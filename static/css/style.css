@@ -119,3 +119,65 @@ html, body {
         padding: 15px 0; /* Reduce footer padding on small screens */
     }
 }
+
+/* General styles for toolbox items */
+.admin-toolbox {
+    background-color: #f9f9f9;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.toolbox-items {
+    display: flex;
+    gap: 10px;
+}
+
+.toolbox-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.3s, border-color 0.3s;
+    font-size: 16px;
+}
+
+.toolbox-item i {
+    margin-right: 8px;
+}
+
+.toolbox-item:hover {
+    background-color: #f1f1f1;
+    border-color: #bbb;
+}
+
+.delete-form {
+    display: inline;
+}
+
+.delete-button {
+    display: flex;
+    align-items: center;
+    background-color: #ff4d4d; /* Red background for delete button */
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.delete-button i {
+    margin-right: 8px;
+}
+
+.delete-button:hover {
+    background-color: #cc0000; /* Darker red on hover */
+}

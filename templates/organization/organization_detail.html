@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/organization_detail.css') }}">
+    <div class="organization-container">
+        <h1 class="organization-title">{{ organization.name }}</h1>
+        <p class="organization-description">{{ organization.description }}</p>
+        <p class="organization-email">Email: <a href="mailto:{{ organization.email }}">{{ organization.email }}</a></p>
+        <p class="organization-website">Website: <a href="{{ organization.website }}" class="organization-website-link" target="_blank">{{ organization.website }}</a></p>
+
+        {% if is_member %}
+            <div class="button-container">
+                <a href="{{ url_for('organization.edit_organization', org_id=organization._id) }}" class="edit-link">Edit Organization</a>
+                <form method="POST" action="{{ url_for('organization.delete_organization', org_id=organization._id) }}" class="delete-form">
+                    <button type="submit">Delete Organization</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

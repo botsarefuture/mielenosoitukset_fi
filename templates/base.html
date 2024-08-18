@@ -21,14 +21,14 @@
                 <li><a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a></li>
                 <li><a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a></li>
                 {% if session.get('admin') %}
-                    <li><a href="{{ url_for('admin_dashboard') }}">Hallintapaneeli</a></li>
-                    <li><a href="{{ url_for('admin_logout') }}">Kirjaudu ulos</a></li>
+                    <li><a href="{{ url_for('admin.admin_dashboard') }}">Hallintapaneeli</a></li>
+                    <li><a href="{{ url_for('admin.admin_logout') }}">Kirjaudu ulos</a></li>
                 {% else %}
-                    <li><a href="{{ url_for('admin_login') }}">Järjestelmävalvojan sisäänkirjautuminen</a></li>
+                    <li><a href="{{ url_for('admin.admin_login') }}">Järjestelmävalvojan sisäänkirjautuminen</a></li>
                 {% endif %}
             </ul>
         </div>
-        
+
     </nav>
 
     <!-- Main Content -->

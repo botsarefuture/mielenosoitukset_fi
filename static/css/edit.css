@@ -78,3 +78,85 @@ textarea:focus {
         height: 80px; /* Adjust textarea height on small screens */
     }
 }
+
+/* Container for the form */
+.form-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header styling */
+h2 {
+    color: #0033A0;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Form styling */
+form {
+    display: grid;
+    gap: 20px;
+}
+
+/* Input and textarea styling */
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="time"],
+textarea,
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Button styling */
+button {
+    background-color: #0033A0;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0066cc;
+}
+
+/* Add organizer button specific styling */
+.add-organizer-button {
+    background-color: #f0f0f0;
+    color: #0033A0;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.add-organizer-button:hover {
+    background-color: #e0e0e0;
+}
+
+/* Optional section styling */
+.optional-section {
+    display: none;
+}
+
+/* Organizer entry styling */
+.organizer-entry {
+    margin-top: 10px;
+}
+
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+    color: #888;
+}

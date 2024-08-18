@@ -1,0 +1,55 @@
+/* edit_user.css */
+
+.edit-user-panel {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.submit-button {
+    background-color: #4CAF50; /* Green */
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #45a049; /* Darker green */
+}
+
+.organization-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.organization {
+    display: flex;
+    align-items: center;
+}

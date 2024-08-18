@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_user_control.css') }}">
+
+<div class="user-control-panel">
+    <h2>Käyttäjähallinta</h2>
+
+    <ul class="user-list">
+        {% for user in users %}
+        <li class="user-item">
+            <div class="user-info">
+                <p><strong>Käyttäjänimi:</strong> {{ user['username'] }}</p>
+                <p><strong>Sähköposti:</strong> {{ user['email'] }}</p>
+                <p><strong>Rooli:</strong> {{ user['role'] }}</p>
+                <p><strong>Admin:</strong> {{ user['is_admin'] }}</p>
+                <p><strong>Global Admin:</strong> {{ user['global_admin'] }}</p>
+            </div>
+            <div class="user-actions">
+                <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
+                <a href="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}" class="button delete-button">Poista</a>
+            </div>
+        </li>
+        {% else %}
+        <li>Ei käyttäjiä</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

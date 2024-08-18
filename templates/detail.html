@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/detail.css') }}">
+<div class="page-container">
+    <!-- Main Content -->
+    <div class="detail-container">
+        <h2>{{ demo['title'] }}</h2>
+
+        <p><strong>Päivämäärä:</strong> {{ demo['date'] }}</p>
+        <p><strong>Alkamisaika:</strong> {{ demo['start_time'] }}</p>
+        <p><strong>Päättymisaika:</strong> {{ demo['end_time'] }}</p>
+        <p><strong>Aihe:</strong> {{ demo['topic'] }}</p>
+        <p><strong>Sijainti:</strong> {{ demo['city'] }}, {{ demo['address'] }}</p>
+
+        {% if demo['route'] %}
+        <div class="route">
+            <p><strong>Reitti:</strong></p>
+            <p>{{ demo['route'] }}</p>
+        </div>
+        {% endif %}
+
+        {% if demo['facebook'] %}
+        <p><strong>Facebook-tapahtumalinkki:</strong> <a href="{{ demo['facebook'] }}" target="_blank">{{ demo['facebook'] }}</a></p>
+        {% endif %}
+
+        <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
+
+        <h3>Järjestäjät</h3>
+        {% for org in demo['organizers'] %}
+        <div class="organizer-info">
+            <p><strong>Nimi:</strong> {{ org['name'] }}</p>
+            <p><strong>Nettisivu:</strong> <a href="{{ org['website'] }}" target="_blank">{{ org['website'] }}</a></p>
+            <p><strong>Sähköposti:</strong> <a href="mailto:{{ org['email'] }}">{{ org['email'] }}</a></p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

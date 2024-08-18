@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit.css') }}">
+<div class="form-container">
+    <h2>Edit Mielenosoitus</h2>
+
+    <form method="POST" action="{{ url_for('edit_event', demo_id=demo['_id']) }}">
+        <div class="form-group">
+            <label for="title">Nimi</label>
+            <input type="text" id="title" name="title" value="{{ demo['title'] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="topic">Aihe</label>
+            <input type="text" id="topic" name="topic" value="{{ demo['topic'] }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="type">Tyyppi</label>
+            <select id="type" name="type" required>
+                <option value="marssi" {% if demo['type'] == 'marssi' %}selected{% endif %}>Marssi</option>
+                <option value="paikallaan" {% if demo['type'] == 'paikallaan' %}selected{% endif %}>Paikallaan</option>
+                <option value="muut" {% if demo['type'] == 'muut' %}selected{% endif %}>Muut</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="organizer">Järjestäjä(t)</label>
+            <input type="text" id="organizer" name="organizer" value="{{ demo['organizer'] }}" required>
+        </div>
+
+        <div id="march-route-container" class="form-group" style="{% if demo['type'] == 'marssi' %}display: block;{% else %}display: none;{% endif %}">
+            <label for="route">Reitti (vain marssille)</label>
+            <textarea id="route" name="route">{{ demo['route'] }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="facebook">Facebook Linkki</label>
+            <input type="text" id="facebook" name="facebook" value="{{ demo['facebook'] }}">
+        </div>
+
+        <div class="form-group">
+            <label for="email">Ilmoittajan sähköposti</label>
+            <input type="email" id="email" name="email" value="{{ demo['email'] }}" required>
+        </div>
+
+        <button type="submit" class="submit-button">Päivitä</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('type').addEventListener('change', function() {
+        var marchRouteContainer = document.getElementById('march-route-container');
+        if (this.value === 'marssi') {
+            marchRouteContainer.style.display = 'block';
+        } else {
+            marchRouteContainer.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+/* Ensure the body and html elements cover the full height of the viewport */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Roboto', sans-serif; /* Consistent font style */
+    background-color: #F5F5F5; /* Light gray background */
+    color: #333; /* Dark gray text for readability */
+}
+
+/* Container for the list page */
+.list-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #FFFFFF; /* White background for the container */
+}
+
+/* Styling for the search form */
+.search-form {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    gap: 10px;
+}
+
+.search-form input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 4px;
+    width: 100%; /* Full width on smaller screens */
+    max-width: 100%; /* Adjust to container's width */
+    box-sizing: border-box;
+}
+
+.search-form button {
+    padding: 10px;
+    background-color: #004080; /* Dark blue button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%; /* Full width on smaller screens */
+}
+
+.search-form button:hover {
+    background-color: #0066cc; /* Lighter blue on hover */
+}
+
+/* Grid container styling */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Four equal-width columns by default */
+    gap: 20px;
+    flex-grow: 1; /* Allow the grid container to fill available space */
+}
+
+/* Individual grid item styling */
+.grid-item {
+    background-color: #ffffff; /* White background for grid items */
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure text links are styled properly */
+.grid-item .title {
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #004080; /* Dark blue text */
+    margin-bottom: 10px;
+}
+
+.grid-item .title:hover {
+    text-decoration: underline;
+}
+
+.grid-item .details {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.grid-item .date {
+    font-weight: bold;
+}
+
+.grid-item .time {
+    color: #666; /* Gray color for time */
+}
+
+.grid-item .topic, .grid-item .location {
+    display: block;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .grid-container {
+        grid-template-columns: repeat(3, 1fr); /* Three columns for tablets */
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr); /* Two columns for mobile devices */
+    }
+
+    .search-form {
+        flex-direction: column; /* Stack elements vertically */
+        gap: 10px;
+    }
+
+    .search-form input[type="text"], .search-form button {
+        width: 100%; /* Full width */
+    }
+
+    .grid-item .title {
+        font-size: 16px; /* Slightly smaller text on small screens */
+    }
+
+    .grid-item .details {
+        font-size: 12px; /* Smaller font size for details */
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-container {
+        grid-template-columns: 1fr; /* Single column layout for very small screens */
+    }
+
+    .search-form {
+        padding: 10px; /* Adjust padding for small screens */
+    }
+
+    .grid-item .title {
+        font-size: 14px; /* Further decrease font size */
+    }
+
+    .grid-item .details {
+        font-size: 12px; /* Keep details font size consistent */
+    }
+}

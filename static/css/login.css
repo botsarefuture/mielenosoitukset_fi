@@ -1,0 +1,66 @@
+/* Styling for the login page */
+.login-container {
+    max-width: 400px; /* Limit width for better focus */
+    margin: 0 auto; /* Center the container horizontally */
+    padding: 40px; /* Add padding for spacing */
+    background-color: #ffffff; /* White background */
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    box-sizing: border-box;
+    text-align: center; /* Center align text */
+}
+
+h2 {
+    color: #0033A0; /* Dark Blue */
+    margin-bottom: 20px; /* Space below the heading */
+}
+
+.form-group {
+    margin-bottom: 20px; /* Space between form fields */
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px; /* Space below label */
+    color: #333; /* Dark gray for better readability */
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 100%; /* Full width of the container */
+    padding: 10px; /* Padding inside the input fields */
+    border: 1px solid #ccc; /* Light gray border */
+    border-radius: 4px; /* Rounded corners for inputs */
+    box-sizing: border-box;
+    font-size: 16px; /* Increase font size for readability */
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+    border-color: #0033A0; /* Dark blue border on focus */
+    outline: none; /* Remove default outline */
+}
+
+.login-button {
+    background-color: #0033A0; /* Dark Blue */
+    color: #ffffff; /* White text */
+    border: none;
+    padding: 15px 20px; /* Padding inside the button */
+    border-radius: 4px; /* Rounded corners */
+    font-size: 16px; /* Font size for the button text */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.login-button:hover {
+    background-color: #002080; /* Darker blue on hover */
+}
+
+@media (max-width: 600px) {
+    .login-container {
+        padding: 20px; /* Reduce padding on smaller screens */
+        max-width: 100%; /* Allow full width on very small screens */
+    }
+}

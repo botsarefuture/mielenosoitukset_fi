@@ -1,0 +1,101 @@
+/* Container for the dashboard */
+.dashboard-container {
+    max-width: 100%; /* Use full width */
+    margin: 20px auto; /* Center the container with margin */
+    padding: 30px; /* Increase padding for more space */
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Slightly larger shadow for depth */
+    box-sizing: border-box;
+}
+
+/* Header styling */
+h2 {
+    color: #0033A0;
+    text-align: center;
+    margin-bottom: 30px; /* Increased margin for spacing */
+}
+
+h3 {
+    color: #0033A0;
+    margin-bottom: 25px; /* Increased margin for spacing */
+}
+
+/* List styling */
+.demo-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.demo-item {
+    padding: 20px; /* Increased padding */
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px; /* Increased space between items */
+    background-color: #f9f9f9; /* Light background for items */
+    border-radius: 8px; /* Rounded corners */
+}
+
+.demo-item:last-child {
+    border-bottom: none;
+}
+
+.demo-header {
+    margin-bottom: 15px;
+}
+
+.demo-details, .organizers {
+    margin-bottom: 25px; /* Increased margin for better spacing */
+}
+
+.organizer {
+    margin-bottom: 15px; /* Increased space between organizers */
+}
+
+.demo-actions {
+    margin-top: 15px;
+}
+
+.demo-actions a {
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 8px; /* More rounded corners */
+    color: #ffffff;
+    font-weight: bold;
+    margin-right: 15px; /* Increased space between buttons */
+    display: inline-block;
+}
+
+.approve-button {
+    background-color: #28a745; /* Green for approve */
+}
+
+.approve-button:hover {
+    background-color: #218838;
+}
+
+.reject-button {
+    background-color: #dc3545; /* Red for reject */
+}
+
+.reject-button:hover {
+    background-color: #c82333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 20px; /* Adjust padding on smaller screens */
+    }
+
+    .demo-actions {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .demo-actions a {
+        margin-right: 0;
+        margin-bottom: 10px; /* Space between buttons on smaller screens */
+    }
+}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
+<div class="list-container">
+    <h2>Tulevat Mielenosoitukset</h2>
+
+    <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
+        <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Search for demonstrations">
+        <button type="submit">Hae</button>
+    </form>
+
+    <div class="grid-container">
+        {% for demo in demonstrations %}
+        <div class="grid-item">
+            <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="title">{{ demo['title'] }}</a>
+            <div class="details">
+                <span class="date">{{ demo['date'] }}</span> |
+                <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span><br>
+                <span class="topic">Aihe: {{ demo['topic'] }}</span><br>
+                <span class="location">Sijainti: {{ demo['city'] }}, {{ demo['address'] }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

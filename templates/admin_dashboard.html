@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+
+<div class="dashboard-container">
+    <h2>Admin Dashboard</h2>
+
+    <h3>Pending Demonstrations</h3>
+    <ul class="demo-list">
+        {% for demo in pending_demos %}
+        <li class="demo-item">
+            <div class="demo-header">
+                <strong>{{ demo['title'] }}</strong>
+            </div>
+            <div class="demo-details">
+                <p>{{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}</p>
+                <p><strong>Aihe:</strong> {{ demo['topic'] }}</p>
+                <p><strong>Sijainti:</strong> {{ demo['city'] }}, {{ demo['address'] }}</p>
+                <p><strong>Facebook:</strong> 
+                    {% if demo['facebook'] %}
+                        <a href="{{ demo['facebook'] }}" target="_blank">{{ demo['facebook'] }}</a>
+                    {% else %}
+                        Ei linkkiä
+                    {% endif %}
+                </p>
+            </div>
+            <div class="organizers">
+                <strong>Organisaattorit:</strong>
+                {% if demo['organizers'] %}
+                    {% for organizer in demo['organizers'] %}
+                    <div class="organizer">
+                        <p><strong>Nimi:</strong> {{ organizer['name'] }}</p>
+                        <p><strong>Nettisivu:</strong> 
+                            {% if organizer['website'] %}
+                                <a href="{{ organizer['website'] }}" target="_blank">{{ organizer['website'] }}</a>
+                            {% else %}
+                                Ei nettisivua
+                            {% endif %}
+                        </p>
+                        <p><strong>Sähköposti:</strong> {{ organizer['email'] }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>Ei organisaattoreita</p>
+                {% endif %}
+            </div>
+            <div class="demo-actions">
+                <a href="{{ url_for('approve_demo', demo_id=demo['_id']) }}" class="approve-button">Hyväksy</a>
+                <a href="{{ url_for('reject_demo', demo_id=demo['_id']) }}" class="reject-button">Hylkää</a>
+            </div>
+        </li>
+        {% else %}
+        <li>Ei odottavia mielenosoituksia.</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

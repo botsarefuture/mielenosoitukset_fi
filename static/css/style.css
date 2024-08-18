@@ -1,0 +1,121 @@
+/* General Styles */
+html, body {
+    height: 100%; /* Ensure the body takes the full height of the viewport */
+    margin: 0;
+    font-family: 'Roboto', sans-serif; /* Updated to match the style guide */
+    background-color: #F5F5F5; /* Updated to match the style guide */
+    color: #333333; /* Text color for consistency */
+    display: flex;
+    flex-direction: column; /* Column layout to push footer to the bottom */
+}
+
+/* Navbar Styles */
+.navbar {
+    background-color: #0033A0; /* Dark Blue from the guide */
+    padding: 15px;
+    position: relative; /* Position relative for toggle button */
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Allow wrapping for small screens */
+}
+
+.navbar .logo {
+    font-size: 1.5em;
+    color: #FFFFFF; /* White text */
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif; /* Updated to match the style guide */
+}
+
+.navbar .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar .nav-links li {
+    display: inline;
+}
+
+.navbar .nav-links a {
+    color: #FFFFFF; /* White text */
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.navbar .nav-links a:hover {
+    background-color: #FF6600; /* Orange from the guide */
+}
+
+/* Toggle Button for Mobile Navigation */
+.navbar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #FFFFFF; /* White text */
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+/* Main Content Styles */
+.container {
+    flex: 1; /* Allow the container to expand and push the footer down */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #0033A0; /* Dark Blue from the guide */
+    color: #FFFFFF; /* White text */
+    text-align: center;
+    padding: 20px 0;
+    width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar .nav-links {
+        flex-direction: column; /* Stack nav links vertically */
+        width: 100%; /* Full width for vertical nav links */
+        position: absolute;
+        top: 60px; /* Adjust if necessary */
+        left: 0;
+        background-color: #0033A0; /* Dark Blue from the guide */
+        display: none; /* Hide by default on small screens */
+    }
+
+    .navbar .nav-links.active {
+        display: flex; /* Show when active */
+    }
+
+    .navbar .nav-links li {
+        margin: 10px 0; /* Space between links */
+    }
+
+    .navbar .nav-links a {
+        display: block; /* Make links block level */
+        padding: 10px; /* Larger padding for touch targets */
+    }
+
+    .navbar-toggle {
+        display: block; /* Show toggle button on small screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar .logo {
+        font-size: 1.2em; /* Slightly smaller logo text on very small screens */
+    }
+
+    .footer {
+        padding: 15px 0; /* Reduce footer padding on small screens */
+    }
+}

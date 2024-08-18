@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
+<div class="form-container">
+    <h2>Ilmoita mielenosoituksesta</h2>
+
+    <form method="POST" action="{{ url_for('submit') }}">
+        <!-- Name -->
+        <label for="name">Mielenosoituksen nimi</label>
+        <input type="text" id="name" name="title" placeholder="Mielenosoituksen nimi" required>
+
+        <!-- Tag (Aihe) -->
+        <label for="topic">Aihe</label>
+        <input type="text" id="topic" name="topic" placeholder="Aihe" required>
+
+        <!-- Date -->
+        <label for="date">Päivämäärä (pp.kk.vvvv)</label>
+        <input type="text" id="date" name="date" placeholder="pp.kk.vvvv" required>
+
+        <!-- Start and End Time -->
+        <label for="start_time">Alkamisaika</label>
+        <input type="time" id="start_time" name="start_time" required>
+
+        <label for="end_time">Päättymisaika</label>
+        <input type="time" id="end_time" name="end_time" required>
+
+        <!-- Additional Information -->
+        <label for="facebook">Facebook-tapahtumalinkki (valinnainen)</label>
+        <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event">
+
+        <!-- Organizers -->
+        <label for="organizers">Järjestäjä(t)</label>
+        <div id="organizers-container">
+            <!-- Placeholder for organizers -->
+        </div>
+        <button type="button" class="add-organizer-button" onclick="addOrganizer()">Lisää järjestäjä</button>
+
+        <!-- Location -->
+        <label for="type">Tyyppi</label>
+        <select id="type" name="type" required>
+            <option value="" disabled selected>Valitse mielenosoituksen tyyppi</option>
+            <option value="marssi">Marssi</option>
+            <option value="paikallaan">Paikallaan</option>
+            <option value="muut">Muut</option>
+        </select>
+
+        <div id="march-route-container" class="optional-section">
+            <label for="route">Reitti (vain marssille, valinnainen)</label>
+            <textarea id="route" name="route" placeholder="Reitti..."></textarea>
+        </div>
+
+        <label for="city">Kaupunki</label>
+        <input type="text" id="city" name="city" placeholder="Kaupunki" required>
+
+        <label for="address">Katuosoite</label>
+        <input type="text" id="address" name="address" placeholder="Katuosoite" required>
+
+        <button type="submit" class="submit-button">Lähetä</button>
+    </form>
+</div>
+
+<script>
+    let organizerCount = 0;
+
+    function addOrganizer() {
+        organizerCount++;
+        const container = document.getElementById('organizers-container');
+        const organizerDiv = document.createElement('div');
+        organizerDiv.className = 'organizer';
+
+        organizerDiv.innerHTML = `
+            <div class="organizer-entry">
+                <hr>
+                <label for="organizer_name_${organizerCount}">Nimi</label>
+                <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="Järjestäjän nimi" required>
+
+                <label for="organizer_website_${organizerCount}">Nettisivu</label>
+                <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+
+                <label for="organizer_email_${organizerCount}">Sähköposti</label>
+                <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com" required>
+            </div>
+        `;
+
+        container.appendChild(organizerDiv);
+    }
+
+    document.getElementById('type').addEventListener('change', function() {
+        var marchRouteContainer = document.getElementById('march-route-container');
+        if (this.value === 'marssi') {
+            marchRouteContainer.style.display = 'block';
+        } else {
+            marchRouteContainer.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

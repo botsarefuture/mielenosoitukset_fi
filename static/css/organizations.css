@@ -1,0 +1,58 @@
+/* organizations.css */
+
+/* Style the container for the organizations page */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Style for the main heading on the page */
+h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 32px;
+    color: #0033A0;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Style for the Create New Organization link */
+.create-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #FF6600;
+    color: #FFFFFF;
+    text-decoration: none;
+    border-radius: 5px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    margin-bottom: 20px;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+.create-link:hover {
+    background-color: #E03C31;
+}
+
+/* Style for the list of organizations */
+.organization-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.organization-list li {
+    margin-bottom: 10px;
+}
+
+.organization-link {
+    text-decoration: none;
+    color: #0033A0;
+    font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.organization-link:hover {
+    color: #FF6600;
+}

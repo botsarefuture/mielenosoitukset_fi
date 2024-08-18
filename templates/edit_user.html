@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_user.css') }}">
+
+<div class="edit-user-panel">
+    <h2>Muokkaa Käyttäjää</h2>
+
+    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}">
+        <label for="username">Käyttäjänimi</label>
+        <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
+
+        <label for="email">Sähköposti</label>
+        <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
+
+        <label for="role">Rooli</label>
+        <select id="role" name="role" required>
+            <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>Käyttäjä</option>
+            <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Ylläpitäjä</option>
+            <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>Globaalihallitsija</option>
+        </select>
+
+        <h3>Organisaatiot</h3>
+        <div class="organization-list">
+            {% for org in organizations %}
+            <div class="organization">
+                <input type="checkbox" id="org_{{ org['_id'] }}" name="organizations" value="{{ org['_id'] }}" 
+                    {% if org['_id'] in user['organizations'] %}checked{% endif %}>
+                <label for="org_{{ org['_id'] }}">{{ org['name'] }}</label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="submit-button">Tallenna muutokset</button>
+    </form>
+</div>
+
+{% endblock %}

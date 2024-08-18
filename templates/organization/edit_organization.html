@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_organization.css') }}">
+<title>Edit Organization</title>
+    <div class="form-container">
+        <h1>Edit Organization</h1>
+
+        <form method="POST">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="{{ organization.name }}" required><br><br>
+
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" required>{{ organization.description }}</textarea><br><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ organization.email }}" required><br><br>
+
+            <label for="website">Website:</label>
+            <input type="url" id="website" name="website" value="{{ organization.website }}"><br><br>
+
+            <button type="submit" class="submit-button">Update</button>
+        </form>
+
+        <a href="{{ url_for('organization.organization_detail', org_id=organization._id) }}" class="back-link">Back to Details</a>
+    </div>
+{% endblock %}

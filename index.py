@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_pymongo import PyMongo
 from flask_mail import Mail, Message
+from bson.objectid import ObjectId
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -13,7 +14,7 @@ mail = Mail(app)
 @app.route('/')
 def index():
     search_query = request.args.get('search', '')
-    
+
     if search_query:
         demonstrations = mongo.db.demonstrations.find({
             "approved": True,
@@ -72,16 +73,10 @@ def submit():
             'approved': False
         })
 
-        # Send confirmation email (placeholder)
-        #msg = Message("Confirmation Email", recipients=[email])
-        #msg.body = f"Thank you for submitting your demonstration: {title}."
-        #mail.send(msg)
-
         flash('Demonstration submitted successfully! It will be reviewed by an admin.')
         return redirect(url_for('index'))
 
     return render_template('submit.html')
-
 
 
 @app.route('/demonstrations')
@@ -102,8 +97,6 @@ def demonstrations():
 
     return render_template('list.html', demonstrations=demonstrations)
 
-from bson.objectid import ObjectId
-
 @app.route('/demonstration/<demo_id>')
 def demonstration_detail(demo_id):
     demo = mongo.db.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
@@ -118,30 +111,38 @@ def demonstration_detail(demo_id):
 @app.route('/edit/<demo_id>', methods=['GET', 'POST'])
 def edit_event(demo_id):
     if not session.get('admin'):
-        demo = mongo.db.demonstrations.find_one({"_id": ObjectId(demo_id)})
-        if demo is None or demo.get('email') != request.form.get('email'):
-            flash("You are not authorized to edit this event.")
-            return redirect(url_for('demonstrations'))
+        flash("You are not authorized to access this page.")
+        return redirect(url_for('admin_login'))
 
     if request.method == 'POST':
-        # Update event data
+        # Get form data
+        title = request.form.get('title')
+        topic = request.form.get('topic')
+        event_type = request.form.get('type')
+        organizer = request.form.get('organizer')
+        route = request.form.get('route') if event_type == 'marssi' else None
+        facebook = request.form.get('facebook')
+        email = request.form.get('email')
+
+        # Update event data in MongoDB
         mongo.db.demonstrations.update_one(
             {"_id": ObjectId(demo_id)},
             {
                 "$set": {
-                    'title': request.form.get('title'),
-                    'topic': request.form.get('topic'),
-                    'type': request.form.get('type'),
-                    'organizer': request.form.get('organizer'),
-                    'route': request.form.get('route') if request.form.get('type') == 'marssi' else None,
-                    'facebook': request.form.get('facebook'),
-                    'email': request.form.get('email')
+                    'title': title,
+                    'topic': topic,
+                    'type': event_type,
+                    'organizer': organizer,
+                    'route': route,
+                    'facebook': facebook,
+                    'email': email
                 }
             }
         )
         flash('Event updated successfully!')
         return redirect(url_for('demonstration_detail', demo_id=demo_id))
 
+    # GET request - fetch event details
     demo = mongo.db.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if demo is None:
         flash("Event not found.")
@@ -149,9 +150,24 @@ def edit_event(demo_id):
 
     return render_template('edit_event.html', demo=demo)
 
+@app.route('/delete/<demo_id>', methods=['POST'])
+def delete_event(demo_id):
+    if not session.get('admin'):
+        flash("You are not authorized to delete this event.")
+        return redirect(url_for('demonstrations'))
 
-# ADMIN
-from flask import session, redirect, url_for
+    demo = mongo.db.demonstrations.find_one({"_id": ObjectId(demo_id)})
+
+    if demo is None:
+        flash("Event not found.")
+        return redirect(url_for('demonstrations'))
+
+    mongo.db.demonstrations.delete_one({"_id": ObjectId(demo_id)})
+    flash('Event deleted successfully!')
+    return redirect(url_for('demonstrations'))
+
+
+# ADMIN ROUTES
 
 # Admin login route
 @app.route('/admin/login', methods=['GET', 'POST'])

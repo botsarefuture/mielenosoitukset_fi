@@ -2,6 +2,30 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/detail.css') }}">
+{% if session.get('admin') %}
+<!-- Admin Toolbox Container -->
+<div class="admin-toolbox">
+    <h2>Hallintatyökalut</h2>
+    <div class="toolbox-items">
+        <!-- Edit Demonstration -->
+        <a href="{{ url_for('edit_event', demo_id=demo._id) }}" class="toolbox-item">
+            <i class="fas fa-edit"></i>
+            <span>Muokkaa mielenosoitusta</span>
+        </a>
+
+        <!-- Delete Demonstration -->
+        <form action="{{ url_for('delete_event', demo_id=demo._id) }}" method="POST" class="toolbox-item delete-form" onsubmit="return confirm('Oletko varma, että haluat poistaa tämän mielenosoituksen?');">
+            <button type="submit" class="delete-button">
+                <i class="fas fa-trash-alt"></i>
+                <span>Poista mielenosoitus</span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+
+
 <div class="page-container">
     <!-- Main Content -->
     <div class="detail-container">

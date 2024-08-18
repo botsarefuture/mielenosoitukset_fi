@@ -9,13 +9,34 @@
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>
     </div>
+    
+    <!-- TODO: Add email field here -->
+    <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required>
+    </div>
+
     <div>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
     </div>
+
+    <!-- TODO: Implement validation for the email field -->
+    <!-- TODO: Ensure that the form input fields are validated client-side (e.g., using HTML5 attributes or JavaScript) -->
+    <!-- TODO: Add client-side validation to ensure email format is correct -->
+
     <button type="submit">Register</button>
 </form>
+
 <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a>.</p>
+
+<!-- TODO: Add server-side validation for form submission to handle incorrect or missing data -->
+<!-- TODO: Ensure that the flashed messages are styled appropriately for better user feedback -->
+<!-- TODO: Add error handling and user-friendly messages for common issues (e.g., username taken, email invalid, password too weak) -->
+<!-- TODO: Implement security measures to prevent attacks (e.g., rate limiting, secure password storage) -->
+<!-- TODO: Check if the form is responsive and visually consistent with the rest of the site -->
+<!-- TODO: Ensure email field validation is handled both client-side and server-side to prevent invalid email submissions -->
+
 {% if get_flashed_messages() %}
     <ul>
         {% for message in get_flashed_messages() %}
@@ -23,4 +44,5 @@
         {% endfor %}
     </ul>
 {% endif %}
+
 {% endblock %}

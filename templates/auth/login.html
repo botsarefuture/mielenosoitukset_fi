@@ -9,13 +9,29 @@
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>
     </div>
+
+    <!-- TODO: Lisää sähköpostikenttä tarvittaessa -->
+    <!-- TODO: Ensure that the username field is validated client-side for proper format -->
+
     <div>
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
     </div>
+
+    <!-- TODO: Add client-side validation for password strength or format if needed -->
+
     <button type="submit">Login</button>
 </form>
+
 <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a>.</p>
+
+<!-- TODO: Translate this page into Finnish -->
+<!-- TODO: Add server-side validation for form submission to handle incorrect or missing data -->
+<!-- TODO: Ensure that the flashed messages are styled appropriately for better user feedback -->
+<!-- TODO: Add error handling and user-friendly messages for common issues (e.g., incorrect username or password) -->
+<!-- TODO: Implement security measures to prevent attacks (e.g., rate limiting, secure password handling) -->
+<!-- TODO: Check if the form is responsive and visually consistent with the rest of the site -->
+
 {% if get_flashed_messages() %}
     <ul>
         {% for message in get_flashed_messages() %}

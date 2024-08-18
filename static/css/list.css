@@ -15,6 +15,7 @@ html, body {
     padding: 20px;
     box-sizing: border-box;
     background-color: #FFFFFF; /* White background for the container */
+    /* TODO: Add styles for header and footer if present */
 }
 
 /* Styling for the search form */
@@ -23,6 +24,7 @@ html, body {
     display: flex;
     flex-direction: column; /* Stack elements vertically */
     gap: 10px;
+    /* TODO: Add styles for form input focus states */
 }
 
 .search-form input[type="text"] {
@@ -32,6 +34,7 @@ html, body {
     width: 100%; /* Full width on smaller screens */
     max-width: 100%; /* Adjust to container's width */
     box-sizing: border-box;
+    /* TODO: Ensure accessibility features (e.g., ARIA attributes) */
 }
 
 .search-form button {
@@ -42,6 +45,7 @@ html, body {
     border-radius: 4px;
     cursor: pointer;
     width: 100%; /* Full width on smaller screens */
+    /* TODO: Add focus styles for better accessibility */
 }
 
 .search-form button:hover {
@@ -54,6 +58,7 @@ html, body {
     grid-template-columns: repeat(4, 1fr); /* Four equal-width columns by default */
     gap: 20px;
     flex-grow: 1; /* Allow the grid container to fill available space */
+    /* TODO: Adjust grid layout for different content types */
 }
 
 /* Individual grid item styling */
@@ -66,6 +71,7 @@ html, body {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    /* TODO: Add hover effects for grid items */
 }
 
 /* Ensure text links are styled properly */
@@ -145,3 +151,10 @@ html, body {
         font-size: 12px; /* Keep details font size consistent */
     }
 }
+
+/* TODOs and Comments */
+/* TODO: Add styles for header and footer if present */
+/* TODO: Add styles for form input focus states */
+/* TODO: Ensure accessibility features (e.g., ARIA attributes) */
+/* TODO: Adjust grid layout for different content types */
+/* TODO: Add hover effects for grid items */

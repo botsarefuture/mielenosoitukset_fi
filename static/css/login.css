@@ -9,11 +9,13 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
     box-sizing: border-box;
     text-align: center; /* Center align text */
+    /* TODO: Add responsive design elements for better mobile view */
 }
 
 h2 {
     color: #0033A0; /* Dark Blue */
     margin-bottom: 20px; /* Space below the heading */
+    /* TODO: Add media queries to adjust font size on smaller screens */
 }
 
 .form-group {
@@ -25,6 +27,7 @@ label {
     font-weight: bold;
     margin-bottom: 5px; /* Space below label */
     color: #333; /* Dark gray for better readability */
+    /* TODO: Add focus styles for better accessibility */
 }
 
 input[type="text"],
@@ -35,6 +38,7 @@ input[type="password"] {
     border-radius: 4px; /* Rounded corners for inputs */
     box-sizing: border-box;
     font-size: 16px; /* Increase font size for readability */
+    /* TODO: Add accessibility styles for improved user experience */
 }
 
 input[type="text"]:focus,
@@ -58,9 +62,18 @@ input[type="password"]:focus {
     background-color: #002080; /* Darker blue on hover */
 }
 
+/* Responsive Design */
 @media (max-width: 600px) {
     .login-container {
         padding: 20px; /* Reduce padding on smaller screens */
         max-width: 100%; /* Allow full width on very small screens */
+        /* TODO: Ensure form fields and button scale appropriately */
     }
 }
+
+/* TODOs and Comments */
+/* TODO: Add responsive design elements for better mobile view */
+/* TODO: Add media queries to adjust font size on smaller screens */
+/* TODO: Add focus styles for better accessibility */
+/* TODO: Add accessibility styles for improved user experience */
+/* TODO: Ensure form fields and button scale appropriately on very small screens */

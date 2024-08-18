@@ -8,29 +8,37 @@
     background-color: #F5F5F5;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* TODO: Add media queries for better responsiveness on smaller screens */
 }
 
+/* Header for organization title */
 h1.organization-title {
     font-family: 'Montserrat', sans-serif;
     font-size: 28px;
     color: #0033A0;
     margin-bottom: 15px;
+    /* TODO: Add responsive font size adjustments for mobile devices */
 }
 
+/* Paragraph styling for organization description */
 p.organization-description {
     font-size: 16px;
     line-height: 1.5;
     color: #333;
     margin-bottom: 15px;
+    /* TODO: Ensure consistent line-height and margin with other text elements across the site */
 }
 
+/* Styling for email and website paragraphs */
 p.organization-email,
 p.organization-website {
     font-size: 16px;
     color: #333;
     margin-bottom: 15px;
+    /* TODO: Consider adding responsive font sizes or spacing for better readability on mobile devices */
 }
 
+/* Styling for website link */
 a.organization-website-link {
     color: #009B77;
     text-decoration: none;
@@ -38,14 +46,16 @@ a.organization-website-link {
 
 a.organization-website-link:hover {
     text-decoration: underline;
+    /* TODO: Add focus styles for better accessibility */
 }
 
-/* Button container */
+/* Button container styling */
 .button-container {
     margin-top: 20px;
+    /* TODO: Add padding or margin adjustments for better spacing */
 }
 
-/* Edit button */
+/* Edit button styling */
 .edit-link {
     display: inline-block;
     padding: 10px 20px;
@@ -67,7 +77,7 @@ a.organization-website-link:hover {
     background-color: #001f4d;
 }
 
-/* Delete button */
+/* Delete button styling */
 .delete-form button {
     background-color: #E03C31;
     color: #FFFFFF;
@@ -87,3 +97,10 @@ a.organization-website-link:hover {
 .delete-form button:active {
     background-color: #a81e1a;
 }
+
+/* TODOs and Comments */
+/* TODO: Add media queries for better responsiveness on smaller screens */
+/* TODO: Ensure consistent line-height and margin with other text elements across the site */
+/* TODO: Consider adding responsive font sizes or spacing for better readability on mobile devices */
+/* TODO: Add focus styles for better accessibility */
+/* TODO: Add padding or margin adjustments for better spacing in button containers */

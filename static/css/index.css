@@ -2,6 +2,7 @@
 .search-form {
     display: flex; /* Align elements horizontally */
     margin-bottom: 20px; /* Space below the form */
+    /* TODO: Add styles for form container responsiveness */
 }
 
 .search-form input[type="text"] {
@@ -10,6 +11,7 @@
     border: 1px solid #ddd; /* Light gray border */
     border-radius: 4px;
     font-size: 16px;
+    /* TODO: Add focus styles for better accessibility */
 }
 
 .search-form button {
@@ -21,6 +23,7 @@
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
+    /* TODO: Add focus styles for better accessibility */
 }
 
 .search-form button:hover {
@@ -31,12 +34,14 @@
 .demonstrations-list {
     list-style-type: none; /* Remove default list styling */
     padding: 0;
+    /* TODO: Add padding for better alignment if needed */
 }
 
 .demonstrations-list li {
     padding: 10px;
     border-bottom: 1px solid #ddd; /* Light gray line between items */
     margin-bottom: 10px;
+    /* TODO: Add hover effects for list items */
 }
 
 .demonstrations-list li:last-child {
@@ -47,6 +52,7 @@
     color: #0033A0; /* Main Blue */
     text-decoration: none; /* Remove underline */
     font-weight: bold;
+    /* TODO: Add font size adjustment for better readability */
 }
 
 .demonstrations-list a:hover {

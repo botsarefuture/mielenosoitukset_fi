@@ -9,6 +9,8 @@
     <form action="{{ url_for('index') }}" method="GET" class="search-form">
         <input type="text" name="search" placeholder="Hae mielenosoituksia...">
         <button type="submit">Hae</button>
+        <!-- Comment: Search form for users to find demonstrations by keyword -->
+        <!-- TODO: Consider adding search filters or advanced search options for better user experience -->
     </form>
 
     <h3>Esitellyt mielenosoitukset</h3>
@@ -22,12 +24,18 @@
                     Aihe: {{ demo['topic'] }}<br>
                     Sijainti: {{ demo['city'] }}, {{ demo['address'] }}
                 </small>
+                <!-- Comment: List item displaying the title, date, time, topic, and location of each demonstration -->
+                <!-- TODO: Add a way to highlight or feature specific demonstrations based on criteria (e.g., upcoming events) -->
             </li>
             {% else %}
             <li>Ei mielenosoituksia näytettäväksi.</li>
+            <!-- Comment: Message displayed when there are no demonstrations to show -->
+            <!-- TODO: Add suggestions or a call-to-action for users to submit new demonstrations or explore other sections -->
             {% endfor %}
         {% else %}
         <li>Ei mielenosoituksia näytettäväksi.</li>
+        <!-- Comment: Message displayed when there are no demonstrations available -->
+        <!-- TODO: Ensure the user experience is smooth even with no data available, possibly with suggestions or links -->
         {% endif %}
     </ul>
 </div>

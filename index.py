@@ -21,6 +21,9 @@ login_manager.login_view = 'login'  # Redirect to login view if not authenticate
 # User Loader function
 @login_manager.user_loader
 def load_user(user_id):
+    """
+    Load a user from the database by user_id.
+    """
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     if user_doc:
         return User.from_db(user_doc)
@@ -41,9 +44,17 @@ app.register_blueprint(admin_user_bp)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Handle user registration.
+    """
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+
+        # Validation for username and password
+        if not username or not password or len(username) < 3 or len(password) < 6:
+            flash('Invalid input. Username must be at least 3 characters and password at least 6 characters.')
+            return redirect(url_for('register'))
 
         # Check if the username already exists
         if mongo.users.find_one({"username": username}):
@@ -58,13 +69,19 @@ def register():
 
     return render_template('auth/register.html')
 
-from flask_login import login_user
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Handle user login.
+    """
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+
+        # Validation for username and password fields
+        if not username or not password:
+            flash('Please enter both username and password.')
+            return redirect(url_for('login'))
 
         user_doc = mongo.users.find_one({"username": username})
 
@@ -78,11 +95,14 @@ def login():
 
     return render_template('auth/login.html')
 
-# Routes
 @app.route('/')
 def index():
+    """
+    Display the index page with a list of approved demonstrations.
+    """
     search_query = request.args.get('search', '')
 
+    # Consider adding pagination to handle large sets of results more efficiently.
     if search_query:
         demonstrations = mongo.demonstrations.find({
             "approved": True,
@@ -100,6 +120,9 @@ def index():
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
+    """
+    Handle submission of a new demonstration.
+    """
     if request.method == 'POST':
         # Get form data
         title = request.form.get('title')
@@ -112,6 +135,11 @@ def submit():
         address = request.form.get('address')
         event_type = request.form.get('type')
         route = request.form.get('route') if event_type == 'marssi' else None
+
+        # Validation for form data
+        if not title or not date or not start_time or not end_time or not topic or not city or not address:
+            flash('Please fill out all required fields.')
+            return redirect(url_for('submit'))
 
         # Get organizers from the form and create Organizer instances
         organizers = []
@@ -151,6 +179,9 @@ def submit():
 
 @app.route('/demonstrations')
 def demonstrations():
+    """
+    List all approved demonstrations, optionally filtered by search query.
+    """
     search_query = request.args.get('search', '')
 
     if search_query:
@@ -169,6 +200,9 @@ def demonstrations():
 
 @app.route('/demonstration/<demo_id>')
 def demonstration_detail(demo_id):
+    """
+    Display details of a specific demonstration.
+    """
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
 
     if demo is None:
@@ -180,6 +214,9 @@ def demonstration_detail(demo_id):
 @app.route('/edit/<demo_id>', methods=['GET', 'POST'])
 @login_required
 def edit_event(demo_id):
+    """
+    Handle editing of a demonstration.
+    """
     if request.method == 'POST':
         # Get form data
         title = request.form.get('title')
@@ -192,6 +229,11 @@ def edit_event(demo_id):
         facebook = request.form.get('facebook')
         city = request.form.get('city')
         address = request.form.get('address')
+
+        # Validation for form data
+        if not title or not date or not start_time or not end_time or not topic or not city or not address:
+            flash('Please fill out all required fields.')
+            return redirect(url_for('edit_event', demo_id=demo_id))
 
         # Get organizers from form data
         organizers = []
@@ -241,6 +283,9 @@ def edit_event(demo_id):
 @app.route('/delete/<demo_id>', methods=['POST'])
 @login_required
 def delete_event(demo_id):
+    """
+    Handle deletion of a demonstration.
+    """
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if demo is None:

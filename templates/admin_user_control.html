@@ -6,6 +6,15 @@
 <div class="user-control-panel">
     <h2>Käyttäjähallinta</h2>
 
+    <!-- Search/Filter Users -->
+    <div class="user-filter">
+        <form method="GET" action="{{ url_for('admin_user.user_control') }}" class="search-form">
+            <input type="text" name="search" placeholder="Search users by username or email" value="{{ search_query }}">
+            <button type="submit" class="button search-button">Search</button>
+        </form>
+    </div>
+
+    <!-- List of Users -->
     <ul class="user-list">
         {% for user in users %}
         <li class="user-item">
@@ -17,13 +26,24 @@
                 <p><strong>Global Admin:</strong> {{ user['global_admin'] }}</p>
             </div>
             <div class="user-actions">
+                <!-- Edit User Link -->
                 <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
-                <a href="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}" class="button delete-button">Poista</a>
+                <!-- Delete User Link with confirmation dialog -->
+                <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}" onsubmit="return confirm('Are you sure you want to delete this user?');" class="delete-form">
+                    <button type="submit" class="button delete-button">Poista</button>
+                </form>
             </div>
         </li>
         {% else %}
-        <li>Ei käyttäjiä</li>
+        <!-- No Users Message -->
+        <li class="no-users">Ei käyttäjiä</li>
         {% endfor %}
     </ul>
+
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        <!-- Pagination links would go here -->
+    </div>
 </div>
+
 {% endblock %}

@@ -12,14 +12,21 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="container">
+            <!-- Logo and Home Link -->
             <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
+            
+            <!-- Toggle Button for Mobile Navigation -->
             <button class="navbar-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars">☰</i>
             </button>
+            
+            <!-- Navigation Links -->
             <ul class="nav-links">
                 <li><a href="{{ url_for('index') }}">Etusivu</a></li>
                 <li><a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a></li>
                 <li><a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a></li>
+                
+                <!-- Conditional Links for Admin -->
                 {% if session.get('admin') %}
                     <li><a href="{{ url_for('admin.admin_dashboard') }}">Hallintapaneeli</a></li>
                     <li><a href="{{ url_for('admin.admin_logout') }}">Kirjaudu ulos</a></li>
@@ -28,12 +35,12 @@
                 {% endif %}
             </ul>
         </div>
-
     </nav>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="container">
         {% block content %}
+        <!-- The content from child templates will be injected here -->
         {% endblock %}
     </main>
 
@@ -44,11 +51,16 @@
         </div>
     </footer>
 
+    <!-- JavaScript for Navigation Menu Toggle -->
     <script>
         // JavaScript to toggle the navigation menu on small screens
         document.querySelector('.navbar-toggle').addEventListener('click', function() {
             document.querySelector('.nav-links').classList.toggle('active');
         });
+
+        // TODO: Add functionality for smooth scroll to sections if needed
+
+        // TODO: Add all the necessary links for pages like contact, about us, etc.
     </script>
 
 </body>

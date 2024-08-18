@@ -9,25 +9,31 @@
         <!-- Name -->
         <label for="name">Mielenosoituksen nimi</label>
         <input type="text" id="name" name="title" placeholder="Mielenosoituksen nimi" required>
+        <!-- Comment: Field for entering the title of the demonstration -->
 
         <!-- Tag (Aihe) -->
         <label for="topic">Aihe</label>
         <input type="text" id="topic" name="topic" placeholder="Aihe" required>
+        <!-- Comment: Field for entering the topic of the demonstration -->
 
         <!-- Date -->
         <label for="date">Päivämäärä (pp.kk.vvvv)</label>
         <input type="text" id="date" name="date" placeholder="pp.kk.vvvv" required>
+        <!-- Comment: Field for entering the date of the demonstration -->
 
         <!-- Start and End Time -->
         <label for="start_time">Alkamisaika</label>
         <input type="time" id="start_time" name="start_time" required>
+        <!-- Comment: Field for entering the start time of the demonstration -->
 
         <label for="end_time">Päättymisaika</label>
         <input type="time" id="end_time" name="end_time" required>
+        <!-- Comment: Field for entering the end time of the demonstration -->
 
         <!-- Additional Information -->
         <label for="facebook">Facebook-tapahtumalinkki (valinnainen)</label>
         <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event">
+        <!-- Comment: Optional field for entering a Facebook event link -->
 
         <!-- Organizers -->
         <label for="organizers">Järjestäjä(t)</label>
@@ -35,6 +41,8 @@
             <!-- Placeholder for organizers -->
         </div>
         <button type="button" class="add-organizer-button" onclick="addOrganizer()">Lisää järjestäjä</button>
+        <!-- Comment: Button to add additional organizer fields -->
+        <!-- TODO: Ensure added organizer fields are handled properly in the form submission -->
 
         <!-- Location -->
         <label for="type">Tyyppi</label>
@@ -44,19 +52,25 @@
             <option value="paikallaan">Paikallaan</option>
             <option value="muut">Muut</option>
         </select>
+        <!-- Comment: Dropdown to select the type of demonstration -->
 
         <div id="march-route-container" class="optional-section">
             <label for="route">Reitti (vain marssille, valinnainen)</label>
             <textarea id="route" name="route" placeholder="Reitti..."></textarea>
         </div>
+        <!-- Comment: Optional field for entering the route, shown only if the type is "marssi" -->
+        <!-- TODO: Ensure that the route information is validated and handled properly -->
 
         <label for="city">Kaupunki</label>
         <input type="text" id="city" name="city" placeholder="Kaupunki" required>
+        <!-- Comment: Field for entering the city of the demonstration -->
 
         <label for="address">Katuosoite</label>
         <input type="text" id="address" name="address" placeholder="Katuosoite" required>
+        <!-- Comment: Field for entering the address of the demonstration -->
 
         <button type="submit" class="submit-button">Lähetä</button>
+        <!-- Comment: Submit button for the form -->
     </form>
 </div>
 
@@ -86,6 +100,8 @@
         container.appendChild(organizerDiv);
     }
 
+    // Comment: Event listener to show/hide the march route input based on the type of demonstration
+    // TODO: Validate and handle the dynamic organizer fields in the form submission
     document.getElementById('type').addEventListener('change', function() {
         var marchRouteContainer = document.getElementById('march-route-container');
         if (this.value === 'marssi') {

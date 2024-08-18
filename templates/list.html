@@ -8,6 +8,8 @@
     <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
         <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Search for demonstrations">
         <button type="submit">Hae</button>
+        <!-- Comment: Search form for filtering demonstrations by keyword -->
+        <!-- TODO: Add additional search filters (e.g., date range, location) if needed -->
     </form>
 
     <div class="grid-container">
@@ -19,10 +21,14 @@
                 <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span><br>
                 <span class="topic">Aihe: {{ demo['topic'] }}</span><br>
                 <span class="location">Sijainti: {{ demo['city'] }}, {{ demo['address'] }}</span>
+                <!-- Comment: Display detailed information for each demonstration -->
+                <!-- TODO: Add functionality to sort or paginate results if the list becomes large -->
             </div>
         </div>
         {% else %}
         <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
+        <!-- Comment: Message displayed when no demonstrations are found -->
+        <!-- TODO: Consider adding suggestions or links for further actions (e.g., submitting a demonstration) -->
         {% endfor %}
     </div>
 </div>

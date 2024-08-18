@@ -4,21 +4,24 @@ from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from classes import Organizer, Demonstration
 
+# Create a Blueprint for organization-related routes
 organization_bp = Blueprint('organization', __name__)
 
-# Initialize database manager
+# Initialize the database manager and get the database connection
 db_manager = DatabaseManager()
 db = db_manager.get_db()
 
 @organization_bp.route('/organizations')
 @login_required
 def list_organizations():
+    # TODO: Consider adding pagination to handle large number of organizations.
     organizations = db['organizations'].find()
     return render_template('organization/list_organizations.html', organizations=organizations)
 
 @organization_bp.route('/organization/<org_id>')
 @login_required
 def organization_detail(org_id):
+    # TODO: Add error handling for invalid ObjectId format.
     organization = db['organizations'].find_one({"_id": ObjectId(org_id)})
     if not organization:
         flash('Organization not found.')
@@ -32,16 +35,20 @@ def organization_detail(org_id):
 @organization_bp.route('/organization/create', methods=['GET', 'POST'])
 @login_required
 def create_organization():
+    # Ensure that the user is authenticated
+    # TODO: Check if there are any additional permission checks needed here.
     if not current_user.is_authenticated:
         flash('You do not have permission to create organizations.')
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        # Extract organization details from the form
         name = request.form.get('name')
         description = request.form.get('description')
         email = request.form.get('email')
         website = request.form.get('website')
 
+        # TODO: Add form validation to ensure required fields are filled out.
         result = db['organizations'].insert_one({
             "name": name,
             "description": description,
@@ -50,7 +57,8 @@ def create_organization():
             "members": [{"user_id": current_user.id, "role": "admin"}]  # Default the creator as an admin
         })
 
-        # Add the new organization to the user's list of organizations
+        # Add the new organization to the user's list of organizations with admin role
+        # TODO: Refactor `current_user.add_organization` method if it requires additional functionality.
         current_user.add_organization(db, result.inserted_id, "admin")
         db['users'].update_one({"_id": ObjectId(current_user.id)}, {"$push": {"organizations": {"org_id": result.inserted_id, "role": "admin"}}})
 
@@ -62,23 +70,28 @@ def create_organization():
 @organization_bp.route('/organization/edit/<org_id>', methods=['GET', 'POST'])
 @login_required
 def edit_organization(org_id):
+    # Fetch the organization to be edited
     organization = db['organizations'].find_one({"_id": ObjectId(org_id)})
     if not organization:
         flash('Organization not found.')
         return redirect(url_for('organization.list_organizations'))
 
-    # Check if user is an admin of the organization
+    # Check if the user is an admin of the organization
+    # TODO: Extract permission check to a separate function for reuse.
     if not any(str(org["org_id"]) == str(org_id) and org["role"] == 'admin' for org in current_user.organizations):
         flash('You do not have permission to edit this organization.')
         print(org_id, current_user.organizations)
         return redirect(url_for('organization.organization_detail', org_id=org_id))
 
     if request.method == 'POST':
+        # Extract updated organization details from the form
         name = request.form.get('name')
         description = request.form.get('description')
         email = request.form.get('email')
         website = request.form.get('website')
 
+        # TODO: Add form validation to ensure required fields are filled out.
+        # Update the organization details in the database
         db['organizations'].update_one(
             {"_id": ObjectId(org_id)},
             {"$set": {
@@ -97,19 +110,23 @@ def edit_organization(org_id):
 @organization_bp.route('/organization/delete/<org_id>', methods=['POST'])
 @login_required
 def delete_organization(org_id):
+    # Fetch the organization to be deleted
     organization = db['organizations'].find_one({"_id": ObjectId(org_id)})
     if not organization:
         flash('Organization not found.')
         return redirect(url_for('organization.list_organizations'))
 
-    # Check if user is an admin of the organization
+    # Check if the user is an admin of the organization
+    # TODO: Extract permission check to a separate function for reuse.
     if not any(str(org['org_id']) == str(org_id) and org['role'] == 'admin' for org in current_user.organizations):
         flash('You do not have permission to delete this organization.')
         return redirect(url_for('organization.organization_detail', org_id=org_id))
 
+    # Delete the organization from the database
     db['organizations'].delete_one({"_id": ObjectId(org_id)})
 
     # Remove the organization from all users' lists
+    # TODO: Consider adding a confirmation step before deletion.
     db['users'].update_many(
         {"organizations.org_id": ObjectId(org_id)},
         {"$pull": {"organizations": {"org_id": ObjectId(org_id)}}}
@@ -122,8 +139,10 @@ def delete_organization(org_id):
 @login_required
 def create_demonstration():
     """
-    If the user has signed in, and has organization with this method the user has better change of getting the informations right."""
+    Creates a new demonstration and links it to an organization if the user has permission.
+    """
     if request.method == 'POST':
+        # Extract demonstration details from the form
         title = request.form.get('title')
         date = request.form.get('date')
         start_time = request.form.get('start_time')
@@ -136,7 +155,8 @@ def create_demonstration():
         route = request.form.get('route')
         organization_id = request.form.get('organization_id')
 
-        # Fetch the organization details to ensure it exists and is accessible
+        # Fetch the organization to ensure it exists and the user has permission to link to it
+        # TODO: Add error handling for invalid ObjectId format.
         organization = db['organizations'].find_one({"_id": ObjectId(organization_id)})
         if not organization or not any(str(org["org_id"]) == str(organization_id) and org["role"] in ['admin', 'member'] for org in current_user.organizations):
             flash('Organization not found or you do not have permission to link to this organization.')
@@ -169,6 +189,8 @@ def create_demonstration():
         return redirect(url_for('organization.list_organizations'))
 
     # Fetch only the organizations the user has access to
+    # TODO: Optimize query if the list of accessible organizations is large.
+    
     accessible_orgs = [org for org in current_user.organizations]
     organizations = db['organizations'].find({"_id": {"$in": [ObjectId(org["org_id"]) for org in accessible_orgs]}})
 

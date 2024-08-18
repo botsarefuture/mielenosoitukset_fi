@@ -67,6 +67,7 @@ button[type="submit"]:hover {
     font-size: 14px;
     margin-top: -10px; /* Adjust spacing for error messages */
     margin-bottom: 15px;
+    /* TODO: Add styles for error message box or icon */
 }
 
 .success {
@@ -74,4 +75,5 @@ button[type="submit"]:hover {
     font-size: 14px;
     margin-top: -10px; /* Adjust spacing for success messages */
     margin-bottom: 15px;
+    /* TODO: Add styles for success message box or icon */
 }

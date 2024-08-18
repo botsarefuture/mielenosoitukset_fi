@@ -129,6 +129,7 @@ html, body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Toolbox items styling */
 .toolbox-items {
     display: flex;
     gap: 10px;
@@ -156,6 +157,7 @@ html, body {
     border-color: #bbb;
 }
 
+/* Delete form styling */
 .delete-form {
     display: inline;
 }
@@ -181,3 +183,10 @@ html, body {
 .delete-button:hover {
     background-color: #cc0000; /* Darker red on hover */
 }
+
+/* TODOs and Comments */
+/* TODO: Add responsive styles for toolbox items to ensure they display well on smaller screens */
+/* TODO: Ensure that the navbar and footer styling is consistent across all pages */
+/* TODO: Improve accessibility by adding ARIA attributes and improving color contrast */
+/* TODO: Consider using CSS variables for consistent color schemes and easier theming */
+/* TODO: Add transitions or animations to the navbar and footer for smoother interactions */

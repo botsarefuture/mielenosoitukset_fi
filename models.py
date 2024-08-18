@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 
 class User(UserMixin):
-    def __init__(self, user_id, username, password_hash, organizations=None, global_admin = False):
+    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False):
         self.id = str(user_id)
         self.username = username
         self.password_hash = password_hash
@@ -12,52 +12,61 @@ class User(UserMixin):
 
     @staticmethod
     def from_db(user_doc):
+        """
+        Create a User instance from a database document.
+        """
         return User(
             user_id=user_doc['_id'],
             username=user_doc['username'],
             password_hash=user_doc['password_hash'],
             organizations=user_doc.get('organizations', []),
-            global_admin=user_doc.get("global_admin", False)
+            global_admin=user_doc.get('global_admin', False)
         )
 
     def check_password(self, password):
+        """
+        Verify the provided password against the stored password hash.
+        """
         return check_password_hash(self.password_hash, password)
 
     @staticmethod
     def create_user(username, password):
+        """
+        Create a new user dictionary with a hashed password.
+        """
         password_hash = generate_password_hash(password)
         return {
-            "username": username,
-            "password_hash": password_hash
+            'username': username,
+            'password_hash': password_hash,
+            'organizations': [],
+            'global_admin': False
         }
 
-    def add_organization(self, db, organization_id, level=None):
-        # Check if the user already has access to this organization
-        existing_org = next((org for org in self.organizations if org['organization_id'] == organization_id), None)
-        
+    def add_organization(self, db, organization_id, role=None):
+        """
+        Add or update an organization for the user.
+        """
+        existing_org = next((org for org in self.organizations if org['org_id'] == organization_id), None)
+
         if not existing_org:
-            # Append the new organization with the specified access level
             self.organizations.append({
-                "org_id": organization_id,
-                "role": level or "member"  # Default to "member" if no level is provided
+                'org_id': organization_id,
+                'role': role or 'member'
             })
 
-            # Update the user's organizations in the database
+            # Ensure atomicity during the database update
             db.users.update_one(
-                {"_id": ObjectId(self.id)},
-                {"$set": {"organizations": self.organizations}}
+                {'_id': ObjectId(self.id)},
+                {'$set': {'organizations': self.organizations}}
             )
         else:
-            # If the user already has access, update the access level
             db.users.update_one(
-                {"_id": ObjectId(self.id), "organizations.organization_id": organization_id},
-                {"$set": {"organizations.$.level": level or "member"}}
+                {'_id': ObjectId(self.id), 'organizations.org_id': organization_id},
+                {'$set': {'organizations.$.role': role or 'member'}}
             )
-            
-    def is_member_of_organization(self, organization_id):
-        """Check if the user is a member of a specific organization."""
-        for org in self.organizations:
-            if org["org_id"] == organization_id:
-                return True
 
-        return False
+    def is_member_of_organization(self, organization_id):
+        """
+        Check if the user is a member of a specific organization.
+        """
+        return any(org['org_id'] == organization_id for org in self.organizations)

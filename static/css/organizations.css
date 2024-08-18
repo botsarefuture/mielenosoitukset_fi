@@ -5,6 +5,7 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
+    /* TODO: Consider adding media queries to adjust padding and margins for smaller screens */
 }
 
 /* Style for the main heading on the page */
@@ -14,6 +15,7 @@ h1 {
     color: #0033A0;
     text-align: center;
     margin-bottom: 30px;
+    /* TODO: Add responsive font size adjustments for smaller screens */
 }
 
 /* Style for the Create New Organization link */
@@ -33,16 +35,19 @@ h1 {
 
 .create-link:hover {
     background-color: #E03C31;
+    /* TODO: Add hover effects or animations to enhance user interaction */
 }
 
 /* Style for the list of organizations */
 .organization-list {
     list-style-type: none;
     padding: 0;
+    /* TODO: Add spacing or border styles for individual list items if needed */
 }
 
 .organization-list li {
     margin-bottom: 10px;
+    /* TODO: Consider adding padding or border for better item separation */
 }
 
 .organization-link {
@@ -55,4 +60,11 @@ h1 {
 
 .organization-link:hover {
     color: #FF6600;
+    /* TODO: Add more interactive effects, such as underline or shadow, on hover */
 }
+
+/* TODOs and Comments */
+/* TODO: Consider adding styles for empty states or loading indicators if no organizations are available */
+/* TODO: Add accessibility enhancements such as focus states for interactive elements */
+/* TODO: Ensure consistent styling with other pages by aligning color schemes and typography */
+/* TODO: Optimize styles for mobile devices by testing on various screen sizes */

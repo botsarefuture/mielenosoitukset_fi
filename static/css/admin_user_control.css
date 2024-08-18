@@ -1,33 +1,78 @@
 /* admin_user_control.css */
 
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
 .user-control-panel {
     padding: 20px;
-    max-width: 1200px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 0 auto;
 }
 
 h2 {
     font-size: 2rem;
     margin-bottom: 20px;
+    color: #333;
+}
+
+.user-filter {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fafafa;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+}
+
+.search-form input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.search-form .search-button {
+    background-color: #2196F3; /* Blue */
+    border: none;
+}
+
+.search-form .search-button:hover {
+    background-color: #0b79d0; /* Darker blue */
 }
 
 .user-list {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
 
 .user-item {
     border: 1px solid #ddd;
     border-radius: 5px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     padding: 15px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.user-info {
-    flex: 1;
+.user-info p {
+    margin: 5px 0;
+    color: #555;
 }
 
 .user-actions {
@@ -37,14 +82,15 @@ h2 {
 
 .button {
     display: inline-block;
-    padding: 10px 20px;
-    font-size: 1rem;
+    padding: 10px 15px;
+    font-size: 0.9rem;
     text-align: center;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     text-decoration: none;
+    transition: background-color 0.3s;
 }
 
 .edit-button {
@@ -61,4 +107,30 @@ h2 {
 
 .delete-button:hover {
     background-color: #e53935; /* Darker red */
+}
+
+.no-users {
+    text-align: center;
+    color: #999;
+}
+
+.pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Pagination link styles */
+.pagination a {
+    display: inline-block;
+    padding: 8px 15px;
+    margin: 0 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    color: #333;
+    text-decoration: none;
+    background-color: #fff;
+}
+
+.pagination a:hover {
+    background-color: #f4f4f4;
 }

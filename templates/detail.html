@@ -2,6 +2,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/detail.css') }}">
+
 {% if session.get('admin') %}
 <!-- Admin Toolbox Container -->
 <div class="admin-toolbox">
@@ -24,19 +25,21 @@
 </div>
 {% endif %}
 
-
-
+<!-- Main Content Container -->
 <div class="page-container">
-    <!-- Main Content -->
+    <!-- Detail Content -->
     <div class="detail-container">
+        <!-- Title of the Demonstration -->
         <h2>{{ demo['title'] }}</h2>
 
+        <!-- Display Event Details -->
         <p><strong>Päivämäärä:</strong> {{ demo['date'] }}</p>
         <p><strong>Alkamisaika:</strong> {{ demo['start_time'] }}</p>
         <p><strong>Päättymisaika:</strong> {{ demo['end_time'] }}</p>
         <p><strong>Aihe:</strong> {{ demo['topic'] }}</p>
         <p><strong>Sijainti:</strong> {{ demo['city'] }}, {{ demo['address'] }}</p>
 
+        <!-- Conditional Display for Route Information -->
         {% if demo['route'] %}
         <div class="route">
             <p><strong>Reitti:</strong></p>
@@ -44,12 +47,15 @@
         </div>
         {% endif %}
 
+        <!-- Conditional Display for Facebook Event Link -->
         {% if demo['facebook'] %}
         <p><strong>Facebook-tapahtumalinkki:</strong> <a href="{{ demo['facebook'] }}" target="_blank">{{ demo['facebook'] }}</a></p>
         {% endif %}
 
+        <!-- Back Link to All Demonstrations -->
         <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
 
+        <!-- Organizers Information -->
         <h3>Järjestäjät</h3>
         {% for org in demo['organizers'] %}
         <div class="organizer-info">

@@ -19,7 +19,7 @@ class User(UserMixin):
         """
         
         global_admin = False
-        if user_doc['role'] == 'global_admin':
+        if user_doc.get('role', '') == 'global_admin':
             global_admin = True
         
         global_admin_user = user_doc.get('global_admin', global_admin)

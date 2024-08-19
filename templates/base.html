@@ -33,14 +33,13 @@
                 <!-- Conditional Links for Authenticated Users -->
                 {% if current_user.is_authenticated %}
                 <li><a><span>Tervetuloa, {{ current_user.username }}!</span></a></li>
-
+                
                 {% if current_user.global_admin %}
                 {% include "sidebar.html" %}
+                {% else %}
+                <li><a href="{{ url_for('logout') }}">Kirjaudu ulos</a></li>
                 {% endif %}
 
-                {% if not current_user.global_admin and not current_user.organizations %}
-                <li><a href="{{ url_for('admin.admin_login') }}">Sisäänkirjautuminen</a></li>
-                {% endif %}
                 {% else %}
                 <li><a href="{{ url_for('login') }}">Kirjaudu sisään</a></li>
                 {% endif %}

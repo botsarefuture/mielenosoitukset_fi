@@ -64,15 +64,21 @@ def edit_user(user_id):
             flash('Invalid email format.')
             return redirect(url_for('admin_user.edit_user', user_id=user_id))
 
+        orgs = []
+
+        for organization in organization_ids:
+            orgs.append({"org_id": organization, "role": "admin"})
+                
         mongo.users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
                 "username": username,
                 "email": email,
                 "role": role,
-                "organizations": [ObjectId(org_id) for org_id in organization_ids]
+                "organizations": orgs  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
             }}
         )
+        
         flash('User updated successfully.')
         return redirect(url_for('admin_user.user_control'))
 
@@ -105,13 +111,18 @@ def save_user(user_id):
         flash('Invalid email format.')
         return redirect(url_for('admin_user.edit_user', user_id=user_id))
 
+    orgs = []
+
+    for organization in organization_ids:
+        orgs.append({"org_id": organization, "role": "admin"})
+            
     mongo.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {
             "username": username,
             "email": email,
             "role": role,
-            "organizations": [ObjectId(org_id) for org_id in organization_ids]
+            "organizations": orgs  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
         }}
     )
     flash('User updated successfully.')

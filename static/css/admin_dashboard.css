@@ -1,70 +1,83 @@
 /* Container for the dashboard */
 .dashboard-container {
-    max-width: 100%; /* Use full width */
-    margin: 20px auto; /* Center the container with margin */
-    padding: 30px; /* Increase padding for more space */
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Slightly larger shadow for depth */
+    display: flex; /* Use flexbox for layout */
+    max-width: 100%; /* Full width for container */
+    height: 100vh; /* Full viewport height */
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    background-color: #f5f5f5; /* Light background color */
     box-sizing: border-box;
 }
 
+/* Sidebar styling */
+.sidebar {
+    width: 250px; /* Fixed width for sidebar */
+    background-color: #0033A0; /* Dark background for sidebar */
+    color: #ffffff; /* White text color */
+    padding: 20px; /* Padding for sidebar content */
+    display: flex;
+    flex-direction: column;
+    position: fixed; /* Fixed position */
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
+}
+
 /* Header styling */
+h2, h3 {
+    color: #0033A0; /* Consistent color for headers */
+    font-family: 'Arial', sans-serif; /* Consistent font */
+}
+
 h2 {
-    color: #0033A0;
     text-align: center;
-    margin-bottom: 30px; /* Increased margin for spacing */
+    margin-bottom: 40px; /* Increased margin for improved spacing */
+    font-size: 2em; /* Larger font size for main header */
 }
 
 h3 {
-    color: #0033A0;
-    margin-bottom: 25px; /* Increased margin for spacing */
+    margin-bottom: 30px; /* Increased margin for improved spacing */
+    font-size: 1.5em; /* Slightly larger font size for section headers */
 }
 
 /* List styling */
-.demo-list {
-    list-style-type: none;
+.demo-list, .org-list {
+    list-style: none; /* Remove default list styling */
     padding: 0;
     margin: 0;
 }
 
-.demo-item {
-    padding: 20px; /* Increased padding */
+.demo-item, .org-item {
+    padding: 20px;
     border-bottom: 1px solid #ddd;
-    margin-bottom: 20px; /* Increased space between items */
-    background-color: #f9f9f9; /* Light background for items */
-    border-radius: 8px; /* Rounded corners */
+    margin-bottom: 20px; /* Space between items */
+    background-color: #ffffff; /* Light background for items */
+    border-radius: 10px; /* Rounded corners */
 }
 
-.demo-item:last-child {
-    border-bottom: none;
+.demo-item:last-child, .org-item:last-child {
+    border-bottom: none; /* Remove bottom border for the last item */
 }
 
-.demo-header {
-    margin-bottom: 15px;
+/* Actions styling */
+.demo-actions, .org-actions {
+    margin-top: 20px;
 }
 
-.demo-details, .organizers {
-    margin-bottom: 25px; /* Increased margin for better spacing */
-}
-
-.organizer {
-    margin-bottom: 15px; /* Increased space between organizers */
-}
-
-.demo-actions {
-    margin-top: 15px;
-}
-
-.demo-actions a {
+.demo-actions a, .org-actions a {
     text-decoration: none;
-    padding: 12px 20px;
-    border-radius: 8px; /* More rounded corners */
+    padding: 15px 25px;
+    border-radius: 10px; /* More rounded corners */
     color: #ffffff;
     font-weight: bold;
-    margin-right: 15px; /* Increased space between buttons */
+    margin-right: 20px; /* Increased space between buttons */
     display: inline-block;
+    transition: background-color 0.3s, transform 0.2s; /* Smooth transitions */
+}
+
+.demo-actions a:hover, .org-actions a:hover {
+    transform: translateY(-2px); /* Slight lift effect on hover */
 }
 
 .approve-button {
@@ -72,7 +85,7 @@ h3 {
 }
 
 .approve-button:hover {
-    background-color: #218838;
+    background-color: #218838; /* Darker green on hover */
 }
 
 .reject-button {
@@ -80,22 +93,129 @@ h3 {
 }
 
 .reject-button:hover {
-    background-color: #c82333;
+    background-color: #c82333; /* Darker red on hover */
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .dashboard-container {
-        padding: 20px; /* Adjust padding on smaller screens */
+    .sidebar {
+        width: 100%; /* Full width on small screens */
+        position: static; /* Reset position on small screens */
+        height: auto; /* Reset height */
+        padding: 10px;
     }
 
-    .demo-actions {
+    .sidebar-toggle {
+        display: none; /* Hide toggle button on small screens */
+    }
+
+    .main-content {
+        margin-left: 0; /* Remove margin for sidebar */
+        width: 100%; /* Full width */
+        padding: 20px; /* Adjust padding for smaller screens */
+    }
+
+    .demo-actions, .org-actions {
         display: flex;
         flex-direction: column;
     }
 
-    .demo-actions a {
+    .demo-actions a, .org-actions a {
         margin-right: 0;
         margin-bottom: 10px; /* Space between buttons on smaller screens */
     }
+}
+
+@import url("admin_tools.css");
+
+/* Sidebar styling */
+.sidebar {
+    width: 250px; /* Fixed width for sidebar */
+    background-color: #0033A0; /* Dark background for sidebar */
+    color: #ffffff; /* White text color */
+    padding: 20px; /* Padding for sidebar content */
+    display: flex;
+    flex-direction: column;
+    position: fixed; /* Fixed position to stick to the side */
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
+    transform: translateX(0); /* Default position */
+    transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
+}
+
+/* Hide sidebar */
+.sidebar.hidden {
+    transform: translateX(-250px); /* Hide sidebar offscreen */
+}
+
+/* Sidebar toggle button */
+.sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    left: 100%; /* Position outside sidebar */
+    margin-left: -50px; /* Adjust to position the button */
+    background-color: #0033A0; /* Dark background for button */
+    color: #ffffff; /* White text color */
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth background color transition */
+}
+
+.sidebar-toggle:hover {
+    background-color: #002a6d; /* Darker blue on hover */
+}
+
+/* Main content styling */
+.main-content {
+    margin-left: 250px; /* Space for the sidebar */
+    padding: 30px; /* Padding for content */
+    width: calc(100% - 250px); /* Full width minus sidebar */
+    height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth margin and width transitions */
+}
+
+.main-content.shifted {
+    margin-left: 0; /* Remove margin for sidebar */
+    width: 100%; /* Full width */
+}
+
+/* Sidebar Title */
+.sidebar-title {
+    font-size: 1.5em; /* Larger font size for title */
+    margin-bottom: 20px; /* Space below the title */
+    color: #ffffff; /* White text color */
+    text-align: center; /* Center-align the title */
+}
+
+/* Sidebar navigation */
+.sidebar-nav {
+    flex: 1;
+}
+
+.sidebar-nav ul {
+    list-style: none; /* Remove default list styling */
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav a {
+    display: block;
+    padding: 15px;
+    color: #ffffff; /* White text color */
+    text-decoration: none;
+    font-weight: bold; /* Bold text */
+    border-radius: 8px; /* Rounded corners */
+    margin-bottom: 10px; /* Space between links */
+    transition: background-color 0.3s, color 0.3s; /* Smooth color transition */
+}
+
+.sidebar-nav a:hover {
+    background-color: #002a6d; /* Darker blue on hover */
+    color: #ffffff; /* Ensure text color remains white */
 }

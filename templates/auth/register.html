@@ -1,41 +1,29 @@
 {% extends "base.html" %}
 
-{% block title %}Register{% endblock %}
+{% block title %}Rekisteröidy{% endblock %}
 
 {% block content %}
-<h1>Register</h1>
+<h1>Rekisteröidy</h1>
 <form action="{{ url_for('register') }}" method="POST">
     <div>
-        <label for="username">Username</label>
+        <label for="username">Käyttäjätunnus</label>
         <input type="text" id="username" name="username" required>
     </div>
     
-    <!-- TODO: Add email field here -->
     <div>
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required>
+        <label for="email">Sähköposti</label>
+        <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Anna kelvollinen sähköpostiosoite">
     </div>
 
     <div>
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
+        <label for="password">Salasana</label>
+        <input type="password" id="password" name="password" required minlength="8" title="Salasanan on oltava vähintään 8 merkkiä pitkä">
     </div>
 
-    <!-- TODO: Implement validation for the email field -->
-    <!-- TODO: Ensure that the form input fields are validated client-side (e.g., using HTML5 attributes or JavaScript) -->
-    <!-- TODO: Add client-side validation to ensure email format is correct -->
-
-    <button type="submit">Register</button>
+    <button type="submit">Rekisteröidy</button>
 </form>
 
-<p>Already have an account? <a href="{{ url_for('login') }}">Login here</a>.</p>
-
-<!-- TODO: Add server-side validation for form submission to handle incorrect or missing data -->
-<!-- TODO: Ensure that the flashed messages are styled appropriately for better user feedback -->
-<!-- TODO: Add error handling and user-friendly messages for common issues (e.g., username taken, email invalid, password too weak) -->
-<!-- TODO: Implement security measures to prevent attacks (e.g., rate limiting, secure password storage) -->
-<!-- TODO: Check if the form is responsive and visually consistent with the rest of the site -->
-<!-- TODO: Ensure email field validation is handled both client-side and server-side to prevent invalid email submissions -->
+<p>Onko sinulla jo tili? <a href="{{ url_for('login') }}">Kirjaudu sisään tästä</a>.</p>
 
 {% if get_flashed_messages() %}
     <ul>

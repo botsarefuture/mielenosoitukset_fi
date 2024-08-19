@@ -138,6 +138,9 @@ def edit_demo(demo_id):
         demonstration.address = request.form.get('address')
         demonstration.event_type = request.form.get('type')
         demonstration.route = request.form.get('route')
+        demonstration.approved = request.form.get('approved', False)
+        if not demonstration.approved is None and not demonstration.approved == False:
+            demonstration.approved = True
 
         try:
             mongo.demonstrations.update_one(

@@ -10,27 +10,38 @@ admin_demo_bp = Blueprint('admin_demo', __name__, url_prefix='/admin/demo')
 # Initialize MongoDB
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
-
 @admin_demo_bp.route('/')
 @login_required
 @admin_required
 def demo_control():
     """Render the demonstration control panel with a list of demonstrations."""
     search_query = request.args.get('search', '')
+    approved_status = request.args.get('approved', '')
 
+    query = {}
+
+    # Add search filters if search query is provided
     if search_query:
-        demos_cursor = mongo.demonstrations.find({
-            "$or": [
-                {"title": {"$regex": search_query, "$options": "i"}},
-                {"city": {"$regex": search_query, "$options": "i"}},
-            ]
-        })
-    else:
-        demos_cursor = mongo.demonstrations.find()
+        query["$or"] = [
+            {"title": {"$regex": search_query, "$options": "i"}},
+            {"city": {"$regex": search_query, "$options": "i"}}
+        ]
 
+    # Add approval status filter if provided
+    if approved_status == 'true':
+        query['approved'] = True
+    elif approved_status == 'false':
+        query['approved'] = False
+
+    # Query the database with the filters
+    demos_cursor = mongo.demonstrations.find(query)
     demos = [Demonstration.from_dict(demo) for demo in demos_cursor]
 
-    return render_template('admin/demonstrations/dashboard.html', demonstrations=demos, search_query=search_query)
+    return render_template('admin/demonstrations/dashboard.html',
+                           demonstrations=demos,
+                           search_query=search_query,
+                           approved_status=approved_status)
+
 @admin_demo_bp.route('/create_demo', methods=['GET', 'POST'])
 @login_required
 @admin_required

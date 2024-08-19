@@ -39,11 +39,12 @@ def admin_login():
 
         user_doc = mongo.users.find_one({"username": username})
 
-        if user_doc and User.check_password(user_doc['password_hash'], password):  # Use hashed passwords
+        if user_doc:
             user = User.from_db(user_doc)
-            login_user(user)
-            logger.info(f"User {username} logged in successfully.")
-            return redirect(url_for('admin.admin_dashboard'))
+            if user.check_password(password):
+                login_user(user)
+                logger.info(f"User {username} logged in successfully.")
+                return redirect(url_for('admin.admin_dashboard'))
 
         logger.warning(f"Failed login attempt for username: {username}")
         flash('Invalid credentials')  # Log invalid credentials attempt for security audit

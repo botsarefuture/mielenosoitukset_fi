@@ -1,42 +1,25 @@
-{% extends "base.html" %}
-
-{% block title %}Login{% endblock %}
+{% extends 'base.html' %}
 
 {% block content %}
-<h1>Login</h1>
-<form action="{{ url_for('login') }}" method="POST">
-    <div>
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required>
-    </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<div class="login-container">
+    <h2>Kirjaudu sisään</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="username">Käyttäjänimi</label>
+            <input type="text" id="username" name="username" required>
+        </div>
 
-    <!-- TODO: Lisää sähköpostikenttä tarvittaessa -->
-    <!-- TODO: Ensure that the username field is validated client-side for proper format -->
+        <div class="form-group">
+            <label for="password">Salasana</label>
+            <input type="password" id="password" name="password" required>
+        </div>
 
-    <div>
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
-    </div>
+        <button type="submit" class="login-button">Kirjaudu sisään</button>
+    </form>
+</div>
 
-    <!-- TODO: Add client-side validation for password strength or format if needed -->
+<!-- TODO: Translate content to Finnish -->
+<!-- TODO: Add Finnish translations for 'Admin Login', 'Username', 'Password', and 'Login' -->
 
-    <button type="submit">Login</button>
-</form>
-
-<p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a>.</p>
-
-<!-- TODO: Translate this page into Finnish -->
-<!-- TODO: Add server-side validation for form submission to handle incorrect or missing data -->
-<!-- TODO: Ensure that the flashed messages are styled appropriately for better user feedback -->
-<!-- TODO: Add error handling and user-friendly messages for common issues (e.g., incorrect username or password) -->
-<!-- TODO: Implement security measures to prevent attacks (e.g., rate limiting, secure password handling) -->
-<!-- TODO: Check if the form is responsive and visually consistent with the rest of the site -->
-
-{% if get_flashed_messages() %}
-    <ul>
-        {% for message in get_flashed_messages() %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
 {% endblock %}

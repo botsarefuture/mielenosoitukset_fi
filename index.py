@@ -50,6 +50,7 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        email = request.form.get('email')
 
         # Validation for username and password
         if not username or not password or len(username) < 3 or len(password) < 6:
@@ -61,7 +62,7 @@ def register():
             flash('Username already exists.')
             return redirect(url_for('register'))
 
-        user_data = User.create_user(username, password)
+        user_data = User.create_user(username, password, email)
         mongo.users.insert_one(user_data)
 
         flash('User registered successfully!')
@@ -94,6 +95,13 @@ def login():
         flash('Invalid username or password.')
 
     return render_template('auth/login.html')
+
+# Admin logout route
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 @app.route('/')
 def index():

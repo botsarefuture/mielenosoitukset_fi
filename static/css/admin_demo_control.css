@@ -1,0 +1,121 @@
+/* Container for the entire demonstration table */
+.demo-table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+/* Table header styling */
+.demo-table-header {
+    display: table-row;
+    font-weight: bold;
+    background-color: #f4f4f4;
+    text-align: left;
+}
+
+.table-cell {
+    display: table-cell;
+    padding: 10px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+/* Align the action cell header to center */
+.actions-cell-header {
+    text-align: center;
+}
+
+/* Table row styling */
+.demo-table-row {
+    display: table-row;
+}
+
+.demo-table-row:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Specific styling for the actions cell */
+.actions-cell {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Styling for action buttons */
+.button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edit-button {
+    background-color: #007bff;
+}
+
+.delete-button {
+    background-color: #dc3545;
+}
+
+/* Additional styling for the "Create New Demonstration" button */
+.create-demo-button {
+    background-color: #28a745;
+    font-size: 16px;
+    padding: 10px 20px;
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #fff;
+    text-align: center;
+}
+
+.create-demo-button:hover {
+    background-color: #218838;
+}
+
+/* Styling for search bar */
+.search-form {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+.search-input {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px;
+    width: 250px;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+}
+
+.search-button {
+    padding: 8px 16px;
+    background-color: #28a745;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.search-button:hover {
+    background-color: #218838;
+}
+
+/* No demonstrations message styling */
+.no-demos .table-cell {
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 20px;
+    border: 1px solid #ddd;
+}

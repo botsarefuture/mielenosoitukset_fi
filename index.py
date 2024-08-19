@@ -4,6 +4,10 @@ from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from models import User  # Import User model
+import jwt  # For generating tokens
+import datetime
+from emailer.EmailSender import EmailSender
+email_sender = EmailSender()
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -112,6 +116,76 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+# Generate a password reset token
+def generate_reset_token(email):
+    return jwt.encode({
+        'email': email,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)  # Token expires in 1 hour
+    }, app.config['SECRET_KEY'], algorithm='HS256')
+
+# Verify the password reset token
+def verify_reset_token(token):
+    try:
+        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        return data['email']
+    except Exception as e:
+        return None
+
+@app.route('/password_reset_request', methods=['GET', 'POST'])
+def password_reset_request():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = mongo.users.find_one({"email": email})
+
+        if user:
+            token = generate_reset_token(email)
+            reset_url = url_for('password_reset', token=token, _external=True)
+
+            # Send the password reset email
+            email_sender.queue_email(
+                template_name='password_reset_email.html',
+                subject='Password Reset Request',
+                recipients=[email],
+                context={
+                    'reset_url': reset_url,
+                    'user_name': user.get('username')
+                }
+            )
+            
+            flash('A password reset link has been sent to your email address.')
+            return redirect(url_for('login'))
+
+        flash('No account found with that email address.')
+        return redirect(url_for('password_reset_request'))
+
+    return render_template('auth/password_reset_request.html')
+@app.route('/password_reset/<token>', methods=['GET', 'POST'])
+def password_reset(token):
+    email = verify_reset_token(token)
+    if not email:
+        flash('The password reset link is invalid or has expired.')
+        return redirect(url_for('password_reset_request'))
+
+    if request.method == 'POST':
+        password = request.form.get('password')
+        
+        # Retrieve the user from the database
+        user_doc = mongo.users.find_one({"email": email})
+        if not user_doc:
+            flash('User not found.')
+            return redirect(url_for('password_reset_request'))
+
+        # Create a User instance
+        user = User.from_db(user_doc)
+        
+        # Change the user's password
+        user.change_password(mongo, password)
+        
+        flash('Your password has been updated successfully.')
+        return redirect(url_for('login'))
+
+    return render_template('auth/password_reset.html', token=token)
 
 @app.route('/')
 def index():

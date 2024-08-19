@@ -42,6 +42,9 @@ app.register_blueprint(organization_bp)
 from admin_user_bp import admin_user_bp
 app.register_blueprint(admin_user_bp)
 
+from admin_org_bp import admin_org_bp
+app.register_blueprint(admin_org_bp)
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """

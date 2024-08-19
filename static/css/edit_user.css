@@ -1,55 +1,82 @@
 /* edit_user.css */
-
 .edit-user-panel {
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: 1000px; /* Set a fixed maximum width */
+    margin: 20px auto;
+    padding: 20px; /* Reduced padding inside the container */
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.edit-user-panel h2 {
+    margin-bottom: 20px; /* Reduced margin below the heading */
+    font-size: 28px; /* Slightly smaller heading size */
+}
+
+.form-group {
+    margin-bottom: 20px; /* Reduced space between form groups */
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px; /* Reduced margin below the label */
+}
+
+.form-group input, .form-group select {
+    width: 100%; /* Full width */
+    padding: 10px; /* Reduced padding inside input and select fields */
     border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+    border-radius: 4px; /* Slightly smaller border radius */
+    box-sizing: border-box; /* Ensure padding is included in the width */
+    font-size: 14px; /* Smaller font size for better fit */
 }
 
-h2 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-}
-
-label {
-    margin-bottom: 10px;
-    font-size: 1.1rem;
-}
-
-input[type="checkbox"] {
-    margin-right: 10px;
-}
-
-.submit-button {
-    background-color: #4CAF50; /* Green */
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
-.submit-button:hover {
-    background-color: #45a049; /* Darker green */
+.search-input {
+    width: calc(100% - 22px); /* Adjust width to fit the container */
+    padding: 10px; /* Reduced padding inside the search input */
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px; /* Reduced space below the search input */
+    box-sizing: border-box;
+    font-size: 14px; /* Smaller font size */
 }
 
 .organization-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-wrap: wrap; /* Wrap items to prevent overflow */
+    gap: 10px; /* Reduced gap between items */
+    margin-top: 10px; /* Reduced space above the list */
 }
 
-.organization {
+.organization-item {
+    flex: 1 1 calc(33% - 10px); /* Flex basis to ensure items fit without overflow */
     display: flex;
     align-items: center;
+    padding: 10px; /* Reduced padding inside each list item */
+    border: 1px solid #ddd;
+    border-radius: 4px; /* Smaller border radius */
+    margin-bottom: 10px; /* Reduced margin between list items */
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.3s ease;
+}
+
+.organization-item:hover {
+    background-color: #f0f0f0;
+}
+
+.submit-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px; /* Reduced padding inside the button */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px; /* Slightly larger font size for better visibility */
+    transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
 }

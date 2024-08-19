@@ -5,27 +5,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
 
 <div class="dashboard-container">
-    <div class="sidebar">
-        <button class="sidebar-toggle" aria-label="Toggle Sidebar">&#9776;</button>
-        <br>
-        <h2 class="sidebar-title">Järjestelmänvalvojien työkalupakki</h2> <!-- Sidebar Title -->
-        <nav class="sidebar-nav">
-            <ul>
-                <li><a href="{{ url_for('admin.admin_dashboard') }}">Hallintapaneeli</a></li>
-                <li><a href="{{ url_for('admin_user.user_control') }}">Käyttäjien hallinta</a></li>
-                <li><a href="{{ url_for('admin.admin_logout') }}">Kirjaudu ulos</a></li>
-                <!-- Add more links as needed -->
-            </ul>
-        </nav>
-    </div>
-
     <div class="main-content">
         {% block main_content %}
         <!-- Default content if no block is defined -->
         {% endblock %}
     </div>
 </div>
-
-<script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
 
 {% endblock %}

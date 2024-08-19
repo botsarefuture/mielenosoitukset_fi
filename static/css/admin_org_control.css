@@ -1,5 +1,5 @@
-/* Container for the entire user table */
-.user-table {
+/* Container for the entire organization table */
+.organization-table {
     display: table;
     width: 100%;
     border-collapse: collapse;
@@ -7,7 +7,7 @@
 }
 
 /* Table header styling */
-.user-table-header {
+.organization-table-header {
     display: table-row;
     font-weight: bold;
     background-color: #f4f4f4;
@@ -27,11 +27,11 @@
 }
 
 /* Table row styling */
-.user-table-row {
+.organization-table-row {
     display: table-row;
 }
 
-.user-table-row:nth-child(even) {
+.organization-table-row:nth-child(even) {
     background-color: #f9f9f9;
 }
 
@@ -66,42 +66,24 @@
     display: inline;
 }
 
-/* Styling for search bar */
-.search-form {
-    display: flex;
-    justify-content: flex-start;
+/* Styling for create organization button */
+.create-organization-button {
+    padding: 10px 20px;
+    background-color: #28a745;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
     margin-bottom: 20px;
 }
 
-.search-input {
-    padding: 8px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px 0 0 4px;
-    width: 250px;
-    outline: none;
-}
-
-.search-input:focus {
-    border-color: #007bff;
-}
-
-.search-button {
-    padding: 8px 16px;
-    background-color: #28a745;
-    border: none;
-    border-radius: 0 4px 4px 0;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.search-button:hover {
+.create-organization-button:hover {
     background-color: #218838;
 }
 
-/* No users message styling */
-.no-users .table-cell {
+/* No organizations message styling */
+.no-organizations .table-cell {
     text-align: center;
     font-style: italic;
     color: #666;

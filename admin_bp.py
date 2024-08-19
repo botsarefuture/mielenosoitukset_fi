@@ -67,7 +67,7 @@ def admin_logout():
 def admin_dashboard():
     pending_demos = mongo.demonstrations.find({"approved": False})
     pending_orgs = mongo.organizations.find({"verified": False})  # Fetch pending organizations
-    return render_template('admin_dashboard.html', pending_demos=pending_demos, pending_orgs=pending_orgs)
+    return render_template('admin/dashboard.html', pending_demos=pending_demos, pending_orgs=pending_orgs)
 
 # DEMONSTRATIONAL ADMINISM
 

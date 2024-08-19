@@ -81,8 +81,12 @@ def edit_user(user_id):
         
         flash('User updated successfully.')
         return redirect(url_for('admin_user.user_control'))
-
-    return render_template('edit_user.html', user=user, organizations=organizations)
+    
+    org_ids = [org["org_id"] for org in user["organizations"]]
+    
+    user["org_ids"] = org_ids
+        
+    return render_template('edit_user.html', user=user, organizations=organizations, org_ids=org_ids)
 
 # Save user details (if needed separately)
 @admin_user_bp.route('/save_user/<user_id>', methods=['POST'])

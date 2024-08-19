@@ -31,23 +31,10 @@ html, body {
 
 }
 
-/* Sidebar styling */
-.sidebar {
-    width: 300px; /* Fixed width for sidebar */
 
-    background-color: #ffffff; /* Light gray background */
-    /* border: 1px solid #ddd; /* Light gray border */
-    /* border-radius: 8px; /* Rounded corners */
-    padding: 15px;
-    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    margin-left: 20px; /* Space between sidebar and main content */
-    flex-shrink: 0; /* Prevent shrinking */
-    overflow: auto; /* Add scroll if content exceeds */
-    float: left;
-}
 
 /* Header styles */
-h2, .sidebar h3 {
+h2 {
     color: #0033A0; /* Main Blue */
     margin-bottom: 20px;
     border-bottom: 2px solid #0033A0; /* Underline effect */
@@ -133,12 +120,6 @@ a:hover {
         padding: 0 10px; /* Reduce horizontal padding on tablets */
     }
 
-    .sidebar {
-        width: 100%; /* Full width on small screens */
-        margin-left: 0; /* Remove left margin */
-        margin-bottom: 20px; /* Space below sidebar */
-    }
-
     .detail-container {
         margin-left: 0; /* Remove left margin on small screens */
     }
@@ -149,10 +130,6 @@ a:hover {
         padding: 0 10px; /* Reduce padding on smaller screens */
     }
 
-    .sidebar {
-        width: 100%; /* Full width on mobile devices */
-        margin-bottom: 20px; /* Space below sidebar */
-    }
 
     .detail-container {
         padding: 15px; /* Reduce padding on mobile */
@@ -160,7 +137,7 @@ a:hover {
 }
 
 @media (max-width: 480px) {
-    h2, .sidebar h3 {
+    h2 {
         font-size: 1.5em; /* Slightly smaller headers on very small screens */
     }
 

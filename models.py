@@ -3,13 +3,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 
 class User(UserMixin):
-    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False, email=None):
+    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False, email=None, org_ids=None):
         self.id = str(user_id)
         self.username = username
         self.email = email
         self.password_hash = password_hash
         self.organizations = organizations or []  # List of organization IDs the user belongs to
         self.global_admin = global_admin
+        self.org_ids = org_ids or []
 
     @staticmethod
     def from_db(user_doc):
@@ -23,13 +24,16 @@ class User(UserMixin):
         
         global_admin_user = user_doc.get('global_admin', global_admin)
         
+        org_ids = [organization["org_id"] for organization in user_doc.get("organizations", [])]
+        
         return User(
             user_id=user_doc['_id'],
             username=user_doc['username'],
             email=user_doc.get("email", None),
             password_hash=user_doc['password_hash'],
             organizations=user_doc.get('organizations', []),
-            global_admin=global_admin_user
+            global_admin=global_admin_user,
+            org_ids=org_ids
         )
 
     def check_password(self, password):

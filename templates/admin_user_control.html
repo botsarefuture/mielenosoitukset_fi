@@ -1,4 +1,3 @@
-<!-- templates/admin_user_control.html -->
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
@@ -9,36 +8,41 @@
 <!-- Search/Filter Users -->
 <div class="user-filter">
     <form method="GET" action="{{ url_for('admin_user.user_control') }}" class="search-form">
-        <input type="text" name="search" placeholder="Search users by username or email" value="{{ search_query }}">
-        <button type="submit" class="button search-button">Search</button>
+        <input type="text" name="search" placeholder="Search users by username or email" value="{{ search_query }}" class="search-input">
+        <button type="submit" class="button search-button">Hae</button>
     </form>
 </div>
 
-<!-- List of Users -->
-<ul class="user-list">
+<!-- List of Users in a Table-Like Layout -->
+<div class="user-table">
+    <div class="user-table-header">
+        <div class="table-cell">Käyttäjänimi</div>
+        <div class="table-cell">Sähköposti</div>
+        <div class="table-cell">Rooli</div>
+        <div class="table-cell">Admin</div>
+        <div class="table-cell">Global Admin</div>
+        <div class="table-cell actions-cell-header">Toiminnot</div>
+    </div>
     {% for user in users %}
-    <li class="user-item">
-        <div class="user-info">
-            <p><strong>Käyttäjänimi:</strong> {{ user['username'] }}</p>
-            <p><strong>Sähköposti:</strong> {{ user['email'] }}</p>
-            <p><strong>Rooli:</strong> {{ user['role'] }}</p>
-            <p><strong>Admin:</strong> {{ user['is_admin'] }}</p>
-            <p><strong>Global Admin:</strong> {{ user['global_admin'] }}</p>
-        </div>
-        <div class="user-actions">
-            <!-- Edit User Link -->
+    <div class="user-table-row">
+        <div class="table-cell">{{ user['username'] }}</div>
+        <div class="table-cell">{{ user['email'] }}</div>
+        <div class="table-cell">{{ user['role'] }}</div>
+        <div class="table-cell">{{ user['is_admin'] }}</div>
+        <div class="table-cell">{{ user['global_admin'] }}</div>
+        <div class="table-cell actions-cell">
             <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
-            <!-- Delete User Link with confirmation dialog -->
-            <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}" onsubmit="return confirm('Are you sure you want to delete this user?');" class="delete-form">
+            <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}" onsubmit="return confirm('Oletko varma, että haluat poistaa tämän käyttäjän?');" class="delete-form">
                 <button type="submit" class="button delete-button">Poista</button>
             </form>
         </div>
-    </li>
+    </div>
     {% else %}
-    <!-- No Users Message -->
-    <li class="no-users">Ei käyttäjiä</li>
+    <div class="user-table-row no-users">
+        <div class="table-cell" colspan="6">Ei käyttäjiä</div>
+    </div>
     {% endfor %}
-</ul>
+</div>
 
 <!-- Pagination Controls -->
 <div class="pagination">

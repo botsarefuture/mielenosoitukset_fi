@@ -5,6 +5,9 @@ from database_manager import DatabaseManager
 from administration import admin_required
 from models import User  # Import User model
 
+from emailer.EmailSender import EmailSender
+email_sender = EmailSender()
+
 admin_user_bp = Blueprint('admin_user', __name__, url_prefix='/admin/user')
 
 # Initialize MongoDB
@@ -87,13 +90,11 @@ def edit_user(user_id):
     user["org_ids"] = org_ids
         
     return render_template('edit_user.html', user=user, organizations=organizations, org_ids=org_ids)
-
-# Save user details (if needed separately)
 @admin_user_bp.route('/save_user/<user_id>', methods=['POST'])
 @login_required
 @admin_required
 def save_user(user_id):
-    """Save updated user details."""
+    """Save updated user details and send email notification."""
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
         flash('User not found.')
@@ -115,20 +116,34 @@ def save_user(user_id):
         flash('Invalid email format.')
         return redirect(url_for('admin_user.edit_user', user_id=user_id))
 
-    orgs = []
+    # Retrieve organization names based on IDs
+    organizations = mongo.organizations.find({"_id": {"$in": [ObjectId(org_id) for org_id in organization_ids]}})
+    org_names = [org['name'] for org in organizations]
 
-    for organization in organization_ids:
-        orgs.append({"org_id": organization, "role": "admin"})
-            
+    # Update user details
     mongo.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {
             "username": username,
             "email": email,
             "role": role,
-            "organizations": orgs  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
+            "organizations": [{"org_id": org_id, "role": "admin"} for org_id in organization_ids]  # Update user organizations
         }}
     )
+
+    # Send email notification
+    email_sender.queue_email(
+        template_name='user_update_notification.html',
+        subject='Your Account Details Have Been Updated',
+        recipients=[email],
+        context={
+            'user_name': username,
+            'role': role,
+            'organization_names': ', '.join(org_names),  # Use organization names
+            'action': 'updated'  # or 'added'/'revoked' based on your logic
+        }
+    )
+
     flash('User updated successfully.')
     return redirect(url_for('admin_user.user_control'))
 

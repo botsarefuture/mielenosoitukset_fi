@@ -1,8 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from classes import Organizer, Demonstration
+from emailer.EmailSender import EmailSender
+from emailer.EmailJob import EmailJob
+
+
 
 # Create a Blueprint for organization-related routes
 organization_bp = Blueprint('organization', __name__)
@@ -10,6 +14,9 @@ organization_bp = Blueprint('organization', __name__)
 # Initialize the database manager and get the database connection
 db_manager = DatabaseManager()
 db = db_manager.get_db()
+
+# Initialize the EmailSender
+email_sender = EmailSender()
 
 @organization_bp.route('/organizations')
 @login_required
@@ -35,34 +42,43 @@ def organization_detail(org_id):
 @organization_bp.route('/organization/create', methods=['GET', 'POST'])
 @login_required
 def create_organization():
-    # Ensure that the user is authenticated
-    # TODO: Check if there are any additional permission checks needed here.
     if not current_user.is_authenticated:
         flash('You do not have permission to create organizations.')
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        # Extract organization details from the form
         name = request.form.get('name')
         description = request.form.get('description')
         email = request.form.get('email')
         website = request.form.get('website')
 
-        # TODO: Add form validation to ensure required fields are filled out.
         result = db['organizations'].insert_one({
             "name": name,
             "description": description,
             "email": email,
             "website": website,
-            "members": [{"user_id": current_user.id, "role": "admin"}]  # Default the creator as an admin
+            "members": [{"user_id": current_user.id, "role": "admin"}]
         })
 
-        # Add the new organization to the user's list of organizations with admin role
-        # TODO: Refactor `current_user.add_organization` method if it requires additional functionality.
         current_user.add_organization(db, result.inserted_id, "admin")
         db['users'].update_one({"_id": ObjectId(current_user.id)}, {"$push": {"organizations": {"org_id": result.inserted_id, "role": "admin"}}})
 
         flash('Organization created successfully!')
+
+        # Send email notification
+        email_sender.queue_email(
+            template_name='organization_access_notification.html',
+            subject='New Organization Access',
+            recipients=[current_user.email],  # Assumes current_user has an email attribute
+            context={
+                'user_name': current_user.username,  # Assumes current_user has a username attribute
+                'organization_name': name,
+                'organization_description': description,
+                'organization_email': email,
+                'organization_website': website
+            }
+        )
+
         return redirect(url_for('organization.list_organizations'))
 
     return render_template('organization/create_organization.html')

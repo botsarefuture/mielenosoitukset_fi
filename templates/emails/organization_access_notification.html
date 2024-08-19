@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Organization Access</title>
+</head>
+<body>
+    <p>Hello {{ user_name }},</p>
+
+    <p>Congratulations! You have been granted access to the organization <strong>{{ organization_name }}</strong>.</p>
+
+    <p>Here are the details of the organization:</p>
+    <ul>
+        <li><strong>Description:</strong> {{ organization_description }}</li>
+        <li><strong>Email:</strong> {{ organization_email }}</li>
+        <li><strong>Website:</strong> <a href="{{ organization_website }}">{{ organization_website }}</a></li>
+    </ul>
+
+    <p>Log in to your account to view more details and manage your memberships.</p>
+
+    <p>Best regards,<br>Your Organization Team</p>
+</body>
+</html>

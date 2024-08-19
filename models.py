@@ -3,9 +3,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 
 class User(UserMixin):
-    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False):
+    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False, email=None):
         self.id = str(user_id)
         self.username = username
+        self.email = email
         self.password_hash = password_hash
         self.organizations = organizations or []  # List of organization IDs the user belongs to
         self.global_admin = global_admin
@@ -15,12 +16,20 @@ class User(UserMixin):
         """
         Create a User instance from a database document.
         """
+        
+        global_admin = False
+        if user_doc['role'] == 'global_admin':
+            global_admin = True
+        
+        global_admin_user = user_doc.get('global_admin', global_admin)
+        
         return User(
             user_id=user_doc['_id'],
             username=user_doc['username'],
+            email=user_doc.get("email", None),
             password_hash=user_doc['password_hash'],
             organizations=user_doc.get('organizations', []),
-            global_admin=user_doc.get('global_admin', False)
+            global_admin=global_admin_user
         )
 
     def check_password(self, password):
@@ -30,7 +39,7 @@ class User(UserMixin):
         return check_password_hash(self.password_hash, password)
 
     @staticmethod
-    def create_user(username, password):
+    def create_user(username, password, email):
         """
         Create a new user dictionary with a hashed password.
         """
@@ -38,6 +47,7 @@ class User(UserMixin):
         return {
             'username': username,
             'password_hash': password_hash,
+            'email': email,
             'organizations': [],
             'global_admin': False
         }
@@ -69,4 +79,4 @@ class User(UserMixin):
         """
         Check if the user is a member of a specific organization.
         """
-        return any(org['org_id'] == organization_id for org in self.organizations)
+        return any(org['org_id'] == str(organization_id) for org in self.organizations)

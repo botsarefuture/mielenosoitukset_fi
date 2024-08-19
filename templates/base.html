@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="fi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/kTc6n5bLvNHrHDbOUjAUnyM4Q2O5U4V2Q5rHkLXbqE4sFJtc5FTCFBo5d2TwLnmH0qtr2k9as3D9w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrZj/kTc6n5bLvNHrHDbOUjAUnyM4Q2O5U4V2Q5rHkLXbqE4sFJtc5FTCFBo5d2TwLnmH0qtr2k9as3D9w=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
 
     <!-- Navigation Bar -->
@@ -14,24 +18,31 @@
         <div class="container">
             <!-- Logo and Home Link -->
             <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
-            
+
             <!-- Toggle Button for Mobile Navigation -->
             <button class="navbar-toggle" aria-label="Toggle navigation">
                 <i class="fas fa-bars">☰</i>
             </button>
-            
+
             <!-- Navigation Links -->
             <ul class="nav-links">
                 <li><a href="{{ url_for('index') }}">Etusivu</a></li>
                 <li><a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a></li>
                 <li><a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a></li>
-                
-                <!-- Conditional Links for Admin -->
-                {% if session.get('admin') %}
-                    <li><a href="{{ url_for('admin.admin_dashboard') }}">Hallintapaneeli</a></li>
-                    <li><a href="{{ url_for('admin.admin_logout') }}">Kirjaudu ulos</a></li>
+
+                <!-- Conditional Links for Authenticated Users -->
+                {% if current_user.is_authenticated %}
+                <li><a><span>Tervetuloa, {{ current_user.username }}!</span></a></li>
+
+                {% if current_user.global_admin %}
+                {% include "sidebar.html" %}
+                {% endif %}
+
+                {% if not current_user.global_admin and not current_user.organizations %}
+                <li><a href="{{ url_for('admin.admin_login') }}">Sisäänkirjautuminen</a></li>
+                {% endif %}
                 {% else %}
-                    <li><a href="{{ url_for('admin.admin_login') }}">Järjestelmävalvojan sisäänkirjautuminen</a></li>
+                <li><a href="{{ url_for('login') }}">Kirjaudu sisään</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -55,7 +66,7 @@
     <!-- JavaScript for Navigation Menu Toggle -->
     <script>
         // JavaScript to toggle the navigation menu on small screens
-        document.querySelector('.navbar-toggle').addEventListener('click', function() {
+        document.querySelector('.navbar-toggle').addEventListener('click', function () {
             document.querySelector('.nav-links').classList.toggle('active');
         });
 
@@ -65,4 +76,5 @@
     </script>
 
 </body>
+
 </html>

@@ -8,7 +8,7 @@
     <form method="POST" action="{{ url_for('admin_org.delete_organization', org_id=organization._id) }}">
         <input type="hidden" name="confirm_delete" value="true">
         <button type="submit" class="btn btn-danger">Yes, Delete</button>
-        <a href="{{ url_for('admin_org.list_organizations') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 {% endblock %}

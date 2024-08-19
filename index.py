@@ -45,6 +45,10 @@ app.register_blueprint(admin_user_bp)
 from admin_org_bp import admin_org_bp
 app.register_blueprint(admin_org_bp)
 
+from admin_demo_bp import admin_demo_bp
+app.register_blueprint(admin_demo_bp)
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """

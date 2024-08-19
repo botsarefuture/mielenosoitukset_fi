@@ -44,6 +44,10 @@ def edit_organization(org_id):
         description = request.form.get('description')
         email = request.form.get('email')
         website = request.form.get('website')
+        verified = request.form.get('verified', False)
+        
+        if verified:
+            verified = True
 
         if not name or not email:
             flash('Name and email are required.')
@@ -59,7 +63,8 @@ def edit_organization(org_id):
                 "name": name,
                 "description": description,
                 "email": email,
-                "website": website
+                "website": website,
+                'verified': verified
             }}
         )
 

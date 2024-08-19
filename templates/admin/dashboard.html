@@ -2,85 +2,66 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<h2>Tarkastuspaneeli</h2>
+<h2>Hallintatyökalut</h2>
 
-<!-- Pending Demonstrations -->
-<h3>Tarkastusta odottavat mielenosoitukset</h3>
-<ul class="demo-list">
-    {% for demo in pending_demos %}
-    <li class="demo-item">
-        <div class="demo-header">
-            <h4>{{ demo['title'] }}</h4>
-        </div>
-        <div class="demo-details">
-            <p><strong>Päivämäärä:</strong> {{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}</p>
-            <p><strong>Aihe:</strong> {{ demo['topic'] }}</p>
-            <p><strong>Sijainti:</strong> {{ demo['city'] }}, {{ demo['address'] }}</p>
-            <p><strong>Facebook:</strong> 
-                {% if demo['facebook'] %}
-                    <a href="{{ demo['facebook'] }}" target="_blank">{{ demo['facebook'] }}</a>
-                {% else %}
-                    Ei linkkiä
-                {% endif %}
-            </p>
-        </div>
-        <div class="organizers">
-            <strong>Järjestäjä(t):</strong>
-            {% if demo['organizers'] %}
-                <div class="organizers-list">
-                    {% for organizer in demo['organizers'] %}
-                    <div class="organizer">
-                        <p><strong>Nimi:</strong> {{ organizer['name'] }}</p>
-                        <p><strong>Nettisivu:</strong> 
-                            {% if organizer['website'] %}
-                                <a href="{{ organizer['website'] }}" target="_blank">{{ organizer['website'] }}</a>
-                            {% else %}
-                                Ei nettisivua
-                            {% endif %}
-                        </p>
-                        <p><strong>Sähköposti:</strong> {{ organizer['email'] }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>Ei ilmoitettuja järjestäjiä.</p>
-            {% endif %}
-        </div>
-        <div class="demo-actions">
-            <a href="{{ url_for('admin.approve_demo', demo_id=demo['_id']) }}" class="button approve-button">Hyväksy</a>
-            <a href="{{ url_for('admin.reject_demo', demo_id=demo['_id']) }}" class="button reject-button">Hylkää</a>
-        </div>
-    </li>
-    {% else %}
-    <li>Ei tarkastettavia mielenosoituksia.</li>
-    {% endfor %}
-</ul>
+<style>
+    .button-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 20px;
+    }
 
-<!-- Pending Organizations -->
-<h3>Tarkastusta odottavat organisaatiot</h3>
-<ul class="org-list">
-    {% for org in pending_orgs %}
-    <li class="org-item">
-        <div class="org-header">
-            <h4>{{ org['name'] }}</h4>
-        </div>
-        <div class="org-details">
-            <p><strong>Sähköposti:</strong> {{ org['email'] }}</p>
-            <p><strong>Nettisivu:</strong> 
-                {% if org['website'] %}
-                    <a href="{{ org['website'] }}" target="_blank">{{ org['website'] }}</a>
-                {% else %}
-                    Ei nettisivua
-                {% endif %}
-            </p>
-        </div>
-        <div class="org-actions">
-            <a href="{{ url_for('admin.approve_org', org_id=org['_id']) }}" class="button approve-button">Hyväksy</a>
-            <a href="{{ url_for('admin.reject_org', org_id=org['_id']) }}" class="button reject-button">Hylkää</a>
-        </div>
-    </li>
-    {% else %}
-    <li>Ei tarkistettavia organisaatioita.</li>
-    {% endfor %}
-</ul>
+    .admin-button {
+        background-color: #007bff;
+        color: white;
+        padding: 15px 25px;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    .admin-button:hover {
+        background-color: #0056b3;
+    }
+
+    .emergency-button {
+        background-color: #ff0000;
+    }
+
+    .emergency-button:hover {
+        background-color: #cc0000;
+    }
+
+    .info-section {
+        margin-top: 30px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+
+    .info-section h3 {
+        margin-top: 0;
+    }
+
+    .info-section p {
+        margin: 5px 0;
+    }
+</style>
+
+<div class="button-container">
+    <!-- Button for managing demonstrations -->
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="admin-button">Manage Demonstrations</a>
+
+    <!-- Button for managing organizations -->
+    <a href="{{ url_for('admin_org.organization_control') }}" class="admin-button">Manage Organizations</a>
+
+    <!-- Button for user management -->
+    <a href="{{ url_for('admin_user.user_control') }}" class="admin-button">Manage Users</a>
+</div>
+
 {% endblock %}

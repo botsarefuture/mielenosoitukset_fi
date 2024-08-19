@@ -4,24 +4,33 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">
 
 <div class="container mt-4">
-    <h2>Demonstration Control Panel</h2>
+    <h2>Mielenosoitukset</h2>
 
     <div class="mb-3">
-        <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button">Create New Demonstration</a>
+        <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button">Uusi mielenosoitus</a>
     </div>
 
     <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
-        <input type="text" name="search" class="search-input" placeholder="Search demonstrations..." value="{{ search_query }}">
-        <button type="submit" class="search-button">Search</button>
+        <input type="text" name="search" class="search-input" placeholder="Hae mielenosoituksia..." value="{{ search_query }}">
+
+        <!-- Dropdown to filter by approval status -->
+        <select name="approved" class="filter-select">
+            <option value="" {% if approved_status == "" %}selected{% endif %}>Kaikki</option>
+            <option value="true" {% if approved_status == "true" %}selected{% endif %}>Hyväksytty</option>
+            <option value="false" {% if approved_status == "false" %}selected{% endif %}>Odottaa</option>
+        </select>
+
+        <button type="submit" class="search-button">Hae</button>
     </form>
 
     {% if demonstrations %}
     <div class="demo-table">
         <div class="demo-table-header">
-            <div class="table-cell">Title</div>
-            <div class="table-cell">City</div>
-            <div class="table-cell">Date</div>
-            <div class="table-cell actions-cell-header">Actions</div>
+            <div class="table-cell">Otsikko</div>
+            <div class="table-cell">Kaupunki</div>
+            <div class="table-cell">Päivämäärä</div>
+            <div class="table-cell">Hyväksytty</div>
+            <div class="table-cell actions-cell-header">Toiminnot</div>
         </div>
 
         {% for demo in demonstrations %}
@@ -29,16 +38,17 @@
             <div class="table-cell">{{ demo.title }}</div>
             <div class="table-cell">{{ demo.city }}</div>
             <div class="table-cell">{{ demo.date }}</div>
+            <div class="table-cell">{{ 'Kyllä' if demo.approved else 'Ei' }}</div>
             <div class="table-cell actions-cell">
-                <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">Edit</a>
-                <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}" class="button delete-button">Delete</a>
+                <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">Muokkaa</a>
+                <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}" class="button delete-button">Poista</a>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
     <div class="no-demos">
-        <div class="table-cell">No demonstrations found.</div>
+        <div class="table-cell">Mielenosoituksia ei löytynyt.</div>
     </div>
     {% endif %}
 </div>

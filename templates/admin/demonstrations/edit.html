@@ -4,69 +4,75 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_form.css') }}">
 
 <div class="container mt-4">
-    <h2>Edit Demonstration</h2>
+    <h2>Muokkaa mielenosoitusta</h2>
     <form method="POST" action="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
         <div class="form-group">
-            <label for="title">Title</label>
+            <label for="title">Otsikko</label>
             <input type="text" id="title" name="title" class="form-control" value="{{ demo.title }}" required>
         </div>
         <div class="form-group">
-            <label for="date">Date</label>
-            <input type="date" id="date" name="date" class="form-control" value="{{ demo.date }}" required>
+            <label for="date">Päivämäärä (pp.kk.vvvv)</label>
+            <input type="text" id="date" name="date" class="form-control" value="{{ demo.date }}" required>
         </div>
         <div class="form-group">
-            <label for="start_time">Start Time</label>
+            <label for="start_time">Alkuaika</label>
             <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time }}" required>
         </div>
         <div class="form-group">
-            <label for="end_time">End Time</label>
+            <label for="end_time">Päättymisaika</label>
             <input type="time" id="end_time" name="end_time" class="form-control" value="{{ demo.end_time }}" required>
         </div>
         <div class="form-group">
-            <label for="topic">Topic</label>
+            <label for="topic">Aihe</label>
             <input type="text" id="topic" name="topic" class="form-control" value="{{ demo.topic }}" required>
         </div>
         <div class="form-group">
-            <label for="facebook">Facebook Link</label>
+            <label for="facebook">Facebook linkki</label>
             <input type="url" id="facebook" name="facebook" class="form-control" value="{{ demo.facebook }}">
         </div>
         <div class="form-group">
-            <label for="city">City</label>
+            <label for="city">Kaupunki</label>
             <input type="text" id="city" name="city" class="form-control" value="{{ demo.city }}" required>
         </div>
         <div class="form-group">
-            <label for="address">Address</label>
+            <label for="address">Osoite</label>
             <input type="text" id="address" name="address" class="form-control" value="{{ demo.address }}" required>
         </div>
         <div class="form-group">
-            <label for="type">Type</label>
+            <label for="type">Tyyppi</label>
             <input type="text" id="type" name="type" class="form-control" value="{{ demo.event_type }}" required>
         </div>
         <div class="form-group">
-            <label for="route">Route (if applicable)</label>
+            <label for="route">Reitti (marssin)</label>
             <input type="text" id="route" name="route" class="form-control" value="{{ demo.route }}">
         </div>
 
-        <h4>Organizer Information</h4>
+        <h4>Järjestäjätahon tiedot</h4>
 
         <div class="form-group">
-            <label for="organizer_name">Organizer Name</label>
+            <label for="organizer_name">Järjestäjätahon nimi</label>
             <input type="text" id="organizer_name" name="organizer_name" class="form-control" value="{{ demo.organizers[0].name }}">
         </div>
         <div class="form-group">
-            <label for="organizer_email">Organizer Email</label>
+            <label for="organizer_email">Järjestätahon sähköpostiosoite</label>
             <input type="email" id="organizer_email" name="organizer_email" class="form-control" value="{{ demo.organizers[0].email }}">
         </div>
         <div class="form-group">
-            <label for="organization_id">Organization ID (optional)</label>
+            <label for="organization_id">Järjestäjäorganisaation ID (valinnainen)</label>
             <input type="text" id="organization_id" name="organization_id" class="form-control" value="{{ demo.organizers[0].organization_id }}">
         </div>
         <div class="form-group">
-            <label for="organizer_website">Organizer Website (optional)</label>
+            <label for="organizer_website">Järjestäjän nettisivu (valinnainen)</label>
             <input type="url" id="organizer_website" name="organizer_website" class="form-control" value="{{ demo.organizers[0].website }}">
         </div>
 
-        <button type="submit" class="submit-button">Update Demonstration</button>
+        <!-- Approved checkbox -->
+        <div class="form-group">
+            <label for="approved">Hyväksytty</label>
+            <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo.approved %}checked{% endif %}>
+        </div>
+
+        <button type="submit" class="submit-button">Tallenna</button>
     </form>
 </div>
 {% endblock %}

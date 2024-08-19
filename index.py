@@ -1,13 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_mail import Mail
+from flask import Flask, render_template, request, redirect, url_for, flash
 from bson.objectid import ObjectId
 from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from models import User  # Import User model
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+
+MAINTANENCE = False
+
+@app.before_request
+def is_maintanence():
+    if MAINTANENCE:
+        return render_template("maintanence.html")
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
@@ -28,9 +34,6 @@ def load_user(user_id):
     if user_doc:
         return User.from_db(user_doc)
     return None
-
-# Initialize Mail
-mail = Mail(app)
 
 # Import and register blueprints
 from admin_bp import admin_bp

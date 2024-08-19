@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from bson.objectid import ObjectId
 from administration import admin_required
 from database_manager import DatabaseManager
 from models import User  # Import User model
 import logging
+
+LOG_FILE_PATH = "app.log"
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -46,7 +48,7 @@ def admin_login():
                 logger.info(f"User {username} logged in successfully.")
                 return redirect(url_for('admin.admin_dashboard'))
 
-        logger.warning(f"Failed login attempt for username: {username}")
+        logger.warning(f"Failed login attempt for username: {username}") 
         flash('Invalid credentials')  # Log invalid credentials attempt for security audit
 
     return render_template('admin_login.html')
@@ -65,60 +67,4 @@ def admin_logout():
 @login_required
 @admin_required
 def admin_dashboard():
-    pending_demos = mongo.demonstrations.find({"approved": False})
-    pending_orgs = mongo.organizations.find({"verified": False})  # Fetch pending organizations
-    return render_template('admin/dashboard.html', pending_demos=pending_demos, pending_orgs=pending_orgs)
-
-# DEMONSTRATIONAL ADMINISM
-
-# Approve demonstration
-@admin_bp.route('/approve/demo/<demo_id>')
-@login_required
-@admin_required
-def approve_demo(demo_id):
-    # SECURITY: Ensure that only authorized admin can approve demonstrations.
-    mongo.demonstrations.update_one(
-        {"_id": ObjectId(demo_id)},
-        {"$set": {"approved": True}}
-    )
-    logger.info(f"Demo {demo_id} approved by admin {current_user.username}")
-    flash('Demonstration approved.')
-    return redirect(url_for('admin.admin_dashboard'))
-
-# Reject demonstration
-@admin_bp.route('/reject/demo/<demo_id>')
-@login_required
-@admin_required
-def reject_demo(demo_id):
-    # SECURITY: Ensure that only authorized admin can reject demonstrations.
-    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-    logger.info(f"Demo {demo_id} rejected by admin {current_user.username}")
-    flash('Demonstration rejected.')
-    return redirect(url_for('admin.admin_dashboard'))
-
-# ORGANIZATIONAL ADMINISM
-
-# Approve organization
-@admin_bp.route('/approve/org/<org_id>')
-@login_required
-@admin_required
-def approve_org(org_id):
-    # SECURITY: Ensure that only authorized admin can approve organizations.
-    mongo.organizations.update_one(
-        {"_id": ObjectId(org_id)},
-        {"$set": {"verified": True}}
-    )
-    logger.info(f"Organization {org_id} approved by admin {current_user.username}")
-    flash('Organization approved.')
-    return redirect(url_for('admin.admin_dashboard'))
-
-# Reject organization
-@admin_bp.route('/reject/org/<org_id>')
-@login_required
-@admin_required
-def reject_org(org_id):
-    # SECURITY: Ensure that only authorized admin can reject organizations.
-    mongo.organizations.delete_one({"_id": ObjectId(org_id)})
-    logger.info(f"Organization {org_id} rejected by admin {current_user.username}")
-    flash('Organization rejected.')
-    return redirect(url_for('admin.admin_dashboard'))
+    return render_template('admin/dashboard.html')

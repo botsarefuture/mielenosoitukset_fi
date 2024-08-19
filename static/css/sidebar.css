@@ -1,7 +1,13 @@
-/* Sidebar styling */
+/* Basic reset */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar container */
 .sidebar {
     width: 250px; /* Fixed width for sidebar */
-    background-color: #0033A0; /* Dark background for sidebar */
+    background-color: #0033A0; /* Solid dark blue background */
     color: #ffffff; /* White text color */
     padding: 20px; /* Padding for sidebar content */
     display: flex;
@@ -13,6 +19,7 @@
     overflow-y: auto; /* Scrollable if content exceeds viewport */
     transform: translateX(0); /* Default position */
     transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
 /* Hide sidebar */
@@ -25,24 +32,40 @@
     position: absolute;
     top: 20px;
     left: 100%; /* Position outside sidebar */
-    margin-left: -50px; /* Adjust to position the button */
-    background-color: #0033A0; /* Dark background for button */
+    margin-left: -70px; /* Adjust to position the button */
     color: #ffffff; /* White text color */
     border: none;
-    border-radius: 8px;
-    padding: 10px;
+    border-radius: 50%; /* Circular button */
+    width: 60px; /* Larger size */
+    height: 60px; /* Larger size */
+    padding: 0; /* Remove padding */
+    font-size: 30px; /* Larger icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: background-color 0.3s ease; /* Smooth background color transition */
 }
 
 .sidebar-toggle:hover {
-    background-color: #002a6d; /* Darker blue on hover */
+    background-color: #e64a19; /* Darker orange on hover */
+    transform: scale(1.1); /* Slightly enlarge button on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
 }
 
 /* Sidebar header */
+.sidebar-header {
+    text-align: center; /* Center-align header content */
+    margin-bottom: 20px;
+}
+
+.sidebar-header.hidden {
+    display: none;
+}
+
 .sidebar-header h2 {
     margin: 0;
-    font-size: 1.5em;
+    font-size: 1.75em; /* Larger font size */
+    font-weight: 600; /* Slightly bolder font */
 }
 
 /* Sidebar menu */
@@ -60,12 +83,14 @@
     color: #ffffff;
     text-decoration: none;
     display: block;
-    padding: 10px;
+    padding: 12px;
     border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
 }
 
 .sidebar-menu a:hover {
     background-color: #002a6d; /* Darker blue on hover */
+    transform: translateX(5px); /* Slightly move link on hover */
 }
 
 /* Main content styling */
@@ -77,9 +102,29 @@
     overflow-y: auto; /* Scrollable if content exceeds viewport */
     box-sizing: border-box;
     transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth margin and width transitions */
+    background-color: #f4f4f4; /* Light background for content */
 }
 
+/* Main content shifted */
 .main-content.shifted {
     margin-left: 0; /* Remove margin for sidebar */
     width: 100%; /* Full width */
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%; /* Full-width on small screens */
+        height: auto;
+        position: relative;
+    }
+    
+    .sidebar-toggle {
+        display: none; /* Hide toggle button on small screens */
+    }
+
+    .main-content {
+        margin-left: 0; /* Adjust for full-width sidebar */
+        width: 100%; /* Full width */
+    }
 }

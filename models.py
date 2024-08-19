@@ -84,3 +84,20 @@ class User(UserMixin):
         Check if the user is a member of a specific organization.
         """
         return any(org['org_id'] == str(organization_id) for org in self.organizations)
+    
+    def change_password(self, db, new_password):
+        """
+        Change the user's password and update the database.
+        
+        :param db: The database connection
+        :param new_password: The new password to be set
+        """
+        new_password_hash = generate_password_hash(new_password)
+        self.password_hash = new_password_hash
+
+        # Update the password hash in the database
+        db.users.update_one(
+            {'_id': ObjectId(self.id)},
+            {'$set': {'password_hash': self.password_hash}}
+        )
+        print('Password updated successfully.')

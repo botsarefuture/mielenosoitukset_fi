@@ -17,6 +17,13 @@
 
         <button type="submit" class="login-button">Kirjaudu sisään</button>
     </form>
+
+    <!-- Forgot your password link -->
+    <div class="form-group">
+        <p class="forgot-password">
+            <a href="{{ url_for('password_reset_request') }}">Unohtuiko salasana?</a>
+        </p>
+    </div>
 </div>
 
 {% endblock %}

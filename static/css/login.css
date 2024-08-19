@@ -91,3 +91,14 @@ input[type="password"]:focus {
 .forgot-password a:hover {
     text-decoration: underline;
 }
+
+/* Add to login.css */
+.register-link a {
+    color: #0033A0; /* Match the color with other links */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}

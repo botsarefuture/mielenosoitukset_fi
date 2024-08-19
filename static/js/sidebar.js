@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.querySelector('.sidebar');
-    sidebar.classList.add('hidden');
     const toggleButton = document.querySelector('.sidebar-toggle');
 
     // Load the saved sidebar state from localStorage

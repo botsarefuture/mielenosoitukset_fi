@@ -21,8 +21,6 @@ mongo = db_manager.get_db()
 def user_control():
     """Render the user control panel with a list of users."""
     search_query = request.args.get('search', '')
-    #page = int(request.args.get('page', 1))
-    #per_page = 10
 
     if search_query:
         users_cursor = mongo.users.find({
@@ -33,13 +31,8 @@ def user_control():
         })
     else:
         users_cursor = mongo.users.find()
-
-    #total_users = users_cursor.count()
-    #users = users_cursor.skip((page - 1) * per_page).limit(per_page)
     
-    #pagination = {"page": page, "per_page": per_page, "total": total_users}
-    
-    return render_template('admin_user_control.html', users=users_cursor, search_query=search_query)#, pagination=pagination,)
+    return render_template('admin/user/list.html', users=users_cursor, search_query=search_query)
 
 # Edit user
 @admin_user_bp.route('/edit_user/<user_id>', methods=['GET', 'POST'])
@@ -89,7 +82,8 @@ def edit_user(user_id):
     
     user["org_ids"] = org_ids
         
-    return render_template('edit_user.html', user=user, organizations=organizations, org_ids=org_ids)
+    return render_template('admin/user/edit.html', user=user, organizations=organizations, org_ids=org_ids)
+
 @admin_user_bp.route('/save_user/<user_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -179,4 +173,4 @@ def confirm_delete_user(user_id):
         flash('User not found.')
         return redirect(url_for('admin_user.user_control'))
 
-    return render_template('confirm_delete_user.html', user=user)
+    return render_template('admin/user/confirm.html', user=user)

@@ -2,10 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from bson.objectid import ObjectId
 from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+from flask_login import LoginManager, login_required
 from models import User  # Import User model
-import jwt  # For generating tokens
-import datetime
 from emailer.EmailSender import EmailSender
 email_sender = EmailSender()
 
@@ -18,6 +16,8 @@ MAINTANENCE = False
 def is_maintanence():
     if MAINTANENCE:
         return render_template("maintanence.html")
+    
+    #flash("meow", "info")
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
@@ -26,7 +26,7 @@ mongo = db_manager.get_db()
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'  # Redirect to login view if not authenticated
+login_manager.login_view = 'auth.login'  # Redirect to login view if not authenticated
 
 # User Loader function
 @login_manager.user_loader
@@ -40,152 +40,23 @@ def load_user(user_id):
     return None
 
 # Import and register blueprints
-from admin_bp import admin_bp
-app.register_blueprint(admin_bp)
 
 from organization import organization_bp
 app.register_blueprint(organization_bp)
 
+from admin_bp import admin_bp
 from admin_user_bp import admin_user_bp
-app.register_blueprint(admin_user_bp)
-
+from admin_demo_bp import admin_demo_bp
 from admin_org_bp import admin_org_bp
+app.register_blueprint(admin_bp)
+app.register_blueprint(admin_demo_bp)
+app.register_blueprint(admin_user_bp)
 app.register_blueprint(admin_org_bp)
 
-from admin_demo_bp import admin_demo_bp
-app.register_blueprint(admin_demo_bp)
 
+from auth import auth_bp
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    """
-    Handle user registration.
-    """
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        email = request.form.get('email')
-
-        # Validation for username and password
-        if not username or not password or len(username) < 3 or len(password) < 6:
-            flash('Invalid input. Username must be at least 3 characters and password at least 6 characters.')
-            return redirect(url_for('register'))
-
-        # Check if the username already exists
-        if mongo.users.find_one({"username": username}):
-            flash('Username already exists.')
-            return redirect(url_for('register'))
-
-        user_data = User.create_user(username, password, email)
-        mongo.users.insert_one(user_data)
-
-        flash('User registered successfully!')
-        return redirect(url_for('login'))
-
-    return render_template('auth/register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """
-    Handle user login.
-    """
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-
-        # Validation for username and password fields
-        if not username or not password:
-            flash('Please enter both username and password.')
-            return redirect(url_for('login'))
-
-        user_doc = mongo.users.find_one({"username": username})
-
-        if user_doc:
-            user = User.from_db(user_doc)
-            if user.check_password(password):
-                login_user(user)
-                return redirect(url_for('index'))
-
-        flash('Invalid username or password.')
-
-    return render_template('auth/login.html')
-
-# Admin logout route
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-# Generate a password reset token
-def generate_reset_token(email):
-    return jwt.encode({
-        'email': email,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)  # Token expires in 1 hour
-    }, app.config['SECRET_KEY'], algorithm='HS256')
-
-# Verify the password reset token
-def verify_reset_token(token):
-    try:
-        data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        return data['email']
-    except Exception as e:
-        return None
-
-@app.route('/password_reset_request', methods=['GET', 'POST'])
-def password_reset_request():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        user = mongo.users.find_one({"email": email})
-
-        if user:
-            token = generate_reset_token(email)
-            reset_url = url_for('password_reset', token=token, _external=True)
-
-            # Send the password reset email
-            email_sender.queue_email(
-                template_name='password_reset_email.html',
-                subject='Password Reset Request',
-                recipients=[email],
-                context={
-                    'reset_url': reset_url,
-                    'user_name': user.get('username')
-                }
-            )
-            
-            flash('A password reset link has been sent to your email address.')
-            return redirect(url_for('login'))
-
-        flash('No account found with that email address.')
-        return redirect(url_for('password_reset_request'))
-
-    return render_template('auth/password_reset_request.html')
-@app.route('/password_reset/<token>', methods=['GET', 'POST'])
-def password_reset(token):
-    email = verify_reset_token(token)
-    if not email:
-        flash('The password reset link is invalid or has expired.')
-        return redirect(url_for('password_reset_request'))
-
-    if request.method == 'POST':
-        password = request.form.get('password')
-        
-        # Retrieve the user from the database
-        user_doc = mongo.users.find_one({"email": email})
-        if not user_doc:
-            flash('User not found.')
-            return redirect(url_for('password_reset_request'))
-
-        # Create a User instance
-        user = User.from_db(user_doc)
-        
-        # Change the user's password
-        user.change_password(mongo, password)
-        
-        flash('Your password has been updated successfully.')
-        return redirect(url_for('login'))
-
-    return render_template('auth/password_reset.html', token=token)
+app.register_blueprint(auth_bp, url_prefix="/auth/")
 
 @app.route('/')
 def index():

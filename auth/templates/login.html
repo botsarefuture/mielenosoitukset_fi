@@ -21,14 +21,14 @@
     <!-- Forgot your password link -->
     <div class="form-group">
         <p class="forgot-password">
-            <a href="{{ url_for('password_reset_request') }}">Unohtuiko salasana?</a>
+            <a href="{{ url_for('auth.password_reset_request') }}">Unohtuiko salasana?</a>
         </p>
     </div>
 
     <!-- Register link -->
     <div class="form-group">
         <p class="register-link">
-            <a href="{{ url_for('register') }}">Luo uusi tili</a>
+            <a href="{{ url_for('auth.register') }}">Rekisteröidy</a>
         </p>
     </div>
 </div>

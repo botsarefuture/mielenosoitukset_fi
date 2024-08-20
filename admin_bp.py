@@ -51,7 +51,7 @@ def admin_login():
         logger.warning(f"Failed login attempt for username: {username}") 
         flash('Invalid credentials')  # Log invalid credentials attempt for security audit
 
-    return render_template('admin_login.html')
+    return render_template('admin/auth/login.html')
 
 # Admin logout route
 @admin_bp.route('/logout')

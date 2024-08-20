@@ -33,7 +33,7 @@
 
                 <!-- Conditional Links for Authenticated Users -->
                 {% if current_user.is_authenticated %}
-                <li><span>Tervetuloa, {{ current_user.username }}!</span></li>
+                <li><span style="color: white;">Tervetuloa, {{ current_user.username }}!</span></li>
 
                 {% if current_user.global_admin %}
                 {% include "sidebar.html" %}

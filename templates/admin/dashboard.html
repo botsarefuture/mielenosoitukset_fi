@@ -5,43 +5,14 @@
 <h2>Hallintatyökalut</h2>
 
 <style>
-    .button-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 20px;
-    }
-
-    .admin-button {
-        background-color: #007bff;
-        color: white;
-        padding: 15px 25px;
-        text-align: center;
-        text-decoration: none;
-        border-radius: 5px;
-        font-size: 16px;
-        font-weight: bold;
-        transition: background-color 0.3s;
-    }
-
-    .admin-button:hover {
-        background-color: #0056b3;
-    }
-
-    .emergency-button {
-        background-color: #ff0000;
-    }
-
-    .emergency-button:hover {
-        background-color: #cc0000;
-    }
-
     .info-section {
         margin-top: 30px;
         padding: 15px;
         border: 1px solid #ddd;
         border-radius: 5px;
         background-color: #f9f9f9;
+        display: flex;
+        align-items: center;
     }
 
     .info-section h3 {
@@ -50,18 +21,22 @@
 
     .info-section p {
         margin: 5px 0;
+        flex: 1;
+    }
+
+    .warning-icon {
+        font-size: 36px;
+        color: #ffcc00;
+        margin-right: 15px;
     }
 </style>
 
-<div class="button-container">
-    <!-- Button for managing demonstrations -->
-    <a href="{{ url_for('admin_demo.demo_control') }}" class="admin-button">Manage Demonstrations</a>
-
-    <!-- Button for managing organizations -->
-    <a href="{{ url_for('admin_org.organization_control') }}" class="admin-button">Manage Organizations</a>
-
-    <!-- Button for user management -->
-    <a href="{{ url_for('admin_user.user_control') }}" class="admin-button">Manage Users</a>
+<div class="info-section">
+    <span class="warning-icon">⚠️</span>
+    <div>
+        <h3>Huomio</h3>
+        <p>Olet kirjautunut sisään superkäyttäjänä. Sinulla on laajat oikeudet, ja kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen käyttäessäsi näitä oikeuksia.</p>
+    </div>
 </div>
 
 {% endblock %}

@@ -1,20 +1,43 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
 
-
 <div class="sidebar">
     <button class="sidebar-toggle" aria-label="Toggle Sidebar">&#9776;</button>
-    <br>
-    <h2 class="sidebar-title">Järjestelmänvalvojien työkalupakki</h2> <!-- Sidebar Title -->
+    <h2 class="sidebar-title">Superkäyttäjän työkalupakki</h2> <!-- Sidebar Title -->
     <nav class="sidebar-nav">
         <ul>
-            <li><a href="{{ url_for('admin.admin_dashboard') }}">Tarkastuspaneeli</a></li>
-            <li><a href="{{ url_for('admin_user.user_control') }}">Käyttäjien hallinta</a></li>
-            <li><a href="{{ url_for('admin_org.organization_control') }}">Organisaatioiden hallinta</a></li>
-            <li><a href="{{ url_for('admin_demo.demo_control') }}">Mielenosoitusten hallinta</a></li>
-            <li><a href="{{ url_for('admin.admin_logout') }}">Kirjaudu ulos</a></li>
-            <!-- Add more links as needed -->
+            <li>
+                <a href="{{ url_for('admin.admin_dashboard') }}">
+                    <span class="icon">&#128187;</span> Superkäyttäjän käsikirja
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_user.user_control') }}">
+                    <span class="icon">&#128100;</span> Käyttäjien hallinta
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_org.organization_control') }}">
+                    <span class="icon">&#128736;</span> Organisaatioiden hallinta
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_demo.demo_control') }}">
+                    <span class="icon">&#128681;</span> Mielenosoitusten hallinta
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.admin_logout') }}">
+                    <span class="icon">&#128682;</span> Kirjaudu ulos
+                </a>
+            </li>
         </ul>
     </nav>
+
+    <!-- Shortened notice at the bottom of the sidebar -->
+    <div class="sidebar-info">
+        <span class="warning-icon">⚠️</span> <!-- Warning icon -->
+        <p>Olet superkäyttäjätilassa.</p>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>

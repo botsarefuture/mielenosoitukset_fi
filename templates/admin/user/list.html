@@ -29,14 +29,14 @@
     <div class="user-table-row">
         <div class="table-cell">{{ user['username'] }}</div>
         <div class="table-cell">{{ user['email'] }}</div>
-        <div class="table-cell">{% if user['confirmed'] %}Kyllä {% else %}Ei{%endif%}</div>
+        <div class="table-cell">{% if user['confirmed'] %}Kyllä {% else %}Ei{% endif %}</div>
         <div class="table-cell">{{ user['role'] }}</div>
-        <div class="table-cell">{% if user['is_admin'] %}Kyllä {% else %}Ei{%endif%}</div>
-        <div class="table-cell">{% if user['global_admin'] %}Kyllä {% else %}Ei{%endif%}</div>
+        <div class="table-cell">{% if user['is_admin'] %}Kyllä {% else %}Ei{% endif %}</div>
+        <div class="table-cell">{% if user['global_admin'] %}Kyllä {% else %}Ei{% endif %}</div>
         <div class="table-cell actions-cell">
             <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
             <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}"
-                onsubmit="return confirm('Oletko varma, että haluat poistaa tämän käyttäjän?');" class="delete-form">
+                onsubmit="return confirmAndSubmit(event);" class="delete-form">
                 <button type="submit" class="button delete-button">Poista</button>
             </form>
         </div>
@@ -47,5 +47,29 @@
     </div>
     {% endfor %}
 </div>
+
+<script>
+function confirmAndSubmit(event) {
+    const confirmation = confirm('Oletko varma, että haluat poistaa tämän käyttäjän?');
+    
+    if (confirmation) {
+        // Create a hidden input field
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'confirm_delete';
+        hiddenInput.value = 'true'; // You can set this value to anything you want
+
+        // Append the hidden input field to the form
+        const form = event.target; // The form that triggered the event
+        form.appendChild(hiddenInput);
+
+        // Proceed with the form submission
+        return true;
+    } else {
+        // If the user cancels, prevent form submission
+        return false;
+    }
+}
+</script>
 
 {% endblock %}

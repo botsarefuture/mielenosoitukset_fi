@@ -14,6 +14,16 @@ admin_user_bp = Blueprint('admin_user', __name__, url_prefix='/admin/user')
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
 
+def flash_message(message, category):
+    """Flash a message with a specific category."""
+    categories = {
+        'info': 'info',
+        'approved': 'success',
+        'warning': 'warning',
+        'error': 'danger'
+    }
+    flash(message, categories.get(category, 'info'))
+
 # User control panel with pagination
 @admin_user_bp.route('/')
 @login_required
@@ -48,34 +58,39 @@ def edit_user(user_id):
         email = request.form.get('email')
         role = request.form.get('role')
         organization_ids = request.form.getlist('organizations')
+        confirmed = request.form.get('confirmed', False)
 
         # SECURITY: Ensure that only authorized users can update other users' details.
         # Validation for user input
         if not username or not email:
-            flash('Username and email are required.')
+            flash_message('Käyttäjänimi ja sähköposti ovat pakollisia.', 'error')
             return redirect(url_for('admin_user.edit_user', user_id=user_id))
         
         # Validate email format
         if '@' not in email or '.' not in email.split('@')[-1]:
-            flash('Invalid email format.')
+            flash_message('Virheellinen sähköpostimuoto.', 'error')
             return redirect(url_for('admin_user.edit_user', user_id=user_id))
 
         orgs = []
 
         for organization in organization_ids:
             orgs.append({"org_id": organization, "role": "admin"})
-                
+        
+        if confirmed:
+            confirmed = True
+        
         mongo.users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
                 "username": username,
                 "email": email,
                 "role": role,
-                "organizations": orgs  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
+                "organizations": orgs,  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
+                "confirmed": confirmed
             }}
         )
         
-        flash('User updated successfully.')
+        flash_message('Käyttäjä päivitetty onnistuneesti.', 'approved')
         return redirect(url_for('admin_user.user_control'))
     
     org_ids = [org["org_id"] for org in user["organizations"]]
@@ -91,24 +106,28 @@ def save_user(user_id):
     """Save updated user details and send email notification."""
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
-        flash('User not found.')
+        flash_message('Käyttäjää ei löydy.', 'error')
         return redirect(url_for('admin_user.user_control'))
 
     username = request.form.get('username')
     email = request.form.get('email')
     role = request.form.get('role')
     organization_ids = request.form.getlist('organizations')
+    confirmed = request.form.get('confirmed', False)
 
     # SECURITY: Ensure that only authorized users can update other users' details.
     # Validation for user input
     if not username or not email:
-        flash('Username and email are required.')
+        flash_message('Käyttäjänimi ja sähköposti ovat pakollisia.', 'error')
         return redirect(url_for('admin_user.edit_user', user_id=user_id))
     
     # Validate email format
     if '@' not in email or '.' not in email.split('@')[-1]:
-        flash('Invalid email format.')
+        flash_message('Virheellinen sähköpostimuoto.', 'error')
         return redirect(url_for('admin_user.edit_user', user_id=user_id))
+    
+    if confirmed:
+        confirmed = True
 
     # Retrieve organization names based on IDs
     organizations = mongo.organizations.find({"_id": {"$in": [ObjectId(org_id) for org_id in organization_ids]}})
@@ -121,28 +140,29 @@ def save_user(user_id):
             "username": username,
             "email": email,
             "role": role,
-            "organizations": [{"org_id": org_id, "role": "admin"} for org_id in organization_ids]  # Update user organizations
+            "organizations": [{"org_id": org_id, "role": "admin"} for org_id in organization_ids],  # Update user organizations
+            "confirmed": confirmed
         }}
     )
 
     # Send email notification
     email_sender.queue_email(
         template_name='user_update_notification.html',
-        subject='Your Account Details Have Been Updated',
+        subject='Tilisi tiedot on päivitetty',
         recipients=[email],
         context={
             'user_name': username,
             'role': role,
-            'organization_names': ', '.join(org_names),  # Use organization names
-            'action': 'updated'  # or 'added'/'revoked' based on your logic
+            'organization_names': ', '.join(org_names),
+            'action': 'päivitetty'  # or 'added'/'revoked' based on your logic
         }
     )
 
-    flash('User updated successfully.')
+    flash_message('Käyttäjä päivitetty onnistuneesti.', 'approved')
     return redirect(url_for('admin_user.user_control'))
 
 # Delete user
-@admin_user_bp.route('/delete_user/<user_id>', methods=['POST'])  # Changed to use POST method for deletion
+@admin_user_bp.route('/delete_user/<user_id>', methods=['POST'])
 @login_required
 @admin_required
 def delete_user(user_id):
@@ -150,15 +170,15 @@ def delete_user(user_id):
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
 
     if user is None:
-        flash('User not found.')
+        flash_message('Käyttäjää ei löydy.', 'error')
         return redirect(url_for('admin_user.user_control'))
 
     if 'confirm_delete' in request.form:
         # Handle confirmation step
         mongo.users.delete_one({"_id": ObjectId(user_id)})
-        flash('User deleted successfully.')
+        flash_message('Käyttäjä poistettu onnistuneesti.', 'approved')
     else:
-        flash('User deletion not confirmed.')
+        return redirect(url_for('admin_user.confirm_delete_user', user_id=user["_id"]))
 
     return redirect(url_for('admin_user.user_control'))
 
@@ -170,7 +190,7 @@ def confirm_delete_user(user_id):
     """Render a confirmation page before deleting a user."""
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if user is None:
-        flash('User not found.')
+        flash_message('Käyttäjää ei löydy.', 'error')
         return redirect(url_for('admin_user.user_control'))
 
     return render_template('admin/user/confirm.html', user=user)

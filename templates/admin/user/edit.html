@@ -20,11 +20,16 @@
         </div>
 
         <div class="form-group">
+            <label for="confirmed">Sähköpostiosoite vahvistettu</label>
+            <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
+        </div>
+
+        <div class="form-group">
             <label for="role">Rooli</label>
             <select id="role" name="role" required>
                 <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>Käyttäjä</option>
-                <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Ylläpitäjä</option>
-                <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>Globaalihallitsija
+                <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Järjestelmänvalvoja</option>
+                <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>Superkäyttäjä
                 </option>
             </select>
         </div>

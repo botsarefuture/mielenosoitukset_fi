@@ -1,6 +1,8 @@
 from database_manager import DatabaseManager
 from bson.objectid import ObjectId
 
+from obj_creator import ObjectId as OID
+
 class Organizer:
     def __init__(self, name: str = None, email: str = None, organization_id: str = None, website: str = None):
         self.name = name
@@ -58,6 +60,10 @@ class Demonstration:
                  organizers: list[Organizer] = None, approved: bool = False, 
                  linked_organizations: dict = None, _id = None):
         
+        if _id is None:
+            _id = OID()
+            _id = ObjectId(str(_id))
+        
         # Validation for required fields
         self.validate_fields(title, date, start_time, end_time, topic, city, address, event_type)
         
@@ -100,7 +106,7 @@ class Demonstration:
             'approved': self.approved,
             'linked_organizations': self.linked_organizations
         }
-
+            
     @classmethod
     def from_dict(cls, data):
         try:

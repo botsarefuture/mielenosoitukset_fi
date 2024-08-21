@@ -58,6 +58,8 @@ from auth import auth_bp
 
 app.register_blueprint(auth_bp, url_prefix="/auth/")
 
+from datetime import datetime
+
 @app.route('/')
 def index():
     """
@@ -65,7 +67,6 @@ def index():
     """
     search_query = request.args.get('search', '')
 
-    # Consider adding pagination to handle large sets of results more efficiently.
     if search_query:
         demonstrations = mongo.demonstrations.find({
             "approved": True,
@@ -78,6 +79,10 @@ def index():
         })
     else:
         demonstrations = mongo.demonstrations.find({"approved": True})
+
+    # Convert the cursor to a list and sort by date
+    demonstrations = list(demonstrations)
+    demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
 
     return render_template('index.html', demonstrations=demonstrations)
 
@@ -146,18 +151,43 @@ def demonstrations():
     List all approved demonstrations, optionally filtered by search query.
     """
     search_query = request.args.get('search', '')
+    city_query = request.args.get('city', '')
+    location_query = request.args.get('location', '')
+    date_query = request.args.get('date', '')
+    topic_query = request.args.get('topic', '')
+
+    # Build the query dictionary
+    query = {"approved": True}
 
     if search_query:
-        demonstrations = mongo.demonstrations.find({
-            "approved": True,
-            "$or": [
-                {"title": {"$regex": search_query, "$options": "i"}},
-                {"location": {"$regex": search_query, "$options": "i"}},
-                {"organizer": {"$regex": search_query, "$options": "i"}}
-            ]
-        })
-    else:
-        demonstrations = mongo.demonstrations.find({"approved": True})
+        query["$or"] = [
+            {"title": {"$regex": search_query, "$options": "i"}},
+            {"city": {"$regex": search_query, "$options": "i"}},
+            {"topic": {"$regex": search_query, "$options": "i"}},
+            {"address": {"$regex": search_query, "$options": "i"}}
+        ]
+
+    if city_query:
+        query["city"] = {"$regex": city_query, "$options": "i"}
+    
+    if location_query:
+        query["address"] = {"$regex": location_query, "$options": "i"}
+
+    if date_query:
+        try:
+            # Convert the date to a datetime object to ensure it's in the correct format
+            parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
+            query["date"] = date_query  # Keep the date in string form, since it's stored that way
+        except ValueError:
+            flash('Invalid date format. Please use pp.kk.vvvv.')
+
+    if topic_query:
+        query["topic"] = {"$regex": topic_query, "$options": "i"}
+
+    demonstrations = list(mongo.demonstrations.find(query))
+
+    # Sort the results by date
+    demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
 
     return render_template('list.html', demonstrations=demonstrations)
 

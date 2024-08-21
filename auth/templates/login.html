@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-<div class="login-container">
-    <h2>Kirjaudu sisään</h2>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+
+<div class="auth-container">
+    <h1>Kirjaudu sisään</h1>
     <form method="POST">
         <div class="form-group">
             <label for="username">Käyttäjänimi</label>
@@ -15,7 +16,7 @@
             <input type="password" id="password" name="password" required>
         </div>
 
-        <button type="submit" class="login-button">Kirjaudu sisään</button>
+        <button type="submit">Kirjaudu sisään</button>
     </form>
 
     <!-- Forgot your password link -->

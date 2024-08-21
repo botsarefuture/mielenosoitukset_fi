@@ -3,34 +3,30 @@
 {% block title %}Rekisteröidy{% endblock %}
 
 {% block content %}
-<h1>Rekisteröidy</h1>
-<form action="{{ url_for('auth.register') }}" method="POST">
-    <div>
-        <label for="username">Käyttäjätunnus</label>
-        <input type="text" id="username" name="username" required>
-    </div>
-    
-    <div>
-        <label for="email">Sähköposti</label>
-        <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Anna kelvollinen sähköpostiosoite">
-    </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
-    <div>
-        <label for="password">Salasana</label>
-        <input type="password" id="password" name="password" required minlength="8" title="Salasanan on oltava vähintään 8 merkkiä pitkä">
-    </div>
+<div class="auth-container">
+    <h1>Rekisteröidy</h1>
+    <form action="{{ url_for('auth.register') }}" method="POST">
+        <div class="form-group">
+            <label for="username">Käyttäjätunnus</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Sähköposti</label>
+            <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Anna kelvollinen sähköpostiosoite">
+        </div>
 
-    <button type="submit">Rekisteröidy</button>
-</form>
+        <div class="form-group">
+            <label for="password">Salasana</label>
+            <input type="password" id="password" name="password" required minlength="8" title="Salasanan on oltava vähintään 8 merkkiä pitkä">
+        </div>
 
-<p>Onko sinulla jo tili? <a href="{{ url_for('auth.login') }}">Kirjaudu sisään tästä</a>.</p>
+        <button type="submit">Rekisteröidy</button>
+    </form>
 
-{% if get_flashed_messages() %}
-    <ul>
-        {% for message in get_flashed_messages() %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
+    <p>Onko sinulla jo tili? <a href="{{ url_for('auth.login') }}">Kirjaudu sisään tästä</a>.</p>
+</div>
 
 {% endblock %}

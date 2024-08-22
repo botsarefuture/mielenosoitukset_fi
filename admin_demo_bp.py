@@ -128,6 +128,7 @@ def edit_demo(demo_id):
     demonstration = Demonstration.from_dict(demo_data)
 
     if request.method == 'POST':
+        # Update demonstration fields
         demonstration.title = request.form.get('title')
         demonstration.date = request.form.get('date')
         demonstration.start_time = request.form.get('start_time')
@@ -138,9 +139,24 @@ def edit_demo(demo_id):
         demonstration.address = request.form.get('address')
         demonstration.event_type = request.form.get('type')
         demonstration.route = request.form.get('route')
-        demonstration.approved = request.form.get('approved', False)
-        if not demonstration.approved is None and not demonstration.approved == False:
-            demonstration.approved = True
+        demonstration.approved = bool(request.form.get('approved'))
+
+        # Process organizers
+        organizers = []
+        i = 1
+        while True:
+            name = request.form.get(f'organizer_name_{i}')
+            website = request.form.get(f'organizer_website_{i}')
+            email = request.form.get(f'organizer_email_{i}')
+            organization_id = request.form.get(f"organization_id_{i}", None) # TODO: Add this to form.
+            
+            if not name:
+                break
+            
+            organizer = Organizer(name=name, email=email, website=website, organization_id=organization_id)
+            organizers.append(organizer)
+            i += 1
+        demonstration.organizers = organizers
 
         try:
             mongo.demonstrations.update_one(
@@ -154,6 +170,7 @@ def edit_demo(demo_id):
             return redirect(url_for('admin_demo.edit_demo', demo_id=demo_id))
 
     return render_template('admin/demonstrations/edit.html', demo=demonstration)
+
 
 @admin_demo_bp.route('/delete_demo/<demo_id>', methods=['POST'])
 @login_required

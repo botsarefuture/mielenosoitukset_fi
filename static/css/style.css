@@ -6,6 +6,8 @@ html, body {
     background-color: #F5F5F5; /* Updated to match the style guide */
     color: #333333; /* Text color for consistency */
     display: flex;
+    overflow-x: hidden;
+    max-width: 100%;
     flex-direction: column; /* Column layout to push footer to the bottom */
 }
 

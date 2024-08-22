@@ -127,20 +127,28 @@
 
 /* Main content styling */
 .main-content {
-    margin-left: 250px; /* Space for the sidebar */
+    width: 100%; /* Full width */
+    margin-left: 75px;
+    width: calc(100% - 75px); /* Full width minus sidebar */
+    box-sizing: border-box;
     padding: 30px; /* Padding for content */
-    width: calc(100% - 250px); /* Full width minus sidebar */
-    height: 100vh; /* Full viewport height */
+
+}
+
+/* Main content shifted when sidebar is hidden */
+.main-content.shifted {
+    margin-left: 300px; /* Space for the sidebar */
+    padding: 30px; /* Padding for content */
+    width: calc(100% - 300px); /* Full width minus sidebar */
+    /*height: 100vh; /* Full viewport height */
     overflow-y: auto; /* Scrollable if content exceeds viewport */
     box-sizing: border-box;
     transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth margin and width transitions */
-    background-color: #f4f4f4; /* Light background for content */
+    
 }
 
-/* Main content shifted */
-.main-content.shifted {
-    margin-left: 0; /* Remove margin for sidebar */
-    width: 100%; /* Full width */
+.footer {
+    padding: 0;
 }
 
 /* Media queries for responsive design */

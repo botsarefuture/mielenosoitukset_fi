@@ -1,7 +1,7 @@
 /* Sidebar container */
-.sidebar {
+.container-sidebar {
     width: 250px; /* Fixed width for sidebar */
-    background-color: #0033A0; /* Solid dark blue background */
+    background-color: #0033A0; /* Dark blue background to match header/footer */
     color: #ffffff; /* White text color */
     padding: 20px; /* Padding for sidebar content */
     display: flex;
@@ -10,16 +10,15 @@
     top: 0;
     left: 0;
     bottom: 0;
-    overflow-y: visible; /* Scrollable if content exceeds viewport */
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
     transform: translateX(0); /* Default position */
     transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
     box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
 /* Hide sidebar */
-.sidebar.hidden {
-    display: none; /* The sidebar should go away when toggled */
-
+.container-sidebar.hidden {
+    display: none; /* Hide sidebar when toggled */
 }
 
 /* Sidebar toggle button */
@@ -62,17 +61,23 @@
 .sidebar-nav a {
     color: #ffffff;
     text-decoration: none;
-    display: flex; /* Change display to flex for alignment */
+    display: flex; /* Flex display for alignment */
     align-items: center;
     padding: 12px;
     border-radius: 5px;
     transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
 }
+
+/* Hover effect for sidebar links */
+.sidebar-nav a:hover {
+    background-color: #e64a19; /* Highlight on hover */
+}
+
 /* Hidden icons section styling */
 .hidden-icons {
     position: fixed;
     display: none; /* Hide by default */
-    left: 0; /* Align to the right edge of the screen */
+    left: 0; /* Align to the left edge of the screen */
     height: 100%;
     top: 50%; /* Center vertically */
     transform: translateY(-50%); /* Adjust for vertical centering */
@@ -124,36 +129,24 @@
     color: #ffffff; /* Icon color on hover */
 }
 
-
 /* Main content styling */
 .main-content {
-    width: 100%; /* Full width */
-    margin-left: 75px;
-    width: calc(100% - 75px); /* Full width minus sidebar */
+    margin-left: 250px; /* Space for the sidebar */
+    width: calc(100% - 250px); /* Full width minus sidebar */
     box-sizing: border-box;
     padding: 30px; /* Padding for content */
-
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth transitions */
 }
 
 /* Main content shifted when sidebar is hidden */
 .main-content.shifted {
-    margin-left: 300px; /* Space for the sidebar */
-    padding: 30px; /* Padding for content */
-    width: calc(100% - 300px); /* Full width minus sidebar */
-    /*height: 100vh; /* Full viewport height */
-    overflow-y: auto; /* Scrollable if content exceeds viewport */
-    box-sizing: border-box;
-    transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth margin and width transitions */
-    
-}
-
-.footer {
-    padding: 0;
+    margin-left: 0; /* Adjust for hidden sidebar */
+    width: 100%; /* Full width */
 }
 
 /* Media queries for responsive design */
 @media (max-width: 768px) {
-    .sidebar {
+    .container-sidebar {
         width: 100%; /* Full-width on small screens */
         height: auto;
         position: relative;
@@ -169,12 +162,13 @@
     }
 }
 
+/* Sidebar info at the bottom */
 .sidebar-info {
     margin-top: 20px;
     padding: 10px;
     border-top: 1px solid #ddd;
-    background-color: #fff3cd;
-    color: #856404;
+    background-color: #FFF3E0; /* Light orange for warnings */
+    color: #856404; /* Darker text color for visibility */
     display: flex;
     align-items: center;
     font-size: 14px;

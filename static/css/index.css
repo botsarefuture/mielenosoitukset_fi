@@ -1,31 +1,38 @@
+
 /* Style for the search form */
 .search-form {
     display: flex; /* Align elements horizontally */
     margin-bottom: 20px; /* Space below the form */
-    /* TODO: Add styles for form container responsiveness */
+    gap: 10px; /* Space between input and button */
 }
 
+/* Style for text input */
 .search-form input[type="text"] {
     flex: 1; /* Take up remaining space */
     padding: 10px;
     border: 1px solid #ddd; /* Light gray border */
     border-radius: 4px;
     font-size: 16px;
-    /* TODO: Add focus styles for better accessibility */
+    /* Focus styles */
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on focus */
 }
 
+/* Style for the search button */
 .search-form button {
     padding: 10px 20px;
-    margin-left: 10px;
     background-color: #0033A0; /* Main Blue */
     color: #fff; /* White text */
     border: none;
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
-    /* TODO: Add focus styles for better accessibility */
+    /* Focus styles */
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on focus */
 }
 
+/* Hover effect for the search button */
 .search-form button:hover {
     background-color: #0066cc; /* Light Blue on hover */
 }
@@ -34,28 +41,64 @@
 .demonstrations-list {
     list-style-type: none; /* Remove default list styling */
     padding: 0;
-    /* TODO: Add padding for better alignment if needed */
+    margin: 0;
 }
 
+/* Style for each list item */
 .demonstrations-list li {
-    padding: 10px;
+    padding: 15px;
     border-bottom: 1px solid #ddd; /* Light gray line between items */
     margin-bottom: 10px;
-    /* TODO: Add hover effects for list items */
+    background-color: #ffffff; /* White background for list items */
+    border-radius: 4px; /* Rounded corners for list items */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
 
+/* Remove border for the last item */
 .demonstrations-list li:last-child {
-    border-bottom: none; /* Remove border for the last item */
+    border-bottom: none;
 }
 
+/* Style for links in the list */
 .demonstrations-list a {
     color: #0033A0; /* Main Blue */
     text-decoration: none; /* Remove underline */
     font-weight: bold;
-    /* TODO: Add font size adjustment for better readability */
+    /* Font size adjustment for readability */
+    font-size: 18px;
 }
 
+/* Hover effect for links in the list */
 .demonstrations-list a:hover {
     text-decoration: underline; /* Underline on hover */
     color: #FF6600; /* Secondary Orange on hover */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+    .container {
+        padding: 15px; /* Adjust padding for medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .search-form {
+        flex-direction: column; /* Stack input and button vertically */
+    }
+    
+    .search-form button {
+        margin-left: 0; /* Remove left margin when stacked */
+        margin-top: 10px; /* Add top margin for spacing */
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px; /* Further adjust padding for small screens */
+    }
+    
+    .search-form input[type="text"], 
+    .search-form button {
+        font-size: 14px; /* Smaller font size for very small screens */
+    }
 }

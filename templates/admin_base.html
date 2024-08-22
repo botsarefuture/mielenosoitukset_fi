@@ -4,12 +4,8 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
 
-<div class="dashboard-container">
-    <div class="main-content">
-        {% block main_content %}
-        <!-- Default content if no block is defined -->
-        {% endblock %}
-    </div>
-</div>
+{% block main_content %}
+            <!-- Default content if no block is defined -->
+{% endblock %}
 
 {% endblock %}

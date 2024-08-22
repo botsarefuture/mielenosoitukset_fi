@@ -2,11 +2,12 @@
 
 {% block main_content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_user_control.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
 <h2>Käyttäjähallinta</h2>
 
 <!-- Search/Filter Users -->
-<div class="user-filter">
+<div class="user-filter mb-4">
     <form method="GET" action="{{ url_for('admin_user.user_control') }}" class="search-form">
         <input type="text" name="search" placeholder="Search users by username or email" value="{{ search_query }}"
             class="search-input">
@@ -14,39 +15,43 @@
     </form>
 </div>
 
-<!-- List of Users in a Table-Like Layout -->
-<div class="user-table">
-    <div class="user-table-header">
-        <div class="table-cell">Käyttäjänimi</div>
-        <div class="table-cell">Sähköposti</div>
-        <div class="table-cell">Sähköposti vahvistettu</div>
-        <div class="table-cell">Rooli</div>
-        <div class="table-cell">Järjestelmänvalvoja</div>
-        <div class="table-cell">Superkäyttäjä</div>
-        <div class="table-cell actions-cell-header">Toiminnot</div>
-    </div>
-    {% for user in users %}
-    <div class="user-table-row">
-        <div class="table-cell">{{ user['username'] }}</div>
-        <div class="table-cell">{{ user['email'] }}</div>
-        <div class="table-cell">{% if user['confirmed'] %}Kyllä {% else %}Ei{% endif %}</div>
-        <div class="table-cell">{{ user['role'] }}</div>
-        <div class="table-cell">{% if user['is_admin'] %}Kyllä {% else %}Ei{% endif %}</div>
-        <div class="table-cell">{% if user['global_admin'] %}Kyllä {% else %}Ei{% endif %}</div>
-        <div class="table-cell actions-cell">
-            <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
-            <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}"
-                onsubmit="return confirmAndSubmit(event);" class="delete-form">
-                <button type="submit" class="button delete-button">Poista</button>
-            </form>
-        </div>
-    </div>
-    {% else %}
-    <div class="user-table-row no-users">
-        <div class="table-cell" colspan="6">Ei käyttäjiä</div>
-    </div>
-    {% endfor %}
-</div>
+<!-- List of Users in a Table -->
+<table class="user-table">
+    <thead>
+        <tr>
+            <th>Käyttäjänimi</th>
+            <th>Sähköposti</th>
+            <th>Sähköposti vahvistettu</th>
+            <th>Rooli</th>
+            <th>Järjestelmänvalvoja</th>
+            <th>Superkäyttäjä</th>
+            <th>Toiminnot</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user['username'] }}</td>
+            <td>{{ user['email'] }}</td>
+            <td>{% if user['confirmed'] %}Kyllä{% else %}Ei{% endif %}</td>
+            <td>{{ user['role'] }}</td>
+            <td>{% if user['is_admin'] %}Kyllä{% else %}Ei{% endif %}</td>
+            <td>{% if user['global_admin'] %}Kyllä{% else %}Ei{% endif %}</td>
+            <td class="actions-cell">
+                <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
+                <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}"
+                    onsubmit="return confirmAndSubmit(event);" class="delete-form">
+                    <button type="submit" class="button delete-button">Poista</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="7">Ei käyttäjiä</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 <script>
 function confirmAndSubmit(event) {

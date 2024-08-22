@@ -10,11 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isSidebarHidden) {
         sidebar.classList.add('hidden');
         hiddenIcons.style.display = 'flex'; // Show hidden icons
-        mainContent.classList.add('shifted'); // Shift main content
+        mainContent.classList.remove('shifted'); // Shift main content
+
     } else {
         sidebar.classList.remove('hidden');
         hiddenIcons.style.display = 'none'; // Hide hidden icons
-        mainContent.classList.remove('shifted'); // Remove shift from main content
+        mainContent.classList.add('shifted'); // Remove shift from main content
     }
 
     // Function to toggle the sidebar and shift main content
@@ -24,10 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isHidden) {
             hiddenIcons.style.display = 'flex'; // Show hidden icons
-            mainContent.classList.add('shifted'); // Shift main content
+            mainContent.classList.remove('shifted'); // Shift main content
         } else {
             hiddenIcons.style.display = 'none'; // Hide hidden icons
-            mainContent.classList.remove('shifted'); // Remove shift from main content
+            mainContent.classList.add('shifted'); // Remove shift from main content
         }
     };
 

@@ -47,24 +47,27 @@
             <input type="text" id="route" name="route" class="form-control" value="{{ demo.route }}">
         </div>
 
-        <h4>Järjestäjätahon tiedot</h4>
+        <h4>Järjestäjätahojen tiedot</h4>
+
+        {{ for organizer in demo.organizers }}
 
         <div class="form-group">
             <label for="organizer_name">Järjestäjätahon nimi</label>
-            <input type="text" id="organizer_name" name="organizer_name" class="form-control" value="{{ demo.organizers[0].name }}">
+            <input type="text" id="organizer_name" name="organizer_name" class="form-control" value="{{ organizer.name }}">
         </div>
         <div class="form-group">
             <label for="organizer_email">Järjestätahon sähköpostiosoite</label>
-            <input type="email" id="organizer_email" name="organizer_email" class="form-control" value="{{ demo.organizers[0].email }}">
+            <input type="email" id="organizer_email" name="organizer_email" class="form-control" value="{{ organizer.email }}">
         </div>
         <div class="form-group">
             <label for="organization_id">Järjestäjäorganisaation ID (valinnainen)</label>
-            <input type="text" id="organization_id" name="organization_id" class="form-control" value="{{ demo.organizers[0].organization_id }}">
+            <input type="text" id="organization_id" name="organization_id" class="form-control" value="{{ organizer.organization_id }}">
         </div>
         <div class="form-group">
             <label for="organizer_website">Järjestäjän nettisivu (valinnainen)</label>
-            <input type="url" id="organizer_website" name="organizer_website" class="form-control" value="{{ demo.organizers[0].website }}">
+            <input type="url" id="organizer_website" name="organizer_website" class="form-control" value="{{ organizer.website }}">
         </div>
+        {{ endfor }}
 
         <!-- Approved checkbox -->
         <div class="form-group">

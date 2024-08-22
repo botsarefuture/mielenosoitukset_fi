@@ -1,7 +1,11 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
+<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+
 
 <div class="container mt-4">
     <h2>Muokkaa mielenosoitusta</h2>
@@ -16,7 +20,8 @@
         </div>
         <div class="form-group">
             <label for="start_time">Alkuaika</label>
-            <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time }}" required>
+            <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time }}"
+                required>
         </div>
         <div class="form-group">
             <label for="end_time">Päättymisaika</label>
@@ -30,52 +35,188 @@
             <label for="facebook">Facebook linkki</label>
             <input type="url" id="facebook" name="facebook" class="form-control" value="{{ demo.facebook }}">
         </div>
+
+        <!-- Paikkakunta Selector -->
         <div class="form-group">
-            <label for="city">Kaupunki</label>
-            <input type="text" id="city" name="city" class="form-control" value="{{ demo.city }}" required>
+            <label for="city">Paikkakunta</label>
+            <div class="dropdown">
+                <button type="button" class="dropbtn">{{ demo.city }}</button>
+                <div id="dropdown-content" class="dropdown-content">
+                    <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()">
+                    <a href="#" onclick="selectCity('Helsinki'); return false;">Helsinki</a>
+                    <a href="#" onclick="selectCity('Espoo'); return false;">Espoo</a>
+                    <a href="#" onclick="selectCity('Tampere'); return false;">Tampere</a>
+                    <a href="#" onclick="selectCity('Vantaa'); return false;">Vantaa</a>
+                    <a href="#" onclick="selectCity('Oulu'); return false;">Oulu</a>
+                    <a href="#" onclick="selectCity('Turku'); return false;">Turku</a>
+                    <a href="#" onclick="selectCity('Jyväskylä'); return false;">Jyväskylä</a>
+                    <a href="#" onclick="selectCity('Lahti'); return false;">Lahti</a>
+                    <a href="#" onclick="selectCity('Kuopio'); return false;">Kuopio</a>
+                    <a href="#" onclick="selectCity('Kouvola'); return false;">Kouvola</a>
+                    <a href="#" onclick="selectCity('Pori'); return false;">Pori</a>
+                    <a href="#" onclick="selectCity('Joensuu'); return false;">Joensuu</a>
+                    <a href="#" onclick="selectCity('Lappeenranta'); return false;">Lappeenranta</a>
+                    <a href="#" onclick="selectCity('Vaasa'); return false;">Vaasa</a>
+                    <a href="#" onclick="selectCity('Rovaniemi'); return false;">Rovaniemi</a>
+                    <a href="#" onclick="selectCity('Seinäjoki'); return false;">Seinäjoki</a>
+                    <a href="#" onclick="selectCity('Mikkeli'); return false;">Mikkeli</a>
+                    <a href="#" onclick="selectCity('Kotka'); return false;">Kotka</a>
+                    <a href="#" onclick="selectCity('Salo'); return false;">Salo</a>
+                    <a href="#" onclick="selectCity('Kokkola'); return false;">Kokkola</a>
+                    <a href="#" onclick="selectCity('Kajaani'); return false;">Kajaani</a>
+                    <a href="#" onclick="selectCity('Rauma'); return false;">Rauma</a>
+                </div>
+            </div>
+            <input type="hidden" id="selected-city" name="city" value="{{ demo.city }}" required>
         </div>
+
         <div class="form-group">
             <label for="address">Osoite</label>
             <input type="text" id="address" name="address" class="form-control" value="{{ demo.address }}" required>
         </div>
+
         <div class="form-group">
             <label for="type">Tyyppi</label>
-            <input type="text" id="type" name="type" class="form-control" value="{{ demo.event_type }}" required>
+            <select id="type" name="type" class="form-control" required>
+                <option value="marssi" {% if demo.event_type=='marssi' %}selected{% endif %}>Marssi</option>
+                <option value="paikallaan" {% if demo.event_type=='paikallaan' %}selected{% endif %}>Paikallaan</option>
+                <option value="muut" {% if demo.event_type=='muut' %}selected{% endif %}>Muut</option>
+            </select>
         </div>
-        <div class="form-group">
+
+        <div id="march-route-container" class="form-group" {% if demo.event_type !='marssi' %}style="display:none;" {%
+            endif %}>
             <label for="route">Reitti (marssin)</label>
             <input type="text" id="route" name="route" class="form-control" value="{{ demo.route }}">
         </div>
 
         <h4>Järjestäjätahojen tiedot</h4>
 
-        {{ for organizer in demo.organizers }}
+        <!-- Container for organizers -->
+        <div id="organizers-container">
+            {% for organizer in demo.organizers %}
+            <div class="form-group organizer-item">
+                <hr>
+                <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi</label>
+                <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.name }}" required>
+                <br><br>
+                <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
+                <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.website }}">
+                <br><br>
+                <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
+                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.email }}" required>
 
-        <div class="form-group">
-            <label for="organizer_name">Järjestäjätahon nimi</label>
-            <input type="text" id="organizer_name" name="organizer_name" class="form-control" value="{{ organizer.name }}">
+                <!-- Remove button -->
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+            </div>
+            {% endfor %}
         </div>
-        <div class="form-group">
-            <label for="organizer_email">Järjestätahon sähköpostiosoite</label>
-            <input type="email" id="organizer_email" name="organizer_email" class="form-control" value="{{ organizer.email }}">
-        </div>
-        <div class="form-group">
-            <label for="organization_id">Järjestäjäorganisaation ID (valinnainen)</label>
-            <input type="text" id="organization_id" name="organization_id" class="form-control" value="{{ organizer.organization_id }}">
-        </div>
-        <div class="form-group">
-            <label for="organizer_website">Järjestäjän nettisivu (valinnainen)</label>
-            <input type="url" id="organizer_website" name="organizer_website" class="form-control" value="{{ organizer.website }}">
-        </div>
-        {{ endfor }}
+
+        <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
 
         <!-- Approved checkbox -->
-        <div class="form-group">
-            <label for="approved">Hyväksytty</label>
-            <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo.approved %}checked{% endif %}>
+        <!-- Outer container with border -->
+        <div class="approval-wrapper" id="approval-wrapper">
+            <!-- Approved checkbox -->
+            <div class="form-group mt-4" id="approval-container">
+                <label for="approved">Hyväksytty</label>
+                <div>
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo.approved
+                        %}checked{% endif %}>
+                    <span id="approval-status" class="status-text">
+                        {% if demo.approved %}Kyllä{% else %}Ei{% endif %}
+                    </span>
+                </div>
+            </div>
         </div>
 
-        <button type="submit" class="submit-button">Tallenna</button>
+
+        <button type="submit" class="submit-button mt-3">Tallenna</button>
     </form>
 </div>
+
+<script>
+    let organizerCount = {{ demo.organizers | length }};
+
+function addOrganizer() {
+    organizerCount++;
+    const container = document.getElementById('organizers-container');
+    const organizerDiv = document.createElement('div');
+    organizerDiv.className = 'form-group organizer-item';
+
+    organizerDiv.innerHTML = `
+        <hr>
+        <label for="organizer_name_${organizerCount}">Järjestäjätahon nimi</label>
+        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control" placeholder="Järjestäjän nimi" required>
+
+        <label for="organizer_website_${organizerCount}">Nettisivu</label>
+        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control" placeholder="https://example.com">
+
+        <label for="organizer_email_${organizerCount}">Sähköposti</label>
+        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control" placeholder="sähköposti@example.com" required>
+
+        <!-- Remove button -->
+        <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+    `;
+
+    container.appendChild(organizerDiv);
+}
+
+function removeOrganizer(button) {
+    const container = document.getElementById('organizers-container');
+    container.removeChild(button.parentElement);
+}
+
+document.getElementById('type').addEventListener('change', function () {
+    const marchRouteContainer = document.getElementById('march-route-container');
+    if (this.value === 'marssi') {
+        marchRouteContainer.style.display = 'block';
+    } else {
+        marchRouteContainer.style.display = 'none';
+    }
+});
+
+// Paikkakunta dropdown functions
+function selectCity(city) {
+    document.querySelector('.dropbtn').textContent = city;
+    document.getElementById('selected-city').value = city;
+    document.getElementById('dropdown-content').style.display = 'none';
+}
+
+function filterFunction() {
+    let input, filter, a, i;
+    input = document.getElementById("searchInput");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("dropdown-content");
+    a = div.getElementsByTagName("a");
+    for (i = 0; i < a.length; i++) {
+        let txtValue = a[i].textContent || a[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            a[i].style.display = "";
+        } else {
+            a[i].style.display = "none";
+        }
+    }
+}
+
+document.querySelector('.dropbtn').addEventListener('click', function () {
+    document.getElementById('dropdown-content').style.display = 'block';
+});
+
+window.onclick = function (event) {
+    if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        var i;
+        for (i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.style.display === "block") {
+                openDropdown.style.display = "none";
+            }
+        }
+    }
+};
+</script>
 {% endblock %}

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 
 <div class="sidebar">
@@ -48,6 +49,23 @@
     <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon">&#128736;</a>
     <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon">&#128681;</a>
     <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon">&#128682;</a>
+=======
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+
+
+<div class="sidebar">
+    <button class="sidebar-toggle" aria-label="Toggle Sidebar">&#9776;</button>
+    <br>
+    <h2 class="sidebar-title">Järjestelmänvalvojien työkalupakki</h2> <!-- Sidebar Title -->
+    <nav class="sidebar-nav">
+        <ul>
+            <li><a href="{{ url_for('admin.admin_dashboard') }}">Hallintapaneeli</a></li>
+            <li><a href="{{ url_for('admin_user.user_control') }}">Käyttäjien hallinta</a></li>
+            <li><a href="{{ url_for('admin.admin_logout') }}">Kirjaudu ulos</a></li>
+            <!-- Add more links as needed -->
+        </ul>
+    </nav>
+>>>>>>> main
 </div>
 
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>

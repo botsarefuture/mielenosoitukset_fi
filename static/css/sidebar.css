@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 /* Sidebar container */
 .sidebar {
     width: 250px; /* Fixed width for sidebar */
     background-color: #0033A0; /* Solid dark blue background */
+=======
+/* Sidebar styling */
+.sidebar {
+    width: 250px; /* Fixed width for sidebar */
+    background-color: #0033A0; /* Dark background for sidebar */
+>>>>>>> main
     color: #ffffff; /* White text color */
     padding: 20px; /* Padding for sidebar content */
     display: flex;
@@ -10,16 +17,26 @@
     top: 0;
     left: 0;
     bottom: 0;
+<<<<<<< HEAD
     overflow-y: visible; /* Scrollable if content exceeds viewport */
     transform: translateX(0); /* Default position */
     transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
     box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+=======
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
+    transform: translateX(0); /* Default position */
+    transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
+>>>>>>> main
 }
 
 /* Hide sidebar */
 .sidebar.hidden {
+<<<<<<< HEAD
     display: none; /* The sidebar should go away when toggled */
 
+=======
+    transform: translateX(-250px); /* Hide sidebar offscreen */
+>>>>>>> main
 }
 
 /* Sidebar toggle button */
@@ -27,6 +44,7 @@
     position: absolute;
     top: 20px;
     left: 100%; /* Position outside sidebar */
+<<<<<<< HEAD
     margin-left: -70px; /* Adjust to position the button */
     color: #ffffff; /* White text color */
     border: none;
@@ -50,11 +68,36 @@
 
 /* Sidebar menu */
 .sidebar-nav {
+=======
+    margin-left: -50px; /* Adjust to position the button */
+    background-color: #0033A0; /* Dark background for button */
+    color: #ffffff; /* White text color */
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth background color transition */
+}
+
+.sidebar-toggle:hover {
+    background-color: #002a6d; /* Darker blue on hover */
+}
+
+/* Sidebar header */
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+/* Sidebar menu */
+.sidebar-menu {
+>>>>>>> main
     list-style-type: none;
     padding: 0;
     margin: 0;
 }
 
+<<<<<<< HEAD
 .sidebar-nav li {
     margin: 10px 0;
 }
@@ -183,4 +226,36 @@
 .sidebar-info .warning-icon {
     font-size: 24px;
     margin-right: 10px;
+=======
+.sidebar-menu li {
+    margin: 10px 0;
+}
+
+.sidebar-menu a {
+    color: #ffffff;
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.sidebar-menu a:hover {
+    background-color: #002a6d; /* Darker blue on hover */
+}
+
+/* Main content styling */
+.main-content {
+    margin-left: 250px; /* Space for the sidebar */
+    padding: 30px; /* Padding for content */
+    width: calc(100% - 250px); /* Full width minus sidebar */
+    height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth margin and width transitions */
+}
+
+.main-content.shifted {
+    margin-left: 0; /* Remove margin for sidebar */
+    width: 100%; /* Full width */
+>>>>>>> main
 }

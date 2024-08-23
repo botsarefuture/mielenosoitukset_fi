@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.querySelector('.sidebar');
     const toggleButton = document.querySelector('.sidebar-toggle');
@@ -37,4 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add event listener for the sidebar toggle button in the hidden icons
     hiddenToggleButton.addEventListener('click', toggleSidebar);
+=======
+// sidebar.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleButton = document.querySelector('.sidebar-toggle');
+    const mainContent = document.querySelector('.main-content');
+
+    toggleButton.addEventListener('click', () => {
+        sidebar.classList.toggle('hidden');
+        mainContent.classList.toggle('shifted');
+    });
+>>>>>>> main
 });

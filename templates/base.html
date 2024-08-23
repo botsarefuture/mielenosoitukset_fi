@@ -16,10 +16,10 @@
 </head>
 
 <body>
-<div class="wrapper">
+
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <div class="container bg-header-footer">
+        <div class="container">
             <!-- Logo and Home Link -->
             <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
 
@@ -77,7 +77,7 @@
 
 
     <!-- Main Content Area -->
-    <main class="container-main-content">
+    <main class="container main-content">
         {% block content %}
         <!-- The content from child templates will be injected here -->
         {% endblock %}
@@ -85,11 +85,11 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container-header-footer">
+        <div class="container">
             <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
         </div>
     </footer>
-</div>
+
     <!-- JavaScript for Navigation Menu Toggle -->
     <script>
         // JavaScript to toggle the navigation menu on small screens

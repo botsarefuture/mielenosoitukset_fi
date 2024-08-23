@@ -2,7 +2,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
-<div class="container-main-content">
+<div class="list-container">
     <h2>Tulevat Mielenosoitukset</h2>
 
     <!-- Extended search form for filtering demonstrations -->
@@ -20,7 +20,7 @@
         <button type="submit">Hae</button>
     </form>
 
-    <div class="container-grid">
+    <div class="grid-container">
         {% if demonstrations|length > 0 %}
             {% for demo in demonstrations %}
             <div class="grid-item">
@@ -29,7 +29,7 @@
                     <span class="date">{{ demo['date'] }}</span> |
                     <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span><br>
                     <span class="topic">Aihe: {{ demo['topic'] }}</span><br>
-                    <span class="location">Sijainti: {{ demo['address'] }}, {{ demo['city'] }}</span>
+                    <span class="location">Sijainti: {{ demo['city'] }}, {{ demo['address'] }}</span>
                 </div>
             </div>
             {% endfor %}

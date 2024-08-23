@@ -1,4 +1,0 @@
-flask
-bson
-pymongo
-flask_login

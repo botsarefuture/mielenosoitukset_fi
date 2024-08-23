@@ -1,0 +1,173 @@
+/* Ensure the body and html elements cover the full height of the viewport */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Roboto', sans-serif; /* Ensure consistent font */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Container for the entire page layout */
+.page-container {
+    display: flex; /* Use flexbox for horizontal layout */
+    margin: 0 auto;
+    padding: 0 20px; /* Horizontal padding */
+    box-sizing: border-box;
+    flex-direction: column; /* Stack content vertically on small screens */
+}
+
+/* Main content styling */
+.detail-container {
+    flex: 1; /* Main content takes up remaining space */
+    /* width: 100%; */
+    background-color: #ffffff; /* White background */
+    /* border: 1px solid #ddd; /* Light gray border */
+    padding: 20px;
+    box-sizing: border-box; /* Include padding in width/height */
+    border-radius: 0; /* No rounded corners */
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    overflow: auto; /* Add scroll if content exceeds */
+
+}
+
+
+
+/* Header styles */
+h2 {
+    color: #0033A0; /* Main Blue */
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0033A0; /* Underline effect */
+    padding-bottom: 10px;
+    font-family: 'Montserrat', sans-serif; /* Apply Montserrat font for headings */
+}
+
+/* Sidebar individual organizer styling */
+.organizer-info {
+    margin-bottom: 20px; /* Space between organizers */
+    padding-bottom: 10px; /* Space inside each organizer block */
+    border-bottom: 1px solid #ddd; /* Separator line */
+}
+
+.organizer-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.organizer-info a {
+    color: #0033A0; /* Main Blue */
+    text-decoration: none; /* Remove underline */
+    font-weight: bold;
+}
+
+.organizer-info a:hover {
+    text-decoration: underline; /* Underline on hover */
+    color: #FF6600; /* Secondary Orange on hover */
+}
+
+/* Paragraph styling */
+p {
+    font-size: 16px;
+    color: #333; /* Dark gray text */
+    margin-bottom: 15px;
+}
+
+strong {
+    color: #0033A0; /* Main Blue for emphasis */
+}
+
+/* Route section styling */
+.route {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9; /* Light gray background */
+    border-left: 5px solid #0033A0; /* Main Blue left border */
+}
+
+/* Link styling */
+a {
+    color: #0033A0; /* Main Blue */
+    text-decoration: none; /* Remove underline */
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline; /* Underline on hover */
+    color: #FF6600; /* Secondary Orange on hover */
+}
+
+/* Back link styling */
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #0033A0; /* Main Blue background */
+    color: #ffffff; /* White text */
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s ease; /* Smooth transition */
+}
+
+.back-link:hover {
+    background-color: #0066cc; /* Light Blue on hover */
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .page-container {
+        flex-direction: column; /* Stack content vertically on tablets */
+        padding: 0 10px; /* Reduce horizontal padding on tablets */
+    }
+
+    .detail-container {
+        margin-left: 0; /* Remove left margin on small screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        padding: 0 10px; /* Reduce padding on smaller screens */
+    }
+
+
+    .detail-container {
+        padding: 15px; /* Reduce padding on mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 1.5em; /* Slightly smaller headers on very small screens */
+    }
+
+    p {
+        font-size: 14px; /* Smaller paragraph text */
+    }
+
+    .route {
+        padding: 10px; /* Reduce padding */
+    }
+
+    .back-link {
+        padding: 8px 16px; /* Smaller padding */
+        font-size: 14px; /* Smaller font size */
+    }
+}
+
+.facebook-button {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #1877f2; /* Facebook blue color */
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.facebook-button:hover {
+    background-color: #145dbf; /* Darker Facebook blue on hover */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}

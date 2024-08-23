@@ -1,18 +1,15 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<!-- Include CSS and JS files -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
 
-<!-- Main content container -->
-<div class="container container-form">
+
+<div class="container mt-4">
     <h2>Muokkaa mielenosoitusta</h2>
     <form method="POST" action="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
-
-        <!-- Form fields -->
         <div class="form-group">
             <label for="title">Otsikko</label>
             <input type="text" id="title" name="title" class="form-control" value="{{ demo.title }}" required>
@@ -22,7 +19,7 @@
             <input type="text" id="date" name="date" class="form-control" value="{{ demo.date }}" required>
         </div>
         <div class="form-group">
-            <label for="start_time">Alkamisaika</label>
+            <label for="start_time">Alkuaika</label>
             <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time }}"
                 required>
         </div>
@@ -44,13 +41,30 @@
             <label for="city">Paikkakunta</label>
             <div class="dropdown">
                 <button type="button" class="dropbtn">{{ demo.city }}</button>
-                <br>
                 <div id="dropdown-content" class="dropdown-content">
                     <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()">
-                    <!-- List of cities -->
-                    {% for city in ['Akaa', 'Alajärvi', 'Alavieska', 'Alavus', 'Asikkala', 'Askola', 'Aura', 'Brändö', 'Eckerö', 'Enonkoski', 'Enontekiö', 'Espoo', 'Eura', 'Eurajoki', 'Evijärvi', 'Finström', 'Forssa', 'Föglö', 'Geta', 'Haapajärvi', 'Haapavesi', 'Hailuoto', 'Halsua', 'Hamina', 'Hammarland', 'Hankasalmi', 'Hanko', 'Harjavalta', 'Hartola', 'Hattula', 'Hausjärvi', 'Heinola', 'Heinävesi', 'Helsinki', 'Hirvensalmi', 'Hollola', 'Huittinen', 'Humppila', 'Hyrynsalmi', 'Hyvinkää', 'Hämeenkyrö', 'Hämeenlinna', 'Ii', 'Iisalmi', 'Iitti', 'Ikaalinen', 'Ilmajoki', 'Ilomantsi', 'Imatra', 'Inari', 'Inkoo', 'Isojoki', 'Isokyrö', 'Janakkala', 'Joensuu', 'Jokioinen', 'Jomala', 'Joroinen', 'Joutsa', 'Juuka', 'Juupajoki', 'Juva', 'Jyväskylä', 'Jämijärvi', 'Jämsä', 'Järvenpää', 'Kaarina', 'Kaavi', 'Kajaani', 'Kalajoki', 'Kangasala', 'Kangasniemi', 'Kankaanpää', 'Kannonkoski', 'Kannus', 'Karijoki', 'Karkkila', 'Karstula', 'Karvia', 'Kaskinen', 'Kauhajoki', 'Kauhava', 'Kauniainen', 'Kaustinen', 'Keitele', 'Kemi', 'Kemijärvi', 'Keminmaa', 'Kemiönsaari', 'Kempele', 'Kerava', 'Keuruu', 'Kihniö', 'Kinnula', 'Kirkkonummi', 'Kitee', 'Kittilä', 'Kiuruvesi', 'Kivijärvi', 'Kokemäki', 'Kokkola', 'Kolari', 'Konnevesi', 'Kontiolahti', 'Korsnäs', 'Koski Tl', 'Kotka', 'Kouvola', 'Kristiinankaupunki', 'Kruunupyy', 'Kuhmo', 'Kuhmoinen', 'Kumlinge', 'Kuopio', 'Kuortane', 'Kurikka', 'Kustavi', 'Kuusamo', 'Kyyjärvi', 'Kärkölä', 'Kärsämäki', 'Kökar', 'Lahti', 'Laihia', 'Laitila', 'Lapinjärvi', 'Lapinlahti', 'Lappajärvi', 'Lappeenranta', 'Lapua', 'Laukaa', 'Lemi', 'Lemland', 'Lempäälä', 'Leppävirta', 'Lestijärvi', 'Lieksa', 'Lieto', 'Liminka', 'Liperi', 'Lohja', 'Loimaa', 'Loppi', 'Loviisa', 'Luhanka', 'Lumijoki', 'Lumparland', 'Luoto', 'Luumäki', 'Maalahti', 'Maarianhamina – Mariehamn', 'Marttila', 'Masku', 'Merijärvi', 'Merikarvia', 'Miehikkälä', 'Mikkeli', 'Muhos', 'Multia', 'Muonio', 'Mustasaari', 'Muurame', 'Mynämäki', 'Myrskylä', 'Mäntsälä', 'Mänttä-Vilppula', 'Mäntyharju', 'Naantali', 'Nakkila', 'Nivala', 'Nokia', 'Nousiainen', 'Nurmes', 'Nurmijärvi', 'Närpiö', 'Orimattila', 'Oripää', 'Orivesi', 'Oulainen', 'Oulu', 'Outokumpu', 'Padasjoki', 'Paimio', 'Paltamo', 'Parainen', 'Parikkala', 'Parkano', 'Pedersöre', 'Pelkosenniemi', 'Pello', 'Perho', 'Pertunmaa', 'Petäjävesi', 'Pieksämäki', 'Pielavesi', 'Pietarsaari', 'Pihtipudas', 'Pirkkala', 'Polvijärvi', 'Pomarkku', 'Pori', 'Pornainen', 'Porvoo', 'Posio', 'Pudasjärvi', 'Pukkila', 'Punkalaidun', 'Puolanka', 'Puumala', 'Pyhtää', 'Pyhäjoki', 'Pyhäjärvi', 'Pyhäntä', 'Pyhäranta', 'Pälkäne', 'Pöytyä', 'Raahe', 'Raasepori', 'Raisio', 'Rantasalmi', 'Ranua', 'Rauma', 'Rautalampi', 'Rautavaara', 'Rautjärvi', 'Reisjärvi', 'Riihimäki', 'Ristijärvi', 'Rovaniemi', 'Ruokolahti', 'Ruovesi', 'Rusko', 'Rääkkylä', 'Saarijärvi', 'Salla', 'Salo', 'Saltvik', 'Sastamala', 'Sauvo', 'Savitaipale', 'Savonlinna', 'Savukoski', 'Seinäjoki', 'Sievi', 'Siikainen', 'Siikajoki', 'Siikalatva', 'Siilinjärvi', 'Simo', 'Sipoo', 'Siuntio', 'Sodankylä', 'Soini', 'Somero', 'Sonkajärvi', 'Sotkamo', 'Sottunga', 'Sulkava', 'Sund', 'Suomussalmi', 'Suonenjoki', 'Sysmä', 'Säkylä', 'Taipalsaari', 'Taivalkoski', 'Taivassalo', 'Tammela', 'Tampere', 'Tervo', 'Tervola', 'Teuva', 'Tohmajärvi', 'Toholampi', 'Toivakka', 'Tornio', 'Turku', 'Tuusniemi', 'Tuusula', 'Tyrnävä', 'Ulvila', 'Urjala', 'Utajärvi', 'Utsjoki', 'Uurainen', 'Uusikaarlepyy', 'Uusikaupunki', 'Vaala', 'Vaasa', 'Valkeakoski', 'Vantaa', 'Varkaus', 'Vehmaa', 'Vesanto', 'Vesilahti', 'Veteli', 'Vieremä', 'Vihti', 'Viitasaari', 'Vimpeli', 'Virolahti', 'Virrat', 'Vårdö', 'Vöyri', 'Ylitornio', 'Ylivieska', 'Ylöjärvi', 'Ypäjä', 'Ähtäri', 'Äänekoski'] %}
-                    <a href="#" onclick="selectCity('{{ city }}'); return false;">{{ city }}</a>
-                    {% endfor %}
+                    <a href="#" onclick="selectCity('Helsinki'); return false;">Helsinki</a>
+                    <a href="#" onclick="selectCity('Espoo'); return false;">Espoo</a>
+                    <a href="#" onclick="selectCity('Tampere'); return false;">Tampere</a>
+                    <a href="#" onclick="selectCity('Vantaa'); return false;">Vantaa</a>
+                    <a href="#" onclick="selectCity('Oulu'); return false;">Oulu</a>
+                    <a href="#" onclick="selectCity('Turku'); return false;">Turku</a>
+                    <a href="#" onclick="selectCity('Jyväskylä'); return false;">Jyväskylä</a>
+                    <a href="#" onclick="selectCity('Lahti'); return false;">Lahti</a>
+                    <a href="#" onclick="selectCity('Kuopio'); return false;">Kuopio</a>
+                    <a href="#" onclick="selectCity('Kouvola'); return false;">Kouvola</a>
+                    <a href="#" onclick="selectCity('Pori'); return false;">Pori</a>
+                    <a href="#" onclick="selectCity('Joensuu'); return false;">Joensuu</a>
+                    <a href="#" onclick="selectCity('Lappeenranta'); return false;">Lappeenranta</a>
+                    <a href="#" onclick="selectCity('Vaasa'); return false;">Vaasa</a>
+                    <a href="#" onclick="selectCity('Rovaniemi'); return false;">Rovaniemi</a>
+                    <a href="#" onclick="selectCity('Seinäjoki'); return false;">Seinäjoki</a>
+                    <a href="#" onclick="selectCity('Mikkeli'); return false;">Mikkeli</a>
+                    <a href="#" onclick="selectCity('Kotka'); return false;">Kotka</a>
+                    <a href="#" onclick="selectCity('Salo'); return false;">Salo</a>
+                    <a href="#" onclick="selectCity('Kokkola'); return false;">Kokkola</a>
+                    <a href="#" onclick="selectCity('Kajaani'); return false;">Kajaani</a>
+                    <a href="#" onclick="selectCity('Rauma'); return false;">Rauma</a>
                 </div>
             </div>
             <input type="hidden" id="selected-city" name="city" value="{{ demo.city }}" required>
@@ -79,7 +93,7 @@
         <h4>Järjestäjätahojen tiedot</h4>
 
         <!-- Container for organizers -->
-        <div id="organizers-container" class="container-columns">
+        <div id="organizers-container">
             {% for organizer in demo.organizers %}
             <div class="form-group organizer-item">
                 <hr>
@@ -94,6 +108,8 @@
                 <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
                 <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
                     class="form-control" value="{{ organizer.email }}" required>
+
+                <!-- Remove button -->
                 <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
             </div>
             {% endfor %}
@@ -102,8 +118,10 @@
         <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
 
         <!-- Approved checkbox -->
-        <div class="approval-wrapper mt-4">
-            <div class="form-group" id="approval-container">
+        <!-- Outer container with border -->
+        <div class="approval-wrapper" id="approval-wrapper">
+            <!-- Approved checkbox -->
+            <div class="form-group mt-4" id="approval-container">
                 <label for="approved">Hyväksytty</label>
                 <div>
                     <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo.approved
@@ -115,6 +133,7 @@
             </div>
         </div>
 
+
         <button type="submit" class="submit-button mt-3">Tallenna</button>
     </form>
 </div>
@@ -122,82 +141,82 @@
 <script>
     let organizerCount = {{ demo.organizers | length }};
 
-    function addOrganizer() {
-        organizerCount++;
-        const container = document.getElementById('organizers-container');
-        const organizerDiv = document.createElement('div');
-        organizerDiv.className = 'form-group organizer-item';
+function addOrganizer() {
+    organizerCount++;
+    const container = document.getElementById('organizers-container');
+    const organizerDiv = document.createElement('div');
+    organizerDiv.className = 'form-group organizer-item';
 
-        organizerDiv.innerHTML = `
-            <hr>
-            <label for="organizer_name_${organizerCount}">Järjestäjätahon nimi</label>
-            <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control" placeholder="Järjestäjän nimi" required>
-            <label for="organizer_website_${organizerCount}">Nettisivu</label>
-            <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control" placeholder="https://example.com">
-            <label for="organizer_email_${organizerCount}">Sähköposti</label>
-            <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control" placeholder="sähköposti@example.com" required>
-            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
-        `;
+    organizerDiv.innerHTML = `
+        <hr>
+        <label for="organizer_name_${organizerCount}">Järjestäjätahon nimi</label>
+        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control" placeholder="Järjestäjän nimi" required>
 
-        container.appendChild(organizerDiv);
+        <label for="organizer_website_${organizerCount}">Nettisivu</label>
+        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control" placeholder="https://example.com">
+
+        <label for="organizer_email_${organizerCount}">Sähköposti</label>
+        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control" placeholder="sähköposti@example.com" required>
+
+        <!-- Remove button -->
+        <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+    `;
+
+    container.appendChild(organizerDiv);
+}
+
+function removeOrganizer(button) {
+    const container = document.getElementById('organizers-container');
+    container.removeChild(button.parentElement);
+}
+
+document.getElementById('type').addEventListener('change', function () {
+    const marchRouteContainer = document.getElementById('march-route-container');
+    if (this.value === 'marssi') {
+        marchRouteContainer.style.display = 'block';
+    } else {
+        marchRouteContainer.style.display = 'none';
     }
+});
 
-    function removeOrganizer(button) {
-        const container = document.getElementById('organizers-container');
-        container.removeChild(button.parentElement);
-    }
+// Paikkakunta dropdown functions
+function selectCity(city) {
+    document.querySelector('.dropbtn').textContent = city;
+    document.getElementById('selected-city').value = city;
+    document.getElementById('dropdown-content').style.display = 'none';
+}
 
-    document.getElementById('type').addEventListener('change', function () {
-        const marchRouteContainer = document.getElementById('march-route-container');
-        if (this.value === 'marssi') {
-            marchRouteContainer.style.display = 'block';
+function filterFunction() {
+    let input, filter, a, i;
+    input = document.getElementById("searchInput");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("dropdown-content");
+    a = div.getElementsByTagName("a");
+    for (i = 0; i < a.length; i++) {
+        let txtValue = a[i].textContent || a[i].innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            a[i].style.display = "";
         } else {
-            marchRouteContainer.style.display = 'none';
+            a[i].style.display = "none";
         }
-    });
-
-    // Paikkakunta dropdown functions
-    function selectCity(city) {
-        document.querySelector('.dropbtn').textContent = city;
-        document.getElementById('selected-city').value = city;
-        document.getElementById('dropdown-content').style.display = 'none';
     }
+}
 
-    function filterFunction() {
-        let input, filter, div, a, i;
-        input = document.getElementById('searchInput');
-        if (input !== '') {
-            filter = input.value.toUpperCase();
-            div = document.getElementById('dropdown-content');
-            a = div.getElementsByTagName('a');
-            for (i = 0; i < a.length; i++) {
-                let txtValue = a[i].textContent || a[i].innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    a[i].style.display = '';
-                } else {
-                    a[i].style.display = 'none';
-                }
+document.querySelector('.dropbtn').addEventListener('click', function () {
+    document.getElementById('dropdown-content').style.display = 'block';
+});
+
+window.onclick = function (event) {
+    if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        var i;
+        for (i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.style.display === "block") {
+                openDropdown.style.display = "none";
             }
         }
     }
-
-    document.querySelector('.dropbtn').addEventListener('click', function () {
-        document.getElementById('dropdown-content').style.display = 'block';
-    });
-
-    window.onclick = function (event) {
-        console.log(event.target);
-        if (!event.target.matches('.dropdown')) {
-            if (event.target !== document.getElementByClassName("dropdown-content")) {
-                var dropdowns = document.getElementsByClassName('dropdown-content');
-                for (let i = 0; i < dropdowns.length; i++) {
-                    let openDropdown = dropdowns[i];
-                    if (openDropdown.style.display === 'block') {
-                        openDropdown.style.display = 'none';
-                    }
-                }
-            }
-        }
-    };
+};
 </script>
 {% endblock %}

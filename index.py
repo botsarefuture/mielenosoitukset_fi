@@ -1,13 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from flask_mail import Mail
+from flask import Flask, render_template, request, redirect, url_for, flash
 from bson.objectid import ObjectId
 from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, login_required
 from models import User  # Import User model
+from emailer.EmailSender import EmailSender
+email_sender = EmailSender()
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+
+MAINTANENCE = False
+
+@app.before_request
+def is_maintanence():
+    if MAINTANENCE:
+        return render_template("maintanence.html")
+    
+    #flash("meow", "info")
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
@@ -16,7 +26,7 @@ mongo = db_manager.get_db()
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'  # Redirect to login view if not authenticated
+login_manager.login_view = 'auth.login'  # Redirect to login view if not authenticated
 
 # User Loader function
 @login_manager.user_loader
@@ -29,19 +39,22 @@ def load_user(user_id):
         return User.from_db(user_doc)
     return None
 
-# Initialize Mail
-mail = Mail(app)
-
 # Import and register blueprints
-from admin_bp import admin_bp
-app.register_blueprint(admin_bp)
 
 from organization import organization_bp
 app.register_blueprint(organization_bp)
 
+from admin_bp import admin_bp
 from admin_user_bp import admin_user_bp
+from admin_demo_bp import admin_demo_bp
+from admin_org_bp import admin_org_bp
+app.register_blueprint(admin_bp)
+app.register_blueprint(admin_demo_bp)
 app.register_blueprint(admin_user_bp)
+app.register_blueprint(admin_org_bp)
 
+<<<<<<< HEAD
+=======
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -51,17 +64,15 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         email = request.form.get('email')
+>>>>>>> main
 
-        # Validation for username and password
-        if not username or not password or len(username) < 3 or len(password) < 6:
-            flash('Invalid input. Username must be at least 3 characters and password at least 6 characters.')
-            return redirect(url_for('register'))
+from auth import auth_bp
 
-        # Check if the username already exists
-        if mongo.users.find_one({"username": username}):
-            flash('Username already exists.')
-            return redirect(url_for('register'))
+app.register_blueprint(auth_bp, url_prefix="/auth/")
 
+<<<<<<< HEAD
+from datetime import datetime
+=======
         user_data = User.create_user(username, password, email)
         mongo.users.insert_one(user_data)
 
@@ -95,6 +106,7 @@ def login():
         flash('Invalid username or password.')
 
     return render_template('auth/login.html')
+>>>>>>> main
 
 # Admin logout route
 @app.route('/logout')
@@ -110,7 +122,6 @@ def index():
     """
     search_query = request.args.get('search', '')
 
-    # Consider adding pagination to handle large sets of results more efficiently.
     if search_query:
         demonstrations = mongo.demonstrations.find({
             "approved": True,
@@ -123,6 +134,10 @@ def index():
         })
     else:
         demonstrations = mongo.demonstrations.find({"approved": True})
+
+    # Convert the cursor to a list and sort by date
+    demonstrations = list(demonstrations)
+    demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
 
     return render_template('index.html', demonstrations=demonstrations)
 
@@ -191,18 +206,43 @@ def demonstrations():
     List all approved demonstrations, optionally filtered by search query.
     """
     search_query = request.args.get('search', '')
+    city_query = request.args.get('city', '')
+    location_query = request.args.get('location', '')
+    date_query = request.args.get('date', '')
+    topic_query = request.args.get('topic', '')
+
+    # Build the query dictionary
+    query = {"approved": True}
 
     if search_query:
-        demonstrations = mongo.demonstrations.find({
-            "approved": True,
-            "$or": [
-                {"title": {"$regex": search_query, "$options": "i"}},
-                {"location": {"$regex": search_query, "$options": "i"}},
-                {"organizer": {"$regex": search_query, "$options": "i"}}
-            ]
-        })
-    else:
-        demonstrations = mongo.demonstrations.find({"approved": True})
+        query["$or"] = [
+            {"title": {"$regex": search_query, "$options": "i"}},
+            {"city": {"$regex": search_query, "$options": "i"}},
+            {"topic": {"$regex": search_query, "$options": "i"}},
+            {"address": {"$regex": search_query, "$options": "i"}}
+        ]
+
+    if city_query:
+        query["city"] = {"$regex": city_query, "$options": "i"}
+    
+    if location_query:
+        query["address"] = {"$regex": location_query, "$options": "i"}
+
+    if date_query:
+        try:
+            # Convert the date to a datetime object to ensure it's in the correct format
+            parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
+            query["date"] = date_query  # Keep the date in string form, since it's stored that way
+        except ValueError:
+            flash('Invalid date format. Please use pp.kk.vvvv.')
+
+    if topic_query:
+        query["topic"] = {"$regex": topic_query, "$options": "i"}
+
+    demonstrations = list(mongo.demonstrations.find(query))
+
+    # Sort the results by date
+    demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
 
     return render_template('list.html', demonstrations=demonstrations)
 

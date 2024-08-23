@@ -1,0 +1,41 @@
+/* Remove Button Styles */
+.btn-danger {
+    background-color: #dc3545; /* Bootstrap danger color */
+    border-color: #dc3545; /* Bootstrap danger border color */
+    color: white; /* Text color for better contrast */
+}
+
+.btn-danger:hover {
+    background-color: #c82333; /* Darker shade for hover effect */
+    border-color: #bd2130; /* Darker border color on hover */
+    color: white; /* Text color remains white */
+}
+
+.btn-danger:focus, .btn-danger.focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 87, 87, 0.5); /* Focus shadow effect */
+}
+
+.btn-sm {
+    font-size: 0.875rem; /* Smaller font size */
+    padding: 0.25rem 0.5rem; /* Smaller padding */
+}
+
+.mt-2 {
+    margin-top: 0.5rem; /* Top margin */
+}
+
+/* Additional Styles for Button Container */
+.organizer-item {
+    position: relative; /* Allows positioning of the remove button */
+    padding-bottom: 1rem; /* Space at the bottom for the remove button */
+}
+
+.organizer-item .btn-danger {
+    position: relative; /* Absolute positioning within the container */
+    top: 1rem; /* Distance from the top */
+    right: 0; /* Align to the right edge */
+}
+
+.form-group {
+    margin-bottom: 5px;
+}

@@ -1,6 +1,8 @@
 from database_manager import DatabaseManager
 from bson.objectid import ObjectId
 
+from obj_creator import ObjectId as OID
+
 class Organizer:
     def __init__(self, name: str = None, email: str = None, organization_id: str = None, website: str = None):
         self.name = name
@@ -56,7 +58,11 @@ class Demonstration:
     def __init__(self, title: str, date: str, start_time: str, end_time: str, topic: str, 
                  facebook: str, city: str, address: str, event_type: str, route: str, 
                  organizers: list[Organizer] = None, approved: bool = False, 
-                 linked_organizations: dict = None):
+                 linked_organizations: dict = None, _id = None):
+        
+        if _id is None:
+            _id = OID()
+            _id = ObjectId(str(_id))
         
         # Validation for required fields
         self.validate_fields(title, date, start_time, end_time, topic, city, address, event_type)
@@ -74,6 +80,7 @@ class Demonstration:
         self.organizers = organizers if organizers is not None else []
         self.approved = approved
         self.linked_organizations = linked_organizations if linked_organizations is not None else {}
+        self._id = _id
 
     def validate_fields(self, title, date, start_time, end_time, topic, city, address, event_type):
         """
@@ -84,6 +91,7 @@ class Demonstration:
 
     def to_dict(self):
         return {
+            '_id': self._id,
             'title': self.title,
             'date': self.date,
             'start_time': self.start_time,
@@ -98,12 +106,13 @@ class Demonstration:
             'approved': self.approved,
             'linked_organizations': self.linked_organizations
         }
-
+            
     @classmethod
     def from_dict(cls, data):
         try:
             organizers = [Organizer.from_dict(org) for org in data.get('organizers', [])] if data.get('organizers') else []
             return cls(
+                _id=data.get("_id", None),
                 title=data['title'],
                 date=data['date'],
                 start_time=data['start_time'],

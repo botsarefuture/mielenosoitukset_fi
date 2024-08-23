@@ -1,3 +1,55 @@
+<<<<<<< HEAD
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+
+<div class="sidebar">
+    <button class="sidebar-toggle" aria-label="Toggle Sidebar">&#9776;</button>
+    <h2 class="sidebar-title">Superkäyttäjän työkalupakki</h2> <!-- Sidebar Title -->
+    <nav class="sidebar-nav">
+        <ul>
+            <li>
+                <a href="{{ url_for('admin.admin_dashboard') }}">
+                    <span class="icon">&#128187;</span> Superkäyttäjän käsikirja
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_user.user_control') }}">
+                    <span class="icon">&#128100;</span> Käyttäjien hallinta
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_org.organization_control') }}">
+                    <span class="icon">&#128736;</span> Organisaatioiden hallinta
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_demo.demo_control') }}">
+                    <span class="icon">&#128681;</span> Mielenosoitusten hallinta
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.admin_logout') }}">
+                    <span class="icon">&#128682;</span> Kirjaudu ulos
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Shortened notice at the bottom of the sidebar -->
+    <div class="sidebar-info">
+        <span class="warning-icon">⚠️</span> <!-- Warning icon -->
+        <p>Olet superkäyttäjätilassa.</p>
+    </div>
+</div>
+
+<!-- Hidden icons section -->
+<div class="hidden-icons">
+    <a class="hidden-icon" id="hiddentoggle" aria-label="Toggle Sidebar">&#9776;</a> <!-- Sidebar Toggle Button -->
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon">&#128187;</a>
+    <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon">&#128100;</a>
+    <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon">&#128736;</a>
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon">&#128681;</a>
+    <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon">&#128682;</a>
+=======
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
 
 
@@ -13,6 +65,7 @@
             <!-- Add more links as needed -->
         </ul>
     </nav>
+>>>>>>> main
 </div>
 
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>

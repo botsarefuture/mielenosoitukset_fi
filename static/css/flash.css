@@ -1,0 +1,47 @@
+/* CSS for Flash Messages */
+.flash-messages {
+    list-style-type: none;
+    padding: 0;
+    margin: 1rem auto; /* Center the list horizontally */
+    max-width: 600px; /* Limit the width of the flash messages */
+}
+
+.flash-messages li {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: bold;
+    display: flex; /* Ensures proper spacing and alignment */
+    align-items: center; /* Vertically centers text */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adds subtle shadow for better visibility */
+    word-wrap: break-word; /* Ensure long words don't overflow */
+}
+
+.flash-messages .success {
+    background-color: #28a745; /* Green for success */
+}
+
+.flash-messages .error {
+    background-color: #dc3545; /* Red for errors */
+}
+
+.flash-messages .info {
+    background-color: #17a2b8; /* Blue for informational messages */
+}
+
+.flash-messages .warning {
+    background-color: #ffc107; /* Yellow for warnings */
+    color: #212529; /* Dark text for better readability */
+}
+
+/* Optional: Add transition for smooth background color change */
+.flash-messages li {
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth background color and slight scale change */
+}
+
+/* Optional: Hover effect for better interactivity */
+.flash-messages li:hover {
+    transform: scale(1.02); /* Slightly enlarges the message on hover */
+    cursor: pointer; /* Changes cursor to pointer on hover */
+}

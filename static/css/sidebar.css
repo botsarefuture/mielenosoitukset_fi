@@ -1,7 +1,14 @@
+<<<<<<< HEAD
+/* Sidebar container */
+.sidebar {
+    width: 250px; /* Fixed width for sidebar */
+    background-color: #0033A0; /* Solid dark blue background */
+=======
 /* Sidebar styling */
 .sidebar {
     width: 250px; /* Fixed width for sidebar */
     background-color: #0033A0; /* Dark background for sidebar */
+>>>>>>> main
     color: #ffffff; /* White text color */
     padding: 20px; /* Padding for sidebar content */
     display: flex;
@@ -10,14 +17,26 @@
     top: 0;
     left: 0;
     bottom: 0;
+<<<<<<< HEAD
+    overflow-y: visible; /* Scrollable if content exceeds viewport */
+    transform: translateX(0); /* Default position */
+    transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+=======
     overflow-y: auto; /* Scrollable if content exceeds viewport */
     transform: translateX(0); /* Default position */
     transition: transform 0.3s ease, width 0.3s ease; /* Smooth transition */
+>>>>>>> main
 }
 
 /* Hide sidebar */
 .sidebar.hidden {
+<<<<<<< HEAD
+    display: none; /* The sidebar should go away when toggled */
+
+=======
     transform: translateX(-250px); /* Hide sidebar offscreen */
+>>>>>>> main
 }
 
 /* Sidebar toggle button */
@@ -25,6 +44,31 @@
     position: absolute;
     top: 20px;
     left: 100%; /* Position outside sidebar */
+<<<<<<< HEAD
+    margin-left: -70px; /* Adjust to position the button */
+    color: #ffffff; /* White text color */
+    border: none;
+    border-radius: 50%; /* Circular button */
+    width: 60px; /* Larger size */
+    height: 60px; /* Larger size */
+    padding: 0; /* Remove padding */
+    font-size: 30px; /* Larger icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background-color: #e64a19; /* Darker orange on hover */
+    transform: scale(1.1); /* Slightly enlarge button on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
+}
+
+/* Sidebar menu */
+.sidebar-nav {
+=======
     margin-left: -50px; /* Adjust to position the button */
     background-color: #0033A0; /* Dark background for button */
     color: #ffffff; /* White text color */
@@ -47,11 +91,142 @@
 
 /* Sidebar menu */
 .sidebar-menu {
+>>>>>>> main
     list-style-type: none;
     padding: 0;
     margin: 0;
 }
 
+<<<<<<< HEAD
+.sidebar-nav li {
+    margin: 10px 0;
+}
+
+.sidebar-nav a {
+    color: #ffffff;
+    text-decoration: none;
+    display: flex; /* Change display to flex for alignment */
+    align-items: center;
+    padding: 12px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+}
+/* Hidden icons section styling */
+.hidden-icons {
+    position: fixed;
+    display: none; /* Hide by default */
+    left: 0; /* Align to the right edge of the screen */
+    height: 100%;
+    top: 50%; /* Center vertically */
+    transform: translateY(-50%); /* Adjust for vertical centering */
+    display: flex;
+    flex-direction: column;
+    background-color: #0033A0; /* Background color matching the sidebar */
+    padding: 10px; /* Padding for spacing */
+    border-radius: 5px; /* Rounded corners for consistency */
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+}
+
+/* Toggle button styling in hidden icons */
+.hidden-icons .sidebar-toggle {
+    font-size: 30px; /* Size for the toggle button */
+    color: #ffffff; /* Icon color */
+    background-color: transparent; /* No background color */
+    border: none; /* Remove border */
+    padding: 10px; /* Padding for click area */
+    cursor: pointer; /* Pointer cursor for clickable element */
+    margin-bottom: 10px; /* Space below the toggle button */
+    transition: background-color 0.3s ease; /* Smooth hover transition */
+}
+
+/* Hover effect on the hidden icons toggle button */
+.hidden-icons .sidebar-toggle:hover {
+    background-color: #e64a19; /* Background color on hover */
+    border-radius: 50%; /* Round button on hover */
+    color: #ffffff; /* Icon color on hover */
+}
+
+/* Hidden icons styling */
+.hidden-icons a {
+    font-size: 24px; /* Default icon size */
+    color: #ffffff; /* Icon color */
+    margin: 10px 0; /* Space between icons */
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, font-size 0.3s ease;
+    padding: 10px; /* Padding for clickable area */
+    border-radius: 50%; /* Rounded hover effect */
+}
+
+/* Hover effect on hidden icons */
+.hidden-icons a:hover {
+    background-color: #e64a19; /* Background color on hover */
+    font-size: 30px; /* Increase icon size on hover */
+    color: #ffffff; /* Icon color on hover */
+}
+
+
+/* Main content styling */
+.main-content {
+    width: 100%; /* Full width */
+    margin-left: 75px;
+    width: calc(100% - 75px); /* Full width minus sidebar */
+    box-sizing: border-box;
+    padding: 30px; /* Padding for content */
+
+}
+
+/* Main content shifted when sidebar is hidden */
+.main-content.shifted {
+    margin-left: 300px; /* Space for the sidebar */
+    padding: 30px; /* Padding for content */
+    width: calc(100% - 300px); /* Full width minus sidebar */
+    /*height: 100vh; /* Full viewport height */
+    overflow-y: auto; /* Scrollable if content exceeds viewport */
+    box-sizing: border-box;
+    transition: margin-left 0.3s ease, width 0.3s ease; /* Smooth margin and width transitions */
+    
+}
+
+.footer {
+    padding: 0;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%; /* Full-width on small screens */
+        height: auto;
+        position: relative;
+    }
+    
+    .sidebar-toggle {
+        display: none; /* Hide toggle button on small screens */
+    }
+
+    .main-content {
+        margin-left: 0; /* Adjust for full-width sidebar */
+        width: 100%; /* Full width */
+    }
+}
+
+.sidebar-info {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: #fff3cd;
+    color: #856404;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.sidebar-info .warning-icon {
+    font-size: 24px;
+    margin-right: 10px;
+=======
 .sidebar-menu li {
     margin: 10px 0;
 }
@@ -82,4 +257,5 @@
 .main-content.shifted {
     margin-left: 0; /* Remove margin for sidebar */
     width: 100%; /* Full width */
+>>>>>>> main
 }

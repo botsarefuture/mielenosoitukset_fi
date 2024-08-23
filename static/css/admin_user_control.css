@@ -1,136 +1,110 @@
-/* admin_user_control.css */
-
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-}
-
-.user-control-panel {
-    padding: 20px;
+/* Container for the entire user table */
+.user-table {
+    display: table;
     width: 100%;
-    box-sizing: border-box;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin: 0 auto;
+    border-collapse: collapse;
+    margin-top: 20px;
 }
 
-h2 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #333;
+/* Table header styling */
+.user-table-header {
+    display: table-row;
+    font-weight: bold;
+    background-color: #f4f4f4;
+    text-align: left;
 }
 
-.user-filter {
-    margin-bottom: 20px;
-    padding: 15px;
-    background-color: #fafafa;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.search-form {
-    display: flex;
-    gap: 10px;
-}
-
-.search-form input[type="text"] {
-    flex: 1;
+.table-cell {
+    display: table-cell;
     padding: 10px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.search-form .search-button {
-    background-color: #2196F3; /* Blue */
-    border: none;
-}
-
-.search-form .search-button:hover {
-    background-color: #0b79d0; /* Darker blue */
-}
-
-.user-list {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
-
-.user-item {
     border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    padding: 15px;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    vertical-align: middle;
 }
 
-.user-info p {
-    margin: 5px 0;
-    color: #555;
+/* Align the action cell header to center */
+.actions-cell-header {
+    text-align: center;
 }
 
-.user-actions {
+/* Table row styling */
+.user-table-row {
+    display: table-row;
+}
+
+.user-table-row:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Specific styling for the actions cell */
+.actions-cell {
     display: flex;
+    justify-content: center;
     gap: 10px;
 }
 
+/* Styling for action buttons */
 .button {
-    display: inline-block;
-    padding: 10px 15px;
-    font-size: 0.9rem;
-    text-align: center;
-    color: #fff;
+    padding: 6px 12px;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    border-radius: 4px;
+    color: #fff;
     text-decoration: none;
-    transition: background-color 0.3s;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 .edit-button {
-    background-color: #4CAF50; /* Green */
+    background-color: #007bff;
 }
 
 .delete-button {
-    background-color: #f44336; /* Red */
+    background-color: #dc3545;
 }
 
-.edit-button:hover {
-    background-color: #45a049; /* Darker green */
+.delete-form {
+    display: inline;
 }
 
-.delete-button:hover {
-    background-color: #e53935; /* Darker red */
+/* Styling for search bar */
+.search-form {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
 }
 
-.no-users {
+.search-input {
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px;
+    width: 250px;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+}
+
+.search-button {
+    padding: 8px 16px;
+    background-color: #28a745;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.search-button:hover {
+    background-color: #218838;
+}
+
+/* No users message styling */
+.no-users .table-cell {
     text-align: center;
-    color: #999;
-}
-
-.pagination {
-    margin-top: 20px;
-    text-align: center;
-}
-
-/* Pagination link styles */
-.pagination a {
-    display: inline-block;
-    padding: 8px 15px;
-    margin: 0 5px;
+    font-style: italic;
+    color: #666;
+    padding: 20px;
     border: 1px solid #ddd;
-    border-radius: 5px;
-    color: #333;
-    text-decoration: none;
-    background-color: #fff;
-}
-
-.pagination a:hover {
-    background-color: #f4f4f4;
 }

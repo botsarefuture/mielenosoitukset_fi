@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Ei pääsyä{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Ei pääsyä</h1>
+    <p>Sinulla ei ole tarvittavia oikeuksia tämän sivun katseluun.</p>
+    <p>Mikäli uskot tämän olevan virhe, ota yhteyttä sivuston ylläpitäjään tai luo tukipyyntö.</p>
+    <a href="{{ url_for('home') }}">Takaisin etusivulle</a> | 
+    <!--<a href="https://tuki.mielenosoitukset.fi" target="_blank">Luo tukipyyntö</a>-->
+</div>
+{% endblock %}

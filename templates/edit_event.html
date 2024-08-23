@@ -5,7 +5,7 @@
 <div class="form-container">
     <h2>Muokkaa mielenosoitusta</h2>
 
-    <form method="POST" action="{{ url_for('edit_event', demo_id=demo._id) }}">
+    <form method="POST">
         <!-- Comment: Form for editing event details -->
         <!-- TODO: Add client-side validation to improve user experience -->
 
@@ -70,7 +70,7 @@
         <!-- Comment: Dropdown for selecting event type -->
 
         <div id="march-route-container" class="optional-section" style="{% if demo.event_type == 'marssi' %}display: block;{% else %}display: none;{% endif %}">
-            <label for="route">Reitti (vain marssille, valinnainen)</label>
+            <label for="route">Reitti (vain marssille)</label>
             <textarea id="route" name="route" placeholder="Reitti...">{{ demo.route }}</textarea>
         </div>
         <!-- Comment: Textarea for the march route, visible only if the event type is 'marssi' -->

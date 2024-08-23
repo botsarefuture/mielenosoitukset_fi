@@ -1,0 +1,92 @@
+/* Container for the entire organization table */
+.organization-table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+/* Table header styling */
+.organization-table-header {
+    display: table-row;
+    font-weight: bold;
+    background-color: #f4f4f4;
+    text-align: left;
+}
+
+.table-cell {
+    display: table-cell;
+    padding: 10px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+/* Align the action cell header to center */
+.actions-cell-header {
+    text-align: center;
+}
+
+/* Table row styling */
+.organization-table-row {
+    display: table-row;
+}
+
+.organization-table-row:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Specific styling for the actions cell */
+.actions-cell {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Styling for action buttons */
+.button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edit-button {
+    background-color: #007bff;
+}
+
+.delete-button {
+    background-color: #dc3545;
+}
+
+.delete-form {
+    display: inline;
+}
+
+/* Styling for create organization button */
+.create-organization-button {
+    padding: 10px 20px;
+    background-color: #28a745;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.create-organization-button:hover {
+    background-color: #218838;
+}
+
+/* No organizations message styling */
+.no-organizations .table-cell {
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 20px;
+    border: 1px solid #ddd;
+}

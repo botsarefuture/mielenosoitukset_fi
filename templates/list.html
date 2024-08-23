@@ -5,31 +5,37 @@
 <div class="list-container">
     <h2>Tulevat Mielenosoitukset</h2>
 
+    <!-- Extended search form for filtering demonstrations -->
     <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
-        <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Search for demonstrations">
+        <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Search for demonstrations" value="{{ request.args.get('search', '') }}">
+        
+        <input type="text" name="city" placeholder="Kaupunki" aria-label="City" value="{{ request.args.get('city', '') }}">
+        
+        <input type="text" name="location" placeholder="Sijainti" aria-label="Location" value="{{ request.args.get('location', '') }}">
+        
+        <input type="text" name="date" placeholder="Päivämäärä (pp.kk.vvvv)" aria-label="Date" value="{{ request.args.get('date', '') }}">
+        
+        <input type="text" name="topic" placeholder="Aihe" aria-label="Topic" value="{{ request.args.get('topic', '') }}">
+        
         <button type="submit">Hae</button>
-        <!-- Comment: Search form for filtering demonstrations by keyword -->
-        <!-- TODO: Add additional search filters (e.g., date range, location) if needed -->
     </form>
 
     <div class="grid-container">
-        {% for demo in demonstrations %}
-        <div class="grid-item">
-            <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="title">{{ demo['title'] }}</a>
-            <div class="details">
-                <span class="date">{{ demo['date'] }}</span> |
-                <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span><br>
-                <span class="topic">Aihe: {{ demo['topic'] }}</span><br>
-                <span class="location">Sijainti: {{ demo['city'] }}, {{ demo['address'] }}</span>
-                <!-- Comment: Display detailed information for each demonstration -->
-                <!-- TODO: Add functionality to sort or paginate results if the list becomes large -->
+        {% if demonstrations|length > 0 %}
+            {% for demo in demonstrations %}
+            <div class="grid-item">
+                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="title">{{ demo['title'] }}</a>
+                <div class="details">
+                    <span class="date">{{ demo['date'] }}</span> |
+                    <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span><br>
+                    <span class="topic">Aihe: {{ demo['topic'] }}</span><br>
+                    <span class="location">Sijainti: {{ demo['city'] }}, {{ demo['address'] }}</span>
+                </div>
             </div>
-        </div>
+            {% endfor %}
         {% else %}
         <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
-        <!-- Comment: Message displayed when no demonstrations are found -->
-        <!-- TODO: Consider adding suggestions or links for further actions (e.g., submitting a demonstration) -->
-        {% endfor %}
+        {% endif %}
     </div>
 </div>
 {% endblock %}

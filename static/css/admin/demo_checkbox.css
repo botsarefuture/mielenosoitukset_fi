@@ -1,0 +1,62 @@
+/* Style for the outer wrapper */
+.approval-wrapper {
+    border: 2px solid #ccc; /* Light grey border */
+    border-radius: 8px; /* Rounded corners */
+    padding: 15px; /* Padding inside the border */
+    margin: 20px 0; /* Margin around the whole block */
+    background-color: #f9f9f9; /* Light grey background for wrapper */
+}
+
+/* Style for checkbox container */
+#approval-container {
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    border: 1px solid #ddd; /* Light border around the checkbox section */
+}
+
+/* Style for status text */
+#approval-container .status-text {
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+/* Ensure checkbox aligns nicely with text */
+.form-check-input {
+    margin-right: 5px;
+}
+
+/* Custom styling for the checkbox itself */
+.form-check-input {
+    width: 24px; /* Larger width */
+    height: 24px; /* Larger height */
+    cursor: pointer; /* Change cursor to pointer on hover */
+    -webkit-appearance: none; /* Remove default styling */
+    appearance: none; /* Remove default styling */
+    border: 2px solid #ccc; /* Light grey border */
+    border-radius: 4px; /* Rounded corners */
+    background-color: #fff; /* White background */
+    position: relative; /* Relative positioning for custom checkmark */
+    outline: none; /* Remove default focus outline */
+}
+
+.form-check-input:checked {
+    background-color: #009B77; /* Green background when checked */
+    border-color: #009B77; /* Green border when checked */
+}
+
+/* Add a custom checkmark for checked state */
+.form-check-input:checked::before {
+    content: ''; /* Empty content for the checkmark */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px; /* Width of the checkmark */
+    height: 16px; /* Height of the checkmark */
+    border: solid #fff; /* White checkmark */
+    border-width: 0 3px 3px 0; /* Checkmark border width */
+    transform: rotate(45deg); /* Rotate the border to form a checkmark */
+    transform-origin: center;
+    margin-top: -8px; /* Adjust the vertical position */
+    margin-left: -4px; /* Adjust the horizontal position */
+}

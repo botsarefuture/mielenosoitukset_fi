@@ -1,0 +1,38 @@
+{% extends 'admin_base.html' %}
+
+{% block main_content %}
+<div class="container mt-4">
+    <h2>Muokkaa järjestäjätahoa</h2>
+
+    <form method="POST" action="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}">
+        <div class="form-group">
+            <label for="name">Nimi</label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ organization.name }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Kuvaus</label>
+            <textarea id="description" name="description" class="form-control" required>{{ organization.description }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="email">sähköpostiosoite</label>
+            <input type="email" id="email" name="email" class="form-control" value="{{ organization.email }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="website">Verkkosivu</label>
+            <input type="url" id="website" name="website" class="form-control" value="{{ organization.website }}">
+        </div>
+
+        <!-- Approved checkbox -->
+        <div class="form-group">
+            <label for="verified">Vahvistettu</label>
+            <input type="checkbox" id="verified" name="verified" class="form-check-input" {% if organization.verified %}checked{% endif %}>
+        </div>
+
+        <button type="submit" class="btn btn-success">Tallenna muutokset</button>
+        <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">Peruuta</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
-/* Styling for the login page */
-.login-container {
+/* Styling for the authentication pages (login and registration) */
+.auth-container {
     max-width: 400px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 40px; /* Add padding for spacing */
@@ -9,13 +9,12 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
     box-sizing: border-box;
     text-align: center; /* Center align text */
-    /* TODO: Add responsive design elements for better mobile view */
 }
 
-h2 {
+h1 {
     color: #0033A0; /* Dark Blue */
     margin-bottom: 20px; /* Space below the heading */
-    /* TODO: Add media queries to adjust font size on smaller screens */
+    font-size: 24px; /* Responsive font size */
 }
 
 .form-group {
@@ -27,10 +26,10 @@ label {
     font-weight: bold;
     margin-bottom: 5px; /* Space below label */
     color: #333; /* Dark gray for better readability */
-    /* TODO: Add focus styles for better accessibility */
 }
 
 input[type="text"],
+input[type="email"],
 input[type="password"] {
     width: 100%; /* Full width of the container */
     padding: 10px; /* Padding inside the input fields */
@@ -38,16 +37,16 @@ input[type="password"] {
     border-radius: 4px; /* Rounded corners for inputs */
     box-sizing: border-box;
     font-size: 16px; /* Increase font size for readability */
-    /* TODO: Add accessibility styles for improved user experience */
 }
 
 input[type="text"]:focus,
+input[type="email"]:focus,
 input[type="password"]:focus {
     border-color: #0033A0; /* Dark blue border on focus */
     outline: none; /* Remove default outline */
 }
 
-.login-button {
+button[type="submit"] {
     background-color: #0033A0; /* Dark Blue */
     color: #ffffff; /* White text */
     border: none;
@@ -58,22 +57,49 @@ input[type="password"]:focus {
     transition: background-color 0.3s ease; /* Smooth transition */
 }
 
-.login-button:hover {
+button[type="submit"]:hover {
     background-color: #002080; /* Darker blue on hover */
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.forgot-password a {
+    color: #0033A0;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+.register-link a {
+    color: #0033A0; /* Match the color with other links */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
 }
 
 /* Responsive Design */
 @media (max-width: 600px) {
-    .login-container {
+    .auth-container {
         padding: 20px; /* Reduce padding on smaller screens */
         max-width: 100%; /* Allow full width on very small screens */
-        /* TODO: Ensure form fields and button scale appropriately */
     }
 }
 
-/* TODOs and Comments */
-/* TODO: Add responsive design elements for better mobile view */
-/* TODO: Add media queries to adjust font size on smaller screens */
-/* TODO: Add focus styles for better accessibility */
-/* TODO: Add accessibility styles for improved user experience */
-/* TODO: Ensure form fields and button scale appropriately on very small screens */
+/* Accessibility Enhancements */
+input:focus {
+    outline: 2px solid #0033A0; /* Outline for accessibility */
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button {
+        transition: none; /* Disable transition if reduced motion is preferred */
+    }
+}

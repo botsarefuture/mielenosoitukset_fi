@@ -1,5 +1,3 @@
 __pycache__/
 *.py[cod]
 *$py.class
-out/linecounter.txt
-out/linecounter.json

@@ -11,15 +11,6 @@ email_sender = EmailSender()
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
-MAINTANENCE = False
-
-@app.before_request
-def is_maintanence():
-    if MAINTANENCE:
-        return render_template("maintanence.html")
-    
-    #flash("meow", "info")
-
 # Initialize MongoDB
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()

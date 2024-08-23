@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<<<<<<< HEAD
     <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}">
+=======
+>>>>>>> main
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
         integrity="sha512-Fo3rlrZj/kTc6n5bLvNHrHDbOUjAUnyM4Q2O5U4V2Q5rHkLXbqE4sFJtc5FTCFBo5d2TwLnmH0qtr2k9as3D9w=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -33,6 +36,7 @@
 
                 <!-- Conditional Links for Authenticated Users -->
                 {% if current_user.is_authenticated %}
+<<<<<<< HEAD
                 <li><span style="color: white;">Tervetuloa, {{ current_user.username }}!</span></li>
 
                 {% if current_user.global_admin %}
@@ -43,6 +47,19 @@
 
                 {% else %}
                 <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
+=======
+                <li><a><span>Tervetuloa, {{ current_user.username }}!</span></a></li>
+
+                {% if current_user.global_admin %}
+                {% include "sidebar.html" %}
+                {% endif %}
+
+                {% if not current_user.global_admin and not current_user.organizations %}
+                <li><a href="{{ url_for('admin.admin_login') }}">Sisäänkirjautuminen</a></li>
+                {% endif %}
+                {% else %}
+                <li><a href="{{ url_for('login') }}">Kirjaudu sisään</a></li>
+>>>>>>> main
                 {% endif %}
             </ul>
         </div>

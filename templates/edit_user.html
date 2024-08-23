@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/edit_user.css') }}">
+
+{% include 'sidebar.html' %}
+
+<div class="edit-user-panel">
+    <h2>Muokkaa Käyttäjää</h2>
+
+    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}">
+        <!-- Comment: Form for editing user details -->
+        <!-- TODO: Add client-side validation for better user experience -->
+
+        <label for="username">Käyttäjänimi</label>
+        <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
+        <!-- Comment: Input field for the user's username -->
+
+        <label for="email">Sähköposti</label>
+        <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
+        <!-- Comment: Input field for the user's email address -->
+
+        <label for="role">Rooli</label>
+        <select id="role" name="role" required>
+            <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>Käyttäjä</option>
+            <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Ylläpitäjä</option>
+            <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>Globaalihallitsija</option>
+        </select>
+        <!-- Comment: Dropdown for selecting user role with pre-selected role based on user data -->
+
+        <h3>Organisaatiot</h3>
+        <div class="organization-list">
+            {% for org in organizations %}
+            <div class="organization">
+                <input type="checkbox" id="org_{{ org['_id'] }}" name="organizations" value="{{ org['_id'] }}" 
+                    {% if org['_id'] in user['organizations'] %}checked{% endif %}>
+                <label for="org_{{ org['_id'] }}">{{ org['name'] }}</label>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Comment: List of organizations with checkboxes for user association -->
+        <!-- TODO: Add functionality to dynamically filter or search organizations if the list is extensive -->
+
+        <button type="submit" class="submit-button">Tallenna muutokset</button>
+        <!-- Comment: Submit button for saving the changes made to user details -->
+    </form>
+</div>
+
+{% endblock %}

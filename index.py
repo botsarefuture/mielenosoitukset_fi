@@ -46,9 +46,72 @@ app.register_blueprint(admin_demo_bp)
 app.register_blueprint(admin_user_bp)
 app.register_blueprint(admin_org_bp)
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """
+    Handle user registration.
+    """
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+>>>>>>> main
+
+>>>>>>> main
 from auth import auth_bp
 app.register_blueprint(auth_bp, url_prefix="/auth/")
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+from datetime import datetime
+=======
+        user_data = User.create_user(username, password, email)
+        mongo.users.insert_one(user_data)
+
+        flash('User registered successfully!')
+        return redirect(url_for('login'))
+
+    return render_template('auth/register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """
+    Handle user login.
+    """
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        # Validation for username and password fields
+        if not username or not password:
+            flash('Please enter both username and password.')
+            return redirect(url_for('login'))
+
+        user_doc = mongo.users.find_one({"username": username})
+
+        if user_doc:
+            user = User.from_db(user_doc)
+            if user.check_password(password):
+                login_user(user)
+                return redirect(url_for('index'))
+
+        flash('Invalid username or password.')
+
+    return render_template('auth/login.html')
+>>>>>>> main
+
+# Admin logout route
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+>>>>>>> main
 
 @app.route('/')
 def index():

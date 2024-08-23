@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<div class="login-container">
+    <h2>Kirjaudu sisään</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="username">Käyttäjänimi</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Salasana</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="login-button">Kirjaudu sisään</button>
+    </form>
+</div>
+
+<!-- TODO: Translate content to Finnish -->
+<!-- TODO: Add Finnish translations for 'Admin Login', 'Username', 'Password', and 'Login' -->
+
+{% endblock %}

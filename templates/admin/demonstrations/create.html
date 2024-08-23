@@ -4,81 +4,84 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_create_demo.css') }}">
 
 <div class="container mt-4">
-    <h2>Create New Demonstration</h2>
+    <h2>Uusi mielenosoitus</h2>
     <form method="POST" action="{{ url_for('admin_demo.create_demo') }}">
         <!-- Existing form fields for demonstration details -->
         <div class="form-group">
-            <label for="title">Title</label>
+            <label for="title">Otsikko</label>
             <input type="text" id="title" name="title" class="form-control" required>
         </div>
         <div class="form-group">
-            <label for="date">Date</label>
+            <label for="date">Päiväys (pp.kk.vvvv)</label>
             <input type="date" id="date" name="date" class="form-control" required>
         </div>
         <div class="form-group">
-            <label for="start_time">Start Time</label>
+            <label for="start_time">Aloitusaika</label>
             <input type="time" id="start_time" name="start_time" class="form-control" required>
         </div>
         <div class="form-group">
-            <label for="end_time">End Time</label>
+            <label for="end_time">Päättymisaika</label>
             <input type="time" id="end_time" name="end_time" class="form-control" required>
         </div>
         <div class="form-group">
-            <label for="topic">Topic</label>
+            <label for="topic">Aihe</label>
             <input type="text" id="topic" name="topic" class="form-control" required>
         </div>
         <div class="form-group">
-            <label for="facebook">Facebook Link</label>
+            <label for="facebook">Facebook tapahtumalinkki</label>
             <input type="url" id="facebook" name="facebook" class="form-control">
         </div>
         <div class="form-group">
-            <label for="city">City</label>
+            <label for="city">Paikkakunta</label>
             <input type="text" id="city" name="city" class="form-control" required>
         </div>
+        <!--TODO: the dropdown-->
         <div class="form-group">
-            <label for="address">Address</label>
+            <label for="address">Osoite</label>
             <input type="text" id="address" name="address" class="form-control" required>
         </div>
+
         <div class="form-group">
-            <label for="type">Type</label>
+            <label for="type">Tyyppi</label>
             <input type="text" id="type" name="type" class="form-control" required>
         </div>
+        <!--TODO radiobuttons or dropdown-->
         <div class="form-group">
-            <label for="route">Route (if applicable)</label>
+            <label for="route">Marssin reitti (if applicable)</label>
             <input type="text" id="route" name="route" class="form-control">
         </div>
 
-        <h4>Organizer Information</h4>
+        <h4>Järjestäjätiedot</h4>
 
         <!-- Dropdown for selecting an existing organization -->
         <div class="form-group">
-            <label for="organization-select">Select Organizer</label>
+            <label for="organization-select">Valitse järjestäjä</label>
             <select id="organization-select" name="organization_id" class="form-control" onchange="toggleManualEntry(this)">
-                <option value="" selected>Select an existing organization</option>
+                <option value="" selected>Valitse olemassaoleva organisaatio</option>
                 {% for org in organizations %}
                 <option value="{{ org._id }}">{{ org.name }}</option>
                 {% endfor %}
-                <option value="manual">Enter details manually</option>
+                <option value="manual">Syötä tiedot manuaalisesti</option>
             </select>
         </div>
 
         <!-- Fields for manual entry (hidden initially) -->
         <div id="manual-entry-fields" style="display: none;">
             <div class="form-group">
-                <label for="organizer_name">Organizer Name</label>
+                <label for="organizer_name">Järjestäjän nimi</label>
                 <input type="text" id="organizer_name" name="organizer_name" class="form-control">
             </div>
             <div class="form-group">
-                <label for="organizer_email">Organizer Email</label>
+                <label for="organizer_email">Järjestäjän sähköposti</label>
                 <input type="email" id="organizer_email" name="organizer_email" class="form-control">
             </div>
             <div class="form-group">
-                <label for="organizer_website">Organizer Website</label>
+                <label for="organizer_website">Järjestäjän nettisivu</label>
                 <input type="url" id="organizer_website" name="organizer_website" class="form-control">
             </div>
         </div>
 
-        <button type="submit" class="submit-button">Create Demonstration</button>
+        <button type="submit" class="submit-button">Luo mielenosoitus</button>
     </form>
 </div>
 

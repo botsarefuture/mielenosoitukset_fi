@@ -2,6 +2,12 @@
 @import url("form.css");
 @import url("table.css");
 
+.wrapper {
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* Header, Main, Footer */
+    min-height: 100vh; /* Full viewport height */
+}
+
 /* General Styles */
 html, body {
     height: 100%; /* Ensure the body takes the full height of the viewport */

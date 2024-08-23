@@ -18,24 +18,6 @@
 
 }
 
-/* Background Color Utility Classes */
-.bg-main-content {
-    background-color: #E0E0E0; /* Default background color for main content areas */
-}
-
-.bg-highlight {
-    background-color: #8cf795; /* Light green for highlight areas */
-}
-
-.bg-warning {
-    background-color: #FFF3E0; /* Light orange for warning or call-to-action areas */
-}
-
-.bg-header-footer {
-    background-color: #0033A0; /* Dark Blue for headers and footers */
-    color: #FFFFFF; /* White text for readability */
-}
-
 /* Fluid Containers */
 .container-fluid {
     max-width: 100%; /* Full width container */
@@ -88,7 +70,8 @@
     display: flex;
     flex-direction: column;
     gap: 15px; /* Space between form elements */
-    background-color: #E0E0E0; /* Default background color */
+    /*background-color: #ffffff; /* Default background color */
+    border-color: var(--border-color);
     margin-top: var(--margin-top-bottom);
     margin-bottom: var(--margin-top-bottom);
 }
@@ -119,8 +102,8 @@
     padding: 20px; /* Padding inside the container */
     border-radius: 8px; /* Rounded corners for aesthetics */
     box-sizing: content-box; /* Ensure padding is included in the width */
-    min-height: fit-content;
-    max-height: fit-content;
+    min-height: min(100vh) max(fit-content);
+    height: minmax(100vh,fit-content);
 }
 
 /* Responsive Containers */
@@ -153,4 +136,39 @@
     .container-grid {
         padding: 10px; /* Further adjust padding for smaller containers */
     }
+}
+
+
+/* Background Color Utility Classes */
+.bg-main-content {
+    background-color: #e0e0e07d; /* Default background color for main content areas */
+}
+
+.bg-light-red {
+    background-color: #ce9c9c;
+}
+
+.bg-highlight {
+    background-color: #8cf795; /* Light green for highlight areas */
+}
+
+.bg-warning {
+    background-color: #FFF3E0; /* Light orange for warning or call-to-action areas */
+}
+
+.bg-header-footer {
+    background-color: #0033A0; /* Dark Blue for headers and footers */
+    color: #FFFFFF; /* White text for readability */
+}
+
+.p5 {
+    padding: 5px;
+}
+
+.p10 {
+    padding: 10px;
+}
+
+.p20 {
+    padding: 20px;
 }

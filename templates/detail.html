@@ -1,51 +1,225 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/detail.css') }}">
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/detail.css') }}">-->
 
-<!-- Main Content Container -->
-<div class="page-container">
-    <!-- Detail Content -->
-    <div class="detail-container">
-        <!-- Title of the Demonstration -->
-        <h2>{{ demo['title'] }}</h2>
+<style>
+    h2 {
+        color: #0033A0;
+        /* Main Blue */
+        margin-bottom: 20px;
+        border-bottom: 2px solid #0033A0;
+        /* Underline effect */
+        padding-bottom: 10px;
+        font-family: 'Montserrat', sans-serif;
+        /* Apply Montserrat font for headings */
+        overflow-wrap: anywhere;
+        /* Forces text to wrap onto the next line if needed */
+        /* For older browsers */
+    }
 
-        <!-- Display Event Details -->
-        <p><strong>Päivämäärä:</strong> {{ demo['date'] }}</p>
-        <p><strong>Alkamisaika:</strong> {{ demo['start_time'] }}</p>
-        <p><strong>Päättymisaika:</strong> {{ demo['end_time'] }}</p>
-        <p><strong>Aihe:</strong> {{ demo['topic'] }}</p>
-        <p><strong>Sijainti:</strong> {{ demo['city'] }}, {{ demo['address'] }}</p>
+    #main {
+        display: inline-block;
+        width: 700px;
+    }
 
-        <!-- Conditional Display for Route Information -->
-        {% if demo['route'] and demo['route'] != "None" %}
-        <div class="route">
-            <p><strong>Reitti:</strong></p>
-            <p>{{ demo['route'] }}</p>
+
+
+    #subcontainer1 #infocontainer,
+    #subcontainer1 #orginfo {
+        width: 45%;
+    }
+
+    #subcontainer1 {
+        display: flex;
+        flex-direction: row;
+        align-content: center;
+    }
+
+    #infocontainer {
+        border-right: 4px dotted blue;
+    }
+
+    .subtitle {
+        margin-top: 0px;
+    }
+
+    @media only screen and (max-width: 767px) {
+        #main {
+            max-width: 84vw;
+        }
+
+        #subcontainer1 {
+            flex-direction: column;
+            max-width: 95%;
+        }
+
+        #subcontainer1 #infocontainer,
+        #subcontainer1 #orginfo {
+            width: auto;
+        }
+
+        #infocontainer {
+            border-right: none;
+            border-bottom: 4px dotted blue;
+        }
+    }
+
+
+    .facebook-button {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #1877f2;
+        /* Facebook blue color */
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .facebook-button:hover {
+        background-color: #145dbf;
+        /* Darker Facebook blue on hover */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+
+    /* Sidebar individual organizer styling */
+    .organizer-info {
+        margin-bottom: 20px;
+        /* Space between organizers */
+        padding-bottom: 10px;
+        /* Space inside each organizer block */
+        border-bottom: 1px solid #FF6600;
+        /* Separator line */
+    }
+
+    .organizer-info a {
+        color: #0033A0;
+        /* Main Blue */
+        text-decoration: none;
+        /* Remove underline */
+        font-weight: bold;
+    }
+
+    .organizer-info a:hover {
+        text-decoration: underline;
+        /* Underline on hover */
+        color: #FF6600;
+        /* Secondary Orange on hover */
+    }
+
+
+    /* Back link styling */
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #0033A0;
+        /* Main Blue background */
+        color: #ffffff;
+        /* White text */
+        border-radius: 4px;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+        /* Smooth transition */
+    }
+
+    .back-link:hover {
+        background-color: #0066cc;
+        /* Light Blue on hover */
+    }
+
+
+    strong {
+        color: #0033A0;
+        /* Main Blue for emphasis */
+    }
+
+    /* Route section styling */
+    .route {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        /* Light gray background */
+        border-left: 5px solid #0033A0;
+        /* Main Blue left border */
+    }
+
+    /* Link styling */
+    a {
+        color: #0033A0;
+        /* Main Blue */
+        text-decoration: none;
+        /* Remove underline */
+        font-weight: bold;
+    }
+
+    a:hover {
+        text-decoration: underline;
+        /* Underline on hover */
+        color: #FF6600;
+        /* Secondary Orange on hover */
+    }
+</style>
+
+<!-- Detail Content -->
+<div id="main" class="bg-light-red p20 container-centered">
+    <!-- Title of the Demonstration -->
+    <h2>{{ demo['title'] }}</h2>
+
+    <div id="subcontainer1" class="container">
+        <div id="infocontainer" class="container">
+            <!-- Display Event Details -->
+            <h3 class="subtitle">Lisätiedot</h3>
+            <p><strong>Päivämäärä:</strong><br>{{ demo['date'] }}</p>
+            <p><strong>Alkamisaika:</strong><br>{{ demo['start_time'] }}</p>
+            <p><strong>Päättymisaika:</strong><br>{{ demo['end_time'] }}</p>
+            <p><strong>Aihe:</strong><br>{{ demo['topic'] }}</p>
+            <p><strong>Sijainti:</strong><br>{{ demo['city'] }}, {{ demo['address'] }}</p>
+
+            <!-- Conditional Display for Route Information -->
+            {% if demo['route'] and demo['route'] != "None" %}
+            <div class="route">
+                <p><strong>Reitti:</strong></p>
+                <p>{{ demo['route'] }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Conditional Display for Facebook Event Link -->
+            {% if demo['facebook'] %}
+            <a href="{{ demo['facebook'] }}" target="_blank" class="facebook-button">
+                Facebook-tapahtuma
+            </a>
+            {% endif %}
         </div>
-
-        {% endif %}
-
-        <!-- Conditional Display for Facebook Event Link -->
-        {% if demo['facebook'] %}
-        <a href="{{ demo['facebook'] }}" target="_blank" class="facebook-button">
-            Facebook-tapahtuma
-        </a>
-        {% endif %}
-
 
         <!-- Back Link to All Demonstrations -->
-        <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
-
         <!-- Organizers Information -->
-        <h3>Järjestäjät</h3>
-        {% for org in demo['organizers'] %}
-        <div class="organizer-info">
-            <p><strong>Nimi:</strong> {{ org['name'] }}</p>
-            <p><strong>Nettisivu:</strong> <a href="{{ org['website'] }}" target="_blank">{{ org['website'] }}</a></p>
-            <p><strong>Sähköposti:</strong> <a href="mailto:{{ org['email'] }}">{{ org['email'] }}</a></p>
+        <div id="orginfo" class="container">
+            <h3 class="subtitle">Järjestäjät</h3>
+            {% for org in demo['organizers'] %}
+            <div class="organizer-info">
+                <p><strong>Nimi:</strong> <br>{{ org['name'] }}</p>
+
+                {% if org['website'] %}
+                <p><strong>Nettisivu:</strong><br><a href="{{ org['website'] }}" target="_blank">{{ org['website']
+                        }}</a>
+                </p>
+                {% endif %}
+
+                {% if org['email'] %}
+                <p><strong>Sähköposti:</strong><br><a href="mailto:{{ org['email'] }}">{{ org['email'] }}</a></p>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
+
+    <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
 </div>
 {% endblock %}

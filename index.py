@@ -4,20 +4,13 @@ from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
 from flask_login import LoginManager, login_required
 from models import User  # Import User model
+from wrappers import admin_required
+from datetime import datetime
 from emailer.EmailSender import EmailSender
 email_sender = EmailSender()
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
-
-MAINTANENCE = False
-
-@app.before_request
-def is_maintanence():
-    if MAINTANENCE:
-        return render_template("maintanence.html")
-    
-    #flash("meow", "info")
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
@@ -41,8 +34,8 @@ def load_user(user_id):
 
 # Import and register blueprints
 
-from organization import organization_bp
-app.register_blueprint(organization_bp)
+from organization import organization_bp # TODO: Remove this
+app.register_blueprint(organization_bp) # TODO: Remove this
 
 from admin_bp import admin_bp
 from admin_user_bp import admin_user_bp
@@ -53,6 +46,8 @@ app.register_blueprint(admin_demo_bp)
 app.register_blueprint(admin_user_bp)
 app.register_blueprint(admin_org_bp)
 
+<<<<<<< HEAD
+=======
 <<<<<<< HEAD
 =======
 @app.route('/register', methods=['GET', 'POST'])
@@ -66,10 +61,12 @@ def register():
         email = request.form.get('email')
 >>>>>>> main
 
+>>>>>>> main
 from auth import auth_bp
-
 app.register_blueprint(auth_bp, url_prefix="/auth/")
 
+<<<<<<< HEAD
+=======
 <<<<<<< HEAD
 from datetime import datetime
 =======
@@ -114,6 +111,7 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+>>>>>>> main
 
 @app.route('/')
 def index():
@@ -161,7 +159,7 @@ def submit():
 
         # Validation for form data
         if not title or not date or not start_time or not end_time or not topic or not city or not address:
-            flash('Please fill out all required fields.')
+            flash('Sinun tulee antaa kaikki vaaditut tiedot.', 'error')
             return redirect(url_for('submit'))
 
         # Get organizers from the form and create Organizer instances
@@ -195,7 +193,7 @@ def submit():
         # Save to MongoDB
         mongo.demonstrations.insert_one(demonstration.to_dict())
 
-        flash('Demonstration submitted successfully! It will be reviewed by an admin.')
+        flash('Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.')
         return redirect(url_for('index'))
 
     return render_template('submit.html')
@@ -234,7 +232,7 @@ def demonstrations():
             parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
             query["date"] = date_query  # Keep the date in string form, since it's stored that way
         except ValueError:
-            flash('Invalid date format. Please use pp.kk.vvvv.')
+            flash('Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.')
 
     if topic_query:
         query["topic"] = {"$regex": topic_query, "$options": "i"}
@@ -254,7 +252,7 @@ def demonstration_detail(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
 
     if demo is None:
-        flash("Demonstration not found or not approved.")
+        flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.")
         return redirect(url_for('demonstrations'))
 
     return render_template('detail.html', demo=demo)
@@ -280,7 +278,7 @@ def edit_event(demo_id):
 
         # Validation for form data
         if not title or not date or not start_time or not end_time or not topic or not city or not address:
-            flash('Please fill out all required fields.')
+            flash('Ole hyvä ja täytä kaikki pakolliset kentät.')
             return redirect(url_for('edit_event', demo_id=demo_id))
 
         # Get organizers from form data
@@ -314,13 +312,13 @@ def edit_event(demo_id):
             }
         )
 
-        flash('Event updated successfully!')
+        flash('MIelenosoitus päivitetty onnistuneesti!')
         return redirect(url_for('demonstration_detail', demo_id=demo_id))
 
     # GET request - fetch event details
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if demo_data is None:
-        flash("Event not found.")
+        flash("Mielenosoitusta ei löytynyt.")
         return redirect(url_for('demonstrations'))
 
     # Convert MongoDB data back to Demonstration object
@@ -330,6 +328,7 @@ def edit_event(demo_id):
 
 @app.route('/delete/<demo_id>', methods=['POST'])
 @login_required
+@admin_required
 def delete_event(demo_id):
     """
     Handle deletion of a demonstration.
@@ -337,11 +336,11 @@ def delete_event(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if demo is None:
-        flash("Event not found.")
+        flash("Mielenosoitusta ei löytynyt.")
         return redirect(url_for('demonstrations'))
 
     mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-    flash('Event deleted successfully!')
+    flash('Mielenosoitus poistettu onnistuneesti!')
     return redirect(url_for('demonstrations'))
 
 if __name__ == '__main__':

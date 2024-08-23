@@ -2,7 +2,7 @@
 
 {% block main_content %}
 <div class="container mt-4">
-    <h2>Muokkaa järjestäjätahoa</h2>
+    <h2>Muokkaa järjestäjäorganisaatiota</h2>
 
     <form method="POST" action="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}">
         <div class="form-group">
@@ -16,7 +16,7 @@
         </div>
 
         <div class="form-group">
-            <label for="email">sähköpostiosoite</label>
+            <label for="email">Sähköpostiosoite</label>
             <input type="email" id="email" name="email" class="form-control" value="{{ organization.email }}" required>
         </div>
 

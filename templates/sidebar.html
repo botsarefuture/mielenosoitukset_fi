@@ -1,8 +1,13 @@
 <<<<<<< HEAD
+<link rel="stylesheet" href="{{ url_for('static', filename='css/container.css') }}">
+=======
+<<<<<<< HEAD
+>>>>>>> main
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 
-<div class="sidebar">
-    <button class="sidebar-toggle" aria-label="Toggle Sidebar">&#9776;</button>
+
+<div class="container-sidebar bg-header-footer">
+    <a class="sidebar-toggle" id="maintoggle" aria-label="Toggle Sidebar">&#9776;</a>
     <h2 class="sidebar-title">Superkäyttäjän työkalupakki</h2> <!-- Sidebar Title -->
     <nav class="sidebar-nav">
         <ul>
@@ -35,14 +40,14 @@
     </nav>
 
     <!-- Shortened notice at the bottom of the sidebar -->
-    <div class="sidebar-info">
+    <div class="sidebar-info bg-warning">
         <span class="warning-icon">⚠️</span> <!-- Warning icon -->
         <p>Olet superkäyttäjätilassa.</p>
     </div>
 </div>
 
 <!-- Hidden icons section -->
-<div class="hidden-icons">
+<div class="hidden-icons container-centered bg-main-content">
     <a class="hidden-icon" id="hiddentoggle" aria-label="Toggle Sidebar">&#9776;</a> <!-- Sidebar Toggle Button -->
     <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon">&#128187;</a>
     <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon">&#128100;</a>

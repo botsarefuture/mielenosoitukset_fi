@@ -59,7 +59,7 @@ def create_demo():
         event_type = request.form.get('type')
         route = request.form.get('route')
 
-        organization_id = request.form.get('organization_id')
+        organization_id = request.form.get('organization_id', None)
         organizer_name = request.form.get('organizer_name')
         organizer_email = request.form.get('organizer_email')
         organizer_website = request.form.get('organizer_website')
@@ -79,7 +79,7 @@ def create_demo():
                 )
                 organizers.append(organizer)
             else:
-                flash('Selected organization does not exist.')
+                flash('Valittua organisaatiota ei ole olemassa.')
                 return redirect(url_for('admin_demo.create_demo'))
         elif organizer_name and organizer_email:
             # Use the manually entered details
@@ -105,7 +105,7 @@ def create_demo():
                 organizers=organizers
             )
             mongo.demonstrations.insert_one(demonstration.to_dict())
-            flash('Demonstration created successfully.')
+            flash('Mielenosoitus luotu onnistuneesti.')
             return redirect(url_for('admin_demo.demo_control'))
         except ValueError as e:
             flash(str(e))
@@ -122,7 +122,7 @@ def edit_demo(demo_id):
     """Edit demonstration details."""
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash('Demonstration not found.')
+        flash('Mielenosoitusta ei löytynyt.')
         return redirect(url_for('admin_demo.demo_control'))
 
     demonstration = Demonstration.from_dict(demo_data)
@@ -163,7 +163,7 @@ def edit_demo(demo_id):
                 {"_id": ObjectId(demo_id)},
                 {"$set": demonstration.to_dict()}
             )
-            flash('Demonstration updated successfully.')
+            flash('Mielenosoitus päivitetty onnistuneesti.')
             return redirect(url_for('admin_demo.demo_control'))
         except ValueError as e:
             flash(str(e))
@@ -180,14 +180,14 @@ def delete_demo(demo_id):
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash('Demonstration not found.')
+        flash('Mielenosoitusta ei löytynyt.')
         return redirect(url_for('admin_demo.demo_control'))
 
     if 'confirm_delete' in request.form:
         mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-        flash('Demonstration deleted successfully.')
+        flash('Mielenosoitus poistettu onnistuneesti.')
     else:
-        flash('Demonstration deletion not confirmed.')
+        flash('Et vahvistanut mielenosoituksen poistoa.')
 
     return redirect(url_for('admin_demo.demo_control'))
 
@@ -198,7 +198,7 @@ def confirm_delete_demo(demo_id):
     """Render a confirmation page before deleting a demonstration."""
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash('Demonstration not found.')
+        flash('Mielenosoitusta ei löytynyt.')
         return redirect(url_for('admin_demo.demo_control'))
 
     demonstration = Demonstration.from_dict(demo_data)

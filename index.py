@@ -5,6 +5,7 @@ from database_manager import DatabaseManager
 from flask_login import LoginManager, login_required
 from models import User  # Import User model
 from wrappers import admin_required
+from datetime import datetime
 from emailer.EmailSender import EmailSender
 email_sender = EmailSender()
 
@@ -33,8 +34,8 @@ def load_user(user_id):
 
 # Import and register blueprints
 
-from organization import organization_bp
-app.register_blueprint(organization_bp)
+from organization import organization_bp # TODO: Remove this
+app.register_blueprint(organization_bp) # TODO: Remove this
 
 from admin_bp import admin_bp
 from admin_user_bp import admin_user_bp
@@ -45,12 +46,9 @@ app.register_blueprint(admin_demo_bp)
 app.register_blueprint(admin_user_bp)
 app.register_blueprint(admin_org_bp)
 
-
 from auth import auth_bp
-
 app.register_blueprint(auth_bp, url_prefix="/auth/")
 
-from datetime import datetime
 
 @app.route('/')
 def index():
@@ -98,7 +96,7 @@ def submit():
 
         # Validation for form data
         if not title or not date or not start_time or not end_time or not topic or not city or not address:
-            flash('Ole hyvä ja täytä kaikki pakolliset kentät.')
+            flash('Sinun tulee antaa kaikki vaaditut tiedot.', 'error')
             return redirect(url_for('submit'))
 
         # Get organizers from the form and create Organizer instances

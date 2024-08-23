@@ -2,31 +2,31 @@
 
 {% block main_content %}
 <div class="container mt-4">
-    <h2>Uusi organisaatio</h2>
+    <h2>Create New Organization</h2>
 
     <form method="POST" action="{{ url_for('admin_org.create_organization') }}">
         <div class="form-group">
-            <label for="name">Nimi</label>
+            <label for="name">Organization Name</label>
             <input type="text" id="name" name="name" class="form-control" required>
         </div>
 
         <div class="form-group">
-            <label for="description">Kuvaus</label>
+            <label for="description">Description</label>
             <textarea id="description" name="description" class="form-control" required></textarea>
         </div>
 
         <div class="form-group">
-            <label for="email">Sähköpostiosoite</label>
+            <label for="email">Email</label>
             <input type="email" id="email" name="email" class="form-control" required>
         </div>
 
         <div class="form-group">
-            <label for="website">Verkkosivu</label>
+            <label for="website">Website</label>
             <input type="url" id="website" name="website" class="form-control">
         </div>
 
-        <button type="submit" class="btn btn-primary">Luo</button>
-        <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">Peruuta</a>
+        <button type="submit" class="btn btn-primary">Create Organization</button>
+        <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
 {% endblock %}

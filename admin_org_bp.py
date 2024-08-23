@@ -50,11 +50,11 @@ def edit_organization(org_id):
             verified = True
 
         if not name or not email:
-            flash('Nimi ja sähköpostiosoite ovat pakollisia.')
+            flash('Name and email are required.')
             return redirect(url_for('admin_org.edit_organization', org_id=org_id))
 
         if '@' not in email or '.' not in email.split('@')[-1]:
-            flash('Virheellinen sähköpostiosoite.')
+            flash('Invalid email format.')
             return redirect(url_for('admin_org.edit_organization', org_id=org_id))
 
         mongo.organizations.update_one(
@@ -68,7 +68,7 @@ def edit_organization(org_id):
             }}
         )
 
-        flash('Organisaatio päivitetty onnistuneesti.')
+        flash('Organization updated successfully.')
         return redirect(url_for('admin_org.organization_control'))
 
     return render_template('admin/organizations/edit.html', organization=organization)
@@ -86,11 +86,11 @@ def create_organization():
         website = request.form.get('website')
 
         if not name or not email:
-            flash('Nimi ja sähköpostiosoite ovat pakollisia.')
+            flash('Name and email are required.')
             return redirect(url_for('admin_org.create_organization'))
 
         if '@' not in email or '.' not in email.split('@')[-1]:
-            flash('Virheellinen sähköpostiosoite.')
+            flash('Invalid email format.')
             return redirect(url_for('admin_org.create_organization'))
 
         mongo.organizations.insert_one({
@@ -101,7 +101,7 @@ def create_organization():
             "members": []
         })
 
-        flash('Organisaatio luotu onnistuneesti.')
+        flash('Organization created successfully.')
         return redirect(url_for('admin_org.organization_control'))
 
     return render_template('admin/organizations/create.html')
@@ -115,14 +115,14 @@ def delete_organization(org_id):
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
-        flash('Organisatiota ei löytynyt.')
+        flash('Organization not found.')
         return redirect(url_for('admin_org.organization_control'))
 
     if 'confirm_delete' in request.form:
         mongo.organizations.delete_one({"_id": ObjectId(org_id)})
-        flash('Organisaatio poistettu onnistuneesti.')
+        flash('Organization deleted successfully.')
     else:
-        flash('Organisaation poistoa ei vahvistettu.')
+        flash('Organization deletion not confirmed.')
 
     return redirect(url_for('admin_org.organization_control'))
 
@@ -135,7 +135,7 @@ def confirm_delete_organization(org_id):
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
-        flash('Organisaatiota ei löytynyt.')
+        flash('Organization not found.')
         return redirect(url_for('admin_org.organization_control'))
 
     return render_template('admin/organizations/confirm_delete.html', organization=organization)

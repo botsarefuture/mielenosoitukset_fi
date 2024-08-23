@@ -1,21 +1,18 @@
-/* form.css */
-/* Define color variables */
-:root {
-    --primary-color: #0033A0; /* Blue */
-    --secondary-color: #FFFFFF; /* White */
-    --highlight-color-orange: #FF6600; /* Orange */
-    --background-color-light: #E0E0E0; /* Light Gray */
-    --border-color: #000000; /* Light Gray */
-    --placeholder-color: #888888; /* Dark Gray */
-    --focus-color: #0033A0; /* Blue */
-    --error-color: #E03C31; /* Red */
-    --box-shadow-color: rgba(0, 0, 0, 0.1); /* Shadow Color */
+/* Container for the form */
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff; /* White background for the form */
+    border: 1px solid #ddd; /* Light gray border */
+    border-radius: 8px; /* Rounded corners for a modern look */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
 }
-/* Form styling */
+
+/* Form element styles */
 form {
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Spacing between form elements */
 }
 
 /* Label styles */
@@ -32,13 +29,12 @@ input[type="url"],
 select, 
 textarea {
     width: 100%;
-    padding: 12px; /* Increased padding for better touch targets */
-    border: 1px solid var(--border-color); /* Light gray border */
+    padding: 10px;
+    border: 1px solid #ccc; /* Light border for inputs and selects */
     border-radius: 4px; /* Rounded corners */
+    margin-bottom: 15px;
     font-size: 16px; /* Ensures readability */
-    color: #333; /* Dark gray text */
     box-sizing: border-box; /* Includes padding and border in element's total width and height */
-    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
 }
 
 /* Textarea specific styles */
@@ -47,23 +43,13 @@ textarea {
     resize: vertical; /* Allow vertical resizing */
 }
 
-/* Focus state for inputs and selects */
-input:focus,
-textarea:focus,
-select:focus {
-    border-color: var(--focus-color); /* Blue border on focus */
-    box-shadow: 0 0 8px var(--focus-color); /* Blue shadow on focus */
-    outline: none;
-    background-color: #FFFFFF; /* White background on focus */
-}
-
 /* Submit button styles */
 button[type="submit"] {
-    padding: 12px 24px; /* Increased padding for better touch targets */
-    background-color: var(--primary-color); /* Blue background */
-    color: var(--secondary-color); /* White text for contrast */
+    padding: 10px 20px;
+    background-color: #004080; /* Dark blue background */
+    color: #ffffff; /* White text for contrast */
     border: none;
-    border-radius: 4px; /* Rounded corners */
+    border-radius: 4px; /* Rounded corners for the button */
     font-size: 16px; /* Readable font size */
     cursor: pointer; /* Pointer cursor on hover */
     transition: background-color 0.3s ease; /* Smooth transition on hover */
@@ -72,15 +58,16 @@ button[type="submit"] {
 
 /* Submit button hover effect */
 button[type="submit"]:hover {
-    background-color: var(--highlight-color-orange); /* Orange on hover */
+    background-color: #0066cc; /* Lighter blue on hover */
 }
 
 /* Error and success messages */
 .error {
-    color: var(--error-color); /* Red for error messages */
+    color: #d9534f; /* Red for error messages */
     font-size: 14px;
     margin-top: -10px; /* Adjust spacing for error messages */
     margin-bottom: 15px;
+    /* TODO: Add styles for error message box or icon */
 }
 
 .success {
@@ -88,4 +75,5 @@ button[type="submit"]:hover {
     font-size: 14px;
     margin-top: -10px; /* Adjust spacing for success messages */
     margin-bottom: 15px;
+    /* TODO: Add styles for success message box or icon */
 }

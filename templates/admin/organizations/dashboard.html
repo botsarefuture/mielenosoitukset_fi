@@ -2,45 +2,40 @@
 
 {% block main_content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_org_control.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
-<div class="table-container mt-4">
+<div class="container mt-4">
     <h2>Organisaatioiden hallinta</h2>
 
     <div class="mb-3">
-        <a href="{{ url_for('admin_org.create_organization') }}" class="button create-organization-button">Uusi organisaatio</a>
+        <a href="{{ url_for('admin_org.create_organization') }}" class="create-organization-button">Uusi organisaatio</a>
     </div>
 
     {% if organizations %}
-    <table>
-        <thead>
-            <tr>
-                <th>Nimi</th>
-                <th>Kuvaus</th>
-                <th>Sähköposti</th>
-                <th>Nettisivu</th>
-                <th>Toiminnot</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for org in organizations %}
-            <tr>
-                <td>{{ org.name }}</td>
-                <td>{{ org.description }}</td>
-                <td>{{ org.email }}</td>
-                <td><a href="{{ org.website }}" target="_blank">{{ org.website }}</a></td>
-                <td>
-                    <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button">Muokkaa</a>
-                    <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button">Poista</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="organization-table">
+        <div class="organization-table-header">
+            <div class="table-cell">Nimi</div>
+            <div class="table-cell">Kuvaus</div>
+            <div class="table-cell">Sähköposti</div>
+            <div class="table-cell">Nettisivu</div>
+            <div class="table-cell actions-cell-header">Toiminnot</div>
+        </div>
+
+        {% for org in organizations %}
+        <div class="organization-table-row">
+            <div class="table-cell">{{ org.name }}</div>
+            <div class="table-cell">{{ org.description }}</div>
+            <div class="table-cell">{{ org.email }}</div>
+            <div class="table-cell"><a href="{{ org.website }}" target="_blank">{{ org.website }}</a></div>
+            <div class="table-cell actions-cell">
+                <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button">Muokkaa</a>
+                <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button">Poista</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% else %}
     <div class="no-organizations">
-        <p>Organisaatioita ei löytynyt.</p>
+        <div class="table-cell">Organisaatioita ei löytynyt.</div>
     </div>
     {% endif %}
 </div>

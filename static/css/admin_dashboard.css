@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 /* Container for the dashboard */
 .dashboard-container {
     display: flex; /* Use flexbox for layout */
@@ -301,4 +299,3 @@ h3 {
     color: #ffffff; /* Ensure text color remains white */
 >>>>>>> main
 }
->>>>>>> main

@@ -8,7 +8,7 @@
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
 
 <!-- Main content container -->
-<div class="container container-form mt-4">
+<div class="container container-form">
     <h2>Muokkaa mielenosoitusta</h2>
     <form method="POST" action="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
 
@@ -23,7 +23,8 @@
         </div>
         <div class="form-group">
             <label for="start_time">Alkamisaika</label>
-            <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time }}" required>
+            <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time }}"
+                required>
         </div>
         <div class="form-group">
             <label for="end_time">Päättymisaika</label>
@@ -43,10 +44,13 @@
             <label for="city">Paikkakunta</label>
             <div class="dropdown">
                 <button type="button" class="dropbtn">{{ demo.city }}</button>
+                <br>
                 <div id="dropdown-content" class="dropdown-content">
                     <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()">
                     <!-- List of cities -->
-                    {% for city in ['Helsinki', 'Espoo', 'Tampere', 'Vantaa', 'Oulu', 'Turku', 'Jyväskylä', 'Lahti', 'Kuopio', 'Kouvola', 'Pori', 'Joensuu', 'Lappeenranta', 'Vaasa', 'Rovaniemi', 'Seinäjoki', 'Mikkeli', 'Kotka', 'Salo', 'Kokkola', 'Kajaani', 'Rauma'] %}
+                    {% for city in ['Helsinki', 'Espoo', 'Tampere', 'Vantaa', 'Oulu', 'Turku', 'Jyväskylä', 'Lahti',
+                    'Kuopio', 'Kouvola', 'Pori', 'Joensuu', 'Lappeenranta', 'Vaasa', 'Rovaniemi', 'Seinäjoki',
+                    'Mikkeli', 'Kotka', 'Salo', 'Kokkola', 'Kajaani', 'Rauma'] %}
                     <a href="#" onclick="selectCity('{{ city }}'); return false;">{{ city }}</a>
                     {% endfor %}
                 </div>
@@ -62,13 +66,14 @@
         <div class="form-group">
             <label for="type">Tyyppi</label>
             <select id="type" name="type" class="form-control" required>
-                <option value="marssi" {% if demo.event_type == 'marssi' %}selected{% endif %}>Marssi</option>
-                <option value="paikallaan" {% if demo.event_type == 'paikallaan' %}selected{% endif %}>Paikallaan</option>
-                <option value="muut" {% if demo.event_type == 'muut' %}selected{% endif %}>Muut</option>
+                <option value="marssi" {% if demo.event_type=='marssi' %}selected{% endif %}>Marssi</option>
+                <option value="paikallaan" {% if demo.event_type=='paikallaan' %}selected{% endif %}>Paikallaan</option>
+                <option value="muut" {% if demo.event_type=='muut' %}selected{% endif %}>Muut</option>
             </select>
         </div>
 
-        <div id="march-route-container" class="form-group" {% if demo.event_type != 'marssi' %}style="display:none;" {% endif %}>
+        <div id="march-route-container" class="form-group" {% if demo.event_type !='marssi' %}style="display:none;" {%
+            endif %}>
             <label for="route">Reitti (marssin)</label>
             <input type="text" id="route" name="route" class="form-control" value="{{ demo.route }}">
         </div>
@@ -81,13 +86,16 @@
             <div class="form-group organizer-item">
                 <hr>
                 <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi</label>
-                <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}" class="form-control" value="{{ organizer.name }}" required>
+                <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.name }}" required>
                 <br><br>
                 <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
-                <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}" class="form-control" value="{{ organizer.website }}">
+                <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.website }}">
                 <br><br>
                 <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
-                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}" class="form-control" value="{{ organizer.email }}" required>
+                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.email }}" required>
                 <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
             </div>
             {% endfor %}
@@ -100,7 +108,8 @@
             <div class="form-group" id="approval-container">
                 <label for="approved">Hyväksytty</label>
                 <div>
-                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo.approved %}checked{% endif %}>
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo.approved
+                        %}checked{% endif %}>
                     <span id="approval-status" class="status-text">
                         {% if demo.approved %}Kyllä{% else %}Ei{% endif %}
                     </span>
@@ -159,15 +168,17 @@
     function filterFunction() {
         let input, filter, div, a, i;
         input = document.getElementById('searchInput');
-        filter = input.value.toUpperCase();
-        div = document.getElementById('dropdown-content');
-        a = div.getElementsByTagName('a');
-        for (i = 0; i < a.length; i++) {
-            let txtValue = a[i].textContent || a[i].innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                a[i].style.display = '';
-            } else {
-                a[i].style.display = 'none';
+        if (input !== '') {
+            filter = input.value.toUpperCase();
+            div = document.getElementById('dropdown-content');
+            a = div.getElementsByTagName('a');
+            for (i = 0; i < a.length; i++) {
+                let txtValue = a[i].textContent || a[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    a[i].style.display = '';
+                } else {
+                    a[i].style.display = 'none';
+                }
             }
         }
     }
@@ -177,12 +188,15 @@
     });
 
     window.onclick = function (event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName('dropdown-content');
-            for (let i = 0; i < dropdowns.length; i++) {
-                let openDropdown = dropdowns[i];
-                if (openDropdown.style.display === 'block') {
-                    openDropdown.style.display = 'none';
+        console.log(event.target);
+        if (!event.target.matches('.dropdown')) {
+            if (event.target !== document.getElementByClassName("dropdown-content")) {
+                var dropdowns = document.getElementsByClassName('dropdown-content');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    let openDropdown = dropdowns[i];
+                    if (openDropdown.style.display === 'block') {
+                        openDropdown.style.display = 'none';
+                    }
                 }
             }
         }

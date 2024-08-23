@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 
@@ -27,7 +27,7 @@
 </form>
 
 {% if demonstrations %}
-<div class="table-container">
+<div class="table-container" style="background: none;">
     <table>
         <thead>
             <tr>

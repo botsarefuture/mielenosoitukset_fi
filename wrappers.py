@@ -14,7 +14,7 @@ def permission_needed(permission, organization_id=None):
         def decorated_function(*args, **kwargs):
             # Ensure the user is authenticated
             if not current_user.is_authenticated:
-                flash('You need to log in to access this page.')
+                flash('Sinun tulee kirjautua sisään käyttääksesi sivua.')
                 return redirect(url_for('auth.login'))  # Redirect to the login page if not authenticated
             
             # If the user is a global admin, grant access regardless of specific permissions
@@ -26,12 +26,12 @@ def permission_needed(permission, organization_id=None):
             
             # Ensure the user is a member of the organization
             if not org_id or not current_user.is_member_of_organization(org_id):
-                flash('You are not a member of this organization.')
+                flash('Sinä et ole tämän organisaation jäsen.')
                 return redirect(url_for('home'))  # Adjust to your desired redirect route
             
             # Check if the user has the required permission in the organization
             if not current_user.has_permission(org_id, permission):
-                flash('You do not have permission to access this page.')
+                flash('Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.')
                 return redirect(url_for('home'))  # Adjust to your desired redirect route
             
             return f(*args, **kwargs)
@@ -43,12 +43,12 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         # Check if current_user is authenticated before checking global_admin status
         if not current_user.is_authenticated:
-            flash('You need to log in to access this page.')
+            flash('Sinun tulee kirjautua sisään käyttääksesi sivua', 'warning')
             return redirect(url_for('login'))  # Redirect to the login page if not authenticated
         
         if not current_user.global_admin:
-            flash('You do not have permission to access this page.')
-            return redirect(url_for('admin.admin_login'))  # Adjust to the correct admin login route if necessary
+            flash('Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.', 'error')
+            return redirect(url_for('home'))  # Adjust to the correct admin login route if necessary
 
         return f(*args, **kwargs)
     

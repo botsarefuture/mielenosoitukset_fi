@@ -1,0 +1,79 @@
+/* Table Styles for Mielenosoitukset.fi */
+
+/* General Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0; /* Add some spacing around tables */
+    font-family: Roboto, sans-serif; /* Consistent font with the rest of the site */
+  }
+  
+  th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd; /* Light border for rows */
+  }
+  
+  th {
+    background-color: #0033A0; /* Dark blue for table headers */
+    color: #FFFFFF; /* White text for header */
+    font-weight: bold;
+  }
+  
+  td {
+    background-color: #FFFFFF; /* White background for table cells */
+  }
+  
+  tr:nth-child(even) {
+    background-color: #F5F5F5; /* Light gray for alternate rows */
+  }
+  
+  tr:hover {
+    background-color: #E0E0E0; /* Light gray highlight on hover */
+  }
+  
+  /* Responsive Tables */
+  @media (max-width: 768px) {
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  
+    th, td {
+      display: block;
+      width: 100%;
+    }
+  
+    th {
+      background-color: #0033A0;
+      color: #FFFFFF;
+      text-align: center;
+    }
+  
+    td {
+      text-align: right;
+      border-bottom: 1px solid #ddd;
+    }
+  
+    tr {
+      display: block;
+      margin-bottom: 10px; /* Add space between rows on small screens */
+    }
+  
+    td::before {
+      content: attr(data-label); /* Use data-label attribute for responsive display */
+      font-weight: bold;
+      display: block;
+      text-transform: uppercase;
+    }
+  }
+  
+  /* Utility Classes for Tables */
+  .table-container {
+    max-width: 1200px; /* Match container max width */
+    margin: 0 auto; /* Center align */
+    background-color: #E0E0E0; /* Match background for main content */
+    padding: 20px; /* Padding for consistency */
+  }
+  

@@ -11,8 +11,8 @@ def admin_required(f):
             return redirect(url_for('login'))  # Redirect to the login page if not authenticated
         
         if not current_user.global_admin:
-            flash('Sinulla ei ole riittäviä oikeuksia käyttääksesi tätä sivua.')
-            return redirect(url_for('admin.admin_login'))  # Adjust to the correct admin login route if necessary
+            flash('Sinun käyttöoikeutesi eivät riitä sivun tarkasteluun.')
+            return redirect(url_for('home'))  # Adjust to the correct admin login route if necessary
 
         return f(*args, **kwargs)
     

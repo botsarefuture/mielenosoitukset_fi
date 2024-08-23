@@ -1,0 +1,174 @@
+* {
+    
+}
+
+:root {
+    --margin-top-bottom: 10px;
+}
+
+/* General Container Styles */
+.container {
+    max-width: 1200px; /* Maximum width of the container */
+    margin: 0 auto; /* Center the container horizontally */
+    margin-top: var(--margin-top-bottom);
+    margin-bottom: var(--margin-top-bottom);
+    padding: 20px; /* Padding inside the container */
+    box-sizing: content-box; /* Ensure padding is included in the width */
+    background-color: #E0E0E0; /* Default background color for main content areas */
+
+}
+
+/* Fluid Containers */
+.container-fluid {
+    max-width: 100%; /* Full width container */
+    padding: 20px; /* Padding inside the container */
+    margin-top: var(--margin-top-bottom);
+    margin-bottom: var(--margin-top-bottom);
+    box-sizing: border-box; /* Ensure padding is included in the width */
+    background-color: #E0E0E0; /* Default background color */
+}
+
+/* Centered Content Container */
+.container-centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items horizontally */
+    justify-content: center; /* Center items vertically */
+    text-align: center; /* Center text */
+    background-color: #E0E0E0; /* Default background color */
+    margin-top: var(--margin-top-bottom);
+    margin-bottom: var(--margin-top-bottom);
+}
+
+/* Container with Fixed Sidebar */
+.container-sidebar {
+    display: flex;
+    background-color: #E0E0E0; /* Default background color */
+}
+
+.container-sidebar .main-content {
+    flex: 1; /* Main content takes the remaining space */
+    padding: 20px;
+}
+
+.container-sidebar .sidebar {
+    width: 250px; /* Fixed width sidebar */
+    padding: 20px;
+}
+
+/* Container with Multiple Columns */
+.container-columns {
+    display: flex;
+    flex-wrap: wrap; /* Allow columns to wrap on smaller screens */
+    gap: 20px; /* Space between columns */
+    padding: 20px;
+    background-color: #E0E0E0; /* Default background color */
+}
+
+/* Container for Forms */
+.container-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between form elements */
+    /*background-color: #ffffff; /* Default background color */
+    border-color: var(--border-color);
+    margin-top: var(--margin-top-bottom);
+    margin-bottom: var(--margin-top-bottom);
+}
+
+/* Container for Grid Layouts */
+.container-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
+    gap: 20px; /* Space between grid items */
+    padding: 20px;
+    background-color: #E0E0E0; /* Default background color */
+    margin-top: var(--margin-top-bottom);
+    margin-bottom: var(--margin-top-bottom);
+}
+
+/* Container for Aligning Items */
+.container-align-items {
+    display: flex;
+    align-items: center; /* Center items vertically */
+    justify-content: space-between; /* Distribute space between items */
+    background-color: #E0E0E0; /* Default background color */
+}
+
+/* Container for Main Content */
+.container-main-content {
+    max-width: 1000px; /* Limit width for better readability */
+    margin: 0 auto; /* Center the container horizontally */
+    padding: 20px; /* Padding inside the container */
+    border-radius: 8px; /* Rounded corners for aesthetics */
+    box-sizing: content-box; /* Ensure padding is included in the width */
+    min-height: min(100vh) max(fit-content);
+    height: minmax(100vh,fit-content);
+}
+
+/* Responsive Containers */
+@media (max-width: 1200px) {
+    .container {
+        max-width: 100%; /* Allow full width on smaller screens */
+    }
+    .container-sidebar .main-content,
+    .container-sidebar .sidebar {
+        padding: 15px; /* Adjust padding for smaller screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px; /* Adjust padding for smaller screens */
+    }
+    .container-form,
+    .container-grid {
+        padding: 15px; /* Adjust padding for forms and grid on smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px; /* Further adjust padding for very small screens */
+    }
+    .container-main-content,
+    .container-columns,
+    .container-grid {
+        padding: 10px; /* Further adjust padding for smaller containers */
+    }
+}
+
+
+/* Background Color Utility Classes */
+.bg-main-content {
+    background-color: #e0e0e07d; /* Default background color for main content areas */
+}
+
+.bg-light-red {
+    background-color: #ce9c9c;
+}
+
+.bg-highlight {
+    background-color: #8cf795; /* Light green for highlight areas */
+}
+
+.bg-warning {
+    background-color: #FFF3E0; /* Light orange for warning or call-to-action areas */
+}
+
+.bg-header-footer {
+    background-color: #0033A0; /* Dark Blue for headers and footers */
+    color: #FFFFFF; /* White text for readability */
+}
+
+.p5 {
+    padding: 5px;
+}
+
+.p10 {
+    padding: 10px;
+}
+
+.p20 {
+    padding: 20px;
+}

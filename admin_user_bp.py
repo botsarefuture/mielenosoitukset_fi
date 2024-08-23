@@ -75,34 +75,12 @@ def edit_user(user_id):
 
         for organization in organization_ids:
             orgs.append({"org_id": organization, "role": "admin"})
-<<<<<<< HEAD
-        
-        if confirmed:
-            confirmed = True
-        
-=======
-                
->>>>>>> main
         mongo.users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
                 "username": username,
                 "email": email,
                 "role": role,
-<<<<<<< HEAD
-                "organizations": orgs,  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
-                "confirmed": confirmed
-            }}
-        )
-        
-        flash_message('Käyttäjä päivitetty onnistuneesti.', 'approved')
-=======
-                "organizations": orgs  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
-            }}
-        )
-        
-        flash('User updated successfully.')
->>>>>>> main
         return redirect(url_for('admin_user.user_control'))
     
     org_ids = [org["org_id"] for org in user["organizations"]]
@@ -141,31 +119,12 @@ def save_user(user_id):
     if confirmed:
         confirmed = True
 
-<<<<<<< HEAD
-    # Retrieve organization names based on IDs
-    organizations = mongo.organizations.find({"_id": {"$in": [ObjectId(org_id) for org_id in organization_ids]}})
-    org_names = [org['name'] for org in organizations]
-
-    # Update user details
-=======
-    orgs = []
-
-    for organization in organization_ids:
-        orgs.append({"org_id": organization, "role": "admin"})
-            
->>>>>>> main
     mongo.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {
             "username": username,
             "email": email,
             "role": role,
-<<<<<<< HEAD
-            "organizations": [{"org_id": org_id, "role": "admin"} for org_id in organization_ids],  # Update user organizations
-            "confirmed": confirmed
-=======
-            "organizations": orgs  # FIXME: Organizations should be a list like this [{"org_id": id_of_org, "role": role_in_org}]
->>>>>>> main
         }}
     )
 

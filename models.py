@@ -3,11 +3,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 
 class User(UserMixin):
-<<<<<<< HEAD
-    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False, email=None, org_ids=None, confirmed=False):
-=======
-    def __init__(self, user_id, username, password_hash, organizations=None, global_admin=False, email=None):
->>>>>>> main
         self.id = str(user_id)
         self.username = username
         self.email = email
@@ -22,35 +17,12 @@ class User(UserMixin):
         """
         Create a User instance from a database document.
         """
-<<<<<<< HEAD
-        global_admin = user_doc.get('global_admin', False)
-        if user_doc.get('role') == 'global_admin':
-            global_admin = True
-            
-        org_ids = [organization["org_id"] for organization in user_doc.get("organizations", [])]
-
-=======
-        
-        global_admin = False
-        if user_doc['role'] == 'global_admin':
-            global_admin = True
-        
-        global_admin_user = user_doc.get('global_admin', global_admin)
-        
->>>>>>> main
         return User(
             user_id=user_doc['_id'],
             username=user_doc['username'],
             email=user_doc.get("email", None),
             password_hash=user_doc['password_hash'],
             organizations=user_doc.get('organizations', []),
-<<<<<<< HEAD
-            global_admin=global_admin,
-            org_ids=org_ids,
-            confirmed=user_doc.get("confirmed", False)
-=======
-            global_admin=global_admin_user
->>>>>>> main
         )
 
     def check_password(self, password):
@@ -103,34 +75,3 @@ class User(UserMixin):
         """
         Check if the user is a member of a specific organization.
         """
-<<<<<<< HEAD
-        return any(org['org_id'] == str(organization_id) for org in self.organizations)
-    
-    def has_permission(self, organization_id, permission):
-        """
-        Check if the user has a specific permission within an organization.
-        """
-        organization = next((org for org in self.organizations if org['org_id'] == organization_id), None)
-        if organization and permission in organization.get('permissions', []):
-            return True
-        return False
-    
-    def change_password(self, db, new_password):
-        """
-        Change the user's password and update the database.
-        
-        :param db: The database connection
-        :param new_password: The new password to be set
-        """
-        new_password_hash = generate_password_hash(new_password)
-        self.password_hash = new_password_hash
-
-        # Update the password hash in the database
-        db.users.update_one(
-            {'_id': ObjectId(self.id)},
-            {'$set': {'password_hash': self.password_hash}}
-        )
-        print('Password updated successfully.')
-=======
-        return any(org['org_id'] == str(organization_id) for org in self.organizations)
->>>>>>> main

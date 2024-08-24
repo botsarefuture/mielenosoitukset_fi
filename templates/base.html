@@ -10,69 +10,85 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
         integrity="sha512-Fo3rlrZj/kTc6n5bLvNHrHDbOUjAUnyM4Q2O5U4V2Q5rHkLXbqE4sFJtc5FTCFBo5d2TwLnmH0qtr2k9as3D9w=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Matomo -->
+    <script>
+        var _paq = window._paq = window._paq || [];
+        /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+        _paq.push(['trackPageView']);
+        _paq.push(['enableLinkTracking']);
+        (function () {
+            var u = "//95.217.132.134:8000/";
+            _paq.push(['setTrackerUrl', u + 'matomo.php']);
+            _paq.push(['setSiteId', '1']);
+            var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+            g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+        })();
+    </script>
+    <!-- End Matomo Code -->
+
 </head>
 
 <body>
-<div class="wrapper">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="container bg-header-footer">
-            <!-- Logo and Home Link -->
-            <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
+    <div class="wrapper">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="container bg-header-footer">
+                <!-- Logo and Home Link -->
+                <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
 
-            <!-- Toggle Button for Mobile Navigation -->
-            <button class="navbar-toggle" aria-label="Toggle navigation">
-                <i class="fas fa-bars">☰</i>
-            </button>
+                <!-- Toggle Button for Mobile Navigation -->
+                <button class="navbar-toggle" aria-label="Toggle navigation">
+                    <i class="fas fa-bars">☰</i>
+                </button>
 
-            <!-- Navigation Links -->
-            <ul class="nav-links">
-                <li><a href="{{ url_for('index') }}">Etusivu</a></li>
-                <li><a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a></li>
-                <li><a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a></li>
+                <!-- Navigation Links -->
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}">Etusivu</a></li>
+                    <li><a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a></li>
+                    <li><a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a></li>
 
-                <!-- Conditional Links for Authenticated Users -->
-                {% if current_user.is_authenticated %}
-                <li><span style="color: white;">Tervetuloa, {{ current_user.username }}!</span></li>
+                    <!-- Conditional Links for Authenticated Users -->
+                    {% if current_user.is_authenticated %}
+                    <li><span style="color: white;">Tervetuloa, {{ current_user.username }}!</span></li>
 
-                {% if current_user.global_admin %}
-                {% include "sidebar.html" %}
-                {% else %}
-                <li><a href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a></li>
-                {% endif %}
+                    {% if current_user.global_admin %}
+                    {% include "sidebar.html" %}
+                    {% else %}
+                    <li><a href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a></li>
+                    {% endif %}
 
-                {% else %}
-                <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </nav>
+                    {% else %}
+                    <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
 
-    <!-- Flash Messages -->
-    {% if get_flashed_messages(with_categories=True) %}
-    <ul class="flash-messages">
-        {% for category, message in get_flashed_messages(with_categories=True) %}
-        <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
+        <!-- Flash Messages -->
+        {% if get_flashed_messages(with_categories=True) %}
+        <ul class="flash-messages">
+            {% for category, message in get_flashed_messages(with_categories=True) %}
+            <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
 
 
 
-    <!-- Main Content Area -->
-    <main class="container-main-content">
-        {% block content %}
-        <!-- The content from child templates will be injected here -->
-        {% endblock %}
-    </main>
+        <!-- Main Content Area -->
+        <main class="container-main-content">
+            {% block content %}
+            <!-- The content from child templates will be injected here -->
+            {% endblock %}
+        </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container-header-footer">
-            <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
-        </div>
-    </footer>
-</div>
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container-header-footer">
+                <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
+            </div>
+        </footer>
+    </div>
     <!-- JavaScript for Navigation Menu Toggle -->
     <script>
         // JavaScript to toggle the navigation menu on small screens

@@ -153,29 +153,36 @@ def demonstrations():
 
     # Filter out past demonstrations manually
     filtered_demonstrations = []
+    added_demo_ids = set()  # To keep track of added demo IDs
+
     for demo in demonstrations:
         demo_date = datetime.strptime(demo['date'], "%d.%m.%Y")
         if demo_date >= today:
             # Apply additional filters
-            if (search_query.lower() in demo['title'].lower() or
+            matches_search = (
+                search_query.lower() in demo['title'].lower() or
                 search_query.lower() in demo['city'].lower() or
                 search_query.lower() in demo['topic'].lower() or
-                search_query.lower() in demo['address'].lower()):
-                
-                if city_query.lower() in demo['city'].lower():
-                    if location_query.lower() in demo['address'].lower():
-                        if date_query:
-                            try:
-                                parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
-                                if parsed_date.strftime("%d.%m.%Y") == demo['date']:
-                                    filtered_demonstrations.append(demo)
-                            except ValueError:
-                                flash('Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.')
-                        else:
-                            filtered_demonstrations.append(demo)
+                search_query.lower() in demo['address'].lower()
+            )
+            
+            matches_city = city_query.lower() in demo['city'].lower() if city_query else True
+            matches_location = location_query.lower() in demo['address'].lower() if location_query else True
+            matches_topic = topic_query.lower() in demo['topic'].lower() if topic_query else True
 
-                if topic_query.lower() in demo['topic'].lower():
+            matches_date = True
+            if date_query:
+                try:
+                    parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
+                    matches_date = parsed_date.strftime("%d.%m.%Y") == demo['date']
+                except ValueError:
+                    flash('Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.')
+                    matches_date = False
+
+            if matches_search and matches_city and matches_location and matches_topic and matches_date:
+                if demo['_id'] not in added_demo_ids:  # Ensure the demo isn't already added
                     filtered_demonstrations.append(demo)
+                    added_demo_ids.add(demo['_id'])  # Mark the demo as added
 
     # Sort the results by date
     filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))

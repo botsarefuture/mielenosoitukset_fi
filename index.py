@@ -53,28 +53,30 @@ app.register_blueprint(auth_bp, url_prefix="/auth/")
 @app.route('/')
 def index():
     """
-    Display the index page with a list of approved demonstrations.
+    Display the index page with a list of upcoming approved demonstrations.
     """
     search_query = request.args.get('search', '')
+    today = datetime.now()
 
-    if search_query:
-        demonstrations = mongo.demonstrations.find({
-            "approved": True,
-            "$or": [
-                {"title": {"$regex": search_query, "$options": "i"}},
-                {"city": {"$regex": search_query, "$options": "i"}},
-                {"topic": {"$regex": search_query, "$options": "i"}},
-                {"address": {"$regex": search_query, "$options": "i"}}
-            ]
-        })
-    else:
-        demonstrations = mongo.demonstrations.find({"approved": True})
+    # Retrieve all approved demonstrations
+    demonstrations = mongo.demonstrations.find({"approved": True})
 
-    # Convert the cursor to a list and sort by date
-    demonstrations = list(demonstrations)
-    demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
+    # Filter out past demonstrations manually
+    filtered_demonstrations = []
+    for demo in demonstrations:
+        demo_date = datetime.strptime(demo['date'], "%d.%m.%Y")
+        if demo_date >= today:
+            # Check for search query match
+            if (search_query.lower() in demo['title'].lower() or
+                search_query.lower() in demo['city'].lower() or
+                search_query.lower() in demo['topic'].lower() or
+                search_query.lower() in demo['address'].lower()):
+                filtered_demonstrations.append(demo)
 
-    return render_template('index.html', demonstrations=demonstrations)
+    # Sort the results by date
+    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
+
+    return render_template('index.html', demonstrations=filtered_demonstrations)
 
 @app.route('/submit', methods=['GET', 'POST'])
 def submit():
@@ -134,52 +136,51 @@ def submit():
         return redirect(url_for('index'))
 
     return render_template('submit.html')
-
 @app.route('/demonstrations')
 def demonstrations():
     """
-    List all approved demonstrations, optionally filtered by search query.
+    List all upcoming approved demonstrations, optionally filtered by search query.
     """
     search_query = request.args.get('search', '')
     city_query = request.args.get('city', '')
     location_query = request.args.get('location', '')
     date_query = request.args.get('date', '')
     topic_query = request.args.get('topic', '')
+    today = datetime.now()
 
-    # Build the query dictionary
-    query = {"approved": True}
+    # Retrieve all approved demonstrations
+    demonstrations = mongo.demonstrations.find({"approved": True})
 
-    if search_query:
-        query["$or"] = [
-            {"title": {"$regex": search_query, "$options": "i"}},
-            {"city": {"$regex": search_query, "$options": "i"}},
-            {"topic": {"$regex": search_query, "$options": "i"}},
-            {"address": {"$regex": search_query, "$options": "i"}}
-        ]
+    # Filter out past demonstrations manually
+    filtered_demonstrations = []
+    for demo in demonstrations:
+        demo_date = datetime.strptime(demo['date'], "%d.%m.%Y")
+        if demo_date >= today:
+            # Apply additional filters
+            if (search_query.lower() in demo['title'].lower() or
+                search_query.lower() in demo['city'].lower() or
+                search_query.lower() in demo['topic'].lower() or
+                search_query.lower() in demo['address'].lower()):
+                
+                if city_query.lower() in demo['city'].lower():
+                    if location_query.lower() in demo['address'].lower():
+                        if date_query:
+                            try:
+                                parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
+                                if parsed_date.strftime("%d.%m.%Y") == demo['date']:
+                                    filtered_demonstrations.append(demo)
+                            except ValueError:
+                                flash('Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.')
+                        else:
+                            filtered_demonstrations.append(demo)
 
-    if city_query:
-        query["city"] = {"$regex": city_query, "$options": "i"}
-    
-    if location_query:
-        query["address"] = {"$regex": location_query, "$options": "i"}
-
-    if date_query:
-        try:
-            # Convert the date to a datetime object to ensure it's in the correct format
-            parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
-            query["date"] = date_query  # Keep the date in string form, since it's stored that way
-        except ValueError:
-            flash('Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.')
-
-    if topic_query:
-        query["topic"] = {"$regex": topic_query, "$options": "i"}
-
-    demonstrations = list(mongo.demonstrations.find(query))
+                if topic_query.lower() in demo['topic'].lower():
+                    filtered_demonstrations.append(demo)
 
     # Sort the results by date
-    demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
+    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
 
-    return render_template('list.html', demonstrations=demonstrations)
+    return render_template('list.html', demonstrations=filtered_demonstrations)
 
 @app.route('/demonstration/<demo_id>')
 def demonstration_detail(demo_id):
@@ -193,92 +194,6 @@ def demonstration_detail(demo_id):
         return redirect(url_for('demonstrations'))
 
     return render_template('detail.html', demo=demo)
-
-@app.route('/edit/<demo_id>', methods=['GET', 'POST'])
-@login_required
-def edit_event(demo_id):
-    """
-    Handle editing of a demonstration.
-    """
-    if request.method == 'POST':
-        # Get form data
-        title = request.form.get('title')
-        date = request.form.get('date')
-        start_time = request.form.get('start_time')
-        end_time = request.form.get('end_time')
-        topic = request.form.get('topic')
-        event_type = request.form.get('type')
-        route = request.form.get('route') if event_type == 'marssi' else None
-        facebook = request.form.get('facebook')
-        city = request.form.get('city')
-        address = request.form.get('address')
-
-        # Validation for form data
-        if not title or not date or not start_time or not end_time or not topic or not city or not address:
-            flash('Ole hyvä ja täytä kaikki pakolliset kentät.')
-            return redirect(url_for('edit_event', demo_id=demo_id))
-
-        # Get organizers from form data
-        organizers = []
-        organizer_names = request.form.getlist('organizers[]')
-        organizer_websites = request.form.getlist('organizer_websites[]')
-        organizer_emails = request.form.getlist('organizer_emails[]')
-
-        for name, website, email in zip(organizer_names, organizer_websites, organizer_emails):
-            if name:  # Ensure that the organizer name is not empty
-                organizer = Organizer(name=name, website=website, email=email)
-                organizers.append(organizer)
-
-        # Update the demonstration in the database
-        mongo.demonstrations.update_one(
-            {"_id": ObjectId(demo_id)},
-            {
-                "$set": {
-                    'title': title,
-                    'date': date,
-                    'start_time': start_time,
-                    'end_time': end_time,
-                    'topic': topic,
-                    'type': event_type,
-                    'route': route,
-                    'facebook': facebook,
-                    'city': city,
-                    'address': address,
-                    'organizers': [org.to_dict() for org in organizers]
-                }
-            }
-        )
-
-        flash('MIelenosoitus päivitetty onnistuneesti!')
-        return redirect(url_for('demonstration_detail', demo_id=demo_id))
-
-    # GET request - fetch event details
-    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    if demo_data is None:
-        flash("Mielenosoitusta ei löytynyt.")
-        return redirect(url_for('demonstrations'))
-
-    # Convert MongoDB data back to Demonstration object
-    demo = Demonstration.from_dict(demo_data)
-
-    return render_template('edit_event.html', demo=demo)
-
-@app.route('/delete/<demo_id>', methods=['POST'])
-@login_required
-@admin_required
-def delete_event(demo_id):
-    """
-    Handle deletion of a demonstration.
-    """
-    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-
-    if demo is None:
-        flash("Mielenosoitusta ei löytynyt.")
-        return redirect(url_for('demonstrations'))
-
-    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-    flash('Mielenosoitus poistettu onnistuneesti!')
-    return redirect(url_for('demonstrations'))
 
 if __name__ == '__main__':
     app.run(debug=True)

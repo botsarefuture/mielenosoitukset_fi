@@ -27,12 +27,26 @@ jobs:
         pip install bandit
 
     - name: Run Bandit Security Scan
+      id: bandit_scan
       continue-on-error: true  # Ensure the job doesn't fail if bandit finds issues
       run: |
         bandit -r ./ -f json -o bandit-report.json
 
+    - name: Check for Bandit Issues
+      id: check_bandit_issues
+      run: |
+        cat bandit-report.json
+        issues=$(jq '.results | length' bandit-report.json)
+        if [ $issues -gt 0 ]; then
+          echo "Security issues found!"
+          echo "::set-output name=issues_found::true"
+        else
+          echo "No security issues found."
+          echo "::set-output name=issues_found::false"
+        fi
+
     - name: Upload Bandit Report
-      if: always()
+      if: always()  # Always upload the report
       uses: actions/upload-artifact@v3
       with:
         name: bandit-report

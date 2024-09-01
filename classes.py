@@ -53,6 +53,38 @@ class Organizer:
             website=data.get('website')
         )
 
+DAY_NAME_TO_NUM = {
+    'monday': 0,
+    'tuesday': 1,
+    'wednesday': 2,
+    'thursday': 3,
+    'friday': 4,
+    'saturday': 5,
+    'sunday': 6
+}
+@NotImplementedError
+class RepeatingDemonstration:
+    def __init__(self, title: str, day_of_week: str, start_time: str, end_time: str, topic: str, city: str, address: str, event_type: str, route: str, organizers: list[Organizer] = None, approved: bool = False, linked_organizations: dict = None, _id = None):
+        if _id is None:
+            _id = OID()
+            _id = ObjectId(str(_id))
+
+        if day_of_week not in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]:
+            raise ValueError('The day of week should be one of these ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]')
+        
+        self.title = title
+        self.day_of_week = DAY_NAME_TO_NUM[day_of_week]
+        self.start_time = start_time
+        self.end_time = end_time
+        self.topic = topic
+        self.city = city
+        self.address = address
+        self.event_type = event_type
+        self.route = route
+        self.organizers = organizers if organizers is not None else []
+        self.approved = approved
+        self.linked_organizations = linked_organizations if linked_organizations is not None else {}
+        self._id = _id
 
 class Demonstration:
     def __init__(self, title: str, date: str, start_time: str, end_time: str, topic: str, 

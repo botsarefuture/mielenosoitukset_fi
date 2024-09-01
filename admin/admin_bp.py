@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from bson.objectid import ObjectId
-from administration import admin_required
+from wrappers import admin_required
 from database_manager import DatabaseManager
-from models import User  # Import User model
+from auth.models import User  # Import User model
 import logging
 
 LOG_FILE_PATH = "app.log"
@@ -16,7 +16,7 @@ mongo = db_manager.get_db()
 
 # Initialize Flask-Login
 login_manager = LoginManager()
-login_manager.login_view = 'admin.admin_login'
+login_manager.login_view = 'admin.admin_login'  # TODO: Ensure this is set correctly in the relevant module
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

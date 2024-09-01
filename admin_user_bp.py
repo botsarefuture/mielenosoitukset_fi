@@ -2,9 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
-from administration import admin_required
-from models import User  # Import User model
-
+from wrappers import admin_required
 from emailer.EmailSender import EmailSender
 email_sender = EmailSender()
 

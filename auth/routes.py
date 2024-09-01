@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required
-from models import User
+from auth.models import User
 import jwt
 import datetime
 from emailer.EmailSender import EmailSender

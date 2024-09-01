@@ -1,0 +1,17 @@
+# Secret key used for session management and cryptographic operations
+SECRET_KEY: "your_secret_key_here"
+
+# URI for MongoDB connection
+MONGO_URI: "mongodb://username:password@host:port/database"
+
+# SMTP server configuration for sending emails
+MAIL_SERVER: "smtp.your-email-provider.com"
+MAIL_PORT: 587  # Typically 587 for TLS or 465 for SSL
+MAIL_USE_TLS: true  # Use TLS for secure email sending
+MAIL_USERNAME: "your-email@example.com"
+MAIL_PASSWORD: "your_email_password_here"
+MAIL_DEFAULT_SENDER: "your-email@example.com"
+
+# Optional settings for server name and URL scheme
+# SERVER_NAME: "your.domain.com"
+# PREFERRED_URL_SCHEME: "https"

@@ -2,7 +2,7 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-<h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
+<h1>Tervetuloa Mielenosoitukset.fi:hin</h1>
 <p>Alustamme, josta voit löytää ja ilmoittaa mielenosoituksia.</p>
 
 <form action="{{ url_for('index') }}" method="GET" class="container-form">
@@ -12,7 +12,7 @@
     <!-- TODO: Consider adding search filters or advanced search options for better user experience -->
 </form>
 
-<h3>Esitellyt mielenosoitukset</h3>
+<h2>Esitellyt mielenosoitukset</h2>
 <ul class="demonstrations-list">
     {% if demonstrations %}
     {% for demo in demonstrations %}

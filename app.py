@@ -2,7 +2,7 @@ from flask import Flask
 from flask_login import LoginManager
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
-from models import User  # Import User model
+from auth.models import User  # Import User model
 from emailer.EmailSender import EmailSender
 
 def create_app():
@@ -33,10 +33,7 @@ def create_app():
         return None
 
     # Import and register blueprints
-    from admin_bp import admin_bp
-    from admin_user_bp import admin_user_bp
-    from admin_demo_bp import admin_demo_bp
-    from admin_org_bp import admin_org_bp
+    from admin import admin_bp, admin_user_bp, admin_demo_bp, admin_org_bp
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
     app.register_blueprint(admin_user_bp)

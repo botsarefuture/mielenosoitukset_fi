@@ -4,6 +4,7 @@ from datetime import datetime
 from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
 from flask_login import current_user
+from datetime import date
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
@@ -12,29 +13,22 @@ mongo = db_manager.get_db()
 def init_routes(app):
     @app.route('/')
     def index():
-        """
-        Display the index page with a list of upcoming approved demonstrations.
-        """
         search_query = request.args.get('search', '')
-        today = datetime.now()
+        today = date.today()  # Use date.today() to get only the date part
 
-        # Retrieve all approved demonstrations
         demonstrations = mongo.demonstrations.find({"approved": True})
 
-        # Filter out past demonstrations manually
         filtered_demonstrations = []
         for demo in demonstrations:
-            demo_date = datetime.strptime(demo['date'], "%d.%m.%Y")
+            demo_date = datetime.strptime(demo['date'], "%d.%m.%Y").date()  # Convert to date object
             if demo_date >= today:
-                # Check for search query match
                 if (search_query.lower() in demo['title'].lower() or
                     search_query.lower() in demo['city'].lower() or
                     search_query.lower() in demo['topic'].lower() or
                     search_query.lower() in demo['address'].lower()):
                     filtered_demonstrations.append(demo)
 
-        # Sort the results by date
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y").date())
 
         return render_template('index.html', demonstrations=filtered_demonstrations)
 
@@ -107,7 +101,7 @@ def init_routes(app):
         location_query = request.args.get('location', '')
         date_query = request.args.get('date', '')
         topic_query = request.args.get('topic', '')
-        today = datetime.now()
+        today = date.today()  # Use date.today() to get only the date part
 
         # Retrieve all approved demonstrations
         demonstrations = mongo.demonstrations.find({"approved": True})
@@ -117,7 +111,7 @@ def init_routes(app):
         added_demo_ids = set()  # To keep track of added demo IDs
 
         for demo in demonstrations:
-            demo_date = datetime.strptime(demo['date'], "%d.%m.%Y")
+            demo_date = datetime.strptime(demo['date'], "%d.%m.%Y").date()  # Convert to date object
             if demo_date >= today:
                 # Apply additional filters
                 matches_search = (
@@ -134,8 +128,8 @@ def init_routes(app):
                 matches_date = True
                 if date_query:
                     try:
-                        parsed_date = datetime.strptime(date_query, "%d.%m.%Y")
-                        matches_date = parsed_date.strftime("%d.%m.%Y") == demo['date']
+                        parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()  # Convert to date object
+                        matches_date = parsed_date == demo_date
                     except ValueError:
                         flash('Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.')
                         matches_date = False
@@ -146,7 +140,7 @@ def init_routes(app):
                         added_demo_ids.add(demo['_id'])  # Mark the demo as added
 
         # Sort the results by date
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y"))
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x['date'], "%d.%m.%Y").date())
 
         return render_template('list.html', demonstrations=filtered_demonstrations)
 

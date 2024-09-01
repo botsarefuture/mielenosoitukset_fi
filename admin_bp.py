@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from bson.objectid import ObjectId
-from administration import admin_required
+from wrappers import admin_required
 from database_manager import DatabaseManager
 from models import User  # Import User model
 import logging

@@ -42,7 +42,7 @@ def init_routes(app):
             title = request.form.get('title')
             date = request.form.get('date')
             start_time = request.form.get('start_time')
-            end_time = request.form.get('end_time')
+            end_time = request.form.get('end_time', None)
             topic = request.form.get('topic')
             facebook = request.form.get('facebook')
             city = request.form.get('city')
@@ -51,7 +51,7 @@ def init_routes(app):
             route = request.form.get('route') if event_type == 'marssi' else None
 
             # Validation for form data
-            if not title or not date or not start_time or not end_time or not topic or not city or not address:
+            if not title or not date or not start_time or not topic or not city or not address:
                 flash('Sinun tulee antaa kaikki vaaditut tiedot.', 'error')
                 return redirect(url_for('submit'))
 
@@ -86,7 +86,7 @@ def init_routes(app):
             # Save to MongoDB
             mongo.demonstrations.insert_one(demonstration.to_dict())
 
-            flash('Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.')
+            flash('Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.', 'success')
             return redirect(url_for('index'))
 
         return render_template('submit.html')

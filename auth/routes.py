@@ -17,14 +17,14 @@ def verify_emailer(email, username):
     confirmation_url = url_for('auth.confirm_email', token=token, _external=True)
     
     email_sender.queue_email(
-                template_name='registration_confirmation_email.html',
-                subject='Confirm Your Registration',
-                recipients=[email],
-                context={
-                    'confirmation_url': confirmation_url,
-                    'user_name': username
-                }
-            )
+        template_name='registration_confirmation_email.html',
+        subject='Vahvista rekisteröitymisesi',
+        recipients=[email],
+        context={
+            'confirmation_url': confirmation_url,
+            'user_name': username
+        }
+    )
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -34,15 +34,15 @@ def register():
         email = request.form.get('email')
 
         if not username or not password or len(username) < 3 or len(password) < 6:
-            flash('Invalid input. Username must be at least 3 characters and password at least 6 characters.', "error")
+            flash('Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.', "error")
             return redirect(url_for('auth.register'))
 
         if mongo.users.find_one({"username": username}):
-            flash('Username already exists.', 'warning')
+            flash('Käyttäjänimi on jo käytössä.', 'warning')
             return redirect(url_for('auth.register'))
 
         if mongo.users.find_one({"email": email}):
-            flash('Email is already registered. Login instead.', "warning")
+            flash('Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.', "warning")
             return redirect(url_for('auth.login'))
 
         user_data = User.create_user(username, password, email)
@@ -50,9 +50,9 @@ def register():
 
         try:
             verify_emailer(email, username)
-            flash('Registration successful! Please check your email to confirm your account.', "info")
+            flash('Rekisteröinti onnistui! Tarkista sähköpostisi vahvistaaksesi tilisi.', "info")
         except Exception as e:
-            flash(f'Error sending confirmation email: {e}', "error")
+            flash(f'Virhe vahvistusviestin lähettämisessä: {e}', "error")
 
         return redirect(url_for('auth.login'))
 
@@ -65,11 +65,11 @@ def confirm_email(token):
         user = mongo.users.find_one({"email": email})
         if user:
             mongo.users.update_one({"email": email}, {"$set": {"confirmed": True}})
-            flash('Your email has been confirmed. You can now log in.', 'info')
+            flash('Sähköpostiosoitteesi on vahvistettu. Voit nyt kirjautua sisään.', 'info')
         else:
-            flash('User not found.', 'error')
+            flash('Käyttäjää ei löytynyt.', 'error')
     else:
-        flash('The confirmation link is invalid or has expired.', 'warning')
+        flash('Vahvistuslinkki on virheellinen tai vanhentunut.', 'warning')
 
     return redirect(url_for('auth.login'))
 
@@ -80,7 +80,7 @@ def login():
         password = request.form.get('password')
 
         if not username or not password:
-            flash('Please enter both username and password.', 'warning')
+            flash('Anna sekä käyttäjänimi että salasana.', 'warning')
             return redirect(url_for('auth.login'))
 
         user_doc = mongo.users.find_one({"username": username})
@@ -90,8 +90,8 @@ def login():
             return redirect(url_for('auth.login'))
         
         user = User.from_db(user_doc)
-        if user.check_password(password) == False:
-            flash(f"Käyttäjänimi tai salasana on väärin.", "error")
+        if not user.check_password(password):
+            flash("Käyttäjänimi tai salasana on väärin.", "error")
             return redirect(url_for('auth.login')) 
         
         if user.confirmed:
@@ -102,7 +102,6 @@ def login():
             flash("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
             return redirect(url_for('index'))
-                        
 
     return render_template('login.html')
 
@@ -110,7 +109,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('Kirjauduit onnistuneesti ulos')
+    flash('Kirjauduit onnistuneesti ulos', 'success')
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/password_reset_request', methods=['GET', 'POST'])
@@ -126,20 +125,20 @@ def password_reset_request():
             try:
                 email_sender.queue_email(
                     template_name='password_reset_email.html',
-                    subject='Password Reset Request',
+                    subject='Salasanan palautuspyyntö',
                     recipients=[email],
                     context={
                         'reset_url': reset_url,
                         'user_name': user.get('username')
                     }
                 )
-                flash('A password reset link has been sent to your email address.', 'info')
+                flash('Salasanan palautuslinkki on lähetetty sähköpostiisi.', 'info')
             except Exception as e:
-                flash(f'Error sending password reset email: {e}', 'error')
+                flash(f'Virhe salasanan palautusviestin lähettämisessä: {e}', 'error')
                 
             return redirect(url_for('auth.login'))
 
-        flash('No account found with that email address.', 'info')
+        flash('Tilin sähköpostiosoitetta ei löytynyt.', 'info')
         return redirect(url_for('auth.password_reset_request'))
 
     return render_template('password_reset_request.html')
@@ -148,7 +147,7 @@ def password_reset_request():
 def password_reset(token):
     email = verify_reset_token(token)
     if not email:
-        flash('The password reset link is invalid or has expired.', 'warning')
+        flash('Salasanan palautuslinkki on virheellinen tai vanhentunut.', 'warning')
         return redirect(url_for('auth.password_reset_request'))
 
     if request.method == 'POST':
@@ -156,13 +155,13 @@ def password_reset(token):
         
         user_doc = mongo.users.find_one({"email": email})
         if not user_doc:
-            flash('User not found.', 'warning')
+            flash('Käyttäjää ei löytynyt.', 'warning')
             return redirect(url_for('auth.password_reset_request'))
 
         user = User.from_db(user_doc)
         user.change_password(mongo, password)
         
-        flash('Your password has been updated successfully.', 'success')
+        flash('Salasanasi on päivitetty onnistuneesti.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('password_reset.html', token=token)
@@ -183,7 +182,7 @@ def verify_reset_token(token):
 def generate_confirmation_token(email):
     return jwt.encode({
         'email': email,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        'exp': datetime.datetime.now(datetime.datetime.UTC()) + datetime.timedelta(hours=1)
     }, current_app.config['SECRET_KEY'], algorithm='HS256')
 
 def verify_confirmation_token(token):

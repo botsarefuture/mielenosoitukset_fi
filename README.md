@@ -1,3 +1,11 @@
+**⚠️ Warning: Out-of-Date Documentation ⚠️**
+
+This README file is currently out-of-date. Due to high workload and time constraints, we will not be able to update this documentation for the foreseeable future. 
+
+Please use the code and project files as the primary source of truth, and reach out to us if you have any urgent questions or need clarification.
+
+Thank you for your understanding!
+
 # Mielenosoitukset.fi
 
 Mielenosoitukset.fi is a platform for finding and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and admins can manage and approve submissions.

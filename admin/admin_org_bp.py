@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
-from administration import admin_required
+from wrappers import admin_required
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint('admin_org', __name__, url_prefix='/admin/organization')

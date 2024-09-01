@@ -21,6 +21,9 @@ class User(UserMixin):
         global_admin = user_doc.get('global_admin', False)
         if user_doc.get('role') == 'global_admin':
             global_admin = True
+
+        else:
+            global_admin = False # Fixes #25
             
         org_ids = [organization["org_id"] for organization in user_doc.get("organizations", [])]
 

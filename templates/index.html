@@ -2,20 +2,29 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-<h1>Tervetuloa Mielenosoitukset.fi:hin</h1>
-<p>Alustamme, josta voit löytää ja ilmoittaa mielenosoituksia.</p>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
 
+<!-- Container only for the welcome message and description -->
+<div class="container-welcome container-centered">
+    <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
+    <p>Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen. <br> Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.</p>
+    <div class="buttons-div">
+        <a class="button button-primary" href="{{ url_for('info') }}">Lue lisää</a>
+        <a class="button button-primary" href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
+    </div>
+</div>
+
+<!-- Search Form -->
 <form action="{{ url_for('index') }}" method="GET" class="container-form">
     <input type="text" name="search" placeholder="Hae mielenosoituksia...">
     <button type="submit">Hae</button>
-    <!-- Comment: Search form for users to find demonstrations by keyword -->
-    <!-- TODO: Consider adding search filters or advanced search options for better user experience -->
 </form>
 
+<!-- Featured Demonstrations Section -->
 <h2>Esitellyt mielenosoitukset</h2>
 <ul class="demonstrations-list">
     {% if demonstrations %}
-    {% for demo in demonstrations %}
+    {% for demo in demonstrations[:5] %} <!-- Limiting to 5 demonstrations -->
     <li>
         <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}">{{ demo['title'] }}</a><br>
         <small>
@@ -23,18 +32,10 @@
             Aihe: {{ demo['topic'] }}<br>
             Sijainti: {{ demo['address'] }}, {{ demo['city'] }}
         </small>
-        <!-- Comment: List item displaying the title, date, time, topic, and location of each demonstration -->
-        <!-- TODO: Add a way to highlight or feature specific demonstrations based on criteria (e.g., upcoming events) -->
     </li>
-    {% else %}
-    <li>Ei mielenosoituksia näytettäväksi.</li>
-    <!-- Comment: Message displayed when there are no demonstrations to show -->
-    <!-- TODO: Add suggestions or a call-to-action for users to submit new demonstrations or explore other sections -->
     {% endfor %}
     {% else %}
     <li>Ei mielenosoituksia näytettäväksi.</li>
-    <!-- Comment: Message displayed when there are no demonstrations available -->
-    <!-- TODO: Ensure the user experience is smooth even with no data available, possibly with suggestions or links -->
     {% endif %}
 </ul>
 {% endblock %}

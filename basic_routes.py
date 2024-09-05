@@ -6,6 +6,9 @@ from database_manager import DatabaseManager
 from flask_login import current_user
 from datetime import date
 
+from emailer.EmailSender import EmailSender, EmailJob
+email_sender = EmailSender()
+
 # Initialize MongoDB
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
@@ -156,3 +159,41 @@ def init_routes(app):
             return redirect(url_for('demonstrations'))
 
         return render_template('detail.html', demo=demo)
+    
+    @app.route("/info")
+    def info():
+        return render_template("info.html")
+    
+    @app.route("/privacy")
+    def privacy():
+        return render_template("access_denied.html")
+    @app.route('/contact', methods=['GET', 'POST'])
+    def contact():
+        if request.method == 'POST':
+            name = request.form.get('name')
+            email = request.form.get('email')
+            subject = request.form.get('subject')
+            message = request.form.get('message')
+
+            # Validate form data
+            if not name or not email or not message:
+                flash('Kaikki kentät ovat pakollisia!', 'error')
+                return redirect(url_for('contact'))
+
+            # Create email job
+            email_sender.queue_email(
+                template_name="new_ticket.html",
+                subject='Uusi viesti Mielenosoitukset.fi:stä',
+                recipients=['tuki@mielenosoitukset.fi'],
+                context={
+                    "name": name,
+                    "email": email,
+                    "subject": subject,
+                    "message": message,
+                }
+            )
+
+            flash('Viesti lähetetty onnistuneesti!', 'success')
+            return redirect(url_for('contact'))
+
+        return render_template('contact.html')

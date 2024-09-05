@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Ei pääsyä{% endblock %}
+
+{% block content %}
+<div class="container-centered p20">
+    <h2>Ei riittäviä käyttöoikeuksia</h2>
+    <p>Sinulla ei ole riittäviä oikeuksia tämän sisällön katseluun.</p>
+    <p>Mikäli uskot tämän olevan virhe, ota yhteyttä sivuston ylläpitoon välittömästi</p>
+    <div class="buttons-div">
+        <a class="button button-primary" href="{{ url_for('index') }}">Takaisin etusivulle</a>
+        <a class="button button-secondary" href="{{ url_for('contact') }}">Ota yhteyttä ylläpitoon</a>
+    </div>
+</div>
+{% endblock %}

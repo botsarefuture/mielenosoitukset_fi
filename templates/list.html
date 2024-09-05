@@ -3,19 +3,19 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
 <div class="container-main-content">
-    <h2>Tulevat Mielenosoitukset</h2>
+    <h1>Tulevat mielenosoitukset</h1>
 
     <!-- Extended search form for filtering demonstrations -->
     <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
-        <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Search for demonstrations" value="{{ request.args.get('search', '') }}">
+        <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Hae mielenosoituksia" value="{{ request.args.get('search', '') }}">
         
-        <input type="text" name="city" placeholder="Kaupunki" aria-label="City" value="{{ request.args.get('city', '') }}">
+        <input type="text" name="city" placeholder="Kaupunki" aria-label="Kaupunki" value="{{ request.args.get('city', '') }}">
         
-        <input type="text" name="location" placeholder="Sijainti" aria-label="Location" value="{{ request.args.get('location', '') }}">
+        <input type="text" name="location" placeholder="Sijainti" aria-label="Sijainti" value="{{ request.args.get('location', '') }}">
         
-        <input type="text" name="date" placeholder="Päivämäärä (pp.kk.vvvv)" aria-label="Date" value="{{ request.args.get('date', '') }}">
+        <input type="text" name="date" placeholder="Päivämäärä (pp.kk.vvvv)" aria-label="Päivämäärä (pp.kk.vvvv)" value="{{ request.args.get('date', '') }}">
         
-        <input type="text" name="topic" placeholder="Aihe" aria-label="Topic" value="{{ request.args.get('topic', '') }}">
+        <input type="text" name="topic" placeholder="Aihe" aria-label="Aihe" value="{{ request.args.get('topic', '') }}">
         
         <button type="submit">Hae</button>
     </form>

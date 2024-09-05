@@ -27,12 +27,12 @@ def permission_needed(permission, organization_id=None):
             # Ensure the user is a member of the organization
             if not org_id or not current_user.is_member_of_organization(org_id):
                 flash('Sinä et ole tämän organisaation jäsen.')
-                return redirect(url_for('home'))  # Adjust to your desired redirect route
+                return redirect(url_for('index'))  # Adjust to your desired redirect route
             
             # Check if the user has the required permission in the organization
             if not current_user.has_permission(org_id, permission):
                 flash('Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.')
-                return redirect(url_for('home'))  # Adjust to your desired redirect route
+                return redirect(url_for('index'))  # Adjust to your desired redirect route
             
             return f(*args, **kwargs)
         return decorated_function
@@ -48,7 +48,7 @@ def admin_required(f):
         
         if not current_user.global_admin:
             flash('Sinun käyttöoikeutesi eivät riitä sivun tarkasteluun.')
-            return redirect(url_for('home'))  # Adjust to the correct admin login route if necessary
+            return redirect(url_for('index'))  # Adjust to the correct admin login route if necessary
 
         return f(*args, **kwargs)
     

@@ -102,3 +102,25 @@
         font-size: 14px; /* Smaller font size for very small screens */
     }
 }
+
+/* index.css */
+
+.container-welcome {
+    background-color: #f4f4f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.container-welcome h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.container-welcome p {
+    font-size: 16px;
+    color: #666;
+    line-height: 1.5;
+}

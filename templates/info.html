@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Tietoa sivustosta - Mielenosoitukset.fi{% endblock %}
+
+{% block content %}
+<section class="info-section">
+    <div class="container">
+        <h1>Tietoa Mielenosoitukset.fi -sivustosta</h1>
+        <p>Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja
+            yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit
+            seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.</p>
+
+        <h2>Mikä on Mielenosoitukset.fi?</h2>
+        <p>Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille
+            mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa,
+            osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.</p>
+
+        <h2>Kuinka ilmoitan mielenosoituksesta?</h2>
+        <p>Voit ilmoittaa oman mielenosoituksesi täyttämällä <a href="{{ url_for('submit') }}">ilmoituslomakkeen</a>.
+            Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja
+            täydellistä tietoa tapahtumastasi.</p>
+
+        <h2>Kuka ylläpitää sivustoa?</h2>
+        <p>Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa
+            mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee
+            monimuotoista ja vapaata mielipiteenilmaisua kaikille.</p>
+
+        <h2>Yhteystiedot</h2>
+        <p>Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit lähettää sähköpostia
+            osoitteeseen <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> tai täyttää <a
+                href="{{ url_for('contact') }}">yhteydenottolomakkeen</a>.</p>
+
+        <h2>Yksityisyys ja evästeet</h2>
+        <p>Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa
+            evästeiden käytöstä ja tietosuojasta löydät <a
+                href="{{ url_for('privacy') }}">yksityisyydensuojakäytännöstämme</a>.</p>
+    </div>
+</section>
+{% endblock %}

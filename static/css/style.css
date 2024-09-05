@@ -1,6 +1,8 @@
 @import url("container.css");
 @import url("form.css");
 @import url("table.css");
+@import url("buttons.css");
+
 
 .wrapper {
     display: grid;
@@ -159,3 +161,26 @@ html, body {
 /* TODO: Improve accessibility by adding ARIA attributes and improving color contrast */
 /* TODO: Consider using CSS variables for consistent color schemes and easier theming */
 /* TODO: Add transitions or animations to the navbar and footer for smoother interactions */
+
+.footer-links,
+.social-media-links {
+    list-style: none;
+    text-align: center;
+    padding: 0;
+    gap: 15px;
+}
+
+.footer-links li,
+.social-media-links li {
+    display: inline;
+}
+
+.footer-links a,
+.social-media-links a {
+    text-decoration: none;
+    color: white; /* Adjust this according to your theme */
+}
+
+.social-media-links a i {
+    margin-right: 8px;
+}

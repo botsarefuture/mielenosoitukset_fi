@@ -1,5 +1,19 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    send_file,
+)
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user,
+)
 from bson.objectid import ObjectId
 from wrappers import admin_required
 from database_manager import DatabaseManager
@@ -8,7 +22,7 @@ import logging
 
 LOG_FILE_PATH = "app.log"
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
@@ -16,11 +30,14 @@ mongo = db_manager.get_db()
 
 # Initialize Flask-Login
 login_manager = LoginManager()
-login_manager.login_view = 'admin.admin_login'  # TODO: Ensure this is set correctly in the relevant module
+login_manager.login_view = (
+    "admin.admin_login"  # TODO: Ensure this is set correctly in the relevant module
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 # User loader function
 @login_manager.user_loader
@@ -30,14 +47,16 @@ def load_user(user_id):
         return User.from_db(user_doc)
     return None
 
+
 # LOGIN & LOGOUT
 
+
 # Admin login route
-@admin_bp.route('/login', methods=['GET', 'POST'])
+@admin_bp.route("/login", methods=["GET", "POST"])
 def admin_login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
 
         user_doc = mongo.users.find_one({"username": username})
 
@@ -46,25 +65,29 @@ def admin_login():
             if user.check_password(password):
                 login_user(user)
                 logger.info(f"User {username} logged in successfully.")
-                return redirect(url_for('admin.admin_dashboard'))
+                return redirect(url_for("admin.admin_dashboard"))
 
-        logger.warning(f"Failed login attempt for username: {username}") 
-        flash('Invalid credentials')  # Log invalid credentials attempt for security audit
+        logger.warning(f"Failed login attempt for username: {username}")
+        flash(
+            "Invalid credentials"
+        )  # Log invalid credentials attempt for security audit
 
-    return render_template('admin/auth/login.html')
+    return render_template("admin/auth/login.html")
+
 
 # Admin logout route
-@admin_bp.route('/logout')
+@admin_bp.route("/logout")
 @login_required
 def admin_logout():
     username = current_user.username
     logout_user()
     logger.info(f"User {username} logged out successfully.")
-    return redirect(url_for('admin.admin_login'))
+    return redirect(url_for("admin.admin_login"))
+
 
 # Admin dashboard
-@admin_bp.route('/dashboard')
+@admin_bp.route("/dashboard")
 @login_required
 @admin_required
 def admin_dashboard():
-    return render_template('admin/dashboard.html')
+    return render_template("admin/dashboard.html")

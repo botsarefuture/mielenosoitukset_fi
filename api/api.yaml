@@ -1,0 +1,160 @@
+openapi: 3.0.0
+info:
+  title: Demonstrations API
+  version: 1.0.1
+  description: API for fetching demonstrations data.
+servers:
+  - url: https://mielenosoitukset.fi/api
+tags:
+  - name: Demonstrations
+    description: Endpoints for demonstrations.
+
+paths:
+  /demonstrations:
+    get:
+      tags:
+        - Demonstrations
+      summary: Get all approved demonstrations
+      description: Fetch a list of upcoming approved demonstrations.
+      responses:
+        200:
+          description: A list of approved demonstrations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id:
+                      type: string
+                      example: "66d05a1b90514a48b5a9f180"
+                    title:
+                      type: string
+                      example: "Kiehumispisteen katujuhla 7.9."
+                    date:
+                      type: string
+                      example: "07.09.2024"
+                    start_time:
+                      type: string
+                      example: "13:00"
+                    end_time:
+                      type: string
+                      example: "21:00"
+                    topic:
+                      type: string
+                      example: "Liity seuraamme Kansalaistorille 7.9., jossa yhdistämme musiikin, taiteen ja työpajat väkivallattomaan vastarintaan."
+                    facebook:
+                      type: string
+                      example: ""
+                    city:
+                      type: string
+                      example: "Helsinki"
+                    address:
+                      type: string
+                      example: "Kansalaistori (Oodin ja Musiikkitalon välissä)"
+                    type:
+                      type: string
+                      example: "marssi"
+                    route:
+                      type: string
+                      example: "13:00 kokoontuminen Kansalaistorille, jossa erilaista ohjelmaa"
+                    organizers:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            example: "Elokapina"
+                          email:
+                            type: string
+                            example: "info@elokapina.me"
+                          organization_id:
+                            type: string
+                            example: null
+                          website:
+                            type: string
+                            example: "https://elokapina.fi/"
+                    approved:
+                      type: boolean
+                      example: true
+        500:
+          description: Internal server error.
+
+  /demonstration/{demo_id}:
+    get:
+      tags:
+        - Demonstrations
+      summary: Get a specific demonstration by ID
+      description: Retrieve details of an approved demonstration by its ID.
+      parameters:
+        - name: demo_id
+          in: path
+          required: true
+          description: The unique ID of the demonstration.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Details of the requested demonstration.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    example: "66d05a1b90514a48b5a9f180"
+                  title:
+                    type: string
+                    example: "Kiehumispisteen katujuhla 7.9."
+                  date:
+                    type: string
+                    example: "07.09.2024"
+                  start_time:
+                    type: string
+                    example: "13:00"
+                  end_time:
+                    type: string
+                    example: "21:00"
+                  topic:
+                    type: string
+                    example: "Liity seuraamme Kansalaistorille 7.9."
+                  facebook:
+                    type: string
+                    example: ""
+                  city:
+                    type: string
+                    example: "Helsinki"
+                  address:
+                    type: string
+                    example: "Kansalaistori"
+                  type:
+                    type: string
+                    example: "marssi"
+                  route:
+                    type: string
+                    example: "13:00 kokoontuminen Kansalaistorille"
+                  organizers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: "Elokapina"
+                        email:
+                          type: string
+                          example: "info@elokapina.me"
+                        organization_id:
+                          type: string
+                          example: null
+                        website:
+                          type: string
+                          example: "https://elokapina.fi/"
+                  approved:
+                    type: boolean
+                    example: true
+        404:
+          description: Demonstration not found or not approved.

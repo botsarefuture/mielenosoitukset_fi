@@ -5,12 +5,15 @@ import struct
 import binascii
 from datetime import datetime
 
+
 class ObjectId:
     # Initialize a class variable for the counter and set it to a random 3-byte integer
     _counter = random.randint(0, 0xFFFFFF)
 
     def __init__(self, value=None):
-        if isinstance(value, int):  # If the input is an integer, treat it as a timestamp
+        if isinstance(
+            value, int
+        ):  # If the input is an integer, treat it as a timestamp
             timestamp = value
             self._random_value = ObjectId._generate_random_value()
             self._counter = ObjectId._generate_counter()
@@ -23,7 +26,11 @@ class ObjectId:
             self._counter = ObjectId._generate_counter()
 
         # Construct the 12-byte ObjectId
-        self._id = struct.pack(">I", timestamp) + self._random_value + struct.pack(">I", self._counter)[1:]
+        self._id = (
+            struct.pack(">I", timestamp)
+            + self._random_value
+            + struct.pack(">I", self._counter)[1:]
+        )
 
     @staticmethod
     def _generate_random_value():
@@ -43,7 +50,7 @@ class ObjectId:
 
     def __str__(self):
         # Return the ObjectId as a hexadecimal string
-        return binascii.hexlify(self._id).decode('utf-8')
+        return binascii.hexlify(self._id).decode("utf-8")
 
     def __repr__(self):
         return f'ObjectId("{self.__str__()}")'

@@ -2,9 +2,9 @@ openapi: 3.0.0
 info:
   title: Demonstrations API
   version: 1.0.1
-  description: API for fetching demonstrations data.
+  description: API for fetching and creating demonstrations data.
 servers:
-  - url: https://mielenosoitukset.fi/api
+  - url: http://localhost:5000/api
 tags:
   - name: Demonstrations
     description: Endpoints for demonstrations.
@@ -43,7 +43,7 @@ paths:
                       example: "21:00"
                     topic:
                       type: string
-                      example: "Liity seuraamme Kansalaistorille 7.9., jossa yhdistämme musiikin, taiteen ja työpajat väkivallattomaan vastarintaan."
+                      example: "Liity seuraamme Kansalaistorille."
                     facebook:
                       type: string
                       example: ""
@@ -52,13 +52,13 @@ paths:
                       example: "Helsinki"
                     address:
                       type: string
-                      example: "Kansalaistori (Oodin ja Musiikkitalon välissä)"
+                      example: "Kansalaistori"
                     type:
                       type: string
                       example: "marssi"
                     route:
                       type: string
-                      example: "13:00 kokoontuminen Kansalaistorille, jossa erilaista ohjelmaa"
+                      example: "Kulkue alkaa Kansalaistorilta."
                     organizers:
                       type: array
                       items:
@@ -70,9 +70,6 @@ paths:
                           email:
                             type: string
                             example: "info@elokapina.me"
-                          organization_id:
-                            type: string
-                            example: null
                           website:
                             type: string
                             example: "https://elokapina.fi/"
@@ -120,7 +117,7 @@ paths:
                     example: "21:00"
                   topic:
                     type: string
-                    example: "Liity seuraamme Kansalaistorille 7.9."
+                    example: "Kansalaistorille kokoonnumme vastarintaan."
                   facebook:
                     type: string
                     example: ""
@@ -135,7 +132,7 @@ paths:
                     example: "marssi"
                   route:
                     type: string
-                    example: "13:00 kokoontuminen Kansalaistorille"
+                    example: "Kansalaistori, kulkue kohti VM"
                   organizers:
                     type: array
                     items:
@@ -147,9 +144,6 @@ paths:
                         email:
                           type: string
                           example: "info@elokapina.me"
-                        organization_id:
-                          type: string
-                          example: null
                         website:
                           type: string
                           example: "https://elokapina.fi/"
@@ -158,3 +152,73 @@ paths:
                     example: true
         404:
           description: Demonstration not found or not approved.
+
+  /demonstration:
+    post:
+      tags:
+        - Demonstrations
+      summary: Create a new demonstration
+      description: Submit a new demonstration to the database for approval.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "New Protest"
+                date:
+                  type: string
+                  example: "08.09.2024"
+                start_time:
+                  type: string
+                  example: "10:00"
+                end_time:
+                  type: string
+                  example: "12:00"
+                topic:
+                  type: string
+                  example: "Climate Action Now"
+                city:
+                  type: string
+                  example: "Helsinki"
+                address:
+                  type: string
+                  example: "City Center"
+                type:
+                  type: string
+                  example: "marssi"
+                route:
+                  type: string
+                  example: "Starting from City Center"
+                organizers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "Climate Group"
+                      email:
+                        type: string
+                        example: "contact@climategroup.org"
+                      website:
+                        type: string
+                        example: "https://climategroup.org"
+      responses:
+        201:
+          description: Demonstration created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Mielenosoitus ilmoitettu onnistuneesti!"
+        400:
+          description: Bad request. Validation failed.
+        500:
+          description: Internal server error.

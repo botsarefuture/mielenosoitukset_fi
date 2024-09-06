@@ -8,6 +8,7 @@ from .EmailJob import EmailJob
 import time
 from config import Config
 
+
 class EmailSender:
     """
     The EmailSender class handles sending emails by processing email jobs from a queue.
@@ -23,8 +24,8 @@ class EmailSender:
         self.config = Config()
         self.db_manager = DatabaseManager()
         self.db = self.db_manager.get_db()
-        self.queue_collection = self.db['email_queue']
-        self.env = Environment(loader=FileSystemLoader('templates/emails'))
+        self.queue_collection = self.db["email_queue"]
+        self.env = Environment(loader=FileSystemLoader("templates/emails"))
         self.start_worker()
 
     def start_worker(self):
@@ -68,17 +69,19 @@ class EmailSender:
                 smtp_port = self.config.MAIL_PORT
                 smtp_username = self.config.MAIL_USERNAME
                 smtp_password = self.config.MAIL_PASSWORD
-                use_tls = self.config.MAIL_USE_TLS or True  # Default to True if not specified
+                use_tls = (
+                    self.config.MAIL_USE_TLS or True
+                )  # Default to True if not specified
 
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = email_job.subject
-            msg['From'] = sender_address
-            msg['To'] = ', '.join(email_job.recipients)
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = email_job.subject
+            msg["From"] = sender_address
+            msg["To"] = ", ".join(email_job.recipients)
 
             if email_job.body:
-                msg.attach(MIMEText(email_job.body, 'plain'))
+                msg.attach(MIMEText(email_job.body, "plain"))
             if email_job.html:
-                msg.attach(MIMEText(email_job.html, 'html'))
+                msg.attach(MIMEText(email_job.html, "html"))
 
             # Send the email using SMTP
             with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -104,7 +107,9 @@ class EmailSender:
         """
         template = self.env.get_template(template_name)
         body = template.render(context)
-        email_job = EmailJob(subject=subject, recipients=recipients, body=body, html=body, sender=sender)
+        email_job = EmailJob(
+            subject=subject, recipients=recipients, body=body, html=body, sender=sender
+        )
         self.queue_collection.insert_one(email_job.to_dict())
 
     def send_now(self, template_name, subject, recipients, context, sender=None):
@@ -120,5 +125,7 @@ class EmailSender:
         """
         template = self.env.get_template(template_name)
         body = template.render(context)
-        email_job = EmailJob(subject=subject, recipients=recipients, body=body, html=body, sender=sender)
+        email_job = EmailJob(
+            subject=subject, recipients=recipients, body=body, html=body, sender=sender
+        )
         self.send_email(email_job)

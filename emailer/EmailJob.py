@@ -1,6 +1,6 @@
 class Sender:
     """
-    The Sender class encapsulates the information related to an email sender, including the 
+    The Sender class encapsulates the information related to an email sender, including the
     SMTP server details and the sender's email credentials.
 
     Attributes:
@@ -12,7 +12,9 @@ class Sender:
         email_address (str): The sender's email address.
     """
 
-    def __init__(self, email_server, email_port, username, password, use_tls, email_address):
+    def __init__(
+        self, email_server, email_port, username, password, use_tls, email_address
+    ):
         """
         Initializes a new Sender instance with the given SMTP and sender details.
 
@@ -39,12 +41,12 @@ class Sender:
             dict: A dictionary containing the sender information.
         """
         return {
-            'email_server': self.email_server,
-            'email_port': self.email_port,
-            'username': self.username,
-            'password': self.password,  # Note: Be careful with storing passwords!
-            'use_tls': self.use_tls,
-            'email_address': self.email_address
+            "email_server": self.email_server,
+            "email_port": self.email_port,
+            "username": self.username,
+            "password": self.password,  # Note: Be careful with storing passwords!
+            "use_tls": self.use_tls,
+            "email_address": self.email_address,
         }
 
     @classmethod
@@ -59,13 +61,14 @@ class Sender:
             Sender: An instance of the Sender class.
         """
         return cls(
-            email_server=data.get('email_server'),
-            email_port=data.get('email_port'),
-            username=data.get('username'),
-            password=data.get('password'),  # Make sure passwords are handled securely!
-            use_tls=data.get('use_tls'),
-            email_address=data.get('email_address')
+            email_server=data.get("email_server"),
+            email_port=data.get("email_port"),
+            username=data.get("username"),
+            password=data.get("password"),  # Make sure passwords are handled securely!
+            use_tls=data.get("use_tls"),
+            email_address=data.get("email_address"),
         )
+
 
 class EmailJob:
     """
@@ -95,7 +98,7 @@ class EmailJob:
         self.body = body
         self.html = html
         self.sender = sender  # Store a Sender instance if provided
-    
+
     def to_dict(self):
         """
         Converts the EmailJob instance to a dictionary format for storage in a database.
@@ -104,13 +107,13 @@ class EmailJob:
             dict: A dictionary representation of the EmailJob instance.
         """
         return {
-            'subject': self.subject,
-            'recipients': self.recipients,
-            'body': self.body,
-            'html': self.html,
-            'sender': self.sender.to_dict() if self.sender else None
+            "subject": self.subject,
+            "recipients": self.recipients,
+            "body": self.body,
+            "html": self.html,
+            "sender": self.sender.to_dict() if self.sender else None,
         }
-    
+
     @classmethod
     def from_dict(cls, data):
         """
@@ -122,12 +125,12 @@ class EmailJob:
         Returns:
             EmailJob: An instance of the EmailJob class.
         """
-        sender_data = data.get('sender')
+        sender_data = data.get("sender")
         sender = Sender.from_dict(sender_data) if sender_data else None
         return cls(
-            subject=data.get('subject'),
-            recipients=data.get('recipients'),
-            body=data.get('body'),
-            html=data.get('html'),
-            sender=sender
+            subject=data.get("subject"),
+            recipients=data.get("recipients"),
+            body=data.get("body"),
+            html=data.get("html"),
+            sender=sender,
         )

@@ -5,18 +5,20 @@ from database_manager import DatabaseManager
 from wrappers import admin_required
 from classes import Demonstration, Organizer
 
-admin_demo_bp = Blueprint('admin_demo', __name__, url_prefix='/admin/demo')
+admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
 # Initialize MongoDB
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
-@admin_demo_bp.route('/')
+
+
+@admin_demo_bp.route("/")
 @login_required
 @admin_required
 def demo_control():
     """Render the demonstration control panel with a list of demonstrations."""
-    search_query = request.args.get('search', '')
-    approved_status = request.args.get('approved', '')
+    search_query = request.args.get("search", "")
+    approved_status = request.args.get("approved", "")
 
     query = {}
 
@@ -24,69 +26,72 @@ def demo_control():
     if search_query:
         query["$or"] = [
             {"title": {"$regex": search_query, "$options": "i"}},
-            {"city": {"$regex": search_query, "$options": "i"}}
+            {"city": {"$regex": search_query, "$options": "i"}},
         ]
 
     # Add approval status filter if provided
-    if approved_status == 'true':
-        query['approved'] = True
-    elif approved_status == 'false':
-        query['approved'] = False
+    if approved_status == "true":
+        query["approved"] = True
+    elif approved_status == "false":
+        query["approved"] = False
 
     # Query the database with the filters
     demos_cursor = mongo.demonstrations.find(query)
     demos = [Demonstration.from_dict(demo) for demo in demos_cursor]
 
-    return render_template('admin/demonstrations/dashboard.html',
-                           demonstrations=demos,
-                           search_query=search_query,
-                           approved_status=approved_status)
+    return render_template(
+        "admin/demonstrations/dashboard.html",
+        demonstrations=demos,
+        search_query=search_query,
+        approved_status=approved_status,
+    )
 
-@admin_demo_bp.route('/create_demo', methods=['GET', 'POST'])
+
+@admin_demo_bp.route("/create_demo", methods=["GET", "POST"])
 @login_required
 @admin_required
 def create_demo():
     """Create a new demonstration."""
-    if request.method == 'POST':
-        title = request.form.get('title')
-        date = request.form.get('date')
-        start_time = request.form.get('start_time')
-        end_time = request.form.get('end_time')
-        topic = request.form.get('topic')
-        facebook = request.form.get('facebook')
-        city = request.form.get('city')
-        address = request.form.get('address')
-        event_type = request.form.get('type')
-        route = request.form.get('route')
+    if request.method == "POST":
+        title = request.form.get("title")
+        date = request.form.get("date")
+        start_time = request.form.get("start_time")
+        end_time = request.form.get("end_time")
+        topic = request.form.get("topic")
+        facebook = request.form.get("facebook")
+        city = request.form.get("city")
+        address = request.form.get("address")
+        event_type = request.form.get("type")
+        route = request.form.get("route")
 
-        organization_id = request.form.get('organization_id', None)
-        organizer_name = request.form.get('organizer_name')
-        organizer_email = request.form.get('organizer_email')
-        organizer_website = request.form.get('organizer_website')
+        organization_id = request.form.get("organization_id", None)
+        organizer_name = request.form.get("organizer_name")
+        organizer_email = request.form.get("organizer_email")
+        organizer_website = request.form.get("organizer_website")
 
         organizers = []
-        
+
         # Check if an organization is selected
-        if organization_id and organization_id != 'manual':
+        if organization_id and organization_id != "manual":
             # Fetch the organization from the database
-            organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+            organization = mongo.organizations.find_one(
+                {"_id": ObjectId(organization_id)}
+            )
             if organization:
                 organizer = Organizer(
-                    name=organization['name'],
-                    email=organization['email'],
-                    organization_id=str(organization['_id']),
-                    website=organization.get('website')
+                    name=organization["name"],
+                    email=organization["email"],
+                    organization_id=str(organization["_id"]),
+                    website=organization.get("website"),
                 )
                 organizers.append(organizer)
             else:
-                flash('Valittua organisaatiota ei ole olemassa.')
-                return redirect(url_for('admin_demo.create_demo'))
+                flash("Valittua organisaatiota ei ole olemassa.")
+                return redirect(url_for("admin_demo.create_demo"))
         elif organizer_name and organizer_email:
             # Use the manually entered details
             organizer = Organizer(
-                name=organizer_name,
-                email=organizer_email,
-                website=organizer_website
+                name=organizer_name, email=organizer_email, website=organizer_website
             )
             organizers.append(organizer)
 
@@ -102,77 +107,83 @@ def create_demo():
                 address=address,
                 event_type=event_type,
                 route=route,
-                organizers=organizers
+                organizers=organizers,
             )
             mongo.demonstrations.insert_one(demonstration.to_dict())
-            flash('Mielenosoitus luotu onnistuneesti.')
-            return redirect(url_for('admin_demo.demo_control'))
+            flash("Mielenosoitus luotu onnistuneesti.")
+            return redirect(url_for("admin_demo.demo_control"))
         except ValueError as e:
             flash(str(e))
-            return redirect(url_for('admin_demo.create_demo'))
+            return redirect(url_for("admin_demo.create_demo"))
 
     # Fetch organizations for the dropdown
     organizations = mongo.organizations.find()
-    return render_template('admin/demonstrations/create.html', organizations=organizations)
+    return render_template(
+        "admin/demonstrations/create.html", organizations=organizations
+    )
 
-@admin_demo_bp.route('/edit_demo/<demo_id>', methods=['GET', 'POST'])
+
+@admin_demo_bp.route("/edit_demo/<demo_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
 def edit_demo(demo_id):
     """Edit demonstration details."""
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash('Mielenosoitusta ei löytynyt.')
-        return redirect(url_for('admin_demo.demo_control'))
+        flash("Mielenosoitusta ei löytynyt.")
+        return redirect(url_for("admin_demo.demo_control"))
 
     demonstration = Demonstration.from_dict(demo_data)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         # Update demonstration fields
-        demonstration.title = request.form.get('title')
-        demonstration.date = request.form.get('date')
-        demonstration.start_time = request.form.get('start_time')
-        demonstration.end_time = request.form.get('end_time')
-        demonstration.topic = request.form.get('topic')
-        demonstration.facebook = request.form.get('facebook')
-        demonstration.city = request.form.get('city')
-        demonstration.address = request.form.get('address')
-        demonstration.event_type = request.form.get('type')
-        demonstration.route = request.form.get('route')
-        demonstration.approved = bool(request.form.get('approved'))
+        demonstration.title = request.form.get("title")
+        demonstration.date = request.form.get("date")
+        demonstration.start_time = request.form.get("start_time")
+        demonstration.end_time = request.form.get("end_time")
+        demonstration.topic = request.form.get("topic")
+        demonstration.facebook = request.form.get("facebook")
+        demonstration.city = request.form.get("city")
+        demonstration.address = request.form.get("address")
+        demonstration.event_type = request.form.get("type")
+        demonstration.route = request.form.get("route")
+        demonstration.approved = bool(request.form.get("approved"))
 
         # Process organizers
         organizers = []
         i = 1
         while True:
-            name = request.form.get(f'organizer_name_{i}')
-            website = request.form.get(f'organizer_website_{i}')
-            email = request.form.get(f'organizer_email_{i}')
-            organization_id = request.form.get(f"organization_id_{i}", None) # TODO: Add this to form.
-            
+            name = request.form.get(f"organizer_name_{i}")
+            website = request.form.get(f"organizer_website_{i}")
+            email = request.form.get(f"organizer_email_{i}")
+            organization_id = request.form.get(
+                f"organization_id_{i}", None
+            )  # TODO: Add this to form.
+
             if not name:
                 break
-            
-            organizer = Organizer(name=name, email=email, website=website, organization_id=organization_id)
+
+            organizer = Organizer(
+                name=name, email=email, website=website, organization_id=organization_id
+            )
             organizers.append(organizer)
             i += 1
         demonstration.organizers = organizers
 
         try:
             mongo.demonstrations.update_one(
-                {"_id": ObjectId(demo_id)},
-                {"$set": demonstration.to_dict()}
+                {"_id": ObjectId(demo_id)}, {"$set": demonstration.to_dict()}
             )
-            flash('Mielenosoitus päivitetty onnistuneesti.')
-            return redirect(url_for('admin_demo.demo_control'))
+            flash("Mielenosoitus päivitetty onnistuneesti.")
+            return redirect(url_for("admin_demo.demo_control"))
         except ValueError as e:
             flash(str(e))
-            return redirect(url_for('admin_demo.edit_demo', demo_id=demo_id))
+            return redirect(url_for("admin_demo.edit_demo", demo_id=demo_id))
 
-    return render_template('admin/demonstrations/edit.html', demo=demonstration)
+    return render_template("admin/demonstrations/edit.html", demo=demonstration)
 
 
-@admin_demo_bp.route('/delete_demo/<demo_id>', methods=['POST'])
+@admin_demo_bp.route("/delete_demo/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
 def delete_demo(demo_id):
@@ -180,26 +191,29 @@ def delete_demo(demo_id):
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash('Mielenosoitusta ei löytynyt.')
-        return redirect(url_for('admin_demo.demo_control'))
+        flash("Mielenosoitusta ei löytynyt.")
+        return redirect(url_for("admin_demo.demo_control"))
 
-    if 'confirm_delete' in request.form:
+    if "confirm_delete" in request.form:
         mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-        flash('Mielenosoitus poistettu onnistuneesti.')
+        flash("Mielenosoitus poistettu onnistuneesti.")
     else:
-        flash('Et vahvistanut mielenosoituksen poistoa.')
+        flash("Et vahvistanut mielenosoituksen poistoa.")
 
-    return redirect(url_for('admin_demo.demo_control'))
+    return redirect(url_for("admin_demo.demo_control"))
 
-@admin_demo_bp.route('/confirm_delete_demo/<demo_id>', methods=['GET'])
+
+@admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
 def confirm_delete_demo(demo_id):
     """Render a confirmation page before deleting a demonstration."""
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash('Mielenosoitusta ei löytynyt.')
-        return redirect(url_for('admin_demo.demo_control'))
+        flash("Mielenosoitusta ei löytynyt.")
+        return redirect(url_for("admin_demo.demo_control"))
 
     demonstration = Demonstration.from_dict(demo_data)
-    return render_template('admin/demonstrations/confirm_delete.html', demo=demonstration)
+    return render_template(
+        "admin/demonstrations/confirm_delete.html", demo=demonstration
+    )

@@ -191,11 +191,16 @@ def init_routes(app):
 
         return render_template("list.html", demonstrations=filtered_demonstrations)
 
+    import requests
+    from flask import Flask, render_template, redirect, url_for, flash
+    from bson.objectid import ObjectId
+
     @app.route("/demonstration/<demo_id>")
     def demonstration_detail(demo_id):
         """
-        Display details of a specific demonstration.
+        Display details of a specific demonstration and save map coordinates if available.
         """
+        # Fetch the demonstration details from MongoDB
         demo = mongo.demonstrations.find_one(
             {"_id": ObjectId(demo_id), "approved": True}
         )
@@ -204,7 +209,40 @@ def init_routes(app):
             flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.")
             return redirect(url_for("demonstrations"))
 
-        return render_template("detail.html", demo=demo)
+        if demo.get("longitude") is None:
+            # Build the address query (assuming 'address' and 'city' fields in the demo)
+            address_query = f"{demo.get('address', '')}, {demo.get('city', '')}"
+
+            # Geocode API URL
+            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
+
+            try:
+                # Make the request to the Geocode API
+                response = requests.get(api_url)
+                response.raise_for_status()
+                geocode_data = response.json()
+
+                # Get latitude and longitude from the response
+                latitude = geocode_data[0]["lat"] if geocode_data else None
+                longitude = geocode_data[0]["lon"] if geocode_data else None
+
+                # If coordinates are fetched, save them to the database
+                if latitude and longitude:
+                    mongo.demonstrations.update_one(
+                        {"_id": ObjectId(demo_id)},
+                        {"$set": {"latitude": latitude, "longitude": longitude}},
+                    )
+            except (requests.exceptions.RequestException, IndexError):
+                # Handle errors or empty geocode data
+                latitude, longitude = None, None
+        else:
+            longitude = demo.get("longitude")
+            latitude = demo.get("latitude")
+
+        # Pass demo details and coordinates to the template
+        return render_template(
+            "detail.html", demo=demo, latitude=latitude, longitude=longitude
+        )
 
     @app.route("/info")
     def info():

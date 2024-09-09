@@ -30,12 +30,12 @@ mongo = db_manager.get_db()
 def demo_control():
     """Render the demonstration control panel with a list of demonstrations."""
     search_query = request.args.get("search", "")
-    approved_status = request.args.get("approved", "")
+    approved_status = request.args.get("approved", "false").lower() == "true"
     show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()  # Get the current date
 
     # Initial query to get all approved demonstrations
-    query = {}
+    query = dict({"approved": approved_status})
     
     # Fetch all approved demonstrations from the database
     demonstrations = mongo.demonstrations.find(query)

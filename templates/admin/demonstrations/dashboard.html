@@ -18,11 +18,10 @@
     <input type="text" id="search" name="search" class="search-input" placeholder="Hae mielenosoituksia..."
         value="{{ search_query }}">
 
-    <label for="approved">Hyväksytty:</label>
+    <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
     <select name="approved" id="approved" class="filter-select">
-        <option value="" {% if approved_status=="" %}selected{% endif %}>Kaikki</option>
-        <option value="true" {% if approved_status=="true" %}selected{% endif %}>Hyväksytty</option>
-        <option value="false" {% if approved_status=="false" %}selected{% endif %}>Odottaa</option>
+        <option value="true" {% if approved_status %}selected{% endif %}>Kyllä</option>
+        <option value="false" {% if not approved_status %}selected{% endif %}>Näytä vain odottavat</option>
     </select>
 
     <label for="show_past">Näytä menneet mielenosoitukset:</label>
@@ -65,7 +64,7 @@
     </table>
 </div>
 {% else %}
-<div class="no-demos">
+<div class="no-demos" style="color: white; font-weight:bold; background-color: var(--error-color); padding: 20px;border-style:dashed ;">
     <p>Mielenosoituksia ei löytynyt.</p>
 </div>
 {% endif %}

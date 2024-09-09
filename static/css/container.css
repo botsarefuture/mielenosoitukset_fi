@@ -97,7 +97,7 @@
 
 /* Container for Main Content */
 .container-main-content {
-    max-width: 1000px; /* Limit width for better readability */
+    max-width: 80vw; /* Limit width for better readability */
     margin: 0 auto; /* Center the container horizontally */
     padding: 20px; /* Padding inside the container */
     border-radius: 8px; /* Rounded corners for aesthetics */
@@ -135,6 +135,15 @@
     .container-columns,
     .container-grid {
         padding: 10px; /* Further adjust padding for smaller containers */
+        max-width: 100%;
+    }
+
+    .container-main-content h1,
+    .container-main-content h2,
+    .container-main-content h3,
+    .container-main-content h4,
+    .container-main-content h5 {
+        text-align: center;
     }
 }
 

@@ -35,8 +35,11 @@ def demo_control():
     show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()  # Get the current date
 
-    # Initial query to get all approved demonstrations
     query = dict({"approved": approved_status})
+
+    # Initial query to get all approved demonstrations
+    if approved_status == False:
+        query = dict()
 
     # Fetch all approved demonstrations from the database
     demonstrations = mongo.demonstrations.find(query)

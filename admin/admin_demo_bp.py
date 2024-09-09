@@ -10,7 +10,19 @@ admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 # Initialize MongoDB
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required
+from bson.objectid import ObjectId
+from database_manager import DatabaseManager
+from wrappers import admin_required
+from classes import Demonstration, Organizer
+from datetime import datetime, date
 
+admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
+
+# Initialize MongoDB
+db_manager = DatabaseManager()
+mongo = db_manager.get_db()
 
 @admin_demo_bp.route("/")
 @login_required
@@ -19,32 +31,42 @@ def demo_control():
     """Render the demonstration control panel with a list of demonstrations."""
     search_query = request.args.get("search", "")
     approved_status = request.args.get("approved", "")
+    show_past = request.args.get("show_past", "false").lower() == "true"
+    today = date.today()  # Get the current date
 
+    # Initial query to get all approved demonstrations
     query = {}
+    
+    # Fetch all approved demonstrations from the database
+    demonstrations = mongo.demonstrations.find(query)
 
-    # Add search filters if search query is provided
-    if search_query:
-        query["$or"] = [
-            {"title": {"$regex": search_query, "$options": "i"}},
-            {"city": {"$regex": search_query, "$options": "i"}},
-        ]
+    # Filter based on the search query
+    filtered_demonstrations = []
+    for demo in demonstrations:
+        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        if show_past or demo_date >= today:
+            if (
+                search_query.lower() in demo["title"].lower()
+                or search_query.lower() in demo["city"].lower()
+                or search_query.lower() in demo["topic"].lower()
+                or search_query.lower() in demo["address"].lower()
+            ):
+                filtered_demonstrations.append(demo)
 
-    # Add approval status filter if provided
-    if approved_status == "true":
-        query["approved"] = True
-    elif approved_status == "false":
-        query["approved"] = False
-
-    # Query the database with the filters
-    demos_cursor = mongo.demonstrations.find(query)
-    demos = [Demonstration.from_dict(demo) for demo in demos_cursor]
+    # Sort the filtered demonstrations by date
+    filtered_demonstrations.sort(
+        key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+    )
 
     return render_template(
         "admin/demonstrations/dashboard.html",
-        demonstrations=demos,
+        demonstrations=filtered_demonstrations,
         search_query=search_query,
         approved_status=approved_status,
+        show_past=show_past,
     )
+
+
 
 
 @admin_demo_bp.route("/create_demo", methods=["GET", "POST"])

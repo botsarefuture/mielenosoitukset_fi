@@ -2,76 +2,75 @@
 
 {% block main_content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_user_control.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
-<h2>Käyttäjähallinta</h2>
+<div class="table-container mt-4">
+    <h2>Käyttäjähallinta</h2>
 
-<!-- Search/Filter Users -->
-<div class="user-filter mb-4">
-    <form method="GET" action="{{ url_for('admin_user.user_control') }}" class="search-form">
-        <input type="text" name="search" placeholder="Search users by username or email" value="{{ search_query }}"
-            class="search-input">
-        <button type="submit" class="button search-button">Hae</button>
-    </form>
+    <!-- Search/Filter Users -->
+    <div class="mb-3">
+        <form method="GET" action="{{ url_for('admin_user.user_control') }}" class="search-form">
+            <input type="text" name="search" placeholder="Search users by username or email" value="{{ search_query }}" class="search-input">
+            <button type="submit" class="button search-button">Hae</button>
+        </form>
+    </div>
+
+    <!-- List of Users in a Table -->
+    {% if users %}
+    <table>
+        <thead>
+            <tr>
+                <th>Käyttäjänimi</th>
+                <th>Sähköposti</th>
+                <th>Sähköposti vahvistettu</th>
+                <th>Rooli</th>
+                <th>Järjestelmänvalvoja</th>
+                <th>Superkäyttäjä</th>
+                <th class="actions-cell-header">Toiminnot</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user['username'] }}</td>
+                <td>{{ user['email'] }}</td>
+                <td>{% if user['confirmed'] %}Kyllä{% else %}Ei{% endif %}</td>
+                <td>{{ user['role'] }}</td>
+                <td>{% if user['is_admin'] %}Kyllä{% else %}Ei{% endif %}</td>
+                <td>{% if user['global_admin'] %}Kyllä{% else %}Ei{% endif %}</td>
+                <td class="actions-cell">
+                    <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
+                    <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}" onsubmit="return confirmAndSubmit(event);" class="delete-form">
+                        <button type="submit" class="button delete-button">Poista</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="no-users">
+        <p>Ei käyttäjiä löytynyt.</p>
+    </div>
+    {% endif %}
 </div>
-
-<!-- List of Users in a Table -->
-<table class="user-table">
-    <thead>
-        <tr>
-            <th>Käyttäjänimi</th>
-            <th>Sähköposti</th>
-            <th>Sähköposti vahvistettu</th>
-            <th>Rooli</th>
-            <th>Järjestelmänvalvoja</th>
-            <th>Superkäyttäjä</th>
-            <th>Toiminnot</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user['username'] }}</td>
-            <td>{{ user['email'] }}</td>
-            <td>{% if user['confirmed'] %}Kyllä{% else %}Ei{% endif %}</td>
-            <td>{{ user['role'] }}</td>
-            <td>{% if user['is_admin'] %}Kyllä{% else %}Ei{% endif %}</td>
-            <td>{% if user['global_admin'] %}Kyllä{% else %}Ei{% endif %}</td>
-            <td class="actions-cell">
-                <a href="{{ url_for('admin_user.edit_user', user_id=user['_id']) }}" class="button edit-button">Muokkaa</a>
-                <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}"
-                    onsubmit="return confirmAndSubmit(event);" class="delete-form">
-                    <button type="submit" class="button delete-button">Poista</button>
-                </form>
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="7">Ei käyttäjiä</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
 
 <script>
 function confirmAndSubmit(event) {
     const confirmation = confirm('Oletko varma, että haluat poistaa tämän käyttäjän?');
     
     if (confirmation) {
-        // Create a hidden input field
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
         hiddenInput.name = 'confirm_delete';
-        hiddenInput.value = 'true'; // You can set this value to anything you want
+        hiddenInput.value = 'true';
 
-        // Append the hidden input field to the form
-        const form = event.target; // The form that triggered the event
+        const form = event.target;
         form.appendChild(hiddenInput);
 
-        // Proceed with the form submission
         return true;
     } else {
-        // If the user cancels, prevent form submission
         return false;
     }
 }

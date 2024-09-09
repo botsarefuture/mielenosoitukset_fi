@@ -1,22 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from bson.objectid import ObjectId
-from database_manager import DatabaseManager
-from wrappers import admin_required
-from classes import Demonstration, Organizer
-
-admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
-
-# Initialize MongoDB
-db_manager = DatabaseManager()
-mongo = db_manager.get_db()
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required
-from bson.objectid import ObjectId
-from database_manager import DatabaseManager
-from wrappers import admin_required
-from classes import Demonstration, Organizer
 from datetime import datetime, date
+
+from database_manager import DatabaseManager
+from wrappers import admin_required
+from classes import Demonstration, Organizer
 
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 

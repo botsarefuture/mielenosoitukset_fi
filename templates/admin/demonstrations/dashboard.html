@@ -5,68 +5,72 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
+<style>
+    td {
+        background-color: transparent !important;
+    }
+</style>
+
 <div class="table-container mt-4">
 
-<h2>Mielenosoitukset</h2>
+    <h2>Mielenosoitukset</h2>
 
-<div class="">
-    <a href="{{ url_for('admin_demo.create_demo') }}" class=" button create-demo-button full-width" style="font-weight: bold;">Uusi mielenosoitus</a>
-</div>
+    <div class="">
+        <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button full-width" style="font-weight: bold;">Uusi mielenosoitus</a>
+    </div>
 
-<form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
-    <label for="search">Hae mielenosoituksia:</label>
-    <input type="text" id="search" name="search" class="search-input" placeholder="Hae mielenosoituksia..."
-        value="{{ search_query }}">
+    <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
+        <label for="search">Hae mielenosoituksia:</label>
+        <input type="text" id="search" name="search" class="search-input" placeholder="Hae mielenosoituksia..."
+            value="{{ search_query }}">
 
-    <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
-    <select name="approved" id="approved" class="filter-select">
-        <option value="true" {% if approved_status %}selected{% endif %}>Kyllä</option>
-        <option value="false" {% if not approved_status %}selected{% endif %}>Ei</option>
-    </select>
+        <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
+        <select name="approved" id="approved" class="filter-select">
+            <option value="true" {% if approved_status %}selected{% endif %}>Kyllä</option>
+            <option value="false" {% if not approved_status %}selected{% endif %}>Ei</option>
+        </select>
 
-    <label for="show_past">Näytä menneet mielenosoitukset:</label>
-    <select name="show_past" id="show_past" class="filter-select">
-        <option value="false" {% if not show_past %}selected{% endif %}>Ei</option>
-        <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
-    </select>
+        <label for="show_past">Näytä menneet mielenosoitukset:</label>
+        <select name="show_past" id="show_past" class="filter-select">
+            <option value="false" {% if not show_past %}selected{% endif %}>Ei</option>
+            <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
+        </select>
 
-    <button type="submit" class="search-button">Hae</button>
-</form>
+        <button type="submit" class="search-button">Hae</button>
+    </form>
 
-{% if demonstrations %}
-<div class="table-container" style="background: none;">
-    <table>
-        <thead>
-            <tr>
-                <th>Otsikko</th>
-                <th>Kaupunki</th>
-                <th>Päivämäärä</th>
-                <th>Hyväksytty</th>
-                <th class="actions-cell-header">Toiminnot</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for demo in demonstrations %}
-            <tr>
-                <td>{{ demo.title }}</td>
-                <td>{{ demo.city }}</td>
-                <td>{{ demo.date }}</td>
-                <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
-                <td class="actions-cell">
-                    <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"
-                        class="button edit-button">Muokkaa</a>
-                    <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}"
-                        class="button delete-button">Poista</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% else %}
-<div class="no-demos" style="color: white; font-weight:bold; background-color: var(--error-color); padding: 20px;border-style:dashed ;">
-    <p>Mielenosoituksia ei löytynyt.</p>
-</div>
-{% endif %}
+    {% if demonstrations %}
+    <div class="table-container" style="background: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Otsikko</th>
+                    <th>Kaupunki</th>
+                    <th>Päivämäärä</th>
+                    <th>Hyväksytty</th>
+                    <th class="actions-cell-header">Toiminnot</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for demo in demonstrations|sort(attribute='approved') %}
+                    <tr style="background-color: {{ 'lightcoral' if not demo.approved else 'white' }};">
+                    <td>{{ demo.title }}</td>
+                    <td>{{ demo.city }}</td>
+                    <td>{{ demo.date }}</td>
+                    <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
+                    <td class="actions-cell">
+                        <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">Muokkaa</a>
+                        <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}" class="button delete-button">Poista</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-demos" style="color: white; font-weight: bold; background-color: var(--error-color); padding: 20px; border-style: dashed;">
+        <p>Mielenosoituksia ei löytynyt.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

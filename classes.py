@@ -181,7 +181,6 @@ class Demonstration:
             not title
             or not date
             or not start_time
-            or not end_time
             or not topic
             or not city
             or not address

@@ -1,3 +1,6 @@
+@import url("admin_actions_cell.css");
+
+
 /* General Styles */
 .mt-4 {
     margin-top: 4rem; /* Adjust as needed */
@@ -22,13 +25,14 @@
     background-color: #0033A0; /* Blue color for the create button, aligning with the primary color */
 }
 
+/*
 .edit-button {
-    background-color: #009B77; /* Green color for edit button, aligning with secondary colors */
+    background-color: #009B77; /* Green color for edit button, aligning with secondary colors 
 }
 
 .delete-button {
-    background-color: #E03C31; /* Red color for delete button, aligning with secondary colors */
-}
+    background-color: #E03C31; /* Red color for delete button, aligning with secondary colors
+}*/
 
 /* Form Styles */
 .search-form {
@@ -73,6 +77,7 @@
     font-family: 'Roboto', sans-serif; /* Consistent font with the style guide */
 }
 
+/*
 .actions-cell-header,
 .actions-cell {
     text-align: center;
@@ -84,4 +89,3 @@
     padding: 20px;
     color: #999;
 }
-

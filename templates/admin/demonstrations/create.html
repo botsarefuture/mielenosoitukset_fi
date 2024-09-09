@@ -2,8 +2,9 @@
 
 {% block main_content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_create_demo.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 
-<div class="container mt-4">
+<div class="container full-width">
     <h2>Uusi mielenosoitus</h2>
     <form method="POST" action="{{ url_for('admin_demo.create_demo') }}">
         <!-- Existing form fields for demonstration details -->
@@ -13,7 +14,7 @@
         </div>
         <div class="form-group">
             <label for="date">Päiväys (pp.kk.vvvv)</label>
-            <input type="date" id="date" name="date" class="form-control" required>
+            <input type="text" id="date" name="date" class="form-control" required>
         </div>
         <div class="form-group">
             <label for="start_time">Aloitusaika</label>

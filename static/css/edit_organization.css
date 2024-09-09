@@ -2,84 +2,84 @@
 
 /* Container for the form */
 .form-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #FFFFFF;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 24px;
-    color: #0033A0;
-    margin-bottom: 20px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 24px;
+  color: #0033a0;
+  margin-bottom: 20px;
 }
 
 /* Form elements */
 form label {
-    display: block;
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
-    color: #333333;
-    margin-bottom: 5px;
+  display: block;
+  font-family: "Roboto", sans-serif;
+  font-size: 16px;
+  color: #333333;
+  margin-bottom: 5px;
 }
 
 form input[type="text"],
 form input[type="email"],
 form input[type="url"],
 form textarea {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #CCCCCC;
-    border-radius: 4px;
-    box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #cccccc;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 form textarea {
-    height: 150px;
+  height: 150px;
 }
 
 form input:focus,
 form textarea:focus {
-    border-color: #0033A0;
-    outline: none;
+  border-color: #0033a0;
+  outline: none;
 }
 
 /* Submit button */
 .submit-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #0033A0;
-    color: #FFFFFF;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.3s ease;
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #0033a0;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .submit-button:hover {
-    background-color: #002580;
-    transform: scale(1.05);
+  background-color: #002580;
+  transform: scale(1.05);
 }
 
 .submit-button:active {
-    background-color: #001f4d;
+  background-color: #001f4d;
 }
 
 /* Back link */
 .back-link {
-    display: inline-block;
-    margin-top: 20px;
-    color: #009B77;
-    text-decoration: none;
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
+  display: inline-block;
+  margin-top: 20px;
+  color: #009b77;
+  text-decoration: none;
+  font-family: "Roboto", sans-serif;
+  font-size: 16px;
 }
 
 .back-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }

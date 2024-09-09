@@ -3,52 +3,64 @@
 {% block main_content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_user.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
+<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+<div class="container mt-4">
 
-<h2>Muokkaa Käyttäjää</h2>
+    <h2>Muokkaa Käyttäjää</h2>
 
-<form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}" class="container-form">
-    <!-- Form for editing user details -->
-    <div class="form-group">
-        <label for="username">Käyttäjänimi</label>
-        <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
-    </div>
-
-    <div class="form-group">
-        <label for="email">Sähköposti</label>
-        <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
-    </div>
-
-    <div class="form-group">
-        <label for="confirmed">Sähköpostiosoite vahvistettu</label>
-        <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{%
-            endif %}>
-    </div>
-
-    <div class="form-group">
-        <label for="role">Rooli</label>
-        <select id="role" name="role" required>
-            <option value="user" {% if user['role']=='user' %}selected{% endif %}>Käyttäjä</option>
-            <option value="admin" {% if user['role']=='admin' %}selected{% endif %}>Järjestelmänvalvoja</option>
-            <option value="global_admin" {% if user['role']=='global_admin' %}selected{% endif %}>Superkäyttäjä</option>
-        </select>
-    </div>
-
-    <h3>Organisaatiot</h3>
-    <div class="form-group">
-        <input type="text" id="org-search" placeholder="Hae organisaatiota..." class="search-input">
-    </div>
-    <div class="organization-list">
-        {% for org in organizations %}
-        <div class="organization-item">
-            <input type="checkbox" id="org_{{ org['_id'] }}" name="organizations" value="{{ org['_id'] }}">
-            <label for="org_{{ org['_id'] }}">{{ org['name'] }}</label>
+    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}" class="container-form">
+        <!-- Form for editing user details -->
+        <div class="form-group">
+            <label for="username">Käyttäjänimi</label>
+            <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
         </div>
-        {% endfor %}
-    </div>
 
-    <button type="submit" class="submit-button">Tallenna muutokset</button>
-</form>
+        <div class="form-group">
+            <label for="email">Sähköposti</label>
+            <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
+        </div>
 
+        <!-- Approved checkbox -->
+        <div class="approval-wrapper mt-4">
+            <div class="form-group" id="approval-container">
+                <label for="confirmed">Sähköpostiosoite vahvistettu</label>
+                <div>
+                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if
+                        user.get('confirmed') %}checked{% endif %}>
+                    <span id="approval-status" class="status-text">
+                        {% if user.get('confirmed') %}Kyllä{% else %}Ei{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="role">Rooli</label>
+            <select id="role" name="role" required>
+                <option value="user" {% if user['role']=='user' %}selected{% endif %}>Käyttäjä</option>
+                <option value="admin" {% if user['role']=='admin' %}selected{% endif %}>Järjestelmänvalvoja</option>
+                <option value="global_admin" {% if user['role']=='global_admin' %}selected{% endif %}>Superkäyttäjä
+                </option>
+            </select>
+        </div>
+
+        <h3>Organisaatiot</h3>
+        <div class="form-group">
+            <input type="text" id="org-search" placeholder="Hae organisaatiota..." class="search-input">
+        </div>
+        <div class="organization-list">
+            {% for org in organizations %}
+            <div class="organization-item">
+                <input type="checkbox" id="org_{{ org['_id'] }}" name="organizations" value="{{ org['_id'] }}">
+                <label for="org_{{ org['_id'] }}">{{ org['name'] }}</label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="submit-button">Tallenna muutokset</button>
+    </form>
+</div>
 <script>
     // JavaScript for filtering organizations
     document.getElementById('org-search').addEventListener('input', function () {

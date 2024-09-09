@@ -10,17 +10,6 @@
     margin-bottom: 3rem; /* Adjust as needed */
 }
 
-/* Button Styles */
-.button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    color: #fff;
-    font-family: 'Roboto', sans-serif; /* Consistent font with the style guide */
-}
-
 .create-demo-button {
     background-color: #0033A0; /* Blue color for the create button, aligning with the primary color */
 }

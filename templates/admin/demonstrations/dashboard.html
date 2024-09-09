@@ -10,7 +10,7 @@
 <h2>Mielenosoitukset</h2>
 
 <div class="">
-    <a href="{{ url_for('admin_demo.create_demo') }}" class=" button create-demo-button full-width">Uusi mielenosoitus</a>
+    <a href="{{ url_for('admin_demo.create_demo') }}" class=" button create-demo-button full-width" style="font-weight: bold;">Uusi mielenosoitus</a>
 </div>
 
 <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
@@ -21,7 +21,7 @@
     <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
     <select name="approved" id="approved" class="filter-select">
         <option value="true" {% if approved_status %}selected{% endif %}>Kyllä</option>
-        <option value="false" {% if not approved_status %}selected{% endif %}>Näytä vain odottavat</option>
+        <option value="false" {% if not approved_status %}selected{% endif %}>Ei</option>
     </select>
 
     <label for="show_past">Näytä menneet mielenosoitukset:</label>

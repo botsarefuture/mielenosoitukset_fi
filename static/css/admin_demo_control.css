@@ -25,15 +25,6 @@
     background-color: #0033A0; /* Blue color for the create button, aligning with the primary color */
 }
 
-/*
-.edit-button {
-    background-color: #009B77; /* Green color for edit button, aligning with secondary colors 
-}
-
-.delete-button {
-    background-color: #E03C31; /* Red color for delete button, aligning with secondary colors
-}*/
-
 /* Form Styles */
 .search-form {
     display: flex;
@@ -75,12 +66,6 @@
     padding: 10px;
     border: 1px solid #ddd;
     font-family: 'Roboto', sans-serif; /* Consistent font with the style guide */
-}
-
-/*
-.actions-cell-header,
-.actions-cell {
-    text-align: center;
 }
 
 /* No demos found */

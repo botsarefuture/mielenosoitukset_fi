@@ -28,8 +28,8 @@
 
 /* Custom styling for the checkbox itself */
 .form-check-input {
-    width: 24px; /* Larger width */
-    height: 24px; /* Larger height */
+    width: 30px; /* Larger width */
+    height: 40px; /* Larger height */
     cursor: pointer; /* Change cursor to pointer on hover */
     -webkit-appearance: none; /* Remove default styling */
     appearance: none; /* Remove default styling */

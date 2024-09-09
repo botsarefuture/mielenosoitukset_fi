@@ -22,11 +22,6 @@
     vertical-align: middle;
 }
 
-/* Align the action cell header to center */
-.actions-cell-header {
-    text-align: center;
-}
-
 /* Table row styling */
 .user-table-row {
     display: table-row;

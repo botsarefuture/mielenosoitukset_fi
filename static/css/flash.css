@@ -18,6 +18,10 @@
     word-wrap: break-word; /* Ensure long words don't overflow */
 }
 
+.flash-messages .message {
+    background-color: var(--focus-color);
+}
+
 .flash-messages .success {
     background-color: #28a745; /* Green for success */
 }

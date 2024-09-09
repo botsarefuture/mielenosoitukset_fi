@@ -30,7 +30,7 @@
                 <td>{{ org.description }}</td>
                 <td>{{ org.email }}</td>
                 <td><a href="{{ org.website }}" target="_blank">{{ org.website }}</a></td>
-                <td>
+                <td class="actions-cell">
                     <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button">Muokkaa</a>
                     <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button">Poista</a>
                 </td>

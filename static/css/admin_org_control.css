@@ -37,10 +37,14 @@
 
 /* Specific styling for the actions cell */
 .actions-cell {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    display: table-cell;
+    vertical-align: middle;
+    text-align: right; /* Align buttons to the right side */
+    padding: 10px;
+    width: fit-content;
 }
+
+
 
 /* Styling for action buttons */
 .button {
@@ -52,14 +56,22 @@
     text-align: center;
     cursor: pointer;
     font-size: 14px;
+    width: 100px; /* Ensure buttons have equal width */
+    display: block;
+    margin-left: 5px; /* Slight gap between buttons */
+    margin-top: 3px;
+}
+
+.button:first-child {
+    margin-top: 0; /* Remove the margin on the first button */
 }
 
 .edit-button {
-    background-color: #007bff;
+    background-color: var(--focus-color);
 }
 
 .delete-button {
-    background-color: #dc3545;
+    background-color: var(--error-color);
 }
 
 .delete-form {
@@ -69,7 +81,7 @@
 /* Styling for create organization button */
 .create-organization-button {
     padding: 10px 20px;
-    background-color: #28a745;
+    background-color: var(--highlight-color-orange);
     border: none;
     border-radius: 4px;
     color: white;
@@ -79,7 +91,7 @@
 }
 
 .create-organization-button:hover {
-    background-color: #218838;
+    background-color: var(--error-color);
 }
 
 /* No organizations message styling */

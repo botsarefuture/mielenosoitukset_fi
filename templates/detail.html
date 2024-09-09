@@ -1,233 +1,351 @@
-{% extends 'base.html' %}
-
-{% block content %}
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/detail.css') }}">-->
-
+{% extends 'base.html' %} {% block content %}
 <style>
-    #main {
-        background-color: #cdcdcd;
-    }
+  #main {
+    background-color: #f4f4f4;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 800px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
 
-    #main .container {
-        background-color: #ffffff;
-    }
+  h1 {
+    color: #0033a0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #0033a0;
+    padding-bottom: 10px;
+    font-family: "Montserrat", sans-serif;
+    overflow-wrap: break-word;
+  }
 
-    h2 {
-        color: #0033A0;
-        /* Main Blue */
-        margin-bottom: 20px;
-        border-bottom: 2px solid #0033A0;
-        /* Underline effect */
-        padding-bottom: 10px;
-        font-family: 'Montserrat', sans-serif;
-        /* Apply Montserrat font for headings */
-        overflow-wrap: anywhere;
-        /* Forces text to wrap onto the next line if needed */
-        /* For older browsers */
-    }
+  #main img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
 
-    #main {
-        display: inline-block;
-        width: 700px;
-    }
+  #subcontainer1 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
 
+  #infocontainer,
+  #orginfo {
+    flex: 1;
+    min-width: 300px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+  }
 
+  #infocontainer {
+    border-right: 4px dotted #0033a0;
+  }
 
-    #subcontainer1 #infocontainer,
-    #subcontainer1 #orginfo {
-        width: 45%;
+  .subtitle {
+    margin-top: 0;
+    font-size: 1.2em;
+    color: #0033a0;
+  }
+
+  @media only screen and (max-width: 767px) {
+    #infocontainer {
+      border-right: none;
+      border-bottom: 4px dotted #0033a0;
     }
 
     #subcontainer1 {
-        display: flex;
-        flex-direction: row;
-        align-content: center;
+      flex-direction: column;
     }
+  }
 
-    #infocontainer {
-        border-right: 4px dotted blue;
-    }
+  .facebook-button,
+  .like-button,
+  .twitter-button,
+  .linkedin-button {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
 
-    .subtitle {
-        margin-top: 0px;
-    }
+  .facebook-button {
+    background-color: #1877f2;
+    color: #ffffff;
+  }
 
-    @media only screen and (max-width: 767px) {
-        #main {
-            max-width: 84vw;
-        }
+  .facebook-button:hover {
+    background-color: #145dbf;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
 
-        #subcontainer1 {
-            flex-direction: column;
-            max-width: 95%;
-        }
+  .like-button {
+    background-color: #4267b2;
+    color: #ffffff;
+  }
 
-        #subcontainer1 #infocontainer,
-        #subcontainer1 #orginfo {
-            width: auto;
-        }
+  .like-button:hover {
+    background-color: #365899;
+  }
 
-        #infocontainer {
-            border-right: none;
-            border-bottom: 4px dotted blue;
-        }
-    }
+  .twitter-button {
+    background-color: #1da1f2;
+    color: #ffffff;
+  }
 
+  .twitter-button:hover {
+    background-color: #0d95e8;
+  }
 
-    .facebook-button {
-        display: inline-block;
-        margin-top: 10px;
-        padding: 10px 20px;
-        background-color: #1877f2;
-        /* Facebook blue color */
-        color: #ffffff;
-        text-decoration: none;
-        border-radius: 4px;
-        font-size: 16px;
-        font-weight: bold;
-        text-align: center;
-        transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
+  .linkedin-button {
+    background-color: #0077b5;
+    color: #ffffff;
+  }
 
-    .facebook-button:hover {
-        background-color: #145dbf;
-        /* Darker Facebook blue on hover */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+  .linkedin-button:hover {
+    background-color: #005582;
+  }
 
+  .organizer-info {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #cccccc;
+  }
 
-    /* Sidebar individual organizer styling */
-    .organizer-info {
-        margin-bottom: 20px;
-        /* Space between organizers */
-        padding-bottom: 10px;
-        /* Space inside each organizer block */
-        border-bottom: 1px solid #cccccc;
-        /* Separator line */
-    }
+  .organizer-info a {
+    color: #0033a0;
+    text-decoration: none;
+    font-weight: bold;
+  }
 
-    .organizer-info a {
-        color: #0033A0;
-        /* Main Blue */
-        text-decoration: none;
-        /* Remove underline */
-        font-weight: bold;
-    }
+  .organizer-info a:hover {
+    text-decoration: underline;
+    color: #ff6600;
+  }
 
-    .organizer-info a:hover {
-        text-decoration: underline;
-        /* Underline on hover */
-        color: #FF6600;
-        /* Secondary Orange on hover */
-    }
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #0033a0;
+    color: #ffffff;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
 
+  .back-link:hover {
+    background-color: #0066cc;
+  }
 
-    /* Back link styling */
-    .back-link {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 20px;
-        background-color: #0033A0;
-        /* Main Blue background */
-        color: #ffffff;
-        /* White text */
-        border-radius: 4px;
-        text-decoration: none;
-        transition: background-color 0.3s ease;
-        /* Smooth transition */
-    }
+  strong {
+    color: #0033a0;
+  }
 
-    .back-link:hover {
-        background-color: #0066cc;
-        /* Light Blue on hover */
-    }
+  .route {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ffffff;
+    border-left: 5px solid #0033a0;
+    border-radius: 8px;
+  }
 
+  a {
+    color: #0033a0;
+    text-decoration: none;
+    font-weight: bold;
+  }
 
-    strong {
-        color: #0033A0;
-        /* Main Blue for emphasis */
-    }
+  a:hover {
+    text-decoration: underline;
+    color: #ff6600;
+  }
 
-    /* Route section styling */
-    .route {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #f9f9f9;
-        /* Light gray background */
-        border-left: 5px solid #0033A0;
-        /* Main Blue left border */
-    }
+  .countdown {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
 
-    /* Link styling */
-    a {
-        color: #0033A0;
-        /* Main Blue */
-        text-decoration: none;
-        /* Remove underline */
-        font-weight: bold;
-    }
-
-    a:hover {
-        text-decoration: underline;
-        /* Underline on hover */
-        color: #FF6600;
-        /* Secondary Orange on hover */
-    }
+  .map {
+    margin-top: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
 </style>
 
-<!-- Detail Content -->
-<div id="main" class="bg-light-red p20 container-centered">
-    <!-- Title of the Demonstration -->
-    <h2>{{ demo['title'] }}</h2>
+<div id="main">
+  {% if demo['img'] %}
+  <img src="{{ demo['img'] }}" alt="Event Image" />
+  {% endif %}
+  <h1>{{ demo['title'] }}</h1>
+  <div>
+    <!--<a href="#" class="like-button"> Tykkää </a>-->
+    <!-- Social Media Share Buttons -->
+    <div>
+      <a
+        href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+        target="_blank"
+        class="facebook-button"
+      >
+        Jaa Facebookissa
+      </a>
+      <a
+        href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
+        target="_blank"
+        class="twitter-button"
+      >
+        Jaa Xssä
+      </a>
+      <a
+        href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
+        target="_blank"
+        class="linkedin-button"
+      >
+        Jaa LinkedInissä
+      </a>
+    </div>
+  </div>
 
-    <div id="subcontainer1" class="container">
-        <div id="infocontainer" class="container">
-            <!-- Display Event Details -->
-            <h3 class="subtitle">Lisätiedot</h3>
-            <p><strong>Päivämäärä:</strong><br>{{ demo['date'] }}</p>
-            <p><strong>Alkamisaika:</strong><br>{{ demo['start_time'] }}</p>
-            <p><strong>Päättymisaika:</strong><br>{{ demo['end_time'] }}</p>
-            <p><strong>Aihe:</strong><br>{{ demo['topic'] }}</p>
-            <p><strong>Sijainti:</strong><br>{{ demo['address'] }}, {{ demo['city'] }}</p>
+  <div class="countdown">
+    <h2 class="subtitle">Aikaa mielenosoituksen alkuun</h2>
+    <div id="timer" style="font-size: 24px; color: #0033a0"></div>
+  </div>
+  <br />
+  <div class="map">
+    <div id="map" style="height: 300px"></div>
+  </div>
+  <br />
 
-            <!-- Conditional Display for Route Information -->
-            {% if demo['route'] and demo['route'] != "None" %}
-            <div class="route">
-                <p><strong>Reitti:</strong></p>
-                <p>{{ demo['route'] }}</p>
-            </div>
-            {% endif %}
+  <div id="subcontainer1">
+    <div id="infocontainer">
+      <h2 class="subtitle">Lisätiedot</h2>
+      <p><strong>Päivämäärä:</strong><br />{{ demo['date'] }}</p>
+      <p><strong>Alkamisaika:</strong><br />{{ demo['start_time'] }}</p>
+      <p><strong>Päättymisaika:</strong><br />{{ demo['end_time'] }}</p>
+      <p><strong>Aihe:</strong><br />{{ demo['topic'] }}</p>
+      <p>
+        <strong>Sijainti:</strong><br />{{ demo['address'] }}, {{ demo['city']
+        }}
+      </p>
 
-            <!-- Conditional Display for Facebook Event Link -->
-            {% if demo['facebook'] %}
-            <a href="{{ demo['facebook'] }}" target="_blank" class="facebook-button">
-                Facebook-tapahtuma
-            </a>
-            {% endif %}
-        </div>
-
-        <!-- Back Link to All Demonstrations -->
-        <!-- Organizers Information -->
-        <div id="orginfo" class="container">
-            <h3 class="subtitle">Järjestäjät</h3>
-            {% for org in demo['organizers'] %}
-            <div class="organizer-info">
-                <p><strong>Nimi:</strong> <br>{{ org['name'] }}</p>
-
-                {% if org['website'] %}
-                <p><strong>Nettisivu:</strong><br><a href="{{ org['website'] }}" target="_blank">{{ org['website']
-                        }}</a>
-                </p>
-                {% endif %}
-
-                {% if org['email'] %}
-                <p><strong>Sähköposti:</strong><br><a href="mailto:{{ org['email'] }}">{{ org['email'] }}</a></p>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
+      {% if demo['route'] and demo['route'] != "None" %}
+      <div class="route">
+        <p><strong>Marssin reitti:</strong></p>
+        <p>{{ demo['route'] }}</p>
+      </div>
+      {% endif %} {% if demo['facebook'] %}
+      <a href="{{ demo['facebook'] }}" target="_blank" class="facebook-button">
+        Facebook-tapahtuma
+      </a>
+      {% endif %}
     </div>
 
-    <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
+    <div id="orginfo">
+      <h2 class="subtitle">Järjestäjät</h2>
+      {% for org in demo['organizers'] %}
+      <div class="organizer-info">
+        <p><strong>Nimi:</strong><br />{{ org['name'] }}</p>
+
+        {% if org['website'] %}
+        <p>
+          <strong>Nettisivu:</strong><br /><a
+            href="{{ org['website'] }}"
+            target="_blank"
+            >{{ org['website'] }}</a
+          >
+        </p>
+        {% endif %} {% if org['email'] %}
+        <p>
+          <strong>Sähköposti:</strong><br /><a href="mailto:{{ org['email'] }}"
+            >{{ org['email'] }}</a
+          >
+        </p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <a class="back-link" href="{{ url_for('demonstrations') }}"
+    >Takaisin kaikkiin mielenosoituksiin</a
+  >
 </div>
+
+<!-- Leaflet JS and Map Integration -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script>
+  var map = L.map("map").setView([{{ latitude }}, {{ longitude }}], 13);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  L.marker([{{ latitude }}, {{ longitude }}])
+    .addTo(map)
+    .bindPopup("{{ demo['address'] }}")
+    .openPopup();
+</script>
+<script>
+  function formatFinnishDate(dateString) {
+    // Convert Finnish date format (pp.kk.vvvv) to ISO format (yyyy-mm-dd)
+    const [day, month, year] = dateString.split(".").map(Number);
+    return `${year}-${month.toString().padStart(2, "0")}-${day
+      .toString()
+      .padStart(2, "0")}`;
+  }
+
+  function updateCountdown() {
+    // Replace these with your actual Finnish date and time strings for testing
+    const demoDate = "{{ demo['date'] }}"; // e.g., "09.09.2024"
+    const demoTime = "{{ demo['start_time'] }}"; // e.g., "14:00:00"
+
+    const formattedDate = formatFinnishDate(demoDate);
+    const eventDateStr = `${formattedDate}T${demoTime}`;
+    console.log(`Event Date String: ${eventDateStr}`);
+
+    const eventDate = new Date(eventDateStr);
+    const now = new Date();
+    const timeRemaining = eventDate - now;
+
+    console.log(`Current Time: ${now}`);
+    console.log(`Event Time: ${eventDate}`);
+    console.log(`Time Remaining: ${timeRemaining}`);
+
+    if (timeRemaining <= 0) {
+      document.getElementById("timer").innerText =
+        "Mielenosoitus on käynnissä!";
+      return;
+    }
+
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor(
+      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
+    );
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    document.getElementById(
+      "timer"
+    ).innerText = `${days} päivää ${hours} tuntia ${minutes} minuuttia ${seconds} sekuntia`;
+  }
+
+  setInterval(updateCountdown, 1000);
+</script>
 {% endblock %}

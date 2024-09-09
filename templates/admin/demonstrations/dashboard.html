@@ -1,14 +1,16 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
+
+<div class="table-container mt-4">
 
 <h2>Mielenosoitukset</h2>
 
-<div class="mb-3">
-    <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button">Uusi mielenosoitus</a>
+<div class="">
+    <a href="{{ url_for('admin_demo.create_demo') }}" class=" button create-demo-button full-width">Uusi mielenosoitus</a>
 </div>
 
 <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
@@ -23,6 +25,12 @@
         <option value="false" {% if approved_status=="false" %}selected{% endif %}>Odottaa</option>
     </select>
 
+    <label for="show_past">Näytä menneet mielenosoitukset:</label>
+    <select name="show_past" id="show_past" class="filter-select">
+        <option value="false" {% if not show_past %}selected{% endif %}>Ei</option>
+        <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
+    </select>
+
     <button type="submit" class="search-button">Hae</button>
 </form>
 
@@ -35,7 +43,7 @@
                 <th>Kaupunki</th>
                 <th>Päivämäärä</th>
                 <th>Hyväksytty</th>
-                <th>Toiminnot</th>
+                <th class="actions-cell-header">Toiminnot</th>
             </tr>
         </thead>
         <tbody>
@@ -45,7 +53,7 @@
                 <td>{{ demo.city }}</td>
                 <td>{{ demo.date }}</td>
                 <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
-                <td>
+                <td class="actions-cell">
                     <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"
                         class="button edit-button">Muokkaa</a>
                     <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}"
@@ -61,4 +69,5 @@
     <p>Mielenosoituksia ei löytynyt.</p>
 </div>
 {% endif %}
+</div>
 {% endblock %}

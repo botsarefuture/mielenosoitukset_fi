@@ -24,6 +24,7 @@ admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
 
+
 @admin_demo_bp.route("/")
 @login_required
 @admin_required
@@ -36,7 +37,7 @@ def demo_control():
 
     # Initial query to get all approved demonstrations
     query = dict({"approved": approved_status})
-    
+
     # Fetch all approved demonstrations from the database
     demonstrations = mongo.demonstrations.find(query)
 
@@ -65,8 +66,6 @@ def demo_control():
         approved_status=approved_status,
         show_past=show_past,
     )
-
-
 
 
 @admin_demo_bp.route("/create_demo", methods=["GET", "POST"])

@@ -18,6 +18,7 @@ class Organizer:
         self.website = website
 
         if organization_id:
+            print("id")
             self.fetch_organization_details()
 
     def fetch_organization_details(self):
@@ -46,6 +47,8 @@ class Organizer:
             self.website = None
 
     def to_dict(self):
+        if self.name == "":
+            self.fetch_organization_details()
         return {
             "name": self.name,
             "email": self.email,
@@ -164,7 +167,12 @@ class Demonstration:
         self.address = address
         self.event_type = event_type
         self.route = route
-        self.organizers = organizers if organizers is not None else []
+        self.organizers = []
+        for organizer in organizers:
+            if not type(organizer) == Organizer:
+                self.organizers.append(Organizer.from_dict(organizer))
+            else:
+                self.organizers.append(organizer)
         self.approved = approved
         self.linked_organizations = (
             linked_organizations if linked_organizations is not None else {}

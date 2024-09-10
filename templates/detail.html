@@ -276,7 +276,7 @@
       <h2 class="subtitle">Järjestäjät</h2>
       {% for org in demo['organizers'] %}
       <div class="organizer-info">
-        <p><strong>Nimi:</strong><br />{{ org['name'] }}</p>
+        <p><strong>Nimi:</strong><br />{{ org.name }}</p>
 
         {% if org['website'] %}
         <p>

@@ -30,7 +30,7 @@
         const file = input.files[0];
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('profile_picture_base64').value = e.target.result;
+            document.getElementById('profile_picture').value = e.target.result;
         };
         reader.readAsDataURL(file);
     }

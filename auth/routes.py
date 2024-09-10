@@ -7,11 +7,12 @@ from flask import (
     flash,
     current_app,
 )
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from auth.models import User
 import jwt
 import datetime
 from emailer.EmailSender import EmailSender
+from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 
 db_manager = DatabaseManager()
@@ -186,6 +187,49 @@ def password_reset(token):
         return redirect(url_for("auth.login"))
 
     return render_template("password_reset.html", token=token)
+
+@auth_bp.route("/profile/")
+@auth_bp.route("/profile/<username>")
+@login_required
+def profile(username=None):
+    if username is None:
+        username = current_user.username
+    user = mongo.users.find_one({"username": username})
+    if user:
+        user_data = User.from_db(user)
+        return render_template("profile.html", user=user_data)
+    else:
+        flash("Käyttäjäprofiilia ei löytynyt.", "warning")
+        return redirect(url_for("index"))
+
+@auth_bp.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    if request.method == "POST":
+        displayname = request.form.get("displayname")
+        profile_picture = request.form.get("profile_picture")
+        bio = request.form.get("bio")
+
+        current_user.displayname = displayname
+        current_user.profile_picture = profile_picture
+        current_user.bio = bio
+
+        mongo.users.update_one(
+            {"_id": ObjectId(current_user.id)},
+            {
+                "$set": {
+                    "displayname": current_user.displayname,
+                    "profile_picture": current_user.profile_picture,
+                    "bio": current_user.bio,
+                }
+            },
+        )
+
+        flash("Profiilitietosi on päivitetty.", "success")
+        return redirect(url_for("auth.profile", username=current_user.username))
+
+    return render_template("edit_profile.html")
+
 
 
 def generate_reset_token(email):

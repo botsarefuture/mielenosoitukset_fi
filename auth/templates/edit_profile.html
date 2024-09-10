@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Muokkaa Profiilia{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/edit_profile.css') }}">
+<div class="container profile-edit-container">
+    <h1>Muokkaa Profiilia</h1>
+
+    <form action="{{ url_for('auth.edit_profile') }}" method="POST">
+        <div class="form-group">
+            <label for="displayname">Näyttönimi:</label>
+            <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname or '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="profile_picture">Profiilikuva URL:</label>
+            <input type="text" id="profile_picture" name="profile_picture" value="{{ current_user.profile_picture or '' }}">
+        </div>
+        <div class="form-group">
+            <label for="bio">Esittelyteksti:</label>
+            <textarea id="bio" name="bio">{{ current_user.bio or '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Tallenna muutokset</button>
+    </form>
+</div>
+{% endblock %}

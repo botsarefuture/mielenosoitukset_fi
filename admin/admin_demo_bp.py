@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from bson.objectid import ObjectId
 from datetime import datetime, date
+from utils import CITY_LIST
 
 from database_manager import DatabaseManager
 from wrappers import admin_required
@@ -24,13 +25,9 @@ def demo_control():
     show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()  # Get the current date
 
-    query = dict({"approved": approved_status})
+    query = {"approved": approved_status} if approved_status else {}
 
-    # Initial query to get all approved demonstrations
-    if approved_status == False:
-        query = dict()
-
-    # Fetch all approved demonstrations from the database
+    # Fetch all demonstrations from the database
     demonstrations = mongo.demonstrations.find(query)
 
     # Filter based on the search query
@@ -66,73 +63,12 @@ def demo_control():
 def create_demo():
     """Create a new demonstration."""
     if request.method == "POST":
-        title = request.form.get("title")
-        date = request.form.get("date")
-        start_time = request.form.get("start_time")
-        end_time = request.form.get("end_time")
-        topic = request.form.get("topic")
-        facebook = request.form.get("facebook")
-        city = request.form.get("city")
-        address = request.form.get("address")
-        event_type = request.form.get("type")
-        route = request.form.get("route")
-
-        organization_id = request.form.get("organization_id", None)
-        organizer_name = request.form.get("organizer_name")
-        organizer_email = request.form.get("organizer_email")
-        organizer_website = request.form.get("organizer_website")
-
-        organizers = []
-
-        # Check if an organization is selected
-        if organization_id and organization_id != "manual":
-            # Fetch the organization from the database
-            organization = mongo.organizations.find_one(
-                {"_id": ObjectId(organization_id)}
-            )
-            if organization:
-                organizer = Organizer(
-                    name=organization["name"],
-                    email=organization["email"],
-                    organization_id=str(organization["_id"]),
-                    website=organization.get("website"),
-                )
-                organizers.append(organizer)
-            else:
-                flash("Valittua organisaatiota ei ole olemassa.")
-                return redirect(url_for("admin_demo.create_demo"))
-        elif organizer_name and organizer_email:
-            # Use the manually entered details
-            organizer = Organizer(
-                name=organizer_name, email=organizer_email, website=organizer_website
-            )
-            organizers.append(organizer)
-
-        try:
-            demonstration = Demonstration(
-                title=title,
-                date=date,
-                start_time=start_time,
-                end_time=end_time,
-                topic=topic,
-                facebook=facebook,
-                city=city,
-                address=address,
-                event_type=event_type,
-                route=route,
-                organizers=organizers,
-            )
-            mongo.demonstrations.insert_one(demonstration.to_dict())
-            flash("Mielenosoitus luotu onnistuneesti.")
-            return redirect(url_for("admin_demo.demo_control"))
-        except ValueError as e:
-            flash(str(e))
-            return redirect(url_for("admin_demo.create_demo"))
+        return handle_demo_form(request, is_edit=False)
 
     # Fetch organizations for the dropdown
     organizations = mongo.organizations.find()
     return render_template(
-        "admin/demonstrations/create.html", organizations=organizations
+        "admin/demonstrations/form.html", organizations=organizations, form_action=url_for("admin_demo.create_demo"), title="Luo mielenosoitus", submit_button_text="Luo", demo=None, city_list=CITY_LIST
     )
 
 
@@ -146,54 +82,72 @@ def edit_demo(demo_id):
         flash("Mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_demo.demo_control"))
 
-    demonstration = Demonstration.from_dict(demo_data)
-
     if request.method == "POST":
-        # Update demonstration fields
-        demonstration.title = request.form.get("title")
-        demonstration.date = request.form.get("date")
-        demonstration.start_time = request.form.get("start_time")
-        demonstration.end_time = request.form.get("end_time")
-        demonstration.topic = request.form.get("topic")
-        demonstration.facebook = request.form.get("facebook")
-        demonstration.city = request.form.get("city")
-        demonstration.address = request.form.get("address")
-        demonstration.event_type = request.form.get("type")
-        demonstration.route = request.form.get("route")
-        demonstration.approved = bool(request.form.get("approved"))
+        return handle_demo_form(request, is_edit=True, demo_id=demo_id)
 
-        # Process organizers
-        organizers = []
-        i = 1
-        while True:
-            name = request.form.get(f"organizer_name_{i}")
-            website = request.form.get(f"organizer_website_{i}")
-            email = request.form.get(f"organizer_email_{i}")
-            organization_id = request.form.get(
-                f"organization_id_{i}", None
-            )  # TODO: Add this to form.
+    demonstration = Demonstration.from_dict(demo_data)
+    return render_template("admin/demonstrations/form.html", demo=demonstration, form_action=url_for("admin_demo.edit_demo",demo_id=demo_id), title="Muokkaa mielenosoitusta", submit_button_text="Vahvista muokkaus")
 
-            if not name:
-                break
+def handle_demo_form(request, is_edit=False, demo_id=None):
+    """Handle form submission for creating or editing a demonstration."""
+    title = request.form.get("title")
+    date = request.form.get("date")
+    start_time = request.form.get("start_time")
+    end_time = request.form.get("end_time")
+    topic = request.form.get("topic")
+    facebook = request.form.get("facebook")
+    city = request.form.get("city")
+    address = request.form.get("address")
+    event_type = request.form.get("type")
+    route = request.form.get("route")
+    approved = request.form.get("approved") == 'on'
 
-            organizer = Organizer(
-                name=name, email=email, website=website, organization_id=organization_id
-            )
-            organizers.append(organizer)
-            i += 1
-        demonstration.organizers = organizers
+    # Process organizers
+    organizers = []
+    i = 1
+    while True:
+        name = request.form.get(f"organizer_name_{i}")
+        website = request.form.get(f"organizer_website_{i}")
+        email = request.form.get(f"organizer_email_{i}")
+        if not name:
+            break
+        organizer = Organizer(name=name, email=email, website=website)
+        organizers.append(organizer)
+        i += 1
 
-        try:
+    demonstration_data = {
+        "title": title,
+        "date": date,
+        "start_time": start_time,
+        "end_time": end_time,
+        "topic": topic,
+        "facebook": facebook,
+        "city": city,
+        "address": address,
+        "type": event_type,
+        "route": route,
+        "organizers": [org.to_dict() for org in organizers],
+        "approved": approved
+    }
+
+    try:
+        if is_edit:
             mongo.demonstrations.update_one(
-                {"_id": ObjectId(demo_id)}, {"$set": demonstration.to_dict()}
+                {"_id": ObjectId(demo_id)},
+                {"$set": demonstration_data}
             )
             flash("Mielenosoitus päivitetty onnistuneesti.")
-            return redirect(url_for("admin_demo.demo_control"))
-        except ValueError as e:
-            flash(str(e))
+        else:
+            mongo.demonstrations.insert_one(demonstration_data)
+            flash("Mielenosoitus luotu onnistuneesti.")
+        return redirect(url_for("admin_demo.demo_control"))
+    except ValueError as e:
+        flash(str(e))
+        if is_edit:
             return redirect(url_for("admin_demo.edit_demo", demo_id=demo_id))
+        else:
+            return redirect(url_for("admin_demo.create_demo"))
 
-    return render_template("admin/demonstrations/edit.html", demo=demonstration)
 
 
 @admin_demo_bp.route("/delete_demo/<demo_id>", methods=["POST"])

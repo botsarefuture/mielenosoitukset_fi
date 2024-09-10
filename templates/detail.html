@@ -1,4 +1,23 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} {% block title %} {{ demo['title'] }} {% endblock %}
+{% block meta %}
+<meta
+  name="description"
+  content="{{ demo['title'] }} - Mielenosoitukset.fissä"
+/>
+<meta property="og:title" content="{{ demo['title'] }}" />
+<meta
+  property="og:description"
+  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}"
+/>
+<meta property="og:image" content="{{ demo['img'] }}" />
+<meta
+  property="og:url"
+  content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+/>
+<meta property="og:type" content="event" />
+<meta property="og:site_name" content="Mielenosoitukset.fi" />
+{% endblock %} {% block content %}
+
 <style>
   #main {
     background-color: #f4f4f4;

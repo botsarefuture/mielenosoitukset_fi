@@ -1,0 +1,97 @@
+/* profile.css */
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.profile-header {
+    width: 100%;
+    background-color: #F5F5F5;
+    border-bottom: 1px solid #E0E0E0;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.profile-picture {
+    margin-bottom: 10px;
+}
+
+.profile-picture img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #E0E0E0;
+}
+
+.profile-info {
+    text-align: center;
+}
+
+.profile-info h1 {
+    font-size: 24px;
+    margin: 10px 0;
+    color: #333;
+}
+
+.profile-info .email,
+.profile-info .bio {
+    font-size: 16px;
+    color: #666;
+}
+
+.profile-info .badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #FFF;
+    font-size: 14px;
+    margin: 5px;
+}
+
+.badge-admin {
+    background-color: #FF6600;
+}
+
+.badge-member {
+    background-color: #009B77;
+}
+
+.btn-secondary {
+    background-color: #FF6600;
+    color: #FFF;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.btn-secondary:hover {
+    background-color: #E03C31;
+}
+
+.btn-primary {
+    background-color: #007BFF;
+    color: #FFF;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}

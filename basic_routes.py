@@ -5,6 +5,7 @@ from classes import Organizer, Demonstration
 from database_manager import DatabaseManager
 from flask_login import current_user
 from datetime import date
+from utils import CITY_LIST
 
 from emailer.EmailSender import EmailSender, EmailJob
 
@@ -110,7 +111,7 @@ def init_routes(app):
             )
             return redirect(url_for("index"))
 
-        return render_template("submit.html")
+        return render_template("submit.html", city_list=CITY_LIST)
 
     @app.route("/demonstrations")
     def demonstrations():

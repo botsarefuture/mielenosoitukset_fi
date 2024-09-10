@@ -7,14 +7,15 @@
 <div class="container profile-edit-container">
     <h1>Muokkaa Profiilia</h1>
 
-    <form action="{{ url_for('auth.edit_profile') }}" method="POST">
+    <form action="{{ url_for('auth.edit_profile') }}" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="displayname">Näyttönimi:</label>
             <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname or '' }}" required>
         </div>
         <div class="form-group">
-            <label for="profile_picture">Profiilikuva URL:</label>
-            <input type="text" id="profile_picture" name="profile_picture" value="{{ current_user.profile_picture or '' }}">
+            <label for="profile_picture_file">Profiilikuva:</label>
+            <input type="file" id="profile_picture_file" name="profile_picture_file" accept="image/*" onchange="convertToBase64(this)">
+            <input type="hidden" id="profile_picture" name="profile_picture" value="{{ current_user.profile_picture or '' }}">
         </div>
         <div class="form-group">
             <label for="bio">Esittelyteksti:</label>
@@ -23,4 +24,15 @@
         <button type="submit" class="btn btn-primary">Tallenna muutokset</button>
     </form>
 </div>
+
+<script>
+    function convertToBase64(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profile_picture_base64').value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+</script>
 {% endblock %}

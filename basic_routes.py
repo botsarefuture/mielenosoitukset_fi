@@ -206,6 +206,9 @@ def init_routes(app):
             {"_id": ObjectId(demo_id), "approved": True}
         )
 
+        demo = Demonstration.from_dict(demo)
+        demo = demo.to_dict()
+
         if demo is None:
             flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.")
             return redirect(url_for("demonstrations"))

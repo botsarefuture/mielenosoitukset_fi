@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.displayname if user.displayname else user.username }}'n Profiili{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+<div class="container profile-container">
+    <div class="profile-header">
+        <div class="profile-details">
+            <div class="profile-picture">
+                <img src="{{ user.profile_picture or url_for('static', filename='default_profile.png') }}" alt="{{ user.displayname if user.displayname else user.username }}'n profiilikuva">
+            </div>
+            <div class="profile-info">
+                <h1>{{ user.displayname if user.displayname else user.username }}</h1>
+                <p class="email">{{ user.email or 'Ei määritetty' }}</p>
+                <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>
+
+                {% if user.global_admin %}
+                    <span class="badge badge-admin">Super User</span>
+                {% elif user.is_member_of_organization('some_organization_id') %}
+                    <span class="badge badge-member">Organisaation jäsen</span>
+                {% endif %}
+                
+                <!--
+                {% if current_user.is_authenticated %}
+                    {% if current_user.username != user.username %}
+                        <form action="{{ url_for('auth.follow_user', username=user.username) }}" method="POST">
+                            <button type="submit" class="btn btn-secondary">
+                                {% if current_user.is_following(user.username) %}
+                                    Lopeta seuraaminen
+                                {% else %}
+                                    Seuraa
+                                {% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+                -->
+
+                {% if current_user.is_authenticated and current_user.username == user.username %}
+                    <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">Muokkaa profiilia</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

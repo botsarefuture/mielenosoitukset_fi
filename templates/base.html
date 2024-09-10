@@ -197,7 +197,9 @@
         </ul>
       </div>
     </nav>
-
+    {% if current_user.global_admin %}
+    {% include "sidebar.html" %}
+    {% endif %}
     <!-- Flash Messages -->
     {% if get_flashed_messages(with_categories=True) %}
     <ul class="flash-messages">

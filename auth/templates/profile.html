@@ -22,19 +22,6 @@
                 {% endif %}
                 
                 <!--
-                {% if current_user.is_authenticated %}
-                    {% if current_user.username != user.username %}
-                        <form action="{{ url_for('auth.follow_user', username=user.username) }}" method="POST">
-                            <button type="submit" class="btn btn-secondary">
-                                {% if current_user.is_following(user.username) %}
-                                    Lopeta seuraaminen
-                                {% else %}
-                                    Seuraa
-                                {% endif %}
-                            </button>
-                        </form>
-                    {% endif %}
-                {% endif %}
                 -->
 
                 {% if current_user.is_authenticated and current_user.username == user.username %}

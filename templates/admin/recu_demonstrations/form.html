@@ -1,0 +1,129 @@
+{% extends "admin_base.html" %}
+
+{% block title %}{% if demo %}Muokkaa toistuvaa mielenosoitusta{% else %}Luo uusi toistuva mielenosoitus{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-5">
+    <h1 class="text-2xl font-bold mb-4">{% if demo %}Muokkaa toistuvaa mielenosoitusta{% else %}Luo uusi toistuva mielenosoitus{% endif %}</h1>
+
+    <form method="POST" action="{{ form_action }}">
+        <div class="mb-4">
+            <label for="title" class="block">Otsikko</label>
+            <input type="text" name="title" id="title" value="{{ demo.title if demo else '' }}" required class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="date" class="block">Alkuperäinen päivämäärä (pp.kk.vvvv)</label>
+            <input type="text" name="date" id="date" value="{{ demo.date if demo else '' }}" required class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="start_time" class="block">Alkuaika</label>
+            <input type="time" name="start_time" id="start_time" value="{{ demo.start_time if demo else '' }}" required class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="end_time" class="block">Loppuaika</label>
+            <input type="time" name="end_time" id="end_time" value="{{ demo.end_time if demo else '' }}" required class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="topic" class="block">Aihe</label>
+            <input type="text" name="topic" id="topic" value="{{ demo.topic if demo else '' }}" class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="facebook" class="block">Facebook-linkki</label>
+            <input type="url" name="facebook" id="facebook" value="{{ demo.facebook if demo else '' }}" class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="city" class="block">Kaupunki</label>
+            <select name="city" id="city" required class="border p-2 w-full">
+                <option value="" disabled {% if not demo %}selected{% endif %}>Valitse kaupunki</option>
+                {% for city in city_list %}
+                <option value="{{ city }}" {% if demo and demo.city == city %}selected{% endif %}>{{ city }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="address" class="block">Osoite</label>
+            <input type="text" name="address" id="address" value="{{ demo.address if demo else '' }}" class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="type" class="block">Tyyppi</label>
+            <input type="text" name="type" id="type" value="{{ demo.type if demo else '' }}" class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="route" class="block">Reitti</label>
+            <input type="text" name="route" id="route" value="{{ demo.route if demo else '' }}" class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="approved" class="block">
+                <input type="checkbox" name="approved" id="approved" {% if demo and demo.approved %}checked{% endif %} />
+                Hyväksytty
+            </label>
+        </div>
+
+        <div class="mb-4">
+            <label for="linked_organizations" class="block">Liitetyt organisaatiot</label>
+            <input type="text" name="linked_organizations" id="linked_organizations" value="{{ demo.linked_organizations|join(', ') if demo else '' }}" class="border p-2 w-full" placeholder="Erota organisaatiot pilkulla" />
+        </div>
+
+        <h2 class="text-xl font-bold mb-2">Toistuvuus</h2>
+        <div class="mb-4">
+            <label for="frequency_type" class="block">Toistuvuus</label>
+            <select name="frequency_type" id="frequency_type" required class="border p-2 w-full">
+                <option value="" disabled {% if not demo %}selected{% endif %}>Valitse toistuvuustyyppi</option>
+                <option value="daily" {% if demo and demo.repeat_schedule.frequency == 'daily' %}selected{% endif %}>Päivittäin</option>
+                <option value="weekly" {% if demo and demo.repeat_schedule.frequency == 'weekly' %}selected{% endif %}>Viikoittain</option>
+                <option value="monthly" {% if demo and demo.repeat_schedule.frequency == 'monthly' %}selected{% endif %}>Kuukausittain</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="frequency_interval" class="block">Toistuvuusväli</label>
+            <input type="number" name="frequency_interval" id="frequency_interval" value="{{ demo.repeat_schedule.interval if demo else 1 }}" min="1" class="border p-2 w-full" />
+        </div>
+
+        <div class="mb-4">
+            <label for="weekday" class="block">Viikonpäivä</label>
+            <select name="weekday" id="weekday" class="border p-2 w-full">
+                <option value="" disabled {% if not demo %}selected{% endif %}>Valitse viikonpäivä</option>
+                <option value="monday" {% if demo and demo.repeat_schedule.weekday == 'monday' %}selected{% endif %}>Maanantai</option>
+                <option value="tuesday" {% if demo and demo.repeat_schedule.weekday == 'tuesday' %}selected{% endif %}>Tiistai</option>
+                <option value="wednesday" {% if demo and demo.repeat_schedule.weekday == 'wednesday' %}selected{% endif %}>Keskiviikko</option>
+                <option value="thursday" {% if demo and demo.repeat_schedule.weekday == 'thursday' %}selected{% endif %}>Torstai</option>
+                <option value="friday" {% if demo and demo.repeat_schedule.weekday == 'friday' %}selected{% endif %}>Perjantai</option>
+                <option value="saturday" {% if demo and demo.repeat_schedule.weekday == 'saturday' %}selected{% endif %}>Lauantai</option>
+                <option value="sunday" {% if demo and demo.repeat_schedule.weekday == 'sunday' %}selected{% endif %}>Sunnuntai</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="create_until" class="block">Loppupäivämäärä (pp.kk.vvvv)</label>
+            <input type="text" name="create_until" id="create_until" value="{{ demo.create_until if demo else '' }}" class="border p-2 w-full" />
+        </div>
+
+        <h2 class="text-xl font-bold mb-2">Organisaattorit</h2>
+        <div id="organizers">
+            {% if demo %}
+                {% for org in demo.organizers %}
+                <div class="organizer mb-4">
+                    <input type="text" name="organizer_name_{{ loop.index }}" placeholder="Nimi" value="{{ org }}" required class="border p-2 w-full mb-2" />
+                </div>
+                {% endfor %}
+            {% endif %}
+            <div class="organizer mb-4">
+                <input type="text" name="organizer_name_1" placeholder="Nimi" class="border p-2 w-full mb-2" />
+            </div>
+        </div>
+
+        <button type="submit" class="bg-blue-500 text-white p-2 rounded">{% if demo %}Vahvista muokkaus{% else %}Luo{% endif %}</button>
+    </form>
+</div>
+{% endblock %}

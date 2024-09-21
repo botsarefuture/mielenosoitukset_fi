@@ -11,7 +11,6 @@ admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization"
 db_manager = DatabaseManager()
 mongo = db_manager.get_db()
 
-
 # Organization control panel
 @admin_org_bp.route("/")
 @login_required

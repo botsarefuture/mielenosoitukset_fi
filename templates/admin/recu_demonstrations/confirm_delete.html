@@ -1,0 +1,23 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Vahvista poisto{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-5">
+    <h1 class="text-2xl font-bold mb-4">Vahvista mielenosoituksen poisto</h1>
+    
+    <div class="mb-4">
+        <p>Oletko varma, että haluat poistaa seuraavan toistuvan mielenosoituksen?</p>
+        <h2 class="text-xl font-semibold">{{ demo.title }}</h2>
+        <p><strong>Päivämäärä:</strong> {{ demo.date }}</p>
+        <p><strong>Kaupunki:</strong> {{ demo.city }}</p>
+        <p><strong>Aihe:</strong> {{ demo.topic }}</p>
+        <p><strong>Osoite:</strong> {{ demo.address }}</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_demo.delete_demo', demo_id=demo.id) }}">
+        <button type="submit" name="confirm_delete" class="bg-red-500 text-white p-2 rounded">Kyllä, poista mielenosoitus</button>
+        <a href="{{ url_for('admin_demo.demo_control') }}" class="bg-gray-300 text-black p-2 rounded ml-2">Peruuta</a>
+    </form>
+</div>
+{% endblock %}

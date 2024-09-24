@@ -29,7 +29,7 @@
   margin-left: -70px; /* Adjust to position the button */
   color: #ffffff; /* White text color */
   border: none;
-  border-radius: 50%; /* Circular button */
+  border-radius: 5%; /* Circular button */
   width: 60px; /* Larger size */
   height: 60px; /* Larger size */
   padding: 0; /* Remove padding */
@@ -58,8 +58,14 @@
   margin: 10px 0;
 }
 
+.sidebar-nav ul {
+  display: contents;
+}
+
 .sidebar-nav a {
-  color: #ffffff;
+  color: #e64a19;
+  background-color: #ffffff;
+  font-weight: bold;
   text-decoration: none;
   display: flex; /* Flex display for alignment */
   align-items: center;
@@ -71,6 +77,7 @@
 /* Hover effect for sidebar links */
 .sidebar-nav a:hover {
   background-color: #e64a19; /* Highlight on hover */
+  color: #ffffff;
 }
 
 /* Hidden icons section styling */
@@ -104,7 +111,7 @@
 /* Hover effect on the hidden icons toggle button */
 .hidden-icons .sidebar-toggle:hover {
   background-color: #e64a19; /* Background color on hover */
-  border-radius: 50%; /* Round button on hover */
+  border-radius: 5%; /* Round button on hover */
   color: #ffffff; /* Icon color on hover */
 }
 
@@ -119,7 +126,7 @@
   justify-content: center;
   transition: background-color 0.3s ease, font-size 0.3s ease;
   padding: 10px; /* Padding for clickable area */
-  border-radius: 50%; /* Rounded hover effect */
+  border-radius: 5%; /* Rounded hover effect */
 }
 
 /* Hover effect on hidden icons */
@@ -147,10 +154,16 @@
 /* Media queries for responsive design */
 @media (max-width: 768px) {
   .container-sidebar {
-    width: 100%; /* Full-width on small screens */
-    height: auto;
+    width: max-content; /* Full-width on small screens */
+    height: min-content;
     position: relative;
     box-shadow: none;
+  }
+  
+
+  .sidebar-nav {
+    flex-direction: column;
+    
   }
 
   .sidebar-toggle {

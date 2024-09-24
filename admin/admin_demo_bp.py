@@ -11,7 +11,7 @@ from classes import Demonstration, Organizer
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
 # Initialize MongoDB
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 

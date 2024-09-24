@@ -8,7 +8,7 @@ from wrappers import admin_required
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
 # Initialize MongoDB
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 

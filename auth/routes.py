@@ -15,7 +15,7 @@ from emailer.EmailSender import EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 email_sender = EmailSender()

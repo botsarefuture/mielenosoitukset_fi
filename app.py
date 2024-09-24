@@ -14,7 +14,7 @@ def create_app():
     app.config.from_object("config.Config")
 
     # Initialize MongoDB
-    db_manager = DatabaseManager()
+    db_manager = DatabaseManager().get_instance()
     mongo = db_manager.get_db()
 
     # Initialize Flask-Login

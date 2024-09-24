@@ -22,7 +22,7 @@ class EmailSender:
         Args:
         """
         self.config = Config()
-        self.db_manager = DatabaseManager()
+        self.db_manager = DatabaseManager().get_instance()
         self.db = self.db_manager.get_db()
         self.queue_collection = self.db["email_queue"]
         self.env = Environment(loader=FileSystemLoader("templates/emails"))

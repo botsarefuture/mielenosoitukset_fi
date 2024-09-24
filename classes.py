@@ -24,7 +24,7 @@ class Organizer:
     def fetch_organization_details(self):
         """Fetch the organization details from the database using the organization_id."""
         try:
-            db_manager = DatabaseManager()
+            db_manager = DatabaseManager().get_instance()
             db = db_manager.get_db()
 
             # Fetch organization details

@@ -12,7 +12,7 @@ from emailer.EmailSender import EmailSender, EmailJob
 email_sender = EmailSender()
 
 # Initialize MongoDB
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 

@@ -14,6 +14,8 @@ email_sender = EmailSender()
 # Initialize MongoDB
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
+_1 = mongo["1_demonstrations"]
+demonstrations_collection = mongo["demonstrations"]
 
 
 def init_routes(app):
@@ -22,7 +24,7 @@ def init_routes(app):
         search_query = request.args.get("search", "")
         today = date.today()  # Use date.today() to get only the date part
 
-        demonstrations = mongo.demonstrations.find({"approved": True})
+        demonstrations = demonstrations_collection.find({"approved": True})
 
         filtered_demonstrations = []
         for demo in demonstrations:
@@ -126,7 +128,7 @@ def init_routes(app):
         today = date.today()  # Use date.today() to get only the date part
 
         # Retrieve all approved demonstrations
-        demonstrations = mongo.demonstrations.find({"approved": True})
+        demonstrations = demonstrations_collection.find({"approved": True})
 
         # Filter out past demonstrations manually
         filtered_demonstrations = []
@@ -202,7 +204,7 @@ def init_routes(app):
         Display details of a specific demonstration and save map coordinates if available.
         """
         # Fetch the demonstration details from MongoDB
-        demo = mongo.demonstrations.find_one(
+        demo = demonstrations_collection.find_one(
             {"_id": ObjectId(demo_id), "approved": True}
         )
 

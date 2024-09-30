@@ -47,7 +47,8 @@ def handle_repeating_demonstrations():
                 demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
                 repeat_schedule = demo.get("repeat_schedule", {})
                 created_until = demo.get("created_until", datetime.min)  # Load created_until
-                created_until = datetime.strptime(created_until, "%d.%m.%Y")
+                if created_until is None:
+                    created_until = datetime.now()
                 next_dates = calculate_next_dates(demo_date, repeat_schedule)
 
                 for next_date in next_dates:
@@ -97,7 +98,7 @@ def handle_repeating_demonstrations():
                             "address": demo["address"],
                             "type": demo["type"],
                             "route": demo["route"],
-                            "organizers": demo["organizers"],
+                            "organizers": demo.get("organizers", []),
                             "approved": demo.get("approved", False),
                             "linked_organizations": demo["linked_organizations"],
                             "parent": demo["_id"],  # Save parent ID

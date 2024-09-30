@@ -11,7 +11,7 @@ from classes import RecurringDemonstration, RepeatSchedule
 admin_recu_demo_bp = Blueprint("admin_recu_demo", __name__, url_prefix="/admin/recu_demo")
 
 # Initialize MongoDB
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 @admin_recu_demo_bp.route("/")

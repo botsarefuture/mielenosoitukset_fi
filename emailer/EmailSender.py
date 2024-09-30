@@ -78,6 +78,9 @@ class EmailSender:
             msg["From"] = sender_address
             msg["To"] = ", ".join(email_job.recipients)
 
+            # Add a custom X-Mailer header
+            msg["X-Mailer"] = "VersoMail"  # Customize the version as needed
+
             if email_job.body:
                 msg.attach(MIMEText(email_job.body, "plain"))
             if email_job.html:

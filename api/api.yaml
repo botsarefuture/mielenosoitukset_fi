@@ -4,7 +4,7 @@ info:
   version: 1.0.1
   description: API for fetching and creating demonstrations data.
 servers:
-  - url: http://localhost:5000/api
+  - url: https://mielenosoitukset.fi/api
 tags:
   - name: Demonstrations
     description: Endpoints for demonstrations.

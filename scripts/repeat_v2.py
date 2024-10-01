@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 db = MongoClient(Config.MONGO_URI)
 client = db["mielenosoitukset"]
 recu_demos_collection = client["recu_demos"]  # Load from recu_demos
-demonstrations_collection = client["1_demonstrations"]  # For saving child demos
+demonstrations_collection = client["demonstrations"]  # For saving child demos
 
 def calculate_next_dates(demo_date, repeat_schedule):
     frequency = repeat_schedule.get("frequency")
@@ -102,8 +102,7 @@ def handle_repeating_demonstrations():
                             "approved": demo.get("approved", False),
                             "linked_organizations": demo["linked_organizations"],
                             "parent": demo["_id"],  # Save parent ID
-                            "repeating": demo["repeating"],
-                            "repeat_schedule": repeat_schedule,
+                            "recurring": True,
                             "created_datetime": datetime.now(),
                         }
 

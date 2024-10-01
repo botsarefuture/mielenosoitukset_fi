@@ -174,6 +174,7 @@ class Demonstration:
         organizers: list[Organizer] = None,
         approved: bool = False,
         linked_organizations: dict = None,
+        img = None,
         _id=None,
     ):
 
@@ -196,6 +197,8 @@ class Demonstration:
         self.address = address
         self.event_type = event_type
         self.route = route
+        self.img = img
+
         self.organizers = []
         for organizer in organizers:
             if not type(organizer) == Organizer:
@@ -243,6 +246,7 @@ class Demonstration:
             "organizers": [organizer.to_dict() for organizer in self.organizers],
             "approved": self.approved,
             "linked_organizations": self.linked_organizations,
+            "img": self.img
         }
 
     @classmethod
@@ -268,6 +272,7 @@ class Demonstration:
                 organizers=organizers,
                 approved=data.get("approved", False),
                 linked_organizations=data.get("linked_organizations", {}),
+                img=data.get("img")
             )
         except KeyError as e:
             raise ValueError(f"Missing required field in data: {e}")

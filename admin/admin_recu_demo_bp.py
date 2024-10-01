@@ -6,7 +6,7 @@ from utils import CITY_LIST
 
 from database_manager import DatabaseManager
 from wrappers import admin_required
-from classes import RecurringDemonstration, RepeatSchedule
+from classes import RecurringDemonstration, RepeatSchedule, Organizer
 
 admin_recu_demo_bp = Blueprint("admin_recu_demo", __name__, url_prefix="/admin/recu_demo")
 
@@ -112,6 +112,21 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     route = request.form.get("route")
     approved = request.form.get("approved") == 'on'
     
+
+    # Process organizers
+    organizers = []
+    i = 1
+    while True:
+        name = request.form.get(f"organizer_name_{i}")
+        website = request.form.get(f"organizer_website_{i}")
+        email = request.form.get(f"organizer_email_{i}")
+        if not name:
+            break
+        organizer = Organizer(name=name, email=email, website=website)
+        organizers.append(organizer)
+        i += 1
+
+
     # Get the repeat schedule details
     repeat_schedule = {
         "frequency": request.form.get("frequency_type"),
@@ -134,7 +149,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "repeat_schedule": repeat_schedule,
         "linked_organizations": request.form.getlist("linked_organizations"),  # Collect linked organizations
         "created_until": request.form.get("created_until"),  # New field
-        "repeating": request.form.get("repeating") == 'on'  # New field
+        "repeating": request.form.get("repeating") == 'on',  # New field,,
+        "organizers": [org.to_dict() for org in organizers],
     }
 
     try:

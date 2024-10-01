@@ -1,56 +1,60 @@
 @import url("admin_actions_cell.css");
 
-
 /* Container for the entire organization table */
 .organization-table {
-    display: table;
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
 }
 
 /* Table header styling */
 .organization-table-header {
-    display: table-row;
     font-weight: bold;
-    background-color: #f4f4f4;
-    text-align: left;
+    background-color: #007bff; /* Highlight header */
+    color: white; /* Text color for header */
 }
 
+/* Common cell styling */
 .table-cell {
-    display: table-cell;
-    padding: 10px;
+    padding: 12px; /* Increased padding for better touch targets */
     border: 1px solid #ddd;
     vertical-align: middle;
 }
 
 /* Table row styling */
 .organization-table-row {
-    display: table-row;
+    transition: background-color 0.3s; /* Smooth transition for hover */
 }
 
 .organization-table-row:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: #f9f9f9; /* Light gray for even rows */
 }
 
+.organization-table-row:hover {
+    background-color: #f1f1f1; /* Highlight on hover */
+}
+
+/* Delete form styling */
 .delete-form {
-    display: inline;
+    display: inline; /* Keep form inline for button grouping */
 }
 
 /* Styling for create organization button */
 .create-organization-button {
     padding: 10px 20px;
-    background-color: var(--highlight-color-orange);
+    background-color: var(--highlight-color-orange); /* Use your defined variable */
     border: none;
     border-radius: 4px;
     color: white;
     cursor: pointer;
     font-size: 16px;
     margin-bottom: 20px;
+    transition: background-color 0.3s; /* Smooth transition on hover */
 }
 
 .create-organization-button:hover {
-    background-color: var(--error-color);
+    background-color: var(--error-color); /* Change to error color on hover */
 }
 
 /* No organizations message styling */
@@ -60,4 +64,5 @@
     color: #666;
     padding: 20px;
     border: 1px solid #ddd;
+    background-color: #fafafa; /* Light background for emphasis */
 }

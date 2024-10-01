@@ -1,38 +1,77 @@
 {% extends "base.html" %}
 
+
+
 {% block title %}Muokkaa Profiilia{% endblock %}
 
+
+
 {% block content %}
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/edit_profile.css') }}">
+
 <div class="container profile-edit-container">
+
     <h1>Muokkaa Profiilia</h1>
 
+
+
     <form action="{{ url_for('auth.edit_profile') }}" method="POST" enctype="multipart/form-data">
+
         <div class="form-group">
+
             <label for="displayname">Näyttönimi:</label>
+
             <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname or '' }}" required>
+
         </div>
+
         <div class="form-group">
+
             <label for="profile_picture_file">Profiilikuva:</label>
-            <input type="file" id="profile_picture_file" name="profile_picture_file" accept="image/*" onchange="convertToBase64(this)">
-            <input type="hidden" id="profile_picture" name="profile_picture" value="{{ current_user.profile_picture or '' }}">
+
+            <input type="file" id="profile_picture_file" name="profile_picture" accept="image/*" required>
+
+            <img id="preview" src="{{ current_user.profile_picture or '' }}" alt="Profiilikuva" style="max-width: 200px; margin-top: 10px;">
+
         </div>
+
         <div class="form-group">
+
             <label for="bio">Esittelyteksti:</label>
+
             <textarea id="bio" name="bio">{{ current_user.bio or '' }}</textarea>
+
         </div>
+
         <button type="submit" class="btn btn-primary">Tallenna muutokset</button>
+
     </form>
+
 </div>
 
+
+
 <script>
-    function convertToBase64(input) {
-        const file = input.files[0];
+
+    // Preview the selected image
+
+    document.getElementById('profile_picture_file').addEventListener('change', function() {
+
+        const file = this.files[0];
+
         const reader = new FileReader();
+
         reader.onload = function(e) {
-            document.getElementById('profile_picture').value = e.target.result;
+
+            document.getElementById('preview').src = e.target.result; // Show preview of image
+
         };
+
         reader.readAsDataURL(file);
-    }
+
+    });
+
 </script>
+
 {% endblock %}

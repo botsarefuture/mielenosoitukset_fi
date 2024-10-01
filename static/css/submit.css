@@ -21,6 +21,7 @@ body {
     box-sizing: border-box;
 }
 
+/* Form Container */
 .form-container {
     max-width: 900px;
     margin: 20px auto;
@@ -32,15 +33,14 @@ body {
     box-sizing: border-box;
 }
 
+/* Responsive adjustments */
 @media (max-width: 600px) {
     .form-container {
         padding: 20px;
     }
-    form {
-        gap: 10px;
-    }
 }
 
+/* Headings */
 h2 {
     color: var(--primary-color);
     margin-bottom: 20px;
@@ -49,11 +49,14 @@ h2 {
     font-weight: bold;
 }
 
+/* Form Layout */
 form {
     display: grid;
     gap: 20px;
 }
 
+/* Input Fields */
+input[type="file"],
 input[type="text"],
 input[type="url"],
 input[type="email"],
@@ -71,6 +74,7 @@ select {
     color: #333;
 }
 
+/* Input Focus State */
 input[type="text"]:focus,
 input[type="url"]:focus,
 input[type="email"]:focus,
@@ -83,6 +87,7 @@ select:focus {
     background-color: #fff;
 }
 
+/* Button Styles */
 button {
     background-color: var(--primary-color);
     color: #ffffff;
@@ -92,6 +97,7 @@ button {
     cursor: pointer;
     font-size: 16px;
     transition: background-color 0.3s ease, transform 0.2s ease;
+    width: 100%; /* Make button full width */
 }
 
 button:hover {
@@ -103,6 +109,7 @@ button:active {
     transform: translateY(0);
 }
 
+/* Additional Button Styles */
 .add-organizer-button {
     background-color: var(--secondary-color);
     color: var(--primary-color);
@@ -119,10 +126,12 @@ button:active {
     border-color: var(--primary-color);
 }
 
+/* Optional Section Visibility */
 .optional-section {
     display: none;
 }
 
+/* Organizer Entry Styles */
 .organizer-entry {
     margin-top: 10px;
     padding: 10px;
@@ -131,11 +140,13 @@ button:active {
     border: 1px solid var(--border-color);
 }
 
+/* Placeholder Styles */
 input::placeholder,
 textarea::placeholder {
     color: var(--placeholder-color);
 }
 
+/* Error Message Styling */
 .error-message {
     color: var(--error-color);
     font-size: 14px;
@@ -143,7 +154,7 @@ textarea::placeholder {
     margin-bottom: 10px;
 }
 
-/* Error state styling */
+/* Error State Styling */
 input.error,
 textarea.error,
 select.error {
@@ -151,6 +162,7 @@ select.error {
     box-shadow: 0 0 8px var(--error-color);
 }
 
+/* Dropdown Styles */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -170,6 +182,7 @@ select.error {
     box-sizing: border-box;
 }
 
+/* Dropdown Content */
 .dropdown-content {
     display: none;
     position: absolute;
@@ -206,6 +219,7 @@ select.error {
     display: block;
 }
 
+/* Search Input */
 #searchInput {
     width: calc(100% - 32px);
     padding: 10px;
@@ -216,4 +230,16 @@ select.error {
     font-size: 16px;
 }
 
-
+/* Responsive Styles for Smaller Screens */
+@media (max-width: 400px) {
+    input[type="text"],
+    input[type="url"],
+    input[type="email"],
+    input[type="time"],
+    textarea,
+    select,
+    button,
+    .add-organizer-button {
+        font-size: 14px; /* Reduce font size */
+    }
+}

@@ -40,6 +40,10 @@
         .strong {
             font-weight: bold;
         }
+        a {
+            color: #0033A0;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -49,11 +53,15 @@
         </div>
         <div class="content">
             <p>Hei {{ user_name }},</p>
-            <p>Tilisi tietoja on muutettu.</p>
-            <p><span class="strong">Roolisi:</span> {{ role }}</p>
-            <p><span class="strong">Organisaatiot:</span> {{ organization_names }}</p>
-            <p><span class="strong">Muutoksen tyyppi:</span> {{ action }}</p>
-            <p>Jos et ole pyytänyt tätä muutosta, ota heti yhteyttä tukeen.</p>
+            <p>Oletko tietoinen, että tilisi tietoja on päivitetty seuraavasti:</p>
+            <ul>
+                <li><span class="strong">Roolisi:</span> {{ role }}</li>
+                <li><span class="strong">Sähköposti:</span> {{ updated_email }}</li>
+                <li><span class="strong">Organisaatiot:</span> {{ organization_names }}</li>
+                <li><span class="strong">Oikeudet:</span> {{ permissions_summary }}</li>
+                <li><span class="strong">Muutoksen tyyppi:</span> {{ action }}</li>
+            </ul>
+            <p>Jos et ole pyytänyt tätä muutosta, ota heti yhteyttä tukeen tai kirjaudu sisään tarkistaaksesi tilisi tietoja: <a href="{{ login_link }}">Kirjaudu sisään</a>.</p>
             <p>Ystävällisin terveisin,<br>Tiimimme</p>
         </div>
         <div class="footer">

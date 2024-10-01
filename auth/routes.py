@@ -14,6 +14,8 @@ import datetime
 from emailer.EmailSender import EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
+from s3_utils import upload_image  # Import your S3 upload function
+import os
 
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
@@ -201,35 +203,51 @@ def profile(username=None):
     else:
         flash("Käyttäjäprofiilia ei löytynyt.", "warning")
         return redirect(url_for("index"))
-
 @auth_bp.route("/profile/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
     if request.method == "POST":
         displayname = request.form.get("displayname")
-        profile_picture = request.form.get("profile_picture")
         bio = request.form.get("bio")
+        profile_picture = request.files.get("profile_picture")  # Get the uploaded file
 
         current_user.displayname = displayname
-        current_user.profile_picture = profile_picture
         current_user.bio = bio
 
-        mongo.users.update_one(
-            {"_id": ObjectId(current_user.id)},
-            {
-                "$set": {
-                    "displayname": current_user.displayname,
-                    "profile_picture": current_user.profile_picture,
-                    "bio": current_user.bio,
-                }
-            },
-        )
+        # Handle profile picture upload
+        if profile_picture:
+            # Save the uploaded file temporarily
+            temp_file_path = os.path.join("uploads", profile_picture.filename)
+            profile_picture.save(temp_file_path)
 
-        flash("Profiilitietosi on päivitetty.", "success")
+            # Define the bucket name and upload the file
+            bucket_name = 'mielenosoitukset-fi1'  # Your S3 bucket name
+            photo_url = upload_image(bucket_name, temp_file_path, "profile_pics")
+
+            if photo_url:
+                current_user.profile_picture = photo_url  # Save the URL to the current user
+
+                # Update user in MongoDB
+                mongo.users.update_one(
+                    {"_id": ObjectId(current_user.id)},
+                    {
+                        "$set": {
+                            "displayname": current_user.displayname,
+                            "profile_picture": current_user.profile_picture,
+                            "bio": current_user.bio,
+                        }
+                    },
+                )
+                flash("Profiilitietosi on päivitetty.", "success")
+            else:
+                flash("Virhekuvan lataamisessa S3:een.", "error")
+
+            # Clean up the temporary file
+            os.remove(temp_file_path)
+
         return redirect(url_for("auth.profile", username=current_user.username))
 
     return render_template("edit_profile.html")
-
 
 
 def generate_reset_token(email):

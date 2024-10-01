@@ -44,7 +44,7 @@ class RepeatSchedule:
 
 
 class RecurringDemonstration:
-    def __init__(self, title, start_time, end_time, topic, facebook, city, address, demo_type, route, organizers=None, linked_organizations=None, repeat_schedule: RepeatSchedule = None, created_until=None):
+    def __init__(self, title, start_time, end_time, topic, facebook, city, address, demo_type, route, organizers=None, linked_organizations=None, repeat_schedule: RepeatSchedule = None, created_until=None, _id=None):
         self.title = title
         self.start_time = start_time  # Should be a datetime object
         self.end_time = end_time  # Should be a datetime object
@@ -59,7 +59,7 @@ class RecurringDemonstration:
         self.repeat_schedule = repeat_schedule  
         self.created_until = created_until or datetime.now()  # Default to now if not provided
         self.created_datetime = datetime.now()  # Time of creation
-        self._id = None  # This will be set when stored in the database
+        self._id = _id  # This will be set when stored in the database
 
     def calculate_next_dates(self):
         """Calculate the next demonstration dates based on the frequency and interval."""
@@ -131,6 +131,7 @@ class RecurringDemonstration:
             "repeat_schedule": self.repeat_schedule.to_dict(),
             "created_until": self.created_until.strftime("%d.%m.%Y") if self.created_until and not self.created_until is None else datetime.now(),
             "created_datetime": self.created_datetime.strftime("%d.%m.%Y %H:%M"),
+            "_id": str(self._id if not self._id is not None else "None")
         }
 
     @classmethod
@@ -160,7 +161,8 @@ class RecurringDemonstration:
             organizers=data.get("organizers", []),
             linked_organizations=data.get("linked_organizations", []),
             repeat_schedule=RepeatSchedule.from_dict(data.get("repeat_schedule")),
-            created_until=created_until
+            created_until=created_until,
+            _id=data["_id"]
         )
 
     def __repr__(self):

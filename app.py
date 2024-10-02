@@ -14,7 +14,7 @@ def create_app():
     app.config.from_object("config.Config")
 
     # Initialize MongoDB
-    db_manager = DatabaseManager()
+    db_manager = DatabaseManager().get_instance()
     mongo = db_manager.get_db()
 
     # Initialize Flask-Login
@@ -36,10 +36,12 @@ def create_app():
         return None
 
     # Import and register blueprints
-    from admin import admin_bp, admin_user_bp, admin_demo_bp, admin_org_bp
+    from admin import admin_bp, admin_user_bp, admin_demo_bp, admin_org_bp, admin_recu_demo_bp
 
     app.register_blueprint(admin_bp)
+
     app.register_blueprint(admin_demo_bp)
+    app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
 

@@ -22,7 +22,7 @@ class EmailSender:
         Args:
         """
         self.config = Config()
-        self.db_manager = DatabaseManager()
+        self.db_manager = DatabaseManager().get_instance()
         self.db = self.db_manager.get_db()
         self.queue_collection = self.db["email_queue"]
         self.env = Environment(loader=FileSystemLoader("templates/emails"))
@@ -77,6 +77,9 @@ class EmailSender:
             msg["Subject"] = email_job.subject
             msg["From"] = sender_address
             msg["To"] = ", ".join(email_job.recipients)
+
+            # Add a custom X-Mailer header
+            msg["X-Mailer"] = "VersoMail"  # Customize the version as needed
 
             if email_job.body:
                 msg.attach(MIMEText(email_job.body, "plain"))

@@ -21,6 +21,8 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <!-- Matomo -->
     <script>
       var _paq = (window._paq = window._paq || []);
@@ -148,6 +150,8 @@
           margin-right: 0;
           margin-bottom: 10px;
         }
+
+
       }
     </style>
     
@@ -156,6 +160,7 @@
 
   <body>
     <!-- Navigation Bar -->
+     <header>
     <nav class="navbar">
       <div class="container bg-header-footer">
         <!-- Logo and Home Link -->
@@ -167,7 +172,7 @@
         </button>
 
         <!-- Navigation Links -->
-        <ul class="nav-links">
+        <ul class="nav-links" style="z-index: 100;">
           <li><a href="{{ url_for('index') }}">Etusivu</a></li>
           <li>
             <a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a>
@@ -202,6 +207,7 @@
     {% if current_user.global_admin %}
     {% include "sidebar.html" %}
     {% endif %}
+    </header>
     <!-- Flash Messages -->
     {% if get_flashed_messages(with_categories=True) %}
     <ul class="flash-messages">

@@ -4,7 +4,7 @@ from datetime import datetime
 from database_manager import DatabaseManager
 import json
 
-mongo = DatabaseManager().get_db()
+mongo = DatabaseManager().get_instance().get_db()
 
 api_bp = Blueprint("api", __name__)
 

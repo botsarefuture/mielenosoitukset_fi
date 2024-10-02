@@ -8,9 +8,8 @@ from wrappers import admin_required
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
 # Initialize MongoDB
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
-
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -81,7 +80,7 @@ def edit_organization(org_id):
         flash("Organisaatio päivitetty onnistuneesti.")
         return redirect(url_for("admin_org.organization_control"))
 
-    return render_template("admin/organizations/edit.html", organization=organization)
+    return render_template("admin/organizations/form.html", organization=organization)
 
 
 # Create organization
@@ -117,7 +116,7 @@ def create_organization():
         flash("Organisaatio luotu onnistuneesti.")
         return redirect(url_for("admin_org.organization_control"))
 
-    return render_template("admin/organizations/create.html")
+    return render_template("admin/organizations/form.html")
 
 
 # Delete organization

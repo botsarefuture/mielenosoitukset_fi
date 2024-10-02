@@ -11,9 +11,8 @@ from classes import Demonstration, Organizer
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
 # Initialize MongoDB
-db_manager = DatabaseManager()
+db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
-
 
 @admin_demo_bp.route("/")
 @login_required
@@ -25,23 +24,23 @@ def demo_control():
     show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()  # Get the current date
 
-    query = {"approved": approved_status} if approved_status else {}
+    # Construct the base query
+    query = {"hide": {"$exists": False}}
+    if approved_status:
+        query["approved"] = approved_status
 
     # Fetch all demonstrations from the database
     demonstrations = mongo.demonstrations.find(query)
 
     # Filter based on the search query
-    filtered_demonstrations = []
-    for demo in demonstrations:
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
-        if show_past or demo_date >= today:
-            if (
-                search_query.lower() in demo["title"].lower()
-                or search_query.lower() in demo["city"].lower()
-                or search_query.lower() in demo["topic"].lower()
-                or search_query.lower() in demo["address"].lower()
-            ):
-                filtered_demonstrations.append(demo)
+    filtered_demonstrations = [
+        demo for demo in demonstrations
+        if (show_past or datetime.strptime(demo["date"], "%d.%m.%Y").date() >= today) and (
+            search_query.lower() in demo["title"].lower() or
+            search_query.lower() in demo["city"].lower() or
+            search_query.lower() in demo["topic"].lower() or
+            search_query.lower() in demo["address"].lower())
+    ]
 
     # Sort the filtered demonstrations by date
     filtered_demonstrations.sort(
@@ -55,6 +54,7 @@ def demo_control():
         approved_status=approved_status,
         show_past=show_past,
     )
+
 
 
 @admin_demo_bp.route("/create_demo", methods=["GET", "POST"])

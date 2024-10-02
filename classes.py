@@ -2,8 +2,6 @@ from database_manager import DatabaseManager
 from bson.objectid import ObjectId
 
 from obj_creator import ObjectId as OID
-
-
 class Organizer:
     def __init__(
         self,
@@ -24,7 +22,7 @@ class Organizer:
     def fetch_organization_details(self):
         """Fetch the organization details from the database using the organization_id."""
         try:
-            db_manager = DatabaseManager()
+            db_manager = DatabaseManager().get_instance()
             db = db_manager.get_db()
 
             # Fetch organization details
@@ -64,6 +62,90 @@ class Organizer:
             organization_id=data.get("organization_id"),
             website=data.get("website"),
         )
+    
+class Organization:
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        website: str = None,
+        social_media: dict = None,
+        demonstrations: list = None,
+        users: dict = None,
+        _id=None,
+    ):
+        if _id is None:
+            _id = OID()
+            _id = ObjectId(str(_id))
+
+        self.name = name
+        self.description = description
+        self.website = website if website else ""
+        self.social_media = social_media if social_media else {}
+        self.demonstrations = demonstrations if demonstrations else []
+        self.users = users if users else {}
+        self._id = _id
+
+    def save(self):
+        """Save the organization to MongoDB."""
+        try:
+            db_manager = DatabaseManager()
+            db = db_manager.get_db()
+            org_data = self.to_dict()
+            # Upsert organization in the database
+            db["organizations"].update_one(
+                {'_id': self._id},
+                {'$set': org_data},
+                upsert=True
+            )
+        except Exception as e:
+            print(f"Error saving organization: {e}")
+
+    def to_dict(self):
+        return {
+            "_id": self._id,
+            "name": self.name,
+            "description": self.description,
+            "website": self.website,
+            "social_media": self.social_media,
+            "demonstrations": self.demonstrations,
+            "users": self.users,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(
+            _id=data.get("_id"),
+            name=data["name"],
+            description=data["description"],
+            website=data.get("website"),
+            social_media=data.get("social_media", {}),
+            demonstrations=data.get("demonstrations", []),
+            users=data.get("users", {}),
+        )
+
+    def add_demonstration(self, demonstration):
+        """Add a demonstration to the organization's list."""
+        self.demonstrations.append(demonstration)
+        self.save()  # Automatically save changes
+
+    def add_user(self, user_id, privileges):
+        """Add a user to the organization with specified privileges."""
+        self.users[user_id] = privileges
+        self.save()  # Automatically save changes
+
+    def update_social_media(self, platform, link):
+        """Update or add a social media link."""
+        self.social_media[platform] = link
+        self.save()  # Automatically save changes
+
+    def remove_user(self, user_id):
+        """Remove a user from the organization."""
+        if user_id in self.users:
+            del self.users[user_id]
+            self.save()  # Automatically save changes
+        else:
+            raise ValueError("User not found in the organization.")
 
 
 DAY_NAME_TO_NUM = {
@@ -75,59 +157,6 @@ DAY_NAME_TO_NUM = {
     "saturday": 5,
     "sunday": 6,
 }
-
-
-@NotImplementedError
-class RepeatingDemonstration:
-    def __init__(
-        self,
-        title: str,
-        day_of_week: str,
-        start_time: str,
-        end_time: str,
-        topic: str,
-        city: str,
-        address: str,
-        event_type: str,
-        route: str,
-        organizers: list[Organizer] = None,
-        approved: bool = False,
-        linked_organizations: dict = None,
-        _id=None,
-    ):
-        if _id is None:
-            _id = OID()
-            _id = ObjectId(str(_id))
-
-        if day_of_week not in [
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ]:
-            raise ValueError(
-                'The day of week should be one of these ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]'
-            )
-
-        self.title = title
-        self.day_of_week = DAY_NAME_TO_NUM[day_of_week]
-        self.start_time = start_time
-        self.end_time = end_time
-        self.topic = topic
-        self.city = city
-        self.address = address
-        self.event_type = event_type
-        self.route = route
-        self.organizers = organizers if organizers is not None else []
-        self.approved = approved
-        self.linked_organizations = (
-            linked_organizations if linked_organizations is not None else {}
-        )
-        self._id = _id
-
 
 class Demonstration:
     def __init__(
@@ -145,6 +174,7 @@ class Demonstration:
         organizers: list[Organizer] = None,
         approved: bool = False,
         linked_organizations: dict = None,
+        img = None,
         _id=None,
     ):
 
@@ -167,6 +197,8 @@ class Demonstration:
         self.address = address
         self.event_type = event_type
         self.route = route
+        self.img = img
+
         self.organizers = []
         for organizer in organizers:
             if not type(organizer) == Organizer:
@@ -214,6 +246,7 @@ class Demonstration:
             "organizers": [organizer.to_dict() for organizer in self.organizers],
             "approved": self.approved,
             "linked_organizations": self.linked_organizations,
+            "img": self.img
         }
 
     @classmethod
@@ -239,6 +272,7 @@ class Demonstration:
                 organizers=organizers,
                 approved=data.get("approved", False),
                 linked_organizations=data.get("linked_organizations", {}),
+                img=data.get("img")
             )
         except KeyError as e:
             raise ValueError(f"Missing required field in data: {e}")
@@ -272,3 +306,5 @@ class Demonstration:
             del self.linked_organizations[organization_id]
         else:
             raise ValueError("Organization is not linked.")
+
+from recu_classes import RepeatSchedule, RecurringDemonstration

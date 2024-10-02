@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mielenosoitukset.fi - Palvelunestohyökkäys</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0033A0; /* Yhtenäinen taustaväri */
+            color: #FFFFFF; /* Valkea teksti parantaa luettavuutta */
+            text-align: center;
+            margin: 0; /* Poista oletusmarginaali */
+            padding: 20px; /* Lisää pehmeyttä reunoihin */
+        }
+
+        .container {
+            max-width: 800px; /* Rajoita sisältöä leveydeltään */
+            margin: auto; /* Keskittää containerin */
+            padding: 30px; /* Lisää tilaa containerin sisällä */
+            background-color: rgba(0, 51, 160, 0.9); /* Hieman läpinäkyvä tausta */
+            border-radius: 8px; /* Pyöristetyt kulmat */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Varjo lisätty syvyyden vuoksi */
+        }
+
+        h1 {
+            font-size: 48px; /* Suurempi koko houkuttelevuuden lisäämiseksi */
+            color: #FF6600; /* Oranssi väriläiskä houkuttelevuutta lisäämään */
+            margin-bottom: 20px; /* Lisää väli otsikoiden väliin */
+        }
+
+        h2 {
+            font-size: 28px; /* Suurempi koko */
+            color: #E03C31; /* Punainen */
+            margin-bottom: 30px; /* Lisää tilaa otsikon ja viestin väliin */
+        }
+
+        .alert-icon {
+            font-size: 120px; /* Suurennettu koko */
+            color: #FF6600; /* Oranssi */
+            animation: pulse 1.5s infinite; /* Lisää pulssiefekti ikoniin */
+        }
+
+        .message {
+            font-size: 20px; /* Suurempi koko */
+            margin: 20px 0;
+            line-height: 1.5; /* Lisää riviväliä parantamaan luettavuutta */
+        }
+
+        .note {
+            font-size: 18px;
+            color: #00BFAE; /* Kirkas vihreä värivaihtoehto */
+            margin: 10px 0;
+        }
+
+        .footer {
+            margin-top: 50px;
+            font-size: 16px;
+            color: #FFFFFF; /* Valkea teksti */
+            border-top: 1px solid #FF6600; /* Korostusviiva yläosaan */
+            padding-top: 20px; /* Lisää tilaa yläosaan */
+        }
+
+        /* Pulssiefekti ikoniin */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Media query mobiililaitteille */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 32px; /* Pienennä kokoa mobiililaitteille */
+            }
+            .alert-icon {
+                font-size: 80px; /* Pienennä ikonin kokoa mobiililaitteille */
+            }
+            .message {
+                font-size: 18px; /* Vähennä tekstin kokoa mobiililaitteille */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fa-solid fa-circle-exclamation alert-icon"></i><br>MIELENOSOITUKSET.FI</h1>
+        <h2>Palvelunestohyökkäys</h2>
+        <p class="message">Meihin kohdistuu tällä hetkellä palvelunestohyökkäys.</p>
+        <p class="note">Työskentelemme ympäri vuorokauden, että hyökkäys saadaan torjuttua.</p>
+        <p>Teidän tietonne ovat turvassa!</p>
+
+        <div class="footer">
+            <p>Kiitos kärsivällisyydestänne.</p>
+        </div>
+    </div>
+</body>
+</html>

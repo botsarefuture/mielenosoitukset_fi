@@ -5,6 +5,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo_remo.css') }}">
+
+
 <!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
@@ -21,21 +24,21 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
         overflow: hidden; /* Ensures the border radius is respected */
     }
-    h2 {
-    color: #333; /* Darker text color for readability */
-    padding: 1.5rem; /* More padding for better spacing */
-    background-color: #007bff; /* Primary color background */
-    color: white; /* White text for contrast */
-    text-align: center; /* Centered text */
-    margin: 2rem 0; /* Increased vertical margin for more spacing */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-    text-transform: uppercase; /* Uppercase letters for a modern touch */
-    letter-spacing: 1px; /* Slightly spaced letters for a sleek look */
-    border-bottom: 4px solid #0056b3; /* Bottom border for emphasis */
-    word-break: break-all;
-}
 
+    h2 {
+        color: #333; /* Darker text color for readability */
+        padding: 1.5rem; /* More padding for better spacing */
+        background-color: #007bff; /* Primary color background */
+        color: white; /* White text for contrast */
+        text-align: center; /* Centered text */
+        margin: 2rem 0; /* Increased vertical margin for more spacing */
+        border-radius: 8px; /* Rounded corners */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+        text-transform: uppercase; /* Uppercase letters for a modern touch */
+        letter-spacing: 1px; /* Slightly spaced letters for a sleek look */
+        border-bottom: 4px solid #0056b3; /* Bottom border for emphasis */
+        word-break: break-all;
+    }
 
     .button {
         display: inline-block;
@@ -144,6 +147,10 @@
             margin-bottom: 0.5rem; /* Space below each element */
         }
     }
+
+
+   
+
 </style>
 
 <div class="table-container">
@@ -197,17 +204,33 @@
                         <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
                         <td class="actions-cell">
                             <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
-                            <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}" class="button delete-button"><i class="fas fa-trash"></i>Poista</a>
-                        </td>
+                            <a href="#" class="button delete-button" onclick="openModal('{{ demo.title }}', '{{ demo._id }}')"><i class="fas fa-trash-alt"></i> Poista</a>                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-    <div class="no-demos">
-        <p>Mielenosoituksia ei löytynyt.</p>
-    </div>
+        <div class="no-demos">Ei mielenosoituksia löytynyt.</div>
     {% endif %}
 </div>
+
+<div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>Poista mielenosoitus</h3>
+        <p>Oletko varma, että haluat poistaa mielenosoituksen <strong id="demoTitle"></strong>?</p>
+        <form method="POST" action="{{ url_for('admin_demo.delete_demo') }}">
+            <input type="hidden" name="demo_id" id="demo_id" value="">
+            <div class="button-container">
+                <button type="submit" class="button delete-confirm">Kyllä, poista</button>
+                <button type="button" class="button" onclick="closeModal()">Peruuta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script src="{{ url_for('static', filename='js/demo_remo.js' )}}">
+
 {% endblock %}

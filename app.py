@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from auth.models import User  # Import User model
 from emailer.EmailSender import EmailSender
-
+from error import register_error_handlers
 
 def create_app():
     # Initialize EmailSender
@@ -12,6 +12,8 @@ def create_app():
 
     app = Flask(__name__)
     app.config.from_object("config.Config")
+
+    register_error_handlers(app)
 
     # Initialize MongoDB
     db_manager = DatabaseManager().get_instance()

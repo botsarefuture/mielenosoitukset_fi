@@ -96,38 +96,41 @@ def confirm_email(token):
 
     return redirect(url_for("auth.login"))
 
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    # Get the next URL to redirect to after login
+    next_page = request.args.get('next')  # Get the 'next' parameter from the query string
+
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
 
         if not username or not password:
             flash("Anna sekä käyttäjänimi että salasana.", "warning")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login", next=next_page))  # Pass next page along
 
         user_doc = mongo.users.find_one({"username": username})
 
         if not user_doc:
             flash(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login", next=next_page))
 
         user = User.from_db(user_doc)
         if not user.check_password(password):
             flash("Käyttäjänimi tai salasana on väärin.", "error")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.login", next=next_page))
 
         if user.confirmed:
             login_user(user)
-            return redirect(url_for("index"))
+            return redirect(next_page or url_for("index"))  # Redirect to the next page or the index
 
         else:
             flash("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
-            return redirect(url_for("index"))
+            return redirect(next_page or url_for("index"))
 
-    return render_template("login.html")
+    return render_template("login.html", next=next_page)
+
 
 
 @auth_bp.route("/logout")

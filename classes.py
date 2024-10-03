@@ -2,6 +2,7 @@ from database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from obj_creator import ObjectId as OID
 
+
 class Organizer:
     def __init__(
         self,
@@ -97,9 +98,7 @@ class Organization:
 
             # Upsert organization in the database
             db["organizations"].update_one(
-                {'_id': self._id},
-                {'$set': org_data},
-                upsert=True
+                {"_id": self._id}, {"$set": org_data}, upsert=True
             )
         except Exception as e:
             print(f"Error saving organization: {e}")
@@ -163,6 +162,7 @@ DAY_NAME_TO_NUM = {
     "sunday": 6,
 }
 
+
 class Demonstration:
     def __init__(
         self,
@@ -204,7 +204,7 @@ class Demonstration:
         self.img = img
 
         self.organizers = []
-        for organizer in (organizers or []):
+        for organizer in organizers or []:
             if not isinstance(organizer, Organizer):
                 self.organizers.append(Organizer.from_dict(organizer))
             else:
@@ -213,12 +213,16 @@ class Demonstration:
         self.linked_organizations = linked_organizations or {}
         self._id = _id
 
-    def validate_fields(self, title, date, start_time, end_time, topic, city, address, event_type):
+    def validate_fields(
+        self, title, date, start_time, end_time, topic, city, address, event_type
+    ):
         """
         Validate required fields for a Demonstration instance.
         """
         if not all([title, date, start_time, topic, city, address, event_type]):
-            raise ValueError("All required fields must be provided and correctly formatted.")
+            raise ValueError(
+                "All required fields must be provided and correctly formatted."
+            )
 
     def to_dict(self):
         """Convert the demonstration instance to a dictionary."""
@@ -237,7 +241,7 @@ class Demonstration:
             "organizers": [organizer.to_dict() for organizer in self.organizers],
             "approved": self.approved,
             "linked_organizations": self.linked_organizations,
-            "img": self.img
+            "img": self.img,
         }
 
     @classmethod
@@ -264,7 +268,7 @@ class Demonstration:
                 organizers=organizers,
                 approved=data.get("approved", False),
                 linked_organizations=data.get("linked_organizations", {}),
-                img=data.get("img")
+                img=data.get("img"),
             )
         except KeyError as e:
             raise ValueError(f"Missing required field in data: {e}")
@@ -290,5 +294,6 @@ class Demonstration:
             del self.linked_organizations[organization_id]
         else:
             raise ValueError("Organization is not linked.")
+
 
 from recu_classes import RepeatSchedule, RecurringDemonstration

@@ -6,6 +6,7 @@ from auth.models import User  # Import User model
 from emailer.EmailSender import EmailSender
 from error import register_error_handlers
 
+
 def create_app():
     # Initialize EmailSender
     email_sender = EmailSender()
@@ -38,7 +39,13 @@ def create_app():
         return None
 
     # Import and register blueprints
-    from admin import admin_bp, admin_user_bp, admin_demo_bp, admin_org_bp, admin_recu_demo_bp
+    from admin import (
+        admin_bp,
+        admin_user_bp,
+        admin_demo_bp,
+        admin_org_bp,
+        admin_recu_demo_bp,
+    )
 
     app.register_blueprint(admin_bp)
 

@@ -1,3 +1,6 @@
+<!-- Link to Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 <link rel="stylesheet" href="{{ url_for('static', filename='css/container.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 
@@ -9,6 +12,31 @@
     span.icon {
         margin-right: 20px;
     }
+
+    .beta-label {
+        background-color: #e0e0e0; /* Light gray background */
+        color: #333; /* Dark text color */
+        border-radius: 3px; /* Rounded corners */
+        padding: 2px 5px; /* Padding for spacing */
+        font-size: 12px; /* Smaller font size */
+        margin-left: 5px; /* Space between text and label */
+    }
+
+    .ddos-button {
+        background-color: #E03C31; /* Red color for the button */
+        color: #FFFFFF;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+    }
+
+    .ddos-button i {
+        margin-right: 8px;
+    }
 </style>
 
 <div class="container-sidebar bg-header-footer">
@@ -17,28 +45,34 @@
     <nav class="sidebar-nav">
         <ul>
             <li>
-                <a href="{{ url_for('admin.admin_dashboard') }}" >
-                    <span class="icon">&#128187;</span> Superkäyttäjän käsikirja
+                <a href="{{ url_for('admin.admin_dashboard') }}">
+                    <span class="icon"><i class="fas fa-book"></i></span> Superkäyttäjän käsikirja
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('admin_user.user_control') }}" >
-                    <span class="icon">&#128100;</span> Käyttäjien hallinta
+                <a href="{{ url_for('admin_user.user_control') }}">
+                    <span class="icon"><i class="fas fa-users"></i></span> Käyttäjien hallinta
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('admin_org.organization_control') }}" >
-                    <span class="icon">&#128736;</span> Organisaatioiden hallinta
+                <a href="{{ url_for('admin_org.organization_control') }}">
+                    <span class="icon"><i class="fas fa-building"></i></span> Organisaatioiden hallinta
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('admin_demo.demo_control') }}" >
-                    <span class="icon">&#128681;</span> Mielenosoitusten hallinta
+                <a href="{{ url_for('admin_demo.demo_control') }}">
+                    <span class="icon"><i class="fas fa-bullhorn"></i></span> Mielenosoitusten hallinta
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('admin.admin_logout') }}" >
-                    <span class="icon">&#128682;</span> Kirjaudu ulos
+                <a href="{{ url_for('admin.stats') }}">
+                    <span class="icon"><i class="fas fa-chart-line"></i></span> Tilastot
+                    <span class="beta-label">Beta</span> <!-- Beta label added -->
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin.admin_logout') }}">
+                    <span class="icon"><i class="fas fa-sign-out-alt"></i></span> Kirjaudu ulos
                 </a>
             </li>
         </ul>
@@ -46,7 +80,7 @@
 
     <!-- Shortened notice at the bottom of the sidebar -->
     <div class="sidebar-info bg-warning">
-        <span class="warning-icon">⚠️</span> <!-- Warning icon -->
+        <span class="warning-icon"><i class="fas fa-exclamation-triangle"></i></span> <!-- Warning icon -->
         <p>Olet superkäyttäjätilassa.</p>
     </div>
 </div>
@@ -54,11 +88,12 @@
 <!-- Hidden icons section -->
 <div class="hidden-icons container-centered bg-main-content">
     <a class="hidden-icon" id="hiddentoggle" aria-label="Avaa sivupalkki">&#9776;</a> <!-- Sidebar Toggle Button -->
-    <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon">&#128187;</a>
-    <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon">&#128100;</a>
-    <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon">&#128736;</a>
-    <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon">&#128681;</a>
-    <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon">&#128682;</a>
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon"><i class="fas fa-book"></i></a>
+    <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>
+    <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>
+    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a> <!-- Beta label added here as well -->
+    <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
 </div>
 
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>

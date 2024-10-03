@@ -14,7 +14,6 @@ admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
-
 @admin_demo_bp.route("/")
 @login_required
 @admin_required
@@ -25,23 +24,23 @@ def demo_control():
     show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()  # Get the current date
 
-    query = {"approved": approved_status} if approved_status else {}
+    # Construct the base query
+    query = {"hide": {"$exists": False}}
+    if approved_status:
+        query["approved"] = approved_status
 
     # Fetch all demonstrations from the database
     demonstrations = mongo.demonstrations.find(query)
 
     # Filter based on the search query
-    filtered_demonstrations = []
-    for demo in demonstrations:
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
-        if show_past or demo_date >= today:
-            if (
-                search_query.lower() in demo["title"].lower()
-                or search_query.lower() in demo["city"].lower()
-                or search_query.lower() in demo["topic"].lower()
-                or search_query.lower() in demo["address"].lower()
-            ):
-                filtered_demonstrations.append(demo)
+    filtered_demonstrations = [
+        demo for demo in demonstrations
+        if (show_past or datetime.strptime(demo["date"], "%d.%m.%Y").date() >= today) and (
+            search_query.lower() in demo["title"].lower() or
+            search_query.lower() in demo["city"].lower() or
+            search_query.lower() in demo["topic"].lower() or
+            search_query.lower() in demo["address"].lower())
+    ]
 
     # Sort the filtered demonstrations by date
     filtered_demonstrations.sort(
@@ -55,6 +54,7 @@ def demo_control():
         approved_status=approved_status,
         show_past=show_past,
     )
+
 
 
 @admin_demo_bp.route("/create_demo", methods=["GET", "POST"])
@@ -149,25 +149,23 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             return redirect(url_for("admin_demo.create_demo"))
 
 
-
-@admin_demo_bp.route("/delete_demo/<demo_id>", methods=["POST"])
+@admin_demo_bp.route("/delete_demo", methods=["POST"])
 @login_required
 @admin_required
-def delete_demo(demo_id):
+def delete_demo():
     """Delete a demonstration from the database."""
+    demo_id = request.form.get("demo_id")  # Get the demo ID from the form
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
         flash("Mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_demo.demo_control"))
 
-    if "confirm_delete" in request.form:
-        mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-        flash("Mielenosoitus poistettu onnistuneesti.")
-    else:
-        flash("Et vahvistanut mielenosoituksen poistoa.")
+    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
+    flash("Mielenosoitus poistettu onnistuneesti.")
 
     return redirect(url_for("admin_demo.demo_control"))
+
 
 
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])

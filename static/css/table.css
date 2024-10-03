@@ -77,3 +77,17 @@ table {
     padding: 20px; /* Padding for consistency */
   }
   
+  #tabletitle {
+    color: #333; /* Darker text color for readability */
+    padding: 1.5rem; /* More padding for better spacing */
+    background-color: #007bff; /* Primary color background */
+    color: white; /* White text for contrast */
+    text-align: center; /* Centered text */
+    margin: 2rem 0; /* Increased vertical margin for more spacing */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    text-transform: uppercase; /* Uppercase letters for a modern touch */
+    letter-spacing: 1px; /* Slightly spaced letters for a sleek look */
+    border-bottom: 4px solid #0056b3; /* Bottom border for emphasis */
+    word-break: break-all;
+}

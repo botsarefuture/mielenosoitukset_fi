@@ -1,7 +1,7 @@
 from database_manager import DatabaseManager
 from bson.objectid import ObjectId
-
 from obj_creator import ObjectId as OID
+
 class Organizer:
     def __init__(
         self,
@@ -16,7 +16,6 @@ class Organizer:
         self.website = website
 
         if organization_id:
-            print("id")
             self.fetch_organization_details()
 
     def fetch_organization_details(self):
@@ -45,6 +44,7 @@ class Organizer:
             self.website = None
 
     def to_dict(self):
+        """Convert the organizer instance to a dictionary."""
         if self.name == "":
             self.fetch_organization_details()
         return {
@@ -56,13 +56,15 @@ class Organizer:
 
     @classmethod
     def from_dict(cls, data):
+        """Create an Organizer instance from a dictionary."""
         return cls(
             name=data.get("name"),
             email=data.get("email"),
             organization_id=data.get("organization_id"),
             website=data.get("website"),
         )
-    
+
+
 class Organization:
     def __init__(
         self,
@@ -80,10 +82,10 @@ class Organization:
 
         self.name = name
         self.description = description
-        self.website = website if website else ""
-        self.social_media = social_media if social_media else {}
-        self.demonstrations = demonstrations if demonstrations else []
-        self.users = users if users else {}
+        self.website = website or ""
+        self.social_media = social_media or {}
+        self.demonstrations = demonstrations or []
+        self.users = users or {}
         self._id = _id
 
     def save(self):
@@ -92,6 +94,7 @@ class Organization:
             db_manager = DatabaseManager()
             db = db_manager.get_db()
             org_data = self.to_dict()
+
             # Upsert organization in the database
             db["organizations"].update_one(
                 {'_id': self._id},
@@ -102,6 +105,7 @@ class Organization:
             print(f"Error saving organization: {e}")
 
     def to_dict(self):
+        """Convert the organization instance to a dictionary."""
         return {
             "_id": self._id,
             "name": self.name,
@@ -114,6 +118,7 @@ class Organization:
 
     @classmethod
     def from_dict(cls, data):
+        """Create an Organization instance from a dictionary."""
         return cls(
             _id=data.get("_id"),
             name=data["name"],
@@ -174,10 +179,9 @@ class Demonstration:
         organizers: list[Organizer] = None,
         approved: bool = False,
         linked_organizations: dict = None,
-        img = None,
+        img=None,
         _id=None,
     ):
-
         if _id is None:
             _id = OID()
             _id = ObjectId(str(_id))
@@ -200,37 +204,24 @@ class Demonstration:
         self.img = img
 
         self.organizers = []
-        for organizer in organizers:
-            if not type(organizer) == Organizer:
+        for organizer in (organizers or []):
+            if not isinstance(organizer, Organizer):
                 self.organizers.append(Organizer.from_dict(organizer))
             else:
                 self.organizers.append(organizer)
         self.approved = approved
-        self.linked_organizations = (
-            linked_organizations if linked_organizations is not None else {}
-        )
+        self.linked_organizations = linked_organizations or {}
         self._id = _id
 
-    def validate_fields(
-        self, title, date, start_time, end_time, topic, city, address, event_type
-    ):
+    def validate_fields(self, title, date, start_time, end_time, topic, city, address, event_type):
         """
         Validate required fields for a Demonstration instance.
         """
-        if (
-            not title
-            or not date
-            or not start_time
-            or not topic
-            or not city
-            or not address
-            or not event_type
-        ):
-            raise ValueError(
-                "All required fields must be provided and correctly formatted."
-            )
+        if not all([title, date, start_time, topic, city, address, event_type]):
+            raise ValueError("All required fields must be provided and correctly formatted.")
 
     def to_dict(self):
+        """Convert the demonstration instance to a dictionary."""
         return {
             "_id": self._id,
             "title": self.title,
@@ -251,6 +242,7 @@ class Demonstration:
 
     @classmethod
     def from_dict(cls, data):
+        """Create a Demonstration instance from a dictionary."""
         try:
             organizers = (
                 [Organizer.from_dict(org) for org in data.get("organizers", [])]
@@ -278,30 +270,22 @@ class Demonstration:
             raise ValueError(f"Missing required field in data: {e}")
 
     def link_organization(self, organization_id: str, can_edit: bool):
-        """
-        Link an organization to the demonstration with edit rights.
-        """
+        """Link an organization to the demonstration with edit rights."""
         self.linked_organizations[organization_id] = can_edit
 
     def can_edit(self, organization_id: str) -> bool:
-        """
-        Check if the given organization has edit rights for the demonstration.
-        """
+        """Check if the given organization has edit rights for the demonstration."""
         return self.linked_organizations.get(organization_id, False)
 
     def update_organization_link(self, organization_id: str, can_edit: bool):
-        """
-        Update the edit rights for an organization.
-        """
+        """Update the edit rights for an organization."""
         if organization_id in self.linked_organizations:
             self.linked_organizations[organization_id] = can_edit
         else:
             raise ValueError("Organization is not linked.")
 
     def remove_organization_link(self, organization_id: str):
-        """
-        Remove the link to an organization.
-        """
+        """Remove the link to an organization."""
         if organization_id in self.linked_organizations:
             del self.linked_organizations[organization_id]
         else:

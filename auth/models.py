@@ -19,6 +19,7 @@ class User(UserMixin):
         confirmed=False,
         permissions=None,
         global_permissions=None,  # Added global permissions
+        role=None
     ):
         self.id = str(user_id)
         self.username = username
@@ -33,6 +34,7 @@ class User(UserMixin):
         self.confirmed = confirmed
         self.permissions = permissions
         self.global_permissions = global_permissions or []  # Ensure it's a list
+        self.role = role or "member"
 
     @staticmethod
     def from_db(user_doc):
@@ -59,6 +61,7 @@ class User(UserMixin):
             global_permissions=user_doc.get(
                 "global_permissions", []
             ),  # Fetch global permissions
+            role=user_doc.get("role", "member")
         )
 
     def check_password(self, password):

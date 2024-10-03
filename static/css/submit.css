@@ -12,15 +12,6 @@
     --input-background-color: #f9f9f9;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: var(--secondary-color);
-    color: #333;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 /* Form Container */
 .form-container {
     max-width: 900px;
@@ -38,15 +29,6 @@ body {
     .form-container {
         padding: 20px;
     }
-}
-
-/* Headings */
-h2 {
-    color: var(--primary-color);
-    margin-bottom: 20px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
 }
 
 /* Form Layout */
@@ -163,7 +145,7 @@ select.error {
 }
 
 /* Dropdown Styles */
-.dropdown {
+#paikkakunta-drop {
     position: relative;
     display: inline-block;
     width: 100%;

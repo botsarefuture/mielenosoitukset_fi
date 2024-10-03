@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const hiddenToggleButton = document.getElementById('hiddentoggle');
     const mainContent = document.querySelector('.container-main-content');
 
+    // Ensure the required elements exist before running logic
+    if (!sidebar || !toggleButton || !hiddenIcons || !hiddenToggleButton || !mainContent) {
+        console.error('Required elements are missing. Please check the element selectors.');
+        return;
+    }
+
     // Load the saved sidebar state from localStorage
     const isSidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
     if (isSidebarHidden) {

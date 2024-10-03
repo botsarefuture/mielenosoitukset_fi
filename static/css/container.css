@@ -103,9 +103,15 @@
   padding: 20px; /* Padding inside the container */
   border-radius: 8px; /* Rounded corners for aesthetics */
   box-sizing: content-box; /* Ensure padding is included in the width */
-  min-height: min(100vh) max(fit-content);
-  height: minmax(100vh, fit-content);
+  min-height: min(100vh, fit-content); /* Corrected min-height property */
 }
+
+/* Shifted Mode for Main Content */
+.container-main-content.shifted {
+  margin-right: 20px; /* Shift to the right */
+  transition: margin-left 0.3s ease; /* Smooth transition for shifting */
+}
+
 
 /* Responsive Containers */
 @media (max-width: 1200px) {

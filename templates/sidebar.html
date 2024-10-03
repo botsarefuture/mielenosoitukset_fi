@@ -13,6 +13,15 @@
         margin-right: 20px;
     }
 
+    .beta-label {
+        background-color: #e0e0e0; /* Light gray background */
+        color: #333; /* Dark text color */
+        border-radius: 3px; /* Rounded corners */
+        padding: 2px 5px; /* Padding for spacing */
+        font-size: 12px; /* Smaller font size */
+        margin-left: 5px; /* Space between text and label */
+    }
+
     .ddos-button {
         background-color: #E03C31; /* Red color for the button */
         color: #FFFFFF;
@@ -56,29 +65,15 @@
                 </a>
             </li>
             <li>
-                <a href="{{ url_for('admin.settings') }}">
-                    <span class="icon"><i class="fas fa-cog"></i></span> Asetukset
-                </a>
-            </li>
-            <li>
                 <a href="{{ url_for('admin.stats') }}">
                     <span class="icon"><i class="fas fa-chart-line"></i></span> Tilastot
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('admin.help') }}">
-                    <span class="icon"><i class="fas fa-question-circle"></i></span> Ohjeet
+                    <span class="beta-label">Beta</span> <!-- Beta label added -->
                 </a>
             </li>
             <li>
                 <a href="{{ url_for('admin.admin_logout') }}">
                     <span class="icon"><i class="fas fa-sign-out-alt"></i></span> Kirjaudu ulos
                 </a>
-            </li>
-            <li>
-                <button class="ddos-button" id="ddosButton">
-                    <span class="icon"><i class="fas fa-tower-broadcast"></i></span> Aloita DDoS Suojautuminen
-                </button>
             </li>
         </ul>
     </nav>
@@ -97,42 +92,8 @@
     <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>
     <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>
     <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>
-    <a href="{{ url_for('admin.settings') }}" class="hidden-icon"><i class="fas fa-cog"></i></a>
-    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a>
-    <a href="{{ url_for('admin.help') }}" class="hidden-icon"><i class="fas fa-question-circle"></i></a>
+    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a> <!-- Beta label added here as well -->
     <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
 </div>
 
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
-
-<script>
-    document.getElementById('ddosButton').addEventListener('click', function() {
-        // Start DDoS protection sequence
-        activateProtection();
-    });
-
-    function activateProtection() {
-        if (confirm("Oletko varma, että haluat aloittaa DDoS suojautumisen? Tämä toimenpide on kriittinen!")) {
-            // POST request to /admin/DDOS
-            fetch('/admin/DDOS', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ action: 'start' }) // Optional payload
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert("DDoS suojautuminen aktivoitu! Sivusto on nyt suojattu.");
-                    window.location.href = 'protection.html'; // Redirect to a protection page
-                } else {
-                    alert("DDoS suojautumisen aktivointi epäonnistui. Yritä uudelleen.");
-                }
-            })
-            .catch(error => {
-                console.error("Virhe DDoS suojautumisessa:", error);
-                alert("Virhe DDoS suojautumisessa. Tarkista konsoli.");
-            });
-        }
-    }
-</script>

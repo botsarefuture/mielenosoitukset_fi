@@ -20,7 +20,7 @@ def convert_to_jpg(image_path, output_path):
         with Image.open(image_path) as img:
             img = img.convert('RGB')  # Ensure it's in RGB mode
             img.save(output_path, 'JPEG')
-        return output_path.replace("temps", "")
+        return output_path
     except Exception as e:
         print(f"Error converting image: {e}")
         return None

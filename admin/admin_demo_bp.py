@@ -149,25 +149,23 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             return redirect(url_for("admin_demo.create_demo"))
 
 
-
-@admin_demo_bp.route("/delete_demo/<demo_id>", methods=["POST"])
+@admin_demo_bp.route("/delete_demo", methods=["POST"])
 @login_required
 @admin_required
-def delete_demo(demo_id):
+def delete_demo():
     """Delete a demonstration from the database."""
+    demo_id = request.form.get("demo_id")  # Get the demo ID from the form
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
         flash("Mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_demo.demo_control"))
 
-    if "confirm_delete" in request.form:
-        mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-        flash("Mielenosoitus poistettu onnistuneesti.")
-    else:
-        flash("Et vahvistanut mielenosoituksen poistoa.")
+    mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
+    flash("Mielenosoitus poistettu onnistuneesti.")
 
     return redirect(url_for("admin_demo.demo_control"))
+
 
 
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])

@@ -1001,6 +1001,1063 @@
                     "filename": "wrappers.py"
                 }
             ]
+        },
+        {
+            "version": "0.2.7",
+            "counttime": "2024-10-03 13:59:42",
+            "filesum": 160,
+            "codesum": 10510,
+            "commentsum": 720,
+            "blanksum": 1682,
+            "statistics": {
+                ".yaml": {
+                    "code": 261,
+                    "comment": 1,
+                    "blank": 6
+                },
+                ".py": {
+                    "code": 2864,
+                    "comment": 306,
+                    "blank": 677
+                },
+                "": {
+                    "code": 6,
+                    "comment": 1,
+                    "blank": 0
+                },
+                ".txt": {
+                    "code": 322,
+                    "comment": 0,
+                    "blank": 0
+                },
+                ".md": {
+                    "code": 93,
+                    "comment": 2,
+                    "blank": 31
+                },
+                ".html": {
+                    "code": 3042,
+                    "comment": 148,
+                    "blank": 529
+                },
+                ".svg": {
+                    "code": 43,
+                    "comment": 1,
+                    "blank": 3
+                },
+                ".yml": {
+                    "code": 26,
+                    "comment": 0,
+                    "blank": 6
+                },
+                ".json": {
+                    "code": 1390,
+                    "comment": 0,
+                    "blank": 1
+                },
+                ".js": {
+                    "code": 112,
+                    "comment": 36,
+                    "blank": 16
+                },
+                ".css": {
+                    "code": 2351,
+                    "comment": 225,
+                    "blank": 413
+                }
+            },
+            "filelist": [
+                {
+                    "blank": 44,
+                    "code": 190,
+                    "comment": 31,
+                    "filename": ".depraced/organization.py"
+                },
+                {
+                    "blank": 10,
+                    "code": 16,
+                    "comment": 8,
+                    "filename": ".depraced/templates/organization/create_organization.html"
+                },
+                {
+                    "blank": 11,
+                    "code": 20,
+                    "comment": 9,
+                    "filename": ".depraced/templates/organization/edit_organization.html"
+                },
+                {
+                    "blank": 8,
+                    "code": 18,
+                    "comment": 9,
+                    "filename": ".depraced/templates/organization/list_organizations.html"
+                },
+                {
+                    "blank": 5,
+                    "code": 18,
+                    "comment": 6,
+                    "filename": ".depraced/templates/organization/organization_detail.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": ".github/dependabot.yml"
+                },
+                {
+                    "blank": 6,
+                    "code": 25,
+                    "comment": 0,
+                    "filename": ".github/workflows/secu.yml"
+                },
+                {
+                    "blank": 0,
+                    "code": 6,
+                    "comment": 1,
+                    "filename": ".gitignore"
+                },
+                {
+                    "filename": "__pycache__/app.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/basic_routes.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/classes.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/config.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/database_manager.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/obj_creator.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/recu_classes.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/s3_utils.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/utils.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "__pycache__/wrappers.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 0,
+                    "code": 5,
+                    "comment": 0,
+                    "filename": "admin/__init__.py"
+                },
+                {
+                    "filename": "admin/__pycache__/__init__.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "admin/__pycache__/admin_bp.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "admin/__pycache__/admin_demo_bp.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "admin/__pycache__/admin_org_bp.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "admin/__pycache__/admin_recu_demo_bp.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "admin/__pycache__/admin_user_bp.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 29,
+                    "code": 111,
+                    "comment": 21,
+                    "filename": "admin/admin_bp.py"
+                },
+                {
+                    "blank": 36,
+                    "code": 141,
+                    "comment": 9,
+                    "filename": "admin/admin_demo_bp.py"
+                },
+                {
+                    "blank": 35,
+                    "code": 115,
+                    "comment": 7,
+                    "filename": "admin/admin_org_bp.py"
+                },
+                {
+                    "blank": 34,
+                    "code": 164,
+                    "comment": 14,
+                    "filename": "admin/admin_recu_demo_bp.py"
+                },
+                {
+                    "blank": 64,
+                    "code": 212,
+                    "comment": 31,
+                    "filename": "admin/admin_user_bp.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "admin/info.txt"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 1,
+                    "filename": "api/__init__.py"
+                },
+                {
+                    "filename": "api/__pycache__/__init__.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "api/__pycache__/routes.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 3,
+                    "code": 221,
+                    "comment": 1,
+                    "filename": "api/api.yaml"
+                },
+                {
+                    "blank": 22,
+                    "code": 87,
+                    "comment": 5,
+                    "filename": "api/routes.py"
+                },
+                {
+                    "blank": 17,
+                    "code": 35,
+                    "comment": 8,
+                    "filename": "app.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 1,
+                    "comment": 0,
+                    "filename": "auth/__init__.py"
+                },
+                {
+                    "filename": "auth/__pycache__/__init__.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "auth/__pycache__/models.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "auth/__pycache__/routes.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 30,
+                    "code": 151,
+                    "comment": 8,
+                    "filename": "auth/models.py"
+                },
+                {
+                    "blank": 59,
+                    "code": 225,
+                    "comment": 9,
+                    "filename": "auth/routes.py"
+                },
+                {
+                    "blank": 2,
+                    "code": 10,
+                    "comment": 1,
+                    "filename": "auth/templates/access_denied.html"
+                },
+                {
+                    "blank": 42,
+                    "code": 35,
+                    "comment": 0,
+                    "filename": "auth/templates/edit_profile.html"
+                },
+                {
+                    "blank": 7,
+                    "code": 28,
+                    "comment": 2,
+                    "filename": "auth/templates/login.html"
+                },
+                {
+                    "blank": 8,
+                    "code": 66,
+                    "comment": 0,
+                    "filename": "auth/templates/password_reset.html"
+                },
+                {
+                    "blank": 3,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "auth/templates/password_reset_request.html"
+                },
+                {
+                    "blank": 1,
+                    "code": 2,
+                    "comment": 0,
+                    "filename": "auth/templates/profile.html"
+                },
+                {
+                    "blank": 8,
+                    "code": 24,
+                    "comment": 0,
+                    "filename": "auth/templates/register.html"
+                },
+                {
+                    "blank": 52,
+                    "code": 228,
+                    "comment": 31,
+                    "filename": "basic_routes.py"
+                },
+                {
+                    "blank": 43,
+                    "code": 254,
+                    "comment": 7,
+                    "filename": "classes.py"
+                },
+                {
+                    "blank": 4,
+                    "code": 16,
+                    "comment": 8,
+                    "filename": "config.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 13,
+                    "comment": 0,
+                    "filename": "config.yaml"
+                },
+                {
+                    "blank": 19,
+                    "code": 74,
+                    "comment": 15,
+                    "filename": "database_manager.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "emailer/__init__.py"
+                },
+                {
+                    "filename": "emailer/__pycache__/__init__.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emailer/__pycache__/EmailJob.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "emailer/__pycache__/EmailSender.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 16,
+                    "code": 55,
+                    "comment": 3,
+                    "filename": "emailer/EmailJob.py"
+                },
+                {
+                    "blank": 20,
+                    "code": 76,
+                    "comment": 7,
+                    "filename": "emailer/EmailSender.py"
+                },
+                {
+                    "blank": 3,
+                    "code": 14,
+                    "comment": 0,
+                    "filename": "example.config.yaml"
+                },
+                {
+                    "blank": 3,
+                    "code": 6,
+                    "comment": 0,
+                    "filename": "index.py"
+                },
+                {
+                    "blank": 9,
+                    "code": 41,
+                    "comment": 8,
+                    "filename": "obj_creator.py"
+                },
+                {
+                    "blank": 1,
+                    "code": 1385,
+                    "comment": 0,
+                    "filename": "package-lock.json"
+                },
+                {
+                    "blank": 0,
+                    "code": 5,
+                    "comment": 0,
+                    "filename": "package.json"
+                },
+                {
+                    "blank": 31,
+                    "code": 93,
+                    "comment": 2,
+                    "filename": "README.md"
+                },
+                {
+                    "blank": 27,
+                    "code": 139,
+                    "comment": 14,
+                    "filename": "recu_classes.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "requirements.txt"
+                },
+                {
+                    "blank": 12,
+                    "code": 56,
+                    "comment": 9,
+                    "filename": "s3_utils.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "scripts/__init__.py"
+                },
+                {
+                    "filename": "scripts/__pycache__/config.cpython-312.pyc",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 1,
+                    "code": 3,
+                    "comment": 0,
+                    "filename": "scripts/city_stuff/cities.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 309,
+                    "comment": 0,
+                    "filename": "scripts/city_stuff/cities.txt"
+                },
+                {
+                    "blank": 4,
+                    "code": 16,
+                    "comment": 8,
+                    "filename": "scripts/config.py"
+                },
+                {
+                    "blank": 0,
+                    "code": 13,
+                    "comment": 0,
+                    "filename": "scripts/config.yaml"
+                },
+                {
+                    "blank": 13,
+                    "code": 40,
+                    "comment": 5,
+                    "filename": "scripts/double_fixer.py"
+                },
+                {
+                    "blank": 28,
+                    "code": 158,
+                    "comment": 8,
+                    "filename": "scripts/repeat_v2.py"
+                },
+                {
+                    "blank": 39,
+                    "code": 178,
+                    "comment": 28,
+                    "filename": "scripts/repeating_demos.py"
+                },
+                {
+                    "blank": 6,
+                    "code": 50,
+                    "comment": 6,
+                    "filename": "static/css/admin/demo_checkbox.css"
+                },
+                {
+                    "blank": 7,
+                    "code": 32,
+                    "comment": 2,
+                    "filename": "static/css/admin/demo_form.css"
+                },
+                {
+                    "blank": 22,
+                    "code": 98,
+                    "comment": 16,
+                    "filename": "static/css/admin/recu_dash.css"
+                },
+                {
+                    "blank": 5,
+                    "code": 33,
+                    "comment": 2,
+                    "filename": "static/css/admin_actions_cell.css"
+                },
+                {
+                    "blank": 14,
+                    "code": 73,
+                    "comment": 9,
+                    "filename": "static/css/admin_create_demo.css"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "static/css/admin_dashboard.css"
+                },
+                {
+                    "blank": 7,
+                    "code": 23,
+                    "comment": 0,
+                    "filename": "static/css/admin_demo_confirm_delete.css"
+                },
+                {
+                    "blank": 11,
+                    "code": 50,
+                    "comment": 4,
+                    "filename": "static/css/admin_demo_control.css"
+                },
+                {
+                    "blank": 10,
+                    "code": 51,
+                    "comment": 7,
+                    "filename": "static/css/admin_org_control.css"
+                },
+                {
+                    "blank": 12,
+                    "code": 60,
+                    "comment": 7,
+                    "filename": "static/css/admin_user_control.css"
+                },
+                {
+                    "blank": 15,
+                    "code": 87,
+                    "comment": 3,
+                    "filename": "static/css/auth.css"
+                },
+                {
+                    "blank": 16,
+                    "code": 60,
+                    "comment": 9,
+                    "filename": "static/css/buttons.css"
+                },
+                {
+                    "blank": 26,
+                    "code": 150,
+                    "comment": 13,
+                    "filename": "static/css/container.css"
+                },
+                {
+                    "blank": 12,
+                    "code": 78,
+                    "comment": 2,
+                    "filename": "static/css/demo_remo.css"
+                },
+                {
+                    "blank": 21,
+                    "code": 131,
+                    "comment": 10,
+                    "filename": "static/css/edit.css"
+                },
+                {
+                    "blank": 11,
+                    "code": 69,
+                    "comment": 5,
+                    "filename": "static/css/edit_organization.css"
+                },
+                {
+                    "blank": 10,
+                    "code": 72,
+                    "comment": 1,
+                    "filename": "static/css/edit_user.css"
+                },
+                {
+                    "blank": 8,
+                    "code": 40,
+                    "comment": 3,
+                    "filename": "static/css/flash.css"
+                },
+                {
+                    "blank": 11,
+                    "code": 85,
+                    "comment": 10,
+                    "filename": "static/css/form.css"
+                },
+                {
+                    "blank": 18,
+                    "code": 94,
+                    "comment": 14,
+                    "filename": "static/css/index.css"
+                },
+                {
+                    "blank": 24,
+                    "code": 117,
+                    "comment": 19,
+                    "filename": "static/css/list.css"
+                },
+                {
+                    "blank": 7,
+                    "code": 41,
+                    "comment": 0,
+                    "filename": "static/css/org_create.css"
+                },
+                {
+                    "blank": 14,
+                    "code": 71,
+                    "comment": 21,
+                    "filename": "static/css/organization_detail.css"
+                },
+                {
+                    "blank": 9,
+                    "code": 45,
+                    "comment": 16,
+                    "filename": "static/css/organizations.css"
+                },
+                {
+                    "blank": 24,
+                    "code": 159,
+                    "comment": 14,
+                    "filename": "static/css/sidebar.css"
+                },
+                {
+                    "blank": 34,
+                    "code": 187,
+                    "comment": 10,
+                    "filename": "static/css/style.css"
+                },
+                {
+                    "blank": 24,
+                    "code": 187,
+                    "comment": 16,
+                    "filename": "static/css/submit.css"
+                },
+                {
+                    "blank": 14,
+                    "code": 75,
+                    "comment": 4,
+                    "filename": "static/css/table.css"
+                },
+                {
+                    "blank": 14,
+                    "code": 82,
+                    "comment": 1,
+                    "filename": "static/css/user/profile.css"
+                },
+                {
+                    "blank": 7,
+                    "code": 51,
+                    "comment": 1,
+                    "filename": "static/css/user/profile_edit.css"
+                },
+                {
+                    "blank": 3,
+                    "code": 20,
+                    "comment": 6,
+                    "filename": "static/js/admin_demo_checkbox.js"
+                },
+                {
+                    "blank": 3,
+                    "code": 37,
+                    "comment": 8,
+                    "filename": "static/js/date.js"
+                },
+                {
+                    "blank": 4,
+                    "code": 21,
+                    "comment": 7,
+                    "filename": "static/js/demo_remo.js"
+                },
+                {
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0,
+                    "filename": "static/js/detail_utils.js"
+                },
+                {
+                    "blank": 6,
+                    "code": 34,
+                    "comment": 15,
+                    "filename": "static/js/sidebar.js"
+                },
+                {
+                    "blank": 2,
+                    "code": 13,
+                    "comment": 0,
+                    "filename": "templates/access_denied.html"
+                },
+                {
+                    "blank": 4,
+                    "code": 18,
+                    "comment": 0,
+                    "filename": "templates/admin/auth/login.html"
+                },
+                {
+                    "blank": 7,
+                    "code": 34,
+                    "comment": 1,
+                    "filename": "templates/admin/dashboard.html"
+                },
+                {
+                    "blank": 4,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "templates/admin/demonstrations/confirm_delete.html"
+                },
+                {
+                    "blank": 36,
+                    "code": 184,
+                    "comment": 1,
+                    "filename": "templates/admin/demonstrations/dashboard.html"
+                },
+                {
+                    "blank": 23,
+                    "code": 140,
+                    "comment": 12,
+                    "filename": "templates/admin/demonstrations/form.html"
+                },
+                {
+                    "blank": 5,
+                    "code": 49,
+                    "comment": 0,
+                    "filename": "templates/admin/help.html"
+                },
+                {
+                    "blank": 2,
+                    "code": 12,
+                    "comment": 0,
+                    "filename": "templates/admin/organizations/confirm_delete.html"
+                },
+                {
+                    "blank": 7,
+                    "code": 29,
+                    "comment": 0,
+                    "filename": "templates/admin/organizations/create.html"
+                },
+                {
+                    "blank": 24,
+                    "code": 158,
+                    "comment": 1,
+                    "filename": "templates/admin/organizations/dashboard.html"
+                },
+                {
+                    "blank": 7,
+                    "code": 30,
+                    "comment": 1,
+                    "filename": "templates/admin/organizations/edit.html"
+                },
+                {
+                    "blank": 8,
+                    "code": 35,
+                    "comment": 1,
+                    "filename": "templates/admin/organizations/form.html"
+                },
+                {
+                    "blank": 7,
+                    "code": 23,
+                    "comment": 0,
+                    "filename": "templates/admin/recu_demonstrations/confirm_delete.html"
+                },
+                {
+                    "blank": 5,
+                    "code": 53,
+                    "comment": 0,
+                    "filename": "templates/admin/recu_demonstrations/dashboard.html"
+                },
+                {
+                    "blank": 23,
+                    "code": 171,
+                    "comment": 11,
+                    "filename": "templates/admin/recu_demonstrations/form.html"
+                },
+                {
+                    "blank": 1,
+                    "code": 21,
+                    "comment": 0,
+                    "filename": "templates/admin/settings.html"
+                },
+                {
+                    "blank": 5,
+                    "code": 22,
+                    "comment": 0,
+                    "filename": "templates/admin/stats.html"
+                },
+                {
+                    "blank": 4,
+                    "code": 15,
+                    "comment": 0,
+                    "filename": "templates/admin/user/confirm.html"
+                },
+                {
+                    "blank": 24,
+                    "code": 144,
+                    "comment": 5,
+                    "filename": "templates/admin/user/edit.html"
+                },
+                {
+                    "blank": 23,
+                    "code": 153,
+                    "comment": 1,
+                    "filename": "templates/admin/user/list.html"
+                },
+                {
+                    "blank": 1,
+                    "code": 6,
+                    "comment": 1,
+                    "filename": "templates/admin_base.html"
+                },
+                {
+                    "blank": 29,
+                    "code": 223,
+                    "comment": 16,
+                    "filename": "templates/base.html"
+                },
+                {
+                    "blank": 10,
+                    "code": 33,
+                    "comment": 0,
+                    "filename": "templates/contact.html"
+                },
+                {
+                    "blank": 10,
+                    "code": 89,
+                    "comment": 0,
+                    "filename": "templates/DDOS.html"
+                },
+                {
+                    "blank": 16,
+                    "code": 54,
+                    "comment": 16,
+                    "filename": "templates/demonstration/create_demonstration.html"
+                },
+                {
+                    "blank": 49,
+                    "code": 330,
+                    "comment": 3,
+                    "filename": "templates/detail.html"
+                },
+                {
+                    "blank": 26,
+                    "code": 89,
+                    "comment": 24,
+                    "filename": "templates/edit_event.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 70,
+                    "comment": 0,
+                    "filename": "templates/emails/new_ticket.html"
+                },
+                {
+                    "blank": 4,
+                    "code": 18,
+                    "comment": 0,
+                    "filename": "templates/emails/organization_access_notification.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 73,
+                    "comment": 0,
+                    "filename": "templates/emails/password_reset_email.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 73,
+                    "comment": 0,
+                    "filename": "templates/emails/registration_confirmation_email.html"
+                },
+                {
+                    "blank": 0,
+                    "code": 72,
+                    "comment": 0,
+                    "filename": "templates/emails/user_update_notification.html"
+                },
+                {
+                    "blank": 4,
+                    "code": 34,
+                    "comment": 3,
+                    "filename": "templates/index.html"
+                },
+                {
+                    "blank": 7,
+                    "code": 32,
+                    "comment": 0,
+                    "filename": "templates/info.html"
+                },
+                {
+                    "blank": 8,
+                    "code": 32,
+                    "comment": 1,
+                    "filename": "templates/list.html"
+                },
+                {
+                    "blank": 6,
+                    "code": 71,
+                    "comment": 1,
+                    "filename": "templates/paikkakunta-dropdown.html"
+                },
+                {
+                    "blank": 10,
+                    "code": 86,
+                    "comment": 3,
+                    "filename": "templates/sidebar.html"
+                },
+                {
+                    "blank": 23,
+                    "code": 86,
+                    "comment": 11,
+                    "filename": "templates/submit.html"
+                },
+                {
+                    "filename": "uploads/DALL·E 2024-09-16 19.31.27 - A stylish and practical tote bag made from eco-friendly materials. The tote features the bold message 'Sinulla on väliä' printed in large, modern font.webp",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "uploads/e.png",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "uploads/front.JPG",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "filename": "uploads/IMG-8555.jpg",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 3,
+                    "code": 43,
+                    "comment": 1,
+                    "filename": "uploads/mielenterveyskaikille-03.svg"
+                },
+                {
+                    "filename": "uploads/Untitled.jpeg",
+                    "isbinaryfile": true,
+                    "blank": 0,
+                    "code": 0,
+                    "comment": 0
+                },
+                {
+                    "blank": 1,
+                    "code": 43,
+                    "comment": 0,
+                    "filename": "utils.py"
+                },
+                {
+                    "blank": 16,
+                    "code": 43,
+                    "comment": 11,
+                    "filename": "wrappers.py"
+                }
+            ]
         }
     ]
 }

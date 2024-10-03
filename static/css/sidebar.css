@@ -127,6 +127,8 @@
   transition: background-color 0.3s ease, font-size 0.3s ease;
   padding: 10px; /* Padding for clickable area */
   border-radius: 5%; /* Rounded hover effect */
+  width: 32px;
+  height: 32px;
 }
 
 /* Hover effect on hidden icons */

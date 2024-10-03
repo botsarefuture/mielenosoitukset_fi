@@ -64,6 +64,11 @@
                     <span class="icon"><i class="fas fa-bullhorn"></i></span> Mielenosoitusten hallinta
                 </a>
             </li>
+            <li></li>
+                <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+                    <span class="icon"><i class="fas fa-redo-alt"></i></span> Toistuvien mielenosoitusten hallinta
+                </a>
+            </li>
             <li>
                 <a href="{{ url_for('admin.stats') }}">
                     <span class="icon"><i class="fas fa-chart-line"></i></span> Tilastot
@@ -92,6 +97,8 @@
     <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>
     <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>
     <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>
+    <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+        <span class="hidden-icon"><i class="fas fa-redo-alt"></i></span>
     <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a> <!-- Beta label added here as well -->
     <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
 </div>

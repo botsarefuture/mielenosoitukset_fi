@@ -1,6 +1,6 @@
 import os
 from s3_utils import upload_image
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, abort
 from bson.objectid import ObjectId
 from datetime import datetime
 from classes import Organizer, Demonstration
@@ -224,6 +224,11 @@ def init_routes(app):
             {"_id": ObjectId(demo_id), "approved": True}
         )
 
+        if not demo or demo is None:
+            abort(404)
+
+
+
         demo = Demonstration.from_dict(demo)
         demo = demo.to_dict()
 
@@ -304,3 +309,39 @@ def init_routes(app):
             return redirect(url_for("contact"))
 
         return render_template("contact.html")
+
+
+    @app.route("/organization/<org_id>")
+    def org(org_id):
+         # Fetch the organization details
+        _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+
+        if _org is None:
+            flash("Organisaatiota ei löytynyt.", "error")
+            return redirect(url_for("index"))
+
+        today = date.today()  # Get today's date
+
+        # Fetch upcoming demonstrations linked to this organization via organizers list
+        upcoming_demos_cursor = mongo.demonstrations.find({
+            "organizers": {
+                "$elemMatch": {
+                    "organization_id": ObjectId(org_id)  # Match the organization_id within the organizers list
+                }
+            },
+            "approved": True  # Ensure the demonstration is approved
+        })
+
+
+    # Filter and sort the demonstrations
+        upcoming_demos = []
+        for demo in upcoming_demos_cursor:
+            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()  # Convert date string to date object
+            if demo_date >= today:  # Only keep upcoming demos
+                upcoming_demos.append(demo)
+
+        # Sort by date
+        upcoming_demos.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+
+        # Render the organization page with the sorted upcoming demonstrations
+        return render_template("organizations/details.html", org=_org, upcoming_demos=upcoming_demos)

@@ -1,34 +1,109 @@
 {% extends "base.html" %}
 
-{% block title %}{{ user.displayname if user.displayname else user.username }}'n Profiili{% endblock %}
+{% block title %}
+{{ user.displayname if user.displayname else user.username }}'n Profiili
+{% endblock %}
 
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+
 <div class="container profile-container">
-    <div class="profile-header">
-        <div class="profile-details">
+    <!-- Profiilin Otsikko -->
+    <div class="profile-header rebellious-header">
+        <!--<div class="cover-photo">
+            <img src="{{ user.cover_photo or 'https://mielenosoitukset-fi1.fsn1.your-objectstorage.com/demos/default.jpg' }}" 
+                 alt="Cover Photo" class="cover-img">
+        </div>-->
+
+        <div class="profile-details rebellious-details">
             <div class="profile-picture">
-                <img src="{{ user.profile_picture or url_for('static', filename='default_profile.png') }}" alt="{{ user.displayname if user.displayname else user.username }}'n profiilikuva">
+                <img src="{{ user.profile_picture or url_for('static', filename='default_profile.png') }}" 
+                     alt="{{ user.displayname if user.displayname else user.username }}'n profiilikuva" 
+                     class="profile-img" 
+                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='default_profile.png') }}';">
             </div>
+
             <div class="profile-info">
-                <h1>{{ user.displayname if user.displayname else user.username }}</h1>
+                <h1 class="user-name rebellious-name">
+                    {{ user.displayname if user.displayname else user.username }}
+                </h1>
                 <p class="email">{{ user.email or 'Ei määritetty' }}</p>
                 <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>
 
                 {% if user.global_admin %}
-                    <span class="badge badge-admin">Super User</span>
-                {% elif user.is_member_of_organization('some_organization_id') %}
-                    <span class="badge badge-member">Organisaation jäsen</span>
+                    <span class="badge badge-admin">Järjestelmävalvoja</span>
                 {% endif %}
-                
-                <!--
-                -->
 
-                {% if current_user.is_authenticated and current_user.username == user.username %}
-                    <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-primary">Muokkaa profiilia</a>
-                {% endif %}
+                <!-- Organizations: each in its own container -->
+                <div class="organizations">
+                    {% for org in user.organizations %}
+                        <div class="org-container rebellious-org">
+                            <p><strong>{{ org.name }}</strong></p>
+                            <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">Tutustu organisaatioon</a>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="button-group rebellious-buttons">
+                    {% if current_user.is_authenticated and current_user.username == user.username %}
+                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">Muokkaa profiilia</a>
+                    {% else %}
+                        <div class="follow-unfollow">
+                            {% if current_user.is_following(user) %}
+                                <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
+                                    <button type="submit" class="btn btn-unfollow rebellious-btn">Lopeta seuraaminen</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
+                                    <button type="submit" class="btn btn-follow rebellious-btn">Seuraa</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Postaukset (commented out for now) -->
+    <!--
+    <div class="profile-posts rebellious-posts">
+        <h2 class="rebellious-heading">
+            {% if user.username == current_user.username %}
+                Mielenosoitukset, joihin osallistuit
+            {% else %}
+                Mielenosoitukset, joihin osallistui
+            {% endif %}
+        </h2>
+
+        {% for protest in user.protests %}
+            <div class="post rebellious-post">
+                <h3 class="post-title rebellious-title">{{ protest.title }}</h3>
+                <p class="post-date-location">{{ protest.date }} - {{ protest.location }}</p>
+                <p class="post-description">{{ protest.description }}</p>
+                <div class="post-actions">
+                    {% if current_user.has_liked(protest) %}
+                        <form action="{{ url_for('protest.unlike', protest_id=protest.id) }}" method="POST">
+                            <button type="submit" class="btn btn-unlike rebellious-btn">Tykkää pois</button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('protest.like', protest_id=protest.id) }}" method="POST">
+                            <button type="submit" class="btn btn-like rebellious-btn">Tykkää</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    -->
+
+    <!-- Upcoming protests message (commented out for now) -->
+    <!--
+    <div class="coming-soon rebellious-soon">
+        <h3 class="soon-heading">Mielenosoitukset ovat tulossa pian!</h3>
+        <p class="soon-description">Pysy kuulolla ja valmistaudu osallistumaan!</p>
+    </div>
+    -->
 </div>
 {% endblock %}

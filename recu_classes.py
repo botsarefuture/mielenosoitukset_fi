@@ -183,8 +183,8 @@ class RecurringDemonstration:
     def from_dict(cls, data: Dict[str, Any]) -> "RecurringDemonstration":
         """Create an instance from a dictionary."""
         try:
-            start_time = datetime.strptime(data["start_time"], "%d.%m.%Y %H:%M")
-            end_time = datetime.strptime(data["end_time"], "%d.%m.%Y %H:%M")
+            start_time = datetime.strptime(data["start_time"], "%H:%M")
+            end_time = datetime.strptime(data["end_time"], "%H:%M")
             created_until = (
                 datetime.strptime(data["created_until"], "%d.%m.%Y")
                 if data.get("created_until")

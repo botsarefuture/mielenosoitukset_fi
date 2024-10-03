@@ -1,97 +1,166 @@
-/* profile.css */
-.profile-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+/* General Styles */
+body {
+    font-family: 'Anton', sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
 }
 
+/* Profile Header */
 .profile-header {
-    width: 100%;
-    background-color: #F5F5F5;
-    border-bottom: 1px solid #E0E0E0;
+    background-color: #ff6f61; /* Soft rebellious color */
     padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
 }
 
+.rebellious-header {
+    position: relative;
+}
+
+/* Profile Details */
 .profile-details {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+/* Profile Picture */
 .profile-picture {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
-.profile-picture img {
-    width: 120px;
-    height: 120px;
+.profile-img {
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #E0E0E0;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.profile-info {
+/* Profile Info */
+.user-name {
+    font-size: 2em;
+    font-weight: bold;
+    color: #fff;
     text-align: center;
 }
 
-.profile-info h1 {
-    font-size: 24px;
-    margin: 10px 0;
-    color: #333;
-}
-
-.profile-info .email,
-.profile-info .bio {
-    font-size: 16px;
-    color: #666;
-}
-
-.profile-info .badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 5px;
-    color: #FFF;
-    font-size: 14px;
-    margin: 5px;
+.email, .bio {
+    font-size: 1.1em;
+    margin: 5px 0;
+    text-align: center;
+    color: #fff;
 }
 
 .badge-admin {
-    background-color: #FF6600;
-}
-
-.badge-member {
-    background-color: #009B77;
-}
-
-.btn-secondary {
-    background-color: #FF6600;
-    color: #FFF;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
+    background-color: #4caf50; /* Green for admin badge */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9em;
     margin-top: 10px;
 }
 
-.btn-secondary:hover {
-    background-color: #E03C31;
+/* Organizations */
+.organizations {
+    width: 100%;
+    margin-top: 20px;
 }
 
-.btn-primary {
-    background-color: #007BFF;
-    color: #FFF;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
+.org-container {
+    background-color: #fff;
+    border: 2px solid #ff6f61;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.org-container p {
+    margin: 0;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.org-link {
+    display: inline-block;
     margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #ff6f61; /* Same rebellious color */
+    color: white;
     text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
 
-.btn-primary:hover {
-    background-color: #0056b3;
+.org-link:hover {
+    background-color: #e65c50; /* Darker shade on hover */
+}
+
+/* Button Group */
+.button-group {
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-edit {
+    background-color: #4caf50; /* Edit button color */
+    color: white;
+}
+
+.btn-follow {
+    background-color: #008cba; /* Follow button color */
+    color: white;
+}
+
+.btn-unfollow {
+    background-color: #f44336; /* Unfollow button color */
+    color: white;
+}
+
+.btn:hover {
+    transform: scale(1.05); /* Slightly enlarge buttons on hover */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-details {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .profile-img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .user-name {
+        font-size: 1.8em;
+    }
+
+    .email, .bio {
+        font-size: 1em;
+    }
+    
+    .btn {
+        width: 100%; /* Full-width buttons on smaller screens */
+        margin: 10px 0;
+    }
 }

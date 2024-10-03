@@ -3,6 +3,7 @@ import yaml
 import logging
 from typing import Any, Dict
 
+
 class Config:
     """Configuration class to load and manage application settings."""
 
@@ -57,6 +58,7 @@ class Config:
             cls.logger.warning("Mail credentials are not set.")
         if cls.SECRET_KEY == "secret_key":
             cls.logger.warning("Default SECRET_KEY should be changed for security.")
+
 
 # Initialize the configuration
 Config.init_config()

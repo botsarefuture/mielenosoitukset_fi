@@ -66,10 +66,9 @@ def init_routes(app):
             event_type = request.form.get("type")
             route = request.form.get("route") if event_type == "marssi" else None
 
-            img = request.files.get('image')
+            img = request.files.get("image")
 
             photo_url = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
-
 
             if img:
                 # Save the uploaded file temporarily
@@ -77,9 +76,8 @@ def init_routes(app):
                 img.save(temp_file_path)
 
                 # Define the bucket name and upload the file
-                bucket_name = 'mielenosoitukset-fi1'  # Your S3 bucket name
+                bucket_name = "mielenosoitukset-fi1"  # Your S3 bucket name
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
-
 
             # Validation for form data
             if (
@@ -119,7 +117,7 @@ def init_routes(app):
                 route=route,
                 organizers=organizers,
                 approved=False,
-                img=photo_url
+                img=photo_url,
             )
 
             # Save to MongoDB

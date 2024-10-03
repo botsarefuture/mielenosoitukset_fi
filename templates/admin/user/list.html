@@ -161,7 +161,6 @@
                     <td>{{ user.role }}</td>
                     <td class="actions-cell">
                         <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
-                        <a href="{{ url_for('admin_user.confirm_delete_user', user_id=user._id) }}" class="button delete-button"><i class="fas fa-trash"></i>Poista</a>
                     </td>
                 </tr>
                 {% endfor %}

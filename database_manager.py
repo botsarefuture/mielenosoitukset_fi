@@ -7,6 +7,7 @@ from config import Config  # Import the Config class
 # Setup logging
 logger = logging.getLogger(__name__)
 
+
 class DatabaseManager:
     _instance = None  # Singleton pattern
     _lock = Lock()  # For thread safety
@@ -21,14 +22,18 @@ class DatabaseManager:
                     self.config = Config()
                     logger.info("Initializing DatabaseManager instance.")
                     # Load URI and default DB name from Config class
-                    self.mongo_uri = self.config.MONGO_URI or 'mongodb://localhost:27017'
-                    self.default_db_name = self.config.MONGO_DBNAME or 'testdb'
+                    self.mongo_uri = (
+                        self.config.MONGO_URI or "mongodb://localhost:27017"
+                    )
+                    self.default_db_name = self.config.MONGO_DBNAME or "testdb"
                     self.client = None
                     self._databases = {}  # Cache for accessed databases
                     self._initialized = False  # Track initialization status
                     DatabaseManager._instance = self  # Save as singleton instance
         else:
-            logger.warning("DatabaseManager instance already initialized. Returning existing instance.")
+            logger.warning(
+                "DatabaseManager instance already initialized. Returning existing instance."
+            )
 
     def _init_client(self):
         """
@@ -47,7 +52,7 @@ class DatabaseManager:
                 self.mongo_uri,
                 serverSelectionTimeoutMS=5000,  # Connection timeout
                 maxPoolSize=50,  # Connection pool size (adjust as needed)
-                minPoolSize=5
+                minPoolSize=5,
             )
             # Ping the server to check the connection
             self.client.admin.command("ping")

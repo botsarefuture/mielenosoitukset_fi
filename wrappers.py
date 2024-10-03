@@ -36,7 +36,9 @@ def permission_needed(permission, organization_id=None):
                 )  # Adjust to your desired redirect route
 
             # Check if the user has the required permission in the organization
-            if not current_user.has_permission(org_id, permission):
+            if (
+                permission not in current_user.permissions
+            ):  # Use the new permissions attribute
                 flash("Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.")
                 return redirect(
                     url_for("index")
@@ -56,7 +58,7 @@ def admin_required(f):
         if not current_user.is_authenticated:
             flash("Sinun täytyy kirjautua sisään käyttääksesi tätä sivua.")
             return redirect(
-                url_for("login")
+                url_for("auth.login")
             )  # Redirect to the login page if not authenticated
 
         if not current_user.global_admin:
@@ -68,3 +70,42 @@ def admin_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def permission_required(permission_name):
+    """
+    Decorator to check if a user has a specific permission.
+
+    Args:
+        permission_name (str): The name of the permission to check.
+
+    Returns:
+        function: The wrapped function.
+    """
+
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Check if the user is authenticated
+            if not current_user.is_authenticated:
+                flash("Sinun tulee kirjautua sisään käyttääksesi sivua.")
+                return redirect(url_for("auth.login"))
+
+            # Log the permission check for debugging purposes
+            print(
+                f"Checking permission: {permission_name} for {current_user.username}..."
+            )
+
+            # Check if the user has the specified permission
+            if permission_name in current_user.global_permissions:
+                return f(*args, **kwargs)
+
+            # If permission is not granted, handle it appropriately
+            flash("Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen.")
+            return redirect(
+                url_for("index")
+            )  # Redirect to the desired route when access is denied
+
+        return decorated_function
+
+    return decorator

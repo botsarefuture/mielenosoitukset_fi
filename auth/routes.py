@@ -96,10 +96,13 @@ def confirm_email(token):
 
     return redirect(url_for("auth.login"))
 
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     # Get the next URL to redirect to after login
-    next_page = request.args.get('next')  # Get the 'next' parameter from the query string
+    next_page = request.args.get(
+        "next"
+    )  # Get the 'next' parameter from the query string
 
     if request.method == "POST":
         username = request.form.get("username")
@@ -107,7 +110,9 @@ def login():
 
         if not username or not password:
             flash("Anna sekä käyttäjänimi että salasana.", "warning")
-            return redirect(url_for("auth.login", next=next_page))  # Pass next page along
+            return redirect(
+                url_for("auth.login", next=next_page)
+            )  # Pass next page along
 
         user_doc = mongo.users.find_one({"username": username})
 
@@ -122,7 +127,9 @@ def login():
 
         if user.confirmed:
             login_user(user)
-            return redirect(next_page or url_for("index"))  # Redirect to the next page or the index
+            return redirect(
+                next_page or url_for("index")
+            )  # Redirect to the next page or the index
 
         else:
             flash("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
@@ -130,7 +137,6 @@ def login():
             return redirect(next_page or url_for("index"))
 
     return render_template("login.html", next=next_page)
-
 
 
 @auth_bp.route("/logout")
@@ -193,6 +199,7 @@ def password_reset(token):
 
     return render_template("password_reset.html", token=token)
 
+
 @auth_bp.route("/profile/")
 @auth_bp.route("/profile/<username>")
 @login_required
@@ -206,6 +213,8 @@ def profile(username=None):
     else:
         flash("Käyttäjäprofiilia ei löytynyt.", "warning")
         return redirect(url_for("index"))
+
+
 @auth_bp.route("/profile/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
@@ -224,11 +233,13 @@ def edit_profile():
             profile_picture.save(temp_file_path)
 
             # Define the bucket name and upload the file
-            bucket_name = 'mielenosoitukset-fi1'  # Your S3 bucket name
+            bucket_name = "mielenosoitukset-fi1"  # Your S3 bucket name
             photo_url = upload_image(bucket_name, temp_file_path, "profile_pics")
 
             if photo_url:
-                current_user.profile_picture = photo_url  # Save the URL to the current user
+                current_user.profile_picture = (
+                    photo_url  # Save the URL to the current user
+                )
 
                 # Update user in MongoDB
                 mongo.users.update_one(

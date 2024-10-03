@@ -1,51 +1,30 @@
-{% extends 'base.html' %} {% block content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/submit.css') }}"
-/>
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}" />
+<!-- Include Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <div class="container container-main-content">
   <h1>Ilmoita mielenosoituksesta</h1>
 
-  <form
-    method="POST"
-    action="{{ url_for('submit') }}"
-    class="container-form"
-    enctype="multipart/form-data"
-  >
+  <form method="POST" action="{{ url_for('submit') }}" class="container-form" enctype="multipart/form-data">
     <!-- Name -->
-    <label for="name" class="required"
-      >Mielenosoituksen nimi<span class="required-asterisk">*</span></label
-    >
-    <input
-      type="text"
-      id="name"
-      name="title"
-      placeholder="Mielenosoituksen nimi"
-      required
-    />
+    <label for="name" class="required">Mielenosoituksen nimi<span class="required-asterisk">*</span></label>
+    <input type="text" id="name" name="title" placeholder="Mielenosoituksen nimi" required />
 
     <!-- Tag (Aihe) -->
-    <label for="topic" class="required"
-      >Aihe<span class="required-asterisk">*</span></label
-    >
+    <label for="topic" class="required">Aihe<span class="required-asterisk">*</span></label>
     <input type="text" id="topic" name="topic" placeholder="Aihe" required />
 
     <!-- Date -->
-    <label for="date" class="required"
-      >Päivämäärä (pp.kk.vvvv)<span class="required-asterisk">*</span></label
-    >
-    <input
-      type="text"
-      id="date"
-      name="date"
-      placeholder="pp.kk.vvvv"
-      required
-    />
+    <label for="date" class="required">Päivämäärä (pp.kk.vvvv)<span class="required-asterisk">*</span></label>
+    <input type="text" id="date" name="date" placeholder="pp.kk.vvvv" required />
 
     <!-- Start and End Time -->
-    <label for="start_time" class="required"
-      >Alkamisaika<span class="required-asterisk">*</span></label
-    >
+    <label for="start_time" class="required">Alkamisaika<span class="required-asterisk">*</span></label>
     <input type="time" id="start_time" name="start_time" required />
     <label for="end_time">Päättymisaika</label>
     <input type="time" id="end_time" name="end_time" />
@@ -56,30 +35,17 @@
 
     <!-- Additional Information -->
     <label for="facebook">Facebook-tapahtumalinkki (valinnainen)</label>
-    <input
-      type="url"
-      id="facebook"
-      name="facebook"
-      placeholder="https://facebook.com/event"
-    />
+    <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event" />
 
     <!-- Organizers -->
-    <label for="organizers" class="required"
-      >Järjestäjä(t)<span class="required-asterisk">*</span></label
-    >
+    <label for="organizers" class="required">Järjestäjä(t)<span class="required-asterisk">*</span></label>
     <div id="organizers-container"></div>
-    <button type="button" class="add-organizer-button" onclick="addOrganizer()">
-      Lisää järjestäjä
-    </button>
+    <button type="button" class="add-organizer-button" onclick="addOrganizer()">Lisää järjestäjä</button>
 
     <!-- Location Type -->
-    <label for="type" class="required"
-      >Mielenosoituksen tyyppi<span class="required-asterisk">*</span></label
-    >
+    <label for="type" class="required">Mielenosoituksen tyyppi<span class="required-asterisk">*</span></label>
     <select id="type" name="type" required>
-      <option value="" disabled selected>
-        Valitse mielenosoituksen tyyppi
-      </option>
+      <option value="" disabled selected>Valitse mielenosoituksen tyyppi</option>
       <option value="paikallaan">Paikallaan</option>
       <option value="marssi">Marssi</option>
       <option value="muut">Muut</option>
@@ -90,41 +56,11 @@
       <textarea id="route" name="route" placeholder="Reitti..."></textarea>
     </div>
 
-    <div class="form-group required">
-      <label for="city"
-        >Paikkakunta<span class="required-asterisk">*</span></label
-      >
-      <div class="dropdown">
-        <button type="button" class="dropbtn">Paikkakunta</button>
-        <br />
-        <div id="dropdown-content" class="dropdown-content">
-          <input
-            type="text"
-            placeholder="Hae paikkakunta..."
-            id="searchInput"
-            onkeyup="filterFunction()"
-          />
-          <!-- List of cities -->
-          {% for city in city_list %}
-          <a href="#" onclick="selectCity('{{ city }}'); return false;"
-            >{{ city }}</a
-          >
-          {% endfor %}
-        </div>
-      </div>
-      <input type="hidden" id="selected-city" name="city" value="" required />
-    </div>
+    <!-- Include Paikkakunta Dropdown -->
+    {% include "paikkakunta-dropdown.html" %}
 
-    <label for="address" class="required"
-      >Katuosoite<span class="required-asterisk">*</span></label
-    >
-    <input
-      type="text"
-      id="address"
-      name="address"
-      placeholder="Katuosoite"
-      required
-    />
+    <label for="address" class="required">Katuosoite<span class="required-asterisk">*</span></label>
+    <input type="text" id="address" name="address" placeholder="Katuosoite" required />
 
     <button type="submit" class="submit-button">Lähetä</button>
   </form>
@@ -140,19 +76,19 @@
     organizerDiv.className = "organizer";
 
     organizerDiv.innerHTML = `
-            <div class="organizer-entry">
-                <hr>
-                <p>Järjestäjätahon...</p>
-                <label for="organizer_name_${organizerCount}">Nimi<span class="required-asterisk">*</span></label>
-                <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="Järjestäjän nimi" required>
+      <div class="organizer-entry">
+        <hr>
+        <p>Järjestäjätahon...</p>
+        <label for="organizer_name_${organizerCount}">Nimi<span class="required-asterisk">*</span></label>
+        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="Järjestäjän nimi" required>
 
-                <label for="organizer_website_${organizerCount}">Verkkosivut</label>
-                <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+        <label for="organizer_website_${organizerCount}">Verkkosivut</label>
+        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
 
-                <label for="organizer_email_${organizerCount}">Sähköpostiosoite</label>
-                <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
-            </div>
-        `;
+        <label for="organizer_email_${organizerCount}">Sähköpostiosoite</label>
+        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
+      </div>
+    `;
 
     container.appendChild(organizerDiv);
   }
@@ -165,51 +101,8 @@
       marchRouteContainer.style.display = "none";
     }
   });
-
-  // Paikkakunta dropdown functions
-  function selectCity(city) {
-    document.querySelector(".dropbtn").textContent = city;
-    document.getElementById("selected-city").value = city;
-    document.getElementById("dropdown-content").style.display = "none";
-  }
-
-  function filterFunction() {
-    let input, filter, div, a, i;
-    input = document.getElementById("searchInput");
-    if (input !== "") {
-      filter = input.value.toUpperCase();
-      div = document.getElementById("dropdown-content");
-      a = div.getElementsByTagName("a");
-      for (i = 0; i < a.length; i++) {
-        let txtValue = a[i].textContent || a[i].innerText;
-        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-          a[i].style.display = "";
-        } else {
-          a[i].style.display = "none";
-        }
-      }
-    }
-  }
-
-  document.querySelector(".dropbtn").addEventListener("click", function () {
-    document.getElementById("dropdown-content").style.display = "block";
-  });
-
-  window.onclick = function (event) {
-    console.log(event.target);
-    if (!event.target.matches(".dropdown")) {
-      if (event.target !== document.getElementByClassName("dropdown-content")) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (let i = 0; i < dropdowns.length; i++) {
-          let openDropdown = dropdowns[i];
-          if (openDropdown.style.display === "block") {
-            openDropdown.style.display = "none";
-          }
-        }
-      }
-    }
-  };
 </script>
+
 <style>
   .required {
     color: #333;
@@ -222,4 +115,6 @@
     display: none;
   }
 </style>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
 {% endblock %}

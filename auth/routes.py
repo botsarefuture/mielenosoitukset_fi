@@ -263,7 +263,6 @@ def edit_profile():
 
     return render_template("edit_profile.html")
 
-
 def generate_reset_token(email):
     return jwt.encode(
         {
@@ -273,7 +272,6 @@ def generate_reset_token(email):
         current_app.config["SECRET_KEY"],
         algorithm="HS256",
     )
-
 
 def verify_reset_token(token):
     try:
@@ -287,8 +285,7 @@ def generate_confirmation_token(email):
     return jwt.encode(
         {
             "email": email,
-            "exp": datetime.datetime.now(datetime.datetime.UTC())
-            + datetime.timedelta(hours=1),
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),  # Korjattu rivi
         },
         current_app.config["SECRET_KEY"],
         algorithm="HS256",

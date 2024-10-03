@@ -6,6 +6,16 @@ from auth.models import User  # Import User model
 from emailer.EmailSender import EmailSender
 from error import register_error_handlers
 
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from scripts.repeat_v2 import main as repeat_main
+from scripts.update_demo_organizers import main as update_main
+
+# Create and configure the scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(repeat_main, 'interval', hours=24)  # Run every 60 seconds
+scheduler.add_job(update_main, 'interval', hours=1)
+scheduler.start()
 
 def create_app():
     # Initialize EmailSender
@@ -57,6 +67,10 @@ def create_app():
     from auth import auth_bp
 
     app.register_blueprint(auth_bp, url_prefix="/auth/")
+
+    from user import user_bp
+
+    app.register_blueprint(user_bp)
 
     from api import api_bp
 

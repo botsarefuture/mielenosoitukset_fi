@@ -248,6 +248,8 @@ class Demonstration:
     def from_dict(cls, data):
         """Create a Demonstration instance from a dictionary."""
         try:
+            if data is None:
+                raise ValueError("Data cannot be none.")
             organizers = (
                 [Organizer.from_dict(org) for org in data.get("organizers", [])]
                 if data.get("organizers")

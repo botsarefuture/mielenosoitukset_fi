@@ -4,8 +4,8 @@
 @import url("buttons.css");
 
 .wrapper {
-  display: grid;
-  grid-template-rows: auto 1fr auto; /* Header, Main, Footer */
+  display: flex; /* Use flexbox for layout */
+  flex-direction: column; /* Stack items vertically */
   min-height: 100vh; /* Full viewport height */
 }
 
@@ -19,7 +19,6 @@ body {
   color: #333333; /* Text color for consistency */
   overflow-x: hidden;
   max-width: 100%;
-  flex-direction: column; /* Column layout to push footer to the bottom */
 }
 
 /* Navbar Styles */
@@ -122,6 +121,11 @@ body {
   cursor: pointer;
 }
 
+/* Main Content Styles */
+.main {
+  flex: 1; /* Allow the main content to grow and fill available space */
+}
+
 /* Footer Styles */
 .footer {
   background-color: #0033a0; /* Dark Blue from the guide */
@@ -222,10 +226,11 @@ body {
   margin-right: 8px;
 }
 
+/* Structure for the layout */
 header {
-  grid-row: 1; /* Header in the first row */
+  flex: 0 0 auto; /* Header in the first row, does not grow */
 }
 
 footer {
-  grid-row: 3; /* Footer in the third row */
+  flex: 0 0 auto; /* Footer in the last row, does not grow */
 }

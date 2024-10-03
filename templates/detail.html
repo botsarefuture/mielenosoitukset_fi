@@ -19,6 +19,7 @@
 {% endblock %} {% block content %}
 
 <style>
+  /* Main Container */
   #main {
     background-color: #f4f4f4;
     padding: 20px;
@@ -28,6 +29,7 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
 
+  /* Headings */
   h1 {
     color: #0033a0;
     margin-bottom: 20px;
@@ -37,6 +39,7 @@
     overflow-wrap: break-word;
   }
 
+  /* Images */
   #main img {
     width: 100%;
     height: auto;
@@ -44,12 +47,14 @@
     margin-bottom: 20px;
   }
 
+  /* Flex Containers */
   #subcontainer1 {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
   }
 
+  /* Info and Organizer Containers */
   #infocontainer,
   #orginfo {
     flex: 1;
@@ -63,12 +68,14 @@
     border-right: 4px dotted #0033a0;
   }
 
+  /* Subtitle */
   .subtitle {
     margin-top: 0;
     font-size: 1.2em;
     color: #0033a0;
   }
 
+  /* Media Queries */
   @media only screen and (max-width: 767px) {
     #infocontainer {
       border-right: none;
@@ -80,10 +87,8 @@
     }
   }
 
-  .facebook-button,
-  .like-button,
-  .twitter-button,
-  .linkedin-button {
+  /* Social Buttons */
+  .social-button {
     display: inline-block;
     margin-top: 10px;
     padding: 10px 20px;
@@ -95,16 +100,6 @@
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .facebook-button {
-    background-color: #1877f2;
-    color: #ffffff;
-  }
-
-  .facebook-button:hover {
-    background-color: #145dbf;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
   .like-button {
     background-color: #4267b2;
     color: #ffffff;
@@ -114,28 +109,18 @@
     background-color: #365899;
   }
 
-  .twitter-button {
-    background-color: #1da1f2;
-    color: #ffffff;
-  }
-
-  .twitter-button:hover {
-    background-color: #0d95e8;
-  }
-
-  .linkedin-button {
-    background-color: #0077b5;
-    color: #ffffff;
-  }
-
-  .linkedin-button:hover {
-    background-color: #005582;
-  }
-
+  /* Organizer Info */
   .organizer-info {
+    background-color: #f0f8ff; /* Light background for contrast */
+    border: 1px solid #0033a0; /* Border to distinguish each organizer */
+    border-radius: 8px;
+    padding: 15px; /* Add padding for better spacing */
     margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #cccccc;
+    transition: transform 0.2s; /* Smooth scaling effect on hover */
+  }
+
+  .organizer-info:hover {
+    transform: scale(1.02); /* Slightly enlarge on hover */
   }
 
   .organizer-info a {
@@ -149,6 +134,7 @@
     color: #ff6600;
   }
 
+  /* Back Link */
   .back-link {
     display: inline-block;
     margin-top: 20px;
@@ -164,10 +150,12 @@
     background-color: #0066cc;
   }
 
+  /* Strong Elements */
   strong {
     color: #0033a0;
   }
 
+  /* Route Information */
   .route {
     margin-top: 20px;
     padding: 15px;
@@ -176,6 +164,7 @@
     border-radius: 8px;
   }
 
+  /* General Links */
   a {
     color: #0033a0;
     text-decoration: none;
@@ -187,6 +176,7 @@
     color: #ff6600;
   }
 
+  /* Countdown */
   .countdown {
     margin-top: 20px;
     padding: 20px;
@@ -196,6 +186,7 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
 
+  /* Map Container */
   .map {
     margin-top: 20px;
     background-color: #ffffff;
@@ -203,40 +194,63 @@
     overflow: hidden;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   }
+
+  /* Organizers List */
+  .organizers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Add spacing between organizers */
+  }
+
+  .button-container {
+            display: flex;
+            justify-content: space-between; /* Evenly spaces buttons */
+            padding: 20px; /* Optional: adds some padding around the container */
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 </style>
 
 <div id="main">
   {% if demo['img'] %}
   <img src="{{ demo['img'] }}" alt="Event Image" />
   {% else %}
+<!--
   <img
     src="https://mielenosoitukset-fi1.fsn1.your-objectstorage.com/demos/default.jpg"
-  />
+  />-->
 
   {% endif %}
   <h1>{{ demo['title'] }}</h1>
   <div>
     <!--<a href="#" class="like-button"> Tykkää </a>-->
     <!-- Social Media Share Buttons -->
-    <div>
+    <div class="button-container">
       <a
         href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
         target="_blank"
-        class="facebook-button"
+        class="facebook-button button"
       >
         Jaa Facebookissa
       </a>
       <a
         href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
         target="_blank"
-        class="twitter-button"
+        class="twitter-button button"
       >
         Jaa Xssä
       </a>
       <a
         href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
         target="_blank"
-        class="linkedin-button"
+        class="linkedin-button button"
       >
         Jaa LinkedInissä
       </a>
@@ -277,106 +291,121 @@
       {% endif %}
     </div>
 
+
     <div id="orginfo">
       <h2 class="subtitle">Järjestäjät</h2>
-      {% for org in demo['organizers'] %}
-      <div class="organizer-info">
-        <p><strong>Nimi:</strong><br />{{ org.name }}</p>
+      {% if demo['organizers'] %}
+      <div class="organizers-list">
+        {% for org in demo['organizers'] %}
+        <div class="organizer-info">
+          <p><strong>Nimi:</strong><br />{{ org.name }}</p>
 
-        {% if org['website'] %}
-        <p>
-          <strong>Nettisivu:</strong><br /><a
-            href="{{ org['website'] }}"
-            target="_blank"
-            >{{ org['website'] }}</a
-          >
-        </p>
-        {% endif %} {% if org['email'] %}
-        <p>
-          <strong>Sähköposti:</strong><br /><a href="mailto:{{ org['email'] }}"
-            >{{ org['email'] }}</a
-          >
-        </p>
-        {% endif %}
+          {% if org['organization_id'] %}
+          <p>
+            <a
+              href="{{ url_for('org', org_id=org.organization_id) }}"
+              class="org-profile-link"
+              >Mielenosoitukset.fi -profiili</a
+            >
+          </p>
+          {% endif %} {% if org['website'] %}
+          <p>
+            <strong>Nettisivu:</strong><br />
+            <a href="{{ org['website'] }}" target="_blank" class="org-website"
+              >{{ org['website'] }}</a
+            >
+          </p>
+          {% endif %} {% if org['email'] %}
+          <p>
+            <strong>Sähköposti:</strong><br />
+            <a href="mailto:{{ org['email'] }}" class="org-email"
+              >{{ org['email'] }}</a
+            >
+          </p>
+          {% endif %}
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
+      {% else %}
+      <p>Ei järjestäjätietoja saatavilla.</p>
+      {% endif %}
     </div>
+
+    <a class="back-link" href="{{ url_for('demonstrations') }}"
+      >Takaisin kaikkiin mielenosoituksiin</a
+    >
   </div>
 
-  <a class="back-link" href="{{ url_for('demonstrations') }}"
-    >Takaisin kaikkiin mielenosoituksiin</a
-  >
+  <!-- Leaflet JS and Map Integration -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script>
+    {% if latitude is not none %}
+      var map = L.map("map").setView([{{ latitude }}, {{ longitude }}], 13);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      L.marker([{{ latitude }}, {{ longitude }}])
+        .addTo(map)
+        .bindPopup("{{ demo['address'] | escape }}")
+        .openPopup();
+    {% else %}
+      var mapElement = document.getElementById("map");
+      if (mapElement) {
+        mapElement.remove();  // Removes the map element if it exists
+      }
+    {% endif %}
+  </script>
+  <script>
+    function formatFinnishDate(dateString) {
+      // Convert Finnish date format (pp.kk.vvvv) to ISO format (yyyy-mm-dd)
+      const [day, month, year] = dateString.split(".").map(Number);
+      return `${year}-${month.toString().padStart(2, "0")}-${day
+        .toString()
+        .padStart(2, "0")}`;
+    }
+
+    function updateCountdown() {
+      // Replace these with your actual Finnish date and time strings for testing
+      const demoDate = "{{ demo['date'] }}"; // e.g., "09.09.2024"
+      const demoTime = "{{ demo['start_time'] }}"; // e.g., "14:00:00"
+
+      const formattedDate = formatFinnishDate(demoDate);
+      const eventDateStr = `${formattedDate}T${demoTime}`;
+      console.log(`Event Date String: ${eventDateStr}`);
+
+      const eventDate = new Date(eventDateStr);
+      const now = new Date();
+      const timeRemaining = eventDate - now;
+
+      console.log(`Current Time: ${now}`);
+      console.log(`Event Time: ${eventDate}`);
+      console.log(`Time Remaining: ${timeRemaining}`);
+
+      if (timeRemaining <= 0) {
+        document.getElementById("timer").innerText =
+          "Mielenosoitus on käynnissä!";
+        return;
+      }
+
+      const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor(
+        (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
+      );
+      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+      document.getElementById(
+        "timer"
+      ).innerText = `${days} päivää ${hours} tuntia ${minutes} minuuttia ${seconds} sekuntia`;
+    }
+
+    setInterval(updateCountdown, 1000);
+  </script>
+  {% endblock %}
 </div>
-
-<!-- Leaflet JS and Map Integration -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script>
-  {% if latitude is not none %}
-    var map = L.map("map").setView([{{ latitude }}, {{ longitude }}], 13);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
-
-    L.marker([{{ latitude }}, {{ longitude }}])
-      .addTo(map)
-      .bindPopup("{{ demo['address'] | escape }}")
-      .openPopup();
-  {% else %}
-    var mapElement = document.getElementById("map");
-    if (mapElement) {
-      mapElement.remove();  // Removes the map element if it exists
-    }
-  {% endif %}
-</script>
-<script>
-  function formatFinnishDate(dateString) {
-    // Convert Finnish date format (pp.kk.vvvv) to ISO format (yyyy-mm-dd)
-    const [day, month, year] = dateString.split(".").map(Number);
-    return `${year}-${month.toString().padStart(2, "0")}-${day
-      .toString()
-      .padStart(2, "0")}`;
-  }
-
-  function updateCountdown() {
-    // Replace these with your actual Finnish date and time strings for testing
-    const demoDate = "{{ demo['date'] }}"; // e.g., "09.09.2024"
-    const demoTime = "{{ demo['start_time'] }}"; // e.g., "14:00:00"
-
-    const formattedDate = formatFinnishDate(demoDate);
-    const eventDateStr = `${formattedDate}T${demoTime}`;
-    console.log(`Event Date String: ${eventDateStr}`);
-
-    const eventDate = new Date(eventDateStr);
-    const now = new Date();
-    const timeRemaining = eventDate - now;
-
-    console.log(`Current Time: ${now}`);
-    console.log(`Event Time: ${eventDate}`);
-    console.log(`Time Remaining: ${timeRemaining}`);
-
-    if (timeRemaining <= 0) {
-      document.getElementById("timer").innerText =
-        "Mielenosoitus on käynnissä!";
-      return;
-    }
-
-    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor(
-      (timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-    );
-    const minutes = Math.floor(
-      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
-    );
-    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-    document.getElementById(
-      "timer"
-    ).innerText = `${days} päivää ${hours} tuntia ${minutes} minuuttia ${seconds} sekuntia`;
-  }
-
-  setInterval(updateCountdown, 1000);
-</script>
-{% endblock %}

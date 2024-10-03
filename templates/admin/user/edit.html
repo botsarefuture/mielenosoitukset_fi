@@ -9,7 +9,7 @@
 <div class="container mt-4">
     <h2>Muokkaa Käyttäjää</h2>
 
-    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}" class="container-form">
+    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}" class="container-form">
         <!-- User Details Form -->
         <div class="form-group">
             <label for="username">Käyttäjänimi</label>
@@ -26,9 +26,9 @@
             <div class="form-group" id="approval-container">
                 <label for="confirmed">Sähköpostiosoite vahvistettu</label>
                 <div>
-                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.get('confirmed') %}checked{% endif %}>
+                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
                     <span id="approval-status" class="status-text">
-                        {% if user.get('confirmed') %}Kyllä{% else %}Ei{% endif %}
+                        {% if user.confirmed %}Kyllä{% else %}Ei{% endif %}
                     </span>
                 </div>
             </div>

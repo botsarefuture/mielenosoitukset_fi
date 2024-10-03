@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
+from auth.models import User
 from wrappers import admin_required, permission_required
 from emailer.EmailSender import EmailSender
 
@@ -72,8 +73,9 @@ def stringify_object_ids(data):
 @admin_required
 @permission_required("EDIT_USER")
 def edit_user(user_id):
-    """Edit user details."""
-    user = mongo.users.find_one({"_id": ObjectId(user_id)})
+    """Edit user details."""    
+    user = User.from_db(mongo.users.find_one({"_id": ObjectId(user_id)}))
+
     organizations = stringify_object_ids(list(mongo.organizations.find()))
 
     if user is None:
@@ -128,13 +130,14 @@ def edit_user(user_id):
 
         flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
         return redirect(url_for("admin_user.user_control"))
+    
 
     # Prepare to render the edit user form
-    user_orgs = user.get("organizations", [])
+    user_orgs = user.organizations
     org_ids = [org.get("org_id") for org in user_orgs]
-    user_permissions = user.get("permissions", {})  # Fetch user-specific permissions
+    user_permissions = user.permissions  # Fetch user-specific permissions
     global_permissions = (
-        current_user.global_permissions
+        user.global_permissions
     )  # Ensure global permissions are retrieved
 
     return render_template(
@@ -244,7 +247,7 @@ def save_user(user_id):
             "updated_email": email,
             "permissions_summary": permission_summary_html,
             "login_link": url_for("auth.login", _external=True),
-            "support_contact": "support@example.com",
+            "support_contact": "tuki@mielenosoitukset.fi",
         },
     )
 

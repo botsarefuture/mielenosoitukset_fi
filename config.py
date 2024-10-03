@@ -16,8 +16,6 @@ class Config:
     MAIL_USERNAME = config.get("MAIL_USERNAME")
     MAIL_PASSWORD = config.get("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = config.get("MAIL_DEFAULT_SENDER") or MAIL_USERNAME
-    PORT = config.get("PORT")
-    DEBUG = config.get("DEBUG")
     # SERVER_NAME = config.get('SERVER_NAME') or 'www.mielenosoitukset.fi'
     # PREFERRED_URL_SCHEME = config.get('PREFERRED_URL_SCHEME') or 'https'
 

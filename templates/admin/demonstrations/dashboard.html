@@ -5,180 +5,38 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo_remo.css') }}">
-
-
-<!-- Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 <style>
-    body {
-        background-color: #f0f4f8; /* Light gray background for contrast */
-        font-family: 'Arial', sans-serif;
-    }
-
-    .table-container {
-        margin-top: 2rem;
-        background-color: #ffffff; /* White background for the table */
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-        overflow: hidden; /* Ensures the border radius is respected */
-    }
-
-    h2 {
-        color: #333; /* Darker text color for readability */
-        padding: 1.5rem; /* More padding for better spacing */
-        background-color: #007bff; /* Primary color background */
-        color: white; /* White text for contrast */
-        text-align: center; /* Centered text */
-        margin: 2rem 0; /* Increased vertical margin for more spacing */
-        border-radius: 8px; /* Rounded corners */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-        text-transform: uppercase; /* Uppercase letters for a modern touch */
-        letter-spacing: 1px; /* Slightly spaced letters for a sleek look */
-        border-bottom: 4px solid #0056b3; /* Bottom border for emphasis */
-        word-break: break-all;
-    }
-
-    .button {
-        display: inline-block;
-        margin: 1rem 0.5rem; /* More margin on top */
-        padding: 0.5rem 1rem;
-        background-color: #007bff; /* Primary color */
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        font-weight: bold; /* Make button text bold */
-        display: flex; /* Align icon and text */
-        align-items: center; /* Center align icon */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    }
-
-    .button:hover {
-        background-color: #0056b3; /* Darker blue on hover */
-        transform: translateY(-2px); /* Lift effect on hover */
-    }
-
-    .button i {
-        margin-right: 0.5rem; /* Space between icon and text */
-    }
-
-    .search-form {
-        margin: 1rem 0;
-        display: flex;
-        flex-wrap: wrap; /* Allows wrapping on smaller screens */
-        justify-content: space-between; /* Space out form elements */
-        align-items: center; /* Center align */
-        gap: 0.5rem; /* Space between form elements */
-    }
-
-    .search-input, .filter-select {
-        padding: 0.75rem;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        flex: 1; /* Allow inputs to take available space */
-        min-width: 150px; /* Minimum width for better usability */
-        max-width: 300px; /* Maximum width to avoid excessive growth */
-        transition: border-color 0.3s ease;
-    }
-
-    .search-input:focus, .filter-select:focus {
-        border-color: #007bff; /* Primary color on focus */
-        outline: none; /* Remove outline */
-    }
-
-    .search-button {
-        background-color: #28a745; /* Success green */
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-        font-weight: bold; /* Bold text for visibility */
-        display: flex; /* Align icon and text */
-        align-items: center; /* Center align icon */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    }
-
-    .search-button:hover {
-        background-color: #218838; /* Darker green on hover */
-    }
-
-    .no-demos {
-        color: #721c24; 
-        font-weight: bold; 
-        background-color: #f8d7da; 
-        padding: 20px; 
-        border: 1px dashed #f5c6cb; /* Dashed border for emphasis */
-        border-radius: 5px;
-        text-align: center;
-        margin: 1rem 0; /* Margin for separation */
-    }
-
     td {
         background-color: transparent !important;
     }
-
-    .actions-cell a {
-        margin-right: 0.5rem;
-    }
-
-    .table-container table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .table-container th, .table-container td {
-        padding: 0.75rem;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-
-    /* Responsive Styles */
-    @media (max-width: 768px) {
-        .search-form {
-            flex-direction: column; /* Stack form elements on smaller screens */
-            align-items: flex-start; /* Align items to the start */
-        }
-        .search-input, .filter-select, .search-button {
-            width: 100%; /* Full width for better usability */
-            margin-bottom: 0.5rem; /* Space below each element */
-        }
-    }
-
-
-   
-
 </style>
 
-<div class="table-container">
+<div class="table-container mt-4">
 
     <h2>Mielenosoitukset</h2>
 
-    <div class="flex justify-center mb-4">
-        <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button"><i class="fas fa-plus"></i>Uusi mielenosoitus</a>
-        <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button"><i class="fas fa-plus-circle"></i>Uusi toistuva mielenosoitus</a>
+    <div class="">
+        <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button full-width" style="font-weight: bold;">Uusi mielenosoitus</a>
     </div>
 
     <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
-        <label for="search" class="sr-only">Hae mielenosoituksia:</label>
-        <input type="text" id="search" name="search" class="search-input" placeholder="Hae mielenosoituksia..." value="{{ search_query }}" aria-label="Search demonstrations">
+        <label for="search">Hae mielenosoituksia:</label>
+        <input type="text" id="search" name="search" class="search-input" placeholder="Hae mielenosoituksia..."
+            value="{{ search_query }}">
 
         <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
-        <select name="approved" id="approved" class="filter-select" aria-label="Approved status filter">
+        <select name="approved" id="approved" class="filter-select">
             <option value="true" {% if approved_status %}selected{% endif %}>Kyllä</option>
             <option value="false" {% if not approved_status %}selected{% endif %}>Ei</option>
         </select>
 
         <label for="show_past">Näytä menneet mielenosoitukset:</label>
-        <select name="show_past" id="show_past" class="filter-select" aria-label="Show past demonstrations">
+        <select name="show_past" id="show_past" class="filter-select">
             <option value="false" {% if not show_past %}selected{% endif %}>Ei</option>
             <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
         </select>
 
-        <button type="submit" class="search-button"><i class="fas fa-search"></i>Hae</button>
+        <button type="submit" class="search-button">Hae</button>
     </form>
 
     {% if demonstrations %}
@@ -189,7 +47,6 @@
                     <th>Otsikko</th>
                     <th>Kaupunki</th>
                     <th>Päivämäärä</th>
-                    <th>Toistuva</th>
                     <th>Hyväksytty</th>
                     <th class="actions-cell-header">Toiminnot</th>
                 </tr>
@@ -197,40 +54,23 @@
             <tbody>
                 {% for demo in demonstrations|sort(attribute='approved') %}
                     <tr style="background-color: {{ 'lightcoral' if not demo.approved else 'white' }};">
-                        <td>{{ demo.title }}</td>
-                        <td>{{ demo.city }}</td>
-                        <td>{{ demo.date }}</td>
-                        <td>{{ 'Kyllä' if demo.repeating else 'Ei' }}</td>
-                        <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
-                        <td class="actions-cell">
-                            <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
-                            <a href="#" class="button delete-button" onclick="openModal('{{ demo.title }}', '{{ demo._id }}')"><i class="fas fa-trash-alt"></i> Poista</a>                        </td>
-                    </tr>
+                    <td>{{ demo.title }}</td>
+                    <td>{{ demo.city }}</td>
+                    <td>{{ demo.date }}</td>
+                    <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
+                    <td class="actions-cell">
+                        <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">Muokkaa</a>
+                        <a href="{{ url_for('admin_demo.confirm_delete_demo', demo_id=demo._id) }}" class="button delete-button">Poista</a>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-        <div class="no-demos">Ei mielenosoituksia löytynyt.</div>
+    <div class="no-demos" style="color: white; font-weight: bold; background-color: var(--error-color); padding: 20px; border-style: dashed;">
+        <p>Mielenosoituksia ei löytynyt.</p>
+    </div>
     {% endif %}
 </div>
-
-<div id="deleteModal" class="modal hidden">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h3>Poista mielenosoitus</h3>
-        <p>Oletko varma, että haluat poistaa mielenosoituksen <strong id="demoTitle"></strong>?</p>
-        <form method="POST" action="{{ url_for('admin_demo.delete_demo') }}">
-            <input type="hidden" name="demo_id" id="demo_id" value="">
-            <div class="button-container">
-                <button type="submit" class="button delete-confirm">Kyllä, poista</button>
-                <button type="button" class="button" onclick="closeModal()">Peruuta</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-
-<script src="{{ url_for('static', filename='js/demo_remo.js' )}}">
-
 {% endblock %}

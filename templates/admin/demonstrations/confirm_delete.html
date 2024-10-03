@@ -3,17 +3,14 @@
 {% block main_content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_confirm_delete.css') }}">
 
-<div class="container mt-4 p-4 border border-gray-300 rounded shadow">
-    <h2 class="text-2xl font-bold mb-4">Vahvista poisto</h2>
-    <p>Oletko varma, että haluat poistaa mielenosoituksen nimeltään <strong>"{{ demo.title }}"</strong>?</p>
-    <p class="text-sm text-gray-600">Huomaa, että tämä toiminto ei ole palautettavissa.</p>
+<div class="container mt-4">
+    <h2>Vahvista poisto</h2>
+    <p>Haluatko varmasti poistaa mielenosoituksen nimeltään "{{ demo.title }}"?</p>
 
-    <form method="POST" action="{{ url_for('admin_demo.delete_demo', demo_id=demo._id) }}" class="mt-4">
+    <form method="POST" action="{{ url_for('admin_demo.delete_demo', demo_id=demo._id) }}">
         <input type="hidden" name="confirm_delete" value="yes">
-        <button type="submit" class="delete-confirmation bg-red-500 text-white p-2 rounded hover:bg-red-600 transition" aria-label="Vahvista poisto">Kyllä, poista</button>
-        <a href="{{ url_for('admin_demo.demo_control') }}" class="button cancel-button bg-gray-300 text-black p-2 rounded ml-2 hover:bg-gray-400 transition" aria-label="Peruuta poisto">Peruuta</a>
+        <button type="submit" class="button delete-confirmation">Kyllä, poista</button>
+        <a href="{{ url_for('admin_demo.demo_control') }}" class="button cancel-button">Peruuta</a>
     </form>
 </div>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_confirm_delete.css') }}">
-
 {% endblock %}

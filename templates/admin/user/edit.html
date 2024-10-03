@@ -5,12 +5,12 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
-
 <div class="container mt-4">
+
     <h2>Muokkaa Käyttäjää</h2>
 
     <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}" class="container-form">
-        <!-- User Details Form -->
+        <!-- Form for editing user details -->
         <div class="form-group">
             <label for="username">Käyttäjänimi</label>
             <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
@@ -21,12 +21,13 @@
             <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
         </div>
 
-        <!-- Email Confirmation Checkbox -->
+        <!-- Approved checkbox -->
         <div class="approval-wrapper mt-4">
             <div class="form-group" id="approval-container">
                 <label for="confirmed">Sähköpostiosoite vahvistettu</label>
                 <div>
-                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.get('confirmed') %}checked{% endif %}>
+                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if
+                        user.get('confirmed') %}checked{% endif %}>
                     <span id="approval-status" class="status-text">
                         {% if user.get('confirmed') %}Kyllä{% else %}Ei{% endif %}
                     </span>
@@ -34,55 +35,25 @@
             </div>
         </div>
 
-        <!-- Role Selection -->
         <div class="form-group">
             <label for="role">Rooli</label>
             <select id="role" name="role" required>
-                <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>Käyttäjä</option>
-                <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Järjestelmänvalvoja</option>
-                <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>Superkäyttäjä</option>
+                <option value="user" {% if user['role']=='user' %}selected{% endif %}>Käyttäjä</option>
+                <option value="admin" {% if user['role']=='admin' %}selected{% endif %}>Järjestelmänvalvoja</option>
+                <option value="global_admin" {% if user['role']=='global_admin' %}selected{% endif %}>Superkäyttäjä
+                </option>
             </select>
         </div>
 
-        <h3>Organisaatiot ja oikeudet</h3>
+        <h3>Organisaatiot</h3>
         <div class="form-group">
             <input type="text" id="org-search" placeholder="Hae organisaatiota..." class="search-input">
         </div>
-
         <div class="organization-list">
             {% for org in organizations %}
             <div class="organization-item">
-                <div class="organization-header" onclick="togglePermissions('{{ org['_id'] }}')">
-                    <span>{{ org['name'] }}</span>
-                    <span id="toggle_icon_{{ org['_id'] }}" class="toggle-icon">&#9660;</span> <!-- Down arrow by default -->
-                    <input type="checkbox" id="org_{{ org['_id'] }}" name="organizations" value="{{ org['_id'] }}"
-                        {% if org['_id'] in user_organizations %}checked{% endif %} onchange="checkOrganization('{{ org['_id'] }}')">
-                </div>
-                
-                
-
-                <!-- Permissions Section -->
-                <div class="permissions-list" id="permissions_{{ org['_id'] }}" style="display: none;">
-                    <div class="select-all">
-                        <input type="checkbox" id="select_all_{{ org['_id'] }}" onchange="selectAllPermissions('{{ org['_id'] }}', this.checked)">
-                        <label for="select_all_{{ org['_id'] }}">Valitse kaikki</label>
-                    </div>
-
-                    <div class="permission-group">
-                        <!-- Loop through PERMISSIONS_GROUPS -->
-                        {% for group_name, permissions in PERMISSIONS_GROUPS.items() %}
-                        <h4>{{ group_name }}</h4>
-                        {% for perm in permissions %}
-                        <div class="permission-item">
-                            <input type="checkbox" id="perm_{{ org['_id'] }}_{{ perm['name'] }}" 
-                                name="permissions[{{ org['_id'] }}][]" value="{{ perm['name'] }}"
-                                {% if perm['name'] in user_permissions.get(org['_id'], []) %}checked{% endif %}>
-                            <label for="perm_{{ org['_id'] }}_{{ perm['name'] }}">{{ perm['description'] }}</label>
-                        </div>
-                        {% endfor %}
-                        {% endfor %}
-                    </div>
-                </div>
+                <input type="checkbox" id="org_{{ org['_id'] }}" name="organizations" value="{{ org['_id'] }}">
+                <label for="org_{{ org['_id'] }}">{{ org['name'] }}</label>
             </div>
             {% endfor %}
         </div>
@@ -90,83 +61,33 @@
         <button type="submit" class="submit-button">Tallenna muutokset</button>
     </form>
 </div>
-
 <script>
     // JavaScript for filtering organizations
     document.getElementById('org-search').addEventListener('input', function () {
-        const filter = this.value.toLowerCase();
-        const items = document.querySelectorAll('.organization-item');
+        let filter = this.value.toLowerCase();
+        let items = document.querySelectorAll('.organization-item');
 
         items.forEach(item => {
-            const text = item.querySelector('.organization-header span').textContent.toLowerCase();
+            let text = item.textContent.toLowerCase();
             item.style.display = text.includes(filter) ? '' : 'none';
         });
-        });
-    // Toggle permissions display based on organization checkbox// Toggle permissions visibility without affecting the checkbox state
-function togglePermissions(orgId) {
-    const permissionsDiv = document.getElementById(`permissions_${orgId}`);
-    const toggleIcon = document.getElementById(`toggle_icon_${orgId}`);
+    });
 
-    if (permissionsDiv.style.display === 'none' || permissionsDiv.style.display === '') {
-        permissionsDiv.style.display = 'block';  // Show the permissions div
-        toggleIcon.innerHTML = '&#9650;';  // Change to up arrow
-    } else {
-        permissionsDiv.style.display = 'none';  // Hide the permissions div
-        toggleIcon.innerHTML = '&#9660;';  // Change to down arrow
-    }
-}
-
-// When the checkbox changes (user manually checks/unchecks), handle permission granting/revoking
-function checkOrganization(orgId) {
-    const checkbox = document.getElementById(`org_${orgId}`);
-    const permissionsDiv = document.getElementById(`permissions_${orgId}`);
-
-    if (checkbox.checked) {
-        // When the organization is checked, we can show the permissions (if hidden)
-        permissionsDiv.style.display = 'block';
-    } else {
-        // If unchecked, visually hide the permissions (but they are revoked)
-        permissionsDiv.style.display = 'none';
-        // You can add extra logic here if needed for permission revocation
-    }
-}
-
-
-    // Select/Deselect all permissions for an organization
-    function selectAllPermissions(orgId, checked) {
-        const permissionCheckboxes = document.querySelectorAll(`#permissions_${orgId} .permission-item input[type="checkbox"]`);
-        permissionCheckboxes.forEach(checkbox => {
-            checkbox.checked = checked;
-        });
+    function toggleOrg(orgId) {
+        let checkbox = document.getElementById(`org_${orgId}`);
+        checkbox.checked = !checkbox.checked;
     }
 
-    // Automatically check the checkboxes for organizations and permissions that the user has
+    // Automatically check the checkboxes for organizations that the user is part of
     document.addEventListener('DOMContentLoaded', function () {
-        const userPermissions = {{ user_permissions | tojson }};
-        const userOrganizations = {{ organizations | tojson }};
-        
-        // Check organization checkboxes and toggle permissions
-        userOrganizations.forEach(org => {
-            const orgId = org._id;
-            const checkbox = document.getElementById(`org_${orgId}`);
-            try {
-                checkbox.checked = true;
-                togglePermissions(orgId);  // Show permissions for the checked organization
-            } catch (error) {
-                console.log(error);
-            }
-        });
-
-        // Check permission checkboxes
-        for (const orgId in userPermissions) {
-            const perms = userPermissions[orgId];
-            perms.forEach(perm => {
-                const permCheckbox = document.getElementById(`perm_${orgId}_${perm}`);
-                if (permCheckbox) {
-                    permCheckbox.checked = true;
-                }
-            });
+        let orgIds = {{ org_ids | tojson
+    }};
+    orgIds.forEach(orgId => {
+        let checkbox = document.getElementById(`org_${orgId}`);
+        if (checkbox) {
+            checkbox.checked = true;
         }
+    });
     });
 </script>
 

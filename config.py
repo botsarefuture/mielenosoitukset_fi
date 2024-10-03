@@ -1,28 +1,62 @@
 import os
 import yaml
-
+import logging
+from typing import Any, Dict
 
 class Config:
-    # Load configuration from YAML file
-    with open("config.yaml", "r") as file:
-        config = yaml.safe_load(file)
+    """Configuration class to load and manage application settings."""
 
-    SECRET_KEY = config.get("SECRET_KEY") or "secret_key"
-    MONGO_URI = config.get("MONGO_URI")
-    MONGO_DBNAME = config.get("MONGO_DBNAME")
-    MAIL_SERVER = config.get("MAIL_SERVER")
-    MAIL_PORT = config.get("MAIL_PORT") or 587
-    MAIL_USE_TLS = config.get("MAIL_USE_TLS", True)
-    MAIL_USERNAME = config.get("MAIL_USERNAME")
-    MAIL_PASSWORD = config.get("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = config.get("MAIL_DEFAULT_SENDER") or MAIL_USERNAME
-    PORT = config.get("PORT")
-    DEBUG = config.get("DEBUG")
-    # SERVER_NAME = config.get('SERVER_NAME') or 'www.mielenosoitukset.fi'
-    # PREFERRED_URL_SCHEME = config.get('PREFERRED_URL_SCHEME') or 'https'
+    # Configure logging for configuration loading
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-    # TODO: Ensure sensitive data such as 'SECRET_KEY', 'MAIL_PASSWORD', and 'MONGO_URI' are secured properly.
-    # TODO: Use a more secure method to manage and rotate secrets, such as a secrets manager or environment variable manager.
-    # TODO: Validate configuration values at runtime to ensure they meet expected formats and constraints (e.g., check if `MAIL_PORT` is a valid port number).
-    # TODO: Consider setting up logging to capture configuration loading errors for easier debugging.
-    # TODO: Review and update the default values to be more secure or more appropriate for your environment if used in production.
+    def load_yaml(file_path: str) -> Dict[str, Any]:
+        """Load configuration from a YAML file."""
+        try:
+            with open(file_path, "r") as file:
+                config = yaml.safe_load(file) or {}
+                logging.info(f"Loaded configuration from {file_path}")
+                return config
+        except Exception as e:
+            logging.error(f"Failed to load configuration from {file_path}: {e}")
+            return {}
+
+    # Load the configuration
+    config = load_yaml("config.yaml")
+
+    # MongoDB Configuration
+    MONGO_URI = config.get("MONGO_URI", "")
+    MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
+
+    # Mail Configuration
+    MAIL_CONFIG = config.get("MAIL", {})
+    MAIL_SERVER = MAIL_CONFIG.get("SERVER", "localhost")
+    MAIL_PORT = MAIL_CONFIG.get("PORT", 587)
+    MAIL_USE_TLS = MAIL_CONFIG.get("USE_TLS", True)
+    MAIL_USERNAME = MAIL_CONFIG.get("USERNAME", "")
+    MAIL_PASSWORD = MAIL_CONFIG.get("PASSWORD", "")
+    MAIL_DEFAULT_SENDER = MAIL_CONFIG.get("DEFAULT_SENDER", MAIL_USERNAME)
+
+    # Flask Configuration
+    SECRET_KEY = config.get("SECRET_KEY", "secret_key")
+    PORT = config.get("PORT", 8000)
+    DEBUG = config.get("DEBUG", False)
+
+    # S3 Configuration
+    S3_CONFIG = config.get("S3", {})
+    ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
+    SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
+    ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
+
+    @classmethod
+    def init_config(cls) -> None:
+        """Initialize configuration and log validation messages."""
+        if not cls.MONGO_URI:
+            cls.logger.warning("MONGO_URI is not set.")
+        if not cls.MAIL_USERNAME or not cls.MAIL_PASSWORD:
+            cls.logger.warning("Mail credentials are not set.")
+        if cls.SECRET_KEY == "secret_key":
+            cls.logger.warning("Default SECRET_KEY should be changed for security.")
+
+# Initialize the configuration
+Config.init_config()

@@ -170,36 +170,6 @@
         button.parentElement.remove();
     }
 </script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        flatpickr("#date", {
-            dateFormat: "d.m.Y", // Date format
-            altInput: true,
-            altFormat: "d.m.Y",
-            allowInput: true,
-        });
-
-        flatpickr("#start_time", {
-            enableTime: true, // Enable time selection
-            noCalendar: true, // Disable calendar
-            dateFormat: "H:i", // 24-hour format
-            altInput: true,
-            altFormat: "H:i", // Alternate input format for display
-            allowInput: true,
-            time_24hr: true, // Ensure 24-hour format
-        });
-
-        flatpickr("#end_time", {
-            enableTime: true,
-            noCalendar: true,
-            dateFormat: "H:i",
-            altInput: true,
-            altFormat: "H:i",
-            allowInput: true,
-            time_24hr: true, // Ensure 24-hour format
-        });
-    });
-</script>
-
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
 
 {% endblock %}

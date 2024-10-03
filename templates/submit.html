@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}" />
+<!-- Include Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <div class="container container-main-content">
   <h1>Ilmoita mielenosoituksesta</h1>
 
@@ -109,4 +115,6 @@
     display: none;
   }
 </style>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
 {% endblock %}

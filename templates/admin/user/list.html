@@ -22,21 +22,6 @@
         overflow: hidden; /* Ensures the border radius is respected */
     }
 
-    h2 {
-        color: #333; /* Darker text color for readability */
-        padding: 1.5rem; /* More padding for better spacing */
-        background-color: #007bff; /* Primary color background */
-        color: white; /* White text for contrast */
-        text-align: center; /* Centered text */
-        margin: 2rem 0; /* Increased vertical margin for more spacing */
-        border-radius: 8px; /* Rounded corners */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-        text-transform: uppercase; /* Uppercase letters for a modern touch */
-        letter-spacing: 1px; /* Slightly spaced letters for a sleek look */
-        border-bottom: 4px solid #0056b3; /* Bottom border for emphasis */
-        word-break: break-all;
-    }
-
     .button {
         display: inline-block;
         margin: 1rem 0.5rem; /* More margin on top */
@@ -148,8 +133,7 @@
 
 <div class="table-container">
 
-    <h2>Käyttäjät</h2>
-
+    <h2 id="tabletitle">Käyttäjät</h2>
 
     <form method="GET" class="search-form" action="{{ url_for('admin_user.user_control') }}">
         <label for="search" class="sr-only">Hae käyttäjiä:</label>
@@ -177,7 +161,6 @@
                     <td>{{ user.role }}</td>
                     <td class="actions-cell">
                         <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
-                        <a href="{{ url_for('admin_user.confirm_delete_user', user_id=user._id) }}" class="button delete-button"><i class="fas fa-trash"></i>Poista</a>
                     </td>
                 </tr>
                 {% endfor %}

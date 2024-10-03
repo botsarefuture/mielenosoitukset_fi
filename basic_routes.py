@@ -1,6 +1,6 @@
 import os
 from s3_utils import upload_image
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, abort
 from bson.objectid import ObjectId
 from datetime import datetime
 from classes import Organizer, Demonstration
@@ -66,10 +66,9 @@ def init_routes(app):
             event_type = request.form.get("type")
             route = request.form.get("route") if event_type == "marssi" else None
 
-            img = request.files.get('image')
+            img = request.files.get("image")
 
             photo_url = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
-
 
             if img:
                 # Save the uploaded file temporarily
@@ -77,9 +76,8 @@ def init_routes(app):
                 img.save(temp_file_path)
 
                 # Define the bucket name and upload the file
-                bucket_name = 'mielenosoitukset-fi1'  # Your S3 bucket name
+                bucket_name = "mielenosoitukset-fi1"  # Your S3 bucket name
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
-
 
             # Validation for form data
             if (
@@ -119,7 +117,7 @@ def init_routes(app):
                 route=route,
                 organizers=organizers,
                 approved=False,
-                img=photo_url
+                img=photo_url,
             )
 
             # Save to MongoDB
@@ -226,6 +224,11 @@ def init_routes(app):
             {"_id": ObjectId(demo_id), "approved": True}
         )
 
+        if not demo or demo is None:
+            abort(404)
+
+
+
         demo = Demonstration.from_dict(demo)
         demo = demo.to_dict()
 
@@ -306,3 +309,39 @@ def init_routes(app):
             return redirect(url_for("contact"))
 
         return render_template("contact.html")
+
+
+    @app.route("/organization/<org_id>")
+    def org(org_id):
+         # Fetch the organization details
+        _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+
+        if _org is None:
+            flash("Organisaatiota ei löytynyt.", "error")
+            return redirect(url_for("index"))
+
+        today = date.today()  # Get today's date
+
+        # Fetch upcoming demonstrations linked to this organization via organizers list
+        upcoming_demos_cursor = mongo.demonstrations.find({
+            "organizers": {
+                "$elemMatch": {
+                    "organization_id": ObjectId(org_id)  # Match the organization_id within the organizers list
+                }
+            },
+            "approved": True  # Ensure the demonstration is approved
+        })
+
+
+    # Filter and sort the demonstrations
+        upcoming_demos = []
+        for demo in upcoming_demos_cursor:
+            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()  # Convert date string to date object
+            if demo_date >= today:  # Only keep upcoming demos
+                upcoming_demos.append(demo)
+
+        # Sort by date
+        upcoming_demos.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+
+        # Render the organization page with the sorted upcoming demonstrations
+        return render_template("organizations/details.html", org=_org, upcoming_demos=upcoming_demos)

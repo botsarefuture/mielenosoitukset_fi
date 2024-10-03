@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ org.name }} - Tiedot
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
+
+<div class="org-container">
+    <div class="org-header">
+        <h1>{{ org.name }}</h1>
+        <p class="org-description">{{ org.description }}</p>
+        <p><strong>Email:</strong> <a href="mailto:{{ org.email }}">{{ org.email }}</a></p>
+        <p><strong>Website:</strong> <a href="{{ org.website }}" target="_blank">{{ org.website }}</a></p>
+        
+        {% if org.verified %}
+            <span class="badge badge-verified">Vahvistettu</span>
+        {% else %}
+            <span class="badge badge-unverified">Ei vahvistettu</span>
+        {% endif %}
+    </div>
+
+    {% if upcoming_demos %}
+        <h2>Tulevat Mielenosoitukset</h2>
+        <div class="upcoming-demos">
+            {% for demo in upcoming_demos %}
+                <div class="demo-box">
+                    <h3>{{ demo.title }}</h3>
+                    <p><strong>Päivämäärä:</strong> {{ demo.date }}</p>
+                    <p><strong>Osoite:</strong> {{ demo.address }}</p>
+                    <p><a class="btn" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">Lisätietoja</a></p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Ei tulevia mielenosoituksia.</p>
+    {% endif %}
+</div>
+{% endblock %}

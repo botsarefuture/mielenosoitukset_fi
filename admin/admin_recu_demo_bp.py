@@ -3,20 +3,25 @@ from flask_login import login_required
 from bson.objectid import ObjectId
 from datetime import datetime, date
 from utils import CITY_LIST
+from wrappers import permission_required
 
 from database_manager import DatabaseManager
 from wrappers import admin_required
 from classes import RecurringDemonstration, RepeatSchedule, Organizer
 
-admin_recu_demo_bp = Blueprint("admin_recu_demo", __name__, url_prefix="/admin/recu_demo")
+admin_recu_demo_bp = Blueprint(
+    "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
+)
 
 # Initialize MongoDB
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required
+@permission_required("LIST_RECURRING_DEMOS")
 def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
     search_query = request.args.get("search", "")
@@ -47,9 +52,9 @@ def recu_demo_control():
         filtered_recurring_demos = recurring_demos
 
     # Sort the filtered recurring demonstrations by date
-    #filtered_recurring_demos.sort(
+    # filtered_recurring_demos.sort(
     #    key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
-    #)
+    # )
 
     return render_template(
         "admin/recu_demonstrations/dashboard.html",
@@ -59,25 +64,29 @@ def recu_demo_control():
         show_past=show_past,
     )
 
+
 @admin_recu_demo_bp.route("/create_recu_demo", methods=["GET", "POST"])
 @login_required
 @admin_required
+@permission_required("CREATE_RECURRING_DEMO")
 def create_recu_demo():
     """Create a new recurring demonstration."""
     if request.method == "POST":
         return handle_recu_demo_form(request, is_edit=False)
 
     return render_template(
-        "admin/recu_demonstrations/form.html", 
+        "admin/recu_demonstrations/form.html",
         form_action=url_for("admin_recu_demo.create_recu_demo"),
-        title="Luo toistuva mielenosoitus", 
-        submit_button_text="Luo", 
-        city_list=CITY_LIST
+        title="Luo toistuva mielenosoitus",
+        submit_button_text="Luo",
+        city_list=CITY_LIST,
     )
+
 
 @admin_recu_demo_bp.route("/edit_recu_demo/<demo_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
+@permission_required("EDIT_RECURRING_DEMO")
 def edit_recu_demo(demo_id):
     """Edit recurring demonstration details."""
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
@@ -90,13 +99,14 @@ def edit_recu_demo(demo_id):
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
     return render_template(
-        "admin/recu_demonstrations/form.html", 
+        "admin/recu_demonstrations/form.html",
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
-        title="Muokkaa toistuvaa mielenosoitusta", 
+        title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
-        city_list=CITY_LIST
+        city_list=CITY_LIST,
     )
+
 
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a recurring demonstration."""
@@ -110,8 +120,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     address = request.form.get("address")
     event_type = request.form.get("type")
     route = request.form.get("route")
-    approved = request.form.get("approved") == 'on'
-    
+    approved = request.form.get("approved") == "on"
 
     # Process organizers
     organizers = []
@@ -126,12 +135,11 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         organizers.append(organizer)
         i += 1
 
-
     # Get the repeat schedule details
     repeat_schedule = {
         "frequency": request.form.get("frequency_type"),
         "interval": int(request.form.get("interval", 1)),
-        "weekday": request.form.get("weekday")  # Capture the weekday
+        "weekday": request.form.get("weekday"),  # Capture the weekday
     }
 
     demonstration_data = {
@@ -147,17 +155,18 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "route": route,
         "approved": approved,
         "repeat_schedule": repeat_schedule,
-        "linked_organizations": request.form.getlist("linked_organizations"),  # Collect linked organizations
+        "linked_organizations": request.form.getlist(
+            "linked_organizations"
+        ),  # Collect linked organizations
         "created_until": request.form.get("created_until"),  # New field
-        "repeating": request.form.get("repeating") == 'on',  # New field,,
+        "repeating": request.form.get("repeating") == "on",  # New field,,
         "organizers": [org.to_dict() for org in organizers],
     }
 
     try:
         if is_edit:
             mongo.recu_demos.update_one(
-                {"_id": ObjectId(demo_id)},
-                {"$set": demonstration_data}
+                {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
             flash("Toistuva mielenosoitus päivitetty onnistuneesti.")
         else:
@@ -171,9 +180,11 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         else:
             return redirect(url_for("admin_recu_demo.create_recu_demo"))
 
+
 @admin_recu_demo_bp.route("/delete_recu_demo/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
+@permission_required("DELETE_RECURRING_DEMO")
 def delete_recu_demo(demo_id):
     """Delete a recurring demonstration from the database."""
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
@@ -190,6 +201,7 @@ def delete_recu_demo(demo_id):
 
     return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
+
 @admin_recu_demo_bp.route("/confirm_delete_recu_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
@@ -202,6 +214,5 @@ def confirm_delete_recu_demo(demo_id):
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
     return render_template(
-        "admin/recu_demonstrations/confirm_delete.html", 
-        demo=recurring_demo
+        "admin/recu_demonstrations/confirm_delete.html", demo=recurring_demo
     )

@@ -16,6 +16,7 @@ client = db["mielenosoitukset"]
 recu_demos_collection = client["recu_demos"]  # Load from recu_demos
 demonstrations_collection = client["demonstrations"]  # For saving child demos
 
+
 def calculate_next_dates(demo_date, repeat_schedule):
     frequency = repeat_schedule.get("frequency")
     interval = repeat_schedule.get("interval", 1)
@@ -37,6 +38,7 @@ def calculate_next_dates(demo_date, repeat_schedule):
 
     return next_dates
 
+
 def handle_repeating_demonstrations():
     try:
         repeating_demos = recu_demos_collection.find()
@@ -46,7 +48,9 @@ def handle_repeating_demonstrations():
             try:
                 demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
                 repeat_schedule = demo.get("repeat_schedule", {})
-                created_until = demo.get("created_until", datetime.min)  # Load created_until
+                created_until = demo.get(
+                    "created_until", datetime.min
+                )  # Load created_until
                 if created_until is None:
                     created_until = datetime.now()
                 next_dates = calculate_next_dates(demo_date, repeat_schedule)
@@ -62,7 +66,10 @@ def handle_repeating_demonstrations():
                     )
 
                     if existing_demo:
-                        if existing_demo.get("created_datetime", datetime.min) < datetime.now():
+                        if (
+                            existing_demo.get("created_datetime", datetime.min)
+                            < datetime.now()
+                        ):
                             update_operation = {
                                 "title": demo["title"],
                                 "start_time": demo["start_time"],
@@ -120,12 +127,15 @@ def handle_repeating_demonstrations():
 
         if bulk_operations:
             result = demonstrations_collection.bulk_write(bulk_operations)
-            logger.info(f"Upserted {result.upserted_count} new or updated demonstrations.")
+            logger.info(
+                f"Upserted {result.upserted_count} new or updated demonstrations."
+            )
         else:
             logger.info("No new demonstrations were created or updated.")
 
     except Exception as e:
         logger.error(f"Error handling repeating demonstrations: {e}")
+
 
 def find_duplicates():
     try:
@@ -155,6 +165,7 @@ def find_duplicates():
         logger.error(f"Error finding duplicates: {e}")
         return []
 
+
 def remove_duplicates():
     try:
         duplicates = find_duplicates()
@@ -165,12 +176,16 @@ def remove_duplicates():
                 ids_to_keep = [duplicate["ids"][0]]
                 ids_to_remove = duplicate["ids"][1:]
 
-                result = demonstrations_collection.delete_many({"_id": {"$in": ids_to_remove}})
+                result = demonstrations_collection.delete_many(
+                    {"_id": {"$in": ids_to_remove}}
+                )
                 removed_count += result.deleted_count
                 logger.info(f"Removed {result.deleted_count} duplicate demonstrations.")
 
             except Exception as e:
-                logger.error(f"Error removing duplicates with ids {duplicate['ids']}: {e}")
+                logger.error(
+                    f"Error removing duplicates with ids {duplicate['ids']}: {e}"
+                )
 
         return removed_count
 
@@ -178,12 +193,16 @@ def remove_duplicates():
         logger.error(f"Error removing duplicates: {e}")
         return 0
 
+
 def main():
-    logger.info("Starting the process of handling repeating demonstrations and removing duplicates.")
+    logger.info(
+        "Starting the process of handling repeating demonstrations and removing duplicates."
+    )
 
     handle_repeating_demonstrations()
     removed_count = remove_duplicates()
     logger.info(f"Removed {removed_count} duplicate demonstrations.")
+
 
 if __name__ == "__main__":
     main()

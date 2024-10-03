@@ -9,7 +9,7 @@
 <div class="container mt-4">
     <h2>Muokkaa Käyttäjää</h2>
 
-    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user['_id']) }}" class="container-form">
+    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}" class="container-form">
         <!-- User Details Form -->
         <div class="form-group">
             <label for="username">Käyttäjänimi</label>
@@ -26,9 +26,9 @@
             <div class="form-group" id="approval-container">
                 <label for="confirmed">Sähköpostiosoite vahvistettu</label>
                 <div>
-                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.get('confirmed') %}checked{% endif %}>
+                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
                     <span id="approval-status" class="status-text">
-                        {% if user.get('confirmed') %}Kyllä{% else %}Ei{% endif %}
+                        {% if user.confirmed %}Kyllä{% else %}Ei{% endif %}
                     </span>
                 </div>
             </div>
@@ -87,6 +87,37 @@
             {% endfor %}
         </div>
 
+        <h3>Globaalit Oikeudet</h3>
+<div class="global-permissions">
+    <div class="organization-item">
+      
+
+        <!-- Permissions Section -->
+        <div class="permissions-list" id="permissions_global" style="display: block;">
+            <div class="select-all">
+                <input type="checkbox" id="select_all_global" onchange="selectAllPermissions('global', this.checked)">
+                <label for="select_all_global">Valitse kaikki</label>
+            </div>
+
+            <div class="permission-group">
+                <!-- Loop through PERMISSIONS_GROUPS -->
+                {% for group_name, permissions in PERMISSIONS_GROUPS.items() %}
+                <h4>{{ group_name }}</h4>
+                {% for perm in permissions %}
+                <div class="permission-item">
+                    <input type="checkbox" id="perm_global_{{ perm['name'] }}" 
+                        name="permissions[global][]" value="{{ perm['name'] }}"
+                        {% if perm['name'] in global_permissions %}checked{% endif %}>
+                    <label for="perm_global_{{ perm['name'] }}">{{ perm['description'] }}</label>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
         <button type="submit" class="submit-button">Tallenna muutokset</button>
     </form>
 </div>
@@ -118,7 +149,11 @@ function togglePermissions(orgId) {
 
 // When the checkbox changes (user manually checks/unchecks), handle permission granting/revoking
 function checkOrganization(orgId) {
-    const checkbox = document.getElementById(`org_${orgId}`);
+    if (orgId == "global") {
+    const checkbox = document.getElementById(orgId);}
+    else {
+    const checkbox = document.getElementById(`org_${orgId}`);}
+
     const permissionsDiv = document.getElementById(`permissions_${orgId}`);
 
     if (checkbox.checked) {
@@ -169,5 +204,6 @@ function checkOrganization(orgId) {
         }
     });
 </script>
+
 
 {% endblock %}

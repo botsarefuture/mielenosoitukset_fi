@@ -1,0 +1,68 @@
+.org-container {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 800px; /* Responsive design */
+}
+
+.org-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.org-description {
+    font-size: 1.2em;
+    color: #666;
+    margin: 10px 0;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.badge-verified {
+    background-color: #28a745; /* Green for verified */
+    color: white;
+}
+
+.badge-unverified {
+    background-color: #dc3545; /* Red for unverified */
+    color: white;
+}
+
+.upcoming-demos {
+    margin-top: 20px;
+}
+
+.demo-box {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+}
+
+.demo-box h3 {
+    margin: 0;
+    color: #ff6f61; /* Accent color for demo titles */
+}
+
+.btn {
+    display: inline-block;
+    background-color: #008cba; /* Button color */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0072a8; /* Darker shade for hover */
+}

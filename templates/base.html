@@ -21,27 +21,6 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <!-- Matomo -->
-    <script>
-      var _paq = (window._paq = window._paq || []);
-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-      _paq.push(["trackPageView"]);
-      _paq.push(["enableLinkTracking"]);
-      (function () {
-        var u = "//matomo.luova.club/";
-        _paq.push(["setTrackerUrl", u + "matomo.php"]);
-        _paq.push(["setSiteId", "1"]);
-        var d = document,
-          g = d.createElement("script"),
-          s = d.getElementsByTagName("script")[0];
-        g.async = true;
-        g.src = u + "matomo.js";
-        s.parentNode.insertBefore(g, s);
-      })();
-    </script>
-    <!-- End Matomo Code -->
     <style>
       /* Yleiset tyylit täällä */
     
@@ -150,64 +129,60 @@
           margin-right: 0;
           margin-bottom: 10px;
         }
-
-
       }
     </style>
-    
-
   </head>
 
   <body>
     <!-- Navigation Bar -->
-     <header>
-    <nav class="navbar">
-      <div class="container bg-header-footer">
-        <!-- Logo and Home Link -->
-        <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
+    <header>
+      <nav class="navbar">
+        <div class="container bg-header-footer" style="display: flex; align-items: center; justify-content: space-between;">
+          <!-- Logo and Home Link -->
+          <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
 
-        <!-- Toggle Button for Mobile Navigation -->
-        <button class="navbar-toggle" aria-label="Avaa valikko">
-          <i class="fas fa-bars">☰</i>
-        </button>
+          <!-- Toggle Button for Mobile Navigation -->
+          <button class="navbar-toggle" aria-label="Avaa valikko">
+            <i class="fas fa-bars">☰</i>
+          </button>
 
-        <!-- Navigation Links -->
-        <ul class="nav-links" style="z-index: 100;">
-          <li><a href="{{ url_for('index') }}">Etusivu</a></li>
-          <li>
-            <a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a>
-          </li>
-          <li>
-            <a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
-          </li>
+          <!-- Navigation Links -->
+          <ul class="nav-links" style="z-index: 100;">
+            <li><a href="{{ url_for('index') }}">Etusivu</a></li>
+            <li>
+              <a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a>
+            </li>
+            <li>
+              <a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
+            </li>
 
-          <!-- Conditional Links for Authenticated Users -->
-          {% if current_user.is_authenticated %}
-          <!-- User Profile Dropdown -->
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle">
-              {% if current_user.profile_picture %}
-                <img src="{{ current_user.profile_picture }}" alt="Profile Picture" class="profile-picture" />
-              {% endif %}
-              <span>{{ current_user.displayname if current_user.displayname else current_user.username }}</span>
-              <i class="fas fa-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-              <li><a href="{{ url_for('auth.profile') }}">Profiili</a></li>
-              <!--<li><a href="#">Asetukset</a></li>-->
-              <li><a href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a></li>
-            </ul>
-          </li>
-          {% else %}
-          <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
-          {% endif %}
-        </ul>
-      </div>
-    </nav>
-    {% if current_user.global_admin %}
-    {% include "sidebar.html" %}
-    {% endif %}
+            <!-- Conditional Links for Authenticated Users -->
+            {% if current_user.is_authenticated %}
+            <!-- User Profile Dropdown -->
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle">
+                {% if current_user.profile_picture %}
+                  <img src="{{ current_user.profile_picture }}" alt="Profile Picture" class="profile-picture" />
+                {% endif %}
+                <span>{{ current_user.displayname if current_user.displayname else current_user.username }}</span>
+                <i class="fas fa-chevron-down"></i>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ url_for('auth.profile') }}">Profiili</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a></li>
+              </ul>
+            </li>
+            {% else %}
+            <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </nav>
+      {% if current_user.global_admin %}
+      {% include "sidebar.html" %}
+      {% endif %}
     </header>
+
     <!-- Flash Messages -->
     {% if get_flashed_messages(with_categories=True) %}
     <ul class="flash-messages">
@@ -229,15 +204,11 @@
       <div class="container-header-footer">
         <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
         <ul class="footer-links">
-          <!-- Links to Info and Privacy Policy pages -->
-          <li><a href="{{ url_for('info') }}">Tietoa sivustosta</a></li>
-          |
-          <li><a href="{{ url_for('privacy') }}">Tietosuojaseloste</a></li>
-          |
+          <li><a href="{{ url_for('info') }}">Tietoa sivustosta</a></li> |
+          <li><a href="{{ url_for('privacy') }}">Tietosuojaseloste</a></li> |
           <li><a href="{{ url_for('contact')}}">Ota yhteyttä</a></li>
         </ul>
         <ul class="social-media-links">
-          <!-- Social Media Links -->
           <li>
             <a href="https://www.instagram.com/mielenosoitukset" target="_blank"
               ><i class="fab fa-instagram"></i> Instagram</a

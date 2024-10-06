@@ -1,27 +1,20 @@
-/* General Styles */
-body {
-    font-family: 'Anton', sans-serif;
-    background-color: #f9f9f9;
-    color: #333;
-}
-
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
 }
 
-/* Profile Header */
-.profile-header {
-    background-color: #ff6f61; /* Soft rebellious color */
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    position: relative;
+.profile-container {
+    background-color: var(--focus-color); /* Soft rebellious color */
+    text-align: center; /* Center content for better alignment */
+display: grid;
+align-items: center;
 }
 
-.rebellious-header {
-    position: relative;
+/* Profile Header */
+.profile-header {
+    padding: 30px; /* Consistent padding */
+    border-radius: 10px; /* Rounded corners */
 }
 
 /* Profile Details */
@@ -32,97 +25,109 @@ body {
 }
 
 /* Profile Picture */
-.profile-picture {
-    margin-bottom: 15px;
+.profile-details .profile-picture {
+    margin-bottom: 20px; /* Increased spacing for visual separation */
+    width: 150px;
+    height: 150px;
+
 }
 
 .profile-img {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    border: 3px solid #fff;
+    width: 150px; /* Consistent size */
+    height: 150px; /* Consistent size */
+    border-radius: 50%; /* Circular profile picture */
+    border: 4px solid #fff; /* White border for contrast */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    object-fit: cover;
 }
 
 /* Profile Info */
 .user-name {
-    font-size: 2em;
-    font-weight: bold;
-    color: #fff;
-    text-align: center;
+    font-size: 2.2em; /* Increased font size for emphasis */
+    font-weight: bold; /* Emphasize user name */
+    color: #fff; /* White text for better contrast */
+    margin: 10px 0; /* Spacing for clarity */
 }
 
-.email, .bio {
-    font-size: 1.1em;
+.email,
+.bio {
+    font-size: 1.1em; /* Consistent size for all text */
     margin: 5px 0;
     text-align: center;
-    color: #fff;
+    color: #fff; /* White text for visibility */
 }
 
 .badge-admin {
     background-color: #4caf50; /* Green for admin badge */
     color: white;
-    padding: 5px 10px;
+    padding: 6px 12px; /* Consistent padding */
     border-radius: 20px;
-    font-size: 0.9em;
-    margin-top: 10px;
+    font-size: 0.9em; /* Smaller font size for badges */
+    margin-top: 10px; /* Spacing above badge */
 }
 
 /* Organizations */
 .organizations {
     width: 100%;
-    margin-top: 20px;
+    margin-top: 20px; /* Spacing above organizations section */
 }
 
 .org-container {
-    background-color: #fff;
-    border: 2px solid #ff6f61;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 10px 0;
+    background-color: #fff; /* White background for organization boxes */
+    border: 2px solid #ff6f61; /* Border color matching profile header */
+    border-radius: 8px; /* Rounded corners */
+    padding: 15px; /* Padding for internal spacing */
+    margin: 10px 0; /* Spacing between organization boxes */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     position: relative;
+    transition: transform 0.2s; /* Smooth transition effect */
+}
+
+.org-container:hover {
+    transform: translateY(-2px); /* Lift effect on hover */
 }
 
 .org-container p {
     margin: 0;
-    font-size: 1.2em;
+    font-size: 1.2em; /* Consistent font size for organization names */
     font-weight: bold;
+    color: #333; /* Darker text color for visibility */
 }
 
 .org-link {
     display: inline-block;
-    margin-top: 10px;
-    padding: 8px 12px;
-    background-color: #ff6f61; /* Same rebellious color */
+    margin-top: 10px; /* Spacing above the link */
+    padding: 8px 12px; /* Sufficient padding for click area */
+    background-color: #ff6f61; /* Button color consistent with theme */
     color: white;
     text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    border-radius: 5px; /* Rounded button corners */
+    transition: background-color 0.3s; /* Transition for hover effect */
 }
 
 .org-link:hover {
-    background-color: #e65c50; /* Darker shade on hover */
+    background-color: #e65c50; /* Darker shade for hover effect */
 }
 
 /* Button Group */
 .button-group {
-    margin-top: 20px;
+    margin-top: 20px; /* Spacing above button group */
 }
 
 .btn {
-    padding: 10px 15px;
+    padding: 10px 15px; /* Consistent button padding */
     border: none;
-    border-radius: 5px;
+    border-radius: 5px; /* Rounded button corners */
     cursor: pointer;
-    font-size: 1em;
-    margin: 5px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 1em; /* Consistent font size for buttons */
+    margin: 5px; /* Margin for spacing between buttons */
+    transition: background-color 0.3s, transform 0.2s; /* Smooth transition effects */
 }
 
 .btn-edit {
     background-color: #4caf50; /* Edit button color */
     color: white;
+    text-decoration: none;
 }
 
 .btn-follow {
@@ -147,20 +152,33 @@ body {
     }
     
     .profile-img {
-        width: 120px;
-        height: 120px;
+        width: 120px; /* Smaller image size for mobile */
+        height: 120px; /* Smaller image size for mobile */
     }
 
     .user-name {
-        font-size: 1.8em;
+        font-size: 1.8em; /* Decreased font size for mobile */
     }
 
-    .email, .bio {
-        font-size: 1em;
+    .email,
+    .bio {
+        font-size: 1em; /* Decreased font size for mobile */
     }
     
     .btn {
-        width: 100%; /* Full-width buttons on smaller screens */
-        margin: 10px 0;
+        width: 100%; /* Full-width buttons on mobile */
+        margin: 10px 0; /* Margin adjustments */
+    }
+
+    .org-container {
+        padding: 10px; /* Adjusted padding for mobile */
+    }
+
+    .org-container p {
+        font-size: 1em; /* Decreased font size for mobile */
+    }
+
+    .org-link {
+        padding: 8px 10px; /* Adjusted padding for links */
     }
 }

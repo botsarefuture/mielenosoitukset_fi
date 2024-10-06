@@ -28,7 +28,7 @@ body {
   display: flex;
   justify-content: space-between; /* Ensures even spacing between items */
   align-items: center;
-  position: relative;
+  position: relative; /* Ensure dropdown menus position correctly */
 }
 
 .navbar .container {
@@ -135,46 +135,6 @@ body {
   width: 100%;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .navbar .nav-links {
-    flex-direction: column; /* Stack nav links vertically */
-    width: 100%; /* Full width for vertical nav links */
-    position: absolute;
-    top: 60px; /* Adjust if necessary */
-    left: 0;
-    background-color: #0033a0; /* Dark Blue from the guide */
-    display: none; /* Hide by default on small screens */
-  }
-
-  .navbar .nav-links.active {
-    display: flex; /* Show when active */
-  }
-
-  .navbar .nav-links li {
-    margin: 10px 0; /* Space between links */
-  }
-
-  .navbar .nav-links a {
-    display: block; /* Make links block level */
-    padding: 10px; /* Larger padding for touch targets */
-  }
-
-  .navbar-toggle {
-    display: block; /* Show toggle button on small screens */
-  }
-}
-
-@media (max-width: 480px) {
-  .navbar .logo {
-    font-size: 1.2em; /* Slightly smaller logo text on very small screens */
-  }
-
-  .footer {
-    padding: 15px 0; /* Reduce footer padding on small screens */
-  }
-}
-
 /* Delete form styling */
 .delete-form {
   display: inline;
@@ -233,4 +193,49 @@ header {
 
 footer {
   flex: 0 0 auto; /* Footer in the last row, does not grow */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar .nav-links {
+    flex-direction: column; /* Stack nav links vertically */
+    width: 100vw; /* Full viewport width */
+    height: 100vh; /* Full viewport height */
+    position: fixed; /* Fix position to cover the entire screen */
+    left: 0; /* Align to the left */
+    top: 0; /* Align to the top */
+    background-color: #0033a0; /* Dark Blue from the guide */
+    display: none; /* Hide by default on small screens */
+    z-index: 1000; /* Ensure the dropdown appears above other content */
+  }
+
+  .navbar .nav-links.active {
+    display: flex; /* Show when active */
+  }
+
+  .navbar .nav-links li {
+    margin: 20px 0; /* Space between links */
+    text-align: center; /* Center-align text */
+  }
+
+  .navbar .nav-links a {
+    display: block; /* Make links block level */
+    padding: 20px; /* Larger padding for touch targets */
+    font-size: 1.5em; /* Increase font size for readability */
+    color: white; /* White text for contrast */
+  }
+
+  .navbar-toggle {
+    display: block; /* Show toggle button on small screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar .logo {
+    font-size: 1.2em; /* Slightly smaller logo text on very small screens */
+  }
+
+  .footer {
+    padding: 15px 0; /* Reduce footer padding on small screens */
+  }
 }

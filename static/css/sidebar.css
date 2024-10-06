@@ -160,6 +160,7 @@
     height: min-content;
     position: relative;
     box-shadow: none;
+    display: none;
   }
   
 

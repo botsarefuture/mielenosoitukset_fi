@@ -13,9 +13,10 @@ from scripts.update_demo_organizers import main as update_main
 
 # Create and configure the scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(repeat_main, 'interval', hours=24)  # Run every 60 seconds
-scheduler.add_job(update_main, 'interval', hours=1)
+scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 60 seconds
+scheduler.add_job(update_main, "interval", hours=1)
 scheduler.start()
+
 
 def create_app():
     # Initialize EmailSender

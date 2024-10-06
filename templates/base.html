@@ -3,135 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+    <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
     {% block meta %}
     {% endblock %}
     <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/flash.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      integrity="sha512-Fo3rlrZj/kTc6n5bLvNHrHDbOUjAUnyM4Q2O5U4V2Q5rHkLXbqE4sFJtc5FTCFBo5d2TwLnmH0qtr2k9as3D9w=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    <style>
-      /* Yleiset tyylit täällä */
-    
-      /* Dropdown Container */
-      .dropdown .user-info {
-        display: flex;
-        align-items: center;
-      }
-    
-      /* User Profile Dropdown */
-      .dropdown {
-        position: relative;
-        display: inline-block;
-      }
-    
-      /* Dropdown Toggle: Center image and text vertically */
-      .dropdown-toggle {
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        text-decoration: none;
-        color: white;
-      }
-    
-      /* Profile Picture */
-      .dropdown .profile-picture {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        margin-right: 10px;
-        object-fit: cover; /* Ensures image stays within the circle */
-      }
-    
-      /* Adjust text to vertically align with the image */
-      .dropdown-toggle span {
-        display: inline-block;
-        vertical-align: middle;
-      }
-    
-      /* Dropdown Menu */
-      .dropdown-menu {
-        display: none;
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background-color: #333;
-        border-radius: 5px;
-        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-        z-index: 1000;
-      }
-    
-      /* Show dropdown when active */
-      .dropdown-menu.show {
-        display: block;
-      }
-    
-      /* Dropdown Menu Links */
-      .dropdown-menu li {
-        list-style: none;
-      }
-    
-      /* Styling for Links */
-      .dropdown-menu a {
-        display: block;
-        padding: 10px 20px;
-        color: white;
-        text-decoration: none;
-      }
-    
-      /* Hover effect for dropdown links */
-      .dropdown-menu a:hover {
-        background-color: #575757;
-      }
-    
-      /* Media Queries for Mobile Devices */
-      @media (max-width: 768px) {
-        /* Navbar Toggle Button */
-        .navbar-toggle {
-          display: block;
-        }
-    
-        /* Hide navigation links on mobile */
-        .nav-links {
-          display: none;
-          flex-direction: column;
-        }
-    
-        /* Show navigation links when active */
-        .nav-links.active {
-          display: flex;
-        }
-    
-        /* Adjust dropdown menu for mobile */
-        .dropdown-menu {
-          position: static;
-          box-shadow: none;
-          width: 100%;
-        }
-    
-        .dropdown-toggle {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-    
-        .dropdown .profile-picture {
-          margin-right: 0;
-          margin-bottom: 10px;
-        }
-      }
-    </style>
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <!-- Matomo -->
     <script>
       var _paq = (window._paq = window._paq || []);
@@ -155,53 +36,7 @@
 
   <body>
     <!-- Navigation Bar -->
-    <header>
-      <nav class="navbar">
-        <div class="container bg-header-footer" style="display: flex; align-items: center; justify-content: space-between;">
-          <!-- Logo and Home Link -->
-          <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
-
-          <!-- Toggle Button for Mobile Navigation -->
-          <button class="navbar-toggle" aria-label="Avaa valikko">
-            <i class="fas fa-bars">☰</i>
-          </button>
-
-          <!-- Navigation Links -->
-          <ul class="nav-links" style="z-index: 100;">
-            <li><a href="{{ url_for('index') }}">Etusivu</a></li>
-            <li>
-              <a href="{{ url_for('demonstrations') }}">Mielenosoitukset</a>
-            </li>
-            <li>
-              <a href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
-            </li>
-
-            <!-- Conditional Links for Authenticated Users -->
-            {% if current_user.is_authenticated %}
-            <!-- User Profile Dropdown -->
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle">
-                {% if current_user.profile_picture %}
-                  <img src="{{ current_user.profile_picture }}" alt="Profile Picture" class="profile-picture" />
-                {% endif %}
-                <span>{{ current_user.displayname if current_user.displayname else current_user.username }}</span>
-                <i class="fas fa-chevron-down"></i>
-              </a>
-              <ul class="dropdown-menu">
-                <li><a href="{{ url_for('auth.profile') }}">Profiili</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Kirjaudu ulos</a></li>
-              </ul>
-            </li>
-            {% else %}
-            <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
-            {% endif %}
-          </ul>
-        </div>
-      </nav>
-      {% if current_user.global_admin %}
-      {% include "sidebar.html" %}
-      {% endif %}
-    </header>
+    {% include "header.html" %}
 
     <!-- Flash Messages -->
     {% if get_flashed_messages(with_categories=True) %}
@@ -230,9 +65,7 @@
         </ul>
         <ul class="social-media-links">
           <li>
-            <a href="https://www.instagram.com/mielenosoitukset" target="_blank"
-              ><i class="fab fa-instagram"></i> Instagram</a
-            >
+            <a href="https://www.instagram.com/mielenosoitukset" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
           </li>
         </ul>
       </div>
@@ -252,8 +85,20 @@
         .querySelector(".dropdown-toggle")
         .addEventListener("click", function (event) {
           event.preventDefault();
-          document.querySelector(".dropdown-menu").classList.toggle("show");
+          const dropdownMenu = this.nextElementSibling;
+          const isOpen = dropdownMenu.classList.toggle("show");
+          this.setAttribute("aria-expanded", isOpen);
         });
+
+      // Close dropdown when clicking outside
+      window.addEventListener("click", function (event) {
+        const dropdowns = document.querySelectorAll(".dropdown-menu");
+        dropdowns.forEach(function (dropdown) {
+          if (!dropdown.parentElement.contains(event.target)) {
+            dropdown.classList.remove("show");
+          }
+        });
+      });
     </script>
   </body>
 </html>

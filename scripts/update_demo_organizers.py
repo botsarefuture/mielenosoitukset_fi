@@ -1,14 +1,15 @@
 import logging
 from bson.objectid import ObjectId
-#from database_manager import DatabaseManager
-#from classes import Demonstration
+
+# from database_manager import DatabaseManager
+# from classes import Demonstration
 
 import importlib
 import sys
 import os
 
 # Get the parent directory
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
 
 database_manager = importlib.import_module("database_manager")
@@ -28,6 +29,7 @@ db = instance.get_db()
 # Collection references
 DEMOCOL = db.demonstrations
 ORGCOL = db.organizations
+
 
 def find_organization(org_id):
     """
@@ -50,6 +52,7 @@ def find_organization(org_id):
 
     return ORGCOL.find_one({"_id": org_id}), org_id
 
+
 def find_organization_by_name(org_name):
     """
     Find an organization by its name.
@@ -61,6 +64,7 @@ def find_organization_by_name(org_name):
         dict: The organization document (if found).
     """
     return ORGCOL.find_one({"name": org_name})
+
 
 def update_demo_organizers(demo):
     """
@@ -78,7 +82,9 @@ def update_demo_organizers(demo):
             organizer.organization_id = org_id
 
             if organization is None:
-                logger.error(f"Organization with ID {organizer.organization_id} not found, skipping...")
+                logger.error(
+                    f"Organization with ID {organizer.organization_id} not found, skipping..."
+                )
                 continue
         else:
             # Try to match organizer's name with organization name
@@ -86,22 +92,31 @@ def update_demo_organizers(demo):
 
             if organization:
                 logger.info(f"Matched organization by name: {organization['name']}")
-                organizer.organization_id = ObjectId(organization["_id"])  # Ensure it is an ObjectId
+                organizer.organization_id = ObjectId(
+                    organization["_id"]
+                )  # Ensure it is an ObjectId
             else:
-                logger.warning(f"Could not match organizer {organizer.name} with any organization.")
+                logger.warning(
+                    f"Could not match organizer {organizer.name} with any organization."
+                )
                 continue
 
     # After processing, update the demonstration with the correct organization id
-    DEMOCOL.update_one({"_id": demo["_id"]}, {"$set": {"organizers": [o.to_dict() for o in _demo.organizers]}})
+    DEMOCOL.update_one(
+        {"_id": demo["_id"]},
+        {"$set": {"organizers": [o.to_dict() for o in _demo.organizers]}},
+    )
+
 
 def main():
     """
     Main function to update organizers' organization IDs in all demonstrations.
     """
     demonstrations = list(DEMOCOL.find())
-    
+
     for demo in demonstrations:
         update_demo_organizers(demo)
+
 
 if __name__ == "__main__":
     main()

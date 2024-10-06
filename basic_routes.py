@@ -25,7 +25,9 @@ def init_routes(app):
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
         # Create the XML structure
-        urlset = ET.Element("urlset", xmlns="http://www.sitemaps.org/schemas/sitemap-image/1.1")
+        urlset = ET.Element(
+            "urlset", xmlns="http://www.sitemaps.org/schemas/sitemap-image/1.1"
+        )
 
         # List of static routes to include in the sitemap
         routes = [
@@ -45,11 +47,15 @@ def init_routes(app):
             loc.text = route["loc"]
 
         # Fetch all approved demonstrations from the database
-        demonstrations = demonstrations_collection.find({"approved": True, "hide": {"$exists": False}})
+        demonstrations = demonstrations_collection.find(
+            {"approved": True, "hide": {"$exists": False}}
+        )
         for demo in demonstrations:
             url = ET.SubElement(urlset, "url")
             loc = ET.SubElement(url, "loc")
-            loc.text = url_for("demonstration_detail", demo_id=demo["_id"], _external=True)
+            loc.text = url_for(
+                "demonstration_detail", demo_id=demo["_id"], _external=True
+            )
 
         # Convert the XML tree to a string
         xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
@@ -62,7 +68,9 @@ def init_routes(app):
         search_query = request.args.get("search", "")
         today = date.today()  # Use date.today() to get only the date part
 
-        demonstrations = demonstrations_collection.find({"approved": True, "hide": {"$exists": False}})
+        demonstrations = demonstrations_collection.find(
+            {"approved": True, "hide": {"$exists": False}}
+        )
 
         filtered_demonstrations = []
         for demo in demonstrations:
@@ -180,7 +188,9 @@ def init_routes(app):
         today = date.today()  # Use date.today() to get only the date part
 
         # Retrieve all approved demonstrations
-        demonstrations = demonstrations_collection.find({"approved": True, "hide": {"$exists": False}})
+        demonstrations = demonstrations_collection.find(
+            {"approved": True, "hide": {"$exists": False}}
+        )
 
         # Filter out past demonstrations manually
         filtered_demonstrations = []
@@ -263,8 +273,6 @@ def init_routes(app):
         if not demo or demo is None:
             abort(404)
 
-
-
         demo = Demonstration.from_dict(demo)
         demo = demo.to_dict()
 
@@ -346,10 +354,9 @@ def init_routes(app):
 
         return render_template("contact.html")
 
-
     @app.route("/organization/<org_id>")
     def org(org_id):
-         # Fetch the organization details
+        # Fetch the organization details
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
         if _org is None:
@@ -359,25 +366,34 @@ def init_routes(app):
         today = date.today()  # Get today's date
 
         # Fetch upcoming demonstrations linked to this organization via organizers list
-        upcoming_demos_cursor = mongo.demonstrations.find({
-            "organizers": {
-                "$elemMatch": {
-                    "organization_id": ObjectId(org_id)  # Match the organization_id within the organizers list
-                }
-            },
-            "approved": True  # Ensure the demonstration is approved
-        })
+        upcoming_demos_cursor = mongo.demonstrations.find(
+            {
+                "organizers": {
+                    "$elemMatch": {
+                        "organization_id": ObjectId(
+                            org_id
+                        )  # Match the organization_id within the organizers list
+                    }
+                },
+                "approved": True,  # Ensure the demonstration is approved
+            }
+        )
 
-
-    # Filter and sort the demonstrations
+        # Filter and sort the demonstrations
         upcoming_demos = []
         for demo in upcoming_demos_cursor:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()  # Convert date string to date object
+            demo_date = datetime.strptime(
+                demo["date"], "%d.%m.%Y"
+            ).date()  # Convert date string to date object
             if demo_date >= today:  # Only keep upcoming demos
                 upcoming_demos.append(demo)
 
         # Sort by date
-        upcoming_demos.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        upcoming_demos.sort(
+            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        )
 
         # Render the organization page with the sorted upcoming demonstrations
-        return render_template("organizations/details.html", org=_org, upcoming_demos=upcoming_demos)
+        return render_template(
+            "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
+        )

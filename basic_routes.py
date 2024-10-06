@@ -26,7 +26,7 @@ def init_routes(app):
         search_query = request.args.get("search", "")
         today = date.today()  # Use date.today() to get only the date part
 
-        demonstrations = demonstrations_collection.find({"approved": True})
+        demonstrations = demonstrations_collection.find({"approved": True, "hide": {"$exists": False}})
 
         filtered_demonstrations = []
         for demo in demonstrations:

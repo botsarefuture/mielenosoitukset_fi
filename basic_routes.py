@@ -1,6 +1,6 @@
 import os
 from s3_utils import upload_image
-from flask import render_template, request, redirect, url_for, flash, abort
+from flask import render_template, request, redirect, url_for, flash, abort, Response
 from bson.objectid import ObjectId
 from datetime import datetime
 from classes import Organizer, Demonstration
@@ -8,6 +8,7 @@ from database_manager import DatabaseManager
 from flask_login import current_user
 from datetime import date
 from utils import CITY_LIST
+import xml.etree.ElementTree as ET
 
 from emailer.EmailSender import EmailSender, EmailJob
 
@@ -21,6 +22,41 @@ demonstrations_collection = mongo["demonstrations"]
 
 
 def init_routes(app):
+    @app.route("/sitemap.xml", methods=["GET"])
+    def sitemap():
+        # Create the XML structure
+        urlset = ET.Element("urlset", xmlns="http://www.sitemaps.org/schemas/sitemap-image/1.1")
+
+        # List of static routes to include in the sitemap
+        routes = [
+            {"loc": url_for("index", _external=True)},
+            {"loc": url_for("submit", _external=True)},
+            {"loc": url_for("demonstrations", _external=True)},
+            {"loc": url_for("info", _external=True)},
+            {"loc": url_for("privacy", _external=True)},
+            {"loc": url_for("contact", _external=True)},
+            # Add more static routes as needed
+        ]
+
+        # Populate the XML with the static routes
+        for route in routes:
+            url = ET.SubElement(urlset, "url")
+            loc = ET.SubElement(url, "loc")
+            loc.text = route["loc"]
+
+        # Fetch all approved demonstrations from the database
+        demonstrations = demonstrations_collection.find({"approved": True, "hide": {"$exists": False}})
+        for demo in demonstrations:
+            url = ET.SubElement(urlset, "url")
+            loc = ET.SubElement(url, "loc")
+            loc.text = url_for("demonstration_detail", demo_id=demo["_id"], _external=True)
+
+        # Convert the XML tree to a string
+        xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
+
+        return Response(xml_str, mimetype="application/xml")
+
+
     @app.route("/")
     def index():
         search_query = request.args.get("search", "")

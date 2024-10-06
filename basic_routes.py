@@ -62,6 +62,7 @@ def init_routes(app):
 
         return Response(xml_str, mimetype="application/xml")
 
+
     @app.route("/")
     def index():
         search_query = request.args.get("search", "")

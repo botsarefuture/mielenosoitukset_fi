@@ -5,9 +5,10 @@ from database_manager import DatabaseManager  # Adjust based on your database se
 
 mongo = DatabaseManager().get_instance().get_db()
 
-user_bp = Blueprint('user', __name__)
+user_bp = Blueprint("user", __name__)
 
-@user_bp.route('/follow/<username>', methods=['POST'])
+
+@user_bp.route("/follow/<username>", methods=["POST"])
 @login_required
 def follow(username):
     user_to_follow = User.from_db(mongo.users.find_one({"username": username}))
@@ -18,7 +19,8 @@ def follow(username):
         flash("Käyttäjää ei löytynyt.", "danger")
     return redirect(request.referrer)  # Replace with the appropriate view
 
-@user_bp.route('/unfollow/<username>', methods=['POST'])
+
+@user_bp.route("/unfollow/<username>", methods=["POST"])
 @login_required
 def unfollow(username):
     user_to_unfollow = User.from_db(mongo.users.find_one({"username": username}))

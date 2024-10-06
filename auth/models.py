@@ -20,7 +20,7 @@ class User(UserMixin):
         confirmed=False,
         permissions=None,
         global_permissions=None,  # Added global permissions
-        role=None
+        role=None,
     ):
         self.id = str(user_id)
         self.username = username
@@ -64,7 +64,7 @@ class User(UserMixin):
             global_permissions=user_doc.get(
                 "global_permissions", []
             ),  # Fetch global permissions
-            role=user_doc.get("role", "member")
+            role=user_doc.get("role", "member"),
         )
 
     def check_password(self, password):
@@ -94,7 +94,7 @@ class User(UserMixin):
             "confirmed": False,
             "permissions": [],
             "global_permissions": [],  # Initialize global permissions,
-            "following": []
+            "following": [],
         }
 
     def add_organization(self, db, organization_id, role="member", permissions=None):
@@ -212,12 +212,12 @@ class User(UserMixin):
                 return permission in org.get("permissions", [])
 
         return False
-    
+
     def is_following(self, user_id):
         """Check if this user is following another user."""
         if isinstance(user_id, User):
             user_id = user_id.id
-        
+
         return user_id in self.following
 
     def __repr__(self):

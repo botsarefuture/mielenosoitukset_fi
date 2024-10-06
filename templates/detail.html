@@ -73,6 +73,7 @@
     margin-top: 0;
     font-size: 1.2em;
     color: #0033a0;
+    text-align: center;
   }
 
   /* Media Queries */
@@ -144,6 +145,7 @@
     border-radius: 4px;
     text-decoration: none;
     transition: background-color 0.3s ease;
+    text-align: center;
   }
 
   .back-link:hover {
@@ -203,26 +205,39 @@
   }
 
   .button-container {
-            display: flex;
-            justify-content: space-between; /* Evenly spaces buttons */
-            padding: 20px; /* Optional: adds some padding around the container */
-        }
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between; /* Evenly spaces buttons */
+    padding: 20px; /* Optional: adds some padding around the container */
+    gap: 5px;
+  }
 
-        .button {
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+  @media (max-width: 620px) {
+    .button-container {
+      flex-direction: column;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+  }
+
+  .button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
 </style>
 
 <div id="main">
   {% if demo['img'] %}
   <img src="{{ demo['img'] }}" alt="Event Image" />
   {% else %}
-<!--
+  <!--
   <img
     src="https://mielenosoitukset-fi1.fsn1.your-objectstorage.com/demos/default.jpg"
   />-->
@@ -290,7 +305,6 @@
       </a>
       {% endif %}
     </div>
-
 
     <div id="orginfo">
       <h2 class="subtitle">Järjestäjät</h2>

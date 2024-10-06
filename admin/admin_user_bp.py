@@ -15,6 +15,7 @@ admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
+
 def flash_message(message, category):
     """Flash a message with a specific category."""
     categories = {
@@ -72,7 +73,7 @@ def stringify_object_ids(data):
 @admin_required
 @permission_required("EDIT_USER")
 def edit_user(user_id):
-    """Edit user details."""    
+    """Edit user details."""
     user = User.from_db(mongo.users.find_one({"_id": ObjectId(user_id)}))
 
     organizations = stringify_object_ids(list(mongo.organizations.find()))
@@ -129,7 +130,6 @@ def edit_user(user_id):
 
         flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
         return redirect(url_for("admin_user.user_control"))
-    
 
     # Prepare to render the edit user form
     user_orgs = user.organizations

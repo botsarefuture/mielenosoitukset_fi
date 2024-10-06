@@ -144,7 +144,7 @@ def init_routes(app):
         today = date.today()  # Use date.today() to get only the date part
 
         # Retrieve all approved demonstrations
-        demonstrations = demonstrations_collection.find({"approved": True})
+        demonstrations = demonstrations_collection.find({"approved": True, "hide": {"$exists": False}})
 
         # Filter out past demonstrations manually
         filtered_demonstrations = []

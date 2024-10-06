@@ -15,7 +15,6 @@ admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
-
 def flash_message(message, category):
     """Flash a message with a specific category."""
     categories = {

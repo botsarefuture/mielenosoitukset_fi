@@ -1,30 +1,115 @@
-{% extends 'base.html' %}
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}" />
+{% extends 'base.html' %} {% block content %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/submit.css') }}"
+/>
 <!-- Include Flatpickr CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
+<link
+  rel="stylesheet"
+  href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css"
+/>
 
+<script>
+  let editor;
+  import ClassicEditor from "ckeditor5-build-classic";
+
+  ClassicEditor.create(document.querySelector("#editor"))
+    .then((newEditor) => {
+      editor = newEditor; // Make editor accessible
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+
+  document.querySelector("#submit").addEventListener("click", (event) => {
+    event.preventDefault(); // Prevent form submission until we set the description
+    const editorData = editor.getData();
+    document.getElementById("description").value = editorData; // Set value instead of innerHTML
+    document.querySelector("form").submit(); // Now submit the form
+  });
+</script>
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <div class="container container-main-content">
   <h1>Ilmoita mielenosoituksesta</h1>
 
-  <form method="POST" action="{{ url_for('submit') }}" class="container-form" enctype="multipart/form-data">
+  <form
+    method="POST"
+    action="{{ url_for('submit') }}"
+    class="container-form"
+    enctype="multipart/form-data"
+  >
     <!-- Name -->
-    <label for="name" class="required">Mielenosoituksen nimi<span class="required-asterisk">*</span></label>
-    <input type="text" id="name" name="title" placeholder="Mielenosoituksen nimi" required />
+    <label for="name" class="required"
+      >Mielenosoituksen nimi<span class="required-asterisk">*</span></label
+    >
+    <input
+      type="text"
+      id="name"
+      name="title"
+      placeholder="Mielenosoituksen nimi"
+      required
+    />
 
     <!-- Tag (Aihe) -->
-    <label for="topic" class="required">Aihe<span class="required-asterisk">*</span></label>
+    <label for="topic" class="required"
+      >Aihe<span class="required-asterisk">*</span></label
+    >
     <input type="text" id="topic" name="topic" placeholder="Aihe" required />
+  
+
+    <label for="description">Kuvaus</label>
+    <div>
+      <div>
+        <div class="main-container">
+          <div
+            class="editor-container editor-container_classic-editor editor-container_include-block-toolbar"
+            id="editor-container"
+          >
+            <div class="editor-container__editor">
+              <div id="editor"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <script type="importmap">
+        {
+          "imports": {
+            "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+            "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+          }
+        }
+      </script>
+      <script
+        type="module"
+        src="{{ url_for('static', filename='js/ck.js') }}"
+      ></script>
+      
+    </div>
+    <input type="hidden" id="description" name="description" />
 
     <!-- Date -->
-    <label for="date" class="required">Päivämäärä (pp.kk.vvvv)<span class="required-asterisk">*</span></label>
-    <input type="text" id="date" name="date" placeholder="pp.kk.vvvv" required />
+    <label for="date" class="required"
+      >Päivämäärä (pp.kk.vvvv)<span class="required-asterisk">*</span></label
+    >
+    <input
+      type="text"
+      id="date"
+      name="date"
+      placeholder="pp.kk.vvvv"
+      required
+    />
 
     <!-- Start and End Time -->
-    <label for="start_time" class="required">Alkamisaika<span class="required-asterisk">*</span></label>
+    <label for="start_time" class="required"
+      >Alkamisaika<span class="required-asterisk">*</span></label
+    >
     <input type="time" id="start_time" name="start_time" required />
     <label for="end_time">Päättymisaika</label>
     <input type="time" id="end_time" name="end_time" />
@@ -35,17 +120,30 @@
 
     <!-- Additional Information -->
     <label for="facebook">Facebook-tapahtumalinkki (valinnainen)</label>
-    <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event" />
+    <input
+      type="url"
+      id="facebook"
+      name="facebook"
+      placeholder="https://facebook.com/event"
+    />
 
     <!-- Organizers -->
-    <label for="organizers" class="required">Järjestäjä(t)<span class="required-asterisk">*</span></label>
+    <label for="organizers" class="required"
+      >Järjestäjä(t)<span class="required-asterisk">*</span></label
+    >
     <div id="organizers-container"></div>
-    <button type="button" class="add-organizer-button" onclick="addOrganizer()">Lisää järjestäjä</button>
+    <button type="button" class="add-organizer-button" onclick="addOrganizer()">
+      Lisää järjestäjä
+    </button>
 
     <!-- Location Type -->
-    <label for="type" class="required">Mielenosoituksen tyyppi<span class="required-asterisk">*</span></label>
+    <label for="type" class="required"
+      >Mielenosoituksen tyyppi<span class="required-asterisk">*</span></label
+    >
     <select id="type" name="type" required>
-      <option value="" disabled selected>Valitse mielenosoituksen tyyppi</option>
+      <option value="" disabled selected>
+        Valitse mielenosoituksen tyyppi
+      </option>
       <option value="paikallaan">Paikallaan</option>
       <option value="marssi">Marssi</option>
       <option value="muut">Muut</option>
@@ -59,13 +157,20 @@
     <!-- Include Paikkakunta Dropdown -->
     {% include "paikkakunta-dropdown.html" %}
 
-    <label for="address" class="required">Katuosoite<span class="required-asterisk">*</span></label>
-    <input type="text" id="address" name="address" placeholder="Katuosoite" required />
+    <label for="address" class="required"
+      >Katuosoite<span class="required-asterisk">*</span></label
+    >
+    <input
+      type="text"
+      id="address"
+      name="address"
+      placeholder="Katuosoite"
+      required
+    />
 
-    <button type="submit" class="submit-button">Lähetä</button>
+    <button id="submit" type="submit" class="submit-button">Lähetä</button>
   </form>
 </div>
-
 <script>
   let organizerCount = 0;
 
@@ -115,6 +220,7 @@
     display: none;
   }
 </style>
+
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 
 {% endblock %}

@@ -1,7 +1,11 @@
+import logging
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class User(UserMixin):
     def __init__(
@@ -61,9 +65,7 @@ class User(UserMixin):
             global_admin=global_admin,
             confirmed=user_doc.get("confirmed", False),
             permissions=user_doc.get("permissions", {}),
-            global_permissions=user_doc.get(
-                "global_permissions", []
-            ),  # Fetch global permissions
+            global_permissions=user_doc.get("global_permissions", []),  # Fetch global permissions
             role=user_doc.get("role", "member"),
         )
 
@@ -116,15 +118,14 @@ class User(UserMixin):
             )
         else:
             existing_org["role"] = role
-            existing_org["permissions"] = permissions or existing_org.get(
-                "permissions", []
-            )
+            existing_org["permissions"] = permissions or existing_org.get("permissions", [])
 
         # Ensure atomicity during the database update
         db.users.update_one(
             {"_id": ObjectId(self.id)},
             {"$set": {"organizations": self.organizations}},
         )
+        logger.info("Organization updated successfully.")
 
     def is_member_of_organization(self, organization_id):
         """
@@ -143,7 +144,7 @@ class User(UserMixin):
         db.users.update_one(
             {"_id": ObjectId(self.id)}, {"$set": {"password_hash": self.password_hash}}
         )
-        print("Password updated successfully.")
+        logger.info("Password updated successfully.")
 
     def update_displayname(self, db, displayname):
         """
@@ -153,7 +154,7 @@ class User(UserMixin):
         db.users.update_one(
             {"_id": ObjectId(self.id)}, {"$set": {"displayname": self.displayname}}
         )
-        print("Display name updated successfully.")
+        logger.info("Display name updated successfully.")
 
     def update_profile_picture(self, db, profile_picture):
         """
@@ -164,7 +165,7 @@ class User(UserMixin):
             {"_id": ObjectId(self.id)},
             {"$set": {"profile_picture": self.profile_picture}},
         )
-        print("Profile picture updated successfully.")
+        logger.info("Profile picture updated successfully.")
 
     def update_bio(self, db, bio):
         """
@@ -172,7 +173,7 @@ class User(UserMixin):
         """
         self.bio = bio
         db.users.update_one({"_id": ObjectId(self.id)}, {"$set": {"bio": self.bio}})
-        print("Bio updated successfully.")
+        logger.info("Bio updated successfully.")
 
     def follow_user(self, db, user_id_to_follow):
         """
@@ -184,7 +185,7 @@ class User(UserMixin):
                 {"_id": ObjectId(self.id)},
                 {"$set": {"following": self.following}},
             )
-            print("Started following user successfully.")
+            logger.info("Started following user successfully.")
 
     def unfollow_user(self, db, user_id_to_unfollow):
         """
@@ -196,7 +197,7 @@ class User(UserMixin):
                 {"_id": ObjectId(self.id)},
                 {"$set": {"following": self.following}},
             )
-            print("Stopped following user successfully.")
+            logger.info("Stopped following user successfully.")
 
     def has_permission(self, organization_id, permission):
         """

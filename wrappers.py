@@ -1,72 +1,65 @@
+import logging
 from functools import wraps
 from flask import redirect, url_for, flash
 from flask_login import current_user
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def permission_needed(permission, organization_id=None):
-    """
-    Decorator that checks if the current user has a specific permission within a given organization.
-
-    :param permission: The required permission (e.g., 'edit_events').
-    :param organization_id: The organization ID to check the permission for. If not provided, the default organization will be used.
-    """
-
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Ensure the user is authenticated
             if not current_user.is_authenticated:
                 flash("Sinun tulee kirjautua sisään käyttääksesi sivua.")
-                return redirect(
-                    url_for("auth.login")
-                )  # Redirect to the login page if not authenticated
+                logger.warning("User not authenticated, redirecting to login.")
+                return redirect(url_for("auth.login"))
 
-            # If the user is a global admin, grant access regardless of specific permissions
+            # Check for global admin
             if current_user.global_admin:
+                logger.info("Global admin access granted.")
                 return f(*args, **kwargs)
 
-            # If organization_id is provided in kwargs, use it; otherwise, fall back to the parameter
-            org_id = kwargs.get("organization_id", organization_id)
+            # Determine organization ID
+            org_id = organization_id if organization_id else kwargs.get("organization_id")
 
-            # Ensure the user is a member of the organization
+            # Check membership
             if not org_id or not current_user.is_member_of_organization(org_id):
                 flash("Sinä et ole tämän organisaation jäsen.")
-                return redirect(
-                    url_for("index")
-                )  # Adjust to your desired redirect route
+                logger.warning(f"User {current_user.username} is not a member of organization {org_id}.")
+                return redirect(url_for("index"))
 
-            # Check if the user has the required permission in the organization
-            if (
-                permission not in current_user.permissions
-            ):  # Use the new permissions attribute
+            # Check organization-specific permissions
+            if not current_user.has_permission(org_id, permission):
                 flash("Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.")
-                return redirect(
-                    url_for("index")
-                )  # Adjust to your desired redirect route
+                logger.warning(f"User {current_user.username} does not have permission '{permission}' in organization {org_id}.")
+                return redirect(url_for("index"))
 
             return f(*args, **kwargs)
 
         return decorated_function
-
     return decorator
 
 
 def admin_required(f):
+    """
+    Decorator that checks if the current user is a global admin.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Check if current_user is authenticated before checking global_admin status
+        # Ensure the user is authenticated
         if not current_user.is_authenticated:
             flash("Sinun täytyy kirjautua sisään käyttääksesi tätä sivua.")
-            return redirect(
-                url_for("auth.login")
-            )  # Redirect to the login page if not authenticated
+            logger.warning("User not authenticated, redirecting to login.")
+            return redirect(url_for("auth.login"))
 
         if not current_user.global_admin:
             flash("Sinun käyttöoikeutesi eivät riitä sivun tarkasteluun.")
-            return redirect(
-                url_for("index")
-            )  # Adjust to the correct admin login route if necessary
+            logger.warning(f"User {current_user.username} is not a global admin.")
+            return redirect(url_for("index"))
 
+        logger.info(f"User {current_user.username} is a global admin.")
         return f(*args, **kwargs)
 
     return decorated_function
@@ -82,29 +75,29 @@ def permission_required(permission_name):
     Returns:
         function: The wrapped function.
     """
-
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # Check if the user is authenticated
             if not current_user.is_authenticated:
                 flash("Sinun tulee kirjautua sisään käyttääksesi sivua.")
+                logger.warning("User not authenticated, redirecting to login.")
                 return redirect(url_for("auth.login"))
 
-            # Log the permission check for debugging purposes
-            print(
-                f"Checking permission: {permission_name} for {current_user.username}..."
-            )
+            # If the user is a global admin, grant access
+            if current_user.global_admin:
+                logger.info("Global admin access granted.")
+                return f(*args, **kwargs)
 
             # Check if the user has the specified permission
             if permission_name in current_user.global_permissions:
+                logger.info(f"User {current_user.username} has permission '{permission_name}'.")
                 return f(*args, **kwargs)
 
             # If permission is not granted, handle it appropriately
             flash("Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen.")
-            return redirect(
-                url_for("index")
-            )  # Redirect to the desired route when access is denied
+            logger.warning(f"User {current_user.username} does not have permission '{permission_name}'.")
+            return redirect(url_for("index"))
 
         return decorated_function
 

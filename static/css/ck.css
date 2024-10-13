@@ -12,8 +12,7 @@
 }
 
 .editor-container_classic-editor .editor-container__editor {
-	min-width: 795px;
-	max-width: 795px;
+	width: 100%;
 }
 
 .editor-container_include-block-toolbar {

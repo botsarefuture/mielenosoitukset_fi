@@ -101,6 +101,8 @@ def init_routes(app):
             # Get form data
             title = request.form.get("title")
             date = request.form.get("date")
+            description = request.form.get("description", "")
+            print(description)
             start_time = request.form.get("start_time")
             end_time = request.form.get("end_time", None)
             topic = request.form.get("topic")
@@ -162,6 +164,7 @@ def init_routes(app):
                 organizers=organizers,
                 approved=False,
                 img=photo_url,
+                description=description
             )
 
             # Save to MongoDB

@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
 
-<!-- Container only for the welcome message and description -->
+<!-- Container for the welcome message and description -->
 <div class="container-welcome container-centered">
     <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
     <p>Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen. <br> Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.</p>
@@ -20,22 +20,53 @@
     <button type="submit">Hae</button>
 </form>
 
+<!-- Pinned Demonstrations Section -->
+{% if pinned_demonstrations %}
+<h2>Suosittelemme</h2>
+<ul class="demonstrations-list">
+    {% for demo in pinned_demonstrations %}
+    <li>
+        <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="demo-link">
+            <div class="demo-container">
+                <h3>{{ demo['title'] }}</h3>
+                <small>
+                    {{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}<br>
+                    Aihe: {{ demo['topic'] }}<br>
+                    Sijainti: {{ demo['address'] }}, {{ demo['city'] }}
+                </small>
+            </div>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
 <!-- Featured Demonstrations Section -->
 <h2>Esitellyt mielenosoitukset</h2>
 <ul class="demonstrations-list">
     {% if demonstrations %}
-    {% for demo in demonstrations[:5] %} <!-- Limiting to 5 demonstrations -->
+    {% for demo in demonstrations[:5] %}
     <li>
-        <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}">{{ demo['title'] }}</a><br>
-        <small>
-            {{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}<br>
-            Aihe: {{ demo['topic'] }}<br>
-            Sijainti: {{ demo['address'] }}, {{ demo['city'] }}
-        </small>
+        <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="demo-link">
+            <div class="demo-container">
+                <h3>{{ demo['title'] }}</h3>
+                <small>
+                    {{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}<br>
+                    Aihe: {{ demo['topic'] }}<br>
+                    Sijainti: {{ demo['address'] }}, {{ demo['city'] }}
+                </small>
+            </div>
+        </a>
     </li>
     {% endfor %}
     {% else %}
     <li>Ei mielenosoituksia näytettäväksi.</li>
     {% endif %}
 </ul>
+
+<!-- Button to View All Demonstrations -->
+<div class="buttons-div">
+    <a class="button button-primary" href="{{ url_for('demonstrations') }}">Näytä kaikki mielenosoitukset</a>
+</div>
+
 {% endblock %}

@@ -1,7 +1,10 @@
+
+@import url("variables.css");
+
 /* Sidebar container */
 .container-sidebar {
   width: 250px; /* Fixed width for sidebar */
-  background-color: #0033a0; /* Dark blue background to match header/footer */
+  background-color: var(--blue); /* Dark blue background to match header/footer */
   color: #ffffff; /* White text color */
   padding: 20px; /* Padding for sidebar content */
   display: flex;
@@ -42,7 +45,7 @@
 }
 
 .sidebar-toggle:hover {
-  background-color: #e64a19; /* Darker orange on hover */
+  background-color: var(--darker-orange); /* Darker orange on hover */
   transform: scale(1.1); /* Slightly enlarge button on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
 }
@@ -63,7 +66,7 @@
 }
 
 .sidebar-nav a {
-  color: #e64a19;
+  color: var(--darker-orange);
   background-color: #ffffff;
   font-weight: bold;
   text-decoration: none;
@@ -76,7 +79,7 @@
 
 /* Hover effect for sidebar links */
 .sidebar-nav a:hover {
-  background-color: #e64a19; /* Highlight on hover */
+  background-color: var(--darker-orange); /* Highlight on hover */
   color: #ffffff;
 }
 
@@ -90,7 +93,7 @@
   transform: translateY(-50%); /* Adjust for vertical centering */
   display: flex;
   flex-direction: column;
-  background-color: #0033a0; /* Background color matching the sidebar */
+  background-color: var(--dark-blue); /* Background color matching the sidebar */
   padding: 10px; /* Padding for spacing */
   border-radius: 5px; /* Rounded corners for consistency */
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
@@ -110,7 +113,7 @@
 
 /* Hover effect on the hidden icons toggle button */
 .hidden-icons .sidebar-toggle:hover {
-  background-color: #e64a19; /* Background color on hover */
+  background-color: var(--darker-orange); /* Background color on hover */
   border-radius: 5%; /* Round button on hover */
   color: #ffffff; /* Icon color on hover */
 }
@@ -133,7 +136,7 @@
 
 /* Hover effect on hidden icons */
 .hidden-icons a:hover {
-  background-color: #e64a19; /* Background color on hover */
+  background-color: var(--darker-orange); /* Background color on hover */
   font-size: 30px; /* Increase icon size on hover */
   color: #ffffff; /* Icon color on hover */
 }

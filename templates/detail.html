@@ -1,9 +1,12 @@
 {% extends 'base.html' %} {% block title %} {{ demo['title'] }} {% endblock %}
 {% block meta %}
 <meta name="description" content="{{ demo['title'] }} - Mielenosoitukset.fissä" />
+<meta name="description" content="{{ demo['title'] }} - Mielenosoitukset.fissä" />
 <meta property="og:title" content="{{ demo['title'] }}" />
 <meta property="og:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta property="og:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
 <meta property="og:image" content="{{ demo['img'] }}" />
+<meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
@@ -34,13 +37,13 @@
   "organizer": {
     "@type": "Organization",
     "name": "{{ demo['organizers'][0].name if demo['organizers'] else 'Tuntematon' }}",
-    "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id, _external=True) if demo['organizers'] else '#' }}"
+    "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id) if demo['organizers'] else '#' }}"
   }
 }
 </script>
 {% endblock %}
+ {% block content %}
 
-{% block content %}
 <style>
   /* Main Container */
   #main {

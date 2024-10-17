@@ -426,15 +426,15 @@
 
       const formattedDate = formatFinnishDate(demoDate);
       const eventDateStr = `${formattedDate}T${demoTime}`;
-      console.log(`Event Date String: ${eventDateStr}`);
+      //console.log(`Event Date String: ${eventDateStr}`);
 
       const eventDate = new Date(eventDateStr);
       const now = new Date();
       const timeRemaining = eventDate - now;
 
-      console.log(`Current Time: ${now}`);
-      console.log(`Event Time: ${eventDate}`);
-      console.log(`Time Remaining: ${timeRemaining}`);
+      //console.log(`Current Time: ${now}`);
+      //console.log(`Event Time: ${eventDate}`);
+      //console.log(`Time Remaining: ${timeRemaining}`);
 
       if (timeRemaining <= 0) {
         document.getElementById("timer").innerText =

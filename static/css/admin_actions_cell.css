@@ -36,5 +36,9 @@
 }
 
 .delete-button {
-    background-color: var(--error-color);
+    background-color: var(--red) !important;
+}
+
+.delete-button:hover {
+    background-color: var(--dark-red) !important;
 }

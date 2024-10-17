@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from bson.objectid import ObjectId
 from datetime import datetime, date
@@ -6,6 +6,9 @@ from utils import CITY_LIST
 from database_manager import DatabaseManager
 from wrappers import admin_required, permission_required
 from classes import Demonstration, Organizer
+
+def popup(message): # In future this will be used to show flash messages to clients via ajax
+    pass
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -188,17 +191,18 @@ def collect_organizers(request):
 @permission_required("DELETE_DEMO")
 def delete_demo():
     """Delete a demonstration from the database."""
-    demo_id = request.form.get("demo_id")
+    json_mode = request.headers.get("Content-Type") == "application/json"
+
+    demo_id = request.form.get("demo_id") or request.json.get("demo_id")
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash("Mielenosoitusta ei löytynyt.")
-        return redirect(url_for("admin_demo.demo_control"))
+        flash("Mielenosoitusta ei löytynyt.") if not json_mode else popup("Mielenosoitusta ei löytynyt.")
+        return jsonify({"status": "ERROR"}) if json_mode else redirect(url_for("admin_demo.demo_control"))
 
     mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
-    flash("Mielenosoitus poistettu onnistuneesti.")
-    return redirect(url_for("admin_demo.demo_control"))
-
+    flash("Mielenosoitus poistettu onnistuneesti.") if not json_mode else popup("Mielenosoitus poistettu onnistuneesti")
+    return jsonify({"status": "OK"}) if json_mode else redirect(url_for("admin_demo.demo_control"))
 
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])
 @login_required

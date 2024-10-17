@@ -201,22 +201,3 @@ const editorConfig = {
 ClassicEditor.create(document.querySelector('#editor'), editorConfig).then( NewEditor => {
     editor = NewEditor;
 });
-
-document.querySelector("#submit").addEventListener("click", (event) => {
-    event.preventDefault(); // Prevent form submission until we set the description
-    const editorData = editor.getData();
-    document.getElementById("description").value = editorData; // Set value instead of innerHTML
-    const form = document.querySelector("form");
-
-    const formda = new FormData(form);
-
-    try {
-        const response = fetch(form.action, {
-        method: form.method,
-        body: formda
-        });
-    } catch (e) {
-        console.error(e);
-    }
-    });
-    

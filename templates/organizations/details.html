@@ -7,23 +7,31 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
 
-
 <div class="org-container">
-    <div class="org-header" style="">
+    <div class="org-header">
         <h1>{{ org.name }}</h1>
-        <p class="org-description" style="">{{ org.description }}</p>
+        <p class="org-description">{{ org.description }}</p>
     </div>
 
     <div class="contact-info" style="background-color: #fafafa; padding: 30px; border-radius: 12px; box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08); margin-bottom: 35px;">
-        <h2 style="color: #333333; margin-bottom: 25px; font-size: 1.75em;">Yhteystiedot</h2>
+        <h2 style="color: #333; margin-bottom: 25px; font-size: 1.75em;">Yhteystiedot</h2>
         <div class="contact-methods" style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-            <p style="flex-basis: 45%; margin-bottom: 20px;"><i class="fa-solid fa-envelope some-icon"></i> <a href="mailto:{{ org.email }}" style="color: #0056b3; text-decoration: none;">{{ org.email }}</a></p>
-            <p style="flex-basis: 45%; margin-bottom: 20px;"><i class="fa-solid fa-external-link some-icon"></i> <a href="{{ org.website }}" target="_blank" style="color: #0056b3; text-decoration: none;">{{ org.website }}</a></p>
+            <p style="flex-basis: 45%; margin-bottom: 20px;">
+                <i class="fa-solid fa-envelope some-icon"></i>
+                <a href="mailto:{{ org.email }}" style="color: #0056b3; text-decoration: none;">{{ org.email }}</a>
+            </p>
+            <p style="flex-basis: 45%; margin-bottom: 20px;">
+                <i class="fa-solid fa-external-link some-icon"></i>
+                <a href="{{ org.website }}" target="_blank" style="color: #0056b3; text-decoration: none;">{{ org.website }}</a>
+            </p>
         </div>
-        <h3 style="color: #333333; margin-top: 35px; font-size: 1.5em;">Sosiaalinen media</h3>
+        <h3 style="color: #333; margin-top: 35px; font-size: 1.5em;">Sosiaalinen media</h3>
         <div class="socials" style="display: flex; justify-content: space-between; flex-wrap: wrap;">
             {% for social in org.social_medias %}
-                <p style="flex-basis: 30%; margin-bottom: 20px;"><i class="fa-brands fa-{{ social.type }} some-icon"></i> <a href="{{ social.link }}" target="_blank" style="color: #0056b3; text-decoration: none;">{% if social.username %}@{{ social.username }}{% endif %}</a></p>
+                <p style="flex-basis: 30%; margin-bottom: 20px;">
+                    <i class="fa-brands fa-{{ social.type }} some-icon"></i>
+                    <a href="{{ social.link }}" target="_blank" style="color: #0056b3; text-decoration: none;">{% if social.username %}@{{ social.username }}{% endif %}</a>
+                </p>
             {% endfor %}
         </div>
     </div>
@@ -38,20 +46,20 @@
     </div>
 
     {% if upcoming_demos %}
-    <h2 style="color: #333333; margin-top: 50px; margin-bottom: 30px; font-size: 1.75em;" id="upcoming-title">Tulevat Mielenosoitukset</h2>
-    <div class="upcoming-demos" style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: center;">
-        {% for demo in upcoming_demos %}
-            <div class="demo-box" style="border: 1px solid #dddddd; padding: 30px; border-radius: 15px; background-color: #ffffff; flex-basis: 28%; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); transition: transform 0.3s, box-shadow 0.3s;">
-                <h3 style="color: var(--primary-color); font-size: 1.6em; margin-bottom: 18px; font-weight: bold;">{{ demo.title }}</h3>
-                <p style="color: #555555; margin-bottom: 10px;"><i class="fa-solid fa-calendar"></i> {{ demo.date }}</p>
-                <p style="color: #555555; margin-bottom: 10px;"><i class="fa-solid fa-location-dot"></i> {{ demo.address }}</p>
-                <p><a class="btn" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" style="color: #0056b3; text-decoration: none; font-weight: bold;">Lisätietoja</a></p>
-            </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <p style="color: #777777; text-align: center; font-size: 1.2em;">Ei tulevia mielenosoituksia.</p>
-{% endif %}
+        <h2 style="color: #333; margin-top: 50px; margin-bottom: 30px; font-size: 1.75em;" id="upcoming-title">Tulevat Mielenosoitukset</h2>
+        <div class="upcoming-demos" style="display: flex; flex-wrap: wrap; gap: 25px; justify-content: center;">
+            {% for demo in upcoming_demos %}
+                <div class="demo-box" style="border: 1px solid #dddddd; padding: 30px; border-radius: 15px; background-color: #ffffff; flex-basis: 28%; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); transition: transform 0.3s, box-shadow 0.3s;">
+                    <h3 style="color: var(--primary-color); font-size: 1.6em; margin-bottom: 18px; font-weight: bold;">{{ demo.title }}</h3>
+                    <p style="color: #555; margin-bottom: 10px;"><i class="fa-solid fa-calendar"></i> {{ demo.date }}</p>
+                    <p style="color: #555; margin-bottom: 10px;"><i class="fa-solid fa-location-dot"></i> {{ demo.address }}</p>
+                    <p><a class="btn" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" style="color: #0056b3; text-decoration: none; font-weight: bold;">Lisätietoja</a></p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: #777; text-align: center; font-size: 1.2em;">Ei tulevia mielenosoituksia.</p>
+    {% endif %}
 
 </div>
 {% endblock %}

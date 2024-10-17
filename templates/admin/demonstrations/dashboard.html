@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo_remo.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}">
 
 
 <!-- Font Awesome for icons -->
@@ -181,7 +181,7 @@
             </thead>
             <tbody>
                 {% for demo in demonstrations|sort(attribute='approved') %}
-                    <tr style="background-color: {{ 'lightcoral' if not demo.approved else 'white' }};">
+                    <tr  id="demo-{{ demo._id }}" style="background-color: {{ 'lightcoral' if not demo.approved else 'white' }};">
                         <td>{{ demo.title }}</td>
                         <td>{{ demo.city }}</td>
                         <td>{{ demo.date }}</td>
@@ -189,9 +189,11 @@
                         <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
                         <td class="actions-cell">
                             <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
-                            <a href="#" class="button delete-button" onclick="openModal('{{ demo.title }}', '{{ demo._id }}')"><i class="fas fa-trash-alt"></i> Poista</a>                        </td>
-                    </tr>
-                {% endfor %}
+                            <button style="width: 132px !important;" type="button" class="delete-button button" 
+                            onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+                       <i class="fas fa-trash-alt"></i><span class="delete-text">Poista</span>
+                    </button>
+                                    {% endfor %}
             </tbody>
         </table>
     </div>
@@ -205,17 +207,13 @@
         <span class="close" onclick="closeModal()">&times;</span>
         <h3>Poista mielenosoitus</h3>
         <p>Oletko varma, että haluat poistaa mielenosoituksen <strong id="demoTitle"></strong>?</p>
-        <form method="POST" action="{{ url_for('admin_demo.delete_demo') }}">
-            <input type="hidden" name="demo_id" id="demo_id" value="">
-            <div class="button-container">
-                <button type="submit" class="button delete-confirm">Kyllä, poista</button>
-                <button type="button" class="button" onclick="closeModal()">Peruuta</button>
-            </div>
-        </form>
+        <div class="button-container">
+            <button type="button" class="button delete-confirm" id="confirmDelete">Kyllä, poista</button>
+            <button type="button" class="button" onclick="closeModal()">Peruuta</button>
+        </div>
     </div>
 </div>
 
-
-<script src="{{ url_for('static', filename='js/demo_remo.js' )}}">
+<script src="{{ url_for('static', filename='js/deleteModal.js' )}}">
 
 {% endblock %}

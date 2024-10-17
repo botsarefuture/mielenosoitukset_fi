@@ -1,7 +1,6 @@
+/* Container for organization details */
 .org-container {
-  background-color: var(
-    --background-color
-  ); /* Using CSS variable for background */
+  background-color: var(--background-color); /* Using CSS variable for background */
   padding: 40px; /* Updated padding for more space */
   border-radius: 12px; /* Adjusted border radius */
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Updated shadow for depth */
@@ -9,31 +8,31 @@
   max-width: 800px; /* Responsive design */
 }
 
+/* Header section for the organization */
 .org-header {
   text-align: center; /* Centering text */
   margin-bottom: 30px; /* Increased margin for separation */
-  background-color: var(
-    --primary-color
-  ); /* Background color using CSS variable */
+  background-color: var(--primary-color); /* Background color using CSS variable */
   padding: 20px 20px 25px; /* Top/bottom and side padding */
   border-bottom: 3px solid #e0e0e0; /* Bottom border for separation */
 }
 
 .org-header h1 {
-    margin: 0; /* Remove default margin */
-    color: white; /* Text color */
-    font-size: 2.75em; /* Font size */
-    font-weight: bold; /* Bold text */
-    margin-bottom: 12px; /* Space below the heading */
+  margin: 0; /* Remove default margin */
+  color: white; /* Text color */
+  font-size: 2.75em; /* Font size */
+  font-weight: bold; /* Bold text */
+  margin-bottom: 12px; /* Space below the heading */
 }
 
-
+/* Description section */
 .org-description {
   color: white;
   margin: 10px 0;
   font-size: 1.3em; 
 }
 
+/* Badge styles for verified and unverified organizations */
 .badge {
   padding: 5px 10px;
   border-radius: 5px;
@@ -52,16 +51,15 @@
   color: white;
 }
 
+/* Upcoming demos grid layout */
 .upcoming-demos {
   margin-top: 20px;
   display: grid; /* Use grid layout */
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(250px, 1fr)
-  ); /* Responsive grid columns */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid columns */
   gap: 15px; /* Space between grid items */
 }
 
+/* Demo box styles */
 .demo-box {
   background-color: #fff;
   padding: 15px;
@@ -74,6 +72,12 @@
   justify-content: space-between; /* Space out content */
 }
 
+@media (max-width: 470px) {
+  .demo-box {
+    flex-basis: auto; /* Change to auto for better responsiveness */
+  }
+}
+
 .demo-box h3 {
   margin: 0;
   text-align: center;
@@ -83,9 +87,10 @@
   margin: 0; /* Remove default paragraph margins */
 }
 
+/* Button styles */
 .btn {
   display: block;
-  background-color: var(--highlight-color-orange);
+  background-color: var(--orange);
   color: white;
   padding: 10px 15px;
   border-radius: 5px;
@@ -96,6 +101,12 @@
   text-align: center;
 }
 
+.btn:hover {
+  background-color: var(--blue);
+  color: var(--orange) !important;
+}
+
+/* Social media section */
 .social-medias {
   display: flex;
   flex-direction: column;
@@ -117,13 +128,7 @@
   color: #ffdd57; /* Hover color */
 }
 
-/*.org-det {
-    width: max-content;
-    margin: auto;
-    padding: 15px;
-    border-radius: 5px;
-  }*/
-
+/* Icon styles */
 .some-icon {
   font-size: 150%;
   align-content: center;
@@ -131,17 +136,36 @@
   vertical-align: middle;
 }
 
-.btn:hover {
-  background-color: var(--focus-color);
-  color: var(--highlight-color-orange) !important;
+/* Upcoming title styles */
+#upcoming-title {
+  color: var(--dark-blue) !important;
+  margin: 50px 0 30px !important; /* Consolidated margin */
+  font-size: xxx-large; /* Font size */
+  text-align: center; /* Centered text */
 }
 
-#upcoming-title {
-  color: var(--focus-color) !important;
-  margin-top: 50px !important;
-  margin-bottom: 30px !important;
-  font-size: 1.75em !important;
-  text-transform: uppercase !important;
-  text-align: center !important;
-  font-size: xxx-large !important;
+/* Verified badge styles */
+.verified-badge {
+  width: 50px; /* Set width */
+  height: 50px; /* Set height */
+  background-image: url('/static/img/verified.svg');
+  background-size: contain; /* Ensure the SVG scales correctly */
+  background-repeat: no-repeat; /* Prevent repeating */
+}
+
+/* Font Awesome custom font */
+@font-face {
+  font-family: 'Font Awesome 5 Sharp'; /* Custom font family name */
+  src: url('/static/fonts/fa-sharp-solid-900.woff2') format('woff2'); /* Path to the .woff2 file */
+  font-weight: 900; /* Weight for the solid icons */
+  font-style: normal; /* Normal style */
+}
+
+/* Check icon styles */
+.check-icon::before {
+  font-family: 'Font Awesome 5 Sharp'; /* Match this to your font family */
+  font-weight: 900;
+  content: '\f336'; /* Unicode for the check badge icon */
+  margin-right: 8px; /* Space between icon and text */
+  color: white;
 }

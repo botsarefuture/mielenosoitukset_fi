@@ -1,29 +1,88 @@
 :root {
-    --primary-color: #0033A0;
-    --secondary-color: #f0f0f0;
+  /* Primary Colors */
+  --primary-color: #0033a0;
+  --secondary-color: #f0f0f0;
 
-    --background-color: var(--primary-color);
-    
+  --primary-text-color: #333;
+  --secondary-text-color: #666;
 
-    --border-color: #ddd;
-    --placeholder-color: #888;
-    --focus-color: var(--light-blue);
-    --error-color: var(--dark-red);
-    --background-color: #ffffff;
-    --box-shadow-color: rgba(0, 0, 0, 0.1);
-    --hover-bg-color: #e0e0e0;
-    --button-hover-color: #005bb5;
-    --input-background-color: #f9f9f9;
-    
-    /* colors */
+  /* Background Colors */
+  --background-color: #ffffff;
+  --input-background-color: #f9f9f9;
+  --hover-bg-color: #e0e0e0;
+  --container-background-color: #f9f9f9; /* Light gray for container background */
 
-    --orange: #ff6600;
-    --darker-orange: #e64a19;
+  /* Borders and Shadows */
+  --border-color: #ddd;
+  --box-shadow-color: rgba(0, 0, 0, 0.1);
 
-    --dark-blue: #0033A0;
-    --blue: var(--dark-blue);
-    --light-blue: #0066cc;
-    
-    --red: #ff4d4d;
-    --dark-red: #cc0000;
+  /* Text Colors */
+  --placeholder-color: #888;
+  --focus-color: #0066cc;
+  --error-color: #cc0000;
+
+  /* Button Colors */
+  --primary-button-color: var(--blue);
+  --primary-button-hover-color: var(--blue-dark);
+
+  /* Blue Colors */
+  --blue: #0033a0;
+  --blue-lighter: #4d79cc;
+  --blue-light: #3366cc;
+  --blue-dark: #002280;
+  --blue-darker: #001160;
+
+  /* Orange Colors */
+  --orange: #ff6600;
+  --orange-lighter: #ff9966;
+  --orange-light: #ff8533;
+  --orange-dark: #cc5200;
+  --orange-darker: #993d00;
+
+  /* Red Colors */
+  --red: #ff4d4d;
+  --red-lighter: #ff8585;
+  --red-light: #ff6666;
+  --red-dark: #cc3d3d;
+  --red-darker: #993030;
+
+  /* Green Colors */
+  --green: #28a745;
+  --green-lighter: #71d78e;
+  --green-light: #4cc476;
+  --green-dark: #218838;
+  --green-darker: #196c2a;
+
+  /* Admin Stuff */
+  --admin-section-title-color: var(--focus-color);
+  --admin-create-btn-bg: var(--green);
+  --admin-create-btn-hover-bg: var(--green-dark);
+}
+
+.admin-btn.create-btn {
+  background-color: var(--admin-create-btn-bg);
+}
+
+.admin-btn.create-btn:hover {
+  background-color: var(--admin-create-btn-hover-bg);
+}
+
+.button {
+  background-color: var(--primary-button-color);
+}
+
+.button:hover {
+  background-color: var(--primary-button-hover-color);
+}
+
+.full-width {
+  max-width: 100%;
+  width: 100%; /* Using 100% for stretch behavior */
+  min-width: 100%; /* Ensures the element takes full width */
+  box-sizing: border-box; /* Ensures padding and border are included in the element's width */
+}
+
+
+.mb-4 {
+  margin-bottom: 1rem; /* 16px */
 }

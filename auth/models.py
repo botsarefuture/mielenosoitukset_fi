@@ -213,6 +213,19 @@ class User(UserMixin):
                 return permission in org.get("permissions", [])
 
         return False
+    
+    def can_use(self, permission):
+        # Check global permissions first
+        if permission in self.global_permissions:
+            return True
+
+        # Check organization-specific permissions
+        for org in self.organizations:
+            return permission in org.get("permissions", [])
+        
+        return False
+
+        
 
     def is_following(self, user_id):
         """Check if this user is following another user."""

@@ -1,13 +1,13 @@
 /* Remove Button Styles */
 .btn-danger {
-    background-color: #dc3545; /* Bootstrap danger color */
-    border-color: #dc3545; /* Bootstrap danger border color */
+    background-color: var(--error-color); /* Bootstrap danger color */
+    border-color: var(--dark-red); /* Bootstrap danger border color */
     color: white; /* Text color for better contrast */
 }
 
 .btn-danger:hover {
-    background-color: #c82333; /* Darker shade for hover effect */
-    border-color: #bd2130; /* Darker border color on hover */
+    background-color: var(--darker-red); /* Darker shade for hover effect */
+    border-color: var(--dark-red); /* Darker border color on hover */
     color: white; /* Text color remains white */
 }
 

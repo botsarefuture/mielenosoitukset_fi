@@ -136,7 +136,7 @@
 
 /* Upcoming title styles */
 #upcoming-title {
-  color: var(--dark-blue) !important; /* Title color */
+  color: var(--blue-dark) !important; /* Title color */
   margin-top: 50px !important; /* Top margin */
   margin-bottom: 30px !important; /* Bottom margin */
   font-size: 1.75em !important; /* Font size for title */
@@ -165,7 +165,7 @@
   font-weight: 900; /* Font weight */
   content: '\f336'; /* Unicode for the check badge icon */
   margin-right: 8px; /* Space between icon and text */
-  color: white; /* Icon color */
+  color: var(--green-light); /* Icon color */
 }
 
 /* Additional styles for improved responsiveness and layout */

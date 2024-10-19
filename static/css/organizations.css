@@ -10,9 +10,8 @@
 
 /* Style for the main heading on the page */
 h1 {
-    font-family: 'Montserrat', sans-serif;
     font-size: 32px;
-    color: #0033A0;
+    color: var(--blue);
     text-align: center;
     margin-bottom: 30px;
     /* TODO: Add responsive font size adjustments for smaller screens */
@@ -22,11 +21,10 @@ h1 {
 .create-link {
     display: inline-block;
     padding: 10px 20px;
-    background-color: #FF6600;
+    background-color: var(--orange);
     color: #FFFFFF;
     text-decoration: none;
     border-radius: 5px;
-    font-family: 'Roboto', sans-serif;
     font-size: 16px;
     margin-bottom: 20px;
     text-align: center;
@@ -34,7 +32,7 @@ h1 {
 }
 
 .create-link:hover {
-    background-color: #E03C31;
+    background-color: var(--orange-dark);
     /* TODO: Add hover effects or animations to enhance user interaction */
 }
 
@@ -52,14 +50,13 @@ h1 {
 
 .organization-link {
     text-decoration: none;
-    color: #0033A0;
-    font-family: 'Roboto', sans-serif;
+    color: var(--blue);
     font-size: 18px;
     transition: color 0.3s;
 }
 
 .organization-link:hover {
-    color: #FF6600;
+    color: var(--orange-dark);
     /* TODO: Add more interactive effects, such as underline or shadow, on hover */
 }
 

@@ -2,9 +2,7 @@
 html, body {
     height: 100%;
     margin: 0;
-    font-family: 'Roboto', sans-serif; /* Consistent font style */
-    background-color: #F5F5F5; /* Light gray background */
-    color: #333; /* Dark gray text for readability */
+    color: var(--primary-text-color); /* Dark gray text for readability */
 }
 
 /* Container for the list page */
@@ -14,7 +12,7 @@ html, body {
     height: 100%;
     padding: 20px;
     box-sizing: border-box;
-    background-color: #FFFFFF; /* White background for the container */
+    background-color: var(--background-color); /* White background for the container */
     /* TODO: Add styles for header and footer if present */
 }
 
@@ -29,17 +27,18 @@ html, body {
 
 .search-form input[type="text"] {
     padding: 10px;
-    border: 1px solid #ddd; /* Light gray border */
+    border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 4px;
     width: 100%; /* Full width on smaller screens */
     max-width: 100%; /* Adjust to container's width */
     box-sizing: border-box;
+    background-color: var(--input-background-color);
     /* TODO: Ensure accessibility features (e.g., ARIA attributes) */
 }
 
 .search-form button {
     padding: 10px;
-    background-color: #004080; /* Dark blue button */
+    background-color: var(--primary-button-color); /* Dark blue button */
     color: white;
     border: none;
     border-radius: 4px;
@@ -49,7 +48,7 @@ html, body {
 }
 
 .search-form button:hover {
-    background-color: #0066cc; /* Lighter blue on hover */
+    background-color: var(--primary-button-hover-color); /* Lighter blue on hover */
 }
 
 /* Grid container styling */
@@ -63,15 +62,19 @@ html, body {
 
 /* Individual grid item styling */
 .grid-item {
-    background-color: #ffffff; /* White background for grid items */
-    border: 1px solid #ddd; /* Light gray border */
+    background-color: var(--background-color); /* White background for grid items */
+    border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 8px;
     padding: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    box-shadow: 0 4px 8px var(--box-shadow-color); /* Subtle shadow for depth */
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     /* TODO: Add hover effects for grid items */
+}
+
+.grid-item:hover {
+    background-color: var(--hover-bg-color);
 }
 
 /* Ensure text links are styled properly */
@@ -79,7 +82,7 @@ html, body {
     font-size: 18px;
     font-weight: bold;
     text-decoration: none;
-    color: #004080; /* Dark blue text */
+    color: var(--blue-dark); /* Dark blue text */
     margin-bottom: 10px;
 }
 
@@ -97,10 +100,10 @@ html, body {
 }
 
 .grid-item .time {
-    color: #666; /* Gray color for time */
+    color: var(--secondary-text-color); /* Gray color for time */
 }
 
-.grid-item .topic, .grid-item .location {
+.grid-item .topic, .grid-item .location, .grid-item .city {
     display: block;
 }
 
@@ -158,3 +161,109 @@ html, body {
 /* TODO: Ensure accessibility features (e.g., ARIA attributes) */
 /* TODO: Adjust grid layout for different content types */
 /* TODO: Add hover effects for grid items */
+/* Tag styling */
+.tag {
+    padding: 8px 12px; /* Padding around the tag */
+    background-color: var(--blue-light); /* Background color for tags */
+    color: #fff; /* White text color for contrast */
+    border-radius: 100px; /* Fully rounded corners for tags */
+    display: inline-block; /* Make tags inline-block for padding and margin */
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.tag:hover {
+    background-color: var(--blue-dark); /* Darker color on hover */
+}
+
+/* Topics styling */
+.topics {
+    margin: 10px 0; /* Add margin for spacing */
+}
+
+.topics p {
+    font-size: 1.25rem; /* Larger font size for the title */
+    font-weight: bold; /* Bold text for emphasis */
+    margin-bottom: 10px; /* Spacing below the title */
+}
+
+.topics ul {
+    list-style: none; /* Remove default list styles */
+    padding: 0; /* Remove default padding */
+    margin: 10px 0; /* Add margin for spacing */
+    display: flex; /* Use flexbox for tags */
+    flex-wrap: wrap; /* Allow tags to wrap to the next line */
+}
+
+.topics li {
+    margin: 5px; /* Add margin between tags */
+}
+
+/* Individual grid item styling */
+.grid-item {
+    background-color: var(--background-color); /* White background for grid items */
+    border: 1px solid var(--border-color); /* Light gray border */
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 8px var(--box-shadow-color); /* Subtle shadow for depth */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distribute space evenly */
+    height: 100%; /* Make all items equal height */
+}
+
+/* Title styles */
+.grid-item .title {
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    color: var(--blue-dark); /* Dark blue text */
+    margin-bottom: 10px;
+}
+
+/* Date and time styling */
+.date-time {
+    margin-bottom: 10px; /* Add margin for spacing */
+    font-size: 14px;
+    color: var(--secondary-text-color); /* Gray color for date and time */
+}
+
+/* Styling for details */
+.grid-item .details {
+    margin-top: 10px;
+}
+
+/* Location styles */
+.grid-item .location {
+    margin-top: 5px; /* Space above location */
+    font-weight: 600; /* Bold for emphasis */
+}
+
+.grid-item .city {
+    margin-top: 5px;
+    font-weight: 700;
+}
+
+/* Hover effects */
+.grid-item:hover {
+    background-color: var(--hover-bg-color); /* Change background on hover */
+}
+
+/* Make the grid link cover the entire grid item */
+.grid-link {
+    display: flex; /* Use flexbox to maintain the structure */
+    flex-direction: column; /* Ensure the content is stacked vertically */
+    height: 100%; /* Make the link cover the entire height of the grid item */
+    text-decoration: none; /* Remove underline from links */
+    color: inherit; /* Inherit text color from parent */
+}
+
+/* Hover effect for the grid item link */
+.grid-item:hover .grid-link {
+    background-color: var(--hover-bg-color); /* Change background on hover */
+}
+
+.grid-item i {
+    width: 16px;
+    height: auto;
+}

@@ -89,18 +89,3 @@ button[type="submit"]:hover {
     margin-top: -10px; /* Adjust spacing for success messages */
     margin-bottom: 15px;
 }
-
-.full-width {
-    max-width: 100%;
-}
-
-.create-demo-button {
-	padding: 20px;
-	background: var(--highlight-color-orange);
-    width: auto;
-    margin-bottom: 20px;
-}
-
-.create-demo-button:hover {
-    background-color: var(--error-color);
-}

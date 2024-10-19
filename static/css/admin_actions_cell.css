@@ -3,6 +3,10 @@
     text-align: center;
 }
 
+.actions-cell a {
+    margin-right: 0.5rem;
+}
+
 .actions-cell {
     display: table-cell;
     vertical-align: middle;
@@ -40,5 +44,5 @@
 }
 
 .delete-button:hover {
-    background-color: var(--dark-red) !important;
+    background-color: var(--red-dark) !important;
 }

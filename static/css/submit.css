@@ -1,17 +1,3 @@
-:root {
-    --primary-color: #0033A0;
-    --secondary-color: #f0f0f0;
-    --border-color: #ddd;
-    --placeholder-color: #888;
-    --focus-color: #0066cc;
-    --error-color: #cc0000;
-    --background-color: #ffffff;
-    --box-shadow-color: rgba(0, 0, 0, 0.1);
-    --hover-bg-color: #e0e0e0;
-    --button-hover-color: #005bb5;
-    --input-background-color: #f9f9f9;
-}
-
 /* Form Container */
 .form-container {
     max-width: 900px;

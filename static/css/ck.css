@@ -1,12 +1,10 @@
 .main-container {
-	font-family: 'Lato';
 	width: fit-content;
 	margin-left: auto;
 	margin-right: auto;
 }
 
 .ck-content {
-	font-family: 'Lato';
 	line-height: 1.6;
 	word-break: break-word;
 }

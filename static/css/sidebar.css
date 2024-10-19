@@ -45,7 +45,7 @@
 }
 
 .sidebar-toggle:hover {
-  background-color: var(--darker-orange); /* Darker orange on hover */
+  background-color: var(--orange-darker); /* Darker orange on hover */
   transform: scale(1.1); /* Slightly enlarge button on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
 }
@@ -66,7 +66,7 @@
 }
 
 .sidebar-nav a {
-  color: var(--darker-orange);
+  color: var(--orange-darker);
   background-color: #ffffff;
   font-weight: bold;
   text-decoration: none;
@@ -79,7 +79,7 @@
 
 /* Hover effect for sidebar links */
 .sidebar-nav a:hover {
-  background-color: var(--darker-orange); /* Highlight on hover */
+  background-color: var(--orange-darker); /* Highlight on hover */
   color: #ffffff;
 }
 
@@ -93,7 +93,7 @@
   transform: translateY(-50%); /* Adjust for vertical centering */
   display: flex;
   flex-direction: column;
-  background-color: var(--dark-blue); /* Background color matching the sidebar */
+  background-color: var(--blue-dark); /* Background color matching the sidebar */
   padding: 10px; /* Padding for spacing */
   border-radius: 5px; /* Rounded corners for consistency */
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
@@ -113,7 +113,7 @@
 
 /* Hover effect on the hidden icons toggle button */
 .hidden-icons .sidebar-toggle:hover {
-  background-color: var(--darker-orange); /* Background color on hover */
+  background-color: var(--orange-darker); /* Background color on hover */
   border-radius: 5%; /* Round button on hover */
   color: #ffffff; /* Icon color on hover */
 }
@@ -136,7 +136,7 @@
 
 /* Hover effect on hidden icons */
 .hidden-icons a:hover {
-  background-color: var(--darker-orange); /* Background color on hover */
+  background-color: var(--orange-darker); /* Background color on hover */
   font-size: 30px; /* Increase icon size on hover */
   color: #ffffff; /* Icon color on hover */
 }

@@ -1,7 +1,7 @@
 <style>
   /* Base Styles */
   .navbar {
-      background-color: #0033a0; /* Dark Blue */
+      background-color: var(--primary-color); /* Dark Blue */
       padding: 10px 20px; /* Add some padding for a better look */
       position: relative; /* Allow absolute positioning of children */
       z-index: 1000000; /* Ensure the navbar is on top */
@@ -175,7 +175,7 @@
 <!-- Navigation Bar -->
 <header>
   <nav class="navbar">
-    <div class="container bg-header-footer">
+    <div class="container bg-header-footer" id="headerbar">
       <!-- Logo and Home Link -->
       <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
 
@@ -256,10 +256,19 @@
         {% else %}
         <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
         {% endif %}
+        <li>
+          <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
+            <i class="fa-solid fa-moon" id="theme-icon"></i>
+          </button>
+        </li>
+        
+
       </ul>
     </div>
   </nav>
-  {% if current_user.global_admin %} {% include "sidebar.html" %} {% endif %}
+  <script>console.log("{{ current_user.role }}")</script>
+  
+  {% if current_user.role != "user" and current_user.is_authenticated %} {% include "sidebar.html" %} {% endif %}
 </header>
 
 <!-- Add some styles for mobile admin links -->

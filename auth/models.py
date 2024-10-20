@@ -2,6 +2,13 @@ import logging
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
+from database_manager import DatabaseManager
+
+db = DatabaseManager().get_instance()
+
+mongo = db.get_db()
+
+collection = mongo["organizations"]
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +47,7 @@ class User(UserMixin):
         self.confirmed = confirmed
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
-        self.role = role or "member"
+        self.role = role or "user"
 
     @staticmethod
     def from_db(user_doc):
@@ -99,6 +106,9 @@ class User(UserMixin):
             "following": [],
         }
 
+    def get_org_name(self, org_id):
+        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
+    
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
@@ -213,6 +223,24 @@ class User(UserMixin):
                 return permission in org.get("permissions", [])
 
         return False
+    
+    def can_use(self, permission):
+        # Check global permissions first
+        if permission in self.global_permissions:
+            return True
+
+        # Check organization-specific permissions
+        for org in self.permissions:
+            if permission in self.permissions.get(org, []):
+                return True
+            
+        for org in self.organizations:
+            if permission in org.get("permissions", []):
+                return True
+        
+        return False
+
+        
 
     def is_following(self, user_id):
         """Check if this user is following another user."""

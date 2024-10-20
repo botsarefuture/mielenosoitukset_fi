@@ -30,7 +30,7 @@ label {
 
 /* Required field indicator */
 .required {
-    color: red;
+    color: var(--red);
 }
 
 /* Input styles */
@@ -44,7 +44,7 @@ label {
 
 /* Input focus styles */
 .form-control:focus {
-    border-color: #007bff;
+    border-color: var(--focus-color);
     outline: none;
 }
 
@@ -103,7 +103,7 @@ label {
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: var(--blue-light);
 }
 
 .btn-secondary {
@@ -111,7 +111,7 @@ label {
 }
 
 .btn-danger {
-    background-color: #dc3545;
+    background-color: var(--red);
 }
 
 .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover {

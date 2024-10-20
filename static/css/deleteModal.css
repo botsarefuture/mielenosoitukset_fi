@@ -56,11 +56,17 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     margin: 0 10px;
     font-weight: bold;
+    align-items: center;
+    align-content: center;
+    display: inline-flex;
 }
 
 .button-container .button.delete-confirm {
-    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    background: var(--red);
     color: white;
+    align-items: center;
+    align-content: center;
+    display: inline-flex;
 }
 
 .button-container .button.delete-confirm:hover {
@@ -69,7 +75,7 @@
 }
 
 .button-container .button:not(.delete-confirm) {
-    background: linear-gradient(90deg, #ffd200, #f0ad4e);
+    background: var(--yellow);
     color: white;
 }
 

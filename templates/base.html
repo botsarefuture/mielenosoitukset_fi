@@ -1,17 +1,31 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="fi" class="normal">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+    <meta
+      name="description"
+      content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa."
+    />
     <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
-    {% block meta %}
-    {% endblock %}
+    {% block meta %} {% endblock %}
     <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/flash.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/header.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
 
     <!-- Matomo -->
     <script>
@@ -39,13 +53,52 @@
     {% include "header.html" %}
 
     <!-- Flash Messages -->
-    {% if get_flashed_messages(with_categories=True) %}
-    <ul class="flash-messages">
-      {% for category, message in get_flashed_messages(with_categories=True) %}
-      <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
+    <!-- Flash Messages -->
+<div id="flash-messages" class="flash-messages" style="display: none;">
+  <ul id="flash-message-list"></ul>
+</div>
+
+
+<script>
+// Check user's system preference and enable dark mode if preferred
+function applyPreferredTheme() {
+  const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const themeIcon = document.getElementById('theme-icon');
+
+  if (prefersDarkMode) {
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('normal');
+    themeIcon.classList.remove('fa-moon');
+    themeIcon.classList.add('fa-sun');
+  } else {
+    document.documentElement.classList.add('normal');
+    document.documentElement.classList.remove('dark');
+    themeIcon.classList.remove('fa-sun');
+    themeIcon.classList.add('fa-moon');
+  }
+}
+
+// Toggle dark mode manually
+function toggleDarkMode() {
+  document.documentElement.classList.toggle('dark');
+  document.documentElement.classList.toggle('normal');
+  
+  const themeIcon = document.getElementById('theme-icon');
+  
+  // Toggle the icon between moon and sun
+  if (document.documentElement.classList.contains('dark')) {
+    themeIcon.classList.remove('fa-moon');
+    themeIcon.classList.add('fa-sun');
+  } else {
+    themeIcon.classList.remove('fa-sun');
+    themeIcon.classList.add('fa-moon');
+  }
+}
+
+// Apply preferred theme on page load
+applyPreferredTheme();
+</script>
+
 
     <!-- Main Content Area -->
     <main class="container-main-content">
@@ -59,13 +112,17 @@
       <div class="container-header-footer">
         <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
         <ul class="footer-links">
-          <li><a href="{{ url_for('info') }}">Tietoa sivustosta</a></li> |
-          <li><a href="{{ url_for('privacy') }}">Tietosuojaseloste</a></li> |
+          <li><a href="{{ url_for('info') }}">Tietoa sivustosta</a></li>
+          |
+          <li><a href="{{ url_for('privacy') }}">Tietosuojaseloste</a></li>
+          |
           <li><a href="{{ url_for('contact')}}">Ota yhteyttä</a></li>
         </ul>
         <ul class="social-media-links">
           <li>
-            <a href="https://www.instagram.com/mielenosoitukset" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
+            <a href="https://www.instagram.com/mielenosoitukset" target="_blank"
+              ><i class="fab fa-instagram"></i> Instagram</a
+            >
           </li>
         </ul>
       </div>
@@ -100,5 +157,48 @@
         });
       });
     </script>
+    <script>
+      function displayFlashMessage(category, message) {
+        const flashMessages = document.getElementById("flash-messages");
+        const messageList = document.getElementById("flash-message-list");
+    
+        // Create a new list item for the message
+        const newMessage = document.createElement("li");
+        newMessage.className = `flash-${category}`; // Add the category class (e.g., flash-success, flash-error)
+        newMessage.textContent = message;
+    
+        // Add the new message to the list
+        messageList.appendChild(newMessage);
+    
+        // Show the flash message container
+        flashMessages.style.display = "block";
+    
+        // Optionally, hide the message after a delay (e.g., 5 seconds)
+        setTimeout(() => {
+            newMessage.remove(); // Remove the message after the delay
+            if (messageList.childElementCount === 0) {
+                flashMessages.style.display = "none"; // Hide container if no more messages
+            }
+        }, 10000); // Adjust the timeout duration as needed
+    }
+    
+    // Simulating continuous flash message checking (polling or using WebSocket)
+    function checkForNewFlashMessages() {
+        fetch('/get_flash_messages') // Adjust the URL to the endpoint that provides flash messages
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.messages && data.messages.length > 0) {
+                    data.messages.forEach(flash => {
+                        displayFlashMessage(flash.category, flash.message);
+                    });
+                }
+            })
+            .catch(error => console.error('Error fetching flash messages:', error));
+    }
+    
+    // Call this function continuously or based on certain events (e.g., every 5 seconds)
+    setInterval(checkForNewFlashMessages, 5000); // Poll every 5 seconds
+
+  </script>
   </body>
 </html>

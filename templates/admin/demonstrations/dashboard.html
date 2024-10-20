@@ -1,54 +1,17 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">-->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}">
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}">
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
 
 <!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 <style>
-    body {
-        background-color: #f0f4f8; /* Light gray background for contrast */
-        font-family: 'Arial', sans-serif;
-    }
-
-    .table-container {
-        margin-top: 2rem;
-        background-color: #ffffff; /* White background for the table */
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-        overflow: hidden; /* Ensures the border radius is respected */
-    }
-
-    .button {
-        display: inline-block;
-        margin: 1rem 0.5rem; /* More margin on top */
-        padding: 0.5rem 1rem;
-        background-color: #007bff; /* Primary color */
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-        transition: background-color 0.3s ease, transform 0.2s ease;
-        font-weight: bold; /* Make button text bold */
-        display: flex; /* Align icon and text */
-        align-items: center; /* Center align icon */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    }
-
-    .button:hover {
-        background-color: #0056b3; /* Darker blue on hover */
-        transform: translateY(-2px); /* Lift effect on hover */
-    }
-
-    .button i {
-        margin-right: 0.5rem; /* Space between icon and text */
-    }
-
     .search-form {
         margin: 1rem 0;
         display: flex;
@@ -69,7 +32,7 @@
     }
 
     .search-input:focus, .filter-select:focus {
-        border-color: #007bff; /* Primary color on focus */
+        border-color: var(--blue); /* Primary color on focus */
         outline: none; /* Remove outline */
     }
 
@@ -91,35 +54,6 @@
         background-color: #218838; /* Darker green on hover */
     }
 
-    .no-demos {
-        color: #721c24; 
-        font-weight: bold; 
-        background-color: #f8d7da; 
-        padding: 20px; 
-        border: 1px dashed #f5c6cb; /* Dashed border for emphasis */
-        border-radius: 5px;
-        text-align: center;
-        margin: 1rem 0; /* Margin for separation */
-    }
-
-    td {
-        background-color: transparent !important;
-    }
-
-    .actions-cell a {
-        margin-right: 0.5rem;
-    }
-
-    .table-container table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .table-container th, .table-container td {
-        padding: 0.75rem;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
 
     /* Responsive Styles */
     @media (max-width: 768px) {
@@ -132,10 +66,6 @@
             margin-bottom: 0.5rem; /* Space below each element */
         }
     }
-
-
-   
-
 </style>
 
 <div class="table-container">
@@ -143,8 +73,29 @@
     <h2 id="tabletitle">Mielenosoitukset</h2>
 
     <div class="flex justify-center mb-4">
-        <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button"><i class="fas fa-plus"></i>Uusi mielenosoitus</a>
-        <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button"><i class="fas fa-plus-circle"></i>Uusi toistuva mielenosoitus</a>
+        {% if current_user.can_use("CREATE_DEMO") or current_user.can_use("CREATE_RECURRING_DEMO") %}
+
+            {% if current_user.can_use("CREATE_DEMO") %}
+                <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button"><i class="fas fa-plus"></i>Uusi mielenosoitus</a>
+            {% else %}
+                <div class="insuffient-perm" style="color: #ccc">
+                    Sinulla ei ole oikeutta luoda uusia mielenosoituksia.
+                </div>
+            {% endif %}
+
+            {% if current_user.can_use("CREATE_RECURRING_DEMO") %}
+                <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button"><i class="fas fa-plus-circle"></i>Uusi toistuva mielenosoitus</a>
+            {% else %}
+                <div class="insuffient-perm" style="color: #ccc">
+                    Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="insuffient-perm" style="color: #ccc">
+                Ei riittäviä oikeuksia.
+            </div>
+        {% endif %}
     </div>
 
     <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
@@ -188,17 +139,36 @@
                         <td>{{ 'Kyllä' if demo.repeating else 'Ei' }}</td>
                         <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
                         <td class="actions-cell">
+                            <!-- TODO: Check if the user has permission to do these before showing these here -->
+                            {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
+                                <!-- TODO: This button should actually mark the demo as accepted! -->
+                                <button style="width: 132px; background-color: green;" type="button" class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">Hyväksy</button>                      
+                            
+                                {% elif not current_user.can_use("ACCEPT_DEMO") and not demo.approved %}
+                                <div class="insuffient-perm" style="color: white;">
+                                    Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.
+                                </div>
+                            {% endif %}
+                            {% if current_user.can_use("EDIT_DEMO") %}
                             <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
+                            
+                            {% else %}
+                            <div class="insuffient-perm" style="color: white;">
+                                    Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.
+                                </div>
+                            {% endif %}
+
                             <button style="width: 132px !important;" type="button" class="delete-button button" 
                             onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+
                        <i class="fas fa-trash-alt"></i><span class="delete-text">Poista</span>
                     </button>
-                                    {% endfor %}
+                {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-        <div class="no-demos">Ei mielenosoituksia löytynyt.</div>
+        <div class="no-results">Ei mielenosoituksia löytynyt.</div>
     {% endif %}
 </div>
 
@@ -214,6 +184,72 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/deleteModal.js' )}}">
+<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
+<script>
+    function acceptSty(demoId) {
+        demo = document.getElementById(`demo-${demoId}`);
+
+        demo.children[4].innerText = "Kyllä";
+
+        demo.children[5].children[0].remove();
+
+        demo.style.removeProperty("background-color");
+    }
+
+    function acceptDemo(demoId) {
+        fetch(`/admin/demo/accept_demo/${demoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}), // You can add additional data here if needed,
+            redirect: 'manual'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const flashMessagesDiv = document.getElementById("flash-messages");
+            const flashMessageList = flashMessagesDiv.querySelector("ul");
+            const newMessage = document.createElement("li");
+
+            // Clear previous messages
+            flashMessageList.innerHTML = ""; // Clear previous messages
+
+            if (data.status === "OK") {
+                newMessage.classList.add("flash-info");
+                newMessage.textContent = "Mielenosoitus hyväksytty onnistuneesti!";
+                flashMessageList.appendChild(newMessage);
+
+                acceptSty(demoId);
+                
+                // Optionally, you can refresh the page or update the UI
+                //location.reload(); // Reload the page to reflect changes
+            } else {
+                newMessage.classList.add("flash-error");
+                newMessage.textContent = "Virhe: " + (data.message || "Tuntematon virhe.");
+                flashMessageList.appendChild(newMessage);
+            }
+
+            // Show the flash messages and set a timeout to hide them
+            flashMessagesDiv.style.display = "block";
+            setTimeout(() => {
+                flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+            }, 3000);
+        })
+        .catch(error => {
+            const flashMessagesDiv = document.getElementById("flash-messages");
+            const flashMessageList = flashMessagesDiv.querySelector("ul");
+            const newMessage = document.createElement("li");
+
+            newMessage.classList.add("flash-error");
+            newMessage.textContent = "Yhteysvirhe, yritä uudelleen.";
+            flashMessageList.appendChild(newMessage);
+            flashMessagesDiv.style.display = "block";
+            setTimeout(() => {
+                flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+            }, 3000);
+            console.error("Virhe:", error);
+        });
+    }
+</script>    
 
 {% endblock %}

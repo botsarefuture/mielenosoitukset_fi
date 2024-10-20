@@ -2,15 +2,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
+from flask_login import current_user
 from wrappers import admin_required, permission_required
 from utils import is_valid_email
+from .utils import mongo
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
-
-# Initialize MongoDB
-db_manager = DatabaseManager().get_instance()
-mongo = db_manager.get_db()
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -19,6 +17,11 @@ mongo = db_manager.get_db()
 @permission_required("LIST_ORGANIZATIONS")
 def organization_control():
     """Render the organization control panel with a list of organizations."""
+    if not current_user.global_admin:
+        org_limiter = [ObjectId(org.get("org_id")) for org in current_user.organizations]
+        print(org_limiter)
+    else:
+        org_limiter = None
     search_query = request.args.get("search", "")
     query = {}
 
@@ -30,6 +33,8 @@ def organization_control():
                 {"email": {"$regex": search_query, "$options": "i"}},
             ]
         }
+    if org_limiter:
+        query["_id"] = {"$in": org_limiter}
 
     organizations = mongo.organizations.find(query)
 

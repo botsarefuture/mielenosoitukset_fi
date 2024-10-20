@@ -324,7 +324,7 @@ def init_routes(app):
 
     @app.route("/privacy")
     def privacy():
-        return render_template("access_denied.html")
+        return render_template("privacy.html")
 
     @app.route("/contact", methods=["GET", "POST"])
     def contact():

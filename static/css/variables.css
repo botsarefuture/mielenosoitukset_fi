@@ -245,6 +245,13 @@
   --header-color: var(--blue);
 }
 
+.link {
+  color: var(--link-color);
+}
+
+.link:hover {
+  color: var(--link-hover-color);
+}
 
 
 .admin-btn.create-btn {

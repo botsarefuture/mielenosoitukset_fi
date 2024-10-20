@@ -1,79 +1,129 @@
 <div class="form-group required">
-    <label for="city">Paikkakunta<span class="required-asterisk">*</span></label>
-    <div id="paikkakunta-drop" class="dropdown">
-      <button type="button" class="dropbtn">Paikkakunta</button>
-      <div id="dropdown-content" class="dropdown-content">
-        <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()" />
-        <!-- List of cities -->
-        {% for city in city_list %}
-        <a href="#" onclick="selectCity('{{ city }}'); return false;">{{ city }}</a>
-        {% endfor %}
-      </div>
+  <label for="city" aria-label="Paikkakunta selection">Paikkakunta<span class="required-asterisk" aria-hidden="true">*</span></label>
+  <br><br>
+  <div id="paikkakunta-drop" class="dropdown">
+    <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Open Paikkakunta dropdown">Paikkakunta</button>
+    <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
+      <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()" aria-label="Search cities" />
+      <!-- List of cities -->
+      {% for city in city_list %}
+      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">{{ city }}</a>
+      {% endfor %}
     </div>
-    <input type="hidden" id="selected-city" name="city" value="" required />
   </div>
-  
-  <script>
-    // Paikkakunta dropdown functions
-    document.querySelector(".dropbtn").addEventListener("click", function (event) {
-      event.stopPropagation(); // Prevent click event from bubbling
-      var dropdownContent = document.getElementById("dropdown-content");
-      dropdownContent.style.display = dropdownContent.style.display === "block" ? "none" : "block";
-    });
-  
-    window.onclick = function (event) {
-      if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
-        document.getElementById("dropdown-content").style.display = "none";
-      }
-    };
-  
-    function selectCity(city) {
-      document.querySelector(".dropbtn").textContent = city;
-      document.getElementById("selected-city").value = city;
+  <input type="hidden" id="selected-city" name="city" value="" required />
+</div>
+
+<script>
+  // Paikkakunta dropdown functions
+  document.querySelector(".dropbtn").addEventListener("click", function (event) {
+    event.stopPropagation(); // Prevent click event from bubbling
+    var dropdownContent = document.getElementById("dropdown-content");
+    var expanded = this.getAttribute("aria-expanded") === "true" || false;
+    dropdownContent.style.display = expanded ? "none" : "block";
+    this.setAttribute("aria-expanded", !expanded);
+  });
+
+  window.onclick = function (event) {
+    if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
       document.getElementById("dropdown-content").style.display = "none";
+      document.querySelector(".dropbtn").setAttribute("aria-expanded", "false");
     }
-  
-    function filterFunction() {
-      let input, filter, div, a, i;
-      input = document.getElementById("searchInput");
-      filter = input.value.toUpperCase();
-      div = document.getElementById("dropdown-content");
-      a = div.getElementsByTagName("a");
-  
-      for (i = 0; i < a.length; i++) {
-        let txtValue = a[i].textContent || a[i].innerText;
-        a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-      }
+  };
+
+  function selectCity(city) {
+    var dropbtn = document.querySelector(".dropbtn");
+    dropbtn.textContent = city;
+    document.getElementById("selected-city").value = city;
+    document.getElementById("dropdown-content").style.display = "none";
+    dropbtn.setAttribute("aria-expanded", "false");
+  }
+
+  function filterFunction() {
+    let input = document.getElementById("searchInput");
+    let filter = input.value.toUpperCase();
+    let div = document.getElementById("dropdown-content");
+    let a = div.getElementsByTagName("a");
+
+    for (let i = 0; i < a.length; i++) {
+      let txtValue = a[i].textContent || a[i].innerText;
+      a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
     }
-  </script>
-  
-  <style>
-    .dropdown {
-      position: relative;
-      display: inline-block;
+  }
+</script>
+
+<style>
+  .dropdown {
+    /*position: relative;*/
+    display: inline-block;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .dropdown-content {
+    display: none;
+    /*position: absolute;*/
+    background-color: var(--input-background-color); /* Using input background color */
+    width: 100%;
+    max-height: 300px; /* Limit height for better UX */
+    overflow-y: auto; /* Scroll if content overflows */
+    box-shadow: var(--box-shadow); /* Using box shadow variable */
+    z-index: 1;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease-in-out; /* Smooth fade-in animation */
+  }
+
+  .dropbtn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color); /* Using border color variable */
+    background-color: var(--background-color); /* Using background color variable */
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: left; /* Align text to left for better readability */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dropbtn::after {
+    content: '▼'; /* Add dropdown arrow */
+    font-size: 12px;
+    margin-left: 10px;
+    color: var(--icon-color); /* Customizable arrow color */
+  }
+
+  .dropdown-content input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--input-background-color);
+    outline: none;
+  }
+
+  .dropdown-content a {
+    color: var(--primary-text-color); /* Using primary text color variable */
+    padding: 10px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--border-color); /* Divider between items */
+  }
+
+  .dropdown-content a:hover {
+    background-color: var(--hover-bg-color); /* Using hover background color variable */
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
     }
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: #f9f9f9;
-      min-width: 160px;
-      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-      z-index: 1;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-    .dropbtn {
-      padding: 10px;
-      border: 1px solid #ccc;
-      background-color: white;
-      cursor: pointer;
-    }
-    .dropdown-content a {
-      color: black;
-      padding: 10px;
-      text-decoration: none;
-      display: block;
-    }
-    .dropdown-content a:hover {
-      background-color: #f1f1f1;
-    }
-  </style>
-  
+  }
+</style>

@@ -142,14 +142,21 @@
                             <!-- TODO: Check if the user has permission to do these before showing these here -->
                             {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
                                 <!-- TODO: This button should actually mark the demo as accepted! -->
-                                <button style="width: 132px; background-color: green;" type="button accept-button" class="button" onclick="alert('meow')">Hyväksy</button>
-                            {% elif not current_user.can_use("ACCEPT_DEMO") and not demo.approved %}
+                                <button style="width: 132px; background-color: green;" type="button" class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">Hyväksy</button>                      
+                            
+                                {% elif not current_user.can_use("ACCEPT_DEMO") and not demo.approved %}
                                 <div class="insuffient-perm" style="color: white;">
                                     Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.
                                 </div>
                             {% endif %}
-
+                            {% if current_user.can_use("EDIT_DEMO") %}
                             <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
+                            
+                            {% else %}
+                            <div class="insuffient-perm" style="color: white;">
+                                    Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.
+                                </div>
+                            {% endif %}
 
                             <button style="width: 132px !important;" type="button" class="delete-button button" 
                             onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
@@ -177,6 +184,72 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/deleteModal.js' )}}">
+<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
+<script>
+    function acceptSty(demoId) {
+        demo = document.getElementById(`demo-${demoId}`);
+
+        demo.children[4].innerText = "Kyllä";
+
+        demo.children[5].children[0].remove();
+
+        demo.style.removeProperty("background-color");
+    }
+
+    function acceptDemo(demoId) {
+        fetch(`/admin/demo/accept_demo/${demoId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}), // You can add additional data here if needed,
+            redirect: 'manual'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const flashMessagesDiv = document.getElementById("flash-messages");
+            const flashMessageList = flashMessagesDiv.querySelector("ul");
+            const newMessage = document.createElement("li");
+
+            // Clear previous messages
+            flashMessageList.innerHTML = ""; // Clear previous messages
+
+            if (data.status === "OK") {
+                newMessage.classList.add("flash-info");
+                newMessage.textContent = "Mielenosoitus hyväksytty onnistuneesti!";
+                flashMessageList.appendChild(newMessage);
+
+                acceptSty(demoId);
+                
+                // Optionally, you can refresh the page or update the UI
+                //location.reload(); // Reload the page to reflect changes
+            } else {
+                newMessage.classList.add("flash-error");
+                newMessage.textContent = "Virhe: " + (data.message || "Tuntematon virhe.");
+                flashMessageList.appendChild(newMessage);
+            }
+
+            // Show the flash messages and set a timeout to hide them
+            flashMessagesDiv.style.display = "block";
+            setTimeout(() => {
+                flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+            }, 3000);
+        })
+        .catch(error => {
+            const flashMessagesDiv = document.getElementById("flash-messages");
+            const flashMessageList = flashMessagesDiv.querySelector("ul");
+            const newMessage = document.createElement("li");
+
+            newMessage.classList.add("flash-error");
+            newMessage.textContent = "Yhteysvirhe, yritä uudelleen.";
+            flashMessageList.appendChild(newMessage);
+            flashMessagesDiv.style.display = "block";
+            setTimeout(() => {
+                flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+            }, 3000);
+            console.error("Virhe:", error);
+        });
+    }
+</script>    
 
 {% endblock %}

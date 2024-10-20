@@ -168,6 +168,7 @@
                     <td class="actions-cell">
                         <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
                         <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button"><i class="fas fa-trash"></i>Poista</a>
+                        <a href="{{ url_for('org', org_id=org._id )}}" class="button view-button"><i class="fa-solid fa-eye"></i>Katsele</a>
                     </td>
                 </tr>
                 {% endfor %}

@@ -10,31 +10,31 @@
 .search-form input[type="text"] {
     flex: 1; /* Take up remaining space */
     padding: 10px;
-    border: 1px solid #ddd; /* Light gray border */
+    border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 4px;
     font-size: 16px;
     /* Focus styles */
     outline: none; /* Remove default focus outline */
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on focus */
+    box-shadow: var(--box-shadow); /* Subtle shadow on focus */
 }
 
 /* Style for the search button */
 .search-form button {
     padding: 10px 20px;
-    background-color: #0033A0; /* Main Blue */
-    color: #fff; /* White text */
+    background-color: var(--primary-button-color); /* Main Blue */
+    color: var(--primary-button-text-color); /* White text */
     border: none;
     border-radius: 4px;
     font-size: 16px;
     cursor: pointer;
     /* Focus styles */
     outline: none; /* Remove default focus outline */
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on focus */
+    box-shadow: var(--box-shadow); /* Subtle shadow on focus */
 }
 
 /* Hover effect for the search button */
 .search-form button:hover {
-    background-color: #0066cc; /* Light Blue on hover */
+    background-color: var(--primary-button-hover-color); /* Light Blue on hover */
 }
 
 /* Style for the list of demonstrations */
@@ -47,11 +47,11 @@
 /* Style for each list item */
 .demonstrations-list li {
     padding: 15px;
-    border-bottom: 1px solid #ddd; /* Light gray line between items */
+    border-bottom: 1px solid var(--border-color); /* Light gray line between items */
     margin-bottom: 10px;
-    background-color: #ffffff; /* White background for list items */
+    background-color: var(--container-background-color); /* White background for list items */
     border-radius: 4px; /* Rounded corners for list items */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    box-shadow: var(--box-shadow); /* Subtle shadow for depth */
 }
 
 /* Remove border for the last item */
@@ -61,7 +61,7 @@
 
 /* Style for links in the list */
 .demonstrations-list a {
-    color: #0033A0; /* Main Blue */
+    color: var(--primary-text-color); /* Main Blue */
     text-decoration: none; /* Remove underline */
     font-weight: bold;
     /* Font size adjustment for readability */
@@ -71,7 +71,7 @@
 /* Hover effect for links in the list */
 .demonstrations-list a:hover {
     text-decoration: underline; /* Underline on hover */
-    color: #FF6600; /* Secondary Orange on hover */
+    color: var(--orange); /* Secondary Orange on hover */
 }
 
 /* Responsive Adjustments */
@@ -106,21 +106,21 @@
 /* index.css */
 
 .container-welcome {
-    background-color: #f4f4f9;
+    background-color: var(--background-color);
     border-radius: 8px;
     padding: 20px;
     margin: 20px 0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
 }
 
 .container-welcome h2 {
     font-size: 24px;
-    color: #333;
+    color: var(--header-color);
     margin-bottom: 10px;
 }
 
 .container-welcome p {
     font-size: 16px;
-    color: #666;
+    color: var(--secondary-text-color);
     line-height: 1.5;
 }

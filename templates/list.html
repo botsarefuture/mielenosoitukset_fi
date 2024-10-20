@@ -19,41 +19,45 @@
         
         <button type="submit">Hae</button>
     </form>
-
     <div class="container-grid">
-        {% if demonstrations|length > 0 %}
+        {% if demonstrations and demonstrations|length > 0 %}
             {% for demo in demonstrations %}
-            <div class="grid-item">
-                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="grid-link">
-                    <div class="title">{{ demo['title'] }}</div>
-                    <div class="details">
-                        <div class="date-time">
-                            <span class="date">{{ demo['date'] }}</span> |
-                            <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
+                <div class="grid-item">
+                    <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="grid-link">
+                        <div class="title">{{ demo['title'] }}</div>
+                        <div class="details">
+                            <div class="date-time">
+                                <span class="date">{{ demo['date'] }}</span> |
+                                <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
+                            </div>
+                            <div class="topics">
+                                <ul>
+                                    {% if demo["tags"] and demo["tags"]|length > 0 %}
+                                        {% for tag in demo["tags"] %}
+                                            <li>
+                                                    <span class="tag">#{{ tag }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li><span class="tag">#{{ demo['topic'] }}</span></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            <span class="city">
+                                <i class="fa-solid fa-city"></i> {{ demo['city'] }}
+                            </span><br>
+                            <span class="location">
+                                <i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}
+                            </span>
                         </div>
-                        <div class="topics">
-                            <ul>
-                                {% if demo["tags"] %}
-                                    {% for tag in demo["tags"] %}
-                                        <li>
-                                            <a href="{{ url_for('tag_detail', tag_name=tag) }}" class="tag">#{{ tag }}</a>
-                                        </li>
-                                    {% endfor %}
-                                {% else %}
-                                    <li><span class="tag">#{{ demo['topic'] }}</span><br></li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                        <span class="city"><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span><br>
-                        <span class="location"><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
-                    </div>
-                </a>
-            </div>
+                    </a>
+                </div>
             {% endfor %}
         {% else %}
-        <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
+            <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
         {% endif %}
     </div>
+    
     
     
 </div>
@@ -61,7 +65,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const tagList = document.querySelector('.topics ul');
         const tags = tagList.children;
-        const maxVisibleTags = 10; // Set maximum visible tags
+        const maxVisibleTags = 1; // Set maximum visible tags
     
         if (tags.length > maxVisibleTags) {
             // Hide all tags beyond the maxVisibleTags

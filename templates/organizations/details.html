@@ -25,9 +25,9 @@
         </div>
         <h3 class="section-title">Sosiaalinen media</h3>
         <div class="socials">
-            {% for social in org.social_medias %}
-                <p><i class="fa-brands fa-{{ social.type }} some-icon"></i> 
-                    <a href="{{ social.link }}" target="_blank" class="social-link">{% if social.username %}@{{ social.username }}{% endif %}</a>
+            {% for social in org.social_media_links %}
+                <p><i class="fa-brands fa-{{ social }} some-icon"></i> 
+                    <a href="{{ org.social_media_links[social] }}" target="_blank" class="social-link">{% if social %}@{{ social.username }}{% endif %}</a>
                 </p>
             {% endfor %}
         </div>

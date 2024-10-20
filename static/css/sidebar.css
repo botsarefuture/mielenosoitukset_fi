@@ -66,8 +66,8 @@
 }
 
 .sidebar-nav a {
-  color: var(--orange-darker);
-  background-color: #ffffff;
+  color: var(--secondary-button-text-color);
+  background-color: var(--secondary-button-color);
   font-weight: bold;
   text-decoration: none;
   display: flex; /* Flex display for alignment */
@@ -79,8 +79,8 @@
 
 /* Hover effect for sidebar links */
 .sidebar-nav a:hover {
-  background-color: var(--orange-darker); /* Highlight on hover */
-  color: #ffffff;
+  background-color: var(--secondary-button-hover-color); /* Highlight on hover */
+  color: var(--secondary-button-hover-text-color);
 }
 
 /* Hidden icons section styling */
@@ -189,9 +189,9 @@
 .sidebar-info {
   margin-top: 20px;
   padding: 10px;
-  border-top: 1px solid #ddd;
-  background-color: #fff3e0; /* Light orange for warnings */
-  color: #856404; /* Darker text color for visibility */
+  border-top: 1px solid var(--border-color);
+  background-color: var(--yellow); /* Light orange for warnings */
+  color: var(--orange-darker); /* Darker text color for visibility */
   display: flex;
   align-items: center;
   font-size: 14px;
@@ -200,4 +200,15 @@
 .sidebar-info .warning-icon {
   font-size: 24px;
   margin-right: 10px;
+  color: var(--orange);
+}
+
+span.icon {
+	margin-right: 20px;
+	width: 16px;
+	height: 16px;
+	align-self: center;
+	justify-self: center;
+	vertical-align: center;
+	text-align: center;
 }

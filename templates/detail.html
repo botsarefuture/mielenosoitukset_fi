@@ -1,67 +1,84 @@
 {% extends 'base.html' %} {% block title %} {{ demo['title'] }} {% endblock %}
 {% block meta %}
-<meta name="description" content="{{ demo['title'] }} - Mielenosoitukset.fissä" />
-<meta name="description" content="{{ demo['title'] }} - Mielenosoitukset.fissä" />
+<meta
+  name="description"
+  content="{{ demo['title'] }} - Mielenosoitukset.fissä"
+/>
+<meta
+  name="description"
+  content="{{ demo['title'] }} - Mielenosoitukset.fissä"
+/>
 <meta property="og:title" content="{{ demo['title'] }}" />
-<meta property="og:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
-<meta property="og:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta
+  property="og:description"
+  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}"
+/>
+<meta
+  property="og:description"
+  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}"
+/>
 <meta property="og:image" content="{{ demo['img'] }}" />
-<meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
-<meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
+<meta
+  property="og:url"
+  content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+/>
+<meta
+  property="og:url"
+  content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+/>
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
 
 <!-- JSON-LD Structured Data -->
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Event",
-  "name": "{{ demo['title'] }}",
-  "startDate": "{{ demo['date'] }}T{{ demo['start_time'] }}",
-  "endDate": "{{ demo['date'] }}T{{ demo['end_time'] }}",
-  "location": {
-    "@type": "Place",
-    "name": "{{ demo['topic'] }}",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "{{ demo['address'] }}",
-      "addressLocality": "{{ demo['city'] }}",
-      "addressRegion": "FI",
-      "postalCode": "{{ demo['postal_code'] }}", // Add postal code if available
-      "addressCountry": "FI"
+  {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    "name": "{{ demo['title'] }}",
+    "startDate": "{{ demo['date'] }}T{{ demo['start_time'] }}",
+    "endDate": "{{ demo['date'] }}T{{ demo['end_time'] }}",
+    "location": {
+      "@type": "Place",
+      "name": "{{ demo['topic'] }}",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "{{ demo['address'] }}",
+        "addressLocality": "{{ demo['city'] }}",
+        "addressRegion": "FI",
+        "postalCode": "{{ demo['postal_code'] }}", // Add postal code if available
+        "addressCountry": "FI"
+      }
+    },
+    "description": "{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}",
+    "image": "{{ demo['img'] }}",
+    "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
+    "organizer": {
+      "@type": "Organization",
+      "name": "{{ demo['organizers'][0].name if demo['organizers'] else 'Tuntematon' }}",
+      "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id) if demo['organizers'][0].organization_id else '#' }}"
     }
-  },
-  "description": "{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}",
-  "image": "{{ demo['img'] }}",
-  "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
-  "organizer": {
-    "@type": "Organization",
-    "name": "{{ demo['organizers'][0].name if demo['organizers'] else 'Tuntematon' }}",
-    "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id) if demo['organizers'][0].organization_id else '#' }}"
   }
-}
 </script>
-{% endblock %}
- {% block content %}
+{% endblock %} {% block content %}
 
 <style>
   /* Main Container */
   #main {
-    background-color: #f4f4f4;
+    background-color: var(--background-color);
     padding: 20px;
     margin: 0 auto;
     max-width: 800px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
   }
 
   /* Headings */
   h1 {
-    color: #0033a0;
     margin-bottom: 20px;
-    border-bottom: 2px solid #0033a0;
+    border-bottom: 2px solid var(--blue-dark);
     padding-bottom: 10px;
     overflow-wrap: break-word;
+    text-align: center;
   }
 
   /* Images */
@@ -84,7 +101,7 @@
   #orginfo {
     flex: 1;
     min-width: 300px;
-    background-color: #ffffff;
+    background-color: var(--container-background-color);
     padding: 20px;
     border-radius: 8px;
   }
@@ -97,7 +114,7 @@
   .subtitle {
     margin-top: 0;
     font-size: 1.2em;
-    color: #0033a0;
+    color: var(--primary-strong-text-color);
     text-align: center;
   }
 
@@ -137,12 +154,15 @@
 
   /* Organizer Info */
   .organizer-info {
-    background-color: #f0f8ff; /* Light background for contrast */
-    border: 1px solid #0033a0; /* Border to distinguish each organizer */
+    background-color: var(
+      --background-color
+    ); /* Light background for contrast */
+    border: 1px solid var(--border-color); /* Border to distinguish each organizer */
     border-radius: 8px;
     padding: 15px; /* Add padding for better spacing */
     margin-bottom: 20px;
     transition: transform 0.2s; /* Smooth scaling effect on hover */
+    box-shadow: var(--box-shadow);
   }
 
   .organizer-info:hover {
@@ -150,14 +170,14 @@
   }
 
   .organizer-info a {
-    color: #0033a0;
+    color: var(--link-color);
     text-decoration: none;
     font-weight: bold;
   }
 
   .organizer-info a:hover {
     text-decoration: underline;
-    color: #ff6600;
+    color: var(--link-hover-color);
   }
 
   /* Back Link */
@@ -165,8 +185,8 @@
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: #0033a0;
-    color: #ffffff;
+    background-color: var(--primary-button-color);
+    color: var(--primary-button-text-color);
     border-radius: 4px;
     text-decoration: none;
     transition: background-color 0.3s ease;
@@ -174,52 +194,53 @@
   }
 
   .back-link:hover {
-    background-color: #0066cc;
+    background-color: var(--primary-button-hover-color);
+    color: var(--primary-button-hover-text-color);
   }
 
   /* Strong Elements */
   strong {
-    color: #0033a0;
+    color: var(--primary-strong-text-color);
   }
 
   /* Route Information */
   .route {
     margin-top: 20px;
     padding: 15px;
-    background-color: #ffffff;
-    border-left: 5px solid #0033a0;
+    background-color: var(--background-color);
+    border-left: 5px solid var(--blue);
     border-radius: 8px;
   }
 
   /* General Links */
   a {
-    color: #0033a0;
+    color: var(--blue);
     text-decoration: none;
     font-weight: bold;
   }
 
   a:hover {
     text-decoration: underline;
-    color: #ff6600;
+    color: var(--blue-dark);
   }
 
   /* Countdown */
   .countdown {
     margin-top: 20px;
     padding: 20px;
-    background-color: #ffffff;
+    background-color: var(--background-color);
     border-radius: 8px;
     text-align: center;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
   }
 
   /* Map Container */
   .map {
     margin-top: 20px;
-    background-color: #ffffff;
+    background-color: var(--background-color);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow);
   }
 
   /* Organizers List */
@@ -245,25 +266,82 @@
     h1 {
       text-align: center;
     }
-
   }
 
   .button {
     padding: 10px 20px;
-    background-color: #007bff;
+    background-color: var(--primary-button-color);
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
   }
+  .tag {
+    padding: 8px 12px; /* Padding around the tag */
+    margin: auto;
+    background-color: var(--blue-light); /* Background color for tags */
+    color: #fff; /* White text color for contrast */
+    border-radius: 100px; /* Fully rounded corners for tags */
+    display: inline-block; /* Make tags inline-block for padding and margin */
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.tag:hover {
+    background-color: var(--blue-dark); /* Darker color on hover */
+}
+
+/* Topics styling */
+.topics {
+    margin: 10px 0; /* Add margin for spacing */
+    display: flex;
+    align-content: space-evenly;
+}
+
+.topics p {
+    font-size: 1.25rem; /* Larger font size for the title */
+    font-weight: bold; /* Bold text for emphasis */
+    margin-bottom: 10px; /* Spacing below the title */
+}
+
+.topics ul {
+    list-style: none; /* Remove default list styles */
+    padding: 0; /* Remove default padding */
+    margin: 10px 0; /* Add margin for spacing */
+    display: flex; /* Use flexbox for tags */
+    flex-wrap: wrap; /* Allow tags to wrap to the next line */
+}
+
+.topics li {
+    margin: 5px; /* Add margin between tags */
+}
+
+.topics ul {
+	list-style: none;
+	padding: 0;
+	margin: 10px 0;
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: row;
+	justify-content: space-evenly;
+	align-content: space-evenly;
+}
+
+.topics {
+	margin: 10px 0;
+	display: flex;
+	/* align-content: space-evenly; */
+	align-items: flex-start;
+	/* justify-content: space-evenly; */
+	flex-direction: column;
+}
 </style>
 
 <div id="main">
-  {% if demo['img'] %}
-  {% if demo['img'] != "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z" %}
+  {% if demo['img'] %} {% if demo['img'] !=
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
+  %}
   <img src="{{ demo['img'] }}" alt="Event Image" />
-  {% endif %}
-  {% else %}
+  {% endif %} {% else %}
   <!--
   <img
     src="https://mielenosoitukset-fi1.fsn1.your-objectstorage.com/demos/default.jpg"
@@ -271,8 +349,20 @@
 
   {% endif %}
   <h1>{{ demo['title'] }}</h1>
-  <div>
     <!--<a href="#" class="like-button"> Tykkää </a>-->
+    <div class="topics">
+      <ul>
+        {% if demo["tags"] and demo["tags"]|length > 0 %} {% for tag in
+        demo["tags"] %}
+        <li>
+          <span class="tag">#{{ tag.lower() }}</span>
+        </li>
+        {% endfor %} {% else %}
+        <li><span class="tag">#{{ demo['topic'].lower() }}</span></li>
+        {% endif %}
+      </ul>
+    </div>
+
     <!-- Social Media Share Buttons -->
     <div class="button-container">
       <a
@@ -297,22 +387,29 @@
         Jaa LinkedInissä
       </a>
     </div>
-  </div>
 
   {% if demo['description'] %}
-  <div class="container" style="margin-top: 20px;
-	padding: 20px;
-	background-color: #ffffff;
-	border-radius: 8px;
-	text-align: center;
-	box-shadow: 0 0 10px var(--error-color);">
-  <h2 class="subtitle">Esittely</h2>
-  {{ demo['description']|safe }}
-</div>
-{% endif %}
+  <div
+    class="container"
+    style="
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: var(--box-shadow);
+    "
+  >
+    <h2 class="subtitle">Esittely</h2>
+    {{ demo['description']|safe }}
+  </div>
+  {% endif %}
   <div class="countdown">
     <h2 class="subtitle">Aikaa mielenosoituksen alkuun</h2>
-    <div id="timer" style="font-size: 24px; color: #0033a0"></div>
+    <div
+      id="timer"
+      style="font-size: 24px; color: var(--primary-strong-text-color)"
+    ></div>
   </div>
   <br />
   <div class="map">
@@ -323,64 +420,19 @@
   <div id="subcontainer1">
     <div id="infocontainer">
       <h2 class="subtitle">Lisätiedot</h2>
-      <p><strong>Päivämäärä:</strong><br />{{ demo['date'] }}</p>
-      <p><strong>Alkamisaika:</strong><br />{{ demo['start_time'] }}</p>
-      <p><strong>Päättymisaika:</strong><br />{{ demo['end_time'] }}</p>
-      <p><strong>Aihe:</strong><br />{{ demo['topic'] }}</p>
-      <p>
-        <strong>Sijainti:</strong><br />{{ demo['address'] }}, {{ demo['city']
-        }}
-      </p>
-
-      {% if demo['route'] and demo['route'] != "None" %}
-      <div class="route">
-        <p><strong>Marssin reitti:</strong></p>
-        <p>{{ demo['route'] }}</p>
+      <div id="demo-details">
+        <!-- Demo details will be injected here by JavaScript -->
       </div>
-      {% endif %} {% if demo['facebook'] %}
-      <a href="{{ demo['facebook'] }}" target="_blank" class="facebook-button">
-        Facebook-tapahtuma
-      </a>
-      {% endif %}
     </div>
 
     <div id="orginfo">
       <h2 class="subtitle">Järjestäjät</h2>
-      {% if demo['organizers'] %}
-      <div class="organizers-list">
-        {% for org in demo['organizers'] %}
-        <div class="organizer-info">
-          <p><strong>Nimi:</strong><br />{{ org.name }}</p>
-
-          {% if org['organization_id'] %}
-          <p>
-            <a
-              href="{{ url_for('org', org_id=org.organization_id) }}"
-              class="org-profile-link"
-              >Mielenosoitukset.fi -profiili</a
-            >
-          </p>
-          {% endif %} {% if org['website'] %}
-          <p>
-            <strong>Nettisivu:</strong><br />
-            <a href="{{ org['website'] }}" target="_blank" class="org-website"
-              >{{ org['website'] }}</a
-            >
-          </p>
-          {% endif %} {% if org['email'] %}
-          <p>
-            <strong>Sähköposti:</strong><br />
-            <a href="mailto:{{ org['email'] }}" class="org-email"
-              >{{ org['email'] }}</a
-            >
-          </p>
-          {% endif %}
-        </div>
-        {% endfor %}
+      <div class="organizers-list" id="organizers-list">
+        <!-- Organizers will be injected here by JavaScript -->
       </div>
-      {% else %}
-      <p>Ei järjestäjätietoja saatavilla.</p>
-      {% endif %}
+      <p id="no-organizers" style="display: none">
+        Ei järjestäjätietoja saatavilla.
+      </p>
     </div>
 
     <a class="back-link" href="{{ url_for('demonstrations') }}"
@@ -392,24 +444,26 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script>
-    {% if latitude is not none %}
-      var map = L.map("map").setView([{{ latitude }}, {{ longitude }}], 13);
+    let data = {"latitude": {{ latitude }}, "longitude": {{ longitude }}, "demo": {{ demo | tojson }}};
+
+    if (data["latitude"] != null) {
+      var map = L.map("map").setView([data["latitude"], data["longitude"]], 13);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
 
-      L.marker([{{ latitude }}, {{ longitude }}])
+      L.marker([data["latitude"], data["longitude"]])
         .addTo(map)
-        .bindPopup("{{ demo['address'] | escape }}")
+        .bindPopup(data["demo"]["address"])
         .openPopup();
-    {% else %}
+    } else {
       var mapElement = document.getElementById("map");
       if (mapElement) {
         mapElement.remove();  // Removes the map element if it exists
       }
-    {% endif %}
+    }
   </script>
   <script>
     function formatFinnishDate(dateString) {
@@ -422,8 +476,8 @@
 
     function updateCountdown() {
       // Replace these with your actual Finnish date and time strings for testing
-      const demoDate = "{{ demo['date'] }}"; // e.g., "09.09.2024"
-      const demoTime = "{{ demo['start_time'] }}"; // e.g., "14:00:00"
+      const demoDate = data["demo"]["date"]; // e.g., "09.09.2024"
+      const demoTime = data["demo"]["start_time"]; // e.g., "14:00:00"
 
       const formattedDate = formatFinnishDate(demoDate);
       const eventDateStr = `${formattedDate}T${demoTime}`;
@@ -459,5 +513,112 @@
 
     setInterval(updateCountdown, 1000);
   </script>
+  <script>
+    // Assuming 'data' is already available in the global scope and contains the 'demo' object
+    const demo = data["demo"];
+    const organizersListDiv = document.getElementById("organizers-list");
+    const noOrganizersText = document.getElementById("no-organizers");
+
+    // Function to populate the organizers info
+    function populateOrganizers(organizers) {
+      // Check if there are any organizers
+      if (organizers && organizers.length > 0) {
+        organizers.forEach((org) => {
+          const organizerDiv = document.createElement("div");
+          organizerDiv.classList.add("organizer-info");
+
+          // Organizer Name
+          const nameParagraph = document.createElement("p");
+          nameParagraph.innerHTML = `<strong>Nimi:</strong><br />${org.name}`;
+          organizerDiv.appendChild(nameParagraph);
+
+          // Mielenosoitukset.fi Profile Link if organization_id exists
+          if (org.organization_id) {
+            const profileLinkParagraph = document.createElement("p");
+            profileLinkParagraph.innerHTML = `
+              <a href="/org/${org.organization_id}" class="org-profile-link">
+                Mielenosoitukset.fi -profiili
+              </a>`;
+            organizerDiv.appendChild(profileLinkParagraph);
+          }
+
+          // Website if available
+          if (org.website) {
+            const websiteParagraph = document.createElement("p");
+            websiteParagraph.innerHTML = `<strong>Nettisivu:</strong><br />
+              <a href="${org.website}" target="_blank" class="org-website">
+                ${org.website}
+              </a>`;
+            organizerDiv.appendChild(websiteParagraph);
+          }
+
+          // Email if available
+          if (org.email) {
+            const emailParagraph = document.createElement("p");
+            emailParagraph.innerHTML = `<strong>Sähköposti:</strong><br />
+              <a href="mailto:${org.email}" class="org-email">
+                ${org.email}
+              </a>`;
+            organizerDiv.appendChild(emailParagraph);
+          }
+
+          // Append organizerDiv to the list
+          organizersListDiv.appendChild(organizerDiv);
+        });
+      } else {
+        // If no organizers, show the "No organizers" message
+        noOrganizersText.style.display = "block";
+      }
+    }
+
+    // Call the function with the organizers list
+    populateOrganizers(demo.organizers);
+  </script>
+  <script>
+    // Assuming 'data' is already available in the global scope and contains the 'demo' object
+    const demoDetailsDiv = document.getElementById("demo-details");
+
+    // Function to populate demo details
+    function populateDemoDetails(demo) {
+      let detailsHTML = "";
+
+      // Päivämäärä
+      detailsHTML += `<p><strong>Päivämäärä:</strong><br />${demo.date}</p>`;
+
+      // Alkamisaika
+      detailsHTML += `<p><strong>Alkamisaika:</strong><br />${demo.start_time}</p>`;
+
+      // Päättymisaika
+      detailsHTML += `<p><strong>Päättymisaika:</strong><br />${demo.end_time}</p>`;
+
+      // Aihe
+      detailsHTML += `<p><strong>Aihe:</strong><br />${demo.topic}</p>`;
+
+      // Sijainti
+      detailsHTML += `<p><strong>Sijainti:</strong><br />${demo.address}, ${demo.city}</p>`;
+
+      // Marssin reitti (conditionally added)
+      if (demo.route && demo.route !== "None") {
+        detailsHTML += `<div class="route">
+                          <p><strong>Marssin reitti:</strong></p>
+                          <p>${demo.route}</p>
+                        </div>`;
+      }
+
+      // Facebook event link (conditionally added)
+      if (demo.facebook) {
+        detailsHTML += `<a href="${demo.facebook}" target="_blank" class="facebook-button">
+                          Facebook-tapahtuma
+                        </a>`;
+      }
+
+      // Insert the constructed HTML into the demoDetailsDiv
+      demoDetailsDiv.innerHTML = detailsHTML;
+    }
+
+    // Call the function with the demo details
+    populateDemoDetails(demo);
+  </script>
+
   {% endblock %}
 </div>

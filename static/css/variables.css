@@ -14,7 +14,9 @@
 
   /* Borders and Shadows */
   --border-color: #ddd;
-  --box-shadow-color: rgba(0, 0, 0, 0.1);
+  --box-shadow-color: rgba(0, 0, 0, 0.15);
+
+  --box-shadow: 0 0 20px var(--box-shadow-color);
 
   /* Text Colors */
   --placeholder-color: #888;
@@ -23,7 +25,25 @@
 
   /* Button Colors */
   --primary-button-color: var(--blue);
+  --primary-button-text-color: white;
   --primary-button-hover-color: var(--blue-dark);
+  --primary-button-hover-text-color: white;
+
+  --secondary-button-color: var(--secondary-color); /* Added secondary button color */
+  --secondary-button-text-color: #333; /* Text color for secondary button */
+  --secondary-button-hover-color: #e0e0e0; /* Hover color for secondary button */
+  --secondary-button-hover-text-color: #000; /* Text color for hover state */
+
+  /* Black and White Shades */
+  --white: #ffffff;
+  --white-lighter: #f9f9f9; /* Very light gray */
+  --white-light: #f0f0f0; /* Light gray */
+  --white-dark: #d0d0d0; /* Darker gray */
+  --black: #000000;
+  --black-lighter: #1a1a1a; /* Very dark gray */
+  --black-light: #333333; /* Dark gray */
+  --black-dark: #4d4d4d; /* Medium gray */
+  --black-darker: #666666; /* Lighter medium gray */
 
   /* Blue Colors */
   --blue: #0033a0;
@@ -53,11 +73,179 @@
   --green-dark: #218838;
   --green-darker: #196c2a;
 
+  /* Yellow Colors */
+  --yellow: #ffcc00; /* Bright yellow */
+  --yellow-lighter: #ffdb4d; /* Light yellow */
+  --yellow-light: #ffe580; /* Soft yellow */
+  --yellow-dark: #cc9900; /* Dark yellow */
+  --yellow-darker: #996600; /* Very dark yellow */
+
   /* Admin Stuff */
   --admin-section-title-color: var(--focus-color);
   --admin-create-btn-bg: var(--green);
   --admin-create-btn-hover-bg: var(--green-dark);
+
+  --link-color: var(--blue);
+  --link-hover-color: var(--orange);
+
+  --primary-strong-text-color: var(--blue);
+  --header-color: var(--blue);
 }
+
+.festive:root {
+  /* Primary Colors */
+  --primary-color: #006400; /* Dark Green for Christmas tree theme */
+  --secondary-color: #ffefdb; /* Warm cream color for a cozy feel */
+
+  --primary-text-color: #333; /* Neutral for readability */
+  --secondary-text-color: #555; /* Softer text color for subtle contrast */
+
+  /* Background Colors */
+  --background-color: #fff5f5; /* Very light red hint, like a winter glow */
+  --input-background-color: #fffafa; /* Snowy white for input backgrounds */
+  --hover-bg-color: #ffebeb; /* Light red/pink for hover effects */
+  --container-background-color: #faf9f6; /* Subtle off-white for containers */
+
+  /* Borders and Shadows */
+  --border-color: #e6b8b8; /* Light red for subtle borders */
+  --box-shadow-color: var(--green); /* Softer shadow for a more gentle look */
+
+  --box-shadow: 0 0 20px var(--box-shadow-color);
+
+  /* Text Colors */
+  --placeholder-color: #888;
+  --focus-color: #ff4500; /* Bright red, a nod to Christmas lights */
+  --error-color: #cc0000; /* Festive red for errors */
+
+  /* Button Colors */
+  --primary-button-color: var(--red); /* Christmas red */
+  --primary-button-hover-color: var(--red-dark); /* Darker red for hover */
+
+  /* Blue Colors */
+  --blue: #0033a0; /* Keeping this unchanged for contrast */
+  --blue-lighter: #4d79cc;
+  --blue-light: #3366cc;
+  --blue-dark: #002280;
+  --blue-darker: #001160;
+
+  /* Orange Colors */
+  --orange: #ff6600; /* Keeping warm orange for accents */
+  --orange-lighter: #ff9966;
+  --orange-light: #ff8533;
+  --orange-dark: #cc5200;
+  --orange-darker: #993d00;
+
+  /* Red Colors */
+  --red: #b22222; /* Festive, deeper red */
+  --red-lighter: #ff7f7f; /* Lighter red for softer elements */
+  --red-light: #ff6347; /* Tomato red, warm and welcoming */
+  --red-dark: #8b0000; /* Dark crimson for bold elements */
+  --red-darker: #660000; /* Very dark red for strong accents */
+
+  /* Green Colors */
+  --green: #228b22; /* Forest green, perfect for holiday vibes */
+  --green-lighter: #7fff00; /* Light lime green for contrast */
+  --green-light: #32cd32; /* Lively green for buttons */
+  --green-dark: #006400; /* Dark green for text and accents */
+  --green-darker: #004b23; /* Very dark green, deep and bold */
+
+  /* Yellow Colors */
+  --yellow: #ffd700; /* Gold for festive sparkle */
+  --yellow-lighter: #ffec8b; /* Light gold for soft accents */
+  --yellow-light: #f0e68c; /* Warm pale yellow, like candlelight */
+  --yellow-dark: #b8860b; /* Dark goldenrod for stronger elements */
+  --yellow-darker: #8b6508; /* Deeper gold for dramatic contrasts */
+
+  /* Admin Stuff */
+  --admin-section-title-color: var(--focus-color); /* Keep the festive red */
+  --admin-create-btn-bg: var(--green); /* Green for creation buttons */
+  --admin-create-btn-hover-bg: var(--green-dark); /* Dark green for hover */
+}
+
+.dark:root {
+  /* Primary Colors */
+  --primary-color: #4d79cc; /* Lighter blue for dark mode */
+  --secondary-color: #202020; /* Dark gray */
+
+  --primary-text-color: #f0f0f0; /* Light text on dark background */
+  --secondary-text-color: #c0c0c0; /* Slightly lighter text */
+
+  /* Background Colors */
+  --background-color: #181818; /* Very dark background */
+  --input-background-color: #2e2e2e; /* Dark input background */
+  --hover-bg-color: #3d3d3d; /* Hover effect for dark backgrounds */
+  --container-background-color: #2e2e2e; /* Dark container background */
+
+  /* Borders and Shadows */
+  --border-color: #444; /* Darker border */
+  --box-shadow-color: rgba(255, 255, 255, 0.15); /* Light shadow */
+
+  --box-shadow: 0 0 20px var(--box-shadow-color);
+
+  /* Text Colors */
+  --placeholder-color: #bbb; /* Lighter placeholder */
+  --focus-color: #4d79cc; /* Softer blue focus */
+  --error-color: #ff4d4d; /* Red error for visibility in dark mode */
+
+  /* Button Colors */
+  --primary-button-color: var(--blue-light);
+  --primary-button-text-color: white;
+  --primary-button-hover-color: var(--blue-darker);
+  --primary-button-hover-text-color: white;
+
+  --secondary-button-color: var(--black-light); /* Secondary button color for dark mode */
+  --secondary-button-text-color: var(--white); /* Text color for secondary button */
+  --secondary-button-hover-color: var(--black-dark); /* Hover color for secondary button */
+  --secondary-button-hover-text-color: var(--white-light); /* Text color for hover state */
+
+  /* Blue Colors */
+  --blue: #4d79cc; /* Light blue for dark mode */
+  --blue-lighter: #4d79cc;
+  --blue-light: #3366cc;
+  --blue-dark: #002280;
+  --blue-darker: #001160;
+
+  /* Orange Colors */
+  --orange: #ff6600;
+  --orange-lighter: #ff9966;
+  --orange-light: #ff8533;
+  --orange-dark: #cc5200;
+  --orange-darker: #993d00;
+
+  /* Red Colors */
+  --red: #ff4d4d;
+  --red-lighter: #ff8585;
+  --red-light: #ff6666;
+  --red-dark: #cc3d3d;
+  --red-darker: #993030;
+
+  /* Green Colors */
+  --green: #28a745;
+  --green-lighter: #71d78e;
+  --green-light: #4cc476;
+  --green-dark: #218838;
+  --green-darker: #196c2a;
+
+  /* Yellow Colors */
+  --yellow: #ffcc00; /* Bright yellow */
+  --yellow-lighter: #ffdb4d; /* Light yellow */
+  --yellow-light: #ffe580; /* Soft yellow */
+  --yellow-dark: #cc9900; /* Dark yellow */
+  --yellow-darker: #996600; /* Very dark yellow */
+
+  /* Admin Stuff */
+  --admin-section-title-color: var(--focus-color);
+  --admin-create-btn-bg: var(--green);
+  --admin-create-btn-hover-bg: var(--green-dark);
+
+  --link-color: var(--blue);
+  --link-hover-color: var(--orange);
+
+  --primary-strong-text-color: var(--blue);
+  --header-color: var(--blue);
+}
+
+
 
 .admin-btn.create-btn {
   background-color: var(--admin-create-btn-bg);
@@ -81,7 +269,6 @@
   min-width: 100%; /* Ensures the element takes full width */
   box-sizing: border-box; /* Ensures padding and border are included in the element's width */
 }
-
 
 .mb-4 {
   margin-bottom: 1rem; /* 16px */

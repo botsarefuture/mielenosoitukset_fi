@@ -6,39 +6,39 @@
 
 <style>
     li {
-        list-style: none;
+      list-style: none;
     }
-
+  
     span.icon {
-        margin-right: 20px;
+      margin-right: 20px;
     }
-
+  
     .beta-label {
-        background-color: #e0e0e0; /* Light gray background */
-        color: #333; /* Dark text color */
-        border-radius: 3px; /* Rounded corners */
-        padding: 2px 5px; /* Padding for spacing */
-        font-size: 12px; /* Smaller font size */
-        margin-left: 5px; /* Space between text and label */
+      background-color: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
+      color: var(--primary-text-color); /* Using primary text color variable for contrast */
+      border-radius: 3px; /* Rounded corners */
+      padding: 2px 5px; /* Padding for spacing */
+      font-size: 12px; /* Smaller font size */
+      margin-left: 5px; /* Space between text and label */
     }
-
+  
     .ddos-button {
-        background-color: var(--red); /* Red color for the button */
-        color: #FFFFFF;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
+      background-color: var(--red); /* Using red color variable for the button */
+      color: var(--primary-button-text-color); /* Using primary button text color variable for white text */
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
     }
-
+  
     .ddos-button i {
-        margin-right: 8px;
+      margin-right: 8px;
     }
-</style>
-
+  </style>
+  
 <div class="container-sidebar bg-header-footer" style="z-index: 100000000000;">
     <a class="sidebar-toggle" id="maintoggle" aria-label="Avaa sivupalkki">&#9776;</a>
     <h2 class="sidebar-title" style="color: white;">{% if current_user.global_admin %} Pääkäyttäjän {% else %} Superkäyttäjän {% endif %} työkalupakki</h2> <!-- Sidebar Title -->

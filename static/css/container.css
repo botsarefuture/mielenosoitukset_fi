@@ -13,7 +13,7 @@
   margin-bottom: var(--margin-top-bottom);
   padding: 20px; /* Padding inside the container */
   box-sizing: content-box; /* Ensure padding is included in the width */
-  background-color: #e0e0e0; /* Default background color for main content areas */
+  background-color: var(--container-background-color); /* Default background color for main content areas */
 }
 
 /* Fluid Containers */
@@ -23,7 +23,7 @@
   margin-top: var(--margin-top-bottom);
   margin-bottom: var(--margin-top-bottom);
   box-sizing: border-box; /* Ensure padding is included in the width */
-  background-color: #e0e0e0; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
 }
 
 /* Centered Content Container */
@@ -33,7 +33,7 @@
   align-items: center; /* Center items horizontally */
   justify-content: center; /* Center items vertically */
   text-align: center; /* Center text */
-  background-color: #e0e0e0; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
   margin-top: var(--margin-top-bottom);
   margin-bottom: var(--margin-top-bottom);
 }
@@ -41,7 +41,7 @@
 /* Container with Fixed Sidebar */
 .container-sidebar {
   display: flex;
-  background-color: #e0e0e0; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
 }
 
 .container-sidebar .main-content {
@@ -60,7 +60,7 @@
   flex-wrap: wrap; /* Allow columns to wrap on smaller screens */
   gap: 20px; /* Space between columns */
   padding: 20px;
-  background-color: #e0e0e0; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
 }
 
 /* Container for Forms */
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 15px; /* Space between form elements */
-  /*background-color: #ffffff; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
   border-color: var(--border-color);
   margin-top: var(--margin-top-bottom);
   margin-bottom: var(--margin-top-bottom);
@@ -83,7 +83,7 @@
   ); /* Responsive grid */
   gap: 20px; /* Space between grid items */
   padding: 20px;
-  background-color: #e0e0e0; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
   margin-top: var(--margin-top-bottom);
   margin-bottom: var(--margin-top-bottom);
 }
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center; /* Center items vertically */
   justify-content: space-between; /* Distribute space between items */
-  background-color: #e0e0e0; /* Default background color */
+  background-color: var(--container-background-color); /* Default background color */
 }
 
 /* Container for Main Content */
@@ -151,28 +151,29 @@
   .container-main-content h4,
   .container-main-content h5 {
     text-align: center;
+    font-size: revert !important;
   }
 }
 
 /* Background Color Utility Classes */
 .bg-main-content {
-  background-color: #e0e0e07d; /* Default background color for main content areas */
+  background-color: var(--background-color); /* Default background color for main content areas */
 }
 
 .bg-light-red {
-  background-color: #ce9c9c;
+  background-color: var(--red-light);
 }
 
 .bg-highlight {
-  background-color: #8cf795; /* Light green for highlight areas */
+  background-color: var(--blue); /* Light green for highlight areas */
 }
 
 .bg-warning {
-  background-color: #fff3e0; /* Light orange for warning or call-to-action areas */
+  background-color: var(--orange-light); /* Light orange for warning or call-to-action areas */
 }
 
 .bg-header-footer {
-  background-color: #0033a0; /* Dark Blue for headers and footers */
+  background-color: var(--primary-color); /* Dark Blue for headers and footers */
   color: #ffffff; /* White text for readability */
 }
 

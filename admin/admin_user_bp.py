@@ -7,14 +7,11 @@ from auth.models import User
 from wrappers import admin_required, permission_required
 from emailer.EmailSender import EmailSender
 
+from .utils import mongo, get_org_name
+
 email_sender = EmailSender()
 
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
-
-# Initialize MongoDB
-db_manager = DatabaseManager().get_instance()
-mongo = db_manager.get_db()
-
 
 def flash_message(message, category):
     """Flash a message with a specific category."""
@@ -132,7 +129,7 @@ def edit_user(user_id):
         return redirect(url_for("admin_user.user_control"))
 
     # Prepare to render the edit user form
-    user_orgs = user.organizations
+    user_orgs = [{"_id": org.get("org_id"), "role": org.get("role")} for org in user.organizations]
     org_ids = [org.get("org_id") for org in user_orgs]
     user_permissions = user.permissions  # Fetch user-specific permissions
     global_permissions = (
@@ -147,12 +144,9 @@ def edit_user(user_id):
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         user_permissions=user_permissions,
         global_permissions=global_permissions,
+        user_organizations=user_orgs
     )
 
-
-def get_org_name(org_id):
-    result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-    return result.get("name") if result else "Unknown Organization"
 
 
 @admin_user_bp.route("/save_user/<user_id>", methods=["POST"])

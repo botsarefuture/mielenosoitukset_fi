@@ -1,16 +1,5 @@
 /* form.css */
-/* Define color variables */
-:root {
-    --primary-color: #0033A0; /* Blue */
-    --secondary-color: #FFFFFF; /* White */
-    --highlight-color-orange: #FF6600; /* Orange */
-    --background-color-light: #E0E0E0; /* Light Gray */
-    --border-color: #000000; /* Light Gray */
-    --placeholder-color: #888888; /* Dark Gray */
-    --focus-color: #0033A0; /* Blue */
-    --error-color: #E03C31; /* Red */
-    --box-shadow-color: rgba(0, 0, 0, 0.1); /* Shadow Color */
-}
+
 /* Form styling */
 form {
     display: flex;
@@ -22,7 +11,7 @@ form {
 label {
     font-weight: bold;
     margin-bottom: 5px;
-    color: #333; /* Dark gray text for better readability */
+    color: var(--primary-text-color); /* Dark gray text for better readability */
 }
 
 /* Input, select, and textarea styles */
@@ -36,9 +25,10 @@ textarea {
     border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 4px; /* Rounded corners */
     font-size: 16px; /* Ensures readability */
-    color: #333; /* Dark gray text */
+    color: var(--primary-text-color); /* Dark gray text */
     box-sizing: border-box; /* Includes padding and border in element's total width and height */
     transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    background-color: var(--input-background-color);
 }
 
 /* Textarea specific styles */
@@ -54,14 +44,14 @@ select:focus {
     border-color: var(--focus-color); /* Blue border on focus */
     box-shadow: 0 0 8px var(--focus-color); /* Blue shadow on focus */
     outline: none;
-    background-color: #FFFFFF; /* White background on focus */
+    background-color: var(--background-color-light); /* White background on focus */
 }
 
 /* Submit button styles */
 button[type="submit"] {
     padding: 12px 24px; /* Increased padding for better touch targets */
-    background-color: var(--primary-color); /* Blue background */
-    color: var(--secondary-color); /* White text for contrast */
+    background-color: var(--primary-button-color); /* Blue background */
+    color: var(--primary-button-text-color); /* White text for contrast */
     border: none;
     border-radius: 4px; /* Rounded corners */
     font-size: 16px; /* Readable font size */
@@ -90,17 +80,7 @@ button[type="submit"]:hover {
     margin-bottom: 15px;
 }
 
-.full-width {
-    max-width: 100%;
-}
-
-.create-demo-button {
-	padding: 20px;
-	background: var(--highlight-color-orange);
-    width: auto;
-    margin-bottom: 20px;
-}
-
-.create-demo-button:hover {
-    background-color: var(--error-color);
+.disabled {
+    background-color: gray !important;
+    color: white !important;
 }

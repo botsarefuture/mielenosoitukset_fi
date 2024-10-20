@@ -5,17 +5,15 @@
     max-width: 800px;
     margin: 20px auto;
     padding: 30px;
-    background-color: #F5F5F5;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px var(--box-shadow-color);
     /* TODO: Add media queries for better responsiveness on smaller screens */
 }
 
 /* Header for organization title */
 h1.organization-title {
-    font-family: 'Montserrat', sans-serif;
     font-size: 28px;
-    color: #0033A0;
+    color: var(--blue);
     margin-bottom: 15px;
     /* TODO: Add responsive font size adjustments for mobile devices */
 }
@@ -24,7 +22,7 @@ h1.organization-title {
 p.organization-description {
     font-size: 16px;
     line-height: 1.5;
-    color: #333;
+    color: var(--text-primary-color);
     margin-bottom: 15px;
     /* TODO: Ensure consistent line-height and margin with other text elements across the site */
 }
@@ -33,7 +31,6 @@ p.organization-description {
 p.organization-email,
 p.organization-website {
     font-size: 16px;
-    color: #333;
     margin-bottom: 15px;
     /* TODO: Consider adding responsive font sizes or spacing for better readability on mobile devices */
 }

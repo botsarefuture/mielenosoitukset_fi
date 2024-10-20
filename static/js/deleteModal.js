@@ -8,6 +8,12 @@ document.addEventListener('keydown', (event) => {
         updateDeleteButtonTexts(); // Update button texts on Shift press
         log('Fast delete mode enabled.'); // Logging
     }
+
+    // Close the modal when the Escape key is pressed
+    if (event.key === 'Escape') {
+        closeModal(); // Call closeModal function to hide the modal
+        log('Modal closed using Escape key.'); // Logging
+    }
 });
 
 // Disable fast delete mode when the Shift key is released

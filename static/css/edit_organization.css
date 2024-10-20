@@ -11,7 +11,6 @@
 }
 
 h1 {
-  font-family: "Montserrat", sans-serif;
   font-size: 24px;
   color: #0033a0;
   margin-bottom: 20px;
@@ -20,7 +19,6 @@ h1 {
 /* Form elements */
 form label {
   display: block;
-  font-family: "Roboto", sans-serif;
   font-size: 16px;
   color: #333333;
   margin-bottom: 5px;
@@ -76,7 +74,6 @@ form textarea:focus {
   margin-top: 20px;
   color: #009b77;
   text-decoration: none;
-  font-family: "Roboto", sans-serif;
   font-size: 16px;
 }
 

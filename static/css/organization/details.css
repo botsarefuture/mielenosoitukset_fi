@@ -1,7 +1,6 @@
+/* Base styles for the organization container */
 .org-container {
-  background-color: var(
-    --background-color
-  ); /* Using CSS variable for background */
+  background-color: var(--background-color); /* Using CSS variable for background */
   padding: 40px; /* Updated padding for more space */
   border-radius: 12px; /* Adjusted border radius */
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Updated shadow for depth */
@@ -9,65 +8,68 @@
   max-width: 800px; /* Responsive design */
 }
 
+/* Header styles */
 .org-header {
   text-align: center; /* Centering text */
   margin-bottom: 30px; /* Increased margin for separation */
-  background-color: var(
-    --primary-color
-  ); /* Background color using CSS variable */
+  background-color: var(--primary-color); /* Background color using CSS variable */
   padding: 20px 20px 25px; /* Top/bottom and side padding */
   border-bottom: 3px solid #e0e0e0; /* Bottom border for separation */
 }
 
 .org-header h1 {
-    margin: 0; /* Remove default margin */
-    color: white; /* Text color */
-    font-size: 2.75em; /* Font size */
-    font-weight: bold; /* Bold text */
-    margin-bottom: 12px; /* Space below the heading */
+  margin: 0; /* Remove default margin */
+  color: white; /* Text color */
+  font-size: 2.75em; /* Font size */
+  font-weight: bold; /* Bold text */
+  margin-bottom: 12px; /* Space below the heading */
 }
 
+.check-icon {
+  color: #28a745; /* Green color for the verified icon */
+  margin-left: 10px; /* Space between title and icon */
+}
 
+/* Description styles */
 .org-description {
-  color: white;
-  margin: 10px 0;
-  font-size: 1.3em; 
+  color: white; /* Text color for the description */
+  margin: 10px 0; /* Vertical margins for spacing */
+  font-size: 1.3em; /* Font size for the description */
 }
 
+/* Badge styles */
 .badge {
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.9em;
-  display: inline-block;
-  margin-top: 10px;
+  padding: 5px 10px; /* Padding for badges */
+  border-radius: 5px; /* Rounded corners */
+  font-size: 0.9em; /* Font size for badges */
+  display: inline-block; /* Inline block for layout */
+  margin-top: 10px; /* Top margin for spacing */
 }
 
 .badge-verified {
-  background-color: #28a745; /* Green for verified */
-  color: white;
+  background-color: #28a745; /* Green for verified badge */
+  color: white; /* Text color */
 }
 
 .badge-unverified {
-  background-color: var(--red); /* Red for unverified */
-  color: white;
+  background-color: var(--red); /* Red for unverified badge */
+  color: white; /* Text color */
 }
 
+/* Upcoming demonstrations styles */
 .upcoming-demos {
-  margin-top: 20px;
-  display: grid; /* Use grid layout */
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(250px, 1fr)
-  ); /* Responsive grid columns */
+  margin-top: 20px; /* Top margin */
+  display: grid; /* Use grid layout for responsiveness */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid columns */
   gap: 15px; /* Space between grid items */
 }
 
 .demo-box {
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 5px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
-  margin-bottom: 15px;
+  background-color: #fff; /* Background color for demo boxes */
+  padding: 15px; /* Padding inside demo boxes */
+  border-radius: 5px; /* Rounded corners */
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); /* Shadow for demo boxes */
+  margin-bottom: 15px; /* Margin below demo boxes */
   height: 200px; /* Fixed height for demo boxes */
   display: flex; /* Flexbox for vertical centering */
   flex-direction: column; /* Stack content vertically */
@@ -75,73 +77,118 @@
 }
 
 .demo-box h3 {
-  margin: 0;
-  text-align: center;
+  margin: 0; /* Remove default margin */
+  text-align: center; /* Center text */
 }
 
 .demo-box p {
   margin: 0; /* Remove default paragraph margins */
 }
 
+/* Button styles */
 .btn {
-  display: block;
-  background-color: var(--highlight-color-orange);
-  color: white;
-  padding: 10px 15px;
-  border-radius: 5px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
-  width: auto;
-  margin: auto;
-  text-align: center;
+  display: block; /* Block-level button */
+  background-color: var(--orange); /* Background color for button */
+  color: white; /* Text color for button */
+  padding: 10px 15px; /* Padding inside button */
+  border-radius: 5px; /* Rounded corners for button */
+  text-decoration: none; /* Remove underline */
+  transition: background-color 0.3s ease; /* Smooth transition for hover */
+  width: auto; /* Auto width for button */
+  margin: auto; /* Center button */
+  text-align: center; /* Center text */
 }
 
+.btn:hover {
+  background-color: var(--blue); /* Hover background color */
+  color: var(--orange) !important; /* Hover text color */
+}
+
+/* Social media styles */
 .social-medias {
-  display: flex;
-  flex-direction: column;
+  display: flex; /* Flex layout for social media links */
+  flex-direction: column; /* Stack items vertically */
   align-items: center; /* Center the social media links */
 }
 
 .social-media {
-  margin-top: 15px;
+  margin-top: 15px; /* Top margin for spacing */
 }
 
 .social-media a {
   margin: 0 10px; /* Space between links */
   color: white; /* Icon color */
   font-size: 1.5em; /* Icon size */
-  transition: color 0.3s ease;
+  transition: color 0.3s ease; /* Smooth transition for hover */
 }
 
 .social-media a:hover {
   color: #ffdd57; /* Hover color */
 }
 
-/*.org-det {
-    width: max-content;
-    margin: auto;
-    padding: 15px;
-    border-radius: 5px;
-  }*/
-
+/* Icon styles */
 .some-icon {
-  font-size: 150%;
-  align-content: center;
-  justify-self: center;
-  vertical-align: middle;
+  font-size: 150%; /* Size for icons */
+  align-content: center; /* Center content */
+  justify-self: center; /* Center self in grid */
+  vertical-align: middle; /* Align vertically */
 }
 
-.btn:hover {
-  background-color: var(--focus-color);
-  color: var(--highlight-color-orange) !important;
-}
-
+/* Upcoming title styles */
 #upcoming-title {
-  color: var(--focus-color) !important;
-  margin-top: 50px !important;
-  margin-bottom: 30px !important;
-  font-size: 1.75em !important;
-  text-transform: uppercase !important;
-  text-align: center !important;
-  font-size: xxx-large !important;
+  color: var(--blue-dark) !important; /* Title color */
+  margin-top: 50px !important; /* Top margin */
+  margin-bottom: 30px !important; /* Bottom margin */
+  font-size: 1.75em !important; /* Font size for title */
+  text-align: center !important; /* Center text */
+}
+
+/* Verified badge styles */
+.verified-badge {
+  width: 50px; /* Set width */
+  height: 50px; /* Set height */
+  background-image: url('/static/img/verified.svg'); /* Background image for verified badge */
+  background-size: contain; /* Ensure the SVG scales correctly */
+  background-repeat: no-repeat; /* Prevent repeating */
+}
+
+/* Font Awesome styles */
+@font-face {
+  font-family: 'Font Awesome 5 Sharp'; /* Custom font family name */
+  src: url('/static/fonts/fa-sharp-solid-900.woff2') format('woff2'); /* Path to the .woff2 file */
+  font-weight: 900; /* Weight for the solid icons */
+  font-style: normal; /* Normal style */
+}
+
+.check-icon::before {
+  font-family: 'Font Awesome 5 Sharp'; /* Match this to your font family */
+  font-weight: 900; /* Font weight */
+  content: '\f336'; /* Unicode for the check badge icon */
+  margin-right: 8px; /* Space between icon and text */
+  color: var(--green-light); /* Icon color */
+}
+
+/* Additional styles for improved responsiveness and layout */
+@media (max-width: 768px) {
+  .org-header h1 {
+    font-size: 2em; /* Smaller font size for header on smaller screens */
+  }
+
+  .org-description {
+    font-size: 1.1em; /* Smaller font size for description on smaller screens */
+  }
+
+  .btn {
+    padding: 8px 12px; /* Smaller padding for buttons on smaller screens */
+  }
+
+  .demo-box {
+    height: auto; /* Allow demo box to adjust height */
+  }
+}
+
+@media (max-width: 470px) {
+  .demo-box {
+    flex-basis: revert !important; /* Revert flex basis for smaller screens */
+  }
 }

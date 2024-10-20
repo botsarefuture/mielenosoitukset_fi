@@ -33,7 +33,7 @@ form {
 }
 
 .form-control:focus {
-    border-color: #007bff;
+    border-color: var(--focus-color);
     outline: none;
 }
 
@@ -44,7 +44,7 @@ form {
 
 /* Button styling */
 .submit-button {
-    background-color: #007bff;
+    background-color: var(--primary-button-color);
     border: none;
     color: #fff;
     padding: 10px 20px;
@@ -58,7 +58,7 @@ form {
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+    background-color: var(--primary-button-hover-color) !important;
 }
 
 /* Dynamic entry fields styling */

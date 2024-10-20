@@ -13,7 +13,7 @@
 }
 
 .delete-confirmation {
-    background-color: #dc2626 !important; /* This will take priority over other styles */
+    background-color: var(--red) !important; /* This will take priority over other styles */
 }
 
 
@@ -22,7 +22,7 @@
 }
 
 .hover\:bg-red-600:hover {
-    background-color: #b91c1c; /* Tailwind's red-700 */
+    background-color: var(--red-dark); /* Tailwind's red-700 */
 }
 
 .hover\:bg-gray-400:hover {

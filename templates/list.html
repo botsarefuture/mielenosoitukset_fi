@@ -19,23 +19,83 @@
         
         <button type="submit">Hae</button>
     </form>
-
     <div class="container-grid">
-        {% if demonstrations|length > 0 %}
+        {% if demonstrations and demonstrations|length > 0 %}
             {% for demo in demonstrations %}
-            <div class="grid-item">
-                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="title">{{ demo['title'] }}</a>
-                <div class="details">
-                    <span class="date">{{ demo['date'] }}</span> |
-                    <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span><br>
-                    <span class="topic">Aihe: {{ demo['topic'] }}</span><br>
-                    <span class="location">Sijainti: {{ demo['address'] }}, {{ demo['city'] }}</span>
+                <div class="grid-item">
+                    <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="grid-link">
+                        <div class="title">{{ demo['title'] }}</div>
+                        <div class="details">
+                            <div class="date-time">
+                                <span class="date">{{ demo['date'] }}</span> |
+                                <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
+                            </div>
+                            <div class="topics">
+                                <ul>
+                                    {% if demo["tags"] and demo["tags"]|length > 0 %}
+                                        {% for tag in demo["tags"] %}
+                                            <li>
+                                                    <span class="tag">#{{ tag }}</span>
+                                            </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li><span class="tag">#{{ demo['topic'] }}</span></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            <span class="city">
+                                <i class="fa-solid fa-city"></i> {{ demo['city'] }}
+                            </span><br>
+                            <span class="location">
+                                <i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}
+                            </span>
+                        </div>
+                    </a>
                 </div>
-            </div>
             {% endfor %}
         {% else %}
-        <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
+            <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
         {% endif %}
     </div>
+    
+    
+    
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tagList = document.querySelector('.topics ul');
+        const tags = tagList.children;
+        const maxVisibleTags = 1; // Set maximum visible tags
+    
+        if (tags.length > maxVisibleTags) {
+            // Hide all tags beyond the maxVisibleTags
+            for (let i = maxVisibleTags; i < tags.length; i++) {
+                tags[i].style.display = 'none';
+            }
+    
+            // Create a "Show More" button
+            const showMoreButton = document.createElement('button');
+            showMoreButton.innerText = 'Näytä lisää';
+            showMoreButton.classList.add('show-more-button');
+            showMoreButton.style.marginTop = '10px'; // Add some space above the button
+            showMoreButton.style.backgroundColor = var(--blue-light); // Match button color
+            showMoreButton.style.color = '#fff'; // Button text color
+            showMoreButton.style.border = 'none'; // No border
+            showMoreButton.style.padding = '8px 12px'; // Padding for button
+            showMoreButton.style.borderRadius = '4px'; // Rounded corners
+            showMoreButton.style.cursor = 'pointer'; // Pointer cursor for interactivity
+    
+            tagList.parentNode.appendChild(showMoreButton); // Append button after the tag list
+    
+            // Show hidden tags when the button is clicked
+            showMoreButton.addEventListener('click', () => {
+                for (let i = maxVisibleTags; i < tags.length; i++) {
+                    tags[i].style.display = 'block'; // Show the hidden tags
+                }
+                showMoreButton.style.display = 'none'; // Hide the button after showing
+            });
+        }
+    });
+    </script>
+    
 {% endblock %}

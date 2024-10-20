@@ -324,6 +324,7 @@ PERMISSIONS_GROUPS = {
         {"name": "DELETE_DEMO", "description": "Delete demos."},
         {"name": "VIEW_DEMO", "description": "View demo details."},
         {"name": "LIST_DEMOS", "description": "List all demos."},
+        {"name": "ACCEPT_DEMO", "description": "Can accept demos."}
     ],
     "User Management": [
         {"name": "VIEW_USER", "description": "View user details."},
@@ -338,6 +339,9 @@ PERMISSIONS_GROUPS = {
         {"name": "VIEW_ORGANIZATION", "description": "View organization details."},
         {"name": "LIST_ORGANIZATIONS", "description": "List all organizations."},
     ],
+    "Analytics": [
+        {"name": "VIEW_ANALYTICS", "description": "View analytics"}
+    ]
 }
 
 

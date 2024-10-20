@@ -178,7 +178,7 @@ function checkOrganization(orgId) {
     // Automatically check the checkboxes for organizations and permissions that the user has
     document.addEventListener('DOMContentLoaded', function () {
         const userPermissions = {{ user_permissions | tojson }};
-        const userOrganizations = {{ organizations | tojson }};
+        const userOrganizations = {{ user_organizations | tojson }};
         
         // Check organization checkboxes and toggle permissions
         userOrganizations.forEach(org => {

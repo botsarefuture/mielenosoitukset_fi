@@ -1,6 +1,6 @@
 import os
 from s3_utils import upload_image
-from flask import render_template, request, redirect, url_for, flash, abort, Response
+from flask import render_template, request, redirect, url_for, flash, abort, Response, get_flashed_messages, jsonify
 from bson.objectid import ObjectId
 from datetime import datetime
 from classes import Organizer, Demonstration
@@ -277,7 +277,7 @@ def init_routes(app):
             abort(404)
 
         demo = Demonstration.from_dict(demo)
-        demo = demo.to_dict()
+        demo = demo.to_dict(json=True)
 
         if demo is None:
             flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.")
@@ -324,7 +324,7 @@ def init_routes(app):
 
     @app.route("/privacy")
     def privacy():
-        return render_template("access_denied.html")
+        return render_template("privacy.html")
 
     @app.route("/contact", methods=["GET", "POST"])
     def contact():
@@ -400,3 +400,23 @@ def init_routes(app):
         return render_template(
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
         )
+    
+    @app.route("/tag_details/<tag_name>")
+    def tag_detail(tag_name):
+        abort(501)
+        
+    # This is the route that provides the flash messages as JSON
+    @app.route('/get_flash_messages', methods=['GET'])
+    def get_flash_messages():
+        # Retrieve flashed messages with categories
+        messages = get_flashed_messages(with_categories=True)
+        
+        # If there are no messages, return an empty array
+        if not messages:
+            return jsonify(messages=[])
+
+        # Format the flash messages into a JSON object
+        flash_data = [{'category': category, 'message': message} for category, message in messages]
+
+        # Return the JSON response
+        return jsonify(messages=flash_data)

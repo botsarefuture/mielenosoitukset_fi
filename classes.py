@@ -17,6 +17,7 @@ class Organizer:
         self.website = website
 
         if organization_id:
+            print(organization_id)
             self.fetch_organization_details()
 
     def fetch_organization_details(self):
@@ -44,14 +45,14 @@ class Organizer:
             self.email = None
             self.website = None
 
-    def to_dict(self):
+    def to_dict(self, json=False):
         """Convert the organizer instance to a dictionary."""
         if self.name == "":
             self.fetch_organization_details()
         return {
             "name": self.name,
             "email": self.email,
-            "organization_id": self.organization_id,
+            "organization_id": ObjectId(self.organization_id) if not json else str(self.organization_id),
             "website": self.website,
         }
 
@@ -181,7 +182,8 @@ class Demonstration:
         linked_organizations: dict = None,
         img=None,
         _id=None,
-        description: str = None
+        description: str = None,
+        tags: list = None
     ):
         if _id is None:
             _id = OID()
@@ -214,6 +216,7 @@ class Demonstration:
         self.approved = approved
         self.linked_organizations = linked_organizations or {}
         self._id = _id
+        self.tags = tags or []
 
     def validate_fields(
         self, title, date, start_time, end_time, topic, city, address, event_type
@@ -226,10 +229,10 @@ class Demonstration:
                 "All required fields must be provided and correctly formatted."
             )
 
-    def to_dict(self):
+    def to_dict(self, *args, **kwargs):
         """Convert the demonstration instance to a dictionary."""
         return {
-            "_id": self._id,
+            "_id": str(self._id),
             "title": self.title,
             "date": self.date,
             "start_time": self.start_time,
@@ -240,11 +243,12 @@ class Demonstration:
             "address": self.address,
             "type": self.event_type,
             "route": self.route,
-            "organizers": [organizer.to_dict() for organizer in self.organizers],
+            "organizers": [organizer.to_dict(*args, **kwargs) for organizer in self.organizers],
             "approved": self.approved,
             "linked_organizations": self.linked_organizations,
             "img": self.img,
-            "description": self.description
+            "description": self.description,
+            "tags": self.tags
         }
 
     @classmethod
@@ -274,7 +278,8 @@ class Demonstration:
                 approved=data.get("approved", False),
                 linked_organizations=data.get("linked_organizations", {}),
                 img=data.get("img"),
-                description=data.get("description")
+                description=data.get("description"),
+                tags=data.get("tags", [])
             )
         except KeyError as e:
             raise ValueError(f"Missing required field in data: {e}")

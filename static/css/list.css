@@ -217,7 +217,7 @@ html, body {
     font-size: 18px;
     font-weight: bold;
     text-decoration: none;
-    color: var(--blue-dark); /* Dark blue text */
+    color: var(--header-color); /* Dark blue text */
     margin-bottom: 10px;
 }
 

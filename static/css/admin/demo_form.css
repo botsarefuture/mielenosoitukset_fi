@@ -1,13 +1,13 @@
 /* Remove Button Styles */
 .btn-danger {
     background-color: var(--error-color); /* Bootstrap danger color */
-    border-color: var(--dark-red); /* Bootstrap danger border color */
+    border-color: var(--red-dark); /* Bootstrap danger border color */
     color: white; /* Text color for better contrast */
 }
 
 .btn-danger:hover {
-    background-color: var(--darker-red); /* Darker shade for hover effect */
-    border-color: var(--dark-red); /* Darker border color on hover */
+    background-color: var(--red-darker); /* Darker shade for hover effect */
+    border-color: var(--red-dark); /* Darker border color on hover */
     color: white; /* Text color remains white */
 }
 
@@ -24,16 +24,26 @@
     margin-top: 0.5rem; /* Top margin */
 }
 
-/* Additional Styles for Button Container */
 .organizer-item {
-    position: relative; /* Allows positioning of the remove button */
-    padding-bottom: 1rem; /* Space at the bottom for the remove button */
+	position: relative;
+	padding-bottom: 1rem;
+	display: grid;
+	flex-direction: column;
+	/* gap: 5p; */
+	background-color: var(--background-color-light);
+	padding: 2%;
+	border-radius: 5px;
+	/* margin-top: ; */
 }
 
 .organizer-item .btn-danger {
-    position: relative; /* Absolute positioning within the container */
+    /*position: relative; /* Absolute positioning within the container */
     top: 1rem; /* Distance from the top */
     right: 0; /* Align to the right edge */
+}
+
+.organizer-item .form-control {
+	margin-bottom: 10px;
 }
 
 .form-group {

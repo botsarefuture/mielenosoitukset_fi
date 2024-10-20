@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
 
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+
 <!-- Include Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
@@ -42,6 +43,20 @@
             <label for="topic">Aihe <span class="required">*</span></label>
             <input type="text" id="topic" name="topic" class="form-control" value="{{ demo.topic if demo and demo.topic else '' }}" required>
         </div>
+
+
+<!-- Osa olemassa olevasta koodista -->
+<div class="form-group">
+    <label for="tags">Tägit</label>
+    <div id="tags-container">
+        {% if demo and demo.tags %}
+            {% for tag in demo.tags %}
+                <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input" value="{{ tag }}" placeholder="Lisää tagi" required>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">Lisää uusi tagi</button>
+</div>
         <div class="form-group">
             <label for="facebook">Facebook linkki</label>
             <input type="url" id="facebook" name="facebook" class="form-control" value="{{ demo.facebook if demo and demo.facebook else '' }}">
@@ -98,12 +113,24 @@
                     <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}" class="form-control" value="{{ organizer.website }}">
                     <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
                     <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}" class="form-control" value="{{ organizer.email }}">
+                    <label for="organizer_id_{{ loop.index }}">ID</label>
+                    <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}" class="form-control disabled" value="{{ organizer.organization_id }}">
                     <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
                 </div>
                 {% endfor %}
             {% endif %}
         </div>
 
+        <!-- Organization Selection -->
+        <div class="form-group">
+            <label for="organization">Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen <span class="required">*</span></label>
+            <select id="organization" name="organization" class="form-control">
+                <option value="">Valitse järjestö</option>
+                {% for organization in current_user.organizations %}
+                    <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
 
         <!-- Approval Checkbox -->
@@ -123,6 +150,22 @@
         </div>
     </form>
 </div>
+<script>
+    let tagCount = 0;
+
+    // Lisää uusi tägi
+    document.getElementById('add-tag-btn').addEventListener('click', function() {
+        tagCount++;
+        const newTagInput = document.createElement('input');
+        newTagInput.type = 'text';
+        newTagInput.id = `tag_${tagCount}`;
+        newTagInput.name = `tag_${tagCount}`;
+        newTagInput.className = 'form-control tag-input mt-2';
+        newTagInput.placeholder = 'Lisää tagi';
+        newTagInput.required = true;
+        document.getElementById('tags-container').appendChild(newTagInput);
+    });
+</script>
 
 <script>
     // City Selector JS functions
@@ -148,26 +191,31 @@
     let organizerCount = {{ demo.organizers | length if demo and demo.organizers else 0 }};
 
     function addOrganizer() {
-        organizerCount++;
-        const container = document.getElementById('organizers-container');
-        const organizerDiv = document.createElement('div');
-        organizerDiv.className = 'form-group organizer-item';
-
-        organizerDiv.innerHTML = `
-            <hr>
-            <label for="organizer_name_${organizerCount}">Järjestäjätahon nimi <span class="required">*</span></label>
-            <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control" placeholder="Järjestäjän nimi" required>
-            <label for="organizer_website_${organizerCount}">Nettisivu</label>
-            <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control" placeholder="Nettisivun URL">
-            <label for="organizer_email_${organizerCount}">Sähköposti</label>
-            <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control" placeholder="Sähköpostiosoite">
-            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
-        `;
-        container.appendChild(organizerDiv);
+        const selectedOrgId = document.getElementById('organization').value;
+        if (selectedOrgId) {
+            organizerCount++;
+            const newOrganizer = document.createElement('div');
+            newOrganizer.className = 'form-group organizer-item';
+            newOrganizer.innerHTML = `
+                <hr>
+                <label for="organizer_name_${organizerCount}_">Järjestäjätahon nimi</label>
+                <input type="text" id="organizer_name_${organizerCount}_" name="organizer_name_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_website_${organizerCount}_">Nettisivu</label>
+                <input type="url" id="organizer_website_${organizerCount}_" name="organizer_website_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_email_${organizerCount}_">Sähköposti</label>
+                <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_id_${organizerCount}">Organisaation ID</label>
+                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+            `;
+            document.getElementById('organizers-container').appendChild(newOrganizer);
+        } else {
+            alert('Valitse ensin järjestö!');
+        }
     }
 
     function removeOrganizer(button) {
-        button.parentElement.remove();
+        button.closest('.organizer-item').remove();
     }
 </script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>

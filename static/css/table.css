@@ -8,12 +8,12 @@ table {
 th, td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-color);
 }
 
 th {
   background-color: var(--blue-dark); /* Retain dark blue for headers */
-  color: #ffffff;
+  color: var(--white);
   font-weight: bold;
 }
 

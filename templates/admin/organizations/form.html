@@ -5,7 +5,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 <style>
-    /* Your existing styles */
     .custom-dropdown {
         position: relative;
         display: inline-block;
@@ -18,6 +17,9 @@
         border: 1px solid #ced4da;
         border-radius: 0.25rem;
         cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .dropdown-list {
@@ -45,16 +47,19 @@
         display: flex;
         align-items: center;
         margin-bottom: 10px;
+        align-items: center;
+        vertical-align: center;
+    }
+
+    .custom-dropdown,
+    html body main.container-main-content div#create.container.mt-4 form div.form-group div#social-media-list div.social-media-container input.form-control {
+        margin: auto;
     }
 
     .social-media-container .remove-btn {
         margin-left: 10px;
         color: red;
         cursor: pointer;
-    }
-
-    .required {
-        color: red;
     }
 
     .form-control {
@@ -70,10 +75,12 @@
         display: flex;
         justify-content: space-between;
     }
+
+    .social-media-conta
 </style>
 
 <div class="container mt-4" id="create">
-    <h2 class="form-title">Uusi tai Muokkaa organisaatiota</h2>
+    <h2 class="form-title">{% if organization %}Muokkaa organisaatiota{% else %}Uusi organisaatio{% endif %}</h2>
 
     <form method="POST" action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
         <div class="form-group">
@@ -103,18 +110,21 @@
         </div>
         {% endif %}
 
-        <!-- Sosiaalinen media -osio -->
-        <div class="form-group">
-            <label for="social_media">Sosiaalinen media</label>
-            <div id="social-media-list">
-                <!-- Olemassa olevat sosiaalisen median merkinnät täytetään tänne -->
-            </div>
-            <button type="button" id="add-social-media" class="btn btn-secondary mt-2">Lisää sosiaalisen median alusta</button>
-        </div>
+<!-- Sosiaalinen media -osio -->
+<div class="form-group">
+    <label for="social_media">Sosiaalinen media</label>
+    <div id="social-media-list">
+        <!-- Existing social media entries will be populated here -->
+    </div>
+    <button type="button" id="add-social-media" class="btn btn-secondary mt-2">Lisää sosiaalisen median alusta</button>
+</div>
+
 
         <div class="form-buttons">
-            <button type="submit" class="btn {% if organization %}btn-success{% else %}btn-primary{% endif %}">{% if organization %}Tallenna muutokset{% else %}Luo{% endif %}</button>
-            <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">Peruuta</a>
+            <button type="submit" class="btn {% if organization %}btn-success{% else %}btn-primary{% endif %}">
+                {% if organization %}Tallenna muutokset{% else %}Luo{% endif %}
+            </button>
+            <a href="{{ url_for('admin_org.organization_control') }}" class="button cancel-button">Peruuta</a>
         </div>
     </form>
 </div>
@@ -122,109 +132,110 @@
 <script>
     const socialMediaList = document.getElementById('social-media-list');
 
-    // Create social media entry
-    function createSocialMediaEntry(platform = '', url = '') {
-        const container = document.createElement('div');
-        container.classList.add('social-media-container');
+// Create social media entry
+function createSocialMediaEntry(platform = '', url = '') {
+    const container = document.createElement('div');
+    container.classList.add('social-media-container');
 
-        const dropdown = document.createElement('div');
-        dropdown.classList.add('custom-dropdown');
-        dropdown.innerHTML = `
-            <div class="dropdown-selected" onclick="toggleDropdown(this)">Valitse sosiaalisen median alusta <i class="fas fa-caret-down"></i></div>
-            <div class="dropdown-list">
-                <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
-                <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
-                <div data-value="instagram"><i class="fab fa-instagram"></i> Instagram</div>
-                <div data-value="linkedin"><i class="fab fa-linkedin"></i> LinkedIn</div>
-                <div data-value="tiktok"><i class="fab fa-tiktok"></i> TikTok</div>
-                <div data-value="youtube"><i class="fab fa-youtube"></i> YouTube</div>
-                <div data-value="snapchat"><i class="fab fa-snapchat"></i> Snapchat</div>
-            </div>
-        `;
+    const dropdown = document.createElement('div');
+    dropdown.classList.add('custom-dropdown');
+    dropdown.innerHTML = `
+        <div class="dropdown-selected" onclick="toggleDropdown(this)">Valitse sosiaalisen median alusta <i class="fas fa-caret-down"></i></div>
+        <div class="dropdown-list">
+            <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
+            <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
+            <div data-value="instagram"><i class="fab fa-instagram"></i> Instagram</div>
+            <div data-value="linkedin"><i class="fab fa-linkedin"></i> LinkedIn</div>
+            <div data-value="tiktok"><i class="fab fa-tiktok"></i> TikTok</div>
+            <div data-value="youtube"><i class="fab fa-youtube"></i> YouTube</div>
+            <div data-value="snapchat"><i class="fab fa-snapchat"></i> Snapchat</div>
+        </div>
+    `;
 
-        // Hidden input fields for form submission
-        const platformInput = document.createElement('input');
-        platformInput.type = 'hidden';
-        platformInput.name = 'social_media_platform[]';  // Array notation for multiple inputs
+    // Hidden input field for platform
+    const platformInput = document.createElement('input');
+    platformInput.type = 'hidden';
+    platformInput.name = 'social_media_platform[]';  // Array notation for multiple inputs
 
-        const urlInput = document.createElement('input');
-        urlInput.type = 'url';
-        urlInput.placeholder = 'Syötä URL';
-        urlInput.className = 'form-control';
-        urlInput.value = url;
+    const urlInput = document.createElement('input');
+    urlInput.type = 'url';
+    urlInput.name = 'social_media_url[]';  // Array notation for URLs
+    urlInput.placeholder = 'Syötä URL';
+    urlInput.className = 'form-control';
+    urlInput.value = url;
 
-        const removeBtn = document.createElement('span');
-        removeBtn.className = 'remove-btn';
-        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-        removeBtn.onclick = function() {
-            container.remove();
-        };
+    const removeBtn = document.createElement('span');
+    removeBtn.className = 'remove-btn';
+    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    removeBtn.onclick = function() {
+        container.remove();
+    };
 
-        dropdown.appendChild(platformInput);
-        container.appendChild(dropdown);
-        container.appendChild(urlInput);
-        container.appendChild(removeBtn);
-        socialMediaList.appendChild(container);
+    dropdown.appendChild(platformInput);
+    container.appendChild(dropdown);
+    container.appendChild(urlInput);
+    container.appendChild(removeBtn);
+    socialMediaList.appendChild(container);
 
-        // Preselect the platform if provided
-        if (platform) {
-            selectPlatform(dropdown, platform);
-            platformInput.value = platform; // Set the value for the platform
-        }
+    // Preselect the platform if provided
+    if (platform) {
+        selectPlatform(dropdown, platform);
+        platformInput.value = platform; // Set the value for the platform
     }
+}
 
-    // Select platform in the dropdown
-    function selectPlatform(dropdown, platform) {
+// Select platform in the dropdown
+function selectPlatform(dropdown, platform) {
+    const selectedDiv = dropdown.querySelector('.dropdown-selected');
+    const platformDiv = dropdown.querySelector(`.dropdown-list div[data-value="${platform}"]`);
+    if (platformDiv) {
+        const selectedText = platformDiv.innerHTML;
+        selectedDiv.innerHTML = `${selectedText} <i class="fas fa-caret-down"></i>`;
+    }
+}
+
+// Toggle dropdown display
+function toggleDropdown(element) {
+    const dropdownList = element.nextElementSibling;
+    dropdownList.style.display = dropdownList.style.display === 'none' ? 'block' : 'none';
+}
+
+// Handle option click
+document.addEventListener('click', function (e) {
+    if (e.target.closest('.dropdown-list div')) {
+        const selectedValue = e.target.getAttribute('data-value');
+        const selectedText = e.target.innerText;
+        const dropdown = e.target.closest('.custom-dropdown');
         const selectedDiv = dropdown.querySelector('.dropdown-selected');
-        const platformDiv = dropdown.querySelector(`.dropdown-list div[data-value="${platform}"]`);
-        if (platformDiv) {
-            const selectedText = platformDiv.innerHTML;
-            selectedDiv.innerHTML = `<i class="fab fa-${platform}"></i> ${selectedText} <i class="fas fa-caret-down"></i>`;
+        selectedDiv.innerHTML = `<i class="fab fa-${selectedValue}"></i> ${selectedText} <i class="fas fa-caret-down"></i>`;
+        dropdown.querySelector('.dropdown-list').style.display = 'none';
+
+        // Set the value of the hidden input
+        const platformInput = dropdown.querySelector('input[type="hidden"]');
+        if (platformInput) {
+            platformInput.value = selectedValue; // Set the platform input value
         }
     }
 
-    // Toggle dropdown display
-    function toggleDropdown(element) {
-        const dropdownList = element.nextElementSibling;
-        dropdownList.style.display = dropdownList.style.display === 'none' ? 'block' : 'none';
+    // Hide dropdown when clicking outside
+    if (!e.target.closest('.custom-dropdown')) {
+        const dropdowns = document.querySelectorAll('.dropdown-list');
+        dropdowns.forEach(function (dropdown) {
+            dropdown.style.display = 'none';
+        });
     }
+});
 
-    // Handle option click
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.dropdown-list div')) {
-            const selectedValue = e.target.getAttribute('data-value');
-            const selectedText = e.target.innerText;
-            const dropdown = e.target.closest('.custom-dropdown');
-            const selectedDiv = dropdown.querySelector('.dropdown-selected');
-            selectedDiv.innerHTML = `<i class="fab fa-${selectedValue}"></i> ${selectedText} <i class="fas fa-caret-down"></i>`;
-            dropdown.querySelector('.dropdown-list').style.display = 'none';
+// Event listener for adding new social media entry
+document.getElementById('add-social-media').addEventListener('click', function() {
+    createSocialMediaEntry();
+});
 
-            // Set the value of the hidden input
-            const platformInput = dropdown.previousElementSibling; // Reference the platform input
-            if (platformInput) {
-                platformInput.value = selectedValue; // Set the platform input value
-            }
-        }
-
-        // Hide dropdown when clicking outside
-        if (!e.target.closest('.custom-dropdown')) {
-            const dropdowns = document.querySelectorAll('.dropdown-list');
-            dropdowns.forEach(function (dropdown) {
-                dropdown.style.display = 'none';
-            });
-        }
-    });
-
-    // Event listener for adding new social media entry
-    document.getElementById('add-social-media').addEventListener('click', function() {
-        createSocialMediaEntry();
-    });
-
-    // Populate existing social media entries if editing
-    {% if organization %}
-    {% for platform, url in organization.get('social_media', {}).items() %}
-    createSocialMediaEntry('{{ platform }}', '{{ url }}');
-    {% endfor %}
-    {% endif %}
+// Populate existing social media entries if editing
+{% if organization %}
+{% for platform, url in organization.get('social_media_links', {}).items() %}
+createSocialMediaEntry('{{ platform }}', '{{ url }}');
+{% endfor %}
+{% endif %}
 </script>
 {% endblock %}

@@ -9,14 +9,11 @@ from database_manager import DatabaseManager
 from wrappers import admin_required
 from classes import RecurringDemonstration, RepeatSchedule, Organizer
 
+from .utils import mongo
+
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
-
-# Initialize MongoDB
-db_manager = DatabaseManager().get_instance()
-mongo = db_manager.get_db()
-
 
 @admin_recu_demo_bp.route("/")
 @login_required

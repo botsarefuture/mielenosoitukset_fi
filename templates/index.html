@@ -7,6 +7,17 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
 
 <div class="container-main-content">
+    {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES") %}
+<!-- Christmas-Themed Section -->   
+    <section class="christmas-section" style="display: none;">
+        <h2 style="color: #ff0000;">🎄 Hyvää joulua! 🎄</h2>
+        <p style="color: #006400;">Tervetuloa viettämään joulun taikaa ja lämpöä! Liity mukaan juhlistamaan yhteisöllisyyttä ja rakkautta.</p>
+        <div class="buttons-div">
+            <a class="button button-primary" href="{{ url_for('celebrate') }}">Juhli kanssamme!</a>
+        </div>
+    </section>
+    {% endif %}
+
     <header class="container-welcome container-centered">
         <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
         <p>Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen. <br>Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.</p>
@@ -15,6 +26,8 @@
             <a class="button button-primary" href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
         </div>
     </header>
+
+
 
     <!-- Search Form -->
     <section class="container-form">
@@ -56,13 +69,6 @@
         <a class="button button-primary" href="{{ url_for('demonstrations') }}">Näytä kaikki mielenosoitukset</a>
     </div>
 
-    <!-- Christmas-Themed Section -->
-    <section class="christmas-section">
-        <h2 style="color: #ff0000;">🎄 Hyvää joulua! 🎄</h2>
-        <p style="color: #006400;">Tervetuloa viettämään joulun taikaa ja lämpöä! Liity mukaan juhlistamaan yhteisöllisyyttä ja rakkautta.</p>
-        <div class="buttons-div">
-            <a class="button button-primary" href="{{ url_for('celebrate') }}">Juhli kanssamme!</a>
-        </div>
-    </section>
+    
 </div>
 {% endblock %}

@@ -1,65 +1,85 @@
 {% extends 'base.html' %} {% block title %} {{ demo['title'] }} {% endblock %}
 {% block meta %}
-<meta
-  name="description"
-  content="{{ demo['title'] }} - Mielenosoitukset.fissä"
-/>
-<meta
-  name="description"
-  content="{{ demo['title'] }} - Mielenosoitukset.fissä"
-/>
-<meta property="og:title" content="{{ demo['title'] }}" />
-<meta
-  property="og:description"
-  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}"
-/>
-<meta
-  property="og:description"
-  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}"
-/>
-<meta property="og:image" content="{{ demo['img'] if demo['img'] != None else url_for('static', filename='img/e.png', _external=True)}}" />
-<meta
-  property="og:url"
-  content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-/>
-<meta
-  property="og:url"
-  content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-/>
+<!-- General Meta Tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta name="keywords" content="{{ demo['keywords'] if demo['keywords'] else 'mielenosoitus, tapahtuma, Helsinki' }}" />
+<meta name="author" content="Mielenosoitukset.fi" />
+<meta name="robots" content="index, follow" />
+
+<!-- Open Graph Meta Tags -->
+<meta property="og:title" content="{{ demo['title'] if demo['title'] else 'Mielenosoitus' }}" />
+<meta property="og:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta property="og:image" content="{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}" />
+<meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
+<meta property="og:locale" content="fi_FI" />
+<meta property="og:determiner" content="the" />
+<meta property="og:updated_time" content="{{ demo['updated_time'] if demo['updated_time'] else '2024-01-01T00:00:00' }}" />
+<meta property="og:see_also" content="{{ demo['related_links'] if demo['related_links'] else '' }}" />
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{ demo['title'] if demo['title'] else 'Mielenosoitus' }}" />
+<meta name="twitter:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta name="twitter:image" content="{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}" />
+<meta name="twitter:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
+<meta name="twitter:site" content="@Mielenosoitukset" />
+<meta name="twitter:creator" content="@Mielenosoitukset" />
+<meta name="twitter:image:alt" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen kuva' }}" />
+
+<!-- Facebook Open Graph App ID -->
+<meta property="fb:app_id" content="{{ demo['fb_app_id'] if demo['fb_app_id'] else '' }}" />
+
+<!-- Additional Social Media Meta Tags -->
+<meta property="article:author" content="{{ demo['organizers'][0]["name"] if demo['organizers'] else 'Tuntematon kirjoittaja' }}" />
+<meta property="article:section" content="{{ demo['section'] if demo['section'] else 'Tapahtumat' }}" />
+<meta property="article:tag" content="{{ demo['tags'] if demo['tags'] else 'mielenosoitus, tapahtuma' }}" />
 
 <!-- JSON-LD Structured Data -->
 <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Event",
-    "name": "{{ demo['title'] }}",
-    "startDate": "{{ demo['date'] }}T{{ demo['start_time'] }}",
-    "endDate": "{{ demo['date'] }}T{{ demo['end_time'] }}",
-    "location": {
-      "@type": "Place",
-      "name": "{{ demo['topic'] }}",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "{{ demo['address'] }}",
-        "addressLocality": "{{ demo['city'] }}",
-        "addressRegion": "FI",
-        "postalCode": "{{ demo['postal_code'] }}", // Add postal code if available
-        "addressCountry": "FI"
-      }
-    },
-    "description": "{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}",
-    "image": "{{ demo['img'] }}",
-    "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
-    "organizer": {
-      "@type": "Organization",
-      "name": "{{ demo['organizers'][0].name if demo['organizers'] else 'Tuntematon' }}",
-      "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id) if demo['organizers'][0].organization_id else '#' }}"
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": "{{ demo['title'] if demo['title'] else 'Tuntematon tapahtuma' }}",
+  "startDate": "{{ demo['date'] }}T{{ demo['start_time'] if demo['start_time'] else '00:00:00' }}",
+  "endDate": "{{ demo['date'] }}T{{ demo['end_time'] if demo['end_time'] else '00:00:00' }}",
+  "location": {
+    "@type": "Place",
+    "name": "{{ demo['topic'] if demo['topic'] else 'Tuntematon paikka' }}",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "{{ demo['address'] if demo['address'] else 'Ei saatavilla' }}",
+      "addressLocality": "{{ demo['city'] if demo['city'] else 'Ei saatavilla' }}",
+      "addressRegion": "FI",
+      "postalCode": "{{ demo['postal_code'] if demo['postal_code'] else 'Ei saatavilla' }}",
+      "addressCountry": "FI"
     }
+  },
+  "description": "{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}",
+  "image": "{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}",
+  "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
+  "organizer": {
+    "@type": "Organization",
+    "name": "{{ demo['organizers'][0].name if demo['organizers'] and demo['organizers'][0].name else 'Tuntematon' }}",
+    "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id) if demo['organizers'] and demo['organizers'][0].organization_id else '#' }}"
+  },
+  "performer": {
+    "@type": "Person",
+    "name": "{{ demo['performer'] if demo['performer'] else 'Tuntematon esiintyjä' }}"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
+    "price": "{{ demo['price'] if demo['price'] else '0.00' }}",
+    "priceCurrency": "{{ demo['currency'] if demo['currency'] else 'EUR' }}"
   }
+}
 </script>
-{% endblock %} {% block content %}
+{% endblock %}
+ {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}"/>
 <style>
   /* Main Container */

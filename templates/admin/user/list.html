@@ -1,229 +1,137 @@
-{% extends 'admin_base.html' %} {% block main_content %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/admin_org_control.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/form.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/table.css') }}"
-/>
+{% extends 'admin_base.html' %}
+{% block main_content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_org_control.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
 
 <!-- Font Awesome for icons -->
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
 <style>
-  body {
-    background-color: #f0f4f8; /* Light gray background for contrast */
-    font-family: "Arial", sans-serif;
-  }
-
-  .table-container {
-    margin-top: 2rem;
-    background-color: #ffffff; /* White background for the table */
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-    overflow: hidden; /* Ensures the border radius is respected */
-  }
-
-  .button {
-    display: inline-block;
-    margin: 1rem 0.5rem; /* More margin on top */
-    padding: 0.5rem 1rem;
-    background-color: #007bff; /* Primary color */
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-weight: bold; /* Make button text bold */
-    display: flex; /* Align icon and text */
-    align-items: center; /* Center align icon */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  }
-
-  .button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-    transform: translateY(-2px); /* Lift effect on hover */
-  }
-
-  .button i {
-    margin-right: 0.5rem; /* Space between icon and text */
-  }
-
-  .search-form {
-    margin: 1rem 0;
-    display: flex;
-    flex-wrap: wrap; /* Allows wrapping on smaller screens */
-    justify-content: space-between; /* Space out form elements */
-    align-items: center; /* Center align */
-    gap: 0.5rem; /* Space between form elements */
-  }
-
-  .search-input,
-  .filter-select {
-    padding: 0.75rem;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    flex: 1; /* Allow inputs to take available space */
-    min-width: 150px; /* Minimum width for better usability */
-    max-width: 300px; /* Maximum width to avoid excessive growth */
-    transition: border-color 0.3s ease;
-  }
-
-  .search-input:focus,
-  .filter-select:focus {
-    border-color: #007bff; /* Primary color on focus */
-    outline: none; /* Remove outline */
-  }
-
-  .search-button {
-    background-color: #28a745; /* Success green */
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    font-weight: bold; /* Bold text for visibility */
-    display: flex; /* Align icon and text */
-    align-items: center; /* Center align icon */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  }
-
-  .search-button:hover {
-    background-color: #218838; /* Darker green on hover */
-  }
-
-  .no-users {
-    color: #721c24;
-    font-weight: bold;
-    background-color: #f8d7da;
-    padding: 20px;
-    border: 1px dashed #f5c6cb; /* Dashed border for emphasis */
-    border-radius: 5px;
-    text-align: center;
-    margin: 1rem 0; /* Margin for separation */
-  }
-
-  td {
-    background-color: transparent !important;
-  }
-
-  .actions-cell a {
-    margin-right: 0.5rem;
-  }
-
-  .table-container table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .table-container th,
-  .table-container td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-
-  /* Responsive Styles */
-  @media (max-width: 768px) {
+    
     .search-form {
-      flex-direction: column; /* Stack form elements on smaller screens */
-      align-items: flex-start; /* Align items to the start */
+        margin: 1rem 0;
+        display: flex;
+        flex-wrap: wrap; /* Allows wrapping on smaller screens */
+        justify-content: space-between; /* Space out form elements */
+        align-items: center; /* Center align */
+        gap: 0.5rem; /* Space between form elements */
     }
-    .search-input,
-    .filter-select,
-    .search-button {
-      width: 100%; /* Full width for better usability */
-      margin-bottom: 0.5rem; /* Space below each element */
-    }
-  }
 
-  .button {
-    width: 134px;
-  }
+    .search-input, .search-button {
+        flex: 1; /* Allow inputs to take available space */
+        min-width: 150px; /* Minimum width for better usability */
+        max-width: 300px; /* Maximum width to avoid excessive growth */
+    }
+
+    .search-input {
+        padding: 0.75rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-input:focus {
+        border-color: #007bff; /* Primary color on focus */
+        outline: none; /* Remove outline */
+    }
+
+    .search-button {
+        background-color: #28a745; /* Success green */
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-weight: bold; /* Bold text for visibility */
+        display: flex; /* Align icon and text */
+        align-items: center; /* Center align icon */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    }
+
+    .search-button:hover {
+        background-color: #218838; /* Darker green on hover */
+    }
+
+    .no-users {
+        color: #721c24; 
+        font-weight: bold; 
+        background-color: #f8d7da; 
+        padding: 20px; 
+        border: 1px dashed #f5c6cb; /* Dashed border for emphasis */
+        border-radius: 5px;
+        text-align: center;
+        margin: 1rem 0; /* Margin for separation */
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .search-form {
+            flex-direction: column; /* Stack form elements on smaller screens */
+            align-items: flex-start; /* Align items to the start */
+        }
+        .search-input, .search-button {
+            width: 100%; /* Full width for better usability */
+            margin-bottom: 0.5rem; /* Space below each element */
+        }
+    }
 </style>
 
 <div class="table-container">
-  <h2 id="tabletitle">Käyttäjät</h2>
+    <h2 id="tabletitle">Käyttäjät</h2>
 
-  <form
-    method="GET"
-    class="search-form"
-    action="{{ url_for('admin_user.user_control') }}"
-  >
-    <label for="search" class="sr-only">Hae käyttäjiä:</label>
-    <input
-      type="text"
-      id="search"
-      name="search"
-      class="search-input"
-      placeholder="Hae käyttäjiä..."
-      value="{{ search_query }}"
-      aria-label="Search users"
-    />
+    <form method="GET" class="search-form" action="{{ url_for('admin_user.user_control') }}">
+        <label for="search" class="sr-only">Hae käyttäjiä:</label>
+        <input type="text" id="search" name="search" class="search-input" placeholder="Hae käyttäjiä..." value="{{ search_query }}" aria-label="Search users" />
+        <button type="submit" class="search-button"><i class="fas fa-search"></i> Hae</button>
+    </form>
 
-    <button type="submit" class="search-button">
-      <i class="fas fa-search"></i>Hae
-    </button>
-  </form>
-
-  {% if users %}
-  <div class="table-container" style="background: none">
+    {% if users %}
     <table>
-      <thead>
-        <tr>
-          <th>Nimi</th>
-          <th>Sähköposti</th>
-          <th>Rooli</th>
-          <th class="actions-cell-header">Toiminnot</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in users %}
-        <tr>
-          <td>{{ user.displayname or user.username }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.role }}</td>
-          <td class="actions-cell">
-            {% if current_user.can_use("EDIT_USER") or
-            current_user.can_use("DELETE_USER") %} {% if
-            current_user.can_use("EDIT_USER") %}
-            <a
-              href="{{ url_for('admin_user.edit_user', user_id=user._id) }}"
-              class="button edit-button"
-              ><i class="fas fa-edit"></i>Muokkaa</a
-            >
-            {% endif %}
-            {% if current_user.can_use("DELETE_USER") %}
-            <button
-              onclick="alert('this feature is not ready');"
-              class="button delete-button"
-            >
-              <i class="fas fa-trash-alt"></i>Poista
-            </button>
-            {% endif %}
-            {% else %}
-            <div class="insuffient-perm" style="color: #ccc">
-              Ei riittäviä oikeuksia.
-            </div>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+        <colgroup>
+            <col />
+            <col />
+            <col />
+            <col class="actions-cell-header" />
+        </colgroup>
+        <thead>
+            <tr>
+                <th>Nimi</th>
+                <th>Sähköposti</th>
+                <th>Rooli</th>
+                <th>Toiminnot</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.displayname or user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <td class="actions-cell">
+                    {% if current_user.can_use("EDIT_USER") or current_user.can_use("DELETE_USER") %} 
+                    {% if current_user.can_use("EDIT_USER") %}
+                    <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i> Muokkaa</a>
+                    {% endif %}
+                    {% if current_user.can_use("DELETE_USER") %}
+                    <button onclick="alert('this feature is not ready');" class="button delete-button"><i class="fas fa-trash-alt"></i> Poista</button>
+                    {% endif %}
+                    {% else %}
+                    <div class="insufficient-perm" style="color: #ccc">Ei riittäviä oikeuksia.</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-  </div>
-  {% else %}
-  <div class="no-users">
-    <p>Käyttäjiä ei löytynyt.</p>
-  </div>
-  {% endif %}
+    {% else %}
+    <div class="no-users">
+        <p>Käyttäjiä ei löytynyt.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

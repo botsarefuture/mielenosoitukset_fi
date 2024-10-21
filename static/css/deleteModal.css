@@ -17,16 +17,16 @@
 }
 
 .modal-content {
-    background: white;
+    background: var(--background-color);
     padding: 30px;
     border-radius: 12px;
     width: 350px;
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px var(--box-shadow-color);
 }
 
 .close {
-    color: #aaa;
+    color: var(--primary-text-color);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -34,7 +34,7 @@
 
 .close:hover,
 .close:focus {
-    color: #ff4c4c;
+    color: var(--red);
     text-decoration: none;
     cursor: pointer;
 }
@@ -76,7 +76,7 @@
 
 .button-container .button:not(.delete-confirm) {
     background: var(--yellow);
-    color: white;
+    color: var(--primary-text-color);
 }
 
 .button-container .button:not(.delete-confirm):hover {
@@ -95,4 +95,8 @@
 
 .modal-content.shake {
     animation: shake 0.5s ease;
+}
+
+.button-container .button {
+	padding: 20px !important;
 }

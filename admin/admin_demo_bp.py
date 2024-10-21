@@ -155,6 +155,7 @@ def edit_demo(demo_id):
         form_action=url_for("admin_demo.edit_demo", demo_id=demo_id),
         title="Muokkaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
+        city_list=CITY_LIST
     )
 
 def handle_demo_form(request, is_edit=False, demo_id=None):

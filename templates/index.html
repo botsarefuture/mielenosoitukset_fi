@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% import 'macros.html' as macros %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
 
 <div class="container-main-content">
     <div class="container-welcome container-centered">
@@ -26,36 +27,7 @@
     <h2>Suosittelemme</h2>
     <div class="container-grid">
             {% for demo in pinned_demonstrations %}
-            <div class="grid-item">
-                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="grid-link">
-                    <div class="title">{{ demo['title'] }}</div>
-                    <div class="details">
-                        <div class="date-time">
-                            <span class="date">{{ demo['date'] }}</span> |
-                            <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
-                        </div>
-                        <div class="topics">
-                            <ul>
-                                {% if demo["tags"] and demo["tags"]|length > 0 %}
-                                    {% for tag in demo["tags"] %}
-                                        <li>
-                                                <span class="tag">#{{ tag }}</span>
-                                        </li>
-                                    {% endfor %}
-                                {% else %}
-                                    <li><span class="tag">#{{ demo['topic'] }}</span></li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                        <span class="city">
-                            <i class="fa-solid fa-city"></i> {{ demo['city'] }}
-                        </span><br>
-                        <span class="location">
-                            <i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}
-                        </span>
-                    </div>
-                </a>
-            </div>
+            {{ macros.demo_card(demo) }}
             {% endfor %}
     </div>
     {% endif %}
@@ -65,36 +37,7 @@
     <div class="container-grid">
             {% if demonstrations %}
             {% for demo in demonstrations[:6] %}
-            <div class="grid-item">
-                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="grid-link">
-                    <div class="title">{{ demo['title'] }}</div>
-                    <div class="details">
-                        <div class="date-time">
-                            <span class="date">{{ demo['date'] }}</span> |
-                            <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
-                        </div>
-                        <div class="topics">
-                            <ul>
-                                {% if demo["tags"] and demo["tags"]|length > 0 %}
-                                    {% for tag in demo["tags"] %}
-                                        <li>
-                                                <span class="tag">#{{ tag }}</span>
-                                        </li>
-                                    {% endfor %}
-                                {% else %}
-                                    <li><span class="tag">#{{ demo['topic'] }}</span></li>
-                                {% endif %}
-                            </ul>
-                        </div>
-                        <span class="city">
-                            <i class="fa-solid fa-city"></i> {{ demo['city'] }}
-                        </span><br>
-                        <span class="location">
-                            <i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}
-                        </span>
-                    </div>
-                </a>
-            </div>
+            {{ macros.demo_card(demo) }}
             {% endfor %}
             {% else %}
             <div class="grid-item">Ei mielenosoituksia näytettäväksi.</div>

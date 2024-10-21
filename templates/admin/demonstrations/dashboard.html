@@ -3,11 +3,16 @@
 {% block main_content %}
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">-->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}">
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">-->
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
+
 
 <!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -118,7 +123,7 @@
     </form>
 
     {% if demonstrations %}
-    <div class="table-container" style="background: none;">
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
@@ -132,7 +137,7 @@
             </thead>
             <tbody>
                 {% for demo in demonstrations|sort(attribute='approved') %}
-                    <tr  id="demo-{{ demo._id }}" style="background-color: {{ 'lightcoral' if not demo.approved else 'white' }};">
+                    <tr  id="demo-{{ demo._id }}" {% if not demo.approved %} class="needs-attention"{% endif %}>
                         <td>{{ demo.title }}</td>
                         <td>{{ demo.city }}</td>
                         <td>{{ demo.date }}</td>
@@ -142,7 +147,7 @@
                             <!-- TODO: Check if the user has permission to do these before showing these here -->
                             {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
                                 <!-- TODO: This button should actually mark the demo as accepted! -->
-                                <button style="width: 132px; background-color: green;" type="button" class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">Hyväksy</button>                      
+                                <button style="width: 132px; background-color: green;" type="button" class="button accept-button" onclick="acceptDemo('{{ demo._id }}')"><i class="fa-solid fa-check"></i>Hyväksy</button>                      
                             
                                 {% elif not current_user.can_use("ACCEPT_DEMO") and not demo.approved %}
                                 <div class="insuffient-perm" style="color: white;">
@@ -193,8 +198,8 @@
 
         demo.children[5].children[0].remove();
 
-        demo.style.removeProperty("background-color");
-    }
+        demo.classList.remove("needs-attention");
+     }
 
     function acceptDemo(demoId) {
         fetch(`/admin/demo/accept_demo/${demoId}`, {

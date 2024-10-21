@@ -28,15 +28,15 @@ label {
     color: var(--primary-text-color); /* Dark gray for better readability */
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-    width: 100%; /* Full width of the container */
-    padding: 10px; /* Padding inside the input fields */
-    border: 1px solid var(--border-color); /* Light gray border */
-    border-radius: 4px; /* Rounded corners for inputs */
-    box-sizing: border-box;
-    font-size: 16px; /* Increase font size for readability */
+input[type="text"], input[type="email"], input[type="password"] {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	box-sizing: border-box;
+	font-size: 16px;
+	background-color: var(--input-background-color);
+	color: var(--primary-text-color);
 }
 
 input[type="text"]:focus,

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fi" class="normal">
+<html lang="fi" class="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -67,11 +67,11 @@ function applyPreferredTheme() {
 
   if (prefersDarkMode) {
     document.documentElement.classList.add('dark');
-    document.documentElement.classList.remove('normal');
+    document.documentElement.classList.remove('light');
     themeIcon.classList.remove('fa-moon');
     themeIcon.classList.add('fa-sun');
   } else {
-    document.documentElement.classList.add('normal');
+    document.documentElement.classList.add('light');
     document.documentElement.classList.remove('dark');
     themeIcon.classList.remove('fa-sun');
     themeIcon.classList.add('fa-moon');
@@ -81,7 +81,7 @@ function applyPreferredTheme() {
 // Toggle dark mode manually
 function toggleDarkMode() {
   document.documentElement.classList.toggle('dark');
-  document.documentElement.classList.toggle('normal');
+  document.documentElement.classList.toggle('light');
   
   const themeIcon = document.getElementById('theme-icon');
   

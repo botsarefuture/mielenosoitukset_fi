@@ -12,8 +12,8 @@ th, td {
 }
 
 th {
-  background-color: var(--blue-dark); /* Retain dark blue for headers */
-  color: var(--white);
+  background-color: var(--background-color); /* Retain dark blue for headers */
+  color: var(--primary-text-color);
   font-weight: bold;
 }
 
@@ -22,11 +22,32 @@ td {
 }
 
 tr:nth-child(even) {
-  background-color: #f5f5f5;
+  background-color: var(--tr-bg-color-1);
+  color: var(--tg-txt-color-1);
 }
 
-tr:hover {
-  background-color: #e0e0e0;
+tr:nth-child(even):hover {
+  background-color: var(--tr-bg-color-1-hover);
+  color: var(--tg-txt-color-1-hover);
+}
+
+tr:nth-child(odd) {
+  background-color: var(--tr-bg-color-2);
+  color: var(--tg-txt-color-2);
+}
+
+tr:nth-child(odd):hover {
+  background-color: var(--tr-bg-color-2-hover);
+  color: var(--tg-txt-color-2-hover);
+}
+
+tr.needs-attention {
+  background-color: var(--yellow-dark);
+  color: var(--black);
+}
+
+tr.needs-attention:hover {
+  background-color: var(--yellow-darker);
 }
 
 /* Responsive Table Styles */
@@ -42,7 +63,7 @@ tr:hover {
   }
   td {
     text-align: right;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-color);
   }
   tr {
     display: block;
@@ -59,9 +80,9 @@ tr:hover {
 /* Table Container */
 .table-container {
   margin-top: 2rem;
-  background-color: #ffffff;
+  background-color: var(--container-background-color);
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px var(--box-shadow-color);
   padding: 20px;
   overflow: hidden;
 }
@@ -74,18 +95,18 @@ tr:hover {
 .table-container th, .table-container td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* Table Title */
 #tabletitle {
-  color: white;
+  color: var(--admin-section-text-color);
   padding: 1.5rem;
   background-color: var(--admin-section-title-color);
   text-align: center;
   margin: 2rem 0;
   border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px var(--box-shadow-color);
   text-transform: uppercase;
   letter-spacing: 1px;
   word-break: break-all;

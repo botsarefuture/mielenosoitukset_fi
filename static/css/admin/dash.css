@@ -3,7 +3,7 @@
 .create-demo-button,
 .btn-create {
 	padding: 20px;
-    background-color: var(--admin-create-btn-bg) !important;
+    background: var(--admin-create-btn-bg) !important;
     width: auto;
     margin-bottom: 20px;
     text-align: start;
@@ -11,7 +11,7 @@
 
 .create-demo-button:hover,
 .btn-create:hover {
-    background-color: var(--admin-create-btn-hover-bg) !important;
+    background: var(--admin-create-btn-hover-bg) !important;
 }
 
 .button i {
@@ -21,7 +21,7 @@
 .no-results {
     color: var(--red-dark); 
     font-weight: bold; 
-    background-color: var(--red-lighter); 
+    background: var(--red-lighter); 
     padding: 20px; 
     border: 1px dashed var(--red-light); /* Dashed border for emphasis */
     border-radius: 5px;

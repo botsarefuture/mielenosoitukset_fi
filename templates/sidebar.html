@@ -14,7 +14,7 @@
     }
   
     .beta-label {
-      background-color: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
+      background: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
       color: var(--primary-text-color); /* Using primary text color variable for contrast */
       border-radius: 3px; /* Rounded corners */
       padding: 2px 5px; /* Padding for spacing */
@@ -23,7 +23,7 @@
     }
   
     .ddos-button {
-      background-color: var(--red); /* Using red color variable for the button */
+      background: var(--red); /* Using red color variable for the button */
       color: var(--primary-button-text-color); /* Using primary button text color variable for white text */
       padding: 10px 15px;
       border: none;
@@ -37,7 +37,7 @@
     .ddos-button i {
       margin-right: 8px;
     }
-  </style>
+</style>
   
 <div class="container-sidebar bg-header-footer" style="z-index: 100000000000;">
     <a class="sidebar-toggle" id="maintoggle" aria-label="Avaa sivupalkki">&#9776;</a>
@@ -87,6 +87,14 @@
                 </a>
             </li>
             {% endif %}
+            <!-- Add Marquee Management Link -->
+            {% if current_user.can_use("MANAGE_MARQUEE") %}
+            <li>
+                <a href="{{ url_for('admin.manage_marquee') }}">
+                    <span class="icon"><i class="fas fa-scroll"></i></span> Marquee Hallinta
+                </a>
+            </li>
+            {% endif %}
             <li>
                 <a href="{{ url_for('admin.admin_logout') }}">
                     <span class="icon"><i class="fas fa-sign-out-alt"></i></span> Kirjaudu ulos
@@ -101,17 +109,30 @@
         <p>Olet superkäyttäjätilassa.</p>
     </div>
 </div>
-
 <!-- Hidden icons section -->
-<div class="hidden-icons container-centered bg-main-content">
+<div class="hidden-icons container-centered bg-main-content" style="z-index: 1000000;">
     <a class="hidden-icon" id="hiddentoggle" aria-label="Avaa sivupalkki">&#9776;</a> <!-- Sidebar Toggle Button -->
+    {% if current_user.global_admin %}
     <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon"><i class="fas fa-book"></i></a>
+    {% endif %}
+    {% if current_user.can_use("LIST_USERS") %}
     <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>
+    {% endif %}
+    {% if current_user.can_use("LIST_ORGANIZATIONS") %}
     <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>
+    {% endif %}
+    {% if current_user.can_use("LIST_DEMOS") %}
     <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>
-    <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
-        <span class="hidden-icon"><i class="fas fa-redo-alt"></i></span>
-    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a> <!-- Beta label added here as well -->
+    {% endif %}
+    {% if current_user.can_use("LIST_RECURRING_DEMOS") %}
+    <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="hidden-icon"><i class="fas fa-redo-alt"></i></a>
+    {% endif %}
+    {% if current_user.can_use("VIEW_ANALYTICS") %}
+    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a>
+    {% endif %}
+    {% if current_user.can_use("MANAGE_MARQUEE") %}
+    <a href="{{ url_for('admin.manage_marquee') }}" class="hidden-icon"><i class="fas fa-scroll"></i></a> <!-- Marquee Management Hidden Icon -->
+    {% endif %}
     <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
 </div>
 

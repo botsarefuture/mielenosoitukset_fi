@@ -20,7 +20,7 @@
 }
 
 .user-table-row:nth-child(even) {
-    background-color: var(--primary-color);
+    background: var(--primary-color);
 }
 
 /* Removed specific styling for .actions-cell to avoid conflict */
@@ -47,7 +47,7 @@
 
 .search-button {
     padding: 8px 16px;
-    background-color: #28a745;
+    background: #28a745;
     border: none;
     border-radius: 0 4px 4px 0;
     color: white;
@@ -56,7 +56,7 @@
 }
 
 .search-button:hover {
-    background-color: #218838;
+    background: #218838;
 }
 
 /* No users message styling */

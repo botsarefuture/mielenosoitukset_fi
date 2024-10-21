@@ -22,32 +22,32 @@
     align-items: center;
     word-wrap: break-word; /* Prevents long words from overflowing */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for better visibility */
-    transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transition for color and hover effects */
+    transition: background 0.3s ease, transform 0.3s ease; /* Smooth transition for color and hover effects */
 }
 
 /* Default background color (for fallback purposes) */
 #flash-messages .message {
-    background-color: var(--focus-color);
+    background: var(--focus-color);
 }
 
 /* Success message styling */
 #flash-messages .flash-success {
-    background-color: #28a745; /* Green for success */
+    background: #28a745; /* Green for success */
 }
 
 /* Error message styling */
 #flash-messages .flash-error {
-    background-color: #dc3545; /* Red for errors */
+    background: #dc3545; /* Red for errors */
 }
 
 /* Informational message styling */
 #flash-messages .flash-info {
-    background-color: #17a2b8; /* Blue for informational messages */
+    background: #17a2b8; /* Blue for informational messages */
 }
 
 /* Warning message styling */
 #flash-messages .flash-warning {
-    background-color: #ffc107; /* Yellow for warnings */
+    background: #ffc107; /* Yellow for warnings */
     color: #212529; /* Dark text for better readability */
 }
 

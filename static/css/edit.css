@@ -3,7 +3,7 @@
     max-width: 800px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 30px; /* Add padding for spacing */
-    background-color: #ffffff; /* White background */
+    background: #ffffff; /* White background */
     border: 1px solid #ddd; /* Light gray border */
     border-radius: 8px; /* Rounded corners */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
@@ -53,20 +53,20 @@ textarea:focus {
 }
 
 .submit-button {
-    background-color: #0033A0; /* Dark Blue */
+    background: #0033A0; /* Dark Blue */
     color: #ffffff; /* White text */
     border: none;
     padding: 15px 20px; /* Padding inside the button */
     border-radius: 4px; /* Rounded corners */
     font-size: 16px; /* Font size for the button text */
     cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s ease; /* Smooth transition */
+    transition: background 0.3s ease; /* Smooth transition */
     display: block; /* Center align button */
     margin: 0 auto;
 }
 
 .submit-button:hover {
-    background-color: #002080; /* Darker blue on hover */
+    background: #002080; /* Darker blue on hover */
 }
 
 @media (max-width: 768px) {
@@ -84,7 +84,7 @@ textarea:focus {
     max-width: 900px;
     margin: 20px auto;
     padding: 30px;
-    background-color: #ffffff;
+    background: #ffffff;
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -119,30 +119,30 @@ select {
 
 /* Button styling */
 button {
-    background-color: #0033A0;
+    background: #0033A0;
     color: #ffffff;
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.3s ease;
+    transition: background 0.3s ease;
 }
 
 button:hover {
-    background-color: #0066cc;
+    background: #0066cc;
 }
 
 /* Add organizer button specific styling */
 .add-organizer-button {
-    background-color: #f0f0f0;
+    background: #f0f0f0;
     color: #0033A0;
     border: 1px solid #ddd;
     font-size: 14px;
 }
 
 .add-organizer-button:hover {
-    background-color: #e0e0e0;
+    background: #e0e0e0;
 }
 
 /* Optional section styling */

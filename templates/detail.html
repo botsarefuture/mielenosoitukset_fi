@@ -64,7 +64,7 @@
 <style>
   /* Main Container */
   #main {
-    background-color: var(--background-color);
+    background: var(--background);
     padding: 20px;
     margin: 0 auto;
     max-width: 800px;
@@ -101,7 +101,7 @@
   #orginfo {
     flex: 1;
     min-width: 300px;
-    background-color: var(--container-background-color);
+    background: var(--container-background);
     padding: 20px;
     border-radius: 8px;
   }
@@ -140,22 +140,22 @@
     font-weight: bold;
     text-align: center;
     text-decoration: none;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
   }
 
   .like-button {
-    background-color: #4267b2;
+    background: #4267b2;
     color: #ffffff;
   }
 
   .like-button:hover {
-    background-color: #365899;
+    background: #365899;
   }
 
   /* Organizer Info */
   .organizer-info {
-    background-color: var(
-      --background-color
+    background: var(
+      --background
     ); /* Light background for contrast */
     border: 1px solid var(--border-color); /* Border to distinguish each organizer */
     border-radius: 8px;
@@ -185,16 +185,16 @@
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: var(--primary-button-color);
+    background: var(--primary-button-color);
     color: var(--primary-button-text-color);
     border-radius: 4px;
     text-decoration: none;
-    transition: background-color 0.3s ease;
+    transition: background 0.3s ease;
     text-align: center;
   }
 
   .back-link:hover {
-    background-color: var(--primary-button-hover-color);
+    background: var(--primary-button-hover-color);
     color: var(--primary-button-hover-text-color);
   }
 
@@ -207,7 +207,7 @@
   .route {
     margin-top: 20px;
     padding: 15px;
-    background-color: var(--background-color);
+    background: var(--background);
     border-left: 5px solid var(--blue);
     border-radius: 8px;
   }
@@ -228,7 +228,7 @@
   .countdown {
     margin-top: 20px;
     padding: 20px;
-    background-color: var(--background-color);
+    background: var(--background);
     border-radius: 8px;
     text-align: center;
     box-shadow: var(--box-shadow);
@@ -237,7 +237,7 @@
   /* Map Container */
   .map {
     margin-top: 20px;
-    background-color: var(--background-color);
+    background: var(--background);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: var(--box-shadow);
@@ -270,7 +270,7 @@
 
   .button {
     padding: 10px 20px;
-    background-color: var(--primary-button-color);
+    background: var(--primary-button-color);
     color: white;
     border: none;
     border-radius: 5px;
@@ -279,15 +279,15 @@
   .tag {
     padding: 8px 12px; /* Padding around the tag */
     margin: auto;
-    background-color: var(--blue-light); /* Background color for tags */
+    background: var(--blue-light); /* Background color for tags */
     color: #fff; /* White text color for contrast */
     border-radius: 100px; /* Fully rounded corners for tags */
     display: inline-block; /* Make tags inline-block for padding and margin */
-    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+    transition: background 0.3s ease; /* Smooth transition for hover effect */
 }
 
 .tag:hover {
-    background-color: var(--blue-dark); /* Darker color on hover */
+    background: var(--blue-dark); /* Darker color on hover */
 }
 
 /* Topics styling */
@@ -438,7 +438,7 @@
     style="
       margin-top: 20px;
       padding: 20px;
-      background-color: #ffffff;
+      background: #ffffff;
       border-radius: 8px;
       text-align: center;
       box-shadow: var(--box-shadow);

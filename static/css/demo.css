@@ -8,7 +8,7 @@
 
 /* Individual grid item styling */
 .grid-item {
-    background-color: var(--background-color); /* White background for grid items */
+    background: var(--background); /* White background for grid items */
     border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 8px;
     padding: 15px;
@@ -22,7 +22,7 @@
 
 /* Hover effects */
 .grid-item:hover {
-    background-color: var(--hover-bg-color); /* Change background on hover */
+    background: var(--hover-bg-color); /* Change background on hover */
 }
 
 /* Title styles */
@@ -48,15 +48,15 @@
 /* Tag styling */
 .tag {
     padding: 8px 12px; /* Padding around the tag */
-    background-color: var(--blue-light); /* Background color for tags */
+    background: var(--blue-light); /* Background color for tags */
     color: #fff; /* White text color for contrast */
     border-radius: 100px; /* Fully rounded corners for tags */
     display: inline-block; /* Make tags inline-block for padding and margin */
-    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+    transition: background 0.3s ease; /* Smooth transition for hover effect */
 }
 
 .tag:hover {
-    background-color: var(--blue-dark); /* Darker color on hover */
+    background: var(--blue-dark); /* Darker color on hover */
 }
 
 /* Topics styling */

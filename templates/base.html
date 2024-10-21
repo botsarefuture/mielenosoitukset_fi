@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fi" class="light">
+<html lang="fi" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -26,11 +26,10 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
-
+    {% block styles %} {% endblock %}
     <!-- Matomo -->
     <script>
       var _paq = (window._paq = window._paq || []);
-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
       _paq.push(["trackPageView"]);
       _paq.push(["enableLinkTracking"]);
       (function () {
@@ -49,56 +48,16 @@
   </head>
 
   <body>
+    <!-- Scrolling Marquee Message Section -->
+    <div class="marquee" style="display: none"></div>
+
     <!-- Navigation Bar -->
     {% include "header.html" %}
 
     <!-- Flash Messages -->
-    <!-- Flash Messages -->
-<div id="flash-messages" class="flash-messages" style="display: none;">
-  <ul id="flash-message-list"></ul>
-</div>
-
-
-<script>
-// Check user's system preference and enable dark mode if preferred
-function applyPreferredTheme() {
-  const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const themeIcon = document.getElementById('theme-icon');
-
-  if (prefersDarkMode) {
-    document.documentElement.classList.add('dark');
-    document.documentElement.classList.remove('light');
-    themeIcon.classList.remove('fa-moon');
-    themeIcon.classList.add('fa-sun');
-  } else {
-    document.documentElement.classList.add('light');
-    document.documentElement.classList.remove('dark');
-    themeIcon.classList.remove('fa-sun');
-    themeIcon.classList.add('fa-moon');
-  }
-}
-
-// Toggle dark mode manually
-function toggleDarkMode() {
-  document.documentElement.classList.toggle('dark');
-  document.documentElement.classList.toggle('light');
-  
-  const themeIcon = document.getElementById('theme-icon');
-  
-  // Toggle the icon between moon and sun
-  if (document.documentElement.classList.contains('dark')) {
-    themeIcon.classList.remove('fa-moon');
-    themeIcon.classList.add('fa-sun');
-  } else {
-    themeIcon.classList.remove('fa-sun');
-    themeIcon.classList.add('fa-moon');
-  }
-}
-
-// Apply preferred theme on page load
-applyPreferredTheme();
-</script>
-
+    <div id="flash-messages" class="flash-messages" style="display: none">
+      <ul id="flash-message-list"></ul>
+    </div>
 
     <!-- Main Content Area -->
     <main class="container-main-content">
@@ -120,9 +79,12 @@ applyPreferredTheme();
         </ul>
         <ul class="social-media-links">
           <li>
-            <a href="https://www.instagram.com/mielenosoitukset" target="_blank"
-              ><i class="fab fa-instagram"></i> Instagram</a
+            <a
+              href="https://www.instagram.com/mielenosoitukset"
+              target="_blank"
             >
+              <i class="fab fa-instagram"></i> Instagram
+            </a>
           </li>
         </ul>
       </div>
@@ -130,14 +92,12 @@ applyPreferredTheme();
 
     <!-- JavaScript for Navigation Menu Toggle and Dropdown -->
     <script>
-      // JavaScript to toggle the navigation menu on small screens
       document
         .querySelector(".navbar-toggle")
         .addEventListener("click", function () {
           document.querySelector(".nav-links").classList.toggle("active");
         });
 
-      // JavaScript to toggle the dropdown menu
       document
         .querySelector(".dropdown-toggle")
         .addEventListener("click", function (event) {
@@ -147,7 +107,6 @@ applyPreferredTheme();
           this.setAttribute("aria-expanded", isOpen);
         });
 
-      // Close dropdown when clicking outside
       window.addEventListener("click", function (event) {
         const dropdowns = document.querySelectorAll(".dropdown-menu");
         dropdowns.forEach(function (dropdown) {
@@ -157,48 +116,134 @@ applyPreferredTheme();
         });
       });
     </script>
+
     <script>
       function displayFlashMessage(category, message) {
         const flashMessages = document.getElementById("flash-messages");
         const messageList = document.getElementById("flash-message-list");
-    
-        // Create a new list item for the message
-        const newMessage = document.createElement("li");
-        newMessage.className = `flash-${category}`; // Add the category class (e.g., flash-success, flash-error)
-        newMessage.textContent = message;
-    
-        // Add the new message to the list
-        messageList.appendChild(newMessage);
-    
-        // Show the flash message container
-        flashMessages.style.display = "block";
-    
-        // Optionally, hide the message after a delay (e.g., 5 seconds)
-        setTimeout(() => {
-            newMessage.remove(); // Remove the message after the delay
-            if (messageList.childElementCount === 0) {
-                flashMessages.style.display = "none"; // Hide container if no more messages
-            }
-        }, 10000); // Adjust the timeout duration as needed
-    }
-    
-    // Simulating continuous flash message checking (polling or using WebSocket)
-    function checkForNewFlashMessages() {
-        fetch('/get_flash_messages') // Adjust the URL to the endpoint that provides flash messages
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.messages && data.messages.length > 0) {
-                    data.messages.forEach(flash => {
-                        displayFlashMessage(flash.category, flash.message);
-                    });
-                }
-            })
-            .catch(error => console.error('Error fetching flash messages:', error));
-    }
-    
-    // Call this function continuously or based on certain events (e.g., every 5 seconds)
-    setInterval(checkForNewFlashMessages, 5000); // Poll every 5 seconds
 
-  </script>
+        const newMessage = document.createElement("li");
+        newMessage.className = `flash-${category}`;
+        newMessage.textContent = message;
+
+        messageList.appendChild(newMessage);
+        flashMessages.style.display = "block";
+
+        setTimeout(() => {
+          newMessage.remove();
+          if (messageList.childElementCount === 0) {
+            flashMessages.style.display = "none";
+          }
+        }, 10000);
+      }
+
+      function checkForNewFlashMessages() {
+        fetch("/get_flash_messages")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data && data.messages && data.messages.length > 0) {
+              data.messages.forEach((flash) => {
+                displayFlashMessage(flash.category, flash.message);
+              });
+            }
+          })
+          .catch((error) =>
+            console.error("Error fetching flash messages:", error)
+          );
+      }
+
+      setInterval(checkForNewFlashMessages, 5000);
+    </script>
+
+    <script>
+      let currentmarg = "";
+      function displayMarqueeMessage(message, style, h2_style) {
+        if (message !== currentmarg) {
+          currentmarg = message;
+          const marqueeElement = document.querySelector(".marquee");
+          marqueeElement.innerHTML = `<h2 style="${h2_style}">${message}</h2>`;
+          marqueeElement.style.display = "block"; // Show marquee
+          marqueeElement.style = style; // Apply additional styles if any
+        } else {
+          console.log("The marque is same already");
+        }
+      }
+
+      function checkForNewMarqueeMessages() {
+        fetch("/marquee")
+          .then((response) => response.json())
+          .then((data) => {
+            const marqueeElement = document.querySelector(".marquee");
+            if (data.message !== "NO") {
+              displayMarqueeMessage(data.message, data.style, data.h2_style);
+            } else {
+              marqueeElement.style.display = "none"; // Hide if no message
+            }
+          })
+          .catch((error) =>
+            console.error("Error fetching marquee message:", error)
+          );
+      }
+
+      // Check for new marquee messages every 5 seconds
+      setInterval(checkForNewMarqueeMessages, 5000);
+
+      document.addEventListener("DOMContentLoaded", function () {
+        checkForNewMarqueeMessages(); // Initial check on page load
+      });
+    </script>
+
+    <script>
+      function applyPreferredTheme() {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersDarkMode = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        const themeIcon = document.getElementById("theme-icon");
+
+        if (savedTheme) {
+          if (savedTheme === "dark") {
+            document.documentElement.classList.add("dark");
+            document.documentElement.classList.remove("light");
+            themeIcon.classList.remove("fa-moon");
+            themeIcon.classList.add("fa-sun");
+          } else {
+            document.documentElement.classList.add("light");
+            document.documentElement.classList.remove("dark");
+            themeIcon.classList.remove("fa-sun");
+            themeIcon.classList.add("fa-moon");
+          }
+        } else if (prefersDarkMode) {
+          document.documentElement.classList.add("dark");
+          document.documentElement.classList.remove("light");
+          themeIcon.classList.remove("fa-moon");
+          themeIcon.classList.add("fa-sun");
+        } else {
+          document.documentElement.classList.add("light");
+          document.documentElement.classList.remove("dark");
+          themeIcon.classList.remove("fa-sun");
+          themeIcon.classList.add("fa-moon");
+        }
+      }
+
+      function toggleDarkMode() {
+        document.documentElement.classList.toggle("dark");
+        document.documentElement.classList.toggle("light");
+
+        const themeIcon = document.getElementById("theme-icon");
+
+        if (document.documentElement.classList.contains("dark")) {
+          themeIcon.classList.remove("fa-moon");
+          themeIcon.classList.add("fa-sun");
+          localStorage.setItem("theme", "dark");
+        } else {
+          themeIcon.classList.remove("fa-sun");
+          themeIcon.classList.add("fa-moon");
+          localStorage.setItem("theme", "light");
+        }
+      }
+
+      applyPreferredTheme();
+    </script>
   </body>
 </html>

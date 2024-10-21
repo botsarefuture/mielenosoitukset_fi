@@ -59,25 +59,25 @@
   border-radius: 4px; /* Smaller border radius */
   margin-bottom: 10px; /* Reduced margin between list items */
   cursor: pointer;
-  background-color: #fff;
-  transition: background-color 0.3s ease;
+  background: #fff;
+  transition: background 0.3s ease;
 }
 
 .organization-item:hover {
-  background-color: #f0f0f0;
+  background: #f0f0f0;
 }
 
 .submit-button {
-  background-color: #007bff;
+  background: #007bff;
   color: #fff;
   border: none;
   padding: 10px 20px; /* Reduced padding inside the button */
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px; /* Slightly larger font size for better visibility */
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 .submit-button:hover {
-  background-color: #0056b3;
+  background: #0056b3;
 }

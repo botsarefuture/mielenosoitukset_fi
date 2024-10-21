@@ -3,7 +3,7 @@
     max-width: 400px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 40px; /* Add padding for spacing */
-    background-color: var(--container-background-color); /* White background */
+    background: var(--container-background); /* White background */
     border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 8px; /* Rounded corners */
     box-shadow: var(--box-shadow); /* Subtle shadow for depth */
@@ -35,7 +35,7 @@ input[type="text"], input[type="email"], input[type="password"] {
 	border-radius: 4px;
 	box-sizing: border-box;
 	font-size: 16px;
-	background-color: var(--input-background-color);
+	background: var(--input-background);
 	color: var(--primary-text-color);
 }
 
@@ -47,18 +47,18 @@ input[type="password"]:focus {
 }
 
 button[type="submit"] {
-    background-color: var(--primary-button-color); /* Dark Blue */
+    background: var(--primary-button-color); /* Dark Blue */
     color: var(--primary-button-text-color); /* White text */
     border: none;
     padding: 15px 20px; /* Padding inside the button */
     border-radius: 4px; /* Rounded corners */
     font-size: 16px; /* Font size for the button text */
     cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s ease; /* Smooth transition */
+    transition: background 0.3s ease; /* Smooth transition */
 }
 
 button[type="submit"]:hover {
-    background-color: var(--primary-button-hover-color); /* Darker blue on hover */
+    background: var(--primary-button-hover-color); /* Darker blue on hover */
     color: var(--primary-button-hover-text-color);
 }
 

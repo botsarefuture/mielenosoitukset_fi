@@ -64,7 +64,7 @@
 
   .dropdown-content {
     display: none;
-    background-color: var(--input-background-color);
+    background: var(--input-background);
     width: 100%;
     max-height: 300px;
     overflow-y: auto;
@@ -78,7 +78,7 @@
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border-color);
-    background-color: var(--background-color);
+    background: var(--background);
     cursor: pointer;
     border-radius: 5px;
     text-align: left;
@@ -100,7 +100,7 @@
     box-sizing: border-box;
     border: none;
     border-bottom: 1px solid var(--border-color);
-    background-color: var(--input-background-color);
+    background: var(--input-background);
     outline: none;
   }
 
@@ -109,17 +109,17 @@
     padding: 10px;
     text-decoration: none;
     display: block;
-    transition: background-color 0.2s ease;
+    transition: background 0.2s ease;
     border-bottom: 1px solid var(--border-color);
   }
 
   .dropdown-content a:hover {
-    background-color: var(--hover-bg-color);
+    background: var(--hover-bg-color);
   }
 
   /* Highlight selected city */
   .dropdown-content a.selected {
-    background-color: var(--selected-bg-color); /* Optional: define a color for the selected city */
+    background: var(--selected-bg-color); /* Optional: define a color for the selected city */
   }
 
   @keyframes fadeIn {

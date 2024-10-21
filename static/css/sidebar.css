@@ -4,7 +4,7 @@
 /* Sidebar container */
 .container-sidebar {
   width: 250px; /* Fixed width for sidebar */
-  background-color: var(--blue); /* Dark blue background to match header/footer */
+  background: var(--blue); /* Dark blue background to match header/footer */
   color: #ffffff; /* White text color */
   padding: 20px; /* Padding for sidebar content */
   display: flex;
@@ -41,11 +41,11 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-  background-color: var(--orange-darker); /* Darker orange on hover */
+  background: var(--orange-darker); /* Darker orange on hover */
   transform: scale(1.1); /* Slightly enlarge button on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
 }
@@ -67,19 +67,19 @@
 
 .sidebar-nav a {
   color: var(--secondary-button-text-color);
-  background-color: var(--secondary-button-color);
+  background: var(--secondary-button-color);
   font-weight: bold;
   text-decoration: none;
   display: flex; /* Flex display for alignment */
   align-items: center;
   padding: 12px;
   border-radius: 5px;
-  transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transitions */
+  transition: background 0.3s ease, transform 0.3s ease; /* Smooth transitions */
 }
 
 /* Hover effect for sidebar links */
 .sidebar-nav a:hover {
-  background-color: var(--secondary-button-hover-color); /* Highlight on hover */
+  background: var(--secondary-button-hover-color); /* Highlight on hover */
   color: var(--secondary-button-hover-text-color);
 }
 
@@ -93,7 +93,7 @@
   transform: translateY(-50%); /* Adjust for vertical centering */
   display: flex;
   flex-direction: column;
-  background-color: var(--blue); /* Background color matching the sidebar */
+  background: var(--blue); /* Background color matching the sidebar */
   padding: 10px; /* Padding for spacing */
   border-radius: 5px; /* Rounded corners for consistency */
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
@@ -103,17 +103,17 @@
 .hidden-icons .sidebar-toggle {
   font-size: 30px; /* Size for the toggle button */
   color: #ffffff; /* Icon color */
-  background-color: transparent; /* No background color */
+  background: transparent; /* No background color */
   border: none; /* Remove border */
   padding: 10px; /* Padding for click area */
   cursor: pointer; /* Pointer cursor for clickable element */
   margin-bottom: 10px; /* Space below the toggle button */
-  transition: background-color 0.3s ease; /* Smooth hover transition */
+  transition: background 0.3s ease; /* Smooth hover transition */
 }
 
 /* Hover effect on the hidden icons toggle button */
 .hidden-icons .sidebar-toggle:hover {
-  background-color: var(--orange-darker); /* Background color on hover */
+  background: var(--orange-darker); /* Background color on hover */
   border-radius: 5%; /* Round button on hover */
   color: #ffffff; /* Icon color on hover */
 }
@@ -127,7 +127,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s ease, font-size 0.3s ease;
+  transition: background 0.3s ease, font-size 0.3s ease;
   padding: 10px; /* Padding for clickable area */
   border-radius: 5%; /* Rounded hover effect */
   width: 32px;
@@ -136,7 +136,7 @@
 
 /* Hover effect on hidden icons */
 .hidden-icons a:hover {
-  background-color: var(--orange-darker); /* Background color on hover */
+  background: var(--orange-darker); /* Background color on hover */
   font-size: 30px; /* Increase icon size on hover */
   color: #ffffff; /* Icon color on hover */
 }
@@ -190,7 +190,7 @@
   margin-top: 20px;
   padding: 10px;
   border-top: 1px solid var(--border-color);
-  background-color: var(--yellow); /* Light orange for warnings */
+  background: var(--yellow); /* Light orange for warnings */
   color: var(--orange-darker); /* Darker text color for visibility */
   display: flex;
   align-items: center;

@@ -12,42 +12,42 @@ th, td {
 }
 
 th {
-  background-color: var(--background-color); /* Retain dark blue for headers */
+  background: var(--background); /* Retain dark blue for headers */
   color: var(--primary-text-color);
   font-weight: bold;
 }
 
 td {
-  background-color: transparent !important; /* Override to ensure transparent background */
+  background: transparent !important; /* Override to ensure transparent background */
 }
 
 tr:nth-child(even) {
-  background-color: var(--tr-bg-color-1);
+  background: var(--tr-bg-color-1);
   color: var(--tg-txt-color-1);
 }
 
 tr:nth-child(even):hover {
-  background-color: var(--tr-bg-color-1-hover);
+  background: var(--tr-bg-color-1-hover);
   color: var(--tg-txt-color-1-hover);
 }
 
 tr:nth-child(odd) {
-  background-color: var(--tr-bg-color-2);
+  background: var(--tr-bg-color-2);
   color: var(--tg-txt-color-2);
 }
 
 tr:nth-child(odd):hover {
-  background-color: var(--tr-bg-color-2-hover);
+  background: var(--tr-bg-color-2-hover);
   color: var(--tg-txt-color-2-hover);
 }
 
 tr.needs-attention {
-  background-color: var(--yellow-dark);
+  background: var(--yellow-dark);
   color: var(--black);
 }
 
 tr.needs-attention:hover {
-  background-color: var(--yellow-darker);
+  background: var(--yellow-darker);
 }
 
 /* Responsive Table Styles */
@@ -80,7 +80,7 @@ tr.needs-attention:hover {
 /* Table Container */
 .table-container {
   margin-top: 2rem;
-  background-color: var(--container-background-color);
+  background: var(--container-background);
   border-radius: 8px;
   box-shadow: 0 4px 20px var(--box-shadow-color);
   padding: 20px;
@@ -102,7 +102,7 @@ tr.needs-attention:hover {
 #tabletitle {
   color: var(--admin-section-text-color);
   padding: 1.5rem;
-  background-color: var(--admin-section-title-color);
+  background: var(--admin-section-title-color);
   text-align: center;
   margin: 2rem 0;
   border-radius: 8px;

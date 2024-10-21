@@ -14,7 +14,7 @@
     }
   
     .beta-label {
-      background-color: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
+      background: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
       color: var(--primary-text-color); /* Using primary text color variable for contrast */
       border-radius: 3px; /* Rounded corners */
       padding: 2px 5px; /* Padding for spacing */
@@ -23,7 +23,7 @@
     }
   
     .ddos-button {
-      background-color: var(--red); /* Using red color variable for the button */
+      background: var(--red); /* Using red color variable for the button */
       color: var(--primary-button-text-color); /* Using primary button text color variable for white text */
       padding: 10px 15px;
       border: none;
@@ -103,7 +103,7 @@
 </div>
 
 <!-- Hidden icons section -->
-<div class="hidden-icons container-centered bg-main-content">
+<div class="hidden-icons container-centered bg-main-content" style="z-index: 1000000;">
     <a class="hidden-icon" id="hiddentoggle" aria-label="Avaa sivupalkki">&#9776;</a> <!-- Sidebar Toggle Button -->
     <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon"><i class="fas fa-book"></i></a>
     <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>

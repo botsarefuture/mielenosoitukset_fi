@@ -28,7 +28,7 @@ textarea {
     color: var(--primary-text-color); /* Dark gray text */
     box-sizing: border-box; /* Includes padding and border in element's total width and height */
     transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
-    background-color: var(--input-background-color);
+    background: var(--input-background);
 }
 
 /* Textarea specific styles */
@@ -44,25 +44,25 @@ select:focus {
     border-color: var(--focus-color); /* Blue border on focus */
     box-shadow: 0 0 8px var(--focus-color); /* Blue shadow on focus */
     outline: none;
-    background-color: var(--background-color-light); /* White background on focus */
+    background: var(--background-light); /* White background on focus */
 }
 
 /* Submit button styles */
 button[type="submit"] {
     padding: 12px 24px; /* Increased padding for better touch targets */
-    background-color: var(--primary-button-color); /* Blue background */
+    background: var(--primary-button-color); /* Blue background */
     color: var(--primary-button-text-color); /* White text for contrast */
     border: none;
     border-radius: 4px; /* Rounded corners */
     font-size: 16px; /* Readable font size */
     cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s ease; /* Smooth transition on hover */
+    transition: background 0.3s ease; /* Smooth transition on hover */
     margin-top: 10px; /* Space above the button */
 }
 
 /* Submit button hover effect */
 button[type="submit"]:hover {
-    background-color: var(--highlight-color-orange); /* Orange on hover */
+    background: var(--highlight-color-orange); /* Orange on hover */
 }
 
 /* Error and success messages */
@@ -81,6 +81,6 @@ button[type="submit"]:hover {
 }
 
 .disabled {
-    background-color: gray !important;
+    background: gray !important;
     color: white !important;
 }

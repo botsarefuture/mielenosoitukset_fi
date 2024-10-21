@@ -17,7 +17,7 @@
 
 <!-- Main content container -->
 <div class="container container-form">
-    <h2 class="form-title">{{ title }}</h2>
+    <h2 class="admin-section-title form-title">{{ title }}</h2>
     <form method="POST" action="{{ form_action }}">
 
         <!-- Form fields with required indicators -->
@@ -62,20 +62,8 @@
             <input type="url" id="facebook" name="facebook" class="form-control" value="{{ demo.facebook if demo and demo.facebook else '' }}">
         </div>
 
-        <!-- City Selector with dropdown -->
-        <div class="form-group">
-            <label for="city">Paikkakunta <span class="required">*</span></label>
-            <div class="dropdown">
-                <button type="button" class="dropbtn">{{ demo.city if demo and demo.city else 'Valitse paikkakunta' }}</button>
-                <div id="dropdown-content" class="dropdown-content">
-                    <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()">
-                    {% for city in city_list %}
-                    <a href="#" onclick="selectCity('{{ city }}'); return false;">{{ city }}</a>
-                    {% endfor %}
-                </div>
-            </div>
-            <input type="hidden" id="selected-city" name="city" value="{{ demo.city if demo and demo.city else '' }}" required>
-        </div>
+        {% include "paikkakunta-dropdown.html" %}
+
 
         <!-- Address Field -->
         <div class="form-group">

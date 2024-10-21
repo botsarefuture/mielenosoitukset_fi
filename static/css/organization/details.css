@@ -136,7 +136,7 @@
 
 /* Upcoming title styles */
 #upcoming-title {
-  color: var(--blue-dark) !important; /* Title color */
+  color: var(--header-color) !important; /* Title color */
   margin-top: 50px !important; /* Top margin */
   margin-bottom: 30px !important; /* Bottom margin */
   font-size: 1.75em !important; /* Font size for title */

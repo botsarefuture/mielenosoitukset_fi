@@ -339,9 +339,11 @@ PERMISSIONS_GROUPS = {
         {"name": "VIEW_ORGANIZATION", "description": "View organization details."},
         {"name": "LIST_ORGANIZATIONS", "description": "List all organizations."},
     ],
-    "Analytics": [
+    "Miscallanious": [
         {"name": "VIEW_ANALYTICS", "description": "View analytics"},
-        {"name": "MANAGE_MARQUEE", "description": "s"}
+        {"name": "MANAGE_MARQUEE", "description": "Manage marquee"},
+        {"name": "BETA_FEATURES", "description": "can access beta"}
+
     ]
 }
 

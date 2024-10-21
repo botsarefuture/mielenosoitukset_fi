@@ -213,9 +213,10 @@ header {
   flex: 0 0 auto; /* Header in the first row, does not grow */
 }
 
+@media (max-width: 1024px) {
 .navbar .container.shifted {
 	margin-right: 20px;
-}
+}}
 
 footer {
   flex: 0 0 auto; /* Footer in the last row, does not grow */

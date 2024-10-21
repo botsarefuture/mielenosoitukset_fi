@@ -17,7 +17,7 @@
   property="og:description"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}"
 />
-<meta property="og:image" content="{{ demo['img'] }}" />
+<meta property="og:image" content="{{ demo['img'] if demo['img'] is defined else url_for('static', filename='img/e.png')}}" />
 <meta
   property="og:url"
   content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"

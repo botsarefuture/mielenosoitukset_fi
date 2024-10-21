@@ -335,7 +335,11 @@
 	flex-direction: column;
 }
 
-</style><div id="demo-toolbox" class="toolbox-sticky">
+</style>
+
+{% if current_user.is_authenticated and current_user.can_use("TOOLBOX") %}
+
+<div id="demo-toolbox" class="toolbox-sticky">
   <div class="toolbox-header">
       <h3>Työkalupakki</h3>
       <button class="toggle-toolbox" onclick="toggleToolbox()">
@@ -374,6 +378,7 @@
   </div>
 </div>
 
+{% endif %}
 
 <div id="main">
   {% if demo['img'] %} {% if demo['img'] !=

@@ -17,7 +17,7 @@ from flask_login import (
     current_user,
 )
 from bson.objectid import ObjectId
-from wrappers import admin_required
+from wrappers import admin_required, permission_required
 from database_manager import DatabaseManager
 from auth.models import User  # Import User model
 import logging
@@ -100,6 +100,7 @@ def get_user_role_counts():
 @admin_bp.route("/manage-marquee", methods=["GET", "POST"])
 @login_required
 @admin_required
+@permission_required("MANAGE_MARQUEE")
 def manage_marquee():
     config_file = "marquee_config.json"
 

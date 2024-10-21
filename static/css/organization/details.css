@@ -1,28 +1,35 @@
 /* Base styles for the organization container */
 .org-container {
-  background-color: var(--background-color); /* Using CSS variable for background */
+  /*background: linear-gradient(135deg, var(--background-color) 0%, var(--background-color-light) 100%); /* Gradient background */
   padding: 40px; /* Updated padding for more space */
   border-radius: 12px; /* Adjusted border radius */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15); /* Updated shadow for depth */
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25); /* Enhanced shadow for depth */
   margin: 20px auto; /* Center the container */
   max-width: 800px; /* Responsive design */
+  transition: transform 0.3s ease; /* Smooth transform transition */
+}
+
+.org-container:hover {
+  transform: scale(1.02); /* Slightly scale up on hover */
 }
 
 /* Header styles */
 .org-header {
   text-align: center; /* Centering text */
   margin-bottom: 30px; /* Increased margin for separation */
-  background-color: var(--primary-color); /* Background color using CSS variable */
+  background: var(--admin-section-title-color); /* Gradient for header */
   padding: 20px 20px 25px; /* Top/bottom and side padding */
   border-bottom: 3px solid #e0e0e0; /* Bottom border for separation */
+  border-radius: 12px; /* Rounded corners for header */
 }
 
 .org-header h1 {
   margin: 0; /* Remove default margin */
-  color: white; /* Text color */
+  color: var(--admin-section-text-color); /* Text color */
   font-size: 2.75em; /* Font size */
   font-weight: bold; /* Bold text */
   margin-bottom: 12px; /* Space below the heading */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4); /* Text shadow for depth */
 }
 
 .check-icon {
@@ -35,6 +42,7 @@
   color: white; /* Text color for the description */
   margin: 10px 0; /* Vertical margins for spacing */
   font-size: 1.3em; /* Font size for the description */
+  line-height: 1.5; /* Line height for readability */
 }
 
 /* Badge styles */
@@ -44,6 +52,7 @@
   font-size: 0.9em; /* Font size for badges */
   display: inline-block; /* Inline block for layout */
   margin-top: 10px; /* Top margin for spacing */
+  transition: background-color 0.3s ease; /* Smooth transition for background */
 }
 
 .badge-verified {
@@ -64,21 +73,28 @@
   gap: 15px; /* Space between grid items */
 }
 
+/* Demo box styles */
 .demo-box {
   background-color: #fff; /* Background color for demo boxes */
   padding: 15px; /* Padding inside demo boxes */
-  border-radius: 5px; /* Rounded corners */
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); /* Shadow for demo boxes */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Shadow for demo boxes */
   margin-bottom: 15px; /* Margin below demo boxes */
   height: 200px; /* Fixed height for demo boxes */
   display: flex; /* Flexbox for vertical centering */
   flex-direction: column; /* Stack content vertically */
   justify-content: space-between; /* Space out content */
+  transition: transform 0.3s ease; /* Smooth transform transition */
+}
+
+.demo-box:hover {
+  transform: translateY(-5px); /* Lift effect on hover */
 }
 
 .demo-box h3 {
   margin: 0; /* Remove default margin */
   text-align: center; /* Center text */
+  color: var(--header-color); /* Heading color */
 }
 
 .demo-box p {
@@ -93,7 +109,7 @@
   padding: 10px 15px; /* Padding inside button */
   border-radius: 5px; /* Rounded corners for button */
   text-decoration: none; /* Remove underline */
-  transition: background-color 0.3s ease; /* Smooth transition for hover */
+  transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover */
   width: auto; /* Auto width for button */
   margin: auto; /* Center button */
   text-align: center; /* Center text */
@@ -102,6 +118,7 @@
 .btn:hover {
   background-color: var(--blue); /* Hover background color */
   color: var(--orange) !important; /* Hover text color */
+  transform: translateY(-3px); /* Lift effect on hover */
 }
 
 /* Social media styles */

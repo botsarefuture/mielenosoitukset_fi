@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
 
-
 <div class="org-container">
     <div class="org-header">
         <h1>{{ org.name }}{% if org.verified %}<span class="check-icon"></span>{% endif %}</h1>
@@ -19,39 +18,32 @@
     <div class="contact-info">
         <h2 class="section-title">Yhteystiedot</h2>
         <div class="contact-methods">
-            <p><i class="fa-solid fa-envelope some-icon"></i> 
-                <a href="mailto:{{ org.email }}" class="contact-link">{{ org.email }}</a>
+            <p>
+                <i class="fa-solid fa-envelope some-icon"></i> 
+                <a href="mailto:{{ org.email }}" class="link contact-link">{{ org.email }}</a>
             </p>
-            <p><i class="fa-solid fa-external-link some-icon"></i> 
-                <a href="{{ org.website }}" target="_blank" class="contact-link">{{ org.website }}</a>
+            <p>
+                <i class="fa-solid fa-external-link some-icon"></i> 
+                <a href="{{ org.website }}" target="_blank" class="link contact-link">{{ org.website }}</a>
             </p>
         </div>
         <h3 class="section-title">Sosiaalinen media</h3>
         <div class="socials">
             {% for social in org.social_media_links %}
-                <p><i class="fa-brands fa-{{ social }} some-icon"></i> 
-                    <a href="{{ org.social_media_links[social] }}" target="_blank" class="social-link">{% if social %}@{{ social.username }}{% endif %}</a>
-                </p>
+                <a href="{{ org.social_media_links[social] }}" target="_blank" class="some-icon link">
+                    <i class="fa-brands fa-{{ social }} some-icon"></i>
+                </a>
             {% endfor %}
         </div>
     </div>
 
-    <div class="verification-status">
-        <span class="badge {{ 'badge-verified' if org.verified else 'badge-unverified' }}" style="background-color: {{ 'green' if org.verified else '#e63946' }};">
-            {{ 'Vahvistettu' if org.verified else 'Ei vahvistettu' }}
-        </span>
-        {% if not org.verified %}
-            <p class="unverified-message">Tämä organisaatio ei ole vielä vahvistettu. Ota yhteyttä saadaksesi lisätietoja!</p>
-        {% endif %}
-    </div>
-
     {% if upcoming_demos %}
-    <h2 class="section-title" id="upcoming-title">Tulevat mielenosoitukset</h2>
-    <div class="container-grid">
-        {% for demo in upcoming_demos %}
-        {{ macros.demo_card(demo) }}
-        {% endfor %}
-    </div>
+        <h2 class="section-title" id="upcoming-title">Tulevat mielenosoitukset</h2>
+        <div class="container-grid">
+            {% for demo in upcoming_demos %}
+                {{ macros.demo_card(demo) }}
+            {% endfor %}
+        </div>
     {% else %}
         <p class="no-demos-message">Ei tulevia mielenosoituksia.</p>
     {% endif %}

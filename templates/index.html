@@ -7,34 +7,53 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
 
 <div class="container-main-content">
-    <div class="container-welcome container-centered">
+    {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES") %}
+<!-- Christmas-Themed Section -->   
+    <section class="christmas-section" style="display: none;">
+        <h2 style="color: #ff0000;">🎄 Hyvää joulua! 🎄</h2>
+        <p style="color: #006400;">Tervetuloa viettämään joulun taikaa ja lämpöä! Liity mukaan juhlistamaan yhteisöllisyyttä ja rakkautta.</p>
+        <div class="buttons-div">
+            <a class="button button-primary" href="{{ url_for('celebrate') }}">Juhli kanssamme!</a>
+        </div>
+    </section>
+    {% endif %}
+
+    <header class="container-welcome container-centered">
         <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
-        <p>Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen. <br> Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.</p>
+        <p>Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen. <br>Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.</p>
         <div class="buttons-div">
             <a class="button button-primary" href="{{ url_for('info') }}">Lue lisää</a>
             <a class="button button-primary" href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
         </div>
-    </div>
+    </header>
+
+
 
     <!-- Search Form -->
-    <form action="{{ url_for('index') }}" method="GET" class="container-form">
-        <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Hae mielenosoituksia">
-        <button type="submit">Hae</button>
-    </form>
+    <section class="container-form">
+        <h3>Hae mielenosoituksia</h3>
+        <form action="{{ url_for('index') }}" method="GET">
+            <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Hae mielenosoituksia" required>
+            <button type="submit">Hae</button>
+        </form>
+    </section>
 
     <!-- Pinned Demonstrations Section -->
     {% if pinned_demonstrations %}
-    <h2>Suosittelemme</h2>
-    <div class="container-grid">
+    <section>
+        <h2>Suosittelemme</h2>
+        <div class="container-grid">
             {% for demo in pinned_demonstrations %}
             {{ macros.demo_card(demo) }}
             {% endfor %}
-    </div>
+        </div>
+    </section>
     {% endif %}
 
     <!-- Featured Demonstrations Section -->
-    <h2>Esitellyt mielenosoitukset</h2>
-    <div class="container-grid">
+    <section>
+        <h2>Esitellyt mielenosoitukset</h2>
+        <div class="container-grid">
             {% if demonstrations %}
             {% for demo in demonstrations[:6] %}
             {{ macros.demo_card(demo) }}
@@ -42,12 +61,14 @@
             {% else %}
             <div class="grid-item">Ei mielenosoituksia näytettäväksi.</div>
             {% endif %}
-    </div>
+        </div>
+    </section>
 
     <!-- Button to View All Demonstrations -->
     <div class="buttons-div">
         <a class="button button-primary" href="{{ url_for('demonstrations') }}">Näytä kaikki mielenosoitukset</a>
     </div>
-</div>
 
+    
+</div>
 {% endblock %}

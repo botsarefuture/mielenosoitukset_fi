@@ -3,7 +3,7 @@
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
-    background-color: var(--background-color);
+    background: var(--background);
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
@@ -42,7 +42,7 @@ h1 {
 }
 
 button.btn-primary {
-    background-color: var(--blue);
+    background: var(--blue);
     color: #FFF;
     border: none;
     padding: 10px 20px;
@@ -51,9 +51,9 @@ button.btn-primary {
     font-size: 16px;
     display: block;
     margin: 20px auto 0;
-    transition: background-color 0.3s ease;
+    transition: background 0.3s ease;
 }
 
 button.btn-primary:hover {
-    background-color: var(--blue-dark);
+    background: var(--blue-dark);
 }

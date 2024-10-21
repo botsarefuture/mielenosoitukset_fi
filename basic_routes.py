@@ -1,3 +1,4 @@
+import json
 import os
 from s3_utils import upload_image
 from flask import render_template, request, redirect, url_for, flash, abort, Response, get_flashed_messages, jsonify
@@ -177,87 +178,107 @@ def init_routes(app):
             return redirect(url_for("index"))
 
         return render_template("submit.html", city_list=CITY_LIST)
+    from flask import request, flash, render_template
+    from datetime import datetime, date
+    from bson import ObjectId
 
     @app.route("/demonstrations")
     def demonstrations():
         """
         List all upcoming approved demonstrations, optionally filtered by search query.
         """
-        search_query = request.args.get("search", "")
-        city_query = request.args.get("city", "")
-        location_query = request.args.get("location", "")
+        # Get pagination parameters
+        page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 10))
+        
+        search_query = request.args.get("search", "").lower()
+        city_query = request.args.get("city", "").lower()
+        location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
-        topic_query = request.args.get("topic", "")
-        today = date.today()  # Use date.today() to get only the date part
+        topic_query = request.args.get("topic", "").lower()
+        today = date.today()
 
         # Retrieve all approved demonstrations
         demonstrations = demonstrations_collection.find(
             {"approved": True, "hide": {"$exists": False}}
         )
 
-        # Filter out past demonstrations manually
-        filtered_demonstrations = []
+        # Filter upcoming demonstrations
+        filtered_demonstrations = filter_demonstrations(demonstrations, today, 
+                                                        search_query, city_query, 
+                                                        location_query, date_query, 
+                                                        topic_query)
+
+        # Sort the results by date
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+
+        # Pagination logic
+        total_demos = len(filtered_demonstrations)
+        total_pages = (total_demos + per_page - 1) // per_page  # Calculate total pages
+        start = (page - 1) * per_page
+        end = start + per_page
+
+        # Get the items for the current page
+        paginated_demonstrations = filtered_demonstrations[start:end]
+
+        return render_template("list.html", 
+                            demonstrations=paginated_demonstrations,
+                            page=page, 
+                            total_pages=total_pages)
+
+
+    def filter_demonstrations(demonstrations, today, search_query, city_query, 
+                            location_query, date_query, topic_query):
+        """
+        Filter the demonstrations based on various criteria.
+        """
+        filtered = []
         added_demo_ids = set()  # To keep track of added demo IDs
 
         for demo in demonstrations:
-            demo_date = datetime.strptime(
-                demo["date"], "%d.%m.%Y"
-            ).date()  # Convert to date object
-            if demo_date >= today:
-                # Apply additional filters
-                matches_search = (
-                    search_query.lower() in demo["title"].lower()
-                    or search_query.lower() in demo["city"].lower()
-                    or search_query.lower() in demo["topic"].lower()
-                    or search_query.lower() in demo["address"].lower()
-                )
+            if is_future_demo(demo, today):
+                if (matches_filters(demo, search_query, city_query, location_query, 
+                                    date_query, topic_query) and 
+                    demo["_id"] not in added_demo_ids):
+                    filtered.append(demo)
+                    added_demo_ids.add(demo["_id"])
 
-                matches_city = (
-                    city_query.lower() in demo["city"].lower() if city_query else True
-                )
-                matches_location = (
-                    location_query.lower() in demo["address"].lower()
-                    if location_query
-                    else True
-                )
-                matches_topic = (
-                    topic_query.lower() in demo["topic"].lower()
-                    if topic_query
-                    else True
-                )
+        return filtered
 
-                matches_date = True
-                if date_query:
-                    try:
-                        parsed_date = datetime.strptime(
-                            date_query, "%d.%m.%Y"
-                        ).date()  # Convert to date object
-                        matches_date = parsed_date == demo_date
-                    except ValueError:
-                        flash(
-                            "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
-                        )
-                        matches_date = False
 
-                if (
-                    matches_search
-                    and matches_city
-                    and matches_location
-                    and matches_topic
-                    and matches_date
-                ):
-                    if (
-                        demo["_id"] not in added_demo_ids
-                    ):  # Ensure the demo isn't already added
-                        filtered_demonstrations.append(demo)
-                        added_demo_ids.add(demo["_id"])  # Mark the demo as added
+    def is_future_demo(demo, today):
+        """
+        Check if the demonstration is in the future.
+        """
+        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        return demo_date >= today
 
-        # Sort the results by date
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+
+    def matches_filters(demo, search_query, city_query, location_query, date_query, topic_query):
+        """
+        Check if the demonstration matches the filtering criteria.
+        """
+        matches_search = (
+            search_query in demo["title"].lower() or 
+            search_query in demo["city"].lower() or 
+            search_query in demo["topic"].lower() or 
+            search_query in demo["address"].lower()
         )
+        matches_city = city_query in demo["city"].lower() if city_query else True
+        matches_location = location_query in demo["address"].lower() if location_query else True
+        matches_topic = topic_query in demo["topic"].lower() if topic_query else True
+        matches_date = True
 
-        return render_template("list.html", demonstrations=filtered_demonstrations)
+        if date_query:
+            try:
+                parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
+                matches_date = parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            except ValueError:
+                flash("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.")
+                matches_date = False
+
+        return matches_search and matches_city and matches_location and matches_topic and matches_date
+
 
     import requests
     from flask import Flask, render_template, redirect, url_for, flash
@@ -420,3 +441,14 @@ def init_routes(app):
 
         # Return the JSON response
         return jsonify(messages=flash_data)
+    
+    @app.route("/celebrate")
+    def celebrate():
+        pass
+    
+    @app.route("/marquee", methods=["GET"])
+    def marquee():
+        with open("marquee_config.json", "r") as config_file:
+            config = json.load(config_file)
+        
+        return jsonify(config)

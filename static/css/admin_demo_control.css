@@ -18,7 +18,7 @@
 .search-button {
     padding: 10px 20px;
     color: var(--primary-button-text-color);
-    background-color: var(--primary-button-color);
+    background: var(--primary-button-color);
     border: none;
     border-radius: 5px;
     cursor: pointer;

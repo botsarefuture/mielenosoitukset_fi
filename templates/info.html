@@ -6,7 +6,7 @@
 <style>
     :root {
         /* Colors */
-        --info-background-color: #f7f8fa; /* Soft, clean background */
+        --info-background: #f7f8fa; /* Soft, clean background */
         --info-text-color: #333; /* Dark, readable text */
         --info-accent-color: #0033a0; /* Primary blue for accents */
         --info-secondary-color: #f0f0f0; /* Light gray for secondary sections */
@@ -17,7 +17,7 @@
       }
       
       .info-page {
-        background-color: var(--container-background-color);
+        background: var(--container-background);
         color: var(--primary-text-color);
         padding: 20px;
         line-height: 1.6;
@@ -37,7 +37,7 @@
       }
       
       .info-box {
-        background-color: var(--secondary-color);
+        background: var(--secondary-color);
         border: 1px solid var(--border-color);
         padding: 20px;
         box-shadow: var(--box-shadow);
@@ -55,7 +55,7 @@
       }
       
       .info-list li {
-        background-color: var(--secondary-color);
+        background: var(--secondary-color);
         border: 1px solid var(--border-color);
         padding: 10px;
         margin-bottom: 10px;
@@ -65,18 +65,18 @@
       
       /* Special Button Styling */
       .info-button {
-        background-color: var(--primary-button-color);
+        background: var(--primary-button-color);
         color: white;
         padding: 10px 20px;
         border-radius: 5px;
         border: none;
         font-size: 16px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background 0.3s;
       }
       
       .info-button:hover {
-        background-color: var(--primary-button-hover-color);
+        background: var(--primary-button-hover-color);
       }
       
       /* Responsive */

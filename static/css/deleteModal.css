@@ -17,7 +17,7 @@
 }
 
 .modal-content {
-    background: var(--background-color);
+    background: var(--background);
     padding: 30px;
     border-radius: 12px;
     width: 350px;

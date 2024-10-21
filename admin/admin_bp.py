@@ -1,3 +1,5 @@
+import os
+import json
 from flask import (
     Blueprint,
     render_template,
@@ -92,3 +94,44 @@ def get_user_role_counts():
         [{"$group": {"_id": "$role", "count": {"$sum": 1}}}]
     )
     return {role["_id"]: role["count"] for role in user_roles}
+
+
+# Route for managing the marquee message
+@admin_bp.route("/manage-marquee", methods=["GET", "POST"])
+@login_required
+@admin_required
+def manage_marquee():
+    config_file = "marquee_config.json"
+
+    # Load existing marquee configuration
+    if os.path.exists(config_file):
+        with open(config_file, "r") as f:
+            marquee_config = json.load(f)
+    else:
+        marquee_config = {
+            "message": "",
+            "default_message": "NO",
+            "style": "background-color: var(--background-color); padding: 0px !important;",
+            "h2_style": "color: var(--primary-color);"
+        }
+
+    if request.method == "POST":
+        new_message = request.form.get("marquee_message", "").strip()
+        background_color = request.form.get("background_color", "#ffffff")
+        text_color = request.form.get("text_color", "#000000")
+
+        # Update marquee configuration
+        marquee_config["message"] = new_message
+        marquee_config["style"] = f"background-color: {background_color}; padding: 0px !important;"
+        marquee_config["h2_style"] = f"color: {text_color};"
+
+        # Save updated marquee configuration
+        with open(config_file, "w") as f:
+            json.dump(marquee_config, f, indent=4)
+
+        flash("Marquee message updated successfully!", "success")
+        logger.info("Marquee message updated to: %s", new_message)
+
+        return redirect(url_for("admin.manage_marquee"))
+
+    return render_template("admin/manage_marquee.html", current_message=marquee_config["message"], background_color=marquee_config["style"].split(': ')[1].split(';')[0], text_color=marquee_config["h2_style"].split(': ')[1])

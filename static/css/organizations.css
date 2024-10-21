@@ -21,18 +21,18 @@ h1 {
 .create-link {
     display: inline-block;
     padding: 10px 20px;
-    background-color: var(--orange);
+    background: var(--orange);
     color: #FFFFFF;
     text-decoration: none;
     border-radius: 5px;
     font-size: 16px;
     margin-bottom: 20px;
     text-align: center;
-    transition: background-color 0.3s;
+    transition: background 0.3s;
 }
 
 .create-link:hover {
-    background-color: var(--orange-dark);
+    background: var(--orange-dark);
     /* TODO: Add hover effects or animations to enhance user interaction */
 }
 

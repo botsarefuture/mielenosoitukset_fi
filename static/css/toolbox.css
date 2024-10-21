@@ -2,7 +2,7 @@
 .toolbox-sticky {
     position: sticky;
     top: 0;
-    background-color: var(--background-color-light);
+    background: var(--background-light);
     padding: 1rem 2rem;
     z-index: 9999;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -13,7 +13,7 @@
     border-radius: 50px;  /* More rounded for a modern style */
     max-width: 700px;      /* Adjust for better visual balance */
     margin: 1rem auto;     /* Center it horizontally with spacing */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Header with title and close button */
@@ -32,14 +32,14 @@
 
 /* Individual button styles */
 .toolbox .button {
-    background-color: var(--primary-color);
+    background: var(--primary-color);
     border: none;
     padding: 8px 15px;
     color: white;
     border-radius: 20px; /* More rounded for a sleek look */
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background 0.3s ease, transform 0.2s ease;
 }
 
 .toolbox .button i {
@@ -47,13 +47,13 @@
 }
 
 .toolbox .button:hover {
-    background-color: var(--primary-button-hover-color);
+    background: var(--primary-button-hover-color);
     transform: translateY(-2px); /* Subtle lift effect */
 }
 
 /* Collapse button ('xxx') */
 .toggle-toolbox {
-    background-color: var(--red);
+    background: var(--red);
     border: none;
     font-size: 14px;
     font-weight: bold;
@@ -67,11 +67,11 @@
     justify-content: center;
     align-items: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, transform 0.3s ease;
+    transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .toggle-toolbox:hover {
-    background-color: var(--dark-red);
+    background: var(--dark-red);
     transform: scale(1.1);
 }
 

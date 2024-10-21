@@ -21,7 +21,7 @@
 /* Style for the search button */
 .search-form button {
     padding: 10px 20px;
-    background-color: var(--primary-button-color); /* Main Blue */
+    background: var(--primary-button-color); /* Main Blue */
     color: var(--primary-button-text-color); /* White text */
     border: none;
     border-radius: 4px;
@@ -34,7 +34,7 @@
 
 /* Hover effect for the search button */
 .search-form button:hover {
-    background-color: var(--primary-button-hover-color); /* Light Blue on hover */
+    background: var(--primary-button-hover-color); /* Light Blue on hover */
 }
 
 /* Style for the list of demonstrations */
@@ -49,7 +49,7 @@
     padding: 15px;
     border-bottom: 1px solid var(--border-color); /* Light gray line between items */
     margin-bottom: 10px;
-    background-color: var(--container-background-color); /* White background for list items */
+    background: var(--container-background); /* White background for list items */
     border-radius: 4px; /* Rounded corners for list items */
     box-shadow: var(--box-shadow); /* Subtle shadow for depth */
 }
@@ -106,7 +106,7 @@
 /* index.css */
 
 .container-welcome {
-    background-color: var(--background-color);
+    background: var(--background);
     border-radius: 8px;
     padding: 20px;
     margin: 20px 0;

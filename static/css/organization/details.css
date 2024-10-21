@@ -1,6 +1,6 @@
 /* Base styles for the organization container */
 .org-container {
-  /*background: linear-gradient(135deg, var(--background-color) 0%, var(--background-color-light) 100%); /* Gradient background */
+  /*background: linear-gradient(135deg, var(--background) 0%, var(--background-light) 100%); /* Gradient background */
   padding: 40px; /* Updated padding for more space */
   border-radius: 12px; /* Adjusted border radius */
   box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25); /* Enhanced shadow for depth */
@@ -52,16 +52,16 @@
   font-size: 0.9em; /* Font size for badges */
   display: inline-block; /* Inline block for layout */
   margin-top: 10px; /* Top margin for spacing */
-  transition: background-color 0.3s ease; /* Smooth transition for background */
+  transition: background 0.3s ease; /* Smooth transition for background */
 }
 
 .badge-verified {
-  background-color: #28a745; /* Green for verified badge */
+  background: #28a745; /* Green for verified badge */
   color: white; /* Text color */
 }
 
 .badge-unverified {
-  background-color: var(--red); /* Red for unverified badge */
+  background: var(--red); /* Red for unverified badge */
   color: white; /* Text color */
 }
 
@@ -75,7 +75,7 @@
 
 /* Demo box styles */
 .demo-box {
-  background-color: #fff; /* Background color for demo boxes */
+  background: #fff; /* Background color for demo boxes */
   padding: 15px; /* Padding inside demo boxes */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Shadow for demo boxes */
@@ -104,19 +104,19 @@
 /* Button styles */
 .btn {
   display: block; /* Block-level button */
-  background-color: var(--orange); /* Background color for button */
+  background: var(--orange); /* Background color for button */
   color: white; /* Text color for button */
   padding: 10px 15px; /* Padding inside button */
   border-radius: 5px; /* Rounded corners for button */
   text-decoration: none; /* Remove underline */
-  transition: background-color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover */
+  transition: background 0.3s ease, transform 0.3s ease; /* Smooth transition for hover */
   width: auto; /* Auto width for button */
   margin: auto; /* Center button */
   text-align: center; /* Center text */
 }
 
 .btn:hover {
-  background-color: var(--blue); /* Hover background color */
+  background: var(--blue); /* Hover background color */
   color: var(--orange) !important; /* Hover text color */
   transform: translateY(-3px); /* Lift effect on hover */
 }

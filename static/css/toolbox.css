@@ -1,0 +1,98 @@
+/* Toolbox styling */
+.toolbox-sticky {
+    position: sticky;
+    top: 0;
+    background-color: var(--background-color-light);
+    padding: 1rem 2rem;
+    z-index: 9999;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 50px;  /* More rounded for a modern style */
+    max-width: 700px;      /* Adjust for better visual balance */
+    margin: 1rem auto;     /* Center it horizontally with spacing */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Header with title and close button */
+.toolbox-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+/* Button container */
+.toolbox-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* Individual button styles */
+.toolbox .button {
+    background-color: var(--primary-color);
+    border: none;
+    padding: 8px 15px;
+    color: white;
+    border-radius: 20px; /* More rounded for a sleek look */
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.toolbox .button i {
+    margin-right: 5px;
+}
+
+.toolbox .button:hover {
+    background-color: var(--primary-button-hover-color);
+    transform: translateY(-2px); /* Subtle lift effect */
+}
+
+/* Collapse button ('xxx') */
+.toggle-toolbox {
+    background-color: var(--red);
+    border: none;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    padding: 5px;
+    border-radius: 50%;
+    width: 36px;  /* Increased size for better usability */
+    height: 36px; /* Increased size for better usability */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.toggle-toolbox:hover {
+    background-color: var(--dark-red);
+    transform: scale(1.1);
+}
+
+.toggle-toolbox:active {
+    transform: scale(0.95);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .toolbox-sticky {
+        padding: 0.5rem 1rem; /* Reduce padding on mobile */
+        max-width: 100%; /* Full width for small screens */
+    }
+
+    .toolbox-buttons {
+        flex-direction: column; /* Stack buttons vertically on smaller screens */
+        gap: 5px; /* Reduced gap for compactness */
+    }
+
+    .toggle-toolbox {
+        width: 30px; /* Slightly smaller on mobile */
+        height: 30px; /* Slightly smaller on mobile */
+    }
+}

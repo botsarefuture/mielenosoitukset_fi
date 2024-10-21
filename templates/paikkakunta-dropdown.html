@@ -7,11 +7,14 @@
       <input type="text" placeholder="Hae paikkakunta..." id="searchInput" onkeyup="filterFunction()" aria-label="Search cities" />
       <!-- List of cities -->
       {% for city in city_list %}
-      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">{{ city }}</a>
+      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" 
+         {% if demo is defined and demo.city == city %} class="selected" {% endif %}>
+         {{ city }}
+      </a>
       {% endfor %}
     </div>
   </div>
-  <input type="hidden" id="selected-city" name="city" value="" required />
+  <input type="hidden" id="selected-city" name="city" value="{{ demo.city if demo is defined else '' }}" required />
 </div>
 
 <script>
@@ -54,7 +57,6 @@
 
 <style>
   .dropdown {
-    /*position: relative;*/
     display: inline-block;
     width: 100%;
     max-width: 300px;
@@ -62,35 +64,34 @@
 
   .dropdown-content {
     display: none;
-    /*position: absolute;*/
-    background-color: var(--input-background-color); /* Using input background color */
+    background-color: var(--input-background-color);
     width: 100%;
-    max-height: 300px; /* Limit height for better UX */
-    overflow-y: auto; /* Scroll if content overflows */
-    box-shadow: var(--box-shadow); /* Using box shadow variable */
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: var(--box-shadow);
     z-index: 1;
     border-radius: 5px;
-    animation: fadeIn 0.3s ease-in-out; /* Smooth fade-in animation */
+    animation: fadeIn 0.3s ease-in-out;
   }
 
   .dropbtn {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border-color); /* Using border color variable */
-    background-color: var(--background-color); /* Using background color variable */
+    border: 1px solid var(--border-color);
+    background-color: var(--background-color);
     cursor: pointer;
     border-radius: 5px;
-    text-align: left; /* Align text to left for better readability */
+    text-align: left;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
   .dropbtn::after {
-    content: '▼'; /* Add dropdown arrow */
+    content: '▼';
     font-size: 12px;
     margin-left: 10px;
-    color: var(--icon-color); /* Customizable arrow color */
+    color: var(--icon-color);
   }
 
   .dropdown-content input {
@@ -104,16 +105,21 @@
   }
 
   .dropdown-content a {
-    color: var(--primary-text-color); /* Using primary text color variable */
+    color: var(--primary-text-color);
     padding: 10px;
     text-decoration: none;
     display: block;
     transition: background-color 0.2s ease;
-    border-bottom: 1px solid var(--border-color); /* Divider between items */
+    border-bottom: 1px solid var(--border-color);
   }
 
   .dropdown-content a:hover {
-    background-color: var(--hover-bg-color); /* Using hover background color variable */
+    background-color: var(--hover-bg-color);
+  }
+
+  /* Highlight selected city */
+  .dropdown-content a.selected {
+    background-color: var(--selected-bg-color); /* Optional: define a color for the selected city */
   }
 
   @keyframes fadeIn {
@@ -127,3 +133,7 @@
     }
   }
 </style>
+
+{% if demo is defined %}
+  <script>selectCity("{{ demo.city }}");</script>
+  {% endif %}

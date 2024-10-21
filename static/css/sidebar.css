@@ -93,7 +93,7 @@
   transform: translateY(-50%); /* Adjust for vertical centering */
   display: flex;
   flex-direction: column;
-  background-color: var(--blue-dark); /* Background color matching the sidebar */
+  background-color: var(--blue); /* Background color matching the sidebar */
   padding: 10px; /* Padding for spacing */
   border-radius: 5px; /* Rounded corners for consistency */
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import 'macros.html' as macros %}
 
 {% block title %}
     {{ org.name }} - Tiedot
@@ -6,6 +7,8 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
+
 
 <div class="org-container">
     <div class="org-header">
@@ -44,14 +47,9 @@
 
     {% if upcoming_demos %}
     <h2 class="section-title" id="upcoming-title">Tulevat mielenosoitukset</h2>
-    <div class="upcoming-demos">
+    <div class="container-grid">
         {% for demo in upcoming_demos %}
-            <div class="demo-box">
-                <h3 class="demo-title">{{ demo.title }}</h3>
-                <p><i class="fa-solid fa-calendar"></i> {{ demo.date }}</p>
-                <p><i class="fa-solid fa-location-dot"></i> {{ demo.address }}</p>
-                <p><a class="btn" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">Lisätietoja</a></p>
-            </div>
+        {{ macros.demo_card(demo) }}
         {% endfor %}
     </div>
     {% else %}

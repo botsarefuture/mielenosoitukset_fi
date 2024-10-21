@@ -1,4 +1,4 @@
-:root {
+.light:root {
   /* Primary Colors */
   --primary-color: #0033a0;
   --secondary-color: #f0f0f0;
@@ -7,242 +7,231 @@
   --secondary-text-color: #666;
 
   /* Background Colors */
-  --background-color: #ffffff;
-  --input-background-color: #f9f9f9;
-  --hover-bg-color: #e0e0e0;
+  --background-color: #ffffff; /* Main background color */
+  --background-color-light: #f0f0f0; /* Light background for containers */
+  --input-background-color: #f9f9f9; /* Input field background */
+  --hover-bg-color: #e0e0e0; /* Hover background color */
   --container-background-color: #f9f9f9; /* Light gray for container background */
 
   /* Borders and Shadows */
-  --border-color: #ddd;
-  --box-shadow-color: rgba(0, 0, 0, 0.15);
-
-  --box-shadow: 0 0 20px var(--box-shadow-color);
+  --border-color: #ddd; /* Border color */
+  --box-shadow-color: rgba(0, 0, 0, 0.15); /* Box shadow color */
+  --box-shadow: 0 0 20px var(--box-shadow-color); /* Box shadow style */
 
   /* Text Colors */
-  --placeholder-color: #888;
-  --focus-color: #0066cc;
-  --error-color: #cc0000;
+  --placeholder-color: #888; /* Placeholder text color */
+  --focus-color: #0066cc; /* Focus color */
+  --error-color: #cc0000; /* Error color */
 
   /* Button Colors */
-  --primary-button-color: var(--blue);
-  --primary-button-text-color: white;
-  --primary-button-hover-color: var(--blue-dark);
-  --primary-button-hover-text-color: white;
+  --primary-button-color: var(--primary-color); /* Primary button color */
+  --primary-button-text-color: white; /* Primary button text color */
+  --primary-button-hover-color: #002280; /* Primary button hover color */
+  --primary-button-hover-text-color: white; /* Primary button hover text color */
 
-  --secondary-button-color: var(--secondary-color); /* Added secondary button color */
-  --secondary-button-text-color: #333; /* Text color for secondary button */
-  --secondary-button-hover-color: #e0e0e0; /* Hover color for secondary button */
-  --secondary-button-hover-text-color: #000; /* Text color for hover state */
+  --secondary-button-color: var(--secondary-color); /* Secondary button color */
+  --secondary-button-text-color: #333; /* Secondary button text color */
+  --secondary-button-hover-color: #e0e0e0; /* Secondary button hover color */
+  --secondary-button-hover-text-color: #000; /* Secondary button hover text color */
 
   /* Black and White Shades */
-  --white: #ffffff;
-  --white-lighter: #f9f9f9; /* Very light gray */
-  --white-light: #f0f0f0; /* Light gray */
-  --white-dark: #d0d0d0; /* Darker gray */
-  --black: #000000;
-  --black-lighter: #1a1a1a; /* Very dark gray */
-  --black-light: #333333; /* Dark gray */
-  --black-dark: #4d4d4d; /* Medium gray */
-  --black-darker: #666666; /* Lighter medium gray */
+  --white: #ffffff; /* White color */
+  --white-lighter: #f9f9f9; /* Lighter shade of white */
+  --white-light: #f0f0f0; /* Light shade of white */
+  --white-dark: #d0d0d0; /* Darker shade of white */
+  --black: #000000; /* Black color */
+  --black-lighter: #1a1a1a; /* Lighter shade of black */
+  --black-light: #333333; /* Light shade of black */
+  --black-dark: #4d4d4d; /* Darker shade of black */
+  --black-darker: #666666; /* Even darker shade of black */
 
   /* Blue Colors */
-  --blue: #0033a0;
-  --blue-lighter: #4d79cc;
-  --blue-light: #3366cc;
-  --blue-dark: #002280;
-  --blue-darker: #001160;
+  --blue: #0033a0; /* Primary blue */
+  --blue-lighter: #4d79cc; /* Lighter blue */
+  --blue-light: #3366cc; /* Light blue */
+  --blue-dark: #002280; /* Dark blue */
+  --blue-darker: #001160; /* Darker blue */
 
   /* Orange Colors */
-  --orange: #ff6600;
-  --orange-lighter: #ff9966;
-  --orange-light: #ff8533;
-  --orange-dark: #cc5200;
-  --orange-darker: #993d00;
+  --orange: #ff6600; /* Primary orange */
+  --orange-lighter: #ff9966; /* Lighter orange */
+  --orange-light: #ff8533; /* Light orange */
+  --orange-dark: #cc5200; /* Dark orange */
+  --orange-darker: #993d00; /* Darker orange */
 
   /* Red Colors */
-  --red: #ff4d4d;
-  --red-lighter: #ff8585;
-  --red-light: #ff6666;
-  --red-dark: #cc3d3d;
-  --red-darker: #993030;
+  --red: #ff4d4d; /* Primary red */
+  --red-lighter: #ff8585; /* Lighter red */
+  --red-light: #ff6666; /* Light red */
+  --red-dark: #cc3d3d; /* Dark red */
+  --red-darker: #993030; /* Darker red */
 
   /* Green Colors */
-  --green: #28a745;
-  --green-lighter: #71d78e;
-  --green-light: #4cc476;
-  --green-dark: #218838;
-  --green-darker: #196c2a;
+  --green: #28a745; /* Primary green */
+  --green-lighter: #71d78e; /* Lighter green */
+  --green-light: #4cc476; /* Light green */
+  --green-dark: #218838; /* Dark green */
+  --green-darker: #196c2a; /* Darker green */
 
   /* Yellow Colors */
-  --yellow: #ffcc00; /* Bright yellow */
-  --yellow-lighter: #ffdb4d; /* Light yellow */
-  --yellow-light: #ffe580; /* Soft yellow */
+  --yellow: #ffcc00; /* Primary yellow */
+  --yellow-lighter: #ffdb4d; /* Lighter yellow */
+  --yellow-light: #ffe580; /* Light yellow */
   --yellow-dark: #cc9900; /* Dark yellow */
-  --yellow-darker: #996600; /* Very dark yellow */
+  --yellow-darker: #996600; /* Darker yellow */
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color);
-  --admin-create-btn-bg: var(--green);
-  --admin-create-btn-hover-bg: var(--green-dark);
+  --admin-section-title-color: var(--focus-color); /* Admin section title color */
+  --admin-section-text-color: var(--white); /* Admin section text color */
+  --admin-create-btn-bg: var(--green); /* Admin create button background */
+  --admin-create-btn-hover-bg: var(--green-dark); /* Admin create button hover background */
 
-  --link-color: var(--blue);
-  --link-hover-color: var(--orange);
+  /* Link Colors */
+  --link-color: var(--blue); /* Link color */
+  --link-hover-color: var(--orange); /* Link hover color */
 
-  --primary-strong-text-color: var(--blue);
-  --header-color: var(--blue);
-}
+  /* Header Colors */
+  --primary-strong-text-color: var(--blue); /* Strong text color */
+  --header-color: var(--blue); /* Header color */
 
-.festive:root {
-  /* Primary Colors */
-  --primary-color: #006400; /* Dark Green for Christmas tree theme */
-  --secondary-color: #ffefdb; /* Warm cream color for a cozy feel */
+  /* Table Row Colors for Light Theme */
+  --tr-bg-color-1: #f9f9f9; /* Row 1 background color */
+  --tr-txt-color-1: #333; /* Row 1 text color */
+  --tr-bg-color-2: #ffffff; /* Row 2 background color */
+  --tr-txt-color-2: #333; /* Row 2 text color */
 
-  --primary-text-color: #333; /* Neutral for readability */
-  --secondary-text-color: #555; /* Softer text color for subtle contrast */
+  /* Hover colors for row color 1 */
+  --tr-bg-color-1-hover: #e5f3ff; /* Hover background color for row 1 */
+  --tr-txt-color-1-hover: #004080; /* Hover text color for row 1 */
 
-  /* Background Colors */
-  --background-color: #fff5f5; /* Very light red hint, like a winter glow */
-  --input-background-color: #fffafa; /* Snowy white for input backgrounds */
-  --hover-bg-color: #ffebeb; /* Light red/pink for hover effects */
-  --container-background-color: #faf9f6; /* Subtle off-white for containers */
-
-  /* Borders and Shadows */
-  --border-color: #e6b8b8; /* Light red for subtle borders */
-  --box-shadow-color: var(--green); /* Softer shadow for a more gentle look */
-
-  --box-shadow: 0 0 20px var(--box-shadow-color);
-
-  /* Text Colors */
-  --placeholder-color: #888;
-  --focus-color: #ff4500; /* Bright red, a nod to Christmas lights */
-  --error-color: #cc0000; /* Festive red for errors */
-
-  /* Button Colors */
-  --primary-button-color: var(--red); /* Christmas red */
-  --primary-button-hover-color: var(--red-dark); /* Darker red for hover */
-
-  /* Blue Colors */
-  --blue: #0033a0; /* Keeping this unchanged for contrast */
-  --blue-lighter: #4d79cc;
-  --blue-light: #3366cc;
-  --blue-dark: #002280;
-  --blue-darker: #001160;
-
-  /* Orange Colors */
-  --orange: #ff6600; /* Keeping warm orange for accents */
-  --orange-lighter: #ff9966;
-  --orange-light: #ff8533;
-  --orange-dark: #cc5200;
-  --orange-darker: #993d00;
-
-  /* Red Colors */
-  --red: #b22222; /* Festive, deeper red */
-  --red-lighter: #ff7f7f; /* Lighter red for softer elements */
-  --red-light: #ff6347; /* Tomato red, warm and welcoming */
-  --red-dark: #8b0000; /* Dark crimson for bold elements */
-  --red-darker: #660000; /* Very dark red for strong accents */
-
-  /* Green Colors */
-  --green: #228b22; /* Forest green, perfect for holiday vibes */
-  --green-lighter: #7fff00; /* Light lime green for contrast */
-  --green-light: #32cd32; /* Lively green for buttons */
-  --green-dark: #006400; /* Dark green for text and accents */
-  --green-darker: #004b23; /* Very dark green, deep and bold */
-
-  /* Yellow Colors */
-  --yellow: #ffd700; /* Gold for festive sparkle */
-  --yellow-lighter: #ffec8b; /* Light gold for soft accents */
-  --yellow-light: #f0e68c; /* Warm pale yellow, like candlelight */
-  --yellow-dark: #b8860b; /* Dark goldenrod for stronger elements */
-  --yellow-darker: #8b6508; /* Deeper gold for dramatic contrasts */
-
-  /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color); /* Keep the festive red */
-  --admin-create-btn-bg: var(--green); /* Green for creation buttons */
-  --admin-create-btn-hover-bg: var(--green-dark); /* Dark green for hover */
+  /* Hover colors for row color 2 */
+  --tr-bg-color-2-hover: #fff6e5; /* Hover background color for row 2 */
+  --tr-txt-color-2-hover: #804000; /* Hover text color for row 2 */
 }
 
 .dark:root {
   /* Primary Colors */
-  --primary-color: #4d79cc; /* Lighter blue for dark mode */
-  --secondary-color: #202020; /* Dark gray */
+  --primary-color: #4d79cc; /* Primary color for dark theme */
+  --secondary-color: #202020; /* Secondary color for dark theme */
 
-  --primary-text-color: #f0f0f0; /* Light text on dark background */
-  --secondary-text-color: #c0c0c0; /* Slightly lighter text */
+  --primary-text-color: #f0f0f0; /* Primary text color */
+  --secondary-text-color: #c0c0c0; /* Secondary text color */
 
   /* Background Colors */
-  --background-color: #181818; /* Very dark background */
-  --input-background-color: #2e2e2e; /* Dark input background */
-  --hover-bg-color: #3d3d3d; /* Hover effect for dark backgrounds */
-  --container-background-color: #2e2e2e; /* Dark container background */
+  --background-color: #181818; /* Main background color for dark theme */
+  --background-color-light: #2c2c2c; /* Light background for containers in dark theme */
+  --input-background-color: #2e2e2e; /* Input field background */
+  --hover-bg-color: #3d3d3d; /* Hover background color */
+  --container-background-color: #2e2e2e; /* Dark gray for container background */
 
   /* Borders and Shadows */
-  --border-color: #444; /* Darker border */
-  --box-shadow-color: rgba(255, 255, 255, 0.15); /* Light shadow */
-
-  --box-shadow: 0 0 20px var(--box-shadow-color);
+  --border-color: #444; /* Border color */
+  --box-shadow-color: rgba(255, 255, 255, 0.15); /* Box shadow color */
+  --box-shadow: 0 0 20px var(--box-shadow-color); /* Box shadow style */
 
   /* Text Colors */
-  --placeholder-color: #bbb; /* Lighter placeholder */
-  --focus-color: #4d79cc; /* Softer blue focus */
-  --error-color: #ff4d4d; /* Red error for visibility in dark mode */
+  --placeholder-color: #bbb; /* Placeholder text color */
+  --focus-color: #4d79cc; /* Focus color */
+  --error-color: #ff4d4d; /* Error color */
 
   /* Button Colors */
-  --primary-button-color: var(--blue-light);
-  --primary-button-text-color: white;
-  --primary-button-hover-color: var(--blue-darker);
-  --primary-button-hover-text-color: white;
+  --primary-button-color: var(--blue-light); /* Primary button color */
+  --primary-button-text-color: white; /* Primary button text color */
+  --primary-button-hover-color: var(--blue-darker); /* Primary button hover color */
+  --primary-button-hover-text-color: white; /* Primary button hover text color */
 
-  --secondary-button-color: var(--black-light); /* Secondary button color for dark mode */
-  --secondary-button-text-color: var(--white); /* Text color for secondary button */
-  --secondary-button-hover-color: var(--black-dark); /* Hover color for secondary button */
-  --secondary-button-hover-text-color: var(--white-light); /* Text color for hover state */
+  --secondary-button-color: var(--black-light); /* Secondary button color */
+  --secondary-button-text-color: var(--white); /* Secondary button text color */
+  --secondary-button-hover-color: var(--black-dark); /* Secondary button hover color */
+  --secondary-button-hover-text-color: var(--white-light); /* Secondary button hover text color */
 
   /* Blue Colors */
-  --blue: #4d79cc; /* Light blue for dark mode */
-  --blue-lighter: #4d79cc;
-  --blue-light: #3366cc;
-  --blue-dark: #002280;
-  --blue-darker: #001160;
+  --blue: #4d79cc; /* Primary blue */
+  --blue-lighter: #4d79cc; /* Lighter blue */
+  --blue-light: #3366cc; /* Light blue */
+  --blue-dark: #002280; /* Dark blue */
+  --blue-darker: #001160; /* Darker blue */
 
   /* Orange Colors */
-  --orange: #ff6600;
-  --orange-lighter: #ff9966;
-  --orange-light: #ff8533;
-  --orange-dark: #cc5200;
-  --orange-darker: #993d00;
+  --orange: #ff6600; /* Primary orange */
+  --orange-lighter: #ff9966; /* Lighter orange */
+  --orange-light: #ff8533; /* Light orange */
+  --orange-dark: #cc5200; /* Dark orange */
+  --orange-darker: #993d00; /* Darker orange */
 
   /* Red Colors */
-  --red: #ff4d4d;
-  --red-lighter: #ff8585;
-  --red-light: #ff6666;
-  --red-dark: #cc3d3d;
-  --red-darker: #993030;
+  --red: #ff4d4d; /* Primary red */
+  --red-lighter: #ff8585; /* Lighter red */
+  --red-light: #ff6666; /* Light red */
+  --red-dark: #cc3d3d; /* Dark red */
+  --red-darker: #993030; /* Darker red */
 
   /* Green Colors */
-  --green: #28a745;
-  --green-lighter: #71d78e;
-  --green-light: #4cc476;
-  --green-dark: #218838;
-  --green-darker: #196c2a;
+  --green: #28a745; /* Primary green */
+  --green-lighter: #71d78e; /* Lighter green */
+  --green-light: #4cc476; /* Light green */
+  --green-dark: #218838; /* Dark green */
+  --green-darker: #196c2a; /* Darker green */
 
   /* Yellow Colors */
-  --yellow: #ffcc00; /* Bright yellow */
-  --yellow-lighter: #ffdb4d; /* Light yellow */
-  --yellow-light: #ffe580; /* Soft yellow */
+  --yellow: #ffcc00; /* Primary yellow */
+  --yellow-lighter: #ffdb4d; /* Lighter yellow */
+  --yellow-light: #ffe580; /* Light yellow */
   --yellow-dark: #cc9900; /* Dark yellow */
-  --yellow-darker: #996600; /* Very dark yellow */
+  --yellow-darker: #996600; /* Darker yellow */
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color);
-  --admin-create-btn-bg: var(--green);
-  --admin-create-btn-hover-bg: var(--green-dark);
+  --admin-section-title-color: var(--focus-color); /* Admin section title color */
+  --admin-section-text-color: var(--white); /* Admin section text color */
+  --admin-create-btn-bg: var(--green); /* Admin create button background */
+  --admin-create-btn-hover-bg: var(--green-dark); /* Admin create button hover background */
 
-  --link-color: var(--blue);
-  --link-hover-color: var(--orange);
+  /* Link Colors */
+  --link-color: var(--blue); /* Link color */
+  --link-hover-color: var(--orange); /* Link hover color */
 
-  --primary-strong-text-color: var(--blue);
-  --header-color: var(--blue);
+  /* Header Colors */
+  --primary-strong-text-color: var(--blue); /* Strong text color */
+  --header-color: var(--blue); /* Header color */
+
+  /* Table Row Colors for Dark Theme */
+  --tr-bg-color-1: #333; /* Row 1 background color */
+  --tr-txt-color-1: #f0f0f0; /* Row 1 text color */
+  --tr-bg-color-2: #444; /* Row 2 background color */
+  --tr-txt-color-2: #f0f0f0; /* Row 2 text color */
+
+  /* Hover colors for row color 1 */
+  --tr-bg-color-1-hover: #4d79cc; /* Hover background color for row 1 */
+  --tr-txt-color-1-hover: #ffffff; /* Hover text color for row 1 */
+
+  /* Hover colors for row color 2 */
+  --tr-bg-color-2-hover: #ff6600; /* Hover background color for row 2 */
+  --tr-txt-color-2-hover: #ffffff; /* Hover text color for row 2 */
+
+    /* Black and White Shades */
+    --white: #ffffff; /* White color */
+    --white-lighter: #f9f9f9; /* Lighter shade of white */
+    --white-light: #f0f0f0; /* Light shade of white */
+    --white-dark: #d0d0d0; /* Darker shade of white */
+    --black: #000000; /* Black color */
+    --black-lighter: #1a1a1a; /* Lighter shade of black */
+    --black-light: #333333; /* Light shade of black */
+    --black-dark: #4d4d4d; /* Darker shade of black */
+    --black-darker: #666666; /* Even darker shade of black */
+}
+
+.admin-section-title {
+  color: var(--admin-section-text-color);
+  padding: 1.5rem;
+  background-color: var(--admin-section-title-color);
+  text-align: center;
+  margin: 2rem 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px var(--box-shadow-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  word-break: break-all;
+  font-weight: 900;
 }
 
 .link {
@@ -252,7 +241,6 @@
 .link:hover {
   color: var(--link-hover-color);
 }
-
 
 .admin-btn.create-btn {
   background-color: var(--admin-create-btn-bg);
@@ -272,11 +260,32 @@
 
 .full-width {
   max-width: 100%;
-  width: 100%; /* Using 100% for stretch behavior */
-  min-width: 100%; /* Ensures the element takes full width */
-  box-sizing: border-box; /* Ensures padding and border are included in the element's width */
+  width: 100%;
+  min-width: 100%; 
+  box-sizing: border-box; 
 }
 
 .mb-4 {
-  margin-bottom: 1rem; /* 16px */
+  margin-bottom: 1rem; 
+}
+
+/* Extra small devices (phones, less than 481px) */
+@media (max-width: 480px) {
+  /* Add your styles here */
+}
+
+/* Small devices (tablets, 481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  /* Add your styles here */
+}
+
+/* Medium devices (desktops, 769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Add your styles here */
+}
+
+/* Large devices (large desktops, 1025px and up) */
+@media (min-width: 1025px) {
+
+  /* Add your styles here */
 }

@@ -1,7 +1,6 @@
 /* Align the action cell header to center */
 .actions-cell-header {
     text-align: center; /* Center align the header */
-    background-color: var(--tr-bg-color-2); /* Light background for the header */
     font-weight: bold; /* Bold text for emphasis */
     padding: 0.5rem; /* Padding for better spacing */
 }

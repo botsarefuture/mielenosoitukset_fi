@@ -5,6 +5,11 @@
     {{ org.name }} - Tiedot
 {% endblock %}
 
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% endblock %}
+
+
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">

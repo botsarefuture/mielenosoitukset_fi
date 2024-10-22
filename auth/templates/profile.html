@@ -34,12 +34,12 @@
                 {% if user.global_admin %}
                     <span class="badge badge-admin">Järjestelmävalvoja</span>
                 {% endif %}
-
+                <h2 class="organizations-title">Organisaatiot</h2>
                 <!-- Organizations: each in its own container -->
                 <div class="organizations">
                     {% for org in user.organizations %}
                         <div class="org-container rebellious-org">
-                            <p><strong>{{ org.name }}</strong></p>
+                            <p><strong>{{ current_user.get_org_name(org.org_id) }}</strong></p>
                             <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">Tutustu organisaatioon</a>
                         </div>
                     {% endfor %}

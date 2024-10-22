@@ -1,85 +1,88 @@
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 1200px; /* Maximum width for the container */
+  margin: 0 auto; /* Center the container */
+  padding: 20px; /* Padding for inner spacing */
 }
 
 .profile-container {
-  background: var(--focus-color); /* Soft rebellious color */
-  text-align: center; /* Center content for better alignment */
-  display: grid;
-  align-items: center;
+  background: var(--container-background); /* Soft rebellious background color */
+  text-align: center; /* Center-align all content */
+  display: grid; /* Use grid for layout */
+  align-items: center; /* Center items vertically */
+  border-radius: 4px; /* Rounded corners */
+  border: 2px solid var(--border-color); /* Border styling */
 }
 
 /* Profile Header */
 .profile-header {
-  padding: 30px; /* Consistent padding */
-  border-radius: 10px; /* Rounded corners */
+  padding: 30px; /* Consistent padding around the header */
+  border-radius: 10px; /* Rounded corners for the header */
 }
 
 /* Profile Details */
 .profile-details {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: flex; /* Flexbox for layout */
+  flex-direction: column; /* Column layout */
+  align-items: center; /* Center items horizontally */
 }
 
 /* Profile Picture */
 .profile-details .profile-picture {
-  margin-bottom: 20px; /* Increased spacing for visual separation */
-  width: 150px;
-  height: 150px;
+  margin-bottom: 20px; /* Spacing below the picture */
+  width: 150px; /* Fixed width for profile picture */
+  height: 150px; /* Fixed height for profile picture */
 }
 
 .profile-img {
   width: 150px; /* Consistent size */
   height: 150px; /* Consistent size */
   border-radius: 50%; /* Circular profile picture */
-  border: 4px solid #fff; /* White border for contrast */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  object-fit: cover;
+  border: 4px solid var(--border-color); /* Border for contrast */
+  box-shadow: 0 2px 8px var(--box-shadow-color); /* Shadow effect */
+  object-fit: cover; /* Cover the area of the image */
 }
 
 /* Profile Info */
 .user-name {
-  font-size: 2.2em; /* Increased font size for emphasis */
-  font-weight: bold; /* Emphasize user name */
-  color: #fff; /* White text for better contrast */
-  margin: 10px 0; /* Spacing for clarity */
+  font-size: 2.2em; /* Larger font size for emphasis */
+  font-weight: bold; /* Bold for user name */
+  color: var(--primary-text-color); /* Contrast color */
+  margin: 10px 0; /* Vertical spacing */
 }
 
 .email,
 .bio {
-  font-size: 1.1em; /* Consistent size for all text */
-  margin: 5px 0;
-  text-align: center;
-  color: #fff; /* White text for visibility */
+  font-size: 1.1em; /* Consistent font size */
+  margin: 5px 0; /* Vertical spacing */
+  text-align: center; /* Center text */
+  color: var(--primary-text-color); /* Contrast color */
 }
 
+/* Admin Badge */
 .badge-admin {
-  background: #4caf50; /* Green for admin badge */
-  color: white;
-  padding: 6px 12px; /* Consistent padding */
-  border-radius: 20px;
-  font-size: 0.9em; /* Smaller font size for badges */
+  background: var(--green); /* Green background for admin badge */
+  color: var(--primary-text-color); /* Text color */
+  padding: 6px 12px; /* Padding around the badge */
+  border-radius: 20px; /* Rounded badge corners */
+  font-size: 0.9em; /* Smaller font size */
   margin-top: 10px; /* Spacing above badge */
 }
 
-/* Organizations */
+/* Organizations Section */
 .organizations {
-  width: 100%;
-  margin-top: 20px; /* Spacing above organizations section */
+  width: 100%; /* Full width for organizations section */
+  margin-top: 20px; /* Spacing above organizations */
 }
 
 .org-container {
-  background: #fff; /* White background for organization boxes */
-  border: 2px solid var(--orange-light); /* Border color matching profile header */
+  background: var(--background-light); /* Light background for org boxes */
+  border: 2px solid var(--border-color); /* Matching border color */
   border-radius: 8px; /* Rounded corners */
-  padding: 15px; /* Padding for internal spacing */
+  padding: 15px; /* Internal spacing */
   margin: 10px 0; /* Spacing between organization boxes */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  position: relative;
-  transition: transform 0.2s; /* Smooth transition effect */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  position: relative; /* Positioning context */
+  transition: transform 0.2s; /* Smooth hover transition */
 }
 
 .org-container:hover {
@@ -87,25 +90,15 @@
 }
 
 .org-container p {
-  margin: 0;
+  margin: 0; /* Remove default margin */
   font-size: 1.2em; /* Consistent font size for organization names */
-  font-weight: bold;
-  color: #333; /* Darker text color for visibility */
-}
-
-.org-link {
-  display: inline-block;
-  margin-top: 10px; /* Spacing above the link */
-  padding: 8px 12px; /* Sufficient padding for click area */
-  background: var(--orange-light); /* Button color consistent with theme */
-  color: white;
-  text-decoration: none;
-  border-radius: 5px; /* Rounded button corners */
-  transition: background 0.3s; /* Transition for hover effect */
+  font-weight: bold; /* Emphasize organization name */
+  color: var(--primary-text-color); /* Darker text color */
 }
 
 .org-link:hover {
-  background: var(--orange); /* Darker shade for hover effect */
+  background: var(--primary-button-hover-color); /* Darker shade on hover */
+  color: var(--primary-button-hover-text-color); /* Text color on hover */
 }
 
 /* Button Group */
@@ -114,29 +107,36 @@
 }
 
 .btn {
-  padding: 10px 15px; /* Consistent button padding */
-  border: none;
+  padding: 10px 15px; /* Consistent padding for buttons */
+  border: none; /* No border */
   border-radius: 5px; /* Rounded button corners */
-  cursor: pointer;
-  font-size: 1em; /* Consistent font size for buttons */
-  margin: 5px; /* Margin for spacing between buttons */
-  transition: background 0.3s, transform 0.2s; /* Smooth transition effects */
+  cursor: pointer; /* Pointer cursor */
+  font-size: 1em; /* Consistent font size */
+  margin: 5px; /* Spacing between buttons */
+  transition: background 0.3s, transform 0.2s; /* Smooth transitions */
 }
 
 .btn-edit {
-  background: #4caf50; /* Edit button color */
-  color: white;
-  text-decoration: none;
+  background: var(--secondary-button-color); /* Edit button color */
+  color: var(--secondary-button-text-color); /* Text color */
+  text-decoration: none; /* No underline */
+}
+
+.btn-edit:hover {
+  background: var(--secondary-button-hover-color); /* Edit button color */
+  color: var(--secondary-button-hover-text-color); /* Text color */
+  text-decoration: none; /* No underline */
+  transition: background 0.3s, transform 0.2s;
 }
 
 .btn-follow {
   background: var(--blue-lighter); /* Follow button color */
-  color: white;
+  color: white; /* Text color */
 }
 
 .btn-unfollow {
   background: var(--orange-light); /* Unfollow button color */
-  color: white;
+  color: white; /* Text color */
 }
 
 .btn:hover {
@@ -146,8 +146,8 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .profile-details {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center items */
   }
 
   .profile-img {
@@ -156,12 +156,12 @@
   }
 
   .user-name {
-    font-size: 1.8em; /* Decreased font size for mobile */
+    font-size: 1.8em; /* Decrease font size for mobile */
   }
 
   .email,
   .bio {
-    font-size: 1em; /* Decreased font size for mobile */
+    font-size: 1em; /* Decrease font size for mobile */
   }
 
   .btn {
@@ -170,14 +170,134 @@
   }
 
   .org-container {
-    padding: 10px; /* Adjusted padding for mobile */
+    padding: 10px; /* Adjust padding for mobile */
   }
 
   .org-container p {
-    font-size: 1em; /* Decreased font size for mobile */
+    font-size: 1em; /* Decrease font size for mobile */
   }
 
   .org-link {
-    padding: 8px 10px; /* Adjusted padding for links */
+    padding: 8px 10px; /* Adjust padding for links */
   }
+}
+
+/* Organizations Section */
+.organizations {
+  width: 100%; /* Full width for organizations section */
+  margin-top: 20px; /* Spacing above organizations */
+  display: grid; /* Use grid layout */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid with flexible columns */
+  gap: 20px; /* Space between grid items */
+}
+
+.org-container {
+  background: var(--background-light); /* Light background for org boxes */
+  border: 2px solid var(--border-color); /* Matching border color */
+  border-radius: 8px; /* Rounded corners */
+  padding: 15px; /* Internal spacing */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  position: relative; /* Positioning context */
+  transition: transform 0.2s; /* Smooth hover transition */
+}
+
+.org-container:hover {
+  transform: translateY(-2px); /* Lift effect on hover */
+}
+
+.profile-info {
+  width: 100%;
+}
+
+.org-container p {
+	margin-top: 0;
+	font-size: 1.2em;
+	font-weight: bold;
+	color: var(--primary-text-color);
+	text-align: center;
+	margin-bottom: 2rem;
+}
+
+.org-container {
+	background: var(--background-light);
+	border: 2px solid var(--border-color);
+	border-radius: 8px;
+	padding: 20px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	position: relative;
+	transition: transform 0.2s;
+	display: flex;
+	flex-direction: column;
+	/* height: ; */
+	box-sizing: content-box;
+}
+
+.organizations {
+	width: 100%;
+	margin-top: 20px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+	gap: 20px;
+}
+
+/* Organizations Section */
+.organizations {
+  width: 100%; /* Full width for organizations section */
+  margin-top: 20px; /* Spacing above organizations */
+  display: grid; /* Use grid layout */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid with flexible columns */
+  gap: 20px; /* Space between grid items */
+}
+
+.org-container {
+  background: var(--background-light); /* Light background for org boxes */
+  border: 2px solid var(--border-color); /* Matching border color */
+  border-radius: 8px; /* Rounded corners */
+  padding: 15px; /* Internal spacing */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  display: flex; /* Enable Flexbox layout */
+  flex-direction: column; /* Arrange children in a column */
+  justify-content: space-between; /* Space items evenly */
+  position: relative; /* Positioning context */
+  transition: transform 0.2s; /* Smooth hover transition */
+}
+
+.org-container:hover {
+  transform: translateY(-2px); /* Lift effect on hover */
+}
+
+.org-container p {
+  margin-top: 0; /* Remove default margin */
+  font-size: 1.2em; /* Consistent font size for organization names */
+  font-weight: bold; /* Emphasize organization name */
+  color: var(--primary-text-color); /* Darker text color */
+  text-align: center; /* Center text */
+}
+
+.org-link {
+  display: inline-block; /* Inline block for link */
+  margin-top: 10px; /* Spacing above the link */
+  padding: 8px 12px; /* Padding for click area */
+  background: var(--primary-button-color); /* Button color */
+  color: var(--primary-button-text-color); /* Button text color */
+  text-decoration: none; /* No underline */
+  border-radius: 5px; /* Rounded button corners */
+  transition: background 0.3s; /* Smooth transition */
+  margin-top: auto; /* Push link to the bottom */
+}
+
+.org-link:hover {
+  background: var(--primary-button-hover-color); /* Darker shade on hover */
+  color: var(--primary-button-hover-text-color); /* Text color on hover */
+}
+
+.badge-admin {
+	background: var(--green);
+	color: var(--primary-text-color);
+	padding: 6px 12px;
+	border-radius: 20px;
+	font-size: 0.9em;
+	margin-top: 1em !important;
+	/* margin: 500px !important; */
+	display: inline-block;
 }

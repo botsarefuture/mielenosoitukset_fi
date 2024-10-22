@@ -1,9 +1,10 @@
+@import url("buttons.css");
+
 /* edit_user.css */
 .edit-user-panel {
   max-width: 1000px; /* Set a fixed maximum width */
   margin: 20px auto;
   padding: 20px; /* Reduced padding inside the container */
-  background: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -27,7 +28,7 @@
 .form-group select {
   width: 100%; /* Full width */
   padding: 10px; /* Reduced padding inside input and select fields */
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px; /* Slightly smaller border radius */
   box-sizing: border-box; /* Ensure padding is included in the width */
   font-size: 14px; /* Smaller font size for better fit */
@@ -36,7 +37,7 @@
 .search-input {
   width: calc(100% - 22px); /* Adjust width to fit the container */
   padding: 10px; /* Reduced padding inside the search input */
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   margin-bottom: 20px; /* Reduced space below the search input */
   box-sizing: border-box;
@@ -55,29 +56,22 @@
   display: flex;
   align-items: center;
   padding: 10px; /* Reduced padding inside each list item */
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px; /* Smaller border radius */
   margin-bottom: 10px; /* Reduced margin between list items */
   cursor: pointer;
-  background: #fff;
+  background: var(--background);
   transition: background 0.3s ease;
 }
 
 .organization-item:hover {
-  background: #f0f0f0;
+  background: var(--hover-bg-color);
 }
 
 .submit-button {
-  background: #007bff;
-  color: #fff;
   border: none;
   padding: 10px 20px; /* Reduced padding inside the button */
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px; /* Slightly larger font size for better visibility */
-  transition: background 0.3s ease;
-}
-
-.submit-button:hover {
-  background: #0056b3;
 }

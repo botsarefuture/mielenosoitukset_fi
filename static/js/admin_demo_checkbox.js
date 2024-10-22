@@ -6,12 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (checkbox.checked) {
       statusText.textContent = "Kyllä";
-      container.style.backgroundColor = "#d4edda"; // Light green for approved
-      container.style.color = "#155724"; // Dark green text
+      container.style.backgroundColor = "var(--green-lighter)"; // Light green for approved
+      container.style.color = "var(--green-darker)"; // Dark green text
     } else {
       statusText.textContent = "Ei";
-      container.style.backgroundColor = "#f8d7da"; // Light red for not approved
-      container.style.color = "#721c24"; // Dark red text
+      container.style.backgroundColor = "var(--red)"; // Light red for not approved
+      container.style.color = "var(--white)"; // Dark red text
     }
   }
 
@@ -20,6 +20,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Add event listener to update status on checkbox change
   document
-    .getElementById("approval-wrapper")
+    .getElementById("approval-container")
     .addEventListener("change", updateApprovalStatus);
 });

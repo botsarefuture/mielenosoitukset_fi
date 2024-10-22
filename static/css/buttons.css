@@ -72,7 +72,7 @@
 }
 
 .button-info:hover {
-    background: #138496;
+    background: hsl(188, 78%, 33%);
 }
 
 /* Buttons container */
@@ -82,4 +82,69 @@
     flex-wrap: wrap;
     justify-content: center;
     margin: 20px 0;
+}
+
+/* Light Theme Button Styles */
+.light .btn-primary,
+.button {
+  background-color: var(--primary-button-color);
+  color: var(--primary-button-text-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+
+.light .btn-primary:hover,
+.button:hover {
+  background-color: var(--primary-button-hover-color);
+  color: var(--primary-button-hover-text-color);
+}
+
+.light .btn-secondary {
+  background-color: var(--secondary-button-color);
+  color: var(--secondary-button-text-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.light .btn-secondary:hover {
+  background-color: var(--secondary-button-hover-color);
+  color: var(--secondary-button-hover-text-color);
+}
+
+/* Dark Theme Button Styles */
+.dark .btn-primary {
+  background-color: var(--primary-button-color);
+  color: var(--primary-button-text-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dark .btn-primary:hover {
+  background-color: var(--primary-button-hover-color);
+  color: var(--primary-button-hover-text-color);
+}
+
+.dark .btn-secondary {
+  background-color: var(--secondary-button-color);
+  color: var(--secondary-button-text-color);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dark .btn-secondary:hover {
+  background-color: var(--secondary-button-hover-color);
+  color: var(--secondary-button-hover-text-color);
 }

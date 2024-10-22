@@ -1,0 +1,97 @@
+{% import 'macros.html' as macros %}
+
+{% extends 'base.html' %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+
+<div class="container-main-content">
+  <h1 class="admin-section-title">#{{ tag_name }}</h1>
+
+
+  {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES") %}
+  <!-- Search form for filtering demonstrations by various criteria -->
+  <form method="GET" action="{{ url_for('tag_detail', tag_name=tag_name) }}" class="search-form">
+    <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Hae mielenosoituksia" value="{{ request.args.get('search', '') }}" />
+    <input type="text" name="city" placeholder="Kaupunki" aria-label="Kaupunki" value="{{ request.args.get('city', '') }}" />
+    <input type="text" name="location" placeholder="Sijainti" aria-label="Sijainti" value="{{ request.args.get('location', '') }}" />
+    <input type="text" name="date" placeholder="Päivämäärä (pp.kk.vvvv)" aria-label="Päivämäärä (pp.kk.vvvv)" value="{{ request.args.get('date', '') }}" />
+    <button type="submit">Hae</button>
+  </form>
+  {% endif %}
+
+  <div class="container-grid">
+    {% if demonstrations and demonstrations|length > 0 %}
+      {% for demo in demonstrations %}
+      {{ macros.demo_card(demo) }}
+      {% endfor %}
+    {% else %}
+      <div class="grid-item no-results">Ei löytynyt mielenosoituksia tällä tagilla.</div>
+    {% endif %}
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('tag_detail', tag_name=tag_name, page=page-1, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">Edellinen</a>
+    {% endif %}
+
+    <span>Sivu {{ page }} / {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+      <a href="{{ url_for('tag_detail', tag_name=tag_name, page=page+1, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">Seuraava</a>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const topics = document.getElementsByClassName("topics");
+
+    Array.from(topics).forEach((topic, index) => {
+      const tagList = topic.querySelector("ul");
+      if (tagList) {
+        const tags = tagList.children;
+        const maxVisibleTags = 1;
+
+        if (tags.length > maxVisibleTags) {
+          for (let i = maxVisibleTags; i < tags.length; i++) {
+            tags[i].style.display = "none";
+          }
+
+          const showMoreButton = document.createElement("button");
+          showMoreButton.innerText = "Näytä kaikki tagit";
+          showMoreButton.classList.add("show-more-button");
+          showMoreButton.onclick = function() {
+            for (let i = maxVisibleTags; i < tags.length; i++) {
+              tags[i].style.display = "block";
+            }
+            showMoreButton.style.display = "none";
+          };
+
+          topic.appendChild(showMoreButton);
+        }
+      }
+    });
+
+    let perPage = 10;
+    if (window.innerWidth < 768) {
+      perPage = 5;
+    } else if (window.innerWidth < 1200) {
+      perPage = 10;
+    } else {
+      perPage = 20;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set("per_page", perPage);
+    window.history.replaceState({}, "", currentUrl);
+  });
+</script>
+
+{% endblock %}

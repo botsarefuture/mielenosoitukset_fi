@@ -34,8 +34,8 @@
   --primary-button-hover-color: #002280; /* Primary button hover color */
   --primary-button-hover-text-color: white; /* Primary button hover text color */
 
-  --secondary-button-color: var(--secondary-color); /* Secondary button color */
-  --secondary-button-text-color: #333; /* Secondary button text color */
+  --secondary-button-color: var(--black); /* Secondary button color */
+  --secondary-button-text-color: var(--white); /* Secondary button text color */
   --secondary-button-hover-color: #e0e0e0; /* Secondary button hover color */
   --secondary-button-hover-text-color: #000; /* Secondary button hover text color */
 
@@ -327,7 +327,7 @@
   padding: 1.5rem;
   background: var(--admin-section-title-color);
   text-align: center;
-  margin: 2rem 0;
+  margin: 0 0 2rem 0;
   border-radius: 8px;
   box-shadow: 0 4px 10px var(--box-shadow-color);
   text-transform: uppercase;

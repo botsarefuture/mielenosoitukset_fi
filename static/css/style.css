@@ -64,13 +64,14 @@ body {
   width: 100%;
 }
 
-/* Navbar Logo */
 .navbar .logo {
-  font-size: 1.5em;
-  color: #ffffff; /* White text */
-  text-decoration: none;
-  font-family: "Montserrat", sans-serif; /* Updated to match the style guide */
-  font-weight: 900; /* Font weight should match the official logo */
+	font-size: 1.5em;
+	color: #ffffff;
+	text-decoration: none;
+	font-family: "Montserrat", sans-serif;
+	font-weight: 900;
+	text-transform: uppercase;
+	margin-right: 1em;
 }
 
 /* Navbar Links */

@@ -1,10 +1,10 @@
 /* Style for the outer wrapper */
 .approval-wrapper {
-    border: 2px solid #ccc; /* Light grey border */
+    border: 2px solid var(--border-color); /* Light grey border */
     border-radius: 8px; /* Rounded corners */
     padding: 15px; /* Padding inside the border */
     margin: 20px 0; /* Margin around the whole block */
-    background: #f9f9f9; /* Light grey background for wrapper */
+    background: var(--input-background); /* Light grey background for wrapper */
 }
 
 /* Style for checkbox container */

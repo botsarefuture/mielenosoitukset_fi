@@ -422,9 +422,43 @@ def init_routes(app):
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
         )
     
-    @app.route("/tag_details/<tag_name>")
+    import re
+
+    @app.route('/tag/<tag_name>')
     def tag_detail(tag_name):
-        abort(501)
+        # Create a case-insensitive regex pattern for the tag
+        tag_regex = re.compile(f'^{re.escape(tag_name)}$', re.IGNORECASE)
+
+        # Fetch demonstrations that include the specified tag (case-insensitive)
+        demonstrations_query = {"tags": tag_regex}
+
+        # Pagination logic
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))  # Adjust per_page as necessary
+
+        # Get the total number of documents matching the query
+        total_demos = mongo.demonstrations.count_documents(demonstrations_query)
+        total_pages = (total_demos + per_page - 1) // per_page  # Calculate total pages
+
+        # Fetch the demonstrations cursor
+        demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)
+
+        # Get the paginated demonstrations using skip and limit directly on the cursor
+        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(per_page)
+
+        # Convert paginated_demos to a list to pass to the template
+        paginated_demos_list = list(paginated_demos)
+
+        # Render the tag_detail template and pass necessary variables
+        return render_template(
+            'tag_list.html',
+            demonstrations=paginated_demos_list,
+            page=page,
+            total_pages=total_pages,
+            tag_name=tag_name
+        )
+
+
         
     # This is the route that provides the flash messages as JSON
     @app.route('/get_flash_messages', methods=['GET'])

@@ -413,14 +413,14 @@
 
   {% endif %}
   <h1>{{ demo['title'] }}</h1>
-    <!--<a href="#" class="like-button"> Tykkää </a>-->
     <div class="topics">
       <ul>
         {% if demo["tags"] and demo["tags"]|length > 0 %} {% for tag in
         demo["tags"] %}
         <li>
-          <span class="tag">#{{ tag.lower() }}</span>
-        </li>
+          <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
+            <span class="tag">#{{ tag }}</span>
+        </a>        </li>
         {% endfor %} {% else %}
         <li><span class="tag">#{{ demo['topic'].lower() }}</span></li>
         {% endif %}

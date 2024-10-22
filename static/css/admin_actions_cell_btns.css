@@ -46,7 +46,7 @@
 }
 
 .view-button {
-    background: var(--secondary-button-color); /* Secondary button color */
+    background: var(--primary-button-color); /* Secondary button color */
 }
 
 /* Hover effects for action items */

@@ -18,11 +18,15 @@
     flex-direction: column;
     justify-content: space-between; /* Distribute space evenly */
     height: 100%; /* Make all items equal height */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effect */
 }
 
 /* Hover effects */
 .grid-item:hover {
     background: var(--hover-bg-color); /* Change background on hover */
+    transform: translateY(-4px); /* Slight lift on hover */
+    box-shadow: 0 8px 16px var(--hover-shadow-color); /* Stronger shadow on hover */
+    cursor: pointer;
 }
 
 /* Title styles */
@@ -125,6 +129,9 @@
     .grid-container {
         grid-template-columns: repeat(3, 1fr); /* Three columns for tablets */
     }
+    .grid-item {
+        padding: 12px; /* Reduce padding on smaller screens */
+    }
 }
 
 @media (max-width: 768px) {
@@ -152,5 +159,9 @@
 
     .grid-item .details {
         font-size: 12px; /* Keep details font size consistent */
+    }
+
+    .grid-item {
+        padding: 10px; /* Reduce padding further for very small screens */
     }
 }

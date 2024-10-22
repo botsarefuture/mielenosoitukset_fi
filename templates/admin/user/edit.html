@@ -6,8 +6,17 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
 
+<style>
+    #approval-container {
+        background-color: var(--red);
+        color: var(--white);
+        width: fit-content !important;
+        padding: 20px;
+        text-align: center;
+    }
+</style>
 <div class="container mt-4">
-    <h2>Muokkaa Käyttäjää</h2>
+    <h2 class="admin-section-title">Muokkaa Käyttäjää</h2>
 
     <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}" class="container-form">
         <!-- User Details Form -->
@@ -22,16 +31,14 @@
         </div>
 
         <!-- Email Confirmation Checkbox -->
-        <div class="approval-wrapper mt-4">
             <div class="form-group" id="approval-container">
-                <label for="confirmed">Sähköpostiosoite vahvistettu</label>
+                <label for="approved">Sähköpostiosoite vahvistettu</label>
                 <div>
-                    <input type="checkbox" id="confirmed" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
+                    <input type="checkbox" id="approved" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
                     <span id="approval-status" class="status-text">
-                        {% if user.confirmed %}Kyllä{% else %}Ei{% endif %}
+                        {% if user["confirmed"] %}Kyllä{% else %}Ei{% endif %}
                     </span>
                 </div>
-            </div>
         </div>
 
         <!-- Role Selection -->
@@ -118,7 +125,7 @@
 </div>
 
 
-        <button type="submit" class="submit-button">Tallenna muutokset</button>
+        <button type="submit" class="button submit-button">Tallenna muutokset</button>
     </form>
 </div>
 

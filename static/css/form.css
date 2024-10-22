@@ -62,7 +62,8 @@ button[type="submit"] {
 
 /* Submit button hover effect */
 button[type="submit"]:hover {
-    background: var(--highlight-color-orange); /* Orange on hover */
+    background: var(--primary-button-hover-color); /* Orange on hover */
+    color: var(--primary-button-hover-text-color);
 }
 
 /* Error and success messages */

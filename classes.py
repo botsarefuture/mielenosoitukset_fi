@@ -52,7 +52,11 @@ class Organizer:
         return {
             "name": self.name,
             "email": self.email,
-            "organization_id": ObjectId(self.organization_id) if not json else str(self.organization_id),
+            "organization_id": (
+                ObjectId(self.organization_id)
+                if not json
+                else str(self.organization_id)
+            ),
             "website": self.website,
         }
 
@@ -183,7 +187,7 @@ class Demonstration:
         img=None,
         _id=None,
         description: str = None,
-        tags: list = None
+        tags: list = None,
     ):
         if _id is None:
             _id = OID()
@@ -243,12 +247,14 @@ class Demonstration:
             "address": self.address,
             "type": self.event_type,
             "route": self.route,
-            "organizers": [organizer.to_dict(*args, **kwargs) for organizer in self.organizers],
+            "organizers": [
+                organizer.to_dict(*args, **kwargs) for organizer in self.organizers
+            ],
             "approved": self.approved,
             "linked_organizations": self.linked_organizations,
             "img": self.img,
             "description": self.description,
-            "tags": self.tags
+            "tags": self.tags,
         }
 
     @classmethod
@@ -279,7 +285,7 @@ class Demonstration:
                 linked_organizations=data.get("linked_organizations", {}),
                 img=data.get("img"),
                 description=data.get("description"),
-                tags=data.get("tags", [])
+                tags=data.get("tags", []),
             )
         except KeyError as e:
             raise ValueError(f"Missing required field in data: {e}")

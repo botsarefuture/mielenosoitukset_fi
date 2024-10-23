@@ -4,11 +4,13 @@
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
 {% endblock %}
 
-{% block content %}
-{% import 'macros.html' as macros %}
-
+{% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+{% endblock %}
+
+{% block content %}
+{% import 'macros.html' as macros %}
 
 <div class="container-main-content">
   <h1>Tulevat mielenosoitukset</h1>

@@ -7,7 +7,6 @@ mongo = DatabaseManager().get_instance().get_db()
 
 user_bp = Blueprint("user", __name__)
 
-
 @user_bp.route("/follow/<username>", methods=["POST"])
 @login_required
 def follow(username):

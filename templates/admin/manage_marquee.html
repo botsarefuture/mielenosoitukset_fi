@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block scripts %}
+<script>
+    function updatePreview() {
+        const message = document.getElementById('marquee_message').value;
+        const backgroundColor = document.getElementById('background_color').value;
+        const textColor = document.getElementById('text_color').value;
+
+        const previewDiv = document.getElementById('preview');
+        previewDiv.style.backgroundColor = backgroundColor;
+        previewDiv.style.color = textColor;
+        previewDiv.innerText = message;
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <h1>Hallinnoi viestiä</h1>
@@ -38,17 +53,4 @@
         {{ current_message }}
     </div>
 </div>
-
-<script>
-    function updatePreview() {
-        const message = document.getElementById('marquee_message').value;
-        const backgroundColor = document.getElementById('background_color').value;
-        const textColor = document.getElementById('text_color').value;
-
-        const previewDiv = document.getElementById('preview');
-        previewDiv.style.backgroundColor = backgroundColor;
-        previewDiv.style.color = textColor;
-        previewDiv.innerText = message;
-    }
-</script>
 {% endblock %}

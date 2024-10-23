@@ -113,7 +113,7 @@ def manage_marquee():
             "message": "",
             "default_message": "NO",
             "style": "background-color: var(--background-color); padding: 0px !important;",
-            "h2_style": "color: var(--primary-color);"
+            "h2_style": "color: var(--primary-color);",
         }
 
     if request.method == "POST":
@@ -123,7 +123,9 @@ def manage_marquee():
 
         # Update marquee configuration
         marquee_config["message"] = new_message
-        marquee_config["style"] = f"background-color: {background_color}; padding: 0px !important;"
+        marquee_config["style"] = (
+            f"background-color: {background_color}; padding: 0px !important;"
+        )
         marquee_config["h2_style"] = f"color: {text_color};"
 
         # Save updated marquee configuration
@@ -135,4 +137,9 @@ def manage_marquee():
 
         return redirect(url_for("admin.manage_marquee"))
 
-    return render_template("admin/manage_marquee.html", current_message=marquee_config["message"], background_color=marquee_config["style"].split(': ')[1].split(';')[0], text_color=marquee_config["h2_style"].split(': ')[1])
+    return render_template(
+        "admin/manage_marquee.html",
+        current_message=marquee_config["message"],
+        background_color=marquee_config["style"].split(": ")[1].split(";")[0],
+        text_color=marquee_config["h2_style"].split(": ")[1],
+    )

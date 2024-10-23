@@ -15,6 +15,7 @@ admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
 
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required

@@ -1,7 +1,17 @@
 import json
 import os
 from s3_utils import upload_image
-from flask import render_template, request, redirect, url_for, flash, abort, Response, get_flashed_messages, jsonify
+from flask import (
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    abort,
+    Response,
+    get_flashed_messages,
+    jsonify,
+)
 from bson.objectid import ObjectId
 from datetime import datetime
 from classes import Organizer, Demonstration
@@ -62,7 +72,6 @@ def init_routes(app):
         xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
 
         return Response(xml_str, mimetype="application/xml")
-
 
     @app.route("/")
     def index():
@@ -165,7 +174,7 @@ def init_routes(app):
                 organizers=organizers,
                 approved=False,
                 img=photo_url,
-                description=description
+                description=description,
             )
 
             # Save to MongoDB
@@ -178,6 +187,7 @@ def init_routes(app):
             return redirect(url_for("index"))
 
         return render_template("submit.html", city_list=CITY_LIST)
+
     from flask import request, flash, render_template
     from datetime import datetime, date
     from bson import ObjectId
@@ -190,7 +200,7 @@ def init_routes(app):
         # Get pagination parameters
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
-        
+
         search_query = request.args.get("search", "").lower()
         city_query = request.args.get("city", "").lower()
         location_query = request.args.get("location", "").lower()
@@ -204,13 +214,20 @@ def init_routes(app):
         )
 
         # Filter upcoming demonstrations
-        filtered_demonstrations = filter_demonstrations(demonstrations, today, 
-                                                        search_query, city_query, 
-                                                        location_query, date_query, 
-                                                        topic_query)
+        filtered_demonstrations = filter_demonstrations(
+            demonstrations,
+            today,
+            search_query,
+            city_query,
+            location_query,
+            date_query,
+            topic_query,
+        )
 
         # Sort the results by date
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        filtered_demonstrations.sort(
+            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        )
 
         # Pagination logic
         total_demos = len(filtered_demonstrations)
@@ -221,14 +238,22 @@ def init_routes(app):
         # Get the items for the current page
         paginated_demonstrations = filtered_demonstrations[start:end]
 
-        return render_template("list.html", 
-                            demonstrations=paginated_demonstrations,
-                            page=page, 
-                            total_pages=total_pages)
+        return render_template(
+            "list.html",
+            demonstrations=paginated_demonstrations,
+            page=page,
+            total_pages=total_pages,
+        )
 
-
-    def filter_demonstrations(demonstrations, today, search_query, city_query, 
-                            location_query, date_query, topic_query):
+    def filter_demonstrations(
+        demonstrations,
+        today,
+        search_query,
+        city_query,
+        location_query,
+        date_query,
+        topic_query,
+    ):
         """
         Filter the demonstrations based on various criteria.
         """
@@ -237,14 +262,21 @@ def init_routes(app):
 
         for demo in demonstrations:
             if is_future_demo(demo, today):
-                if (matches_filters(demo, search_query, city_query, location_query, 
-                                    date_query, topic_query) and 
-                    demo["_id"] not in added_demo_ids):
+                if (
+                    matches_filters(
+                        demo,
+                        search_query,
+                        city_query,
+                        location_query,
+                        date_query,
+                        topic_query,
+                    )
+                    and demo["_id"] not in added_demo_ids
+                ):
                     filtered.append(demo)
                     added_demo_ids.add(demo["_id"])
 
         return filtered
-
 
     def is_future_demo(demo, today):
         """
@@ -253,32 +285,44 @@ def init_routes(app):
         demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
         return demo_date >= today
 
-
-    def matches_filters(demo, search_query, city_query, location_query, date_query, topic_query):
+    def matches_filters(
+        demo, search_query, city_query, location_query, date_query, topic_query
+    ):
         """
         Check if the demonstration matches the filtering criteria.
         """
         matches_search = (
-            search_query in demo["title"].lower() or 
-            search_query in demo["city"].lower() or 
-            search_query in demo["topic"].lower() or 
-            search_query in demo["address"].lower()
+            search_query in demo["title"].lower()
+            or search_query in demo["city"].lower()
+            or search_query in demo["topic"].lower()
+            or search_query in demo["address"].lower()
         )
         matches_city = city_query in demo["city"].lower() if city_query else True
-        matches_location = location_query in demo["address"].lower() if location_query else True
+        matches_location = (
+            location_query in demo["address"].lower() if location_query else True
+        )
         matches_topic = topic_query in demo["topic"].lower() if topic_query else True
         matches_date = True
 
         if date_query:
             try:
                 parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
-                matches_date = parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+                matches_date = (
+                    parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+                )
             except ValueError:
-                flash("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.")
+                flash(
+                    "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+                )
                 matches_date = False
 
-        return matches_search and matches_city and matches_location and matches_topic and matches_date
-
+        return (
+            matches_search
+            and matches_city
+            and matches_location
+            and matches_topic
+            and matches_date
+        )
 
     import requests
     from flask import Flask, render_template, redirect, url_for, flash
@@ -421,20 +465,22 @@ def init_routes(app):
         return render_template(
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
         )
-    
+
     import re
 
-    @app.route('/tag/<tag_name>')
+    @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):
         # Create a case-insensitive regex pattern for the tag
-        tag_regex = re.compile(f'^{re.escape(tag_name)}$', re.IGNORECASE)
+        tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
 
         # Fetch demonstrations that include the specified tag (case-insensitive)
         demonstrations_query = {"tags": tag_regex}
 
         # Pagination logic
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10) or 10)  # Adjust per_page as necessary
+        page = int(request.args.get("page", 1))
+        per_page = int(
+            request.args.get("per_page", 10) or 10
+        )  # Adjust per_page as necessary
 
         # Get the total number of documents matching the query
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
@@ -444,45 +490,47 @@ def init_routes(app):
         demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)
 
         # Get the paginated demonstrations using skip and limit directly on the cursor
-        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(per_page)
+        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(
+            per_page
+        )
 
         # Convert paginated_demos to a list to pass to the template
         paginated_demos_list = list(paginated_demos)
 
         # Render the tag_detail template and pass necessary variables
         return render_template(
-            'tag_list.html',
+            "tag_list.html",
             demonstrations=paginated_demos_list,
             page=page,
             total_pages=total_pages,
-            tag_name=tag_name
+            tag_name=tag_name,
         )
 
-
-        
     # This is the route that provides the flash messages as JSON
-    @app.route('/get_flash_messages', methods=['GET'])
+    @app.route("/get_flash_messages", methods=["GET"])
     def get_flash_messages():
         # Retrieve flashed messages with categories
         messages = get_flashed_messages(with_categories=True)
-        
+
         # If there are no messages, return an empty array
         if not messages:
             return jsonify(messages=[])
 
         # Format the flash messages into a JSON object
-        flash_data = [{'category': category, 'message': message} for category, message in messages]
+        flash_data = [
+            {"category": category, "message": message} for category, message in messages
+        ]
 
         # Return the JSON response
         return jsonify(messages=flash_data)
-    
+
     @app.route("/celebrate")
     def celebrate():
         pass
-    
+
     @app.route("/marquee", methods=["GET"])
     def marquee():
         with open("marquee_config.json", "r") as config_file:
             config = json.load(config_file)
-        
+
         return jsonify(config)

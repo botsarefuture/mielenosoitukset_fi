@@ -1,19 +1,95 @@
 {% extends 'admin_base.html' %}
 
-{% block main_content %}
+{% block styles %}
 <!-- Include CSS and JS files -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
 
-<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
-
 <!-- Include Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
+
+{% block scripts %}
+
+<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    let tagCount = 0;
+
+    // Lisää uusi tägi
+    document.getElementById('add-tag-btn').addEventListener('click', function() {
+        tagCount++;
+        const newTagInput = document.createElement('input');
+        newTagInput.type = 'text';
+        newTagInput.id = `tag_${tagCount}`;
+        newTagInput.name = `tag_${tagCount}`;
+        newTagInput.className = 'form-control tag-input mt-2';
+        newTagInput.placeholder = 'Lisää tagi';
+        newTagInput.required = true;
+        document.getElementById('tags-container').appendChild(newTagInput);
+    });
+</script>
+
+<script>
+    // City Selector JS functions
+    function selectCity(city) {
+        document.querySelector('.dropbtn').textContent = city;
+        document.getElementById('selected-city').value = city;
+        document.getElementById('dropdown-content').style.display = 'none';
+    }
+
+    function filterFunction() {
+        let input, filter, div, a;
+        input = document.getElementById('searchInput');
+        filter = input.value.toUpperCase();
+        div = document.getElementById('dropdown-content');
+        a = div.getElementsByTagName('a');
+        for (let i = 0; i < a.length; i++) {
+            let txtValue = a[i].textContent || a[i].innerText;
+            a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    // Organizer JS functions
+    let organizerCount = {{ demo.organizers | length if demo and demo.organizers else 0 }};
+
+    function addOrganizer() {
+        const selectedOrgId = document.getElementById('organization').value;
+        if (selectedOrgId) {
+            organizerCount++;
+            const newOrganizer = document.createElement('div');
+            newOrganizer.className = 'form-group organizer-item';
+            newOrganizer.innerHTML = `
+                <hr>
+                <label for="organizer_name_${organizerCount}_">Järjestäjätahon nimi</label>
+                <input type="text" id="organizer_name_${organizerCount}_" name="organizer_name_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_website_${organizerCount}_">Nettisivu</label>
+                <input type="url" id="organizer_website_${organizerCount}_" name="organizer_website_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_email_${organizerCount}_">Sähköposti</label>
+                <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_id_${organizerCount}">Organisaation ID</label>
+                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+            `;
+            document.getElementById('organizers-container').appendChild(newOrganizer);
+        } else {
+            alert('Valitse ensin järjestö!');
+        }
+    }
+
+    function removeOrganizer(button) {
+        button.closest('.organizer-item').remove();
+    }
+</script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+{% endblock %}
+
+{% block main_content %}
 
 <!-- Main content container -->
 <div class="container container-form">
@@ -138,74 +214,4 @@
         </div>
     </form>
 </div>
-<script>
-    let tagCount = 0;
-
-    // Lisää uusi tägi
-    document.getElementById('add-tag-btn').addEventListener('click', function() {
-        tagCount++;
-        const newTagInput = document.createElement('input');
-        newTagInput.type = 'text';
-        newTagInput.id = `tag_${tagCount}`;
-        newTagInput.name = `tag_${tagCount}`;
-        newTagInput.className = 'form-control tag-input mt-2';
-        newTagInput.placeholder = 'Lisää tagi';
-        newTagInput.required = true;
-        document.getElementById('tags-container').appendChild(newTagInput);
-    });
-</script>
-
-<script>
-    // City Selector JS functions
-    function selectCity(city) {
-        document.querySelector('.dropbtn').textContent = city;
-        document.getElementById('selected-city').value = city;
-        document.getElementById('dropdown-content').style.display = 'none';
-    }
-
-    function filterFunction() {
-        let input, filter, div, a;
-        input = document.getElementById('searchInput');
-        filter = input.value.toUpperCase();
-        div = document.getElementById('dropdown-content');
-        a = div.getElementsByTagName('a');
-        for (let i = 0; i < a.length; i++) {
-            let txtValue = a[i].textContent || a[i].innerText;
-            a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
-        }
-    }
-
-    // Organizer JS functions
-    let organizerCount = {{ demo.organizers | length if demo and demo.organizers else 0 }};
-
-    function addOrganizer() {
-        const selectedOrgId = document.getElementById('organization').value;
-        if (selectedOrgId) {
-            organizerCount++;
-            const newOrganizer = document.createElement('div');
-            newOrganizer.className = 'form-group organizer-item';
-            newOrganizer.innerHTML = `
-                <hr>
-                <label for="organizer_name_${organizerCount}_">Järjestäjätahon nimi</label>
-                <input type="text" id="organizer_name_${organizerCount}_" name="organizer_name_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
-                <label for="organizer_website_${organizerCount}_">Nettisivu</label>
-                <input type="url" id="organizer_website_${organizerCount}_" name="organizer_website_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
-                <label for="organizer_email_${organizerCount}_">Sähköposti</label>
-                <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
-                <label for="organizer_id_${organizerCount}">Organisaation ID</label>
-                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
-                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
-            `;
-            document.getElementById('organizers-container').appendChild(newOrganizer);
-        } else {
-            alert('Valitse ensin järjestö!');
-        }
-    }
-
-    function removeOrganizer(button) {
-        button.closest('.organizer-item').remove();
-    }
-</script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
-
 {% endblock %}

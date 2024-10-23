@@ -9,10 +9,12 @@
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
 {% endblock %}
 
-
-{% block content %}
+{% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
+{% endblock %}
+
+{% block content %}
 
 <div class="org-container">
     <div class="org-header">

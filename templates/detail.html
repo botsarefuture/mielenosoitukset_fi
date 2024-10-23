@@ -79,7 +79,7 @@
 }
 </script>
 {% endblock %}
- {% block content %}
+ {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}"/>
 <style>
   /* Main Container */
@@ -356,6 +356,7 @@
 }
 
 </style>
+
 
 {% if current_user.is_authenticated and current_user.can_use("TOOLBOX") %}
 

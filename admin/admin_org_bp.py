@@ -10,6 +10,7 @@ from .utils import mongo
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
+
 # Organization control panel
 @admin_org_bp.route("/")
 @login_required
@@ -18,7 +19,9 @@ admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization"
 def organization_control():
     """Render the organization control panel with a list of organizations."""
     if not current_user.global_admin:
-        org_limiter = [ObjectId(org.get("org_id")) for org in current_user.organizations]
+        org_limiter = [
+            ObjectId(org.get("org_id")) for org in current_user.organizations
+        ]
         print(org_limiter)
     else:
         org_limiter = None
@@ -44,6 +47,7 @@ def organization_control():
         search_query=search_query,
     )
 
+
 # Edit organization
 @admin_org_bp.route("/edit/<org_id>", methods=["GET", "POST"])
 @login_required
@@ -59,7 +63,9 @@ def edit_organization(org_id):
         description = request.form.get("description")
         email = request.form.get("email")
         website = request.form.get("website")
-        social_media_platforms = request.form.getlist("social_media_platform[]")  # Get the platforms
+        social_media_platforms = request.form.getlist(
+            "social_media_platform[]"
+        )  # Get the platforms
         social_media_urls = request.form.getlist("social_media_url[]")  # Get the URLs
         verified = request.form.get("verified") == "on"
 
@@ -73,7 +79,11 @@ def edit_organization(org_id):
             return redirect(url_for("admin_org.edit_organization", org_id=org_id))
 
         # Prepare social media links
-        social_media_links = {platform: url for platform, url in zip(social_media_platforms, social_media_urls) if platform and url}
+        social_media_links = {
+            platform: url
+            for platform, url in zip(social_media_platforms, social_media_urls)
+            if platform and url
+        }
 
         # Update organization in the database
         mongo.organizations.update_one(
@@ -95,6 +105,7 @@ def edit_organization(org_id):
 
     return render_template("admin/organizations/form.html", organization=organization)
 
+
 # Create organization
 @admin_org_bp.route("/create", methods=["GET", "POST"])
 @login_required
@@ -108,7 +119,9 @@ def create_organization():
         description = request.form.get("description")
         email = request.form.get("email")
         website = request.form.get("website")
-        social_media_platforms = request.form.getlist("social_media_platform[]")  # Get the platforms
+        social_media_platforms = request.form.getlist(
+            "social_media_platform[]"
+        )  # Get the platforms
         social_media_urls = request.form.getlist("social_media_url[]")  # Get the URLs
 
         # Validate required fields
@@ -121,7 +134,11 @@ def create_organization():
             return redirect(url_for("admin_org.create_organization"))
 
         # Prepare social media links
-        social_media_links = {platform: url for platform, url in zip(social_media_platforms, social_media_urls) if platform and url}
+        social_media_links = {
+            platform: url
+            for platform, url in zip(social_media_platforms, social_media_urls)
+            if platform and url
+        }
 
         # Insert new organization into the database
         mongo.organizations.insert_one(
@@ -139,6 +156,7 @@ def create_organization():
         return redirect(url_for("admin_org.organization_control"))
 
     return render_template("admin/organizations/form.html")
+
 
 # Delete organization
 @admin_org_bp.route("/delete/<org_id>", methods=["POST"])
@@ -160,6 +178,7 @@ def delete_organization(org_id):
         flash("Organisaation poistoa ei vahvistettu.", "warning")
 
     return redirect(url_for("admin_org.organization_control"))
+
 
 # Confirmation before deleting an organization
 @admin_org_bp.route("/confirm_delete/<org_id>", methods=["GET"])

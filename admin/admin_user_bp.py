@@ -13,6 +13,7 @@ email_sender = EmailSender()
 
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 
+
 def flash_message(message, category):
     """Flash a message with a specific category."""
     categories = {
@@ -129,7 +130,10 @@ def edit_user(user_id):
         return redirect(url_for("admin_user.user_control"))
 
     # Prepare to render the edit user form
-    user_orgs = [{"_id": org.get("org_id"), "role": org.get("role")} for org in user.organizations]
+    user_orgs = [
+        {"_id": org.get("org_id"), "role": org.get("role")}
+        for org in user.organizations
+    ]
     org_ids = [org.get("org_id") for org in user_orgs]
     user_permissions = user.permissions  # Fetch user-specific permissions
     global_permissions = (
@@ -144,9 +148,8 @@ def edit_user(user_id):
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         user_permissions=user_permissions,
         global_permissions=global_permissions,
-        user_organizations=user_orgs
+        user_organizations=user_orgs,
     )
-
 
 
 @admin_user_bp.route("/save_user/<user_id>", methods=["POST"])

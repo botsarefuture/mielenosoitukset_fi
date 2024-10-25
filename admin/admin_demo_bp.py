@@ -9,21 +9,6 @@ from flask_login import current_user
 from classes import Demonstration, Organizer
 from .utils import mongo
 
-
-def popup(message: str) -> None:
-    """
-    Displays a flash message to the client via Ajax.
-
-    Args:
-        message (str): The message to be displayed in the popup.
-
-    Future:
-        This function will send the flash message to the client asynchronously using Ajax.
-    """
-    # Placeholder for future Ajax functionality to display the message
-    pass
-
-
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 

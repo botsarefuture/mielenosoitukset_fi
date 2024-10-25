@@ -1,56 +1,79 @@
-{% extends "base.html" %}
-{% import 'macros.html' as macros %}
-
-{% block title %}
-    {{ org.name }} - Tiedot
-{% endblock %}
-
-{% block scripts %}
+{% extends "base.html" %} {% import 'macros.html' as macros %} {% block title %}
+{{ org.name }} - Tiedot {% endblock %} {% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-{% endblock %}
+{% endblock %} {% block styles %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/organization/details.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/demo.css') }}"
+/>
+{% endblock %} {% block content %}
 
+<div class="container-centered">
+  <div class="org-header">
+    <h1>
+      {{ org.name }}{% if org.verified %}<span class="check-icon"></span>{%
+      endif %}
+    </h1>
+    <p class="org-description">{{ org.description }}</p>
+  </div>
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">
-
-<div class="org-container">
-    <div class="org-header">
-        <h1>{{ org.name }}{% if org.verified %}<span class="check-icon"></span>{% endif %}</h1>
-        <p class="org-description">{{ org.description }}</p>
+  <div class="contact-info">
+    <h2 class="section-title">Yhteystiedot</h2>
+    <div class="contact-methods">
+      <p>
+        <i class="fa-solid fa-envelope some-icon"></i>
+        <a href="mailto:{{ org.email }}" class="link contact-link"
+          >{{ org.email }}</a
+        >
+      </p></div>
+      <p>
+        <i class="fa-solid fa-external-link some-icon"></i>
+        <a href="{{ org.website }}" target="_blank" class="link contact-link"
+          >{{ org.website }}</a
+        >
+      </p>
     </div>
-
-    <div class="contact-info">
-        <h2 class="section-title">Yhteystiedot</h2>
-        <div class="contact-methods">
-            <p>
-                <i class="fa-solid fa-envelope some-icon"></i> 
-                <a href="mailto:{{ org.email }}" class="link contact-link">{{ org.email }}</a>
-            </p>
-            <p>
-                <i class="fa-solid fa-external-link some-icon"></i> 
-                <a href="{{ org.website }}" target="_blank" class="link contact-link">{{ org.website }}</a>
-            </p>
-        </div>
-        <h3 class="section-title">Sosiaalinen media</h3>
-        <div class="socials">
-            {% for social in org.social_media_links %}
-                <a href="{{ org.social_media_links[social] }}" target="_blank" class="some-icon link">
-                    <i class="fa-brands fa-{{ social }} some-icon"></i>
-                </a>
-            {% endfor %}
-        </div>
+    {% if org.social_media_links %}
+    <h3 class="section-title">Sosiaalinen media</h3>
+    <div class="socials">
+      {% for social in org.social_media_links %}
+      <a
+        href="{{ org.social_media_links[social] }}"
+        target="_blank"
+        class="some-icon link"
+      >
+        <i class="fa-brands fa-{{ social }} some-icon"></i>
+      </a>
+      {% endfor %}
     </div>
-
-    {% if upcoming_demos %}
-        <h2 class="section-title" id="upcoming-title">Tulevat mielenosoitukset</h2>
-        <div class="container-grid">
-            {% for demo in upcoming_demos %}
-                {{ macros.demo_card(demo) }}
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="no-demos-message">Ei tulevia mielenosoituksia.</p>
     {% endif %}
+  </div>
+</div>
+
+  {% if upcoming_demos %}
+  <section
+    style="
+      display: flex;
+      flex-direction: column;
+      align-content: center;
+      width: 100%;
+      align-items: center;
+    "
+  >
+    <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
+      Esitellyt mielenosoitukset
+    </h2>
+    <div class="container-grid" style="width: 100%">
+      {% if upcoming_demos %} {% for demo in upcoming_demos %} {{
+      macros.demo_card(demo) }} {% endfor %} {% else %}
+      <div class="grid-item">Ei mielenosoituksia näytettäväksi.</div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
 </div>
 {% endblock %}

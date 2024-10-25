@@ -324,7 +324,7 @@ PERMISSIONS_GROUPS = {
         {"name": "DELETE_DEMO", "description": "Delete demos."},
         {"name": "VIEW_DEMO", "description": "View demo details."},
         {"name": "LIST_DEMOS", "description": "List all demos."},
-        {"name": "ACCEPT_DEMO", "description": "Can accept demos."}
+        {"name": "ACCEPT_DEMO", "description": "Can accept demos."},
     ],
     "User Management": [
         {"name": "VIEW_USER", "description": "View user details."},
@@ -342,9 +342,8 @@ PERMISSIONS_GROUPS = {
     "Miscallanious": [
         {"name": "VIEW_ANALYTICS", "description": "View analytics"},
         {"name": "MANAGE_MARQUEE", "description": "Manage marquee"},
-        {"name": "BETA_FEATURES", "description": "can access beta"}
-
-    ]
+        {"name": "BETA_FEATURES", "description": "can access beta"},
+    ],
 }
 
 

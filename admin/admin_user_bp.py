@@ -13,6 +13,7 @@ email_sender = EmailSender()
 
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 
+
 def flash_message(message, category):
     """Flash a message with a specific category."""
     categories = {
@@ -63,8 +64,6 @@ def stringify_object_ids(data):
     else:
         print(data)
         return data
-
-
 @admin_user_bp.route("/edit_user/<user_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -79,14 +78,17 @@ def edit_user(user_id):
         flash_message("Käyttäjää ei löytynyt.", "error")
         return redirect(url_for("admin_user.user_control"))
 
+    # Check if the current user is trying to edit a higher-level user
+    if user.role == "global_admin" and current_user.role != "global_admin":
+        flash_message("Et voi muokata globaalin ylläpitäjän tietoja.", "error")
+        return redirect(url_for("admin_user.user_control"))
+
     if request.method == "POST":
         username = request.form.get("username")
         email = request.form.get("email")
         role = request.form.get("role")
         organization_ids = request.form.getlist("organizations")
-        confirmed = (
-            request.form.get("confirmed") == "on"
-        )  # Correctly handle confirmation input
+        confirmed = request.form.get("confirmed") == "on"
 
         # Validation for user input
         if not username or not email:
@@ -96,6 +98,16 @@ def edit_user(user_id):
         # Validate email format
         if not is_valid_email(email):
             flash_message("Virheellinen sähköpostimuoto.", "error")
+            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+        # Prevent role escalation (user cannot upgrade their own role)
+        if current_user._id == user_id and role != current_user.role:
+            flash_message("Et voi muuttaa omaa rooliasi.", "error")
+            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+        # If the user is a global admin, ensure they cannot lower their own role
+        if user.role == "global_admin" and current_user._id == user_id and role != "global_admin":
+            flash_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # Collect organizations and permissions
@@ -129,7 +141,10 @@ def edit_user(user_id):
         return redirect(url_for("admin_user.user_control"))
 
     # Prepare to render the edit user form
-    user_orgs = [{"_id": org.get("org_id"), "role": org.get("role")} for org in user.organizations]
+    user_orgs = [
+        {"_id": org.get("org_id"), "role": org.get("role")}
+        for org in user.organizations
+    ]
     org_ids = [org.get("org_id") for org in user_orgs]
     user_permissions = user.permissions  # Fetch user-specific permissions
     global_permissions = (
@@ -144,10 +159,8 @@ def edit_user(user_id):
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         user_permissions=user_permissions,
         global_permissions=global_permissions,
-        user_organizations=user_orgs
+        user_organizations=user_orgs,
     )
-
-
 
 @admin_user_bp.route("/save_user/<user_id>", methods=["POST"])
 @login_required
@@ -167,14 +180,15 @@ def save_user(user_id):
     organization_ids = request.form.getlist("organizations")
     confirmed = request.form.get("confirmed") == "on"
 
-    # Gather user permissions
-    user_permissions = {
-        org_id: request.form.getlist(f"permissions[{org_id}][]")
-        for org_id in organization_ids
-    }
-    global_permissions = request.form.getlist(
-        "permissions[global][]"
-    )  # Changed from "global" to access global permissions
+    # Prevent role escalation (user cannot upgrade their own role)
+    if current_user._id == user_id and role != current_user.role:
+        flash_message("Et voi muuttaa omaa rooliasi.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+    # Prevent global admins from lowering their role
+    if user.get("role") == "global_admin" and current_user._id == user_id and role != "global_admin":
+        flash_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Validate mandatory fields
     if not username or not email:

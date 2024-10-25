@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-{% block main_content %}
+{% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_org_control.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
@@ -80,6 +80,9 @@
         }
     }
 </style>
+
+{% endblock %}
+{% block main_content %}
 
 <div class="table-container">
     <h2 id="tabletitle">Käyttäjät</h2>

@@ -1,281 +1,373 @@
-{% extends 'admin_base.html' %}
-
-{% block main_content %}
+{% extends 'admin_base.html' %} {% block styles %}
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/form.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/table.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/dash.css') }}"
+/>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}">
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/deleteModal.css') }}"
+/>
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">-->
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin_actions_cell.css') }}"
+/>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
-
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}"
+/>
 
 <!-- Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+/>
 <style>
+  .search-form {
+    margin: 1rem 0;
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+    justify-content: space-between; /* Space out form elements */
+    align-items: center; /* Center align */
+    gap: 0.5rem; /* Space between form elements */
+  }
+
+  .search-input,
+  .filter-select {
+    padding: 0.75rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    flex: 1; /* Allow inputs to take available space */
+    min-width: 150px; /* Minimum width for better usability */
+    max-width: 300px; /* Maximum width to avoid excessive growth */
+    transition: border-color 0.3s ease;
+  }
+
+  .search-input:focus,
+  .filter-select:focus {
+    border-color: var(--blue); /* Primary color on focus */
+    outline: none; /* Remove outline */
+  }
+
+  .search-button {
+    background: #28a745; /* Success green */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-weight: bold; /* Bold text for visibility */
+    display: flex; /* Align icon and text */
+    align-items: center; /* Center align icon */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  }
+
+  .search-button:hover {
+    background: #218838; /* Darker green on hover */
+  }
+
+  /* Responsive Styles */
+  @media (max-width: 768px) {
     .search-form {
-        margin: 1rem 0;
-        display: flex;
-        flex-wrap: wrap; /* Allows wrapping on smaller screens */
-        justify-content: space-between; /* Space out form elements */
-        align-items: center; /* Center align */
-        gap: 0.5rem; /* Space between form elements */
+      flex-direction: column; /* Stack form elements on smaller screens */
+      align-items: flex-start; /* Align items to the start */
     }
-
-    .search-input, .filter-select {
-        padding: 0.75rem;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        flex: 1; /* Allow inputs to take available space */
-        min-width: 150px; /* Minimum width for better usability */
-        max-width: 300px; /* Maximum width to avoid excessive growth */
-        transition: border-color 0.3s ease;
-    }
-
-    .search-input:focus, .filter-select:focus {
-        border-color: var(--blue); /* Primary color on focus */
-        outline: none; /* Remove outline */
-    }
-
+    .search-input,
+    .filter-select,
     .search-button {
-        background: #28a745; /* Success green */
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        font-weight: bold; /* Bold text for visibility */
-        display: flex; /* Align icon and text */
-        align-items: center; /* Center align icon */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+      width: 100%; /* Full width for better usability */
+      margin-bottom: 0.5rem; /* Space below each element */
     }
-
-    .search-button:hover {
-        background: #218838; /* Darker green on hover */
-    }
-
-
-    /* Responsive Styles */
-    @media (max-width: 768px) {
-        .search-form {
-            flex-direction: column; /* Stack form elements on smaller screens */
-            align-items: flex-start; /* Align items to the start */
-        }
-        .search-input, .filter-select, .search-button {
-            width: 100%; /* Full width for better usability */
-            margin-bottom: 0.5rem; /* Space below each element */
-        }
-    }
+  }
 </style>
+{% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
+<script>
+  function acceptSty(demoId) {
+    demo = document.getElementById(`demo-${demoId}`);
+
+    demo.children[4].innerText = "Kyllä";
+
+    demo.children[5].children[0].remove();
+
+    demo.classList.remove("needs-attention");
+  }
+
+  function acceptDemo(demoId) {
+    fetch(`/admin/demo/accept_demo/${demoId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}), // You can add additional data here if needed,
+      redirect: "manual",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const flashMessagesDiv = document.getElementById("flash-messages");
+        const flashMessageList = flashMessagesDiv.querySelector("ul");
+        const newMessage = document.createElement("li");
+
+        // Clear previous messages
+        flashMessageList.innerHTML = ""; // Clear previous messages
+
+        if (data.status === "OK") {
+          newMessage.classList.add("flash-info");
+          newMessage.textContent = "Mielenosoitus hyväksytty onnistuneesti!";
+          flashMessageList.appendChild(newMessage);
+
+          acceptSty(demoId);
+
+          // Optionally, you can refresh the page or update the UI
+          //location.reload(); // Reload the page to reflect changes
+        } else {
+          newMessage.classList.add("flash-error");
+          newMessage.textContent =
+            "Virhe: " + (data.message || "Tuntematon virhe.");
+          flashMessageList.appendChild(newMessage);
+        }
+
+        // Show the flash messages and set a timeout to hide them
+        flashMessagesDiv.style.display = "block";
+        setTimeout(() => {
+          flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+        }, 3000);
+      })
+      .catch((error) => {
+        const flashMessagesDiv = document.getElementById("flash-messages");
+        const flashMessageList = flashMessagesDiv.querySelector("ul");
+        const newMessage = document.createElement("li");
+
+        newMessage.classList.add("flash-error");
+        newMessage.textContent = "Yhteysvirhe, yritä uudelleen.";
+        flashMessageList.appendChild(newMessage);
+        flashMessagesDiv.style.display = "block";
+        setTimeout(() => {
+          flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+        }, 3000);
+        console.error("Virhe:", error);
+      });
+  }
+</script>
+
+{% endblock %} {% block main_content %}
 
 <div class="table-container">
+  <h2 id="tabletitle">Mielenosoitukset</h2>
 
-    <h2 id="tabletitle">Mielenosoitukset</h2>
-
-    <div class="flex justify-center mb-4">
-        {% if current_user.can_use("CREATE_DEMO") or current_user.can_use("CREATE_RECURRING_DEMO") %}
-
-            {% if current_user.can_use("CREATE_DEMO") %}
-                <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button"><i class="fas fa-plus"></i>Uusi mielenosoitus</a>
-            {% else %}
-                <div class="insuffient-perm" style="color: #ccc">
-                    Sinulla ei ole oikeutta luoda uusia mielenosoituksia.
-                </div>
-            {% endif %}
-
-            {% if current_user.can_use("CREATE_RECURRING_DEMO") %}
-                <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button"><i class="fas fa-plus-circle"></i>Uusi toistuva mielenosoitus</a>
-            {% else %}
-                <div class="insuffient-perm" style="color: #ccc">
-                    Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.
-                </div>
-            {% endif %}
-
-        {% else %}
-            <div class="insuffient-perm" style="color: #ccc">
-                Ei riittäviä oikeuksia.
-            </div>
-        {% endif %}
+  <div class="flex justify-center mb-4">
+    {% if current_user.can_use("CREATE_DEMO") or
+    current_user.can_use("CREATE_RECURRING_DEMO") %} {% if
+    current_user.can_use("CREATE_DEMO") %}
+    <a
+      href="{{ url_for('admin_demo.create_demo') }}"
+      class="button create-demo-button"
+      ><i class="fas fa-plus"></i>Uusi mielenosoitus</a
+    >
+    {% else %}
+    <div class="insuffient-perm" style="color: #ccc">
+      Sinulla ei ole oikeutta luoda uusia mielenosoituksia.
     </div>
+    {% endif %} {% if current_user.can_use("CREATE_RECURRING_DEMO") %}
+    <a
+      href="{{ url_for('admin_recu_demo.create_recu_demo') }}"
+      class="button create-demo-button"
+      ><i class="fas fa-plus-circle"></i>Uusi toistuva mielenosoitus</a
+    >
+    {% else %}
+    <div class="insuffient-perm" style="color: #ccc">
+      Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.
+    </div>
+    {% endif %} {% else %}
+    <div class="insuffient-perm" style="color: #ccc">
+      Ei riittäviä oikeuksia.
+    </div>
+    {% endif %}
+  </div>
 
-    <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
-        <label for="search" class="sr-only">Hae mielenosoituksia:</label>
-        <input type="text" id="search" name="search" class="search-input" placeholder="Hae mielenosoituksia..." value="{{ search_query }}" aria-label="Search demonstrations">
+  <form
+    method="GET"
+    class="search-form"
+    action="{{ url_for('admin_demo.demo_control') }}"
+  >
+    <label for="search" class="sr-only">Hae mielenosoituksia:</label>
+    <input
+      type="text"
+      id="search"
+      name="search"
+      class="search-input"
+      placeholder="Hae mielenosoituksia..."
+      value="{{ search_query }}"
+      aria-label="Search demonstrations"
+    />
 
-        <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
-        <select name="approved" id="approved" class="filter-select" aria-label="Approved status filter">
-            <option value="true" {% if approved_status %}selected{% endif %}>Kyllä</option>
-            <option value="false" {% if not approved_status %}selected{% endif %}>Ei</option>
-        </select>
+    <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
+    <select
+      name="approved"
+      id="approved"
+      class="filter-select"
+      aria-label="Approved status filter"
+    >
+      <option value="true" {% if approved_status %}selected{% endif %}>
+        Kyllä
+      </option>
+      <option value="false" {% if not approved_status %}selected{% endif %}>
+        Ei
+      </option>
+    </select>
 
-        <label for="show_past">Näytä menneet mielenosoitukset:</label>
-        <select name="show_past" id="show_past" class="filter-select" aria-label="Show past demonstrations">
-            <option value="false" {% if not show_past %}selected{% endif %}>Ei</option>
-            <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
-        </select>
+    <label for="show_past">Näytä menneet mielenosoitukset:</label>
+    <select
+      name="show_past"
+      id="show_past"
+      class="filter-select"
+      aria-label="Show past demonstrations"
+    >
+      <option value="false" {% if not show_past %}selected{% endif %}>
+        Ei
+      </option>
+      <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
+    </select>
 
-        <button type="submit" class="search-button"><i class="fas fa-search"></i>Hae</button>
-    </form>
+    <button type="submit" class="search-button">
+      <i class="fas fa-search"></i>Hae
+    </button>
+  </form>
 
-    {% if demonstrations %}
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Otsikko</th>
-                    <th>Kaupunki</th>
-                    <th>Päivämäärä</th>
-                    <th>Toistuva</th>
-                    <th>Hyväksytty</th>
-                    <th class="actions-cell-header">Toiminnot</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for demo in demonstrations|sort(attribute='approved') %}
-    <tr id="demo-{{ demo._id }}" {% if not demo.approved %} class="needs-attention"{% endif %}>
-        <td>{{ demo.title }}</td>
-        <td>{{ demo.city }}</td>
-        <td>{{ demo.date }}</td>
-        <td>{{ 'Kyllä' if demo.repeating else 'Ei' }}</td>
-        <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
-        <td class="actions-cell">
+  {% if demonstrations %}
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Otsikko</th>
+          <th>Kaupunki</th>
+          <th>Päivämäärä</th>
+          <th>Toistuva</th>
+          <th>Hyväksytty</th>
+          <th class="actions-cell-header">Toiminnot</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for demo in demonstrations|sort(attribute='approved') %}
+        <tr
+          id="demo-{{ demo._id }}"
+          {%
+          if
+          not
+          demo.approved
+          %}
+          class="needs-attention"
+          {%
+          endif
+          %}
+        >
+          <td>{{ demo.title }}</td>
+          <td>{{ demo.city }}</td>
+          <td>{{ demo.date }}</td>
+          <td>{{ 'Kyllä' if demo.repeating else 'Ei' }}</td>
+          <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
+          <td class="actions-cell">
             <!-- Check if the user has permission to accept the demo -->
             {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
-                <button style="width: 132px; background: green;" type="button" class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
-                    <i class="fa-solid fa-check"></i>Hyväksy
-                </button>
-            {% elif not current_user.can_use("ACCEPT_DEMO") and not demo.approved %}
-                <div class="insuffient-perm" style="color: white;">
-                    Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.
-                </div>
+            <button
+              style="width: 132px; background: green"
+              type="button"
+              class="button accept-button"
+              onclick="acceptDemo('{{ demo._id }}')"
+            >
+              <i class="fa-solid fa-check"></i>Hyväksy
+            </button>
+            {% elif not current_user.can_use("ACCEPT_DEMO") and not
+            demo.approved %}
+            <div class="insuffient-perm" style="color: white">
+              Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.
+            </div>
             {% endif %}
-            
+
             <!-- Check if the user has permission to edit the demo -->
             {% if current_user.can_use("EDIT_DEMO") %}
-                <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
+            <a
+              href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"
+              class="button edit-button"
+              ><i class="fas fa-edit"></i>Muokkaa</a
+            >
             {% else %}
-                <div class="insuffient-perm" style="color: white;">
-                    Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.
-                </div>
+            <div class="insuffient-perm" style="color: white">
+              Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.
+            </div>
             {% endif %}
 
             <!-- Check if the user has permission to view the demo -->
             {% if current_user.can_use("VIEW_DEMO") %}
-                <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
-                    <i class="fa-solid fa-eye"></i>Katsele
-                </a>
+            <a
+              href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"
+              class="button view-button"
+            >
+              <i class="fa-solid fa-eye"></i>Katsele
+            </a>
             {% else %}
-                <div class="insuffient-perm" style="color: white;">
-                    Ei riittäviä oikeuksia mielenosoituksen katseluun.
-                </div>
+            <div class="insuffient-perm" style="color: white">
+              Ei riittäviä oikeuksia mielenosoituksen katseluun.
+            </div>
             {% endif %}
 
             <!-- Check if the user has permission to delete the demo -->
             {% if current_user.can_use("DELETE_DEMO") %}
-                <button style="width: 132px !important;" type="button" class="delete-button button" 
-                    onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
-                    <i class="fas fa-trash-alt"></i><span class="delete-text">Poista</span>
-                </button>
+            <button
+              style="width: 132px !important"
+              type="button"
+              class="delete-button button"
+              onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"
+            >
+              <i class="fas fa-trash-alt"></i
+              ><span class="delete-text">Poista</span>
+            </button>
             {% else %}
-                <div class="insuffient-perm" style="color: white;">
-                    Ei riittäviä oikeuksia mielenosoituksen poistamiseen.
-                </div>
+            <div class="insuffient-perm" style="color: white">
+              Ei riittäviä oikeuksia mielenosoituksen poistamiseen.
+            </div>
             {% endif %}
-        </td>
-    </tr>
-{% endfor %}
-
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-        <div class="no-results">Ei mielenosoituksia löytynyt.</div>
-    {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="no-results">Ei mielenosoituksia löytynyt.</div>
+  {% endif %}
 </div>
 
 <div id="deleteModal" class="modal hidden">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h3>Poista mielenosoitus</h3>
-        <p>Oletko varma, että haluat poistaa mielenosoituksen <strong id="demoTitle"></strong>?</p>
-        <div class="button-container">
-            <button type="button" class="button delete-confirm" id="confirmDelete">Kyllä, poista</button>
-            <button type="button" class="button" onclick="closeModal()">Peruuta</button>
-        </div>
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h3>Poista mielenosoitus</h3>
+    <p>
+      Oletko varma, että haluat poistaa mielenosoituksen
+      <strong id="demoTitle"></strong>?
+    </p>
+    <div class="button-container">
+      <button type="button" class="button delete-confirm" id="confirmDelete">
+        Kyllä, poista
+      </button>
+      <button type="button" class="button" onclick="closeModal()">
+        Peruuta
+      </button>
     </div>
+  </div>
 </div>
-
-<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
-<script>
-    function acceptSty(demoId) {
-        demo = document.getElementById(`demo-${demoId}`);
-
-        demo.children[4].innerText = "Kyllä";
-
-        demo.children[5].children[0].remove();
-
-        demo.classList.remove("needs-attention");
-     }
-
-    function acceptDemo(demoId) {
-        fetch(`/admin/demo/accept_demo/${demoId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({}), // You can add additional data here if needed,
-            redirect: 'manual'
-        })
-        .then(response => response.json())
-        .then(data => {
-            const flashMessagesDiv = document.getElementById("flash-messages");
-            const flashMessageList = flashMessagesDiv.querySelector("ul");
-            const newMessage = document.createElement("li");
-
-            // Clear previous messages
-            flashMessageList.innerHTML = ""; // Clear previous messages
-
-            if (data.status === "OK") {
-                newMessage.classList.add("flash-info");
-                newMessage.textContent = "Mielenosoitus hyväksytty onnistuneesti!";
-                flashMessageList.appendChild(newMessage);
-
-                acceptSty(demoId);
-                
-                // Optionally, you can refresh the page or update the UI
-                //location.reload(); // Reload the page to reflect changes
-            } else {
-                newMessage.classList.add("flash-error");
-                newMessage.textContent = "Virhe: " + (data.message || "Tuntematon virhe.");
-                flashMessageList.appendChild(newMessage);
-            }
-
-            // Show the flash messages and set a timeout to hide them
-            flashMessagesDiv.style.display = "block";
-            setTimeout(() => {
-                flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
-            }, 3000);
-        })
-        .catch(error => {
-            const flashMessagesDiv = document.getElementById("flash-messages");
-            const flashMessageList = flashMessagesDiv.querySelector("ul");
-            const newMessage = document.createElement("li");
-
-            newMessage.classList.add("flash-error");
-            newMessage.textContent = "Yhteysvirhe, yritä uudelleen.";
-            flashMessageList.appendChild(newMessage);
-            flashMessagesDiv.style.display = "block";
-            setTimeout(() => {
-                flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
-            }, 3000);
-            console.error("Virhe:", error);
-        });
-    }
-</script>    
 
 {% endblock %}

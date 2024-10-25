@@ -92,6 +92,7 @@
   </div>
 </div>
 
+{% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES") %}
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     // Dynamically set items per page based on screen size
@@ -110,5 +111,5 @@
     window.history.replaceState({}, "", currentUrl);
   });
 </script>
-
+{% endif %}
 {% endblock %}

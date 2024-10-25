@@ -200,7 +200,6 @@ def init_routes(app):
         # Get pagination parameters
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
-
         search_query = request.args.get("search", "").lower()
         city_query = request.args.get("city", "").lower()
         location_query = request.args.get("location", "").lower()
@@ -477,10 +476,8 @@ def init_routes(app):
         demonstrations_query = {"tags": tag_regex}
 
         # Pagination logic
-        page = int(request.args.get("page", 1))
-        per_page = int(
-            request.args.get("per_page", 10) or 10
-        )  # Adjust per_page as necessary
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10) or 10)  # Adjust per_page as necessary
 
         # Get the total number of documents matching the query
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)

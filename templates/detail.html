@@ -1,4 +1,5 @@
-{% extends 'base.html' %} {% block title %} {{ demo['title'] }} {% endblock %}
+{% extends 'base.html' %} 
+{% block title %} {{ demo['title'] }} {% endblock %}
 {% block meta %}
 <!-- General Meta Tags -->
 <meta charset="UTF-8" />
@@ -356,6 +357,9 @@
 }
 
 </style>
+{% endblock %}
+
+{% block content %}
 
 
 {% if current_user.is_authenticated and current_user.can_use("TOOLBOX") %}

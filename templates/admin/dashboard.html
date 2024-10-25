@@ -1,9 +1,7 @@
 <!-- templates/admin_dashboard.html -->
 {% extends 'admin_base.html' %}
 
-{% block main_content %}
-<h2>Hallintatyökalut</h2>
-
+{% block styles %}
 <style>
     .info-section {
         margin-top: 30px;
@@ -30,6 +28,10 @@
         margin-right: 15px;
     }
 </style>
+{% endblock %}
+
+{% block main_content %}
+<h2>Hallintatyökalut</h2>
 
 <div class="info-section">
     <span class="warning-icon">⚠️</span>

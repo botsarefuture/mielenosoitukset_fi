@@ -14,6 +14,7 @@ collection = mongo["organizations"]
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class User(UserMixin):
     def __init__(
         self,
@@ -72,7 +73,9 @@ class User(UserMixin):
             global_admin=global_admin,
             confirmed=user_doc.get("confirmed", False),
             permissions=user_doc.get("permissions", {}),
-            global_permissions=user_doc.get("global_permissions", []),  # Fetch global permissions
+            global_permissions=user_doc.get(
+                "global_permissions", []
+            ),  # Fetch global permissions
             role=user_doc.get("role", "member"),
         )
 
@@ -108,7 +111,7 @@ class User(UserMixin):
 
     def get_org_name(self, org_id):
         return collection.find_one({"_id": ObjectId(org_id)}).get("name")
-    
+
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
@@ -128,7 +131,9 @@ class User(UserMixin):
             )
         else:
             existing_org["role"] = role
-            existing_org["permissions"] = permissions or existing_org.get("permissions", [])
+            existing_org["permissions"] = permissions or existing_org.get(
+                "permissions", []
+            )
 
         # Ensure atomicity during the database update
         db.users.update_one(
@@ -223,7 +228,7 @@ class User(UserMixin):
                 return permission in org.get("permissions", [])
 
         return False
-    
+
     def can_use(self, permission):
         # Check global permissions first
         if permission in self.global_permissions:
@@ -233,14 +238,12 @@ class User(UserMixin):
         for org in self.permissions:
             if permission in self.permissions.get(org, []):
                 return True
-            
+
         for org in self.organizations:
             if permission in org.get("permissions", []):
                 return True
-        
-        return False
 
-        
+        return False
 
     def is_following(self, user_id):
         """Check if this user is following another user."""

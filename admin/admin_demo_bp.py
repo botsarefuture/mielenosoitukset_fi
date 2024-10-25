@@ -9,19 +9,6 @@ from flask_login import current_user
 from classes import Demonstration, Organizer
 from .utils import mongo
 
-def popup(message: str) -> None:
-    """
-    Displays a flash message to the client via Ajax.
-    
-    Args:
-        message (str): The message to be displayed in the popup.
-
-    Future:
-        This function will send the flash message to the client asynchronously using Ajax.
-    """
-    # Placeholder for future Ajax functionality to display the message
-    pass
-
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
@@ -38,7 +25,9 @@ def demo_control():
     """
     # Limit demonstrations by organization if the user is not a global admin
     if not current_user.global_admin:
-        user_org_ids = [ObjectId(org.get("org_id")) for org in current_user.organizations]
+        user_org_ids = [
+            ObjectId(org.get("org_id")) for org in current_user.organizations
+        ]
     else:
         user_org_ids = None
 
@@ -52,7 +41,7 @@ def demo_control():
 
     if approved_only:
         query["approved"] = False
-        
+
     if user_org_ids:
         query["organizers"] = {"$elemMatch": {"organization_id": {"$in": user_org_ids}}}
 
@@ -72,6 +61,7 @@ def demo_control():
         show_past=show_past,
     )
 
+
 def filter_demonstrations(query, search_query, show_past, today):
     """
     Fetch and filter demonstrations based on search criteria.
@@ -90,11 +80,15 @@ def filter_demonstrations(query, search_query, show_past, today):
 
     # Filter demonstrations based on the criteria
     filtered_demos = [
-        demo for demo in demonstrations
+        demo
+        for demo in demonstrations
         if (show_past or datetime.strptime(demo["date"], "%d.%m.%Y").date() >= today)
-        and any(search_query in demo[field].lower() for field in ["title", "city", "topic", "address"])
+        and any(
+            search_query in demo[field].lower()
+            for field in ["title", "city", "topic", "address"]
+        )
     ]
-    
+
     return filtered_demos
 
 
@@ -124,6 +118,7 @@ def create_demo():
         demo=None,
         city_list=CITY_LIST,
     )
+
 
 @admin_demo_bp.route("/edit_demo/<demo_id>", methods=["GET", "POST"])
 @login_required
@@ -155,8 +150,9 @@ def edit_demo(demo_id):
         form_action=url_for("admin_demo.edit_demo", demo_id=demo_id),
         title="Muokkaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
-        city_list=CITY_LIST
+        city_list=CITY_LIST,
     )
+
 
 def handle_demo_form(request, is_edit=False, demo_id=None):
     """
@@ -187,14 +183,17 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
 
         # Redirect to the demonstration control panel on success
         return redirect(url_for("admin_demo.demo_control"))
-    
+
     except ValueError as e:
         flash(f"Virhe: {str(e)}", "error")
-        
+
         # Redirect to the edit or create form based on operation type
         return redirect(
-            url_for("admin_demo.edit_demo", demo_id=demo_id) if is_edit else url_for("admin_demo.create_demo")
+            url_for("admin_demo.edit_demo", demo_id=demo_id)
+            if is_edit
+            else url_for("admin_demo.create_demo")
         )
+
 
 def collect_demo_data(request):
     """
@@ -246,6 +245,7 @@ def collect_demo_data(request):
         "tags": tags,
     }
 
+
 def collect_organizers(request):
     """
     Collect organizer data from the request form.
@@ -274,16 +274,20 @@ def collect_organizers(request):
             break
 
         # Create an Organizer object and append to the list
-        organizers.append(Organizer(
-            name=name.strip() if name else None,
-            email=email.strip() if email else None,
-            website=website.strip() if website else None,
-            organization_id=organizer_id.strip() if organizer_id else None
-        ))
+        organizers.append(
+            Organizer(
+                name=name.strip() if name else None,
+                email=email.strip() if email else None,
+                website=website.strip() if website else None,
+                organization_id=organizer_id.strip() if organizer_id else None,
+            )
+        )
 
         i += 1  # Move to the next organizer field
 
     return organizers
+
+
 def collect_tags(request):
     """
     Collect tags data from the request form.
@@ -302,17 +306,18 @@ def collect_tags(request):
     while True:
         # Extract the tag value from the dynamic form field names
         tag_name = request.form.get(f"tag_{i}")
-        
+
         # Break the loop if no tag name is found
         if not tag_name:
             break
-        
+
         # Append the trimmed tag to the list
         tags.append(tag_name.strip())
-        
+
         i += 1  # Move to the next tag field
 
     return tags
+
 
 @admin_demo_bp.route("/delete_demo", methods=["POST"])
 @login_required
@@ -323,12 +328,15 @@ def delete_demo():
     json_mode = request.headers.get("Content-Type") == "application/json"
 
     # Extract demo_id from either form data or JSON body
-    demo_id = request.form.get("demo_id") or (request.json.get("demo_id") if json_mode else None)
+    demo_id = request.form.get("demo_id") or (
+        request.json.get("demo_id") if json_mode else None
+    )
 
     if not demo_id:
         error_message = "Mielenosoituksen tunniste puuttuu."
         return (
-            jsonify({"status": "ERROR", "message": error_message}) if json_mode
+            jsonify({"status": "ERROR", "message": error_message})
+            if json_mode
             else redirect(url_for("admin_demo.demo_control"))
         )
 
@@ -352,6 +360,8 @@ def delete_demo():
     else:
         flash(success_message)
         return redirect(url_for("admin_demo.demo_control"))
+
+
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
@@ -370,9 +380,9 @@ def confirm_delete_demo(demo_id):
 
     # Render the confirmation template with the demonstration details
     return render_template(
-        "admin/demonstrations/confirm_delete.html",
-        demo=demonstration
+        "admin/demonstrations/confirm_delete.html", demo=demonstration
     )
+
 
 @admin_demo_bp.route("/accept_demo/<demo_id>", methods=["POST"])
 @login_required
@@ -382,7 +392,15 @@ def accept_demo(demo_id):
     """Accept an existing demonstration by updating its status."""
     # Ensure the request is JSON
     if request.headers.get("Content-Type") != "application/json":
-        return jsonify({"status": "ERROR", "message": "Invalid Content-Type. Expecting application/json."}), 400
+        return (
+            jsonify(
+                {
+                    "status": "ERROR",
+                    "message": "Invalid Content-Type. Expecting application/json.",
+                }
+            ),
+            400,
+        )
 
     # Get the JSON data
     request_data = request.get_json()
@@ -396,8 +414,15 @@ def accept_demo(demo_id):
     try:
         mongo.demonstrations.update_one(
             {"_id": ObjectId(demo_id)},
-            {"$set": {"approved": True}}  # You can also include other fields to update if needed
+            {
+                "$set": {"approved": True}
+            },  # You can also include other fields to update if needed
         )
-        return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
+        return (
+            jsonify(
+                {"status": "OK", "message": "Demonstration accepted successfully."}
+            ),
+            200,
+        )
     except Exception as e:
         return jsonify({"status": "ERROR", "message": str(e)}), 500

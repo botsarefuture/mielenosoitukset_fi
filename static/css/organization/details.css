@@ -21,6 +21,7 @@
   padding: 20px 20px 25px; /* Top/bottom and side padding */
   border-bottom: 3px solid #e0e0e0; /* Bottom border for separation */
   border-radius: 12px; /* Rounded corners for header */
+  margin-top: 1em;
 }
 
 .org-header h1 {

@@ -458,7 +458,9 @@
         </a>
       </li>
       {% endfor %} {% else %}
-      <li><span class="tag">#{{ demo['topic'].lower() }}</span></li>
+      {% if demo["topic"] %}
+      <li><span class="tag">#{{ demo["topic"].lower() }}</span></li>
+      {% endif %}
       {% endif %}
     </ul>
   </div>

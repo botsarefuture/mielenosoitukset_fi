@@ -334,21 +334,20 @@ def init_routes(app):
         Display details of a specific demonstration and save map coordinates if available.
         """
         # Fetch the demonstration details from MongoDB
-        demo = demonstrations_collection.find_one(
-            {"_id": ObjectId(demo_id)}
-        )
+        demo = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
 
-        if not demo or demo is None:
+        if not demo:
             flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.", 'error')
             return redirect(url_for("demonstrations"))
 
         demo = Demonstration.from_dict(demo)
 
-        if demo.approved != True and current_user.can_use("VIEW_DEMO") != True:
-            abort(401)          
+        if not demo.approved and not current_user.can_use("VIEW_DEMO"):
+            abort(401)
 
         demo = demo.to_dict(json=True)
 
+        # Check if longitude is None to trigger geocoding
         if demo.get("longitude") is None:
             # Build the address query (assuming 'address' and 'city' fields in the demo)
             address_query = f"{demo.get('address', '')}, {demo.get('city', '')}"
@@ -363,34 +362,29 @@ def init_routes(app):
                 geocode_data = response.json()
 
                 # Get latitude and longitude from the response
-                latitude = geocode_data[0]["lat"] if geocode_data else "None"
-                longitude = geocode_data[0]["lon"] if geocode_data else "None"
+                if geocode_data:
+                    latitude = geocode_data[0].get("lat", "None")
+                    longitude = geocode_data[0].get("lon", "None")
 
-                # If coordinates are fetched, save them to the database
-                if latitude and longitude:
-                    mongo.demonstrations.update_one(
-                        {"_id": ObjectId(demo_id)},
-                        {"$set": {"latitude": latitude, "longitude": longitude}},
-                    )
+                    # Save coordinates to the database if they are fetched
+                    if latitude and longitude:
+                        mongo.demonstrations.update_one(
+                            {"_id": ObjectId(demo_id)},
+                            {"$set": {"latitude": latitude, "longitude": longitude}},
+                        )
+                else:
+                    latitude, longitude = "None", "None"
             except (requests.exceptions.RequestException, IndexError):
-                # Handle errors or empty geocode data
                 latitude, longitude = "None", "None"
         else:
-            longitude = demo.get("longitude").replace(None, "None")# if not None else "None"
-            latitude = demo.get("latitude").replace(None, "None")# if not None else "None"
-
-        def convert(val):
-            #if isinstance(val, None):
-                #return "None"#
-            
-            if val is None:
-                return "None"
-
+            latitude = demo.get("latitude", "None")
+            longitude = demo.get("longitude", "None")
 
         # Pass demo details and coordinates to the template
         return render_template(
-            "detail.html", demo=demo, latitude=convert(latitude), longitude=convert(longitude)
+            "detail.html", demo=demo, latitude=latitude, longitude=longitude
         )
+
 
     @app.route("/info")
     def info():

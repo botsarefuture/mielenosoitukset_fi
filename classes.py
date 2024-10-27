@@ -16,12 +16,26 @@ class Organizer:
         self.organization_id = organization_id
         self.website = website
 
+        self.validate_organization_id() # Just a safety mechanism for shit
+
         if organization_id:
             print(organization_id)
             self.fetch_organization_details()
 
+    def validate_organization_id(self):
+        if self.organization_id:
+            db_manager = DatabaseManager().get_instance()
+            db = db_manager.get_db()
+            organization = db["organizations"].find_one({"_id": ObjectId(self.organization_id)})
+            if organization is None:
+                raise ValueError(f"Organization ID {self.organization_id} does not exist.")
+
+
     def fetch_organization_details(self):
         """Fetch the organization details from the database using the organization_id."""
+        if self.organization_id is None:
+            return
+        
         try:
             db_manager = DatabaseManager().get_instance()
             db = db_manager.get_db()
@@ -47,17 +61,18 @@ class Organizer:
 
     def to_dict(self, json=False):
         """Convert the organizer instance to a dictionary."""
+        if self.organization_id is not None:
+            organization_id = ObjectId(self.organization_id) if not json else str(self.organization_id)
+        else:
+            organization_id = ""
+
         if self.name == "":
             self.fetch_organization_details()
         return {
             "name": self.name,
             "email": self.email,
-            "organization_id": (
-                ObjectId(self.organization_id)
-                if not json
-                else str(self.organization_id)
-            ),
             "website": self.website,
+            "organization_id": organization_id
         }
 
     @classmethod
@@ -175,7 +190,6 @@ class Demonstration:
         date: str,
         start_time: str,
         end_time: str,
-        topic: str,
         facebook: str,
         city: str,
         address: str,
@@ -195,14 +209,13 @@ class Demonstration:
 
         # Validation for required fields
         self.validate_fields(
-            title, date, start_time, end_time, topic, city, address, event_type
+            title, date, start_time, end_time, city, address, event_type
         )
 
         self.title = title
         self.date = date
         self.start_time = start_time
         self.end_time = end_time
-        self.topic = topic
         self.facebook = facebook
         self.city = city
         self.address = address
@@ -219,29 +232,29 @@ class Demonstration:
                 self.organizers.append(organizer)
         self.approved = approved
         self.linked_organizations = linked_organizations or {}
-        self._id = _id
+        self._id = ObjectId(_id)
         self.tags = tags or []
 
     def validate_fields(
-        self, title, date, start_time, end_time, topic, city, address, event_type
+        self, title, date, start_time, end_time, city, address, event_type
     ):
         """
         Validate required fields for a Demonstration instance.
         """
-        if not all([title, date, start_time, topic, city, address, event_type]):
+        if not all([title, date, start_time, city, address, event_type]):
             raise ValueError(
                 "All required fields must be provided and correctly formatted."
             )
 
     def to_dict(self, *args, **kwargs):
         """Convert the demonstration instance to a dictionary."""
+        _id = str(self._id) if kwargs["json"] else ObjectId(self._id)
         return {
-            "_id": str(self._id),
+            "_id": _id,
             "title": self.title,
             "date": self.date,
             "start_time": self.start_time,
             "end_time": self.end_time,
-            "topic": self.topic,
             "facebook": self.facebook,
             "city": self.city,
             "address": self.address,
@@ -274,7 +287,6 @@ class Demonstration:
                 date=data["date"],
                 start_time=data["start_time"],
                 end_time=data["end_time"],
-                topic=data["topic"],
                 facebook=data.get("facebook"),
                 city=data["city"],
                 address=data["address"],

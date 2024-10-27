@@ -1,4 +1,8 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %}
+
+{% block title %} Ilmoita mielenosoituksesta {%endblock %}
+
+{% block styles %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/submit.css') }}"
@@ -13,6 +17,20 @@
   rel="stylesheet"
   href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css"
 />
+<style>
+  .required {
+    color: var(--primary-text-color);
+  }
+  .required-asterisk {
+    color: var(--red);
+    margin-left: 5px;
+  }
+  .optional-section {
+    display: none;
+  }
+</style>
+{% endblock %}
+{% block scripts %}
 
 <script>
   let editor;
@@ -26,45 +44,82 @@
       console.error(error);
     });
 
-  
-document.querySelector("#submit").addEventListener("click", async (event) => {
-  event.preventDefault(); // Prevent form submission until we set the description
+  document.querySelector("#submit").addEventListener("click", async (event) => {
+    event.preventDefault(); // Prevent form submission until we set the description
 
-  const editorData = editor.getData();
-  document.getElementById("description").value = editorData; // Set value instead of innerHTML
+    const editorData = editor.getData();
+    document.getElementById("description").value = editorData; // Set value instead of innerHTML
 
-  const form = document.querySelector("form");
-  const formData = new FormData(form);
+    const form = document.querySelector("form");
+    const formData = new FormData(form);
 
-  try {
+    try {
       // Send the form data using fetch and wait for the response
       const response = await fetch(form.action, {
-          method: form.method,
-          body: formData,
-          redirect: 'manual' // Prevent automatic redirects
+        method: form.method,
+        body: formData,
+        redirect: "manual", // Prevent automatic redirects
       });
 
       // Check if the response status is a 3xx (indicating a redirect)
       if (response.status >= 300 && response.status < 400) {
-          const locationHeader = response.headers.get("location");
-          if (locationHeader) {
-              // Redirect the user to the URL in the 'Location' header
-              window.location.href = locationHeader;
-          } else {
-            alert("ERROR!");
-          }
+        const locationHeader = response.headers.get("location");
+        if (locationHeader) {
+          // Redirect the user to the URL in the 'Location' header
+          window.location.href = locationHeader;
+        } else {
+          alert("ERROR!");
+        }
       }
-  } catch (e) {
+    } catch (e) {
       // Handle network errors
       console.error("Network error:", e);
       alert("There was an issue submitting the form. Please try again.");
-  }
-});
-
+    }
+  });
 </script>
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  let organizerCount = 0;
 
+  function addOrganizer() {
+    organizerCount++;
+    const container = document.getElementById("organizers-container");
+    const organizerDiv = document.createElement("div");
+    organizerDiv.className = "organizer";
+
+    organizerDiv.innerHTML = `
+      <div class="organizer-entry">
+        <hr>
+        <p>Järjestäjätahon...</p>
+        <label for="organizer_name_${organizerCount}">Nimi<span class="required-asterisk">*</span></label>
+        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="Järjestäjän nimi" required>
+
+        <label for="organizer_website_${organizerCount}">Verkkosivut</label>
+        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+
+        <label for="organizer_email_${organizerCount}">Sähköpostiosoite</label>
+        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
+      </div>
+    `;
+
+    container.appendChild(organizerDiv);
+  }
+
+  document.getElementById("type").addEventListener("change", function () {
+    var marchRouteContainer = document.getElementById("march-route-container");
+    if (this.value === "marssi") {
+      marchRouteContainer.style.display = "block";
+    } else {
+      marchRouteContainer.style.display = "none";
+    }
+  });
+</script>
+
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+{% endblock %}
+{% block content %}
 <div class="container container-main-content">
   <h1>Ilmoita mielenosoituksesta</h1>
 
@@ -91,7 +146,6 @@ document.querySelector("#submit").addEventListener("click", async (event) => {
       >Aihe<span class="required-asterisk">*</span></label
     >
     <input type="text" id="topic" name="topic" placeholder="Aihe" required />
-  
 
     <label for="description">Kuvaus</label>
     <div>
@@ -119,7 +173,6 @@ document.querySelector("#submit").addEventListener("click", async (event) => {
         type="module"
         src="{{ url_for('static', filename='js/ck.js') }}"
       ></script>
-      
     </div>
     <input type="hidden" id="description" name="description" />
 
@@ -200,56 +253,4 @@ document.querySelector("#submit").addEventListener("click", async (event) => {
     <button id="submit" type="submit" class="submit-button">Lähetä</button>
   </form>
 </div>
-<script>
-  let organizerCount = 0;
-
-  function addOrganizer() {
-    organizerCount++;
-    const container = document.getElementById("organizers-container");
-    const organizerDiv = document.createElement("div");
-    organizerDiv.className = "organizer";
-
-    organizerDiv.innerHTML = `
-      <div class="organizer-entry">
-        <hr>
-        <p>Järjestäjätahon...</p>
-        <label for="organizer_name_${organizerCount}">Nimi<span class="required-asterisk">*</span></label>
-        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="Järjestäjän nimi" required>
-
-        <label for="organizer_website_${organizerCount}">Verkkosivut</label>
-        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
-
-        <label for="organizer_email_${organizerCount}">Sähköpostiosoite</label>
-        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
-      </div>
-    `;
-
-    container.appendChild(organizerDiv);
-  }
-
-  document.getElementById("type").addEventListener("change", function () {
-    var marchRouteContainer = document.getElementById("march-route-container");
-    if (this.value === "marssi") {
-      marchRouteContainer.style.display = "block";
-    } else {
-      marchRouteContainer.style.display = "none";
-    }
-  });
-</script>
-
-<style>
-  .required {
-    color: #333;
-  }
-  .required-asterisk {
-    color: red;
-    margin-left: 5px;
-  }
-  .optional-section {
-    display: none;
-  }
-</style>
-
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
-
 {% endblock %}

@@ -7,14 +7,6 @@
     margin-top: 20px;
 }
 
-/* Table header styling */
-.user-table-header {
-    display: table-row;
-    font-weight: bold;
-    background-color: #f4f4f4;
-    text-align: left;
-}
-
 .table-cell {
     display: table-cell;
     padding: 10px;
@@ -28,7 +20,7 @@
 }
 
 .user-table-row:nth-child(even) {
-    background-color: #f9f9f9;
+    background: var(--primary-color);
 }
 
 /* Removed specific styling for .actions-cell to avoid conflict */
@@ -43,19 +35,19 @@
 .search-input {
     padding: 8px;
     font-size: 14px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     border-radius: 4px 0 0 4px;
     width: 250px;
     outline: none;
 }
 
 .search-input:focus {
-    border-color: #007bff;
+    border-color: var(--focus-color);
 }
 
 .search-button {
     padding: 8px 16px;
-    background-color: #28a745;
+    background: #28a745;
     border: none;
     border-radius: 0 4px 4px 0;
     color: white;
@@ -64,16 +56,16 @@
 }
 
 .search-button:hover {
-    background-color: #218838;
+    background: #218838;
 }
 
 /* No users message styling */
 .no-users .table-cell {
     text-align: center;
     font-style: italic;
-    color: #666;
+    color: var(--primary-color);
     padding: 20px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
 }
 
 /* Removed redundant button styles to avoid conflict with admin_actions_cell.css */

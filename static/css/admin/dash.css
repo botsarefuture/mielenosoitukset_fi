@@ -1,0 +1,30 @@
+
+
+.create-demo-button,
+.btn-create {
+	padding: 20px;
+    background: var(--admin-create-btn-bg) !important;
+    width: auto !important;
+    margin-bottom: 20px;
+    text-align: start;
+}
+
+.create-demo-button:hover,
+.btn-create:hover {
+    background: var(--admin-create-btn-hover-bg) !important;
+}
+
+.button i {
+    margin-right: 0.5rem; /* Space between icon and text */
+}
+
+.no-results {
+    color: var(--red-dark); 
+    font-weight: bold; 
+    background: var(--red-lighter); 
+    padding: 20px; 
+    border: 1px dashed var(--red-light); /* Dashed border for emphasis */
+    border-radius: 5px;
+    text-align: center;
+    margin: 1rem 0; /* Margin for separation */
+}

@@ -1,5 +1,5 @@
 #create {
-    background-color: #fff;
+    background: #fff;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -28,17 +28,17 @@
 
 .btn {
     display: inline-block;
-    background-color: #007bff;
+    background: #007bff;
     color: white;
     padding: 10px 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background 0.3s;
 }
 
 .btn:hover {
-    background-color: #0056b3;
+    background: #0056b3;
 }
 
 .form-buttons {

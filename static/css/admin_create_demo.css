@@ -2,7 +2,7 @@
 
 /* Form styling */
 form {
-    background-color: #fff;
+    background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     padding: 20px;
@@ -33,7 +33,7 @@ form {
 }
 
 .form-control:focus {
-    border-color: #007bff;
+    border-color: var(--focus-color);
     outline: none;
 }
 
@@ -44,7 +44,7 @@ form {
 
 /* Button styling */
 .submit-button {
-    background-color: #007bff;
+    background: var(--primary-button-color);
     border: none;
     color: #fff;
     padding: 10px 20px;
@@ -54,18 +54,18 @@ form {
     font-size: 16px;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background 0.3s;
 }
 
 .submit-button:hover {
-    background-color: #0056b3;
+    background: var(--primary-button-hover-color) !important;
 }
 
 /* Dynamic entry fields styling */
 #manual-entry-fields {
     margin-top: 20px;
     padding: 15px;
-    background-color: #f9f9f9;
+    background: #f9f9f9;
     border: 1px solid #ddd;
     border-radius: 4px;
 }

@@ -1,72 +1,112 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} {% import 'macros.html' as macros %} {% block scripts
+%}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% endblock %} {% block styles %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/index.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/buttons.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/demo.css') }}"
+/>
+{% endblock %} {% block content %}
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">
-
-<!-- Container for the welcome message and description -->
-<div class="container-welcome container-centered">
-    <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
-    <p>Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen. <br> Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.</p>
+<div class="container-main-content">
+  {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES")
+  %}
+  <!-- Christmas-Themed Section -->
+  <section class="christmas-section" style="display: none">
+    <h2 style="color: #ff0000">🎄 Hyvää joulua! 🎄</h2>
+    <p style="color: #006400">
+      Tervetuloa viettämään joulun taikaa ja lämpöä! Liity mukaan juhlistamaan
+      yhteisöllisyyttä ja rakkautta.
+    </p>
     <div class="buttons-div">
-        <a class="button button-primary" href="{{ url_for('info') }}">Lue lisää</a>
-        <a class="button button-primary" href="{{ url_for('submit') }}">Ilmoita mielenosoituksesta</a>
+      <a class="button button-primary" href="{{ url_for('celebrate') }}"
+        >Juhli kanssamme!</a
+      >
     </div>
+  </section>
+  {% endif %}
+
+  <header class="container-welcome container-centered">
+    <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
+    <p>
+      Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri
+      Suomen. <br />Pyrimme tekemään osallistumisesta mielenosoituksiin
+      mahdollisimman vaivatonta ja sujuvaa.
+    </p>
+    <div class="buttons-div">
+      <a class="button button-primary" href="{{ url_for('info') }}"
+        >Lue lisää</a
+      >
+      <a class="button button-primary" href="{{ url_for('submit') }}"
+        >Ilmoita mielenosoituksesta</a
+      >
+    </div>
+  </header>
+
+  <!--
+     Search Form
+    <section class="container-form search-form">
+        <h3 class="admin-section-title" style="margin-bottom: 0.5em;">Hae mielenosoituksia</h3>
+        <form action="{{ url_for('index') }}" method="GET">
+            <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Hae mielenosoituksia" required>
+            <button type="submit">Hae</button>
+        </form>
+    </section>-->
+
+  <!-- Pinned Demonstrations Section -->
+  {% if pinned_demonstrations %}
+  <section
+    style="
+      display: flex;
+      flex-direction: column;
+      align-content: center;
+      width: 100%;
+      align-items: center;
+    "
+  >
+    <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
+      Suosittelemme
+    </h2>
+    <div class="container-grid">
+      {% for demo in pinned_demonstrations %} {{ macros.demo_card(demo) }} {%
+      endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Featured Demonstrations Section -->
+  <section style="
+      display: flex;
+      flex-direction: column;
+      align-content: center;
+      width: 100%;
+      align-items: center;
+    "
+  >
+    <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
+      Esitellyt mielenosoitukset
+    </h2>
+    <div class="container-grid" style="width: 100%">
+      {% if demonstrations %} {% for demo in demonstrations[:6] %} {{
+      macros.demo_card(demo) }} {% endfor %} {% else %}
+      <div class="grid-item">Ei mielenosoituksia näytettäväksi.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Button to View All Demonstrations -->
+  <div class="buttons-div">
+    <a class="button button-primary" href="{{ url_for('demonstrations') }}"
+      >Näytä kaikki mielenosoitukset</a
+    >
+  </div>
 </div>
-
-<!-- Search Form -->
-<form action="{{ url_for('index') }}" method="GET" class="container-form">
-    <input type="text" name="search" placeholder="Hae mielenosoituksia...">
-    <button type="submit">Hae</button>
-</form>
-
-<!-- Pinned Demonstrations Section -->
-{% if pinned_demonstrations %}
-<h2>Suosittelemme</h2>
-<ul class="demonstrations-list">
-    {% for demo in pinned_demonstrations %}
-    <li>
-        <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="demo-link">
-            <div class="demo-container">
-                <h3>{{ demo['title'] }}</h3>
-                <small>
-                    {{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}<br>
-                    Aihe: {{ demo['topic'] }}<br>
-                    Sijainti: {{ demo['address'] }}, {{ demo['city'] }}
-                </small>
-            </div>
-        </a>
-    </li>
-    {% endfor %}
-</ul>
-{% endif %}
-
-<!-- Featured Demonstrations Section -->
-<h2>Esitellyt mielenosoitukset</h2>
-<ul class="demonstrations-list">
-    {% if demonstrations %}
-    {% for demo in demonstrations[:5] %}
-    <li>
-        <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="demo-link">
-            <div class="demo-container">
-                <h3>{{ demo['title'] }}</h3>
-                <small>
-                    {{ demo['date'] }} | {{ demo['start_time'] }} - {{ demo['end_time'] }}<br>
-                    Aihe: {{ demo['topic'] }}<br>
-                    Sijainti: {{ demo['address'] }}, {{ demo['city'] }}
-                </small>
-            </div>
-        </a>
-    </li>
-    {% endfor %}
-    {% else %}
-    <li>Ei mielenosoituksia näytettäväksi.</li>
-    {% endif %}
-</ul>
-
-<!-- Button to View All Demonstrations -->
-<div class="buttons-div">
-    <a class="button button-primary" href="{{ url_for('demonstrations') }}">Näytä kaikki mielenosoitukset</a>
-</div>
-
 {% endblock %}

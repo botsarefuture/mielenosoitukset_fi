@@ -1,0 +1,40 @@
+{% macro render_table(items, config) %}
+    {% if items %}
+    <div class="table-container" style="background: none;">
+        <table>
+            <thead>
+                <tr>
+                    {% for column in config.columns %}
+                        <th>{{ column.label }}</th>
+                    {% endfor %}
+                    <th class="actions-cell-header">Toiminnot</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    {% for column in config.columns %}
+                        <td>{{ item[column.key] }}</td>
+                    {% endfor %}
+                    <td class="actions-cell">
+                        <td class="actions-cell">
+                            {% for action in config.actions %}
+                                <a href="{{ url_for(action.url, demo_id=item['_id']) }}" class="button {{ action.label | lower }}-button">
+                                    <i class="fas fa-{{ action.icon }}"></i>{{ action.label }}
+                                </a>
+                            {% endfor %}
+                        </td>
+                        
+                    </td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-orgs">
+        <p>{{ config.name }} ei löytynyt.</p>
+    </div>
+    {% endif %}
+{% endmacro %}

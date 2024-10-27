@@ -5,13 +5,12 @@
   max-width: 600px;
   margin: 20px auto;
   padding: 20px;
-  background-color: #ffffff;
+  background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
-  font-family: "Montserrat", sans-serif;
   font-size: 24px;
   color: #0033a0;
   margin-bottom: 20px;
@@ -20,7 +19,6 @@ h1 {
 /* Form elements */
 form label {
   display: block;
-  font-family: "Roboto", sans-serif;
   font-size: 16px;
   color: #333333;
   margin-bottom: 5px;
@@ -52,22 +50,22 @@ form textarea:focus {
 .submit-button {
   display: inline-block;
   padding: 10px 20px;
-  background-color: #0033a0;
+  background: #0033a0;
   color: #ffffff;
   border: none;
   border-radius: 5px;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .submit-button:hover {
-  background-color: #002580;
+  background: #002580;
   transform: scale(1.05);
 }
 
 .submit-button:active {
-  background-color: #001f4d;
+  background: #001f4d;
 }
 
 /* Back link */
@@ -76,7 +74,6 @@ form textarea:focus {
   margin-top: 20px;
   color: #009b77;
   text-decoration: none;
-  font-family: "Roboto", sans-serif;
   font-size: 16px;
 }
 

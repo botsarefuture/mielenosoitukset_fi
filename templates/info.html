@@ -1,39 +1,160 @@
-{% extends "base.html" %}
+{% extends "base.html" %} {% block title %}Tietoa sivustosta -
+Mielenosoitukset.fi{% endblock %} {% block styles %}
+<style>
+  :root {
+    /* Colors */
+    --info-background: #f7f8fa; /* Soft, clean background */
+    --info-text-color: #333; /* Dark, readable text */
+    --info-accent-color: #0033a0; /* Primary blue for accents */
+    --info-secondary-color: #f0f0f0; /* Light gray for secondary sections */
+    --info-link-color: #ff6600; /* Bright orange for links */
+    --info-link-hover-color: #cc5200; /* Darker orange on hover */
+    --info-border-color: #ddd; /* Subtle borders */
+    --info-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for elements */
+  }
 
-{% block title %}Tietoa sivustosta - Mielenosoitukset.fi{% endblock %}
+  .info-page {
+    background: var(--container-background);
+    color: var(--primary-text-color);
+    padding: 20px;
+    line-height: 1.6;
+  }
 
-{% block content %}
-<section class="info-section">
-    <div class="container">
-        <h1>Tietoa Mielenosoitukset.fi -sivustosta</h1>
-        <p>Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja
-            yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit
-            seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.</p>
+  .info-page p {
+    margin-bottom: 20px;
+  }
 
-        <h2>Mikä on Mielenosoitukset.fi?</h2>
-        <p>Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille
-            mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa,
-            osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.</p>
+  .info-page a {
+    color: var(--link-color);
+    text-decoration: underline;
+  }
 
-        <h2>Kuinka ilmoitan mielenosoituksesta?</h2>
-        <p>Voit ilmoittaa oman mielenosoituksesi täyttämällä <a href="{{ url_for('submit') }}">ilmoituslomakkeen</a>.
-            Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja
-            täydellistä tietoa tapahtumastasi.</p>
+  .info-page a:hover {
+    color: var(--link-hover-color);
+  }
 
-        <h2>Kuka ylläpitää sivustoa?</h2>
-        <p>Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa
-            mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee
-            monimuotoista ja vapaata mielipiteenilmaisua kaikille.</p>
+  .info-box {
+    background: var(--secondary-color);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    box-shadow: var(--box-shadow);
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
 
-        <h2>Yhteystiedot</h2>
-        <p>Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit lähettää sähköpostia
-            osoitteeseen <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> tai täyttää <a
-                href="{{ url_for('contact') }}">yhteydenottolomakkeen</a>.</p>
+  .info-box strong {
+    color: var(--primary-strong-text-color);
+  }
 
-        <h2>Yksityisyys ja evästeet</h2>
-        <p>Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa
-            evästeiden käytöstä ja tietosuojasta löydät <a
-                href="{{ url_for('privacy') }}">yksityisyydensuojakäytännöstämme</a>.</p>
+  .info-list {
+    list-style-type: none;
+    padding-left: 0;
+  }
+
+  .info-list li {
+    background: var(--secondary-color);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: var(--box-shadow);
+  }
+
+  /* Special Button Styling */
+  .info-button {
+    background: var(--primary-button-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .info-button:hover {
+    background: var(--primary-button-hover-color);
+  }
+
+  /* Responsive */
+  @media screen and (max-width: 768px) {
+    .info-page {
+      padding: 15px;
+    }
+
+    .info-box {
+      padding: 15px;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<section class="info-page info-section">
+  <div class="container">
+    <h1 class="title">Tietoa Mielenosoitukset.fi -sivustosta</h1>
+    <p>
+      Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa
+      järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat.
+      Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit
+      seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi
+      helposti ja nopeasti.
+    </p>
+
+    <div class="info-box">
+      <h2 class="subtitle">Mikä on Mielenosoitukset.fi?</h2>
+      <p>
+        Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja
+        neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän
+        tavoitteemme on auttaa kansalaisia löytämään tietoa, osallistumaan
+        aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata
+        mielipiteenilmaisua.
+      </p>
     </div>
+
+    <div class="info-box">
+      <h2 class="subtitle">Kuinka ilmoitan mielenosoituksesta?</h2>
+      <p>
+        Voit ilmoittaa oman mielenosoituksesi täyttämällä
+        <a class="link" href="{{ url_for('submit') }}">ilmoituslomakkeen</a>.
+        Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut
+        osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi.
+      </p>
+    </div>
+
+    <div class="info-box">
+      <h2 class="subtitle">Kuka ylläpitää sivustoa?</h2>
+      <p>
+        Mielenosoitukset.fi ylläpidetään riippumattomana projektina
+        vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen
+        puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan,
+        joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.
+      </p>
+    </div>
+
+    <div class="info-box">
+      <h2 class="subtitle">Yhteystiedot</h2>
+      <p>
+        Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä
+        ylläpitäjiin, voit lähettää sähköpostia osoitteeseen
+        <a class="link" href="mailto:tuki@mielenosoitukset.fi"
+          >tuki@mielenosoitukset.fi</a
+        >
+        tai täyttää
+        <a class="link" href="{{ url_for('contact') }}">yhteydenottolomakkeen</a
+        >.
+      </p>
+    </div>
+
+    <div class="info-box">
+      <h2 class="subtitle">Yksityisyys ja evästeet</h2>
+      <p>
+        Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme
+        sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja
+        tietosuojasta löydät
+        <a class="link" href="{{ url_for('privacy') }}"
+          >yksityisyydensuojakäytännöstämme</a
+        >.
+      </p>
+    </div>
+  </div>
 </section>
 {% endblock %}

@@ -3,16 +3,16 @@
     max-width: 400px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 40px; /* Add padding for spacing */
-    background-color: #ffffff; /* White background */
-    border: 1px solid #ddd; /* Light gray border */
+    background: var(--container-background); /* White background */
+    border: 1px solid var(--border-color); /* Light gray border */
     border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    box-shadow: var(--box-shadow); /* Subtle shadow for depth */
     box-sizing: border-box;
     text-align: center; /* Center align text */
 }
 
 h1 {
-    color: #0033A0; /* Dark Blue */
+    color: var(--header-color); /* Dark Blue */
     margin-bottom: 20px; /* Space below the heading */
     font-size: 24px; /* Responsive font size */
 }
@@ -25,40 +25,41 @@ label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px; /* Space below label */
-    color: #333; /* Dark gray for better readability */
+    color: var(--primary-text-color); /* Dark gray for better readability */
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-    width: 100%; /* Full width of the container */
-    padding: 10px; /* Padding inside the input fields */
-    border: 1px solid #ccc; /* Light gray border */
-    border-radius: 4px; /* Rounded corners for inputs */
-    box-sizing: border-box;
-    font-size: 16px; /* Increase font size for readability */
+input[type="text"], input[type="email"], input[type="password"] {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	box-sizing: border-box;
+	font-size: 16px;
+	background: var(--input-background);
+	color: var(--primary-text-color);
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-    border-color: #0033A0; /* Dark blue border on focus */
+    border-color: var(--focus-color); /* Dark blue border on focus */
     outline: none; /* Remove default outline */
 }
 
 button[type="submit"] {
-    background-color: #0033A0; /* Dark Blue */
-    color: #ffffff; /* White text */
+    background: var(--primary-button-color); /* Dark Blue */
+    color: var(--primary-button-text-color); /* White text */
     border: none;
     padding: 15px 20px; /* Padding inside the button */
     border-radius: 4px; /* Rounded corners */
     font-size: 16px; /* Font size for the button text */
     cursor: pointer; /* Pointer cursor on hover */
-    transition: background-color 0.3s ease; /* Smooth transition */
+    transition: background 0.3s ease; /* Smooth transition */
 }
 
 button[type="submit"]:hover {
-    background-color: #002080; /* Darker blue on hover */
+    background: var(--primary-button-hover-color); /* Darker blue on hover */
+    color: var(--primary-button-hover-text-color);
 }
 
 .forgot-password {
@@ -67,22 +68,25 @@ button[type="submit"]:hover {
 }
 
 .forgot-password a {
-    color: #0033A0;
+    color: var(--link-color);
     text-decoration: none;
 }
 
 .forgot-password a:hover {
     text-decoration: underline;
+    color: var(--link-hover-color);
 }
 
 .register-link a {
-    color: #0033A0; /* Match the color with other links */
+    color: var(--link-color); /* Match the color with other links */
     text-decoration: none;
     font-weight: bold;
 }
 
 .register-link a:hover {
     text-decoration: underline;
+    color: var(--link-hover-color);
+
 }
 
 /* Responsive Design */
@@ -95,7 +99,7 @@ button[type="submit"]:hover {
 
 /* Accessibility Enhancements */
 input:focus {
-    outline: 2px solid #0033A0; /* Outline for accessibility */
+    outline: 2px solid var(--focus-color); /* Outline for accessibility */
 }
 
 @media (prefers-reduced-motion: reduce) {

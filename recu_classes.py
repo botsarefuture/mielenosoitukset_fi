@@ -57,7 +57,7 @@ class RecurringDemonstration:
         title: str,
         start_time: datetime,
         end_time: datetime,
-        topic: str,
+        #topic: str,
         facebook: str,
         city: str,
         address: str,
@@ -72,7 +72,7 @@ class RecurringDemonstration:
         self.title = title
         self.start_time = start_time
         self.end_time = end_time
-        self.topic = topic
+        #self.topic = topic
         self.facebook = facebook
         self.city = city
         self.address = address
@@ -120,7 +120,7 @@ class RecurringDemonstration:
         title: Optional[str] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-        topic: Optional[str] = None,
+        #topic: Optional[str] = None,
         facebook: Optional[str] = None,
         city: Optional[str] = None,
         address: Optional[str] = None,
@@ -136,8 +136,8 @@ class RecurringDemonstration:
             self.start_time = start_time
         if end_time:
             self.end_time = end_time
-        if topic:
-            self.topic = topic
+        #if topic:
+        #    self.topic = topic
         if facebook:
             self.facebook = facebook
         if city:
@@ -159,7 +159,7 @@ class RecurringDemonstration:
             "title": self.title,
             "start_time": self.start_time.strftime("%d.%m.%Y %H:%M"),
             "end_time": self.end_time.strftime("%d.%m.%Y %H:%M"),
-            "topic": self.topic,
+            #"topic": self.topic,
             "facebook": self.facebook,
             "city": self.city,
             "address": self.address,
@@ -197,7 +197,7 @@ class RecurringDemonstration:
             title=data["title"],
             start_time=start_time,
             end_time=end_time,
-            topic=data["topic"],
+            #topic=data["topic"],
             facebook=data["facebook"],
             city=data["city"],
             address=data["address"],

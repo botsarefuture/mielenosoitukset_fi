@@ -1,4 +1,4 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% block title %} {{ demo['title'] }} {% endblock %}
 {% block meta %}
 <!-- General Meta Tags -->
@@ -11,31 +11,38 @@
 
 <!-- Open Graph Meta Tags -->
 <meta property="og:title" content="{{ demo['title'] if demo['title'] else 'Mielenosoitus' }}" />
-<meta property="og:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
-<meta property="og:image" content="{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}" />
+<meta property="og:description"
+  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta property="og:image"
+  content="{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}" />
 <meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
 <meta property="og:locale" content="fi_FI" />
 <meta property="og:determiner" content="the" />
-<meta property="og:updated_time" content="{{ demo['updated_time'] if demo['updated_time'] else '2024-01-01T00:00:00' }}" />
+<meta property="og:updated_time"
+  content="{{ demo['updated_time'] if demo['updated_time'] else '2024-01-01T00:00:00' }}" />
 <meta property="og:see_also" content="{{ demo['related_links'] if demo['related_links'] else '' }}" />
 
 <!-- Twitter Card Meta Tags -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="{{ demo['title'] if demo['title'] else 'Mielenosoitus' }}" />
-<meta name="twitter:description" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
-<meta name="twitter:image" content="{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}" />
+<meta name="twitter:description"
+  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+<meta name="twitter:image"
+  content="{{ demo['img'] if demo['img'] else url_for('static', filename='img/e.png', _external=True) }}" />
 <meta name="twitter:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta name="twitter:site" content="@Mielenosoitukset" />
 <meta name="twitter:creator" content="@Mielenosoitukset" />
-<meta name="twitter:image:alt" content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen kuva' }}" />
+<meta name="twitter:image:alt"
+  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen kuva' }}" />
 
 <!-- Facebook Open Graph App ID -->
 <meta property="fb:app_id" content="{{ demo['fb_app_id'] if demo['fb_app_id'] else '' }}" />
 
 <!-- Additional Social Media Meta Tags -->
-<meta property="article:author" content="{{ demo['organizers'][0]["name"] if demo['organizers'] else 'Tuntematon kirjoittaja' }}" />
+<meta property="article:author" content="{{ demo['organizers'][0][" name"] if demo['organizers']
+  else 'Tuntematon kirjoittaja' }}" />
 <meta property="article:section" content="{{ demo['section'] if demo['section'] else 'Tapahtumat' }}" />
 <meta property="article:tag" content="{{ demo['tags'] if demo['tags'] else 'mielenosoitus, tapahtuma' }}" />
 
@@ -80,8 +87,8 @@
 }
 </script>
 {% endblock %}
- {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}"/>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
 <style>
   /* Main Container */
   #main {
@@ -175,19 +182,22 @@
 
   /* Organizer Info */
   .organizer-info {
-    background: var(
-      --background
-    ); /* Light background for contrast */
-    border: 1px solid var(--border-color); /* Border to distinguish each organizer */
+    background: var(--background);
+    /* Light background for contrast */
+    border: 1px solid var(--border-color);
+    /* Border to distinguish each organizer */
     border-radius: 8px;
-    padding: 15px; /* Add padding for better spacing */
+    padding: 15px;
+    /* Add padding for better spacing */
     margin-bottom: 20px;
-    transition: transform 0.2s; /* Smooth scaling effect on hover */
+    transition: transform 0.2s;
+    /* Smooth scaling effect on hover */
     box-shadow: var(--box-shadow);
   }
 
   .organizer-info:hover {
-    transform: scale(1.02); /* Slightly enlarge on hover */
+    transform: scale(1.02);
+    /* Slightly enlarge on hover */
   }
 
   .organizer-info a {
@@ -268,14 +278,17 @@
   .organizers-list {
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Add spacing between organizers */
+    gap: 15px;
+    /* Add spacing between organizers */
   }
 
   .button-container {
     display: flex;
     flex-direction: row;
-    justify-content: space-between; /* Evenly spaces buttons */
-    padding: 20px; /* Optional: adds some padding around the container */
+    justify-content: space-between;
+    /* Evenly spaces buttons */
+    padding: 20px;
+    /* Optional: adds some padding around the container */
     gap: 5px;
   }
 
@@ -297,65 +310,82 @@
     border-radius: 5px;
     cursor: pointer;
   }
+
   .tag {
-    padding: 8px 12px; /* Padding around the tag */
+    padding: 8px 12px;
+    /* Padding around the tag */
     margin: auto;
-    background: var(--blue-light); /* Background color for tags */
-    color: #fff; /* White text color for contrast */
-    border-radius: 100px; /* Fully rounded corners for tags */
-    display: inline-block; /* Make tags inline-block for padding and margin */
-    transition: background 0.3s ease; /* Smooth transition for hover effect */
-}
+    background: var(--blue-light);
+    /* Background color for tags */
+    color: #fff;
+    /* White text color for contrast */
+    border-radius: 100px;
+    /* Fully rounded corners for tags */
+    display: inline-block;
+    /* Make tags inline-block for padding and margin */
+    transition: background 0.3s ease;
+    /* Smooth transition for hover effect */
+  }
 
-.tag:hover {
-    background: var(--blue-dark); /* Darker color on hover */
-}
+  .tag:hover {
+    background: var(--blue-dark);
+    /* Darker color on hover */
+  }
 
-/* Topics styling */
-.topics {
-    margin: 10px 0; /* Add margin for spacing */
+  /* Topics styling */
+  .topics {
+    margin: 10px 0;
+    /* Add margin for spacing */
     display: flex;
     align-content: space-evenly;
-}
+  }
 
-.topics p {
-    font-size: 1.25rem; /* Larger font size for the title */
-    font-weight: bold; /* Bold text for emphasis */
-    margin-bottom: 10px; /* Spacing below the title */
-}
+  .topics p {
+    font-size: 1.25rem;
+    /* Larger font size for the title */
+    font-weight: bold;
+    /* Bold text for emphasis */
+    margin-bottom: 10px;
+    /* Spacing below the title */
+  }
 
-.topics ul {
-    list-style: none; /* Remove default list styles */
-    padding: 0; /* Remove default padding */
-    margin: 10px 0; /* Add margin for spacing */
-    display: flex; /* Use flexbox for tags */
-    flex-wrap: wrap; /* Allow tags to wrap to the next line */
-}
+  .topics ul {
+    list-style: none;
+    /* Remove default list styles */
+    padding: 0;
+    /* Remove default padding */
+    margin: 10px 0;
+    /* Add margin for spacing */
+    display: flex;
+    /* Use flexbox for tags */
+    flex-wrap: wrap;
+    /* Allow tags to wrap to the next line */
+  }
 
-.topics li {
-    margin: 5px; /* Add margin between tags */
-}
+  .topics li {
+    margin: 5px;
+    /* Add margin between tags */
+  }
 
-.topics ul {
-	list-style: none;
-	padding: 0;
-	margin: 10px 0;
-	display: flex;
-	flex-wrap: wrap;
-	flex-direction: row;
-	justify-content: space-evenly;
-	align-content: space-evenly;
-}
+  .topics ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-content: space-evenly;
+  }
 
-.topics {
-	margin: 10px 0;
-	display: flex;
-	/* align-content: space-evenly; */
-	align-items: flex-start;
-	/* justify-content: space-evenly; */
-	flex-direction: column;
-}
-
+  .topics {
+    margin: 10px 0;
+    display: flex;
+    /* align-content: space-evenly; */
+    align-items: flex-start;
+    /* justify-content: space-evenly; */
+    flex-direction: column;
+  }
 </style>
 {% endblock %}
 
@@ -366,40 +396,40 @@
 
 <div id="demo-toolbox" class="toolbox-sticky">
   <div class="toolbox-header">
-      <h3>Työkalupakki</h3>
-      <button class="toggle-toolbox" onclick="toggleToolbox()">
-          <i class="fa fa-times"></i>
-      </button>
+    <h3>Työkalupakki</h3>
+    <button class="toggle-toolbox" onclick="toggleToolbox()">
+      <i class="fa fa-times"></i>
+    </button>
   </div>
 
   <div id="toolbox-buttons" class="toolbox-buttons">
-      <!-- Approve Button -->
-      {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
-      <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
-          <i class="fa-solid fa-check"></i> Hyväksy
-      </button>
-      {% endif %}
+    <!-- Approve Button -->
+    {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
+    <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
+      <i class="fa-solid fa-check"></i> Hyväksy
+    </button>
+    {% endif %}
 
-      <!-- Edit Button -->
-      {% if current_user.can_use("EDIT_DEMO") %}
-      <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">
-          <i class="fas fa-edit"></i> Muokkaa
-      </a>
-      {% endif %}
+    <!-- Edit Button -->
+    {% if current_user.can_use("EDIT_DEMO") %}
+    <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">
+      <i class="fas fa-edit"></i> Muokkaa
+    </a>
+    {% endif %}
 
-      <!-- View Button -->
-      {% if current_user.can_use("VIEW_DEMO") %}
-      <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
-          <i class="fa-solid fa-eye"></i> Katsele
-      </a>
-      {% endif %}
+    <!-- View Button -->
+    {% if current_user.can_use("VIEW_DEMO") %}
+    <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
+      <i class="fa-solid fa-eye"></i> Katsele
+    </a>
+    {% endif %}
 
-      <!-- Delete Button -->
-      {% if current_user.can_use("DELETE_DEMO") %}
-      <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
-          <i class="fas fa-trash-alt"></i> Poista
-      </button>
-      {% endif %}
+    <!-- Delete Button -->
+    {% if current_user.can_use("DELETE_DEMO") %}
+    <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+      <i class="fas fa-trash-alt"></i> Poista
+    </button>
+    {% endif %}
   </div>
 </div>
 
@@ -418,67 +448,55 @@
 
   {% endif %}
   <h1>{{ demo['title'] }}</h1>
-    <div class="topics">
-      <ul>
-        {% if demo["tags"] and demo["tags"]|length > 0 %} {% for tag in
-        demo["tags"] %}
-        <li>
-          <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
-            <span class="tag">#{{ tag }}</span>
-        </a>        </li>
-        {% endfor %} {% else %}
-        <li><span class="tag">#{{ demo['topic'].lower() }}</span></li>
-        {% endif %}
-      </ul>
-    </div>
+  <div class="topics">
+    <ul>
+      {% if demo["tags"] and demo["tags"]|length > 0 %} {% for tag in
+      demo["tags"] %}
+      <li>
+        <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
+          <span class="tag">#{{ tag }}</span>
+        </a>
+      </li>
+      {% endfor %} {% else %}
+      {% if demo["topic"] %}
+      <li><span class="tag">#{{ demo["topic"].lower() }}</span></li>
+      {% endif %}
+      {% endif %}
+    </ul>
+  </div>
 
-    <!-- Social Media Share Buttons -->
-    <div class="button-container">
-      <a
-        href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-        target="_blank"
-        class="facebook-button button"
-      >
-        Jaa Facebookissa
-      </a>
-      <a
-        href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-        target="_blank"
-        class="twitter-button button"
-      >
-        Jaa Xssä
-      </a>
-      <a
-        href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-        target="_blank"
-        class="linkedin-button button"
-      >
-        Jaa LinkedInissä
-      </a>
-    </div>
+  <!-- Social Media Share Buttons -->
+  <div class="button-container">
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+      target="_blank" class="facebook-button button">
+      Jaa Facebookissa
+    </a>
+    <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
+      target="_blank" class="twitter-button button">
+      Jaa Xssä
+    </a>
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
+      target="_blank" class="linkedin-button button">
+      Jaa LinkedInissä
+    </a>
+  </div>
 
   {% if demo['description'] %}
-  <div
-    class="container"
-    style="
+  <div class="container" style="
       margin-top: 20px;
       padding: 20px;
       background: #ffffff;
       border-radius: 8px;
       text-align: center;
       box-shadow: var(--box-shadow);
-    "
-  >
+    ">
     <h2 class="subtitle">Esittely</h2>
     {{ demo['description']|safe }}
   </div>
   {% endif %}
   <div class="countdown">
     <h2 class="subtitle">Aikaa mielenosoituksen alkuun</h2>
-    <div
-      id="timer"
-      style="font-size: 24px; color: var(--primary-strong-text-color)"
-    ></div>
+    <div id="timer" style="font-size: 24px; color: var(--primary-strong-text-color)"></div>
   </div>
   <br />
   <div class="map">
@@ -504,16 +522,18 @@
       </p>
     </div>
 
-    <a class="back-link" href="{{ url_for('demonstrations') }}"
-      >Takaisin kaikkiin mielenosoituksiin</a
-    >
+    <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
   </div>
-
+  {% block scripts %}
   <!-- Leaflet JS and Map Integration -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script>
-    let data = {"latitude": {{ latitude }}, "longitude": {{ longitude }}, "demo": {{ demo | tojson }}};
+    let data = {
+      "latitude": {{ latitude if latitude is not none else "null" }},
+    "longitude": {{ longitude if longitude is not none else "null" }},
+    "demo": {{ demo | tojson }}
+  };
 
     if (data["latitude"] != null) {
       var map = L.map("map").setView([data["latitude"], data["longitude"]], 13);
@@ -660,8 +680,8 @@
       // Päättymisaika
       detailsHTML += `<p><strong>Päättymisaika:</strong><br />${demo.end_time}</p>`;
 
-      // Aihe
-      detailsHTML += `<p><strong>Aihe:</strong><br />${demo.topic}</p>`;
+      /* DEPRACED SINCE V1.7 Aihe
+      detailsHTML += `<p><strong>Aihe:</strong><br />${demo.topic}</p>`;*/
 
       // Sijainti
       detailsHTML += `<p><strong>Sijainti:</strong><br />${demo.address}, ${demo.city}</p>`;
@@ -690,9 +710,10 @@
     function toggleToolbox() {
       const toolboxButtons = document.getElementById('toolbox-buttons');
       toolboxButtons.style.display = (toolboxButtons.style.display === 'none') ? 'flex' : 'none';
-  }
-  
-  </script>
+    }
 
+  </script>
   {% endblock %}
 </div>
+
+{% endblock %}

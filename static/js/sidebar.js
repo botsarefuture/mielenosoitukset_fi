@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hiddenIcons = document.querySelector('.hidden-icons');
     const hiddenToggleButton = document.getElementById('hiddentoggle');
     const mainContent = document.querySelector('.container-main-content');
+    const headerbar = document.getElementById('headerbar');
 
     // Ensure the required elements exist before running logic
     if (!sidebar || !toggleButton || !hiddenIcons || !hiddenToggleButton || !mainContent) {
@@ -18,10 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.add('hidden');
         hiddenIcons.style.display = 'flex'; // Show hidden icons
         mainContent.classList.remove('shifted'); // Remove shift from main content
+        headerbar.classList.remove("shifted");
     } else {
         sidebar.classList.remove('hidden');
         hiddenIcons.style.display = 'none'; // Hide hidden icons
         mainContent.classList.add('shifted'); // Shift main content
+        headerbar.classList.add('shifted');
     }
 
     // Function to toggle the sidebar and adjust main content
@@ -32,9 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isHidden) {
             hiddenIcons.style.display = 'flex'; // Show hidden icons
             mainContent.classList.remove('shifted'); // Remove shift from main content
+            headerbar.classList.remove("shifted");
         } else {
             hiddenIcons.style.display = 'none'; // Hide hidden icons
             mainContent.classList.add('shifted'); // Shift main content
+            headerbar.classList.add('shifted');
         }
     };
 

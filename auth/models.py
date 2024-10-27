@@ -2,10 +2,18 @@ import logging
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
+from database_manager import DatabaseManager
+
+db = DatabaseManager().get_instance()
+
+mongo = db.get_db()
+
+collection = mongo["organizations"]
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class User(UserMixin):
     def __init__(
@@ -40,7 +48,7 @@ class User(UserMixin):
         self.confirmed = confirmed
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
-        self.role = role or "member"
+        self.role = role or "user"
 
     @staticmethod
     def from_db(user_doc):
@@ -65,7 +73,9 @@ class User(UserMixin):
             global_admin=global_admin,
             confirmed=user_doc.get("confirmed", False),
             permissions=user_doc.get("permissions", {}),
-            global_permissions=user_doc.get("global_permissions", []),  # Fetch global permissions
+            global_permissions=user_doc.get(
+                "global_permissions", []
+            ),  # Fetch global permissions
             role=user_doc.get("role", "member"),
         )
 
@@ -99,6 +109,9 @@ class User(UserMixin):
             "following": [],
         }
 
+    def get_org_name(self, org_id):
+        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
+
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
@@ -118,7 +131,9 @@ class User(UserMixin):
             )
         else:
             existing_org["role"] = role
-            existing_org["permissions"] = permissions or existing_org.get("permissions", [])
+            existing_org["permissions"] = permissions or existing_org.get(
+                "permissions", []
+            )
 
         # Ensure atomicity during the database update
         db.users.update_one(
@@ -211,6 +226,22 @@ class User(UserMixin):
         for org in self.organizations:
             if org["org_id"] == str(organization_id):
                 return permission in org.get("permissions", [])
+
+        return False
+
+    def can_use(self, permission):
+        # Check global permissions first
+        if permission in self.global_permissions:
+            return True
+
+        # Check organization-specific permissions
+        for org in self.permissions:
+            if permission in self.permissions.get(org, []):
+                return True
+
+        for org in self.organizations:
+            if permission in org.get("permissions", []):
+                return True
 
         return False
 

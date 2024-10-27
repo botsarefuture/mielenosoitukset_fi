@@ -17,16 +17,16 @@
 }
 
 .modal-content {
-    background: white;
+    background: var(--background);
     padding: 30px;
     border-radius: 12px;
     width: 350px;
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px var(--box-shadow-color);
 }
 
 .close {
-    color: #aaa;
+    color: var(--primary-text-color);
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -34,7 +34,7 @@
 
 .close:hover,
 .close:focus {
-    color: #ff4c4c;
+    color: var(--red);
     text-decoration: none;
     cursor: pointer;
 }
@@ -56,11 +56,17 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     margin: 0 10px;
     font-weight: bold;
+    align-items: center;
+    align-content: center;
+    display: inline-flex;
 }
 
 .button-container .button.delete-confirm {
-    background: linear-gradient(90deg, #ff416c, #ff4b2b);
+    background: var(--red);
     color: white;
+    align-items: center;
+    align-content: center;
+    display: inline-flex;
 }
 
 .button-container .button.delete-confirm:hover {
@@ -69,8 +75,8 @@
 }
 
 .button-container .button:not(.delete-confirm) {
-    background: linear-gradient(90deg, #ffd200, #f0ad4e);
-    color: white;
+    background: var(--yellow);
+    color: var(--primary-text-color);
 }
 
 .button-container .button:not(.delete-confirm):hover {
@@ -89,4 +95,8 @@
 
 .modal-content.shake {
     animation: shake 0.5s ease;
+}
+
+.button-container .button {
+	padding: 20px !important;
 }

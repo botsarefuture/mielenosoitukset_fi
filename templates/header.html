@@ -1,7 +1,7 @@
 <style>
   /* Base Styles */
   .navbar {
-      background-color: #0033a0; /* Dark Blue */
+      background: var(--primary-color); /* Dark Blue */
       padding: 10px 20px; /* Add some padding for a better look */
       position: relative; /* Allow absolute positioning of children */
       z-index: 1000000; /* Ensure the navbar is on top */
@@ -55,7 +55,7 @@
           position: fixed; /* Fix position to cover the entire screen */
           left: 0; /* Align to the left */
           top: 83.5px; /* Align below the navbar */
-          background-color: #0033a0; /* Dark Blue */
+          background: var(--primary-color); /* Dark Blue */
           display: none; /* Hide by default on small screens */
           z-index: 999999; /* Ensure the dropdown appears above other content */
           padding-top: 50px; /* Padding for top */
@@ -97,7 +97,7 @@
       }
 
       .navbar {
-          background-color: #0033a0;
+        background: var(--primary-color); /* Dark Blue */
       }
   }
 
@@ -114,7 +114,7 @@
   .dropdown-menu {
       display: none; /* Hide dropdown by default */
       position: absolute; /* Absolute positioning */
-      background-color: #0033a0; /* Dark Blue */
+      background: #0033a0; /* Dark Blue */
       top: 100%; /* Position below the parent */
       /*left: 0; /* Align to the left */
       padding: 10px 0; /* Padding around the menu */
@@ -138,7 +138,7 @@
   }
 
   .dropdown-menu a:hover {
-      background-color: #004cbf; /* Lighten on hover */
+      background: #004cbf; /* Lighten on hover */
   }
 
   /* Accessibility: Make sure dropdown menu can be opened with keyboard */
@@ -168,14 +168,14 @@
       border-radius: 50%; /* Circular profile picture */
       object-fit: cover; /* Crop image to fit */
       margin-right: 10px; /* Space between image and text */
-      background-color: #cccccc; /* Gray background in case of missing image */
+      background: #cccccc; /* Gray background in case of missing image */
   }
 </style>
 
 <!-- Navigation Bar -->
 <header>
   <nav class="navbar">
-    <div class="container bg-header-footer">
+    <div class="container bg-header-footer" id="headerbar">
       <!-- Logo and Home Link -->
       <a href="{{ url_for('index') }}" class="logo">Mielenosoitukset.fi</a>
 
@@ -256,10 +256,19 @@
         {% else %}
         <li><a href="{{ url_for('auth.login') }}">Kirjaudu sisään</a></li>
         {% endif %}
+        <li>
+          <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
+            <i class="fa-solid fa-moon" id="theme-icon"></i>
+          </button>
+        </li>
+        
+
       </ul>
     </div>
   </nav>
-  {% if current_user.global_admin %} {% include "sidebar.html" %} {% endif %}
+  <script>console.log("{{ current_user.role }}")</script>
+  
+  {% if current_user.role != "user" and current_user.is_authenticated %} {% include "sidebar.html" %} {% endif %}
 </header>
 
 <!-- Add some styles for mobile admin links -->

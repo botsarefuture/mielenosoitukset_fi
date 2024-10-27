@@ -1,11 +1,34 @@
 @import url("container.css");
 @import url("form.css");
-@import url("table.css");
 @import url("buttons.css");
+@import url("table.css");
 
 @import url("variables.css");
 
-.wrapper {
+/* Import fonts */
+
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--header-color);
+}
+
+html {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+secondary .wrapper {
   display: flex; /* Use flexbox for layout */
   flex-direction: column; /* Stack items vertically */
   min-height: 100vh; /* Full viewport height */
@@ -16,16 +39,17 @@ html,
 body {
   height: 100%; /* Ensure the body takes the full height of the viewport */
   margin: 0;
-  font-family: "Roboto", sans-serif; /* Updated to match the style guide */
-  background-color: #f5f5f5; /* Updated to match the style guide */
-  color: #333333; /* Text color for consistency */
+  background: var(
+    --background
+  ) !important; /* Updated to match the style guide */
+  color: var(--primary-text-color); /* Text color for consistency */
   overflow-x: hidden;
   max-width: 100%;
 }
 
 /* Navbar Styles */
 .navbar {
-  background-color: var(--background-color); /* Dark Blue from the guide */
+  background: var(--background); /* Dark Blue from the guide */
   padding: 15px;
   display: flex;
   justify-content: space-between; /* Ensures even spacing between items */
@@ -40,12 +64,14 @@ body {
   width: 100%;
 }
 
-/* Navbar Logo */
 .navbar .logo {
-  font-size: 1.5em;
-  color: #ffffff; /* White text */
-  text-decoration: none;
-  font-family: "Montserrat", sans-serif; /* Updated to match the style guide */
+	font-size: 1.5em;
+	color: #ffffff;
+	text-decoration: none;
+	font-family: "Montserrat", sans-serif;
+	font-weight: 900;
+	text-transform: uppercase;
+	margin-right: 1em;
 }
 
 /* Navbar Links */
@@ -70,7 +96,7 @@ body {
 }
 
 .navbar .nav-links a:hover {
-  background-color: var(--orange); /* Orange from the guide */
+  background: var(--orange); /* Orange from the guide */
 }
 
 /* Profile Dropdown */
@@ -92,7 +118,7 @@ body {
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: var(--blue);
+  background: var(--blue);
   border-radius: 5px;
   padding: 10px;
 }
@@ -110,7 +136,7 @@ body {
 }
 
 .profile-dropdown .dropdown-menu a:hover {
-  background-color: var(--orange);
+  background: var(--orange);
 }
 
 /* Toggle Button for Mobile Navigation */
@@ -130,7 +156,7 @@ body {
 
 /* Footer Styles */
 .footer {
-  background-color: var(--blue); /* Dark Blue from the guide */
+  background: var(--blue); /* Dark Blue from the guide */
   color: #ffffff; /* White text */
   text-align: center;
   padding: 20px 0;
@@ -145,15 +171,15 @@ body {
 .delete-button {
   display: flex;
   align-items: center;
-  background-color: var(--red); /* Red background for delete button */
+  background: var(--red) !important; /* Red background for delete button */
   color: #fff;
   border: none;
   border-radius: 5px;
-  padding: 10px 15px;
+  padding: 10px 15px !important;
   text-decoration: none;
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background 0.3s;
 }
 
 .delete-button i {
@@ -161,7 +187,7 @@ body {
 }
 
 .delete-button:hover {
-  background-color: var(--error-color); /* Darker red on hover */
+  background: var(--error-color); /* Darker red on hover */
 }
 
 /* Footer links */
@@ -193,6 +219,12 @@ header {
   flex: 0 0 auto; /* Header in the first row, does not grow */
 }
 
+@media (max-width: 1024px) {
+  .navbar .container.shifted {
+    margin-right: 20px;
+  }
+}
+
 footer {
   flex: 0 0 auto; /* Footer in the last row, does not grow */
 }
@@ -206,7 +238,7 @@ footer {
     position: fixed; /* Fix position to cover the entire screen */
     left: 0; /* Align to the left */
     top: 0; /* Align to the top */
-    background-color: var(--blue); /* Dark Blue from the guide */
+    background: var(--blue); /* Dark Blue from the guide */
     display: none; /* Hide by default on small screens */
     z-index: 1000; /* Ensure the dropdown appears above other content */
   }
@@ -252,15 +284,143 @@ footer {
 
 .demo-container {
   padding: 10px;
-  background-color: #fff;
+  background: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
   margin-bottom: 10px;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease;
 }
 
 /* Add hover effect for better UX */
 .demo-container:hover {
-  background-color: #f0f0f0;
+  background: #f0f0f0;
   border-color: #ccc;
+}
+
+.insuffient-perm {
+  background: var(--red-light);
+  color: white;
+  padding: 20px;
+  border-radius: 5px;
+  border-color: var(--red-darker);
+  border-width: 2px;
+  text-align: center;
+  font-weight: 700;
+  box-sizing: content-box;
+}
+
+span i {
+  margin-right: 0.5em;
+}
+
+.location i,
+.city i {
+  font-size: 1.2em;
+  color: var(--blue-light);
+}
+
+.cancel-button {
+  background: var(--yellow) !important;
+  color: var(--text-secondary-color);
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+}
+.dropdown-list i {
+  width: 16px;
+  height: auto;
+  margin-right: 20px;
+}
+
+.christmas-section {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #ff0000;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.christmas-section h2 {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.christmas-section p {
+  font-size: 1.2em;
+  margin-bottom: 20px;
+}
+
+.spinning-message {
+  text-align: center;
+  margin: 20px 0;
+  animation: spin 10s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning-message h2 {
+  font-size: 2rem; /* Adjust font size as needed */
+  color: #ff0000; /* Red color for the text */
+  /* Optional: Add some text shadow for a festive touch */
+  text-shadow: 1px 1px 2px #000;
+}
+
+.marquee {
+	background-color: #f0f8ff;
+	color: #ff0000;
+	overflow: hidden;
+	white-space: nowrap;
+	box-shadow: 0 2px 5px var(--box-shadow-color);
+	z-index: 9990000;
+	position: sticky;
+	top: 0;
+}
+
+.marquee h2 {
+  display: inline-block; /* Display inline for scrolling */
+  animation: marquee 15s linear infinite; /* Animation for scrolling */
+  padding: 10px 0; /* Vertical padding */
+  font-size: 1.5rem; /* Adjust font size as needed */
+  color: inherit;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  } /* Start off-screen to the right */
+  100% {
+    transform: translateX(-100%);
+  } /* End off-screen to the left */
+}
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%; /* Full width */
+}
+
+.marquee-content {
+  display: inline-block;
+  position: absolute; /* Positioning for fixed distance */
+  animation: marquee linear infinite; /* Use keyframes to control the animation */
+}
+
+@keyframes marquee {
+  0% {
+      transform: translateX(100%); /* Start from the right */
+  }
+  100% {
+      transform: translateX(calc(-100% - 10cm)); /* Move left by the full width plus the desired distance */
+  }
 }

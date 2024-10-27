@@ -1,104 +1,235 @@
 <!DOCTYPE html>
-<html lang="fi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
-    <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
-    {% block meta %}
+<html lang="fi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
+  <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
+
+  {% block meta %} 
+  
+  <!-- meta content will be inserted here --> 
+
+  {% endblock %}
+
+  <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
+
+  <!-- START of stylesheets -->
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  {% block styles %} {% endblock %}
+
+  <!-- END of stylesheets -->
+
+  <!-- Matomo -->
+  <script>
+    var _paq = (window._paq = window._paq || []);
+    _paq.push(["trackPageView"]);
+    _paq.push(["enableLinkTracking"]);
+    (function () {
+      var u = "//matomo.luova.club/";
+      _paq.push(["setTrackerUrl", u + "matomo.php"]);
+      _paq.push(["setSiteId", "1"]);
+      var d = document,
+        g = d.createElement("script"),
+        s = d.getElementsByTagName("script")[0];
+      g.async = true;
+      g.src = u + "matomo.js";
+      s.parentNode.insertBefore(g, s);
+    })();
+  </script>
+  <!-- End Matomo Code -->
+</head>
+
+<body>
+  <!-- Scrolling Marquee Message Section -->
+  <div class="marquee" style="display: none"></div>
+
+  <!-- Navigation Bar -->
+  {% include "header.html" %}
+
+  <!-- Flash Messages -->
+  <div id="flash-messages" class="flash-messages" style="display: none">
+    <ul id="flash-message-list"></ul>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="container-main-content">
+    {% block content %}
+    <!-- The content from child templates will be injected here -->
     {% endblock %}
-    <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  </main>
 
-    <!-- Matomo -->
-    <script>
-      var _paq = (window._paq = window._paq || []);
-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-      _paq.push(["trackPageView"]);
-      _paq.push(["enableLinkTracking"]);
-      (function () {
-        var u = "//matomo.luova.club/";
-        _paq.push(["setTrackerUrl", u + "matomo.php"]);
-        _paq.push(["setSiteId", "1"]);
-        var d = document,
-          g = d.createElement("script"),
-          s = d.getElementsByTagName("script")[0];
-        g.async = true;
-        g.src = u + "matomo.js";
-        s.parentNode.insertBefore(g, s);
-      })();
-    </script>
-    <!-- End Matomo Code -->
-  </head>
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container-header-footer">
+      <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
+      <ul class="footer-links">
+        <li><a href="{{ url_for('info') }}">Tietoa sivustosta</a></li>
+        |
+        <li><a href="{{ url_for('privacy') }}">Tietosuojaseloste</a></li>
+        |
+        <li><a href="{{ url_for('contact')}}">Ota yhteyttä</a></li>
+      </ul>
+      <ul class="social-media-links">
+        <li>
+          <a href="https://www.instagram.com/mielenosoitukset" target="_blank">
+            <i class="fab fa-instagram"></i> Instagram
+          </a>
+        </li>
+      </ul>
+    </div>
+  </footer>
 
-  <body>
-    <!-- Navigation Bar -->
-    {% include "header.html" %}
+  <!-- JavaScript for Navigation Menu Toggle and Dropdown -->
+  <script>
+    document.querySelector(".navbar-toggle").addEventListener("click", function () {
+      document.querySelector(".nav-links").classList.toggle("active");
+    });
 
-    <!-- Flash Messages -->
-    {% if get_flashed_messages(with_categories=True) %}
-    <ul class="flash-messages">
-      {% for category, message in get_flashed_messages(with_categories=True) %}
-      <li class="{{ category }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
+    document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
+      event.preventDefault();
+      const dropdownMenu = this.nextElementSibling;
+      const isOpen = dropdownMenu.classList.toggle("show");
+      this.setAttribute("aria-expanded", isOpen);
+    });
 
-    <!-- Main Content Area -->
-    <main class="container-main-content">
-      {% block content %}
-      <!-- The content from child templates will be injected here -->
-      {% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container-header-footer">
-        <p>&copy; 2024 Mielenosoitukset.fi - Kaikki oikeudet pidätetään.</p>
-        <ul class="footer-links">
-          <li><a href="{{ url_for('info') }}">Tietoa sivustosta</a></li> |
-          <li><a href="{{ url_for('privacy') }}">Tietosuojaseloste</a></li> |
-          <li><a href="{{ url_for('contact')}}">Ota yhteyttä</a></li>
-        </ul>
-        <ul class="social-media-links">
-          <li>
-            <a href="https://www.instagram.com/mielenosoitukset" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
-          </li>
-        </ul>
-      </div>
-    </footer>
-
-    <!-- JavaScript for Navigation Menu Toggle and Dropdown -->
-    <script>
-      // JavaScript to toggle the navigation menu on small screens
-      document
-        .querySelector(".navbar-toggle")
-        .addEventListener("click", function () {
-          document.querySelector(".nav-links").classList.toggle("active");
-        });
-
-      // JavaScript to toggle the dropdown menu
-      document
-        .querySelector(".dropdown-toggle")
-        .addEventListener("click", function (event) {
-          event.preventDefault();
-          const dropdownMenu = this.nextElementSibling;
-          const isOpen = dropdownMenu.classList.toggle("show");
-          this.setAttribute("aria-expanded", isOpen);
-        });
-
-      // Close dropdown when clicking outside
-      window.addEventListener("click", function (event) {
-        const dropdowns = document.querySelectorAll(".dropdown-menu");
-        dropdowns.forEach(function (dropdown) {
-          if (!dropdown.parentElement.contains(event.target)) {
-            dropdown.classList.remove("show");
-          }
-        });
+    window.addEventListener("click", function (event) {
+      const dropdowns = document.querySelectorAll(".dropdown-menu");
+      dropdowns.forEach(function (dropdown) {
+        if (!dropdown.parentElement.contains(event.target)) {
+          dropdown.classList.remove("show");
+        }
       });
-    </script>
-  </body>
+    });
+  </script>
+
+  <script>
+    function displayFlashMessage(category, message) {
+      const flashMessages = document.getElementById("flash-messages");
+      const messageList = document.getElementById("flash-message-list");
+
+      const newMessage = document.createElement("li");
+      newMessage.className = `flash-${category}`;
+      newMessage.textContent = message;
+
+      messageList.appendChild(newMessage);
+      flashMessages.style.display = "block";
+
+      setTimeout(() => {
+        newMessage.remove();
+        if (messageList.childElementCount === 0) {
+          flashMessages.style.display = "none";
+        }
+      }, 10000);
+    }
+
+    function checkForNewFlashMessages() {
+      fetch("/get_flash_messages")
+        .then((response) => response.json())
+        .then((data) => {
+          if (data && data.messages && data.messages.length > 0) {
+            data.messages.forEach((flash) => {
+              displayFlashMessage(flash.category, flash.message);
+            });
+          }
+        })
+        .catch((error) => console.error("Error fetching flash messages:", error));
+    }
+
+    setInterval(checkForNewFlashMessages, 5000);
+  </script>
+
+  <script>
+    let currentmarg = "";
+    function displayMarqueeMessage(message, style, h2_style) {
+      if (message !== currentmarg) {
+        currentmarg = message;
+        const marqueeElement = document.querySelector(".marquee");
+        marqueeElement.innerHTML = `<h2 style="${h2_style}">${message}</h2>`;
+        marqueeElement.style.display = "block"; // Show marquee
+        marqueeElement.style = style; // Apply additional styles if any
+      } else {
+        console.log("The marquee is the same already");
+      }
+    }
+
+    function checkForNewMarqueeMessages() {
+      fetch("/marquee")
+        .then((response) => response.json())
+        .then((data) => {
+          const marqueeElement = document.querySelector(".marquee");
+          if (data.message !== "NO") {
+            displayMarqueeMessage(data.message, data.style, data.h2_style);
+          } else {
+            marqueeElement.style.display = "none"; // Hide if no message
+          }
+        })
+        .catch((error) => console.error("Error fetching marquee message:", error));
+    }
+
+    // Check for new marquee messages every 5 seconds
+    setInterval(checkForNewMarqueeMessages, 5000);
+
+    document.addEventListener("DOMContentLoaded", function () {
+      checkForNewMarqueeMessages(); // Initial check on page load
+    });
+  </script>
+
+  <script>
+    function applyPreferredTheme() {
+      const savedTheme = localStorage.getItem("theme");
+      const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const themeIcon = document.getElementById("theme-icon");
+
+      if (savedTheme) {
+        if (savedTheme === "dark") {
+          document.documentElement.classList.add("dark");
+          document.documentElement.classList.remove("light");
+          themeIcon.classList.remove("fa-moon");
+          themeIcon.classList.add("fa-sun");
+        } else {
+          document.documentElement.classList.add("light");
+          document.documentElement.classList.remove("dark");
+          themeIcon.classList.remove("fa-sun");
+          themeIcon.classList.add("fa-moon");
+        }
+      } else if (prefersDarkMode) {
+        document.documentElement.classList.add("dark");
+        document.documentElement.classList.remove("light");
+        themeIcon.classList.remove("fa-moon");
+        themeIcon.classList.add("fa-sun");
+      } else {
+        document.documentElement.classList.add("light");
+        document.documentElement.classList.remove("dark");
+        themeIcon.classList.remove("fa-sun");
+        themeIcon.classList.add("fa-moon");
+      }
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle("dark");
+      document.documentElement.classList.toggle("light");
+
+      const themeIcon = document.getElementById("theme-icon");
+
+      if (document.documentElement.classList.contains("dark")) {
+        themeIcon.classList.remove("fa-moon");
+        themeIcon.classList.add("fa-sun");
+        localStorage.setItem("theme", "dark");
+      } else {
+        themeIcon.classList.remove("fa-sun");
+        themeIcon.classList.add("fa-moon");
+        localStorage.setItem("theme", "light");
+      }
+    }
+
+    applyPreferredTheme();
+  </script>
+
+  {% block scripts %} {% endblock %}
+</body>
 </html>

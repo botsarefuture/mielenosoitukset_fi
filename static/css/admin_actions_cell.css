@@ -1,44 +1,22 @@
 /* Align the action cell header to center */
 .actions-cell-header {
-    text-align: center;
+    text-align: center; /* Center align the header */
+    font-weight: bold; /* Bold text for emphasis */
+    padding: 0.5rem; /* Padding for better spacing */
 }
 
+/* Actions Cell Styles */
 .actions-cell {
-    display: table-cell;
-    vertical-align: middle;
-    text-align: right; /* Align buttons to the right side */
-    padding: 10px;
-    width: fit-content;
+    display: table-cell; /* Display as table cell */
+    vertical-align: middle; /* Vertically center the content */
+    text-align: right; /* Align buttons to the right */
+    padding: 10px; /* Padding for better spacing */
+    width: 150px; /* Fixed width for the actions column */
+    position: relative; /* Allow positioning adjustments if needed */
 }
 
-/* Styling for action buttons */
-.button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    color: #fff;
-    text-decoration: none;
-    text-align: center;
-    cursor: pointer;
-    font-size: 14px;
-    width: 100px; /* Ensure buttons have equal width */
-    display: block;
-    margin-left: 5px; /* Slight gap between buttons */
-    margin-top: 3px;
+.actions-cell a,  .actions-cell button {
+    margin-right: 0.5rem; /* Margin to the right for links */
 }
 
-.button:first-child {
-    margin-top: 0; /* Remove the margin on the first button */
-}
 
-.edit-button {
-    background-color: var(--focus-color);
-}
-
-.delete-button {
-    background-color: var(--red) !important;
-}
-
-.delete-button:hover {
-    background-color: var(--dark-red) !important;
-}

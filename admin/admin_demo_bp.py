@@ -151,6 +151,7 @@ def edit_demo(demo_id):
         title="Muokkaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
         city_list=CITY_LIST,
+        all_organizations=mongo.organizations.find()
     )
 
 

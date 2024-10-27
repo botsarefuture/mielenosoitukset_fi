@@ -1,3 +1,6 @@
+import requests
+from flask import Flask, render_template, redirect, url_for, flash
+from bson.objectid import ObjectId
 import json
 import os
 from s3_utils import upload_image
@@ -91,7 +94,7 @@ def init_routes(app):
                 if (
                     search_query.lower() in demo["title"].lower()
                     or search_query.lower() in demo["city"].lower()
-                    or search_query.lower() in demo["topic"].lower()
+                    #or search_query.lower() in demo["topic"].lower()
                     or search_query.lower() in demo["address"].lower()
                 ):
                     filtered_demonstrations.append(demo)
@@ -112,15 +115,16 @@ def init_routes(app):
             title = request.form.get("title")
             date = request.form.get("date")
             description = request.form.get("description", "")
-            print(description)
             start_time = request.form.get("start_time")
             end_time = request.form.get("end_time", None)
-            topic = request.form.get("topic")
+            #topic = request.form.get("topic") DEPRACED SINCE V1.7
             facebook = request.form.get("facebook")
             city = request.form.get("city")
             address = request.form.get("address")
             event_type = request.form.get("type")
             route = request.form.get("route") if event_type == "marssi" else None
+            tags = request.form.get("tags", None)
+            tags = [tag.strip() for tag in tags.split(",")]
 
             img = request.files.get("image")
 
@@ -140,7 +144,7 @@ def init_routes(app):
                 not title
                 or not date
                 or not start_time
-                or not topic
+                #or not topic DEPRACED SINCE V1.7
                 or not city
                 or not address
             ):
@@ -165,7 +169,7 @@ def init_routes(app):
                 date=date,
                 start_time=start_time,
                 end_time=end_time,
-                topic=topic,
+                #topic=topic, DEPRACED SINCE V1.7
                 facebook=facebook,
                 city=city,
                 address=address,
@@ -175,6 +179,7 @@ def init_routes(app):
                 approved=False,
                 img=photo_url,
                 description=description,
+                tags=tags
             )
 
             # Save to MongoDB
@@ -204,7 +209,7 @@ def init_routes(app):
         city_query = request.args.get("city", "").lower()
         location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
-        topic_query = request.args.get("topic", "").lower()
+        #topic_query = request.args.get("topic", "").lower() DEPRACED SINCE V1.7
         today = date.today()
 
         # Retrieve all approved demonstrations
@@ -220,7 +225,7 @@ def init_routes(app):
             city_query,
             location_query,
             date_query,
-            topic_query,
+            #topic_query, DEPRACED SINCE V1.7
         )
 
         # Sort the results by date
@@ -251,7 +256,7 @@ def init_routes(app):
         city_query,
         location_query,
         date_query,
-        topic_query,
+        #topic_query, DEPRACED SINCE V1.7
     ):
         """
         Filter the demonstrations based on various criteria.
@@ -268,7 +273,7 @@ def init_routes(app):
                         city_query,
                         location_query,
                         date_query,
-                        topic_query,
+                        #topic_query, DEPRACED SINCE V1.7
                     )
                     and demo["_id"] not in added_demo_ids
                 ):
@@ -285,7 +290,7 @@ def init_routes(app):
         return demo_date >= today
 
     def matches_filters(
-        demo, search_query, city_query, location_query, date_query, topic_query
+        demo, search_query, city_query, location_query, date_query#, topic_query
     ):
         """
         Check if the demonstration matches the filtering criteria.
@@ -293,14 +298,14 @@ def init_routes(app):
         matches_search = (
             search_query in demo["title"].lower()
             or search_query in demo["city"].lower()
-            or search_query in demo["topic"].lower()
+            #or search_query in demo["topic"].lower() DEPRACED SINCE V1.7
             or search_query in demo["address"].lower()
         )
         matches_city = city_query in demo["city"].lower() if city_query else True
         matches_location = (
             location_query in demo["address"].lower() if location_query else True
         )
-        matches_topic = topic_query in demo["topic"].lower() if topic_query else True
+        #matches_topic = topic_query in demo["topic"].lower() if topic_query else True DEPRACED SINCE V1.7
         matches_date = True
 
         if date_query:
@@ -319,13 +324,9 @@ def init_routes(app):
             matches_search
             and matches_city
             and matches_location
-            and matches_topic
+            #and matches_topic DEPRACED SINCE V1.7
             and matches_date
         )
-
-    import requests
-    from flask import Flask, render_template, redirect, url_for, flash
-    from bson.objectid import ObjectId
 
     @app.route("/demonstration/<demo_id>")
     def demonstration_detail(demo_id):
@@ -333,20 +334,20 @@ def init_routes(app):
         Display details of a specific demonstration and save map coordinates if available.
         """
         # Fetch the demonstration details from MongoDB
-        demo = demonstrations_collection.find_one(
-            {"_id": ObjectId(demo_id), "approved": True}
-        )
+        demo = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
 
-        if not demo or demo is None:
-            abort(404)
-
-        demo = Demonstration.from_dict(demo)
-        demo = demo.to_dict(json=True)
-
-        if demo is None:
-            flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.")
+        if not demo:
+            flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.", 'error')
             return redirect(url_for("demonstrations"))
 
+        demo = Demonstration.from_dict(demo)
+
+        if not demo.approved and not current_user.can_use("VIEW_DEMO"):
+            abort(401)
+
+        demo = demo.to_dict(json=True)
+
+        # Check if longitude is None to trigger geocoding
         if demo.get("longitude") is None:
             # Build the address query (assuming 'address' and 'city' fields in the demo)
             address_query = f"{demo.get('address', '')}, {demo.get('city', '')}"
@@ -361,26 +362,29 @@ def init_routes(app):
                 geocode_data = response.json()
 
                 # Get latitude and longitude from the response
-                latitude = geocode_data[0]["lat"] if geocode_data else None
-                longitude = geocode_data[0]["lon"] if geocode_data else None
+                if geocode_data:
+                    latitude = geocode_data[0].get("lat", "None")
+                    longitude = geocode_data[0].get("lon", "None")
 
-                # If coordinates are fetched, save them to the database
-                if latitude and longitude:
-                    mongo.demonstrations.update_one(
-                        {"_id": ObjectId(demo_id)},
-                        {"$set": {"latitude": latitude, "longitude": longitude}},
-                    )
+                    # Save coordinates to the database if they are fetched
+                    if latitude and longitude:
+                        mongo.demonstrations.update_one(
+                            {"_id": ObjectId(demo_id)},
+                            {"$set": {"latitude": latitude, "longitude": longitude}},
+                        )
+                else:
+                    latitude, longitude = "None", "None"
             except (requests.exceptions.RequestException, IndexError):
-                # Handle errors or empty geocode data
-                latitude, longitude = None, None
+                latitude, longitude = "None", "None"
         else:
-            longitude = demo.get("longitude")
-            latitude = demo.get("latitude")
+            latitude = demo.get("latitude", "None")
+            longitude = demo.get("longitude", "None")
 
         # Pass demo details and coordinates to the template
         return render_template(
             "detail.html", demo=demo, latitude=latitude, longitude=longitude
         )
+
 
     @app.route("/info")
     def info():

@@ -10,6 +10,8 @@
 <!-- Include Flatpickr CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
+{% endblock %}
+
 
 {% block scripts %}
 
@@ -190,10 +192,18 @@
             <label for="organization">Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen <span class="required">*</span></label>
             <select id="organization" name="organization" class="form-control">
                 <option value="">Valitse järjestö</option>
-                {% for organization in current_user.organizations %}
-                    <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
-                {% endfor %}
+                
+                {% if current_user.global_admin %}
+                    {% for organization in all_organizations %}
+                        <option value="{{ organization.org_id }}">{{ organization.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    {% for organization in current_user.organizations %}
+                        <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
+                    {% endfor %}
+                {% endif %}
             </select>
+            
         </div>
         <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
 

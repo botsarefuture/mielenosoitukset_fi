@@ -79,7 +79,7 @@ class User(UserMixin):
             global_permissions=user_doc.get(
                 "global_permissions", []
             ),  # Fetch global permissions
-            role=user_doc.get("role", "member"),
+            role=user_doc.get("role", "user"),
         )
 
     def check_password(self, password):

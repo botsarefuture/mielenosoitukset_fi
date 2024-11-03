@@ -49,9 +49,7 @@ class User(UserMixin):
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
-
-        #if self.role == "global_admin":
-            #self.organizations = collection.find()
+        self._id = self.id # Alias for id
 
     @staticmethod
     def from_db(user_doc):
@@ -79,7 +77,7 @@ class User(UserMixin):
             global_permissions=user_doc.get(
                 "global_permissions", []
             ),  # Fetch global permissions
-            role=user_doc.get("role", "member"),
+            role=user_doc.get("role", "user"),
         )
 
     def check_password(self, password):

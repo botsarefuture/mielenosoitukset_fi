@@ -387,10 +387,10 @@
     flex-direction: column;
   }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
 {% endblock %}
 
 {% block content %}
-
 
 {% if current_user.is_authenticated and current_user.can_use("TOOLBOX") %}
 
@@ -526,195 +526,193 @@
   </div>
 </div>
 
-  {% endblock %}
-  {% block scripts %}
-  <!-- Leaflet JS and Map Integration -->
-  <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
-  <script>
-    let data = {
-    "demo": 
+{% endblock %}
+{% block scripts %}
+<!-- Leaflet JS and Map Integration -->
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script>
+  let data = {
+    "demo":
       {{ demo | tojson }}
   };
 
-    if (data["demo"]["latitude"] != null) {
-      var map = L.map("map").setView([data["demo"]["latitude"], data["demo"]["longitude"]], 13);
+  if (data["demo"]["latitude"] != null) {
+    var map = L.map("map").setView([data["demo"]["latitude"], data["demo"]["longitude"]], 13);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
 
-      L.marker([data["demo"]["latitude"], data["demo"]["longitude"]])
-        .addTo(map)
-        .bindPopup(data["demo"]["address"])
-        .openPopup();
-    } else {
-      var mapElement = document.getElementById("map");
-      if (mapElement) {
-        mapElement.remove();  // Removes the map element if it exists
-      }
+    L.marker([data["demo"]["latitude"], data["demo"]["longitude"]])
+      .addTo(map)
+      .bindPopup(data["demo"]["address"])
+      .openPopup();
+  } else {
+    var mapElement = document.getElementById("map");
+    if (mapElement) {
+      mapElement.remove();  // Removes the map element if it exists
     }
-  </script>
-  <script>
-    function formatFinnishDate(dateString) {
-      // Convert Finnish date format (pp.kk.vvvv) to ISO format (yyyy-mm-dd)
-      const [day, month, year] = dateString.split(".").map(Number);
-      return `${year}-${month.toString().padStart(2, "0")}-${day
-        .toString()
-        .padStart(2, "0")}`;
-    }
+  }
+</script>
+<script>
+  function formatFinnishDate(dateString) {
+    // Convert Finnish date format (pp.kk.vvvv) to ISO format (yyyy-mm-dd)
+    const [day, month, year] = dateString.split(".").map(Number);
+    return `${year}-${month.toString().padStart(2, "0")}-${day
+      .toString()
+      .padStart(2, "0")}`;
+  }
 
-    function updateCountdown() {
-      // Replace these with your actual Finnish date and time strings for testing
-      const demoDate = data["demo"]["date"]; // e.g., "09.09.2024"
-      const demoTime = data["demo"]["start_time"]; // e.g., "14:00:00"
+  function updateCountdown() {
+    // Replace these with your actual Finnish date and time strings for testing
+    const demoDate = data["demo"]["date"]; // e.g., "09.09.2024"
+    const demoTime = data["demo"]["start_time"]; // e.g., "14:00:00"
 
-      const formattedDate = formatFinnishDate(demoDate);
-      const eventDateStr = `${formattedDate}T${demoTime}`;
-      //console.log(`Event Date String: ${eventDateStr}`);
+    const formattedDate = formatFinnishDate(demoDate);
+    const eventDateStr = `${formattedDate}T${demoTime}`;
+    //console.log(`Event Date String: ${eventDateStr}`);
 
-      const eventDate = new Date(eventDateStr);
-      const now = new Date();
-      const timeRemaining = eventDate - now;
+    const eventDate = new Date(eventDateStr);
+    const now = new Date();
+    const timeRemaining = eventDate - now;
 
-      //console.log(`Current Time: ${now}`);
-      //console.log(`Event Time: ${eventDate}`);
-      //console.log(`Time Remaining: ${timeRemaining}`);
+    //console.log(`Current Time: ${now}`);
+    //console.log(`Event Time: ${eventDate}`);
+    //console.log(`Time Remaining: ${timeRemaining}`);
 
-      if (timeRemaining <= 0) {
-        document.getElementById("timer").innerText =
-          "Mielenosoitus on käynnissä!";
-        return;
-      }
-
-      const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
-      const minutes = Math.floor(
-        (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
-      );
-      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-      document.getElementById(
-        "timer"
-      ).innerText = `${days} päivää ${hours} tuntia ${minutes} minuuttia ${seconds} sekuntia`;
+    if (timeRemaining <= 0) {
+      document.getElementById("timer").innerText =
+        "Mielenosoitus on käynnissä!";
+      return;
     }
 
-    setInterval(updateCountdown, 1000);
-  </script>
-  <script>
-    // Assuming 'data' is already available in the global scope and contains the 'demo' object
-    const demo = data["demo"];
-    const organizersListDiv = document.getElementById("organizers-list");
-    const noOrganizersText = document.getElementById("no-organizers");
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor(
+      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60)
+    );
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
-    // Function to populate the organizers info
-    function populateOrganizers(organizers) {
-      // Check if there are any organizers
-      if (organizers && organizers.length > 0) {
-        organizers.forEach((org) => {
-          const organizerDiv = document.createElement("div");
-          organizerDiv.classList.add("organizer-info");
+    document.getElementById(
+      "timer"
+    ).innerText = `${days} päivää ${hours} tuntia ${minutes} minuuttia ${seconds} sekuntia`;
+  }
 
-          // Organizer Name
-          const nameParagraph = document.createElement("p");
-          nameParagraph.innerHTML = `<strong>Nimi:</strong><br />${org.name}`;
-          organizerDiv.appendChild(nameParagraph);
+  setInterval(updateCountdown, 1000);
+</script>
+<script>
+  // Assuming 'data' is already available in the global scope and contains the 'demo' object
+  const demo = data["demo"];
+  const organizersListDiv = document.getElementById("organizers-list");
+  const noOrganizersText = document.getElementById("no-organizers");
 
-          // Mielenosoitukset.fi Profile Link if organization_id exists
-          if (org.organization_id) {
-            const profileLinkParagraph = document.createElement("p");
-            profileLinkParagraph.innerHTML = `
+  // Function to populate the organizers info
+  function populateOrganizers(organizers) {
+    // Check if there are any organizers
+    if (organizers && organizers.length > 0) {
+      organizers.forEach((org) => {
+        const organizerDiv = document.createElement("div");
+        organizerDiv.classList.add("organizer-info");
+
+        // Organizer Name
+        const nameParagraph = document.createElement("p");
+        nameParagraph.innerHTML = `<strong>Nimi:</strong><br />${org.name}`;
+        organizerDiv.appendChild(nameParagraph);
+
+        // Mielenosoitukset.fi Profile Link if organization_id exists
+        if (org.organization_id) {
+          const profileLinkParagraph = document.createElement("p");
+          profileLinkParagraph.innerHTML = `
               <a href="${org.url}" class="org-profile-link">
                 Mielenosoitukset.fi -profiili
               </a>`;
-            organizerDiv.appendChild(profileLinkParagraph);
-          }
+          organizerDiv.appendChild(profileLinkParagraph);
+        }
 
-          // Website if available
-          if (org.website) {
-            const websiteParagraph = document.createElement("p");
-            websiteParagraph.innerHTML = `<strong>Nettisivu:</strong><br />
+        // Website if available
+        if (org.website) {
+          const websiteParagraph = document.createElement("p");
+          websiteParagraph.innerHTML = `<strong>Nettisivu:</strong><br />
               <a href="${org.website}" target="_blank" class="org-website">
                 ${org.website}
               </a>`;
-            organizerDiv.appendChild(websiteParagraph);
-          }
+          organizerDiv.appendChild(websiteParagraph);
+        }
 
-          // Email if available
-          if (org.email) {
-            const emailParagraph = document.createElement("p");
-            emailParagraph.innerHTML = `<strong>Sähköposti:</strong><br />
+        // Email if available
+        if (org.email) {
+          const emailParagraph = document.createElement("p");
+          emailParagraph.innerHTML = `<strong>Sähköposti:</strong><br />
               <a href="mailto:${org.email}" class="org-email">
                 ${org.email}
               </a>`;
-            organizerDiv.appendChild(emailParagraph);
-          }
+          organizerDiv.appendChild(emailParagraph);
+        }
 
-          // Append organizerDiv to the list
-          organizersListDiv.appendChild(organizerDiv);
-        });
-      } else {
-        // If no organizers, show the "No organizers" message
-        noOrganizersText.style.display = "block";
-      }
+        // Append organizerDiv to the list
+        organizersListDiv.appendChild(organizerDiv);
+      });
+    } else {
+      // If no organizers, show the "No organizers" message
+      noOrganizersText.style.display = "block";
     }
+  }
 
-    // Call the function with the organizers list
-    populateOrganizers(demo.organizers);
-  </script>
-  <script>
-    // Assuming 'data' is already available in the global scope and contains the 'demo' object
-    const demoDetailsDiv = document.getElementById("demo-details");
+  // Call the function with the organizers list
+  populateOrganizers(demo.organizers);
+</script>
+<script>
+  // Assuming 'data' is already available in the global scope and contains the 'demo' object
+  const demoDetailsDiv = document.getElementById("demo-details");
 
-    // Function to populate demo details
-    function populateDemoDetails(demo) {
-      let detailsHTML = "";
+  // Function to populate demo details
+  function populateDemoDetails(demo) {
+    let detailsHTML = "";
 
-      // Päivämäärä
-      detailsHTML += `<p><strong>Päivämäärä:</strong><br />${demo.date}</p>`;
+    // Päivämäärä
+    detailsHTML += `<p><strong>Päivämäärä:</strong><br />${demo.date}</p>`;
 
-      // Alkamisaika
-      detailsHTML += `<p><strong>Alkamisaika:</strong><br />${demo.start_time}</p>`;
+    // Alkamisaika
+    detailsHTML += `<p><strong>Alkamisaika:</strong><br />${demo.start_time}</p>`;
 
-      // Päättymisaika
-      detailsHTML += `<p><strong>Päättymisaika:</strong><br />${demo.end_time}</p>`;
+    // Päättymisaika
+    detailsHTML += `<p><strong>Päättymisaika:</strong><br />${demo.end_time}</p>`;
 
-      /* DEPRACED SINCE V1.7 Aihe
-      detailsHTML += `<p><strong>Aihe:</strong><br />${demo.topic}</p>`;*/
+    /* DEPRACED SINCE V1.7 Aihe
+    detailsHTML += `<p><strong>Aihe:</strong><br />${demo.topic}</p>`;*/
 
-      // Sijainti
-      detailsHTML += `<p><strong>Sijainti:</strong><br />${demo.address}, ${demo.city}</p>`;
+    // Sijainti
+    detailsHTML += `<p><strong>Sijainti:</strong><br />${demo.address}, ${demo.city}</p>`;
 
-      // Marssin reitti (conditionally added)
-      if (demo.route && demo.route !== "None") {
-        detailsHTML += `<div class="route">
+    // Marssin reitti (conditionally added)
+    if (demo.route && demo.route !== "None") {
+      detailsHTML += `<div class="route">
                           <p><strong>Marssin reitti:</strong></p>
                           <p>${demo.route}</p>
                         </div>`;
-      }
+    }
 
-      // Facebook event link (conditionally added)
-      if (demo.facebook) {
-        detailsHTML += `<a href="${demo.facebook}" target="_blank" class="facebook-button">
+    // Facebook event link (conditionally added)
+    if (demo.facebook) {
+      detailsHTML += `<a href="${demo.facebook}" target="_blank" class="facebook-button">
                           Facebook-tapahtuma
                         </a>`;
-      }
-
-      // Insert the constructed HTML into the demoDetailsDiv
-      demoDetailsDiv.innerHTML = detailsHTML;
-
     }
 
-    // Call the function with the demo details
-    populateDemoDetails(demo);
-    function toggleToolbox() {
-      const toolboxButtons = document.getElementById('toolbox-buttons');
-      toolboxButtons.style.display = (toolboxButtons.style.display === 'none') ? 'flex' : 'none';
-    }
+    // Insert the constructed HTML into the demoDetailsDiv
+    demoDetailsDiv.innerHTML = detailsHTML;
 
-  </script>
-  {% endblock %}
+  }
 
+  // Call the function with the demo details
+  populateDemoDetails(demo);
+  function toggleToolbox() {
+    const toolboxButtons = document.getElementById('toolbox-buttons');
+    toolboxButtons.style.display = (toolboxButtons.style.display === 'none') ? 'flex' : 'none';
+  }
+
+</script>
+{% endblock %}

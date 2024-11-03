@@ -50,9 +50,6 @@ class User(UserMixin):
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
 
-        #if self.role == "global_admin":
-            #self.organizations = collection.find()
-
     @staticmethod
     def from_db(user_doc):
         """

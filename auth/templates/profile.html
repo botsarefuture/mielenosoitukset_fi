@@ -46,20 +46,22 @@
                 </div>
 
                 <div class="button-group rebellious-buttons">
-                    {% if current_user.is_authenticated and current_user.username == user.username %}
-                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">Muokkaa profiilia</a>
-                    {% else %}
-                        <div class="follow-unfollow">
-                            {% if current_user.is_following(user) %}
-                                <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
-                                    <button type="submit" class="btn btn-unfollow rebellious-btn">Lopeta seuraaminen</button>
-                                </form>
-                            {% else %}
-                                <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
-                                    <button type="submit" class="btn btn-follow rebellious-btn">Seuraa</button>
-                                </form>
-                            {% endif %}
-                        </div>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.username == user.username %}
+                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">Muokkaa profiilia</a>
+                        {% else %}
+                            <div class="follow-unfollow">
+                                {% if current_user.is_following(user) %}
+                                    <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
+                                        <button type="submit" class="btn btn-unfollow rebellious-btn">Lopeta seuraaminen</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
+                                        <button type="submit" class="btn btn-follow rebellious-btn">Seuraa</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>

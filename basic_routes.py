@@ -344,12 +344,12 @@ def init_routes(app):
             abort(401)
 
         # Check if longitude is None to trigger geocoding
-        if demo.longitude is None:
+        if not demo.longitude:
             # Build the address query (assuming 'address' and 'city' fields in the demo)
             address_query = f"{demo.address}, {demo.city}"
 
             # Geocode API URL
-            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
+            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595" #FIXME: Use variable for the api key!
 
             try:
                 # Make the request to the Geocode API

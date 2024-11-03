@@ -49,6 +49,7 @@ class User(UserMixin):
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
+        self._id = self.id # Alias for id
 
     @staticmethod
     def from_db(user_doc):

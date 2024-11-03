@@ -208,8 +208,8 @@ def profile(username=None):
         if current_user.is_authenticated:
             username = current_user.username
         
-    else:
-        return abort(404)
+        else:
+            return abort(404)
     
     user = mongo.users.find_one({"username": username})
     if user:

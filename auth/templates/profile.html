@@ -28,7 +28,9 @@
                 <h1 class="user-name rebellious-name">
                     {{ user.displayname if user.displayname else user.username }}
                 </h1>
+                {% if current_user.is_authenticated and current_user.id == user.id %}
                 <p class="email">{{ user.email or 'Ei määritetty' }}</p>
+                {% endif %}
                 <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>
 
                 {% if user.global_admin %}

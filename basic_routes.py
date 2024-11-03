@@ -368,12 +368,8 @@ def init_routes(app):
                         demo.longitude = longitude
                         demo.save()
 
-                        #mongo.demonstrations.update_one(
-                        #    {"_id": ObjectId(demo_id)},
-                        #    {"$set": {"latitude": latitude, "longitude": longitude}},
-                        #)
             except (requests.exceptions.RequestException, IndexError):
-                latitude, longitude = "None", "None"
+                ...
 
         demo = Demonstration.to_dict(demo, True)
 

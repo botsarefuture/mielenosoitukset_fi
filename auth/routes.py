@@ -5,6 +5,7 @@ from flask import (
     redirect,
     url_for,
     flash,
+    abort,
     current_app,
 )
 from flask_login import login_user, logout_user, login_required, current_user
@@ -202,10 +203,14 @@ def password_reset(token):
 
 @auth_bp.route("/profile/")
 @auth_bp.route("/profile/<username>")
-@login_required
 def profile(username=None):
     if username is None:
-        username = current_user.username
+        if current_user.is_authenticated:
+            username = current_user.username
+        
+    else:
+        return abort(404)
+    
     user = mongo.users.find_one({"username": username})
     if user:
         user_data = User.from_db(user)

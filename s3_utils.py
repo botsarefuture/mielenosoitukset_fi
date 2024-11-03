@@ -101,5 +101,3 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     except ClientError as e:
         logger.error(f"Error uploading image to bucket '{bucket_name}': {e}")
         return None
-
-#upload_image("mielenosoitukset_fi1", "default-pfp.jpg", "jpg")

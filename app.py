@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from auth.models import User  # Import User model
 from emailer.EmailSender import EmailSender
-from error import register_error_handlers
+from error_handlers import register_error_handlers
 
 from apscheduler.schedulers.background import BackgroundScheduler
 

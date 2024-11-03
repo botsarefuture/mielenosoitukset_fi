@@ -28,8 +28,10 @@
                 <h1 class="user-name rebellious-name">
                     {{ user.displayname if user.displayname else user.username }}
                 </h1>
+                {% if user.global_admin %}
                 <p class="email">{{ user.email or 'Ei määritetty' }}</p>
-                <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>
+                {% endif %}
+                <p class="bio">{{ user.bio or 'Ei esittelytekstiä saatavilla' }}</p>
 
                 {% if user.global_admin %}
                     <span class="badge badge-admin">Järjestelmävalvoja</span>

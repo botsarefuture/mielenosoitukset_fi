@@ -29,6 +29,8 @@
                     {{ user.displayname if user.displayname else user.username }}
                 </h1>
                 {% if current_user.is_authenticated and current_user.id == user.id %}
+
+                <!-- TODO: user should be able to choose whether or not to show the email to others -->
                 <p class="email">{{ user.email or 'Ei määritetty' }}</p>
                 {% endif %}
                 <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>

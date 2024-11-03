@@ -485,7 +485,7 @@
   <div class="container" style="
       margin-top: 20px;
       padding: 20px;
-      background: #ffffff;
+      background: var(--background);
       border-radius: 8px;
       text-align: center;
       box-shadow: var(--box-shadow);
@@ -524,26 +524,28 @@
 
     <a class="back-link" href="{{ url_for('demonstrations') }}">Takaisin kaikkiin mielenosoituksiin</a>
   </div>
+</div>
+
+  {% endblock %}
   {% block scripts %}
   <!-- Leaflet JS and Map Integration -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
   <script>
     let data = {
-      "latitude": {{ latitude if latitude is not none else "null" }},
-    "longitude": {{ longitude if longitude is not none else "null" }},
-    "demo": {{ demo | tojson }}
+    "demo": 
+      {{ demo | tojson }}
   };
 
-    if (data["latitude"] != null) {
-      var map = L.map("map").setView([data["latitude"], data["longitude"]], 13);
+    if (data["demo"]["latitude"] != null) {
+      var map = L.map("map").setView([data["demo"]["latitude"], data["demo"]["longitude"]], 13);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(map);
 
-      L.marker([data["latitude"], data["longitude"]])
+      L.marker([data["demo"]["latitude"], data["demo"]["longitude"]])
         .addTo(map)
         .bindPopup(data["demo"]["address"])
         .openPopup();
@@ -625,7 +627,7 @@
           if (org.organization_id) {
             const profileLinkParagraph = document.createElement("p");
             profileLinkParagraph.innerHTML = `
-              <a href="/organization/${org.organization_id}" class="org-profile-link">
+              <a href="${org.url}" class="org-profile-link">
                 Mielenosoitukset.fi -profiili
               </a>`;
             organizerDiv.appendChild(profileLinkParagraph);
@@ -703,6 +705,7 @@
 
       // Insert the constructed HTML into the demoDetailsDiv
       demoDetailsDiv.innerHTML = detailsHTML;
+
     }
 
     // Call the function with the demo details
@@ -714,6 +717,4 @@
 
   </script>
   {% endblock %}
-</div>
 
-{% endblock %}

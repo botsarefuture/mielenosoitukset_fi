@@ -1,10 +1,10 @@
 import requests
-from flask import Flask, render_template, redirect, url_for, flash
-from bson.objectid import ObjectId
-import json
-import os
-from s3_utils import upload_image
 from flask import (
+    Flask, 
+    render_template, 
+    redirect, 
+    url_for, 
+    flash,
     render_template,
     request,
     redirect,
@@ -16,15 +16,23 @@ from flask import (
     jsonify,
 )
 from bson.objectid import ObjectId
-from datetime import datetime
-from classes import Organizer, Demonstration
-from database_manager import DatabaseManager
-from flask_login import current_user
-from datetime import date
-from utils import CITY_LIST
-import xml.etree.ElementTree as ET
+import json
+import os
 
-from emailer.EmailSender import EmailSender, EmailJob
+from s3_utils import upload_image
+
+from classes import (Organizer, Demonstration)
+from database_manager import DatabaseManager
+
+from flask_login import current_user
+from utils import CITY_LIST
+
+import xml.etree.ElementTree as ET
+import re
+from datetime import (datetime, date)
+from bson import ObjectId
+
+from emailer.EmailSender import EmailSender
 
 email_sender = EmailSender()
 
@@ -94,7 +102,6 @@ def init_routes(app):
                 if (
                     search_query.lower() in demo["title"].lower()
                     or search_query.lower() in demo["city"].lower()
-                    #or search_query.lower() in demo["topic"].lower()
                     or search_query.lower() in demo["address"].lower()
                 ):
                     filtered_demonstrations.append(demo)
@@ -117,7 +124,6 @@ def init_routes(app):
             description = request.form.get("description", "")
             start_time = request.form.get("start_time")
             end_time = request.form.get("end_time", None)
-            #topic = request.form.get("topic") DEPRACED SINCE V1.7
             facebook = request.form.get("facebook")
             city = request.form.get("city")
             address = request.form.get("address")
@@ -128,7 +134,7 @@ def init_routes(app):
 
             img = request.files.get("image")
 
-            photo_url = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
+            photo_url = ""
 
             if img:
                 # Save the uploaded file temporarily
@@ -144,11 +150,10 @@ def init_routes(app):
                 not title
                 or not date
                 or not start_time
-                #or not topic DEPRACED SINCE V1.7
                 or not city
                 or not address
             ):
-                flash("Sinun tulee antaa kaikki vaaditut tiedot.", "error")
+                flash("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
                 return redirect(url_for("submit"))
 
             # Get organizers from the form and create Organizer instances
@@ -169,7 +174,6 @@ def init_routes(app):
                 date=date,
                 start_time=start_time,
                 end_time=end_time,
-                #topic=topic, DEPRACED SINCE V1.7
                 facebook=facebook,
                 city=city,
                 address=address,
@@ -189,13 +193,10 @@ def init_routes(app):
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
             )
+
             return redirect(url_for("index"))
 
         return render_template("submit.html", city_list=CITY_LIST)
-
-    from flask import request, flash, render_template
-    from datetime import datetime, date
-    from bson import ObjectId
 
     @app.route("/demonstrations")
     def demonstrations():
@@ -209,7 +210,6 @@ def init_routes(app):
         city_query = request.args.get("city", "").lower()
         location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
-        #topic_query = request.args.get("topic", "").lower() DEPRACED SINCE V1.7
         today = date.today()
 
         # Retrieve all approved demonstrations
@@ -225,7 +225,6 @@ def init_routes(app):
             city_query,
             location_query,
             date_query,
-            #topic_query, DEPRACED SINCE V1.7
         )
 
         # Sort the results by date
@@ -256,7 +255,6 @@ def init_routes(app):
         city_query,
         location_query,
         date_query,
-        #topic_query, DEPRACED SINCE V1.7
     ):
         """
         Filter the demonstrations based on various criteria.
@@ -273,7 +271,6 @@ def init_routes(app):
                         city_query,
                         location_query,
                         date_query,
-                        #topic_query, DEPRACED SINCE V1.7
                     )
                     and demo["_id"] not in added_demo_ids
                 ):
@@ -298,14 +295,12 @@ def init_routes(app):
         matches_search = (
             search_query in demo["title"].lower()
             or search_query in demo["city"].lower()
-            #or search_query in demo["topic"].lower() DEPRACED SINCE V1.7
             or search_query in demo["address"].lower()
         )
         matches_city = city_query in demo["city"].lower() if city_query else True
         matches_location = (
             location_query in demo["address"].lower() if location_query else True
         )
-        #matches_topic = topic_query in demo["topic"].lower() if topic_query else True DEPRACED SINCE V1.7
         matches_date = True
 
         if date_query:
@@ -324,7 +319,6 @@ def init_routes(app):
             matches_search
             and matches_city
             and matches_location
-            #and matches_topic DEPRACED SINCE V1.7
             and matches_date
         )
 
@@ -334,23 +328,25 @@ def init_routes(app):
         Display details of a specific demonstration and save map coordinates if available.
         """
         # Fetch the demonstration details from MongoDB
-        demo = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
+        result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
+        if result:
+            demo = Demonstration.from_dict(result)
+        
+        else:
+            abort(404)
+
 
         if not demo:
             flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.", 'error')
             return redirect(url_for("demonstrations"))
 
-        demo = Demonstration.from_dict(demo)
-
         if not demo.approved and not current_user.can_use("VIEW_DEMO"):
             abort(401)
 
-        demo = demo.to_dict(json=True)
-
         # Check if longitude is None to trigger geocoding
-        if demo.get("longitude") is None:
+        if demo.longitude is None:
             # Build the address query (assuming 'address' and 'city' fields in the demo)
-            address_query = f"{demo.get('address', '')}, {demo.get('city', '')}"
+            address_query = f"{demo.address}, {demo.city}"
 
             # Geocode API URL
             api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
@@ -368,21 +364,23 @@ def init_routes(app):
 
                     # Save coordinates to the database if they are fetched
                     if latitude and longitude:
-                        mongo.demonstrations.update_one(
-                            {"_id": ObjectId(demo_id)},
-                            {"$set": {"latitude": latitude, "longitude": longitude}},
-                        )
-                else:
-                    latitude, longitude = "None", "None"
+                        demo.latitude = latitude
+                        demo.longitude = longitude
+                        demo.save()
+
+                        #mongo.demonstrations.update_one(
+                        #    {"_id": ObjectId(demo_id)},
+                        #    {"$set": {"latitude": latitude, "longitude": longitude}},
+                        #)
             except (requests.exceptions.RequestException, IndexError):
                 latitude, longitude = "None", "None"
-        else:
-            latitude = demo.get("latitude", "None")
-            longitude = demo.get("longitude", "None")
+
+        demo = Demonstration.to_dict(demo, True)
+
 
         # Pass demo details and coordinates to the template
         return render_template(
-            "detail.html", demo=demo, latitude=latitude, longitude=longitude
+            "detail.html", demo=demo
         )
 
 
@@ -410,7 +408,7 @@ def init_routes(app):
             # Create email job
             email_sender.queue_email(
                 template_name="new_ticket.html",
-                subject="Uusi viesti Mielenosoitukset.fi:stä",
+                subject="Uusi tukipyyntö!",
                 recipients=["tuki@mielenosoitukset.fi"],
                 context={
                     "name": name,
@@ -469,7 +467,6 @@ def init_routes(app):
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
         )
 
-    import re
 
     @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):
@@ -526,8 +523,9 @@ def init_routes(app):
         return jsonify(messages=flash_data)
 
     @app.route("/celebrate")
-    def celebrate():
-        pass
+    def celebrate(): 
+        # This aims to be a cmast celebration page sometime in the future
+        ...
 
     @app.route("/marquee", methods=["GET"])
     def marquee():

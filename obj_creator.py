@@ -11,6 +11,8 @@ class ObjectId:
     _counter = random.randint(0, 0xFFFFFF)
 
     def __init__(self, value=None):
+        raise PendingDeprecationWarning("This will be Depraced in V2! Use bson.objectid.ObjectId() instead!")
+
         if isinstance(
             value, int
         ):  # If the input is an integer, treat it as a timestamp

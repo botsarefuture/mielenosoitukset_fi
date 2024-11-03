@@ -1,8 +1,9 @@
-from flask import jsonify, request, abort, Blueprint
+from flask import jsonify, request, abort, Blueprint, Response, make_response
 from bson.objectid import ObjectId
 from datetime import datetime
 from database_manager import DatabaseManager
 import json
+from classes import Demonstration
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -22,18 +23,15 @@ def stringify_object_ids(data):
         return [stringify_object_ids(item) for item in data]
     elif isinstance(data, ObjectId):
         return str(data)
-    elif isinstance(data, str):
-        return data
     elif isinstance(data, datetime):
         return data.strftime("%d.%m.%Y")  # Convert datetime to Finnish date format
     else:
-        print(data)
         return data
 
 
 @api_bp.route("/demonstrations", methods=["GET"])
 def get_demonstrations():
-    search_query = request.args.get("search", "")
+    search_query = request.args.get("search", "").lower()
     today = datetime.now()
 
     demonstrations = mongo.demonstrations.find({"approved": True})
@@ -42,31 +40,37 @@ def get_demonstrations():
     for demo in demonstrations:
         demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
         if demo_date >= today:
-            demo = stringify_object_ids(demo)  # Convert ObjectId to string here
+            demo = stringify_object_ids(demo)  # Convert ObjectId to string
             if (
-                search_query.lower() in demo["title"].lower()
-                or search_query.lower() in demo["city"].lower()
-                or search_query.lower() in demo["topic"].lower()
-                or search_query.lower() in demo["address"].lower()
+                search_query in demo["title"].lower()
+                or search_query in demo["city"].lower()
+                or search_query in demo["tags"].lower()
+                or search_query in demo["address"].lower()
             ):
                 filtered_demonstrations.append(demo)
 
+    # Sort by date in ascending order
     filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y"))
 
-    return json.dumps(filtered_demonstrations)
+    response = make_response(json.dumps(filtered_demonstrations))
+    response.content_type = "application/json"
+
+    return response
 
 
 @api_bp.route("/demonstration/<demo_id>", methods=["GET"])
 def get_demonstration_detail(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
 
+
     if demo is None:
         abort(
             404,
             description="Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.",
         )
+    demo = Demonstration.from_dict(demo)
 
-    return json(stringify_object_ids(demo))
+    return jsonify(stringify_object_ids(demo.to_dict(json=False)))
 
 
 @api_bp.route("/demonstration", methods=["POST"])
@@ -83,14 +87,14 @@ def create_demonstration():
         "start_time",
         "end_time",
         "topic",
-        "city",
+        "tags",
         "address",
         "type",
     ]
     if not all(field in data for field in required_fields):
         abort(400, description="Missing required fields.")
 
-    # Create a Demonstration instance
+    # Create a demonstration instance
     demonstration = {
         "title": data["title"],
         "date": data["date"],

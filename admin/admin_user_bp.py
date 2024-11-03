@@ -144,6 +144,8 @@ def save_user(user_id):
         flash_message("Käyttäjää ei löydy.", "error")
         return redirect(url_for("admin_user.user_control"))
 
+    user = User.from_db(user)
+
     # Get form data
     username = request.form.get("username")
     email = request.form.get("email")
@@ -157,7 +159,7 @@ def save_user(user_id):
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Prevent global admins from lowering their role
-    if user.get("role") == "global_admin" and current_user._id == user_id and role != "global_admin":
+    if user.role == "global_admin" and current_user._id == user_id and role != "global_admin":
         flash_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
@@ -210,7 +212,7 @@ def save_user(user_id):
         subject="Tilisi tiedot on päivitetty",
         recipients=[email],
         context={
-            "user_name": user.get("displayname") or username,
+            "user_name": user.displayname or username,
             "role": role,
             "organization_names": ", ".join(org_names),
             "action": "päivitetty",

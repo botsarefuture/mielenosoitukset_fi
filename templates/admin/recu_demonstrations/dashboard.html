@@ -13,10 +13,6 @@
                 <option value="false" {% if not approved_status %}selected{% endif %}>Ei hyväksytty</option>
                 <option value="true" {% if approved_status %}selected{% endif %}>Hyväksytty</option>
             </select>
-            <label class="flex items-center mb-2 sm:mb-0">
-                <input type="checkbox" name="show_past" value="true" {% if show_past %}checked{% endif %} class="mr-1" />
-                Näytä menneet
-            </label>
             <button type="submit" class="bg-blue-500 text-white p-2 rounded">Hae</button>
         </div>
     </form>

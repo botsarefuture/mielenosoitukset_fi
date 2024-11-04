@@ -409,3 +409,12 @@
     box-shadow: 0 0 20px rgba(255, 79, 79, 0.7), 0 0 20px 5px rgba(255, 156, 0, 0.7), 0 0 20px 10px rgba(255, 204, 0, 0.7), 0 0 20px 15px rgba(40, 167, 69, 0.7), 0 0 20px 20px rgba(0, 123, 255, 0.7), 0 0 20px 25px rgba(111, 66, 193, 0.7);
   }
 }
+
+
+.link {
+	color: var(--link-color);
+	text-decoration: none;
+	/* gap: 20px; */
+	/* display: inline-flex; */
+	margin-right: 1em;
+}

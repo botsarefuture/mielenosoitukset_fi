@@ -35,6 +35,7 @@
   text-align: center; /* Center text */
   background: var(--container-background); /* Default background color */
   margin-top: var(--margin-top-bottom);
+  padding-bottom: 1em;
   margin-bottom: var(--margin-top-bottom);
 }
 

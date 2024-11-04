@@ -44,8 +44,10 @@ def find_organization(org_id):
     try:
         if isinstance(org_id, dict) and "$oid" in org_id:
             org_id = ObjectId(org_id["$oid"])
+
         elif isinstance(org_id, str):
             org_id = ObjectId(org_id)
+
     except Exception as e:
         logger.error(f"Invalid organization ID format: {org_id}, Error: {e}")
         return None, None
@@ -86,6 +88,7 @@ def update_demo_organizers(demo):
                     f"Organization with ID {organizer.organization_id} not found, skipping..."
                 )
                 continue
+            
         else:
             # Try to match organizer's name with organization name
             organization = find_organization_by_name(organizer.name)

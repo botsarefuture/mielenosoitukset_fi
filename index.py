@@ -1,9 +1,9 @@
-from app import create_app
+"""
+This file's contents have been relocated to run.py and will be removed in version 2.5.0.
+"""
 
-app = create_app()
+from run import main as run
 
-if __name__ == "__main__":
-    port = app.config["PORT"]
-    debug = app.config["DEBUG"]
+raise PendingDeprecationWarning("index.py has been migrated to run.py. This alias will be deprecated in version 2.5.0.")
 
-    app.run(debug=debug, port=port)
+run()

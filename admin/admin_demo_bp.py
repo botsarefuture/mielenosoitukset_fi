@@ -213,7 +213,6 @@ def collect_demo_data(request):
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
-    topic = request.form.get("topic")
     facebook = request.form.get("facebook")
     city = request.form.get("city")
     address = request.form.get("address")
@@ -235,7 +234,6 @@ def collect_demo_data(request):
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
-        "topic": topic,
         "facebook": facebook,
         "city": city,
         "address": address,
@@ -310,8 +308,12 @@ def collect_tags(request):
 
         # Break the loop if no tag name is found
         if not tag_name:
-            break
-
+            if not request.form.get(f"tag_{i+1}"):
+                break
+            
+            else:
+                continue
+            
         # Append the trimmed tag to the list
         tags.append(tag_name.strip())
 
@@ -411,14 +413,13 @@ def accept_demo(demo_id):
     if not demo_data:
         return jsonify({"status": "ERROR", "message": "Demonstration not found."}), 404
 
+    demo = Demonstration.from_dict(demo_data)
+
     # Update the approved status
     try:
-        mongo.demonstrations.update_one(
-            {"_id": ObjectId(demo_id)},
-            {
-                "$set": {"approved": True}
-            },  # You can also include other fields to update if needed
-        )
+        demo.approved = True
+        demo.save()
+
         return (
             jsonify(
                 {"status": "OK", "message": "Demonstration accepted successfully."}

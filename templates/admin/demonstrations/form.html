@@ -20,19 +20,28 @@
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    let tagCount = 0;
+    let tagCount = {{ demo.tags | length }};
 
     // Lisää uusi tägi
-    document.getElementById('add-tag-btn').addEventListener('click', function() {
+    document.getElementById('add-tag-btn').addEventListener('click', function () {
         tagCount++;
         const newTagInput = document.createElement('input');
         newTagInput.type = 'text';
         newTagInput.id = `tag_${tagCount}`;
         newTagInput.name = `tag_${tagCount}`;
-        newTagInput.className = 'form-control tag-input mt-2';
+        newTagInput.className = 'form-control tag-input';
         newTagInput.placeholder = 'Lisää tagi';
         newTagInput.required = true;
+        const remButton = document.createElement('button');
+        remButton.className = "circle-btn";
+        remButton.id = `remove_tag_${tagCount}`;
+        remButton.addEventListener("click", function () {
+            remove(tagCount);
+        })
+        remButton.innerHTML = '<i class="fa fa-times"></i>'
         document.getElementById('tags-container').appendChild(newTagInput);
+        document.getElementById('tags-container').appendChild(remButton);
+
     });
 </script>
 
@@ -89,6 +98,21 @@
 </script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 
+<script>
+    function remove(id) {
+        ss = document.getElementById(`tag_${id}`);
+        console.log(ss);
+        ss.parentNode.removeChild(ss);
+        delete ss;
+        ca = document.getElementById(`remove_tag_${id}`);
+        ca.parentNode.removeChild(ca);
+        delete ca;
+
+        //document.removeChild(ss);        
+
+    }
+</script>
+
 {% endblock %}
 
 {% block main_content %}
@@ -101,43 +125,46 @@
         <!-- Form fields with required indicators -->
         <div class="form-group">
             <label for="title">Otsikko <span class="required">*</span></label>
-            <input type="text" id="title" name="title" class="form-control" value="{{ demo.title if demo and demo.title else '' }}" required>
+            <input type="text" id="title" name="title" class="form-control"
+                value="{{ demo.title if demo and demo.title else '' }}" required>
         </div>
         <div class="form-group">
             <label for="date">Päivämäärä (pp.kk.vvvv) <span class="required">*</span></label>
-            <input type="text" id="date" name="date" class="form-control" value="{{ demo.date if demo and demo.date else '' }}" required>
+            <input type="text" id="date" name="date" class="form-control"
+                value="{{ demo.date if demo and demo.date else '' }}" required>
         </div>
-        
+
         <div class="form-group">
             <label for="start_time">Alkamisaika <span class="required">*</span></label>
-            <input type="text" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time if demo and demo.start_time else '' }}" required>
+            <input type="text" id="start_time" name="start_time" class="form-control"
+                value="{{ demo.start_time if demo and demo.start_time else '' }}" required>
         </div>
         <div class="form-group">
             <label for="end_time">Päättymisaika</label>
-            <input type="text" id="end_time" name="end_time" class="form-control" value="{{ demo.end_time if demo and demo.end_time else '' }}">
+            <input type="text" id="end_time" name="end_time" class="form-control"
+                value="{{ demo.end_time if demo and demo.end_time else '' }}">
         </div>
-        
+
+
         <div class="form-group">
-            <label for="topic">Aihe <span class="required">*</span></label>
-            <input type="text" id="topic" name="topic" class="form-control" value="{{ demo.topic if demo and demo.topic else '' }}" required>
+            <label for="tags">Tägit</label>
+            <div id="tags-container">
+                {% if demo and demo.tags %}
+                {% for tag in demo.tags %}
+                <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input"
+                    value="{{ tag }}" placeholder="Lisää tagi" required>
+                <button class="circle-btn" id="remove_tag_{{loop.index}}" onclick="remove({{ loop.index }})"><i
+                        class="fa fa-times"></i></button>
+                {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">Lisää uusi tagi</button>
         </div>
 
-
-<!-- Osa olemassa olevasta koodista -->
-<div class="form-group">
-    <label for="tags">Tägit</label>
-    <div id="tags-container">
-        {% if demo and demo.tags %}
-            {% for tag in demo.tags %}
-                <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input" value="{{ tag }}" placeholder="Lisää tagi" required>
-            {% endfor %}
-        {% endif %}
-    </div>
-    <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">Lisää uusi tagi</button>
-</div>
         <div class="form-group">
             <label for="facebook">Facebook linkki</label>
-            <input type="url" id="facebook" name="facebook" class="form-control" value="{{ demo.facebook if demo and demo.facebook else '' }}">
+            <input type="url" id="facebook" name="facebook" class="form-control"
+                value="{{ demo.facebook if demo and demo.facebook else '' }}">
         </div>
 
         {% include "paikkakunta-dropdown.html" %}
@@ -146,64 +173,83 @@
         <!-- Address Field -->
         <div class="form-group">
             <label for="address">Osoite <span class="required">*</span></label>
-            <input type="text" id="address" name="address" class="form-control" value="{{ demo.address if demo and demo.address else '' }}" required>
+            <input type="text" id="address" name="address" class="form-control"
+                value="{{ demo.address if demo and demo.address else '' }}" required>
         </div>
 
         <!-- Event Type Selector -->
         <div class="form-group">
             <label for="type">Tyyppi <span class="required">*</span></label>
             <select id="type" name="type" class="form-control" required>
-                <option value="marssi" {% if demo and demo.event_type == 'marssi' %}selected{% endif %}>Marssi</option>
-                <option value="paikallaan" {% if demo and demo.event_type == 'paikallaan' %}selected{% endif %}>Paikallaan</option>
-                <option value="muut" {% if demo and demo.event_type == 'muut' %}selected{% endif %}>Muut</option>
+                <option value="marssi" {% if demo and demo.event_type=='marssi' %}selected{% endif %}>Marssi</option>
+                <option value="paikallaan" {% if demo and demo.event_type=='paikallaan' %}selected{% endif %}>Paikallaan
+                </option>
+                <option value="muut" {% if demo and demo.event_type=='muut' %}selected{% endif %}>Muut</option>
             </select>
         </div>
 
         <!-- March Route Input -->
-        <div id="march-route-container" class="form-group" {% if demo and demo.event_type != 'marssi' %}style="display:none;"{% endif %}>
+        <div id="march-route-container" class="form-group" {% if demo and demo.event_type !='marssi'
+            %}style="display:none;" {% endif %}>
             <label for="route">Reitti (marssin)</label>
-            <input type="text" id="route" name="route" class="form-control" value="{{ demo.route if demo and demo.route else '' }}">
+            <input type="text" id="route" name="route" class="form-control"
+                value="{{ demo.route if demo and demo.route else '' }}">
         </div>
 
-        <h4>Järjestäjätahojen tiedot</h4>
+        <h4>Järjestäjätahojen tiedot<span class="required">*</span></h4>
 
         <!-- Organizers Section -->
         <div id="organizers-container" class="container-columns">
             {% if demo and demo.organizers %}
-                {% for organizer in demo.organizers %}
-                <div class="form-group organizer-item">
-                    <hr>
-                    <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi <span class="required">*</span></label>
-                    <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}" class="form-control" value="{{ organizer.name }}" required>
-                    <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
-                    <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}" class="form-control" value="{{ organizer.website }}">
-                    <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
-                    <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}" class="form-control" value="{{ organizer.email }}">
-                    <label for="organizer_id_{{ loop.index }}">ID</label>
-                    <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}" class="form-control disabled" value="{{ organizer.organization_id }}">
-                    <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
-                </div>
-                {% endfor %}
+            {% for organizer in demo.organizers %}
+            <div class="form-group organizer-item">
+                <hr>
+
+                <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi <span
+                        class="required">*</span></label>
+                <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.name }}" required>
+
+                <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
+                <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.website }}">
+
+                <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
+                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.email }}">
+
+                <label for="organizer_id_{{ loop.index }}">ID</label>
+                <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
+                    class="form-control disabled" value="{{ organizer.organization_id }}">
+
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+            </div>
+            {% else %}
+            <script>addOrganizer();</script>
+            {% endfor %}
+            {% else %}
+            <script>addOrganizer();</script>
             {% endif %}
         </div>
 
         <!-- Organization Selection -->
         <div class="form-group">
-            <label for="organization">Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen <span class="required">*</span></label>
+            <label for="organization">Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen <span
+                    class="required">*</span></label>
             <select id="organization" name="organization" class="form-control">
                 <option value="">Valitse järjestö</option>
-                
+
                 {% if current_user.global_admin %}
-                    {% for organization in all_organizations %}
-                        <option value="{{ organization.org_id }}">{{ organization.name }}</option>
-                    {% endfor %}
+                {% for organization in all_organizations %}
+                <option value="{{ organization.org_id }}">{{ organization.name }}</option>
+                {% endfor %}
                 {% else %}
-                    {% for organization in current_user.organizations %}
-                        <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
-                    {% endfor %}
+                {% for organization in current_user.organizations %}
+                <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
+                {% endfor %}
                 {% endif %}
             </select>
-            
+
         </div>
         <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
 
@@ -212,8 +258,10 @@
             <div class="form-group" id="approval-container">
                 <label for="approved">Hyväksytty</label>
                 <div>
-                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and demo.approved %}checked{% endif %}>
-                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}Kyllä{% else %}Ei{% endif %}</span>
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
+                        demo.approved %}checked{% endif %}>
+                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}Kyllä{% else %}Ei{%
+                        endif %}</span>
                 </div>
             </div>
         </div>

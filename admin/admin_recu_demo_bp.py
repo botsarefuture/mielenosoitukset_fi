@@ -3,18 +3,18 @@ from flask_login import login_required
 from bson.objectid import ObjectId
 from datetime import datetime, date
 from utils import CITY_LIST
-from wrappers import permission_required
+from wrappers import permission_required, admin_required
+
+from .demo_utils import collect_tags
 
 from database_manager import DatabaseManager
-from wrappers import admin_required
-from classes import RecurringDemonstration, RepeatSchedule, Organizer
+from classes import RecurringDemonstration, Organizer
 
 from .utils import mongo
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
-
 
 @admin_recu_demo_bp.route("/")
 @login_required
@@ -24,42 +24,32 @@ def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
     search_query = request.args.get("search", "")
     approved_status = request.args.get("approved", "false").lower() == "true"
-    show_past = request.args.get("show_past", "false").lower() == "true"
-    today = date.today()  # Get the current date
+    #show_past = request.args.get("show_past", "false").lower() == "true"
+    today = date.today()
 
+    # Construct query based on approval status
     query = {"approved": approved_status} if approved_status else {}
-
-    # Fetch all recurring demonstrations from the database
     recurring_demos = mongo.recu_demos.find(query)
 
-    # Filter based on the search query
-    filtered_recurring_demos = []
-    if 1 == 2:
-        for demo in recurring_demos:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
-            if show_past or demo_date >= today:
-                if (
-                    search_query.lower() in demo["title"].lower()
-                    or search_query.lower() in demo["city"].lower()
-                    or search_query.lower() in demo["topic"].lower()
-                    or search_query.lower() in demo["address"].lower()
-                ):
-                    filtered_recurring_demos.append(demo)
-
-    else:
-        filtered_recurring_demos = recurring_demos
+    # Filter based on search query and date
+    filtered_recurring_demos = [
+        demo for demo in recurring_demos
+        if
+        (search_query.lower() in demo["title"].lower() or 
+         search_query.lower() in demo["city"].lower() or 
+         search_query.lower() in demo["address"].lower())
+    ]
 
     # Sort the filtered recurring demonstrations by date
-    # filtered_recurring_demos.sort(
-    #    key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
-    # )
+    filtered_recurring_demos.sort(
+        key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+    )
 
     return render_template(
         "admin/recu_demonstrations/dashboard.html",
         recurring_demos=filtered_recurring_demos,
         search_query=search_query,
         approved_status=approved_status,
-        show_past=show_past,
     )
 
 
@@ -112,7 +102,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
-    topic = request.form.get("topic")
+
     facebook = request.form.get("facebook")
     city = request.form.get("city")
     address = request.form.get("address")
@@ -120,24 +110,23 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     route = request.form.get("route")
     approved = request.form.get("approved") == "on"
 
+    tags = collect_tags(request)
+
     # Process organizers
     organizers = []
-    i = 1
-    while True:
+    for i in range(1, 10):  # Assuming a maximum of 9 organizers
         name = request.form.get(f"organizer_name_{i}")
+        if not name:  # Stop if no more organizer names are found
+            break
         website = request.form.get(f"organizer_website_{i}")
         email = request.form.get(f"organizer_email_{i}")
-        if not name:
-            break
-        organizer = Organizer(name=name, email=email, website=website)
-        organizers.append(organizer)
-        i += 1
+        organizers.append(Organizer(name=name, email=email, website=website))
 
     # Get the repeat schedule details
     repeat_schedule = {
         "frequency": request.form.get("frequency_type"),
         "interval": int(request.form.get("interval", 1)),
-        "weekday": request.form.get("weekday"),  # Capture the weekday
+        "weekday": request.form.get("weekday"),
     }
 
     demonstration_data = {
@@ -145,7 +134,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
-        "topic": topic,
+        "tags": tags,
         "facebook": facebook,
         "city": city,
         "address": address,
@@ -153,11 +142,9 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "route": route,
         "approved": approved,
         "repeat_schedule": repeat_schedule,
-        "linked_organizations": request.form.getlist(
-            "linked_organizations"
-        ),  # Collect linked organizations
-        "created_until": request.form.get("created_until"),  # New field
-        "repeating": request.form.get("repeating") == "on",  # New field,,
+        "linked_organizations": request.form.getlist("linked_organizations"),
+        "created_until": request.form.get("created_until"),
+        "repeating": request.form.get("repeating") == "on",
         "organizers": [org.to_dict() for org in organizers],
     }
 
@@ -171,12 +158,9 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             mongo.recu_demos.insert_one(demonstration_data)
             flash("Toistuva mielenosoitus luotu onnistuneesti.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
-    except ValueError as e:
-        flash(str(e))
-        if is_edit:
-            return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
-        else:
-            return redirect(url_for("admin_recu_demo.create_recu_demo"))
+    except Exception as e:
+        flash(f"Virhe: {str(e)}")
+        return redirect(url_for("admin_recu_demo.create_recu_demo" if not is_edit else "admin_recu_demo.edit_recu_demo", demo_id=demo_id))
 
 
 @admin_recu_demo_bp.route("/delete_recu_demo/<demo_id>", methods=["POST"])

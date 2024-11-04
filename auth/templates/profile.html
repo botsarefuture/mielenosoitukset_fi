@@ -18,17 +18,21 @@
 
         <div class="profile-details rebellious-details">
             <div class="profile-picture">
-                <img src="{{ user.profile_picture or url_for('static', filename='default_profile.png') }}" 
-                     alt="{{ user.displayname if user.displayname else user.username }}'n profiilikuva" 
+                <img src="{{ user.profile_picture or 'https://fsn1.your-objectstorage.com/mielenosoitukset-fi1/default-pfp.jpg' }}" 
+                     alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva" 
                      class="profile-img" 
-                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='default_profile.png') }}';">
+                     onerror="this.onerror=null; this.src='https://fsn1.your-objectstorage.com/mielenosoitukset-fi1/default-pfp.jpg';">
             </div>
 
             <div class="profile-info">
                 <h1 class="user-name rebellious-name">
                     {{ user.displayname if user.displayname else user.username }}
                 </h1>
+                {% if current_user.is_authenticated and current_user.id == user.id %}
+
+                <!-- TODO: user should be able to choose whether or not to show the email to others -->
                 <p class="email">{{ user.email or 'Ei määritetty' }}</p>
+                {% endif %}
                 <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>
 
                 {% if user.global_admin %}
@@ -39,27 +43,29 @@
                 <div class="organizations">
                     {% for org in user.organizations %}
                         <div class="org-container rebellious-org">
-                            <p><strong>{{ current_user.get_org_name(org.org_id) }}</strong></p>
+                            <p><strong>{{ user.get_org_name(org.org_id) }}</strong></p>
                             <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">Tutustu organisaatioon</a>
                         </div>
                     {% endfor %}
                 </div>
 
                 <div class="button-group rebellious-buttons">
-                    {% if current_user.is_authenticated and current_user.username == user.username %}
-                        <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">Muokkaa profiilia</a>
-                    {% else %}
-                        <div class="follow-unfollow">
-                            {% if current_user.is_following(user) %}
-                                <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
-                                    <button type="submit" class="btn btn-unfollow rebellious-btn">Lopeta seuraaminen</button>
-                                </form>
-                            {% else %}
-                                <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
-                                    <button type="submit" class="btn btn-follow rebellious-btn">Seuraa</button>
-                                </form>
-                            {% endif %}
-                        </div>
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.username == user.username %}
+                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">Muokkaa profiilia</a>
+                        {% else %}
+                            <div class="follow-unfollow">
+                                {% if current_user.is_following(user) %}
+                                    <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
+                                        <button type="submit" class="btn btn-unfollow rebellious-btn">Lopeta seuraaminen</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
+                                        <button type="submit" class="btn btn-follow rebellious-btn">Seuraa</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>

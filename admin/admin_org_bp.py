@@ -1,15 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from bson.objectid import ObjectId
-from database_manager import DatabaseManager
-from flask_login import current_user
 from wrappers import admin_required, permission_required
 from utils import is_valid_email
 from .utils import mongo
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
-
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -18,26 +15,13 @@ admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization"
 @permission_required("LIST_ORGANIZATIONS")
 def organization_control():
     """Render the organization control panel with a list of organizations."""
-    if not current_user.global_admin:
-        org_limiter = [
-            ObjectId(org.get("org_id")) for org in current_user.organizations
-        ]
-        print(org_limiter)
-    else:
-        org_limiter = None
+    org_limiter = (
+        [ObjectId(org.get("org_id")) for org in current_user.organizations]
+        if not current_user.global_admin else None
+    )
+    
     search_query = request.args.get("search", "")
-    query = {}
-
-    # Query organizations based on search input
-    if search_query:
-        query = {
-            "$or": [
-                {"name": {"$regex": search_query, "$options": "i"}},
-                {"email": {"$regex": search_query, "$options": "i"}},
-            ]
-        }
-    if org_limiter:
-        query["_id"] = {"$in": org_limiter}
+    query = construct_query(search_query, org_limiter)
 
     organizations = mongo.organizations.find(query)
 
@@ -46,6 +30,24 @@ def organization_control():
         organizations=organizations,
         search_query=search_query,
     )
+
+
+def construct_query(search_query, org_limiter):
+    """Construct the query for organizations based on search input."""
+    query = {}
+    
+    if search_query:
+        query = {
+            "$or": [
+                {"name": {"$regex": search_query, "$options": "i"}},
+                {"email": {"$regex": search_query, "$options": "i"}},
+            ]
+        }
+        
+    if org_limiter:
+        query["_id"] = {"$in": org_limiter}
+    
+    return query
 
 
 # Edit organization
@@ -58,52 +60,63 @@ def edit_organization(org_id):
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if request.method == "POST":
-        # Get form data
-        name = request.form.get("name")
-        description = request.form.get("description")
-        email = request.form.get("email")
-        website = request.form.get("website")
-        social_media_platforms = request.form.getlist(
-            "social_media_platform[]"
-        )  # Get the platforms
-        social_media_urls = request.form.getlist("social_media_url[]")  # Get the URLs
-        verified = request.form.get("verified") == "on"
-
-        # Validate required fields
-        if not name or not email:
-            flash("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
-            return redirect(url_for("admin_org.edit_organization", org_id=org_id))
-
-        if not is_valid_email(email):
-            flash("Virheellinen sähköpostiosoite.", "error")
-            return redirect(url_for("admin_org.edit_organization", org_id=org_id))
-
-        # Prepare social media links
-        social_media_links = {
-            platform: url
-            for platform, url in zip(social_media_platforms, social_media_urls)
-            if platform and url
-        }
-
-        # Update organization in the database
-        mongo.organizations.update_one(
-            {"_id": ObjectId(org_id)},
-            {
-                "$set": {
-                    "name": name,
-                    "description": description,
-                    "email": email,
-                    "website": website,
-                    "social_media_links": social_media_links,
-                    "verified": verified,
-                }
-            },
-        )
-
-        flash("Organisaatio päivitetty onnistuneesti.")
-        return redirect(url_for("admin_org.organization_control"))
+        if update_organization(org_id):
+            flash("Organisaatio päivitetty onnistuneesti.")
+            return redirect(url_for("admin_org.organization_control"))
 
     return render_template("admin/organizations/form.html", organization=organization)
+
+
+def update_organization(org_id):
+    """Update organization details based on form input."""
+    name = request.form.get("name")
+    email = request.form.get("email")
+
+    if not validate_organization_fields(name, email, org_id):
+        return False
+
+    description = request.form.get("description")
+    website = request.form.get("website")
+    social_media_links = get_social_media_links()
+
+    mongo.organizations.update_one(
+        {"_id": ObjectId(org_id)},
+        {
+            "$set": {
+                "name": name,
+                "description": description,
+                "email": email,
+                "website": website,
+                "social_media_links": social_media_links,
+                "verified": request.form.get("verified") == "on",
+            }
+        },
+    )
+    return True
+
+
+def validate_organization_fields(name, email, org_id):
+    """Validate required fields for organization."""
+    if not name or not email:
+        flash("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
+        return False
+
+    if not is_valid_email(email):
+        flash("Virheellinen sähköpostiosoite.", "error")
+        return False
+    
+    return True
+
+
+def get_social_media_links():
+    """Retrieve social media links from form input."""
+    platforms = request.form.getlist("social_media_platform[]")
+    urls = request.form.getlist("social_media_url[]")
+    return {
+        platform: url
+        for platform, url in zip(platforms, urls)
+        if platform and url
+    }
 
 
 # Create organization
@@ -114,48 +127,34 @@ def edit_organization(org_id):
 def create_organization():
     """Create a new organization."""
     if request.method == "POST":
-        # Get form data
-        name = request.form.get("name")
-        description = request.form.get("description")
-        email = request.form.get("email")
-        website = request.form.get("website")
-        social_media_platforms = request.form.getlist(
-            "social_media_platform[]"
-        )  # Get the platforms
-        social_media_urls = request.form.getlist("social_media_url[]")  # Get the URLs
-
-        # Validate required fields
-        if not name or not email:
-            flash("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
-            return redirect(url_for("admin_org.create_organization"))
-
-        if not is_valid_email(email):
-            flash("Virheellinen sähköpostiosoite.", "error")
-            return redirect(url_for("admin_org.create_organization"))
-
-        # Prepare social media links
-        social_media_links = {
-            platform: url
-            for platform, url in zip(social_media_platforms, social_media_urls)
-            if platform and url
-        }
-
-        # Insert new organization into the database
-        mongo.organizations.insert_one(
-            {
-                "name": name,
-                "description": description,
-                "email": email,
-                "website": website,
-                "social_media_links": social_media_links,
-                "members": [],
-            }
-        )
-
-        flash("Organisaatio luotu onnistuneesti.")
-        return redirect(url_for("admin_org.organization_control"))
+        if insert_organization():
+            flash("Organisaatio luotu onnistuneesti.")
+            return redirect(url_for("admin_org.organization_control"))
 
     return render_template("admin/organizations/form.html")
+
+
+def insert_organization():
+    """Insert a new organization into the database."""
+    name = request.form.get("name")
+    email = request.form.get("email")
+
+    if not validate_organization_fields(name, email, None):
+        return False
+
+    description = request.form.get("description")
+    website = request.form.get("website")
+    social_media_links = get_social_media_links()
+
+    mongo.organizations.insert_one({
+        "name": name,
+        "description": description,
+        "email": email,
+        "website": website,
+        "social_media_links": social_media_links,
+        "members": [],
+    })
+    return True
 
 
 # Delete organization
@@ -196,7 +195,3 @@ def confirm_delete_organization(org_id):
     return render_template(
         "admin/organizations/confirm_delete.html", organization=organization
     )
-
-
-##########################################################################################
-

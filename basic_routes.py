@@ -21,7 +21,7 @@ import os
 
 from s3_utils import upload_image
 
-from classes import (Organizer, Demonstration)
+from classes import (Organizer, Demonstration, Organization)
 from database_manager import DatabaseManager
 
 from flask_login import current_user
@@ -427,6 +427,8 @@ def init_routes(app):
         if _org is None:
             flash("Organisaatiota ei löytynyt.", "error")
             return redirect(url_for("index"))
+
+        _org = Organization.from_dict(_org)
 
         today = date.today()  # Get today's date
 

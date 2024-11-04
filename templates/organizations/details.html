@@ -46,12 +46,20 @@
         target="_blank"
         class="some-icon link"
       >
-        <i class="fa-brands fa-{{ social }} some-icon"></i>
-      </a>
+      {% set social_link = org.social_media_links[social].split("/") %}
+{% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else social_link[-2] if social_link | length > 1 else "" %}
+
+<i class="fa-brands fa-{{ social }} some-icon"></i>
+{{ '@' + username if username and username[0] != '@' else username }}
+
+            </a>
       {% endfor %}
+      <br>
     </div>
+    <br>
     {% endif %}
   </div>
+  <br>
 </div>
 
   {% if upcoming_demos %}

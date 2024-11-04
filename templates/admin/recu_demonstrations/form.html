@@ -1,66 +1,189 @@
 {% extends 'admin_base.html' %}
 
-{% block main_content %}
+{% block styles %}
 <!-- Include CSS and JS files -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_form.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}"> <!-- Load recu_dash.css -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+
+<!-- Include Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+{% endblock %}
+
+
+{% block scripts %}
+
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    let tagCount = 0;
+
+    // Lisää uusi tägi
+    document.getElementById('add-tag-btn').addEventListener('click', function () {
+        tagCount++;
+        const newTagInput = document.createElement('input');
+        newTagInput.type = 'text';
+        newTagInput.id = `tag_${tagCount}`;
+        newTagInput.name = `tag_${tagCount}`;
+        newTagInput.className = 'form-control tag-input mt-2';
+        newTagInput.placeholder = 'Lisää tagi';
+        newTagInput.required = true;
+        document.getElementById('tags-container').appendChild(newTagInput);
+    });
+</script>
+
+<script>
+    // City Selector JS functions
+    function selectCity(city) {
+        document.querySelector('.dropbtn').textContent = city;
+        document.getElementById('selected-city').value = city;
+        document.getElementById('dropdown-content').style.display = 'none';
+    }
+
+    function filterFunction() {
+        let input, filter, div, a;
+        input = document.getElementById('searchInput');
+        filter = input.value.toUpperCase();
+        div = document.getElementById('dropdown-content');
+        a = div.getElementsByTagName('a');
+        for (let i = 0; i < a.length; i++) {
+            let txtValue = a[i].textContent || a[i].innerText;
+            a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    // Organizer JS functions
+    let organizerCount = {{ demo.organizers | length if demo and demo.organizers else 0 }};
+
+    function addOrganizer() {
+        const selectedOrgId = document.getElementById('organization').value;
+        if (selectedOrgId) {
+            organizerCount++;
+            const newOrganizer = document.createElement('div');
+            newOrganizer.className = 'form-group organizer-item';
+            newOrganizer.innerHTML = `
+                <hr>
+                <label for="organizer_name_${organizerCount}_">Järjestäjätahon nimi</label>
+                <input type="text" id="organizer_name_${organizerCount}_" name="organizer_name_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_website_${organizerCount}_">Nettisivu</label>
+                <input type="url" id="organizer_website_${organizerCount}_" name="organizer_website_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_email_${organizerCount}_">Sähköposti</label>
+                <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
+                <label for="organizer_id_${organizerCount}">Organisaation ID</label>
+                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+            `;
+            document.getElementById('organizers-container').appendChild(newOrganizer);
+        } else {
+            alert('Valitse ensin järjestö!');
+        }
+    }
+
+    function removeOrganizer(button) {
+        button.closest('.organizer-item').remove();
+    }
+</script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+<script>
+    function remove(id) {
+        ss = document.getElementById(`tag_${id}`);
+        console.log(ss);
+        ss.parentNode.removeChild(ss); 
+        delete ss;
+        ca = document.getElementById(`remove_tag_${id}`);
+        ca.parentNode.removeChild(ca);
+        delete ca;
+
+        //document.removeChild(ss);        
+
+    }
+</script>
+
+{% endblock %}
+
+{% block main_content %}
 
 <!-- Main content container -->
 <div class="container container-form">
-    <h2>{{ title }}</h2>
+    <h2 class="admin-section-title form-title">{{ title }}</h2>
     <form method="POST" action="{{ form_action }}">
 
         <!-- Form fields with required indicators -->
         <div class="form-group">
             <label for="title">Otsikko <span class="required">*</span></label>
-            <input type="text" id="title" name="title" class="form-control" value="{{ demo.title if demo and demo.title else '' }}" required>
+            <input type="text" id="title" name="title" class="form-control"
+                value="{{ demo.title if demo and demo.title else '' }}" required>
         </div>
         <div class="form-group">
             <label for="date">Päivämäärä (pp.kk.vvvv) <span class="required">*</span></label>
-            <input type="text" id="date" name="date" class="form-control" value="{{ demo.date if demo and demo.date else '' }}" required>
+            <input type="text" id="date" name="date" class="form-control"
+                value="{{ demo.date if demo and demo.date else '' }}" required>
         </div>
+
         <div class="form-group">
             <label for="start_time">Alkamisaika <span class="required">*</span></label>
-            <input type="time" id="start_time" name="start_time" class="form-control" value="{{ demo.start_time if demo and demo.start_time else '' }}" required>
+            <input type="text" id="start_time" name="start_time" class="form-control"
+                value="{{ demo.start_time if demo and demo.start_time else '' }}" required>
         </div>
         <div class="form-group">
             <label for="end_time">Päättymisaika</label>
-            <input type="time" id="end_time" name="end_time" class="form-control" value="{{ demo.end_time if demo and demo.end_time else '' }}">
+            <input type="text" id="end_time" name="end_time" class="form-control"
+                value="{{ demo.end_time if demo and demo.end_time else '' }}">
         </div>
+
+
         <div class="form-group">
-            <label for="topic">Aihe <span class="required">*</span></label>
-            <input type="text" id="topic" name="topic" class="form-control" value="{{ demo.topic if demo and demo.topic else '' }}" required>
+            <label for="tags">Tägit</label>
+            <div id="tags-container">
+                {% if demo and demo.tags %}
+                {% for tag in demo.tags %}
+                <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input"
+                    value="{{ tag }}" placeholder="Lisää tagi" required>
+                <button class="circle-btn" id="remove_tag_{{loop.index}}" onclick="remove({{ loop.index }})"><i class="fa fa-times"></i></button>
+                {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">Lisää uusi tagi</button>
         </div>
+
         <div class="form-group">
             <label for="facebook">Facebook linkki</label>
-            <input type="url" id="facebook" name="facebook" class="form-control" value="{{ demo.facebook if demo and demo.facebook else '' }}">
+            <input type="url" id="facebook" name="facebook" class="form-control"
+                value="{{ demo.facebook if demo and demo.facebook else '' }}">
         </div>
 
         {% include "paikkakunta-dropdown.html" %}
 
+
         <!-- Address Field -->
         <div class="form-group">
             <label for="address">Osoite <span class="required">*</span></label>
-            <input type="text" id="address" name="address" class="form-control" value="{{ demo.address if demo and demo.address else '' }}" required>
+            <input type="text" id="address" name="address" class="form-control"
+                value="{{ demo.address if demo and demo.address else '' }}" required>
         </div>
 
         <!-- Event Type Selector -->
         <div class="form-group">
             <label for="type">Tyyppi <span class="required">*</span></label>
             <select id="type" name="type" class="form-control" required>
-                <option value="marssi" {% if demo and demo.event_type == 'marssi' %}selected{% endif %}>Marssi</option>
-                <option value="paikallaan" {% if demo and demo.event_type == 'paikallaan' %}selected{% endif %}>Paikallaan</option>
-                <option value="muut" {% if demo and demo.event_type == 'muut' %}selected{% endif %}>Muut</option>
+                <option value="marssi" {% if demo and demo.event_type=='marssi' %}selected{% endif %}>Marssi</option>
+                <option value="paikallaan" {% if demo and demo.event_type=='paikallaan' %}selected{% endif %}>Paikallaan
+                </option>
+                <option value="muut" {% if demo and demo.event_type=='muut' %}selected{% endif %}>Muut</option>
             </select>
         </div>
 
         <!-- March Route Input -->
-        <div id="march-route-container" class="form-group" {% if demo and demo.event_type != 'marssi' %}style="display:none;"{% endif %}>
+        <div id="march-route-container" class="form-group" {% if demo and demo.event_type !='marssi'
+            %}style="display:none;" {% endif %}>
             <label for="route">Reitti (marssin)</label>
-            <input type="text" id="route" name="route" class="form-control" value="{{ demo.route if demo and demo.route else '' }}">
+            <input type="text" id="route" name="route" class="form-control"
+                value="{{ demo.route if demo and demo.route else '' }}">
         </div>
 
         <h4>Järjestäjätahojen tiedot</h4>
@@ -68,21 +191,47 @@
         <!-- Organizers Section -->
         <div id="organizers-container" class="container-columns">
             {% if demo and demo.organizers %}
-                {% for organizer in demo.organizers %}
-                <div class="form-group organizer-item">
-                    <hr>
-                    <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi <span class="required">*</span></label>
-                    <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}" class="form-control" value="{{ organizer.name }}" required>
-                    <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
-                    <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}" class="form-control" value="{{ organizer.website }}">
-                    <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
-                    <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}" class="form-control" value="{{ organizer.email }}">
-                    <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
-                </div>
-                {% endfor %}
+            {% for organizer in demo.organizers %}
+            <div class="form-group organizer-item">
+                <hr>
+                <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi <span
+                        class="required">*</span></label>
+                <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.name }}" required>
+                <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
+                <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.website }}">
+                <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
+                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.email }}">
+                <label for="organizer_id_{{ loop.index }}">ID</label>
+                <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
+                    class="form-control disabled" value="{{ organizer.organization_id }}">
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+            </div>
+            {% endfor %}
             {% endif %}
         </div>
 
+        <!-- Organization Selection -->
+        <div class="form-group">
+            <label for="organization">Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen <span
+                    class="required">*</span></label>
+            <select id="organization" name="organization" class="form-control">
+                <option value="">Valitse järjestö</option>
+
+                {% if current_user.global_admin %}
+                {% for organization in all_organizations %}
+                <option value="{{ organization.org_id }}">{{ organization.name }}</option>
+                {% endfor %}
+                {% else %}
+                {% for organization in current_user.organizations %}
+                <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+
+        </div>
         <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
 
         <!-- Approval Checkbox -->
@@ -90,8 +239,10 @@
             <div class="form-group" id="approval-container">
                 <label for="approved">Hyväksytty</label>
                 <div>
-                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and demo.approved %}checked{% endif %}>
-                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}Kyllä{% else %}Ei{% endif %}</span>
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
+                        demo.approved %}checked{% endif %}>
+                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}Kyllä{% else %}Ei{%
+                        endif %}</span>
                 </div>
             </div>
         </div>
@@ -134,59 +285,9 @@
         </div>
 
         <!-- Submit Button -->
-        <div class="form-group">
-            <button type="submit" class="btn btn-success">Tallenna</button>
+        <div class="text-center">
+            <button type="submit" class="btn btn-submit mt-3">{{ submit_button_text }}</button>
         </div>
     </form>
 </div>
-
-<script>
-    // JavaScript functions for handling the dynamic parts
-    function selectCity(city) {
-        document.getElementById('selected-city').value = city;
-        document.querySelector('.dropbtn').textContent = city;
-        document.getElementById('dropdown-content').style.display = 'none'; // Hide dropdown
-    }
-
-    function filterFunction() {
-        var input, filter, div, a, i;
-        input = document.getElementById("searchInput");
-        filter = input.value.toUpperCase();
-        div = document.getElementById("dropdown-content");
-        a = div.getElementsByTagName("a");
-        for (i = 0; i < a.length; i++) {
-            if (a[i].textContent.toUpperCase().indexOf(filter) > -1) {
-                a[i].style.display = "";
-            } else {
-                a[i].style.display = "none";
-            }
-        }
-    }
-
-    function addOrganizer() {
-        const container = document.getElementById('organizers-container');
-        const index = container.getElementsByClassName('organizer-item').length + 1; // New index for unique IDs
-        const newItem = `
-        <div class="form-group organizer-item">
-            <hr>
-            <label for="organizer_name_${index}">Järjestäjätahon nimi <span class="required">*</span></label>
-            <input type="text" id="organizer_name_${index}" name="organizer_name_${index}" class="form-control" required>
-            <label for="organizer_website_${index}">Nettisivu</label>
-            <input type="url" id="organizer_website_${index}" name="organizer_website_${index}" class="form-control">
-            <label for="organizer_email_${index}">Sähköposti</label>
-            <input type="email" id="organizer_email_${index}" name="organizer_email_${index}" class="form-control">
-            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
-        </div>`;
-        container.insertAdjacentHTML('beforeend', newItem);
-    }
-
-    function removeOrganizer(button) {
-        button.closest('.organizer-item').remove(); // Remove the organizer item
-    }
-
-    document.getElementById('type').addEventListener('change', function () {
-        document.getElementById('march-route-container').style.display = this.value === 'marssi' ? 'block' : 'none';
-    });
-</script>
-
 {% endblock %}

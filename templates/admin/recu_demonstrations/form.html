@@ -93,7 +93,7 @@
     function remove(id) {
         ss = document.getElementById(`tag_${id}`);
         console.log(ss);
-        ss.parentNode.removeChild(ss); 
+        ss.parentNode.removeChild(ss);
         delete ss;
         ca = document.getElementById(`remove_tag_${id}`);
         ca.parentNode.removeChild(ca);
@@ -144,7 +144,8 @@
                 {% for tag in demo.tags %}
                 <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input"
                     value="{{ tag }}" placeholder="Lisää tagi" required>
-                <button class="circle-btn" id="remove_tag_{{loop.index}}" onclick="remove({{ loop.index }})"><i class="fa fa-times"></i></button>
+                <button class="circle-btn" id="remove_tag_{{loop.index}}" onclick="remove({{ loop.index }})"><i
+                        class="fa fa-times"></i></button>
                 {% endfor %}
                 {% endif %}
             </div>
@@ -254,34 +255,46 @@
             <label for="frequency_type">Toistuvuus</label>
             <select name="frequency_type" id="frequency_type" class="form-control">
                 <option value="" disabled {% if not demo %}selected{% endif %}>Valitse toistuvuustyyppi</option>
-                <option value="daily" {% if demo and demo.repeat_schedule.frequency == 'daily' %}selected{% endif %}>Päivittäin</option>
-                <option value="weekly" {% if demo and demo.repeat_schedule.frequency == 'weekly' %}selected{% endif %}>Viikoittain</option>
-                <option value="monthly" {% if demo and demo.repeat_schedule.frequency == 'monthly' %}selected{% endif %}>Kuukausittain</option>
+                <option value="daily" {% if demo and demo.repeat_schedule.frequency=='daily' %}selected{% endif %}>
+                    Päivittäin</option>
+                <option value="weekly" {% if demo and demo.repeat_schedule.frequency=='weekly' %}selected{% endif %}>
+                    Viikoittain</option>
+                <option value="monthly" {% if demo and demo.repeat_schedule.frequency=='monthly' %}selected{% endif %}>
+                    Kuukausittain</option>
             </select>
         </div>
 
         <div class="form-group">
             <label for="frequency_interval">Toistuvuusväli</label>
-            <input type="number" name="frequency_interval" id="frequency_interval" value="{{ demo.repeat_schedule.interval if demo else 1 }}" min="1" class="form-control">
+            <input type="number" name="frequency_interval" id="frequency_interval"
+                value="{{ demo.repeat_schedule.interval if demo else 1 }}" min="1" class="form-control">
         </div>
 
         <div class="form-group">
             <label for="weekday">Viikonpäivä</label>
             <select name="weekday" id="weekday" class="form-control">
                 <option value="" disabled {% if not demo %}selected{% endif %}>Valitse viikonpäivä</option>
-                <option value="monday" {% if demo and demo.repeat_schedule.weekday == 'monday' %}selected{% endif %}>Maanantai</option>
-                <option value="tuesday" {% if demo and demo.repeat_schedule.weekday == 'tuesday' %}selected{% endif %}>Tiistai</option>
-                <option value="wednesday" {% if demo and demo.repeat_schedule.weekday == 'wednesday' %}selected{% endif %}>Keskiviikko</option>
-                <option value="thursday" {% if demo and demo.repeat_schedule.weekday == 'thursday' %}selected{% endif %}>Torstai</option>
-                <option value="friday" {% if demo and demo.repeat_schedule.weekday == 'friday' %}selected{% endif %}>Perjantai</option>
-                <option value="saturday" {% if demo and demo.repeat_schedule.weekday == 'saturday' %}selected{% endif %}>Lauantai</option>
-                <option value="sunday" {% if demo and demo.repeat_schedule.weekday == 'sunday' %}selected{% endif %}>Sunnuntai</option>
+                <option value="monday" {% if demo and demo.repeat_schedule.weekday=='monday' %}selected{% endif %}>
+                    Maanantai</option>
+                <option value="tuesday" {% if demo and demo.repeat_schedule.weekday=='tuesday' %}selected{% endif %}>
+                    Tiistai</option>
+                <option value="wednesday" {% if demo and demo.repeat_schedule.weekday=='wednesday' %}selected{% endif
+                    %}>Keskiviikko</option>
+                <option value="thursday" {% if demo and demo.repeat_schedule.weekday=='thursday' %}selected{% endif %}>
+                    Torstai</option>
+                <option value="friday" {% if demo and demo.repeat_schedule.weekday=='friday' %}selected{% endif %}>
+                    Perjantai</option>
+                <option value="saturday" {% if demo and demo.repeat_schedule.weekday=='saturday' %}selected{% endif %}>
+                    Lauantai</option>
+                <option value="sunday" {% if demo and demo.repeat_schedule.weekday=='sunday' %}selected{% endif %}>
+                    Sunnuntai</option>
             </select>
         </div>
 
         <div class="form-group">
             <label for="end_date">Loppupäivämäärä</label>
-            <input type="text" name="end_date" id="end_date" class="form-control" value="{{ demo.repeat_schedule.end_date if demo else '' }}">
+            <input type="text" name="end_date" id="end_date" class="form-control"
+                value="{{ demo.repeat_schedule.end_date if demo else '' }}">
         </div>
 
         <!-- Submit Button -->

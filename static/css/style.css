@@ -424,3 +424,18 @@ span i {
       transform: translateX(calc(-100% - 10cm)); /* Move left by the full width plus the desired distance */
   }
 }
+
+.circle-btn {
+	height: 2em;
+	line-height: 2em;
+	width: 2em;
+	font-size: 1em;
+	font-weight: bold;
+	border-radius: 50%;
+	background-color: var(--red-darker);
+	color: white;
+	text-align: center;
+	cursor: pointer;
+	padding: 0 !important;
+	/* margin: auto; */
+}

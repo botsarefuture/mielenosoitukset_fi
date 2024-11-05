@@ -1,20 +1,20 @@
+from datetime import datetime, date
+
+from bson.objectid import ObjectId
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
-from bson.objectid import ObjectId
-from datetime import datetime, date
+
+from classes import RecurringDemonstration, Organizer
 from utils import CITY_LIST
 from wrappers import permission_required, admin_required
 
 from .demo_utils import collect_tags
-
-from database_manager import DatabaseManager
-from classes import RecurringDemonstration, Organizer
-
 from .utils import mongo
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
+
 
 @admin_recu_demo_bp.route("/")
 @login_required
@@ -24,7 +24,7 @@ def recu_demo_control():
     """Render the recurring demonstration control panel with a list of recurring demonstrations."""
     search_query = request.args.get("search", "")
     approved_status = request.args.get("approved", "false").lower() == "true"
-    #show_past = request.args.get("show_past", "false").lower() == "true"
+    # show_past = request.args.get("show_past", "false").lower() == "true"
     today = date.today()
 
     # Construct query based on approval status
@@ -33,11 +33,13 @@ def recu_demo_control():
 
     # Filter based on search query and date
     filtered_recurring_demos = [
-        demo for demo in recurring_demos
-        if
-        (search_query.lower() in demo["title"].lower() or 
-         search_query.lower() in demo["city"].lower() or 
-         search_query.lower() in demo["address"].lower())
+        demo
+        for demo in recurring_demos
+        if (
+            search_query.lower() in demo["title"].lower()
+            or search_query.lower() in demo["city"].lower()
+            or search_query.lower() in demo["address"].lower()
+        )
     ]
 
     # Sort the filtered recurring demonstrations by date
@@ -76,10 +78,17 @@ def create_recu_demo():
 @admin_required
 @permission_required("EDIT_RECURRING_DEMO")
 def edit_recu_demo(demo_id):
-    """Edit recurring demonstration details."""
+    """Edit recurring demonstration details.
+
+    Changelog:
+    ---------
+    v2.4.0:
+    - Fixed some typos in flashes
+    """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
+
     if not demo_data:
-        flash("Toistuva mielenosoitus ei löytynyt.")
+        flash("Toistuvaa mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     if request.method == "POST":
@@ -160,7 +169,16 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         flash(f"Virhe: {str(e)}")
-        return redirect(url_for("admin_recu_demo.create_recu_demo" if not is_edit else "admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+        return redirect(
+            url_for(
+                (
+                    "admin_recu_demo.create_recu_demo"
+                    if not is_edit
+                    else "admin_recu_demo.edit_recu_demo"
+                ),
+                demo_id=demo_id,
+            )
+        )
 
 
 @admin_recu_demo_bp.route("/delete_recu_demo/<demo_id>", methods=["POST"])
@@ -187,11 +205,19 @@ def delete_recu_demo(demo_id):
 @admin_recu_demo_bp.route("/confirm_delete_recu_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
+@permission_required("DELETE_RECURRING_DEMO")
 def confirm_delete_recu_demo(demo_id):
-    """Render a confirmation page before deleting a recurring demonstration."""
+    """Render a confirmation page before deleting a recurring demonstration.
+
+    Changelog:
+    ----------
+    v2.4.0:
+    - Fixed some typos in flashes
+    """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
+
     if not demo_data:
-        flash("Toistuva mielenosoitus ei löytynyt.")
+        flash("Toistuvaa mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)

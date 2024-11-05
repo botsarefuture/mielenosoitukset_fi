@@ -1,3 +1,5 @@
+import re, warnings
+
 CITY_LIST = [
     "Akaa",
     "Alajärvi",
@@ -347,10 +349,36 @@ PERMISSIONS_GROUPS = {
 }
 
 
-import re
-
-
 def is_valid_email(email):
+    """
+    Deprecated: This function is deprecated and will be removed in future versions.
+    Please use `valid_email` from this module instead.
+
+    Args:
+        email (str): The email address to validate.
+
+    Returns:
+        bool: True if the email is valid, False otherwise.
+
+    Changelog:
+    ----------
+
+    v2.4.0:
+    - Depraced this function
+
+    """
+    warnings.warn(
+        "is_valid_email is deprecated; use valid_email from this module instead.",
+        DeprecationWarning,
+    )
+
+    # Regular expression for validating an email
+    email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+
+    return re.match(email_regex, email) is not None
+
+
+def valid_email(email):
     """
     Check if the given email address is valid.
 
@@ -360,7 +388,29 @@ def is_valid_email(email):
     Returns:
         bool: True if the email is valid, False otherwise.
     """
-    # Regular expression for validating an Email
+    # Regular expression for validating an email
     email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
     return re.match(email_regex, email) is not None
+
+
+def load_version() -> str:
+    """
+    meow
+
+    Returns:
+        version (str): version currently running
+
+    Changelog:
+    ----------
+    v2.4.0:
+    - Added this function
+    """
+
+    with open("VERSION") as f:
+        version = f.read()
+
+    if not version.lower().startswith("v"):
+        return f"v{version}"
+
+    return version

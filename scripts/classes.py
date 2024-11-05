@@ -6,8 +6,8 @@ from dateutil.relativedelta import relativedelta
 from typing import List, Optional, Dict, Any
 from database_manager import DatabaseManager
 from bson.objectid import ObjectId
-from flask import url_for
 
+def url_for(*args, **kwargs): ...
 
 def stringify_object_ids(data):
     """
@@ -246,14 +246,9 @@ class Demonstration(BaseModel):
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
+        self.recurring = recurring
         self.repeat_schedule = repeat_schedule
         self.repeating = repeating
-        self.recurring = recurring
-        if not self.repeating:
-            self.repeating = recurring
-        
-        elif not self.recurring:
-            self.recurring = repeating
 
         # DEPRECATED
         self.topic = topic

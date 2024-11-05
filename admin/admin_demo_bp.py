@@ -1,13 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from flask_login import login_required
+from datetime import date, datetime
 from bson.objectid import ObjectId
-from datetime import datetime, date
-from utils import CITY_LIST
-from database_manager import DatabaseManager
-from wrappers import admin_required, permission_required
-from flask_login import current_user
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import current_user, login_required
+
 from classes import Demonstration, Organizer
+from utils import CITY_LIST
+from wrappers import admin_required, permission_required
 from .utils import mongo
+
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -151,7 +152,7 @@ def edit_demo(demo_id):
         title="Muokkaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find()
+        all_organizations=mongo.organizations.find(),
     )
 
 
@@ -310,10 +311,10 @@ def collect_tags(request):
         if not tag_name:
             if not request.form.get(f"tag_{i+1}"):
                 break
-            
+
             else:
                 continue
-            
+
         # Append the trimmed tag to the list
         tags.append(tag_name.strip())
 

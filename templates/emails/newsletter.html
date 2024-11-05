@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uusimmat Mielenosoitukset</title>
+    <style>
+        :root {
+            --primary-color: #0033a0;
+            --secondary-color: #f0f0f0;
+            --background: #ffffff;
+            --border-color: #ddd;
+            --text-color: #333;
+            --hover-bg-color: #e0e0e0;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4; 
+            margin: 0; 
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px; 
+            background: var(--background);
+            margin: auto; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: var(--box-shadow);
+        }
+        .header {
+            text-align: center; 
+            background: #0033a0;
+            color: #ffffff; 
+            padding: 10px 0; 
+            border-radius: 8px 8px 0 0;
+        }
+        .footer {
+            text-align: center; 
+            font-size: 0.9em; 
+            color: #888888; 
+            margin-top: 20px;
+        }
+        .demo { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 10px 0; 
+        }
+        .demo:last-child { 
+            border-bottom: none; 
+        }
+        .grid-container {
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 20px;
+        }
+        .grid-item {
+            background: var(--background); 
+            border: 1px solid var(--border-color);
+            border-radius: 8px; 
+            padding: 15px; 
+            box-shadow: var(--box-shadow);
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .grid-item:hover {
+            background: var(--hover-bg-color); 
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        .grid-item .title {
+            font-size: 18px; 
+            font-weight: bold; 
+            color: var(--primary-color);
+            margin-bottom: 10px; 
+            text-decoration: none;
+        }
+        .grid-item .title:hover { 
+            text-decoration: underline; 
+        }
+        .date-time { 
+            margin-bottom: 10px; 
+            font-size: 14px; 
+            color: var(--text-color); 
+        }
+        .tag {
+            padding: 8px 12px; 
+            background: #3366cc; 
+            color: #fff; 
+            border-radius: 100px;
+            display: inline-block; 
+            transition: background 0.3s;
+        }
+        .tag:hover { 
+            background: #002280; 
+        }
+        .topics { 
+            margin: 10px 0; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Mielenosoitukset</h1>
+        </div>
+        <div class="content">
+            <p>Hei, {{ user_name }}</p>
+            <p>Olet tilannut päivittäiset ilmoitukset uusista mielenosoituksista. Tästä johtuen lähetämme sinulle tämän sähköpostin.</p>
+            <p>Tässä ovat uusimmat mielenosoitukset:</p>
+            <div class="grid-container">
+                {% import 'macros_new.html' as macros %}
+                {% for demo in demonstrations %}
+                    {{ macros.demo_card(demo) }}
+                {% endfor %}
+            </div>
+        </div>
+        <div class="footer">
+            <p>Tämä on automaattinen viesti, älä vastaa tähän sähköpostiin.</p>
+        </div>
+    </div>
+</body>
+</html>

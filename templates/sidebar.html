@@ -97,7 +97,8 @@
             </li>
             {% endif %}
             <li>
-                <a href="{{ url_for('admin.admin_logout') }}">
+                <!-- admin.admin_logout has been depraced in v2.4.0. -->
+                <a href="{{ url_for('auth.logout') }}">
                     <span class="icon"><i class="fas fa-sign-out-alt"></i></span> Kirjaudu ulos
                 </a>
             </li>
@@ -134,7 +135,7 @@
     {% if current_user.can_use("MANAGE_MARQUEE") %}
     <a href="{{ url_for('admin.manage_marquee') }}" class="hidden-icon"><i class="fas fa-scroll"></i></a> <!-- Marquee Management Hidden Icon -->
     {% endif %}
-    <a href="{{ url_for('admin.admin_logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
+    <a href="{{ url_for('auth.logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
 </div>
 
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>

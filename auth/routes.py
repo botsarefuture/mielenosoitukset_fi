@@ -18,10 +18,10 @@ from database_manager import DatabaseManager
 from s3_utils import upload_image  # Import your S3 upload function
 import os
 
+
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
-email_sender = EmailSender()
 auth_bp = Blueprint("auth", __name__, template_folder="./templates/")
 
 
@@ -207,10 +207,10 @@ def profile(username=None):
     if username is None:
         if current_user.is_authenticated:
             username = current_user.username
-        
+
         else:
             return abort(404)
-    
+
     user = mongo.users.find_one({"username": username})
     if user:
         user_data = User.from_db(user)

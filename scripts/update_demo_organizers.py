@@ -88,7 +88,7 @@ def update_demo_organizers(demo):
                     f"Organization with ID {organizer.organization_id} not found, skipping..."
                 )
                 continue
-            
+
         else:
             # Try to match organizer's name with organization name
             organization = find_organization_by_name(organizer.name)

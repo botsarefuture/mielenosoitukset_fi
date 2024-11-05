@@ -1,6 +1,7 @@
 """
 This file contains code for a test of new kind of control panel stuff, that would make creating the control panels a lot easier.
 """
+
 @app.route("/admin/control_panel", methods=["GET"])
 def control_panel():
     # Example items data

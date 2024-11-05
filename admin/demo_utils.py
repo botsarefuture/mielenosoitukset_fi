@@ -1,34 +1,38 @@
+from flask import Request
+from typing import List
 
-def collect_tags(request):
+
+def collect_tags(request: Request) -> List[str]:
     """
-    Collect tags data from the request form.
+    Collect and return a list of tags from the request form data.
 
-    This function extracts multiple tags from the form fields and returns them as a list.
+    This function extracts all form fields that start with 'tag_' (regardless of index),
+    ensuring that gaps in numbering don't prevent tag collection.
 
     Args:
-        request: The incoming request object containing form data.
+        request (Request): The incoming Flask request object containing form data.
 
     Returns:
-        list: A list of tags extracted from the form.
+        List[str]: A list of non-empty, trimmed tags from the form.
+
+    Changelog:
+    ----------
+    v2.4.0:
+    - Added dynamic collection of all `tag_` prefixed fields.
+    - Introduced sorting of `tag_` keys by numerical index to handle gaps in numbering.
+    - Enhanced handling of empty or whitespace-only tags by skipping them.
     """
+
+    # Extract all keys starting with 'tag_' and sort them
+    tag_keys = sorted(
+        (key for key in request.form if key.startswith("tag_")),
+        key=lambda k: int(k.split("_")[1]),
+    )
+
     tags = []
-    i = 1
-
-    while True:
-        # Extract the tag value from the dynamic form field names
-        tag_name = request.form.get(f"tag_{i}")
-
-        # Break the loop if no tag name is found
-        if not tag_name:
-            if not request.form.get(f"tag_{i+1}"):
-                break
-            
-            else:
-                continue
-            
-        # Append the trimmed tag to the list
-        tags.append(tag_name.strip())
-
-        i += 1  # Move to the next tag field
+    for key in tag_keys:
+        tag_name = request.form.get(key, "").strip()
+        if tag_name:  # Only add non-empty, trimmed tags
+            tags.append(tag_name)
 
     return tags

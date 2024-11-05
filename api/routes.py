@@ -62,7 +62,6 @@ def get_demonstrations():
 def get_demonstration_detail(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
 
-
     if demo is None:
         abort(
             404,

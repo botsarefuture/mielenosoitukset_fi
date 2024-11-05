@@ -1,13 +1,12 @@
 import logging
+import warnings
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 
 db = DatabaseManager().get_instance()
-
 mongo = db.get_db()
-
 collection = mongo["organizations"]
 
 # Configure logging
@@ -49,7 +48,7 @@ class User(UserMixin):
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
-        self._id = self.id # Alias for id
+        self._id = self.id  # Alias for id
 
     @staticmethod
     def from_db(user_doc):
@@ -106,11 +105,19 @@ class User(UserMixin):
             "global_admin": False,
             "confirmed": False,
             "permissions": [],
-            "global_permissions": [],  # Initialize global permissions,
+            "global_permissions": [],  # Initialize global permissions
             "following": [],
         }
 
     def get_org_name(self, org_id):
+        """
+        DEPRECATED: Use get_organization_details instead.
+        """
+        warnings.warn(
+            "get_org_name is deprecated and will be removed in a future release. "
+            "Use get_organization_details instead.",
+            DeprecationWarning,
+        )
         return collection.find_one({"_id": ObjectId(org_id)}).get("name")
 
     def add_organization(self, db, organization_id, role="member", permissions=None):
@@ -231,6 +238,14 @@ class User(UserMixin):
         return False
 
     def can_use(self, permission):
+        """
+        DEPRECATED: Use has_permission instead.
+        """
+        warnings.warn(
+            "can_use is deprecated and will be removed in a future release. "
+            "Use has_permission instead.",
+            DeprecationWarning,
+        )
         # Check global permissions first
         if permission in self.global_permissions:
             return True

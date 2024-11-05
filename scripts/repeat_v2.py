@@ -39,7 +39,28 @@ def calculate_next_dates(demo_date, repeat_schedule):
     return next_dates
 
 
+
+def remove_invalid_child_demonstrations(parent_demo, valid_dates):
+    try:
+        valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
+        child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
+
+        for demo in child_demos:
+            if demo["date"] not in valid_date_strings:
+                demonstrations_collection.delete_one({"_id": demo["_id"]})
+                logger.info(f"Removed demonstration with id {demo['_id']} due to invalid date.")
+    except Exception as e:
+        logger.error(f"Error removing invalid child demonstrations for parent {parent_demo['_id']}: {e}")
+
+
 def handle_repeating_demonstrations():
+    """
+    
+    Changelog:
+    ----------
+    v2.4.0:
+    - Now removing all demos that have the parent id of this recu demo but dont match schedule
+    """
     try:
         repeating_demos = recu_demos_collection.find()
         bulk_operations = []
@@ -48,12 +69,14 @@ def handle_repeating_demonstrations():
             try:
                 demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
                 repeat_schedule = demo.get("repeat_schedule", {})
-                created_until = demo.get(
-                    "created_until", datetime.min
-                )  # Load created_until
+                created_until = demo.get("created_until", datetime.min)
                 if created_until is None:
                     created_until = datetime.now()
+
                 next_dates = calculate_next_dates(demo_date, repeat_schedule)
+
+                # Remove invalid child demonstrations
+                remove_invalid_child_demonstrations(demo, next_dates)
 
                 for next_date in next_dates:
                     if next_date <= created_until:
@@ -66,40 +89,36 @@ def handle_repeating_demonstrations():
                     )
 
                     if existing_demo:
-                        if (
-                            existing_demo.get("created_datetime", datetime.min)
-                            < datetime.now()
-                        ):
-                            update_operation = {
-                                "title": demo["title"],
-                                "start_time": demo["start_time"],
-                                "end_time": demo["end_time"],
-                                "topic": demo["topic"],
-                                "facebook": demo["facebook"],
-                                "city": demo["city"],
-                                "address": demo["address"],
-                                "type": demo["type"],
-                                "route": demo["route"],
-                                "organizers": demo["organizers"],
-                                "approved": demo.get("approved", False),
-                                "linked_organizations": demo["linked_organizations"],
-                                "repeating": demo["repeating"],
-                                "repeat_schedule": repeat_schedule,
-                                "created_datetime": datetime.now(),
-                            }
-                            bulk_operations.append(
-                                UpdateOne(
-                                    {"_id": existing_demo["_id"]},
-                                    {"$set": update_operation},
-                                )
+                        update_operation = {
+                            "title": demo["title"],
+                            "start_time": demo["start_time"],
+                            "end_time": demo["end_time"],
+                            "tags": demo["tags"],
+                            "facebook": demo["facebook"],
+                            "city": demo["city"],
+                            "address": demo["address"],
+                            "type": demo["type"],
+                            "route": demo["route"],
+                            "organizers": demo["organizers"],
+                            "approved": demo.get("approved", False),
+                            "linked_organizations": demo["linked_organizations"],
+                            "repeating": demo["repeating"],
+                            "repeat_schedule": repeat_schedule,
+                            "created_datetime": datetime.now(),
+                        }
+                        bulk_operations.append(
+                            UpdateOne(
+                                {"_id": existing_demo["_id"]},
+                                {"$set": update_operation},
                             )
+                        )
                     else:
                         new_demo = {
                             "title": demo["title"],
                             "date": next_date_str,
                             "start_time": demo["start_time"],
                             "end_time": demo["end_time"],
-                            "topic": demo["topic"],
+                            "tags": demo["tags"],
                             "facebook": demo["facebook"],
                             "city": demo["city"],
                             "address": demo["address"],
@@ -108,12 +127,11 @@ def handle_repeating_demonstrations():
                             "organizers": demo.get("organizers", []),
                             "approved": demo.get("approved", False),
                             "linked_organizations": demo["linked_organizations"],
-                            "parent": demo["_id"],  # Save parent ID
+                            "parent": demo["_id"],
                             "recurring": True,
                             "created_datetime": datetime.now(),
                         }
 
-                        # Save the new demonstration to the demonstrations collection
                         bulk_operations.append(
                             UpdateOne(
                                 {"date": next_date_str, "parent": demo["_id"]},
@@ -135,7 +153,6 @@ def handle_repeating_demonstrations():
 
     except Exception as e:
         logger.error(f"Error handling repeating demonstrations: {e}")
-
 
 def find_duplicates():
     try:

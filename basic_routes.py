@@ -382,7 +382,7 @@ def init_routes(app):
 
             # Create email job
             email_sender.queue_email(
-                template_name="new_ticket.html",
+                template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
                 recipients=["tuki@mielenosoitukset.fi"],
                 context={

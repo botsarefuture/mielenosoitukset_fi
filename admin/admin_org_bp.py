@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from wrappers import admin_required, permission_required
-from utils import valid_email
+from utils.validators import valid_email
 from .utils import mongo, log_admin_action
 
 # Create a Blueprint for admin organization management

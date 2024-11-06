@@ -1,14 +1,32 @@
-import logging
+from utils.logger import logger
+
 from functools import wraps
 from flask import redirect, url_for, flash
 from flask_login import current_user
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+import warnings
 
 
+# DEPRACED: #REMOVE in 2.5.0
 def permission_needed(permission, organization_id=None):
+    """
+    This function is deprecated and will be removed in v2.5.0.
+    Use 'permission_required' instead.
+
+    Changelog:
+    ----------
+    v2.4.0:
+    - Added warning that this is going to be deprecated soon.
+    - Use 'permission_required' instead of 'permission_needed'.
+    """
+
+    # Issue a deprecation warning with instruction to use 'permission_required' instead
+    warnings.warn(
+        "The 'permission_needed' function is deprecated and will be removed in v2.5.0. "
+        "Please use 'permission_required' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -87,7 +105,7 @@ def permission_required(permission_name):
         permission_name (str): The name of the permission to check.
 
     Returns:
-        function: The wrapped function.
+        function: The wrapped functiloggingon.
     """
 
     def decorator(f):

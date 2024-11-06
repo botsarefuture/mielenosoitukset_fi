@@ -21,11 +21,11 @@ from flask_login import current_user
 
 from bson.objectid import ObjectId
 
-from s3_utils import upload_image
+from utils.s3 import upload_image
 from classes import Organizer, Demonstration, Organization
 from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
-from utils import CITY_LIST
+from utils.variables import CITY_LIST
 from config import Config
 
 email_sender = EmailSender()
@@ -511,3 +511,8 @@ def init_routes(app):
             config = json.load(config_file)
 
         return jsonify(config)
+
+    @app.route("/500")
+    def _500():
+        return abort(500)
+    

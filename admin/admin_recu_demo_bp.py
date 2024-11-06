@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 
 from classes import RecurringDemonstration, Organizer
-from utils import CITY_LIST
+from utils.variables import CITY_LIST
 from wrappers import permission_required, admin_required
 
 from .demo_utils import collect_tags

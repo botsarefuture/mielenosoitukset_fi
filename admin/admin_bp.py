@@ -1,5 +1,6 @@
 import json
-import logging
+from utils.logger import logger
+
 import os
 import warnings
 
@@ -36,10 +37,6 @@ mongo = db_manager.get_db()
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 # User loader function

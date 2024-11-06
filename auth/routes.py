@@ -15,7 +15,7 @@ import datetime
 from emailer.EmailSender import EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
-from s3_utils import upload_image  # Import your S3 upload function
+from utils.s3 import upload_image  # Import your S3 upload function
 import os
 
 

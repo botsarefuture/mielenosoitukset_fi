@@ -1,14 +1,8 @@
-import logging
+from utils.logger import logger
 from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from config import Config
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 # Establish connection to MongoDB
 db = MongoClient(Config.MONGO_URI)
@@ -39,7 +33,6 @@ def calculate_next_dates(demo_date, repeat_schedule):
     return next_dates
 
 
-
 def remove_invalid_child_demonstrations(parent_demo, valid_dates):
     try:
         valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
@@ -48,14 +41,18 @@ def remove_invalid_child_demonstrations(parent_demo, valid_dates):
         for demo in child_demos:
             if demo["date"] not in valid_date_strings:
                 demonstrations_collection.delete_one({"_id": demo["_id"]})
-                logger.info(f"Removed demonstration with id {demo['_id']} due to invalid date.")
+                logger.info(
+                    f"Removed demonstration with id {demo['_id']} due to invalid date."
+                )
     except Exception as e:
-        logger.error(f"Error removing invalid child demonstrations for parent {parent_demo['_id']}: {e}")
+        logger.error(
+            f"Error removing invalid child demonstrations for parent {parent_demo['_id']}: {e}"
+        )
 
 
 def handle_repeating_demonstrations():
     """
-    
+
     Changelog:
     ----------
     v2.4.0:
@@ -153,6 +150,7 @@ def handle_repeating_demonstrations():
 
     except Exception as e:
         logger.error(f"Error handling repeating demonstrations: {e}")
+
 
 def find_duplicates():
     try:

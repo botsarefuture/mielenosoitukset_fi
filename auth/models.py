@@ -1,6 +1,7 @@
-import logging
+from utils.logger import logger
+
 import warnings
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
@@ -8,10 +9,6 @@ from database_manager import DatabaseManager
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
 collection = mongo["organizations"]
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class User(UserMixin):
@@ -270,3 +267,116 @@ class User(UserMixin):
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin})>"
+
+class AnonymousUser(AnonymousUserMixin):
+    def __init__(self):
+        self.id = None
+        self.username = "Anonymous"
+        self.email = None
+        self.displayname = None
+        self.profile_picture = None
+        self.bio = None
+        self.followers = []
+        self.following = []
+        self.organizations = []
+        self.global_admin = False
+        self.confirmed = False
+        self.permissions = {}
+        self.global_permissions = []
+        self.role = "anonymous"
+
+    def get_org_name(self, org_id):
+        """
+        DEPRECATED: Use get_organization_details instead.
+        """
+        warnings.warn(
+            "get_org_name is deprecated and will be removed in a future release. "
+            "Use get_organization_details instead.",
+            DeprecationWarning,
+        )
+        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
+
+    def add_organization(self, db, organization_id, role="member", permissions=None):
+        """
+        Add or update an organization for the user, including role and permissions.
+        """
+        logger.critical(f"Trying to add organization to AnonymousUser")
+
+    def is_member_of_organization(self, organization_id):
+        """
+        Check if the user is a member of a specific organization.
+        """
+        return False
+    
+    def change_password(self, db, new_password):
+        """
+        Change the user's password and update the database.
+        """
+        ...
+
+    def update_displayname(self, db, displayname):
+        """
+        Update the user's display name and database record.
+        """
+        ...
+
+    def update_profile_picture(self, db, profile_picture):
+        """
+        Update the user's profile picture and database record.
+        """
+        ...
+
+    def update_bio(self, db, bio):
+        """
+        Update the user's bio and database record.
+        """
+        ...
+
+    def follow_user(self, db, user_id_to_follow):
+        """
+        Add a user to the followers list of this user.
+        """
+        ...
+
+    def unfollow_user(self, db, user_id_to_unfollow):
+        """
+        Remove a user from the followers list of this user.
+        """
+        ...
+
+    def has_permission(self, organization_id, permission):
+        """
+        Check if the user has a specific permission in a given organization or globally.
+        """
+        return False
+
+    def can_use(self, permission):
+        """
+        DEPRECATED: Use has_permission instead.
+        """
+        warnings.warn(
+            "can_use is deprecated and will be removed in a future release. "
+            "Use has_permission instead.",
+            DeprecationWarning,
+        )
+        # Check global permissions first
+        if permission in self.global_permissions:
+            return True
+
+        # Check organization-specific permissions
+        for org in self.permissions:
+            if permission in self.permissions.get(org, []):
+                return True
+
+        for org in self.organizations:
+            if permission in org.get("permissions", []):
+                return True
+
+        return False
+
+    def is_following(self, user_id):
+        """Check if this user is following another user."""
+        return False
+
+    def __repr__(self):
+        return f"<AnonymousUser(username={self.username})>"

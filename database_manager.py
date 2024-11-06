@@ -1,12 +1,7 @@
-import logging
+from utils.logger import logger
 from pymongo import MongoClient, errors
 from threading import Lock
 from config import Config  # Import the Config class
-
-__name__ = "Database Manager"
-
-# Setup logging
-logger = logging.getLogger(__name__)
 
 
 class DatabaseManager:

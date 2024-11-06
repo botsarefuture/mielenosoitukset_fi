@@ -5,8 +5,12 @@ from flask_login import current_user, login_required
 from auth.models import User
 from emailer.EmailSender import EmailSender
 from wrappers import admin_required, permission_required
-from utils import PERMISSIONS_GROUPS, valid_email
+from utils.variables import PERMISSIONS_GROUPS
+from utils.validators import valid_email
+from utils.database import stringify_object_ids
+
 from .utils import get_org_name, mongo
+
 
 email_sender = EmailSender()
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
@@ -45,17 +49,6 @@ def user_control():
     return render_template(
         "admin/user/list.html", users=users_cursor, search_query=search_query
     )
-
-
-def stringify_object_ids(data):
-    """Recursively converts all ObjectId instances in the given data structure to strings."""
-    if isinstance(data, dict):
-        return {k: stringify_object_ids(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [stringify_object_ids(item) for item in data]
-    elif isinstance(data, ObjectId):
-        return str(data)
-    return data
 
 
 @admin_user_bp.route("/edit_user/<user_id>", methods=["GET", "POST"])

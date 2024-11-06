@@ -1,17 +1,16 @@
-import logging
+from utils.logger import logger
+
 from flask import Flask
 from flask_login import LoginManager
 from bson.objectid import ObjectId
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from database_manager import DatabaseManager
-from auth.models import User
+from auth.models import User, AnonymousUser
 from error_handlers import register_error_handlers
 from scripts.repeat_v2 import main as repeat_main
 from scripts.update_demo_organizers import main as update_main
-from utils import load_version
-
-VERSION = load_version()
+from utils import VERSION
 
 # Create and configure the scheduler
 scheduler = BackgroundScheduler()
@@ -33,14 +32,6 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
 
-    # Set up logging
-    level = logging.INFO
-
-    if app.debug:
-        level = logging.DEBUG
-
-    logging.basicConfig(level=level)
-    logger = logging.getLogger(__name__)
     logger.info("Creating Flask application...")
 
     # Register error handlers
@@ -56,6 +47,8 @@ def create_app():
     login_manager.login_view = (
         "auth.login"  # Redirect to login view if not authenticated
     )
+
+    login_manager.anonymous_user = AnonymousUser
 
     # User Loader function
     @login_manager.user_loader
@@ -112,6 +105,7 @@ def create_app():
 
     return app
 
+
 def create_minimal():
     """
 
@@ -125,14 +119,6 @@ def create_minimal():
     app = Flask(__name__)
     app.config.from_object("config.Config")
 
-    # Set up logging
-    level = logging.INFO
-
-    if app.debug:
-        level = logging.DEBUG
-
-    logging.basicConfig(level=level)
-    logger = logging.getLogger(__name__)
     logger.info("Creating Flask application...")
 
     # Register error handlers
@@ -176,4 +162,3 @@ def create_minimal():
             return f"Pong from {VERSION}"
 
     return app
-

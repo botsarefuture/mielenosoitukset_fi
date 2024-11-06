@@ -3,12 +3,8 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 from PIL import Image
 from config import Config  # Import your Config class
-import logging
+from utils.logger import logger
 import time
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # Initial delay in seconds

@@ -4,10 +4,7 @@ from datetime import datetime
 from classes import Organization
 from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
-import logging
-
-# Initialize logging
-logger = logging.getLogger(__name__)
+from utils.logger import logger
 
 # Initialize the database manager and get the MongoDB instance
 db_manager = DatabaseManager().get_instance()

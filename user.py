@@ -14,7 +14,7 @@ def follow(username):
     user_to_follow = User.from_db(mongo.users.find_one({"username": username}))
     if user_to_follow:
         current_user.follow_user(mongo, user_to_follow.id)
-        flash(f"Olet nyt seuraamassa käyttäjää {username}.", "success")
+        flash(f"Seuraat nyt käyttäjää {username}.", "success")
     else:
         flash("Käyttäjää ei löytynyt.", "danger")
     return redirect(request.referrer)  # Replace with the appropriate view

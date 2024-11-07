@@ -142,11 +142,11 @@ msgstr ""
 
 #: templates/list.html:77 templates/tag_list.html:44
 msgid "Sivu"
-msgstr ""
+msgstr "Page"
 
 #: templates/list.html:81
 msgid "Seuraava"
-msgstr ""
+msgstr "Next"
 
 #: templates/submit.html:95
 msgid "Järjestäjätahon..."
@@ -169,11 +169,10 @@ msgid "Sähköpostiosoite"
 msgstr "Email address"
 
 #: templates/tag_list.html:34
-#, fuzzy
 msgid "Ei löytynyt mielenosoituksia tällä tagilla."
-msgstr "Submit a demonstration"
+msgstr "No demonstrations found with this tag."
 
 #: templates/tag_list.html:68
 msgid "Näytä kaikki tagit"
-msgstr ""
+msgstr "Show all tags"
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-07 22:41+0200\n"
+"POT-Creation-Date: 2024-11-07 22:59+0200\n"
 "PO-Revision-Date: 2024-11-06 21:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fi\n"
@@ -265,5 +265,61 @@ msgstr "Ilmoita mielenosoituksesta"
 
 #: templates/tag_list.html:68
 msgid "Näytä kaikki tagit"
+msgstr ""
+
+#: templates/admin/dashboard.html:33
+msgid "Hallintatyökalut"
+msgstr ""
+
+#: templates/admin/dashboard.html:38
+msgid "Huomio"
+msgstr ""
+
+#: templates/admin/dashboard.html:39
+msgid ""
+"Olet kirjautunut sisään superkäyttäjänä. Sinulla on laajat oikeudet, ja "
+"kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen "
+"käyttäessäsi näitä oikeuksia."
+msgstr ""
+
+#: templates/admin/stats.html:4
+msgid "Tilastot"
+msgstr ""
+
+#: templates/admin/stats.html:5
+msgid "Tässä osiossa voit tarkastella sivuston tilastoja."
+msgstr ""
+
+#: templates/admin/stats.html:8
+#, fuzzy
+msgid "Käyttäjät"
+msgstr "Järjestäjätahon"
+
+#: templates/admin/stats.html:9
+msgid "Rekisteröityneet käyttäjät:"
+msgstr ""
+
+#: templates/admin/stats.html:10
+msgid "Sähköpostiosoitteensa vahvistaneet käyttäjät:"
+msgstr ""
+
+#: templates/admin/stats.html:12
+msgid "Organisaatiot"
+msgstr ""
+
+#: templates/admin/stats.html:13
+msgid "Rekisteröidyt organisaatiot:"
+msgstr ""
+
+#: templates/admin/stats.html:16
+msgid "Viimeisimmät aktiviteetit"
+msgstr ""
+
+#: templates/admin/stats.html:22
+msgid "Ei aktiivisuuksia vielä."
+msgstr ""
+
+#: templates/admin/stats.html:27
+msgid "Palaa hallintapaneeliin"
 msgstr ""
 

@@ -1,0 +1,181 @@
+# Finnish translations for PROJECT.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-11-07 16:00+0200\n"
+"PO-Revision-Date: 2024-11-06 21:51+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fi\n"
+"Language-Team: fi <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: templates/base.html:69
+msgid "Kaikki oikeudet pidätetään."
+msgstr ""
+
+#: templates/base.html:71
+msgid "Tietoa sivustosta"
+msgstr ""
+
+#: templates/contact.html:12
+msgid "Ota yhteyttä"
+msgstr ""
+
+#: templates/contact.html:14
+msgid ""
+"Jos sinulla on kysyttävää tai tarvitset apua, voit ottaa meihin yhteyttä "
+"seuraavilla tavoilla:"
+msgstr ""
+
+#: templates/contact.html:30
+msgid "Aihe:"
+msgstr ""
+
+#: templates/contact.html:32
+msgid "Valitse aihe"
+msgstr ""
+
+#: templates/contact.html:33
+msgid "Tukipyyntö"
+msgstr ""
+
+#: templates/header.html:193
+msgid "Etusivu"
+msgstr ""
+
+#: templates/header.html:194
+#, fuzzy
+msgid "Mielenosoitukset"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/header.html:196 templates/index.html:49 templates/submit.html:3
+msgid "Ilmoita mielenosoituksesta"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/index.html:38
+#, fuzzy
+msgid "Tervetuloa Mielenosoitukset.fi:hin"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/index.html:40
+msgid ""
+"Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista "
+"ympäri\n"
+"      Suomen."
+msgstr ""
+
+#: templates/index.html:41
+msgid ""
+"Pyrimme tekemään osallistumisesta mielenosoituksiin\n"
+"      mahdollisimman vaivatonta ja sujuvaa."
+msgstr ""
+
+#: templates/index.html:46
+msgid "Lue lisää"
+msgstr ""
+
+#: templates/index.html:76
+msgid "Suosittelemme"
+msgstr ""
+
+#: templates/index.html:95
+#, fuzzy
+msgid "Esitellyt mielenosoitukset"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/index.html:100
+#, fuzzy
+msgid "Ei mielenosoituksia näytettäväksi."
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/index.html:108
+#, fuzzy
+msgid "Näytä kaikki mielenosoitukset"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/list.html:16
+#, fuzzy
+msgid "Tulevat mielenosoitukset"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/list.html:23 templates/tag_list.html:20
+#, fuzzy
+msgid "Hae mielenosoituksia..."
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/list.html:24 templates/tag_list.html:20
+#, fuzzy
+msgid "Hae mielenosoituksia"
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/list.html:35 templates/list.html:36 templates/tag_list.html:21
+msgid "Kaupunki"
+msgstr ""
+
+#: templates/list.html:43 templates/list.html:44 templates/tag_list.html:22
+msgid "Sijainti"
+msgstr ""
+
+#: templates/list.html:51 templates/list.html:52 templates/tag_list.html:23
+msgid "Päivämäärä (pp.kk.vvvv)"
+msgstr ""
+
+#: templates/list.html:56
+msgid "Hae"
+msgstr ""
+
+#: templates/list.html:65
+#, fuzzy
+msgid "Ei löytynyt mielenosoituksia."
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/list.html:73
+msgid "Edellinen"
+msgstr ""
+
+#: templates/list.html:77 templates/tag_list.html:44
+msgid "Sivu"
+msgstr ""
+
+#: templates/list.html:81
+msgid "Seuraava"
+msgstr ""
+
+#: templates/submit.html:95
+msgid "Järjestäjätahon..."
+msgstr "Järjestäjätahon"
+
+#: templates/submit.html:96
+msgid "Nimi"
+msgstr "Nimi"
+
+#: templates/submit.html:97
+msgid "Järjestäjän nimi"
+msgstr "Järjestäjän nimi"
+
+#: templates/submit.html:99
+msgid "Verkkosivut"
+msgstr "Verkkosivut"
+
+#: templates/submit.html:102
+msgid "Sähköpostiosoite"
+msgstr "Sähköpostiosoite"
+
+#: templates/tag_list.html:34
+#, fuzzy
+msgid "Ei löytynyt mielenosoituksia tällä tagilla."
+msgstr "Ilmoita mielenosoituksesta"
+
+#: templates/tag_list.html:68
+msgid "Näytä kaikki tagit"
+msgstr ""
+

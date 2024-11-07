@@ -9,9 +9,9 @@
 {% block content %}
 
 <div class="container-centered p20">
-    <h2>Ota yhteyttä</h2>
+    <h2>{{ _('Ota yhteyttä') }}</h2>
     
-    <p>Jos sinulla on kysyttävää tai tarvitset apua, voit ottaa meihin yhteyttä seuraavilla tavoilla:</p>
+    <p>{{ _('Jos sinulla on kysyttävää tai tarvitset apua, voit ottaa meihin yhteyttä seuraavilla tavoilla:') }}</p>
     
     <div class="contact-info">
         <h3>Yhteystiedot</h3>
@@ -27,10 +27,10 @@
             <label for="email">Sähköposti:</label>
             <input type="email" id="email" name="email" required>
 
-            <label for="subject">Aihe:</label>
+            <label for="subject">{{ _('Aihe:') }}</label>
             <select id="subject" name="subject" required>
-                <option value="" disabled selected>Valitse aihe</option>
-                <option value="Tuki">Tukipyyntö</option>
+                <option value="" disabled selected>{{ _('Valitse aihe') }}</option>
+                <option value="Tuki">{{ _('Tukipyyntö') }}</option>
                 <option value="Yleinen kysymys">Yleinen kysymys</option>
                 <option value="Palautetta">Palautetta</option>
                 <option value="Muu">Muu</option>

@@ -31,15 +31,15 @@
             <select id="subject" name="subject" required>
                 <option value="" disabled selected>{{ _('Valitse aihe') }}</option>
                 <option value="Tuki">{{ _('Tukipyyntö') }}</option>
-                <option value="Yleinen kysymys">Yleinen kysymys</option>
-                <option value="Palautetta">Palautetta</option>
-                <option value="Muu">Muu</option>
+                <option value="Yleinen kysymys">{{ _('Yleinen kysymys') }}</option>
+                <option value="Palautetta">{{ _('Palautetta') }}</option>
+                <option value="Muu">{{ _('Muu') }}</option>
             </select>
 
-            <label for="message">Viesti:</label>
+            <label for="message">{{ _('Viesti:') }}</label>
             <textarea id="message" name="message" rows="5" required></textarea>
 
-            <button type="submit" class="button button-primary">Lähetä</button>
+            <button type="submit" class="button button-primary">{{ _('Lähetä') }}</button>
         </form>
     </div>
 </div>

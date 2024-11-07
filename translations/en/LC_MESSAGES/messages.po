@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-07 16:00+0200\n"
+"POT-Creation-Date: 2024-11-07 22:41+0200\n"
 "PO-Revision-Date: 2024-11-06 21:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -48,6 +48,82 @@ msgstr ""
 msgid "Tukipyyntö"
 msgstr ""
 
+#: templates/contact.html:34
+msgid "Yleinen kysymys"
+msgstr ""
+
+#: templates/contact.html:35
+msgid "Palautetta"
+msgstr ""
+
+#: templates/contact.html:36
+msgid "Muu"
+msgstr ""
+
+#: templates/contact.html:39
+msgid "Viesti:"
+msgstr ""
+
+#: templates/contact.html:42
+msgid "Lähetä"
+msgstr ""
+
+#: templates/detail.html:411
+msgid "Hyväksy"
+msgstr ""
+
+#: templates/detail.html:418
+msgid "Muokkaa"
+msgstr ""
+
+#: templates/detail.html:425
+msgid "Katsele"
+msgstr ""
+
+#: templates/detail.html:432
+msgid "Poista"
+msgstr ""
+
+#: templates/detail.html:472
+msgid "Jaa Facebookissa"
+msgstr ""
+
+#: templates/detail.html:477
+msgid "Jaa Xssä"
+msgstr ""
+
+#: templates/detail.html:482
+msgid "Jaa LinkedInissä"
+msgstr ""
+
+#: templates/detail.html:496
+#, fuzzy
+msgid "Mielenosoituksen esittelyteksti"
+msgstr "Demonstrations"
+
+#: templates/detail.html:501
+#, fuzzy
+msgid "Aikaa mielenosoituksen alkuun"
+msgstr "Submit a demonstration"
+
+#: templates/detail.html:512
+msgid "Lisätiedot"
+msgstr ""
+
+#: templates/detail.html:519
+#, fuzzy
+msgid "Järjestäjät"
+msgstr "Organizers"
+
+#: templates/detail.html:524
+msgid "Ei järjestäjätietoja saatavilla."
+msgstr ""
+
+#: templates/detail.html:528
+#, fuzzy
+msgid "Takaisin kaikkiin mielenosoituksiin"
+msgstr "Submit a demonstration"
+
 #: templates/header.html:193
 msgid "Etusivu"
 msgstr ""
@@ -59,6 +135,18 @@ msgstr "Demonstrations"
 #: templates/header.html:196 templates/index.html:49 templates/submit.html:3
 msgid "Ilmoita mielenosoituksesta"
 msgstr "Submit a demonstration"
+
+#: templates/header.html:251
+msgid "Profiili"
+msgstr ""
+
+#: templates/header.html:252
+msgid "Kirjaudu ulos"
+msgstr ""
+
+#: templates/header.html:257
+msgid "Kirjaudu sisään"
+msgstr ""
 
 #: templates/index.html:38
 #, fuzzy

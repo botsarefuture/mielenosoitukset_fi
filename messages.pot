@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-07 16:00+0200\n"
+"POT-Creation-Date: 2024-11-07 22:41+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,6 +47,78 @@ msgstr ""
 msgid "Tukipyyntö"
 msgstr ""
 
+#: templates/contact.html:34
+msgid "Yleinen kysymys"
+msgstr ""
+
+#: templates/contact.html:35
+msgid "Palautetta"
+msgstr ""
+
+#: templates/contact.html:36
+msgid "Muu"
+msgstr ""
+
+#: templates/contact.html:39
+msgid "Viesti:"
+msgstr ""
+
+#: templates/contact.html:42
+msgid "Lähetä"
+msgstr ""
+
+#: templates/detail.html:411
+msgid "Hyväksy"
+msgstr ""
+
+#: templates/detail.html:418
+msgid "Muokkaa"
+msgstr ""
+
+#: templates/detail.html:425
+msgid "Katsele"
+msgstr ""
+
+#: templates/detail.html:432
+msgid "Poista"
+msgstr ""
+
+#: templates/detail.html:472
+msgid "Jaa Facebookissa"
+msgstr ""
+
+#: templates/detail.html:477
+msgid "Jaa Xssä"
+msgstr ""
+
+#: templates/detail.html:482
+msgid "Jaa LinkedInissä"
+msgstr ""
+
+#: templates/detail.html:496
+msgid "Mielenosoituksen esittelyteksti"
+msgstr ""
+
+#: templates/detail.html:501
+msgid "Aikaa mielenosoituksen alkuun"
+msgstr ""
+
+#: templates/detail.html:512
+msgid "Lisätiedot"
+msgstr ""
+
+#: templates/detail.html:519
+msgid "Järjestäjät"
+msgstr ""
+
+#: templates/detail.html:524
+msgid "Ei järjestäjätietoja saatavilla."
+msgstr ""
+
+#: templates/detail.html:528
+msgid "Takaisin kaikkiin mielenosoituksiin"
+msgstr ""
+
 #: templates/header.html:193
 msgid "Etusivu"
 msgstr ""
@@ -57,6 +129,18 @@ msgstr ""
 
 #: templates/header.html:196 templates/index.html:49 templates/submit.html:3
 msgid "Ilmoita mielenosoituksesta"
+msgstr ""
+
+#: templates/header.html:251
+msgid "Profiili"
+msgstr ""
+
+#: templates/header.html:252
+msgid "Kirjaudu ulos"
+msgstr ""
+
+#: templates/header.html:257
+msgid "Kirjaudu sisään"
 msgstr ""
 
 #: templates/index.html:38

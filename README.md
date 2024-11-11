@@ -1,3 +1,4 @@
+
 # ⚠️ **Warning: Out-of-Date Documentation** ⚠️
 
 **This README file is currently out-of-date.**  
@@ -24,6 +25,7 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
+- [Translating](#translating)
 
 ---
 
@@ -138,6 +140,13 @@ We will review and merge your changes after testing.
 
 ---
 
+## Translating
+
+> **HOX**: this has been transferred:
+[TRANSLATING.md][translations]
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+
+[translations]: TRANSLATING.md

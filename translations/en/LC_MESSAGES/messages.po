@@ -225,6 +225,8 @@ msgid ""
 "Pyrimme tekemään osallistumisesta mielenosoituksiin\n"
 "      mahdollisimman vaivatonta ja sujuvaa."
 msgstr ""
+"We strive to make participation in demonstrations\n"
+"as hassle-free and smooth as possible."
 
 #: templates/index.html:46
 msgid "Lue lisää"
@@ -240,7 +242,7 @@ msgstr "Suggested demonstrations"
 
 #: templates/index.html:100
 msgid "Ei mielenosoituksia näytettäväksi."
-msgstr ""
+msgstr "No demonstrations to display."
 
 #: templates/index.html:108
 msgid "Näytä kaikki mielenosoitukset"

@@ -141,7 +141,7 @@ msgstr "Organizers"
 
 #: templates/detail.html:524
 msgid "Ei järjestäjätietoja saatavilla."
-msgstr ""
+msgstr "No organizer information available."
 
 #: templates/detail.html:528
 msgid "Takaisin kaikkiin mielenosoituksiin"

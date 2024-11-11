@@ -8,6 +8,7 @@ from flask import (
     abort,
     current_app,
 )
+from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
 from auth.models import User
 import jwt
@@ -101,9 +102,12 @@ def confirm_email(token):
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     # Get the next URL to redirect to after login
-    next_page = request.args.get(
-        "next"
-    )  # Get the 'next' parameter from the query string
+    next_page = request.args.get('next', '')
+    next_page = next_page.replace('\\', '')
+    if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
+        safe_next_page = next_page
+    else:
+        safe_next_page = None
 
     if request.method == "POST":
         username = request.form.get("username")
@@ -129,13 +133,13 @@ def login():
         if user.confirmed:
             login_user(user)
             return redirect(
-                next_page or url_for("index")
+                safe_next_page or url_for("index")
             )  # Redirect to the next page or the index
 
         else:
             flash("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
-            return redirect(next_page or url_for("index"))
+            return redirect(safe_next_page or url_for("index"))
 
     return render_template("login.html", next=next_page)
 

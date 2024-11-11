@@ -18,6 +18,7 @@ from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from s3_utils import upload_image  # Import your S3 upload function
 import os
+from werkzeug.utils import secure_filename
 
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
@@ -238,7 +239,8 @@ def edit_profile():
         # Handle profile picture upload
         if profile_picture:
             # Save the uploaded file temporarily
-            temp_file_path = os.path.join("uploads", profile_picture.filename)
+            filename = secure_filename(profile_picture.filename)
+            temp_file_path = os.path.join("uploads", filename)
             profile_picture.save(temp_file_path)
 
             # Define the bucket name and upload the file

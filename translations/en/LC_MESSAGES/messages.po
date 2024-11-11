@@ -448,7 +448,7 @@ msgstr ""
 
 #: templates/privacy.html:12
 msgid "Käyttäjätoiminta"
-msgstr ""
+msgstr "User activity"
 
 #: templates/privacy.html:12
 msgid ""

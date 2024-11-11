@@ -254,7 +254,7 @@ msgstr "About the site - Mielenosoitukset.fi"
 
 #: templates/info.html:97
 msgid "Tietoa Mielenosoitukset.fi -sivustosta"
-msgstr ""
+msgstr "About the Mielenosoitukset.fi website"
 
 #: templates/info.html:99
 msgid ""

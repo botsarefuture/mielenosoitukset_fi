@@ -44,6 +44,8 @@ msgid ""
 "Jos sinulla on kysyttävää tai tarvitset apua, voit ottaa meihin yhteyttä "
 "seuraavilla tavoilla:"
 msgstr ""
+"If you have any questions or need help, you can contact us in the following "
+"ways:"
 
 #: templates/contact.html:17 templates/info.html:126 templates/privacy.html:11
 msgid "Yhteystiedot"

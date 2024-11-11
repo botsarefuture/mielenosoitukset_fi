@@ -1,30 +1,34 @@
-# English translations for PROJECT.
+# Translations template for PROJECT.
 # Copyright (C) 2024 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
-#
+# 
+# Translators:
+# Verso, 2024
+# 
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2024-11-11 10:32+0200\n"
-"PO-Revision-Date: 2024-11-06 21:51+0200\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: en\n"
-"Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"PO-Revision-Date: 2024-11-11 09:34+0000\n"
+"Last-Translator: Verso, 2024\n"
+"Language-Team: English (https://app.transifex.com/mielenosoituksetfi/teams/201341/en/)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: templates/base.html:69
 msgid "Kaikki oikeudet pidätetään."
-msgstr ""
+msgstr "All rights reserved."
 
 #: templates/base.html:71
 msgid "Tietoa sivustosta"
-msgstr ""
+msgstr "About the site"
 
 #: templates/base.html:73
 msgid "Tietosuojaseloste"
@@ -46,18 +50,16 @@ msgid "Yhteystiedot"
 msgstr ""
 
 #: templates/contact.html:18 templates/contact.html:27
-#, fuzzy
 msgid "Sähköposti:"
-msgstr "Email address"
+msgstr ""
 
 #: templates/contact.html:22
 msgid "Ota yhteyttä lomakkeen kautta"
 msgstr ""
 
 #: templates/contact.html:24
-#, fuzzy
 msgid "Nimi:"
-msgstr "Name"
+msgstr ""
 
 #: templates/contact.html:30
 msgid "Aihe:"
@@ -120,37 +122,32 @@ msgid "Jaa LinkedInissä"
 msgstr ""
 
 #: templates/detail.html:496
-#, fuzzy
 msgid "Mielenosoituksen esittelyteksti"
-msgstr "Demonstrations"
+msgstr ""
 
 #: templates/detail.html:501
-#, fuzzy
 msgid "Aikaa mielenosoituksen alkuun"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/detail.html:512
 msgid "Lisätiedot"
 msgstr ""
 
 #: templates/detail.html:519
-#, fuzzy
 msgid "Järjestäjät"
-msgstr "Organizers"
+msgstr ""
 
 #: templates/detail.html:524
 msgid "Ei järjestäjätietoja saatavilla."
 msgstr ""
 
 #: templates/detail.html:528
-#, fuzzy
 msgid "Takaisin kaikkiin mielenosoituksiin"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/header.html:259
-#, fuzzy
 msgid "Mielenosoitukset.fi"
-msgstr "Demonstrations"
+msgstr ""
 
 #: templates/header.html:262
 msgid "Avaa valikko"
@@ -182,14 +179,12 @@ msgid "Organisaatioiden hallinta"
 msgstr ""
 
 #: templates/header.html:287
-#, fuzzy
 msgid "Mielenosoitusten hallinta"
-msgstr "Demonstrations"
+msgstr ""
 
 #: templates/header.html:290
-#, fuzzy
 msgid "Toistuvien mielenosoitusten hallinta"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/admin/stats.html:4 templates/header.html:293
 msgid "Tilastot"
@@ -212,14 +207,12 @@ msgid "Kirjaudu sisään"
 msgstr ""
 
 #: templates/index.html:38
-#, fuzzy
 msgid "Tervetuloa Mielenosoitukset.fi:hin"
-msgstr "Welcome to Mielenosoitukset.fi"
+msgstr ""
 
 #: templates/index.html:40
 msgid ""
-"Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista "
-"ympäri\n"
+"Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri\n"
 "      Suomen."
 msgstr ""
 
@@ -242,38 +235,33 @@ msgid "Esitellyt mielenosoitukset"
 msgstr "Suggested demonstrations"
 
 #: templates/index.html:100
-#, fuzzy
 msgid "Ei mielenosoituksia näytettäväksi."
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/index.html:108
-#, fuzzy
 msgid "Näytä kaikki mielenosoitukset"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/info.html:2
-#, fuzzy
 msgid "Tietoa sivustosta - Mielenosoitukset.fi"
-msgstr "Welcome to Mielenosoitukset.fi"
+msgstr ""
 
 #: templates/info.html:97
-#, fuzzy
 msgid "Tietoa Mielenosoitukset.fi -sivustosta"
-msgstr "Welcome to Mielenosoitukset.fi"
+msgstr ""
 
 #: templates/info.html:99
 msgid ""
 "Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa "
 "järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. "
-"Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit"
-" seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi "
-"helposti ja nopeasti."
+"Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit "
+"seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti"
+" ja nopeasti."
 msgstr ""
 
 #: templates/info.html:103
-#, fuzzy
 msgid "Mikä on Mielenosoitukset.fi?"
-msgstr "Demonstrations"
+msgstr ""
 
 #: templates/info.html:105
 msgid ""
@@ -285,14 +273,12 @@ msgid ""
 msgstr ""
 
 #: templates/info.html:110
-#, fuzzy
 msgid "Kuinka ilmoitan mielenosoituksesta?"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/info.html:112
-#, fuzzy
 msgid "Voit ilmoittaa oman mielenosoituksesi täyttämällä"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/info.html:113
 msgid "ilmoituslomakkeen"
@@ -310,10 +296,10 @@ msgstr ""
 
 #: templates/info.html:121
 msgid ""
-"Mielenosoitukset.fi ylläpidetään riippumattomana projektina "
-"vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen "
-"puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, "
-"joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille."
+"Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten "
+"toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai "
+"organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee "
+"monimuotoista ja vapaata mielipiteenilmaisua kaikille."
 msgstr ""
 
 #: templates/info.html:128
@@ -323,9 +309,8 @@ msgid ""
 msgstr ""
 
 #: templates/info.html:130
-#, fuzzy
 msgid "tai täyttää"
-msgstr "Organizers"
+msgstr ""
 
 #: templates/info.html:131
 msgid "yhteydenottolomakkeen"
@@ -337,9 +322,8 @@ msgstr ""
 
 #: templates/info.html:138
 msgid ""
-"Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme "
-"sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja "
-"tietosuojasta löydät"
+"Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle"
+" paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät"
 msgstr ""
 
 #: templates/info.html:139
@@ -347,19 +331,16 @@ msgid "yksityisyydensuojakäytännöstämme"
 msgstr ""
 
 #: templates/list.html:16
-#, fuzzy
 msgid "Tulevat mielenosoitukset"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/list.html:23 templates/tag_list.html:20
-#, fuzzy
 msgid "Hae mielenosoituksia..."
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/list.html:24 templates/tag_list.html:20
-#, fuzzy
 msgid "Hae mielenosoituksia"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/list.html:35 templates/list.html:36 templates/tag_list.html:21
 msgid "Kaupunki"
@@ -379,9 +360,8 @@ msgid "Hae"
 msgstr ""
 
 #: templates/list.html:65
-#, fuzzy
 msgid "Ei löytynyt mielenosoituksia."
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/list.html:73
 msgid "Edellinen"
@@ -437,12 +417,12 @@ msgid ""
 msgstr ""
 
 #: templates/privacy.html:12
-#, fuzzy
 msgid "Käyttäjätoiminta"
-msgstr "Organizers"
+msgstr ""
 
 #: templates/privacy.html:12
-msgid "tiedot, kuten selaushistoria, klikkaukset ja käyttämäsi laitteen tiedot."
+msgid ""
+"tiedot, kuten selaushistoria, klikkaukset ja käyttämäsi laitteen tiedot."
 msgstr ""
 
 #: templates/privacy.html:13
@@ -472,7 +452,8 @@ msgid "Parantaaksemme käyttökokemusta ja analysoidaksemme sivuston käyttöä.
 msgstr ""
 
 #: templates/privacy.html:21
-msgid "Yhteydenottoon, jos olet ilmoittanut tapahtuman tai pyytänyt lisätietoja."
+msgid ""
+"Yhteydenottoon, jos olet ilmoittanut tapahtuman tai pyytänyt lisätietoja."
 msgstr ""
 
 #: templates/privacy.html:24
@@ -491,8 +472,8 @@ msgstr ""
 
 #: templates/privacy.html:27
 msgid ""
-"jos meidän on jaettava tietoja lain, viranomaispyynnön tai "
-"oikeusprosessin perusteella."
+"jos meidän on jaettava tietoja lain, viranomaispyynnön tai oikeusprosessin "
+"perusteella."
 msgstr ""
 
 #: templates/privacy.html:28
@@ -501,8 +482,8 @@ msgstr ""
 
 #: templates/privacy.html:28
 msgid ""
-"voimme käyttää kolmansia osapuolia teknisen tuen tai palvelun "
-"toimittamiseen (esim. analytiikka), jotka ovat GDPR:n mukaisia."
+"voimme käyttää kolmansia osapuolia teknisen tuen tai palvelun toimittamiseen"
+" (esim. analytiikka), jotka ovat GDPR:n mukaisia."
 msgstr ""
 
 #: templates/privacy.html:31
@@ -511,8 +492,8 @@ msgstr ""
 
 #: templates/privacy.html:32
 msgid ""
-"Säilytämme henkilötietojasi vain niin kauan kuin on tarpeellista palvelun"
-" tarjoamisen ja lakisääteisten vaatimusten täyttämiseksi."
+"Säilytämme henkilötietojasi vain niin kauan kuin on tarpeellista palvelun "
+"tarjoamisen ja lakisääteisten vaatimusten täyttämiseksi."
 msgstr ""
 
 #: templates/privacy.html:34
@@ -560,7 +541,8 @@ msgid "Oikeus vastustaa"
 msgstr ""
 
 #: templates/privacy.html:41
-msgid "sinulla on oikeus vastustaa tietojesi käsittelyä tietyissä tilanteissa."
+msgid ""
+"sinulla on oikeus vastustaa tietojesi käsittelyä tietyissä tilanteissa."
 msgstr ""
 
 #: templates/privacy.html:44
@@ -570,8 +552,8 @@ msgstr ""
 #: templates/privacy.html:45
 msgid ""
 "Käytämme evästeitä ja vastaavia tekniikoita analysoidaksemme verkkosivun "
-"käyttöä ja parantaaksemme käyttökokemustasi. Voit hallita evästeasetuksia"
-" selaimesi asetuksissa."
+"käyttöä ja parantaaksemme käyttökokemustasi. Voit hallita evästeasetuksia "
+"selaimesi asetuksissa."
 msgstr ""
 
 #: templates/privacy.html:48
@@ -601,9 +583,8 @@ msgid "Sähköpostiosoite"
 msgstr "Email address"
 
 #: templates/submit.html:134 templates/submit.html:140
-#, fuzzy
 msgid "Mielenosoituksen nimi"
-msgstr "Demonstrations"
+msgstr ""
 
 #: templates/submit.html:152
 msgid "Tagit (pilkuilla erotettuna)"
@@ -638,24 +619,20 @@ msgid "Facebook-tapahtumalinkki (valinnainen)"
 msgstr ""
 
 #: templates/submit.html:226
-#, fuzzy
 msgid "Järjestäjä(t)"
-msgstr "Organizers"
+msgstr ""
 
 #: templates/submit.html:230
-#, fuzzy
 msgid "Lisää järjestäjä"
-msgstr "Organizers"
+msgstr ""
 
 #: templates/submit.html:235
-#, fuzzy
 msgid "Mielenosoituksen tyyppi"
-msgstr "Demonstrations"
+msgstr ""
 
 #: templates/submit.html:239
-#, fuzzy
 msgid "Valitse mielenosoituksen tyyppi"
-msgstr "Submit a demonstration"
+msgstr ""
 
 #: templates/submit.html:241
 msgid "Paikallaan"
@@ -678,9 +655,8 @@ msgid "Reitti..."
 msgstr ""
 
 #: templates/submit.html:255 templates/submit.html:261
-#, fuzzy
 msgid "Katuosoite"
-msgstr "Email address"
+msgstr ""
 
 #: templates/tag_list.html:34
 msgid "Ei löytynyt mielenosoituksia tällä tagilla."
@@ -710,9 +686,8 @@ msgid "Tässä osiossa voit tarkastella sivuston tilastoja."
 msgstr ""
 
 #: templates/admin/stats.html:8
-#, fuzzy
 msgid "Käyttäjät"
-msgstr "Organizers"
+msgstr ""
 
 #: templates/admin/stats.html:9
 msgid "Rekisteröityneet käyttäjät:"
@@ -741,4 +716,3 @@ msgstr ""
 #: templates/admin/stats.html:27
 msgid "Palaa hallintapaneeliin"
 msgstr ""
-

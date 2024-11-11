@@ -443,6 +443,8 @@ msgid ""
 "kuten nimi ja sähköpostiosoite, jos olet yhteydessä meihin tai ilmoitat "
 "tapahtumasi sivustolla."
 msgstr ""
+"such as your name and email address if you contact us or post an event on "
+"the site."
 
 #: templates/privacy.html:12
 msgid "Käyttäjätoiminta"

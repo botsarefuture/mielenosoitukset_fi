@@ -121,7 +121,7 @@
 {% endblock %}
 {% block content %}
 <div class="container container-main-content">
-  <h1>Ilmoita mielenosoituksesta</h1>
+  <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
 
   <form
     method="POST"
@@ -131,13 +131,13 @@
   >
     <!-- Name -->
     <label for="name" class="required"
-      >Mielenosoituksen nimi<span class="required-asterisk">*</span></label
+      >{{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span></label
     >
     <input
       type="text"
       id="name"
       name="title"
-      placeholder="Mielenosoituksen nimi"
+      placeholder="{{ _('Mielenosoituksen nimi') }}"
       required
     />
 
@@ -149,16 +149,16 @@
     <input type="text" id="topic" name="topic" placeholder="Aihe" required />-->
 
     <!-- Tags -->
-    <label for="tags" class="required">Tagit (pilkuilla erotettu)<span class="required-asterisk">*</span></label>
+    <label for="tags" class="required">{{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span></label>
     <input
       type="text"
       id="tags"
       name="tags"
-      placeholder="esim. ilmasto, tasa-arvo, oikeudet" required
+      placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet')}}" required
     />
 
 
-    <label for="description">Kuvaus</label>
+    <label for="description">{{ _('Kuvausteksti') }}</label>
     <div>
       <div>
         <div class="main-container">
@@ -187,32 +187,33 @@
     </div>
     <input type="hidden" id="description" name="description" />
 
-    <!-- Date -->
+    <!-- Date --> 
+    <!-- #122: Update Date Formatting to ISO 8601 Standard-->
+
     <label for="date" class="required"
-      >Päivämäärä (pp.kk.vvvv)<span class="required-asterisk">*</span></label
-    >
+      >{{ _('Päivämäärä (pp.kk.vvvv)') }}<span class="required-asterisk">*</span></label>
     <input
       type="text"
       id="date"
       name="date"
-      placeholder="pp.kk.vvvv"
+      placeholder="{{ _('pp.kk.vvvv') }}"
       required
     />
 
     <!-- Start and End Time -->
     <label for="start_time" class="required"
-      >Alkamisaika<span class="required-asterisk">*</span></label
+      >{{ _('Alkamisaika') }}<span class="required-asterisk">*</span></label
     >
     <input type="time" id="start_time" name="start_time" required />
-    <label for="end_time">Päättymisaika</label>
+    <label for="end_time">{{ _('Päättymisaika') }}</label>
     <input type="time" id="end_time" name="end_time" />
 
     <!-- Image Upload -->
-    <label for="image">Kuva (valinnainen)</label>
+    <label for="image">{{ _('Kuva (valinnainen)') }}</label>
     <input type="file" id="image" name="image" accept="image/*" />
 
     <!-- Additional Information -->
-    <label for="facebook">Facebook-tapahtumalinkki (valinnainen)</label>
+    <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
     <input
       type="url"
       id="facebook"
@@ -222,46 +223,46 @@
 
     <!-- Organizers -->
     <label for="organizers" class="required"
-      >Järjestäjä(t)<span class="required-asterisk">*</span></label
+      >{{ _('Järjestäjä(t)') }}<span class="required-asterisk">*</span></label
     >
     <div id="organizers-container"></div>
     <button type="button" class="add-organizer-button" onclick="addOrganizer()">
-      Lisää järjestäjä
+      {{ _('Lisää järjestäjä') }}
     </button>
 
     <!-- Location Type -->
     <label for="type" class="required"
-      >Mielenosoituksen tyyppi<span class="required-asterisk">*</span></label
+      >{{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span></label
     >
     <select id="type" name="type" required>
       <option value="" disabled selected>
-        Valitse mielenosoituksen tyyppi
+        {{ _('Valitse mielenosoituksen tyyppi') }}
       </option>
-      <option value="paikallaan">Paikallaan</option>
-      <option value="marssi">Marssi</option>
-      <option value="muut">Muut</option>
+      <option value="paikallaan">{{ _('Paikallaan') }}</option>
+      <option value="marssi">{{ _('Marssi') }}</option>
+      <option value="muut">{{ _('Muut') }}</option>
     </select>
 
     <div id="march-route-container" class="optional-section">
-      <label for="route">Reitti (vain marssille, valinnainen)</label>
-      <textarea id="route" name="route" placeholder="Reitti..."></textarea>
+      <label for="route">{{ _('Reitti (vain marssille, valinnainen)') }}</label>
+      <textarea id="route" name="route" placeholder="{{ _('Reitti...') }}"></textarea>
     </div>
 
     <!-- Include Paikkakunta Dropdown -->
     {% include "paikkakunta-dropdown.html" %}
 
     <label for="address" class="required"
-      >Katuosoite<span class="required-asterisk">*</span></label
+      >{{ _('Katuosoite') }}<span class="required-asterisk">*</span></label
     >
     <input
       type="text"
       id="address"
       name="address"
-      placeholder="Katuosoite"
+      placeholder="{{ _('Katuosoite') }}"
       required
     />
 
-    <button id="submit" type="submit" class="submit-button">Lähetä</button>
+    <button id="submit" type="submit" class="submit-button">{{ _('Lähetä') }}</button>
   </form>
 </div>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Ota yhteyttä{% endblock %}
+{% block title %}{{ _('Ota yhteyttä') }}{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/contact.css') }}">
@@ -14,17 +14,17 @@
     <p>{{ _('Jos sinulla on kysyttävää tai tarvitset apua, voit ottaa meihin yhteyttä seuraavilla tavoilla:') }}</p>
     
     <div class="contact-info">
-        <h3>Yhteystiedot</h3>
-        <p><strong>Sähköposti:</strong> <a class="link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a></p>
+        <h3>{{ _('Yhteystiedot') }}</h3>
+        <p><strong>{{ _('Sähköposti:') }}</strong> <a class="link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a></p>
     </div>
 
     <div class="container-form">
-        <h3>Ota yhteyttä lomakkeen kautta</h3>
+        <h3>{{ _('Ota yhteyttä lomakkeen kautta') }}</h3>
         <form action="{{ url_for('contact') }}" method="POST">
-            <label for="name">Nimi:</label>
+            <label for="name">{{ _('Nimi:') }}</label>
             <input type="text" id="name" name="name" required>
 
-            <label for="email">Sähköposti:</label>
+            <label for="email">{{ _('Sähköposti:') }}</label>
             <input type="email" id="email" name="email" required>
 
             <label for="subject">{{ _('Aihe:') }}</label>

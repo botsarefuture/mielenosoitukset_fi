@@ -21,7 +21,7 @@
     <input type="text" name="city" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" value="{{ request.args.get('city', '') }}" />
     <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}" value="{{ request.args.get('location', '') }}" />
     <input type="text" name="date" placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}" aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}" value="{{ request.args.get('date', '') }}" />
-    <button type="submit">Hae</button>
+    <button type="submit">{{ _('Hae') }}</button>
   </form>
   {% endif %}
 

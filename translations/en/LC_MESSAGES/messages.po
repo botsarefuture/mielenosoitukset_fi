@@ -422,7 +422,7 @@ msgstr "Search municipalities"
 
 #: templates/privacy.html:6
 msgid "Yksityisyydensuoja ja GDPR"
-msgstr ""
+msgstr "Privacy and GDPR"
 
 #: templates/privacy.html:7
 msgid ""

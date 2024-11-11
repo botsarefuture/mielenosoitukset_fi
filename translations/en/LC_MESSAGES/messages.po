@@ -308,7 +308,7 @@ msgstr ""
 
 #: templates/info.html:119
 msgid "Kuka ylläpitää sivustoa?"
-msgstr ""
+msgstr "Who runs the site?"
 
 #: templates/info.html:121
 msgid ""

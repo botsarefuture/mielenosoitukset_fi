@@ -475,7 +475,7 @@ msgstr "What do we use the data for?"
 
 #: templates/privacy.html:17
 msgid "Keräämiämme tietoja käytetään seuraaviin tarkoituksiin:"
-msgstr ""
+msgstr "The information we collect, is used for the purposes described below"
 
 #: templates/privacy.html:19
 msgid "Tarjotaksemme ja ylläpitääksemme palveluamme."

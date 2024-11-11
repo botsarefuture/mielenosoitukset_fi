@@ -353,11 +353,11 @@ msgstr ""
 
 #: templates/info.html:139
 msgid "yksityisyydensuojakäytännöstämme"
-msgstr ""
+msgstr "about our privacy policy"
 
 #: templates/list.html:16
 msgid "Tulevat mielenosoitukset"
-msgstr ""
+msgstr "Upcoming demonstrations"
 
 #: templates/list.html:23 templates/tag_list.html:20
 msgid "Hae mielenosoituksia..."

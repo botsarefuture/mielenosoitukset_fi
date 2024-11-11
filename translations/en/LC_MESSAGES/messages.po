@@ -217,6 +217,8 @@ msgid ""
 "Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri\n"
 "      Suomen."
 msgstr ""
+"Mielenosoitukset.fi provides up-to-date information on demonstrations around the world.\n"
+"Finland."
 
 #: templates/index.html:41
 msgid ""

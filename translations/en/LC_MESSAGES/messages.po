@@ -250,7 +250,7 @@ msgstr "Display all demonstrations"
 
 #: templates/info.html:2
 msgid "Tietoa sivustosta - Mielenosoitukset.fi"
-msgstr ""
+msgstr "About the site - Mielenosoitukset.fi"
 
 #: templates/info.html:97
 msgid "Tietoa Mielenosoitukset.fi -sivustosta"

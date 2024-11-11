@@ -466,6 +466,8 @@ msgid ""
 "käytämme evästeitä parantaaksemme käyttökokemustasi ja kerätäksemme "
 "analytiikkaa sivuston toiminnasta."
 msgstr ""
+"We use cookies to improve your experience and collect analytics on the "
+"website's performance."
 
 #: templates/privacy.html:16
 msgid "Mihin käytämme tietoja?"

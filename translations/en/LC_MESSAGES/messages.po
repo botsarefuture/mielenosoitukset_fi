@@ -57,15 +57,15 @@ msgstr "Email:"
 
 #: templates/contact.html:22
 msgid "Ota yhteyttä lomakkeen kautta"
-msgstr ""
+msgstr "Contact via the form"
 
 #: templates/contact.html:24
 msgid "Nimi:"
-msgstr ""
+msgstr "Name:"
 
 #: templates/contact.html:30
 msgid "Aihe:"
-msgstr ""
+msgstr "Subject:"
 
 #: templates/contact.html:32
 msgid "Valitse aihe"

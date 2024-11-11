@@ -93,11 +93,11 @@ msgstr "Message:"
 
 #: templates/contact.html:42 templates/submit.html:265
 msgid "Lähetä"
-msgstr ""
+msgstr "Submit"
 
 #: templates/detail.html:411
 msgid "Hyväksy"
-msgstr ""
+msgstr "Accept"
 
 #: templates/detail.html:418
 msgid "Muokkaa"

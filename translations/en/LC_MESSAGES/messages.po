@@ -101,15 +101,15 @@ msgstr "Accept"
 
 #: templates/detail.html:418
 msgid "Muokkaa"
-msgstr ""
+msgstr "Edit"
 
 #: templates/detail.html:425
 msgid "Katsele"
-msgstr ""
+msgstr "View"
 
 #: templates/detail.html:432
 msgid "Poista"
-msgstr ""
+msgstr "Remove"
 
 #: templates/detail.html:472
 msgid "Jaa Facebookissa"

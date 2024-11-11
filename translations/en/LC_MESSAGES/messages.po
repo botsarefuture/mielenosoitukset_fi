@@ -340,7 +340,7 @@ msgstr "contact form"
 
 #: templates/info.html:136
 msgid "Yksityisyys ja evästeet"
-msgstr ""
+msgstr "Privacy and cookies"
 
 #: templates/info.html:138
 msgid ""

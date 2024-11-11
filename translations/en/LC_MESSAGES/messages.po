@@ -129,15 +129,15 @@ msgstr "Presentation text of the demonstration"
 
 #: templates/detail.html:501
 msgid "Aikaa mielenosoituksen alkuun"
-msgstr ""
+msgstr "Time till the demonstration starts"
 
 #: templates/detail.html:512
 msgid "Lisätiedot"
-msgstr ""
+msgstr "Additional informatio"
 
 #: templates/detail.html:519
 msgid "Järjestäjät"
-msgstr ""
+msgstr "Organizers"
 
 #: templates/detail.html:524
 msgid "Ei järjestäjätietoja saatavilla."

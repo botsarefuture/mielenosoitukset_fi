@@ -378,11 +378,11 @@ msgstr "Location"
 #: templates/list.html:51 templates/list.html:52 templates/submit.html:194
 #: templates/tag_list.html:23
 msgid "Päivämäärä (pp.kk.vvvv)"
-msgstr ""
+msgstr "Date (pp.kk.vvvv)"
 
 #: templates/list.html:56 templates/tag_list.html:24
 msgid "Hae"
-msgstr ""
+msgstr "Search"
 
 #: templates/list.html:65
 msgid "Ei löytynyt mielenosoituksia."

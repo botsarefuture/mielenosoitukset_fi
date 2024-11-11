@@ -210,7 +210,7 @@ msgstr "Sign in"
 
 #: templates/index.html:38
 msgid "Tervetuloa Mielenosoitukset.fi:hin"
-msgstr ""
+msgstr "Welcome to Mielenosoitukset.fi"
 
 #: templates/index.html:40
 msgid ""

@@ -426,4 +426,5 @@ def accept_demo(demo_id):
             200,
         )
     except Exception as e:
-        return jsonify({"status": "ERROR", "message": str(e)}), 500
+        app.logger.error(f"Error accepting demonstration: {e}")
+        return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500

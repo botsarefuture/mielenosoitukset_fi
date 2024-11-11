@@ -121,7 +121,7 @@ msgstr "Share on X"
 
 #: templates/detail.html:482
 msgid "Jaa LinkedInissä"
-msgstr ""
+msgstr "Share on LinkedIn"
 
 #: templates/detail.html:496
 msgid "Mielenosoituksen esittelyteksti"

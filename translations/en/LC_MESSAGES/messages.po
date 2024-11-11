@@ -174,11 +174,11 @@ msgstr "Super-user's handbook"
 
 #: templates/header.html:281
 msgid "Käyttäjien hallinta"
-msgstr ""
+msgstr "Manage users"
 
 #: templates/header.html:284
 msgid "Organisaatioiden hallinta"
-msgstr ""
+msgstr "Manage organizations"
 
 #: templates/header.html:287
 msgid "Mielenosoitusten hallinta"

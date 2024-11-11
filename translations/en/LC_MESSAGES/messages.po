@@ -153,11 +153,11 @@ msgstr "Mielenosoitukset.fi"
 
 #: templates/header.html:262
 msgid "Avaa valikko"
-msgstr ""
+msgstr "Open a menu"
 
 #: templates/header.html:268
 msgid "Etusivu"
-msgstr ""
+msgstr "Frontpage"
 
 #: templates/header.html:269
 msgid "Mielenosoitukset"

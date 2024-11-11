@@ -104,44 +104,44 @@
 
 {% block main_content %}
 <div class="container mt-4">
-    <h2 class="admin-section-title">Muokkaa Käyttäjää</h2>
+    <h2 class="admin-section-title">{{ _('Muokkaa käyttäjää') }}</h2>
 
     <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}" class="container-form">
         <!-- User Details Form -->
         <div class="form-group">
-            <label for="username">Käyttäjänimi</label>
+            <label for="username">{{ _('Käyttäjänimi') }}</label>
             <input type="text" id="username" name="username" value="{{ user['username'] }}" required>
         </div>
 
         <div class="form-group">
-            <label for="email">Sähköposti</label>
+            <label for="email">{{ _('Sähköposti') }}</label>
             <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
         </div>
 
         <!-- Email Confirmation Checkbox -->
         <div class="form-group" id="approval-container">
-            <label for="approved">Sähköpostiosoite vahvistettu</label>
+            <label for="approved">{{ _('Sähköpostiosoite vahvistettu') }}</label>
             <div>
                 <input type="checkbox" id="approved" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
                 <span id="approval-status" class="status-text">
-                    {% if user["confirmed"] %}Kyllä{% else %}Ei{% endif %}
+                    {% if user["confirmed"] %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}
                 </span>
             </div>
         </div>
 
         <!-- Role Selection -->
         <div class="form-group">
-            <label for="role">Rooli</label>
+            <label for="role">{{ _('Rooli') }}</label>
             <select id="role" name="role" required>
-                <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>Käyttäjä</option>
-                <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>Järjestelmänvalvoja</option>
-                <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>Superkäyttäjä</option>
+                <option value="user" {% if user['role'] == 'user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
+                <option value="admin" {% if user['role'] == 'admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}</option>
+                <option value="global_admin" {% if user['role'] == 'global_admin' %}selected{% endif %}>{{ _('Superkäyttäjä') }}</option>
             </select>
         </div>
 
-        <h3>Organisaatiot ja oikeudet</h3>
+        <h3>{{ _('Organisaatiot ja oikeudet') }}</h3>
         <div class="form-group">
-            <input type="text" id="org-search" placeholder="Hae organisaatiota..." class="search-input">
+            <input type="text" id="org-search" placeholder="{{ _('Hae organisaatiota...) }}" class="search-input">
         </div>
 
         <div class="organization-list">
@@ -158,7 +158,7 @@
                 <div class="permissions-list" id="permissions_{{ org['_id'] }}" style="display: none;">
                     <div class="select-all">
                         <input type="checkbox" id="select_all_{{ org['_id'] }}" onchange="selectAllPermissions('{{ org['_id'] }}', this.checked)">
-                        <label for="select_all_{{ org['_id'] }}">Valitse kaikki</label>
+                        <label for="select_all_{{ org['_id'] }}">{{ _('Valitse kaikki') }}</label>
                     </div>
 
                     <div class="permission-group">
@@ -180,14 +180,15 @@
             {% endfor %}
         </div>
 
-        <h3>Globaalit Oikeudet</h3>
+        <h3>{{ _('Globaalit oikeudet') }}</h3>
+        <i>{{ _('Globaalit oikeudet ovat vain superkäyttäjille tarkoitettuja oikeuksia, jotka antavat käyttäjän suorittaa kyseisen toiminnon mille tahansa organisaatiolle.') }}</i>
         <div class="global-permissions">
             <div class="organization-item">
                 <!-- Permissions Section -->
                 <div class="permissions-list" id="permissions_global" style="display: block;">
                     <div class="select-all">
                         <input type="checkbox" id="select_all_global" onchange="selectAllPermissions('global', this.checked)">
-                        <label for="select_all_global">Valitse kaikki</label>
+                        <label for="select_all_global">{{ _('Valitse kaikki') }}</label>
                     </div>
 
                     <div class="permission-group">
@@ -209,7 +210,7 @@
         </div>
 
         <div class="form-group">
-            <button type="submit" class="btn btn-primary">Tallenna käyttäjä</button>
+            <button type="submit" class="btn btn-primary">{{ _('Tallenna muutokset') }}</button>
         </div>
     </form>
 </div>

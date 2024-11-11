@@ -35,18 +35,18 @@
   {% endif %}
 
   <header class="container-welcome container-centered">
-    <h2>Tervetuloa Mielenosoitukset.fi:hin</h2>
+    <h2>{{ _('Tervetuloa Mielenosoitukset.fi:hin') }}</h2>
     <p>
-      Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri
-      Suomen. <br />Pyrimme tekemään osallistumisesta mielenosoituksiin
-      mahdollisimman vaivatonta ja sujuvaa.
+      {{ _('Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri
+      Suomen.') }} <br> {{ _('Pyrimme tekemään osallistumisesta mielenosoituksiin
+      mahdollisimman vaivatonta ja sujuvaa.') }}
     </p>
     <div class="buttons-div">
       <a class="button button-primary" href="{{ url_for('info') }}"
-        >Lue lisää</a
+        >{{ _('Lue lisää') }}</a
       >
       <a class="button button-primary" href="{{ url_for('submit') }}"
-        >Ilmoita mielenosoituksesta</a
+        >{{ _('Ilmoita mielenosoituksesta') }}</a
       >
     </div>
   </header>
@@ -73,7 +73,7 @@
     "
   >
     <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
-      Suosittelemme
+      {{ _('Suosittelemme') }}
     </h2>
     <div class="container-grid">
       {% for demo in pinned_demonstrations %} {{ macros.demo_card(demo) }} {%
@@ -92,12 +92,12 @@
     "
   >
     <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
-      Esitellyt mielenosoitukset
+      {{ _('Esitellyt mielenosoitukset') }}
     </h2>
     <div class="container-grid" style="width: 100%">
       {% if demonstrations %} {% for demo in demonstrations[:6] %} {{
       macros.demo_card(demo) }} {% endfor %} {% else %}
-      <div class="grid-item">Ei mielenosoituksia näytettäväksi.</div>
+      <div class="grid-item">{{ _('Ei mielenosoituksia näytettäväksi.') }}</div>
       {% endif %}
     </div>
   </section>
@@ -105,7 +105,7 @@
   <!-- Button to View All Demonstrations -->
   <div class="buttons-div">
     <a class="button button-primary" href="{{ url_for('demonstrations') }}"
-      >Näytä kaikki mielenosoitukset</a
+      >{{ _('Näytä kaikki mielenosoitukset') }}</a
     >
   </div>
 </div>

@@ -170,7 +170,7 @@ msgstr "Submit a demonstration"
 
 #: templates/header.html:278
 msgid "Superkäyttäjän käsikirja"
-msgstr ""
+msgstr "Super-user's handbook"
 
 #: templates/header.html:281
 msgid "Käyttäjien hallinta"

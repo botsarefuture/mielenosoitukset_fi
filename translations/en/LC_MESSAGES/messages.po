@@ -49,11 +49,11 @@ msgstr ""
 
 #: templates/contact.html:17 templates/info.html:126 templates/privacy.html:11
 msgid "Yhteystiedot"
-msgstr ""
+msgstr "Contact information"
 
 #: templates/contact.html:18 templates/contact.html:27
 msgid "Sähköposti:"
-msgstr ""
+msgstr "Email:"
 
 #: templates/contact.html:22
 msgid "Ota yhteyttä lomakkeen kautta"

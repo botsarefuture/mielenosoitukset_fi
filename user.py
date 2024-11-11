@@ -1,4 +1,5 @@
 from flask import Blueprint, redirect, url_for, flash, request
+from urllib.parse import urlparse
 from flask_login import login_required, current_user
 from auth.models import User  # Adjust the import based on your project structure
 from database_manager import DatabaseManager  # Adjust based on your database setup
@@ -16,7 +17,11 @@ def follow(username):
         flash(f"Olet nyt seuraamassa käyttäjää {username}.", "success")
     else:
         flash("Käyttäjää ei löytynyt.", "danger")
-    return redirect(request.referrer)  # Replace with the appropriate view
+    referrer = request.referrer
+    referrer = referrer.replace('\\', '')
+    if not urlparse(referrer).netloc and not urlparse(referrer).scheme:
+        return redirect(referrer, code=302)
+    return redirect(url_for('index'))  # Replace 'index' with the appropriate view
 
 
 @user_bp.route("/unfollow/<username>", methods=["POST"])
@@ -28,4 +33,8 @@ def unfollow(username):
         flash(f"Lopetit käyttäjän {username} seuraamisen.", "success")
     else:
         flash("Käyttäjää ei löytynyt.", "danger")
-    return redirect(request.referrer)  # Replace with the appropriate view
+    referrer = request.referrer
+    referrer = referrer.replace('\\', '')
+    if not urlparse(referrer).netloc and not urlparse(referrer).scheme:
+        return redirect(referrer, code=302)
+    return redirect(url_for('index'))  # Replace 'index' with the appropriate view

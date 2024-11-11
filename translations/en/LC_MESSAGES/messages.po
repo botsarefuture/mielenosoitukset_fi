@@ -145,11 +145,11 @@ msgstr "No organizer information available."
 
 #: templates/detail.html:528
 msgid "Takaisin kaikkiin mielenosoituksiin"
-msgstr ""
+msgstr "Back to all demonstrations"
 
 #: templates/header.html:259
 msgid "Mielenosoitukset.fi"
-msgstr ""
+msgstr "Mielenosoitukset.fi"
 
 #: templates/header.html:262
 msgid "Avaa valikko"

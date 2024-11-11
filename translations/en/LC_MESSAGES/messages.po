@@ -406,7 +406,7 @@ msgstr "Municipality selection"
 
 #: templates/paikkakunta-dropdown.html:2 templates/paikkakunta-dropdown.html:5
 msgid "Paikkakunta"
-msgstr ""
+msgstr "Municipality"
 
 #: templates/paikkakunta-dropdown.html:5
 msgid "Open Paikkakunta dropdown"

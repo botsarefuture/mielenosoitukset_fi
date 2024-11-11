@@ -264,10 +264,14 @@ msgid ""
 "seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti"
 " ja nopeasti."
 msgstr ""
+"Mielenosoitukset.fi is a website that brings together all the demonstrations"
+" and social events taking place in Finland. Our aim is to provide a "
+"comprehensive and up-to-date source of information where you can follow "
+"upcoming events and report your own demonstration easily and quickly."
 
 #: templates/info.html:103
 msgid "Mikä on Mielenosoitukset.fi?"
-msgstr ""
+msgstr "What is Mielenosoitukset.fi?"
 
 #: templates/info.html:105
 msgid ""

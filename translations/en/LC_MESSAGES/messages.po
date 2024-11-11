@@ -317,12 +317,18 @@ msgid ""
 "organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee "
 "monimuotoista ja vapaata mielipiteenilmaisua kaikille."
 msgstr ""
+"Mielenosoitukset.fi is maintained as an independent project by volunteers. "
+"We are not affiliated with any political party or organisation. We aim to "
+"provide a neutral platform that supports diverse and free expression of "
+"opinion for all."
 
 #: templates/info.html:128
 msgid ""
 "Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä "
 "ylläpitäjiin, voit lähettää sähköpostia osoitteeseen"
 msgstr ""
+"If you have any questions, suggestions or would like to contact the "
+"administrators, you can send an email to."
 
 #: templates/info.html:130
 msgid "tai täyttää"

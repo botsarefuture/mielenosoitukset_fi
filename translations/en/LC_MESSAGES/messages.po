@@ -281,6 +281,10 @@ msgid ""
 "aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata "
 "mielipiteenilmaisua."
 msgstr ""
+"Our website operates as an independent platform, providing an open and "
+"neutral space for all demonstrations and protests. Our aim is to help "
+"citizens find information, actively participate in social events and promote"
+" the free expression of opinion."
 
 #: templates/info.html:110
 msgid "Kuinka ilmoitan mielenosoituksesta?"

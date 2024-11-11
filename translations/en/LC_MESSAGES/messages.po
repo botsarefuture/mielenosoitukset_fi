@@ -332,11 +332,11 @@ msgstr ""
 
 #: templates/info.html:130
 msgid "tai täyttää"
-msgstr ""
+msgstr "or fill in"
 
 #: templates/info.html:131
 msgid "yhteydenottolomakkeen"
-msgstr ""
+msgstr "contact form"
 
 #: templates/info.html:136
 msgid "Yksityisyys ja evästeet"

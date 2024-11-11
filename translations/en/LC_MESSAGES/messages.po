@@ -418,7 +418,7 @@ msgstr "Search municipality..."
 
 #: templates/paikkakunta-dropdown.html:7
 msgid "Search cities"
-msgstr ""
+msgstr "Search municipalities"
 
 #: templates/privacy.html:6
 msgid "Yksityisyydensuoja ja GDPR"

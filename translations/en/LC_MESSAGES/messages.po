@@ -454,10 +454,12 @@ msgstr "User activity"
 msgid ""
 "tiedot, kuten selaushistoria, klikkaukset ja käyttämäsi laitteen tiedot."
 msgstr ""
+"information, such as browsing history, clicks and information of the device "
+"you're using"
 
 #: templates/privacy.html:13
 msgid "Evästetiedot"
-msgstr ""
+msgstr "Cookieinfo"
 
 #: templates/privacy.html:13
 msgid ""

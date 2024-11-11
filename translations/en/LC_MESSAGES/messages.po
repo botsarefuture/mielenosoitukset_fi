@@ -296,13 +296,15 @@ msgstr "You can register your own demonstration by filling in"
 
 #: templates/info.html:113
 msgid "ilmoituslomakkeen"
-msgstr ""
+msgstr "the notification form"
 
 #: templates/info.html:114
 msgid ""
 "Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut "
 "osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi."
 msgstr ""
+"Make sure that all information is up-to-date and correct so that other "
+"participants receive correct and complete information about your event."
 
 #: templates/info.html:119
 msgid "Kuka ylläpitää sivustoa?"

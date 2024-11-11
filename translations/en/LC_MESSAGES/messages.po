@@ -206,7 +206,7 @@ msgstr "Sign out"
 
 #: templates/header.html:318
 msgid "Kirjaudu sisään"
-msgstr ""
+msgstr "Sign in"
 
 #: templates/index.html:38
 msgid "Tervetuloa Mielenosoitukset.fi:hin"

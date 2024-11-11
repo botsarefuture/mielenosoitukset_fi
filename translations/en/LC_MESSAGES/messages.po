@@ -386,11 +386,11 @@ msgstr "Search"
 
 #: templates/list.html:65
 msgid "Ei löytynyt mielenosoituksia."
-msgstr ""
+msgstr "No demonstrations found"
 
 #: templates/list.html:73
 msgid "Edellinen"
-msgstr ""
+msgstr "Previous"
 
 #: templates/list.html:77 templates/tag_list.html:44
 msgid "Sivu"

@@ -365,15 +365,15 @@ msgstr "Search for demonstrations..."
 
 #: templates/list.html:24 templates/tag_list.html:20
 msgid "Hae mielenosoituksia"
-msgstr ""
+msgstr "Search for demonstrations"
 
 #: templates/list.html:35 templates/list.html:36 templates/tag_list.html:21
 msgid "Kaupunki"
-msgstr ""
+msgstr "City"
 
 #: templates/list.html:43 templates/list.html:44 templates/tag_list.html:22
 msgid "Sijainti"
-msgstr ""
+msgstr "Locatio"
 
 #: templates/list.html:51 templates/list.html:52 templates/submit.html:194
 #: templates/tag_list.html:23

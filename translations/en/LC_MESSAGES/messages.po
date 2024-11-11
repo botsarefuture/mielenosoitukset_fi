@@ -373,7 +373,7 @@ msgstr "City"
 
 #: templates/list.html:43 templates/list.html:44 templates/tag_list.html:22
 msgid "Sijainti"
-msgstr "Locatio"
+msgstr "Location"
 
 #: templates/list.html:51 templates/list.html:52 templates/submit.html:194
 #: templates/tag_list.html:23

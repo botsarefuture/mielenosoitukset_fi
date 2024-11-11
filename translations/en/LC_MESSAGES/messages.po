@@ -69,7 +69,7 @@ msgstr "Subject:"
 
 #: templates/contact.html:32
 msgid "Valitse aihe"
-msgstr ""
+msgstr "Choose subject"
 
 #: templates/contact.html:33
 msgid "Tukipyyntö"

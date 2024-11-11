@@ -113,11 +113,11 @@ msgstr "Remove"
 
 #: templates/detail.html:472
 msgid "Jaa Facebookissa"
-msgstr ""
+msgstr "Share on Facebook"
 
 #: templates/detail.html:477
 msgid "Jaa Xssä"
-msgstr ""
+msgstr "Share on X"
 
 #: templates/detail.html:482
 msgid "Jaa LinkedInissä"

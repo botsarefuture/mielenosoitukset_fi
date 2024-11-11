@@ -81,15 +81,15 @@ msgstr "Questio"
 
 #: templates/contact.html:35
 msgid "Palautetta"
-msgstr ""
+msgstr "Feedback"
 
 #: templates/contact.html:36
 msgid "Muu"
-msgstr ""
+msgstr "Other"
 
 #: templates/contact.html:39
 msgid "Viesti:"
-msgstr ""
+msgstr "Message:"
 
 #: templates/contact.html:42 templates/submit.html:265
 msgid "Lähetä"

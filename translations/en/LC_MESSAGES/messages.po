@@ -190,19 +190,19 @@ msgstr "Manage recurring demonstrations"
 
 #: templates/admin/stats.html:4 templates/header.html:293
 msgid "Tilastot"
-msgstr ""
+msgstr "Stats"
 
 #: templates/header.html:303
 msgid "Profiilikuva"
-msgstr ""
+msgstr "Profile picture"
 
 #: templates/header.html:312
 msgid "Profiili"
-msgstr ""
+msgstr "Profile"
 
 #: templates/header.html:313
 msgid "Kirjaudu ulos"
-msgstr ""
+msgstr "Sign out"
 
 #: templates/header.html:318
 msgid "Kirjaudu sisään"

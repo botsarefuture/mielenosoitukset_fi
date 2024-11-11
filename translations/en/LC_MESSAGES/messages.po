@@ -292,7 +292,7 @@ msgstr "How do I register a demonstration?"
 
 #: templates/info.html:112
 msgid "Voit ilmoittaa oman mielenosoituksesi täyttämällä"
-msgstr ""
+msgstr "You can register your own demonstration by filling in"
 
 #: templates/info.html:113
 msgid "ilmoituslomakkeen"

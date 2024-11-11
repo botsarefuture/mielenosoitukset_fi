@@ -402,7 +402,7 @@ msgstr "Next"
 
 #: templates/paikkakunta-dropdown.html:2
 msgid "Paikkakunta selection"
-msgstr ""
+msgstr "Municipality selection"
 
 #: templates/paikkakunta-dropdown.html:2 templates/paikkakunta-dropdown.html:5
 msgid "Paikkakunta"

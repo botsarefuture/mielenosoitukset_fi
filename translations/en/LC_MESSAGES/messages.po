@@ -32,12 +32,12 @@ msgstr "About the site"
 
 #: templates/base.html:73
 msgid "Tietosuojaseloste"
-msgstr ""
+msgstr "Privacy policy"
 
 #: templates/base.html:75 templates/contact.html:3 templates/contact.html:12
 #: templates/privacy.html:47
 msgid "Ota yhteyttä"
-msgstr ""
+msgstr "Contact us"
 
 #: templates/contact.html:14
 msgid ""

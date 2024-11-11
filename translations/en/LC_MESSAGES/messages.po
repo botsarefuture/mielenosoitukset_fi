@@ -347,6 +347,9 @@ msgid ""
 "Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle"
 " paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät"
 msgstr ""
+"We use cookies to improve your user experience and provide you with a better"
+" service. For more information on the use of cookies and data protection, "
+"please see"
 
 #: templates/info.html:139
 msgid "yksityisyydensuojakäytännöstämme"

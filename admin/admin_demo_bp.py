@@ -1,13 +1,15 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from flask_login import login_required
+from datetime import date, datetime
 from bson.objectid import ObjectId
-from datetime import datetime, date
-from utils import CITY_LIST
-from database_manager import DatabaseManager
-from wrappers import admin_required, permission_required
-from flask_login import current_user
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask_login import current_user, login_required
+
 from classes import Demonstration, Organizer
+from utils.variables import CITY_LIST
+from wrappers import admin_required, permission_required
 from .utils import mongo
+from utils.admin.demonstration import collect_tags
+
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -151,7 +153,7 @@ def edit_demo(demo_id):
         title="Muokkaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
         city_list=CITY_LIST,
-        all_organizations=mongo.organizations.find()
+        all_organizations=mongo.organizations.find(),
     )
 
 
@@ -285,41 +287,6 @@ def collect_organizers(request):
         i += 1  # Move to the next organizer field
 
     return organizers
-
-
-def collect_tags(request):
-    """
-    Collect tags data from the request form.
-
-    This function extracts multiple tags from the form fields and returns them as a list.
-
-    Args:
-        request: The incoming request object containing form data.
-
-    Returns:
-        list: A list of tags extracted from the form.
-    """
-    tags = []
-    i = 1
-
-    while True:
-        # Extract the tag value from the dynamic form field names
-        tag_name = request.form.get(f"tag_{i}")
-
-        # Break the loop if no tag name is found
-        if not tag_name:
-            if not request.form.get(f"tag_{i+1}"):
-                break
-            
-            else:
-                continue
-            
-        # Append the trimmed tag to the list
-        tags.append(tag_name.strip())
-
-        i += 1  # Move to the next tag field
-
-    return tags
 
 
 @admin_demo_bp.route("/delete_demo", methods=["POST"])

@@ -1,356 +1,70 @@
-CITY_LIST = [
-    "Akaa",
-    "Alajärvi",
-    "Alavieska",
-    "Alavus",
-    "Asikkala",
-    "Askola",
-    "Aura",
-    "Brändö",
-    "Eckerö",
-    "Enonkoski",
-    "Enontekiö",
-    "Espoo",
-    "Eura",
-    "Eurajoki",
-    "Evijärvi",
-    "Finström",
-    "Forssa",
-    "Föglö",
-    "Geta",
-    "Haapajärvi",
-    "Haapavesi",
-    "Hailuoto",
-    "Halsua",
-    "Hamina",
-    "Hammarland",
-    "Hankasalmi",
-    "Hanko",
-    "Harjavalta",
-    "Hartola",
-    "Hattula",
-    "Hausjärvi",
-    "Heinola",
-    "Heinävesi",
-    "Helsinki",
-    "Hirvensalmi",
-    "Hollola",
-    "Huittinen",
-    "Humppila",
-    "Hyrynsalmi",
-    "Hyvinkää",
-    "Hämeenkyrö",
-    "Hämeenlinna",
-    "Ii",
-    "Iisalmi",
-    "Iitti",
-    "Ikaalinen",
-    "Ilmajoki",
-    "Ilomantsi",
-    "Imatra",
-    "Inari",
-    "Inkoo",
-    "Isojoki",
-    "Isokyrö",
-    "Janakkala",
-    "Joensuu",
-    "Jokioinen",
-    "Jomala",
-    "Joroinen",
-    "Joutsa",
-    "Juuka",
-    "Juupajoki",
-    "Juva",
-    "Jyväskylä",
-    "Jämijärvi",
-    "Jämsä",
-    "Järvenpää",
-    "Kaarina",
-    "Kaavi",
-    "Kajaani",
-    "Kalajoki",
-    "Kangasala",
-    "Kangasniemi",
-    "Kankaanpää",
-    "Kannonkoski",
-    "Kannus",
-    "Karijoki",
-    "Karkkila",
-    "Karstula",
-    "Karvia",
-    "Kaskinen",
-    "Kauhajoki",
-    "Kauhava",
-    "Kauniainen",
-    "Kaustinen",
-    "Keitele",
-    "Kemi",
-    "Kemijärvi",
-    "Keminmaa",
-    "Kemiönsaari",
-    "Kempele",
-    "Kerava",
-    "Keuruu",
-    "Kihniö",
-    "Kinnula",
-    "Kirkkonummi",
-    "Kitee",
-    "Kittilä",
-    "Kiuruvesi",
-    "Kivijärvi",
-    "Kokemäki",
-    "Kokkola",
-    "Kolari",
-    "Konnevesi",
-    "Kontiolahti",
-    "Korsnäs",
-    "Koski Tl",
-    "Kotka",
-    "Kouvola",
-    "Kristiinankaupunki",
-    "Kruunupyy",
-    "Kuhmo",
-    "Kuhmoinen",
-    "Kumlinge",
-    "Kuopio",
-    "Kuortane",
-    "Kurikka",
-    "Kustavi",
-    "Kuusamo",
-    "Kyyjärvi",
-    "Kärkölä",
-    "Kärsämäki",
-    "Kökar",
-    "Lahti",
-    "Laihia",
-    "Laitila",
-    "Lapinjärvi",
-    "Lapinlahti",
-    "Lappajärvi",
-    "Lappeenranta",
-    "Lapua",
-    "Laukaa",
-    "Lemi",
-    "Lemland",
-    "Lempäälä",
-    "Leppävirta",
-    "Lestijärvi",
-    "Lieksa",
-    "Lieto",
-    "Liminka",
-    "Liperi",
-    "Lohja",
-    "Loimaa",
-    "Loppi",
-    "Loviisa",
-    "Luhanka",
-    "Lumijoki",
-    "Lumparland",
-    "Luoto",
-    "Luumäki",
-    "Maalahti",
-    "Maarianhamina – Mariehamn",
-    "Marttila",
-    "Masku",
-    "Merijärvi",
-    "Merikarvia",
-    "Miehikkälä",
-    "Mikkeli",
-    "Muhos",
-    "Multia",
-    "Muonio",
-    "Mustasaari",
-    "Muurame",
-    "Mynämäki",
-    "Myrskylä",
-    "Mäntsälä",
-    "Mänttä-Vilppula",
-    "Mäntyharju",
-    "Naantali",
-    "Nakkila",
-    "Nivala",
-    "Nokia",
-    "Nousiainen",
-    "Nurmes",
-    "Nurmijärvi",
-    "Närpiö",
-    "Orimattila",
-    "Oripää",
-    "Orivesi",
-    "Oulainen",
-    "Oulu",
-    "Outokumpu",
-    "Padasjoki",
-    "Paimio",
-    "Paltamo",
-    "Parainen",
-    "Parikkala",
-    "Parkano",
-    "Pedersöre",
-    "Pelkosenniemi",
-    "Pello",
-    "Perho",
-    "Pertunmaa",
-    "Petäjävesi",
-    "Pieksämäki",
-    "Pielavesi",
-    "Pietarsaari",
-    "Pihtipudas",
-    "Pirkkala",
-    "Polvijärvi",
-    "Pomarkku",
-    "Pori",
-    "Pornainen",
-    "Porvoo",
-    "Posio",
-    "Pudasjärvi",
-    "Pukkila",
-    "Punkalaidun",
-    "Puolanka",
-    "Puumala",
-    "Pyhtää",
-    "Pyhäjoki",
-    "Pyhäjärvi",
-    "Pyhäntä",
-    "Pyhäranta",
-    "Pälkäne",
-    "Pöytyä",
-    "Raahe",
-    "Raasepori",
-    "Raisio",
-    "Rantasalmi",
-    "Ranua",
-    "Rauma",
-    "Rautalampi",
-    "Rautavaara",
-    "Rautjärvi",
-    "Reisjärvi",
-    "Riihimäki",
-    "Ristijärvi",
-    "Rovaniemi",
-    "Ruokolahti",
-    "Ruovesi",
-    "Rusko",
-    "Rääkkylä",
-    "Saarijärvi",
-    "Salla",
-    "Salo",
-    "Saltvik",
-    "Sastamala",
-    "Sauvo",
-    "Savitaipale",
-    "Savonlinna",
-    "Savukoski",
-    "Seinäjoki",
-    "Sievi",
-    "Siikainen",
-    "Siikajoki",
-    "Siikalatva",
-    "Siilinjärvi",
-    "Simo",
-    "Sipoo",
-    "Siuntio",
-    "Sodankylä",
-    "Soini",
-    "Somero",
-    "Sonkajärvi",
-    "Sotkamo",
-    "Sottunga",
-    "Sulkava",
-    "Sund",
-    "Suomussalmi",
-    "Suonenjoki",
-    "Sysmä",
-    "Säkylä",
-    "Taipalsaari",
-    "Taivalkoski",
-    "Taivassalo",
-    "Tammela",
-    "Tampere",
-    "Tervo",
-    "Tervola",
-    "Teuva",
-    "Tohmajärvi",
-    "Toholampi",
-    "Toivakka",
-    "Tornio",
-    "Turku",
-    "Tuusniemi",
-    "Tuusula",
-    "Tyrnävä",
-    "Ulvila",
-    "Urjala",
-    "Utajärvi",
-    "Utsjoki",
-    "Uurainen",
-    "Uusikaarlepyy",
-    "Uusikaupunki",
-    "Vaala",
-    "Vaasa",
-    "Valkeakoski",
-    "Vantaa",
-    "Varkaus",
-    "Vehmaa",
-    "Vesanto",
-    "Vesilahti",
-    "Veteli",
-    "Vieremä",
-    "Vihti",
-    "Viitasaari",
-    "Vimpeli",
-    "Virolahti",
-    "Virrat",
-    "Vårdö",
-    "Vöyri",
-    "Ylitornio",
-    "Ylivieska",
-    "Ylöjärvi",
-    "Ypäjä",
-    "Ähtäri",
-    "Äänekoski",
-]
-
-PERMISSIONS_GROUPS = {
-    "Recurring Demonstration Management": [
-        {"name": "CREATE_RECURRING_DEMO", "description": "Create recurring demos."},
-        {"name": "EDIT_RECURRING_DEMO", "description": "Edit recurring demos."},
-        {"name": "DELETE_RECURRING_DEMO", "description": "Delete recurring demos."},
-        {"name": "VIEW_RECURRING_DEMO", "description": "View recurring demo details."},
-        {"name": "LIST_RECURRING_DEMOS", "description": "List all recurring demos."},
-    ],
-    "Demonstration Management": [
-        {"name": "CREATE_DEMO", "description": "Create demos."},
-        {"name": "EDIT_DEMO", "description": "Edit demos."},
-        {"name": "DELETE_DEMO", "description": "Delete demos."},
-        {"name": "VIEW_DEMO", "description": "View demo details."},
-        {"name": "LIST_DEMOS", "description": "List all demos."},
-        {"name": "ACCEPT_DEMO", "description": "Can accept demos."},
-    ],
-    "User Management": [
-        {"name": "VIEW_USER", "description": "View user details."},
-        {"name": "EDIT_USER", "description": "Edit users."},
-        {"name": "DELETE_USER", "description": "Delete users."},
-        {"name": "LIST_USERS", "description": "List all users."},
-    ],
-    "Organization Management": [
-        {"name": "CREATE_ORGANIZATION", "description": "Create organizations."},
-        {"name": "EDIT_ORGANIZATION", "description": "Edit organizations."},
-        {"name": "DELETE_ORGANIZATION", "description": "Delete organizations."},
-        {"name": "VIEW_ORGANIZATION", "description": "View organization details."},
-        {"name": "LIST_ORGANIZATIONS", "description": "List all organizations."},
-    ],
-    "Miscallanious": [
-        {"name": "VIEW_ANALYTICS", "description": "View analytics"},
-        {"name": "MANAGE_MARQUEE", "description": "Manage marquee"},
-        {"name": "BETA_FEATURES", "description": "can access beta"},
-    ],
-}
-
-
 import re
+import warnings
+import json
+import os
+
+
+def load_from_file(_filename):
+    """
+    Load and parse JSON data from a specified file located in the ".utils" directory.
+
+    This function reads the content of a JSON file and returns it as a Python dictionary.
+    The file is expected to be located in the `.utils` folder relative to the current working directory.
+
+    Args:
+        _filename (str): The name of the JSON file to load (e.g., 'city_list.json').
+
+    Returns:
+        dict: A dictionary containing the parsed JSON data.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist in the ".utils" directory.
+        json.JSONDecodeError: If the file is not a valid JSON file.
+
+    Changelog:
+    ----------
+    v2.4.0:
+        - Added this function to load JSON data from the ".utils" directory.
+    """
+    file_path = os.path.join(".utils", _filename)
+
+    # Attempt to open and load the file
+    with open(file_path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+CITY_LIST = load_from_file("city_list.json")
+PERMISSIONS_GROUPS = load_from_file("permission_groups.json")
 
 
 def is_valid_email(email):
+    """
+    Deprecated: This function is deprecated and will be removed in future versions.
+    Please use `valid_email` from this module instead.
+
+    Args:
+        email (str): The email address to validate.
+
+    Returns:
+        bool: True if the email is valid, False otherwise.
+
+    Changelog:
+    ----------
+    v2.4.0:
+        - Deprecated this function. Use `valid_email` instead.
+    """
+    warnings.warn(
+        "The 'is_valid_email' function is deprecated; use 'valid_email' from this module instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    # Regular expression for validating an email
+    email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    return re.match(email_regex, email) is not None
+
+
+def valid_email(email):
     """
     Check if the given email address is valid.
 
@@ -359,8 +73,33 @@ def is_valid_email(email):
 
     Returns:
         bool: True if the email is valid, False otherwise.
-    """
-    # Regular expression for validating an Email
-    email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 
+    Changelog:
+    ----------
+    v2.4.0:
+        - Added this function.
+    """
+    # Regular expression for validating an email
+    email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return re.match(email_regex, email) is not None
+
+
+def load_version() -> str:
+    """
+    Load the current version of the application from the VERSION file.
+
+    Returns:
+        str: The version string currently running.
+
+    Changelog:
+    ----------
+    v2.4.0:
+        - Added this function to load the version.
+
+    v2.5.0:
+        - Moved this function to utils lib, but keeping this here as an alias.
+    """
+
+    from utils import VERSION
+
+    return VERSION

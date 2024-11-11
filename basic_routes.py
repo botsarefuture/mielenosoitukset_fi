@@ -1,45 +1,38 @@
+import os
+import re
+import json
 import requests
+import xml.etree.ElementTree as ET
+from datetime import datetime, date
+
 from flask import (
-    Flask, 
-    render_template, 
-    redirect, 
-    url_for, 
-    flash,
+    Flask,
     render_template,
-    request,
     redirect,
     url_for,
     flash,
+    request,
     abort,
     Response,
     get_flashed_messages,
     jsonify,
 )
-from bson.objectid import ObjectId
-import json
-import os
-
-from s3_utils import upload_image
-
-from classes import (Organizer, Demonstration, Organization)
-from database_manager import DatabaseManager
-
 from flask_login import current_user
-from utils import CITY_LIST
 
-import xml.etree.ElementTree as ET
-import re
-from datetime import (datetime, date)
-from bson import ObjectId
+from bson.objectid import ObjectId
 
+from utils.s3 import upload_image
+from classes import Organizer, Demonstration, Organization
+from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
+from utils.variables import CITY_LIST
+from config import Config
 
 email_sender = EmailSender()
 
 # Initialize MongoDB
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
-_1 = mongo["1_demonstrations"]
 demonstrations_collection = mongo["demonstrations"]
 
 
@@ -146,13 +139,7 @@ def init_routes(app):
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
 
             # Validation for form data
-            if (
-                not title
-                or not date
-                or not start_time
-                or not city
-                or not address
-            ):
+            if not title or not date or not start_time or not city or not address:
                 flash("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
                 return redirect(url_for("submit"))
 
@@ -183,7 +170,7 @@ def init_routes(app):
                 approved=False,
                 img=photo_url,
                 description=description,
-                tags=tags
+                tags=tags,
             )
 
             # Save to MongoDB
@@ -287,7 +274,7 @@ def init_routes(app):
         return demo_date >= today
 
     def matches_filters(
-        demo, search_query, city_query, location_query, date_query#, topic_query
+        demo, search_query, city_query, location_query, date_query  # , topic_query
     ):
         """
         Check if the demonstration matches the filtering criteria.
@@ -315,12 +302,7 @@ def init_routes(app):
                 )
                 matches_date = False
 
-        return (
-            matches_search
-            and matches_city
-            and matches_location
-            and matches_date
-        )
+        return matches_search and matches_city and matches_location and matches_date
 
     @app.route("/demonstration/<demo_id>")
     def demonstration_detail(demo_id):
@@ -331,13 +313,14 @@ def init_routes(app):
         result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
         if result:
             demo = Demonstration.from_dict(result)
-        
+
         else:
             abort(404)
 
-
         if not demo:
-            flash("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.", 'error')
+            flash(
+                "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.", "error"
+            )
             return redirect(url_for("demonstrations"))
 
         if not demo.approved and not current_user.can_use("VIEW_DEMO"):
@@ -349,7 +332,7 @@ def init_routes(app):
             address_query = f"{demo.address}, {demo.city}"
 
             # Geocode API URL
-            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595" #FIXME: Use variable for the api key!
+            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"  # FIXME: Use variable for the api key!
 
             try:
                 # Make the request to the Geocode API
@@ -373,12 +356,8 @@ def init_routes(app):
 
         demo = Demonstration.to_dict(demo, True)
 
-
         # Pass demo details and coordinates to the template
-        return render_template(
-            "detail.html", demo=demo
-        )
-
+        return render_template("detail.html", demo=demo)
 
     @app.route("/info")
     def info():
@@ -403,7 +382,7 @@ def init_routes(app):
 
             # Create email job
             email_sender.queue_email(
-                template_name="new_ticket.html",
+                template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
                 recipients=["tuki@mielenosoitukset.fi"],
                 context={
@@ -465,7 +444,6 @@ def init_routes(app):
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
         )
 
-
     @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):
         # Create a case-insensitive regex pattern for the tag
@@ -475,8 +453,10 @@ def init_routes(app):
         demonstrations_query = {"tags": tag_regex}
 
         # Pagination logic
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10) or 10)  # Adjust per_page as necessary
+        page = int(request.args.get("page", 1))
+        per_page = int(
+            request.args.get("per_page", 10) or 10
+        )  # Adjust per_page as necessary
 
         # Get the total number of documents matching the query
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
@@ -521,7 +501,7 @@ def init_routes(app):
         return jsonify(messages=flash_data)
 
     @app.route("/celebrate")
-    def celebrate(): 
+    def celebrate():
         # This aims to be a cmast celebration page sometime in the future
         ...
 
@@ -531,3 +511,8 @@ def init_routes(app):
             config = json.load(config_file)
 
         return jsonify(config)
+
+    @app.route("/500")
+    def _500():
+        return abort(500)
+    

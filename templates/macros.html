@@ -1,6 +1,6 @@
 {% macro demo_card(demo) %}
-<div class="grid-item" data-href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}">
-    <div class="title">{{ demo['title'] }}</div>
+<article class="grid-item" data-href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" aria-label="Demonstration card">
+    <header class="title">{{ demo['title'] }}</header>
     <div class="details">
         <div class="date-time">
             <span class="date">{{ demo['date'] }}</span> |
@@ -8,10 +8,10 @@
         </div>
         <div class="topics">
             <ul>
-                {% if demo["tags"] and demo["tags"]|length > 0 %}
-                    {% for tag in demo["tags"] %}
+                {% if demo['tags'] and demo['tags']|length > 0 %}
+                    {% for tag in demo['tags'] %}
                         <li>
-                            <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
+                            <a href="{{ url_for('tag_detail', tag_name=tag) }}">
                                 <span class="tag">#{{ tag }}</span>
                             </a>
                         </li>
@@ -30,5 +30,5 @@
             <i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}
         </span>
     </div>
-</div>
+</article>
 {% endmacro %}

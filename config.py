@@ -1,7 +1,7 @@
 import os
 import yaml
-import logging
 from typing import Any, Dict
+import logging
 
 
 class Config:
@@ -48,6 +48,9 @@ class Config:
     ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
     SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
     ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
+
+    # Admin stuff
+    ADMIN_EMAIL = config.get("ADMIN_EMAIL", "verso@luova.club")
 
     @classmethod
     def init_config(cls) -> None:

@@ -1,0 +1,104 @@
+{
+    "Recurring Demonstration Management": [
+        {
+            "name": "CREATE_RECURRING_DEMO",
+            "description": "Create recurring demos."
+        },
+        {
+            "name": "EDIT_RECURRING_DEMO",
+            "description": "Edit recurring demos."
+        },
+        {
+            "name": "DELETE_RECURRING_DEMO",
+            "description": "Delete recurring demos."
+        },
+        {
+            "name": "VIEW_RECURRING_DEMO",
+            "description": "View recurring demo details."
+        },
+        {
+            "name": "LIST_RECURRING_DEMOS",
+            "description": "List all recurring demos."
+        }
+    ],
+    "Demonstration Management": [
+        {
+            "name": "CREATE_DEMO",
+            "description": "Create demos."
+        },
+        {
+            "name": "EDIT_DEMO",
+            "description": "Edit demos."
+        },
+        {
+            "name": "DELETE_DEMO",
+            "description": "Delete demos."
+        },
+        {
+            "name": "VIEW_DEMO",
+            "description": "View demo details."
+        },
+        {
+            "name": "LIST_DEMOS",
+            "description": "List all demos."
+        },
+        {
+            "name": "ACCEPT_DEMO",
+            "description": "Can accept demos."
+        }
+    ],
+    "User Management": [
+        {
+            "name": "VIEW_USER",
+            "description": "View user details."
+        },
+        {
+            "name": "EDIT_USER",
+            "description": "Edit users."
+        },
+        {
+            "name": "DELETE_USER",
+            "description": "Delete users."
+        },
+        {
+            "name": "LIST_USERS",
+            "description": "List all users."
+        }
+    ],
+    "Organization Management": [
+        {
+            "name": "CREATE_ORGANIZATION",
+            "description": "Create organizations."
+        },
+        {
+            "name": "EDIT_ORGANIZATION",
+            "description": "Edit organizations."
+        },
+        {
+            "name": "DELETE_ORGANIZATION",
+            "description": "Delete organizations."
+        },
+        {
+            "name": "VIEW_ORGANIZATION",
+            "description": "View organization details."
+        },
+        {
+            "name": "LIST_ORGANIZATIONS",
+            "description": "List all organizations."
+        }
+    ],
+    "Miscallanious": [
+        {
+            "name": "VIEW_ANALYTICS",
+            "description": "View analytics"
+        },
+        {
+            "name": "MANAGE_MARQUEE",
+            "description": "Manage marquee"
+        },
+        {
+            "name": "BETA_FEATURES",
+            "description": "can access beta"
+        }
+    ]
+}

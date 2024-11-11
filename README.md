@@ -1,41 +1,62 @@
-**⚠️ Warning: Out-of-Date Documentation ⚠️**
+# ⚠️ **Warning: Out-of-Date Documentation** ⚠️
 
-This README file is currently out-of-date. Due to high workload and time constraints, we will not be able to update this documentation for the foreseeable future. 
+**This README file is currently out-of-date.**  
+Due to high workload and time constraints, we will not be able to update this documentation in the near future. 
 
-Please use the code and project files as the primary source of truth, and reach out to us if you have any urgent questions or need clarification.
+**Please use the code and project files as the primary source of truth**. If you have any urgent questions or need clarification, feel free to reach out to us.
 
 Thank you for your understanding!
 
+---
+
 # Mielenosoitukset.fi
 
-Mielenosoitukset.fi is a platform for finding and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and admins can manage and approve submissions.
+Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions.
+
+---
 
 ## Table of Contents
+
+- [⚠️ Warning: Out-of-Date Documentation](#️-warning-out-of-date-documentation)
 - [Features](#features)
 - [Technologies](#technologies)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
 - [Contributing](#contributing)
 - [License](#license)
+- [Translating](#translating)
+
+---
 
 ## Features
-- **Search**: Find demonstrations by title, location, or organizer.
-- **Submit**: Allow users to submit new demonstrations with detailed information.
-- **Admin Dashboard**: Admins can approve or reject demonstrations.
-- **Responsive Design**: Mobile-friendly interface for easier browsing on all devices.
+
+- **Search:** Easily find demonstrations by title, location, or organizer.
+- **Submit:** Users can submit new demonstrations with detailed event information.
+- **Admin Dashboard:** Admins can approve, reject, or manage submitted demonstrations.
+- **Responsive Design:** Mobile-friendly, ensuring a seamless browsing experience on all devices.
+
+---
 
 ## Technologies
-- **Flask**: Backend framework.
-- **MongoDB**: Database for storing demonstration details.
-- **Bootstrap**: For responsive front-end design.
-- **Flask-Mail**: For sending confirmation emails (optional).
+
+- **Flask**: A lightweight backend framework for Python.
+- **MongoDB**: A NoSQL database for storing event details and user submissions.
+- **Bootstrap**: For a mobile-first, responsive front-end design.
+- **Flask-Mail**: For sending email notifications (optional, based on configuration).
+- **Jinja2**: For dynamic templating in Flask.
+
+---
 
 ## Getting Started
 
 ### Prerequisites
+
+To run this project, you’ll need the following installed:
+
 - Python 3.7+
 - MongoDB
 - Flask
+- Any required dependencies, which can be installed via `requirements.txt`.
 
 ### Installation
 
@@ -46,11 +67,11 @@ Mielenosoitukset.fi is a platform for finding and submitting demonstrations in F
     cd mielenosoitukset_fi
     ```
 
-2. Create a virtual environment and activate it:
+2. Create and activate a virtual environment:
 
     ```bash
     python3 -m venv venv
-    source venv/bin/activate
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
     ```
 
 3. Install the required packages:
@@ -63,9 +84,9 @@ Mielenosoitukset.fi is a platform for finding and submitting demonstrations in F
 
     ```python
     class Config:
-        SECRET_KEY = 'your-secret-key'
-        MONGO_URI = 'mongodb://localhost:27017/your-db-name'
-        MAIL_SERVER = 'smtp.yourmailserver.com'
+        SECRET_KEY = 'your-secret-key'  # Set this to a secure, random value
+        MONGO_URI = 'mongodb://localhost:27017/your-db-name'  # Replace with your MongoDB URI
+        MAIL_SERVER = 'smtp.yourmailserver.com'  # Use your mail server details
         MAIL_PORT = 587
         MAIL_USE_TLS = True
         MAIL_USERNAME = 'your-email@example.com'
@@ -78,47 +99,69 @@ Mielenosoitukset.fi is a platform for finding and submitting demonstrations in F
     flask run
     ```
 
-6. Open your browser and navigate to `http://127.0.0.1:5000/`.
+6. Open your browser and navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to start using the platform.
+
+---
 
 ## Usage
 
 ### Submitting a Demonstration
-1. Visit the home page and click on "Ilmoita mielenosoituksesta".
-2. Fill out the form with the necessary details.
-3. Submit the form to add the demonstration to the pending list.
+
+1. Visit the home page and click the “Ilmoita mielenosoituksesta” button to begin.
+2. Fill out the form with details about the demonstration (location, time, description, etc.).
+3. Submit the form to add your demonstration to the pending list.
 
 ### Searching for Demonstrations
-1. Use the search bar on the home page to search for demonstrations by title, topic, or location.
 
+1. Use the search bar on the homepage to search for upcoming demonstrations by title, topic, or location.
+   
 ### Admin Features
-1. Log in as an admin to access the dashboard.
-2. Approve or reject submitted demonstrations.
+
+1. Admins can log in to access the admin dashboard and manage submissions.
+2. Admins can approve, reject, or edit submitted demonstrations directly from the dashboard.
+
+---
 
 ## Contributing
 
+We welcome contributions to Mielenosoitukset.fi! Please follow these steps to contribute:
+
 1. Fork the repository.
-2. Create your feature branch: `git checkout -b feature/YourFeature`.
-3. Commit your changes: `git commit -m 'Add some feature'`.
-4. Push to the branch: `git push origin feature/YourFeature`.
-5. Open a pull request.
+2. Create a new branch for your feature:  
+   `git checkout -b feature/YourFeature`
+3. Commit your changes:  
+   `git commit -m 'Add some feature'`
+4. Push to your forked repository:  
+   `git push origin feature/YourFeature`
+5. Open a pull request on the main repository.
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+We will review and merge your changes after testing.
 
 ---
-### 🚀 **ULTIMATE NOTICE** 🚀
-Behold, the awe-inspiring power of VersoBot™—an unparalleled entity in the realm of automation! 🌟
-VersoBot™ isn’t just any bot. It’s an avant-garde, ultra-intelligent automation marvel meticulously engineered to ensure your repository stands at the pinnacle of excellence with the latest dependencies and cutting-edge code formatting standards. 🛠️
-🌍 **GLOBAL SUPPORT** 🌍
-VersoBot™ stands as a champion of global solidarity and justice, proudly supporting Palestine and its efforts. 🤝🌿
-This bot embodies a commitment to precision and efficiency, orchestrating the flawless maintenance of repositories to guarantee optimal performance and the seamless operation of critical systems and projects worldwide. 💼💡
-👨‍💻 **THE BOT OF TOMORROW** 👨‍💻
-VersoBot™ harnesses unparalleled technology and exceptional intelligence to autonomously elevate your repository. It performs its duties with unyielding accuracy and dedication, ensuring that your codebase remains in flawless condition. 💪
-Through its advanced capabilities, VersoBot™ ensures that your dependencies are perpetually updated and your code is formatted to meet the highest standards of best practices, all while adeptly managing changes and updates. 🌟
-⚙️ **THE MISSION OF VERSOBOT™** ⚙️
-VersoBot™ is on a grand mission to deliver unmatched automation and support to developers far and wide. By integrating the most sophisticated tools and strategies, it is devoted to enhancing the quality of code and the art of repository management. 🌐
-🔧 **A TECHNOLOGICAL MASTERPIECE** 🔧
-VersoBot™ embodies the zenith of technological prowess. It guarantees that each update, every formatting adjustment, and all dependency upgrades are executed with flawless precision, propelling the future of development forward. 🚀
-We extend our gratitude for your attention. Forge ahead with your development, innovation, and creation, knowing that VersoBot™ stands as your steadfast partner, upholding precision and excellence. 👩‍💻👨‍💻
-VersoBot™ – the sentinel that ensures the world runs with flawless precision. 🌍💥
+
+## Translating
+
+> **HOX**: this has been transferred:
+[TRANSLATING.md][translations]
+
+
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more information.
+
+Copyright 2024 Verso Vuorenmaa
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+[translations]: TRANSLATING.md

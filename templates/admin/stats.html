@@ -1,35 +1,28 @@
 {% extends "admin_base.html" %}
 
 {% block main_content %}
-    <h1>Tilastot</h1>
-    <p>Tässä osiossa voit tarkastella sivuston tilastoja.</p>
+    <h1>{{ _('Tilastot') }}</h1>
+    <p>{{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}</p>
     
     <div class="stats-overview">
-        <h2>Käyttäjät</h2>
-        <p>Rekisteröityneet käyttäjät: <strong>{{ total_users }}</strong></p>
-        <p>Aktivoidut käyttäjät: <strong>{{ active_users }}</strong></p>
+        <h2>{{ _('Käyttäjät') }}</h2>
+        <p>{{ _('Rekisteröityneet käyttäjät:') }} <strong>{{ total_users }}</strong></p>
+        <p>{{ _('Sähköpostiosoitteensa vahvistaneet käyttäjät:') }} <strong>{{ active_users }}</strong></p>
         
-        <h2>Organisaatiot</h2>
-        <p>Rekisteröidyt organisaatiot: <strong>{{ total_organizations }}</strong></p>
+        <h2>{{ _('Organisaatiot') }}</h2>
+        <p>{{ _('Rekisteröidyt organisaatiot:') }} <strong>{{ total_organizations }}</strong></p>
         
-        <h2>Viimeisimmät aktiviteetit</h2>
+        <!-- TODO: Make this actually work -->
+        <h2>{{ _('Viimeisimmät aktiviteetit') }}</h2>
         <ul>
             {% for activity in recent_activities %}
             <li>{{ activity }}</li>
             {% endfor %}
             {% if not recent_activities %}
-            <li>Ei aktiivisuuksia vielä.</li>
+            <li>{{ _('Ei aktiivisuuksia vielä.') }}</li>
             {% endif %}
         </ul>
     </div>
-    
-    <!-- Matomo Analytics -->
-    <div class="matomo-stats">
-        <h2>Matomo Tilastot</h2>
-        <iframe sandbox=" allow-scripts allow-popups allow-forms" src="https://matomo.luova.club/index.php?module=Widgetize&action=iframe&moduleToWidgetize=VisitsSummary&actionToWidgetize=index&idSite=1&period=day&date=today" 
-            width="100%" height="350px" frameborder="0" marginheight="0" marginwidth="0">
-        </iframe>
-    </div>
-    
-    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-primary">Palaa hallintapaneeliin</a>
+        
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-primary">{{ _('Palaa hallintapaneeliin') }}</a>
 {% endblock %}

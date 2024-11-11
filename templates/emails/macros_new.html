@@ -1,0 +1,38 @@
+{% macro demo_card(demo) %}
+<article style="border: 1px solid #ddd; border-radius: 8px; margin: 10px 0; padding: 15px; background-color: #ffffff; transition: background-color 0.3s;">
+    <header style="font-size: 18px; font-weight: bold; color: #0033a0; margin-bottom: 10px;">
+        <a href="https://mielenosoitukset.fi/demonstration/{{ demo['_id'] }}" style="text-decoration: none; color: inherit; display: block; padding: 5px; border-radius: 4px; transition: background-color 0.3s;">
+            {{ demo['title'] }}
+        </a>
+    </header>
+    <div style="font-size: 14px; color: #333;">
+        <div style="margin-bottom: 10px;">
+            <span class="date" style="font-weight: bold;">{{ demo['date'] }}</span> |
+            <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <ul style="padding: 0; list-style-type: none; margin: 0;">
+                {% if demo['tags'] and demo['tags']|length > 0 %}
+                    {% for tag in demo['tags'] %}
+                        <li style="display: inline; margin-right: 5px;">
+                            <a href="https://mielenosoitukset.fi/tag/{{ tag }}" style="text-decoration: none; color: #3366cc;">
+                                <span style="background-color: #3366cc; color: #ffffff; padding: 5px 10px; border-radius: 20px;">#{{ tag }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li style="display: inline;">
+                        <span style="background-color: #3366cc; color: #ffffff; padding: 5px 10px; border-radius: 20px;">#{{ demo['topic'] }}</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        <div style="margin-bottom: 5px;">
+            <span style="font-weight: bold;">Kaupunki:</span> {{ demo['city'] }}
+        </div>
+        <div>
+            <span style="font-weight: bold;">Osoite:</span> {{ demo['address'] }}
+        </div>
+    </div>
+</article>
+{% endmacro %}

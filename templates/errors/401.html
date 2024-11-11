@@ -6,50 +6,81 @@
     <title>401 Valtuutusvaatimus</title>
     <style>
         body {
-
-            background: #f9f9f9;
+            background: linear-gradient(to bottom, #e0f7fa, #f9f9f9);
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
         }
         .container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
+            max-width: 500px;
+            padding: 30px;
             text-align: center;
             background: #fff;
             border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         h1 {
-            font-size: 2rem;
-            color: #e74c3c;
+            font-size: 2.2rem;
+            color: #d32f2f;
+            margin-bottom: 20px;
         }
         p {
-            font-size: 1rem;
-            color: #333;
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 15px;
         }
-        a {
+        .btn {
             display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #3498db;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: #0288d1;
             color: white;
+            font-size: 1rem;
             text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
+            border-radius: 8px;
+            transition: background 0.3s, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
-        a:hover {
-            background: #2980b9;
+        .btn:hover {
+            background: #0277bd;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #757575;
+            margin-left: 10px;
+        }
+        .btn-secondary:hover {
+            background: #616161;
+        }
+        .icon {
+            font-size: 3rem;
+            color: #f44336;
+            margin-bottom: 15px;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
+        <div class="icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
         <h1>401 Valtuutusvaatimus</h1>
-        <p>Sinun täytyy kirjautua sisään päästäksesi tähän sisältöön.</p>
-        <p>Ole hyvä ja yritä uudelleen kirjautumalla sisään.</p>
-        <a href="/login">Kirjaudu sisään</a>
+        <p>Valitettavasti tarvitset kirjautumisen käyttääksesi tätä sisältöä.</p>
+        <p>Kirjaudu sisään jatkaaksesi tai palaa takaisin etusivulle.</p>
+        <a href="/login" class="btn"><i class="fas fa-sign-in-alt"></i> Kirjaudu sisään</a>
+        <a href="/" class="btn btn-secondary">Etusivulle</a>
     </div>
 </body>
 </html>

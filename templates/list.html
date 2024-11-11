@@ -13,15 +13,15 @@
 {% import 'macros.html' as macros %}
 
 <div class="container-main-content">
-  <h1>Tulevat mielenosoitukset</h1>
+  <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
 
   <!-- Extended search form for filtering demonstrations -->
   <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
     <input
       type="text"
       name="search"
-      placeholder="Hae mielenosoituksia..."
-      aria-label="Hae mielenosoituksia"
+      placeholder="{{ _('Hae mielenosoituksia...') }}"
+      aria-label="{{ _('Hae mielenosoituksia') }}"
       value="{{ request.args.get('search', '') }}"
     />
     
@@ -32,41 +32,28 @@
     <input
       type="text"
       name="city"
-      placeholder="Kaupunki"
-      aria-label="Kaupunki"
+      placeholder="{{ _('Kaupunki') }}"
+      aria-label="{{ _('Kaupunki') }}"
       value="{{ request.args.get('city', '') }}"
     />
 
     <input
       type="text"
       name="location"
-      placeholder="Sijainti"
-      aria-label="Sijainti"
+      placeholder="{{ _('Sijainti') }}"
+      aria-label="{{ _('Sijainti') }}"
       value="{{ request.args.get('location', '') }}"
     />
 
     <input
       type="text"
       name="date"
-      placeholder="Päivämäärä (pp.kk.vvvv)"
-      aria-label="Päivämäärä (pp.kk.vvvv)"
+      placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
+      aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
       value="{{ request.args.get('date', '') }}"
     />
 
-    <!-- DEPRACED SINCE V1.7 -->
-    
-    <!--
-    <input
-      type="text"
-      name="topic"
-      placeholder="Aihe"
-      aria-label="Aihe"
-      value="{{ request.args.get('topic', '') }}"
-    />
-    
-    -->
-
-    <button type="submit">Hae</button>
+    <button type="submit">{{ _('Hae') }}</button>
   </form>
 
   <div class="container-grid">
@@ -75,23 +62,23 @@
         {{ macros.demo_card(demo) }}
       {% endfor %}
     {% else %}
-      <div class="grid-item no-results">Ei löytynyt mielenosoituksia.</div>
+      <div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>
     {% endif %}
   </div>
 
   <!-- Pagination Controls -->
   <div class="pagination">
     {% if page > 1 %}
-      <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}">
-        Edellinen
+      <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
+        {{ _('Edellinen') }}
       </a>
     {% endif %}
 
-    <span>Sivu {{ page }} / {{ total_pages }}</span>
+    <span>{{ _('Sivu') }} {{ page }} / {{ total_pages }}</span>
 
     {% if page < total_pages %}
-      <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', ''), topic=request.args.get('topic', '')) }}">
-        Seuraava
+      <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
+        {{ _('Seuraava') }}
       </a>
     {% endif %}
   </div>

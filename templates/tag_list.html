@@ -17,11 +17,11 @@
   {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES") %}
   <!-- Search form for filtering demonstrations by various criteria -->
   <form method="GET" action="{{ url_for('tag_detail', tag_name=tag_name) }}" class="search-form">
-    <input type="text" name="search" placeholder="Hae mielenosoituksia..." aria-label="Hae mielenosoituksia" value="{{ request.args.get('search', '') }}" />
-    <input type="text" name="city" placeholder="Kaupunki" aria-label="Kaupunki" value="{{ request.args.get('city', '') }}" />
-    <input type="text" name="location" placeholder="Sijainti" aria-label="Sijainti" value="{{ request.args.get('location', '') }}" />
-    <input type="text" name="date" placeholder="Päivämäärä (pp.kk.vvvv)" aria-label="Päivämäärä (pp.kk.vvvv)" value="{{ request.args.get('date', '') }}" />
-    <button type="submit">Hae</button>
+    <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}" aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ request.args.get('search', '') }}" />
+    <input type="text" name="city" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" value="{{ request.args.get('city', '') }}" />
+    <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}" value="{{ request.args.get('location', '') }}" />
+    <input type="text" name="date" placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}" aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}" value="{{ request.args.get('date', '') }}" />
+    <button type="submit">{{ _('Hae') }}</button>
   </form>
   {% endif %}
 
@@ -31,7 +31,7 @@
       {{ macros.demo_card(demo) }}
       {% endfor %}
     {% else %}
-      <div class="grid-item no-results">Ei löytynyt mielenosoituksia tällä tagilla.</div>
+      <div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia tällä tagilla.') }}</div>
     {% endif %}
   </div>
 
@@ -41,7 +41,7 @@
       <a href="{{ url_for('tag_detail', tag_name=tag_name, page=page-1, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">Edellinen</a>
     {% endif %}
 
-    <span>Sivu {{ page }} / {{ total_pages }}</span>
+    <span>{{ _('Sivu') }} {{ page }} / {{ total_pages }}</span>
 
     {% if page < total_pages %}
       <a href="{{ url_for('tag_detail', tag_name=tag_name, page=page+1, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">Seuraava</a>
@@ -65,7 +65,7 @@
           }
 
           const showMoreButton = document.createElement("button");
-          showMoreButton.innerText = "Näytä kaikki tagit";
+          showMoreButton.innerText = "{{ _('Näytä kaikki tagit') }}";
           showMoreButton.classList.add("show-more-button");
           showMoreButton.onclick = function() {
             for (let i = maxVisibleTags; i < tags.length; i++) {

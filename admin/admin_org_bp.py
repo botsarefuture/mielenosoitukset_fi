@@ -2,11 +2,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from wrappers import admin_required, permission_required
-from utils import is_valid_email
-from .utils import mongo
+from utils.validators import valid_email
+from .utils import mongo, log_admin_action
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
+
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -15,11 +16,16 @@ admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization"
 @permission_required("LIST_ORGANIZATIONS")
 def organization_control():
     """Render the organization control panel with a list of organizations."""
+    log_admin_action(
+        current_user, "View Organizations", "Accessed organization control panel"
+    )  # Admin action logging has been in use since V2.4.0, and it helps us keep track who did what.
+
     org_limiter = (
         [ObjectId(org.get("org_id")) for org in current_user.organizations]
-        if not current_user.global_admin else None
+        if not current_user.global_admin
+        else None
     )
-    
+
     search_query = request.args.get("search", "")
     query = construct_query(search_query, org_limiter)
 
@@ -35,7 +41,7 @@ def organization_control():
 def construct_query(search_query, org_limiter):
     """Construct the query for organizations based on search input."""
     query = {}
-    
+
     if search_query:
         query = {
             "$or": [
@@ -43,10 +49,10 @@ def construct_query(search_query, org_limiter):
                 {"email": {"$regex": search_query, "$options": "i"}},
             ]
         }
-        
+
     if org_limiter:
         query["_id"] = {"$in": org_limiter}
-    
+
     return query
 
 
@@ -57,10 +63,17 @@ def construct_query(search_query, org_limiter):
 @permission_required("EDIT_ORGANIZATION")
 def edit_organization(org_id):
     """Edit organization details."""
+    log_admin_action(
+        current_user, "Edit Organization", f"Editing organization {org_id}"
+    )
+
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if request.method == "POST":
         if update_organization(org_id):
+            log_admin_action(
+                current_user, "Update Organization", f"Updated organization {org_id}"
+            )
             flash("Organisaatio päivitetty onnistuneesti.")
             return redirect(url_for("admin_org.organization_control"))
 
@@ -96,15 +109,22 @@ def update_organization(org_id):
 
 
 def validate_organization_fields(name, email, org_id):
-    """Validate required fields for organization."""
+    """Validate required fields for organization.
+
+    Changelog:
+    ----------
+
+    v2.4.0:
+    - Modified code to use valid_email instead of depraced is_valid_email.
+    """
     if not name or not email:
         flash("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
         return False
 
-    if not is_valid_email(email):
+    if not valid_email(email):
         flash("Virheellinen sähköpostiosoite.", "error")
         return False
-    
+
     return True
 
 
@@ -112,11 +132,7 @@ def get_social_media_links():
     """Retrieve social media links from form input."""
     platforms = request.form.getlist("social_media_platform[]")
     urls = request.form.getlist("social_media_url[]")
-    return {
-        platform: url
-        for platform, url in zip(platforms, urls)
-        if platform and url
-    }
+    return {platform: url for platform, url in zip(platforms, urls) if platform and url}
 
 
 # Create organization
@@ -146,14 +162,16 @@ def insert_organization():
     website = request.form.get("website")
     social_media_links = get_social_media_links()
 
-    mongo.organizations.insert_one({
-        "name": name,
-        "description": description,
-        "email": email,
-        "website": website,
-        "social_media_links": social_media_links,
-        "members": [],
-    })
+    mongo.organizations.insert_one(
+        {
+            "name": name,
+            "description": description,
+            "email": email,
+            "website": website,
+            "social_media_links": social_media_links,
+            "members": [],
+        }
+    )
     return True
 
 
@@ -167,12 +185,19 @@ def delete_organization(org_id):
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
+        log_admin_action(
+            current_user, "Delete Organization", f"Failed to find organization {org_id}"
+        )
         flash("Organisatiota ei löytynyt.", "error")
         return redirect(url_for("admin_org.organization_control"))
 
     if "confirm_delete" in request.form:
         mongo.organizations.delete_one({"_id": ObjectId(org_id)})
         flash("Organisaatio poistettu onnistuneesti.")
+        log_admin_action(
+            current_user, "Delete Organization", f"Deleted organization {org_id}"
+        )
+
     else:
         flash("Organisaation poistoa ei vahvistettu.", "warning")
 
@@ -190,6 +215,7 @@ def confirm_delete_organization(org_id):
 
     if not organization:
         flash("Organisaatiota ei löytynyt.", "error")
+
         return redirect(url_for("admin_org.organization_control"))
 
     return render_template(

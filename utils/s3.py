@@ -3,15 +3,12 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 from PIL import Image
 from config import Config  # Import your Config class
-import logging
+from utils.logger import logger
 import time
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # Initial delay in seconds
+
 
 # Initialize the S3 client with configuration
 def create_s3_client():
@@ -26,7 +23,9 @@ def create_s3_client():
         logger.error("AWS credentials not found.")
         return None
 
+
 s3_client = create_s3_client()
+
 
 # Retry decorator with a "graze" handler if all retries fail
 def retry_with_graze(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
@@ -39,13 +38,20 @@ def retry_with_graze(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
                 except Exception as e:
                     retries += 1
                     if retries < max_retries:
-                        logger.warning(f"Retry {retries}/{max_retries} after error: {e}")
+                        logger.warning(
+                            f"Retry {retries}/{max_retries} after error: {e}"
+                        )
                         time.sleep(delay * (2 ** (retries - 1)))  # Exponential backoff
                     else:
-                        logger.info(f"Well, grazed it. {func.__name__} didn’t succeed, moving on.")
+                        logger.info(
+                            f"Well, grazed it. {func.__name__} didn’t succeed, moving on."
+                        )
                         return None  # Handle the graze and move on
+
         return wrapper
+
     return decorator
+
 
 # Convert image to JPEG and save locally
 @retry_with_graze()
@@ -59,6 +65,7 @@ def convert_to_jpg(image_path: str, output_path: str) -> str:
     except Exception as e:
         logger.error(f"Error converting image {image_path}: {e}")
         return None
+
 
 # Generate the next ID by checking the current objects in the bucket
 @retry_with_graze()
@@ -76,6 +83,7 @@ def generate_next_id(bucket_name: str, image_type: str) -> int:
     except Exception as e:
         logger.error(f"Error generating next ID for bucket '{bucket_name}': {e}")
         return None
+
 
 # Upload the image to a bucket with retry logic
 @retry_with_graze()

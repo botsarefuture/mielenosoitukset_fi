@@ -182,11 +182,11 @@ msgstr "Manage organizations"
 
 #: templates/header.html:287
 msgid "Mielenosoitusten hallinta"
-msgstr ""
+msgstr "Manage demonstrations"
 
 #: templates/header.html:290
 msgid "Toistuvien mielenosoitusten hallinta"
-msgstr ""
+msgstr "Manage recurring demonstrations"
 
 #: templates/admin/stats.html:4 templates/header.html:293
 msgid "Tilastot"

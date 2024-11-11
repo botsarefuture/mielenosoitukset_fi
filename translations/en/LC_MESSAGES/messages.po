@@ -125,7 +125,7 @@ msgstr "Share on LinkedIn"
 
 #: templates/detail.html:496
 msgid "Mielenosoituksen esittelyteksti"
-msgstr ""
+msgstr "Presentation text of the demonstration"
 
 #: templates/detail.html:501
 msgid "Aikaa mielenosoituksen alkuun"

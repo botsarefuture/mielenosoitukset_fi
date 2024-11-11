@@ -73,11 +73,11 @@ msgstr "Choose subject"
 
 #: templates/contact.html:33
 msgid "Tukipyyntö"
-msgstr ""
+msgstr "Support request"
 
 #: templates/contact.html:34
 msgid "Yleinen kysymys"
-msgstr ""
+msgstr "Questio"
 
 #: templates/contact.html:35
 msgid "Palautetta"

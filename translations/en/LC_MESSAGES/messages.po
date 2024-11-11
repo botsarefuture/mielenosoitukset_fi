@@ -410,7 +410,7 @@ msgstr "Municipality"
 
 #: templates/paikkakunta-dropdown.html:5
 msgid "Open Paikkakunta dropdown"
-msgstr ""
+msgstr "Open municipality dropdown"
 
 #: templates/paikkakunta-dropdown.html:7
 msgid "Hae paikkakunta..."

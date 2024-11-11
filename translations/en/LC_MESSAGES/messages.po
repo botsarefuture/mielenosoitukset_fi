@@ -246,7 +246,7 @@ msgstr "No demonstrations to display."
 
 #: templates/index.html:108
 msgid "Näytä kaikki mielenosoitukset"
-msgstr ""
+msgstr "Display all demonstrations"
 
 #: templates/info.html:2
 msgid "Tietoa sivustosta - Mielenosoitukset.fi"

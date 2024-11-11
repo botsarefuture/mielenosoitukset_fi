@@ -361,7 +361,7 @@ msgstr "Upcoming demonstrations"
 
 #: templates/list.html:23 templates/tag_list.html:20
 msgid "Hae mielenosoituksia..."
-msgstr ""
+msgstr "Search for demonstrations..."
 
 #: templates/list.html:24 templates/tag_list.html:20
 msgid "Hae mielenosoituksia"

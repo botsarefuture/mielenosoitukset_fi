@@ -414,7 +414,7 @@ msgstr "Open municipality dropdown"
 
 #: templates/paikkakunta-dropdown.html:7
 msgid "Hae paikkakunta..."
-msgstr ""
+msgstr "Search municipality..."
 
 #: templates/paikkakunta-dropdown.html:7
 msgid "Search cities"

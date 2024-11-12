@@ -7,7 +7,6 @@ import warnings
 from bson.objectid import ObjectId
 from flask import (
     Blueprint,
-    flash_message,
     redirect,
     render_template,
     request,
@@ -24,6 +23,8 @@ from flask_login import (
 from auth.models import User  # Import User model
 from database_manager import DatabaseManager
 from wrappers import admin_required, permission_required
+
+from utils.flashing import flash_message
 
 # Constants
 LOG_FILE_PATH = "app.log"

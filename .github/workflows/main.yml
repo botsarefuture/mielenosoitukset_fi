@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - translations
+  workflow_dispatch:
 
 jobs:
   compile_translations:

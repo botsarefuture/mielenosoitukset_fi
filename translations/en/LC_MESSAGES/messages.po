@@ -727,19 +727,19 @@ msgstr "Starts at "
 
 #: templates/submit.html:208
 msgid "Päättymisaika"
-msgstr ""
+msgstr "Ends at"
 
 #: templates/submit.html:212
 msgid "Kuva (valinnainen)"
-msgstr ""
+msgstr "Image (optional)"
 
 #: templates/submit.html:216
 msgid "Facebook-tapahtumalinkki (valinnainen)"
-msgstr ""
+msgstr "Facebook-eventlink (optional)"
 
 #: templates/submit.html:226
 msgid "Järjestäjä(t)"
-msgstr ""
+msgstr "Organizer(s)"
 
 #: templates/submit.html:230
 msgid "Lisää järjestäjä"

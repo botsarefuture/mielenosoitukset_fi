@@ -6,27 +6,27 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
 <div class="auth-container">
-    <h1>Rekisteröidy</h1>
+    <h1>{{ _('Rekisteröidy') }}</h1>
     <form action="{{ url_for('auth.register') }}" method="POST">
         <div class="form-group">
-            <label for="username">Käyttäjätunnus</label>
+            <label for="username">{{ _('Käyttäjätunnus') }}</label>
             <input type="text" id="username" name="username" required>
         </div>
         
         <div class="form-group">
-            <label for="email">Sähköposti</label>
-            <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Anna kelvollinen sähköpostiosoite">
+            <label for="email">{{ _('Sähköposti') }}</label>
+            <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="{{ _('Anna kelvollinen sähköpostiosoite') }}">
         </div>
 
         <div class="form-group">
-            <label for="password">Salasana</label>
-            <input type="password" id="password" name="password" required minlength="8" title="Salasanan on oltava vähintään 8 merkkiä pitkä">
+            <label for="password">{{ _('Salasana') }}</label>
+            <input type="password" id="password" name="password" required minlength="8" title="{{ _('Salasanan on oltava vähintään 8 merkkiä pitkä') }}">
         </div>
 
-        <button type="submit">Rekisteröidy</button>
+        <button type="submit">{{ _('Rekisteröidy') }}</button>
     </form>
 
-    <p>Onko sinulla jo tili? <a href="{{ url_for('auth.login') }}">Kirjaudu sisään tästä</a>.</p>
+    <p>Onko sinulla jo tili? <a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään tästä') }}</a>.</p>
 </div>
 
 {% endblock %}

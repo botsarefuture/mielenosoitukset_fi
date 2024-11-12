@@ -2,7 +2,7 @@
 
 
 
-{% block title %}Muokkaa Profiilia{% endblock %}
+{% block title %}{{ _('Muokkaa Profiilia') }}{% endblock %}
 
 
 
@@ -12,7 +12,7 @@
 
 <div class="container profile-edit-container">
 
-    <h1 class="admin-section-title">Muokkaa Profiilia</h1>
+    <h1 class="admin-section-title">{{ _('Muokkaa profiiliasi') }}</h1>
 
 
 
@@ -20,7 +20,7 @@
 
         <div class="form-group">
 
-            <label for="displayname">Näyttönimi:</label>
+            <label for="displayname">{{ _('Näyttönimi:') }}</label>
 
             <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname or '' }}" required>
 
@@ -28,7 +28,7 @@
 
         <div class="form-group">
 
-            <label for="profile_picture_file">Profiilikuva:</label>
+            <label for="profile_picture_file">{{ _('Profiilikuva:') }}</label>
 
             <input type="file" id="profile_picture_file" name="profile_picture" accept="image/*" required>
 
@@ -38,13 +38,13 @@
 
         <div class="form-group">
 
-            <label for="bio">Esittelyteksti:</label>
+            <label for="bio">{{ _('Esittelyteksti:') }}</label>
 
             <textarea id="bio" name="bio">{{ current_user.bio or '' }}</textarea>
 
         </div>
 
-        <button type="submit" class="button btn-primary">Tallenna muutokset</button>
+        <button type="submit" class="button btn-primary">{{ _('Tallenna muutokset') }}</button>
 
     </form>
 

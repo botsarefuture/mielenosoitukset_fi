@@ -186,50 +186,50 @@
 
 {% block main_content %}
 <div class="container mt-4" id="create">
-    <h2 class="admin-section-title form-title">{% if organization %}Muokkaa organisaatiota{% else %}Uusi organisaatio{% endif %}</h2>
+    <h2 class="admin-section-title form-title">{% if organization %}{{ _('Muokkaa organisaatiota') }}{% else %}{{ _('Uusi organisaatio') }}{% endif %}</h2>
 
     <form method="POST" action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
         <div class="form-group">
-            <label for="name">Nimi <span class="required">*</span></label>
+            <label for="name">{{ _('Nimi') }} <span class="required">*</span></label>
             <input type="text" id="name" name="name" class="form-control" value="{{ organization.name if organization else '' }}" required>
         </div>
 
         <div class="form-group">
-            <label for="description">Kuvaus <span class="required">*</span></label>
+            <label for="description">{{ _('Kuvaus') }} <span class="required">*</span></label>
             <textarea id="description" name="description" class="form-control" required>{{ organization.description if organization else '' }}</textarea>
         </div>
 
         <div class="form-group">
-            <label for="email">Sähköpostiosoite <span class="required">*</span></label>
+            <label for="email">{{ _('Sähköpostiosoite') }} <span class="required">*</span></label>
             <input type="email" id="email" name="email" class="form-control" value="{{ organization.email if organization else '' }}" required>
         </div>
 
         <div class="form-group">
-            <label for="website">Verkkosivu</label>
+            <label for="website">{{ _('Verkkosivu') }}</label>
             <input type="url" id="website" name="website" class="form-control" value="{{ organization.website if organization else '' }}">
         </div>
 
         {% if organization %}
         <div class="form-group">
-            <label for="verified">Vahvistettu</label>
+            <label for="verified">{{ _('Onko organisaatio vahvistettu?') }}</label>
             <input type="checkbox" id="verified" name="verified" class="form-check-input" {% if organization.verified %}checked{% endif %}>
         </div>
         {% endif %}
 
         <!-- Sosiaalinen media -osio -->
         <div class="form-group">
-            <label for="social_media">Sosiaalinen media</label>
+            <label for="social_media">{{ _('Sosiaalinen media') }}</label>
             <div id="social-media-list">
                 <!-- Existing social media entries will be populated here -->
             </div>
-            <button type="button" id="add-social-media" class="button">Lisää sosiaalisen median alusta</button>
+            <button type="button" id="add-social-media" class="button">{{ _('Lisää sosiaalisen median alusta') }}</button>
         </div>
 
         <div class="form-buttons">
             <button type="submit" class="btn {% if organization %}btn-success{% else %}btn-primary{% endif %}">
-                {% if organization %}Tallenna muutokset{% else %}Luo{% endif %}
+                {% if organization %}{{ _('Tallenna muutokset') }}{% else %}{{ _('Luo') }}{% endif %}
             </button>
-            <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-danger">Peruuta</a>
+            <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-danger">{{ _('Peruuta') }}</a>
         </div>
     </form>
 </div>

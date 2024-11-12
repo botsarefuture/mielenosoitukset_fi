@@ -6,7 +6,7 @@
 # Translators:
 # Verso, 2024
 # 
-#
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
@@ -24,88 +24,88 @@ msgstr ""
 
 #: basic_routes.py:302
 msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
-msgstr ""
+msgstr "Incorrect date format. Please use the format dd.mm.yyyy."
 
 #: basic_routes.py:323
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
-msgstr ""
+msgstr "Demonstration wasn't found or it hasn't been accepted yet."
 
 #: admin/admin_bp.py:158
 msgid "Marquee message updated successfully!"
-msgstr ""
+msgstr "Marquee message updated successfully!"
 
 #: admin/admin_demo_bp.py:139 admin/admin_demo_bp.py:318
 #: admin/admin_demo_bp.py:346
 msgid "Mielenosoitusta ei löytynyt."
-msgstr ""
+msgstr "Demonstration not found."
 
 #: admin/admin_demo_bp.py:154
 msgid "Muokkaa mielenosoitusta"
-msgstr ""
+msgstr "Edit demonstration"
 
 #: admin/admin_demo_bp.py:155
 msgid "Tallenna muutokset"
-msgstr ""
+msgstr "Save changes"
 
 #: admin/admin_demo_bp.py:182
 msgid "Mielenosoitus päivitetty onnistuneesti."
-msgstr ""
+msgstr "Demonstration updated successfully."
 
 #: admin/admin_demo_bp.py:186
 msgid "Mielenosoitus luotu onnistuneesti."
-msgstr ""
+msgstr "Demonstration created successfully."
 
 #: admin/admin_demo_bp.py:228
 msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."
-msgstr ""
+msgstr "Title, date and city are mandatory to fill."
 
 #: admin/admin_demo_bp.py:307
 msgid "Mielenosoituksen tunniste puuttuu."
-msgstr ""
+msgstr "The demonstration ID is missing."
 
 #: admin/admin_demo_bp.py:328
 msgid "Mielenosoitus poistettu onnistuneesti."
-msgstr ""
+msgstr "Demonstration removed successfully."
 
 #: admin/admin_org_bp.py:78
 msgid "Organisaatio päivitetty onnistuneesti."
-msgstr ""
+msgstr "Organization updated successfully."
 
 #: admin/admin_org_bp.py:148
 msgid "Organisaatio luotu onnistuneesti."
-msgstr ""
+msgstr "Organization created successfully."
 
 #: admin/admin_org_bp.py:197
 msgid "Organisaatio poistettu onnistuneesti."
-msgstr ""
+msgstr "Organization removed successfully."
 
 #: admin/admin_recu_demo_bp.py:91 admin/admin_recu_demo_bp.py:220
 msgid "Toistuvaa mielenosoitusta ei löytynyt."
-msgstr ""
+msgstr "Recurring demonstration not found."
 
 #: admin/admin_recu_demo_bp.py:165
 msgid "Toistuva mielenosoitus päivitetty onnistuneesti."
-msgstr ""
+msgstr "Recurring demonstration updated successfully."
 
 #: admin/admin_recu_demo_bp.py:168
 msgid "Toistuva mielenosoitus luotu onnistuneesti."
-msgstr ""
+msgstr "Recurring demonstration created successfully."
 
 #: admin/admin_recu_demo_bp.py:193
 msgid "Toistuva mielenosoitus ei löytynyt."
-msgstr ""
+msgstr "Recurring demonstration not found."
 
 #: admin/admin_recu_demo_bp.py:198
 msgid "Toistuva mielenosoitus poistettu onnistuneesti."
-msgstr ""
+msgstr "Recurring demonstration removed successfully."
 
 #: admin/admin_recu_demo_bp.py:200
 msgid "Et vahvistanut toistuvan mielenosoituksen poistoa."
-msgstr ""
+msgstr "You didn't confirm removation of recurring demonstration."
 
 #: auth/routes.py:136
 msgid "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
-msgstr ""
+msgstr "Your email hasn't been verified. Check your email inbox."
 
 #: templates/base.html:69
 msgid "Kaikki oikeudet pidätetään."
@@ -680,6 +680,8 @@ msgid ""
 "Jos sinulla on kysyttävää tietosuojakäytännöstämme tai haluat käyttää "
 "oikeuksiasi, voit ottaa yhteyttä sähköpostitse osoitteeseen"
 msgstr ""
+"If you have any questions about our privacy policy or wish to exercise your "
+"rights, you can contact us by email at."
 
 #: templates/submit.html:95
 msgid "Järjestäjätahon..."
@@ -703,79 +705,79 @@ msgstr "Email address"
 
 #: templates/submit.html:134 templates/submit.html:140
 msgid "Mielenosoituksen nimi"
-msgstr ""
+msgstr "Title of the demonstration"
 
 #: templates/submit.html:152
 msgid "Tagit (pilkuilla erotettuna)"
-msgstr ""
+msgstr "Tags (separated by comma)"
 
 #: templates/submit.html:157
 msgid "esim. ilmasto, tasa-arvo, oikeudet"
-msgstr ""
+msgstr "e.g. climate, equality, rights"
 
 #: templates/submit.html:161
 msgid "Kuvausteksti"
-msgstr ""
+msgstr "Description"
 
 #: templates/submit.html:199
 msgid "pp.kk.vvvv"
-msgstr ""
+msgstr "dd.mm.yyyy"
 
 #: templates/submit.html:205
 msgid "Alkamisaika"
-msgstr ""
+msgstr "Starts at "
 
 #: templates/submit.html:208
 msgid "Päättymisaika"
-msgstr ""
+msgstr "Ends at"
 
 #: templates/submit.html:212
 msgid "Kuva (valinnainen)"
-msgstr ""
+msgstr "Image (optional)"
 
 #: templates/submit.html:216
 msgid "Facebook-tapahtumalinkki (valinnainen)"
-msgstr ""
+msgstr "Facebook-eventlink (optional)"
 
 #: templates/submit.html:226
 msgid "Järjestäjä(t)"
-msgstr ""
+msgstr "Organizer(s)"
 
 #: templates/submit.html:230
 msgid "Lisää järjestäjä"
-msgstr ""
+msgstr "Add organizer"
 
 #: templates/submit.html:235
 msgid "Mielenosoituksen tyyppi"
-msgstr ""
+msgstr "Type of demonstration"
 
 #: templates/submit.html:239
 msgid "Valitse mielenosoituksen tyyppi"
-msgstr ""
+msgstr "Select demonstration type"
 
 #: templates/submit.html:241
 msgid "Paikallaan"
-msgstr ""
+msgstr "Stay still"
 
 #: templates/submit.html:242
 msgid "Marssi"
-msgstr ""
+msgstr "March"
 
 #: templates/submit.html:243
 msgid "Muut"
-msgstr ""
+msgstr "Others"
 
 #: templates/submit.html:247
 msgid "Reitti (vain marssille, valinnainen)"
-msgstr ""
+msgstr "March route (optional)"
 
 #: templates/submit.html:248
 msgid "Reitti..."
-msgstr ""
+msgstr "Route"
 
 #: templates/submit.html:255 templates/submit.html:261
 msgid "Katuosoite"
-msgstr ""
+msgstr "Address"
 
 #: templates/tag_list.html:34
 msgid "Ei löytynyt mielenosoituksia tällä tagilla."
@@ -787,11 +789,11 @@ msgstr "Show all tags"
 
 #: templates/admin/dashboard.html:33
 msgid "Hallintatyökalut"
-msgstr ""
+msgstr "Management tools"
 
 #: templates/admin/dashboard.html:38
 msgid "Huomio"
-msgstr ""
+msgstr "HOX!"
 
 #: templates/admin/dashboard.html:39
 msgid ""
@@ -799,39 +801,42 @@ msgid ""
 "kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen "
 "käyttäessäsi näitä oikeuksia."
 msgstr ""
+"You are logged in as a superuser. You have extensive rights, and all your "
+"actions can be traced back to you. Please be careful when using these "
+"rights."
 
 #: templates/admin/stats.html:5
 msgid "Tässä osiossa voit tarkastella sivuston tilastoja."
-msgstr ""
+msgstr "In this section you can view the site's statistics."
 
 #: templates/admin/stats.html:8
 msgid "Käyttäjät"
-msgstr ""
+msgstr "Users"
 
 #: templates/admin/stats.html:9
 msgid "Rekisteröityneet käyttäjät:"
-msgstr ""
+msgstr "Registered users:"
 
 #: templates/admin/stats.html:10
 msgid "Sähköpostiosoitteensa vahvistaneet käyttäjät:"
-msgstr ""
+msgstr "Users who have verified their email address:"
 
 #: templates/admin/stats.html:12
 msgid "Organisaatiot"
-msgstr ""
+msgstr "Organizations"
 
 #: templates/admin/stats.html:13
 msgid "Rekisteröidyt organisaatiot:"
-msgstr ""
+msgstr "Registered organizations:"
 
 #: templates/admin/stats.html:16
 msgid "Viimeisimmät aktiviteetit"
-msgstr ""
+msgstr "Latest activities"
 
 #: templates/admin/stats.html:22
 msgid "Ei aktiivisuuksia vielä."
-msgstr ""
+msgstr "No activities yet."
 
 #: templates/admin/stats.html:27
 msgid "Palaa hallintapaneeliin"
-msgstr ""
+msgstr "Back to control panel"

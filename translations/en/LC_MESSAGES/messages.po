@@ -97,7 +97,7 @@ msgstr "Recurring demonstration not found."
 
 #: admin/admin_recu_demo_bp.py:198
 msgid "Toistuva mielenosoitus poistettu onnistuneesti."
-msgstr ""
+msgstr "Recurring demonstration removed successfully."
 
 #: admin/admin_recu_demo_bp.py:200
 msgid "Et vahvistanut toistuvan mielenosoituksen poistoa."

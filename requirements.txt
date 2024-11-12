@@ -1,6 +1,6 @@
 APScheduler==3.10.4
 boto3==1.35.58
-botocore==1.35.54
+botocore==1.35.58
 Flask==3.0.3
 Flask_Login==0.6.3
 Jinja2==3.1.4

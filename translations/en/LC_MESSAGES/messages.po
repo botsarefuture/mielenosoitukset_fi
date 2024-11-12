@@ -81,7 +81,7 @@ msgstr "Organization removed successfully."
 
 #: admin/admin_recu_demo_bp.py:91 admin/admin_recu_demo_bp.py:220
 msgid "Toistuvaa mielenosoitusta ei löytynyt."
-msgstr ""
+msgstr "Recurring demonstration not found."
 
 #: admin/admin_recu_demo_bp.py:165
 msgid "Toistuva mielenosoitus päivitetty onnistuneesti."

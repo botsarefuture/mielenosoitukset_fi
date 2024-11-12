@@ -41,11 +41,11 @@ msgstr "Demonstration not found."
 
 #: admin/admin_demo_bp.py:154
 msgid "Muokkaa mielenosoitusta"
-msgstr ""
+msgstr "Edit demonstration"
 
 #: admin/admin_demo_bp.py:155
 msgid "Tallenna muutokset"
-msgstr ""
+msgstr "Save changes"
 
 #: admin/admin_demo_bp.py:182
 msgid "Mielenosoitus päivitetty onnistuneesti."

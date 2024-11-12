@@ -751,11 +751,11 @@ msgstr "Type of demonstration"
 
 #: templates/submit.html:239
 msgid "Valitse mielenosoituksen tyyppi"
-msgstr ""
+msgstr "Select demonstration type"
 
 #: templates/submit.html:241
 msgid "Paikallaan"
-msgstr ""
+msgstr "Stay still"
 
 #: templates/submit.html:242
 msgid "Marssi"

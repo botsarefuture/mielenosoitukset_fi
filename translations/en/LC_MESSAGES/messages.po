@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-12 09:37+0000\n"
+"POT-Creation-Date: 2024-11-12 15:42+0000\n"
 "PO-Revision-Date: 2024-11-11 09:34+0000\n"
 "Last-Translator: Verso, 2024\n"
 "Language: en\n"
@@ -241,7 +241,7 @@ msgstr "Email:"
 msgid "Ota yhteyttä lomakkeen kautta"
 msgstr "Contact via the form"
 
-#: templates/contact.html:24
+#: templates/contact.html:24 templates/detail.html:603
 msgid "Nimi:"
 msgstr "Name:"
 
@@ -328,6 +328,69 @@ msgstr "No organizer information available."
 #: templates/detail.html:528
 msgid "Takaisin kaikkiin mielenosoituksiin"
 msgstr "Back to all demonstrations"
+
+#: templates/detail.html:578
+#, fuzzy
+msgid "Mielenosoitus on käynnissä!"
+msgstr "Title of the demonstration"
+
+#: templates/detail.html:587
+msgid "päivää"
+msgstr ""
+
+#: templates/detail.html:587
+msgid "tuntia"
+msgstr ""
+
+#: templates/detail.html:587
+#, fuzzy
+msgid "minuuttia"
+msgstr "Others"
+
+#: templates/detail.html:587
+msgid "sekuntia"
+msgstr ""
+
+#: templates/detail.html:610
+#, fuzzy
+msgid "Mielenosoitukset.fi -profiili"
+msgstr "Mielenosoitukset.fi"
+
+#: templates/detail.html:621
+#, fuzzy
+msgid "Verkkosivut:"
+msgstr "Website"
+
+#: templates/detail.html:632
+#, fuzzy
+msgid "Sähköpostiosoite:"
+msgstr "Email address"
+
+#: templates/detail.html:648
+msgid "Päivämäärä:"
+msgstr ""
+
+#: templates/detail.html:649
+msgid "Alkaa klo:"
+msgstr ""
+
+#: templates/detail.html:650
+msgid "Päättyy klo:"
+msgstr ""
+
+#: templates/detail.html:651
+#, fuzzy
+msgid "Alkupaikka:"
+msgstr "Starts at "
+
+#: templates/detail.html:657
+msgid "Marssin reitti:"
+msgstr ""
+
+#: templates/detail.html:663
+#, fuzzy
+msgid "Facebook-tapahtuma"
+msgstr "Facebook-eventlink (optional)"
 
 #: templates/header.html:259
 msgid "Mielenosoitukset.fi"
@@ -894,6 +957,36 @@ msgstr ""
 "You are logged in as a superuser. You have extensive rights, and all your"
 " actions can be traced back to you. Please be careful when using these "
 "rights."
+
+#: templates/admin/manage_marquee.html:20
+msgid "Hallinnoi pyöröä"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:22
+msgid "Pyöröllä tarkoitetaan sivuston yläreunaan ilmestyvää liikkuvaa tekstiä"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:36
+#, fuzzy
+msgid "Nykyinen viesti:"
+msgstr "Message:"
+
+#: templates/admin/manage_marquee.html:41
+msgid "Taustaväri:"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:46
+msgid "Tekstin väri:"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:50
+msgid "Tallenna pyörö"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:53
+#, fuzzy
+msgid "Esikatselu:"
+msgstr "View"
 
 #: templates/admin/stats.html:5
 msgid "Tässä osiossa voit tarkastella sivuston tilastoja."

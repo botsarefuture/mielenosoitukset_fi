@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-12 09:37+0000\n"
+"POT-Creation-Date: 2024-11-12 15:42+0000\n"
 "PO-Revision-Date: 2024-11-11 10:33+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: sv\n"
@@ -235,7 +235,7 @@ msgstr ""
 msgid "Ota yhteyttä lomakkeen kautta"
 msgstr ""
 
-#: templates/contact.html:24
+#: templates/contact.html:24 templates/detail.html:603
 msgid "Nimi:"
 msgstr ""
 
@@ -321,6 +321,62 @@ msgstr ""
 
 #: templates/detail.html:528
 msgid "Takaisin kaikkiin mielenosoituksiin"
+msgstr ""
+
+#: templates/detail.html:578
+msgid "Mielenosoitus on käynnissä!"
+msgstr ""
+
+#: templates/detail.html:587
+msgid "päivää"
+msgstr ""
+
+#: templates/detail.html:587
+msgid "tuntia"
+msgstr ""
+
+#: templates/detail.html:587
+msgid "minuuttia"
+msgstr ""
+
+#: templates/detail.html:587
+msgid "sekuntia"
+msgstr ""
+
+#: templates/detail.html:610
+msgid "Mielenosoitukset.fi -profiili"
+msgstr ""
+
+#: templates/detail.html:621
+msgid "Verkkosivut:"
+msgstr ""
+
+#: templates/detail.html:632
+msgid "Sähköpostiosoite:"
+msgstr ""
+
+#: templates/detail.html:648
+msgid "Päivämäärä:"
+msgstr ""
+
+#: templates/detail.html:649
+msgid "Alkaa klo:"
+msgstr ""
+
+#: templates/detail.html:650
+msgid "Päättyy klo:"
+msgstr ""
+
+#: templates/detail.html:651
+msgid "Alkupaikka:"
+msgstr ""
+
+#: templates/detail.html:657
+msgid "Marssin reitti:"
+msgstr ""
+
+#: templates/detail.html:663
+msgid "Facebook-tapahtuma"
 msgstr ""
 
 #: templates/header.html:259
@@ -848,6 +904,34 @@ msgid ""
 "Olet kirjautunut sisään superkäyttäjänä. Sinulla on laajat oikeudet, ja "
 "kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen "
 "käyttäessäsi näitä oikeuksia."
+msgstr ""
+
+#: templates/admin/manage_marquee.html:20
+msgid "Hallinnoi pyöröä"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:22
+msgid "Pyöröllä tarkoitetaan sivuston yläreunaan ilmestyvää liikkuvaa tekstiä"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:36
+msgid "Nykyinen viesti:"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:41
+msgid "Taustaväri:"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:46
+msgid "Tekstin väri:"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:50
+msgid "Tallenna pyörö"
+msgstr ""
+
+#: templates/admin/manage_marquee.html:53
+msgid "Esikatselu:"
 msgstr ""
 
 #: templates/admin/stats.html:5

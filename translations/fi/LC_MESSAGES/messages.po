@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-11 10:32+0200\n"
+"POT-Creation-Date: 2024-11-12 11:08+0200\n"
 "PO-Revision-Date: 2024-11-11 10:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fi\n"
@@ -17,6 +17,188 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
+
+#: basic_routes.py:302
+msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+msgstr ""
+
+#: basic_routes.py:323
+msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
+msgstr ""
+
+#: admin/admin_demo_bp.py:139 admin/admin_demo_bp.py:318
+#: admin/admin_demo_bp.py:346
+msgid "Mielenosoitusta ei löytynyt."
+msgstr ""
+
+#: admin/admin_demo_bp.py:154
+msgid "Muokkaa mielenosoitusta"
+msgstr ""
+
+#: admin/admin_demo_bp.py:155 auth/templates/edit_profile.html:47
+msgid "Tallenna muutokset"
+msgstr ""
+
+#: admin/admin_demo_bp.py:182
+msgid "Mielenosoitus päivitetty onnistuneesti."
+msgstr ""
+
+#: admin/admin_demo_bp.py:186
+msgid "Mielenosoitus luotu onnistuneesti."
+msgstr ""
+
+#: admin/admin_demo_bp.py:228
+msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."
+msgstr ""
+
+#: admin/admin_demo_bp.py:307
+msgid "Mielenosoituksen tunniste puuttuu."
+msgstr ""
+
+#: admin/admin_demo_bp.py:328
+msgid "Mielenosoitus poistettu onnistuneesti."
+msgstr ""
+
+#: admin/admin_org_bp.py:79
+msgid "Organisaatio päivitetty onnistuneesti."
+msgstr ""
+
+#: admin/admin_org_bp.py:149
+msgid "Organisaatio luotu onnistuneesti."
+msgstr ""
+
+#: admin/admin_org_bp.py:198
+msgid "Organisaatio poistettu onnistuneesti."
+msgstr ""
+
+#: auth/routes.py:136
+msgid "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
+msgstr ""
+
+#: auth/templates/edit_profile.html:5
+msgid "Muokkaa Profiilia"
+msgstr ""
+
+#: auth/templates/edit_profile.html:15
+msgid "Muokkaa profiiliasi"
+msgstr ""
+
+#: auth/templates/edit_profile.html:23
+msgid "Näyttönimi:"
+msgstr ""
+
+#: auth/templates/edit_profile.html:31
+msgid "Profiilikuva:"
+msgstr ""
+
+#: auth/templates/edit_profile.html:41
+msgid "Esittelyteksti:"
+msgstr ""
+
+#: auth/templates/login.html:7 auth/templates/login.html:19
+#: templates/header.html:318
+msgid "Kirjaudu sisään"
+msgstr ""
+
+#: auth/templates/login.html:10
+msgid "Käyttäjänimi"
+msgstr ""
+
+#: auth/templates/login.html:15 auth/templates/register.html:22
+msgid "Salasana"
+msgstr ""
+
+#: auth/templates/login.html:25
+msgid "Unohtuiko salasana?"
+msgstr ""
+
+#: auth/templates/login.html:32 auth/templates/register.html:9
+#: auth/templates/register.html:26
+msgid "Rekisteröidy"
+msgstr ""
+
+#: auth/templates/password_reset.html:65
+msgid "Salasanan vaihtaminen"
+msgstr ""
+
+#: auth/templates/password_reset.html:68
+msgid "Uusi salasana"
+msgstr ""
+
+#: auth/templates/password_reset.html:71
+msgid "Vaihda salasana"
+msgstr ""
+
+#: auth/templates/password_reset_request.html:7
+msgid "Unohtuiko salasanasi?"
+msgstr ""
+
+#: auth/templates/password_reset_request.html:8
+msgid ""
+"Syötä mielenosoitukset.fi -palvelussa käyttämäsi sähköpostiosoite alla "
+"olevaan kenttään, niin lähetämme salasanan nollauslinkin sinulle "
+"sähköpostitse."
+msgstr ""
+
+#: auth/templates/password_reset_request.html:11 templates/submit.html:102
+msgid "Sähköpostiosoite"
+msgstr ""
+
+#: auth/templates/password_reset_request.html:14
+msgid "Pyydä salasananvaihtoa"
+msgstr ""
+
+#: auth/templates/profile.html:34
+msgid "Ei määritetty"
+msgstr ""
+
+#: auth/templates/profile.html:36
+msgid "Ei saatavilla"
+msgstr ""
+
+#: auth/templates/profile.html:39
+msgid "Järjestelmävalvoja"
+msgstr ""
+
+#: auth/templates/profile.html:41 templates/admin/stats.html:12
+msgid "Organisaatiot"
+msgstr ""
+
+#: auth/templates/profile.html:47
+msgid "Tutustu organisaatioon"
+msgstr ""
+
+#: auth/templates/profile.html:55
+msgid "Muokkaa profiilia"
+msgstr ""
+
+#: auth/templates/profile.html:60
+msgid "Lopeta seuraaminen"
+msgstr ""
+
+#: auth/templates/profile.html:64
+msgid "Seuraa"
+msgstr ""
+
+#: auth/templates/register.html:12
+msgid "Käyttäjätunnus"
+msgstr ""
+
+#: auth/templates/register.html:17
+msgid "Sähköposti"
+msgstr ""
+
+#: auth/templates/register.html:18
+msgid "Anna kelvollinen sähköpostiosoite"
+msgstr ""
+
+#: auth/templates/register.html:23
+msgid "Salasanan on oltava vähintään 8 merkkiä pitkä"
+msgstr ""
+
+#: auth/templates/register.html:29
+msgid "Kirjaudu sisään tästä"
+msgstr ""
 
 #: templates/base.html:69
 msgid "Kaikki oikeudet pidätetään."
@@ -196,10 +378,6 @@ msgstr ""
 
 #: templates/header.html:313
 msgid "Kirjaudu ulos"
-msgstr ""
-
-#: templates/header.html:318
-msgid "Kirjaudu sisään"
 msgstr ""
 
 #: templates/index.html:38
@@ -573,10 +751,6 @@ msgstr ""
 msgid "Verkkosivut"
 msgstr ""
 
-#: templates/submit.html:102
-msgid "Sähköpostiosoite"
-msgstr ""
-
 #: templates/submit.html:134 templates/submit.html:140
 msgid "Mielenosoituksen nimi"
 msgstr ""
@@ -690,10 +864,6 @@ msgstr ""
 
 #: templates/admin/stats.html:10
 msgid "Sähköpostiosoitteensa vahvistaneet käyttäjät:"
-msgstr ""
-
-#: templates/admin/stats.html:12
-msgid "Organisaatiot"
 msgstr ""
 
 #: templates/admin/stats.html:13

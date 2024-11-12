@@ -4,32 +4,32 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 
 <div class="auth-container">
-    <h1>Kirjaudu sisään</h1>
+    <h1>{{ _('Kirjaudu sisään') }}</h1>
     <form method="POST">
         <div class="form-group">
-            <label for="username">Käyttäjänimi</label>
+            <label for="username">{{ _('Käyttäjänimi') }}</label>
             <input type="text" id="username" name="username" required>
         </div>
 
         <div class="form-group">
-            <label for="password">Salasana</label>
+            <label for="password">{{ _('Salasana') }}</label>
             <input type="password" id="password" name="password" required>
         </div>
 
-        <button type="submit">Kirjaudu sisään</button>
+        <button type="submit">{{ _('Kirjaudu sisään') }}</button>
     </form>
 
     <!-- Forgot your password link -->
     <div class="form-group">
         <p class="forgot-password">
-            <a href="{{ url_for('auth.password_reset_request') }}">Unohtuiko salasana?</a>
+            <a href="{{ url_for('auth.password_reset_request') }}">{{ _('Unohtuiko salasana?') }}</a>
         </p>
     </div>
 
     <!-- Register link -->
     <div class="form-group">
         <p class="register-link">
-            <a href="{{ url_for('auth.register') }}">Rekisteröidy</a>
+            <a href="{{ url_for('auth.register') }}">{{ _('Rekisteröidy') }}</a>
         </p>
     </div>
 </div>

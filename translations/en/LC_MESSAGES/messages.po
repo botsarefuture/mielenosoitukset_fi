@@ -799,6 +799,9 @@ msgid ""
 "kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen "
 "käyttäessäsi näitä oikeuksia."
 msgstr ""
+"You are logged in as a superuser. You have extensive rights, and all your "
+"actions can be traced back to you. Please be careful when using these "
+"rights."
 
 #: templates/admin/stats.html:5
 msgid "Tässä osiossa voit tarkastella sivuston tilastoja."

@@ -719,7 +719,7 @@ msgstr "Description"
 
 #: templates/submit.html:199
 msgid "pp.kk.vvvv"
-msgstr ""
+msgstr "dd.mm.yyyy"
 
 #: templates/submit.html:205
 msgid "Alkamisaika"

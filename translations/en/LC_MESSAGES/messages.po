@@ -57,7 +57,7 @@ msgstr "Demonstration created successfully."
 
 #: admin/admin_demo_bp.py:228
 msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."
-msgstr ""
+msgstr "Title, date and city are mandatory to fill."
 
 #: admin/admin_demo_bp.py:307
 msgid "Mielenosoituksen tunniste puuttuu."

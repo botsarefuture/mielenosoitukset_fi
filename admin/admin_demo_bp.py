@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from bson.objectid import ObjectId
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash_message, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import current_user, login_required
 
 from classes import Demonstration, Organizer
@@ -10,7 +10,7 @@ from wrappers import admin_required, permission_required
 from .utils import mongo
 from utils.admin.demonstration import collect_tags
 from gettext import gettext as _
-
+from utils.flashing import flash_message
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")

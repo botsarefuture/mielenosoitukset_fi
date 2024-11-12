@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash_message
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from wrappers import admin_required, permission_required
 from utils.validators import valid_email
 from .utils import mongo, log_admin_action
 from gettext import gettext as _
+from utils.flashing import flash_message
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")

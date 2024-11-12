@@ -821,11 +821,11 @@ msgstr "Users who have verified their email address:"
 
 #: templates/admin/stats.html:12
 msgid "Organisaatiot"
-msgstr ""
+msgstr "Organizations"
 
 #: templates/admin/stats.html:13
 msgid "Rekisteröidyt organisaatiot:"
-msgstr ""
+msgstr "Registered organizations:"
 
 #: templates/admin/stats.html:16
 msgid "Viimeisimmät aktiviteetit"

@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash_message, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from auth.models import User
@@ -8,25 +8,14 @@ from wrappers import admin_required, permission_required
 from utils.variables import PERMISSIONS_GROUPS
 from utils.validators import valid_email
 from utils.database import stringify_object_ids
+from utils.flash_messageing import flash_message_message
 
 from .utils import get_org_name, mongo
+from gettext import gettext as _
 
 
 email_sender = EmailSender()
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
-
-
-def flash_message(message, category):
-    """Flash a message with a specific category."""
-    categories = {
-        "info": "info",
-        "approved": "success",
-        "success": "success",
-        "warning": "warning",
-        "error": "danger",
-    }
-    flash(message, categories.get(category, "info"))
-
 
 # User control panel with pagination
 @admin_user_bp.route("/")
@@ -68,12 +57,12 @@ def edit_user(user_id):
     organizations = stringify_object_ids(list(mongo.organizations.find()))
 
     if user is None:
-        flash_message("Käyttäjää ei löytynyt.", "error")
+        flash_message_message("Käyttäjää ei löytynyt.", "error")
         return redirect(url_for("admin_user.user_control"))
 
     # Check if the current user is trying to edit a higher-level user
     if user.role == "global_admin" and current_user.role != "global_admin":
-        flash_message("Et voi muokata globaalin ylläpitäjän tietoja.", "error")
+        flash_message_message("Et voi muokata globaalin ylläpitäjän tietoja.", "error")
         return redirect(url_for("admin_user.user_control"))
 
     if request.method == "POST":
@@ -85,16 +74,16 @@ def edit_user(user_id):
 
         # Validate user input
         if not username or not email:
-            flash_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
+            flash_message_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         if not valid_email(email):
-            flash_message("Virheellinen sähköpostimuoto.", "error")
+            flash_message_message("Virheellinen sähköpostimuoto.", "error")
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # Prevent role escalation
         if current_user._id == user_id and role != current_user.role:
-            flash_message("Et voi muuttaa omaa rooliasi.", "error")
+            flash_message_message("Et voi muuttaa omaa rooliasi.", "error")
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # Ensure global admins cannot lower their role
@@ -103,7 +92,7 @@ def edit_user(user_id):
             and current_user._id == user_id
             and role != "global_admin"
         ):
-            flash_message(
+            flash_message_message(
                 "Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error"
             )
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
@@ -132,7 +121,7 @@ def edit_user(user_id):
             },
         )
 
-        flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
+        flash_message_message("Käyttäjä päivitetty onnistuneesti.", "approved")
         return redirect(url_for("admin_user.user_control"))
 
     # Prepare to render the edit user form
@@ -171,7 +160,7 @@ def save_user(user_id):
     """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
-        flash_message("Käyttäjää ei löydy.", "error")
+        flash_message_message("Käyttäjää ei löydy.", "error")
         return redirect(url_for("admin_user.user_control"))
 
     user = User.from_db(user)
@@ -185,7 +174,7 @@ def save_user(user_id):
 
     # Prevent role escalation
     if current_user._id == user_id and role != current_user.role:
-        flash_message("Et voi muuttaa omaa rooliasi.", "error")
+        flash_message_message("Et voi muuttaa omaa rooliasi.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Prevent global admins from lowering their role
@@ -195,16 +184,16 @@ def save_user(user_id):
         and role != "global_admin"
     ):
         # If user that's the target of this edit, is a global_admin and you're the user that's being edited, and you're trying to lower your role, we will deny it.
-        flash_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
+        flash_message_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Validate mandatory fields
     if not username or not email:
-        flash_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
+        flash_message_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     if not valid_email(email):
-        flash_message("Virheellinen sähköpostimuoto.", "error")
+        flash_message_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Fetch organization names for notification
@@ -260,7 +249,7 @@ def save_user(user_id):
         },
     )
 
-    flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
+    flash_message_message("Käyttäjä päivitetty onnistuneesti.", "approved")
     return redirect(url_for("admin_user.user_control"))
 
 
@@ -296,7 +285,7 @@ def delete_user(user_id):
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if user:
         mongo.users.delete_one({"_id": ObjectId(user_id)})
-        flash_message("Käyttäjä poistettu onnistuneesti.", "approved")
+        flash_message_message("Käyttäjä poistettu onnistuneesti.", "approved")
     else:
-        flash_message("Käyttäjää ei löydy.", "error")
+        flash_message_message("Käyttäjää ei löydy.", "error")
     return redirect(url_for("admin_user.user_control"))

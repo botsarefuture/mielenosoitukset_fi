@@ -4,28 +4,24 @@ on:
   push:
     branches:
       - translations
-  workflow_dispatch:
-
 
 jobs:
   compile_translations:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out the code
+      - name: Check out the translations branch
         uses: actions/checkout@v3
         with:
-          ref: translations  # Force checkout the translations branch
+          ref: translations
 
+      - name: Verify babel.cfg existence
+        run: ls -R && cat babel.cfg
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      
-      - name: List files to verify
-        run: ls -R
-
 
       - name: Install dependencies
         run: |
@@ -34,9 +30,9 @@ jobs:
 
       - name: Compile Translations
         run: |
-          pybabel extract -F babel.cfg -o messages.pot .
-          pybabel update -i messages.pot -d translations
-          pybabel compile -d translations
+          pybabel extract -F babel.cfg -o messages.pot . --verbose
+          pybabel update -i messages.pot -d translations --verbose
+          pybabel compile -d translations --verbose
 
       - name: Commit compiled translations
         run: |
@@ -44,38 +40,13 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add translations
           git commit -m "Compile translations"
+          git push origin translations
 
-      - name: Push changes to translations branch
-        run: git push origin translations
-
-  create_pr_to_refactoring_v2:
-    needs: compile_translations
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v3
-
-      - name: Create Pull Request to refactoring-v2
+      - name: Create Pull Request to `refactoring-v2`
         uses: peter-evans/create-pull-request@v5
         with:
-          source-branch: translations
-          destination-branch: refactoring-v2
-          title: "Update translations from translations branch"
-          commit-message: "Compile and update translations"
-
-  create_pr_to_development:
-    needs: create_pr_to_refactoring_v2
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v3
-
-      - name: Create Pull Request to development
-        uses: peter-evans/create-pull-request@v5
-        with:
-          source-branch: refactoring-v2
-          destination-branch: development
-          title: "Update translations from refactoring-v2"
-          commit-message: "Merge translations from refactoring-v2"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: refactoring-v2  # Target branch for the PR
+          branch: compile-translations-pr  # Optional: branch name for PR
+          title: "Automated translation compilation"
+          body: "This PR was automatically generated to merge compiled translations."

@@ -4,13 +4,13 @@ import json
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
+from gettext import gettext as _
 
 from flask import (
     Flask,
     render_template,
     redirect,
     url_for,
-    flash,
     request,
     abort,
     Response,
@@ -27,6 +27,7 @@ from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST
 from config import Config
+from utils.flashing import flash_message
 
 email_sender = EmailSender()
 
@@ -140,7 +141,7 @@ def init_routes(app):
 
             # Validation for form data
             if not title or not date or not start_time or not city or not address:
-                flash("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
+                flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
                 return redirect(url_for("submit"))
 
             # Get organizers from the form and create Organizer instances
@@ -176,7 +177,7 @@ def init_routes(app):
             # Save to MongoDB
             mongo.demonstrations.insert_one(demonstration.to_dict())
 
-            flash(
+            flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
             )
@@ -297,8 +298,8 @@ def init_routes(app):
                     parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
                 )
             except ValueError:
-                flash(
-                    "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+                flash_message(
+                    _("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.")
                 )
                 matches_date = False
 
@@ -318,8 +319,8 @@ def init_routes(app):
             abort(404)
 
         if not demo:
-            flash(
-                "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty.", "error"
+            flash_message(
+                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error"
             )
             return redirect(url_for("demonstrations"))
 
@@ -377,7 +378,7 @@ def init_routes(app):
 
             # Validate form data
             if not name or not email or not message:
-                flash("Kaikki kentät ovat pakollisia!", "error")
+                flash_message("Kaikki kentät ovat pakollisia!", "error")
                 return redirect(url_for("contact"))
 
             # Create email job
@@ -393,7 +394,7 @@ def init_routes(app):
                 },
             )
 
-            flash("Viesti lähetetty onnistuneesti!", "success")
+            flash_message("Viesti lähetetty onnistuneesti!", "success")
             return redirect(url_for("contact"))
 
         return render_template("contact.html")
@@ -404,7 +405,7 @@ def init_routes(app):
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
         if _org is None:
-            flash("Organisaatiota ei löytynyt.", "error")
+            flash_message("Organisaatiota ei löytynyt.", "error")
             return redirect(url_for("index"))
 
         _org = Organization.from_dict(_org)
@@ -482,23 +483,23 @@ def init_routes(app):
             tag_name=tag_name,
         )
 
-    # This is the route that provides the flash messages as JSON
-    @app.route("/get_flash_messages", methods=["GET"])
-    def get_flash_messages():
-        # Retrieve flashed messages with categories
-        messages = get_flashed_messages(with_categories=True)
+    # This is the route that provides the flash_message messages as JSON
+    @app.route("/get_flash_message_messages", methods=["GET"])
+    def get_flash_message_messages():
+        # Retrieve flash_messageed messages with categories
+        messages = get_flash_messageed_messages(with_categories=True)
 
         # If there are no messages, return an empty array
         if not messages:
             return jsonify(messages=[])
 
-        # Format the flash messages into a JSON object
-        flash_data = [
+        # Format the flash_message messages into a JSON object
+        flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
 
         # Return the JSON response
-        return jsonify(messages=flash_data)
+        return jsonify(messages=flash_message_data)
 
     @app.route("/celebrate")
     def celebrate():

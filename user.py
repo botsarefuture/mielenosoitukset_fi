@@ -1,7 +1,8 @@
-from flask import Blueprint, redirect, url_for, flash, request
+from flask import Blueprint, redirect, request
 from flask_login import login_required, current_user
 from auth.models import User  # Adjust the import based on your project structure
 from database_manager import DatabaseManager  # Adjust based on your database setup
+from utils.flashing import flash_message
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -14,9 +15,9 @@ def follow(username):
     user_to_follow = User.from_db(mongo.users.find_one({"username": username}))
     if user_to_follow:
         current_user.follow_user(mongo, user_to_follow.id)
-        flash(f"Seuraat nyt käyttäjää {username}.", "success")
+        flash_message(f"Seuraat nyt käyttäjää {username}.", "success")
     else:
-        flash("Käyttäjää ei löytynyt.", "danger")
+        flash_message("Käyttäjää ei löytynyt.", "danger")
     return redirect(request.referrer)  # Replace with the appropriate view
 
 
@@ -26,7 +27,7 @@ def unfollow(username):
     user_to_unfollow = User.from_db(mongo.users.find_one({"username": username}))
     if user_to_unfollow:
         current_user.unfollow_user(mongo, user_to_unfollow.id)
-        flash(f"Lopetit käyttäjän {username} seuraamisen.", "success")
+        flash_message(f"Lopetit käyttäjän {username} seuraamisen.", "success")
     else:
-        flash("Käyttäjää ei löytynyt.", "danger")
+        flash_message("Käyttäjää ei löytynyt", "danger")
     return redirect(request.referrer)  # Replace with the appropriate view

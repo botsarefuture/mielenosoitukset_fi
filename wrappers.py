@@ -1,9 +1,11 @@
 from utils.logger import logger
 
 from functools import wraps
-from flask import redirect, url_for, flash
+from flask import redirect, url_for
+from gettext import gettext as _
 from flask_login import current_user
 import warnings
+from utils.flashing import flash_message
 
 
 # DEPRACED: #REMOVE in 2.5.0
@@ -31,7 +33,7 @@ def permission_needed(permission, organization_id=None):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                flash("Sinun tulee kirjautua sisään käyttääksesi sivua.")
+                flash_message("Sinun tulee kirjautua sisään käyttääksesi sivua.")
                 logger.warning("User not authenticated, redirecting to login.")
                 return redirect(url_for("auth.login"))
 
@@ -50,7 +52,7 @@ def permission_needed(permission, organization_id=None):
 
             # Check membership
             if not org_id or not current_user.is_member_of_organization(org_id):
-                flash("Sinä et ole tämän organisaation jäsen.")
+                flash_message("Sinä et ole tämän organisaation jäsen.")
                 logger.warning(
                     f"User {current_user.username} is not a member of organization {org_id}."
                 )
@@ -60,7 +62,7 @@ def permission_needed(permission, organization_id=None):
             if not current_user.has_permission(
                 org_id, permission
             ) and not current_user.can_use(permission):
-                flash("Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.")
+                flash_message("Sinun käyttöoikeutesi eivät riitä tämän sivun käyttämiseen.")
                 logger.warning(
                     f"User {current_user.username} does not have permission '{permission}' in organization {org_id}."
                 )
@@ -82,12 +84,12 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         # Ensure the user is authenticated
         if not current_user.is_authenticated:
-            flash("Sinun täytyy kirjautua sisään käyttääksesi tätä sivua.")
+            flash_message("Sinun täytyy kirjautua sisään käyttääksesi tätä sivua.")
             logger.warning("User not authenticated, redirecting to login.")
             return redirect(url_for("auth.login"))
 
         if not current_user.global_admin and current_user.role in ["user", "member"]:
-            flash("Sinun käyttöoikeutesi eivät riitä sivun tarkasteluun.")
+            flash_message("Sinun käyttöoikeutesi eivät riitä sivun tarkasteluun.")
             logger.warning(f"User {current_user.username} is not a global admin.")
             return redirect(url_for("index"))
 
@@ -113,7 +115,7 @@ def permission_required(permission_name):
         def decorated_function(*args, **kwargs):
             # Check if the user is authenticated
             if not current_user.is_authenticated:
-                flash("Sinun tulee kirjautua sisään käyttääksesi sivua.")
+                flash_message("Sinun tulee kirjautua sisään käyttääksesi sivua.")
                 logger.warning("User not authenticated, redirecting to login.")
                 return redirect(url_for("auth.login"))
 
@@ -133,7 +135,7 @@ def permission_required(permission_name):
                 return f(*args, **kwargs)
 
             # If permission is not granted, handle it appropriately
-            flash("Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen.")
+            flash_message("Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen.")
             logger.warning(
                 f"User {current_user.username} does not have permission '{permission_name}'."
             )

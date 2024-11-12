@@ -4,10 +4,10 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash,
     abort,
     current_app,
 )
+
 from flask_login import login_user, logout_user, login_required, current_user
 from auth.models import User
 import jwt
@@ -17,7 +17,7 @@ from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from utils.s3 import upload_image  # Import your S3 upload function
 import os
-
+from utils.flashing import flash_message
 
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
@@ -45,18 +45,18 @@ def register():
         email = request.form.get("email")
 
         if not username or not password or len(username) < 3 or len(password) < 6:
-            flash(
+            flash_message(
                 "Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.",
                 "error",
             )
             return redirect(url_for("auth.register"))
 
         if mongo.users.find_one({"username": username}):
-            flash("Käyttäjänimi on jo käytössä.", "warning")
+            flash_message("Käyttäjänimi on jo käytössä.", "warning")
             return redirect(url_for("auth.register"))
 
         if mongo.users.find_one({"email": email}):
-            flash(
+            flash_message(
                 "Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.",
                 "warning",
             )
@@ -67,12 +67,12 @@ def register():
 
         try:
             verify_emailer(email, username)
-            flash(
+            flash_message(
                 "Rekisteröinti onnistui! Tarkista sähköpostisi vahvistaaksesi tilisi.",
                 "info",
             )
         except Exception as e:
-            flash(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
+            flash_message(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
 
         return redirect(url_for("auth.login"))
 
@@ -86,14 +86,14 @@ def confirm_email(token):
         user = mongo.users.find_one({"email": email})
         if user:
             mongo.users.update_one({"email": email}, {"$set": {"confirmed": True}})
-            flash(
+            flash_message(
                 "Sähköpostiosoitteesi on vahvistettu. Voit nyt kirjautua sisään.",
                 "info",
             )
         else:
-            flash("Käyttäjää ei löytynyt.", "error")
+            flash_message("Käyttäjää ei löytynyt.", "error")
     else:
-        flash("Vahvistuslinkki on virheellinen tai vanhentunut.", "warning")
+        flash_message("Vahvistuslinkki on virheellinen tai vanhentunut.", "warning")
 
     return redirect(url_for("auth.login"))
 
@@ -110,7 +110,7 @@ def login():
         password = request.form.get("password")
 
         if not username or not password:
-            flash("Anna sekä käyttäjänimi että salasana.", "warning")
+            flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
             return redirect(
                 url_for("auth.login", next=next_page)
             )  # Pass next page along
@@ -118,12 +118,12 @@ def login():
         user_doc = mongo.users.find_one({"username": username})
 
         if not user_doc:
-            flash(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
             return redirect(url_for("auth.login", next=next_page))
 
         user = User.from_db(user_doc)
         if not user.check_password(password):
-            flash("Käyttäjänimi tai salasana on väärin.", "error")
+            flash_message("Käyttäjänimi tai salasana on väärin.", "error")
             return redirect(url_for("auth.login", next=next_page))
 
         if user.confirmed:
@@ -133,7 +133,7 @@ def login():
             )  # Redirect to the next page or the index
 
         else:
-            flash("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
+            flash_message(_("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."))
             verify_emailer(user.email, username)
             return redirect(next_page or url_for("index"))
 
@@ -144,7 +144,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash("Kirjauduit onnistuneesti ulos", "success")
+    flash_message("Kirjauduit onnistuneesti ulos", "success")
     return redirect(url_for("auth.login"))
 
 
@@ -165,13 +165,13 @@ def password_reset_request():
                     recipients=[email],
                     context={"reset_url": reset_url, "user_name": user.get("username")},
                 )
-                flash("Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info")
+                flash_message("Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info")
             except Exception as e:
-                flash(f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error")
+                flash_message(f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error")
 
             return redirect(url_for("auth.login"))
 
-        flash("Tilin sähköpostiosoitetta ei löytynyt.", "info")
+        flash_message("Tilin sähköpostiosoitetta ei löytynyt.", "info")
         return redirect(url_for("auth.password_reset_request"))
 
     return render_template("password_reset_request.html")
@@ -181,7 +181,7 @@ def password_reset_request():
 def password_reset(token):
     email = verify_reset_token(token)
     if not email:
-        flash("Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning")
+        flash_message("Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning")
         return redirect(url_for("auth.password_reset_request"))
 
     if request.method == "POST":
@@ -189,13 +189,13 @@ def password_reset(token):
 
         user_doc = mongo.users.find_one({"email": email})
         if not user_doc:
-            flash("Käyttäjää ei löytynyt.", "warning")
+            flash_message("Käyttäjää ei löytynyt.", "warning")
             return redirect(url_for("auth.password_reset_request"))
 
         user = User.from_db(user_doc)
         user.change_password(mongo, password)
 
-        flash("Salasanasi on päivitetty onnistuneesti.", "success")
+        flash_message("Salasanasi on päivitetty onnistuneesti.", "success")
         return redirect(url_for("auth.login"))
 
     return render_template("password_reset.html", token=token)
@@ -216,7 +216,7 @@ def profile(username=None):
         user_data = User.from_db(user)
         return render_template("profile.html", user=user_data)
     else:
-        flash("Käyttäjäprofiilia ei löytynyt.", "warning")
+        flash_message("Käyttäjäprofiilia ei löytynyt.", "warning")
         return redirect(url_for("index"))
 
 
@@ -257,9 +257,9 @@ def edit_profile():
                         }
                     },
                 )
-                flash("Profiilitietosi on päivitetty.", "success")
+                flash_message("Profiilitietosi on päivitetty.", "success")
             else:
-                flash("Virhekuvan lataamisessa S3:een.", "error")
+                flash_message("Virhekuvan lataamisessa S3:een.", "error")
 
             # Clean up the temporary file
             os.remove(temp_file_path)

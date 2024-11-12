@@ -707,7 +707,7 @@ msgstr ""
 
 #: templates/submit.html:152
 msgid "Tagit (pilkuilla erotettuna)"
-msgstr ""
+msgstr "Tags (separated by comma)"
 
 #: templates/submit.html:157
 msgid "esim. ilmasto, tasa-arvo, oikeudet"

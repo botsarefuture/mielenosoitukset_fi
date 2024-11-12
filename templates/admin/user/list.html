@@ -103,10 +103,10 @@
         </colgroup>
         <thead>
             <tr>
-                <th>Nimi</th>
-                <th>Sähköposti</th>
-                <th>Rooli</th>
-                <th>Toiminnot</th>
+                <th>{{ _('Nimi') }}</th>
+                <th>{{ _('Sähköpostiosoite') }}</th>
+                <th>{{ _('Rooli') }}</th>
+                <th>{{ _('Toiminnot') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -118,13 +118,13 @@
                 <td class="actions-cell">
                     {% if current_user.can_use("EDIT_USER") or current_user.can_use("DELETE_USER") %} 
                     {% if current_user.can_use("EDIT_USER") %}
-                    <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i> Muokkaa</a>
+                    <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i> {{ _('Muokkaa') }}</a>
                     {% endif %}
                     {% if current_user.can_use("DELETE_USER") %}
-                    <button onclick="alert('this feature is not ready');" class="button delete-button"><i class="fas fa-trash-alt"></i> Poista</button>
+                    <button onclick="alert('this feature is not ready');" class="button delete-button"><i class="fas fa-trash-alt"></i> {{ _('Poista') }}</button>
                     {% endif %}
                     {% else %}
-                    <div class="insufficient-perm" style="color: #ccc">Ei riittäviä oikeuksia.</div>
+                    <div class="insufficient-perm" style="color: #ccc">{{ _('Ei riittäviä oikeuksia.') }}</div>
                     {% endif %}
                 </td>
             </tr>
@@ -132,8 +132,8 @@
         </tbody>
     </table>
     {% else %}
-    <div class="no-users">
-        <p>Käyttäjiä ei löytynyt.</p>
+    <div class="no-users"> <!-- #MODULARIZE -->
+        <p>{{ _('Käyttäjiä ei löytynyt.') }}</p>
     </div>
     {% endif %}
 </div>

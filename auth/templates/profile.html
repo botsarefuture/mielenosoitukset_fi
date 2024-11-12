@@ -31,20 +31,20 @@
                 {% if current_user.is_authenticated and current_user.id == user.id %}
 
                 <!-- TODO: user should be able to choose whether or not to show the email to others -->
-                <p class="email">{{ user.email or 'Ei määritetty' }}</p>
+                <p class="email">{{ user.email or _('Ei määritetty') }}</p>
                 {% endif %}
-                <p class="bio">{{ user.bio or 'Ei saatavilla' }}</p>
+                <p class="bio">{{ user.bio or _('Ei saatavilla') }}</p>
 
                 {% if user.global_admin %}
-                    <span class="badge badge-admin">Järjestelmävalvoja</span>
+                    <span class="badge badge-admin">{{ _('Järjestelmävalvoja') }}</span>
                 {% endif %}
-                <h2 class="organizations-title">Organisaatiot</h2>
+                <h2 class="organizations-title">{{ _('Organisaatiot') }}</h2>
                 <!-- Organizations: each in its own container -->
                 <div class="organizations">
                     {% for org in user.organizations %}
                         <div class="org-container rebellious-org">
                             <p><strong>{{ user.get_org_name(org.org_id) }}</strong></p>
-                            <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">Tutustu organisaatioon</a>
+                            <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
                         </div>
                     {% endfor %}
                 </div>
@@ -52,16 +52,16 @@
                 <div class="button-group rebellious-buttons">
                     {% if current_user.is_authenticated %}
                         {% if current_user.username == user.username %}
-                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">Muokkaa profiilia</a>
+                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">{{ _('Muokkaa profiilia') }}</a>
                         {% else %}
                             <div class="follow-unfollow">
                                 {% if current_user.is_following(user) %}
                                     <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
-                                        <button type="submit" class="btn btn-unfollow rebellious-btn">Lopeta seuraaminen</button>
+                                        <button type="submit" class="btn btn-unfollow rebellious-btn">{{ _('Lopeta seuraaminen') }}</button>
                                     </form>
                                 {% else %}
                                     <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
-                                        <button type="submit" class="btn btn-follow rebellious-btn">Seuraa</button>
+                                        <button type="submit" class="btn btn-follow rebellious-btn">{{ _('Seuraa') }}</button>
                                     </form>
                                 {% endif %}
                             </div>

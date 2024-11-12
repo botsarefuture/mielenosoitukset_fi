@@ -85,7 +85,7 @@ msgstr "Recurring demonstration not found."
 
 #: admin/admin_recu_demo_bp.py:165
 msgid "Toistuva mielenosoitus päivitetty onnistuneesti."
-msgstr ""
+msgstr "Recurring demonstration updated successfully."
 
 #: admin/admin_recu_demo_bp.py:168
 msgid "Toistuva mielenosoitus luotu onnistuneesti."

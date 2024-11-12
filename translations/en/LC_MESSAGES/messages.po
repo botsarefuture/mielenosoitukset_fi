@@ -6,7 +6,7 @@
 # Translators:
 # Verso, 2024
 # 
-#
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
@@ -28,7 +28,7 @@ msgstr ""
 
 #: basic_routes.py:323
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
-msgstr ""
+msgstr "Demonstration wasn't found or it hasn't been accepted yet."
 
 #: admin/admin_bp.py:158
 msgid "Marquee message updated successfully!"

@@ -6,6 +6,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, date
 from gettext import gettext as _
 
+from utils import DATE_FORMAT
+
 from flask import (
     Flask,
     render_template,
@@ -90,7 +92,7 @@ def init_routes(app):
         filtered_demonstrations = []
         for demo in demonstrations:
             demo_date = datetime.strptime(
-                demo["date"], "%d.%m.%Y"
+                demo["date"], "%Y-%m-%d"
             ).date()  # Convert to date object
             if demo_date >= today:
                 if (
@@ -101,7 +103,7 @@ def init_routes(app):
                     filtered_demonstrations.append(demo)
 
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], DATE_FORMAT).date()
         )
 
         return render_template("index.html", demonstrations=filtered_demonstrations)
@@ -217,7 +219,7 @@ def init_routes(app):
 
         # Sort the results by date
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], DATE_FORMAT).date()
         )
 
         # Pagination logic
@@ -271,7 +273,7 @@ def init_routes(app):
         """
         Check if the demonstration is in the future.
         """
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        demo_date = datetime.strptime(demo["date"], DATE_FORMAT).date()
         return demo_date >= today
 
     def matches_filters(
@@ -293,9 +295,9 @@ def init_routes(app):
 
         if date_query:
             try:
-                parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
+                parsed_date = datetime.strptime(date_query, DATE_FORMAT).date()
                 matches_date = (
-                    parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+                    parsed_date == datetime.strptime(demo["date"], DATE_FORMAT).date()
                 )
             except ValueError:
                 flash_message(
@@ -430,14 +432,14 @@ def init_routes(app):
         upcoming_demos = []
         for demo in upcoming_demos_cursor:
             demo_date = datetime.strptime(
-                demo["date"], "%d.%m.%Y"
+                demo["date"], DATE_FORMAT
             ).date()  # Convert date string to date object
             if demo_date >= today:  # Only keep upcoming demos
                 upcoming_demos.append(demo)
 
         # Sort by date
         upcoming_demos.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], DATE_FORMAT).date()
         )
 
         # Render the organization page with the sorted upcoming demonstrations
@@ -487,7 +489,7 @@ def init_routes(app):
     @app.route("/get_flash_message_messages", methods=["GET"])
     def get_flash_message_messages():
         # Retrieve flash_messageed messages with categories
-        messages = get_flash_messageed_messages(with_categories=True)
+        messages = get_flashed_messages(with_categories=True)
 
         # If there are no messages, return an empty array
         if not messages:

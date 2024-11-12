@@ -1,6 +1,8 @@
 from bson.objectid import ObjectId
 from datetime import datetime
 
+from utils import DATE_FORMAT
+
 
 def stringify_object_ids(data):
     """
@@ -16,6 +18,6 @@ def stringify_object_ids(data):
     elif isinstance(data, ObjectId):
         return str(data)
     elif isinstance(data, datetime):
-        return data.strftime("%d.%m.%Y")  # Convert datetime to Finnish date format
+        return data.strftime(DATE_FORMAT)  # Convert datetime to Finnish date format
     else:
         return data

@@ -5,6 +5,8 @@ from emailer.EmailSender import (
     EmailSender,
 )  # Assuming EmailSender is in a module named email_sender
 
+from utils import DATE_FORMAT
+
 # Initialize the Flask app
 app = Flask(__name__)
 
@@ -15,7 +17,7 @@ db = db_manager.get_db()
 
 def is_future_demo(demo, today):
     """Check if the demonstration is in the future."""
-    demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+    demo_date = datetime.strptime(demo["date"], DATE_FORMAT).date()
     return demo_date >= today
 
 

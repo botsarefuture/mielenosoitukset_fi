@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 from database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from utils.database import stringify_object_ids
-
+from utils import DATE_FORMAT
 
 def url_for(*args, **kwargs): ...
 
@@ -400,7 +400,7 @@ class RecurringDemonstration(Demonstration):
         start_time = datetime.strptime(data["start_time"], "%H:%M")
         end_time = datetime.strptime(data["end_time"], "%H:%M")
         created_until = (
-            datetime.strptime(data["created_until"], "%d.%m.%Y")
+            datetime.strptime(data["created_until"], DATE_FORMAT)
             if data.get("created_until")
             else datetime.now()
         )

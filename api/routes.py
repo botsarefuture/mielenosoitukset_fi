@@ -6,6 +6,8 @@ import json
 from classes import Demonstration
 from utils.database import stringify_object_ids
 
+from utils import DATE_FORMAT
+
 mongo = DatabaseManager().get_instance().get_db()
 
 api_bp = Blueprint("api", __name__)
@@ -20,7 +22,7 @@ def get_demonstrations():
     filtered_demonstrations = []
 
     for demo in demonstrations:
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+        demo_date = datetime.strptime(demo["date"], DATE_FORMAT)
         if demo_date >= today:
             demo = stringify_object_ids(demo)  # Convert ObjectId to string
             if (
@@ -32,7 +34,7 @@ def get_demonstrations():
                 filtered_demonstrations.append(demo)
 
     # Sort by date in ascending order
-    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y"))
+    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], DATE_FORMAT))
 
     response = make_response(json.dumps(filtered_demonstrations))
     response.content_type = "application/json"

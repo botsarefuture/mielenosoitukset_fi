@@ -3,6 +3,7 @@ from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from config import Config
+from utils import DATE_FORMAT
 
 # Establish connection to MongoDB
 db = MongoClient(Config.MONGO_URI)
@@ -35,7 +36,7 @@ def calculate_next_dates(demo_date, repeat_schedule):
 
 def remove_invalid_child_demonstrations(parent_demo, valid_dates):
     try:
-        valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
+        valid_date_strings = {d.strftime(DATE_FORMAT) for d in valid_dates}
         child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
 
         for demo in child_demos:
@@ -64,7 +65,7 @@ def handle_repeating_demonstrations():
 
         for demo in repeating_demos:
             try:
-                demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+                demo_date = datetime.strptime(demo["date"], DATE_FORMAT)
                 repeat_schedule = demo.get("repeat_schedule", {})
                 created_until = demo.get("created_until", datetime.min)
                 if created_until is None:
@@ -79,7 +80,7 @@ def handle_repeating_demonstrations():
                     if next_date <= created_until:
                         continue  # Skip dates that have already been created
 
-                    next_date_str = next_date.strftime("%d.%m.%Y")
+                    next_date_str = next_date.strftime(DATE_FORMAT)
 
                     existing_demo = demonstrations_collection.find_one(
                         {"date": next_date_str, "parent": demo["_id"]}

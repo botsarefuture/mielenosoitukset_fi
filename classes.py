@@ -398,7 +398,7 @@ class RecurringDemonstration(Demonstration):
         start_time = datetime.strptime(data["start_time"], "%H:%M")
         end_time = datetime.strptime(data["end_time"], "%H:%M")
         created_until = (
-            datetime.strptime(data["created_until"], "%d.%m.%Y")
+            datetime.strptime(data["created_until"], "%Y-%m-%d") #122
             if data.get("created_until")
             else datetime.now()
         )

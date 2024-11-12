@@ -11,6 +11,8 @@ from .utils import mongo
 from utils.admin.demonstration import collect_tags
 from gettext import gettext as _
 
+from utils import DATE_FORMAT
+
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -53,7 +55,7 @@ def demo_control():
 
     # Sort filtered demonstrations by date
     filtered_demos.sort(
-        key=lambda demo: datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        key=lambda demo: datetime.strptime(demo["date"], DATE_FORMAT).date()
     )
 
     return render_template(
@@ -85,7 +87,7 @@ def filter_demonstrations(query, search_query, show_past, today):
     filtered_demos = [
         demo
         for demo in demonstrations
-        if (show_past or datetime.strptime(demo["date"], "%d.%m.%Y").date() >= today)
+        if (show_past or datetime.strptime(demo["date"], DATE_FORMAT).date() >= today)
         and any(
             search_query in demo[field].lower()
             for field in ["title", "city", "topic", "address"]

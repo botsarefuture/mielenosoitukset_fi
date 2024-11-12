@@ -2,6 +2,8 @@ from datetime import datetime
 
 import importlib, os, sys
 
+from utils import DATE_FORMAT
+
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
@@ -47,7 +49,7 @@ def hide_past():
 
         # Iterate through the demonstrations and hide past ones
         for demo in demos:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            demo_date = datetime.strptime(demo["date"], DATE_FORMAT).date()
             if not is_future_demo(demo_date, today):
                 demonstration_instance = Demonstration.from_dict(demo)
                 demonstration_instance.hide = True

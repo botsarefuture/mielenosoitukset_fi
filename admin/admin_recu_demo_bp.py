@@ -10,6 +10,7 @@ from wrappers import permission_required, admin_required
 
 from .demo_utils import collect_tags
 from .utils import mongo
+from utils import DATE_FORMAT
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
@@ -44,7 +45,7 @@ def recu_demo_control():
 
     # Sort the filtered recurring demonstrations by date
     filtered_recurring_demos.sort(
-        key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        key=lambda x: datetime.strptime(x["date"], DATE_FORMAT).date()
     )
 
     return render_template(

@@ -3,6 +3,7 @@ from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from config import Config
+from utils import DATE_FORMAT
 
 # Set up logging
 logging.basicConfig(
@@ -65,14 +66,14 @@ def handle_repeating_demonstrations():
         for demo in repeating_demos:
             try:
                 # Parse the current demonstration's date
-                demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+                demo_date = datetime.strptime(demo["date"], DATE_FORMAT)
                 repeat_schedule = demo.get("repeat_schedule", {})
 
                 # Calculate the next dates based on the repeat schedule
                 next_dates = calculate_next_dates(demo_date, repeat_schedule)
 
                 for next_date in next_dates:
-                    next_date_str = next_date.strftime("%d.%m.%Y")
+                    next_date_str = next_date.strftime(DATE_FORMAT)
 
                     # Check if a document with the same date and parent already exists
                     existing_demo = collection.find_one(

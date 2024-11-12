@@ -65,7 +65,7 @@ msgstr ""
 
 #: admin/admin_demo_bp.py:328
 msgid "Mielenosoitus poistettu onnistuneesti."
-msgstr ""
+msgstr "Demonstration removed successfully."
 
 #: admin/admin_org_bp.py:78
 msgid "Organisaatio päivitetty onnistuneesti."

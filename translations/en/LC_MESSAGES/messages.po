@@ -805,15 +805,15 @@ msgstr ""
 
 #: templates/admin/stats.html:5
 msgid "Tässä osiossa voit tarkastella sivuston tilastoja."
-msgstr ""
+msgstr "In this section you can view the site's statistics."
 
 #: templates/admin/stats.html:8
 msgid "Käyttäjät"
-msgstr ""
+msgstr "Users"
 
 #: templates/admin/stats.html:9
 msgid "Rekisteröityneet käyttäjät:"
-msgstr ""
+msgstr "Registered users:"
 
 #: templates/admin/stats.html:10
 msgid "Sähköpostiosoitteensa vahvistaneet käyttäjät:"

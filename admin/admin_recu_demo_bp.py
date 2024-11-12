@@ -1,7 +1,7 @@
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
-from flask import Blueprint, render_template, request, redirect, url_for, flash_message
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required
 from utils.flashing import flash_message
 

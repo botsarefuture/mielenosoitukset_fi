@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from flask import Blueprint, flash_message, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from auth.models import User
@@ -8,7 +8,7 @@ from wrappers import admin_required, permission_required
 from utils.variables import PERMISSIONS_GROUPS
 from utils.validators import valid_email
 from utils.database import stringify_object_ids
-from utils.flash_messageing import flash_message_message
+from utils.flashing import flash_message
 
 from .utils import get_org_name, mongo
 from gettext import gettext as _

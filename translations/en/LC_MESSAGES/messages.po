@@ -743,11 +743,11 @@ msgstr "Organizer(s)"
 
 #: templates/submit.html:230
 msgid "Lisää järjestäjä"
-msgstr ""
+msgstr "Add organizer"
 
 #: templates/submit.html:235
 msgid "Mielenosoituksen tyyppi"
-msgstr ""
+msgstr "Type of demonstration"
 
 #: templates/submit.html:239
 msgid "Valitse mielenosoituksen tyyppi"

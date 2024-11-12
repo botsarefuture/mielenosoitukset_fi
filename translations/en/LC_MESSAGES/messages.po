@@ -680,6 +680,8 @@ msgid ""
 "Jos sinulla on kysyttävää tietosuojakäytännöstämme tai haluat käyttää "
 "oikeuksiasi, voit ottaa yhteyttä sähköpostitse osoitteeseen"
 msgstr ""
+"If you have any questions about our privacy policy or wish to exercise your "
+"rights, you can contact us by email at."
 
 #: templates/submit.html:95
 msgid "Järjestäjätahon..."

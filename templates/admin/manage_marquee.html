@@ -17,9 +17,9 @@
 
 {% block content %}
 <div class="container">
-    <h1>{{ _('Hallinnoi pyöröä') }}
+    <h1>{{ _('Pyörörullan hallinta') }}
     </h1>
-    <i>{{ _('Pyöröllä tarkoitetaan sivuston yläreunaan ilmestyvää liikkuvaa tekstiä') }}</i>
+    <i>{{ _('Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen.') }}</i>
     
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
@@ -33,21 +33,21 @@
     
     <form method="POST" action="{{ url_for('admin.manage_marquee') }}">
         <div class="form-group">
-            <label for="marquee_message"> {{ _('Nykyinen viesti:') }}</label>
+            <label for="marquee_message"> {{ _('Nykyinen pyörö:') }}</label>
             <textarea id="marquee_message" name="marquee_message" rows="4" class="form-control" oninput="updatePreview()">{{ current_message }}</textarea>
         </div>
         
         <div class="form-group">
-            <label for="background_color">{{ _('Taustaväri:') }}</label>
+            <label for="background_color">{{ _('Pyörön taustaväri:') }}</label>
             <input type="color" id="background_color" name="background_color" value="#ffffff" onchange="updatePreview()">
         </div>
         
         <div class="form-group">
-            <label for="text_color">{{ _('Tekstin väri:') }}</label>
+            <label for="text_color">{{ _('Pyörön tekstin väri:') }}</label>
             <input type="color" id="text_color" name="text_color" value="#000000" onchange="updatePreview()">
         </div>
         
-        <button type="submit" class="btn btn-primary">{{ _('Tallenna pyörö') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Tallenna pyörörulla') }}</button>
     </form>
 
     <h2>{{ _('Esikatselu:') }}</h2>

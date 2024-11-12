@@ -53,7 +53,7 @@ msgstr "Demonstration updated successfully."
 
 #: admin/admin_demo_bp.py:186
 msgid "Mielenosoitus luotu onnistuneesti."
-msgstr ""
+msgstr "Demonstration created successfully."
 
 #: admin/admin_demo_bp.py:228
 msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."

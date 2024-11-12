@@ -35,7 +35,7 @@ def create_app():
     app.config.from_object("config.Config")
 
     # Set default language and available languages
-    app.config['BABEL_DEFAULT_LOCALE'] = 'en'
+    app.config['BABEL_DEFAULT_LOCALE'] = 'fi'
     app.config['BABEL_SUPPORTED_LOCALES'] = ['en', 'fi', 'sv']
 
     def get_locale():

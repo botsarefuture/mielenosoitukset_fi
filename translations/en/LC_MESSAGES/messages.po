@@ -69,7 +69,7 @@ msgstr "Demonstration removed successfully."
 
 #: admin/admin_org_bp.py:78
 msgid "Organisaatio päivitetty onnistuneesti."
-msgstr ""
+msgstr "Organization updated successfully."
 
 #: admin/admin_org_bp.py:148
 msgid "Organisaatio luotu onnistuneesti."

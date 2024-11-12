@@ -17,7 +17,9 @@
 
 {% block content %}
 <div class="container">
-    <h1>Hallinnoi viestiä</h1>
+    <h1>{{ _('Hallinnoi pyöröä') }}
+    </h1>
+    <i>{{ _('Pyöröllä tarkoitetaan sivuston yläreunaan ilmestyvää liikkuvaa tekstiä') }}</i>
     
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
@@ -41,14 +43,14 @@
         </div>
         
         <div class="form-group">
-            <label for="text_color">{{ _('Tekstiväri:') }}</label>
+            <label for="text_color">{{ _('Tekstin väri:') }}</label>
             <input type="color" id="text_color" name="text_color" value="#000000" onchange="updatePreview()">
         </div>
         
-        <button type="submit" class="btn btn-primary">{{ _('Päivitä viesti') }}</button>
+        <button type="submit" class="btn btn-primary">{{ _('Tallenna pyörö') }}</button>
     </form>
 
-    <h2>Esikatselu:</h2>
+    <h2>{{ _('Esikatselu:') }}</h2>
     <div id="preview" style="padding: 10px; border: 1px solid #ccc; background-color: #ffffff; color: #000000;">
         {{ current_message }}
     </div>

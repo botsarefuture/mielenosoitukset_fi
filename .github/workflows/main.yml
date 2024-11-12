@@ -31,9 +31,9 @@ jobs:
 
       - name: Compile Translations
         run: |
-          pybabel extract -F babel.cfg -o messages.pot . --verbose
-          pybabel update -i messages.pot -d translations --verbose
-          pybabel compile -d translations --verbose
+          pybabel extract -F babel.cfg -o messages.pot .
+          pybabel update -i messages.pot -d translations
+          pybabel compile -d translations
 
       - name: Commit compiled translations
         run: |

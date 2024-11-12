@@ -715,7 +715,7 @@ msgstr ""
 
 #: templates/submit.html:161
 msgid "Kuvausteksti"
-msgstr ""
+msgstr "Description"
 
 #: templates/submit.html:199
 msgid "pp.kk.vvvv"
@@ -723,7 +723,7 @@ msgstr ""
 
 #: templates/submit.html:205
 msgid "Alkamisaika"
-msgstr ""
+msgstr "Starts at "
 
 #: templates/submit.html:208
 msgid "Päättymisaika"

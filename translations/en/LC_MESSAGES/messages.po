@@ -771,11 +771,11 @@ msgstr "March route (optional)"
 
 #: templates/submit.html:248
 msgid "Reitti..."
-msgstr ""
+msgstr "Route"
 
 #: templates/submit.html:255 templates/submit.html:261
 msgid "Katuosoite"
-msgstr ""
+msgstr "Address"
 
 #: templates/tag_list.html:34
 msgid "Ei löytynyt mielenosoituksia tällä tagilla."

@@ -74,9 +74,11 @@
                 <label for="organizer_email_${organizerCount}_">Sähköposti</label>
                 <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="Täytetään automaattisesti">
                 <label for="organizer_id_${organizerCount}">Organisaation ID</label>
-                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
+                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled">
                 <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
             `;
+            const organizerIdInput = newOrganizer.querySelector(`#organizer_id_${organizerCount}`);
+            organizerIdInput.value = selectedOrgId;
             document.getElementById('organizers-container').appendChild(newOrganizer);
         } else {
             alert('Valitse ensin järjestö!');

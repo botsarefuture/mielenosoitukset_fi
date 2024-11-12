@@ -829,11 +829,11 @@ msgstr "Registered organizations:"
 
 #: templates/admin/stats.html:16
 msgid "Viimeisimmät aktiviteetit"
-msgstr ""
+msgstr "Latest activities"
 
 #: templates/admin/stats.html:22
 msgid "Ei aktiivisuuksia vielä."
-msgstr ""
+msgstr "No activities yet."
 
 #: templates/admin/stats.html:27
 msgid "Palaa hallintapaneeliin"

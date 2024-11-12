@@ -32,12 +32,12 @@ msgstr "Demonstration wasn't found or it hasn't been accepted yet."
 
 #: admin/admin_bp.py:158
 msgid "Marquee message updated successfully!"
-msgstr ""
+msgstr "Marquee message updated successfully!"
 
 #: admin/admin_demo_bp.py:139 admin/admin_demo_bp.py:318
 #: admin/admin_demo_bp.py:346
 msgid "Mielenosoitusta ei löytynyt."
-msgstr ""
+msgstr "Demonstration not found."
 
 #: admin/admin_demo_bp.py:154
 msgid "Muokkaa mielenosoitusta"

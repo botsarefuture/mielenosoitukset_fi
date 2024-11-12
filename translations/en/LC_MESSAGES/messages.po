@@ -703,7 +703,7 @@ msgstr "Email address"
 
 #: templates/submit.html:134 templates/submit.html:140
 msgid "Mielenosoituksen nimi"
-msgstr ""
+msgstr "Title of the demonstrations"
 
 #: templates/submit.html:152
 msgid "Tagit (pilkuilla erotettuna)"

@@ -61,7 +61,7 @@ msgstr "Title, date and city are mandatory to fill."
 
 #: admin/admin_demo_bp.py:307
 msgid "Mielenosoituksen tunniste puuttuu."
-msgstr ""
+msgstr "The demonstration ID is missing."
 
 #: admin/admin_demo_bp.py:328
 msgid "Mielenosoitus poistettu onnistuneesti."

@@ -20,7 +20,7 @@
     <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}" aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ request.args.get('search', '') }}" />
     <input type="text" name="city" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" value="{{ request.args.get('city', '') }}" />
     <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}" value="{{ request.args.get('location', '') }}" />
-    <input type="text" name="date" placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}" aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}" value="{{ request.args.get('date', '') }}" />
+    <input type="text" name="date" placeholder="{{ _('Päivämäärä (pp.kk.vvvv. #122)') }}" aria-label="{{ _('Päivämäärä (pp.kk.vvvv. #122)') }}" value="{{ request.args.get('date', '') }}" />
     <button type="submit">{{ _('Hae') }}</button>
   </form>
   {% endif %}

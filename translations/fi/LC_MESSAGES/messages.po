@@ -350,7 +350,7 @@ msgstr ""
 
 #: templates/list.html:51 templates/list.html:52 templates/submit.html:194
 #: templates/tag_list.html:23
-msgid "Päivämäärä (pp.kk.vvvv)"
+msgid "Päivämäärä (pp.kk.vvvv. #122)"
 msgstr ""
 
 #: templates/list.html:56 templates/tag_list.html:24
@@ -594,7 +594,7 @@ msgid "Kuvausteksti"
 msgstr ""
 
 #: templates/submit.html:199
-msgid "pp.kk.vvvv"
+msgid "pp.kk.vvvv. #122"
 msgstr ""
 
 #: templates/submit.html:205

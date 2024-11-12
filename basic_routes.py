@@ -301,7 +301,7 @@ def init_routes(app):
                 )
             except ValueError:
                 flash_message(
-                    _("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.")
+                    _("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv. #122.")
                 )
                 matches_date = False
 

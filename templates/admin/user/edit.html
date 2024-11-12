@@ -114,13 +114,13 @@
         </div>
 
         <div class="form-group">
-            <label for="email">{{ _('Sähköposti') }}</label>
+            <label for="email">{{ _('Sähköpostiosoite') }}</label>
             <input type="email" id="email" name="email" value="{{ user['email'] }}" required>
         </div>
 
         <!-- Email Confirmation Checkbox -->
         <div class="form-group" id="approval-container">
-            <label for="approved">{{ _('Sähköpostiosoite vahvistettu') }}</label>
+            <label for="approved">{{ _('Onko sähköpostiosoite vahvistettu') }}</label>
             <div>
                 <input type="checkbox" id="approved" name="confirmed" class="form-check-input" {% if user.confirmed %}checked{% endif %}>
                 <span id="approval-status" class="status-text">
@@ -141,7 +141,7 @@
 
         <h3>{{ _('Organisaatiot ja oikeudet') }}</h3>
         <div class="form-group">
-            <input type="text" id="org-search" placeholder="{{ _('Hae organisaatiota...) }}" class="search-input">
+            <input type="text" id="org-search" placeholder="{{ _('Hae organisaatioita...) }}" class="search-input">
         </div>
 
         <div class="organization-list">

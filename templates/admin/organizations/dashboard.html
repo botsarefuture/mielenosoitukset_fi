@@ -84,17 +84,17 @@
 
 <div class="table-container">
 
-    <h2 id="tabletitle">Organisaatiot</h2>
+    <h2 id="tabletitle">{{ _('Organisaatiot') }}</h2>
 
     <div class="flex justify-center mb-4">
-        <a href="{{ url_for('admin_org.create_organization') }}" class="button create-org-button"><i class="fas fa-plus"></i>Uusi organisaatio</a>
+        <a href="{{ url_for('admin_org.create_organization') }}" class="button create-org-button"><i class="fas fa-plus"></i>{{ _('Luo uusi organisaatio') }}</a>
     </div>
 
     <form method="GET" class="search-form" action="{{ url_for('admin_org.organization_control') }}">
-        <label for="search" class="sr-only">Hae organisaatioita:</label>
-        <input type="text" id="search" name="search" class="search-input" placeholder="Hae organisaatioita..." value="{{ search_query }}" aria-label="Search organizations">
+        <label for="search" class="sr-only">{{ _('Hae organisaatioita:') }}</label>
+        <input type="text" id="search" name="search" class="search-input" placeholder="{{ _('Hae organisaatioita...') }}" value="{{ search_query }}" aria-label="Search organizations">
 
-        <button type="submit" class="search-button"><i class="fas fa-search"></i>Hae</button>
+        <button type="submit" class="search-button"><i class="fas fa-search"></i>{{ _('Hae') }}</button>
     </form>
 
     {% if organizations %}
@@ -102,11 +102,11 @@
         <table>
             <thead>
                 <tr>
-                    <th>Nimi</th>
-                    <th>Kuvaus</th>
-                    <th>Sähköposti</th>
-                    <th>Verkkosivu</th>
-                    <th class="actions-cell-header">Toiminnot</th>
+                    <th>{{ _('Nimi') }}</th>
+                    <th>{{ _('Kuvaus') }}</th>
+                    <th>{{ _('Sähköpostiosoite') }}</th>
+                    <th>{{ _('Verkkosivu') }}</th>
+                    <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -117,9 +117,9 @@
                     <td>{{ org.email }}</td>
                     <td><a href="{{ org.website }}" target="_blank" class="link">{{ org.website }}</a></td>
                     <td class="actions-cell">
-                        <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button"><i class="fas fa-edit"></i>Muokkaa</a>
-                        <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button"><i class="fas fa-trash"></i>Poista</a>
-                        <a href="{{ url_for('org', org_id=org._id )}}" class="button view-button"><i class="fa-solid fa-eye"></i>Katsele</a>
+                        <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button"><i class="fas fa-edit"></i>{{ _('Muokkaa') }}</a>
+                        <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button"><i class="fas fa-trash"></i>{{ _('Poista') }}</a>
+                        <a href="{{ url_for('org', org_id=org._id )}}" class="button view-button"><i class="fa-solid fa-eye"></i>{{ _('Katsele') }}</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -128,7 +128,7 @@
     </div>
     {% else %}
     <div class="no-orgs">
-        <p>Organisaatioita ei löytynyt.</p>
+        <p>{{ _('Organisaatioita ei löytynyt.') }}</p>
     </div>
     {% endif %}
 </div>

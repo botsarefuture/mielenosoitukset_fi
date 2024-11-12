@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from bson.objectid import ObjectId
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash_message, jsonify
 from flask_login import current_user, login_required
 
 from classes import Demonstration, Organizer
@@ -9,6 +9,7 @@ from utils.variables import CITY_LIST
 from wrappers import admin_required, permission_required
 from .utils import mongo
 from utils.admin.demonstration import collect_tags
+from gettext import gettext as _
 
 
 # Blueprint setup
@@ -135,7 +136,7 @@ def edit_demo(demo_id):
     # Fetch demonstration data by ID
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash("Mielenosoitusta ei löytynyt.", "error")
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_control"))
 
     if request.method == "POST":
@@ -150,8 +151,8 @@ def edit_demo(demo_id):
         "admin/demonstrations/form.html",
         demo=demonstration,
         form_action=url_for("admin_demo.edit_demo", demo_id=demo_id),
-        title="Muokkaa mielenosoitusta",
-        submit_button_text="Vahvista muokkaus",
+        title=_("Muokkaa mielenosoitusta"),
+        submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
         all_organizations=mongo.organizations.find(),
     )
@@ -178,17 +179,17 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             mongo.demonstrations.update_one(
                 {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
-            flash("Mielenosoitus päivitetty onnistuneesti.", "success")
+            flash_message(_("Mielenosoitus päivitetty onnistuneesti."), "success")
         else:
             # Insert a new demonstration
             mongo.demonstrations.insert_one(demonstration_data)
-            flash("Mielenosoitus luotu onnistuneesti.", "success")
+            flash_message(_("Mielenosoitus luotu onnistuneesti."), "success")
 
         # Redirect to the demonstration control panel on success
         return redirect(url_for("admin_demo.demo_control"))
 
     except ValueError as e:
-        flash(f"Virhe: {str(e)}", "error")
+        flash_message(f"Virhe: {str(e)}", "error")
 
         # Redirect to the edit or create form based on operation type
         return redirect(
@@ -224,7 +225,7 @@ def collect_demo_data(request):
 
     # Validate required fields
     if not title or not date or not city:
-        raise ValueError("Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä.")
+        raise ValueError(_("Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."))
 
     # Process organizers and tags
     organizers = collect_organizers(request)
@@ -303,7 +304,7 @@ def delete_demo():
     )
 
     if not demo_id:
-        error_message = "Mielenosoituksen tunniste puuttuu."
+        error_message = _("Mielenosoituksen tunniste puuttuu.")
         return (
             jsonify({"status": "ERROR", "message": error_message})
             if json_mode
@@ -314,21 +315,21 @@ def delete_demo():
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        error_message = "Mielenosoitusta ei löytynyt."
+        error_message = _("Mielenosoitusta ei löytynyt.")
         if json_mode:
             return jsonify({"status": "ERROR", "message": error_message})
         else:
-            flash(error_message)
+            flash_message(error_message)
             return redirect(url_for("admin_demo.demo_control"))
 
     # Perform deletion
     mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
 
-    success_message = "Mielenosoitus poistettu onnistuneesti."
+    success_message = _("Mielenosoitus poistettu onnistuneesti.")
     if json_mode:
         return jsonify({"status": "OK", "message": success_message})
     else:
-        flash(success_message)
+        flash_message(success_message)
         return redirect(url_for("admin_demo.demo_control"))
 
 
@@ -342,7 +343,7 @@ def confirm_delete_demo(demo_id):
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash("Mielenosoitusta ei löytynyt.")
+        flash_message(_("Mielenosoitusta ei löytynyt."))
         return redirect(url_for("admin_demo.demo_control"))
 
     # Create a Demonstration instance from the fetched data
@@ -378,7 +379,7 @@ def accept_demo(demo_id):
     # Validate that the demo ID exists
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        return jsonify({"status": "ERROR", "message": "Demonstration not found."}), 404
+        return jsonify({"status": "ERROR", "message": "Demonstration not found."}), 404 # FIXME: Default in Finnish, then use '_' function to translate into english
 
     demo = Demonstration.from_dict(demo_data)
 

@@ -7,7 +7,7 @@ import warnings
 from bson.objectid import ObjectId
 from flask import (
     Blueprint,
-    flash,
+    flash_message,
     redirect,
     render_template,
     request,
@@ -155,7 +155,7 @@ def manage_marquee():
         with open(config_file, "w") as f:
             json.dump(marquee_config, f, indent=4)
 
-        flash("Marquee message updated successfully!", "success")
+        flash_message(_("Marquee message updated successfully!")success)
         logger.info("Marquee message updated to: %s", new_message)
 
         return redirect(url_for("admin.manage_marquee"))

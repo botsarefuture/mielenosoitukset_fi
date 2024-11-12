@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash_message
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from wrappers import admin_required, permission_required
 from utils.validators import valid_email
 from .utils import mongo, log_admin_action
+from gettext import gettext as _
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
@@ -74,7 +75,7 @@ def edit_organization(org_id):
             log_admin_action(
                 current_user, "Update Organization", f"Updated organization {org_id}"
             )
-            flash("Organisaatio päivitetty onnistuneesti.")
+            flash_message(_("Organisaatio päivitetty onnistuneesti."))
             return redirect(url_for("admin_org.organization_control"))
 
     return render_template("admin/organizations/form.html", organization=organization)
@@ -118,11 +119,11 @@ def validate_organization_fields(name, email, org_id):
     - Modified code to use valid_email instead of depraced is_valid_email.
     """
     if not name or not email:
-        flash("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
+        flash_message("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
         return False
 
     if not valid_email(email):
-        flash("Virheellinen sähköpostiosoite.", "error")
+        flash_message("Virheellinen sähköpostiosoite.", "error")
         return False
 
     return True
@@ -144,7 +145,7 @@ def create_organization():
     """Create a new organization."""
     if request.method == "POST":
         if insert_organization():
-            flash("Organisaatio luotu onnistuneesti.")
+            flash_message(_("Organisaatio luotu onnistuneesti."))
             return redirect(url_for("admin_org.organization_control"))
 
     return render_template("admin/organizations/form.html")
@@ -188,18 +189,18 @@ def delete_organization(org_id):
         log_admin_action(
             current_user, "Delete Organization", f"Failed to find organization {org_id}"
         )
-        flash("Organisatiota ei löytynyt.", "error")
+        flash_message("Organisatiota ei löytynyt.", "error")
         return redirect(url_for("admin_org.organization_control"))
 
     if "confirm_delete" in request.form:
         mongo.organizations.delete_one({"_id": ObjectId(org_id)})
-        flash("Organisaatio poistettu onnistuneesti.")
+        flash_message(_("Organisaatio poistettu onnistuneesti."))
         log_admin_action(
             current_user, "Delete Organization", f"Deleted organization {org_id}"
         )
 
     else:
-        flash("Organisaation poistoa ei vahvistettu.", "warning")
+        flash_message("Organisaation poistoa ei vahvistettu.", "warning")
 
     return redirect(url_for("admin_org.organization_control"))
 
@@ -214,7 +215,7 @@ def confirm_delete_organization(org_id):
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
-        flash("Organisaatiota ei löytynyt.", "error")
+        flash_message("Organisaatiota ei löytynyt.", "error")
 
         return redirect(url_for("admin_org.organization_control"))
 

@@ -101,7 +101,7 @@ msgstr "Recurring demonstration removed successfully."
 
 #: admin/admin_recu_demo_bp.py:200
 msgid "Et vahvistanut toistuvan mielenosoituksen poistoa."
-msgstr ""
+msgstr "You didn't confirm removation of recurring demonstration."
 
 #: auth/routes.py:136
 msgid "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."

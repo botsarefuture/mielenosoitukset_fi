@@ -105,7 +105,7 @@ msgstr "You didn't confirm removation of recurring demonstration."
 
 #: auth/routes.py:136
 msgid "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
-msgstr ""
+msgstr "Your email hasn't been verified. Check your email inbox."
 
 #: templates/base.html:69
 msgid "Kaikki oikeudet pidätetään."

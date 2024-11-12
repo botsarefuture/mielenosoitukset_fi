@@ -787,11 +787,11 @@ msgstr "Show all tags"
 
 #: templates/admin/dashboard.html:33
 msgid "Hallintatyökalut"
-msgstr ""
+msgstr "Management tools"
 
 #: templates/admin/dashboard.html:38
 msgid "Huomio"
-msgstr ""
+msgstr "HOX!"
 
 #: templates/admin/dashboard.html:39
 msgid ""

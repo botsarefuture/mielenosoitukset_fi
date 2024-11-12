@@ -24,7 +24,7 @@ msgstr ""
 
 #: basic_routes.py:302
 msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
-msgstr ""
+msgstr "Incorrect date format. Please use the format dd.mm.yyyy."
 
 #: basic_routes.py:323
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."

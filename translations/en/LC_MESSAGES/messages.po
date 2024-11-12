@@ -837,4 +837,4 @@ msgstr "No activities yet."
 
 #: templates/admin/stats.html:27
 msgid "Palaa hallintapaneeliin"
-msgstr ""
+msgstr "Back to control panel"

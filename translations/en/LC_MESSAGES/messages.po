@@ -817,7 +817,7 @@ msgstr "Registered users:"
 
 #: templates/admin/stats.html:10
 msgid "Sähköpostiosoitteensa vahvistaneet käyttäjät:"
-msgstr ""
+msgstr "Users who have verified their email address:"
 
 #: templates/admin/stats.html:12
 msgid "Organisaatiot"

@@ -31,7 +31,7 @@
     
     <form method="POST" action="{{ url_for('admin.manage_marquee') }}">
         <div class="form-group">
-            <label for="marquee_message">Nykyinen viesti:</label>
+            <label for="marquee_message"> {{ _('Nykyinen viesti:') }}</label>
             <textarea id="marquee_message" name="marquee_message" rows="4" class="form-control" oninput="updatePreview()">{{ current_message }}</textarea>
         </div>
         

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-12 15:42+0000\n"
+"POT-Creation-Date: 2024-11-12 21:21+0000\n"
 "PO-Revision-Date: 2024-11-11 09:34+0000\n"
 "Last-Translator: Verso, 2024\n"
 "Language: en\n"
@@ -40,6 +40,7 @@ msgid "Muokkaa mielenosoitusta"
 msgstr "Edit demonstration"
 
 #: admin/admin_demo_bp.py:155 auth/templates/edit_profile.html:47
+#: templates/admin/organizations/form.html:230
 msgid "Tallenna muutokset"
 msgstr "Save changes"
 
@@ -100,7 +101,7 @@ msgid "Esittelyteksti:"
 msgstr ""
 
 #: auth/templates/login.html:7 auth/templates/login.html:19
-#: templates/header.html:318
+#: templates/header.html:326
 msgid "Kirjaudu sisään"
 msgstr "Sign in"
 
@@ -144,7 +145,10 @@ msgid ""
 "sähköpostitse."
 msgstr ""
 
-#: auth/templates/password_reset_request.html:11 templates/submit.html:102
+#: auth/templates/password_reset_request.html:11
+#: templates/admin/organizations/dashboard.html:107
+#: templates/admin/organizations/form.html:203
+#: templates/admin/user/list.html:107 templates/submit.html:102
 msgid "Sähköpostiosoite"
 msgstr "Email address"
 
@@ -164,7 +168,9 @@ msgstr ""
 msgid "Järjestelmävalvoja"
 msgstr ""
 
-#: auth/templates/profile.html:41 templates/admin/stats.html:12
+#: auth/templates/profile.html:41
+#: templates/admin/organizations/dashboard.html:87
+#: templates/admin/stats.html:12
 msgid "Organisaatiot"
 msgstr "Organizations"
 
@@ -188,7 +194,7 @@ msgstr ""
 msgid "Käyttäjätunnus"
 msgstr ""
 
-#: auth/templates/register.html:17
+#: auth/templates/register.html:17 templates/admin/demonstrations/form.html:83
 msgid "Sähköposti"
 msgstr ""
 
@@ -281,15 +287,18 @@ msgstr "Submit"
 msgid "Hyväksy"
 msgstr "Accept"
 
-#: templates/detail.html:418
+#: templates/admin/organizations/dashboard.html:120
+#: templates/admin/user/list.html:121 templates/detail.html:418
 msgid "Muokkaa"
 msgstr "Edit"
 
-#: templates/detail.html:425
+#: templates/admin/organizations/dashboard.html:122 templates/detail.html:425
 msgid "Katsele"
 msgstr "View"
 
-#: templates/detail.html:432
+#: templates/admin/demonstrations/form.html:87
+#: templates/admin/organizations/dashboard.html:121
+#: templates/admin/user/list.html:124 templates/detail.html:432
 msgid "Poista"
 msgstr "Remove"
 
@@ -361,7 +370,7 @@ msgstr "Mielenosoitukset.fi"
 msgid "Verkkosivut:"
 msgstr "Website"
 
-#: templates/detail.html:632
+#: templates/admin/user/confirm.html:9 templates/detail.html:632
 #, fuzzy
 msgid "Sähköpostiosoite:"
 msgstr "Email address"
@@ -392,60 +401,60 @@ msgstr ""
 msgid "Facebook-tapahtuma"
 msgstr "Facebook-eventlink (optional)"
 
-#: templates/header.html:259
+#: templates/header.html:267
 msgid "Mielenosoitukset.fi"
 msgstr "Mielenosoitukset.fi"
 
-#: templates/header.html:262
+#: templates/header.html:270
 msgid "Avaa valikko"
 msgstr "Open a menu"
 
-#: templates/header.html:268
+#: templates/header.html:276
 msgid "Etusivu"
 msgstr "Frontpage"
 
-#: templates/header.html:269
+#: templates/header.html:277
 msgid "Mielenosoitukset"
 msgstr "Demonstrations"
 
-#: templates/header.html:271 templates/index.html:49 templates/submit.html:3
+#: templates/header.html:279 templates/index.html:49 templates/submit.html:3
 #: templates/submit.html:124
 msgid "Ilmoita mielenosoituksesta"
 msgstr "Submit a demonstration"
 
-#: templates/header.html:278
+#: templates/header.html:286
 msgid "Superkäyttäjän käsikirja"
 msgstr "Super-user's handbook"
 
-#: templates/header.html:281
+#: templates/header.html:289
 msgid "Käyttäjien hallinta"
 msgstr "Manage users"
 
-#: templates/header.html:284
+#: templates/header.html:292
 msgid "Organisaatioiden hallinta"
 msgstr "Manage organizations"
 
-#: templates/header.html:287
+#: templates/header.html:295
 msgid "Mielenosoitusten hallinta"
 msgstr "Manage demonstrations"
 
-#: templates/header.html:290
+#: templates/header.html:298
 msgid "Toistuvien mielenosoitusten hallinta"
 msgstr "Manage recurring demonstrations"
 
-#: templates/admin/stats.html:4 templates/header.html:293
+#: templates/admin/stats.html:4 templates/header.html:301
 msgid "Tilastot"
 msgstr "Stats"
 
-#: templates/header.html:303
+#: templates/header.html:311
 msgid "Profiilikuva"
 msgstr "Profile picture"
 
-#: templates/header.html:312
+#: templates/header.html:320
 msgid "Profiili"
 msgstr "Profile"
 
-#: templates/header.html:313
+#: templates/header.html:321
 msgid "Kirjaudu ulos"
 msgstr "Sign out"
 
@@ -625,7 +634,8 @@ msgstr "Location"
 msgid "Päivämäärä (pp.kk.vvvv)"
 msgstr "Date (pp.kk.vvvv)"
 
-#: templates/list.html:56 templates/tag_list.html:24
+#: templates/admin/organizations/dashboard.html:97 templates/list.html:56
+#: templates/tag_list.html:24
 msgid "Hae"
 msgstr "Search"
 
@@ -844,7 +854,9 @@ msgstr ""
 msgid "Järjestäjätahon..."
 msgstr "Organizers"
 
-#: templates/submit.html:96
+#: templates/admin/organizations/dashboard.html:105
+#: templates/admin/organizations/form.html:193
+#: templates/admin/user/list.html:106 templates/submit.html:96
 msgid "Nimi"
 msgstr "Name"
 
@@ -959,28 +971,30 @@ msgstr ""
 "rights."
 
 #: templates/admin/manage_marquee.html:20
-msgid "Hallinnoi pyöröä"
+msgid "Pyörörullan hallinta"
 msgstr ""
 
 #: templates/admin/manage_marquee.html:22
-msgid "Pyöröllä tarkoitetaan sivuston yläreunaan ilmestyvää liikkuvaa tekstiä"
+msgid ""
+"Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, "
+"jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen."
 msgstr ""
 
 #: templates/admin/manage_marquee.html:36
 #, fuzzy
-msgid "Nykyinen viesti:"
+msgid "Nykyinen pyörö:"
 msgstr "Message:"
 
 #: templates/admin/manage_marquee.html:41
-msgid "Taustaväri:"
+msgid "Pyörön taustaväri:"
 msgstr ""
 
 #: templates/admin/manage_marquee.html:46
-msgid "Tekstin väri:"
+msgid "Pyörön tekstin väri:"
 msgstr ""
 
 #: templates/admin/manage_marquee.html:50
-msgid "Tallenna pyörö"
+msgid "Tallenna pyörörulla"
 msgstr ""
 
 #: templates/admin/manage_marquee.html:53
@@ -1019,4 +1033,142 @@ msgstr "No activities yet."
 #: templates/admin/stats.html:27
 msgid "Palaa hallintapaneeliin"
 msgstr "Back to control panel"
+
+#: templates/admin/demonstrations/form.html:79
+#, fuzzy
+msgid "Järjestäjätahon nimi"
+msgstr "Organizers name"
+
+#: templates/admin/demonstrations/form.html:80
+#: templates/admin/demonstrations/form.html:82
+#: templates/admin/demonstrations/form.html:84
+msgid "Täytetään automaattisesti"
+msgstr ""
+
+#: templates/admin/demonstrations/form.html:81
+#, fuzzy
+msgid "Nettisivu"
+msgstr "Frontpage"
+
+#: templates/admin/demonstrations/form.html:85
+#, fuzzy
+msgid "Organisaation ID"
+msgstr "Organizations"
+
+#: templates/admin/organizations/dashboard.html:90
+#, fuzzy
+msgid "Luo uusi organisaatio"
+msgstr "Organizations"
+
+#: templates/admin/organizations/dashboard.html:94
+#, fuzzy
+msgid "Hae organisaatioita:"
+msgstr "Organizations"
+
+#: templates/admin/organizations/dashboard.html:95
+#, fuzzy
+msgid "Hae organisaatioita..."
+msgstr "Organizations"
+
+#: templates/admin/organizations/dashboard.html:106
+#: templates/admin/organizations/form.html:198
+#, fuzzy
+msgid "Kuvaus"
+msgstr "Description"
+
+#: templates/admin/organizations/dashboard.html:108
+#: templates/admin/organizations/form.html:208
+#, fuzzy
+msgid "Verkkosivu"
+msgstr "Website"
+
+#: templates/admin/organizations/dashboard.html:109
+#: templates/admin/user/list.html:109
+msgid "Toiminnot"
+msgstr ""
+
+#: templates/admin/organizations/dashboard.html:131
+#, fuzzy
+msgid "Organisaatioita ei löytynyt."
+msgstr "Demonstration not found."
+
+#: templates/admin/organizations/form.html:189
+#, fuzzy
+msgid "Muokkaa organisaatiota"
+msgstr "Organizations"
+
+#: templates/admin/organizations/form.html:189
+#, fuzzy
+msgid "Uusi organisaatio"
+msgstr "Organizations"
+
+#: templates/admin/organizations/form.html:214
+#, fuzzy
+msgid "Onko organisaatio vahvistettu?"
+msgstr "Organizations"
+
+#: templates/admin/organizations/form.html:221
+msgid "Sosiaalinen media"
+msgstr ""
+
+#: templates/admin/organizations/form.html:225
+msgid "Lisää sosiaalisen median alusta"
+msgstr ""
+
+#: templates/admin/organizations/form.html:230
+msgid "Luo"
+msgstr ""
+
+#: templates/admin/organizations/form.html:232
+msgid "Peruuta"
+msgstr ""
+
+#: templates/admin/user/confirm.html:7
+msgid "Haluatko varmasti poistaa tämän käyttäjän?"
+msgstr ""
+
+#: templates/admin/user/confirm.html:8
+#, fuzzy
+msgid "Käyttäjänimi:"
+msgstr "User activity"
+
+#: templates/admin/user/confirm.html:10
+msgid "Rooli:"
+msgstr ""
+
+#: templates/admin/user/confirm.html:14
+msgid "Kyllä, poista käyttäjä"
+msgstr ""
+
+#: templates/admin/user/confirm.html:15
+msgid "Peruuta poistaminen"
+msgstr ""
+
+#: templates/admin/user/list.html:108
+#, fuzzy
+msgid "Rooli"
+msgstr "Profile"
+
+#: templates/admin/user/list.html:127
+msgid "Ei riittäviä oikeuksia."
+msgstr ""
+
+#: templates/admin/user/list.html:136
+msgid "Käyttäjiä ei löytynyt."
+msgstr ""
+
+#~ msgid "Hallinnoi pyöröä"
+#~ msgstr ""
+
+#~ msgid "Pyöröllä tarkoitetaan sivuston yläreunaan ilmestyvää liikkuvaa tekstiä"
+#~ msgstr ""
+
+#~ msgid "Taustaväri:"
+#~ msgstr ""
+
+#~ msgid "Tekstin väri:"
+#~ msgstr ""
+
+#~ msgid "Tallenna pyörö"
+#~ msgstr ""
 

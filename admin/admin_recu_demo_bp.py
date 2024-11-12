@@ -3,6 +3,7 @@ from datetime import datetime, date
 from bson.objectid import ObjectId
 from flask import Blueprint, render_template, request, redirect, url_for, flash_message
 from flask_login import login_required
+from utils.flashing import flash_message
 
 from classes import RecurringDemonstration, Organizer
 from utils.variables import CITY_LIST
@@ -88,7 +89,7 @@ def edit_recu_demo(demo_id):
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash_message(_("Toistuvaa mielenosoitusta ei löytynyt."))
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     if request.method == "POST":
@@ -162,10 +163,10 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             mongo.recu_demos.update_one(
                 {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
-            flash_message(_("Toistuva mielenosoitus päivitetty onnistuneesti."))
+            flash_message("Toistuva mielenosoitus päivitetty onnistuneesti.")
         else:
             mongo.recu_demos.insert_one(demonstration_data)
-            flash_message(_("Toistuva mielenosoitus luotu onnistuneesti."))
+            flash_message("Toistuva mielenosoitus luotu onnistuneesti.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         flash_message(f"Virhe: {str(e)}")
@@ -190,14 +191,14 @@ def delete_recu_demo(demo_id):
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash_message(_("Toistuva mielenosoitus ei löytynyt."))
+        flash_message("Toistuva mielenosoitus ei löytynyt.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     if "confirm_delete" in request.form:
         mongo.recu_demos.delete_one({"_id": ObjectId(demo_id)})
-        flash_message(_("Toistuva mielenosoitus poistettu onnistuneesti."))
+        flash_message("Toistuva mielenosoitus poistettu onnistuneesti.")
     else:
-        flash_message(_("Et vahvistanut toistuvan mielenosoituksen poistoa."))
+        flash_message("Et vahvistanut toistuvan mielenosoituksen poistoa.")
 
     return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
@@ -217,7 +218,7 @@ def confirm_delete_recu_demo(demo_id):
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash_message(_("Toistuvaa mielenosoitusta ei löytynyt."))
+        flash_message('Toistuvaa mielenosoitusta ei löytynyt.')
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)

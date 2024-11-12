@@ -155,7 +155,7 @@ def manage_marquee():
         with open(config_file, "w") as f:
             json.dump(marquee_config, f, indent=4)
 
-        flash_message(_("Marquee message updated successfully!")success)
+        flash_message("Marquee message updated successfully!", 'success')
         logger.info("Marquee message updated to: %s", new_message)
 
         return redirect(url_for("admin.manage_marquee"))

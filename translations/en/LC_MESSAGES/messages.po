@@ -759,15 +759,15 @@ msgstr "Stay still"
 
 #: templates/submit.html:242
 msgid "Marssi"
-msgstr ""
+msgstr "March"
 
 #: templates/submit.html:243
 msgid "Muut"
-msgstr ""
+msgstr "Others"
 
 #: templates/submit.html:247
 msgid "Reitti (vain marssille, valinnainen)"
-msgstr ""
+msgstr "March route (optional)"
 
 #: templates/submit.html:248
 msgid "Reitti..."

@@ -92,7 +92,7 @@
 
     <form method="GET" class="search-form" action="{{ url_for('admin_org.organization_control') }}">
         <label for="search" class="sr-only">{{ _('Hae organisaatioita:') }}</label>
-        <input type="text" id="search" name="search" class="search-input" placeholder="{{ _('Hae organisaatioita...') }}" value="{{ search_query }}" aria-label="Search organizations">
+        <input type="text" id="search" name="search" class="search-input" placeholder="{{ _('Hae organisaatioita...') }}" value="{{ search_query }}" aria-label="{{ _('Hae organisaatioita') }}">
 
         <button type="submit" class="search-button"><i class="fas fa-search"></i>{{ _('Hae') }}</button>
     </form>

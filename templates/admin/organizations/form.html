@@ -84,7 +84,7 @@
         const dropdown = document.createElement('div');
         dropdown.classList.add('custom-dropdown');
         dropdown.innerHTML = `
-            <div class="dropdown-selected" onclick="toggleDropdown(this)">Valitse sosiaalisen median alusta <i class="fas fa-caret-down"></i></div>
+            <div class="dropdown-selected" onclick="toggleDropdown(this)">{{ _('Valitse sosiaalisen median alusta') }} <i class="fas fa-caret-down"></i></div>
             <div class="dropdown-list">
                 <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
                 <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
@@ -104,7 +104,7 @@
         const urlInput = document.createElement('input');
         urlInput.type = 'url';
         urlInput.name = 'social_media_url[]';  // Array notation for URLs
-        urlInput.placeholder = 'Syötä URL';
+        urlInput.placeholder = "{{ _('Syötä URL') }}";
         urlInput.className = 'form-control';
         urlInput.value = url;
 

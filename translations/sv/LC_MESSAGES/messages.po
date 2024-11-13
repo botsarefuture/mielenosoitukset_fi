@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-13 10:07+0200\n"
+"POT-Creation-Date: 2024-11-13 10:17+0200\n"
 "PO-Revision-Date: 2024-11-11 10:33+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: sv\n"
@@ -230,7 +230,8 @@ msgid ""
 "seuraavilla tavoilla:"
 msgstr ""
 
-#: templates/contact.html:17 templates/info.html:126 templates/privacy.html:11
+#: templates/contact.html:17 templates/info.html:126
+#: templates/organizations/details.html:25 templates/privacy.html:11
 msgid "Yhteystiedot"
 msgstr ""
 
@@ -276,6 +277,10 @@ msgstr ""
 
 #: templates/contact.html:42 templates/submit.html:265
 msgid "Lähetä"
+msgstr ""
+
+#: templates/detail.html:401
+msgid "Työkalupakki"
 msgstr ""
 
 #: templates/admin/demonstrations/dashboard.html:291 templates/detail.html:411
@@ -475,11 +480,11 @@ msgstr ""
 msgid "Suosittelemme"
 msgstr ""
 
-#: templates/index.html:95
+#: templates/index.html:95 templates/organizations/details.html:76
 msgid "Esitellyt mielenosoitukset"
 msgstr ""
 
-#: templates/index.html:100
+#: templates/index.html:100 templates/organizations/details.html:81
 msgid "Ei mielenosoituksia näytettäväksi."
 msgstr ""
 
@@ -1280,6 +1285,7 @@ msgid "Onko organisaatio vahvistettu?"
 msgstr ""
 
 #: templates/admin/organizations/form.html:221
+#: templates/organizations/details.html:41
 msgid "Sosiaalinen media"
 msgstr ""
 
@@ -1317,6 +1323,10 @@ msgstr ""
 
 #: templates/admin/user/list.html:136
 msgid "Käyttäjiä ei löytynyt."
+msgstr ""
+
+#: templates/organizations/details.html:2
+msgid "Tiedot"
 msgstr ""
 
 #~ msgid "Hallinnoi pyöröä"

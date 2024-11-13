@@ -169,9 +169,9 @@
   <h2 id="tabletitle">{{ _('Mielenosoitukset') }}</h2>
 
   <div class="flex justify-center mb-4">
-    {% if current_user.can_use("CREATE_DEMO") or
-    current_user.can_use("CREATE_RECURRING_DEMO") %} {% if
-    current_user.can_use("CREATE_DEMO") %}
+    {% if current_user.has_permission("CREATE_DEMO") or
+    current_user.has_permission("CREATE_RECURRING_DEMO") %} {% if
+    current_user.has_permission("CREATE_DEMO") %}
     <a
       href="{{ url_for('admin_demo.create_demo') }}"
       class="button create-demo-button"
@@ -181,7 +181,7 @@
     <div class="insuffient-perm" style="color: #ccc">
       {{ _('Sinulla ei ole oikeutta luoda uusia mielenosoituksia.') }}
     </div>
-    {% endif %} {% if current_user.can_use("CREATE_RECURRING_DEMO") %}
+    {% endif %} {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
     <a
       href="{{ url_for('admin_recu_demo.create_recu_demo') }}"
       class="button create-demo-button"
@@ -281,7 +281,7 @@
           <td>{{ _('Kyllä') if demo.approved else _('Ei') }}</td>
           <td class="actions-cell">
             <!-- Check if the user has permission to accept the demo -->
-            {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
+            {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
             <button
               style="width: 132px; background: green"
               type="button"
@@ -290,7 +290,7 @@
             >
               <i class="fa-solid fa-check"></i>{{ _('Hyväksy') }}
             </button>
-            {% elif not current_user.can_use("ACCEPT_DEMO") and not
+            {% elif not current_user.has_permission("ACCEPT_DEMO") and not
             demo.approved %}
             <div class="insuffient-perm" style="color: white">
               {{ _('Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.') }}
@@ -298,7 +298,7 @@
             {% endif %}
 
             <!-- Check if the user has permission to edit the demo -->
-            {% if current_user.can_use("EDIT_DEMO") %}
+            {% if current_user.has_permission("EDIT_DEMO") %}
             <a
               href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"
               class="button edit-button"
@@ -311,7 +311,7 @@
             {% endif %}
 
             <!-- Check if the user has permission to view the demo -->
-            {% if current_user.can_use("VIEW_DEMO") %}
+            {% if current_user.has_permission("VIEW_DEMO") %}
             <a
               href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"
               class="button view-button"
@@ -325,7 +325,7 @@
             {% endif %}
 
             <!-- Check if the user has permission to delete the demo -->
-            {% if current_user.can_use("DELETE_DEMO") %}
+            {% if current_user.has_permission("DELETE_DEMO") %}
             <button
               style="width: 132px !important"
               type="button"

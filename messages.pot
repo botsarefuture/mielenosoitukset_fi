@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-13 10:21+0200\n"
+"POT-Creation-Date: 2024-11-13 16:42+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,57 +17,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: basic_routes.py:300
+#: basic_routes.py:295
 msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
 msgstr ""
 
-#: basic_routes.py:321
+#: basic_routes.py:318
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
 msgstr ""
 
-#: admin/admin_demo_bp.py:139 admin/admin_demo_bp.py:318
-#: admin/admin_demo_bp.py:346
-msgid "Mielenosoitusta ei löytynyt."
-msgstr ""
-
-#: admin/admin_demo_bp.py:154
+#: admin/admin_demo_bp.py:165
 msgid "Muokkaa mielenosoitusta"
 msgstr ""
 
-#: admin/admin_demo_bp.py:155 auth/templates/edit_profile.html:47
-#: templates/admin/organizations/form.html:230
+#: admin/admin_demo_bp.py:166 auth/templates/edit_profile.html:47
+#: templates/admin/organizations/form.html:259
+#: templates/admin/user/edit.html:213
 msgid "Tallenna muutokset"
 msgstr ""
 
-#: admin/admin_demo_bp.py:182
-msgid "Mielenosoitus päivitetty onnistuneesti."
-msgstr ""
-
-#: admin/admin_demo_bp.py:186
-msgid "Mielenosoitus luotu onnistuneesti."
-msgstr ""
-
-#: admin/admin_demo_bp.py:228
+#: admin/admin_demo_bp.py:239
 msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."
 msgstr ""
 
-#: admin/admin_demo_bp.py:307
-msgid "Mielenosoituksen tunniste puuttuu."
-msgstr ""
-
-#: admin/admin_demo_bp.py:328
-msgid "Mielenosoitus poistettu onnistuneesti."
-msgstr ""
-
-#: admin/admin_org_bp.py:79
+#: admin/admin_org_bp.py:93
 msgid "Organisaatio päivitetty onnistuneesti."
 msgstr ""
 
-#: admin/admin_org_bp.py:149
-msgid "Organisaatio luotu onnistuneesti."
-msgstr ""
-
-#: admin/admin_org_bp.py:198
+#: admin/admin_org_bp.py:224
 msgid "Organisaatio poistettu onnistuneesti."
 msgstr ""
 
@@ -96,7 +72,7 @@ msgstr ""
 msgid "Kirjaudu sisään"
 msgstr ""
 
-#: auth/templates/login.html:10
+#: auth/templates/login.html:10 templates/admin/user/edit.html:112
 msgid "Käyttäjänimi"
 msgstr ""
 
@@ -138,8 +114,9 @@ msgstr ""
 
 #: auth/templates/password_reset_request.html:11
 #: templates/admin/organizations/dashboard.html:107
-#: templates/admin/organizations/form.html:203
-#: templates/admin/user/list.html:107 templates/submit.html:102
+#: templates/admin/organizations/form.html:232
+#: templates/admin/user/edit.html:117 templates/admin/user/list.html:107
+#: templates/submit.html:102
 msgid "Sähköpostiosoite"
 msgstr ""
 
@@ -814,7 +791,7 @@ msgid "Järjestäjätahon..."
 msgstr ""
 
 #: templates/admin/organizations/dashboard.html:105
-#: templates/admin/organizations/form.html:193
+#: templates/admin/organizations/form.html:222
 #: templates/admin/user/list.html:106 templates/submit.html:96
 msgid "Nimi"
 msgstr ""
@@ -1014,7 +991,7 @@ msgstr ""
 #: templates/admin/demonstrations/confirm_delete.html:14
 #: templates/admin/demonstrations/dashboard.html:367
 #: templates/admin/organizations/confirm_delete.html:11
-#: templates/admin/organizations/form.html:232
+#: templates/admin/organizations/form.html:261
 msgid "Peruuta"
 msgstr ""
 
@@ -1024,6 +1001,7 @@ msgstr ""
 #: templates/admin/demonstrations/dashboard.html:280
 #: templates/admin/demonstrations/dashboard.html:281
 #: templates/admin/demonstrations/form.html:260
+#: templates/admin/user/edit.html:127
 msgid "Kyllä"
 msgstr ""
 
@@ -1085,6 +1063,7 @@ msgstr ""
 #: templates/admin/demonstrations/dashboard.html:280
 #: templates/admin/demonstrations/dashboard.html:281
 #: templates/admin/demonstrations/form.html:260
+#: templates/admin/user/edit.html:127
 msgid "Ei"
 msgstr ""
 
@@ -1238,6 +1217,7 @@ msgid "Hae organisaatioita:"
 msgstr ""
 
 #: templates/admin/organizations/dashboard.html:95
+#: templates/admin/user/edit.html:144
 msgid "Hae organisaatioita..."
 msgstr ""
 
@@ -1246,12 +1226,12 @@ msgid "Hae organisaatioita"
 msgstr ""
 
 #: templates/admin/organizations/dashboard.html:106
-#: templates/admin/organizations/form.html:198
+#: templates/admin/organizations/form.html:227
 msgid "Kuvaus"
 msgstr ""
 
 #: templates/admin/organizations/dashboard.html:108
-#: templates/admin/organizations/form.html:208
+#: templates/admin/organizations/form.html:237
 msgid "Verkkosivu"
 msgstr ""
 
@@ -1259,36 +1239,44 @@ msgstr ""
 msgid "Organisaatioita ei löytynyt."
 msgstr ""
 
-#: templates/admin/organizations/form.html:87
+#: templates/admin/organizations/dashboard.html:138
+msgid "Kutsu henkilö"
+msgstr ""
+
+#: templates/admin/organizations/dashboard.html:139
+msgid "Hallitse rooleja"
+msgstr ""
+
+#: templates/admin/organizations/form.html:116
 msgid "Valitse sosiaalisen median alusta"
 msgstr ""
 
-#: templates/admin/organizations/form.html:107
+#: templates/admin/organizations/form.html:136
 msgid "Syötä URL"
 msgstr ""
 
-#: templates/admin/organizations/form.html:189
+#: templates/admin/organizations/form.html:218
 msgid "Muokkaa organisaatiota"
 msgstr ""
 
-#: templates/admin/organizations/form.html:189
+#: templates/admin/organizations/form.html:218
 msgid "Uusi organisaatio"
 msgstr ""
 
-#: templates/admin/organizations/form.html:214
+#: templates/admin/organizations/form.html:243
 msgid "Onko organisaatio vahvistettu?"
 msgstr ""
 
-#: templates/admin/organizations/form.html:221
+#: templates/admin/organizations/form.html:250
 #: templates/organizations/details.html:41
 msgid "Sosiaalinen media"
 msgstr ""
 
-#: templates/admin/organizations/form.html:225
+#: templates/admin/organizations/form.html:254
 msgid "Lisää sosiaalisen median alusta"
 msgstr ""
 
-#: templates/admin/organizations/form.html:230
+#: templates/admin/organizations/form.html:259
 msgid "Luo"
 msgstr ""
 
@@ -1312,8 +1300,47 @@ msgstr ""
 msgid "Peruuta poistaminen"
 msgstr ""
 
-#: templates/admin/user/list.html:108
+#: templates/admin/user/edit.html:107
+msgid "Muokkaa käyttäjää"
+msgstr ""
+
+#: templates/admin/user/edit.html:123
+msgid "Onko sähköpostiosoite vahvistettu"
+msgstr ""
+
+#: templates/admin/user/edit.html:134 templates/admin/user/list.html:108
 msgid "Rooli"
+msgstr ""
+
+#: templates/admin/user/edit.html:136
+msgid "Käyttäjä"
+msgstr ""
+
+#: templates/admin/user/edit.html:137
+msgid "Järjestelmänvalvoja"
+msgstr ""
+
+#: templates/admin/user/edit.html:138
+msgid "Superkäyttäjä"
+msgstr ""
+
+#: templates/admin/user/edit.html:142
+msgid "Organisaatiot ja oikeudet"
+msgstr ""
+
+#: templates/admin/user/edit.html:161 templates/admin/user/edit.html:191
+msgid "Valitse kaikki"
+msgstr ""
+
+#: templates/admin/user/edit.html:183
+msgid "Globaalit oikeudet"
+msgstr ""
+
+#: templates/admin/user/edit.html:184
+msgid ""
+"Globaalit oikeudet ovat vain superkäyttäjille tarkoitettuja oikeuksia, "
+"jotka antavat käyttäjän suorittaa kyseisen toiminnon mille tahansa "
+"organisaatiolle."
 msgstr ""
 
 #: templates/admin/user/list.html:136

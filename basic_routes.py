@@ -320,7 +320,7 @@ def init_routes(app):
             )
             return redirect(url_for("demonstrations"))
 
-        if not demo.approved and not current_user.can_use("VIEW_DEMO"):
+        if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
 
         # Check if longitude is None to trigger geocoding

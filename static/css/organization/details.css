@@ -1,3 +1,36 @@
+ /*
+ * 
+ * This stylesheet contains the styles for the organization details page.
+ * 
+ * Styles included:
+ * 
+ * - .org-container: Base styles for the organization container, including padding, border radius, box shadow, and hover effects.
+ * - .org-header: Styles for the header section, including text alignment, margins, background, padding, and border.
+ * - .org-header h1: Styles for the header title, including margin, color, font size, font weight, and text shadow.
+ * - .check-icon: Styles for the verified icon, including color and margin.
+ * - .org-description: Styles for the description text, including color, margin, font size, and line height.
+ * - .badge: Base styles for badges, including padding, border radius, font size, display, margin, and transition.
+ * - .badge-verified: Styles for the verified badge, including background and text color.
+ * - .badge-unverified: Styles for the unverified badge, including background and text color.
+ * - .upcoming-demos: Styles for the upcoming demonstrations section, including margin, display, grid layout, and gap.
+ * - .demo-box: Styles for individual demo boxes, including background, padding, border radius, box shadow, margin, height, display, flex direction, justify content, and hover effects.
+ * - .demo-box h3: Styles for the demo box headings, including margin, text alignment, and color.
+ * - .demo-box p: Styles for the demo box paragraphs, including margin.
+ * - .btn: Styles for buttons, including display, background, color, padding, border radius, text decoration, transition, width, margin, and text alignment.
+ * - .btn:hover: Hover styles for buttons, including background, text color, and transform.
+ * - .social-medias: Styles for the social media links container, including display, flex direction, and alignment.
+ * - .social-media: Styles for individual social media links, including margin.
+ * - .social-media a: Styles for social media anchor tags, including margin, color, font size, and transition.
+ * - .social-media a:hover: Hover styles for social media anchor tags, including color.
+ * - .some-icon: Styles for icons, including font size, alignment, and vertical alignment.
+ * - #upcoming-title: Styles for the upcoming title, including color, margin, font size, and text alignment.
+ * - .verified-badge: Styles for the verified badge, including width, height, background image, background size, and background repeat.
+ * - @font-face: Font face definition for 'Font Awesome 5 Sharp', including font family, source, weight, and style.
+ * - .check-icon::before: Styles for the check icon before pseudo-element, including font family, font weight, content, margin, and color.
+ * - @media (max-width: 768px): Responsive styles for screens up to 768px, including adjustments for header title font size, description font size, button padding, and demo box height.
+ * - @media (max-width: 470px): Responsive styles for screens up to 470px, including adjustments for demo box flex basis.
+ */
+
 /* Base styles for the organization container */
 .org-container {
   /*background: linear-gradient(135deg, var(--background) 0%, var(--background-light) 100%); /* Gradient background */

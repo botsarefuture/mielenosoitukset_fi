@@ -17,7 +17,7 @@
 {% endblock %} {% block content %}
 
 <div class="container-main-content">
-  {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES")
+  {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES")
   %}
   <!-- Christmas-Themed Section -->
   <section class="christmas-section" style="display: none">

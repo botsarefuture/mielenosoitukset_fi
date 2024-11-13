@@ -9,8 +9,6 @@ from database_manager import DatabaseManager
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
 collection = mongo["organizations"]
-
-
 class User(UserMixin):
     def __init__(
         self,
@@ -129,11 +127,7 @@ class User(UserMixin):
                 "permissions", []
             )
 
-        # Ensure atomicity during the database update
-        db.users.update_one(
-            {"_id": ObjectId(self.id)},
-            {"$set": {"organizations": self.organizations}},
-        )
+        self.save(db)
         logger.info("Organization updated successfully.")
 
     def is_member_of_organization(self, organization_id):
@@ -149,10 +143,7 @@ class User(UserMixin):
         new_password_hash = generate_password_hash(new_password)
         self.password_hash = new_password_hash
 
-        # Update the password hash in the database
-        db.users.update_one(
-            {"_id": ObjectId(self.id)}, {"$set": {"password_hash": self.password_hash}}
-        )
+        self.save(db)
         logger.info("Password updated successfully.")
 
     def update_displayname(self, db, displayname):
@@ -160,9 +151,7 @@ class User(UserMixin):
         Update the user's display name and database record.
         """
         self.displayname = displayname
-        db.users.update_one(
-            {"_id": ObjectId(self.id)}, {"$set": {"displayname": self.displayname}}
-        )
+        self.save(db)
         logger.info("Display name updated successfully.")
 
     def update_profile_picture(self, db, profile_picture):
@@ -170,10 +159,7 @@ class User(UserMixin):
         Update the user's profile picture and database record.
         """
         self.profile_picture = profile_picture
-        db.users.update_one(
-            {"_id": ObjectId(self.id)},
-            {"$set": {"profile_picture": self.profile_picture}},
-        )
+        self.save(db)
         logger.info("Profile picture updated successfully.")
 
     def update_bio(self, db, bio):
@@ -181,8 +167,38 @@ class User(UserMixin):
         Update the user's bio and database record.
         """
         self.bio = bio
-        db.users.update_one({"_id": ObjectId(self.id)}, {"$set": {"bio": self.bio}})
+        self.save(db)
         logger.info("Bio updated successfully.")
+
+    def save(self, db):
+        """
+        Save the current state of the user to the database.
+        """
+        db.users.update_one(
+            {"_id": ObjectId(self.id)},
+            {"$set": self.to_dict()}
+        )
+
+    def to_dict(self):
+        """
+        Convert the User object to a dictionary for database storage.
+        """
+        return {
+            "username": self.username,
+            "email": self.email,
+            "password_hash": self.password_hash,
+            "displayname": self.displayname,
+            "profile_picture": self.profile_picture,
+            "bio": self.bio,
+            "followers": self.followers,
+            "following": self.following,
+            "organizations": self.organizations,
+            "global_admin": self.global_admin,
+            "confirmed": self.confirmed,
+            "permissions": self.permissions,
+            "global_permissions": self.global_permissions,
+            "role": self.role,
+        }
 
     def follow_user(self, db, user_id_to_follow):
         """
@@ -190,10 +206,7 @@ class User(UserMixin):
         """
         if user_id_to_follow not in self.following:
             self.following.append(user_id_to_follow)
-            db.users.update_one(
-                {"_id": ObjectId(self.id)},
-                {"$set": {"following": self.following}},
-            )
+            self.save(db)
             logger.info("Started following user successfully.")
 
     def unfollow_user(self, db, user_id_to_unfollow):
@@ -202,10 +215,7 @@ class User(UserMixin):
         """
         if user_id_to_unfollow in self.following:
             self.following.remove(user_id_to_unfollow)
-            db.users.update_one(
-                {"_id": ObjectId(self.id)},
-                {"$set": {"following": self.following}},
-            )
+            self.save(db)
             logger.info("Stopped following user successfully.")
 
     def has_permission(self, permission, organization_id=None):
@@ -262,40 +272,16 @@ class User(UserMixin):
 
         return False
 
-    def can_use(self, permission):
-        """
-        DEPRECATED: Use has_permission instead.
-        """
-        warnings.warn(
-            "can_use is deprecated and will be removed in a future release. "
-            "Use has_permission instead.",
-            DeprecationWarning,
-        )
-        # Check global permissions first
-        if permission in self.global_permissions:
-            return True
-
-        # Check organization-specific permissions
-        for org in self.permissions:
-            if permission in self.permissions.get(org, []):
-                return True
-
-        for org in self.organizations:
-            if permission in org.get("permissions", []):
-                return True
-
-        return False
-
     def is_following(self, user_id):
         """Check if this user is following another user."""
-        if isinstance(user_id, User):
-            user_id = user_id.id
+        
+        if isinstance(user_id, User): # Check if the user_id is a User object
+            return self.is_following(user_id.id) # If it is, check the user_id's id
 
         return user_id in self.following
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin})>"
-
 
 
 class AnonymousUser(AnonymousUserMixin):

@@ -133,3 +133,10 @@
     {% endif %}
 </div>
 {% endblock %}
+{% block extra_buttons %}
+<div class="extra-buttons">
+    <a href="{{ url_for('admin_org.invite_to_organization') }}" class="button invite-button"><i class="fas fa-user-plus"></i>{{ _('Kutsu henkilö') }}</a>
+    <a href="{{ url_for('admin_org.manage_roles') }}" class="button manage-roles-button"><i class="fas fa-user-cog"></i>{{ _('Hallitse rooleja') }}</a>
+</div>
+{% endblock %}
+</div>

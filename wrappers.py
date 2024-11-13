@@ -96,7 +96,7 @@ def permission_required(permission_name):
                 return f(*args, **kwargs)
 
             # Check if the user has the specified permission via user role permissions
-            if current_user.can_use(
+            if current_user.has_permission(
                 permission_name
             ):  # DEPRACED: Use has_permission instead
                 logger.info(

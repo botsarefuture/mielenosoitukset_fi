@@ -94,7 +94,7 @@ class EmailSender:
                 server.sendmail(sender_address, email_job.recipients, msg.as_string())
 
         except Exception as e:
-            print(f"Failed to send email: {str(e)}")
+            print(f"Failed to send email: {str(e)}") # TODO: #192 Log the error
             # Optionally, requeue the email or log the error
 
     def queue_email(self, template_name, subject, recipients, context, sender=None):

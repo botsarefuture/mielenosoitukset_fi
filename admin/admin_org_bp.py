@@ -1,3 +1,17 @@
+"""
+Changelog:
+----------
+
+v2.5.0:
+- Removed gettext as it is not needed in create_organization.
+
+v2.4.0:
+- Added validation for organization fields.
+- Added logging for organization creation.
+- Modified code to use valid_email instead of deprecated is_valid_email.
+- Admin action logging has been in use since V2.4.0, and it helps us keep track who did what.
+"""
+
 from bson.objectid import ObjectId
 from flask import Blueprint, redirect, render_template, request, url_for
 from flask_babel import gettext as _
@@ -235,3 +249,9 @@ def confirm_delete_organization(org_id):
     return render_template(
         "admin/organizations/confirm_delete.html", organization=organization
     )
+
+# TODO: #174 Add unit tests for all routes and functions.
+# TODO: #175 Implement pagination for the organization control panel.
+# TODO: #176 Add error handling for database operations.
+# TODO: #177 Refactor common code into utility functions.
+# TODO: #179 #178 Improve the user interface for organization forms.

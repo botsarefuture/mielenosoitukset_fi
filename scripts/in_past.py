@@ -24,11 +24,10 @@ Usage:
     This script is intended to be run as a standalone module. When executed, it will mark past demonstrations as hidden in the database.
 """
 
-from datetime import datetime
-
 import importlib
 import os
 import sys
+from datetime import datetime
 
 # Get the parent directory
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

@@ -15,12 +15,10 @@ class EmailSender:
     It uses SMTP to send emails and supports templated email content.
     """
 
-    def __init__(self):
+    def __init__(self, config=Config):
         """
         Initializes the EmailSender instance with the Flask app configuration.
-
-        Args:
-        """
+       """
         self.config = Config()
         self.db_manager = DatabaseManager().get_instance()
         self.db = self.db_manager.get_db()

@@ -2,6 +2,7 @@ import json
 import os
 
 from . import _CUR_DIR
+from utils.database import DEMO_FILTER
 
 
 def load_from_file(_filename):

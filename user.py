@@ -18,7 +18,7 @@ def follow(username):
         if user_to_follow:
             current_user.follow_user(mongo, user_to_follow.id)
             flash_message(f"Seuraat nyt käyttäjää {username}.", "success")
-            logger.info(f"User {current_user.username} followed {username}.")
+            logger.debug(f"User {current_user.username} followed {username}.") # This might be unnecessary
             
         else:
             flash_message("Käyttäjää ei löytynyt.", "danger")
@@ -40,7 +40,7 @@ def unfollow(username):
             
             flash_message(f"Lopetit käyttäjän {username} seuraamisen.", "success")
             
-            logger.info(f"User {current_user.username} unfollowed {username}.")
+            logger.debug(f"User {current_user.username} unfollowed {username}.")
         else:
             flash_message("Käyttäjää ei löytynyt", "danger")
             

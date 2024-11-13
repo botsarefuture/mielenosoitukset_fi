@@ -1,3 +1,10 @@
+"""
+This module provides utility functions for file path operations and version loading.
+Functions:
+- get_cur_dir():
+- load_version() -> str:
+"""
+
 import os
 
 

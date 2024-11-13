@@ -1,3 +1,16 @@
+"""
+This module provides utility functions for handling database operations, specifically for converting
+ObjectId and datetime instances within data structures to their string representations.
+
+Functions:
+    stringify_object_ids(data): Traverses through a dictionary or list and converts all instances of
+                                ObjectId to their string representation and datetime instances to a
+                                string formatted as "dd.mm.yyyy".
+
+Constants:
+    DEMO_FILTER (dict): A filter used to query approved demonstrations that are not hidden.
+"""
+
 from bson.objectid import ObjectId
 from datetime import datetime
 

@@ -394,11 +394,11 @@
 
 {% block content %}
 
-{% if current_user.is_authenticated and current_user.can_use("TOOLBOX") %}
+{% if current_user.is_authenticated and current_user.has_permission("TOOLBOX") %}
 
 <div id="demo-toolbox" class="toolbox-sticky">
   <div class="toolbox-header">
-    <h3>Työkalupakki</h3>
+    <h3>{{ _('Työkalupakki') }}</h3>
     <button class="toggle-toolbox" onclick="toggleToolbox()">
       <i class="fa fa-times"></i>
     </button>
@@ -406,28 +406,28 @@
 
   <div id="toolbox-buttons" class="toolbox-buttons">
     <!-- Approve Button -->
-    {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
+    {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
     <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
       <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
     </button>
     {% endif %}
 
     <!-- Edit Button -->
-    {% if current_user.can_use("EDIT_DEMO") %}
+    {% if current_user.has_permission("EDIT_DEMO") %}
     <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">
       <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
     </a>
     {% endif %}
 
     <!-- View Button -->
-    {% if current_user.can_use("VIEW_DEMO") %}
+    {% if current_user.has_permission("VIEW_DEMO") %}
     <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
       <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
     </a>
     {% endif %}
 
     <!-- Delete Button -->
-    {% if current_user.can_use("DELETE_DEMO") %}
+    {% if current_user.has_permission("DELETE_DEMO") %}
     <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
       <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
     </button>

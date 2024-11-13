@@ -14,7 +14,7 @@
   <h1 class="admin-section-title">#{{ tag_name }}</h1>
 
 
-  {% if current_user.is_authenticated and current_user.can_use("BETA_FEATURES") %}
+  {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
   <!-- Search form for filtering demonstrations by various criteria -->
   <form method="GET" action="{{ url_for('tag_detail', tag_name=tag_name) }}" class="search-form">
     <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}" aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ request.args.get('search', '') }}" />

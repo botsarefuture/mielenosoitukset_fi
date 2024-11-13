@@ -3,18 +3,18 @@
     max-width: 400px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 40px; /* Add padding for spacing */
-    background: var(--container-background); /* White background */
-    border: 1px solid var(--border-color); /* Light gray border */
+    background: var(--container-background); /* Background color */
+    border: 1px solid var(--border-color); /* Border color */
     border-radius: 8px; /* Rounded corners */
-    box-shadow: var(--box-shadow); /* Subtle shadow for depth */
+    box-shadow: var(--box-shadow); /* Box shadow for depth */
     box-sizing: border-box;
     text-align: center; /* Center align text */
 }
 
 h1 {
-    color: var(--header-color); /* Dark Blue */
+    color: var(--header-color); /* Header color */
     margin-bottom: 20px; /* Space below the heading */
-    font-size: 24px; /* Responsive font size */
+    font-size: 24px; /* Font size */
 }
 
 .form-group {
@@ -25,75 +25,74 @@ label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px; /* Space below label */
-    color: var(--primary-text-color); /* Dark gray for better readability */
+    color: var(--primary-text-color); /* Label color */
 }
 
 input[type="text"], input[type="email"], input[type="password"] {
-	width: 100%;
-	padding: 10px;
-	border: 1px solid var(--border-color);
-	border-radius: 4px;
-	box-sizing: border-box;
-	font-size: 16px;
-	background: var(--input-background);
-	color: var(--primary-text-color);
+    width: 100%; /* Full width */
+    padding: 10px; /* Padding inside input */
+    border: 1px solid var(--border-color); /* Border color */
+    border-radius: 4px; /* Rounded corners */
+    box-sizing: border-box;
+    font-size: 16px; /* Font size */
+    background: var(--input-background); /* Input background color */
+    color: var(--primary-text-color); /* Input text color */
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-    border-color: var(--focus-color); /* Dark blue border on focus */
+    border-color: var(--focus-color); /* Border color on focus */
     outline: none; /* Remove default outline */
 }
 
 button[type="submit"] {
-    background: var(--primary-button-color); /* Dark Blue */
-    color: var(--primary-button-text-color); /* White text */
+    background: var(--primary-button-color); /* Button background color */
+    color: var(--primary-button-text-color); /* Button text color */
     border: none;
     padding: 15px 20px; /* Padding inside the button */
     border-radius: 4px; /* Rounded corners */
-    font-size: 16px; /* Font size for the button text */
+    font-size: 16px; /* Font size */
     cursor: pointer; /* Pointer cursor on hover */
     transition: background 0.3s ease; /* Smooth transition */
 }
 
 button[type="submit"]:hover {
-    background: var(--primary-button-hover-color); /* Darker blue on hover */
-    color: var(--primary-button-hover-text-color);
+    background: var(--primary-button-hover-color); /* Button background color on hover */
+    color: var(--primary-button-hover-text-color); /* Button text color on hover */
 }
 
 .forgot-password {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 10px; /* Space above the forgot password link */
 }
 
 .forgot-password a {
-    color: var(--link-color);
-    text-decoration: none;
+    color: var(--link-color); /* Link color */
+    text-decoration: none; /* Remove underline */
 }
 
 .forgot-password a:hover {
-    text-decoration: underline;
-    color: var(--link-hover-color);
+    text-decoration: underline; /* Underline on hover */
+    color: var(--link-hover-color); /* Link color on hover */
 }
 
 .register-link a {
-    color: var(--link-color); /* Match the color with other links */
-    text-decoration: none;
-    font-weight: bold;
+    color: var(--link-color); /* Link color */
+    text-decoration: none; /* Remove underline */
+    font-weight: bold; /* Bold text */
 }
 
 .register-link a:hover {
-    text-decoration: underline;
-    color: var(--link-hover-color);
-
+    text-decoration: underline; /* Underline on hover */
+    color: var(--link-hover-color); /* Link color on hover */
 }
 
 /* Responsive Design */
 @media (max-width: 600px) {
     .auth-container {
         padding: 20px; /* Reduce padding on smaller screens */
-        max-width: 100%; /* Allow full width on very small screens */
+        max-width: 100%; /* Full width on small screens */
     }
 }
 

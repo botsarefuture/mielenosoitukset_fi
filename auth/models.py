@@ -9,8 +9,6 @@ from database_manager import DatabaseManager
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
 collection = mongo["organizations"]
-
-
 class User(UserMixin):
     def __init__(
         self,
@@ -45,7 +43,7 @@ class User(UserMixin):
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
-        self._id = self.id  # Alias for id
+        self._id = self.id  # Alias for id a
 
     @staticmethod
     def from_db(user_doc):
@@ -106,17 +104,6 @@ class User(UserMixin):
             "following": [],
         }
 
-    def get_org_name(self, org_id):
-        """
-        DEPRECATED: Use get_organization_details instead.
-        """
-        warnings.warn(
-            "get_org_name is deprecated and will be removed in a future release. "
-            "Use get_organization_details instead.",
-            DeprecationWarning,
-        )
-        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
-
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
@@ -140,11 +127,7 @@ class User(UserMixin):
                 "permissions", []
             )
 
-        # Ensure atomicity during the database update
-        db.users.update_one(
-            {"_id": ObjectId(self.id)},
-            {"$set": {"organizations": self.organizations}},
-        )
+        self.save(db)
         logger.info("Organization updated successfully.")
 
     def is_member_of_organization(self, organization_id):
@@ -160,10 +143,7 @@ class User(UserMixin):
         new_password_hash = generate_password_hash(new_password)
         self.password_hash = new_password_hash
 
-        # Update the password hash in the database
-        db.users.update_one(
-            {"_id": ObjectId(self.id)}, {"$set": {"password_hash": self.password_hash}}
-        )
+        self.save(db)
         logger.info("Password updated successfully.")
 
     def update_displayname(self, db, displayname):
@@ -171,9 +151,7 @@ class User(UserMixin):
         Update the user's display name and database record.
         """
         self.displayname = displayname
-        db.users.update_one(
-            {"_id": ObjectId(self.id)}, {"$set": {"displayname": self.displayname}}
-        )
+        self.save(db)
         logger.info("Display name updated successfully.")
 
     def update_profile_picture(self, db, profile_picture):
@@ -181,10 +159,7 @@ class User(UserMixin):
         Update the user's profile picture and database record.
         """
         self.profile_picture = profile_picture
-        db.users.update_one(
-            {"_id": ObjectId(self.id)},
-            {"$set": {"profile_picture": self.profile_picture}},
-        )
+        self.save(db)
         logger.info("Profile picture updated successfully.")
 
     def update_bio(self, db, bio):
@@ -192,8 +167,38 @@ class User(UserMixin):
         Update the user's bio and database record.
         """
         self.bio = bio
-        db.users.update_one({"_id": ObjectId(self.id)}, {"$set": {"bio": self.bio}})
+        self.save(db)
         logger.info("Bio updated successfully.")
+
+    def save(self, db):
+        """
+        Save the current state of the user to the database.
+        """
+        db.users.update_one(
+            {"_id": ObjectId(self.id)},
+            {"$set": self.to_dict()}
+        )
+
+    def to_dict(self):
+        """
+        Convert the User object to a dictionary for database storage.
+        """
+        return {
+            "username": self.username,
+            "email": self.email,
+            "password_hash": self.password_hash,
+            "displayname": self.displayname,
+            "profile_picture": self.profile_picture,
+            "bio": self.bio,
+            "followers": self.followers,
+            "following": self.following,
+            "organizations": self.organizations,
+            "global_admin": self.global_admin,
+            "confirmed": self.confirmed,
+            "permissions": self.permissions,
+            "global_permissions": self.global_permissions,
+            "role": self.role,
+        }
 
     def follow_user(self, db, user_id_to_follow):
         """
@@ -201,10 +206,7 @@ class User(UserMixin):
         """
         if user_id_to_follow not in self.following:
             self.following.append(user_id_to_follow)
-            db.users.update_one(
-                {"_id": ObjectId(self.id)},
-                {"$set": {"following": self.following}},
-            )
+            self.save(db)
             logger.info("Started following user successfully.")
 
     def unfollow_user(self, db, user_id_to_unfollow):
@@ -213,60 +215,74 @@ class User(UserMixin):
         """
         if user_id_to_unfollow in self.following:
             self.following.remove(user_id_to_unfollow)
-            db.users.update_one(
-                {"_id": ObjectId(self.id)},
-                {"$set": {"following": self.following}},
-            )
+            self.save(db)
             logger.info("Stopped following user successfully.")
 
-    def has_permission(self, organization_id, permission):
+    def has_permission(self, permission, organization_id=None):
         """
-        Check if the user has a specific permission in a given organization or globally.
+        This method verifies if the user possesses a certain permission either on a global level or within a specified organization.
+        It first checks the global permissions, then the organization-specific permissions if an organization ID is provided,
+        and finally checks the permissions dictionary for organization-specific permissions.
+
+        Args:
+            permission (str): The permission to check for.
+            organization_id (str, optional): The ID of the organization to check the permission against. Defaults to None.
+
+        Returns:
+            bool: True if the user has the specified permission, either globally or within the given organization; False otherwise.
+
+        Global Permissions:
+            The method first checks if the specified permission exists in the user's global permissions.
+            If it does, the method returns True.
+
+        Organization-specific Permissions:
+            If an organization ID is provided, the method iterates through the user's organizations to find a match with the given ID.
+            If a match is found and the specified permission exists in the organization's permissions, the method returns True.
+
+        Permissions Dictionary:
+            If the permission is not found in the global or organization-specific permissions, the method checks the permissions dictionary.
+            It iterates through the dictionary to see if the specified permission exists in any of the organization's permissions.
+            If found, the method returns True.
+
+        Example:
+            ```python
+            user = User(global_permissions=['read'], organizations=[{'org_id': '1', 'permissions': ['write']}], permissions={'2': ['delete']})
+            user.has_permission('write', '1')  # Returns True
+            user.has_permission('delete', '2')  # Returns True
+            user.has_permission('read')  # Returns True
+            user.has_permission('update')  # Returns False
+            ```
         """
+        
         # Check global permissions first
         if permission in self.global_permissions:
             return True
 
-        # Check organization-specific permissions
-        for org in self.organizations:
-            if org["org_id"] == str(organization_id):
-                return permission in org.get("permissions", [])
+        # If organization_id is provided, check organization-specific permissions
+        if organization_id:
+            for org in self.organizations:
+                if org["org_id"] == str(organization_id):
+                    if permission in org.get("permissions", []):
+                        return True
 
-        return False
-
-    def can_use(self, permission):
-        """
-        DEPRECATED: Use has_permission instead.
-        """
-        warnings.warn(
-            "can_use is deprecated and will be removed in a future release. "
-            "Use has_permission instead.",
-            DeprecationWarning,
-        )
-        # Check global permissions first
-        if permission in self.global_permissions:
-            return True
-
-        # Check organization-specific permissions
+        # Check organization-specific permissions in the permissions dictionary
         for org in self.permissions:
             if permission in self.permissions.get(org, []):
-                return True
-
-        for org in self.organizations:
-            if permission in org.get("permissions", []):
                 return True
 
         return False
 
     def is_following(self, user_id):
         """Check if this user is following another user."""
-        if isinstance(user_id, User):
-            user_id = user_id.id
+        
+        if isinstance(user_id, User): # Check if the user_id is a User object
+            return self.is_following(user_id.id) # If it is, check the user_id's id
 
         return user_id in self.following
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin})>"
+
 
 class AnonymousUser(AnonymousUserMixin):
     def __init__(self):
@@ -285,63 +301,61 @@ class AnonymousUser(AnonymousUserMixin):
         self.global_permissions = []
         self.role = "anonymous"
 
-    def get_org_name(self, org_id):
-        """
-        DEPRECATED: Use get_organization_details instead.
-        """
-        warnings.warn(
-            "get_org_name is deprecated and will be removed in a future release. "
-            "Use get_organization_details instead.",
-            DeprecationWarning,
-        )
-        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
-
+    
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
         """
-        logger.critical(f"Trying to add organization to AnonymousUser")
+        logger.critical(
+            f"Trying to add organization to AnonymousUser"
+        )  # TODO: Handle this case more gracefully
 
     def is_member_of_organization(self, organization_id):
         """
         Check if the user is a member of a specific organization.
         """
         return False
-    
+
     def change_password(self, db, new_password):
         """
         Change the user's password and update the database.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_displayname(self, db, displayname):
         """
         Update the user's display name and database record.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_profile_picture(self, db, profile_picture):
         """
         Update the user's profile picture and database record.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_bio(self, db, bio):
         """
         Update the user's bio and database record.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def follow_user(self, db, user_id_to_follow):
         """
         Add a user to the followers list of this user.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def unfollow_user(self, db, user_id_to_unfollow):
         """
         Remove a user from the followers list of this user.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def has_permission(self, organization_id, permission):

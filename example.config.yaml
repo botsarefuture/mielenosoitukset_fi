@@ -1,17 +1,24 @@
-# Secret key used for session management and cryptographic operations
-SECRET_KEY: "your_secret_key_here"
+# Application Configuration
+SECRET_KEY: "example_secret_key"  # Secret key for session management
+MONGO_URI: "mongodb://example.com:27017"  # MongoDB connection URI
+MONGO_DBNAME: "example_db"  # Name of the MongoDB database
+MAIL:
+  SERVER: "smtp.example.com"  # SMTP server for sending emails
+  PORT: 587  # SMTP port, typically 587 for TLS
+  USE_TLS: true  # Enable TLS for secure email sending
+  USERNAME: "example@example.com"  # SMTP username
+  PASSWORD: "example_password"  # SMTP password
+  DEFAULT_SENDER: "example@example.com"  # Default sender email address
 
-# URI for MongoDB connection
-MONGO_URI: "mongodb://username:password@host:port/database"
+# Optional configurations
+# SERVER_NAME: "www.example.com"  # Server name for the application
+# PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)
 
-# SMTP server configuration for sending emails
-MAIL_SERVER: "smtp.your-email-provider.com"
-MAIL_PORT: 587  # Typically 587 for TLS or 465 for SSL
-MAIL_USE_TLS: true  # Use TLS for secure email sending
-MAIL_USERNAME: "your-email@example.com"
-MAIL_PASSWORD: "your_email_password_here"
-MAIL_DEFAULT_SENDER: "your-email@example.com"
+PORT: 5002  # Application port
+DEBUG: true  # Enable debugging mode for development
 
-# Optional settings for server name and URL scheme
-# SERVER_NAME: "your.domain.com"
-# PREFERRED_URL_SCHEME: "https"
+# S3 Configuration
+S3:
+  ACCESS_KEY: "example_access_key"  # Access key for S3
+  SECRET_KEY: "example_secret_key"  # Secret key for S3
+  ENDPOINT_URI: "https://example.com"  # S3 endpoint URL

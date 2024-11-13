@@ -1,4 +1,3 @@
-import os
 import yaml
 from typing import Any, Dict
 import logging
@@ -11,6 +10,7 @@ class Config:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
+    @staticmethod
     def load_yaml(file_path: str) -> Dict[str, Any]:
         """Load configuration from a YAML file."""
         try:

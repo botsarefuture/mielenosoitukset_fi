@@ -7,7 +7,6 @@ from flask import (
     abort,
     current_app,
 )
-
 from flask_login import login_user, logout_user, login_required, current_user
 from auth.models import User
 import jwt
@@ -20,6 +19,8 @@ import os
 from utils.flashing import flash_message
 from werkzeug.utils import secure_filename
 
+db_manager = DatabaseManager().get_instance()
+email_sender = EmailSender()  # Initialize email sender
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
@@ -119,7 +120,9 @@ def login():
         user_doc = mongo.users.find_one({"username": username})
 
         if not user_doc:
-            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+            flash_message(
+                f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error"
+            )
             return redirect(url_for("auth.login", next=next_page))
 
         user = User.from_db(user_doc)
@@ -134,7 +137,9 @@ def login():
             )  # Redirect to the next page or the index
 
         else:
-            flash_message(_("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."))
+            flash_message(
+                "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
+            )
             verify_emailer(user.email, username)
             return redirect(next_page or url_for("index"))
 
@@ -166,9 +171,13 @@ def password_reset_request():
                     recipients=[email],
                     context={"reset_url": reset_url, "user_name": user.get("username")},
                 )
-                flash_message("Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info")
+                flash_message(
+                    "Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info"
+                )
             except Exception as e:
-                flash_message(f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error")
+                flash_message(
+                    f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error"
+                )
 
             return redirect(url_for("auth.login"))
 
@@ -182,7 +191,9 @@ def password_reset_request():
 def password_reset(token):
     email = verify_reset_token(token)
     if not email:
-        flash_message("Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning")
+        flash_message(
+            "Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning"
+        )
         return redirect(url_for("auth.password_reset_request"))
 
     if request.method == "POST":

@@ -2,13 +2,13 @@
 
 {% block main_content %}
 <div class="container mt-4">
-    <h2>Vahvista poistaminen</h2>
-    <p>Haluatko varmasti poistaa organisaation <strong>{{ organization.name }}</strong>? Toiminto on peruuttamaton.</p>
+    <h2>{{ _('Vahvista poistaminen') }}</h2>
+    <p>{{ _('Haluatko varmasti poistaa organisaation') }} <strong>{{ organization.name }}</strong>? {{ _('Toiminto on peruuttamaton.') }}</p>
 
     <form method="POST" action="{{ url_for('admin_org.delete_organization', org_id=organization._id) }}">
         <input type="hidden" name="confirm_delete" value="true">
-        <button type="submit" class="btn btn-danger">Kyllä, poista</button>
-        <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">Peruuta</a>
+        <button type="submit" class="btn btn-danger">{{ _('Kyllä, poista') }}</button>
+        <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">{{ _('Peruuta') }}</a>
     </form>
 </div>
 {% endblock %}

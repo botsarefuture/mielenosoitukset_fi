@@ -22,28 +22,36 @@ scheduler.start()
 # Initialize Babel
 babel = Babel()
 
+
 def create_app():
     """
     Changelog:
     ----------
+    v2.5.0:
+    - Added a context processor to get the organization name from the organization ID.
+    
     v2.4.0:
     - Refined code
     - Logging level now reflects the app.debug variable
-    - Introduced /ping route
+    - Introduced /ping route for debugging purposes
     """
     app = Flask(__name__)
     app.config.from_object("config.Config")
 
     # Set default language and available languages
-    app.config['BABEL_DEFAULT_LOCALE'] = 'fi'
-    app.config['BABEL_SUPPORTED_LOCALES'] = ['en', 'fi', 'sv']
+    app.config["BABEL_DEFAULT_LOCALE"] = "fi"
+    app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "fi", "sv"]
 
     def get_locale():
         # This could also be modified to check user settings in the database
-        return request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
+        return request.accept_languages.best_match(
+            app.config["BABEL_SUPPORTED_LOCALES"]
+        )
 
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
+
+    
     
     logger.info("Creating Flask application...")
 
@@ -92,23 +100,34 @@ def create_app():
     app.register_blueprint(admin_org_bp)
 
     from auth import auth_bp
+
     app.register_blueprint(auth_bp, url_prefix="/auth/")
 
     from user import user_bp
+
     app.register_blueprint(user_bp)
 
     from api import api_bp
+
     app.register_blueprint(api_bp, url_prefix="/api/")
 
     # Import and initialize routes
     import basic_routes
+
     basic_routes.init_routes(app)
 
     logger.info("Flask application created successfully.")
 
     if app.debug:
+
         @app.route("/ping")
         def ping():
             return f"Pong from {VERSION}"
+        
+    @app.context_processor
+    def utility_processor():
+        def get_org_name(org_id):
+            return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
+        return dict(get_org_name=get_org_name)
 
     return app

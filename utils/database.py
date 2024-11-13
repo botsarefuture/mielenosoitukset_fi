@@ -1,6 +1,8 @@
 from bson.objectid import ObjectId
 from datetime import datetime
 
+DEMO_FILTER = {"approved": True, "$or": [{"hide": {"$exists": False}}, {"hide": False}]}
+
 
 def stringify_object_ids(data):
     """

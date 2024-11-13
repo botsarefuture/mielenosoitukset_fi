@@ -1,433 +1,195 @@
 .container {
-  max-width: 1200px;
-  /* Maximum width for the container */
+  max-width: var(--container-max-width, 1200px);
   margin: 0 auto;
-  /* Center the container */
-  padding: 20px;
-  /* Padding for inner spacing */
+  padding: var(--container-padding, 20px);
 }
 
 .profile-container {
   background: var(--container-background);
-  /* Soft rebellious background color */
   text-align: center;
-  /* Center-align all content */
   display: grid;
-  /* Use grid for layout */
   align-items: center;
-  /* Center items vertically */
-  border-radius: 4px;
-  /* Rounded corners */
+  border-radius: var(--border-radius, 4px);
   border: 2px solid var(--border-color);
-  /* Border styling */
 }
 
-/* Profile Header */
 .profile-header {
-  padding: 30px;
-  /* Consistent padding around the header */
-  border-radius: 10px;
-  /* Rounded corners for the header */
+  padding: var(--header-padding, 30px);
+  border-radius: var(--header-border-radius, 10px);
 }
 
-/* Profile Details */
 .profile-details {
   display: flex;
-  /* Flexbox for layout */
   flex-direction: column;
-  /* Column layout */
   align-items: center;
-  /* Center items horizontally */
 }
 
-/* Profile Picture */
 .profile-details .profile-picture {
-  margin-bottom: 20px;
-  /* Spacing below the picture */
-  width: 150px;
-  /* Fixed width for profile picture */
-  height: 150px;
-  /* Fixed height for profile picture */
+  margin-bottom: var(--profile-picture-margin-bottom, 20px);
+  width: var(--profile-picture-size, 150px);
+  height: var(--profile-picture-size, 150px);
 }
 
 .profile-img {
-  width: 150px;
-  /* Consistent size */
-  height: 150px;
-  /* Consistent size */
+  width: var(--profile-picture-size, 150px);
+  height: var(--profile-picture-size, 150px);
   border-radius: 50%;
-  /* Circular profile picture */
   border: 4px solid var(--border-color);
-  /* Border for contrast */
   box-shadow: 0 2px 8px var(--box-shadow-color);
-  /* Shadow effect */
   object-fit: cover;
-  /* Cover the area of the image */
   box-sizing: border-box;
 }
 
-/* Profile Info */
 .user-name {
-  font-size: 2.2em;
-  /* Larger font size for emphasis */
+  font-size: var(--user-name-font-size, 2.2em);
   font-weight: bold;
-  /* Bold for user name */
   color: var(--primary-text-color);
-  /* Contrast color */
-  margin: 10px 0;
-  /* Vertical spacing */
+  margin: var(--user-name-margin, 10px 0);
 }
 
 .email,
 .bio {
-  font-size: 1.1em;
-  /* Consistent font size */
-  margin: 5px 0;
-  /* Vertical spacing */
+  font-size: var(--email-bio-font-size, 1.1em);
+  margin: var(--email-bio-margin, 5px 0);
   text-align: center;
-  /* Center text */
   color: var(--primary-text-color);
-  /* Contrast color */
 }
 
-/* Admin Badge */
 .badge-admin {
   background: var(--green);
-  /* Green background for admin badge */
   color: var(--primary-text-color);
-  /* Text color */
-  padding: 6px 12px;
-  /* Padding around the badge */
-  border-radius: 20px;
-  /* Rounded badge corners */
-  font-size: 0.9em;
-  /* Smaller font size */
-  margin-top: 10px;
-  /* Spacing above badge */
+  padding: var(--badge-padding, 6px 12px);
+  border-radius: var(--badge-border-radius, 20px);
+  font-size: var(--badge-font-size, 0.9em);
+  margin-top: var(--badge-margin-top, 10px);
 }
 
-/* Organizations Section */
 .organizations {
   width: 100%;
-  /* Full width for organizations section */
-  margin-top: 20px;
-  /* Spacing above organizations */
+  margin-top: var(--organizations-margin-top, 20px);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--organizations-gap, 20px);
 }
 
 .org-container {
   background: var(--background-light);
-  /* Light background for org boxes */
   border: 2px solid var(--border-color);
-  /* Matching border color */
-  border-radius: 8px;
-  /* Rounded corners */
-  padding: 15px;
-  /* Internal spacing */
-  margin: 10px 0;
-  /* Spacing between organization boxes */
+  border-radius: var(--org-container-border-radius, 8px);
+  padding: var(--org-container-padding, 15px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* Shadow for depth */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   position: relative;
-  /* Positioning context */
   transition: transform 0.2s;
-  /* Smooth hover transition */
 }
 
 .org-container:hover {
   transform: translateY(-2px);
-  /* Lift effect on hover */
 }
 
 .org-container p {
-  margin: 0;
-  /* Remove default margin */
-  font-size: 1.2em;
-  /* Consistent font size for organization names */
+  margin-top: 0;
+  font-size: var(--org-container-font-size, 1.2em);
   font-weight: bold;
-  /* Emphasize organization name */
   color: var(--primary-text-color);
-  /* Darker text color */
+  text-align: center;
+  margin-bottom: var(--org-container-margin-bottom, 2rem);
+}
+
+.org-link {
+  display: inline-block;
+  margin-top: var(--org-link-margin-top, 10px);
+  padding: var(--org-link-padding, 8px 12px);
+  background: var(--primary-button-color);
+  color: var(--primary-button-text-color);
+  text-decoration: none;
+  border-radius: var(--org-link-border-radius, 5px);
+  transition: background 0.3s;
+  margin-top: auto;
 }
 
 .org-link:hover {
   background: var(--primary-button-hover-color);
-  /* Darker shade on hover */
   color: var(--primary-button-hover-text-color);
-  /* Text color on hover */
 }
 
-/* Button Group */
 .button-group {
-  margin-top: 20px;
-  /* Spacing above button group */
+  margin-top: var(--button-group-margin-top, 20px);
 }
 
 .btn {
-  padding: 10px 15px;
-  /* Consistent padding for buttons */
+  padding: var(--btn-padding, 10px 15px);
   border: none;
-  /* No border */
-  border-radius: 5px;
-  /* Rounded button corners */
+  border-radius: var(--btn-border-radius, 5px);
   cursor: pointer;
-  /* Pointer cursor */
-  font-size: 1em;
-  /* Consistent font size */
-  margin: 5px;
-  /* Spacing between buttons */
+  font-size: var(--btn-font-size, 1em);
+  margin: var(--btn-margin, 5px);
   transition: background 0.3s, transform 0.2s;
-  /* Smooth transitions */
 }
 
 .btn-edit {
   background: var(--secondary-button-color);
-  /* Edit button color */
   color: var(--secondary-button-text-color);
-  /* Text color */
   text-decoration: none;
-  /* No underline */
 }
 
 .btn-edit:hover {
   background: var(--secondary-button-hover-color);
-  /* Edit button color */
   color: var(--secondary-button-hover-text-color);
-  /* Text color */
   text-decoration: none;
-  /* No underline */
   transition: background 0.3s, transform 0.2s;
 }
 
 .btn-follow {
   background: var(--blue-lighter);
-  /* Follow button color */
   color: white;
-  /* Text color */
 }
 
 .btn-unfollow {
   background: var(--orange-light);
-  /* Unfollow button color */
   color: white;
-  /* Text color */
 }
 
 .btn:hover {
   transform: scale(1.05);
-  /* Slightly enlarge buttons on hover */
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .profile-details {
     flex-direction: column;
-    /* Stack items vertically */
     align-items: center;
-    /* Center items */
   }
 
   .profile-img {
-    width: 120px;
-    /* Smaller image size for mobile */
-    height: 120px;
-    /* Smaller image size for mobile */
+    width: var(--profile-img-mobile-size, 120px);
+    height: var(--profile-img-mobile-size, 120px);
   }
 
   .user-name {
-    font-size: 1.8em;
-    /* Decrease font size for mobile */
+    font-size: var(--user-name-mobile-font-size, 1.8em);
   }
 
   .email,
   .bio {
-    font-size: 1em;
-    /* Decrease font size for mobile */
+    font-size: var(--email-bio-mobile-font-size, 1em);
   }
 
   .btn {
     width: 100%;
-    /* Full-width buttons on mobile */
-    margin: 10px 0;
-    /* Margin adjustments */
+    margin: var(--btn-mobile-margin, 10px 0);
   }
 
   .org-container {
-    padding: 10px;
-    /* Adjust padding for mobile */
+    padding: var(--org-container-mobile-padding, 10px);
   }
 
   .org-container p {
-    font-size: 1em;
-    /* Decrease font size for mobile */
+    font-size: var(--org-container-mobile-font-size, 1em);
   }
 
   .org-link {
-    padding: 8px 10px;
-    /* Adjust padding for links */
+    padding: var(--org-link-mobile-padding, 8px 10px);
   }
-}
-
-/* Organizations Section */
-.organizations {
-  width: 100%;
-  /* Full width for organizations section */
-  margin-top: 20px;
-  /* Spacing above organizations */
-  display: grid;
-  /* Use grid layout */
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  /* Responsive grid with flexible columns */
-  gap: 20px;
-  /* Space between grid items */
-}
-
-.org-container {
-  background: var(--background-light);
-  /* Light background for org boxes */
-  border: 2px solid var(--border-color);
-  /* Matching border color */
-  border-radius: 8px;
-  /* Rounded corners */
-  padding: 15px;
-  /* Internal spacing */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* Shadow for depth */
-  position: relative;
-  /* Positioning context */
-  transition: transform 0.2s;
-  /* Smooth hover transition */
-}
-
-.org-container:hover {
-  transform: translateY(-2px);
-  /* Lift effect on hover */
-}
-
-.profile-info {
-  width: 100%;
-}
-
-.org-container p {
-  margin-top: 0;
-  font-size: 1.2em;
-  font-weight: bold;
-  color: var(--primary-text-color);
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.org-container {
-  background: var(--background-light);
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  position: relative;
-  transition: transform 0.2s;
-  display: flex;
-  flex-direction: column;
-  /* height: ; */
-  box-sizing: content-box;
-}
-
-.organizations {
-  width: 100%;
-  margin-top: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-/* Organizations Section */
-.organizations {
-  width: 100%;
-  /* Full width for organizations section */
-  margin-top: 20px;
-  /* Spacing above organizations */
-  display: grid;
-  /* Use grid layout */
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  /* Responsive grid with flexible columns */
-  gap: 20px;
-  /* Space between grid items */
-}
-
-.org-container {
-  background: var(--background-light);
-  /* Light background for org boxes */
-  border: 2px solid var(--border-color);
-  /* Matching border color */
-  border-radius: 8px;
-  /* Rounded corners */
-  padding: 15px;
-  /* Internal spacing */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* Shadow for depth */
-  display: flex;
-  /* Enable Flexbox layout */
-  flex-direction: column;
-  /* Arrange children in a column */
-  justify-content: space-between;
-  /* Space items evenly */
-  position: relative;
-  /* Positioning context */
-  transition: transform 0.2s;
-  /* Smooth hover transition */
-}
-
-.org-container:hover {
-  transform: translateY(-2px);
-  /* Lift effect on hover */
-}
-
-.org-container p {
-  margin-top: 0;
-  /* Remove default margin */
-  font-size: 1.2em;
-  /* Consistent font size for organization names */
-  font-weight: bold;
-  /* Emphasize organization name */
-  color: var(--primary-text-color);
-  /* Darker text color */
-  text-align: center;
-  /* Center text */
-}
-
-.org-link {
-  display: inline-block;
-  /* Inline block for link */
-  margin-top: 10px;
-  /* Spacing above the link */
-  padding: 8px 12px;
-  /* Padding for click area */
-  background: var(--primary-button-color);
-  /* Button color */
-  color: var(--primary-button-text-color);
-  /* Button text color */
-  text-decoration: none;
-  /* No underline */
-  border-radius: 5px;
-  /* Rounded button corners */
-  transition: background 0.3s;
-  /* Smooth transition */
-  margin-top: auto;
-  /* Push link to the bottom */
-}
-
-.org-link:hover {
-  background: var(--primary-button-hover-color);
-  /* Darker shade on hover */
-  color: var(--primary-button-hover-text-color);
-  /* Text color on hover */
-}
-
-.badge-admin {
-  background: var(--green);
-  color: var(--primary-text-color);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.9em;
-  margin-top: 1em !important;
-  /* margin: 500px !important; */
-  display: inline-block;
 }

@@ -116,11 +116,11 @@
                 <td>{{ user.email }}</td>
                 <td>{{ user.role }}</td>
                 <td class="actions-cell">
-                    {% if current_user.can_use("EDIT_USER") or current_user.can_use("DELETE_USER") %} 
-                    {% if current_user.can_use("EDIT_USER") %}
+                    {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") %} 
+                    {% if current_user.has_permission("EDIT_USER") %}
                     <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i> {{ _('Muokkaa') }}</a>
                     {% endif %}
-                    {% if current_user.can_use("DELETE_USER") %}
+                    {% if current_user.has_permission("DELETE_USER") %}
                     <button onclick="alert('this feature is not ready');" class="button delete-button"><i class="fas fa-trash-alt"></i> {{ _('Poista') }}</button>
                     {% endif %}
                     {% else %}

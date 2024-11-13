@@ -1,1 +1,0 @@
-from utils.admin.demonstration import collect_tags

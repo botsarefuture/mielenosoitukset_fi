@@ -99,7 +99,7 @@
   function acceptSty(demoId) {
     demo = document.getElementById(`demo-${demoId}`);
 
-    demo.children[4].innerText = "Kyllä";
+    demo.children[4].innerText = "{{ _('Kyllä') }}";
 
     demo.children[5].children[0].remove();
 
@@ -126,7 +126,7 @@
 
         if (data.status === "OK") {
           newMessage.classList.add("flash-info");
-          newMessage.textContent = "Mielenosoitus hyväksytty onnistuneesti!";
+          newMessage.textContent = "{{ _('Mielenosoitus hyväksytty onnistuneesti!') }}";
           flashMessageList.appendChild(newMessage);
 
           acceptSty(demoId);
@@ -136,7 +136,7 @@
         } else {
           newMessage.classList.add("flash-error");
           newMessage.textContent =
-            "Virhe: " + (data.message || "Tuntematon virhe.");
+            "{{ _('Virhe: ') }}" + (data.message || "{{ _('Tuntematon virhe.') }}");
           flashMessageList.appendChild(newMessage);
         }
 
@@ -152,7 +152,7 @@
         const newMessage = document.createElement("li");
 
         newMessage.classList.add("flash-error");
-        newMessage.textContent = "Yhteysvirhe, yritä uudelleen.";
+        newMessage.textContent = "{{ _('Yhteysvirhe, yritä uudelleen.') }}";
         flashMessageList.appendChild(newMessage);
         flashMessagesDiv.style.display = "block";
         setTimeout(() => {
@@ -166,34 +166,34 @@
 {% endblock %} {% block main_content %}
 
 <div class="table-container">
-  <h2 id="tabletitle">Mielenosoitukset</h2>
+  <h2 id="tabletitle">{{ _('Mielenosoitukset') }}</h2>
 
   <div class="flex justify-center mb-4">
-    {% if current_user.can_use("CREATE_DEMO") or
-    current_user.can_use("CREATE_RECURRING_DEMO") %} {% if
-    current_user.can_use("CREATE_DEMO") %}
+    {% if current_user.has_permission("CREATE_DEMO") or
+    current_user.has_permission("CREATE_RECURRING_DEMO") %} {% if
+    current_user.has_permission("CREATE_DEMO") %}
     <a
       href="{{ url_for('admin_demo.create_demo') }}"
       class="button create-demo-button"
-      ><i class="fas fa-plus"></i>Uusi mielenosoitus</a
+      ><i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}</a
     >
     {% else %}
     <div class="insuffient-perm" style="color: #ccc">
-      Sinulla ei ole oikeutta luoda uusia mielenosoituksia.
+      {{ _('Sinulla ei ole oikeutta luoda uusia mielenosoituksia.') }}
     </div>
-    {% endif %} {% if current_user.can_use("CREATE_RECURRING_DEMO") %}
+    {% endif %} {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
     <a
       href="{{ url_for('admin_recu_demo.create_recu_demo') }}"
       class="button create-demo-button"
-      ><i class="fas fa-plus-circle"></i>Uusi toistuva mielenosoitus</a
+      ><i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}</a
     >
     {% else %}
     <div class="insuffient-perm" style="color: #ccc">
-      Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.
+      {{ _('Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.') }}
     </div>
     {% endif %} {% else %}
     <div class="insuffient-perm" style="color: #ccc">
-      Ei riittäviä oikeuksia.
+      {{ _('Ei riittäviä oikeuksia.') }}
     </div>
     {% endif %}
   </div>
@@ -203,47 +203,47 @@
     class="search-form"
     action="{{ url_for('admin_demo.demo_control') }}"
   >
-    <label for="search" class="sr-only">Hae mielenosoituksia:</label>
+    <label for="search" class="sr-only">{{ _('Hae mielenosoituksia:') }}</label>
     <input
       type="text"
       id="search"
       name="search"
       class="search-input"
-      placeholder="Hae mielenosoituksia..."
+      placeholder="{{ _('Hae mielenosoituksia...') }}"
       value="{{ search_query }}"
-      aria-label="Search demonstrations"
+      aria-label="{{ _('Search demonstrations') }}"
     />
 
-    <label for="approved">Näytä vain hyväksytyt mielenosoitukset:</label>
+    <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
     <select
       name="approved"
       id="approved"
       class="filter-select"
-      aria-label="Approved status filter"
+      aria-label="{{ _('Approved status filter') }}"
     >
       <option value="true" {% if approved_status %}selected{% endif %}>
-        Kyllä
+        {{ _('Kyllä') }}
       </option>
       <option value="false" {% if not approved_status %}selected{% endif %}>
-        Ei
+        {{ _('Ei') }}
       </option>
     </select>
 
-    <label for="show_past">Näytä menneet mielenosoitukset:</label>
+    <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
     <select
       name="show_past"
       id="show_past"
       class="filter-select"
-      aria-label="Show past demonstrations"
+      aria-label="{{ _('Show past demonstrations') }}"
     >
       <option value="false" {% if not show_past %}selected{% endif %}>
-        Ei
+        {{ _('Ei') }}
       </option>
-      <option value="true" {% if show_past %}selected{% endif %}>Kyllä</option>
+      <option value="true" {% if show_past %}selected{% endif %}>{{ _('Kyllä') }}</option>
     </select>
 
     <button type="submit" class="search-button">
-      <i class="fas fa-search"></i>Hae
+      <i class="fas fa-search"></i>{{ _('Hae') }}
     </button>
   </form>
 
@@ -252,12 +252,12 @@
     <table>
       <thead>
         <tr>
-          <th>Otsikko</th>
-          <th>Kaupunki</th>
-          <th>Päivämäärä</th>
-          <th>Toistuva</th>
-          <th>Hyväksytty</th>
-          <th class="actions-cell-header">Toiminnot</th>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Päivämäärä') }}</th>
+          <th>{{ _('Toistuva') }}</th>
+          <th>{{ _('Hyväksytty') }}</th>
+          <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -277,55 +277,55 @@
           <td>{{ demo.title }}</td>
           <td>{{ demo.city }}</td>
           <td>{{ demo.date }}</td>
-          <td>{{ 'Kyllä' if demo.repeating else 'Ei' }}</td>
-          <td>{{ 'Kyllä' if demo.approved else 'Ei' }}</td>
+          <td>{{ _('Kyllä') if demo.repeating else _('Ei') }}</td>
+          <td>{{ _('Kyllä') if demo.approved else _('Ei') }}</td>
           <td class="actions-cell">
             <!-- Check if the user has permission to accept the demo -->
-            {% if not demo.approved and current_user.can_use("ACCEPT_DEMO") %}
+            {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
             <button
               style="width: 132px; background: green"
               type="button"
               class="button accept-button"
               onclick="acceptDemo('{{ demo._id }}')"
             >
-              <i class="fa-solid fa-check"></i>Hyväksy
+              <i class="fa-solid fa-check"></i>{{ _('Hyväksy') }}
             </button>
-            {% elif not current_user.can_use("ACCEPT_DEMO") and not
+            {% elif not current_user.has_permission("ACCEPT_DEMO") and not
             demo.approved %}
             <div class="insuffient-perm" style="color: white">
-              Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.
+              {{ _('Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.') }}
             </div>
             {% endif %}
 
             <!-- Check if the user has permission to edit the demo -->
-            {% if current_user.can_use("EDIT_DEMO") %}
+            {% if current_user.has_permission("EDIT_DEMO") %}
             <a
               href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"
               class="button edit-button"
-              ><i class="fas fa-edit"></i>Muokkaa</a
+              ><i class="fas fa-edit"></i>{{ _('Muokkaa') }}</a
             >
             {% else %}
             <div class="insuffient-perm" style="color: white">
-              Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.
+              {{ _('Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.') }}
             </div>
             {% endif %}
 
             <!-- Check if the user has permission to view the demo -->
-            {% if current_user.can_use("VIEW_DEMO") %}
+            {% if current_user.has_permission("VIEW_DEMO") %}
             <a
               href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"
               class="button view-button"
             >
-              <i class="fa-solid fa-eye"></i>Katsele
+              <i class="fa-solid fa-eye"></i>{{ _('Katsele') }}
             </a>
             {% else %}
             <div class="insuffient-perm" style="color: white">
-              Ei riittäviä oikeuksia mielenosoituksen katseluun.
+              {{ _('Ei riittäviä oikeuksia mielenosoituksen katseluun.') }}
             </div>
             {% endif %}
 
             <!-- Check if the user has permission to delete the demo -->
-            {% if current_user.can_use("DELETE_DEMO") %}
+            {% if current_user.has_permission("DELETE_DEMO") %}
             <button
               style="width: 132px !important"
               type="button"
@@ -333,11 +333,11 @@
               onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"
             >
               <i class="fas fa-trash-alt"></i
-              ><span class="delete-text">Poista</span>
+              ><span class="delete-text">{{ _('Poista') }}</span>
             </button>
             {% else %}
             <div class="insuffient-perm" style="color: white">
-              Ei riittäviä oikeuksia mielenosoituksen poistamiseen.
+              {{ _('Ei riittäviä oikeuksia mielenosoituksen poistamiseen.') }}
             </div>
             {% endif %}
           </td>
@@ -347,24 +347,24 @@
     </table>
   </div>
   {% else %}
-  <div class="no-results">Ei mielenosoituksia löytynyt.</div>
+  <div class="no-results">{{ _('Ei mielenosoituksia löytynyt.') }}</div>
   {% endif %}
 </div>
 
 <div id="deleteModal" class="modal hidden">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
-    <h3>Poista mielenosoitus</h3>
+    <h3>{{ _('Poista mielenosoitus') }}</h3>
     <p>
-      Oletko varma, että haluat poistaa mielenosoituksen
+      {{ _('Oletko varma, että haluat poistaa mielenosoituksen') }}
       <strong id="demoTitle"></strong>?
     </p>
     <div class="button-container">
       <button type="button" class="button delete-confirm" id="confirmDelete">
-        Kyllä, poista
+        {{ _('Kyllä, poista') }}
       </button>
       <button type="button" class="button" onclick="closeModal()">
-        Peruuta
+        {{ _('Peruuta') }}
       </button>
     </div>
   </div>

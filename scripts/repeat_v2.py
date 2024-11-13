@@ -1,14 +1,18 @@
 from utils.logger import logger
+
 from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from config import Config
+from classes import Demonstration, RecurringDemonstration
 
 # Establish connection to MongoDB
-db = MongoClient(Config.MONGO_URI)
-client = db["mielenosoitukset"]
-recu_demos_collection = client["recu_demos"]  # Load from recu_demos
-demonstrations_collection = client["demonstrations"]  # For saving child demos
+client = MongoClient(Config.MONGO_URI)
+db = client["mielenosoitukset"]
+recu_demos_collection = db["recu_demos"]  # Collection for recurring demonstrations
+demonstrations_collection = db[
+    "demonstrations"
+]  # Collection for individual demonstrations
 
 
 def calculate_next_dates(demo_date, repeat_schedule):
@@ -17,10 +21,13 @@ def calculate_next_dates(demo_date, repeat_schedule):
     current_date = datetime.now()
     next_dates = []
 
+    # Generate dates for the next year
     end_date = current_date + relativedelta(years=1)
 
     while demo_date <= end_date:
-        next_dates.append(demo_date)
+        if demo_date >= current_date:
+            next_dates.append(demo_date)
+
         if frequency == "daily":
             demo_date += timedelta(days=interval)
         elif frequency == "weekly":
@@ -29,13 +36,17 @@ def calculate_next_dates(demo_date, repeat_schedule):
             demo_date += relativedelta(months=interval)
         elif frequency == "yearly":
             demo_date += relativedelta(years=interval)
-
+        else:
+            break
+    print(next_dates)
     return next_dates
 
 
 def remove_invalid_child_demonstrations(parent_demo, valid_dates):
     try:
-        valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
+        valid_date_strings = {
+            d.strftime("%d.%m.%Y") for d in valid_dates if isinstance(d, datetime)
+        }
         child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
 
         for demo in child_demos:
@@ -51,13 +62,6 @@ def remove_invalid_child_demonstrations(parent_demo, valid_dates):
 
 
 def handle_repeating_demonstrations():
-    """
-
-    Changelog:
-    ----------
-    v2.4.0:
-    - Now removing all demos that have the parent id of this recu demo but dont match schedule
-    """
     try:
         repeating_demos = recu_demos_collection.find()
         bulk_operations = []
@@ -66,9 +70,11 @@ def handle_repeating_demonstrations():
             try:
                 demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
                 repeat_schedule = demo.get("repeat_schedule", {})
-                created_until = demo.get("created_until", datetime.min)
-                if created_until is None:
-                    created_until = datetime.now()
+                created_until = demo.get("created_until")
+                if created_until:
+                    created_until = datetime.strptime(created_until, "%d.%m.%Y")
+                else:
+                    created_until = datetime.min
 
                 next_dates = calculate_next_dates(demo_date, repeat_schedule)
 
@@ -77,62 +83,46 @@ def handle_repeating_demonstrations():
 
                 for next_date in next_dates:
                     if next_date <= created_until:
+                        print(
+                            f"Skipping {next_date} because it is before {created_until}"
+                        )
                         continue  # Skip dates that have already been created
 
-                    next_date_str = next_date.strftime("%d.%m.%Y")
+                    next_date_str = (
+                        next_date.strftime("%d.%m.%Y")
+                        if not isinstance(next_date, str)
+                        else logger.error(f"Invalid date: {next_date}")
+                    )
 
                     existing_demo = demonstrations_collection.find_one(
                         {"date": next_date_str, "parent": demo["_id"]}
                     )
 
                     if existing_demo:
-                        update_operation = {
-                            "title": demo["title"],
-                            "start_time": demo["start_time"],
-                            "end_time": demo["end_time"],
-                            "tags": demo["tags"],
-                            "facebook": demo["facebook"],
-                            "city": demo["city"],
-                            "address": demo["address"],
-                            "type": demo["type"],
-                            "route": demo["route"],
-                            "organizers": demo["organizers"],
-                            "approved": demo.get("approved", False),
-                            "linked_organizations": demo["linked_organizations"],
-                            "repeating": demo["repeating"],
-                            "repeat_schedule": repeat_schedule,
-                            "created_datetime": datetime.now(),
-                        }
+                        update_demo = RecurringDemonstration(**demo)
+                        update_data = update_demo.to_dict()
+                        if "_id" in update_data:
+                            del update_data["_id"]
                         bulk_operations.append(
                             UpdateOne(
-                                {"_id": existing_demo["_id"]},
-                                {"$set": update_operation},
+                                {"date": next_date_str, "parent": demo["_id"]},
+                                {"$set": update_data},
+                                upsert=True,
                             )
                         )
                     else:
-                        new_demo = {
-                            "title": demo["title"],
-                            "date": next_date_str,
-                            "start_time": demo["start_time"],
-                            "end_time": demo["end_time"],
-                            "tags": demo["tags"],
-                            "facebook": demo["facebook"],
-                            "city": demo["city"],
-                            "address": demo["address"],
-                            "type": demo["type"],
-                            "route": demo["route"],
-                            "organizers": demo.get("organizers", []),
-                            "approved": demo.get("approved", False),
-                            "linked_organizations": demo["linked_organizations"],
-                            "parent": demo["_id"],
-                            "recurring": True,
-                            "created_datetime": datetime.now(),
-                        }
+                        new_demo_data = demo.copy()
+                        new_demo_data["date"] = next_date_str
+                        new_demo_data["parent"] = demo["_id"]
+                        new_demo_data["recurring"] = True
+                        new_demo_data.pop("created_until", None)
+                        new_demo_data.pop("_id", None)
+                        new_demo = Demonstration(**new_demo_data)
 
                         bulk_operations.append(
                             UpdateOne(
                                 {"date": next_date_str, "parent": demo["_id"]},
-                                {"$setOnInsert": new_demo},
+                                {"$setOnInsert": new_demo.to_dict()},
                                 upsert=True,
                             )
                         )
@@ -187,20 +177,20 @@ def remove_duplicates():
         removed_count = 0
 
         for duplicate in duplicates:
-            try:
-                ids_to_keep = [duplicate["ids"][0]]
-                ids_to_remove = duplicate["ids"][1:]
-
-                result = demonstrations_collection.delete_many(
-                    {"_id": {"$in": ids_to_remove}}
-                )
-                removed_count += result.deleted_count
-                logger.info(f"Removed {result.deleted_count} duplicate demonstrations.")
-
-            except Exception as e:
-                logger.error(
-                    f"Error removing duplicates with ids {duplicate['ids']}: {e}"
-                )
+            ids_to_remove = duplicate["ids"][1:]
+            if ids_to_remove:
+                try:
+                    result = demonstrations_collection.delete_many(
+                        {"_id": {"$in": ids_to_remove}}
+                    )
+                    removed_count += result.deleted_count
+                    logger.info(
+                        f"Removed {result.deleted_count} duplicate demonstrations."
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Error removing duplicates with ids {duplicate['ids']}: {e}"
+                    )
 
         return removed_count
 
@@ -213,7 +203,6 @@ def main():
     logger.info(
         "Starting the process of handling repeating demonstrations and removing duplicates."
     )
-
     handle_repeating_demonstrations()
     removed_count = remove_duplicates()
     logger.info(f"Removed {removed_count} duplicate demonstrations.")

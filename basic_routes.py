@@ -4,10 +4,9 @@ import json
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
-from gettext import gettext as _
+from flask_babel import gettext as _
 
 from flask import (
-    Flask,
     render_template,
     redirect,
     url_for,
@@ -26,8 +25,8 @@ from classes import Organizer, Demonstration, Organization
 from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST
-from config import Config
 from utils.flashing import flash_message
+from utils.database import DEMO_FILTER
 
 email_sender = EmailSender()
 
@@ -63,9 +62,7 @@ def init_routes(app):
             loc.text = route["loc"]
 
         # Fetch all approved demonstrations from the database
-        demonstrations = demonstrations_collection.find(
-            {"approved": True, "hide": {"$exists": False}}
-        )
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
         for demo in demonstrations:
             url = ET.SubElement(urlset, "url")
             loc = ET.SubElement(url, "loc")
@@ -83,9 +80,7 @@ def init_routes(app):
         search_query = request.args.get("search", "")
         today = date.today()  # Use date.today() to get only the date part
 
-        demonstrations = demonstrations_collection.find(
-            {"approved": True, "hide": {"$exists": False}}
-        )
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
 
         filtered_demonstrations = []
         for demo in demonstrations:
@@ -124,7 +119,7 @@ def init_routes(app):
             event_type = request.form.get("type")
             route = request.form.get("route") if event_type == "marssi" else None
             tags = request.form.get("tags", None)
-            tags = [tag.strip() for tag in tags.split(",")]
+            tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
 
             img = request.files.get("image")
 
@@ -201,9 +196,7 @@ def init_routes(app):
         today = date.today()
 
         # Retrieve all approved demonstrations
-        demonstrations = demonstrations_collection.find(
-            {"approved": True, "hide": {"$exists": False}}
-        )
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
 
         # Filter upcoming demonstrations
         filtered_demonstrations = filter_demonstrations(
@@ -299,7 +292,9 @@ def init_routes(app):
                 )
             except ValueError:
                 flash_message(
-                    _("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.")
+                    _(
+                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+                    )
                 )
                 matches_date = False
 
@@ -320,11 +315,12 @@ def init_routes(app):
 
         if not demo:
             flash_message(
-                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error"
+                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
+                "error",
             )
             return redirect(url_for("demonstrations"))
 
-        if not demo.approved and not current_user.can_use("VIEW_DEMO"):
+        if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
 
         # Check if longitude is None to trigger geocoding
@@ -432,6 +428,7 @@ def init_routes(app):
             demo_date = datetime.strptime(
                 demo["date"], "%d.%m.%Y"
             ).date()  # Convert date string to date object
+
             if demo_date >= today:  # Only keep upcoming demos
                 upcoming_demos.append(demo)
 
@@ -451,7 +448,7 @@ def init_routes(app):
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
 
         # Fetch demonstrations that include the specified tag (case-insensitive)
-        demonstrations_query = {"tags": tag_regex}
+        demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
 
         # Pagination logic
         page = int(request.args.get("page", 1))
@@ -484,10 +481,10 @@ def init_routes(app):
         )
 
     # This is the route that provides the flash_message messages as JSON
-    @app.route("/get_flash_message_messages", methods=["GET"])
+    @app.route("/get_flash_messages", methods=["GET"])
     def get_flash_message_messages():
         # Retrieve flash_messageed messages with categories
-        messages = get_flash_messageed_messages(with_categories=True)
+        messages = get_flashed_messages(with_categories=True)
 
         # If there are no messages, return an empty array
         if not messages:
@@ -501,11 +498,6 @@ def init_routes(app):
         # Return the JSON response
         return jsonify(messages=flash_message_data)
 
-    @app.route("/celebrate")
-    def celebrate():
-        # This aims to be a cmast celebration page sometime in the future
-        ...
-
     @app.route("/marquee", methods=["GET"])
     def marquee():
         with open("marquee_config.json", "r") as config_file:
@@ -516,4 +508,3 @@ def init_routes(app):
     @app.route("/500")
     def _500():
         return abort(500)
-    

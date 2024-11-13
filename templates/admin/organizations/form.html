@@ -4,7 +4,6 @@
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/org_create.css') }}">-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
 <style>
     .custom-dropdown {
         position: relative;
@@ -68,6 +67,36 @@
         display: flex;
         justify-content: space-between;
     }
+
+    .form-buttons .btn {
+        margin-right: 10px;
+    }
+
+    .form-title {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        font-weight: bold;
+    }
+
+    .form-group .required {
+        color: red;
+    }
+
+    .button {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+
+    .button:hover {
+        background-color: var(--primary-color-dark);
+    }
+</style>
 </style>
 
 {% endblock %}
@@ -84,7 +113,7 @@
         const dropdown = document.createElement('div');
         dropdown.classList.add('custom-dropdown');
         dropdown.innerHTML = `
-            <div class="dropdown-selected" onclick="toggleDropdown(this)">Valitse sosiaalisen median alusta <i class="fas fa-caret-down"></i></div>
+            <div class="dropdown-selected" onclick="toggleDropdown(this)">{{ _('Valitse sosiaalisen median alusta') }} <i class="fas fa-caret-down"></i></div>
             <div class="dropdown-list">
                 <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
                 <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
@@ -104,7 +133,7 @@
         const urlInput = document.createElement('input');
         urlInput.type = 'url';
         urlInput.name = 'social_media_url[]';  // Array notation for URLs
-        urlInput.placeholder = 'Syötä URL';
+        urlInput.placeholder = "{{ _('Syötä URL') }}";
         urlInput.className = 'form-control';
         urlInput.value = url;
 

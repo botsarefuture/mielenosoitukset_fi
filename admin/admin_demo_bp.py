@@ -147,7 +147,7 @@ def edit_demo(demo_id):
     # Fetch demonstration data by ID
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        flash_message("Mielenosoitusta ei löytynyt.", "error")
         return redirect(url_for("admin_demo.demo_control"))
 
     if request.method == "POST":
@@ -190,11 +190,11 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             mongo.demonstrations.update_one(
                 {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
-            flash_message(_("Mielenosoitus päivitetty onnistuneesti."), "success")
+            flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
             # Insert a new demonstration
             mongo.demonstrations.insert_one(demonstration_data)
-            flash_message(_("Mielenosoitus luotu onnistuneesti."), "success")
+            flash_message("Mielenosoitus luotu onnistuneesti.", "success")
 
         # Redirect to the demonstration control panel on success
         return redirect(url_for("admin_demo.demo_control"))
@@ -315,7 +315,7 @@ def delete_demo():
     )
 
     if not demo_id:
-        error_message = _("Mielenosoituksen tunniste puuttuu.")
+        error_message = "Mielenosoituksen tunniste puuttuu."
         return (
             jsonify({"status": "ERROR", "message": error_message})
             if json_mode
@@ -326,7 +326,7 @@ def delete_demo():
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        error_message = _("Mielenosoitusta ei löytynyt.")
+        error_message = "Mielenosoitusta ei löytynyt."
         if json_mode:
             return jsonify({"status": "ERROR", "message": error_message})
         else:
@@ -336,7 +336,7 @@ def delete_demo():
     # Perform deletion
     mongo.demonstrations.delete_one({"_id": ObjectId(demo_id)})
 
-    success_message = _("Mielenosoitus poistettu onnistuneesti.")
+    success_message = "Mielenosoitus poistettu onnistuneesti."
     if json_mode:
         return jsonify({"status": "OK", "message": success_message})
     else:
@@ -354,7 +354,7 @@ def confirm_delete_demo(demo_id):
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash_message(_("Mielenosoitusta ei löytynyt."))
+        flash_message("Mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_demo.demo_control"))
 
     # Create a Demonstration instance from the fetched data

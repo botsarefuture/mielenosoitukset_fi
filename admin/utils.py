@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from bson.objectid import ObjectId
-from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
 
 from database_manager import DatabaseManager
@@ -80,3 +79,6 @@ def log_admin_action(user, action: str, details: str):
         logger.info(f"Admin action logged: {action} by user {user.email}")
     except PyMongoError as e:
         logger.error(f"Error logging admin action: {e}")
+
+
+# TODO: Transfer organization-related functions to utils.organizations

@@ -106,17 +106,6 @@ class User(UserMixin):
             "following": [],
         }
 
-    def get_org_name(self, org_id):
-        """
-        DEPRECATED: Use get_organization_details instead.
-        """
-        warnings.warn(
-            "get_org_name is deprecated and will be removed in a future release. "
-            "Use get_organization_details instead.",
-            DeprecationWarning,
-        )
-        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
-
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
@@ -326,17 +315,7 @@ class AnonymousUser(AnonymousUserMixin):
         self.global_permissions = []
         self.role = "anonymous"
 
-    def get_org_name(self, org_id):
-        """
-        DEPRECATED: Use get_organization_details instead.
-        """
-        warnings.warn(
-            "get_org_name is deprecated and will be removed in a future release. "
-            "Use get_organization_details instead.",
-            DeprecationWarning,
-        )
-        return collection.find_one({"_id": ObjectId(org_id)}).get("name")
-
+    
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.

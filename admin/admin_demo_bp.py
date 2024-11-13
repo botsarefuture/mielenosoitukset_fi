@@ -103,12 +103,17 @@ def filter_demonstrations(query, search_query, show_past, today):
 @admin_demo_bp.route("/create_demo", methods=["GET", "POST"])
 @login_required
 @admin_required
-@
+@permission_required("CREATE_DEMO")
 def create_demo():
     """
     Create a new demonstration.
 
     Renders the form for creating a demonstration or handles the form submission.
+    
+    Changelog:
+    ----------
+    v2.5.0:
+    - Permission required to create a demonstration.
     """
     if request.method == "POST":
         # Handle form submission for creating a new demonstration

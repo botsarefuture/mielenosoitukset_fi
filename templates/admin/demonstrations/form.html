@@ -242,7 +242,7 @@
                 {% endfor %}
                 {% else %}
                 {% for organization in current_user.organizations %}
-                <option value="{{ organization.org_id }}">{{ current_user.get_org_name(organization.org_id) }}</option>
+                <option value="{{ organization.org_id }}">{{ get_org_name(organization.org_id) }}</option>
                 {% endfor %}
                 {% endif %}
             </select>

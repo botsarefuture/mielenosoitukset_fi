@@ -27,10 +27,13 @@ def create_app():
     """
     Changelog:
     ----------
+    v2.5.0:
+    - Added a context processor to get the organization name from the organization ID.
+    
     v2.4.0:
     - Refined code
     - Logging level now reflects the app.debug variable
-    - Introduced /ping route
+    - Introduced /ping route for debugging purposes
     """
     app = Flask(__name__)
     app.config.from_object("config.Config")
@@ -48,6 +51,8 @@ def create_app():
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
 
+    
+    
     logger.info("Creating Flask application...")
 
     # Register error handlers
@@ -118,5 +123,11 @@ def create_app():
         @app.route("/ping")
         def ping():
             return f"Pong from {VERSION}"
+        
+    @app.context_processor
+    def utility_processor():
+        def get_org_name(org_id):
+            return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
+        return dict(get_org_name=get_org_name)
 
     return app

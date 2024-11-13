@@ -4,7 +4,7 @@ import json
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
-from gettext import gettext as _
+from flask_babel import gettext as _
 
 from flask import (
     render_template,

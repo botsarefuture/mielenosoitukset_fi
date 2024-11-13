@@ -11,7 +11,7 @@ from utils.database import stringify_object_ids
 from utils.flashing import flash_message
 
 from .utils import get_org_name, mongo
-from gettext import gettext as _
+from flask_babel import _
 
 
 email_sender = EmailSender()

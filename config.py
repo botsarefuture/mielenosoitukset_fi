@@ -4,7 +4,43 @@ import logging
 
 
 class Config:
-    """Configuration class to load and manage application settings."""
+    """
+    Configuration class to load and manage application settings.
+
+    Attributes:
+        config (dict): Loaded configuration from the YAML file.
+        MONGO_URI (str): MongoDB URI.
+        MONGO_DBNAME (str): MongoDB database name.
+        MAIL_CONFIG (dict): Mail configuration settings.
+        MAIL_SERVER (str): Mail server address.
+        MAIL_PORT (int): Mail server port.
+        MAIL_USE_TLS (bool): Use TLS for mail server.
+        MAIL_USERNAME (str): Mail server username.
+        MAIL_PASSWORD (str): Mail server password.
+        MAIL_DEFAULT_SENDER (str): Default sender email address.
+        SECRET_KEY (str): Secret key for Flask application.
+        PORT (int): Port number for the Flask application.
+        DEBUG (bool): Debug mode for the Flask application.
+        S3_CONFIG (dict): S3 configuration settings.
+        ACCESS_KEY (str): S3 access key.
+        SECRET_KEY (str): S3 secret key.
+        ENDPOINT_URL (str): S3 endpoint URL.
+        ADMIN_EMAIL (str): Admin email address.
+
+    Methods:
+    --------
+        load_yaml(file_path: str) -> Dict[str, Any]:
+            Load configuration from a YAML file.
+        init_config() -> None:
+            Initialize configuration and log validation messages.
+            
+    Changelog:
+    ----------
+    v2.6.0:
+    - Moved babel configuration to the config file.
+    - Added a method to initialize the configuration and log validation messages.
+    - Updated the docstring.
+    """
 
     # Configure logging for configuration loading
     logging.basicConfig(level=logging.INFO)
@@ -12,7 +48,20 @@ class Config:
 
     @staticmethod
     def load_yaml(file_path: str) -> Dict[str, Any]:
-        """Load configuration from a YAML file."""
+        """
+        Load configuration from a YAML file.
+
+        Args:
+            file_path (str): The path to the YAML file.
+
+        Returns:
+            Dict[str, Any]: The configuration loaded from the YAML file. 
+                            Returns an empty dictionary if loading fails.
+
+        Raises:
+            Exception: If there is an error reading the file or parsing the YAML content.
+        """
+
         try:
             with open(file_path, "r") as file:
                 config = yaml.safe_load(file) or {}
@@ -38,6 +87,11 @@ class Config:
     MAIL_PASSWORD = MAIL_CONFIG.get("PASSWORD", "")
     MAIL_DEFAULT_SENDER = MAIL_CONFIG.get("DEFAULT_SENDER", MAIL_USERNAME)
 
+    # Babel Configuration
+    BABEL_CONFIG = config.get("BABEL", {})
+    BABEL_DEFAULT_LOCALE = BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
+    BABEL_SUPPORTED_LOCALES = BABEL_CONFIG.get("SUPPORTED_LOCALES", ["en"])
+    
     # Flask Configuration
     SECRET_KEY = config.get("SECRET_KEY", "secret_key")
     PORT = config.get("PORT", 8000)
@@ -54,7 +108,18 @@ class Config:
 
     @classmethod
     def init_config(cls) -> None:
-        """Initialize configuration and log validation messages."""
+        """
+        Initialize configuration and log validation messages.
+
+        This method checks for the presence of essential configuration variables
+        and logs warnings if they are not set or if they use default insecure values.
+
+        Warnings:
+            - Logs a warning if `MONGO_URI` is not set.
+            - Logs a warning if either `MAIL_USERNAME` or `MAIL_PASSWORD` is not set.
+            - Logs a warning if `SECRET_KEY` is set to the default value "secret_key".
+        """
+
         if not cls.MONGO_URI:
             cls.logger.warning("MONGO_URI is not set.")
         if not cls.MAIL_USERNAME or not cls.MAIL_PASSWORD:
@@ -64,4 +129,4 @@ class Config:
 
 
 # Initialize the configuration
-Config.init_config()
+Config.init_config()  # This will log warnings if essential configuration variables are not set or use default values.

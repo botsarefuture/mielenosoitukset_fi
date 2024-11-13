@@ -23,10 +23,39 @@ scheduler.start()
 babel = Babel()
 
 
-def create_app():
-    """
+def create_app() -> Flask:
+    """Create and configure the Flask application.
+    
+    Returns:
+        Flask:
+            The configured Flask application instance.
+        
+    Initializes:
+    ------------
+    - Flask application with configurations from 'config.Config'.
+    - Babel for internationalization with default locale 'fi' and supported locales 'en', 'fi', 'sv'.
+    - MongoDB connection using DatabaseManager.
+    - Flask-Login for user session management.
+    - Registers error handlers.
+    - Registers blueprints for admin, auth, user, and API routes.
+    - Initializes basic routes.
+    - Adds a '/ping' route for debugging if app is in debug mode.
+    - Adds a context processor to fetch organization name by ID.
+    
+    User Loader:
+    ------------
+    - Loads a user from the database by user_id for Flask-Login.
+    
+    Context Processor:
+    ------------------
+    - Provides a utility function to get organization name from organization ID.
+    
     Changelog:
     ----------
+    v2.6.0:
+    - Updated the docstring.
+    - Moved the babel config to the config file.
+    
     v2.5.0:
     - Added a context processor to get the organization name from the organization ID.
     
@@ -35,15 +64,14 @@ def create_app():
     - Logging level now reflects the app.debug variable
     - Introduced /ping route for debugging purposes
     """
+    
     app = Flask(__name__)
-    app.config.from_object("config.Config")
+    app.config.from_object("config.Config") # Load configurations from 'config.Config'
 
-    # Set default language and available languages
-    app.config["BABEL_DEFAULT_LOCALE"] = "fi"
-    app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "fi", "sv"]
-
+    # Locale selector function
     def get_locale():
-        # This could also be modified to check user settings in the database
+        # TODO: #196 Modify this function to check user settings in the database
+        
         return request.accept_languages.best_match(
             app.config["BABEL_SUPPORTED_LOCALES"]
         )

@@ -80,6 +80,7 @@ class EmailSender:
 
             # Add a custom X-Mailer header
             msg["X-Mailer"] = "VersoMail"  # Customize the version as needed
+            # FIXME: #193 Currently the X-Mailer header is hardcoded to "VersoMail" and the version is not customizable
 
             if email_job.body:
                 msg.attach(MIMEText(email_job.body, "plain"))
@@ -113,7 +114,7 @@ class EmailSender:
         email_job = EmailJob(
             subject=subject, recipients=recipients, body=body, html=body, sender=sender
         )
-        self.queue_collection.insert_one(email_job.to_dict())
+        self.queue_collection.insert_one(email_job.to_dict()) # TODO: #194 Handle potential database insertion errors
 
     def send_now(self, template_name, subject, recipients, context, sender=None):
         """
@@ -131,4 +132,5 @@ class EmailSender:
         email_job = EmailJob(
             subject=subject, recipients=recipients, body=body, html=body, sender=sender
         )
-        self.send_email(email_job)
+        self.send_email(email_job) # TODO: #195 Handle potential email sending errors
+

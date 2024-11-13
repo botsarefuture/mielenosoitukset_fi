@@ -196,6 +196,7 @@ class Demonstration(BaseModel):
         validate_fields(title, date, start_time, city, address): Validates required fields.
         save(): Saves or updates the demonstration in the database.
     """
+    
     def __init__(
         self,
         title: str,
@@ -226,6 +227,38 @@ class Demonstration(BaseModel):
         save_flag=False,
         hide=False,
     ):
+        """
+        Initialize a new demonstration event.
+
+        Args:
+            title (str): The title of the event.
+            date (str): The date of the event.
+            start_time (str): The start time of the event.
+            end_time (str): The end time of the event.
+            facebook (str): The Facebook link for the event.
+            city (str): The city where the event is held.
+            address (str): The address of the event.
+            route (str): The route of the event if it is a march.
+            organizers (list, optional): A list of organizers. Defaults to None.
+            approved (bool, optional): Whether the event is approved. Defaults to False.
+            linked_organizations (dict, optional): Linked organizations. Defaults to None.
+            img (optional): Image associated with the event. Defaults to None.
+            _id (optional): The unique identifier for the event. Defaults to None.
+            description (str, optional): Description of the event. Defaults to None.
+            tags (list, optional): Tags associated with the event. Defaults to None.
+            parent (ObjectId, optional): Parent event ID for recurring events. Defaults to None.
+            created_datetime (optional): The datetime when the event was created. Defaults to None.
+            recurring (bool, optional): Whether the event is recurring. Defaults to False.
+            topic (str, optional): The topic of the event. Deprecated. Defaults to None.
+            type (str, optional): The type of the event. Defaults to None.
+            repeat_schedule (RepeatSchedule, optional): The repeat schedule for recurring events. Defaults to None.
+            repeating (bool, optional): Whether the event is repeating. Defaults to False.
+            latitude (str, optional): Latitude of the event location. Defaults to None.
+            longitude (str, optional): Longitude of the event location. Defaults to None.
+            event_type (optional): The type of the event. Defaults to None.
+            save_flag (bool, optional): Flag to save the event. Defaults to False.
+            hide (bool, optional): Flag to hide the event. Defaults to False.
+        """
 
         self.save_flag = save_flag
 
@@ -469,7 +502,17 @@ class RecurringDemonstration(Demonstration):
         self.repeat_schedule = repeat_schedule
 
     def calculate_next_dates(self) -> List[datetime]:
-        """Calculate the next demonstration dates based on the frequency and interval."""
+        """
+        Calculate the next demonstration dates based on the frequency and interval.
+
+        This method calculates the upcoming demonstration dates starting from the initial
+        date (`self.date`) and continues until one year from the current date. The calculation
+        is based on the frequency and interval specified in `self.repeat_schedule`.
+
+        Returns:
+            List[datetime]: A list of datetime objects representing the next demonstration dates.
+        """
+
         next_dates = []
         demo_date = datetime.strptime(self.date, "%Y-%m-%d")
         end_date = datetime.now() + relativedelta(years=1)
@@ -501,13 +544,45 @@ class RecurringDemonstration(Demonstration):
         return next_dates
 
     def update_demo(self, **kwargs) -> None:
-        """Update demonstration details using keyword arguments."""
+        """
+        Update demonstration details using keyword arguments.
+
+        This method allows updating the attributes of the demonstration instance
+        by passing keyword arguments. Only the attributes with non-None values
+        will be updated.
+
+        Args:
+            **kwargs: Arbitrary keyword arguments representing the attributes
+                      to be updated and their new values.
+
+        Example:
+            demo.update_demo(name="New Name", location="New Location")
+
+        Note:
+            If a keyword argument has a value of None, the corresponding attribute
+            will not be updated.
+        """
+
         for attr, value in kwargs.items():
             if value is not None:
                 setattr(self, attr, value)
 
     def to_dict(self, json=False) -> Dict[str, Any]:
-        """Convert the object to a dictionary for easy storage in a database."""
+        """
+        Convert the object to a dictionary for easy storage in a database.
+
+        Args:
+            json (bool): If True, the dictionary will be JSON serializable.
+
+        Returns:
+            Dict[str, Any]: A dictionary representation of the object.
+
+        Notes:
+            - Calls the parent class's to_dict method to get the base dictionary.
+            - Converts `repeat_schedule` to a dictionary if it is not None.
+            - Formats `created_until` as a string in the format "%d.%m.%Y" if it is a datetime object.
+        """
+
         data = super().to_dict(json=json)  # Call the parent to_dict
         if isinstance(self.repeat_schedule, dict):
             self.repeat_schedule = RepeatSchedule.from_dict(self.repeat_schedule)
@@ -530,7 +605,33 @@ class RecurringDemonstration(Demonstration):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RecurringDemonstration":
-        """Create an instance from a dictionary."""
+        """
+        Create an instance of RecurringDemonstration from a dictionary.
+
+        Args:
+            data (Dict[str, Any]): A dictionary containing the data to create the instance.
+
+        Returns:
+            RecurringDemonstration: An instance of the RecurringDemonstration class.
+
+        The dictionary should have the following keys:
+            - title (str): The title of the demonstration.
+            - date (str): The date of the demonstration.
+            - start_time (str): The start time of the demonstration.
+            - end_time (str): The end time of the demonstration.
+            - facebook (str): The Facebook event link.
+            - city (str): The city where the demonstration will take place.
+            - address (str): The address of the demonstration.
+            - route (str): The route of the demonstration.
+            - organizers (list, optional): A list of organizers. Defaults to an empty list.
+            - linked_organizations (dict, optional): A dictionary of linked organizations. Defaults to an empty dictionary.
+            - repeat_schedule (dict, optional): A dictionary representing the repeat schedule. Defaults to None.
+            - created_until (str, optional): The date until which the demonstration is created. Defaults to the current date.
+            - _id (str, optional): The unique identifier of the demonstration. Defaults to None.
+            - description (str, optional): A description of the demonstration. Defaults to None.
+            - tags (list, optional): A list of tags associated with the demonstration. Defaults to an empty list.
+        """
+
         start_time = data["start_time"]
         end_time = data["end_time"]
         created_until = (
@@ -562,4 +663,10 @@ class RecurringDemonstration(Demonstration):
         )
 
     def __repr__(self) -> str:
+        """
+        Return a string representation of the RecurringDemonstration instance.
+
+        Returns:
+            str: A string containing the title, start time, and end time of the demonstration.
+        """
         return f"<RecurringDemonstration(title={self.title}, start_time={self.start_time}, end_time={self.end_time})>"

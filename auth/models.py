@@ -10,7 +10,6 @@ db = DatabaseManager().get_instance()
 mongo = db.get_db()
 collection = mongo["organizations"]
 
-
 class User(UserMixin):
     def __init__(
         self,
@@ -300,7 +299,7 @@ class AnonymousUser(AnonymousUserMixin):
         """
         Add or update an organization for the user, including role and permissions.
         """
-        logger.critical(f"Trying to add organization to AnonymousUser")
+        logger.critical(f"Trying to add organization to AnonymousUser")  # TODO: Handle this case more gracefully
 
     def is_member_of_organization(self, organization_id):
         """
@@ -312,36 +311,42 @@ class AnonymousUser(AnonymousUserMixin):
         """
         Change the user's password and update the database.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_displayname(self, db, displayname):
         """
         Update the user's display name and database record.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_profile_picture(self, db, profile_picture):
         """
         Update the user's profile picture and database record.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_bio(self, db, bio):
         """
         Update the user's bio and database record.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def follow_user(self, db, user_id_to_follow):
         """
         Add a user to the followers list of this user.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def unfollow_user(self, db, user_id_to_unfollow):
         """
         Remove a user from the followers list of this user.
         """
+        # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def has_permission(self, organization_id, permission):

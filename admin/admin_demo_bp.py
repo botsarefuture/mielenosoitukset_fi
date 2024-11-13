@@ -1,17 +1,18 @@
 from datetime import date, datetime
 from bson.objectid import ObjectId
 
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
+from flask_babel import _
+
 from classes import Demonstration, Organizer
+from utils.admin.demonstration import collect_tags
+from utils.database import DEMO_FILTER
+from utils.flashing import flash_message
 from utils.variables import CITY_LIST
 from wrappers import admin_required, permission_required
 from .utils import mongo
-from utils.admin.demonstration import collect_tags
-from gettext import gettext as _
-from utils.flashing import flash_message
-from utils.database import DEMO_FILTER
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -41,12 +42,13 @@ def demo_control():
     today = date.today()
 
     # Construct the base query to fetch demonstrations
-    del DEMO_FILTER["approved"] #, None)
+    # Remove the "approved" filter to allow for dynamic filtering based on user input
+    del DEMO_FILTER["approved"]
     query = DEMO_FILTER
     
 
     if approved_only:
-        query["approved"] = False
+        query["approved"] = True
 
     if user_org_ids:
         query["organizers"] = {"$elemMatch": {"organization_id": {"$in": user_org_ids}}}
@@ -91,7 +93,7 @@ def filter_demonstrations(query, search_query, show_past, today):
         if (show_past or datetime.strptime(demo["date"], "%d.%m.%Y").date() >= today)
         and any(
             search_query in demo[field].lower()
-            for field in ["title", "city", "topic", "address"]
+            for field in ["title", "city", "address"]
         )
     ]
 
@@ -101,6 +103,7 @@ def filter_demonstrations(query, search_query, show_past, today):
 @admin_demo_bp.route("/create_demo", methods=["GET", "POST"])
 @login_required
 @admin_required
+@
 def create_demo():
     """
     Create a new demonstration.

@@ -1,14 +1,3 @@
-# ⚠️ **Warning: Out-of-Date Documentation** ⚠️
-
-**This README file is currently out-of-date.**  
-Due to high workload and time constraints, we will not be able to update this documentation in the near future. 
-
-**Please use the code and project files as the primary source of truth**. If you have any urgent questions or need clarification, feel free to reach out to us.
-
-Thank you for your understanding!
-
----
-
 # Mielenosoitukset.fi
 
 Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions.
@@ -17,7 +6,6 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 
 ## Table of Contents
 
-- [⚠️ Warning: Out-of-Date Documentation](#️-warning-out-of-date-documentation)
 - [Features](#features)
 - [Technologies](#technologies)
 - [Getting Started](#getting-started)
@@ -141,27 +129,29 @@ We will review and merge your changes after testing.
 
 ## Translating
 
-> **HOX**: this has been transferred:
-[TRANSLATING.md][translations]
+For translation guidelines, please refer to the [TRANSLATING.md][translations] file.
 
-
+---
 
 ## License
 
 This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for more information.
 
-Copyright 2024 Verso Vuorenmaa
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-
 [translations]: TRANSLATING.md
+---
+
+## Contact
+
+If you have any questions, suggestions, or feedback, feel free to reach out to us:
+
+- Email: support@mielenosoitukset.fi
+- Twitter: [@mielenosoitukset](https://twitter.com/mielenosoitukset)
+- GitHub Issues: [https://github.com/botsarefuture/mielenosoitukset_fi/issues](https://github.com/botsarefuture/mielenosoitukset_fi/issues)
+
+We appreciate your input and support!
+
+---
+
+## Changelog
+
+See the [CHANGELOG.md](CHANGELOG.md) file for details on the latest updates and changes to the project.

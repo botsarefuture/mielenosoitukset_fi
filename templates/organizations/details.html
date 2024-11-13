@@ -1,5 +1,5 @@
 {% extends "base.html" %} {% import 'macros.html' as macros %} {% block title %}
-{{ org.name }} - Tiedot {% endblock %} {% block scripts %}
+{{ org.name }} - {{ _('Tiedot') }} {% endblock %} {% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
 {% endblock %} {% block styles %}
 <link
@@ -22,7 +22,7 @@
   </div>
 
   <div class="contact-info">
-    <h2 class="section-title">Yhteystiedot</h2>
+    <h2 class="section-title">{{ _('Yhteystiedot') }}</h2>
     <div class="contact-methods">
       <p>
         <i class="fa-solid fa-envelope some-icon"></i>
@@ -38,7 +38,7 @@
       </p>
     </div>
     {% if org.social_media_links %}
-    <h3 class="section-title">Sosiaalinen media</h3>
+    <h3 class="section-title">{{ _('Sosiaalinen media') }}</h3>
     <div class="socials">
       {% for social in org.social_media_links %}
       <a
@@ -73,12 +73,12 @@
     "
   >
     <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
-      Esitellyt mielenosoitukset
+      {{ _('Esitellyt mielenosoitukset') }}
     </h2>
     <div class="container-grid" style="width: 100%">
       {% if upcoming_demos %} {% for demo in upcoming_demos %} {{
       macros.demo_card(demo) }} {% endfor %} {% else %}
-      <div class="grid-item">Ei mielenosoituksia näytettäväksi.</div>
+      <div class="grid-item">{{ _('Ei mielenosoituksia näytettäväksi.') }}</div>
       {% endif %}
     </div>
   </section>

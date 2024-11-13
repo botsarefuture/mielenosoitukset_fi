@@ -7,7 +7,6 @@ from flask import (
     abort,
     current_app,
 )
-
 from flask_login import login_user, logout_user, login_required, current_user
 from auth.models import User
 import jwt
@@ -20,6 +19,8 @@ import os
 from utils.flashing import flash_message
 from werkzeug.utils import secure_filename
 
+db_manager = DatabaseManager().get_instance()
+email_sender = EmailSender()  # Initialize email sender
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
@@ -134,7 +135,7 @@ def login():
             )  # Redirect to the next page or the index
 
         else:
-            flash_message(_("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."))
+            flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
             return redirect(next_page or url_for("index"))
 

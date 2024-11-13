@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-13 10:17+0200\n"
+"POT-Creation-Date: 2024-11-13 10:21+0200\n"
 "PO-Revision-Date: 2024-11-11 09:34+0000\n"
 "Last-Translator: Verso, 2024\n"
 "Language: en\n"
@@ -75,10 +75,6 @@ msgstr "Organization created successfully."
 #: admin/admin_org_bp.py:198
 msgid "Organisaatio poistettu onnistuneesti."
 msgstr "Organization removed successfully."
-
-#: auth/routes.py:137
-msgid "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
-msgstr "Your email hasn't been verified. Check your email inbox."
 
 #: auth/templates/edit_profile.html:5
 msgid "Muokkaa Profiilia"
@@ -1434,4 +1430,7 @@ msgstr "Additional informatio"
 
 #~ msgid "Tallenna pyörö"
 #~ msgstr ""
+
+#~ msgid "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
+#~ msgstr "Your email hasn't been verified. Check your email inbox."
 

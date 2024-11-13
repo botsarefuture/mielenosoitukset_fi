@@ -36,7 +36,8 @@ sys.path.append(parent_dir)
 # Import necessary modules
 classes = importlib.import_module("classes")
 database_manager = importlib.import_module("database_manager")
-app = importlib.import_module("app").create_app()
+if __name__ == "__main__":
+    app = importlib.import_module("app").create_app()
 utils = importlib.import_module("utils")
 
 # Get the database instance

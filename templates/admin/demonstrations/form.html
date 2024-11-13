@@ -30,7 +30,7 @@
         newTagInput.id = `tag_${tagCount}`;
         newTagInput.name = `tag_${tagCount}`;
         newTagInput.className = 'form-control tag-input';
-        newTagInput.placeholder = 'Lisää tagi';
+        newTagInput.placeholder = '{{ _("Lisää tagi") }}';
         newTagInput.required = true;
         const remButton = document.createElement('button');
         remButton.className = "circle-btn";
@@ -88,7 +88,7 @@
             `;
             document.getElementById('organizers-container').appendChild(newOrganizer);
         } else {
-            alert('Valitse ensin järjestö!');
+            alert('{{ _("Valitse ensin järjestö!") }}');
         }
     }
 
@@ -100,16 +100,14 @@
 
 <script>
     function remove(id) {
-        ss = document.getElementById(`tag_${id}`);
-        console.log(ss);
-        ss.parentNode.removeChild(ss);
-        delete ss;
-        ca = document.getElementById(`remove_tag_${id}`);
-        ca.parentNode.removeChild(ca);
-        delete ca;
-
-        //document.removeChild(ss);        
-
+        tagElement = document.getElementById(`tag_${id}`);
+        console.log(tagElement);
+        tagElement.parentNode.removeChild(tagElement);
+        tagElement = null;
+        
+        removeButton = document.getElementById(`remove_tag_${id}`);
+        removeButton.parentNode.removeChild(removeButton);
+        removeButton = null;
     }
 </script>
 
@@ -124,45 +122,45 @@
 
         <!-- Form fields with required indicators -->
         <div class="form-group">
-            <label for="title">Otsikko <span class="required">*</span></label>
+            <label for="title">{{ _('Otsikko') }} <span class="required">*</span></label>
             <input type="text" id="title" name="title" class="form-control"
                 value="{{ demo.title if demo and demo.title else '' }}" required>
         </div>
         <div class="form-group">
-            <label for="date">Päivämäärä (pp.kk.vvvv) <span class="required">*</span></label>
+            <label for="date">{{ _('Päivämäärä (pp.kk.vvvv)') }} <span class="required">*</span></label>
             <input type="text" id="date" name="date" class="form-control"
                 value="{{ demo.date if demo and demo.date else '' }}" required>
         </div>
 
         <div class="form-group">
-            <label for="start_time">Alkamisaika <span class="required">*</span></label>
+            <label for="start_time">{{ _('Alkamisaika') }} <span class="required">*</span></label>
             <input type="text" id="start_time" name="start_time" class="form-control"
                 value="{{ demo.start_time if demo and demo.start_time else '' }}" required>
         </div>
         <div class="form-group">
-            <label for="end_time">Päättymisaika</label>
+            <label for="end_time">{{ _('Päättymisaika') }}</label>
             <input type="text" id="end_time" name="end_time" class="form-control"
                 value="{{ demo.end_time if demo and demo.end_time else '' }}">
         </div>
 
 
         <div class="form-group">
-            <label for="tags">Tägit</label>
+            <label for="tags">{{ _('Tägit') }}</label>
             <div id="tags-container">
                 {% if demo and demo.tags %}
                 {% for tag in demo.tags %}
                 <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input"
-                    value="{{ tag }}" placeholder="Lisää tagi" required>
+                    value="{{ tag }}" placeholder="{{ _('Lisää tagi') }}" required>
                 <button class="circle-btn" id="remove_tag_{{loop.index}}" onclick="remove({{ loop.index }})"><i
                         class="fa fa-times"></i></button>
                 {% endfor %}
                 {% endif %}
             </div>
-            <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">Lisää uusi tagi</button>
+            <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">{{ _('Lisää uusi tagi') }}</button>
         </div>
 
         <div class="form-group">
-            <label for="facebook">Facebook linkki</label>
+            <label for="facebook">{{ _('Facebook linkki') }}</label>
             <input type="url" id="facebook" name="facebook" class="form-control"
                 value="{{ demo.facebook if demo and demo.facebook else '' }}">
         </div>
@@ -172,31 +170,30 @@
 
         <!-- Address Field -->
         <div class="form-group">
-            <label for="address">Osoite <span class="required">*</span></label>
+            <label for="address">{{ _('Osoite') }} <span class="required">*</span></label>
             <input type="text" id="address" name="address" class="form-control"
                 value="{{ demo.address if demo and demo.address else '' }}" required>
         </div>
 
         <!-- Event Type Selector -->
         <div class="form-group">
-            <label for="type">Tyyppi <span class="required">*</span></label>
+            <label for="type">{{ _('Tyyppi') }} <span class="required">*</span></label>
             <select id="type" name="type" class="form-control" required>
-                <option value="marssi" {% if demo and demo.event_type=='marssi' %}selected{% endif %}>Marssi</option>
-                <option value="paikallaan" {% if demo and demo.event_type=='paikallaan' %}selected{% endif %}>Paikallaan
-                </option>
-                <option value="muut" {% if demo and demo.event_type=='muut' %}selected{% endif %}>Muut</option>
+                <option value="marssi" {% if demo and demo.event_type=='marssi' %}selected{% endif %}>{{ _('Marssi') }}</option>
+                <option value="paikallaan" {% if demo and demo.event_type=='paikallaan' %}selected{% endif %}>{{ _('Paikallaan') }}</option>
+                <option value="muut" {% if demo and demo.event_type=='muut' %}selected{% endif %}>{{ _('Muut') }}</option>
             </select>
         </div>
 
         <!-- March Route Input -->
         <div id="march-route-container" class="form-group" {% if demo and demo.event_type !='marssi'
             %}style="display:none;" {% endif %}>
-            <label for="route">Reitti (marssin)</label>
+            <label for="route">{{ _('Reitti (marssin)') }}</label>
             <input type="text" id="route" name="route" class="form-control"
                 value="{{ demo.route if demo and demo.route else '' }}">
         </div>
 
-        <h4>Järjestäjätahojen tiedot<span class="required">*</span></h4>
+        <h4>{{ _('Järjestäjätahojen tiedot') }}<span class="required">*</span></h4>
 
         <!-- Organizers Section -->
         <div id="organizers-container" class="container-columns">
@@ -205,24 +202,24 @@
             <div class="form-group organizer-item">
                 <hr>
 
-                <label for="organizer_name_{{ loop.index }}">Järjestäjätahon nimi <span
+                <label for="organizer_name_{{ loop.index }}">{{ _('Järjestäjätahon nimi') }} <span
                         class="required">*</span></label>
                 <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
                     class="form-control" value="{{ organizer.name }}" required>
 
-                <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
+                <label for="organizer_website_{{ loop.index }}">{{ _('Nettisivu') }}</label>
                 <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
                     class="form-control" value="{{ organizer.website }}">
 
-                <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
+                <label for="organizer_email_{{ loop.index }}">{{ _('Sähköposti') }}</label>
                 <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
                     class="form-control" value="{{ organizer.email }}">
 
-                <label for="organizer_id_{{ loop.index }}">ID</label>
+                <label for="organizer_id_{{ loop.index }}">{{ _('ID') }}</label>
                 <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
                     class="form-control disabled" value="{{ organizer.organization_id }}">
 
-                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
             </div>
             {% else %}
             <script>addOrganizer();</script>
@@ -234,10 +231,10 @@
 
         <!-- Organization Selection -->
         <div class="form-group">
-            <label for="organization">Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen <span
+            <label for="organization">{{ _('Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen') }} <span
                     class="required">*</span></label>
             <select id="organization" name="organization" class="form-control">
-                <option value="">Valitse järjestö</option>
+                <option value="">{{ _('Valitse järjestö') }}</option>
 
                 {% if current_user.global_admin %}
                 {% for organization in all_organizations %}
@@ -251,17 +248,16 @@
             </select>
 
         </div>
-        <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">Lisää järjestäjä</button>
+        <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">{{ _('Lisää järjestäjä') }}</button>
 
         <!-- Approval Checkbox -->
         <div class="approval-wrapper mt-4">
             <div class="form-group" id="approval-container">
-                <label for="approved">Hyväksytty</label>
+                <label for="approved">{{ _('Hyväksytty') }}</label>
                 <div>
                     <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
                         demo.approved %}checked{% endif %}>
-                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}Kyllä{% else %}Ei{%
-                        endif %}</span>
+                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
                 </div>
             </div>
         </div>

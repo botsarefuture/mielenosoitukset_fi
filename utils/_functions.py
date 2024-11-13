@@ -2,6 +2,16 @@ import os
 
 
 def get_cur_dir():
+    """
+    Returns the current directory of the file where this function is called.
+
+    This function determines the full path of the file using `__file__`, 
+    then extracts and returns the directory part of the path.
+
+    Returns:
+        str: The current directory of the file.
+    """
+    
     _FULL_PATH = os.path.realpath(__file__)
 
     _CUR_DIR = os.path.dirname(_FULL_PATH)
@@ -9,7 +19,7 @@ def get_cur_dir():
     return _CUR_DIR
 
 
-_CUR_DIR = get_cur_dir()
+_CUR_DIR = get_cur_dir() # Get the current directory of the file
 
 
 def load_version() -> str:

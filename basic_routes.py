@@ -62,8 +62,7 @@ def init_routes(app):
             loc.text = route["loc"]
 
         # Fetch all approved demonstrations from the database
-        demonstrations = demonstrations_collection.find(
-    DEMO_FILTER        )
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
         for demo in demonstrations:
             url = ET.SubElement(urlset, "url")
             loc = ET.SubElement(url, "loc")
@@ -81,8 +80,7 @@ def init_routes(app):
         search_query = request.args.get("search", "")
         today = date.today()  # Use date.today() to get only the date part
 
-        demonstrations = demonstrations_collection.find(
-DEMO_FILTER        )
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
 
         filtered_demonstrations = []
         for demo in demonstrations:
@@ -198,8 +196,7 @@ DEMO_FILTER        )
         today = date.today()
 
         # Retrieve all approved demonstrations
-        demonstrations = demonstrations_collection.find(
-DEMO_FILTER        )
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
 
         # Filter upcoming demonstrations
         filtered_demonstrations = filter_demonstrations(
@@ -295,7 +292,9 @@ DEMO_FILTER        )
                 )
             except ValueError:
                 flash_message(
-                    _("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv.")
+                    _(
+                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+                    )
                 )
                 matches_date = False
 
@@ -316,7 +315,8 @@ DEMO_FILTER        )
 
         if not demo:
             flash_message(
-                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error"
+                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
+                "error",
             )
             return redirect(url_for("demonstrations"))
 
@@ -428,7 +428,7 @@ DEMO_FILTER        )
             demo_date = datetime.strptime(
                 demo["date"], "%d.%m.%Y"
             ).date()  # Convert date string to date object
-            
+
             if demo_date >= today:  # Only keep upcoming demos
                 upcoming_demos.append(demo)
 
@@ -508,4 +508,3 @@ DEMO_FILTER        )
     @app.route("/500")
     def _500():
         return abort(500)
-    

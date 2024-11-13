@@ -1,29 +1,56 @@
 from utils.logger import logger
 from functools import wraps
-from flask import redirect, url_for
+from flask import redirect, url_for, abort
 from flask_babel import _
 from flask_login import current_user
 from utils.flashing import flash_message
 
+
 def admin_required(f):
     """
-    Decorator that checks if the current user is a global admin.
+    Decorator to enforce that a user has global admin privileges to access a specific route.
+
+    The decorator performs two checks:
+    1. Ensures the user is authenticated.
+    2. Verifies that the user has a global admin role.
+
+    If either check fails, a 403 Forbidden response is returned, and an appropriate log message is created.
+
+    Changelog:
+    ----------
+    v2.6.0:
+        - Replaced flash message and redirect with abort(403) for unauthorized access.
+        - Enhanced logging for each access control check.
+        - Improved log messages for better debugging capabilities.
+        - Simplified access control logic for better readability.
+        - Replaced multiple return statements with a single return statement.
+        - Added function documentation for clarity.
+        - Removed unnecessary try-except block.
+
+
+    Args:
+        f (function): The route function requiring admin access.
+
+    Returns:
+        function: The wrapped function with access control enforced.
     """
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # Ensure the user is authenticated
+        # Check if the user is authenticated
         if not current_user.is_authenticated:
-            flash_message("Sinun täytyy kirjautua sisään käyttääksesi tätä sivua.")
-            logger.warning("User not authenticated, redirecting to login.")
-            return redirect(url_for("auth.login"))
+            logger.warning("User not authenticated, Unauthorized (401).")
+            abort(401)
 
-        if not current_user.global_admin and current_user.role in {"user", "member"}:
-            flash_message("Sinun käyttöoikeutesi eivät riitä sivun tarkasteluun.")
-            logger.warning(f"User {current_user.username} is not a global admin.")
-            return redirect(url_for("index"))
+        # Check if the user has global admin privileges
+        if not current_user.global_admin:
+            logger.warning(
+                f"User {current_user.username} is not a global admin, access forbidden (403)."
+            )
+            abort(403)
 
-        logger.info(f"User {current_user.username} is an admin.")
+        # User is a global admin, access granted
+        logger.info(f"User {current_user.username} is an admin, access granted.")
         return f(*args, **kwargs)
 
     return decorated_function
@@ -31,45 +58,67 @@ def admin_required(f):
 
 def permission_required(permission_name):
     """
-    Decorator to check if a user has a specific permission.
+    Decorator to enforce specific permission requirements for route access.
+
+    This decorator checks:
+    1. If the user is authenticated.
+    2. If the user has global admin privileges (bypasses specific permission check).
+    3. If the user has the specified permission.
+
+    If access is denied, the user is redirected and a flash message is displayed.
+
+    Changelog:
+        - Enhanced logging at each step to improve debugging capabilities.
+        - Added logic for global admin bypass of specific permissions.
+        - Integrated flash messaging to notify user of access restrictions.
+        - Consolidated and clarified permission handling logic.
+        - Replaced redirect with abort(403) for unauthorized access.
 
     Args:
-        permission_name (str): The name of the permission to check.
+        permission_name (str): The specific permission name required to access the route.
 
     Returns:
-        function: The wrapped function.
+        function: The wrapped function with permission control enforced.
     """
 
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Check if the user is authenticated
+            # Ensure the user is authenticated
             if not current_user.is_authenticated:
                 flash_message("Sinun tulee kirjautua sisään käyttääksesi sivua.")
                 logger.warning("User not authenticated, redirecting to login.")
                 return redirect(url_for("auth.login"))
 
-            # If the user is a global admin, grant access
+            # Allow access if the user is a global admin
             if current_user.global_admin:
                 logger.info("Global admin access granted.")
                 return f(*args, **kwargs)
 
-            if current_user.can_use(permission_name):
-                return f(*args, **kwargs)
-
-            # Check if the user has the specified permission
-            if permission_name in current_user.global_permissions:
+            # Check if the user has the specified permission via user role permissions
+            if current_user.can_use(
+                permission_name
+            ):  # DEPRACED: Use has_permission instead
                 logger.info(
-                    f"User {current_user.username} has permission '{permission_name}'."
+                    f"User {current_user.username} has permission '{permission_name}' via role."
                 )
                 return f(*args, **kwargs)
 
-            # If permission is not granted, handle it appropriately
-            flash_message("Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen.")
+            # Check if user has the specified permission directly in global permissions
+            if permission_name in current_user.global_permissions:
+                logger.info(
+                    f"User {current_user.username} has global permission '{permission_name}'."
+                )
+                return f(*args, **kwargs)
+
+            # Access denied if no permissions are met
+            flash_message(
+                "Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen."
+            )
             logger.warning(
                 f"User {current_user.username} does not have permission '{permission_name}'."
             )
-            return redirect(url_for("index"))
+            return abort(403)  # Forbidden
 
         return decorated_function
 

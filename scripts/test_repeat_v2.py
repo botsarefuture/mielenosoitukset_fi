@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 from scripts.repeat_v2 import calculate_next_dates
 
+
 class TestCalculateNextDates(unittest.TestCase):
 
     def test_daily_frequency(self):
@@ -43,6 +44,7 @@ class TestCalculateNextDates(unittest.TestCase):
         self.assertEqual(len(next_dates), 183)
         self.assertEqual(next_dates[0], demo_date)
         self.assertEqual(next_dates[1], demo_date + timedelta(days=2))
+
 
 if __name__ == "__main__":
     unittest.main()

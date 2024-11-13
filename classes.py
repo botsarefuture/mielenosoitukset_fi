@@ -10,6 +10,7 @@ from utils.database import stringify_object_ids
 
 DB = DatabaseManager().get_instance().get_db()
 
+
 class RepeatSchedule:
     def __init__(
         self, frequency: str, interval: int, weekday: Optional[datetime] = None
@@ -247,9 +248,7 @@ class Demonstration(BaseModel):
         if self.save_flag:
             self.save()
 
-        self.validate_fields(
-            title, date, start_time, city, address
-        )
+        self.validate_fields(title, date, start_time, city, address)
 
     def merge(self, id_of_other_demo):
         """Merge another demonstration into this one."""
@@ -267,10 +266,9 @@ class Demonstration(BaseModel):
 
         # Ensure the merged demonstration can be found by both IDs
         DB["demonstrations"].update_one(
-            {"_id": ObjectId(id_of_other_demo)},
-            {"$set": {"merged_into": self._id}}
+            {"_id": ObjectId(id_of_other_demo)}, {"$set": {"merged_into": self._id}}
         )
-    
+
     def to_dict(self, json=False):
         """Convert instance to dictionary, including organizers as dictionaries."""
         data = super().to_dict(json=json)
@@ -313,6 +311,7 @@ class Demonstration(BaseModel):
             # Insert new entry
             DB["demonstrations"].insert_one(data)
             print("Demonstration saved successfully.")
+
 
 class RecurringDemonstration(Demonstration):
     def __init__(
@@ -431,8 +430,14 @@ class RecurringDemonstration(Demonstration):
             if isinstance(self.created_until, datetime):
                 data["created_until"] = self.created_until.strftime("%d.%m.%Y")
             else:
-            # Transform this to datetime object, and then make the strftime call
-                data["created_until"] = datetime.strptime(data["created_until"], "%d.%m.%Y").strftime("%d.%m.%Y") if self.created_until is not None else None
+                # Transform this to datetime object, and then make the strftime call
+                data["created_until"] = (
+                    datetime.strptime(data["created_until"], "%d.%m.%Y").strftime(
+                        "%d.%m.%Y"
+                    )
+                    if self.created_until is not None
+                    else None
+                )
         return data
 
     @classmethod

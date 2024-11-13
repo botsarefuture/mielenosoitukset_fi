@@ -17,6 +17,7 @@ from gettext import gettext as _
 email_sender = EmailSender()
 admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 
+
 # User control panel with pagination
 @admin_user_bp.route("/")
 @login_required

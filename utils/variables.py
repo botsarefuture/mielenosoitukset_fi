@@ -3,6 +3,7 @@ import os
 
 from . import _CUR_DIR
 
+
 def load_from_file(_filename):
     """
     Load and parse JSON data from a specified file located in the ".utils" directory.

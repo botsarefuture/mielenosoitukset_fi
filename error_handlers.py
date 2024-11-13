@@ -1,6 +1,7 @@
 from utils.logger import logger
 from flask import Flask, render_template, request
 
+
 def register_error_handlers(app: Flask):
     """Register error handlers for different HTTP error codes."""
 
@@ -13,11 +14,13 @@ def register_error_handlers(app: Flask):
     def unauthorized(error):
         """Handle Unauthorized (401) errors."""
         # Log the 401 error details
-        logger.warning(f"401 Unauthorized: {request.path} attempted by {request.remote_addr}\n{error}")
-        
+        logger.warning(
+            f"401 Unauthorized: {request.path} attempted by {request.remote_addr}\n{error}"
+        )
+
         # You could also send this data to a monitoring service, e.g.:
         # monitor_service.log_401_error(path=request.path, ip=request.remote_addr)
-        
+
         return render_template("errors/401.html"), 401
 
     @app.errorhandler(403)

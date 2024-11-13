@@ -170,6 +170,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         import logging
+
         logging.error(f"An error occurred: {str(e)}")
         flash_message(f"Virhe: {str(e)}")
         return redirect(
@@ -220,7 +221,7 @@ def confirm_delete_recu_demo(demo_id):
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash_message('Toistuvaa mielenosoitusta ei löytynyt.')
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)

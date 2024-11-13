@@ -22,6 +22,7 @@ scheduler.start()
 # Initialize Babel
 babel = Babel()
 
+
 def create_app():
     """
     Changelog:
@@ -35,16 +36,18 @@ def create_app():
     app.config.from_object("config.Config")
 
     # Set default language and available languages
-    app.config['BABEL_DEFAULT_LOCALE'] = 'fi'
-    app.config['BABEL_SUPPORTED_LOCALES'] = ['en', 'fi', 'sv']
+    app.config["BABEL_DEFAULT_LOCALE"] = "fi"
+    app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "fi", "sv"]
 
     def get_locale():
         # This could also be modified to check user settings in the database
-        return request.accept_languages.best_match(app.config['BABEL_SUPPORTED_LOCALES'])
+        return request.accept_languages.best_match(
+            app.config["BABEL_SUPPORTED_LOCALES"]
+        )
 
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
-    
+
     logger.info("Creating Flask application...")
 
     # Register error handlers
@@ -92,21 +95,26 @@ def create_app():
     app.register_blueprint(admin_org_bp)
 
     from auth import auth_bp
+
     app.register_blueprint(auth_bp, url_prefix="/auth/")
 
     from user import user_bp
+
     app.register_blueprint(user_bp)
 
     from api import api_bp
+
     app.register_blueprint(api_bp, url_prefix="/api/")
 
     # Import and initialize routes
     import basic_routes
+
     basic_routes.init_routes(app)
 
     logger.info("Flask application created successfully.")
 
     if app.debug:
+
         @app.route("/ping")
         def ping():
             return f"Pong from {VERSION}"

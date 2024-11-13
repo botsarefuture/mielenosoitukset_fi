@@ -10,6 +10,7 @@ db = DatabaseManager().get_instance()
 mongo = db.get_db()
 collection = mongo["organizations"]
 
+
 class User(UserMixin):
     def __init__(
         self,
@@ -44,7 +45,7 @@ class User(UserMixin):
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
-        self._id = self.id  # Alias for id
+        self._id = self.id  # Alias for id a
 
     @staticmethod
     def from_db(user_doc):
@@ -218,18 +219,57 @@ class User(UserMixin):
             )
             logger.info("Stopped following user successfully.")
 
-    def has_permission(self, organization_id, permission):
+    def has_permission(self, permission, organization_id=None):
         """
-        Check if the user has a specific permission in a given organization or globally.
+        This method verifies if the user possesses a certain permission either on a global level or within a specified organization.
+        It first checks the global permissions, then the organization-specific permissions if an organization ID is provided,
+        and finally checks the permissions dictionary for organization-specific permissions.
+
+        Args:
+            permission (str): The permission to check for.
+            organization_id (str, optional): The ID of the organization to check the permission against. Defaults to None.
+
+        Returns:
+            bool: True if the user has the specified permission, either globally or within the given organization; False otherwise.
+
+        Global Permissions:
+            The method first checks if the specified permission exists in the user's global permissions.
+            If it does, the method returns True.
+
+        Organization-specific Permissions:
+            If an organization ID is provided, the method iterates through the user's organizations to find a match with the given ID.
+            If a match is found and the specified permission exists in the organization's permissions, the method returns True.
+
+        Permissions Dictionary:
+            If the permission is not found in the global or organization-specific permissions, the method checks the permissions dictionary.
+            It iterates through the dictionary to see if the specified permission exists in any of the organization's permissions.
+            If found, the method returns True.
+
+        Example:
+            ```python
+            user = User(global_permissions=['read'], organizations=[{'org_id': '1', 'permissions': ['write']}], permissions={'2': ['delete']})
+            user.has_permission('write', '1')  # Returns True
+            user.has_permission('delete', '2')  # Returns True
+            user.has_permission('read')  # Returns True
+            user.has_permission('update')  # Returns False
+            ```
         """
+        
         # Check global permissions first
         if permission in self.global_permissions:
             return True
 
-        # Check organization-specific permissions
-        for org in self.organizations:
-            if org["org_id"] == str(organization_id):
-                return permission in org.get("permissions", [])
+        # If organization_id is provided, check organization-specific permissions
+        if organization_id:
+            for org in self.organizations:
+                if org["org_id"] == str(organization_id):
+                    if permission in org.get("permissions", []):
+                        return True
+
+        # Check organization-specific permissions in the permissions dictionary
+        for org in self.permissions:
+            if permission in self.permissions.get(org, []):
+                return True
 
         return False
 
@@ -267,6 +307,8 @@ class User(UserMixin):
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin})>"
 
+
+
 class AnonymousUser(AnonymousUserMixin):
     def __init__(self):
         self.id = None
@@ -299,14 +341,16 @@ class AnonymousUser(AnonymousUserMixin):
         """
         Add or update an organization for the user, including role and permissions.
         """
-        logger.critical(f"Trying to add organization to AnonymousUser")  # TODO: Handle this case more gracefully
+        logger.critical(
+            f"Trying to add organization to AnonymousUser"
+        )  # TODO: Handle this case more gracefully
 
     def is_member_of_organization(self, organization_id):
         """
         Check if the user is a member of a specific organization.
         """
         return False
-    
+
     def change_password(self, db, new_password):
         """
         Change the user's password and update the database.

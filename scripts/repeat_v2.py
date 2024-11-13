@@ -10,7 +10,10 @@ from classes import Demonstration, RecurringDemonstration
 client = MongoClient(Config.MONGO_URI)
 db = client["mielenosoitukset"]
 recu_demos_collection = db["recu_demos"]  # Collection for recurring demonstrations
-demonstrations_collection = db["demonstrations"]  # Collection for individual demonstrations
+demonstrations_collection = db[
+    "demonstrations"
+]  # Collection for individual demonstrations
+
 
 def calculate_next_dates(demo_date, repeat_schedule):
     frequency = repeat_schedule.get("frequency")
@@ -24,7 +27,7 @@ def calculate_next_dates(demo_date, repeat_schedule):
     while demo_date <= end_date:
         if demo_date >= current_date:
             next_dates.append(demo_date)
-            
+
         if frequency == "daily":
             demo_date += timedelta(days=interval)
         elif frequency == "weekly":
@@ -41,7 +44,9 @@ def calculate_next_dates(demo_date, repeat_schedule):
 
 def remove_invalid_child_demonstrations(parent_demo, valid_dates):
     try:
-        valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates if isinstance(d, datetime)}
+        valid_date_strings = {
+            d.strftime("%d.%m.%Y") for d in valid_dates if isinstance(d, datetime)
+        }
         child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
 
         for demo in child_demos:
@@ -78,10 +83,16 @@ def handle_repeating_demonstrations():
 
                 for next_date in next_dates:
                     if next_date <= created_until:
-                        print(f"Skipping {next_date} because it is before {created_until}")
+                        print(
+                            f"Skipping {next_date} because it is before {created_until}"
+                        )
                         continue  # Skip dates that have already been created
 
-                    next_date_str = next_date.strftime("%d.%m.%Y") if not isinstance(next_date, str) else logger.error(f"Invalid date: {next_date}")
+                    next_date_str = (
+                        next_date.strftime("%d.%m.%Y")
+                        if not isinstance(next_date, str)
+                        else logger.error(f"Invalid date: {next_date}")
+                    )
 
                     existing_demo = demonstrations_collection.find_one(
                         {"date": next_date_str, "parent": demo["_id"]}
@@ -173,7 +184,9 @@ def remove_duplicates():
                         {"_id": {"$in": ids_to_remove}}
                     )
                     removed_count += result.deleted_count
-                    logger.info(f"Removed {result.deleted_count} duplicate demonstrations.")
+                    logger.info(
+                        f"Removed {result.deleted_count} duplicate demonstrations."
+                    )
                 except Exception as e:
                     logger.error(
                         f"Error removing duplicates with ids {duplicate['ids']}: {e}"
@@ -187,7 +200,9 @@ def remove_duplicates():
 
 
 def main():
-    logger.info("Starting the process of handling repeating demonstrations and removing duplicates.")
+    logger.info(
+        "Starting the process of handling repeating demonstrations and removing duplicates."
+    )
     handle_repeating_demonstrations()
     removed_count = remove_duplicates()
     logger.info(f"Removed {removed_count} duplicate demonstrations.")

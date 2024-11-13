@@ -1,9 +1,10 @@
 from flask import flash
 from flask_babel import _
 
+
 def flash_message(message, category="message"):
     """flash_message a message with a specific category.
-    
+
     Changelog:
     ----------
     v2.5.0:

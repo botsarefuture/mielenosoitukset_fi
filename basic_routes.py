@@ -7,7 +7,6 @@ from datetime import datetime, date
 from gettext import gettext as _
 
 from flask import (
-    Flask,
     render_template,
     redirect,
     url_for,
@@ -26,7 +25,6 @@ from classes import Organizer, Demonstration, Organization
 from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST
-from config import Config
 from utils.flashing import flash_message
 
 email_sender = EmailSender()
@@ -124,7 +122,7 @@ def init_routes(app):
             event_type = request.form.get("type")
             route = request.form.get("route") if event_type == "marssi" else None
             tags = request.form.get("tags", None)
-            tags = [tag.strip() for tag in tags.split(",")]
+            tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
 
             img = request.files.get("image")
 
@@ -484,10 +482,10 @@ def init_routes(app):
         )
 
     # This is the route that provides the flash_message messages as JSON
-    @app.route("/get_flash_message_messages", methods=["GET"])
+    @app.route("/get_flash_messages", methods=["GET"])
     def get_flash_message_messages():
         # Retrieve flash_messageed messages with categories
-        messages = get_flash_messageed_messages(with_categories=True)
+        messages = get_flashed_messages(with_categories=True)
 
         # If there are no messages, return an empty array
         if not messages:
@@ -500,11 +498,6 @@ def init_routes(app):
 
         # Return the JSON response
         return jsonify(messages=flash_message_data)
-
-    @app.route("/celebrate")
-    def celebrate():
-        # This aims to be a cmast celebration page sometime in the future
-        ...
 
     @app.route("/marquee", methods=["GET"])
     def marquee():

@@ -11,13 +11,14 @@ from auth.models import User, AnonymousUser
 from error_handlers import register_error_handlers
 from scripts.repeat_v2 import main as repeat_main
 from scripts.update_demo_organizers import main as update_main
+from scripts.in_past import hide_past
 from utils import VERSION
 
 # Create and configure the scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
 scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
-scheduler.start()
+
 
 # Initialize Babel
 babel = Babel()
@@ -55,6 +56,7 @@ def create_app() -> Flask:
     v2.6.0:
     - Updated the docstring.
     - Moved the babel config to the config file.
+    - Added the scheduler to run hide_past every 24 hours.
     
     v2.5.0:
     - Added a context processor to get the organization name from the organization ID.
@@ -157,5 +159,8 @@ def create_app() -> Flask:
         def get_org_name(org_id):
             return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
         return dict(get_org_name=get_org_name)
-
+    
+    with app.app_context():
+        scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours
+        scheduler.start()
     return app

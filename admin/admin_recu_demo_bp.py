@@ -9,7 +9,7 @@ from classes import RecurringDemonstration, Organizer
 from utils.variables import CITY_LIST
 from wrappers import permission_required, admin_required
 
-from .demo_utils import collect_tags
+from utils.admin.demonstration import collect_tags
 from .utils import mongo
 
 admin_recu_demo_bp = Blueprint(
@@ -84,7 +84,7 @@ def edit_recu_demo(demo_id):
     Changelog:
     ---------
     v2.4.0:
-    - Fixed some typos in flash_messagees
+    - Fixed some typos in flash_messages
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
@@ -169,6 +169,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             flash_message("Toistuva mielenosoitus luotu onnistuneesti.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
+        import logging
+        logging.error(f"An error occurred: {str(e)}")
         flash_message(f"Virhe: {str(e)}")
         return redirect(
             url_for(

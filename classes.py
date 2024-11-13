@@ -8,6 +8,7 @@ from flask import url_for
 from database_manager import DatabaseManager
 from utils.database import stringify_object_ids
 
+DB = DatabaseManager().get_instance().get_db()
 
 class RepeatSchedule:
     def __init__(
@@ -26,7 +27,7 @@ class RepeatSchedule:
         }
 
         weekday_str = (
-            f" on {self.weekday.strftime('%A')}"
+            f" on {self.weekday.strftime('%A') if isinstance(self.weekday, datetime) else ''}"
             if self.frequency == "weekly" and self.weekday
             else ""
         )
@@ -88,14 +89,12 @@ class Organizer(BaseModel):
         self.organization_id = organization_id or None
         self.website = website
         self.url = url
-        self._db_manager = DatabaseManager().get_instance()
 
         if organization_id:
             self.fetch_organization_details()
 
     def to_dict(self, json=False):
         data = super().to_dict(json)
-        del data["_db_manager"]
         return data
 
     def fetch_organization_details(self):
@@ -103,22 +102,23 @@ class Organizer(BaseModel):
         if not self.organization_id:
             return
 
-        db = self._db_manager.get_db()
-        organization = db["organizations"].find_one({"_id": self.organization_id})
+        organization = DB["organizations"].find_one({"_id": self.organization_id})
 
         if organization:
             self.name = organization.get("name")
             self.email = organization.get("email")
             self.website = organization.get("website")
-            self.url = url_for("org", org_id=str(self.organization_id))
+            try:
+                self.url = url_for("org", org_id=str(self.organization_id))
+            except RuntimeError:
+                self.url = f"/org/{self.organization_id}"
 
     def validate_organization_id(self):
         """Validate the existence of organization_id in the database."""
         if not self.organization_id:
             return False
 
-        db = self._db_manager.get_db()
-        return bool(db["organizations"].find_one({"_id": self.organization_id}))
+        return bool(DB["organizations"].find_one({"_id": self.organization_id}))
 
 
 class Organization(BaseModel):
@@ -144,8 +144,7 @@ class Organization(BaseModel):
 
     def save(self):
         """Save the organization to MongoDB."""
-        db = DatabaseManager().get_instance().get_db()
-        db["organizations"].update_one(
+        DB["organizations"].update_one(
             {"_id": self._id}, {"$set": self.to_dict()}, upsert=True
         )
 
@@ -249,9 +248,29 @@ class Demonstration(BaseModel):
             self.save()
 
         self.validate_fields(
-            title, date, start_time, city, address, event_type=self.event_type
+            title, date, start_time, city, address
         )
 
+    def merge(self, id_of_other_demo):
+        """Merge another demonstration into this one."""
+        other_demo = DB["demonstrations"].find_one({"_id": ObjectId(id_of_other_demo)})
+        if not other_demo:
+            raise ValueError(f"Demonstration with id {id_of_other_demo} not found.")
+
+        # Update fields with non-None values from the other demonstration
+        for key, value in other_demo.items():
+            if key != "_id" and value is not None:
+                setattr(self, key, value)
+
+        # Save the merged demonstration
+        self.save()
+
+        # Ensure the merged demonstration can be found by both IDs
+        DB["demonstrations"].update_one(
+            {"_id": ObjectId(id_of_other_demo)},
+            {"$set": {"merged_into": self._id}}
+        )
+    
     def to_dict(self, json=False):
         """Convert instance to dictionary, including organizers as dictionaries."""
         data = super().to_dict(json=json)
@@ -261,7 +280,7 @@ class Demonstration(BaseModel):
         ]
         return data
 
-    def validate_fields(self, title, date, start_time, city, address, event_type=None):
+    def validate_fields(self, title, date, start_time, city, address):
         if not title or not date or not start_time or not city or not address:
             missing_fields = []
             if not title:
@@ -280,22 +299,20 @@ class Demonstration(BaseModel):
     def save(self):
         """Save or update the demonstration in the database."""
         # Get the database instance from DatabaseManager
-        db = DatabaseManager().get_instance().get_db()
         data = self.to_dict()  # Convert the object to a dictionary
 
         # Check if the demonstration already exists in the database
-        if db["demonstrations"].find_one({"_id": self._id}):
+        if DB["demonstrations"].find_one({"_id": self._id}):
             # Update existing entry
-            result = db["demonstrations"].replace_one({"_id": self._id}, data)
+            result = DB["demonstrations"].replace_one({"_id": self._id}, data)
             if result.modified_count:
                 print("Demonstration updated successfully.")
             else:
                 print("No changes were made to the demonstration.")
         else:
             # Insert new entry
-            db["demonstrations"].insert_one(data)
+            DB["demonstrations"].insert_one(data)
             print("Demonstration saved successfully.")
-
 
 class RecurringDemonstration(Demonstration):
     def __init__(
@@ -308,16 +325,25 @@ class RecurringDemonstration(Demonstration):
         city: str,
         address: str,
         route: str,
-        organizers: Optional[List[str]] = None,
+        organizers: list = None,
         approved: bool = False,
-        linked_organizations: Optional[Dict[str, Any]] = None,
-        img: Optional[str] = None,
-        _id: Optional[str] = None,
-        description: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        parent: Optional[str] = None,
-        created_datetime: Optional[datetime] = None,
-        repeat_schedule: Optional[RepeatSchedule] = None,
+        linked_organizations: dict = None,
+        img=None,
+        _id=None,
+        description: str = None,
+        tags: list = None,
+        parent: ObjectId = None,
+        created_datetime=None,
+        recurring: bool = False,
+        topic: str = None,
+        type: str = None,
+        repeat_schedule: RepeatSchedule = None,
+        repeating: bool = False,
+        latitude: str = None,
+        longitude: str = None,
+        event_type=None,
+        save_flag=False,
+        hide=False,
         created_until: Optional[datetime] = None,
     ):
 
@@ -340,6 +366,15 @@ class RecurringDemonstration(Demonstration):
             parent,
             created_datetime,
             recurring=True,
+            topic=topic,
+            type=type,
+            repeat_schedule=repeat_schedule,
+            repeating=repeating,
+            latitude=latitude,
+            longitude=longitude,
+            event_type=event_type,
+            save_flag=save_flag,
+            hide=hide,
         )
 
         # Set created_until to now if not provided
@@ -349,7 +384,7 @@ class RecurringDemonstration(Demonstration):
     def calculate_next_dates(self) -> List[datetime]:
         """Calculate the next demonstration dates based on the frequency and interval."""
         next_dates = []
-        demo_date = self.start_time
+        demo_date = datetime.strptime(self.date, "%Y-%m-%d")
         end_date = datetime.now() + relativedelta(years=1)
 
         while demo_date <= end_date:
@@ -384,19 +419,27 @@ class RecurringDemonstration(Demonstration):
             if value is not None:
                 setattr(self, attr, value)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, json=False) -> Dict[str, Any]:
         """Convert the object to a dictionary for easy storage in a database."""
-        data = super().to_dict()  # Call the parent to_dict
+        data = super().to_dict(json=json)  # Call the parent to_dict
+        if isinstance(self.repeat_schedule, dict):
+            self.repeat_schedule = RepeatSchedule.from_dict(self.repeat_schedule)
         data["repeat_schedule"] = (
             self.repeat_schedule.to_dict() if self.repeat_schedule else None
         )
+        if self.created_until:
+            if isinstance(self.created_until, datetime):
+                data["created_until"] = self.created_until.strftime("%d.%m.%Y")
+            else:
+            # Transform this to datetime object, and then make the strftime call
+                data["created_until"] = datetime.strptime(data["created_until"], "%d.%m.%Y").strftime("%d.%m.%Y") if self.created_until is not None else None
         return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RecurringDemonstration":
         """Create an instance from a dictionary."""
-        start_time = datetime.strptime(data["start_time"], "%H:%M")
-        end_time = datetime.strptime(data["end_time"], "%H:%M")
+        start_time = data["start_time"]
+        end_time = data["end_time"]
         created_until = (
             datetime.strptime(data["created_until"], "%d.%m.%Y")
             if data.get("created_until")

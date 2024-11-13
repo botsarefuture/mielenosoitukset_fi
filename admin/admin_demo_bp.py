@@ -11,6 +11,7 @@ from .utils import mongo
 from utils.admin.demonstration import collect_tags
 from gettext import gettext as _
 from utils.flashing import flash_message
+from utils.database import DEMO_FILTER
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -40,7 +41,9 @@ def demo_control():
     today = date.today()
 
     # Construct the base query to fetch demonstrations
-    query = {"hide": {"$exists": False}}
+    del DEMO_FILTER["approved"] #, None)
+    query = DEMO_FILTER
+    
 
     if approved_only:
         query["approved"] = False

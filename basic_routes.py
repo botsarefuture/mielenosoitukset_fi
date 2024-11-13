@@ -26,6 +26,7 @@ from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST
 from utils.flashing import flash_message
+from utils.database import DEMO_FILTER
 
 email_sender = EmailSender()
 
@@ -62,8 +63,7 @@ def init_routes(app):
 
         # Fetch all approved demonstrations from the database
         demonstrations = demonstrations_collection.find(
-            {"approved": True, "hide": {"$exists": False}}
-        )
+    DEMO_FILTER        )
         for demo in demonstrations:
             url = ET.SubElement(urlset, "url")
             loc = ET.SubElement(url, "loc")
@@ -82,8 +82,7 @@ def init_routes(app):
         today = date.today()  # Use date.today() to get only the date part
 
         demonstrations = demonstrations_collection.find(
-            {"approved": True, "hide": {"$exists": False}}
-        )
+DEMO_FILTER        )
 
         filtered_demonstrations = []
         for demo in demonstrations:
@@ -200,8 +199,7 @@ def init_routes(app):
 
         # Retrieve all approved demonstrations
         demonstrations = demonstrations_collection.find(
-            {"approved": True, "hide": {"$exists": False}}
-        )
+DEMO_FILTER        )
 
         # Filter upcoming demonstrations
         filtered_demonstrations = filter_demonstrations(
@@ -430,6 +428,7 @@ def init_routes(app):
             demo_date = datetime.strptime(
                 demo["date"], "%d.%m.%Y"
             ).date()  # Convert date string to date object
+            
             if demo_date >= today:  # Only keep upcoming demos
                 upcoming_demos.append(demo)
 
@@ -449,7 +448,7 @@ def init_routes(app):
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
 
         # Fetch demonstrations that include the specified tag (case-insensitive)
-        demonstrations_query = {"tags": tag_regex}
+        demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
 
         # Pagination logic
         page = int(request.args.get("page", 1))

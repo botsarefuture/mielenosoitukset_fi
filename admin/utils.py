@@ -1,12 +1,13 @@
-from bson.objectid import ObjectId
-from database_manager import DatabaseManager
 from datetime import datetime
-from classes import Organization
+
+from bson.objectid import ObjectId
 from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
+
+from database_manager import DatabaseManager
+from classes import Organization
 from utils.logger import logger
 
-# Initialize the database manager and get the MongoDB instance
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 

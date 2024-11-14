@@ -28,33 +28,41 @@ html {
   font-weight: 400;
   font-style: normal;
 }
+
 secondary .wrapper {
-  display: flex; /* Use flexbox for layout */
-  flex-direction: column; /* Stack items vertically */
-  min-height: 100vh; /* Full viewport height */
+  display: flex;
+  /* Use flexbox for layout */
+  flex-direction: column;
+  /* Stack items vertically */
+  min-height: 100vh;
+  /* Full viewport height */
 }
 
 /* General Styles */
 html,
 body {
-  height: 100%; /* Ensure the body takes the full height of the viewport */
+  height: 100%;
+  /* Ensure the body takes the full height of the viewport */
   margin: 0;
-  background: var(
-    --background
-  ) !important; /* Updated to match the style guide */
-  color: var(--primary-text-color); /* Text color for consistency */
+  background: var(--background) !important;
+  /* Updated to match the style guide */
+  color: var(--primary-text-color);
+  /* Text color for consistency */
   overflow-x: hidden;
   max-width: 100%;
 }
 
 /* Navbar Styles */
 .navbar {
-  background: var(--background); /* Dark Blue from the guide */
+  background: var(--background);
+  /* Dark Blue from the guide */
   padding: 15px;
   display: flex;
-  justify-content: space-between; /* Ensures even spacing between items */
+  justify-content: space-between;
+  /* Ensures even spacing between items */
   align-items: center;
-  position: relative; /* Ensure dropdown menus position correctly */
+  position: relative;
+  /* Ensure dropdown menus position correctly */
 }
 
 .navbar .container {
@@ -65,13 +73,13 @@ body {
 }
 
 .navbar .logo {
-	font-size: 1.5em;
-	color: #ffffff;
-	text-decoration: none;
-	font-family: "Montserrat", sans-serif;
-	font-weight: 900;
-	text-transform: uppercase;
-	margin-right: 1em;
+  font-size: 1.5em;
+  color: #ffffff;
+  text-decoration: none;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-right: 1em;
 }
 
 /* Navbar Links */
@@ -89,14 +97,16 @@ body {
 }
 
 .navbar .nav-links a {
-  color: #ffffff; /* White text */
+  color: #ffffff;
+  /* White text */
   text-decoration: none;
   padding: 5px 10px;
   border-radius: 5px;
 }
 
 .navbar .nav-links a:hover {
-  background: var(--orange); /* Orange from the guide */
+  background: var(--orange);
+  /* Orange from the guide */
 }
 
 /* Profile Dropdown */
@@ -144,20 +154,24 @@ body {
   display: none;
   background: none;
   border: none;
-  color: #ffffff; /* White text */
+  color: #ffffff;
+  /* White text */
   font-size: 1.5em;
   cursor: pointer;
 }
 
 /* Main Content Styles */
 .main {
-  flex: 1; /* Allow the main content to grow and fill available space */
+  flex: 1;
+  /* Allow the main content to grow and fill available space */
 }
 
 /* Footer Styles */
 .footer {
-  background: var(--blue); /* Dark Blue from the guide */
-  color: #ffffff; /* White text */
+  background: var(--blue);
+  /* Dark Blue from the guide */
+  color: #ffffff;
+  /* White text */
   text-align: center;
   padding: 20px 0;
   width: 100%;
@@ -171,7 +185,8 @@ body {
 .delete-button {
   display: flex;
   align-items: center;
-  background: var(--red) !important; /* Red background for delete button */
+  background: var(--red) !important;
+  /* Red background for delete button */
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -187,16 +202,25 @@ body {
 }
 
 .delete-button:hover {
-  background: var(--error-color); /* Darker red on hover */
+  background: var(--error-color);
+  /* Darker red on hover */
 }
 
-/* Footer links */
 .footer-links,
 .social-media-links {
   list-style: none;
   text-align: center;
   padding: 0;
   gap: 15px;
+  column-gap: 15px;
+  display: flex;
+  flex-direction: row;
+  align-content: center;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  justify-items: center;
+  text-align: center;
 }
 
 .footer-links li,
@@ -204,10 +228,33 @@ body {
   display: inline;
 }
 
+.footer-links .auth-buttons {
+  display: flex;
+  gap: 15px;
+  background-color: var(--blue);
+  padding: 10px;
+  border-radius: 5px;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-buttons a {
+  color: white;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background: var(--primary-color);
+}
+
+.auth-buttons a:hover {
+  background: var(--orange);
+}
+
 .footer-links a,
 .social-media-links a {
   text-decoration: none;
-  color: white; /* Adjust this according to your theme */
+  color: white;
+  /* Adjust this according to your theme */
 }
 
 .social-media-links a i {
@@ -216,7 +263,8 @@ body {
 
 /* Structure for the layout */
 header {
-  flex: 0 0 auto; /* Header in the first row, does not grow */
+  flex: 0 0 auto;
+  /* Header in the first row, does not grow */
 }
 
 @media (max-width: 1024px) {
@@ -226,51 +274,71 @@ header {
 }
 
 footer {
-  flex: 0 0 auto; /* Footer in the last row, does not grow */
+  flex: 0 0 auto;
+  /* Footer in the last row, does not grow */
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .navbar .nav-links {
-    flex-direction: column; /* Stack nav links vertically */
-    width: 100vw; /* Full viewport width */
-    height: 100vh; /* Full viewport height */
-    position: fixed; /* Fix position to cover the entire screen */
-    left: 0; /* Align to the left */
-    top: 0; /* Align to the top */
-    background: var(--blue); /* Dark Blue from the guide */
-    display: none; /* Hide by default on small screens */
-    z-index: 1000; /* Ensure the dropdown appears above other content */
+    flex-direction: column;
+    /* Stack nav links vertically */
+    width: 100vw;
+    /* Full viewport width */
+    height: 100vh;
+    /* Full viewport height */
+    position: fixed;
+    /* Fix position to cover the entire screen */
+    left: 0;
+    /* Align to the left */
+    top: 0;
+    /* Align to the top */
+    background: var(--blue);
+    /* Dark Blue from the guide */
+    display: none;
+    /* Hide by default on small screens */
+    z-index: 1000;
+    /* Ensure the dropdown appears above other content */
   }
 
   .navbar .nav-links.active {
-    display: flex; /* Show when active */
+    display: flex;
+    /* Show when active */
   }
 
   .navbar .nav-links li {
-    margin: 20px 0; /* Space between links */
-    text-align: center; /* Center-align text */
+    margin: 20px 0;
+    /* Space between links */
+    text-align: center;
+    /* Center-align text */
   }
 
   .navbar .nav-links a {
-    display: block; /* Make links block level */
-    padding: 20px; /* Larger padding for touch targets */
-    font-size: 1.5em; /* Increase font size for readability */
-    color: white; /* White text for contrast */
+    display: block;
+    /* Make links block level */
+    padding: 20px;
+    /* Larger padding for touch targets */
+    font-size: 1.5em;
+    /* Increase font size for readability */
+    color: white;
+    /* White text for contrast */
   }
 
   .navbar-toggle {
-    display: block; /* Show toggle button on small screens */
+    display: block;
+    /* Show toggle button on small screens */
   }
 }
 
 @media (max-width: 480px) {
   .navbar .logo {
-    font-size: 1.2em; /* Slightly smaller logo text on very small screens */
+    font-size: 1.2em;
+    /* Slightly smaller logo text on very small screens */
   }
 
   .footer {
-    padding: 15px 0; /* Reduce footer padding on small screens */
+    padding: 15px 0;
+    /* Reduce footer padding on small screens */
   }
 }
 
@@ -327,6 +395,7 @@ span i {
   align-self: center;
   align-content: center;
 }
+
 .dropdown-list i {
   width: 16px;
   height: auto;
@@ -362,44 +431,55 @@ span i {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
 .spinning-message h2 {
-  font-size: 2rem; /* Adjust font size as needed */
-  color: #ff0000; /* Red color for the text */
+  font-size: 2rem;
+  /* Adjust font size as needed */
+  color: #ff0000;
+  /* Red color for the text */
   /* Optional: Add some text shadow for a festive touch */
   text-shadow: 1px 1px 2px #000;
 }
 
 .marquee {
-	background-color: #f0f8ff;
-	color: #ff0000;
-	overflow: hidden;
-	white-space: nowrap;
-	box-shadow: 0 2px 5px var(--box-shadow-color);
-	z-index: 9990000;
-	position: sticky;
-	top: 0;
+  background-color: #f0f8ff;
+  color: #ff0000;
+  overflow: hidden;
+  white-space: nowrap;
+  box-shadow: 0 2px 5px var(--box-shadow-color);
+  z-index: 9990000;
+  position: sticky;
+  top: 0;
 }
 
 .marquee h2 {
-  display: inline-block; /* Display inline for scrolling */
-  animation: marquee 15s linear infinite; /* Animation for scrolling */
-  padding: 10px 0; /* Vertical padding */
-  font-size: 1.5rem; /* Adjust font size as needed */
+  display: inline-block;
+  /* Display inline for scrolling */
+  animation: marquee 15s linear infinite;
+  /* Animation for scrolling */
+  padding: 10px 0;
+  /* Vertical padding */
+  font-size: 1.5rem;
+  /* Adjust font size as needed */
   color: inherit;
 }
 
 @keyframes marquee {
   0% {
     transform: translateX(100%);
-  } /* Start off-screen to the right */
+  }
+
+  /* Start off-screen to the right */
   100% {
     transform: translateX(-100%);
-  } /* End off-screen to the left */
+  }
+
+  /* End off-screen to the left */
 }
 
 .marquee {
@@ -407,35 +487,41 @@ span i {
   white-space: nowrap;
   box-sizing: border-box;
   position: relative;
-  width: 100%; /* Full width */
+  width: 100%;
+  /* Full width */
 }
 
 .marquee-content {
   display: inline-block;
-  position: absolute; /* Positioning for fixed distance */
-  animation: marquee linear infinite; /* Use keyframes to control the animation */
+  position: absolute;
+  /* Positioning for fixed distance */
+  animation: marquee linear infinite;
+  /* Use keyframes to control the animation */
 }
 
 @keyframes marquee {
   0% {
-      transform: translateX(100%); /* Start from the right */
+    transform: translateX(100%);
+    /* Start from the right */
   }
+
   100% {
-      transform: translateX(calc(-100% - 10cm)); /* Move left by the full width plus the desired distance */
+    transform: translateX(calc(-100% - 10cm));
+    /* Move left by the full width plus the desired distance */
   }
 }
 
 .circle-btn {
-	height: 2em;
-	line-height: 2em;
-	width: 2em;
-	font-size: 1em;
-	font-weight: bold;
-	border-radius: 50%;
-	background-color: var(--red-darker);
-	color: white;
-	text-align: center;
-	cursor: pointer;
-	padding: 0 !important;
-	/* margin: auto; */
+  height: 2em;
+  line-height: 2em;
+  width: 2em;
+  font-size: 1em;
+  font-weight: bold;
+  border-radius: 50%;
+  background-color: var(--red-darker);
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  padding: 0 !important;
+  /* margin: auto; */
 }

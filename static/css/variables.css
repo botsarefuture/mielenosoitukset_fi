@@ -112,6 +112,9 @@
   /* Hover colors for row color 2 */
   --tr-bg-color-2-hover: #fff6e5; /* Hover background color for row 2 */
   --tr-txt-color-2-hover: #804000; /* Hover text color for row 2 */
+  
+  --auth-button-bg-color: var(--secondary-color);
+
 }
 
 .dark:root {

@@ -11,7 +11,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 from auth.models import User
 import jwt
 import datetime
-from emailer.EmailSender import EmailSender
+import importlib
+
+EmailSender = importlib.import_module('emailer.EmailSender', "mielenosoitukset_fi").EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from utils.s3 import upload_image  # Import your S3 upload function
@@ -19,7 +21,6 @@ import os
 from utils.flashing import flash_message
 from werkzeug.utils import secure_filename
 
-db_manager = DatabaseManager().get_instance()
 email_sender = EmailSender()  # Initialize email sender
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()

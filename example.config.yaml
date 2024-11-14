@@ -22,3 +22,10 @@ S3:
   ACCESS_KEY: "example_access_key"  # Access key for S3
   SECRET_KEY: "example_secret_key"  # Secret key for S3
   ENDPOINT_URI: "https://example.com"  # S3 endpoint URL
+
+BABEL:
+  DEFAULT_LOCALE: "fi"  # Default locale for the application
+  SUPPORTED_LOCALES:
+    - "fi"
+    - "en"
+    - "sv"

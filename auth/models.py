@@ -9,7 +9,48 @@ from database_manager import DatabaseManager
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
 collection = mongo["organizations"]
+
 class User(UserMixin):
+    """
+    User class represents a user in the system with various attributes and methods to manage user data and interactions.
+    
+    Attributes:
+        id (str): Unique identifier for the user.
+        username (str): Username of the user.
+        email (str, optional): Email address of the user.
+        password_hash (str): Hashed password of the user.
+        displayname (str, optional): Display name of the user.
+        profile_picture (str, optional): URL to the user's profile picture.
+        bio (str, optional): Bio of the user.
+        followers (list): List of user IDs who follow this user.
+        following (list): List of user IDs this user is following.
+        organizations (list): List of organizations the user is part of.
+        global_admin (bool): Indicates if the user is a global admin.
+        confirmed (bool): Indicates if the user's email is confirmed.
+        permissions (dict): Dictionary of permissions for the user.
+        global_permissions (list): List of global permissions for the user.
+        role (str): Role of the user, default is "user".
+        _id (str): Alias for id.
+        
+    Methods:
+        from_db(user_doc): Create a User instance from a database document.
+        check_password(password): Verify the provided password against the stored password hash.
+        create_user(username, password, email, displayname=None, profile_picture=None, bio=None): Create a new user dictionary with a hashed password.
+        add_organization(db, organization_id, role="member", permissions=None): Add or update an organization for the user, including role and permissions.
+        is_member_of_organization(organization_id): Check if the user is a member of a specific organization.
+        change_password(db, new_password): Change the user's password and update the database.
+        update_displayname(db, displayname): Update the user's display name and database record.
+        update_profile_picture(db, profile_picture): Update the user's profile picture and database record.
+        update_bio(db, bio): Update the user's bio and database record.
+        save(db): Save the current state of the user to the database.
+        to_dict(): Convert the User object to a dictionary for database storage.
+        follow_user(db, user_id_to_follow): Add a user to the followers list of this user.
+        unfollow_user(db, user_id_to_unfollow): Remove a user from the followers list of this user.
+        has_permission(permission, organization_id=None): Verify if the user possesses a certain permission either on a global level or within a specified organization.
+        is_following(user_id): Check if this user is following another user.
+        __repr__(): Return a string representation of the User object.
+    """
+    
     def __init__(
         self,
         user_id,

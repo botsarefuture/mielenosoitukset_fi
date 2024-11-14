@@ -10,13 +10,13 @@
 
 <div class="container profile-container" style="text-align: center;">
     <!-- Profiilin Otsikko -->
-    <div class="profile-header rebellious-header">
+    <div class="profile-header">
         <!--<div class="cover-photo">
             <img src="{{ user.cover_photo or 'https://mielenosoitukset-fi1.fsn1.your-objectstorage.com/demos/default.jpg' }}" 
                  alt="Cover Photo" class="cover-img">
         </div>-->
 
-        <div class="profile-details rebellious-details">
+        <div class="profile-details">
             <div class="profile-picture">
                 <img src="{{ user.profile_picture or 'https://fsn1.your-objectstorage.com/mielenosoitukset-fi1/default-pfp.jpg' }}" 
                      alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva" 
@@ -25,37 +25,40 @@
             </div>
 
             <div class="profile-info">
-                <h1 class="user-name rebellious-name">
+                <h1 class="user-name">
                     {{ user.displayname if user.displayname else user.username }}
                 </h1>
 
                 {% if user.global_admin %}
                     <span class="badge badge-admin">{{ _('Järjestelmävalvoja') }}</span>
                 {% endif %}
-                <h2 class="organizations-title">{{ _('Organisaatiot') }}</h2>
-                <!-- Organizations: each in its own container -->
-                <div class="organizations">
-                    {% for org in user.organizations %}
-                        <div class="org-container rebellious-org">
-                            <p><strong>{{ get_org_name(org.org_id) }}</strong></p>
-                            <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
-                        </div>
-                    {% endfor %}
-                </div>
+                
+                {% if user.organizations %}
+                    <h2 class="organizations-title">{{ _('Organisaatiot') }}</h2>
+                    <!-- Organizations: each in its own container -->
+                    <div class="organizations">
+                        {% for org in user.organizations %}
+                            <div class="org-container">
+                                <p><strong>{{ get_org_name(org.org_id) }}</strong></p>
+                                <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-                <div class="button-group rebellious-buttons">
+                <div class="button-group">
                     {% if current_user.is_authenticated %}
                         {% if current_user.username == user.username %}
-                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit rebellious-btn">{{ _('Muokkaa profiilia') }}</a>
+                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit">{{ _('Muokkaa profiilia') }}</a>
                         {% else %}
                             <div class="follow-unfollow">
                                 {% if current_user.is_following(user) %}
                                     <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
-                                        <button type="submit" class="btn btn-unfollow rebellious-btn">{{ _('Lopeta seuraaminen') }}</button>
+                                        <button type="submit" class="btn btn-unfollow">{{ _('Lopeta seuraaminen') }}</button>
                                     </form>
                                 {% else %}
                                     <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
-                                        <button type="submit" class="btn btn-follow rebellious-btn">{{ _('Seuraa') }}</button>
+                                        <button type="submit" class="btn btn-follow">{{ _('Seuraa') }}</button>
                                     </form>
                                 {% endif %}
                             </div>
@@ -68,7 +71,7 @@
 
     <!-- Postaukset (commented out for now) -->
     <!--
-    <div class="profile-posts rebellious-posts">
+    <div class="profile-posts">
         <h2 class="rebellious-heading">
             {% if user.username == current_user.username %}
                 Mielenosoitukset, joihin osallistuit
@@ -78,18 +81,18 @@
         </h2>
 
         {% for protest in user.protests %}
-            <div class="post rebellious-post">
-                <h3 class="post-title rebellious-title">{{ protest.title }}</h3>
+            <div class="post">
+                <h3 class="post-title">{{ protest.title }}</h3>
                 <p class="post-date-location">{{ protest.date }} - {{ protest.location }}</p>
                 <p class="post-description">{{ protest.description }}</p>
                 <div class="post-actions">
                     {% if current_user.has_liked(protest) %}
                         <form action="{{ url_for('protest.unlike', protest_id=protest.id) }}" method="POST">
-                            <button type="submit" class="btn btn-unlike rebellious-btn">Tykkää pois</button>
+                            <button type="submit" class="btn btn-unlike">Tykkää pois</button>
                         </form>
                     {% else %}
                         <form action="{{ url_for('protest.like', protest_id=protest.id) }}" method="POST">
-                            <button type="submit" class="btn btn-like rebellious-btn">Tykkää</button>
+                            <button type="submit" class="btn btn-like">Tykkää</button>
                         </form>
                     {% endif %}
                 </div>
@@ -100,7 +103,7 @@
 
     <!-- Upcoming protests message (commented out for now) -->
     <!--
-    <div class="coming-soon rebellious-soon">
+    <div class="coming-soon">
         <h3 class="soon-heading">Mielenosoitukset ovat tulossa pian!</h3>
         <p class="soon-description">Pysy kuulolla ja valmistaudu osallistumaan!</p>
     </div>

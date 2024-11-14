@@ -4,7 +4,7 @@ import json
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
-from flask_babel import gettext as _
+from flask_babel import _, refresh
 
 from flask import (
     render_template,
@@ -15,6 +15,7 @@ from flask import (
     Response,
     get_flashed_messages,
     jsonify,
+    session
 )
 from flask_login import current_user
 
@@ -508,3 +509,23 @@ def init_routes(app):
     @app.route("/500")
     def _500():
         return abort(500)
+    
+    @app.route("/set_language/<lang>")
+    def set_language(lang):
+        # List of supported languages        
+        supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
+
+        # Validate the language parameter
+        if lang not in supported_languages:
+            flash_message("Unsupported language selected.", "error")
+            return redirect(request.referrer)
+
+        # Set the language cookie
+        session["locale"] = lang
+        
+        session.modified = True
+        
+        referrer = request.referrer
+        if referrer and referrer.startswith(request.host_url):
+            return redirect(referrer)
+        return redirect(url_for("index"))

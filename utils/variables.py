@@ -2,6 +2,7 @@ import json
 import os
 
 from . import _CUR_DIR
+from utils.database import DEMO_FILTER
 
 
 def load_from_file(_filename):
@@ -29,6 +30,7 @@ def load_from_file(_filename):
     v2.5.0:
         - Moved this function to utils.variables, and moved files to ./data directory.
     """
+    
     file_path = os.path.join(_CUR_DIR, "data", _filename)
 
     # Attempt to open and load the file

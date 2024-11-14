@@ -37,44 +37,81 @@ mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
 
 
+def generate_alternate_urls(app, endpoint, **values):
+    """
+    Generate alternate URLs for supported languages.
+    """
+    alternate_urls = {}
+    for lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
+        with app.test_request_context():
+            alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
+    return alternate_urls
+
 def init_routes(app):
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
-        # Create the XML structure
-        urlset = ET.Element(
-            "urlset", xmlns="http://www.sitemaps.org/schemas/sitemap-image/1.1"
-        )
+        try:
+            # Define the root XML element for the sitemap
+            urlset = ET.Element("urlset",
+                                {"xmlns:xhtml":"http://www.w3.org/1999/xhtml"})
 
-        # List of static routes to include in the sitemap
-        routes = [
-            {"loc": url_for("index", _external=True)},
-            {"loc": url_for("submit", _external=True)},
-            {"loc": url_for("demonstrations", _external=True)},
-            {"loc": url_for("info", _external=True)},
-            {"loc": url_for("privacy", _external=True)},
-            {"loc": url_for("contact", _external=True)},
-            # Add more static routes as needed
-        ]
+            # Static routes to include in the sitemap
+            routes = [
+                {"loc": "index"},
+                {"loc": "submit"},
+                {"loc": "demonstrations"},
+                {"loc": "info"},
+                {"loc": "privacy"},
+                {"loc": "contact"}
+            ]
 
-        # Populate the XML with the static routes
-        for route in routes:
-            url = ET.SubElement(urlset, "url")
-            loc = ET.SubElement(url, "loc")
-            loc.text = route["loc"]
+            # Iterate over each static route and language
+            for route in routes:
+                url = ET.SubElement(urlset, "url")
+                loc = ET.SubElement(url, "loc")
+                loc.text = url_for(route["loc"], _external=True)
 
-        # Fetch all approved demonstrations from the database
-        demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        for demo in demonstrations:
-            url = ET.SubElement(urlset, "url")
-            loc = ET.SubElement(url, "loc")
-            loc.text = url_for(
-                "demonstration_detail", demo_id=demo["_id"], _external=True
-            )
+                # Add alternate language links for each URL
+                for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
+                    ET.SubElement(
+                        url, "{http://www.w3.org/1999/xhtml}link",
+                        rel="alternate",
+                        hreflang=alt_lang_code,
+                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True)
+                    )
 
-        # Convert the XML tree to a string
-        xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
+            # Add dynamic routes for each demonstration
+            for demo in demonstrations_collection.find():
+                demo_url = ET.SubElement(urlset, "url")
+                loc = ET.SubElement(demo_url, "loc")
+                loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
 
-        return Response(xml_str, mimetype="application/xml")
+                # Add alternate language links for each demonstration URL
+                for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
+                    ET.SubElement(
+                        demo_url, "{http://www.w3.org/1999/xhtml}link",
+                        rel="alternate",
+                        hreflang=alt_lang_code,
+                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True)
+                    )
+
+            # Convert the XML tree to a string and return as response
+            xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
+            return Response(xml_str, mimetype="application/xml")
+
+        except Exception as e:
+            # Log error if sitemap generation fails and return an empty response
+            app.logger.error(f"Error generating sitemap: {e}")
+            return Response(status=500)
+
+
+    @app.context_processor
+    def inject_alternate_urls():
+        """
+        Inject alternate URLs into the template context.
+        """
+        alternate_urls = generate_alternate_urls(app, request.endpoint, **request.view_args)
+        return dict(alternate_urls=alternate_urls)
 
     @app.route("/")
     def index():
@@ -529,3 +566,24 @@ def init_routes(app):
         if referrer and referrer.startswith(request.host_url):
             return redirect(referrer)
         return redirect(url_for("index"))
+
+    # Here, add a thing that can handle /<lang>/<page>
+    # As an example:
+    # /en/: render '/' with the language set to 'en'
+    # /en/demonstrations: render '/demonstrations' with the language set to 'en'
+    @app.before_request
+    def preprocess_url():
+        """
+        
+        """
+        supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
+        path = request.path.strip("/").split("/")
+        
+        if path and path[0] in supported_languages:
+            lang = path[0]
+            session["locale"] = lang
+            session.modified = True
+            new_path = "/" + "/".join(path[1:])
+            return redirect(new_path)
+    
+    #

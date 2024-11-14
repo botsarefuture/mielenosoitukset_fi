@@ -181,6 +181,7 @@
   }
 </style>
 
+
 <!-- Navigation Bar -->
 <header>
   <nav class="navbar">
@@ -233,17 +234,18 @@
         <!-- Language Selector -->
         <li>
           <div class="dropdown">
-            <a href="#" class="dropdown-toggle">
+            <a href="#" class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">
               <span>{{ _('Kieli') }}</span>
               <i style="margin-left: 5px;" class="fas fa-chevron-down"></i>
             </a>
-            <ul class="dropdown-menu">
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
               {% for lang_code in get_supported_locales() %}
               <li><a href="{{ url_for('set_language', lang=lang_code) }}">{{ get_lang_name(lang_code) }}</a></li>
               {% endfor %}
             </ul>
           </div>
         </li>
+
         <li>
           <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
             <i class="fa-solid fa-moon" id="theme-icon"></i>

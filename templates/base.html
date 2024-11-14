@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fi" class="dark">
+<html lang="{{ session.get('locale', 'fi') }}" class="dark">
 
 <head>
   <meta charset="UTF-8" />
@@ -12,6 +12,10 @@
   <!-- meta content will be inserted here -->
 
   {% endblock %}
+
+  {% for lang_code, url in alternate_urls.items() %}
+    <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+  {% endfor %}
 
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
 

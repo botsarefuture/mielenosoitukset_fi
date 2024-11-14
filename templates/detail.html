@@ -82,12 +82,9 @@
   }
 }
 </script>
-<!-- #TODO: Add this to that ld+json, after we have the program data
-"performer": {
-   "@type": "Person",
-   "name": "{{ demo['performer'] if demo['performer'] else 'Tuntematon esiintyjä' }}"
-  },
--->
+{% for lang_code, url in alternate_urls.items() %}
+  <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+{% endfor %}
 {% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />

@@ -1,9 +1,12 @@
 from flask import Blueprint, redirect, request
-from flask_login import login_required, current_user
 from auth.models import User
+from flask_login import login_required, current_user
+
 from database_manager import DatabaseManager
 from utils.flashing import flash_message
 from utils.logger import logger
+
+current_user: User = current_user
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -15,8 +18,9 @@ def follow(username):
 
     try:
         user_to_follow = User.from_db(mongo.users.find_one({"username": username}))
+        print(user_to_follow)
         if user_to_follow:
-            current_user.follow_user(mongo, user_to_follow.id)
+            current_user.follow_user(user_to_follow.id)
             flash_message(f"Seuraat nyt käyttäjää {username}.", "success")
             logger.debug(f"User {current_user.username} followed {username}.") # This might be unnecessary
             
@@ -36,7 +40,7 @@ def unfollow(username):
     try:
         user_to_unfollow = User.from_db(mongo.users.find_one({"username": username}))
         if user_to_unfollow:
-            current_user.unfollow_user(mongo, user_to_unfollow.id)
+            current_user.unfollow_user(user_to_unfollow.id)
             
             flash_message(f"Lopetit käyttäjän {username} seuraamisen.", "success")
             

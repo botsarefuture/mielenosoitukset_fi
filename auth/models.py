@@ -8,7 +8,6 @@ from database_manager import DatabaseManager
 
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
-collection = mongo["organizations"]
 
 class User(UserMixin):
     """
@@ -145,10 +144,15 @@ class User(UserMixin):
             "following": [],
         }
 
-    def add_organization(self, db, organization_id, role="member", permissions=None):
+    def add_organization(self, organization_id=None, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.
         """
+        if organization_id is None:
+            logger.error("Organization ID is required to add organization.")
+            return
+        
+        # Check if the organization already exists in the user's organizations
         existing_org = next(
             (org for org in self.organizations if org["org_id"] == organization_id),
             None,
@@ -161,14 +165,17 @@ class User(UserMixin):
                     "role": role,
                     "permissions": permissions or [],
                 }
-            )
+            ) # Add the organization to the user's organizations
+            # TODO: #199 A class for representing organizations  and roles would be better
+            
+            
         else:
             existing_org["role"] = role
             existing_org["permissions"] = permissions or existing_org.get(
                 "permissions", []
             )
 
-        self.save(db)
+        self.save()
         logger.info("Organization updated successfully.")
 
     def is_member_of_organization(self, organization_id):
@@ -177,86 +184,82 @@ class User(UserMixin):
         """
         return any(org["org_id"] == str(organization_id) for org in self.organizations)
 
-    def change_password(self, db, new_password):
+    def change_password(self, new_password):
         """
         Change the user's password and update the database.
         """
         new_password_hash = generate_password_hash(new_password)
         self.password_hash = new_password_hash
 
-        self.save(db)
+        self.save()
         logger.info("Password updated successfully.")
 
-    def update_displayname(self, db, displayname):
+    def update_displayname(self, displayname):
         """
         Update the user's display name and database record.
         """
         self.displayname = displayname
-        self.save(db)
+        self.save()
         logger.info("Display name updated successfully.")
 
-    def update_profile_picture(self, db, profile_picture):
+    def update_profile_picture(self, profile_picture):
         """
         Update the user's profile picture and database record.
         """
         self.profile_picture = profile_picture
-        self.save(db)
+        self.save()
         logger.info("Profile picture updated successfully.")
 
-    def update_bio(self, db, bio):
+    def update_bio(self, bio):
         """
         Update the user's bio and database record.
         """
         self.bio = bio
-        self.save(db)
+        self.save()
         logger.info("Bio updated successfully.")
 
-    def save(self, db):
+    def save(self):
         """
-        Save the current state of the user to the database.
+        This method updates the user's information in the MongoDB collection.
+        It finds the user by their unique ID and sets the user's data to the current state.
+        Returns:
+            None
         """
-        db.users.update_one(
-            {"_id": ObjectId(self.id)},
-            {"$set": self.to_dict()}
+        data = self.to_dict()
+        del data["_id"]  # Remove the _id field from the data
+        
+        mongo.users.update_one(
+            {"_id": ObjectId(self._id)}, {"$set": data}, upsert=True
         )
 
-    def to_dict(self):
+    def to_dict(self, json=False):
         """
         Convert the User object to a dictionary for database storage.
         """
-        return {
-            "username": self.username,
-            "email": self.email,
-            "password_hash": self.password_hash,
-            "displayname": self.displayname,
-            "profile_picture": self.profile_picture,
-            "bio": self.bio,
-            "followers": self.followers,
-            "following": self.following,
-            "organizations": self.organizations,
-            "global_admin": self.global_admin,
-            "confirmed": self.confirmed,
-            "permissions": self.permissions,
-            "global_permissions": self.global_permissions,
-            "role": self.role,
-        }
+        data = self.__dict__.copy()
+        if json and "_id" in data:
+            data["_id"] = str(data["_id"])
+        return data
 
-    def follow_user(self, db, user_id_to_follow):
+    def follow_user(self, user_id_to_follow):
         """
         Add a user to the followers list of this user.
         """
+        if isinstance(user_id_to_follow, User): # Check if the user_id_to_follow is a User object
+            user_id_to_follow = user_id_to_follow.id
+            
         if user_id_to_follow not in self.following:
             self.following.append(user_id_to_follow)
-            self.save(db)
+            self.save()
             logger.info("Started following user successfully.")
 
-    def unfollow_user(self, db, user_id_to_unfollow):
+    def unfollow_user(self, user_id_to_unfollow):
         """
         Remove a user from the followers list of this user.
         """
         if user_id_to_unfollow in self.following:
             self.following.remove(user_id_to_unfollow)
-            self.save(db)
+            self.save()
             logger.info("Stopped following user successfully.")
 
     def has_permission(self, permission, organization_id=None):
@@ -319,6 +322,8 @@ class User(UserMixin):
         if isinstance(user_id, User): # Check if the user_id is a User object
             return self.is_following(user_id.id) # If it is, check the user_id's id
 
+        print(self.following, user_id, user_id in self.following)
+        
         return user_id in self.following
 
     def __repr__(self):

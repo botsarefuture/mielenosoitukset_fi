@@ -13,6 +13,14 @@ import jwt
 import datetime
 import importlib
 
+from utils.auth import (
+    generate_confirmation_token,
+    verify_confirmation_token,
+    generate_reset_token,
+    verify_reset_token,
+    
+)
+
 EmailSender = importlib.import_module('emailer.EmailSender', "mielenosoitukset_fi").EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
@@ -281,42 +289,3 @@ def edit_profile():
         return redirect(url_for("auth.profile", username=current_user.username))
 
     return render_template("edit_profile.html")
-
-
-def generate_reset_token(email):
-    return jwt.encode(
-        {
-            "email": email,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
-        },
-        current_app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
-
-
-def verify_reset_token(token):
-    try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-        return data["email"]
-    except Exception:
-        return None
-
-
-def generate_confirmation_token(email):
-    return jwt.encode(
-        {
-            "email": email,
-            "exp": datetime.datetime.utcnow()
-            + datetime.timedelta(hours=1),  # Korjattu rivi
-        },
-        current_app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
-
-
-def verify_confirmation_token(token):
-    try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-        return data["email"]
-    except Exception:
-        return None

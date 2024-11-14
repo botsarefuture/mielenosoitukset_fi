@@ -26,7 +26,12 @@
         <button type="submit">{{ _('Rekisteröidy') }}</button>
     </form>
 
-    <p>Onko sinulla jo tili? <a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään tästä') }}</a>.</p>
+    <!-- Login link -->
+    <div class="form-group">
+        <p class="register-link">
+            <a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään tästä') }}</a>
+        </p>
+    </div>
 </div>
 
 {% endblock %}

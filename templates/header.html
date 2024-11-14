@@ -2,225 +2,156 @@
   /* Base Styles */
   .navbar {
     background: var(--primary-color);
-    /* Dark Blue */
     padding: 10px 20px;
-    /* Add some padding for a better look */
     position: relative;
-    /* Allow absolute positioning of children */
     z-index: 1000000;
-    /* Ensure the navbar is on top */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    /* Add shadow for better visibility */
   }
 
   .logo {
     font-size: 1.5em;
-    /* Logo size */
     color: white;
-    /* Logo color */
     text-decoration: none;
-    /* Remove underline */
   }
 
   .navbar-toggle {
     background: none;
-    /* Remove default button styling */
     border: none;
-    /* Remove border */
     color: white;
-    /* Icon color */
     font-size: 1.5em;
-    /* Icon size */
     cursor: pointer;
-    /* Pointer cursor on hover */
     display: none;
-    /* Hide by default on larger screens */
   }
 
   .nav-links {
     display: flex;
-    /* Horizontal layout for links */
     align-items: center;
-    /* Center the links */
     list-style: none;
-    /* Remove list styling */
     padding: 0;
-    /* Remove padding */
     margin: 0;
-    /* Remove margin */
   }
 
   .nav-links li {
     margin: 0 15px;
-    /* Space between links */
   }
 
   .nav-links a {
     color: white;
-    /* Link color */
     text-decoration: none;
-    /* Remove underline */
     font-size: 1em;
-    /* Link font size */
     transition: color 0.3s;
-    /* Smooth transition for hover effect */
   }
 
   .nav-links a:hover {
     color: #f2f2f2;
-    /* Lighten on hover */
   }
 
   /* Responsive Design */
   @media (max-width: 768px) {
     .navbar .nav-links {
       flex-direction: column;
-      /* Stack nav links vertically */
       width: 100vw;
-      /* Full viewport width */
       height: calc(100vh - 83.5px);
-      /* Full viewport height minus the navbar height */
       position: fixed;
-      /* Fix position to cover the entire screen */
       left: 0;
-      /* Align to the left */
       top: 83.5px;
-      /* Align below the navbar */
       background: var(--primary-color);
-      /* Dark Blue */
       display: none;
-      /* Hide by default on small screens */
       z-index: 999999;
-      /* Ensure the dropdown appears above other content */
       padding-top: 50px;
-      /* Padding for top */
       overflow-y: auto;
-      /* Enable scrolling if needed */
     }
 
     .navbar .nav-links.active {
       display: flex;
-      /* Show when active */
     }
 
     .navbar .nav-links li {
       margin: 20px 0;
-      /* Space between links */
       text-align: center;
-      /* Center-align text */
     }
 
     .navbar .nav-links a {
       padding: 20px;
-      /* Larger padding for touch targets */
       font-size: 1.5em;
-      /* Increase font size for readability */
     }
 
     .navbar-toggle {
       display: block;
-      /* Show toggle button on small screens */
     }
 
     header .container {
       display: flex;
       align-items: center;
-      /* Center the items vertically */
       justify-content: space-between;
-      /* Space between logo and toggle */
     }
   }
 
   @media (max-width: 480px) {
     .navbar .nav-links {
-      height: calc(100vh, 73.5px);
+      height: calc(100vh - 73.5px);
       top: 73.5px;
     }
 
     .navbar .logo {
       font-size: 1.5em;
-      /* Slightly smaller logo text on very small screens */
     }
 
     .navbar {
       background: var(--primary-color);
-      /* Dark Blue */
     }
   }
 
   /* Profile Picture Styles */
   .profile-picture {
     width: 35px;
-    /* Adjust size as needed */
     height: 35px;
-    /* Keep it square */
     border-radius: 50%;
-    /* Circular profile picture */
     margin-right: 5px;
-    /* Space between image and text */
     object-fit: cover;
   }
 
   /* Dropdown Menu Styles */
   .dropdown-menu {
     display: none;
-    /* Hide dropdown by default */
     position: absolute;
-    /* Absolute positioning */
     background: #0033a0;
-    /* Dark Blue */
     top: 100%;
-    /* Position below the parent */
-    /*left: 0; /* Align to the left */
     padding: 10px 0;
-    /* Padding around the menu */
     z-index: 100000;
-    /* Ensure it appears above other content */
     min-width: 150px;
-    /* Set a minimum width for dropdown */
   }
 
   .dropdown:hover .dropdown-menu {
     display: block;
-    /* Show on hover */
   }
 
   .dropdown-menu li {
     margin: 0;
-    /* Remove margin for dropdown items */
   }
 
   .dropdown-menu a {
     display: block;
-    /* Make the links block elements */
     padding: 10px 20px;
-    /* Padding for better click area */
     color: white;
-    /* Link color in dropdown */
     text-decoration: none;
-    /* Remove underline */
   }
 
   .dropdown-menu a:hover {
     background: #004cbf;
-    /* Lighten on hover */
   }
 
-  /* Accessibility: Make sure dropdown menu can be opened with keyboard */
   .dropdown-toggle {
     cursor: pointer;
-    /* Pointer cursor for clickable items */
     margin-left: 5px;
   }
 
   .dropdown-toggle:focus+.dropdown-menu,
   .dropdown-menu:focus {
     display: block;
-    /* Show dropdown on focus */
   }
 
   @media (max-width: 769px) {
-
     .navbar,
     .container,
     .nav-links {
@@ -230,24 +161,16 @@
 
   .profile-container {
     display: flex;
-    /* Use flexbox for alignment */
     align-items: center;
-    /* Center vertically */
   }
 
   .profile-picture {
     width: 35px;
-    /* Fixed width */
     height: 35px;
-    /* Fixed height */
     border-radius: 50%;
-    /* Circular profile picture */
     object-fit: cover;
-    /* Crop image to fit */
     margin-right: 10px;
-    /* Space between image and text */
     background: #cccccc;
-    /* Gray background in case of missing image */
   }
 
   @media (min-width: 720px) {
@@ -255,7 +178,6 @@
       visibility: hidden;
       display: none;
     }
-
   }
 </style>
 
@@ -275,29 +197,16 @@
       <ul class="nav-links">
         <li><a href="{{ url_for('index') }}">{{ _('Etusivu') }}</a></li>
         <li><a href="{{ url_for('demonstrations') }}">{{ _('Mielenosoitukset') }}</a></li>
-        <li>
-          <a href="{{ url_for('submit') }}">{{ _('Ilmoita mielenosoituksesta') }}</a>
-        </li>
+        <li><a href="{{ url_for('submit') }}">{{ _('Ilmoita mielenosoituksesta') }}</a></li>
 
         <!-- Additional Links for Global Admins on Mobile -->
         {% if current_user.global_admin %}
         <div class="mobile-admin-links">
-          <li>
-            <a href="{{ url_for('admin.admin_dashboard') }}">{{ _('Superkäyttäjän käsikirja') }}</a>
-          </li>
-          <li>
-            <a href="{{ url_for('admin_user.user_control') }}">{{ _('Käyttäjien hallinta') }}</a>
-          </li>
-          <li>
-            <a href="{{ url_for('admin_org.organization_control') }}">{{ _('Organisaatioiden hallinta') }}</a>
-          </li>
-          <li>
-            <a href="{{ url_for('admin_demo.demo_control') }}">{{ _('Mielenosoitusten hallinta') }}</a>
-          </li>
-          <li>
-            <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}">{{ _('Toistuvien mielenosoitusten hallinta')
-              }}</a>
-          </li>
+          <li><a href="{{ url_for('admin.admin_dashboard') }}">{{ _('Superkäyttäjän käsikirja') }}</a></li>
+          <li><a href="{{ url_for('admin_user.user_control') }}">{{ _('Käyttäjien hallinta') }}</a></li>
+          <li><a href="{{ url_for('admin_org.organization_control') }}">{{ _('Organisaatioiden hallinta') }}</a></li>
+          <li><a href="{{ url_for('admin_demo.demo_control') }}">{{ _('Mielenosoitusten hallinta') }}</a></li>
+          <li><a href="{{ url_for('admin_recu_demo.recu_demo_control') }}">{{ _('Toistuvien mielenosoitusten hallinta') }}</a></li>
           <li><a href="{{ url_for('admin.stats') }}">{{ _('Tilastot') }}</a></li>
         </div>
         {% endif %}
@@ -310,9 +219,7 @@
               {% if current_user.profile_picture %}
               <img src="{{ current_user.profile_picture }}" alt="{{ _('Profiilikuva') }}" class="profile-picture" />
               {% endif %}
-              <span>
-                {{ current_user.displayname if current_user.displayname else current_user.username }}
-              </span>
+              <span>{{ current_user.displayname if current_user.displayname else current_user.username }}</span>
               <i style="margin-left: 5px;" class="fas fa-chevron-down"></i>
             </span>
           </a>
@@ -321,23 +228,35 @@
             <li><a href="{{ url_for('auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
           </ul>
         </li>
-
-        {% else %}
-        <li><a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
         {% endif %}
+
+        <!-- Language Selector -->
+        <li>
+          <div class="dropdown">
+            <a href="#" class="dropdown-toggle">
+              <span>{{ _('Kieli') }}</span>
+              <i style="margin-left: 5px;" class="fas fa-chevron-down"></i>
+            </a>
+            <ul class="dropdown-menu">
+              {% for lang_code in get_supported_locales() %}
+              <li><a href="{{ url_for('set_language', lang=lang_code) }}">{{ get_lang_name(lang_code) }}</a></li>
+              {% endfor %}
+            </ul>
+          </div>
+        </li>
         <li>
           <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
             <i class="fa-solid fa-moon" id="theme-icon"></i>
           </button>
         </li>
-
-
       </ul>
     </div>
   </nav>
   <script>console.log("{{ current_user.role }}")</script>
 
-  {% if current_user.role != "user" and current_user.is_authenticated %} {% include "sidebar.html" %} {% endif %}
+  {% if current_user.role != "user" and current_user.is_authenticated %}
+  {% include "sidebar.html" %}
+  {% endif %}
 </header>
 
 <script>

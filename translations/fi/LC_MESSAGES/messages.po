@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-13 16:42+0200\n"
+"POT-Creation-Date: 2024-11-14 18:09+0200\n"
 "PO-Revision-Date: 2024-11-11 10:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fi\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: basic_routes.py:295
+#: basic_routes.py:296
 msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
 msgstr ""
 
-#: basic_routes.py:318
+#: basic_routes.py:319
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
 msgstr ""
 
@@ -69,7 +69,7 @@ msgid "Esittelyteksti:"
 msgstr ""
 
 #: auth/templates/login.html:7 auth/templates/login.html:19
-#: templates/header.html:326
+#: templates/base.html:93
 msgid "Kirjaudu sisään"
 msgstr ""
 
@@ -86,7 +86,7 @@ msgid "Unohtuiko salasana?"
 msgstr ""
 
 #: auth/templates/login.html:32 auth/templates/register.html:9
-#: auth/templates/register.html:26
+#: auth/templates/register.html:26 templates/base.html:94
 msgid "Rekisteröidy"
 msgstr ""
 
@@ -137,25 +137,25 @@ msgstr ""
 msgid "Järjestelmävalvoja"
 msgstr ""
 
-#: auth/templates/profile.html:41
+#: auth/templates/profile.html:43
 #: templates/admin/organizations/dashboard.html:87
 #: templates/admin/stats.html:12
 msgid "Organisaatiot"
 msgstr ""
 
-#: auth/templates/profile.html:47
+#: auth/templates/profile.html:49
 msgid "Tutustu organisaatioon"
 msgstr ""
 
-#: auth/templates/profile.html:55
+#: auth/templates/profile.html:58
 msgid "Muokkaa profiilia"
 msgstr ""
 
-#: auth/templates/profile.html:60
+#: auth/templates/profile.html:63
 msgid "Lopeta seuraaminen"
 msgstr ""
 
-#: auth/templates/profile.html:64
+#: auth/templates/profile.html:67
 msgid "Seuraa"
 msgstr ""
 
@@ -176,23 +176,23 @@ msgstr ""
 msgid "Salasanan on oltava vähintään 8 merkkiä pitkä"
 msgstr ""
 
-#: auth/templates/register.html:29
+#: auth/templates/register.html:32
 msgid "Kirjaudu sisään tästä"
 msgstr ""
 
-#: templates/base.html:69
+#: templates/base.html:70
 msgid "Kaikki oikeudet pidätetään."
 msgstr ""
 
-#: templates/base.html:71
+#: templates/base.html:72
 msgid "Tietoa sivustosta"
 msgstr ""
 
-#: templates/base.html:73
+#: templates/base.html:74
 msgid "Tietosuojaseloste"
 msgstr ""
 
-#: templates/base.html:75 templates/contact.html:3 templates/contact.html:12
+#: templates/base.html:76 templates/contact.html:3 templates/contact.html:12
 #: templates/privacy.html:47
 msgid "Ota yhteyttä"
 msgstr ""
@@ -371,61 +371,65 @@ msgstr ""
 msgid "Facebook-tapahtuma"
 msgstr ""
 
-#: templates/header.html:267
+#: templates/header.html:189
 msgid "Mielenosoitukset.fi"
 msgstr ""
 
-#: templates/header.html:270
+#: templates/header.html:192
 msgid "Avaa valikko"
 msgstr ""
 
-#: templates/header.html:276
+#: templates/header.html:198
 msgid "Etusivu"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:169 templates/header.html:277
+#: templates/admin/demonstrations/dashboard.html:169 templates/header.html:199
 msgid "Mielenosoitukset"
 msgstr ""
 
-#: templates/header.html:279 templates/index.html:49 templates/submit.html:3
+#: templates/header.html:200 templates/index.html:49 templates/submit.html:3
 #: templates/submit.html:124
 msgid "Ilmoita mielenosoituksesta"
 msgstr ""
 
-#: templates/header.html:286
+#: templates/header.html:205
 msgid "Superkäyttäjän käsikirja"
 msgstr ""
 
-#: templates/header.html:289
+#: templates/header.html:206
 msgid "Käyttäjien hallinta"
 msgstr ""
 
-#: templates/header.html:292
+#: templates/header.html:207
 msgid "Organisaatioiden hallinta"
 msgstr ""
 
-#: templates/header.html:295
+#: templates/header.html:208
 msgid "Mielenosoitusten hallinta"
 msgstr ""
 
-#: templates/header.html:298
+#: templates/header.html:209
 msgid "Toistuvien mielenosoitusten hallinta"
 msgstr ""
 
-#: templates/admin/stats.html:4 templates/header.html:301
+#: templates/admin/stats.html:4 templates/header.html:210
 msgid "Tilastot"
 msgstr ""
 
-#: templates/header.html:311
+#: templates/header.html:220
 msgid "Profiilikuva"
 msgstr ""
 
-#: templates/header.html:320
+#: templates/header.html:227
 msgid "Profiili"
 msgstr ""
 
-#: templates/header.html:321
+#: templates/header.html:228
 msgid "Kirjaudu ulos"
+msgstr ""
+
+#: templates/header.html:237
+msgid "Kieli"
 msgstr ""
 
 #: templates/index.html:38

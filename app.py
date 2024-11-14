@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, session, g
 from flask_babel import Babel
 from flask_login import LoginManager
 from bson.objectid import ObjectId
@@ -29,7 +29,7 @@ def create_app() -> Flask:
 
     # Locale selector function
     def get_locale():
-        return request.accept_languages.best_match(app.config["BABEL_SUPPORTED_LOCALES"])
+        return session.get("locale", request.accept_languages.best_match(app.config["BABEL_SUPPORTED_LOCALES"], app.config["BABEL_DEFAULT_LOCALE"])) # Get locale from session or request headers or else use default locale
 
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
@@ -89,7 +89,14 @@ def create_app() -> Flask:
     def utility_processor():
         def get_org_name(org_id):
             return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
-        return dict(get_org_name=get_org_name)
+        
+        def get_supported_locales():
+            return app.config["BABEL_SUPPORTED_LOCALES"]
+        
+        def get_lang_name(lang_code):
+            return app.config["BABEL_LANGUAGES"].get(lang_code)
+        
+        return dict(get_org_name=get_org_name, get_supported_locales=get_supported_locales, get_lang_name=get_lang_name)
     
     with app.app_context():
         scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours

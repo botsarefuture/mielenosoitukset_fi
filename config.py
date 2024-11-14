@@ -91,6 +91,7 @@ class Config:
     BABEL_CONFIG = config.get("BABEL", {})
     BABEL_DEFAULT_LOCALE = BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
     BABEL_SUPPORTED_LOCALES = BABEL_CONFIG.get("SUPPORTED_LOCALES", ["en"])
+    BABEL_LANGUAGES = BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
     
     # Flask Configuration
     SECRET_KEY = config.get("SECRET_KEY", "secret_key")

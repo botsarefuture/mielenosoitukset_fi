@@ -1,3 +1,9 @@
+v2.7.0
+### Added
+- Added language navigation feature
+
+
+
 v2.6.0
 ### Added
 - New feature for user authentication

@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="fi" class="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
 
-  {% block meta %} 
-  
-  <!-- meta content will be inserted here --> 
+  {% block meta %}
+
+  <!-- meta content will be inserted here -->
 
   {% endblock %}
 
@@ -80,7 +81,21 @@
             <i class="fab fa-instagram"></i> Instagram
           </a>
         </li>
+        <li>
+          <a href="https://www.facebook.com/mielenosoitukset" target="_blank">
+            <i class="fab fa-facebook"></i> Facebook
+          </a>
+        </li>
       </ul>
+      <!-- ADD THE LOGIN LINK HERE-->
+      <ul class="footer-links">
+        <div class="auth-buttons">
+          <li><a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
+          <li><a href="{{ url_for('auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
+        </div>
+
+      </ul>
+
     </div>
   </footer>
 
@@ -232,4 +247,5 @@
 
   {% block scripts %} {% endblock %}
 </body>
+
 </html>

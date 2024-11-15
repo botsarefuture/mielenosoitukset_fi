@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-15 22:28+0200\n"
+"POT-Creation-Date: 2024-11-15 23:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -321,10 +321,6 @@ msgstr ""
 msgid "Mielenosoitus on käynnissä!"
 msgstr ""
 
-#: templates/detail.html:594
-msgid "Mielenosoitus on päättynyt."
-msgstr ""
-
 #: templates/detail.html:603
 msgid "päivää"
 msgstr ""
@@ -402,6 +398,30 @@ msgstr ""
 msgid "Ilmoita mielenosoituksesta"
 msgstr ""
 
+#: templates/header.html:286
+msgid "Superkäyttäjän käsikirja"
+msgstr ""
+
+#: templates/header.html:289
+msgid "Käyttäjien hallinta"
+msgstr ""
+
+#: templates/header.html:292
+msgid "Organisaatioiden hallinta"
+msgstr ""
+
+#: templates/header.html:295
+msgid "Mielenosoitusten hallinta"
+msgstr ""
+
+#: templates/header.html:298
+msgid "Toistuvien mielenosoitusten hallinta"
+msgstr ""
+
+#: templates/admin/stats.html:4 templates/header.html:301
+msgid "Tilastot"
+msgstr ""
+
 #: templates/header.html:442
 msgid "Profiilikuva"
 msgstr ""
@@ -412,10 +432,6 @@ msgstr ""
 
 #: templates/header.html:450
 msgid "Kirjaudu ulos"
-msgstr ""
-
-#: templates/header.html:460
-msgid "Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten"
 msgstr ""
 
 #: templates/index.html:27
@@ -928,10 +944,6 @@ msgstr ""
 msgid "Esikatselu:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:64 templates/admin/stats.html:47
-msgid "Palaa hallintapaneeliin"
-msgstr ""
-
 #: templates/admin/stats.html:10
 msgid "Tilastot"
 msgstr ""
@@ -960,12 +972,12 @@ msgstr ""
 msgid "Viimeisimmät aktiviteetit"
 msgstr ""
 
-#: templates/admin/stats.html:26
-msgid "Aktiviteetti"
+#: templates/admin/stats.html:22
+msgid "Ei aktiivisuuksia vielä."
 msgstr ""
 
-#: templates/admin/stats.html:37
-msgid "Ei aktiivisuuksia vielä."
+#: templates/admin/stats.html:27
+msgid "Palaa hallintapaneeliin"
 msgstr ""
 
 #: templates/admin/demonstrations/confirm_delete.html:7
@@ -1251,10 +1263,6 @@ msgstr ""
 msgid "Verkkosivu"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:123
-msgid "Esikatsele"
-msgstr ""
-
 #: templates/admin/organizations/dashboard.html:132
 msgid "Organisaatioita ei löytynyt."
 msgstr ""
@@ -1300,64 +1308,6 @@ msgstr ""
 
 #: templates/admin/organizations/form.html:268
 msgid "Luo"
-msgstr ""
-
-#: templates/admin/organizations/form.html:276
-#: templates/admin/organizations/macros.html:25
-#: templates/admin/organizations/view.html:154
-msgid "Kutsu käyttäjiä"
-msgstr ""
-
-#: templates/admin/organizations/macros.html:32
-msgid "Kutsuttavan sähköpostiosoite"
-msgstr ""
-
-#: templates/admin/organizations/macros.html:39
-msgid "Lähetä kutsu"
-msgstr ""
-
-#: templates/admin/organizations/view.html:111
-msgid "Organisaation tiedot"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:75
-msgid "Toistuvat mielenosoitukset"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:80
-msgid "Luo uusi toistuva mielenosoitus"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:90
-msgid "Hae toistuvia mielenosoituksia:"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:91
-msgid "Hae toistuvia mielenosoituksia..."
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:91
-msgid "Hae toistuvia mielenosoituksia"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:93
-msgid "Näytä vain hyväksytyt toistuvat mielenosoitukset:"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:94
-msgid "Hyväksytty status"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:111
-msgid "Aika"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:114
-msgid "Toimet"
-msgstr ""
-
-#: templates/admin/recu_demonstrations/dashboard.html:152
-msgid "Ei löytynyt toistuvia mielenosoituksia."
 msgstr ""
 
 #: templates/admin/user/confirm.html:7

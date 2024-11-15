@@ -564,15 +564,23 @@
   function updateCountdown() {
       const demoDate = data.demo.date;
       const demoTime = data.demo.start_time;
+      const demoEnds = data.demo.end_time;
       const eventDateStr = `${formatFinnishDate(demoDate)}T${demoTime}`;
       const eventDate = new Date(eventDateStr);
       const now = new Date();
       const timeRemaining = eventDate - now;
+      const TimeUntilEnd = new Date(`${formatFinnishDate(demoDate)}T${demoEnds}`) - now;
+
   
       const timerElement = document.getElementById("timer");
   
-      if (timeRemaining <= 0) {
+      if (timeRemaining <= 0 && TimeUntilEnd >= 0) { // Event is ongoing
           timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
+          return;
+      }
+
+      if (TimeUntilEnd <= 0) {
+          timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
           return;
       }
   

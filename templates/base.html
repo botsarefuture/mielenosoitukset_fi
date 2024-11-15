@@ -57,9 +57,20 @@
   {% include "header.html" %}
 
   <!-- Flash Messages -->
-  <div id="flash-messages" class="flash-messages" style="display: none">
-    <ul id="flash-message-list"></ul>
-  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div id="flash-messages" class="flash-messages">
+        <button class="flash-close" onclick="document.getElementById('flash-messages').style.display = 'none'">
+          <i class="fas fa-times"></i>
+        </button>
+        <ul id="flash-message-list">
+          {% for category, message in messages %}
+            <li class="flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endwith %}
 
   <!-- Main Content Area -->
   <main class="container-main-content">
@@ -145,7 +156,7 @@
         }
       }, 10000);
     }
-
+    /*
     function checkForNewFlashMessages() {
       fetch("/get_flash_messages")
         .then((response) => response.json())
@@ -159,7 +170,7 @@
         .catch((error) => console.error("Error fetching flash messages:", error));
     }
 
-    setInterval(checkForNewFlashMessages, 5000);
+    setInterval(checkForNewFlashMessages, 5000);*/
   </script>
 
   <script>

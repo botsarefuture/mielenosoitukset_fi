@@ -727,27 +727,19 @@ span i {
   padding: 2rem;
 }
 
-.mb-only
+@media screen and (min-width: 769px) {
 
-/* mobile only */
-  {
-  visibility: hidden !important;
+  .mb-only {
+    visibility: hidden !important;
+    display: none;
+  }
+
+  .mb-only * {
+    visibility: hidden !important;
+    display: none;
+  }
 }
 
-.mb-only * {
-  visibility: hidden !important;
-}
-
-.pc-only
-
-/* pc only */
-  {
-  visibility: visible !important;
-}
-
-.pc-only * {
-  visibility: visible !important;
-}
 
 @media (max-width: 768px) {
   .mb-only {
@@ -760,12 +752,14 @@ span i {
 
   .pc-only {
     visibility: hidden !important;
+    display: none;
     width: 0;
     height: 0;
   }
 
   .pc-only * {
     visibility: hidden !important;
+    display: none;
     height: 0;
     width: 0;
   }
@@ -785,6 +779,7 @@ span i {
   0% {
     transform: translateX(100%);
   }
+
   100% {
     transform: translateX(-100%);
   }
@@ -802,4 +797,28 @@ span i {
   display: inline-block;
   position: absolute;
   animation: marquee linear infinite;
+}
+
+/* When any object is not visible, resize to width: 0; height: 0;
+so when, 'visiblitity: hidden' is applied, it doesn't take up space */
+
+/* When any object is not visible, resize to width: 0; height: 0;
+so when, 'visiblitity: hidden' is applied, it doesn't take up space */
+
+/* Highlight Text */
+.highlight {
+  background-color: var(--highlight-bg);
+  color: var(--highlight-text);
+  padding: 5px;
+  border-radius: 3px;
+}
+
+/* Card Style Container */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }

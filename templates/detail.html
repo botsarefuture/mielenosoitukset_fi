@@ -131,10 +131,16 @@
     background: var(--container-background);
     padding: 20px;
     border-radius: 8px;
-    margin: auto;
     /* width: auto; */
-    box-sizing: border-box;
+    
   }
+
+  @media screen and (max-width: 767px) {
+    #infocontainer,
+    #orginfo {
+      box-sizing: border-box;
+
+    }}
 
   #infocontainer {
     border-right: 4px dotted #0033a0;

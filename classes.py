@@ -720,27 +720,8 @@ class RecurringDemonstration(Demonstration):
 
         Returns:
             RecurringDemonstration: An instance of the RecurringDemonstration class.
-
-        The dictionary should have the following keys:
-            - title (str): The title of the demonstration.
-            - date (str): The date of the demonstration.
-            - start_time (str): The start time of the demonstration.
-            - end_time (str): The end time of the demonstration.
-            - facebook (str): The Facebook event link.
-            - city (str): The city where the demonstration will take place.
-            - address (str): The address of the demonstration.
-            - route (str): The route of the demonstration.
-            - organizers (list, optional): A list of organizers. Defaults to an empty list.
-            - linked_organizations (dict, optional): A dictionary of linked organizations. Defaults to an empty dictionary.
-            - repeat_schedule (dict, optional): A dictionary representing the repeat schedule. Defaults to None.
-            - created_until (str, optional): The date until which the demonstration is created. Defaults to the current date.
-            - _id (str, optional): The unique identifier of the demonstration. Defaults to None.
-            - description (str, optional): A description of the demonstration. Defaults to None.
-            - tags (list, optional): A list of tags associated with the demonstration. Defaults to an empty list.
         """
 
-        start_time = data["start_time"]
-        end_time = data["end_time"]
         created_until = (
             datetime.strptime(data["created_until"], "%d.%m.%Y")
             if data.get("created_until")
@@ -750,23 +731,39 @@ class RecurringDemonstration(Demonstration):
         return cls(
             title=data["title"],
             date=data["date"],
-            start_time=start_time,
-            end_time=end_time,
+            start_time=data["start_time"],
+            end_time=data["end_time"],
             facebook=data["facebook"],
             city=data["city"],
             address=data["address"],
             route=data["route"],
-            organizers=data.get("organizers", []),
+            organizers=[
+                Organizer.from_dict(org) if isinstance(org, dict) else org
+                for org in data.get("organizers", [])
+            ],
+            approved=data.get("approved", False),
             linked_organizations=data.get("linked_organizations", {}),
+            img=data.get("img"),
+            _id=data.get("_id"),
+            description=data.get("description"),
+            tags=data.get("tags", []),
+            parent=ObjectId(data["parent"]) if data.get("parent") else None,
+            created_datetime=data.get("created_datetime"),
+            recurring=True,
+            topic=data.get("topic"),
+            type=data.get("type"),
             repeat_schedule=(
                 RepeatSchedule.from_dict(data["repeat_schedule"])
                 if data.get("repeat_schedule")
                 else None
             ),
+            repeating=data.get("repeating", False),
+            latitude=data.get("latitude"),
+            longitude=data.get("longitude"),
+            event_type=data.get("event_type"),
+            save_flag=data.get("save_flag", False),
+            hide=data.get("hide", False),
             created_until=created_until,
-            _id=data.get("_id"),
-            description=data.get("description"),
-            tags=data.get("tags", []),
         )
 
     def __repr__(self) -> str:

@@ -19,7 +19,28 @@ class RepeatSchedule:
         self.frequency = frequency
         self.interval = interval
         self.weekday = weekday
+        
+        print(frequency, interval, weekday)
 
+    def as_string(self) -> str:
+        frequency_map = {
+            "daily": "daily",
+            "weekly": "weekly",
+            "monthly": "monthly",
+            "yearly": "yearly",
+        }
+
+        weekday_str = (
+            f" on {self.weekday.strftime('%A') if isinstance(self.weekday, datetime) else self.weekday}"
+            if self.frequency == "weekly" and self.weekday
+            else ""
+        )
+        return (
+            f"every {self.interval} {frequency_map.get(self.frequency, 'unknown')}s{weekday_str}"
+            if self.interval > 1
+            else frequency_map.get(self.frequency, "unknown") + weekday_str
+        )
+    
     def __str__(self) -> str:
         frequency_map = {
             "daily": "daily",

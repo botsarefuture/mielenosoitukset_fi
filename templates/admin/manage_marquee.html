@@ -1,4 +1,9 @@
-{% extends "base.html" %}
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/manage_marquee.css') }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+{% endblock %}
 
 {% block scripts %}
 <script>
@@ -15,12 +20,11 @@
 </script>
 {% endblock %}
 
-{% block content %}
+{% block main_content %}
 <div class="container">
-    <h1 class="admin-section-title">{{ _('Pyörörullan hallinta') }}
-    </h1>
-    <i>{{ _('Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen.') }}</i>
-    <br><br>
+    <h2 id="tabletitle">{{ _('Pyörörullan hallinta') }}</h2>
+    <p>{{ _('Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen.') }}</p>
+
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
             <ul class="flashes">
@@ -33,8 +37,7 @@
     
     <form method="POST" action="{{ url_for('admin.manage_marquee') }}">
         <div class="form-group">
-            <label for="marquee_message"> {{ _('Nykyinen pyörö:') }}</label>
-            <br>
+            <label for="marquee_message">{{ _('Nykyinen pyörö:') }}</label>
             <textarea id="marquee_message" name="marquee_message" rows="4" class="form-control" oninput="updatePreview()">{{ current_message }}</textarea>
         </div>
         
@@ -54,6 +57,12 @@
     <h2>{{ _('Esikatselu:') }}</h2>
     <div id="preview" style="padding: 10px; border: 1px solid #ccc; background-color: #ffffff; color: #000000;">
         {{ current_message }}
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
+            <i class="fas fa-arrow-left"></i>{{ _('Palaa hallintapaneeliin') }}
+        </a>
     </div>
 </div>
 {% endblock %}

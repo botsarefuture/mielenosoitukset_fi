@@ -115,7 +115,7 @@
                 {% for demo in recurring_demos %}
                 <tr>
                     <td>{{ demo.title }}</td>
-                    <td>{{ demo.repeat_schedule.as_string }}</td>
+                    <td>{{ demo.repeat_schedule.as_string() }}</td>
                     <td>{{ demo.start_time }} - {{ demo.end_time }}</td>
                     <td>{{ demo.city }}</td>
                     <td>{% if demo.approved %}✔️{% else %}❌{% endif %}</td>

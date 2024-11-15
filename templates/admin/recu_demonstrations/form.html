@@ -240,12 +240,11 @@
         <!-- Approval Checkbox -->
         <div class="approval-wrapper mt-4">
             <div class="form-group" id="approval-container">
-                <label for="approved">Hyväksytty</label>
+                <label for="approved">{{ _('Hyväksytty') }}</label>
                 <div>
                     <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
                         demo.approved %}checked{% endif %}>
-                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}Kyllä{% else %}Ei{%
-                        endif %}</span>
+                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
                 </div>
             </div>
         </div>

@@ -12,6 +12,8 @@ from wrappers import permission_required, admin_required
 from utils.admin.demonstration import collect_tags
 from .utils import mongo
 
+from classes import RecurringDemonstration
+
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
@@ -30,22 +32,23 @@ def recu_demo_control():
 
     # Construct query based on approval status
     query = {"approved": approved_status} if approved_status else {}
-    recurring_demos = mongo.recu_demos.find(query)
+    recurring_demos = [RecurringDemonstration.from_dict(recudemo) for recudemo in list(mongo.recu_demos.find(query))] #  .recu_demos.find(query)
+    
 
     # Filter based on search query and date
     filtered_recurring_demos = [
         demo
         for demo in recurring_demos
         if (
-            search_query.lower() in demo["title"].lower()
-            or search_query.lower() in demo["city"].lower()
-            or search_query.lower() in demo["address"].lower()
+            search_query.lower() in demo.title.lower()
+            or search_query.lower() in demo.city.lower()
+            or search_query.lower() in demo.address.lower()
         )
     ]
 
     # Sort the filtered recurring demonstrations by date
     filtered_recurring_demos.sort(
-        key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date()
     )
 
     return render_template(

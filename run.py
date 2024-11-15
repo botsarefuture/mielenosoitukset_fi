@@ -8,6 +8,17 @@ def main():
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
     debug = os.getenv("DEBUG", app.config.get("DEBUG", False))
 
+    # Modify the current configuration
+    app.config.update(
+        BABEL={
+            "DEFAULT_LOCALE": "fi",
+            "SUPPORTED_LOCALES": ["fi"],
+            "LANGUAGES": {
+                "fi": "Suomi"
+            }
+        }
+    ) # Change the default language to Finnish
+
     app.run(debug=debug, port=port)
 
 if __name__ == "__main__":

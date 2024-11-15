@@ -102,3 +102,20 @@ def create_demonstration():
         ),
         201,
     )
+
+@api_bp.route("/demo/<demo_id>/like", methods=["POST"])
+def like_demo(demo_id):
+    """
+    Like a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
+    """
+    
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+
+    if demo is None:
+        abort(404, description="Mielenosoitusta ei löytynyt.")
+
+    mongo.demo_likes.update_one({"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": 1}}, upsert=True)
+    
+    likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})["likes"]
+    
+    return jsonify({"likes": likes})

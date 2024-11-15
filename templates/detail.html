@@ -97,6 +97,12 @@
     max-width: 800px;
     border-radius: 8px;
     box-shadow: var(--box-shadow);
+    animation: fadeIn 1s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* Headings */
@@ -106,6 +112,12 @@
     padding-bottom: 10px;
     overflow-wrap: break-word;
     text-align: center;
+    animation: slideIn 1s ease-in-out;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 
   /* Images */
@@ -114,6 +126,11 @@
     height: auto;
     border-radius: 8px;
     margin-bottom: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  #main img:hover {
+    transform: scale(1.05);
   }
 
   /* Flex Containers */
@@ -131,16 +148,21 @@
     background: var(--container-background);
     padding: 20px;
     border-radius: 8px;
-    /* width: auto; */
-    
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  #infocontainer:hover,
+  #orginfo:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--box-shadow-hover);
   }
 
   @media screen and (max-width: 767px) {
     #infocontainer,
     #orginfo {
       box-sizing: border-box;
-
-    }}
+    }
+  }
 
   #infocontainer {
     border-right: 4px dotted #0033a0;
@@ -191,21 +213,17 @@
   /* Organizer Info */
   .organizer-info {
     background: var(--background);
-    /* Light background for contrast */
     border: 1px solid var(--border-color);
-    /* Border to distinguish each organizer */
     border-radius: 8px;
     padding: 15px;
-    /* Add padding for better spacing */
     margin-bottom: 20px;
-    transition: transform 0.2s;
-    /* Smooth scaling effect on hover */
+    transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: var(--box-shadow);
   }
 
   .organizer-info:hover {
     transform: scale(1.02);
-    /* Slightly enlarge on hover */
+    box-shadow: var(--box-shadow-hover);
   }
 
   .organizer-info a {
@@ -271,6 +289,7 @@
     border-radius: 8px;
     text-align: center;
     box-shadow: var(--box-shadow);
+    animation: fadeIn 1s ease-in-out;
   }
 
   /* Map Container */
@@ -287,16 +306,13 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    /* Add spacing between organizers */
   }
 
   .button-container {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    /* Evenly spaces buttons */
     padding: 20px;
-    /* Optional: adds some padding around the container */
     gap: 5px;
   }
 
@@ -317,62 +333,51 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+
+  .button:hover {
+    background: var(--primary-button-hover-color);
+    transform: translateY(-2px);
   }
 
   .tag {
     padding: 8px 12px;
-    /* Padding around the tag */
     margin: auto;
     background: var(--blue-light);
-    /* Background color for tags */
     color: #fff;
-    /* White text color for contrast */
     border-radius: 100px;
-    /* Fully rounded corners for tags */
     display: inline-block;
-    /* Make tags inline-block for padding and margin */
     transition: background 0.3s ease;
-    /* Smooth transition for hover effect */
   }
 
   .tag:hover {
     background: var(--blue-dark);
-    /* Darker color on hover */
   }
 
   /* Topics styling */
   .topics {
     margin: 10px 0;
-    /* Add margin for spacing */
     display: flex;
     align-content: space-evenly;
   }
 
   .topics p {
     font-size: 1.25rem;
-    /* Larger font size for the title */
     font-weight: bold;
-    /* Bold text for emphasis */
     margin-bottom: 10px;
-    /* Spacing below the title */
   }
 
   .topics ul {
     list-style: none;
-    /* Remove default list styles */
     padding: 0;
-    /* Remove default padding */
     margin: 10px 0;
-    /* Add margin for spacing */
     display: flex;
-    /* Use flexbox for tags */
     flex-wrap: wrap;
-    /* Allow tags to wrap to the next line */
   }
 
   .topics li {
     margin: 5px;
-    /* Add margin between tags */
   }
 
   .topics ul {
@@ -389,9 +394,7 @@
   .topics {
     margin: 10px 0;
     display: flex;
-    /* align-content: space-evenly; */
     align-items: flex-start;
-    /* justify-content: space-evenly; */
     flex-direction: column;
   }
 </style>
@@ -456,23 +459,6 @@
   <!-- NAME OR TITLE -->
   <h1>{{ demo['title'] }}</h1>
 
-  <!-- TAGS -->
-  <div class="topics">
-    <ul>
-      {% if demo["tags"] and demo["tags"]|length > 0 %}
-      {% for tag in demo["tags"] %}
-      <li>
-        <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
-          <span class="tag">#{{ tag }}</span>
-        </a>
-      </li>
-      {% endfor %}
-      {% endif %}
-
-
-    </ul>
-  </div>
-
   <!-- Social Media Share Buttons -->
   <div class="button-container">
     <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
@@ -490,6 +476,72 @@
       {{ _('Jaa LinkedInissä') }}
     </a>
   </div>
+
+  <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
+  <div class="button-container">
+    <button class="button like-button" onclick="likeDemo('{{ demo['_id'] }}')">
+      <i class="fas fa-thumbs-up"></i> {{ _('Osallistun') }}
+    </button>
+    <div class="like-count">
+      <p>{{ _('Osallistuu:') }}</p>
+      <i class="fas fa-thumbs-up"></i>
+      <p id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</p>
+    </div>
+  </div>
+  <style>
+    #like-count {
+      font-size: 16px;
+      color: var(--primary-strong-text-color);
+    }
+
+    #like-count::before {
+      content: " (";
+    }
+
+    #like-count::after {
+      content: ")";
+    }
+  </style>
+
+  <script>
+    function likeDemo(demoId) {
+      fetch(`/api/demo/${demoId}/like`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("like-count").innerText = data.likes;
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    }
+  </script>
+
+  <!-- add a separator line here -->
+  <hr style="margin: 20px 0;">
+
+  <!-- TAGS -->
+  <div class="topics">
+    <ul>
+      {% if demo["tags"] and demo["tags"]|length > 0 %}
+      {% for tag in demo["tags"] %}
+      <li>
+        <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
+          <span class="tag">#{{ tag }}</span>
+        </a>
+      </li>
+      {% endfor %}
+      {% endif %}
+
+
+    </ul>
+  </div>
+
+  
 
   {% if demo['description'] %}
   <div class="container" style="
@@ -539,6 +591,7 @@
 {% endblock %}
 
 {% block scripts %}
+
 <!-- Leaflet JS and Map Integration -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script>// Data initialization

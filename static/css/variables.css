@@ -4,327 +4,401 @@
   --secondary-color: #f0f0f0;
 
   /* Christmas Colors */
-  --chrismast-primary: #ff0000; /* Red */
-  --chrismast-secondary: #00ff00; /* Green */
-  --chrismast-accent: #ffff00; /* Yellow for festive accents */
+  --chrismast-primary: #ff0000;
+  --chrismast-secondary: #00ff00;
+  --chrismast-accent: #ffff00;
 
   --primary-text-color: #333;
   --secondary-text-color: #666;
 
   /* Background Colors */
-  --background: #ffffff; /* Main background color */
-  --background-light: #f0f0f0; /* Light background for containers */
-  --input-background: #f9f9f9; /* Input field background */
-  --hover-bg-color: #e0e0e0; /* Hover background color */
-  --container-background: #f9f9f9; /* Light gray for container background */
+  --background: #ffffff;
+  --background-light: #f0f0f0;
+  --input-background: #f9f9f9;
+  --hover-bg-color: #e0e0e0;
+  --container-background: #f9f9f9;
 
   /* Borders and Shadows */
-  --border-color: #ddd; /* Border color */
-  --box-shadow-color: rgba(0, 0, 0, 0.15); /* Box shadow color */
-  --box-shadow: 0 0 20px var(--box-shadow-color); /* Box shadow style */
+  --border-color: #ddd;
+  --box-shadow-color: rgba(0, 0, 0, 0.15);
+  --box-shadow: 0 0 20px var(--box-shadow-color);
 
   /* Text Colors */
-  --placeholder-color: #888; /* Placeholder text color */
-  --focus-color: #0066cc; /* Focus color */
-  --error-color: #cc0000; /* Error color */
+  --placeholder-color: #888;
+  --focus-color: #0066cc;
+  --error-color: #cc0000;
 
   /* Button Colors */
-  --primary-button-color: var(--primary-color); /* Primary button color */
-  --primary-button-text-color: white; /* Primary button text color */
-  --primary-button-hover-color: #002280; /* Primary button hover color */
-  --primary-button-hover-text-color: white; /* Primary button hover text color */
+  --primary-button-color: var(--primary-color);
+  --primary-button-text-color: white;
+  --primary-button-hover-color: #002280;
+  --primary-button-hover-text-color: white;
 
-  --secondary-button-color: var(--black); /* Secondary button color */
-  --secondary-button-text-color: var(--white); /* Secondary button text color */
-  --secondary-button-hover-color: #e0e0e0; /* Secondary button hover color */
-  --secondary-button-hover-text-color: #000; /* Secondary button hover text color */
+  --secondary-button-color: var(--black);
+  --secondary-button-text-color: var(--white);
+  --secondary-button-hover-color: #e0e0e0;
+  --secondary-button-hover-text-color: #000;
 
   /* Black and White Shades */
-  --white: #ffffff; /* White color */
-  --white-lighter: #f9f9f9; /* Lighter shade of white */
-  --white-light: #f0f0f0; /* Light shade of white */
-  --white-dark: #d0d0d0; /* Darker shade of white */
-  --black: #000000; /* Black color */
-  --black-lighter: #1a1a1a; /* Lighter shade of black */
-  --black-light: #333333; /* Light shade of black */
-  --black-dark: #4d4d4d; /* Darker shade of black */
-  --black-darker: #666666; /* Even darker shade of black */
+  --white: #ffffff;
+  --white-lighter: #f9f9f9;
+  --white-light: #f0f0f0;
+  --white-dark: #d0d0d0;
+  --black: #000000;
+  --black-lighter: #1a1a1a;
+  --black-light: #333333;
+  --black-dark: #4d4d4d;
+  --black-darker: #666666;
 
   /* Blue Colors */
-  --blue: #0033a0; /* Primary blue */
-  --blue-lighter: #4d79cc; /* Lighter blue */
-  --blue-light: #3366cc; /* Light blue */
-  --blue-dark: #002280; /* Dark blue */
-  --blue-darker: #001160; /* Darker blue */
+  --blue: #0033a0;
+  --blue-lighter: #4d79cc;
+  --blue-light: #3366cc;
+  --blue-dark: #002280;
+  --blue-darker: #001160;
 
   /* Orange Colors */
-  --orange: #ff6600; /* Primary orange */
-  --orange-lighter: #ff9966; /* Lighter orange */
-  --orange-light: #ff8533; /* Light orange */
-  --orange-dark: #cc5200; /* Dark orange */
-  --orange-darker: #993d00; /* Darker orange */
+  --orange: #ff6600;
+  --orange-lighter: #ff9966;
+  --orange-light: #ff8533;
+  --orange-dark: #cc5200;
+  --orange-darker: #993d00;
 
   /* Red Colors */
-  --red: #ff4d4d; /* Primary red */
-  --red-lighter: #ff8585; /* Lighter red */
-  --red-light: #ff6666; /* Light red */
-  --red-dark: #cc3d3d; /* Dark red */
-  --red-darker: #993030; /* Darker red */
+  --red: #ff4d4d;
+  --red-lighter: #ff8585;
+  --red-light: #ff6666;
+  --red-dark: #cc3d3d;
+  --red-darker: #993030;
 
   /* Green Colors */
-  --green: #28a745; /* Primary green */
-  --green-lighter: #71d78e; /* Lighter green */
-  --green-light: #4cc476; /* Light green */
-  --green-dark: #218838; /* Dark green */
-  --green-darker: #196c2a; /* Darker green */
+  --green: #28a745;
+  --green-lighter: #71d78e;
+  --green-light: #4cc476;
+  --green-dark: #218838;
+  --green-darker: #196c2a;
 
   /* Yellow Colors */
-  --yellow: #ffcc00; /* Primary yellow */
-  --yellow-lighter: #ffdb4d; /* Lighter yellow */
-  --yellow-light: #ffe580; /* Light yellow */
-  --yellow-dark: #cc9900; /* Dark yellow */
-  --yellow-darker: #996600; /* Darker yellow */
+  --yellow: #ffcc00;
+  --yellow-lighter: #ffdb4d;
+  --yellow-light: #ffe580;
+  --yellow-dark: #cc9900;
+  --yellow-darker: #996600;
+
+  /* Neon Green Colors */
+  --neon-green: #39ff14;
+  --neon-green-lighter: #66ff66;
+  --neon-green-light: #4cff4c;
+  --neon-green-dark: #2eb82e;
+  --neon-green-darker: #1f7a1f;
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color); /* Admin section title color */
-  --admin-section-text-color: var(--white); /* Admin section text color */
-  --admin-create-btn-bg: var(--green); /* Admin create button background */
-  --admin-create-btn-hover-bg: var(--green-dark); /* Admin create button hover background */
+  --admin-section-title-color: var(--focus-color);
+  --admin-section-text-color: var(--white);
+  --admin-create-btn-bg: var(--green);
+  --admin-create-btn-hover-bg: var(--green-dark);
 
   /* Link Colors */
-  --link-color: var(--blue); /* Link color */
-  --link-hover-color: var(--orange); /* Link hover color */
+  --link-color: var(--blue);
+  --link-hover-color: var(--orange);
 
   /* Header Colors */
-  --primary-strong-text-color: var(--blue); /* Strong text color */
-  --header-color: var(--blue); /* Header color */
+  --primary-strong-text-color: var(--blue);
+  --header-color: var(--blue);
 
   /* Table Row Colors for Light Theme */
-  --tr-bg-color-1: #f9f9f9; /* Row 1 background color */
-  --tr-txt-color-1: #333; /* Row 1 text color */
-  --tr-bg-color-2: #ffffff; /* Row 2 background color */
-  --tr-txt-color-2: #333; /* Row 2 text color */
+  --tr-bg-color-1: #f9f9f9;
+  --tr-txt-color-1: #333;
+  --tr-bg-color-2: #ffffff;
+  --tr-txt-color-2: #333;
 
   /* Hover colors for row color 1 */
-  --tr-bg-color-1-hover: #e5f3ff; /* Hover background color for row 1 */
-  --tr-txt-color-1-hover: #004080; /* Hover text color for row 1 */
+  --tr-bg-color-1-hover: #e5f3ff;
+  --tr-txt-color-1-hover: #004080;
 
   /* Hover colors for row color 2 */
-  --tr-bg-color-2-hover: #fff6e5; /* Hover background color for row 2 */
-  --tr-txt-color-2-hover: #804000; /* Hover text color for row 2 */
-  
-  --auth-button-bg-color: var(--secondary-color);
+  --tr-bg-color-2-hover: #fff6e5;
+  --tr-txt-color-2-hover: #804000;
 
+  --auth-button-bg-color: var(--secondary-color);
 }
 
 .dark:root {
   /* Primary Colors */
-  --primary-color: #4d79cc; /* Primary color for dark theme */
-  --secondary-color: #202020; /* Secondary color for dark theme */
+  --primary-color: #4d79cc;
+  --secondary-color: #202020;
 
   /* Christmas Colors */
-  --chrismast-primary: #ff0000; /* Red */
-  --chrismast-secondary: #00ff00; /* Green */
-  --chrismast-accent: #ffff00; /* Yellow for festive accents */
+  --chrismast-primary: #ff0000;
+  --chrismast-secondary: #00ff00;
+  --chrismast-accent: #ffff00;
 
-  --primary-text-color: #f0f0f0; /* Primary text color */
-  --secondary-text-color: #c0c0c0; /* Secondary text color */
+  --primary-text-color: #f0f0f0;
+  --secondary-text-color: #c0c0c0;
 
   /* Background Colors */
-  --background: #181818; /* Main background color for dark theme */
-  --background-light: #2c2c2c; /* Light background for containers in dark theme */
-  --input-background: #2e2e2e; /* Input field background */
-  --hover-bg-color: #3d3d3d; /* Hover background color */
-  --container-background: #2e2e2e; /* Dark gray for container background */
+  --background: #181818;
+  --background-light: #2c2c2c;
+  --input-background: #2e2e2e;
+  --hover-bg-color: #3d3d3d;
+  --container-background: #2e2e2e;
 
   /* Borders and Shadows */
-  --border-color: #444; /* Border color */
-  --box-shadow-color: rgba(255, 255, 255, 0.15); /* Box shadow color */
+  --border-color: #444;
+  --box-shadow-color: rgba(255, 255, 255, 0.15);
   --cmast-shadow-color: var(--chrismast-secondary);
-  --box-shadow: 0 0 20px var(--box-shadow-color); /* Box shadow style */
+  --box-shadow: 0 0 20px var(--box-shadow-color);
 
   /* Text Colors */
-  --placeholder-color: #bbb; /* Placeholder text color */
-  --focus-color: #4d79cc; /* Focus color */
-  --error-color: #ff4d4d; /* Error color */
+  --placeholder-color: #bbb;
+  --focus-color: #4d79cc;
+  --error-color: #ff4d4d;
 
   /* Button Colors */
-  --primary-button-color: var(--blue-light); /* Primary button color */
-  --primary-button-text-color: white; /* Primary button text color */
-  --primary-button-hover-color: var(--blue-darker); /* Primary button hover color */
-  --primary-button-hover-text-color: white; /* Primary button hover text color */
+  --primary-button-color: var(--blue-light);
+  --primary-button-text-color: white;
+  --primary-button-hover-color: var(--blue-darker);
+  --primary-button-hover-text-color: white;
 
-  --secondary-button-color: var(--black-light); /* Secondary button color */
-  --secondary-button-text-color: var(--white); /* Secondary button text color */
-  --secondary-button-hover-color: var(--black-dark); /* Secondary button hover color */
-  --secondary-button-hover-text-color: var(--white-light); /* Secondary button hover text color */
+  --secondary-button-color: var(--black-light);
+  --secondary-button-text-color: var(--white);
+  --secondary-button-hover-color: var(--black-dark);
+  --secondary-button-hover-text-color: var(--white-light);
 
   /* Blue Colors */
-  --blue: #4d79cc; /* Primary blue */
-  --blue-lighter: #4d79cc; /* Lighter blue */
-  --blue-light: #3366cc; /* Light blue */
-  --blue-dark: #002280; /* Dark blue */
-  --blue-darker: #001160; /* Darker blue */
+  --blue: #4d79cc;
+  --blue-lighter: #4d79cc;
+  --blue-light: #3366cc;
+  --blue-dark: #002280;
+  --blue-darker: #001160;
 
   /* Orange Colors */
-  --orange: #ff6600; /* Primary orange */
-  --orange-lighter: #ff9966; /* Lighter orange */
-  --orange-light: #ff8533; /* Light orange */
-  --orange-dark: #cc5200; /* Dark orange */
-  --orange-darker: #993d00; /* Darker orange */
+  --orange: #ff6600;
+  --orange-lighter: #ff9966;
+  --orange-light: #ff8533;
+  --orange-dark: #cc5200;
+  --orange-darker: #993d00;
 
   /* Red Colors */
-  --red: #ff4d4d; /* Primary red */
-  --red-lighter: #ff8585; /* Lighter red */
-  --red-light: #ff6666; /* Light red */
-  --red-dark: #cc3d3d; /* Dark red */
-  --red-darker: #993030; /* Darker red */
+  --red: #ff4d4d;
+  --red-lighter: #ff8585;
+  --red-light: #ff6666;
+  --red-dark: #cc3d3d;
+  --red-darker: #993030;
 
   /* Green Colors */
-  --green: #28a745; /* Primary green */
-  --green-lighter: #71d78e; /* Lighter green */
-  --green-light: #4cc476; /* Light green */
-  --green-dark: #218838; /* Dark green */
-  --green-darker: #196c2a; /* Darker green */
+  --green: #28a745;
+  --green-lighter: #71d78e;
+  --green-light: #4cc476;
+  --green-dark: #218838;
+  --green-darker: #196c2a;
 
   /* Yellow Colors */
-  --yellow: #ffcc00; /* Primary yellow */
-  --yellow-lighter: #ffdb4d; /* Lighter yellow */
-  --yellow-light: #ffe580; /* Light yellow */
-  --yellow-dark: #cc9900; /* Dark yellow */
-  --yellow-darker: #996600; /* Darker yellow */
+  --yellow: #ffcc00;
+  --yellow-lighter: #ffdb4d;
+  --yellow-light: #ffe580;
+  --yellow-dark: #cc9900;
+  --yellow-darker: #996600;
 
-    /* Black and White Shades */
-    --white: #ffffff; /* White color */
-    --white-lighter: #f9f9f9; /* Lighter shade of white */
-    --white-light: #f0f0f0; /* Light shade of white */
-    --white-dark: #d0d0d0; /* Darker shade of white */
-    --black: #000000; /* Black color */
-    --black-lighter: #1a1a1a; /* Lighter shade of black */
-    --black-light: #333333; /* Light shade of black */
-    --black-dark: #4d4d4d; /* Darker shade of black */
-    --black-darker: #666666; /* Even darker shade of black */
+  /* Neon Green Colors */
+  --neon-green: #39ff14;
+  --neon-green-lighter: #66ff66;
+  --neon-green-light: #4cff4c;
+  --neon-green-dark: #2eb82e;
+  --neon-green-darker: #1f7a1f;
+
+  /* Black and White Shades */
+  --white: #ffffff;
+  --white-lighter: #f9f9f9;
+  --white-light: #f0f0f0;
+  --white-dark: #d0d0d0;
+  --black: #000000;
+  --black-lighter: #1a1a1a;
+  --black-light: #333333;
+  --black-dark: #4d4d4d;
+  --black-darker: #666666;
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color); /* Admin section title color */
-  --admin-section-text-color: var(--white); /* Admin section text color */
-  --admin-create-btn-bg: var(--green); /* Admin create button background */
-  --admin-create-btn-hover-bg: var(--green-dark); /* Admin create button hover background */
+  --admin-section-title-color: var(--focus-color);
+  --admin-section-text-color: var(--white);
+  --admin-create-btn-bg: var(--green);
+  --admin-create-btn-hover-bg: var(--green-dark);
 
   /* Link Colors */
-  --link-color: var(--blue-light); /* Link color */
-  --link-hover-color: var(--orange); /* Link hover color */
+  --link-color: var(--blue-light);
+  --link-hover-color: var(--orange);
 
   /* Header Colors */
-  --primary-strong-text-color: var(--blue-light); /* Strong text color */
-  --header-color: var(--blue-light); /* Header color */
+  --primary-strong-text-color: var(--blue-light);
+  --header-color: var(--blue-light);
 
   /* Table Row Colors for Dark Theme */
-  --tr-bg-color-1: #333; /* Row 1 background color */
-  --tr-txt-color-1: #f0f0f0; /* Row 1 text color */
-  --tr-bg-color-2: #444; /* Row 2 background color */
-  --tr-txt-color-2: #f0f0f0; /* Row 2 text color */
+  --tr-bg-color-1: #333;
+  --tr-txt-color-1: #f0f0f0;
+  --tr-bg-color-2: #444;
+  --tr-txt-color-2: #f0f0f0;
 
   /* Hover colors for row color 1 */
-  --tr-bg-color-1-hover: #666; /* Hover background color for row 1 */
-  --tr-txt-color-1-hover: #fff; /* Hover text color for row 1 */
+  --tr-bg-color-1-hover: #666;
+  --tr-txt-color-1-hover: #fff;
 
   /* Hover colors for row color 2 */
-  --tr-bg-color-2-hover: #555; /* Hover background color for row 2 */
-  --tr-txt-color-2-hover: #fff; /* Hover text color for row 2 */
-  
+  --tr-bg-color-2-hover: #555;
+  --tr-txt-color-2-hover: #fff;
+
   --auth-button-bg-color: var(--secondary-color);
 }
 
 
 .pride:root {
   /* Primary Colors */
-  --primary-color: #ff4f4f; /* Red */
-  --secondary-color: #ffcc00; /* Yellow */
+  --primary-color: #ff4f4f;
+  /* Red */
+  --secondary-color: #ffcc00;
+  /* Yellow */
 
-  --primary-text-color: #ffffff; /* Primary text color */
-  --secondary-text-color: #f0f0f0; /* Secondary text color */
+  --primary-text-color: #ffffff;
+  /* Primary text color */
+  --secondary-text-color: #f0f0f0;
+  /* Secondary text color */
 
   /* Background Colors */
-  --background: linear-gradient(135deg, rgba(255, 79, 79, 1), rgba(255, 156, 0, 1), rgba(255, 204, 0, 1), rgba(40, 167, 69, 1), rgba(0, 123, 255, 1), rgba(111, 66, 193, 1));  --background-light: #f0f0f0; /* Light background for containers */
-  --input-background: #f9f9f9; /* Input field background */
-  --hover-bg-color: #e0e0e0; /* Hover background color */
-  --container-background: #ffffff; /* White for container background */
+  --background: linear-gradient(135deg, rgba(255, 79, 79, 1), rgba(255, 156, 0, 1), rgba(255, 204, 0, 1), rgba(40, 167, 69, 1), rgba(0, 123, 255, 1), rgba(111, 66, 193, 1));
+  --background-light: #f0f0f0;
+  /* Light background for containers */
+  --input-background: #f9f9f9;
+  /* Input field background */
+  --hover-bg-color: #e0e0e0;
+  /* Hover background color */
+  --container-background: #ffffff;
+  /* White for container background */
 
   /* Borders and Shadows */
-  --border-color: #ddd; /* Border color */
-  --box-shadow-color: rgba(0, 0, 0, 0.15); /* Box shadow color */
+  --border-color: #ddd;
+  /* Border color */
+  --box-shadow-color: rgba(0, 0, 0, 0.15);
+  /* Box shadow color */
   --box-shadow: 0 0 20px var(--box-shadow-color),
-                0 0 10px var(--red),
-                0 0 10px var(--orange),
-                0 0 10px var(--yellow),
-                0 0 10px var(--green),
-                0 0 10px var(--blue),
-                0 0 10px var(--purple); /* Box shadow with pride colors */
+    0 0 10px var(--red),
+    0 0 10px var(--orange),
+    0 0 10px var(--yellow),
+    0 0 10px var(--green),
+    0 0 10px var(--blue),
+    0 0 10px var(--purple);
+  /* Box shadow with pride colors */
 
   /* Text Colors */
-  --placeholder-color: #888; /* Placeholder text color */
-  --focus-color: #0066cc; /* Focus color */
-  --error-color: #cc0000; /* Error color */
+  --placeholder-color: #888;
+  /* Placeholder text color */
+  --focus-color: #0066cc;
+  /* Focus color */
+  --error-color: #cc0000;
+  /* Error color */
 
   /* Button Colors */
-  --primary-button-color: var(--primary-color); /* Primary button color */
-  --primary-button-text-color: white; /* Primary button text color */
-  --primary-button-hover-color: #c30000; /* Darker red for hover */
-  --primary-button-hover-text-color: white; /* Primary button hover text color */
+  --primary-button-color: var(--primary-color);
+  /* Primary button color */
+  --primary-button-text-color: white;
+  /* Primary button text color */
+  --primary-button-hover-color: #c30000;
+  /* Darker red for hover */
+  --primary-button-hover-text-color: white;
+  /* Primary button hover text color */
 
-  --secondary-button-color: var(--secondary-color); /* Secondary button color */
-  --secondary-button-text-color: #333; /* Secondary button text color */
-  --secondary-button-hover-color: #e0e0e0; /* Secondary button hover color */
-  --secondary-button-hover-text-color: #000; /* Secondary button hover text color */
+  --secondary-button-color: var(--secondary-color);
+  /* Secondary button color */
+  --secondary-button-text-color: #333;
+  /* Secondary button text color */
+  --secondary-button-hover-color: #e0e0e0;
+  /* Secondary button hover color */
+  --secondary-button-hover-text-color: #000;
+  /* Secondary button hover text color */
 
   /* Black and White Shades */
-  --white: #ffffff; /* White color */
-  --white-lighter: #f9f9f9; /* Lighter shade of white */
-  --white-light: #f0f0f0; /* Light shade of white */
-  --white-dark: #d0d0d0; /* Darker shade of white */
-  --black: #000000; /* Black color */
-  --black-lighter: #1a1a1a; /* Lighter shade of black */
-  --black-light: #333333; /* Light shade of black */
-  --black-dark: #4d4d4d; /* Darker shade of black */
-  --black-darker: #666666; /* Even darker shade of black */
+  --white: #ffffff;
+  /* White color */
+  --white-lighter: #f9f9f9;
+  /* Lighter shade of white */
+  --white-light: #f0f0f0;
+  /* Light shade of white */
+  --white-dark: #d0d0d0;
+  /* Darker shade of white */
+  --black: #000000;
+  /* Black color */
+  --black-lighter: #1a1a1a;
+  /* Lighter shade of black */
+  --black-light: #333333;
+  /* Light shade of black */
+  --black-dark: #4d4d4d;
+  /* Darker shade of black */
+  --black-darker: #666666;
+  /* Even darker shade of black */
 
   /* Colors of the Pride Flag */
-  --red: #ff4f4f; /* Primary red */
-  --orange: #ff9c00; /* Orange */
-  --yellow: #ffcc00; /* Yellow */
-  --green: #28a745; /* Green */
-  --blue: #007bff; /* Blue */
-  --purple: #6f42c1; /* Purple */
+  --red: #ff4f4f;
+  /* Primary red */
+  --orange: #ff9c00;
+  /* Orange */
+  --yellow: #ffcc00;
+  /* Yellow */
+  --green: #28a745;
+  /* Green */
+  --blue: #007bff;
+  /* Blue */
+  --purple: #6f42c1;
+  /* Purple */
+
+  /* Neon Green Colors */
+  --neon-green: #39ff14;
+  --neon-green-lighter: #66ff66;
+  --neon-green-light: #4cff4c;
+  --neon-green-dark: #2eb82e;
+  --neon-green-darker: #1f7a1f;
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color); /* Admin section title color */
-  --admin-section-text-color: var(--white); /* Admin section text color */
-  --admin-create-btn-bg: var(--green); /* Admin create button background */
-  --admin-create-btn-hover-bg: var(--green-dark); /* Admin create button hover background */
+  --admin-section-title-color: var(--focus-color);
+  /* Admin section title color */
+  --admin-section-text-color: var(--white);
+  /* Admin section text color */
+  --admin-create-btn-bg: var(--green);
+  /* Admin create button background */
+  --admin-create-btn-hover-bg: var(--green-dark);
+  /* Admin create button hover background */
 
   /* Link Colors */
-  --link-color: var(--blue); /* Link color */
-  --link-hover-color: var(--orange); /* Link hover color */
+  --link-color: var(--blue);
+  /* Link color */
+  --link-hover-color: var(--orange);
+  /* Link hover color */
 
   /* Header Colors */
-  --primary-strong-text-color: var(--blue); /* Strong text color */
-  --header-color: var(--blue); /* Header color */
+  --primary-strong-text-color: var(--blue);
+  /* Strong text color */
+  --header-color: var(--blue);
+  /* Header color */
 
   /* Table Row Colors for Pride Theme */
-  --tr-bg-color-1: #f2f2f2; /* Row 1 background color */
-  --tr-txt-color-1: #333; /* Row 1 text color */
-  --tr-bg-color-2: #ffffff; /* Row 2 background color */
-  --tr-txt-color-2: #333; /* Row 2 text color */
+  --tr-bg-color-1: #f2f2f2;
+  /* Row 1 background color */
+  --tr-txt-color-1: #333;
+  /* Row 1 text color */
+  --tr-bg-color-2: #ffffff;
+  /* Row 2 background color */
+  --tr-txt-color-2: #333;
+  /* Row 2 text color */
 
   /* Hover colors for row color 1 */
-  --tr-bg-color-1-hover: #ffcc00; /* Hover background color for row 1 */
-  --tr-txt-color-1-hover: #004080; /* Hover text color for row 1 */
+  --tr-bg-color-1-hover: #ffcc00;
+  /* Hover background color for row 1 */
+  --tr-txt-color-1-hover: #004080;
+  /* Hover text color for row 1 */
 
   /* Hover colors for row color 2 */
-  --tr-bg-color-2-hover: #ff4f4f; /* Hover background color for row 2 */
-  --tr-txt-color-2-hover: #804000; /* Hover text color for row 2 */
-  
+  --tr-bg-color-2-hover: #ff4f4f;
+  /* Hover background color for row 2 */
+  --tr-txt-color-2-hover: #804000;
+  /* Hover text color for row 2 */
+
   --auth-button-bg-color: var(--secondary-color);
 }
 
@@ -339,7 +413,9 @@
   box-shadow: 0 4px 10px var(--box-shadow-color);
   text-transform: uppercase;
   letter-spacing: 1px;
-  word-break: break-all;
+   /* try to only break words, but if it's not enought, break all pls */
+  word-break: break-word;
+  
   font-weight: 900;
 }
 
@@ -370,12 +446,12 @@
 .full-width {
   max-width: 100%;
   width: 100%;
-  min-width: 100%; 
-  box-sizing: border-box; 
+  min-width: 100%;
+  box-sizing: border-box;
 }
 
 .mb-4 {
-  margin-bottom: 1rem; 
+  margin-bottom: 1rem;
 }
 
 /* Extra small devices (phones, less than 481px) */
@@ -403,15 +479,19 @@
   0% {
     box-shadow: 0 0 20px rgba(255, 79, 79, 0.7), 0 0 20px 5px rgba(255, 156, 0, 0.7), 0 0 20px 10px rgba(255, 204, 0, 0.7), 0 0 20px 15px rgba(40, 167, 69, 0.7), 0 0 20px 20px rgba(0, 123, 255, 0.7), 0 0 20px 25px rgba(111, 66, 193, 0.7);
   }
+
   25% {
     box-shadow: 0 0 20px rgba(255, 156, 0, 0.7), 0 0 20px 5px rgba(255, 204, 0, 0.7), 0 0 20px 10px rgba(40, 167, 69, 0.7), 0 0 20px 15px rgba(0, 123, 255, 0.7), 0 0 20px 20px rgba(111, 66, 193, 0.7), 0 0 20px 25px rgba(255, 79, 79, 0.7);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(255, 204, 0, 0.7), 0 0 20px 5px rgba(40, 167, 69, 0.7), 0 0 20px 10px rgba(0, 123, 255, 0.7), 0 0 20px 15px rgba(111, 66, 193, 0.7), 0 0 20px 20px rgba(255, 79, 79, 0.7), 0 0 20px 25px rgba(255, 156, 0, 0.7);
   }
+
   75% {
     box-shadow: 0 0 20px rgba(40, 167, 69, 0.7), 0 0 20px 5px rgba(0, 123, 255, 0.7), 0 0 20px 10px rgba(111, 66, 193, 0.7), 0 0 20px 15px rgba(255, 79, 79, 0.7), 0 0 20px 20px rgba(255, 156, 0, 0.7), 0 0 20px 25px rgba(255, 204, 0, 0.7);
   }
+
   100% {
     box-shadow: 0 0 20px rgba(255, 79, 79, 0.7), 0 0 20px 5px rgba(255, 156, 0, 0.7), 0 0 20px 10px rgba(255, 204, 0, 0.7), 0 0 20px 15px rgba(40, 167, 69, 0.7), 0 0 20px 20px rgba(0, 123, 255, 0.7), 0 0 20px 25px rgba(111, 66, 193, 0.7);
   }
@@ -419,9 +499,9 @@
 
 
 .link {
-	color: var(--link-color);
-	text-decoration: none;
-	/* gap: 20px; */
-	/* display: inline-flex; */
-	margin-right: 1em;
+  color: var(--link-color);
+  text-decoration: none;
+  /* gap: 20px; */
+  /* display: inline-flex; */
+  margin-right: 1em;
 }

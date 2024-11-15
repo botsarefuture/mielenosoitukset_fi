@@ -72,7 +72,7 @@ body {
   width: 100%;
 }
 
-.navbar .logo {
+header .logo {
   font-size: 1.5em;
   color: var(--white);
   text-decoration: none;
@@ -330,7 +330,7 @@ footer {
 }
 
 @media (max-width: 480px) {
-  .navbar .logo {
+  header .logo {
     font-size: 1.2em;
     /* Slightly smaller logo text on very small screens */
   }

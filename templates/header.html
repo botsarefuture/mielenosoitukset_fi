@@ -36,6 +36,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    width: 100%;
   }
 
   .nav-links li {
@@ -65,7 +66,6 @@
       background: var(--primary-color);
       display: none;
       z-index: 999999;
-      padding-top: 50px;
       overflow-y: auto;
     }
 
@@ -85,6 +85,12 @@
 
     .navbar-toggle {
       display: block;
+      background: var(--red);
+      border-radius: 50%;
+      width: 2em;
+      height: 2em;
+      line-height: 1em;
+      font-size: 1em;
     }
 
     header .container {
@@ -111,6 +117,14 @@
 
     .language-buttons button:hover {
       color: #f2f2f2;
+    }
+
+    .navbar .logo {
+      font-size: 1.5em;
+      color: white;
+      text-decoration: none;
+      margin: 0;
+      text-align: center;
     }
   }
 
@@ -211,30 +225,210 @@
   .nav-links.active {
     /*display: flex;*/
   }
+
+  /* Styles for Top Header */
+  .top-header {
+    background: var(--container-background);
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .top-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+  }
+
+  .top-header .branding {
+    flex: 1;
+    text-align: left;
+  }
+
+  .top-header .language-buttons {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  @media screen and (max-width: 768px) {
+    .top-header .container {
+      flex-direction: column;
+    }
+
+    .top-header .branding {
+      margin-bottom: 10px;
+      font-size: 1.5em;
+    }
+
+    .top-header .logo {
+      color: var(--orange);
+      text-align: center;
+      margin: auto;
+      margin-bottom: 0.5em;
+      display: block;
+    }
+
+    .navbar .nav-links.active {
+      display: flex;
+      background: var(--blue);
+      height: 100vh;
+      top: 0;
+    }
+  }
+
+  @media screen and (max-width: 480px) {
+    .top-header .branding {
+      font-size: 1.5em;
+    }
+
+    .top-header .language-buttons {
+      flex-direction: row;
+    }
+  }
+
+  .top-header .language-buttons {
+    display: flex;
+  }
+
+  .top-header .language-buttons button {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 1em;
+    margin: 0 5px;
+    cursor: pointer;
+    transition: font-weight 0.3s, color 0.3s, height 0.3s, width 0.3s;
+    border-radius: 50%;
+    padding: 5px;
+    border: 2px solid var(--blue);
+    background: var(--blue);
+    height: 3em;
+    width: 3em;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .top-header .language-buttons button:hover {
+    color: var(--orange);
+    font-weight: 700;
+    height: 4em;
+    width: 4em;
+  }
+
+  .top-header .language-buttons button.active,
+  .top-header .language-buttons button.active:hover {
+    font-weight: 900;
+    text-decoration: underline solid var(--orange);
+    color: var(--orange);
+  }
 </style>
+
+<!-- Top Header -->
+<header class="top-header">
+  <div class="container">
+    <!-- Branding Section -->
+    <div class="branding">
+      <a href="{{ url_for('index') }}" class="logo" style="color: var(--orange);">{{ _('Mielenosoitukset.fi') }}</a>
+    </div>
+    <br class="mb-only">
+    <!-- Language Selection Section -->
+    <div class="language-buttons">
+      {% for lang_code in get_supported_locales() %}
+      <button {% if session.get('locale', 'fi' )==lang_code %}class="active" {% endif %}
+        onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'">{{ lang_code.upper() }}</button>
+      {% endfor %}
+    </div>
+  </div>
+</header>
 
 <!-- Navigation Bar -->
 <header>
   <nav class="navbar">
     <div class="container bg-header-footer" id="headerbar">
-      <!-- Logo and Home Link -->
-      <a href="{{ url_for('index') }}" class="logo">{{ _('Mielenosoitukset.fi') }}</a>
 
-      <!-- Toggle Button for Mobile Navigation -->
-      <button class="mb-only navbar-toggle" aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
+      <!-- Toggle Button for Mobile Navigation, center it, and make it 0.5em radius -->
+      <button class="mb-only navbar-toggle" style="display: block; 
+      border-radius: 0.5em;
+      margin: 0 auto;
+      font-size: 2em;
+      background-color: unset;
+      " 
+
+      
+      aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
         <i class="fas fa-bars"></i>
       </button>
 
       <!-- Navigation Links -->
       <ul class="nav-links">
-        <!-- Language Buttons for Mobile -->
-        <div class="mb-only language-buttons">
-          {% for lang_code in get_supported_locales() %}
-          <button onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'">{{ get_lang_name(lang_code)
-            }}</button>
-          {% endfor %}
+
+        <div class="mb-only">
+          <!-- here the header for this mobile menu -->
+          <div class="mb-only nav-header">
+            <style>
+              .nav-header {
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                width: 100vw;
+                background-color: var(--blue-darker);
+                margin: 0;
+                /* margin-top: 1.5em; */
+                padding: 0.5em;
+                margin-top: 0 !important;
+              }
+
+              .theme-button {
+                background-color: var(--primary-button-color);
+                color: var(--primary-button-text-color);
+                border: none;
+                /* padding: 10px 20px; */
+                border-radius: 50% !important;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+                text-decoration: none;
+                font-size: 1.5em !important;
+                line-height: 1em;
+                height: 3em;
+                width: 3em;
+                display: block;
+              }
+
+              .nav-links .mb-only .button {
+                border: none;
+                padding: 10px 20px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+                text-decoration: none;
+                width: 3em;
+                height: 3em;
+                display: block;
+                line-height: 1em;
+                font-size: 1.5em;
+
+              }
+            </style>
+
+
+            
+            <!-- theme change button here-->
+            <button class="button theme-button" style="font-size: 2em;" onclick="toggleDarkMode()">
+              <i class="fa-solid fa-moon" id="theme-icon"></i>
+            </button>
+
+            <!-- close button here -->
+            <button class="button navbar-toggle" aria-label="{{ _('Sulje valikko') }}" onclick="toggleNavbar()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <a href="{{ url_for('index') }}" class="logo">{{ _('Mielenosoitukset.fi') }}</a>
+
         </div>
-        
+
+
         <li><a href="{{ url_for('index') }}">{{ _('Etusivu') }}</a></li>
         <li><a href="{{ url_for('demonstrations') }}">{{ _('Mielenosoitukset') }}</a></li>
         <li><a href="{{ url_for('submit') }}">{{ _('Ilmoita mielenosoituksesta') }}</a></li>
@@ -267,12 +461,15 @@
           </a>
         </li>
         {% endif %}
+        <!-- Forcefully align the theme switcher to the other side of the screen -->
+        <div class="pc-only" style="margin-left: auto;">
+          <li>
+            <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
+              <i class="fa-solid fa-moon" id="theme-icon"></i>
+            </button>
+          </li>
+        </div>
 
-        <li>
-          <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
-            <i class="fa-solid fa-moon" id="theme-icon"></i>
-          </button>
-        </li>
       </ul>
     </div>
   </nav>

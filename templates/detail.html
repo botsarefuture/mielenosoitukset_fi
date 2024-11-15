@@ -610,7 +610,9 @@
       </p>
     </div>
 
+    <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
     <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
+
   </div>
 </div>
 {% endblock %}

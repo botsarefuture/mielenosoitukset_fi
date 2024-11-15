@@ -20,7 +20,7 @@ from utils.flashing import flash_message
 from utils.validators import valid_email
 from wrappers import admin_required, permission_required
 from .utils import log_admin_action, mongo, get_org_name as get_organization_name
-
+from classes import Organization
 
 
 # Create a Blueprint for admin organization management
@@ -112,6 +112,17 @@ def invite_to_organization(invitee_email, organization_id):
         organization_id (str): The ID of the organization.
     """
     try:
+        organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+        org = Organization.from_dict(organization)
+        
+        if invitee_email in org.invitations:
+            flash_message("Kutsu on jo lähetetty tälle sähköpostiosoitteelle.", "error")
+            return
+
+        if org.is_member(invitee_email):
+            flash_message("Käyttäjä on jo jäsen organisaatiossa.", "error")
+            return
+        
         # Add invitation into db
         mongo.organizations.update_one(
             {"_id": ObjectId(organization_id)},
@@ -303,3 +314,11 @@ def invite():
     print(invitee_email, organization_id)
     invite_to_organization(invitee_email, ObjectId(organization_id))
     return redirect(url_for("admin_org.organization_control"))
+
+@admin_org_bp.route("/view/<org_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_ORGANIZATION")
+def view_organization(org_id):
+    organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    return render_template("admin/organizations/view.html", organization=organization)    

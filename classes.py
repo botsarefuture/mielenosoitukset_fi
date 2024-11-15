@@ -5,6 +5,7 @@ from bson import ObjectId
 from dateutil.relativedelta import relativedelta
 from flask import url_for
 
+from auth.models import User
 from database_manager import DatabaseManager
 from utils.database import stringify_object_ids
 
@@ -121,7 +122,62 @@ class Organizer(BaseModel):
 
         return bool(DB["organizations"].find_one({"_id": self.organization_id}))
 
+class Membership(BaseModel):
+    def __init__(self, user_id: ObjectId, organization_id: ObjectId, role: str, permissions: List[str] = None):
+        self.user_id = user_id
+        self.organization_id = organization_id
+        self.role = role
+        self.permissions = permissions or []
 
+    def save(self):
+        """Save the membership to MongoDB."""
+        # Save to users info, as user["organizations"], and to organization["members"]
+        user = DB["users"].find_one({"_id": self.user_id})
+        organization = DB["organizations"].find_one({"_id": self.organization_id})
+
+        if user and organization:
+            # Update user's organizations
+            if "organizations" not in user:
+                user["organizations"] = []
+            if self.organization_id not in user["organizations"]:
+                user["organizations"].append(
+                    {
+                        "org_id": self.organization_id,
+                        "role": self.role,
+                        "permissions": self.permissions,
+                    })
+                
+            DB["users"].update_one({"_id": ObjectId(self.user_id)}, {"$set": {"organizations": user["organizations"]}})
+
+            # Update organization's members
+            if "members" not in organization:
+                organization["members"] = []
+            if self.user_id not in [member["user_id"] for member in organization["members"]]:
+                organization["members"].append({"user_id": self.user_id, "role": self.role, "permissions": self.permissions})
+            DB["organizations"].update_one({"_id": self.organization_id}, {"$set": {"members": organization["members"]}})
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create a Membership instance from a dictionary."""
+        return cls(**data)
+
+    def to_dict(self, json=False):
+        """Convert instance to dictionary."""
+        data = self.__dict__.copy()
+        if json and "_id" in data:
+            data["_id"] = str(data["_id"])
+
+        if json:
+            # Replace None with None-equivalent in JSON format
+            data = stringify_object_ids(data)
+
+        return data
+
+    def insert_to_db(self):
+        """Insert the membership to the database."""
+        # Same as in save method
+        self.save()
+        
 class Organization(BaseModel):
     def __init__(
         self,
@@ -130,7 +186,7 @@ class Organization(BaseModel):
         email: str,
         website: str = "",
         social_media_links: Dict[str, str] = None,
-        members: List[Dict[str, Any]] = None,
+        members: List[User] = None,
         verified: bool = False,
         _id=None,
         invitations = None
@@ -143,8 +199,16 @@ class Organization(BaseModel):
         self.members = members or []
         self.verified = verified
         self._id = _id or ObjectId()
-        self.invitations = invitations
+        self.invitations = invitations or []
+        
+        self.init_members()
 
+    def init_members(self):
+        """Initialize the members list."""
+        self.members = [User.from_db(DB["users"].find_one(
+            {"_id": ObjectId(member["user_id"])})) for member in self.members]
+        
+    
     def save(self):
         """Save the organization to MongoDB."""
         DB["organizations"].update_one(
@@ -157,7 +221,27 @@ class Organization(BaseModel):
         # Remove any deprecated or unnecessary keys
         data.pop("social_medias", None)  # Remove 'social_medias' if it exists
         return cls(**data)
+
+    def is_member(self, email):
+        """Check if a user with the given email is a member of the organization."""
+        return any(member["email"] == email for member in self.members)
     
+    def add_member(self, member: ObjectId|User, role="member", permissions=[]):
+        """Add a member to the organization."""
+        # Use the membership class to do shit
+        if isinstance(member, User):
+            member = ObjectId(member._id)
+        
+        elif isinstance(member, str):
+            member = ObjectId(member)
+        
+        Membership(
+            member,
+            self._id,
+            role,
+            permissions
+        ).save()
+            
 class Demonstration(BaseModel):
     """
     A class to represent a demonstration event.

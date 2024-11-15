@@ -13,6 +13,7 @@ import jwt
 import datetime
 import importlib
 
+from classes import Organization
 from utils.auth import (
     generate_confirmation_token,
     verify_confirmation_token,
@@ -299,19 +300,22 @@ def accept_invite():
     
     organization_id = request.args.get("organization_id")
     organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+    org = Organization.from_dict(organization)
 
     if organization["invitations"] and current_user.email in organization["invitations"]:
+        
         organization["invitations"].remove(current_user.email)
         mongo.organizations.update_one(
             {"_id": ObjectId(organization_id)},
             {"$set": {"invitations": organization["invitations"]}},
         )
-        # Add user to organization
-        current_user.add_organization(organization_id)
+        org.add_member(current_user, role="member", permissions=[])
         
     else:
         flash_message("Kutsua ei löytynyt.", "warning")
         return redirect(url_for("index"))
+    
+    
 
     flash_message(f"Liityit organisaatioon {organization.get('name')}.", "success")
     return redirect(url_for("org", org_id=organization_id))

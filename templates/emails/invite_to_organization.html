@@ -20,29 +20,52 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
-            color: #333333;
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            background: #0033A0;
+            color: #ffffff;
+            border-radius: 8px 8px 0 0;
         }
-        p {
-            line-height: 1.6;
+        .content {
+            margin: 20px;
         }
-        .button {
+        .btn {
             display: inline-block;
             padding: 10px 20px;
-            background: #007bff;
+            background: #0033A0;
             color: #ffffff;
             text-decoration: none;
             border-radius: 5px;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #002a6d;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888888;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Kutsu liittyä organisaatioon {{ organization_name }}</h1>
-        <p>Hei,</p>
-        <p>Sinut on kutsuttu liittymään organisaatioon {{ organization_name }}. Klikkaa alla olevaa painiketta hyväksyäksesi kutsun.</p>
-        <p><a href="{{ invite_url }}" class="button">Hyväksy kutsu</a></p>
-        <p>Ystävällisin terveisin,<br>{{ inviter_name }}</p>
+        <div class="header">
+            <h1>Kutsu liittyä organisaatioon {{ organization_name }}</h1>
+        </div>
+        <div class="content">
+            <p>Hei,</p>
+            <p>Sinut on kutsuttu liittymään organisaatioon {{ organization_name }}. Klikkaa alla olevaa painiketta hyväksyäksesi kutsun.</p>
+            <p style="text-align: center;">
+                <a href="{{ invite_url }}" class="btn">Hyväksy kutsu</a>
+            </p>
+            <p>Ystävällisin terveisin,<br>{{ inviter_name }}</p>
+        </div>
+        <div class="footer">
+            <p>Tämä on automaattinen viesti, älä vastaa tähän sähköpostiin.</p>
+        </div>
     </div>
 </body>
 </html>

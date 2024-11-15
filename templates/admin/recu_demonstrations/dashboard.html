@@ -2,53 +2,154 @@
 
 {% block title %}Toistuvat mielenosoitukset{% endblock %}
 
-{% block content %}
-<div class="container mx-auto mt-5">
-    <h1 class="text-2xl font-bold mb-4">Toistuvat mielenosoitukset</h1>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+<style>
+    .search-form {
+        margin: 1rem 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-    <form method="GET" action="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="mb-4">
-        <div class="flex flex-col sm:flex-row sm:items-center">
-            <input type="text" name="search" placeholder="Etsi..." value="{{ search_query }}" class="border p-2 rounded mb-2 sm:mb-0 sm:mr-2 flex-grow" aria-label="Etsi toistuvia mielenosoituksia" />
-            <select name="approved" class="border p-2 rounded mb-2 sm:mb-0 sm:mr-2" aria-label="Hyväksytty status">
-                <option value="false" {% if not approved_status %}selected{% endif %}>Ei hyväksytty</option>
-                <option value="true" {% if approved_status %}selected{% endif %}>Hyväksytty</option>
-            </select>
-            <button type="submit" class="bg-blue-500 text-white p-2 rounded">Hae</button>
+    .search-input,
+    .filter-select {
+        padding: 0.75rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        flex: 1;
+        min-width: 150px;
+        max-width: 300px;
+        transition: border-color 0.3s ease;
+    }
+
+    .search-input:focus,
+    .filter-select:focus {
+        border-color: var(--blue);
+        outline: none;
+    }
+
+    .search-button {
+        background: #28a745;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-button:hover {
+        background: #218838;
+    }
+
+    @media (max-width: 768px) {
+        .search-form {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .search-input,
+        .filter-select,
+        .search-button {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <h2 id="tabletitle">{{ _('Toistuvat mielenosoitukset') }}</h2>
+
+    <div class="flex justify-center mb-4">
+        {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
+        <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button">
+            <i class="fas fa-plus-circle"></i>{{ _('Luo uusi toistuva mielenosoitus') }}
+        </a>
+        {% else %}
+        <div class="insuffient-perm" style="color: #ccc">
+            {{ _('Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.') }}
         </div>
+        {% endif %}
+    </div>
+
+    <form method="GET" class="search-form" action="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+        <label for="search" class="sr-only">{{ _('Hae toistuvia mielenosoituksia:') }}</label>
+        <input type="text" id="search" name="search" class="search-input" placeholder="{{ _('Hae toistuvia mielenosoituksia...') }}" value="{{ search_query }}" aria-label="{{ _('Hae toistuvia mielenosoituksia') }}">
+
+        <label for="approved">{{ _('Näytä vain hyväksytyt toistuvat mielenosoitukset:') }}</label>
+        <select name="approved" id="approved" class="filter-select" aria-label="{{ _('Hyväksytty status') }}">
+            <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
+            <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+        </select>
+
+        <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>{{ _('Hae') }}
+        </button>
     </form>
 
-    <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="bg-green-500 text-white p-2 rounded mb-4">Luo uusi toistuva mielenosoitus</a>
+    {% if recurring_demos %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ _('Otsikko') }}</th>
+                    <th>{{ _('Päivämäärä') }}</th>
+                    <th>{{ _('Aika') }}</th>
+                    <th>{{ _('Kaupunki') }}</th>
+                    <th>{{ _('Hyväksytty') }}</th>
+                    <th class="actions-cell-header">{{ _('Toimet') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for demo in recurring_demos %}
+                <tr>
+                    <td>{{ demo.title }}</td>
+                    <td>{{ demo.repeat_schedule.as_string }}</td>
+                    <td>{{ demo.start_time }} - {{ demo.end_time }}</td>
+                    <td>{{ demo.city }}</td>
+                    <td>{% if demo.approved %}✔️{% else %}❌{% endif %}</td>
+                    <td class="actions-cell">
+                        {% if current_user.has_permission("EDIT_DEMO") %}
+                        <a href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}" class="button edit-button">
+                            <i class="fas fa-edit"></i>{{ _('Muokkaa') }}
+                        </a>
+                        {% else %}
+                        <div class="insuffient-perm" style="color: white">
+                            {{ _('Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.') }}
+                        </div>
+                        {% endif %}
 
-    <table class="min-w-full border border-gray-300">
-        <thead>
-            <tr class="bg-gray-200">
-                <th class="border px-4 py-2">Otsikko</th>
-                <th class="border px-4 py-2">Päivämäärä</th>
-                <th class="border px-4 py-2">Aika</th>
-                <th class="border px-4 py-2">Kaupunki</th>
-                <th class="border px-4 py-2">Hyväksytty</th>
-                <th class="border px-4 py-2">Toimet</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for demo in recurring_demos %}
-            <tr>
-                <td class="border px-4 py-2">{{ demo.title }}</td>
-                <td class="border px-4 py-2">{{ demo.repeat_schedule.as_string }}</td>
-                <td class="border px-4 py-2">{{ demo.start_time }} - {{ demo.end_time }}</td>
-                <td class="border px-4 py-2">{{ demo.city }}</td>
-                <td class="border px-4 py-2">{% if demo.approved %}✔️{% else %}❌{% endif %}</td>
-                <td class="border px-4 py-2">
-                    <a href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}" class="text-blue-500">Muokkaa</a>
-                    <a href="{{ url_for('admin_recu_demo.confirm_delete_recu_demo', demo_id=demo._id) }}" class="text-red-500">Poista</a>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="6" class="border px-4 py-2 text-center">Ei löytynyt toistuvia mielenosoituksia.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                        {% if current_user.has_permission("DELETE_DEMO") %}
+                        <a href="{{ url_for('admin_recu_demo.confirm_delete_recu_demo', demo_id=demo._id) }}" class="button delete-button">
+                            <i class="fas fa-trash-alt"></i>{{ _('Poista') }}
+                        </a>
+                        {% else %}
+                        <div class="insuffient-perm" style="color: white">
+                            {{ _('Ei riittäviä oikeuksia mielenosoituksen poistamiseen.') }}
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-results">{{ _('Ei löytynyt toistuvia mielenosoituksia.') }}</div>
+    {% endif %}
 </div>
 {% endblock %}

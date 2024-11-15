@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-14 18:09+0200\n"
+"POT-Creation-Date: 2024-11-15 22:28+0200\n"
 "PO-Revision-Date: 2024-11-11 09:34+0000\n"
 "Last-Translator: Verso, 2024\n"
 "Language: en\n"
@@ -22,33 +22,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: basic_routes.py:296
+#: basic_routes.py:336
 msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
 msgstr "Incorrect date format. Please use the format dd.mm.yyyy."
 
-#: basic_routes.py:319
+#: basic_routes.py:359
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
 msgstr "Demonstration wasn't found or it hasn't been accepted yet."
 
-#: admin/admin_demo_bp.py:165
+#: admin/admin_demo_bp.py:166
 msgid "Muokkaa mielenosoitusta"
 msgstr "Edit demonstration"
 
-#: admin/admin_demo_bp.py:166 auth/templates/edit_profile.html:47
-#: templates/admin/organizations/form.html:259
+#: admin/admin_demo_bp.py:167 auth/templates/edit_profile.html:47
+#: templates/admin/organizations/form.html:268
 #: templates/admin/user/edit.html:213
 msgid "Tallenna muutokset"
 msgstr "Save changes"
 
-#: admin/admin_demo_bp.py:239
+#: admin/admin_demo_bp.py:240
 msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."
 msgstr "Title, date and city are mandatory to fill."
 
-#: admin/admin_org_bp.py:93
+#: admin/admin_org_bp.py:100
 msgid "Organisaatio päivitetty onnistuneesti."
 msgstr "Organization updated successfully."
 
-#: admin/admin_org_bp.py:224
+#: admin/admin_org_bp.py:272
 msgid "Organisaatio poistettu onnistuneesti."
 msgstr "Organization removed successfully."
 
@@ -73,7 +73,7 @@ msgid "Esittelyteksti:"
 msgstr ""
 
 #: auth/templates/login.html:7 auth/templates/login.html:19
-#: templates/base.html:93
+#: templates/base.html:108
 msgid "Kirjaudu sisään"
 msgstr "Sign in"
 
@@ -90,7 +90,7 @@ msgid "Unohtuiko salasana?"
 msgstr ""
 
 #: auth/templates/login.html:32 auth/templates/register.html:9
-#: auth/templates/register.html:26 templates/base.html:94
+#: auth/templates/register.html:26 templates/base.html:109
 msgid "Rekisteröidy"
 msgstr ""
 
@@ -119,9 +119,10 @@ msgstr ""
 
 #: auth/templates/password_reset_request.html:11
 #: templates/admin/organizations/dashboard.html:107
-#: templates/admin/organizations/form.html:232
+#: templates/admin/organizations/form.html:237
+#: templates/admin/organizations/view.html:124
 #: templates/admin/user/edit.html:117 templates/admin/user/list.html:107
-#: templates/submit.html:102
+#: templates/submit.html:120
 msgid "Sähköpostiosoite"
 msgstr "Email address"
 
@@ -143,7 +144,7 @@ msgstr ""
 
 #: auth/templates/profile.html:43
 #: templates/admin/organizations/dashboard.html:87
-#: templates/admin/stats.html:12
+#: templates/admin/stats.html:18
 msgid "Organisaatiot"
 msgstr "Organizations"
 
@@ -184,19 +185,19 @@ msgstr ""
 msgid "Kirjaudu sisään tästä"
 msgstr ""
 
-#: templates/base.html:70
+#: templates/base.html:85
 msgid "Kaikki oikeudet pidätetään."
 msgstr "All rights reserved."
 
-#: templates/base.html:72
+#: templates/base.html:87
 msgid "Tietoa sivustosta"
 msgstr "About the site"
 
-#: templates/base.html:74
+#: templates/base.html:89
 msgid "Tietosuojaseloste"
 msgstr "Privacy policy"
 
-#: templates/base.html:76 templates/contact.html:3 templates/contact.html:12
+#: templates/base.html:91 templates/contact.html:3 templates/contact.html:12
 #: templates/privacy.html:47
 msgid "Ota yhteyttä"
 msgstr "Contact us"
@@ -222,7 +223,7 @@ msgstr "Email:"
 msgid "Ota yhteyttä lomakkeen kautta"
 msgstr "Contact via the form"
 
-#: templates/contact.html:24 templates/detail.html:603
+#: templates/contact.html:24 templates/detail.html:619
 msgid "Nimi:"
 msgstr "Name:"
 
@@ -254,27 +255,28 @@ msgstr "Other"
 msgid "Viesti:"
 msgstr "Message:"
 
-#: templates/contact.html:42 templates/submit.html:265
+#: templates/contact.html:42 templates/submit.html:276
 msgid "Lähetä"
 msgstr "Submit"
 
-#: templates/detail.html:401
+#: templates/detail.html:407
 #, fuzzy
 msgid "Työkalupakki"
 msgstr "Starts at "
 
-#: templates/admin/demonstrations/dashboard.html:291 templates/detail.html:411
+#: templates/admin/demonstrations/dashboard.html:291 templates/detail.html:417
 msgid "Hyväksy"
 msgstr "Accept"
 
 #: templates/admin/demonstrations/dashboard.html:305
 #: templates/admin/organizations/dashboard.html:120
-#: templates/admin/user/list.html:121 templates/detail.html:418
+#: templates/admin/recu_demonstrations/dashboard.html:128
+#: templates/admin/user/list.html:121 templates/detail.html:424
 msgid "Muokkaa"
 msgstr "Edit"
 
 #: templates/admin/demonstrations/dashboard.html:319
-#: templates/admin/organizations/dashboard.html:122 templates/detail.html:425
+#: templates/admin/organizations/dashboard.html:122 templates/detail.html:431
 msgid "Katsele"
 msgstr "View"
 
@@ -282,175 +284,162 @@ msgstr "View"
 #: templates/admin/demonstrations/form.html:87
 #: templates/admin/demonstrations/form.html:222
 #: templates/admin/organizations/dashboard.html:121
-#: templates/admin/user/list.html:124 templates/detail.html:432
+#: templates/admin/recu_demonstrations/dashboard.html:138
+#: templates/admin/user/list.html:124 templates/detail.html:438
 msgid "Poista"
 msgstr "Remove"
 
-#: templates/detail.html:472
+#: templates/detail.html:480
 msgid "Jaa Facebookissa"
 msgstr "Share on Facebook"
 
-#: templates/detail.html:477
+#: templates/detail.html:485
 msgid "Jaa Xssä"
 msgstr "Share on X"
 
-#: templates/detail.html:482
+#: templates/detail.html:490
 msgid "Jaa LinkedInissä"
 msgstr "Share on LinkedIn"
 
-#: templates/detail.html:496
+#: templates/detail.html:504
 msgid "Mielenosoituksen esittelyteksti"
 msgstr "Presentation text of the demonstration"
 
-#: templates/detail.html:501
+#: templates/detail.html:509
 msgid "Aikaa mielenosoituksen alkuun"
 msgstr "Time till the demonstration starts"
 
-#: templates/detail.html:512
+#: templates/detail.html:520
 msgid "Lisätiedot"
 msgstr "Additional informatio"
 
-#: templates/detail.html:519
+#: templates/detail.html:527
 msgid "Järjestäjät"
 msgstr "Organizers"
 
-#: templates/detail.html:524
+#: templates/detail.html:532
 msgid "Ei järjestäjätietoja saatavilla."
 msgstr "No organizer information available."
 
-#: templates/detail.html:528
+#: templates/detail.html:536
 msgid "Takaisin kaikkiin mielenosoituksiin"
 msgstr "Back to all demonstrations"
 
-#: templates/detail.html:578
+#: templates/detail.html:589
 #, fuzzy
 msgid "Mielenosoitus on käynnissä!"
 msgstr "Title of the demonstration"
 
-#: templates/detail.html:587
+#: templates/detail.html:594
+#, fuzzy
+msgid "Mielenosoitus on päättynyt."
+msgstr "Title of the demonstration"
+
+#: templates/detail.html:603
 msgid "päivää"
 msgstr ""
 
-#: templates/detail.html:587
+#: templates/detail.html:603
 msgid "tuntia"
 msgstr ""
 
-#: templates/detail.html:587
+#: templates/detail.html:603
 #, fuzzy
 msgid "minuuttia"
 msgstr "Others"
 
-#: templates/detail.html:587
+#: templates/detail.html:603
 msgid "sekuntia"
 msgstr ""
 
-#: templates/detail.html:610
+#: templates/detail.html:626
 #, fuzzy
 msgid "Mielenosoitukset.fi -profiili"
 msgstr "Mielenosoitukset.fi"
 
-#: templates/detail.html:621
+#: templates/detail.html:637
 #, fuzzy
 msgid "Verkkosivut:"
 msgstr "Website"
 
-#: templates/admin/user/confirm.html:9 templates/detail.html:632
+#: templates/admin/user/confirm.html:9 templates/detail.html:648
 #, fuzzy
 msgid "Sähköpostiosoite:"
 msgstr "Email address"
 
-#: templates/detail.html:648
+#: templates/detail.html:664
 msgid "Päivämäärä:"
 msgstr ""
 
-#: templates/detail.html:649
+#: templates/detail.html:665
 msgid "Alkaa klo:"
 msgstr ""
 
-#: templates/detail.html:650
+#: templates/detail.html:666
 msgid "Päättyy klo:"
 msgstr ""
 
-#: templates/detail.html:651
+#: templates/detail.html:667
 #, fuzzy
 msgid "Alkupaikka:"
 msgstr "Starts at "
 
-#: templates/detail.html:657
+#: templates/detail.html:673
 msgid "Marssin reitti:"
 msgstr ""
 
-#: templates/detail.html:663
+#: templates/detail.html:679
 #, fuzzy
 msgid "Facebook-tapahtuma"
 msgstr "Facebook-eventlink (optional)"
 
-#: templates/header.html:189
+#: templates/header.html:332 templates/header.html:427
 msgid "Mielenosoitukset.fi"
 msgstr "Mielenosoitukset.fi"
 
-#: templates/header.html:192
+#: templates/header.html:359
 msgid "Avaa valikko"
 msgstr "Open a menu"
 
-#: templates/header.html:198
+#: templates/header.html:422
+#, fuzzy
+msgid "Sulje valikko"
+msgstr "Open a menu"
+
+#: templates/header.html:432
 msgid "Etusivu"
 msgstr "Frontpage"
 
-#: templates/admin/demonstrations/dashboard.html:169 templates/header.html:199
+#: templates/admin/demonstrations/dashboard.html:169 templates/header.html:433
 msgid "Mielenosoitukset"
 msgstr "Demonstrations"
 
-#: templates/header.html:200 templates/index.html:49 templates/submit.html:3
-#: templates/submit.html:124
+#: templates/header.html:434 templates/index.html:35 templates/submit.html:3
+#: templates/submit.html:142
 msgid "Ilmoita mielenosoituksesta"
 msgstr "Submit a demonstration"
 
-#: templates/header.html:205
-msgid "Superkäyttäjän käsikirja"
-msgstr "Super-user's handbook"
-
-#: templates/header.html:206
-msgid "Käyttäjien hallinta"
-msgstr "Manage users"
-
-#: templates/header.html:207
-msgid "Organisaatioiden hallinta"
-msgstr "Manage organizations"
-
-#: templates/header.html:208
-msgid "Mielenosoitusten hallinta"
-msgstr "Manage demonstrations"
-
-#: templates/header.html:209
-msgid "Toistuvien mielenosoitusten hallinta"
-msgstr "Manage recurring demonstrations"
-
-#: templates/admin/stats.html:4 templates/header.html:210
-msgid "Tilastot"
-msgstr "Stats"
-
-#: templates/header.html:220
+#: templates/header.html:442
 msgid "Profiilikuva"
 msgstr "Profile picture"
 
-#: templates/header.html:227
+#: templates/header.html:449
 msgid "Profiili"
 msgstr "Profile"
 
-#: templates/header.html:228
+#: templates/header.html:450
 msgid "Kirjaudu ulos"
 msgstr "Sign out"
 
-#: templates/header.html:237
-msgid "Kieli"
+#: templates/header.html:460
+msgid "Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten"
 msgstr ""
 
-#: templates/index.html:38
+#: templates/index.html:27
 msgid "Tervetuloa Mielenosoitukset.fi:hin"
 msgstr "Welcome to Mielenosoitukset.fi"
 
-#: templates/index.html:40
+#: templates/index.html:29
 msgid ""
 "Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista "
 "ympäri\n"
@@ -460,7 +449,7 @@ msgstr ""
 "around the world.\n"
 "Finland."
 
-#: templates/index.html:41
+#: templates/index.html:30
 msgid ""
 "Pyrimme tekemään osallistumisesta mielenosoituksiin\n"
 "      mahdollisimman vaivatonta ja sujuvaa."
@@ -468,23 +457,23 @@ msgstr ""
 "We strive to make participation in demonstrations\n"
 "as hassle-free and smooth as possible."
 
-#: templates/index.html:46
+#: templates/index.html:34
 msgid "Lue lisää"
 msgstr "Read more"
 
-#: templates/index.html:76
+#: templates/index.html:59
 msgid "Suosittelemme"
 msgstr "We recommend"
 
-#: templates/index.html:95 templates/organizations/details.html:76
+#: templates/index.html:77 templates/organizations/details.html:76
 msgid "Esitellyt mielenosoitukset"
 msgstr "Suggested demonstrations"
 
-#: templates/index.html:100 templates/organizations/details.html:81
+#: templates/index.html:82 templates/organizations/details.html:81
 msgid "Ei mielenosoituksia näytettäväksi."
 msgstr "No demonstrations to display."
 
-#: templates/index.html:108
+#: templates/index.html:89
 msgid "Näytä kaikki mielenosoitukset"
 msgstr "Display all demonstrations"
 
@@ -602,31 +591,34 @@ msgid "Tulevat mielenosoitukset"
 msgstr "Upcoming demonstrations"
 
 #: templates/admin/demonstrations/dashboard.html:212 templates/list.html:23
-#: templates/tag_list.html:20
+#: templates/tag_list.html:23
 msgid "Hae mielenosoituksia..."
 msgstr "Search for demonstrations..."
 
-#: templates/list.html:24 templates/tag_list.html:20
+#: templates/list.html:24 templates/tag_list.html:24
 msgid "Hae mielenosoituksia"
 msgstr "Search for demonstrations"
 
-#: templates/admin/demonstrations/dashboard.html:256 templates/list.html:35
-#: templates/list.html:36 templates/tag_list.html:21
+#: templates/admin/demonstrations/dashboard.html:256
+#: templates/admin/recu_demonstrations/dashboard.html:112
+#: templates/list.html:35 templates/list.html:36 templates/tag_list.html:25
 msgid "Kaupunki"
 msgstr "City"
 
-#: templates/list.html:43 templates/list.html:44 templates/tag_list.html:22
+#: templates/list.html:43 templates/list.html:44 templates/tag_list.html:27
 msgid "Sijainti"
 msgstr "Location"
 
 #: templates/admin/demonstrations/form.html:130 templates/list.html:51
-#: templates/list.html:52 templates/submit.html:194 templates/tag_list.html:23
+#: templates/list.html:52 templates/submit.html:205 templates/tag_list.html:29
+#: templates/tag_list.html:30
 msgid "Päivämäärä (pp.kk.vvvv)"
 msgstr "Date (pp.kk.vvvv)"
 
 #: templates/admin/demonstrations/dashboard.html:246
-#: templates/admin/organizations/dashboard.html:97 templates/list.html:56
-#: templates/tag_list.html:24
+#: templates/admin/organizations/dashboard.html:97
+#: templates/admin/recu_demonstrations/dashboard.html:100
+#: templates/list.html:56 templates/tag_list.html:31
 msgid "Hae"
 msgstr "Search"
 
@@ -638,7 +630,7 @@ msgstr "No demonstrations found"
 msgid "Edellinen"
 msgstr "Previous"
 
-#: templates/list.html:77 templates/tag_list.html:44
+#: templates/list.html:77 templates/tag_list.html:52
 msgid "Sivu"
 msgstr "Page"
 
@@ -841,117 +833,118 @@ msgstr ""
 "If you have any questions about our privacy policy or wish to exercise "
 "your rights, you can contact us by email at."
 
-#: templates/submit.html:95
+#: templates/submit.html:113
 msgid "Järjestäjätahon..."
 msgstr "Organizers"
 
 #: templates/admin/organizations/dashboard.html:105
-#: templates/admin/organizations/form.html:222
-#: templates/admin/user/list.html:106 templates/submit.html:96
+#: templates/admin/organizations/form.html:225
+#: templates/admin/organizations/view.html:114
+#: templates/admin/user/list.html:106 templates/submit.html:114
 msgid "Nimi"
 msgstr "Name"
 
-#: templates/submit.html:97
+#: templates/submit.html:115
 msgid "Järjestäjän nimi"
 msgstr "Organizers name"
 
-#: templates/submit.html:99
+#: templates/submit.html:117
 msgid "Verkkosivut"
 msgstr "Website"
 
-#: templates/submit.html:134 templates/submit.html:140
+#: templates/submit.html:152 templates/submit.html:158
 msgid "Mielenosoituksen nimi"
 msgstr "Title of the demonstration"
 
-#: templates/submit.html:152
+#: templates/submit.html:163
 msgid "Tagit (pilkuilla erotettuna)"
 msgstr "Tags (separated by comma)"
 
-#: templates/submit.html:157
+#: templates/submit.html:168
 msgid "esim. ilmasto, tasa-arvo, oikeudet"
 msgstr "e.g. climate, equality, rights"
 
-#: templates/submit.html:161
+#: templates/submit.html:172
 msgid "Kuvausteksti"
 msgstr "Description"
 
-#: templates/submit.html:199
+#: templates/submit.html:210
 msgid "pp.kk.vvvv"
 msgstr "dd.mm.yyyy"
 
-#: templates/admin/demonstrations/form.html:136 templates/submit.html:205
+#: templates/admin/demonstrations/form.html:136 templates/submit.html:216
 msgid "Alkamisaika"
 msgstr "Starts at "
 
-#: templates/admin/demonstrations/form.html:141 templates/submit.html:208
+#: templates/admin/demonstrations/form.html:141 templates/submit.html:219
 msgid "Päättymisaika"
 msgstr "Ends at"
 
-#: templates/submit.html:212
+#: templates/submit.html:223
 msgid "Kuva (valinnainen)"
 msgstr "Image (optional)"
 
-#: templates/submit.html:216
+#: templates/submit.html:227
 msgid "Facebook-tapahtumalinkki (valinnainen)"
 msgstr "Facebook-eventlink (optional)"
 
-#: templates/submit.html:226
+#: templates/submit.html:237
 msgid "Järjestäjä(t)"
 msgstr "Organizer(s)"
 
-#: templates/admin/demonstrations/form.html:251 templates/submit.html:230
+#: templates/admin/demonstrations/form.html:251 templates/submit.html:241
 msgid "Lisää järjestäjä"
 msgstr "Add organizer"
 
-#: templates/submit.html:235
+#: templates/submit.html:246
 msgid "Mielenosoituksen tyyppi"
 msgstr "Type of demonstration"
 
-#: templates/submit.html:239
+#: templates/submit.html:250
 msgid "Valitse mielenosoituksen tyyppi"
 msgstr "Select demonstration type"
 
-#: templates/admin/demonstrations/form.html:183 templates/submit.html:241
+#: templates/admin/demonstrations/form.html:183 templates/submit.html:252
 msgid "Paikallaan"
 msgstr "Stay still"
 
-#: templates/admin/demonstrations/form.html:182 templates/submit.html:242
+#: templates/admin/demonstrations/form.html:182 templates/submit.html:253
 msgid "Marssi"
 msgstr "March"
 
-#: templates/admin/demonstrations/form.html:184 templates/submit.html:243
+#: templates/admin/demonstrations/form.html:184 templates/submit.html:254
 msgid "Muut"
 msgstr "Others"
 
-#: templates/submit.html:247
+#: templates/submit.html:258
 msgid "Reitti (vain marssille, valinnainen)"
 msgstr "March route (optional)"
 
-#: templates/submit.html:248
+#: templates/submit.html:259
 msgid "Reitti..."
 msgstr "Route"
 
-#: templates/submit.html:255 templates/submit.html:261
+#: templates/submit.html:266 templates/submit.html:272
 msgid "Katuosoite"
 msgstr "Address"
 
-#: templates/tag_list.html:34
+#: templates/tag_list.html:41
 msgid "Ei löytynyt mielenosoituksia tällä tagilla."
 msgstr "No demonstrations found with this tag."
 
-#: templates/tag_list.html:68
+#: templates/tag_list.html:80
 msgid "Näytä kaikki tagit"
 msgstr "Show all tags"
 
-#: templates/admin/dashboard.html:33
+#: templates/admin/dashboard.html:34
 msgid "Hallintatyökalut"
 msgstr "Management tools"
 
-#: templates/admin/dashboard.html:38
+#: templates/admin/dashboard.html:39
 msgid "Huomio"
 msgstr "HOX!"
 
-#: templates/admin/dashboard.html:39
+#: templates/admin/dashboard.html:40
 msgid ""
 "Olet kirjautunut sisään superkäyttäjänä. Sinulla on laajat oikeudet, ja "
 "kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen "
@@ -961,69 +954,77 @@ msgstr ""
 " actions can be traced back to you. Please be careful when using these "
 "rights."
 
-#: templates/admin/manage_marquee.html:20
+#: templates/admin/manage_marquee.html:25
 msgid "Pyörörullan hallinta"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:22
+#: templates/admin/manage_marquee.html:26
 msgid ""
 "Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, "
 "jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen."
 msgstr ""
 
-#: templates/admin/manage_marquee.html:36
+#: templates/admin/manage_marquee.html:40
 #, fuzzy
 msgid "Nykyinen pyörö:"
 msgstr "Message:"
 
-#: templates/admin/manage_marquee.html:41
+#: templates/admin/manage_marquee.html:45
 msgid "Pyörön taustaväri:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:46
+#: templates/admin/manage_marquee.html:50
 msgid "Pyörön tekstin väri:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:50
+#: templates/admin/manage_marquee.html:54
 msgid "Tallenna pyörörulla"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:53
+#: templates/admin/manage_marquee.html:57
 #, fuzzy
 msgid "Esikatselu:"
 msgstr "View"
 
-#: templates/admin/stats.html:5
+#: templates/admin/manage_marquee.html:64 templates/admin/stats.html:47
+msgid "Palaa hallintapaneeliin"
+msgstr "Back to control panel"
+
+#: templates/admin/stats.html:10
+msgid "Tilastot"
+msgstr "Stats"
+
+#: templates/admin/stats.html:11
 msgid "Tässä osiossa voit tarkastella sivuston tilastoja."
 msgstr "In this section you can view the site's statistics."
 
-#: templates/admin/stats.html:8
+#: templates/admin/stats.html:14
 msgid "Käyttäjät"
 msgstr "Users"
 
-#: templates/admin/stats.html:9
+#: templates/admin/stats.html:15
 msgid "Rekisteröityneet käyttäjät:"
 msgstr "Registered users:"
 
-#: templates/admin/stats.html:10
+#: templates/admin/stats.html:16
 msgid "Sähköpostiosoitteensa vahvistaneet käyttäjät:"
 msgstr "Users who have verified their email address:"
 
-#: templates/admin/stats.html:13
+#: templates/admin/stats.html:19
 msgid "Rekisteröidyt organisaatiot:"
 msgstr "Registered organizations:"
 
-#: templates/admin/stats.html:16
+#: templates/admin/stats.html:21
 msgid "Viimeisimmät aktiviteetit"
 msgstr "Latest activities"
 
-#: templates/admin/stats.html:22
+#: templates/admin/stats.html:26
+msgid "Aktiviteetti"
+msgstr ""
+
+#: templates/admin/stats.html:37
 msgid "Ei aktiivisuuksia vielä."
 msgstr "No activities yet."
-
-#: templates/admin/stats.html:27
-msgid "Palaa hallintapaneeliin"
-msgstr "Back to control panel"
 
 #: templates/admin/demonstrations/confirm_delete.html:7
 #: templates/admin/demonstrations/confirm_delete.html:13
@@ -1052,7 +1053,7 @@ msgstr ""
 #: templates/admin/demonstrations/confirm_delete.html:14
 #: templates/admin/demonstrations/dashboard.html:367
 #: templates/admin/organizations/confirm_delete.html:11
-#: templates/admin/organizations/form.html:261
+#: templates/admin/organizations/form.html:270
 msgid "Peruuta"
 msgstr ""
 
@@ -1062,6 +1063,8 @@ msgstr ""
 #: templates/admin/demonstrations/dashboard.html:280
 #: templates/admin/demonstrations/dashboard.html:281
 #: templates/admin/demonstrations/form.html:260
+#: templates/admin/recu_demonstrations/dashboard.html:95
+#: templates/admin/recu_demonstrations/form.html:247
 #: templates/admin/user/edit.html:127
 msgid "Kyllä"
 msgstr ""
@@ -1099,6 +1102,7 @@ msgid "Uusi toistuva mielenosoitus"
 msgstr "Submit a demonstration"
 
 #: templates/admin/demonstrations/dashboard.html:192
+#: templates/admin/recu_demonstrations/dashboard.html:84
 msgid "Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia."
 msgstr ""
 
@@ -1130,6 +1134,8 @@ msgstr ""
 #: templates/admin/demonstrations/dashboard.html:280
 #: templates/admin/demonstrations/dashboard.html:281
 #: templates/admin/demonstrations/form.html:260
+#: templates/admin/recu_demonstrations/dashboard.html:96
+#: templates/admin/recu_demonstrations/form.html:247
 #: templates/admin/user/edit.html:127
 msgid "Ei"
 msgstr ""
@@ -1145,10 +1151,12 @@ msgstr ""
 
 #: templates/admin/demonstrations/dashboard.html:255
 #: templates/admin/demonstrations/form.html:125
+#: templates/admin/recu_demonstrations/dashboard.html:109
 msgid "Otsikko"
 msgstr ""
 
 #: templates/admin/demonstrations/dashboard.html:257
+#: templates/admin/recu_demonstrations/dashboard.html:110
 #, fuzzy
 msgid "Päivämäärä"
 msgstr "Date (pp.kk.vvvv)"
@@ -1160,6 +1168,8 @@ msgstr "Remove"
 
 #: templates/admin/demonstrations/dashboard.html:259
 #: templates/admin/demonstrations/form.html:256
+#: templates/admin/recu_demonstrations/dashboard.html:113
+#: templates/admin/recu_demonstrations/form.html:243
 #, fuzzy
 msgid "Hyväksytty"
 msgstr "Accept"
@@ -1175,6 +1185,7 @@ msgid "Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen."
 msgstr ""
 
 #: templates/admin/demonstrations/dashboard.html:309
+#: templates/admin/recu_demonstrations/dashboard.html:132
 msgid "Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen."
 msgstr ""
 
@@ -1184,6 +1195,7 @@ msgid "Ei riittäviä oikeuksia mielenosoituksen katseluun."
 msgstr "Time till the demonstration starts"
 
 #: templates/admin/demonstrations/dashboard.html:340
+#: templates/admin/recu_demonstrations/dashboard.html:142
 msgid "Ei riittäviä oikeuksia mielenosoituksen poistamiseen."
 msgstr ""
 
@@ -1313,65 +1325,145 @@ msgid "Hae organisaatioita"
 msgstr "Organizations"
 
 #: templates/admin/organizations/dashboard.html:106
-#: templates/admin/organizations/form.html:227
+#: templates/admin/organizations/form.html:231
+#: templates/admin/organizations/view.html:119
 #, fuzzy
 msgid "Kuvaus"
 msgstr "Description"
 
 #: templates/admin/organizations/dashboard.html:108
-#: templates/admin/organizations/form.html:237
+#: templates/admin/organizations/form.html:243
+#: templates/admin/organizations/view.html:129
 #, fuzzy
 msgid "Verkkosivu"
 msgstr "Website"
 
-#: templates/admin/organizations/dashboard.html:131
+#: templates/admin/organizations/dashboard.html:123
+#, fuzzy
+msgid "Esikatsele"
+msgstr "View"
+
+#: templates/admin/organizations/dashboard.html:132
 #, fuzzy
 msgid "Organisaatioita ei löytynyt."
 msgstr "Demonstration not found."
 
-#: templates/admin/organizations/dashboard.html:138
+#: templates/admin/organizations/dashboard.html:139
 msgid "Kutsu henkilö"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:139
+#: templates/admin/organizations/dashboard.html:140
 msgid "Hallitse rooleja"
 msgstr ""
 
-#: templates/admin/organizations/form.html:116
+#: templates/admin/organizations/form.html:117
 msgid "Valitse sosiaalisen median alusta"
 msgstr ""
 
-#: templates/admin/organizations/form.html:136
+#: templates/admin/organizations/form.html:137
 msgid "Syötä URL"
 msgstr ""
 
-#: templates/admin/organizations/form.html:218
+#: templates/admin/organizations/form.html:220
 #, fuzzy
 msgid "Muokkaa organisaatiota"
 msgstr "Organizations"
 
-#: templates/admin/organizations/form.html:218
+#: templates/admin/organizations/form.html:220
 #, fuzzy
 msgid "Uusi organisaatio"
 msgstr "Organizations"
 
-#: templates/admin/organizations/form.html:243
+#: templates/admin/organizations/form.html:250
+#: templates/admin/organizations/view.html:135
 #, fuzzy
 msgid "Onko organisaatio vahvistettu?"
 msgstr "Organizations"
 
-#: templates/admin/organizations/form.html:250
+#: templates/admin/organizations/form.html:258
+#: templates/admin/organizations/view.html:141
 #: templates/organizations/details.html:41
 msgid "Sosiaalinen media"
 msgstr ""
 
-#: templates/admin/organizations/form.html:254
+#: templates/admin/organizations/form.html:262
 msgid "Lisää sosiaalisen median alusta"
 msgstr ""
 
-#: templates/admin/organizations/form.html:259
+#: templates/admin/organizations/form.html:268
 msgid "Luo"
 msgstr ""
+
+#: templates/admin/organizations/form.html:276
+#: templates/admin/organizations/macros.html:25
+#: templates/admin/organizations/view.html:154
+#, fuzzy
+msgid "Kutsu käyttäjiä"
+msgstr "Users"
+
+#: templates/admin/organizations/macros.html:32
+#, fuzzy
+msgid "Kutsuttavan sähköpostiosoite"
+msgstr "Email address"
+
+#: templates/admin/organizations/macros.html:39
+#, fuzzy
+msgid "Lähetä kutsu"
+msgstr "Submit"
+
+#: templates/admin/organizations/view.html:111
+#, fuzzy
+msgid "Organisaation tiedot"
+msgstr "Organizations"
+
+#: templates/admin/recu_demonstrations/dashboard.html:75
+#, fuzzy
+msgid "Toistuvat mielenosoitukset"
+msgstr "Upcoming demonstrations"
+
+#: templates/admin/recu_demonstrations/dashboard.html:80
+#, fuzzy
+msgid "Luo uusi toistuva mielenosoitus"
+msgstr "Submit a demonstration"
+
+#: templates/admin/recu_demonstrations/dashboard.html:90
+#, fuzzy
+msgid "Hae toistuvia mielenosoituksia:"
+msgstr "Search for demonstrations"
+
+#: templates/admin/recu_demonstrations/dashboard.html:91
+#, fuzzy
+msgid "Hae toistuvia mielenosoituksia..."
+msgstr "Search for demonstrations..."
+
+#: templates/admin/recu_demonstrations/dashboard.html:91
+#, fuzzy
+msgid "Hae toistuvia mielenosoituksia"
+msgstr "Submit a demonstration"
+
+#: templates/admin/recu_demonstrations/dashboard.html:93
+#, fuzzy
+msgid "Näytä vain hyväksytyt toistuvat mielenosoitukset:"
+msgstr "Display all demonstrations"
+
+#: templates/admin/recu_demonstrations/dashboard.html:94
+#, fuzzy
+msgid "Hyväksytty status"
+msgstr "Accept"
+
+#: templates/admin/recu_demonstrations/dashboard.html:111
+msgid "Aika"
+msgstr ""
+
+#: templates/admin/recu_demonstrations/dashboard.html:114
+#, fuzzy
+msgid "Toimet"
+msgstr "Additional informatio"
+
+#: templates/admin/recu_demonstrations/dashboard.html:152
+#, fuzzy
+msgid "Ei löytynyt toistuvia mielenosoituksia."
+msgstr "No demonstrations found"
 
 #: templates/admin/user/confirm.html:7
 msgid "Haluatko varmasti poistaa tämän käyttäjän?"
@@ -1489,4 +1581,22 @@ msgstr "Additional informatio"
 
 #~ msgid "Organisaatio luotu onnistuneesti."
 #~ msgstr "Organization created successfully."
+
+#~ msgid "Superkäyttäjän käsikirja"
+#~ msgstr "Super-user's handbook"
+
+#~ msgid "Käyttäjien hallinta"
+#~ msgstr "Manage users"
+
+#~ msgid "Organisaatioiden hallinta"
+#~ msgstr "Manage organizations"
+
+#~ msgid "Mielenosoitusten hallinta"
+#~ msgstr "Manage demonstrations"
+
+#~ msgid "Toistuvien mielenosoitusten hallinta"
+#~ msgstr "Manage recurring demonstrations"
+
+#~ msgid "Kieli"
+#~ msgstr ""
 

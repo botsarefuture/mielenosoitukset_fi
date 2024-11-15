@@ -1,28 +1,51 @@
 {% extends "admin_base.html" %}
 
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+{% endblock %}
+
 {% block main_content %}
-    <h1>{{ _('Tilastot') }}</h1>
+<div class="table-container">
+    <h2 id="tabletitle">{{ _('Tilastot') }}</h2>
     <p>{{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}</p>
-    
+
     <div class="stats-overview">
         <h2>{{ _('Käyttäjät') }}</h2>
         <p>{{ _('Rekisteröityneet käyttäjät:') }} <strong>{{ total_users }}</strong></p>
         <p>{{ _('Sähköpostiosoitteensa vahvistaneet käyttäjät:') }} <strong>{{ active_users }}</strong></p>
-        
+
         <h2>{{ _('Organisaatiot') }}</h2>
         <p>{{ _('Rekisteröidyt organisaatiot:') }} <strong>{{ total_organizations }}</strong></p>
-        
-        <!-- TODO: Make this actually work -->
+
         <h2>{{ _('Viimeisimmät aktiviteetit') }}</h2>
-        <ul>
-            {% for activity in recent_activities %}
-            <li>{{ activity }}</li>
-            {% endfor %}
-            {% if not recent_activities %}
-            <li>{{ _('Ei aktiivisuuksia vielä.') }}</li>
-            {% endif %}
-        </ul>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ _('Aktiviteetti') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in recent_activities %}
+                    <tr>
+                        <td>{{ activity }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not recent_activities %}
+                    <tr>
+                        <td>{{ _('Ei aktiivisuuksia vielä.') }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
-        
-    <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-primary">{{ _('Palaa hallintapaneeliin') }}</a>
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
+            <i class="fas fa-arrow-left"></i>{{ _('Palaa hallintapaneeliin') }}
+        </a>
+    </div>
+</div>
 {% endblock %}

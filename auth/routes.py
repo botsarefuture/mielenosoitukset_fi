@@ -13,6 +13,15 @@ import jwt
 import datetime
 import importlib
 
+from classes import Organization
+from utils.auth import (
+    generate_confirmation_token,
+    verify_confirmation_token,
+    generate_reset_token,
+    verify_reset_token,
+    
+)
+
 EmailSender = importlib.import_module('emailer.EmailSender', "mielenosoitukset_fi").EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
@@ -282,41 +291,31 @@ def edit_profile():
 
     return render_template("edit_profile.html")
 
+@auth_bp.route("/accept_invite", methods=["GET"])
+#@login_required # Don't require login to accept invite
+def accept_invite():
+    if not current_user.is_authenticated:
+        flash_message("Kirjaudu sisään liittyäksesi organisaatioon.", "info")
+        return redirect(url_for("auth.login", next=request.url))
+    
+    organization_id = request.args.get("organization_id")
+    organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+    org = Organization.from_dict(organization)
 
-def generate_reset_token(email):
-    return jwt.encode(
-        {
-            "email": email,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
-        },
-        current_app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
+    if organization["invitations"] and current_user.email in organization["invitations"]:
+        
+        organization["invitations"].remove(current_user.email)
+        mongo.organizations.update_one(
+            {"_id": ObjectId(organization_id)},
+            {"$set": {"invitations": organization["invitations"]}},
+        )
+        org.add_member(current_user, role="member", permissions=[])
+        
+    else:
+        flash_message("Kutsua ei löytynyt.", "warning")
+        return redirect(url_for("index"))
+    
+    
 
-
-def verify_reset_token(token):
-    try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-        return data["email"]
-    except Exception:
-        return None
-
-
-def generate_confirmation_token(email):
-    return jwt.encode(
-        {
-            "email": email,
-            "exp": datetime.datetime.utcnow()
-            + datetime.timedelta(hours=1),  # Korjattu rivi
-        },
-        current_app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
-
-
-def verify_confirmation_token(token):
-    try:
-        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-        return data["email"]
-    except Exception:
-        return None
+    flash_message(f"Liityit organisaatioon {organization.get('name')}.", "success")
+    return redirect(url_for("org", org_id=organization_id))

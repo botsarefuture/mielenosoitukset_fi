@@ -87,8 +87,8 @@ def edit_user(user_id):
         flash_message("Käyttäjää ei löytynyt.", "error")
         return redirect(url_for("admin_user.user_control"))
 
-    # Check if the current user has the right to edit the target user
-    if compare_user_levels(current_user, user) is False:
+    # Check if the current user has the right to edit the target user 
+    if user != current_user and compare_user_levels(current_user, user) is False:
         flash_message("Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.", "error")
         return redirect(url_for("admin_user.user_control")) 
         # SECURITY: Prevents users from editing users with higher access levels \

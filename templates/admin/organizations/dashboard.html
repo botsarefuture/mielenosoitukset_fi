@@ -119,7 +119,8 @@
                     <td class="actions-cell">
                         <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}" class="button edit-button"><i class="fas fa-edit"></i>{{ _('Muokkaa') }}</a>
                         <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}" class="button delete-button"><i class="fas fa-trash"></i>{{ _('Poista') }}</a>
-                        <a href="{{ url_for('org', org_id=org._id )}}" class="button view-button"><i class="fa-solid fa-eye"></i>{{ _('Katsele') }}</a>
+                        <a href="{{ url_for('admin_org.view_organization', org_id=org._id )}}" class="button view-button"><i class="fa-solid fa-eye"></i>{{ _('Katsele') }}</a>
+                        <a href="{{ url_for('org', org_id=org._id )}}" class="button view-button"><i class="fa-solid fa-eye"></i>{{ _('Esikatsele') }}</a>
                     </td>
                 </tr>
                 {% endfor %}

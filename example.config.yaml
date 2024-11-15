@@ -16,6 +16,10 @@ MAIL:
 
 PORT: 5002  # Application port
 DEBUG: true  # Enable debugging mode for development
+# SOS! Disable debug mode in production! 
+# Debug mode exposes sensitive information and is not suitable for production environments!
+# https://flask.palletsprojects.com/en/stable/config/#DEBUG
+
 
 # S3 Configuration
 S3:
@@ -29,3 +33,8 @@ BABEL:
     - "fi"
     - "en"
     - "sv"
+  
+  LANGUAGES:
+    fi: "Suomi"
+    en: "English"
+    sv: "Svenska"

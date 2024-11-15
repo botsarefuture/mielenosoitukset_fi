@@ -66,7 +66,7 @@ const editorConfig = {
 			'outdent',
 			'indent'
 		],
-		shouldNotGroupWhenFull: false
+		shouldNotGroupWhenFull: true // Enable grouping when toolbar is full
 	},
 	plugins: [
 		AccessibilityHelp,
@@ -199,5 +199,5 @@ const editorConfig = {
 };
 
 ClassicEditor.create(document.querySelector('#editor'), editorConfig).then( NewEditor => {
-    editor = NewEditor;
+		editor = NewEditor;
 });

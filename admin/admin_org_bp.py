@@ -19,11 +19,18 @@ from flask_login import current_user, login_required
 from utils.flashing import flash_message
 from utils.validators import valid_email
 from wrappers import admin_required, permission_required
-from .utils import log_admin_action, mongo
+from .utils import log_admin_action, mongo, get_org_name as get_organization_name
+from classes import Organization
+
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
+from emailer.EmailSender import EmailSender
+from utils.flashing import flash_message
+from utils.logger import logger
+
+email_sender = EmailSender()
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -95,6 +102,47 @@ def edit_organization(org_id):
 
     return render_template("admin/organizations/form.html", organization=organization)
 
+
+def invite_to_organization(invitee_email, organization_id):
+    """
+    Send an invitation email to a user to join an organization.
+
+    Args:
+        invitee_email (str): The email address of the person being invited.
+        organization_id (str): The ID of the organization.
+    """
+    try:
+        organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+        org = Organization.from_dict(organization)
+        
+        if invitee_email in org.invitations:
+            flash_message("Kutsu on jo lähetetty tälle sähköpostiosoitteelle.", "error")
+            return
+
+        if org.is_member(invitee_email):
+            flash_message("Käyttäjä on jo jäsen organisaatiossa.", "error")
+            return
+        
+        # Add invitation into db
+        mongo.organizations.update_one(
+            {"_id": ObjectId(organization_id)},
+            {"$addToSet": {"invitations": invitee_email}},
+        ) # Add the email to the invitations list
+        
+        invite_url = url_for('auth.accept_invite', organization_id=organization_id, _external=True)
+        email_sender.queue_email(
+            template_name="invite_to_organization.html",
+            subject=f"Kutsu liittyä organisaatioon {get_organization_name(organization_id)}",
+            recipients=[invitee_email],
+            context={
+                "invite_url": invite_url,
+                "inviter_name": current_user.displayname or current_user.username,
+            }
+        )
+        flash_message("Kutsu lähetetty onnistuneesti.", "success")
+    except Exception as e:
+        logger.error(f"Kutsun lähettäminen epäonnistui: {e}")
+        flash_message(f"Kutsun lähettäminen epäonnistui: {e}", "error")
 
 def update_organization(org_id):
     """Update organization details based on form input."""
@@ -255,3 +303,22 @@ def confirm_delete_organization(org_id):
 # TODO: #176 Add error handling for database operations.
 # TODO: #177 Refactor common code into utility functions.
 # TODO: #179 #178 Improve the user interface for organization forms.
+
+@admin_org_bp.route("/invite", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("INVITE_TO_ORGANIZATION")
+def invite():
+    invitee_email = request.form.get("invitee_email")
+    organization_id = request.form.get("organization_id")
+    print(invitee_email, organization_id)
+    invite_to_organization(invitee_email, ObjectId(organization_id))
+    return redirect(url_for("admin_org.organization_control"))
+
+@admin_org_bp.route("/view/<org_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_ORGANIZATION")
+def view_organization(org_id):
+    organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    return render_template("admin/organizations/view.html", organization=organization)    

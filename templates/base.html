@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fi" class="dark">
+<html lang="{{ session.get('locale', 'fi') }}" class="dark">
 
 <head>
   <meta charset="UTF-8" />
@@ -12,6 +12,10 @@
   <!-- meta content will be inserted here -->
 
   {% endblock %}
+
+  {% for lang_code, url in alternate_urls.items() %}
+    <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+  {% endfor %}
 
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
 
@@ -53,9 +57,20 @@
   {% include "header.html" %}
 
   <!-- Flash Messages -->
-  <div id="flash-messages" class="flash-messages" style="display: none">
-    <ul id="flash-message-list"></ul>
-  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div id="flash-messages" class="flash-messages">
+        <button class="flash-close" onclick="document.getElementById('flash-messages').style.display = 'none'">
+          <i class="fas fa-times"></i>
+        </button>
+        <ul id="flash-message-list">
+          {% for category, message in messages %}
+            <li class="flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endwith %}
 
   <!-- Main Content Area -->
   <main class="container-main-content">
@@ -101,10 +116,6 @@
 
   <!-- JavaScript for Navigation Menu Toggle and Dropdown -->
   <script>
-    document.querySelector(".navbar-toggle").addEventListener("click", function () {
-      document.querySelector(".nav-links").classList.toggle("active");
-    });
-
     document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
       event.preventDefault();
       const dropdownMenu = this.nextElementSibling;
@@ -141,7 +152,7 @@
         }
       }, 10000);
     }
-
+    /*
     function checkForNewFlashMessages() {
       fetch("/get_flash_messages")
         .then((response) => response.json())
@@ -155,7 +166,7 @@
         .catch((error) => console.error("Error fetching flash messages:", error));
     }
 
-    setInterval(checkForNewFlashMessages, 5000);
+    setInterval(checkForNewFlashMessages, 5000);*/
   </script>
 
   <script>
@@ -244,7 +255,12 @@
 
     applyPreferredTheme();
   </script>
-
+<script>
+  function toggleNavbar() {
+    const navLinks = document.querySelector('.nav-links');
+    navLinks.classList.toggle('active');
+  }
+</script>
   {% block scripts %} {% endblock %}
 </body>
 

@@ -43,8 +43,9 @@ def demo_control():
 
     # Construct the base query to fetch demonstrations
     # Remove the "approved" filter to allow for dynamic filtering based on user input
-    del DEMO_FILTER["approved"]
-    query = DEMO_FILTER
+    filter = DEMO_FILTER.copy() # Copy the base filter to avoid modifying the original
+    del filter["approved"]
+    query = filter
     
 
     if approved_only:

@@ -1,0 +1,107 @@
+/* General modal styles */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 600px;
+    background-color: var(--background);
+    box-shadow: var(--box-shadow);
+    z-index: 1000;
+    border-radius: 8px;
+    overflow: hidden;
+    display: none; /* Hide the modal by default */
+}
+
+.modal.active {
+    display: block; /* Show the modal when .active class is added */
+}
+
+/* Modal header */
+.modal-header {
+    padding: 15px;
+    background-color: var(--background-light);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: var(--primary-text-color);
+}
+
+.modal-header .close {
+    cursor: pointer;
+}
+
+/* Modal body */
+.modal-body {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    color: var(--primary-text-color);
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 10px;
+    background-color: var(--background-light);
+    border-top: 1px solid var(--border-color);
+    text-align: right;
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 10px;
+    background-color: var(--background-light);
+    border-top: 1px solid var(--border-color);
+    text-align: right;
+}
+
+.modal-footer .btn {
+    padding: 10px 20px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-footer .btn-primary {
+    background-color: var(--primary-button-color);
+    color: var(--primary-button-text-color);
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: var(--primary-button-hover-color);
+    color: var(--primary-button-hover-text-color);
+}
+
+.modal-footer .btn-secondary {
+    background-color: var(--secondary-button-color);
+    color: var(--secondary-button-text-color);
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: var(--secondary-button-hover-color);
+    color: var(--secondary-button-hover-text-color);
+}
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none; /* Hide the overlay by default */
+}
+
+.modal-overlay.active {
+    display: block; /* Show the overlay when .active class is added */
+}

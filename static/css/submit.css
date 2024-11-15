@@ -213,10 +213,10 @@ select.error {
     }
 }
 
-
+/* Tag Input Styles */
 .tag-input {
-        width: 95% !important;
-        gap: 5px !important;
-        margin-top: 5px !important;
-        margin-right: 5px !important;
+    width: 95% !important;
+    gap: 5px !important;
+    margin-top: 5px !important;
+    margin-right: 5px !important;
 }

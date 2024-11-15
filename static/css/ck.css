@@ -16,3 +16,12 @@
 .editor-container_include-block-toolbar {
 	margin-left: 42px;
 }
+
+@media (max-width: 600px) {
+  .editor-container_classic-editor .editor-container__editor {
+    width: 100%;
+  }
+  .editor-container_include-block-toolbar {
+    margin-left: 0;
+  }
+}

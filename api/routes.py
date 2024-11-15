@@ -119,3 +119,38 @@ def like_demo(demo_id):
     likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})["likes"]
     
     return jsonify({"likes": likes})
+
+@api_bp.route("/demo/<demo_id>/unlike", methods=["POST"])
+def unlike_demo(demo_id):
+    """
+    unLike a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
+    """
+    
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+
+    if demo is None:
+        abort(404, description="Mielenosoitusta ei löytynyt.")
+
+    mongo.demo_likes.update_one({"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": -1}}, upsert=True)
+    
+    likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})["likes"]
+    
+    return jsonify({"likes": likes})
+
+@api_bp.route("/demo/<demo_id>/likes", methods=["GET"])
+def get_likes(demo_id):
+    """
+    Get the number of likes for a demonstration
+    """
+    
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+
+    if demo is None:
+        abort(404, description="Mielenosoitusta ei löytynyt.")
+    
+    likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})
+    
+    if likes is None:
+        return jsonify({"likes": 0})
+    
+    return jsonify({"likes": likes["likes"]})

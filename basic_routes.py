@@ -110,8 +110,11 @@ def init_routes(app):
         """
         Inject alternate URLs into the template context.
         """
-        alternate_urls = generate_alternate_urls(app, request.endpoint, **request.view_args)
-        return dict(alternate_urls=alternate_urls)
+        if request.view_args:
+            alternate_urls = generate_alternate_urls(app, request.endpoint, **request.view_args)
+            return dict(alternate_urls=alternate_urls)
+        else:
+            return dict(alternate_urls={})
 
     @app.route("/")
     def index():

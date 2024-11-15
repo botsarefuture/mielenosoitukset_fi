@@ -289,3 +289,29 @@ def edit_profile():
         return redirect(url_for("auth.profile", username=current_user.username))
 
     return render_template("edit_profile.html")
+
+@auth_bp.route("/accept_invite", methods=["GET"])
+#@login_required # Don't require login to accept invite
+def accept_invite():
+    if not current_user.is_authenticated:
+        flash_message("Kirjaudu sisään liittyäksesi organisaatioon.", "info")
+        return redirect(url_for("auth.login", next=request.url))
+    
+    organization_id = request.args.get("organization_id")
+    organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+
+    if organization["invitations"] and current_user.email in organization["invitations"]:
+        organization["invitations"].remove(current_user.email)
+        mongo.organizations.update_one(
+            {"_id": ObjectId(organization_id)},
+            {"$set": {"invitations": organization["invitations"]}},
+        )
+        # Add user to organization
+        current_user.add_organization(organization_id)
+        
+    else:
+        flash_message("Kutsua ei löytynyt.", "warning")
+        return redirect(url_for("index"))
+
+    flash_message(f"Liityit organisaatioon {organization.get('name')}.", "success")
+    return redirect(url_for("org", org_id=organization_id))

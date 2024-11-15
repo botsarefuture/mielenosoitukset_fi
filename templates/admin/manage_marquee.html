@@ -17,10 +17,10 @@
 
 {% block content %}
 <div class="container">
-    <h1>{{ _('Pyörörullan hallinta') }}
+    <h1 class="admin-section-title">{{ _('Pyörörullan hallinta') }}
     </h1>
     <i>{{ _('Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen.') }}</i>
-    
+    <br><br>
     {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
             <ul class="flashes">
@@ -34,6 +34,7 @@
     <form method="POST" action="{{ url_for('admin.manage_marquee') }}">
         <div class="form-group">
             <label for="marquee_message"> {{ _('Nykyinen pyörö:') }}</label>
+            <br>
             <textarea id="marquee_message" name="marquee_message" rows="4" class="form-control" oninput="updatePreview()">{{ current_message }}</textarea>
         </div>
         

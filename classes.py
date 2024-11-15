@@ -133,6 +133,7 @@ class Organization(BaseModel):
         members: List[Dict[str, Any]] = None,
         verified: bool = False,
         _id=None,
+        invitations = None
     ):
         self.name = name
         self.description = description
@@ -142,6 +143,7 @@ class Organization(BaseModel):
         self.members = members or []
         self.verified = verified
         self._id = _id or ObjectId()
+        self.invitations = invitations
 
     def save(self):
         """Save the organization to MongoDB."""

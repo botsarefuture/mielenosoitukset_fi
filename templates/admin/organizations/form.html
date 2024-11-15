@@ -261,5 +261,14 @@
             <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-danger">{{ _('Peruuta') }}</a>
         </div>
     </form>
+        <!-- ADD HERE THE INVITATION FORM -->
+    <form method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
+        <div class="form-group">
+            <label for="email">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span></label>
+            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required>
+        </div>
+        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
+        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
+    </form>
 </div>
 {% endblock %}

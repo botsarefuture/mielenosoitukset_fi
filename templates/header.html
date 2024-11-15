@@ -203,12 +203,9 @@
         <!-- Additional Links for Global Admins on Mobile -->
         {% if current_user.global_admin %}
         <div class="mobile-admin-links">
-          <li><a href="{{ url_for('admin.admin_dashboard') }}">{{ _('Superkäyttäjän käsikirja') }}</a></li>
+          <li>Olet mobiililaitteella. Siirry tietokoneelle, täysiä hallintoja varten.</li>
           <li><a href="{{ url_for('admin_user.user_control') }}">{{ _('Käyttäjien hallinta') }}</a></li>
-          <li><a href="{{ url_for('admin_org.organization_control') }}">{{ _('Organisaatioiden hallinta') }}</a></li>
           <li><a href="{{ url_for('admin_demo.demo_control') }}">{{ _('Mielenosoitusten hallinta') }}</a></li>
-          <li><a href="{{ url_for('admin_recu_demo.recu_demo_control') }}">{{ _('Toistuvien mielenosoitusten hallinta') }}</a></li>
-          <li><a href="{{ url_for('admin.stats') }}">{{ _('Tilastot') }}</a></li>
         </div>
         {% endif %}
 

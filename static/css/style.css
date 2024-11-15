@@ -445,71 +445,6 @@ span i {
   text-shadow: 1px 1px 2px var(--black);
 }
 
-.marquee {
-  background-color: var(--background-light);
-  color: var(--red);
-  overflow: hidden;
-  white-space: nowrap;
-  box-shadow: 0 2px 5px var(--box-shadow-color);
-  z-index: 9990000;
-  position: sticky;
-  top: 0;
-}
-
-.marquee h2 {
-  display: inline-block;
-  /* Display inline for scrolling */
-  animation: marquee 15s linear infinite;
-  /* Animation for scrolling */
-  padding: 10px 0;
-  /* Vertical padding */
-  font-size: 1.5rem;
-  /* Adjust font size as needed */
-  color: inherit;
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(100%);
-  }
-
-  /* Start off-screen to the right */
-  100% {
-    transform: translateX(-100%);
-  }
-
-  /* End off-screen to the left */
-}
-
-.marquee {
-  overflow: hidden;
-  white-space: nowrap;
-  box-sizing: border-box;
-  position: relative;
-  width: 100%;
-  /* Full width */
-}
-
-.marquee-content {
-  display: inline-block;
-  position: absolute;
-  /* Positioning for fixed distance */
-  animation: marquee linear infinite;
-  /* Use keyframes to control the animation */
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(100%);
-    /* Start from the right */
-  }
-
-  100% {
-    transform: translateX(calc(-100% - 10cm));
-    /* Move left by the full width plus the desired distance */
-  }
-}
-
 .circle-btn {
   height: 2em;
   line-height: 2em;
@@ -792,7 +727,10 @@ span i {
   padding: 2rem;
 }
 
-.mb-only /* mobile only */ {
+.mb-only
+
+/* mobile only */
+  {
   visibility: hidden !important;
 }
 
@@ -800,7 +738,10 @@ span i {
   visibility: hidden !important;
 }
 
-.pc-only /* pc only */ {
+.pc-only
+
+/* pc only */
+  {
   visibility: visible !important;
 }
 
@@ -837,5 +778,28 @@ span i {
     position: fixed;
     left: 10vw;
     border: black 1px solid;
-  }  
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+}
+
+.marquee-content {
+  display: inline-block;
+  position: absolute;
+  animation: marquee linear infinite;
 }

@@ -28,11 +28,27 @@
   .optional-section {
     display: none;
   }
+  @media (max-width: 600px) {
+    .container-form {
+      padding: 10px;
+    }
+    .editor-container__editor {
+      width: 100%;
+    }
+    .add-organizer-button,
+    .submit-button {
+      width: 100%;
+    }
+    .editor-container_include-block-toolbar {
+      margin-left: 0;
+    }
+  }
 </style>
 {% endblock %}
 {% block scripts %}
+<script type="module">
+  import ClassicEditor from "ckeditor5";
 
-<script>
   let editor;
   import ClassicEditor from "ckeditor5-build-classic";
 
@@ -80,6 +96,8 @@
 </script>
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
 <script>
   let organizerCount = 0;
 

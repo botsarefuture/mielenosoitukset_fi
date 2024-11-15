@@ -259,7 +259,12 @@
 
     applyPreferredTheme();
   </script>
-
+<script>
+  function toggleNavbar() {
+    const navLinks = document.querySelector('.nav-links');
+    navLinks.classList.toggle('active');
+  }
+</script>
   {% block scripts %} {% endblock %}
 </body>
 

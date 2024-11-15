@@ -85,6 +85,26 @@
       align-items: center;
       justify-content: space-between;
     }
+
+    .language-buttons {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .language-buttons button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5em;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+
+    .language-buttons button:hover {
+      color: #f2f2f2;
+    }
   }
 
   @media (max-width: 480px) {
@@ -180,8 +200,11 @@
       display: none;
     }
   }
-</style>
 
+  .nav-links.active {
+    /*display: flex;*/
+  }
+</style>
 
 <!-- Navigation Bar -->
 <header>
@@ -197,22 +220,21 @@
 
       <!-- Navigation Links -->
       <ul class="nav-links">
+        <!-- Language Buttons for Mobile -->
+        <div class="language-buttons">
+          {% for lang_code in get_supported_locales() %}
+          <button onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'">{{ get_lang_name(lang_code)
+            }}</button>
+          {% endfor %}
+        </div>
+
         <li><a href="{{ url_for('index') }}">{{ _('Etusivu') }}</a></li>
         <li><a href="{{ url_for('demonstrations') }}">{{ _('Mielenosoitukset') }}</a></li>
         <li><a href="{{ url_for('submit') }}">{{ _('Ilmoita mielenosoituksesta') }}</a></li>
 
-        <!-- Additional Links for Global Admins on Mobile -->
-        {% if current_user.global_admin %}
-        <div class="mobile-admin-links">
-          <li>Olet mobiililaitteella. Siirry tietokoneelle, täysiä hallintoja varten.</li>
-          <li><a href="{{ url_for('admin_user.user_control') }}">{{ _('Käyttäjien hallinta') }}</a></li>
-          <li><a href="{{ url_for('admin_demo.demo_control') }}">{{ _('Mielenosoitusten hallinta') }}</a></li>
-        </div>
-        {% endif %}
-
         <!-- Conditional Links for Authenticated Users -->
         {% if current_user.is_authenticated %}
-        <li class="dropdown">
+        <li class="pc-only dropdown"> <!-- Dropdown Menu for Authenticated Users -->
           <a href="#" class="dropdown-toggle">
             <span class="profile-container">
               {% if current_user.profile_picture %}
@@ -229,20 +251,15 @@
         </li>
         {% endif %}
 
-        <!-- Language Selector -->
-        <li>
-          <div class="dropdown">
-            <a href="#" class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">
-              <span>{{ _('Kieli') }}</span>
-              <i style="margin-left: 5px;" class="fas fa-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              {% for lang_code in get_supported_locales() %}
-              <li><a href="{{ url_for('set_language', lang=lang_code) }}">{{ get_lang_name(lang_code) }}</a></li>
-              {% endfor %}
-            </ul>
-          </div>
+        <!-- Additional Links for Global Admins on Mobile -->
+        {% if current_user.global_admin %}
+        <li class="mb-only mobile-admin-links">
+          <a href="#">
+            <i class="fas fa-exclamation-circle" style="color: red; margin-right: 5px;"></i>
+            {{ _('Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten') }}
+          </a>
         </li>
+        {% endif %}
 
         <li>
           <button class="button" style="font-size: 2em;" onclick="toggleDarkMode()">
@@ -258,10 +275,3 @@
   {% include "sidebar.html" %}
   {% endif %}
 </header>
-
-<script>
-  function toggleNavbar() {
-    const navLinks = document.querySelector('.nav-links');
-    navLinks.classList.toggle('active');
-  }
-</script>

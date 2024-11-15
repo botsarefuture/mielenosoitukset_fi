@@ -791,3 +791,37 @@ span i {
 .pd-8 {
   padding: 2rem;
 }
+
+.mb-only /* mobile only */ {
+  display: none !important;
+}
+
+.mb-only * {
+  display: none !important;
+}
+
+.pc-only /* pc only */ {
+  display: block !important;
+}
+
+.pc-only * {
+  display: block !important;
+}
+
+@media (max-width: 768px) {
+  .mb-only {
+    display: block !important;
+  }
+
+  .mb-only * {
+    display: block !important;
+  }
+
+  .pc-only {
+    display: none !important;
+  }
+
+  .pc-only * {
+    display: none !important;
+  }
+}

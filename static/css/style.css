@@ -793,35 +793,50 @@ span i {
 }
 
 .mb-only /* mobile only */ {
-  display: none !important;
+  visibility: hidden !important;
 }
 
 .mb-only * {
-  display: none !important;
+  visibility: hidden !important;
 }
 
 .pc-only /* pc only */ {
-  display: block !important;
+  visibility: visible !important;
 }
 
 .pc-only * {
-  display: block !important;
+  visibility: visible !important;
 }
 
 @media (max-width: 768px) {
   .mb-only {
-    display: block !important;
+    visibility: visible !important;
   }
 
   .mb-only * {
-    display: block !important;
+    visibility: visible !important;
   }
 
   .pc-only {
-    display: none !important;
+    visibility: hidden !important;
+    width: 0;
+    height: 0;
   }
 
   .pc-only * {
-    display: none !important;
+    visibility: hidden !important;
+    height: 0;
+    width: 0;
   }
 }
+
+@media screen and (max-width: 720px) {
+  header nav.navbar div#headerbar.container.bg-header-footer.shifted ul.nav-links.active li button.button {
+    margin: 0 auto;
+    top: 100px;
+    position: fixed;
+    left: 10vw;
+    border: black 1px solid;
+  }  
+}
+

@@ -1,3 +1,10 @@
+<script>
+  function toggleNavbar() {
+    const navLinks = document.querySelector('.nav-links');
+    navLinks.classList.toggle('active');
+  }
+</script>
+
 <style>
   /* Base Styles */
   .navbar {
@@ -214,14 +221,14 @@
       <a href="{{ url_for('index') }}" class="logo">{{ _('Mielenosoitukset.fi') }}</a>
 
       <!-- Toggle Button for Mobile Navigation -->
-      <button class="navbar-toggle" aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
+      <button class="mb-only navbar-toggle" aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
         <i class="fas fa-bars"></i>
       </button>
 
       <!-- Navigation Links -->
       <ul class="nav-links">
         <!-- Language Buttons for Mobile -->
-        <div class="language-buttons">
+        <div class="mb-only language-buttons">
           {% for lang_code in get_supported_locales() %}
           <button onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'">{{ get_lang_name(lang_code)
             }}</button>

@@ -4,27 +4,23 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
-
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
-
-<!-- Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
 <style>
-    
     .search-form {
         margin: 1rem 0;
         display: flex;
-        flex-wrap: wrap; /* Allows wrapping on smaller screens */
-        justify-content: space-between; /* Space out form elements */
-        align-items: center; /* Center align */
-        gap: 0.5rem; /* Space between form elements */
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .search-input, .search-button {
-        flex: 1; /* Allow inputs to take available space */
-        min-width: 150px; /* Minimum width for better usability */
-        max-width: 300px; /* Maximum width to avoid excessive growth */
+        flex: 1;
+        min-width: 150px;
+        max-width: 300px;
     }
 
     .search-input {
@@ -35,52 +31,50 @@
     }
 
     .search-input:focus {
-        border-color: #007bff; /* Primary color on focus */
-        outline: none; /* Remove outline */
+        border-color: #007bff;
+        outline: none;
     }
 
     .search-button {
-        background: #28a745; /* Success green */
+        background: #28a745;
         color: white;
         padding: 0.5rem 1rem;
         border-radius: 5px;
         border: none;
         cursor: pointer;
         transition: background 0.3s ease;
-        font-weight: bold; /* Bold text for visibility */
-        display: flex; /* Align icon and text */
-        align-items: center; /* Center align icon */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .search-button:hover {
-        background: #218838; /* Darker green on hover */
+        background: #218838;
     }
 
     .no-users {
-        color: #721c24; 
-        font-weight: bold; 
-        background: #f8d7da; 
-        padding: 20px; 
-        border: 1px dashed #f5c6cb; /* Dashed border for emphasis */
+        color: #721c24;
+        font-weight: bold;
+        background: #f8d7da;
+        padding: 20px;
+        border: 1px dashed #f5c6cb;
         border-radius: 5px;
         text-align: center;
-        margin: 1rem 0; /* Margin for separation */
+        margin: 1rem 0;
     }
 
-    /* Responsive Styles */
     @media (max-width: 768px) {
         .search-form {
-            flex-direction: column; /* Stack form elements on smaller screens */
-            align-items: flex-start; /* Align items to the start */
+            flex-direction: column;
+            align-items: flex-start;
         }
         .search-input, .search-button {
-            width: 100%; /* Full width for better usability */
-            margin-bottom: 0.5rem; /* Space below each element */
+            width: 100%;
+            margin-bottom: 0.5rem;
         }
     }
 </style>
-
 {% endblock %}
 {% block main_content %}
 

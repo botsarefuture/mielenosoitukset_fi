@@ -1,8 +1,10 @@
+
 {% extends 'admin_base.html' %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 <style>
     .custom-dropdown {
         position: relative;
@@ -81,43 +83,6 @@
         background-color: var(--primary-color-dark);
     }
 
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-        background-color: var(--container-background);
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-        max-width: 500px;
-        border-radius: 0.25rem;
-    }
-
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-
     .btn-primary {
         background-color: var(--primary-button-color);
         color: var(--primary-button-text-color);
@@ -134,19 +99,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 <script>
-    function toggleModal() {
-        const modal = document.getElementById('inviteModal');
-        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
-    }
-
-    window.onclick = function(event) {
-        const modal = document.getElementById('inviteModal');
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    }
-
     // TODO: Add functionality to handle dropdown selection
     // TODO: Add form validation for invitee email
 </script>
@@ -197,20 +151,7 @@
         </div>
     </div>
 
-    <button class="button" onclick="toggleModal()">{{ _('Kutsu käyttäjiä') }}</button>
-
-    <div id="inviteModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="toggleModal()">&times;</span>
-            <form method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
-                <div class="form-group">
-                    <label for="invitee_email">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span></label>
-                    <input type="email" id="invitee_email" name="invitee_email" class="form-control" required>
-                </div>
-                <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
-                <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
-            </form>
-        </div>
-    </div>
+    <button class="button" data-modal-target="#inviteModal">{{ _('Kutsu käyttäjiä') }}</button>
 </div>
+{{ org_macros.invite_modal(organization) }}
 {% endblock %}

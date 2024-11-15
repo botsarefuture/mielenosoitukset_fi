@@ -691,11 +691,14 @@ class RecurringDemonstration(Demonstration):
         """
 
         data = super().to_dict(json=json)  # Call the parent to_dict
+        
         if isinstance(self.repeat_schedule, dict):
             self.repeat_schedule = RepeatSchedule.from_dict(self.repeat_schedule)
+        
         data["repeat_schedule"] = (
             self.repeat_schedule.to_dict() if self.repeat_schedule else None
         )
+        
         if self.created_until:
             if isinstance(self.created_until, datetime):
                 data["created_until"] = self.created_until.strftime("%d.%m.%Y")

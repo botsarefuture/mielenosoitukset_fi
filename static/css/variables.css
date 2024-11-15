@@ -232,6 +232,8 @@
   /* Hover colors for row color 2 */
   --tr-bg-color-2-hover: #555; /* Hover background color for row 2 */
   --tr-txt-color-2-hover: #fff; /* Hover text color for row 2 */
+  
+  --auth-button-bg-color: var(--secondary-color);
 }
 
 
@@ -322,6 +324,8 @@
   /* Hover colors for row color 2 */
   --tr-bg-color-2-hover: #ff4f4f; /* Hover background color for row 2 */
   --tr-txt-color-2-hover: #804000; /* Hover text color for row 2 */
+  
+  --auth-button-bg-color: var(--secondary-color);
 }
 
 

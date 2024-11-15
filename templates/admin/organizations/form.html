@@ -1,7 +1,6 @@
 {% extends 'admin_base.html' %}
 
 {% block styles %}
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/org_create.css') }}">-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
@@ -97,7 +96,9 @@
         background-color: var(--primary-color-dark);
     }
 </style>
-</style>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+
 
 {% endblock %}
 
@@ -114,7 +115,7 @@
         dropdown.classList.add('custom-dropdown');
         dropdown.innerHTML = `
             <div class="dropdown-selected" onclick="toggleDropdown(this)">{{ _('Valitse sosiaalisen median alusta') }} <i class="fas fa-caret-down"></i></div>
-            <div class="dropdown-list">
+            <div class="dropdown-list" style="display: none;">
                 <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
                 <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
                 <div data-value="instagram"><i class="fab fa-instagram"></i> Instagram</div>
@@ -140,7 +141,7 @@
         const removeBtn = document.createElement('span');
         removeBtn.className = 'remove-btn';
         removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-        removeBtn.onclick = function() {
+        removeBtn.onclick = function () {
             container.remove();
         };
 
@@ -174,7 +175,7 @@
     }
 
     // Handle option click
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.dropdown-list div')) {
             const selectedValue = e.target.getAttribute('data-value');
             const selectedText = e.target.innerText;
@@ -193,14 +194,14 @@
         // Hide dropdown when clicking outside
         if (!e.target.closest('.custom-dropdown')) {
             const dropdowns = document.querySelectorAll('.dropdown-list');
-            dropdowns.forEach(function(dropdown) {
+            dropdowns.forEach(function (dropdown) {
                 dropdown.style.display = 'none';
             });
         }
     });
 
     // Event listener for adding new social media entry
-    document.getElementById('add-social-media').addEventListener('click', function() {
+    document.getElementById('add-social-media').addEventListener('click', function () {
         createSocialMediaEntry();
     });
 
@@ -211,37 +212,44 @@
     {% endfor %}
     {% endif %}
 </script>
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 {% endblock %}
 
 {% block main_content %}
 <div class="container mt-4" id="create">
-    <h2 class="admin-section-title form-title">{% if organization %}{{ _('Muokkaa organisaatiota') }}{% else %}{{ _('Uusi organisaatio') }}{% endif %}</h2>
+    <h2 class="admin-section-title form-title">{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h2>
 
-    <form method="POST" action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
+    <form method="POST"
+        action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
         <div class="form-group">
             <label for="name">{{ _('Nimi') }} <span class="required">*</span></label>
-            <input type="text" id="name" name="name" class="form-control" value="{{ organization.name if organization else '' }}" required>
+            <input type="text" id="name" name="name" class="form-control"
+                value="{{ organization.name if organization else '' }}" required>
         </div>
 
         <div class="form-group">
             <label for="description">{{ _('Kuvaus') }} <span class="required">*</span></label>
-            <textarea id="description" name="description" class="form-control" required>{{ organization.description if organization else '' }}</textarea>
+            <textarea id="description" name="description" class="form-control"
+                required>{{ organization.description if organization else '' }}</textarea>
         </div>
 
         <div class="form-group">
             <label for="email">{{ _('Sähköpostiosoite') }} <span class="required">*</span></label>
-            <input type="email" id="email" name="email" class="form-control" value="{{ organization.email if organization else '' }}" required>
+            <input type="email" id="email" name="email" class="form-control"
+                value="{{ organization.email if organization else '' }}" required>
         </div>
 
         <div class="form-group">
             <label for="website">{{ _('Verkkosivu') }}</label>
-            <input type="url" id="website" name="website" class="form-control" value="{{ organization.website if organization else '' }}">
+            <input type="url" id="website" name="website" class="form-control"
+                value="{{ organization.website if organization else '' }}">
         </div>
 
         {% if organization %}
         <div class="form-group">
             <label for="verified">{{ _('Onko organisaatio vahvistettu?') }}</label>
-            <input type="checkbox" id="verified" name="verified" class="form-check-input" {% if organization.verified %}checked{% endif %}>
+            <input type="checkbox" id="verified" name="verified" class="form-check-input" {% if organization.verified
+                %}checked{% endif %}>
         </div>
         {% endif %}
 
@@ -251,7 +259,8 @@
             <div id="social-media-list">
                 <!-- Existing social media entries will be populated here -->
             </div>
-            <button type="button" id="add-social-media" class="button">{{ _('Lisää sosiaalisen median alusta') }}</button>
+            <button type="button" id="add-social-media" class="button">{{ _('Lisää sosiaalisen median alusta')
+                }}</button>
         </div>
 
         <div class="form-buttons">
@@ -261,14 +270,15 @@
             <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-danger">{{ _('Peruuta') }}</a>
         </div>
     </form>
-        <!-- ADD HERE THE INVITATION FORM -->
-    <form method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
-        <div class="form-group">
-            <label for="email">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span></label>
-            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required>
-        </div>
-        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
-        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
-    </form>
+
+    <!-- TODO: #200 Consider making some kind of admin-tools block in Jinja2 and put this in it -->
+    {% if organization %}
+    <button class="button" data-modal-target="#inviteModal">{{ _('Kutsu käyttäjiä') }}</button>
+    {% endif %}
+
+</div>
+
+{{ org_macros.invite_modal(organization) }}
+
 </div>
 {% endblock %}

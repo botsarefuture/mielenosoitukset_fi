@@ -2,17 +2,20 @@
 
 {% extends 'base.html' %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% block meta %}
+<!-- Additional meta tags can be added here if needed -->
+{% endblock %}
+
+{% block title %}#{{ tag_name }} - Mielenosoitukset.fi{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 {% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-
 <div class="container-main-content">
   <h1 class="admin-section-title">#{{ tag_name }}</h1>
-
 
   {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
   <!-- Search form for filtering demonstrations by various criteria -->
@@ -54,7 +57,10 @@
       {% endif %}
   </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const topics = document.getElementsByClassName("topics");
@@ -99,5 +105,4 @@
     window.history.replaceState({}, "", currentUrl);
   });
 </script>
-
 {% endblock %}

@@ -1,69 +1,99 @@
-{% extends 'admin_base.html' %}
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+{% extends 'admin_base.html' %} {% block styles %}
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/form.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/table.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin/dash.css') }}"
+/>
 
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/deleteModal.css') }}"
+/>
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">-->
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin_actions_cell.css') }}"
+/>
+
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}"
+/>
+
+<!-- Font Awesome for icons -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+/>
 <style>
+  .search-form {
+    margin: 1rem 0;
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+    justify-content: space-between; /* Space out form elements */
+    align-items: center; /* Center align */
+    gap: 0.5rem; /* Space between form elements */
+  }
+
+  .search-input,
+  .filter-select {
+    padding: 0.75rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    flex: 1; /* Allow inputs to take available space */
+    min-width: 150px; /* Minimum width for better usability */
+    max-width: 300px; /* Maximum width to avoid excessive growth */
+    transition: border-color 0.3s ease;
+  }
+
+  .search-input:focus,
+  .filter-select:focus {
+    border-color: var(--blue); /* Primary color on focus */
+    outline: none; /* Remove outline */
+  }
+
+  .search-button {
+    background: #28a745; /* Success green */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-weight: bold; /* Bold text for visibility */
+    display: flex; /* Align icon and text */
+    align-items: center; /* Center align icon */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  }
+
+  .search-button:hover {
+    background: #218838; /* Darker green on hover */
+  }
+
+  /* Responsive Styles */
+  @media (max-width: 768px) {
     .search-form {
-        margin: 1rem 0;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.5rem;
+      flex-direction: column; /* Stack form elements on smaller screens */
+      align-items: flex-start; /* Align items to the start */
     }
-
-    .search-input, .filter-select {
-        padding: 0.75rem;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        flex: 1;
-        min-width: 150px;
-        max-width: 300px;
-        transition: border-color 0.3s ease;
-    }
-
-    .search-input:focus, .filter-select:focus {
-        border-color: var(--blue);
-        outline: none;
-    }
-
+    .search-input,
+    .filter-select,
     .search-button {
-        background: #28a745;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
-        border: none;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      width: 100%; /* Full width for better usability */
+      margin-bottom: 0.5rem; /* Space below each element */
     }
-
-    .search-button:hover {
-        background: #218838;
-    }
-
-    @media (max-width: 768px) {
-        .search-form {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .search-input, .filter-select, .search-button {
-            width: 100%;
-            margin-bottom: 0.5rem;
-        }
-    }
+  }
 </style>
-{% endblock %}
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
 <script>
   function acceptSty(demoId) {
@@ -133,8 +163,7 @@
   }
 </script>
 
-{% endblock %}
-{% block main_content %}
+{% endblock %} {% block main_content %}
 
 <div class="table-container">
   <h2 id="tabletitle">{{ _('Mielenosoitukset') }}</h2>

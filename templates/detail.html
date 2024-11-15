@@ -479,7 +479,7 @@
 
   <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
   <div class="button-container">
-    <button class="button like-button" onclick="likeDemo('{{ demo['_id'] }}')">
+    <button class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')">
       <i class="fas fa-thumbs-up"></i> {{ _('Osallistun') }}
     </button>
     <div class="like-count">
@@ -502,10 +502,18 @@
       content: ")";
     }
   </style>
-
   <script>
-    function likeDemo(demoId) {
-      fetch(`/api/demo/${demoId}/like`, {
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
+
+    function toggleLike(demoId) {
+      const url = liked ? `/api/demo/${demoId}/unlike` : `/api/demo/${demoId}/like`;
+      fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -514,11 +522,28 @@
       .then((response) => response.json())
       .then((data) => {
         document.getElementById("like-count").innerText = data.likes;
+        liked = !liked;
+        document.cookie = `liked_${demoId}=${liked}; path=/`;
       })
       .catch((error) => {
         console.error('Error:', error);
       });
     }
+
+    function get_likes(demoId) {
+      fetch(`/api/demo/${demoId}/likes`)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("like-count").innerText = data.likes;
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      get_likes("{{ demo['_id'] }}");
+    });
   </script>
 
   <!-- add a separator line here -->

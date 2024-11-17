@@ -58,11 +58,11 @@
                         {% else %}
                             <div class="follow-unfollow">
                                 {% if current_user.is_following(user) %}
-                                    <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
+                                    <form action="{{ url_for('users.profile.unfollow', username=user.username) }}" method="POST">
                                         <button type="submit" class="btn btn-unfollow">{{ _('Lopeta seuraaminen') }}</button>
                                     </form>
                                 {% else %}
-                                    <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
+                                    <form action="{{ url_for('users.profile.follow', username=user.username) }}" method="POST">
                                         <button type="submit" class="btn btn-follow">{{ _('Seuraa') }}</button>
                                     </form>
                                 {% endif %}

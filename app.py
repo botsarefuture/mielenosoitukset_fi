@@ -61,8 +61,7 @@ def create_app() -> Flask:
 
     # Import and register blueprints
     from admin import admin_bp, admin_user_bp, admin_demo_bp, admin_org_bp, admin_recu_demo_bp
-    from users import _BLUEPRINT_ as auth_bp
-    from user import user_bp
+    from users import _BLUEPRINT_ as user_bp
     from api import api_bp
 
     app.register_blueprint(admin_bp)
@@ -70,8 +69,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
-    app.register_blueprint(auth_bp, url_prefix="/users/")
-    app.register_blueprint(user_bp)
+    app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
 
     # Import and initialize routes

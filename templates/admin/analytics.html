@@ -26,17 +26,16 @@
 </style>
 {% endblock %}
 
-{% block main_content %}
-<div class="analytics-container">
-    <h2 id="tabletitle">{{ _('Admin Analytics') }}</h2>
+{% block main_content %}<div class="analytics-container" style="margin-top: 40px;">
+    <h2 id="tabletitle">{{ _('Mielenosoitus analytiikka') }}</h2>
 
     {% if data %}
     <div class="table-container" style="background: none;">
         <table>
             <thead>
                 <tr>
-                    <th>{{ _('Demo ID') }}</th>
-                    <th>{{ _('Views') }}</th>
+                    <th>{{ _('Mielenosoituksen ID') }}</th>
+                    <th>{{ _('Katselukerrat') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -51,7 +50,7 @@
     </div>
     {% else %}
     <div class="no-data">
-        <p>{{ _('No data available.') }}</p>
+        <p>{{ _('Ei tietoja saatavilla.') }}</p>
     </div>
     {% endif %}
 </div>

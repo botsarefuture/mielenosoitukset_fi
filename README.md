@@ -1,3 +1,12 @@
+> [!WARNING]
+> The `main` branch will be **force-pushed** with updates from the `[development]` branch. This operation will overwrite the branch history entirely.
+> ### **What You Need to Do**
+> 1. **Back Up Your Work**: If you have changes on `main`, ensure they are safely backed up locally or on another branch.
+> 2. **Sync Your Local Environment**: After the update, pull the latest changes or re-clone the repository to avoid conflicts.
+> 3. For questions or concerns, please contact the maintainers.
+
+----
+
 **⚠️ Warning: Out-of-Date Documentation ⚠️**
 
 This README file is currently out-of-date. Due to high workload and time constraints, we will not be able to update this documentation for the foreseeable future. 

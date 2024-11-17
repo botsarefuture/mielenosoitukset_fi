@@ -105,8 +105,12 @@
       <!-- ADD THE LOGIN LINK HERE-->
       <ul class="footer-links">
         <div class="auth-buttons">
-          <li><a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
-          <li><a href="{{ url_for('auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
+          {% if current_user.unauthorized %}
+          <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
+          <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
+          {% else %}
+          <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+          {% endif %}
         </div>
 
       </ul>

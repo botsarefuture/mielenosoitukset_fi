@@ -446,8 +446,8 @@
             </span>
           </a>
           <ul class="dropdown-menu">
-            <li><a href="{{ url_for('auth.profile') }}">{{ _('Profiili') }}</a></li>
-            <li><a href="{{ url_for('auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+            <li><a href="{{ url_for('users.profile.profile') }}">{{ _('Profiili') }}</a></li>
+            <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
           </ul>
         </li>
         {% endif %}

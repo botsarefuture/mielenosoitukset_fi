@@ -7,7 +7,7 @@
 
 <div class="auth-container">
     <h1>{{ _('Rekisteröidy') }}</h1>
-    <form action="{{ url_for('auth.register') }}" method="POST">
+    <form action="{{ url_for('users.auth.register') }}" method="POST">
         <div class="form-group">
             <label for="username">{{ _('Käyttäjätunnus') }}</label>
             <input type="text" id="username" name="username" required>
@@ -29,7 +29,7 @@
     <!-- Login link -->
     <div class="form-group">
         <p class="register-link">
-            <a href="{{ url_for('auth.login') }}">{{ _('Kirjaudu sisään tästä') }}</a>
+            <a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään tästä') }}</a>
         </p>
     </div>
 </div>

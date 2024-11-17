@@ -1,5 +1,5 @@
 from flask import Blueprint, redirect, request
-from auth.models import User
+from users.models import User
 from flask_login import login_required, current_user
 
 from database_manager import DatabaseManager

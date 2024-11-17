@@ -90,11 +90,3 @@
   </div>
 </div>
 {% endblock %}
-
-<head>
-  <!-- ...existing code... -->
-  {% for lang_code, url in alternate_urls.items() %}
-    <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
-  {% endfor %}
-  <!-- ...existing code... -->
-</head>

@@ -8,7 +8,7 @@ from flask import (
     current_app,
 )
 from flask_login import login_user, logout_user, login_required, current_user
-from auth.models import User
+from users.models import User
 import jwt
 import datetime
 import importlib
@@ -61,18 +61,18 @@ def register():
                 "Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.",
                 "error",
             )
-            return redirect(url_for("auth.register"))
+            return redirect(url_for("users.auth.register"))
 
         if mongo.users.find_one({"username": username}):
             flash_message("Käyttäjänimi on jo käytössä.", "warning")
-            return redirect(url_for("auth.register"))
+            return redirect(url_for("users.auth.register"))
 
         if mongo.users.find_one({"email": email}):
             flash_message(
                 "Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.",
                 "warning",
             )
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("users.auth.login"))
 
         user_data = User.create_user(username, password, email)
         mongo.users.insert_one(user_data)
@@ -86,7 +86,7 @@ def register():
         except Exception as e:
             flash_message(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
 
-        return redirect(url_for("auth.login"))
+        return redirect(url_for("users.auth.login"))
 
     return render_template("register.html")
 
@@ -107,7 +107,7 @@ def confirm_email(token):
     else:
         flash_message("Vahvistuslinkki on virheellinen tai vanhentunut.", "warning")
 
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("users.auth.login"))
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -124,7 +124,7 @@ def login():
         if not username or not password:
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
             return redirect(
-                url_for("auth.login", next=next_page)
+                url_for("users.auth.login", next=next_page)
             )  # Pass next page along
 
         user_doc = mongo.users.find_one({"username": username})
@@ -133,12 +133,12 @@ def login():
             flash_message(
                 f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error"
             )
-            return redirect(url_for("auth.login", next=next_page))
+            return redirect(url_for("users.auth.login", next=next_page))
 
         user = User.from_db(user_doc)
         if not user.check_password(password):
             flash_message("Käyttäjänimi tai salasana on väärin.", "error")
-            return redirect(url_for("auth.login", next=next_page))
+            return redirect(url_for("users.auth.login", next=next_page))
 
         if user.confirmed:
             login_user(user)
@@ -161,7 +161,7 @@ def login():
 def logout():
     logout_user()
     flash_message("Kirjauduit onnistuneesti ulos", "success")
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("users.auth.login"))
 
 
 @auth_bp.route("/password_reset_request", methods=["GET", "POST"])
@@ -189,7 +189,7 @@ def password_reset_request():
                     f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error"
                 )
 
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("users.auth.login"))
 
         flash_message("Tilin sähköpostiosoitetta ei löytynyt.", "info")
         return redirect(url_for("auth.password_reset_request"))
@@ -218,7 +218,7 @@ def password_reset(token):
         user.change_password(mongo, password)
 
         flash_message("Salasanasi on päivitetty onnistuneesti.", "success")
-        return redirect(url_for("auth.login"))
+        return redirect(url_for("users.auth.login"))
 
     return render_template("password_reset.html", token=token)
 
@@ -287,7 +287,7 @@ def edit_profile():
             # Clean up the temporary file
             os.remove(temp_file_path)
 
-        return redirect(url_for("auth.profile", username=current_user.username))
+        return redirect(url_for("users.profile.profile", username=current_user.username))
 
     return render_template("edit_profile.html")
 
@@ -296,7 +296,7 @@ def edit_profile():
 def accept_invite():
     if not current_user.is_authenticated:
         flash_message("Kirjaudu sisään liittyäksesi organisaatioon.", "info")
-        return redirect(url_for("auth.login", next=request.url))
+        return redirect(url_for("users.auth.login", next=request.url))
     
     organization_id = request.args.get("organization_id")
     organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
@@ -319,3 +319,13 @@ def accept_invite():
 
     flash_message(f"Liityit organisaatioon {organization.get('name')}.", "success")
     return redirect(url_for("org", org_id=organization_id))
+
+# TODO:
+# - Add MFAs
+# - Add user roles and permissions
+# - Add password reset
+# - Add settings page
+#   - Language
+#   - Notification settings
+#   - Profile settings
+

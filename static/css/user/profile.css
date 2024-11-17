@@ -4,7 +4,7 @@
   padding: var(--container-padding, 20px);
 }
 
-.profile-container {
+main .profile-container { /* This change closes #163 */
   background: var(--container-background);
   text-align: center;
   display: grid;

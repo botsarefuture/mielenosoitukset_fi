@@ -12,6 +12,7 @@ from users.models import User
 import jwt
 import datetime
 import importlib
+from urllib.parse import urlparse
 
 from classes import Organization
 from utils.auth import (
@@ -142,16 +143,22 @@ def login():
 
         if user.confirmed:
             login_user(user)
-            return redirect(
-                next_page or url_for("index")
-            )  # Redirect to the next page or the index
+            if next_page:
+                next_page = next_page.replace('\\', '')
+                if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
+                    return redirect(next_page)  # Safe to redirect
+            return redirect(url_for("index"))  # Redirect to the index
 
         else:
             flash_message(
                 "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
             )
             verify_emailer(user.email, username)
-            return redirect(next_page or url_for("index"))
+            if next_page:
+                next_page = next_page.replace('\\', '')
+                if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
+                    return redirect(next_page)  # Safe to redirect
+            return redirect(url_for("index"))  # Redirect to the index
 
     return render_template("login.html", next=next_page)
 

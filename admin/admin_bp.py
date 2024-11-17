@@ -204,6 +204,9 @@ def manage_marquee():
 
 
 @admin_bp.route('/admin/analytics')
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
 def admin_analytics():
     data = get_demo_views()
     data = count_per_demo(data)    

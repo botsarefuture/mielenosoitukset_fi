@@ -1,77 +1,46 @@
 {% extends "base.html" %}
 
-
-
 {% block title %}{{ _('Muokkaa Profiilia') }}{% endblock %}
 
-
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/user/edit_profile.css') }}">
+{% endblock %}
 
 {% block content %}
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user/edit_profile.css') }}">
-
 <div class="container profile-edit-container">
-
     <h1 class="admin-section-title">{{ _('Muokkaa profiiliasi') }}</h1>
 
-
-
-    <form action="{{ url_for('auth.edit_profile') }}" method="POST" enctype="multipart/form-data">
-
+    <form action="{{ url_for('users.profile.edit_profile') }}" method="POST" enctype="multipart/form-data">
         <div class="form-group">
-
             <label for="displayname">{{ _('Näyttönimi:') }}</label>
-
             <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname or '' }}" required>
-
         </div>
 
         <div class="form-group">
-
             <label for="profile_picture_file">{{ _('Profiilikuva:') }}</label>
-
             <input type="file" id="profile_picture_file" name="profile_picture" accept="image/*" required>
-
             <img id="preview" src="{{ current_user.profile_picture or '' }}" alt="Profiilikuva" style="max-width: 200px; margin-top: 10px;">
-
         </div>
 
         <div class="form-group">
-
             <label for="bio">{{ _('Esittelyteksti:') }}</label>
-
             <textarea id="bio" name="bio">{{ current_user.bio or '' }}</textarea>
-
         </div>
 
         <button type="submit" class="button btn-primary">{{ _('Tallenna muutokset') }}</button>
-
     </form>
-
 </div>
+{% endblock %}
 
-
-
+{% block scripts %}
 <script>
-
-    // Preview the selected image
-
     document.getElementById('profile_picture_file').addEventListener('change', function() {
-
         const file = this.files[0];
-
         const reader = new FileReader();
-
         reader.onload = function(e) {
-
-            document.getElementById('preview').src = e.target.result; // Show preview of image
-
+            document.getElementById('preview').src = e.target.result;
         };
-
         reader.readAsDataURL(file);
-
     });
-
 </script>
-
 {% endblock %}

@@ -88,7 +88,7 @@ def permission_required(permission_name):
             if not current_user.is_authenticated:
                 flash_message("Sinun tulee kirjautua sisään käyttääksesi sivua.")
                 logger.warning("User not authenticated, redirecting to login.")
-                return redirect(url_for("auth.login"))
+                return redirect(url_for("users.auth.login"))
 
             # Allow access if the user is a global admin
             if current_user.global_admin:

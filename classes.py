@@ -5,7 +5,7 @@ from bson import ObjectId
 from dateutil.relativedelta import relativedelta
 from flask import url_for
 
-from auth.models import User
+from users.models import User
 from database_manager import DatabaseManager
 from utils.database import stringify_object_ids
 

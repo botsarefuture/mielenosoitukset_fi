@@ -6,7 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from utils.logger import logger
 from database_manager import DatabaseManager
-from auth.models import User, AnonymousUser
+from users.models import User, AnonymousUser
 from error_handlers import register_error_handlers
 from scripts.repeat_v2 import main as repeat_main
 from scripts.update_demo_organizers import main as update_main
@@ -46,7 +46,7 @@ def create_app() -> Flask:
     # Initialize Flask-Login
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = "auth.login"  # Redirect to login view if not authenticated
+    login_manager.login_view = "users.auth.login"  # Redirect to login view if not authenticated
     login_manager.anonymous_user = AnonymousUser
 
     # User Loader function
@@ -61,8 +61,7 @@ def create_app() -> Flask:
 
     # Import and register blueprints
     from admin import admin_bp, admin_user_bp, admin_demo_bp, admin_org_bp, admin_recu_demo_bp
-    from auth import auth_bp
-    from user import user_bp
+    from users import _BLUEPRINT_ as user_bp
     from api import api_bp
 
     app.register_blueprint(admin_bp)
@@ -70,8 +69,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
-    app.register_blueprint(auth_bp, url_prefix="/auth/")
-    app.register_blueprint(user_bp)
+    app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
 
     # Import and initialize routes

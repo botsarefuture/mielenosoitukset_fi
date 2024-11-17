@@ -20,7 +20,7 @@ from flask_login import (
     login_user,
     logout_user,
 )
-from auth.models import User  # Import User model
+from users.models import User  # Import User model
 from database_manager import DatabaseManager
 from wrappers import admin_required, permission_required
 
@@ -37,7 +37,7 @@ db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 login_manager = LoginManager()
-login_manager.login_view = "auth.login"
+login_manager.login_view = "users.auth.login"
 
 
 class DemoViewCount:
@@ -103,7 +103,7 @@ def admin_logout():
     username = current_user.username
     logout_user()
     logger.info(f"User {username} logged out successfully.")
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("users.auth.login"))
 
 
 # Admin dashboard

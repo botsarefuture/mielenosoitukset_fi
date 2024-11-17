@@ -5,7 +5,6 @@
 {% endblock %}
 
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
 
 <div class="container profile-container" style="text-align: center;">
@@ -49,15 +48,15 @@
                 <div class="button-group">
                     {% if current_user.is_authenticated %}
                         {% if current_user.username == user.username %}
-                            <a href="{{ url_for('auth.edit_profile') }}" class="btn btn-edit">{{ _('Muokkaa profiilia') }}</a>
+                            <a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-edit">{{ _('Muokkaa profiilia') }}</a>
                         {% else %}
                             <div class="follow-unfollow">
                                 {% if current_user.is_following(user) %}
-                                    <form action="{{ url_for('user.unfollow', username=user.username) }}" method="POST">
+                                    <form action="{{ url_for('users.profile.unfollow', username=user.username) }}" method="POST">
                                         <button type="submit" class="btn btn-unfollow">{{ _('Lopeta seuraaminen') }}</button>
                                     </form>
                                 {% else %}
-                                    <form action="{{ url_for('user.follow', username=user.username) }}" method="POST">
+                                    <form action="{{ url_for('users.profile.follow', username=user.username) }}" method="POST">
                                         <button type="submit" class="btn btn-follow">{{ _('Seuraa') }}</button>
                                     </form>
                                 {% endif %}

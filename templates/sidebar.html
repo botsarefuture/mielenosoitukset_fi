@@ -97,6 +97,12 @@
             </li>
             {% endif %}
             <li>
+                <a href="{{ url_for('admin_analytics.admin_analytics') }}">
+                    <span class="icon"><i class="fas fa-chart-bar"></i></span> Analytiikka
+                </a>
+            </li>
+            
+            <li>
                 <!-- admin.admin_logout has been depraced in v2.4.0. -->
                 <a href="{{ url_for('auth.logout') }}">
                     <span class="icon"><i class="fas fa-sign-out-alt"></i></span> Kirjaudu ulos
@@ -135,6 +141,7 @@
     {% if current_user.has_permission("MANAGE_MARQUEE") %}
     <a href="{{ url_for('admin.manage_marquee') }}" class="hidden-icon"><i class="fas fa-scroll"></i></a> <!-- Marquee Management Hidden Icon -->
     {% endif %}
+    <a href="{{ url_for('admin_analytics.admin_analytics') }}" class="hidden-icon"><i class="fas fa-chart-bar"></i></a>
     <a href="{{ url_for('auth.logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
 </div>
 

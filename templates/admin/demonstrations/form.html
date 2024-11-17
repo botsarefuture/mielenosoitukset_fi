@@ -68,6 +68,15 @@
     // Organizer JS functions
     let organizerCount = {{ demo.organizers | length if demo and demo.organizers else 0 }};
 
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     function addOrganizer() {
         const selectedOrgId = document.getElementById('organization').value;
         if (selectedOrgId) {
@@ -83,7 +92,7 @@
                 <label for="organizer_email_${organizerCount}_">{{ _('Sähköposti') }}</label>
                 <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="{{ _('Täytetään automaattisesti') }}">
                 <label for="organizer_id_${organizerCount}">{{ _('Organisaation ID') }}</label>
-                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
+                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${escapeHtml(selectedOrgId)}">
                 <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
             `;
             document.getElementById('organizers-container').appendChild(newOrganizer);

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from utils.analytics import get_demo_views
 
-admin_analytics_bp = Blueprint('admin_analytics_bp', __name__, template_folder='templates')
+admin_analytics_bp = Blueprint('admin_analytics', __name__, template_folder='templates')
 
 class DemoViewCount:
     def __init__(self, demo_id, count):

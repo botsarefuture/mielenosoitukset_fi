@@ -1,3 +1,24 @@
+/**
+ * Initializes the sidebar functionality once the DOM content is loaded.
+ * 
+ * This script handles the toggling of the sidebar visibility and adjusts the main content accordingly.
+ * It also saves the sidebar state in localStorage to persist the user's preference.
+ * 
+ * Elements:
+ * - sidebar: The sidebar container element.
+ * - toggleButton: The main toggle button for the sidebar.
+ * - hiddenIcons: The container for hidden icons.
+ * - hiddenToggleButton: The toggle button for hidden icons.
+ * - mainContent: The main content container element.
+ * - headerbar: The header bar element.
+ * 
+ * Logic:
+ * - Checks if all required elements exist before proceeding.
+ * - Loads the saved sidebar state from localStorage and applies the appropriate classes/styles.
+ * - Defines a function to toggle the sidebar visibility and update localStorage.
+ * - Adds event listeners to the toggle buttons to handle sidebar toggling.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
     // Select elements based on the updated class names
     const sidebar = document.querySelector('.container-sidebar');

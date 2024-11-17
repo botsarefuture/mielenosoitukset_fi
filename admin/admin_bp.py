@@ -203,9 +203,15 @@ def manage_marquee():
 
 
 
-@admin_bp.route('/admin/analytics')
+@admin_bp.route('/demo_analytics')
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
 def admin_analytics():
+    return demo_analytics()
+
+def demo_analytics():
     data = get_demo_views()
-    data = count_per_demo(data)    
+    data = count_per_demo(data)
     
     return render_template('admin/analytics.html', data=data)

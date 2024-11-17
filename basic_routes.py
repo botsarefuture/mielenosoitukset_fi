@@ -28,6 +28,8 @@ from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST
 from utils.flashing import flash_message
 from utils.database import DEMO_FILTER
+from utils.analytics import log_demo_view
+from wrappers import permission_required
 
 email_sender = EmailSender()
 
@@ -350,7 +352,6 @@ def init_routes(app):
         result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
         if result:
             demo = Demonstration.from_dict(result)
-
         else:
             abort(404)
 
@@ -394,9 +395,72 @@ def init_routes(app):
 
         demo = Demonstration.to_dict(demo, True)
 
+        # Log the view
+        log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+
         # Pass demo details and coordinates to the template
         return render_template("detail.html", demo=demo)
 
+    @app.route("/demonstration/<demo_id>/some", methods=["GET"])
+    @permission_required("VIEW_DEMO")
+    def preview(demo_id):
+        """
+        Display details of a specific demonstration and save map coordinates if available.
+        """
+        # Fetch the demonstration details from MongoDB
+        result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
+        if result:
+            demo = Demonstration.from_dict(result)
+        else:
+            abort(404)
+
+        if not demo:
+            flash_message(
+                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
+                "error",
+            )
+            return redirect(url_for("demonstrations"))
+
+        if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
+            abort(401)
+
+        # Check if longitude is None to trigger geocoding
+        if not demo.longitude:
+            # Build the address query (assuming 'address' and 'city' fields in the demo)
+            address_query = f"{demo.address}, {demo.city}"
+
+            # Geocode API URL
+            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"  # FIXME: Use variable for the api key!
+
+            try:
+                # Make the request to the Geocode API
+                response = requests.get(api_url)
+                response.raise_for_status()
+                geocode_data = response.json()
+
+                # Get latitude and longitude from the response
+                if geocode_data:
+                    latitude = geocode_data[0].get("lat", "None")
+                    longitude = geocode_data[0].get("lon", "None")
+
+                    # Save coordinates to the database if they are fetched
+                    if latitude and longitude:
+                        demo.latitude = latitude
+                        demo.longitude = longitude
+                        demo.save()
+
+            except (requests.exceptions.RequestException, IndexError):
+                ...
+
+        demo = Demonstration.to_dict(demo, True)
+
+        # Log the view
+        log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+
+        # Pass demo details and coordinates to the template
+        return render_template("preview.html", demo=demo)
+
+    
     @app.route("/info")
     def info():
         return render_template("info.html")

@@ -1,55 +1,68 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="fi" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>403 Kielletty</title>
+    <title>403 EI RIITTÄVIÄ KÄYTTÖOIKEUKSIA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        body {
-
-            background: #f9f9f9;
-            margin: 0;
-            padding: 0;
-        }
         .container {
             max-width: 600px;
             margin: 50px auto;
             padding: 20px;
             text-align: center;
-            background: #fff;
+            background: var(--orange);
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px var(--error-color);
+            /* Updated to create a glow effect */
         }
+
         h1 {
             font-size: 2rem;
             color: #e74c3c;
         }
+
         p {
             font-size: 1rem;
             color: #333;
         }
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
+
+
+
+        .warning {
+            color: #831205 !important;
+            font-weight: bold;
+            font-size: 1.2rem;
+            animation: none;
+            /* Removed animation for a more serious tone */
         }
-        a:hover {
-            background: #2980b9;
+
+        @keyframes flash {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
     </style>
 </head>
-<body>
+
+<body class="error_body">
     <div class="container">
-        <h1>403 Kielletty</h1>
-        <p>Sinulla ei ole oikeuksia nähdä tätä sisältöä.</p>
-        <p>Jos uskot, että tämä on virhe, ota yhteyttä järjestelmänvalvojaan.</p>
-        <a href="/">Palaa etusivulle</a>
+        <h1>403 EI RIITTÄVIÄ KÄYTTÖOIKEUKSIA</h1>
+        <p class="warning">Yrität katsella sisältöä, johon käyttöoikeutesi eivät riitä.</p>
+        <p>Jos uskot tämän olevan virhe, ota yhteyttä asiakaspalveluumme.</p>
+        <div class="button-container">
+            <a class="button" href="https://mielenosoitukset.fi/contact">Ota yhteyttä</a>
+            <a class="button" href="/">Palaa etusivulle</a>
+        </div>
     </div>
 </body>
+
 </html>

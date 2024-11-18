@@ -123,13 +123,8 @@ def invite_to_organization(invitee_email, organization_id):
             flash_message("Käyttäjä on jo jäsen organisaatiossa.", "error")
             return
         
-        # Add invitation into db
-        mongo.organizations.update_one(
-            {"_id": ObjectId(organization_id)},
-            {"$addToSet": {"invitations": invitee_email}},
-        ) # Add the email to the invitations list
         
-        invite_url = url_for('auth.accept_invite', organization_id=organization_id, _external=True)
+        invite_url = url_for('users.user_orgs.accept_invite', organization_id=organization_id, _external=True)
         email_sender.queue_email(
             template_name="invite_to_organization.html",
             subject=f"Kutsu liittyä organisaatioon {get_organization_name(organization_id)}",
@@ -137,8 +132,16 @@ def invite_to_organization(invitee_email, organization_id):
             context={
                 "invite_url": invite_url,
                 "inviter_name": current_user.displayname or current_user.username,
+                "organization_name": get_organization_name(organization_id),
             }
         )
+        
+        # Add invitation into db
+        mongo.organizations.update_one(
+            {"_id": ObjectId(organization_id)},
+            {"$addToSet": {"invitations": invitee_email}},
+        ) # Add the email to the invitations list in the organization document.
+        
         flash_message("Kutsu lähetetty onnistuneesti.", "success")
     except Exception as e:
         logger.error(f"Kutsun lähettäminen epäonnistui: {e}")

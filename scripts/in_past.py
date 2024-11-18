@@ -38,7 +38,7 @@ classes = importlib.import_module("classes")
 database_manager = importlib.import_module("database_manager")
 if __name__ == "__main__":
     app = importlib.import_module("app").create_app()
-utils = importlib.import_module("utils")
+variables = importlib.import_module("utils.variables") # Import the utils module, not the file
 
 # Get the database instance
 DatabaseManager = database_manager.DatabaseManager
@@ -53,7 +53,7 @@ def is_future_demo(demo_date, today):
 
 def fetch_upcoming_demos():
     """Fetch upcoming demonstrations that are not in the past."""
-    return list(db["demonstrations"].find(utils.variables.DEMO_FILTER))
+    return list(db["demonstrations"].find(variables.DEMO_FILTER))
 
 def hide_past_demos(demos, today):
     """
@@ -64,13 +64,15 @@ def hide_past_demos(demos, today):
         today (datetime.date): The current date to compare demonstration dates against.
 
     Returns:
-        None
+        dict: A dictionary containing statistics about the processed demonstrations.
 
     Raises:
         Prints an error message if there is an issue processing a demonstration.
     """
+    stats = {"total": 0, "hidden": 0, "errors": 0}
     
     for demo in demos:
+        stats["total"] += 1
         try:
             demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
             if not is_future_demo(demo_date, today):
@@ -80,15 +82,22 @@ def hide_past_demos(demos, today):
                     demonstration_instance = RecurringDemonstration.from_dict(demo)
                 demonstration_instance.hide = True
                 demonstration_instance.save()
+                stats["hidden"] += 1
         except Exception as e:
+            stats["errors"] += 1
             print(f"Error processing demonstration {demo['_id']}: {e}")
+    
+    return stats
 
 def hide_past():
-    """Mark past demonstrations as hidden."""
+    """Mark past demonstrations as hidden and output statistics."""
     try:
         today = datetime.now().date()
         demos = fetch_upcoming_demos()
-        hide_past_demos(demos, today)
+        stats = hide_past_demos(demos, today)
+        print(f"Total demonstrations processed: {stats['total']}")
+        print(f"Total demonstrations hidden: {stats['hidden']}")
+        print(f"Total errors: {stats['errors']}")
     except Exception as e:
         print(f"Error hiding past demonstrations: {e}")
 

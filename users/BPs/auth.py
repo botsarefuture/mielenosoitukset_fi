@@ -36,7 +36,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 def verify_emailer(email, username):
     token = generate_confirmation_token(email)
-    confirmation_url = url_for("auth.confirm_email", token=token, _external=True)
+    confirmation_url = url_for("users.auth.confirm_email", token=token, _external=True)
     email_sender.queue_email(
         template_name="registration_confirmation_email.html",
         subject="Vahvista rekisteröitymisesi",
@@ -156,7 +156,7 @@ def password_reset_request():
 
         if user:
             token = generate_reset_token(email)
-            reset_url = url_for("auth.password_reset", token=token, _external=True)
+            reset_url = url_for("users.auth.password_reset", token=token, _external=True)
 
             try:
                 email_sender.queue_email(
@@ -172,7 +172,7 @@ def password_reset_request():
             return redirect(url_for("users.auth.login"))
 
         flash_message("Tilin sähköpostiosoitetta ei löytynyt.", "info")
-        return redirect(url_for("auth.password_reset_request"))
+        return redirect(url_for("users.auth.password_reset_request"))
 
     return render_template("users/auth/password_reset_request.html")
 
@@ -182,7 +182,7 @@ def password_reset(token):
     email = verify_reset_token(token)
     if not email:
         flash_message("Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning")
-        return redirect(url_for("auth.password_reset_request"))
+        return redirect(url_for("users.auth.password_reset_request"))
 
     if request.method == "POST":
         password = request.form.get("password")
@@ -190,10 +190,21 @@ def password_reset(token):
         user_doc = mongo.users.find_one({"email": email})
         if not user_doc:
             flash_message("Käyttäjää ei löytynyt.", "warning")
-            return redirect(url_for("auth.password_reset_request"))
+            return redirect(url_for("users.auth.password_reset_request"))
 
         user = User.from_db(user_doc)
-        user.change_password(mongo, password)
+        user.change_password(password)
+        
+        # Notify user about their password being changed via email
+        try:
+            email_sender.queue_email(
+                template_name="auth/password_changed.html",
+                subject="Salasanan vaihto",
+                recipients=[email],
+                context={"user_name": user.displayname or user.username},
+                )
+        except Exception as e:
+            flash_message(f"Virhe salasanan vaihtoviestin lähettämisessä: {e}", "error")        
 
         flash_message("Salasanasi on päivitetty onnistuneesti.", "success")
         return redirect(url_for("users.auth.login"))

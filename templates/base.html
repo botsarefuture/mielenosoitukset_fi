@@ -55,12 +55,11 @@
 
   <!-- Navigation Bar -->
   {% include "header.html" %}
-
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div id="flash-messages" class="flash-messages">
-        <button class="flash-close" onclick="document.getElementById('flash-messages').style.display = 'none'">
+        <button class="flash-close" onclick="this.parentElement.style.display = 'none'"></button>
           <i class="fas fa-times"></i>
         </button>
         <ul id="flash-message-list">
@@ -105,7 +104,7 @@
       <!-- ADD THE LOGIN LINK HERE-->
       <ul class="footer-links">
         <div class="auth-buttons">
-          {% if current_user.unauthorized %}
+          {% if not current_user.is_authenticated %}
           <li><a href="{{ url_for('users.auth.login') }}">{{ _('Kirjaudu sisään') }}</a></li>
           <li><a href="{{ url_for('users.auth.register') }}">{{ _('Rekisteröidy') }}</a></li>
           {% else %}

@@ -4,7 +4,6 @@
     padding: 0;
     margin: 1rem auto;
     max-width: 600px; /* Limits the width for better layout control */
-    display: none; /* Initially hidden, will be shown when messages are added */
 }
 
 #flash-messages ul {
@@ -23,6 +22,7 @@
     word-wrap: break-word; /* Prevents long words from overflowing */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for better visibility */
     transition: background 0.3s ease, transform 0.3s ease; /* Smooth transition for color and hover effects */
+    animation: slide-in 0.3s ease-out forwards; /* Animation to slide in the flash messages */
 }
 
 /* Default background color (for fallback purposes) */
@@ -55,11 +55,6 @@
 #flash-messages li:hover {
     transform: scale(1.02); /* Slightly enlarge the message on hover */
     cursor: pointer; /* Changes cursor to pointer on hover */
-}
-
-/* Optional: Animation to slide in the flash messages */
-#flash-messages li {
-    animation: slide-in 0.3s ease-out forwards;
 }
 
 @keyframes slide-in {

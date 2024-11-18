@@ -822,3 +822,51 @@ so when, 'visiblitity: hidden' is applied, it doesn't take up space */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
 }
+
+.error_body {
+	background: var(--error-color) !important;
+	display: flex;
+	justify-content: center;
+	justify-items: center;
+	align-content: center;
+	align-items: center;
+	width: 100vw;
+	height: 100vh;
+}
+
+.error_body h1 {
+  color: var(--white);
+}
+
+.error_body p {
+  color: var(--white);
+}
+
+.error_body a {
+  color: var(--white);
+}
+
+/* Animate error body to be very scary */
+@keyframes scary {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+  100% {
+    transform: rotate(-5deg);
+  }
+}
+
+.scary {
+  animation: scary 0.5s infinite;
+}
+
+/* Animate error body to be very scary */

@@ -19,6 +19,7 @@ import os
 
 # if env var forcerun
 if os.environ.get("FORCERUN"): # Set this via: export FORCERUN=1
+    # To unset: unset FORCERUN
     repeat_main()
     update_main()
     hide_past()

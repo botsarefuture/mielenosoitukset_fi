@@ -8,10 +8,22 @@ from utils.logger import logger
 from database_manager import DatabaseManager
 from users.models import User, AnonymousUser
 from error_handlers import register_error_handlers
+
 from scripts.repeat_v2 import main as repeat_main
 from scripts.update_demo_organizers import main as update_main
 from scripts.in_past import hide_past
+
 from utils import VERSION
+
+import os
+
+# if env var forcerun
+if os.environ.get("FORCERUN"): # Set this via: export FORCERUN=1
+    repeat_main()
+    update_main()
+    hide_past()
+    exit()
+    
 
 # Create and configure the scheduler
 scheduler = BackgroundScheduler()

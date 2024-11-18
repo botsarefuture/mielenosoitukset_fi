@@ -6,62 +6,75 @@
     <title>Kutsu organisaatioon</title>
     <style>
         body {
-            background: #f4f4f4;
-            color: #333333;
+            background-color: #f4f4f4;
+            color: #333;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            line-height: 1.6;
         }
         .container {
-            width: 100%;
             max-width: 600px;
-            padding: 20px;
-            background: #ffffff;
-            margin: 0 auto;
+            margin: 30px auto;
+            background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
         .header {
+            background-color: #0033A0;
+            color: #fff;
             text-align: center;
-            padding: 10px 0;
-            background: #0033A0;
-            color: #ffffff;
-            border-radius: 8px 8px 0 0;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
         }
         .content {
-            margin: 20px;
+            padding: 20px;
+        }
+        .content p {
+            margin: 10px 0;
         }
         .btn {
             display: inline-block;
-            padding: 10px 20px;
-            background: #0033A0;
-            color: #ffffff;
+            padding: 12px 20px;
+            background-color: #0033A0;
+            color: #fff;
             text-decoration: none;
             border-radius: 5px;
+            font-size: 1em;
             text-align: center;
+            margin: 10px 0;
         }
         .btn:hover {
-            background: #002a6d;
+            background-color: #002a6d;
         }
         .footer {
-            margin-top: 20px;
+            background-color: #f4f4f4;
+            color: #888;
             text-align: center;
+            padding: 10px;
             font-size: 0.9em;
-            color: #888888;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Kutsu liittyä organisaatioon {{ organization_name }}</h1>
+            <h1>Kutsu liittyä organisaatioon: "{{ organization_name }}"</h1>
         </div>
         <div class="content">
             <p>Hei,</p>
-            <p>Sinut on kutsuttu liittymään organisaatioon {{ organization_name }}. Klikkaa alla olevaa painiketta hyväksyäksesi kutsun.</p>
+            <p>Sinut on kutsuttu liittymään organisaatioon "{{ organization_name }}".</p>
+            <p>Kutsun on lähettänyt: {{ inviter_name }}</p>
+            <p>Klikkaa alla olevaa painiketta hyväksyäksesi kutsun:</p>
             <p style="text-align: center;">
                 <a href="{{ invite_url }}" class="btn">Hyväksy kutsu</a>
             </p>
-            <p>Ystävällisin terveisin,<br>{{ inviter_name }}</p>
+            <p>Jos et halua liittyä organisaatioon, voit jättää tämän viestin huomiotta.</p>
+            <p>Ystävällisin terveisin,<br>Tiimimme</p>
         </div>
         <div class="footer">
             <p>Tämä on automaattinen viesti, älä vastaa tähän sähköpostiin.</p>

@@ -1,82 +1,62 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="fi" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>500 Palvelinvirhe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* Global styles */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-
         .container {
             max-width: 600px;
-            padding: 30px 20px;
+            margin: 50px auto;
+            padding: 20px;
             text-align: center;
-            background: #ffffff;
+            background: var(--orange);
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s ease;
-        }
-
-        .container:hover {
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 10px var(--error-color);
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: #e74c3c;
-            margin-bottom: 10px;
         }
 
         p {
             font-size: 1rem;
-            color: #555;
-            margin: 10px 0;
+            color: #333;
         }
 
-        .home-link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 25px;
-            background-color: #3498db;
-            color: #fff;
-            text-decoration: none;
-            font-size: 1rem;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+        .warning {
+            color: #831205 !important;
+            font-weight: bold;
+            font-size: 1.2rem;
         }
 
-        .home-link:hover {
-            background-color: #2980b9;
-        }
+        @keyframes flash {
+            0%,
+            100% {
+                opacity: 1;
+            }
 
-        /* Accessibility */
-        .home-link:focus {
-            outline: 3px solid #2980b9;
+            50% {
+                opacity: 0.5;
+            }
         }
     </style>
 </head>
-<body>
+
+<body class="error_body">
     <div class="container">
         <h1>500 Palvelinvirhe</h1>
-        <p>Anteeksi, mutta jokin meni pieleen palvelimellamme.</p>
+        <p class="warning">Anteeksi, mutta jokin meni pieleen palvelimellamme.</p>
         <p>Yritä uudelleen myöhemmin tai ota yhteyttä tukeen, jos ongelma jatkuu.</p>
-        <a href="/" class="home-link" aria-label="Palaa takaisin etusivulle">Palaa etusivulle</a>
+        <div class="button-container">
+            <a class="button" href="https://mielenosoitukset.fi/contact">Ota yhteyttä</a>
+            <a class="button" href="/">Palaa etusivulle</a>
+        </div>
     </div>
 </body>
+
 </html>

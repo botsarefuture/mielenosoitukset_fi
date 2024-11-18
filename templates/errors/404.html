@@ -1,74 +1,69 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="fi" class="dark">
 
-{% block content %}
-<style>
-body {
-    display: flex;              
-    flex-direction: column;     
-    min-height: 100vh;         
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-    background: #c0392b; /* Tummanpunainen tausta kiireellisyyden vuoksi */
-}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Ei Löydy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            background: var(--orange);
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px var(--error-color);
+            /* Updated to create a glow effect */
+        }
 
-#error.container {
-    flex: 1;                   
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 20px;
-    text-align: center;
-    background: #fff;    /* Valkoinen tausta sisällölle */
-    border: 2px solid #e74c3c; /* Rajausväri */
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
+        h1 {
+            font-size: 2rem;
+            color: #e74c3c;
+        }
 
-#error h1 {
-    font-size: 2rem;
-    color: #e74c3c; /* Vaaraväri otsikolle */
-    font-weight: bold;
-}
+        p {
+            font-size: 1rem;
+            color: #333;
+        }
 
-#error p {
-    font-size: 1rem;
-    color: #333; /* Tumma harmaa väri tekstille */
-}
 
-#error a {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 10px 20px;
-    background: #e74c3c; /* Vaaraväri napille */
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background 0.3s;
-}
 
-#error a:hover {
-    background: #c0392b; /* Tummempi sävy hover-efektille */
-}
+        .warning {
+            color: #831205 !important;
+            font-weight: bold;
+            font-size: 1.2rem;
+            animation: none;
+            /* Removed animation for a more serious tone */
+        }
 
-/* Footer-tyylit */
-footer {
-    background: #fff;      /* Footerin tausta */
-    text-align: center;
-    padding: 10px;
-    border-top: 1px solid #e74c3c; /* Yläreunan rajaus */
-}
-</style>
-    <div id="error" class="container">
+        @keyframes flash {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+
+<body class="error_body">
+    <div class="container">
         <h1>404 Ei Löydy</h1>
-        <p>Anteeksi, etsimääsi sivua ei löytynyt.</p>
+        <p class="warning">Anteeksi, etsimääsi sivua ei löytynyt.</p>
         <p>Se on voinut poistua tai olet saattanut syöttää virheellisen URL-osoitteen.</p>
         <p>Voit palata etusivulle painamalla alla olevaa linkkiä.</p>
-        <a href="/">Palaa etusivulle</a>
+        <div class="button-container">
+            <a class="button" href="{{ request.referrer }}">Mene takaisin</a>
+            <a class="button" href="/">Palaa etusivulle</a>
+        </div>
     </div>
-{% endblock %}
+</body>
 
-{% block footer %}
-<footer>
-    <p>© 2024 Luova Club. Kaikki oikeudet pidätetään.</p>
-</footer>
-{% endblock %}
+</html>

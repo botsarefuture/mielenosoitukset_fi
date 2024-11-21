@@ -129,11 +129,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     organizers = []
     for i in range(1, 10):  # Assuming a maximum of 9 organizers
         name = request.form.get(f"organizer_name_{i}")
-        if not name:  # Stop if no more organizer names are found
+        _id = request.form.get(f"organizer_id_{i}")
+
+        if not name and not _id:  # Stop if no more organizer names are found
             break
         website = request.form.get(f"organizer_website_{i}")
         email = request.form.get(f"organizer_email_{i}")
-        organizers.append(Organizer(name=name, email=email, website=website))
+        organizers.append(Organizer(name=name, email=email, website=website, organization_id=_id))
 
     # Get the repeat schedule details
     repeat_schedule = {
@@ -158,9 +160,14 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "linked_organizations": request.form.getlist("linked_organizations"),
         "created_until": request.form.get("created_until"),
         "repeating": request.form.get("repeating") == "on",
+        # Please make sure that the id of the organization, is still an ObjectId
         "organizers": [org.to_dict() for org in organizers],
     }
 
+    for organizer in demonstration_data["organizers"]:
+        if "organization_id" in organizer:
+            organizer["organization_id"] = ObjectId(organizer["organization_id"])
+    
     try:
         if is_edit:
             mongo.recu_demos.update_one(

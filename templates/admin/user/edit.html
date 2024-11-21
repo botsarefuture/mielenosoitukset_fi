@@ -168,7 +168,7 @@
                         {% for perm in permissions %}
                         <div class="permission-item">
                             <input type="checkbox" id="perm_{{ org['_id'] }}_{{ perm['name'] }}" 
-                                name="permissions[{{ org['_id'] }}][]" value="{{ perm['name'] }}"
+                                name="permissions_{{ org['_id'] }}" value="{{ perm['name'] }}"
                                 {% if perm['name'] in user_permissions.get(org['_id'], []) %}checked{% endif %}>
                             <label for="perm_{{ org['_id'] }}_{{ perm['name'] }}">{{ perm['description'] }}</label>
                         </div>

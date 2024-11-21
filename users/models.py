@@ -258,6 +258,15 @@ class User(UserMixin):
         data = self.__dict__.copy()
         if json and "_id" in data:
             data["_id"] = str(data["_id"])
+            
+        # If user organizations has ObjectId, stringiyf
+        for org in data.get("organizations", []):
+            if isinstance(org.get("org_id"), ObjectId):
+                org["org_id"] = str(org["org_id"])
+        
+        # dont include the MFA in the dict
+        del data["mfa"]
+        
         return data
 
     def follow_user(self, user_id_to_follow):
@@ -439,6 +448,12 @@ class UserMFA:
         secret = pyotp.random_base32()
         self.add_secret(secret)
         return secret
+    
+    def to_dict(self):
+        return {
+            "user_id": ObjectId(self.user_id),
+            "secrets": self.secrets
+        }
     
     
 

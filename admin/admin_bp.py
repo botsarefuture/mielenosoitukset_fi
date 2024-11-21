@@ -25,6 +25,7 @@ from database_manager import DatabaseManager
 from wrappers import admin_required, permission_required
 
 from utils.flashing import flash_message
+from utils.analytics import get_demo_views
 
 # Constants
 LOG_FILE_PATH = "app.log"

@@ -43,7 +43,7 @@ def admin_required(f):
             abort(401)
 
         # Check if the user has global admin privileges
-        if not current_user.global_admin:
+        if not current_user.role in ["global_admin", "admin"]:
             logger.warning(
                 f"User {current_user.username} is not a global admin, access forbidden (403)."
             )

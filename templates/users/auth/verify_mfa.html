@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1>{{ _('Vahvista MFA') }}</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="mfa_code">{{ _('MFA-koodi') }}</label>
+            <input type="text" id="mfa_code" name="mfa_code" required>
+        </div>
+
+        <button type="submit">{{ _('Vahvista') }}</button>
+    </form>
+
+    <!-- Resend MFA code link -->
+    <div class="form-group">
+        <p class="resend-mfa">
+            <a href="{{ url_for('users.auth.resend_mfa_code') }}">{{ _('Lähetä koodi uudelleen') }}</a>
+        </p>
+    </div>
+
+    <!-- Back to login link -->
+    <div class="form-group">
+        <p class="back-to-login">
+            <a href="{{ url_for('users.auth.login') }}">{{ _('Takaisin kirjautumiseen') }}</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

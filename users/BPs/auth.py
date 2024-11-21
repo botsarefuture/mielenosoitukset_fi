@@ -5,9 +5,10 @@ from flask import (
     redirect,
     url_for,
     current_app,
+    session
 )
 from flask_login import login_user, logout_user, login_required, current_user
-from users.models import User
+from users.models import User, UserMFA
 from utils.auth import (
     generate_confirmation_token,
     verify_confirmation_token,
@@ -105,7 +106,6 @@ def confirm_email(token):
 
     return redirect(url_for("users.auth.login"))
 
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     next_page = request.args.get("next")
@@ -129,16 +129,98 @@ def login():
             flash_message("Käyttäjänimi tai salasana on väärin.", "error")
             return redirect(url_for("users.auth.login", next=next_page))
 
-        if user.confirmed:
-            login_user(user)
-            return redirect(next_page or url_for("index"))
-        else:
+        if not user.confirmed:
             flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
-            return redirect(next_page or url_for("index"))
+            return redirect(url_for("users.auth.login", next=next_page))
+
+        if user.mfa_enabled:
+            session["mfa_required"] = True
+            session["modified"] = True
+            return redirect(url_for("users.auth.verify_mfa", next=next_page))
+
+        login_user(user)
+        return redirect(next_page or url_for("index"))
 
     return render_template("users/auth/login.html", next=next_page)
 
+@auth_bp.route("/verify_mfa", methods=["GET", "POST"])
+def verify_mfa():
+    if not session.get("mfa_required"):
+        return redirect(url_for("users.auth.login"))
+    
+    if request.method == "POST":
+        token = request.form.get("token")
+        next = request.args.get("next")
+        user = current_user
+        
+        if UserMFA(user._id).verify_mfa(token):
+            login_user(user)
+            session["mfa_required"] = False
+            session["modified"] = True
+            
+            return redirect(next or url_for("index"))
+        
+        flash_message("Väärä MFA-koodi", "error")
+        return redirect(url_for("users.auth.verify_mfa"))
+    
+    return render_template("users/auth/verify_mfa.html")
+
+@auth_bp.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    """
+    Let users activate MFA
+    """
+    user = current_user
+
+    if request.method == "POST":
+        user_data = request.form.to_dict()
+
+        if 'mfa_enabled' in user_data:
+            user_data['mfa_enabled'] = user_data['mfa_enabled'] == 'on'
+            mongo.users.update_one({"_id": user._id}, {"$set": {"mfa_enabled": user_data['mfa_enabled']}})
+            user.enable_mfa() if user_data['mfa_enabled'] else user.disable_mfa()
+
+            # Send the user email, including the info on how to start using mfa
+            if user_data['mfa_enabled']:
+                try:
+                    email_sender.queue_email(
+                        template_name="auth/mfa_enabled.html",
+                        subject="Kaksivaiheisen todennuksen käyttöönotto",
+                        recipients=[user.email],
+                        context={"user_name": user.displayname or user.username},
+                    )
+                except Exception as e:
+                    flash_message(f"Virhe kaksivaiheisen todennuksen käyttöönoton viestin lähettämisessä: {e}", "error")
+            else:
+                try:
+                    email_sender.queue_email(
+                        template_name="auth/mfa_disabled.html",
+                        subject="Kaksivaiheisen todennuksen poistaminen",
+                        recipients=[user.email],
+                        context={"user_name": user.displayname or user.username},
+                    )
+                except Exception as e:
+                    flash_message(f"Virhe kaksivaiheisen todennuksen poistamisen viestin lähettämisessä: {e}", "error")
+
+        flash_message("Asetukset päivitetty.", "success")
+        return redirect(url_for("users.auth.settings"))
+
+    #return render_template("users/auth/settings.html", user=user)
+    if user.mfa_enabled and not user.mfa_secret:
+        user_mfa = user.mfa
+        secret = user_mfa.generate_secret()
+        print(secret)
+        #mongo.users.update_one({"_id": user._id}, {"$set": {"mfa_secret": user_mfa.secret}})
+        #user.mfa.add_secret = user_mfa.secret
+
+    if user.mfa_enabled:
+        user_mfa = user.mfa
+        qr_code_url = user_mfa.get_qr_code_url()
+        return render_template("users/auth/settings.html", user=user, qr_code_url=qr_code_url)
+
+    return render_template("users/auth/settings.html", user=user)
 
 @auth_bp.route("/logout")
 @login_required

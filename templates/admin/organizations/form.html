@@ -277,8 +277,9 @@
     {% endif %}
 
 </div>
-
+{% if organization %}
 {{ org_macros.invite_modal(organization) }}
+{% endif %}
 
 </div>
 {% endblock %}

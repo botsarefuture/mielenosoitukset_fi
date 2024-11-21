@@ -1,3 +1,5 @@
+import pyotp
+import datetime
 from utils.logger import logger
 
 import warnings
@@ -8,6 +10,8 @@ from database_manager import DatabaseManager
 
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
+
+VALID_WINDOW = 5 # TODO: #226 Move this to a configuration file
 
 class User(UserMixin):
     """
@@ -29,6 +33,8 @@ class User(UserMixin):
         permissions (dict): Dictionary of permissions for the user.
         global_permissions (list): List of global permissions for the user.
         role (str): Role of the user, default is "user".
+        banned (bool): Indicates if the user is banned.
+        mfa_enabled (bool): Indicates if MFA is enabled for the user.
         _id (str): Alias for id.
         
     Methods:
@@ -47,6 +53,10 @@ class User(UserMixin):
         unfollow_user(db, user_id_to_unfollow): Remove a user from the followers list of this user.
         has_permission(permission, organization_id=None): Verify if the user possesses a certain permission either on a global level or within a specified organization.
         is_following(user_id): Check if this user is following another user.
+        ban_user(): Ban the user.
+        unban_user(): Unban the user.
+        enable_mfa(): Enable MFA for the user.
+        disable_mfa(): Disable MFA for the user.
         __repr__(): Return a string representation of the User object.
     """
     
@@ -67,6 +77,8 @@ class User(UserMixin):
         permissions=None,
         global_permissions=None,  # Added global permissions
         role=None,
+        banned=False,  # Added banned attribute
+        mfa_enabled=False,  # Added MFA attribute
     ):
         self.id = str(user_id)
         self.username = username
@@ -83,7 +95,10 @@ class User(UserMixin):
         self.permissions = permissions or {}
         self.global_permissions = global_permissions or []  # Ensure it's a list
         self.role = role or "user"
-        self._id = self.id  # Alias for id a
+        self.banned = banned  # Initialize banned attribute
+        self.mfa_enabled = mfa_enabled  # Initialize MFA attribute
+        self._id = self.id  # Alias for id
+        self.mfa = UserMFA(self.id)  # Initialize MFA for the user
 
     @staticmethod
     def from_db(user_doc):
@@ -112,6 +127,8 @@ class User(UserMixin):
                 "global_permissions", []
             ),  # Fetch global permissions
             role=user_doc.get("role", "user"),
+            banned=user_doc.get("banned", False),  # Fetch banned status
+            mfa_enabled=user_doc.get("mfa_enabled", False),  # Fetch MFA status
         )
 
     def check_password(self, password):
@@ -142,6 +159,8 @@ class User(UserMixin):
             "permissions": [],
             "global_permissions": [],  # Initialize global permissions
             "following": [],
+            "banned": False,  # Initialize banned status
+            "mfa_enabled": False,  # Initialize MFA status
         }
 
     def add_organization(self, organization_id=None, role="member", permissions=None):
@@ -326,9 +345,102 @@ class User(UserMixin):
         
         return user_id in self.following
 
-    def __repr__(self):
-        return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin})>"
+    def ban_user(self):
+        """Ban the user."""
+        self.banned = True
+        self.save()
+        logger.info("User banned successfully.")
 
+    def unban_user(self):
+        """Unban the user."""
+        self.banned = False
+        self.save()
+        logger.info("User unbanned successfully.")
+
+    def enable_mfa(self):
+        """Enable MFA for the user."""
+        self.mfa_enabled = True
+        self.save()
+        logger.info("MFA enabled successfully.")
+
+    def disable_mfa(self):
+        """Disable MFA for the user."""
+        self.mfa_enabled = False
+        self.save()
+        logger.info("MFA disabled successfully.")
+
+    def __repr__(self):
+        return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin}, banned={self.banned}, mfa_enabled={self.mfa_enabled})>"
+
+class _2faToken:
+    def __init__(self, token, user_id):
+        self.token = token
+        self.user_id = user_id
+    
+    def __repr__(self):
+        return f"<2faToken(user_id={self.user_id})>"
+
+    def generate_token(self):
+        """Generate a new 2FA token."""
+        ...
+    
+    def check_token(self, token):
+        """Check if the provided token matches the stored token."""
+        ...
+
+class MFAToken:
+    """We have this kind of data sctructure for MFA tokens.
+    
+    {
+        '_id': ObjectId('_id here'),
+        'user_id': ObjectId('userid here'),
+        'secret': 'secret here',
+        'created_at': datetime.datetime(2022, 1, 1, 0, 0),
+        'in_use': True
+        
+    }
+    """
+    def __init__(self, user_id, secret):
+        self.user_id = user_id
+        self.secret = secret
+        self.created_at = datetime.datetime.now()
+        self.in_use = True
+        self.totp = pyotp.TOTP(secret)
+    
+    def __repr__(self):
+        return f"<MFAToken(user_id={self.user_id})>"
+
+    def check_token(self, token):
+        return self.totp.verify(token, valid_window=VALID_WINDOW)
+    
+class UserMFA:
+    def __init__(self, user_id) -> None:
+        self.user_id = user_id
+        self.secrets = self.get_secrets()
+        self.secrets_ = [MFAToken(user_id, secret) for secret in self.secrets]
+    
+    def get_secrets(self):
+        mfas = mongo.mfas.find({"user_id": ObjectId(self.user_id)})
+        return [mfa["secret"] for mfa in mfas]
+
+    def verify_token(self, token):
+        for secret in self.secrets_:
+            if secret.check_token(token):
+                return True
+        
+        return False
+    
+    def add_secret(self, secret):
+        mongo.mfas.insert_one({"user_id": ObjectId(self.user_id), "secret": secret})
+        self.secrets.append(secret)
+        self.secrets_.append(MFAToken(self.user_id, secret))
+    
+    def generate_secret(self):
+        secret = pyotp.random_base32()
+        self.add_secret(secret)
+        return secret
+    
+    
 
 class AnonymousUser(AnonymousUserMixin):
     def __init__(self):
@@ -346,8 +458,9 @@ class AnonymousUser(AnonymousUserMixin):
         self.permissions = {}
         self.global_permissions = []
         self.role = "anonymous"
+        self.banned = False
+        self.mfa_enabled = False
 
-    
     def add_organization(self, db, organization_id, role="member", permissions=None):
         """
         Add or update an organization for the user, including role and permissions.

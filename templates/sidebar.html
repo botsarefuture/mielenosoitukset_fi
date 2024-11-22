@@ -42,6 +42,22 @@
 	background-color: var(--orange);
 	padding: 5px;
 }
+
+.dangerous-action {
+    background-color: var(--red) !important;
+    color: white !important;
+    padding: 5px;
+    border-radius: 5px;
+    border: black 1px solid;
+
+}
+
+.dangerous-action:hover {
+    background-color: var(--red-dark) !important;
+}
+
+
+
 </style>
   
 <div class="container-sidebar bg-header-footer pc-only" style="z-index: 100000000000;">
@@ -117,13 +133,23 @@
             <div class="sidebar-section">
                 <div class="sidebar-title">{{ _('Mielenosoituksen hallinnat') }}</div>
                 <li>
+                    <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}">
+                        <span class="icon"><i class="fas fa-eye"></i></span> {{ _('Katsele') }}
+                    </a>
+                </li>
+                <li>
                     <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}">
                         <span class="icon"><i class="fas fa-edit"></i></span> {{ _('Muokkaa') }}
                     </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('admin_demo.delete_demo', demo_id=demo['_id']) }}">
+                    <a href="{{ url_for('admin_demo.delete_demo', demo_id=demo['_id']) }}" class="dangerous-action">
                         <span class="icon"><i class="fas fa-trash-alt"></i></span> {{ _('Poista') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('preview', demo_id=demo['_id']) }}">
+                        <span class="icon"><i class="fas fa-image"></i></span> {{ _('Mainoskuvan luontityökalu') }}
                     </a>
                 </li>
             </div>

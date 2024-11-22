@@ -445,6 +445,49 @@
 </div>
 {% endif %}
 
+<!-- here comes stats for admins -->
+{% if current_user.has_permission("VIEW_ANALYTICS") %}
+<div id="demo-stats" class="toolbox-sticky">
+  <div class="toolbox-header">
+    <h3>{{ _('Tilastot') }}</h3>
+    <button class="toggle-toolbox" onclick="toggleToolbox()">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+
+  <div id="toolbox-buttons" class="toolbox-buttons">
+    <a href="{{ url_for('admin.stats') }}" class="button stats-button">
+      <i class="fas fa-chart-line"></i> {{ _('Tilastot') }}
+    </a>
+  </div>
+
+  <div id="stats-content">
+    <!-- Stats will be injected here by JavaScript -->
+  </div>
+</div>
+
+<script>
+  function get_demo_stats(demoId) {
+    fetch(`/api/demo/${demoId}/stats`)
+      .then((response) => response.json())
+      .then((data) => {
+        const statsContent = document.getElementById("stats-content");
+        statsContent.innerHTML = `
+          <p><strong>{{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
+          <p><strong>{{ _('Osallistujat:') }}</strong> ${data.participants}</p>
+        `;
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    get_demo_stats("{{ demo['_id'] }}");
+  });
+</script>
+{% endif %}
+
 <div id="main">
 
   <!-- IMAGE -->

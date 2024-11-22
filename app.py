@@ -12,17 +12,21 @@ from error_handlers import register_error_handlers
 from scripts.repeat_v2 import main as repeat_main
 from scripts.update_demo_organizers import main as update_main
 from scripts.in_past import hide_past
+from utils.analytics import prep
+import sys
+
 
 from utils import VERSION
 
 import os
 
 # if env var forcerun
-if os.environ.get("FORCERUN"): # Set this via: export FORCERUN=1
+if os.environ.get("FORCERUN") or (len(sys.argv) == 2 and sys.argv[1] == "force"): # Set this via: export FORCERUN=1
     # To unset: unset FORCERUN
     repeat_main()
     update_main()
     hide_past()
+    prep()
     exit()
     
 
@@ -30,6 +34,8 @@ if os.environ.get("FORCERUN"): # Set this via: export FORCERUN=1
 scheduler = BackgroundScheduler()
 scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
 scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
+
+scheduler.add_job(prep, "interval", minutes=15)
 
 # Initialize Babel
 babel = Babel()

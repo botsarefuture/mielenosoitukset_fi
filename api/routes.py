@@ -5,6 +5,7 @@ from database_manager import DatabaseManager
 import json
 from classes import Demonstration
 from utils.database import stringify_object_ids
+from utils.analytics import get_demo_views, get_prepped_data
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -154,3 +155,13 @@ def get_likes(demo_id):
         return jsonify({"likes": 0})
     
     return jsonify({"likes": likes["likes"]})
+
+@api_bp.route("/demo/<demo_id>/stats", methods=["GET"])
+def get_demo_stats_route(demo_id):
+    """
+    Get the statistics for a demonstration
+    """
+    
+    stats = get_prepped_data(ObjectId(demo_id))
+    print(stats)
+    return jsonify(stringify_object_ids(stats))

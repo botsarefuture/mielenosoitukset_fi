@@ -9,6 +9,7 @@ from users.models import User
 from database_manager import DatabaseManager
 from utils.database import stringify_object_ids
 from utils.validators import valid_event_type, return_exists
+import time
 
 DB = DatabaseManager().get_instance().get_db()
 
@@ -348,6 +349,8 @@ class Demonstration(BaseModel):
         event_type=None,
         save_flag=False,
         hide=False,
+        aliases=None,
+        in_past=False,
     ):
         """
         Initialize a new demonstration event.
@@ -380,6 +383,7 @@ class Demonstration(BaseModel):
             event_type (optional): The type of the event. Defaults to None.
             save_flag (bool, optional): Flag to save the event. Defaults to False.
             hide (bool, optional): Flag to hide the event. Defaults to False.
+            aliases (list, optional): Aliases for the event. Defaults to None.
         """
 
         self.save_flag = save_flag
@@ -424,7 +428,6 @@ class Demonstration(BaseModel):
         self.parent: ObjectId = parent or None
         self.repeat_schedule = repeat_schedule
         self.repeating, self.recurring = return_exists(repeating, recurring, False)          
-        
 
         # DEPRECATED
         self.topic = topic or None # Deprecated
@@ -441,12 +444,32 @@ class Demonstration(BaseModel):
             Organizer.from_dict(org) if isinstance(org, dict) else org
             for org in (organizers or [])
         ]
+        
+        self.in_past = in_past # Whether or not in past
+        if self.in_past == True:
+            self.hide = True
+            self.save_flag = True
 
+        self.aliases = aliases or []
+        self.alias_fix()
+    
         if self.save_flag: # Save the demonstration if the save_flag is set
             self.save() # Save the demonstration
 
         self.validate_fields(title, date, start_time, city, address) # Validate required fields
+        
+        
 
+    def alias_fix(self):
+        aliases = self.aliases.copy()
+        
+        for alias in aliases:
+            if not isinstance(alias, ObjectId):
+                alias = ObjectId(alias)
+        
+        self.aliases = aliases
+                
+    
     def merge(self, id_of_other_demo):
         """
         Merge another demonstration into this one.
@@ -462,12 +485,14 @@ class Demonstration(BaseModel):
         Raises:
             ValueError: If the demonstration with the given ID is not found in the database.
         """
-        other_demo = DB["demonstrations"].find_one({"_id": ObjectId(id_of_other_demo)})
-        if not other_demo:
+        other_demo_data = DB["demonstrations"].find_one({"_id": ObjectId(id_of_other_demo)})
+        if not other_demo_data:
             raise ValueError(f"Demonstration with id {id_of_other_demo} not found.")
 
+        other_demo = Demonstration.from_dict(other_demo_data)
+
         # Update fields with non-None values from the other demonstration
-        for key, value in other_demo.items():
+        for key, value in other_demo.to_dict().items():
             if key != "_id" and value is not None:
                 setattr(self, key, value)
 
@@ -476,8 +501,31 @@ class Demonstration(BaseModel):
 
         # Ensure the merged demonstration can be found by both IDs
         DB["demonstrations"].update_one(
-            {"_id": ObjectId(id_of_other_demo)}, {"$set": {"merged_into": self._id}}
+            {"_id": ObjectId(id_of_other_demo)}, {"$set": {"merged_into": self._id, "hide": True}}
         )
+        
+        self.aliases.append(ObjectId(id_of_other_demo)) #Make sure that this gets saved
+        
+        
+        self.save()
+        
+    def update_self_from_recurring(self, recurring_demo):
+        """
+        Update the demonstration details using a recurring demonstration.
+
+        This method updates the demonstration instance with the details from a recurring
+        demonstration. The details that are updated include the title, description, tags,
+        and organizers.
+
+        Args:
+            recurring_demo (RecurringDemonstration): The recurring demonstration instance.
+        """
+        self.title = recurring_demo.title
+        self.description = recurring_demo.description
+        self.tags = recurring_demo.tags
+        self.organizers = recurring_demo.organizers
+        
+        self.save()
 
     def to_dict(self, json=False):
         """
@@ -495,6 +543,7 @@ class Demonstration(BaseModel):
             org.to_dict(json=json) if isinstance(org, Organizer) else org
             for org in self.organizers
         ]
+        data["aliases"] = [str(alias) for alias in self.aliases]
         return data
 
     def validate_fields(self, title, date, start_time, city, address):
@@ -539,9 +588,12 @@ class Demonstration(BaseModel):
         Returns:
             None
         """
-
+        
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary
+        
+        if data.get("aliases") is None:
+            raise ValueError("Aliases are missing.")
 
         # Check if the demonstration already exists in the database
         if DB["demonstrations"].find_one({"_id": self._id}):

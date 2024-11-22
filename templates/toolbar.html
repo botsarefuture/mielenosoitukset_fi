@@ -1,4 +1,11 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}">
+{% if organization %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+{% endif %}
+
+
+{% import 'admin/organizations/macros.html' as org_macros %}
 
 <div id="demo-toolbox" class="toolbox">
     <div class="toolbox-header">
@@ -12,6 +19,11 @@
             {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
             <button class="button accept-button" onclick="acceptDemo('{{ demo['_id'] }}')">
                 <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
+            </button>
+
+            <!-- Reject Button -->
+            <button class="button reject-button" onclick="rejectDemo('{{ demo['_id'] }}')">
+                <i class="fa-solid fa-times"></i> {{ _('Hylkää') }}
             </button>
             {% endif %}
 
@@ -27,7 +39,15 @@
             <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="button view-button">
                 <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
             </a>
+            <!-- extra info button -->
+            <button class="button view-button" onclick="fetchDemoInfo('{{ demo['_id'] }}')">
+                <i class="fa-solid fa-info"></i> {{ _('Lisätietoja') }}
+            </button>
             {% endif %}
+
+            <a href="{{ url_for('preview', demo_id=demo['_id']) }}" class="button preview-button">
+                <i class="fas fa-image"></i> {{ _('Mainoskuvan luontityökalu') }}
+            </a>
 
             <!-- Delete Button -->
             {% if current_user.has_permission("DELETE_DEMO") %}
@@ -46,31 +66,51 @@
                 <!-- Stats will be injected here by JavaScript -->
             </div>
             {% endif %}
+            
             {% endif %}
 
         </demo-toolbar-buttons>
         <org-toolbar-buttons>
-            {% if organization %}
+            {% if org %}
             <!-- Edit Button -->
             {% if current_user.has_permission("EDIT_ORGANIZATION") %}
-            <a href="{{ url_for('admin_organization.edit_organization', org_id=organization['_id']) }}" class="button edit-button">
+            <a href="{{ url_for('admin_org.edit_organization', org_id=org['_id']) }}" class="button edit-button">
                 <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
             </a>
             {% endif %}
 
             <!-- View Button -->
             {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-            <a href="{{ url_for('organization_detail', org_id=organization['_id']) }}" class="button view-button">
+            <a href="{{ url_for('org', org_id=org['_id']) }}" class="button view-button">
                 <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
             </a>
             {% endif %}
 
             <!-- Delete Button -->
             {% if current_user.has_permission("DELETE_ORGANIZATION") %}
-            <button class="button delete-button" onclick="openModal(event, '{{ organization.name }}', '{{ organization['_id'] }}')">
+            <button class="button delete-button" onclick="openModal(event, '{{ org.name }}', '{{ org['_id'] }}')">
                 <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
             </button>
             {% endif %}
+
+            <!-- invite users -->
+            {% if current_user.has_permission("INVITE_TO_ORGANIZATION") %}
+            <button class="button invite-button" data-modal-target="#inviteModal">
+                <i class="fas fa-user-plus"></i> {{ _('Kutsu käyttäjiä') }}
+            </button>
+
+            {{ org_macros.invite_modal(org) }}
+
+            {% endif %}
+
+
+                        <!-- if current user is member of -->
+            {% if current_user.has_permission("VIEW_ORGANIZATION") %}
+            <button class="button leave-button" onclick="leaveOrganization('{{ org['_id'] }}')">
+                <i class="fas fa-sign-out-alt"></i> {{ _('Poistu<br>organisaatiosta') }}
+            </button>
+            {% endif %}
+
             {% endif %}
         </org-toolbar-buttons>
     </div>
@@ -111,13 +151,20 @@
 
 {% if demo %}
 <script>
-    document.getElementsByTagName("demo-toolbar-buttons")[0].classList.add("display");
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementsByTagName("demo-toolbar-buttons")[0].classList.add("display");
+    });
 </script>
-{% endif %}
-
-{# Display orgasm toolbar #}
-{% if organization %}
+{% elif org %}
 <script>
-    document.getElementsByTagName("org-toolbar-buttons")[0].classList.add("display");
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementsByTagName("org-toolbar-buttons")[0].classList.add("display");
+    });
+</script>
+{% else %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("demo-toolbox").style.display = "none";
+    });
 </script>
 {% endif %}

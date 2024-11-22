@@ -85,6 +85,10 @@
         {
             "name": "LIST_ORGANIZATIONS",
             "description": "List all organizations."
+        },
+        {
+            "name": "INVITE_TO_ORGANIZATION",
+            "description": "Can invite users to organization."
         }
     ],
     "Miscallanious": [

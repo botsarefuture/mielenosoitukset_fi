@@ -1,6 +1,14 @@
-async function fetchDemoInfo(demoId) {
+/**
+ * Fetches demonstration information and updates the modal content.
+ *
+ * Parameters
+ * ----------
+ * demo_id : str
+ *     The ID of the demonstration to fetch information for.
+ */
+async function fetchDemoInfo(demo_id) {
     try {
-        const response = await fetch(`/api/admin/demo/info/${demoId}`);
+        const response = await fetch(`/api/admin/demo/info/${demo_id}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
@@ -13,6 +21,14 @@ async function fetchDemoInfo(demoId) {
     }
 }
 
+/**
+ * Updates the content of the modal with demonstration information.
+ *
+ * Parameters
+ * ----------
+ * demo_info : Object
+ *     The demonstration information object.
+ */
 function updateModalContent(demo_info) {
     // insert the modal into the document if it doesn't exist
     if (!document.querySelector('.modal')) {
@@ -69,10 +85,16 @@ function updateModalContent(demo_info) {
     });
 }
 
+/**
+ * Displays the modal.
+ */
 function showModal() {
     document.querySelector('.modal').classList.add("display");
 }
 
+/**
+ * Closes the modal.
+ */
 function closeModal() {
     document.querySelector('.modal').classList.remove("display");
 }

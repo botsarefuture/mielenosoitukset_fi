@@ -1,3 +1,6 @@
+/**
+ * Toggles between dark and light mode.
+ */
 function toggleDarkMode() {
     document.documentElement.classList.toggle("dark");
     document.documentElement.classList.toggle("light");
@@ -15,6 +18,9 @@ function toggleDarkMode() {
     }
 }
 
+/**
+ * Applies the preferred theme based on saved preference or system settings.
+ */
 function applyPreferredTheme() {
     const savedTheme = localStorage.getItem("theme");
     const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;

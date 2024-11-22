@@ -66,7 +66,7 @@
                 <!-- Stats will be injected here by JavaScript -->
             </div>
             {% endif %}
-            
+
             {% endif %}
 
         </demo-toolbar-buttons>
@@ -104,7 +104,7 @@
             {% endif %}
 
 
-                        <!-- if current user is member of -->
+            <!-- if current user is member of -->
             {% if current_user.has_permission("VIEW_ORGANIZATION") %}
             <button class="button leave-button" onclick="leaveOrganization('{{ org['_id'] }}')">
                 <i class="fas fa-sign-out-alt"></i> {{ _('Poistu<br>organisaatiosta') }}
@@ -126,8 +126,9 @@
     <!-- DO NOT REMOVE ABOVE -->
 </div>
 
-{% if current_user.has_permission("VIEW_ANALYTICS") and demo %}
+{% if demo %}
 <script>
+
     function get_demo_stats(demoId) {
         fetch(`/api/demo/${demoId}/stats`)
             .then((response) => response.json())
@@ -144,15 +145,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", () => {
-        get_demo_stats("{{ demo['_id'] }}");
-    });
-</script>
-{% endif %}
-
-{% if demo %}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
         document.getElementsByTagName("demo-toolbar-buttons")[0].classList.add("display");
+        get_demo_stats("{{ demo['_id'] }}");
+
     });
 </script>
 {% elif org %}

@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, abort
+from urllib.parse import urlparse
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
@@ -116,7 +117,11 @@ def follow(username):
         flash_message("Tapahtui virhe.", "danger")
         logger.error(f"Error following user {username}: {e}")
         
-    return redirect(request.referrer or "/")  # TODO: #197 Use safe referrer // redirect to home if referrer is not available
+    referrer = request.referrer or "/"
+    referrer = referrer.replace('\\', '')
+    if not urlparse(referrer).netloc and not urlparse(referrer).scheme:
+        return redirect(referrer, code=302)
+    return redirect("/", code=302)
 
 @profile_bp.route("/unfollow/<username>", methods=["POST"])
 @login_required
@@ -150,4 +155,8 @@ def unfollow(username):
         flash_message("Tapahtui virhe.", "danger")
         logger.error(f"Error unfollowing user {username}: {e}")
         
-    return redirect(request.referrer)  # TODO: #197 Use safe referrer // redirect to home if referrer is not available
+    referrer = request.referrer or "/"
+    referrer = referrer.replace('\\', '')
+    if not urlparse(referrer).netloc and not urlparse(referrer).scheme:
+        return redirect(referrer, code=302)
+    return redirect("/", code=302)

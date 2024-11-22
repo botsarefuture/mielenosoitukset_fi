@@ -30,6 +30,7 @@ from utils.flashing import flash_message
 from utils.database import DEMO_FILTER
 from utils.analytics import log_demo_view
 from wrappers import permission_required
+from werkzeug.utils import secure_filename
 
 email_sender = EmailSender()
 
@@ -170,7 +171,8 @@ def init_routes(app):
 
             if img:
                 # Save the uploaded file temporarily
-                temp_file_path = os.path.join("uploads", img.filename)
+                filename = secure_filename(img.filename)
+                temp_file_path = os.path.join("uploads", filename)
                 img.save(temp_file_path)
 
                 # Define the bucket name and upload the file

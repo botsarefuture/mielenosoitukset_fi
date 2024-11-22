@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from bson.objectid import ObjectId
-
+import logging
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
@@ -530,4 +530,5 @@ def accept_demo(demo_id):
             200,
         )
     except Exception as e:
-        return jsonify({"status": "ERROR", "message": str(e)}), 500
+        logging.error("An error occurred while accepting the demonstration: %s", str(e))
+        return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500

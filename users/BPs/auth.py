@@ -7,6 +7,7 @@ from flask import (
     current_app,
     session
 )
+from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
 from users.models import User, UserMFA
 from utils.auth import (
@@ -135,8 +136,12 @@ def confirm_email(token):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    """ """
-    next_page = request.args.get("next")
+    next_page = request.args.get("next", "")
+    next_page = next_page.replace('\\', '')
+    if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
+        safe_next_page = next_page
+    else:
+        safe_next_page = url_for("index")
 
     if request.method == "POST":
         username = request.form.get("username")

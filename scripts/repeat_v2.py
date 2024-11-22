@@ -227,7 +227,6 @@ def merge_duplicates():
             try:
                 Demonstration(**base_demo).merge(duplicate_id)
                 print("MERGING", duplicate_id)
-                time.sleep(200)
                 merged_count += 1
             except Exception as e:
                 logger.error(f"Error merging duplicate {duplicate_id}: {e}")

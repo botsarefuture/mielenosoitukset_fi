@@ -83,11 +83,21 @@ def create_recu_demo():
 @permission_required("EDIT_RECURRING_DEMO")
 def edit_recu_demo(demo_id):
     """Edit recurring demonstration details.
-
+    
     Changelog:
     ---------
     v2.4.0:
     - Fixed some typos in flash_messages
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
@@ -110,7 +120,22 @@ def edit_recu_demo(demo_id):
 
 
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
-    """Handle form submission for creating or editing a recurring demonstration."""
+    """Handle form submission for creating or editing a recurring demonstration.
+
+    Parameters
+    ----------
+    request :
+        param is_edit:  (Default value = False)
+    demo_id :
+        Default value = None)
+    is_edit :
+        (Default value = False)
+
+    Returns
+    -------
+
+    
+    """
     title = request.form.get("title")
     date = request.form.get("date")
     start_time = request.form.get("start_time")
@@ -200,7 +225,18 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
 @admin_required
 @permission_required("DELETE_RECURRING_DEMO")
 def delete_recu_demo(demo_id):
-    """Delete a recurring demonstration from the database."""
+    """Delete a recurring demonstration from the database.
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
@@ -222,11 +258,21 @@ def delete_recu_demo(demo_id):
 @permission_required("DELETE_RECURRING_DEMO")
 def confirm_delete_recu_demo(demo_id):
     """Render a confirmation page before deleting a recurring demonstration.
-
+    
     Changelog:
     ----------
     v2.4.0:
     - Fixed some typos in flash_messagees
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 

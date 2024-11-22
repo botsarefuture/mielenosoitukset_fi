@@ -47,15 +47,19 @@ USER_ACCESS_LEVELS = {
 }
 
 def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
-    """
-    Compare the access levels of two users.
-    Args:
-        user1: An object representing the first user, which must have a 'role' attribute.
-        user2: An object representing the second user, which must have a 'role' attribute.
-    Returns:
-        bool: True if user1 has a higher access level than user2, False otherwise.
-    Raises:
-        ValueError: If either user1 or user2 has an invalid role not present in USER_ACCESS_LEVELS.
+    """Compare the access levels of two users.
+
+    Parameters
+    ----------
+    user1 :
+        An object representing the first user, which must have a 'role' attribute.
+    user2 :
+        raises ValueError: If either user1 or user2 has an invalid role not present in USER_ACCESS_LEVELS.
+
+    Returns
+    -------
+
+    
     """
     if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
         raise ValueError("Invalid user role")
@@ -68,7 +72,7 @@ def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
 @permission_required("EDIT_USER")
 def edit_user(user_id):
     """Edit user details.
-
+    
     Changelog:
     ----------
     v2.5.0:
@@ -78,6 +82,16 @@ def edit_user(user_id):
     
     v2.4.0:
     - Modified to use valid_email instead of depraced is_valid_email
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
     """
     
     user = User.from_db(mongo.users.find_one({"_id": ObjectId(user_id)}))
@@ -184,6 +198,7 @@ def edit_user(user_id):
     )
 
 class UserOrg:
+    """ """
     def __init__(self, org_id, user, role, permissions):
         self.org_id = org_id
         self.user = user
@@ -194,6 +209,7 @@ class UserOrg:
         return f"UserOrg({self.org_id}, {self.user}, {self.role}, {self.permissions})"
     
     def to_dict(self):
+        """ """
         return {
             "org_id": ObjectId(self.org_id),
             "role": self.role if self.role in ["global_admin", "admin", "user"] else "user",
@@ -202,6 +218,18 @@ class UserOrg:
         
     @staticmethod
     def from_dict(data):
+        """
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        
+        """
         return UserOrg(data.get("org_id"), data.get("user"), data.get("role"), data.get("permissions"))
 
 @admin_user_bp.route("/save_user/<user_id>", methods=["POST"])
@@ -210,12 +238,22 @@ class UserOrg:
 @permission_required("EDIT_USER")
 def save_user(user_id):
     """Save updated user details, permissions, and send email notification.
-
+    
     Changelog:
     ----------
-
+    
     v2.4.0:
     - Modified to use valid_email instead of depraced is_valid_email
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
     """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
@@ -313,15 +351,24 @@ import warnings
 
 
 def is_valid_email(email):
-    """
-    Deprecated: This function is deprecated and will be removed in future versions.
+    """Deprecated: This function is deprecated and will be removed in future versions.
     Please use `valid_email` from `utils.py` instead.
-
+    
     Usage:
         from utils import valid_email
         is_valid = valid_email(email)
-
+    
     Utility function to validate email format.
+
+    Parameters
+    ----------
+    email :
+        
+
+    Returns
+    -------
+
+    
     """
     warnings.warn(
         "is_valid_email is deprecated; use valid_email from ../utils.py instead.",
@@ -337,7 +384,18 @@ def is_valid_email(email):
 @admin_required
 @permission_required("DELETE_USER")
 def delete_user(user_id):
-    """Delete a user from the system."""
+    """Delete a user from the system.
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if user:
         mongo.users.delete_one({"_id": ObjectId(user_id)})

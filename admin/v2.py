@@ -4,6 +4,7 @@ This file contains code for a test of new kind of control panel stuff, that woul
 
 @app.route("/admin/control_panel", methods=["GET"])
 def control_panel():
+    """ """
     # Example items data
     items = mongo.demonstrations.find()
 

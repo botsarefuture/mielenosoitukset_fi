@@ -17,6 +17,18 @@ profile_bp = Blueprint("profile", __name__, template_folder="/users/profile/", u
 @profile_bp.route("/")
 @profile_bp.route("/<username>")
 def profile(username=None):
+    """
+
+    Parameters
+    ----------
+    username :
+        Default value = None)
+
+    Returns
+    -------
+
+    
+    """
     if username is None:
         if current_user.is_authenticated:
             username = current_user.username
@@ -34,6 +46,7 @@ def profile(username=None):
 @profile_bp.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
+    """ """
     if request.method == "POST":
         displayname = request.form.get("displayname")
         bio = request.form.get("bio")
@@ -76,6 +89,18 @@ def edit_profile():
 @profile_bp.route("/follow/<username>", methods=["POST"])
 @login_required
 def follow(username):
+    """
+
+    Parameters
+    ----------
+    username :
+        
+
+    Returns
+    -------
+
+    
+    """
     try:
         user_to_follow = User.from_db(mongo.users.find_one({"username": username}))
         logger.debug(f"User to follow: {user_to_follow}")
@@ -96,6 +121,18 @@ def follow(username):
 @profile_bp.route("/unfollow/<username>", methods=["POST"])
 @login_required
 def unfollow(username):
+    """
+
+    Parameters
+    ----------
+    username :
+        
+
+    Returns
+    -------
+
+    
+    """
     try:
         user_to_unfollow = User.from_db(mongo.users.find_one({"username": username}))
         if user_to_unfollow:

@@ -38,6 +38,20 @@ auth_bp = Blueprint("auth", __name__, template_folder="./templates/")
 
 
 def verify_emailer(email, username):
+    """
+
+    Parameters
+    ----------
+    email :
+        param username:
+    username :
+        
+
+    Returns
+    -------
+
+    
+    """
     token = generate_confirmation_token(email)
     confirmation_url = url_for("auth.confirm_email", token=token, _external=True)
 
@@ -51,6 +65,7 @@ def verify_emailer(email, username):
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
+    """ """
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -93,6 +108,18 @@ def register():
 
 @auth_bp.route("/confirm_email/<token>")
 def confirm_email(token):
+    """
+
+    Parameters
+    ----------
+    token :
+        
+
+    Returns
+    -------
+
+    
+    """
     email = verify_confirmation_token(token)
     if email:
         user = mongo.users.find_one({"email": email})
@@ -112,6 +139,7 @@ def confirm_email(token):
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """ """
     # Get the next URL to redirect to after login
     next_page = request.args.get(
         "next"
@@ -159,6 +187,7 @@ def login():
 @auth_bp.route("/logout")
 @login_required
 def logout():
+    """ """
     logout_user()
     flash_message("Kirjauduit onnistuneesti ulos", "success")
     return redirect(url_for("users.auth.login"))
@@ -166,6 +195,7 @@ def logout():
 
 @auth_bp.route("/password_reset_request", methods=["GET", "POST"])
 def password_reset_request():
+    """ """
     if request.method == "POST":
         email = request.form.get("email")
         user = mongo.users.find_one({"email": email})
@@ -199,6 +229,18 @@ def password_reset_request():
 
 @auth_bp.route("/password_reset/<token>", methods=["GET", "POST"])
 def password_reset(token):
+    """
+
+    Parameters
+    ----------
+    token :
+        
+
+    Returns
+    -------
+
+    
+    """
     email = verify_reset_token(token)
     if not email:
         flash_message(
@@ -226,6 +268,18 @@ def password_reset(token):
 @auth_bp.route("/profile/")
 @auth_bp.route("/profile/<username>")
 def profile(username=None):
+    """
+
+    Parameters
+    ----------
+    username :
+        Default value = None)
+
+    Returns
+    -------
+
+    
+    """
     if username is None:
         if current_user.is_authenticated:
             username = current_user.username
@@ -245,6 +299,7 @@ def profile(username=None):
 @auth_bp.route("/profile/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
+    """ """
     if request.method == "POST":
         displayname = request.form.get("displayname")
         bio = request.form.get("bio")
@@ -294,6 +349,7 @@ def edit_profile():
 @auth_bp.route("/accept_invite", methods=["GET"])
 #@login_required # Don't require login to accept invite
 def accept_invite():
+    """ """
     if not current_user.is_authenticated:
         flash_message("Kirjaudu sisään liittyäksesi organisaatioon.", "info")
         return redirect(url_for("users.auth.login", next=request.url))

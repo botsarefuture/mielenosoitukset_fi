@@ -1,15 +1,14 @@
 class Sender:
-    """
-    The Sender class encapsulates the information related to an email sender, including the
+    """The Sender class encapsulates the information related to an email sender, including the
     SMTP server details and the sender's email credentials.
 
-    Attributes:
-        email_server (str): The SMTP server address used to send emails.
-        email_port (int): The port to connect to the SMTP server.
-        username (str): The username for authenticating with the SMTP server.
-        password (str): The password for authenticating with the SMTP server.
-        use_tls (bool): A flag indicating whether to use TLS for the SMTP connection.
-        email_address (str): The sender's email address.
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
 
     def __init__(
@@ -34,12 +33,7 @@ class Sender:
         self.email_address = email_address
 
     def to_dict(self):
-        """
-        Converts the Sender instance to a dictionary format.
-
-        Returns:
-            dict: A dictionary containing the sender information.
-        """
+        """Converts the Sender instance to a dictionary format."""
         return {
             "email_server": self.email_server,
             "email_port": self.email_port,
@@ -51,14 +45,17 @@ class Sender:
 
     @classmethod
     def from_dict(cls, data):
-        """
-        Creates a Sender instance from a dictionary.
+        """Creates a Sender instance from a dictionary.
 
-        Args:
-            data (dict): A dictionary containing sender information.
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing sender information.
 
-        Returns:
-            Sender: An instance of the Sender class.
+        Returns
+        -------
+
+        
         """
         return cls(
             email_server=data.get("email_server"),
@@ -71,16 +68,7 @@ class Sender:
 
 
 class EmailJob:
-    """
-    The EmailJob class represents an email task, encapsulating all the details required to send an email.
-
-    Attributes:
-        subject (str): The subject line of the email.
-        recipients (list[str]): A list of recipient email addresses.
-        body (str, optional): The plain text body of the email.
-        html (str, optional): The HTML content of the email.
-        sender (Sender, optional): An instance of the Sender class containing the sender's information. Defaults to None.
-    """
+    """The EmailJob class represents an email task, encapsulating all the details required to send an email."""
 
     def __init__(self, subject, recipients, body=None, html=None, sender=None):
         """
@@ -100,12 +88,7 @@ class EmailJob:
         self.sender = sender  # Store a Sender instance if provided
 
     def to_dict(self):
-        """
-        Converts the EmailJob instance to a dictionary format for storage in a database.
-
-        Returns:
-            dict: A dictionary representation of the EmailJob instance.
-        """
+        """Converts the EmailJob instance to a dictionary format for storage in a database."""
         return {
             "subject": self.subject,
             "recipients": self.recipients,
@@ -116,14 +99,17 @@ class EmailJob:
 
     @classmethod
     def from_dict(cls, data):
-        """
-        Creates an EmailJob instance from a dictionary.
+        """Creates an EmailJob instance from a dictionary.
 
-        Args:
-            data (dict): A dictionary containing email job details.
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing email job details.
 
-        Returns:
-            EmailJob: An instance of the EmailJob class.
+        Returns
+        -------
+
+        
         """
         sender_data = data.get("sender")
         sender = Sender.from_dict(sender_data) if sender_data else None

@@ -42,6 +42,7 @@ login_manager.login_view = "users.auth.login"
 
 
 class DemoViewCount:
+    """ """
     def __init__(self, demo_id, count):
         self.id = demo_id
         self.views = count
@@ -53,6 +54,18 @@ class DemoViewCount:
         return f"Demo ID: {self.id}, Count: {self.views}"
 
 def count_per_demo(data):
+    """
+
+    Parameters
+    ----------
+    data :
+        
+
+    Returns
+    -------
+
+    
+    """
     demo_count = {}
     for view in data:
         demo_id = view.get("demo_id")
@@ -68,7 +81,18 @@ def count_per_demo(data):
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    """Load a user from the database using their ID."""
+    """Load a user from the database using their ID.
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     return User.from_db(user_doc) if user_doc else None
 
@@ -78,16 +102,23 @@ def load_user(user_id):
 @login_required
 def admin_logout():
     """Handle admin logout and log the action.
-
+    
     This function is deprecated as of version 2.4.0 and will be
     removed in version 2.5.0. Please use the `logout` function
     from `auth` instead.
-
+    
     Changelog:
     ----------
     v2.4.0:
     - Depraced this function.
 
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
     # Raise a deprecation warning
     warnings.warn(
@@ -204,16 +235,29 @@ def manage_marquee():
 @admin_required
 @permission_required("VIEW_ANALYTICS")
 def admin_analytics():
+    """ """
     return demo_analytics()
 
 def demo_analytics():
+    """ """
     data = get_demo_views()
     data = count_per_demo(data)
     
     return render_template('admin/analytics.html', data=data)
 
 def send_red_alert_email(user):
-    """Send a red alert email to the user."""
+    """Send a red alert email to the user.
+
+    Parameters
+    ----------
+    user :
+        
+
+    Returns
+    -------
+
+    
+    """
     # Use email_sender
     from emailer import EmailSender
     email_sender = EmailSender()
@@ -270,6 +314,17 @@ def shutdown():
     return "Server shutting down..."
 
 def validate_mfa_token(token):
-    """Validate the MFA token."""
+    """Validate the MFA token.
+
+    Parameters
+    ----------
+    token :
+        
+
+    Returns
+    -------
+
+    
+    """
     # Implement your MFA token validation logic here
     return True  # Placeholder for actual validation logic

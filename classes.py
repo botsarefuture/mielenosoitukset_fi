@@ -15,6 +15,7 @@ DB = DatabaseManager().get_instance().get_db()
 
 
 class RepeatSchedule:
+    """ """
     def __init__(
         self, frequency: str, interval: int, weekday: Optional[datetime] = None
     ):
@@ -25,6 +26,7 @@ class RepeatSchedule:
         print(frequency, interval, weekday)
 
     def as_string(self) -> str:
+        """ """
         frequency_map = {
             "daily": "daily",
             "weekly": "weekly",
@@ -63,6 +65,7 @@ class RepeatSchedule:
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """ """
         return {
             "frequency": self.frequency,
             "interval": self.interval,
@@ -72,6 +75,32 @@ class RepeatSchedule:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RepeatSchedule":
+        """
+
+        Parameters
+        ----------
+        data :
+            Dict[str:
+        Any :
+            
+        data : Dict[str :
+            
+        Any] :
+            
+        data : Dict[str :
+            
+        data : Dict[str :
+            
+        data : Dict[str :
+            
+        data: Dict[str :
+            
+
+        Returns
+        -------
+
+        
+        """
         return cls(
             frequency=data["frequency"],
             interval=data["interval"],
@@ -84,11 +113,33 @@ class BaseModel:
 
     @classmethod
     def from_dict(cls, data):
-        """Create an instance from a dictionary."""
+        """Create an instance from a dictionary.
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        
+        """
         return cls(**data)
 
     def to_dict(self, json=False):
-        """Convert instance to dictionary."""
+        """Convert instance to dictionary.
+
+        Parameters
+        ----------
+        json :
+            Default value = False)
+
+        Returns
+        -------
+
+        
+        """
         data = self.__dict__.copy()
         if json and "_id" in data:
             data["_id"] = str(data["_id"])
@@ -101,6 +152,7 @@ class BaseModel:
 
 
 class Organizer(BaseModel):
+    """ """
     def __init__(
         self,
         name: str = None,
@@ -119,6 +171,18 @@ class Organizer(BaseModel):
             self.fetch_organization_details()
 
     def to_dict(self, json=False):
+        """
+
+        Parameters
+        ----------
+        json :
+            Default value = False)
+
+        Returns
+        -------
+
+        
+        """
         data = super().to_dict(json)
         return data
 
@@ -146,6 +210,7 @@ class Organizer(BaseModel):
         return bool(DB["organizations"].find_one({"_id": self.organization_id}))
 
 class Membership(BaseModel):
+    """ """
     def __init__(self, user_id: ObjectId, organization_id: ObjectId, role: str, permissions: List[str] = None):
         self.user_id = user_id
         self.organization_id = organization_id
@@ -181,11 +246,49 @@ class Membership(BaseModel):
 
     @classmethod
     def from_dict(cls, data: dict):
-        """Create a Membership instance from a dictionary."""
+        """Create a Membership instance from a dictionary.
+
+        Parameters
+        ----------
+        data :
+            dict:
+        data : dict :
+            
+        data : dict :
+            
+        data : dict :
+            
+        data : dict :
+            
+        data: dict :
+            
+
+        Returns
+        -------
+
+        
+        """
         return cls(**data)
 
     def to_dict(self, json=False):
-        """Convert instance to dictionary."""
+        """Convert instance to dictionary.
+
+        Parameters
+        ----------
+        json : bool, default=False
+            If True, the dictionary will be JSON serializable.
+            
+        Returns
+        -------
+        dict
+            The instance as a dictionary.
+        
+        See Also
+        --------
+        utils.database.stringify_object_ids : Replace None with None-equivalent in JSON format.
+
+        
+        """
         data = self.__dict__.copy()
         if json and "_id" in data:
             data["_id"] = str(data["_id"])
@@ -202,6 +305,7 @@ class Membership(BaseModel):
         self.save()
         
 class Organization(BaseModel):
+    """ """
     def __init__(
         self,
         name: str,
@@ -240,18 +344,67 @@ class Organization(BaseModel):
 
     @classmethod
     def from_dict(cls, data: dict):
-        """Create an Organization instance from a dictionary."""
+        """
+        Create an instance of the class from a dictionary.
+
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing the data to initialize the instance.
+
+        Returns
+        -------
+        Organization : Organization
+            An instance of the Organization class.
+        """
         # Remove any deprecated or unnecessary keys
         data.pop("social_medias", None)  # Remove 'social_medias' if it exists
         return cls(**data)
 
     def is_member(self, email):
-        """Check if a user with the given email is a member of the organization."""
+        """Check if a user with the given email is a member of the organization.
+
+        Parameters
+        ----------
+        email : str
+            The email address of the user to check.
+            
+        Returns
+        -------
+        bool
+            True if the user is a member, False otherwise.
+            
+        Raises
+        ------
+        TypeError
+            If the email is not a string.
+
+        
+        """
+        
+        if not isinstance(email, str):
+            raise TypeError("Email must be a string.")
+        
         return any(member["email"] == email for member in self.members)
     
-    def add_member(self, member: ObjectId|User, role="member", permissions=[]):
-        """Add a member to the organization."""
-        # Use the membership class to do shit
+    from typing import Union
+
+    def add_member(self, member: Union[ObjectId, User], role="member", permissions=[]):
+        """Add a member to the organization.
+
+        Parameters
+        ----------
+        member : Union[ObjectId, User]
+            The member to add, either as an ObjectId or User instance.
+        role : str, optional
+            The role of the member in the organization (default is "member").
+        permissions : list, optional
+            The permissions of the member (default is []).
+
+        Returns
+        -------
+        None
+        """
         if isinstance(member, User):
             member = ObjectId(member._id)
         
@@ -265,7 +418,26 @@ class Organization(BaseModel):
             permissions
         ).save()
         
-def event_type_convertor(event_type):
+def event_type_convertor(event_type: str) -> str:
+    """
+    Parameters
+    ----------
+    event_type : str
+        The event type to be converted. Expected values are "marssi", "paikallaan", "muut", 
+        or any valid event type.
+    
+    Returns
+    -------
+    standardized_event_type : str
+        The standardized event type. Returns "MARCH" for "marssi", "STAY_STILL" for "paikallaan",
+        "OTHER" for "muut", or the original event type if it is already valid.
+        
+    Raises
+    ------
+    ValueError
+        If the event type is not already standardized and not one of the expected values ("marssi", "paikallaan", "muut").
+    """
+    
     cv = {
         "marssi": "MARCH",
         "paikallaan": "STAY_STILL",
@@ -275,50 +447,14 @@ def event_type_convertor(event_type):
     if not valid_event_type(event_type):
         if event_type in ["marssi", "paikallaan", "muut"]:
             return cv[event_type]
+        else:
+            raise ValueError(f"Invalid event type: {event_type}")
     
     else:
         return event_type
         
 class Demonstration(BaseModel):
-    """
-    A class to represent a demonstration event.
-
-    Attributes:
-        title (str): The title of the demonstration.
-        date (str): The date of the demonstration.
-        start_time (str): The start time of the demonstration.
-        end_time (str): The end time of the demonstration.
-        facebook (str): The Facebook link for the demonstration.
-        city (str): The city where the demonstration is held.
-        address (str): The address of the demonstration.
-        route (str): The route of the demonstration if it is a march.
-        organizers (list): A list of organizers for the demonstration.
-        approved (bool): Approval status of the demonstration.
-        linked_organizations (dict): Linked organizations for the demonstration.
-        img: Image associated with the demonstration.
-        _id: The unique identifier for the demonstration.
-        description (str): Description of the demonstration.
-        tags (list): Tags associated with the demonstration.
-        parent (ObjectId): Parent demonstration ID if it is a recurring event.
-        created_datetime: The datetime when the demonstration was created.
-        recurring (bool): Whether the demonstration is recurring.
-        topic (str): The topic of the demonstration.
-        type (str): The type of the demonstration.
-        repeat_schedule (RepeatSchedule): The repeat schedule for recurring demonstrations.
-        repeating (bool): Whether the demonstration is repeating.
-        latitude (str): Latitude of the demonstration location.
-        longitude (str): Longitude of the demonstration location.
-        event_type: The type of event.
-        save_flag (bool): Flag to indicate if the demonstration should be saved.
-        hide (bool): Flag to indicate if the demonstration should be hidden.
-
-    Methods:
-        __init__: Initializes the Demonstration instance.
-        merge(id_of_other_demo): Merges another demonstration into this one.
-        to_dict(json=False): Converts the instance to a dictionary.
-        validate_fields(title, date, start_time, city, address): Validates required fields.
-        save(): Saves or updates the demonstration in the database.
-    """
+    """A class to represent a demonstration event."""
     
     def __init__(
         self,
@@ -384,6 +520,10 @@ class Demonstration(BaseModel):
             save_flag (bool, optional): Flag to save the event. Defaults to False.
             hide (bool, optional): Flag to hide the event. Defaults to False.
             aliases (list, optional): Aliases for the event. Defaults to None.
+            
+        .. deprecated:: 1.6.0
+          `ndobj_old` will be removed in NumPy 2.0.0, it is replaced by
+          `ndobj_new` because the latter works also with array subclasses.
         """
 
         self.save_flag = save_flag
@@ -419,8 +559,8 @@ class Demonstration(BaseModel):
         self.linked_organizations = linked_organizations or {} # What is this used for? 
         # TODO: #232 Remove linked_organizations if not used
         
-        self._id = _id or ObjectId()
-        self.tags = tags or []
+        self._id = _id or ObjectId() # Unique ID for the demonstration
+        self.tags = tags or [] # Tags for the demonstration
 
         self.created_datetime = created_datetime or None
 
@@ -461,6 +601,24 @@ class Demonstration(BaseModel):
         
 
     def alias_fix(self):
+        """
+        Ensures that all aliases are of type ObjectId.
+
+        This method iterates through the `aliases` attribute of the instance and converts any alias that is not already an ObjectId to an ObjectId.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> demo = Demonstration(...)
+        >>> demo.alias_fix()
+        """
         aliases = self.aliases.copy()
         
         for alias in aliases:
@@ -468,8 +626,8 @@ class Demonstration(BaseModel):
                 alias = ObjectId(alias)
         
         self.aliases = aliases
+        
                 
-    
     def merge(self, id_of_other_demo):
         """
         Merge another demonstration into this one.
@@ -479,11 +637,28 @@ class Demonstration(BaseModel):
         demonstration is then saved, and the database is updated to reflect that the other
         demonstration has been merged into this one.
 
-        Args:
-            id_of_other_demo (str): The ID of the demonstration to merge into this one.
+        Parameters
+        ----------
+        id_of_other_demo : str or ObjectId
+            The ID of the demonstration to merge into this one.
 
-        Raises:
-            ValueError: If the demonstration with the given ID is not found in the database.
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If the demonstration with the provided ID is not found in the database.
+
+        See Also
+        --------
+        save : Save the demonstration to the database.
+        
+        Examples
+        --------
+        >>> demo = Demonstration(...)
+        >>> demo.merge("60f8e1e7a1b9c9b8f6b3f3b2") # Merge the demonstration with ID "60f8e1e7a1b9c9b8f6b3f3b2" into the current demonstration.
         """
         other_demo_data = DB["demonstrations"].find_one({"_id": ObjectId(id_of_other_demo)})
         if not other_demo_data:
@@ -503,22 +678,27 @@ class Demonstration(BaseModel):
         DB["demonstrations"].update_one(
             {"_id": ObjectId(id_of_other_demo)}, {"$set": {"merged_into": self._id, "hide": True}}
         )
-        
-        self.aliases.append(ObjectId(id_of_other_demo)) #Make sure that this gets saved
-        
-        
+
+        self.aliases.append(ObjectId(id_of_other_demo))  # Make sure that this gets saved
+
         self.save()
         
     def update_self_from_recurring(self, recurring_demo):
-        """
-        Update the demonstration details using a recurring demonstration.
-
+        """Update the demonstration details using a recurring demonstration.
+        
         This method updates the demonstration instance with the details from a recurring
         demonstration. The details that are updated include the title, description, tags,
         and organizers.
 
-        Args:
-            recurring_demo (RecurringDemonstration): The recurring demonstration instance.
+        Parameters
+        ----------
+        recurring_demo : RecurringDemonstration
+            The recurring demonstration instance.
+
+        Returns
+        -------
+
+        
         """
         self.title = recurring_demo.title
         self.description = recurring_demo.description
@@ -528,14 +708,17 @@ class Demonstration(BaseModel):
         self.save()
 
     def to_dict(self, json=False):
-        """
-        Convert instance to dictionary, including organizers as dictionaries.
+        """Convert instance to dictionary, including organizers as dictionaries.
 
-        Args:
-            json (bool): If True, convert the instance to a JSON-compatible dictionary.
+        Parameters
+        ----------
+        json : bool
+            If True, convert the instance to a JSON-compatible dictionary. (Default value = False)
 
-        Returns:
-            dict: A dictionary representation of the instance, with organizers also converted to dictionaries.
+        Returns
+        -------
+
+        
         """
 
         data = super().to_dict(json=json)
@@ -547,19 +730,25 @@ class Demonstration(BaseModel):
         return data
 
     def validate_fields(self, title, date, start_time, city, address):
-        """
-        Validates that all required fields are provided.
+        """Validates that all required fields are provided.
 
-        Args:
-            title (str): The title of the event.
-            date (str): The date of the event.
-            start_time (str): The start time of the event.
-            city (str): The city where the event is held.
-            address (str): The address where the event is held.
+        Parameters
+        ----------
+        title : str
+            The title of the event.
+        date : str
+            The date of the event.
+        start_time : str
+            The start time of the event.
+        city : str
+            The city where the event is held.
+        address : str
+            The address where the event is held.
 
-        Raises:
-            ValueError: If any of the required fields are missing, raises an error
-                        with a message indicating which fields are missing.
+        Returns
+        -------
+
+        
         """
         
         if not title or not date or not start_time or not city or not address:
@@ -578,15 +767,19 @@ class Demonstration(BaseModel):
             raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
     def save(self):
-        """
-        Save or update the demonstration in the database.
-
-        This method converts the demonstration object to a dictionary and checks if it 
-        already exists in the database. If it does, the existing entry is updated. 
+        """Save or update the demonstration in the database.
+        
+        This method converts the demonstration object to a dictionary and checks if it
+        already exists in the database. If it does, the existing entry is updated.
         Otherwise, a new entry is inserted.
 
-        Returns:
-            None
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        
         """
         
         # Get the database instance from DatabaseManager
@@ -610,6 +803,7 @@ class Demonstration(BaseModel):
 
 
 class RecurringDemonstration(Demonstration):
+    """ """
     def __init__(
         self,
         title: str,
@@ -677,15 +871,19 @@ class RecurringDemonstration(Demonstration):
         self.repeat_schedule = repeat_schedule
 
     def calculate_next_dates(self) -> List[datetime]:
-        """
-        Calculate the next demonstration dates based on the frequency and interval.
-
+        """Calculate the next demonstration dates based on the frequency and interval.
+        
         This method calculates the upcoming demonstration dates starting from the initial
         date (`self.date`) and continues until one year from the current date. The calculation
         is based on the frequency and interval specified in `self.repeat_schedule`.
 
-        Returns:
-            List[datetime]: A list of datetime objects representing the next demonstration dates.
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        
         """
 
         next_dates = []
@@ -719,23 +917,21 @@ class RecurringDemonstration(Demonstration):
         return next_dates
 
     def update_demo(self, **kwargs) -> None:
-        """
-        Update demonstration details using keyword arguments.
-
+        """Update demonstration details using keyword arguments.
+        
         This method allows updating the attributes of the demonstration instance
         by passing keyword arguments. Only the attributes with non-None values
         will be updated.
 
-        Args:
-            **kwargs: Arbitrary keyword arguments representing the attributes
-                      to be updated and their new values.
+        Parameters
+        ----------
+        **kwargs :
+            
 
-        Example:
-            demo.update_demo(name="New Name", location="New Location")
+        Returns
+        -------
 
-        Note:
-            If a keyword argument has a value of None, the corresponding attribute
-            will not be updated.
+        
         """
 
         for attr, value in kwargs.items():
@@ -743,19 +939,17 @@ class RecurringDemonstration(Demonstration):
                 setattr(self, attr, value)
 
     def to_dict(self, json=False) -> Dict[str, Any]:
-        """
-        Convert the object to a dictionary for easy storage in a database.
+        """Convert the object to a dictionary for easy storage in a database.
 
-        Args:
-            json (bool): If True, the dictionary will be JSON serializable.
+        Parameters
+        ----------
+        json : bool
+            If True, the dictionary will be JSON serializable. (Default value = False)
 
-        Returns:
-            Dict[str, Any]: A dictionary representation of the object.
+        Returns
+        -------
 
-        Notes:
-            - Calls the parent class's to_dict method to get the base dictionary.
-            - Converts `repeat_schedule` to a dictionary if it is not None.
-            - Formats `created_until` as a string in the format "%d.%m.%Y" if it is a datetime object.
+        
         """
 
         data = super().to_dict(json=json)  # Call the parent to_dict
@@ -783,14 +977,33 @@ class RecurringDemonstration(Demonstration):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RecurringDemonstration":
-        """
-        Create an instance of RecurringDemonstration from a dictionary.
+        """Create an instance of RecurringDemonstration from a dictionary.
 
-        Args:
-            data (Dict[str, Any]): A dictionary containing the data to create the instance.
+        Parameters
+        ----------
+        data : Dict[str
+            A dictionary containing the data to create the instance.
+        data :
+            Dict[str:
+        Any :
+            returns: An instance of the RecurringDemonstration class.
+        data : Dict[str :
+            
+        Any] :
+            
+        data : Dict[str :
+            
+        data : Dict[str :
+            
+        data : Dict[str :
+            
+        data: Dict[str :
+            
 
-        Returns:
-            RecurringDemonstration: An instance of the RecurringDemonstration class.
+        Returns
+        -------
+
+        
         """
 
         created_until = (

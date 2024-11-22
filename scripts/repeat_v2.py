@@ -20,6 +20,20 @@ demonstrations_collection = db["demonstrations"]
 
 # Helper function to calculate the next dates
 def calculate_next_dates(start_date, schedule):
+    """
+
+    Parameters
+    ----------
+    start_date :
+        param schedule:
+    schedule :
+        
+
+    Returns
+    -------
+
+    
+    """
     frequency = schedule.get("frequency")
     interval = schedule.get("interval", 1)
     current_date = datetime.now()
@@ -46,6 +60,20 @@ def calculate_next_dates(start_date, schedule):
 
 # Remove invalid child demonstrations
 def remove_invalid_child_demonstrations(parent_demo, valid_dates):
+    """
+
+    Parameters
+    ----------
+    parent_demo :
+        param valid_dates:
+    valid_dates :
+        
+
+    Returns
+    -------
+
+    
+    """
     valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
 
@@ -55,6 +83,22 @@ def remove_invalid_child_demonstrations(parent_demo, valid_dates):
             logger.info(f"Deleted invalid child demonstration {demo['_id']}")
 
 def get(object, key, default=None):
+    """
+
+    Parameters
+    ----------
+    object :
+        param key:
+    default :
+        Default value = None)
+    key :
+        
+
+    Returns
+    -------
+
+    
+    """
     result = object.get(key,default)
     if result is None:
         return default
@@ -63,6 +107,18 @@ def get(object, key, default=None):
 
 # Process a single demonstration
 def process_demo(demo):
+    """
+
+    Parameters
+    ----------
+    demo :
+        
+
+    Returns
+    -------
+
+    
+    """
     try:
         demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
         print(demo_date)
@@ -109,6 +165,7 @@ def process_demo(demo):
 
 # Handle all repeating demonstrations
 def handle_repeating_demonstrations():
+    """ """
     try:
         demos = recu_demos_collection.find()
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -119,7 +176,22 @@ def handle_repeating_demonstrations():
         logger.error(f"Error handling repeating demonstrations: {e}")
 # Find duplicate demonstrations
 def find_duplicates():
+    """ """
     def demo_match(demo1, demo2):
+        """
+
+        Parameters
+        ----------
+        demo1 :
+            param demo2:
+        demo2 :
+            
+
+        Returns
+        -------
+
+        
+        """
         return (
             demo1["title"] == demo2["title"] and
             demo1["date"] == demo2["date"] and
@@ -144,6 +216,7 @@ def find_duplicates():
 
 # Merge duplicate demonstrations
 def merge_duplicates():
+    """ """
     duplicates = find_duplicates()
     merged_count = 0
 
@@ -164,6 +237,7 @@ def merge_duplicates():
 
 # Main function
 def main():
+    """ """
     logger.info("Starting demonstration processing.")
     handle_repeating_demonstrations()
     total_merged = merge_duplicates()

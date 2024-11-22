@@ -5,6 +5,7 @@ from config import Config  # Import the Config class
 
 
 class DatabaseManager:
+    """ """
     _instance = None  # Singleton instance
     _lock = Lock()  # Ensure thread-safe initialization
 
@@ -53,7 +54,18 @@ class DatabaseManager:
             raise RuntimeError(f"Failed to connect to MongoDB: {e}")
 
     def get_db(self, db_name=None):
-        """Retrieve a MongoDB database object, using cached connections where possible."""
+        """Retrieve a MongoDB database object, using cached connections where possible.
+
+        Parameters
+        ----------
+        db_name :
+            Default value = None)
+
+        Returns
+        -------
+
+        
+        """
         if self.client is None:
             logger.info("MongoDB client not initialized. Initializing now.")
             self._init_client()

@@ -7,15 +7,14 @@ from utils.flashing import flash_message
 
 
 def admin_required(f):
-    """
-    Decorator to enforce that a user has global admin privileges to access a specific route.
-
+    """Decorator to enforce that a user has global admin privileges to access a specific route.
+    
     The decorator performs two checks:
     1. Ensures the user is authenticated.
     2. Verifies that the user has a global admin role.
-
+    
     If either check fails, a 403 Forbidden response is returned, and an appropriate log message is created.
-
+    
     Changelog:
     ----------
     v2.6.0:
@@ -26,17 +25,41 @@ def admin_required(f):
         - Replaced multiple return statements with a single return statement.
         - Added function documentation for clarity.
         - Removed unnecessary try-except block.
-
-
+    
+    
     Args:
         f (function): The route function requiring admin access.
-
+    
     Returns:
         function: The wrapped function with access control enforced.
+
+    Parameters
+    ----------
+    f :
+        
+
+    Returns
+    -------
+
+    
     """
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        
+        """
         # Check if the user is authenticated
         if not current_user.is_authenticated:
             logger.warning("User not authenticated, Unauthorized (401).")
@@ -57,33 +80,64 @@ def admin_required(f):
 
 
 def permission_required(permission_name):
-    """
-    Decorator to enforce specific permission requirements for route access.
-
+    """Decorator to enforce specific permission requirements for route access.
+    
     This decorator checks:
     1. If the user is authenticated.
     2. If the user has global admin privileges (bypasses specific permission check).
     3. If the user has the specified permission.
-
+    
     If access is denied, the user is redirected and a flash message is displayed.
-
+    
     Changelog:
+    ----------
+    v2.6.0:
         - Enhanced logging at each step to improve debugging capabilities.
         - Added logic for global admin bypass of specific permissions.
         - Integrated flash messaging to notify user of access restrictions.
         - Consolidated and clarified permission handling logic.
         - Replaced redirect with abort(403) for unauthorized access.
 
-    Args:
-        permission_name (str): The specific permission name required to access the route.
+    Parameters
+    ----------
+    permission_name : str
+        The specific permission name required to access the route.
 
-    Returns:
-        function: The wrapped function with permission control enforced.
+    Returns
+    -------
+
+    
     """
 
     def decorator(f):
+        """
+
+        Parameters
+        ----------
+        f :
+            
+
+        Returns
+        -------
+
+        
+        """
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            """
+
+            Parameters
+            ----------
+            *args :
+                
+            **kwargs :
+                
+
+            Returns
+            -------
+
+            
+            """
             # Ensure the user is authenticated
             if not current_user.is_authenticated:
                 flash_message("Sinun tulee kirjautua sisään käyttääksesi sivua.")

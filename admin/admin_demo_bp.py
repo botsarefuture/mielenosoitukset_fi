@@ -23,10 +23,17 @@ admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 @admin_required
 @permission_required("LIST_DEMOS")
 def demo_control():
-    """
-    Render the demonstration control panel with a list of demonstrations.
-
+    """Render the demonstration control panel with a list of demonstrations.
+    
     Filters demonstrations by search query, approval status, and whether past events should be shown.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
     # Limit demonstrations by organization if the user is not a global admin
     if not current_user.global_admin:
@@ -72,17 +79,23 @@ def demo_control():
 
 
 def filter_demonstrations(query, search_query, show_past, today):
-    """
-    Fetch and filter demonstrations based on search criteria.
+    """Fetch and filter demonstrations based on search criteria.
 
-    Args:
-        query (dict): MongoDB query to filter demonstrations.
-        search_query (str): The search term to filter by (applies to title, city, topic, and address).
-        show_past (bool): Whether to include past demonstrations.
-        today (date): The current date for filtering future demonstrations.
+    Parameters
+    ----------
+    query : dict
+        MongoDB query to filter demonstrations.
+    search_query : str
+        The search term to filter by (applies to title, city, topic, and address).
+    show_past : bool
+        Whether to include past demonstrations.
+    today : date
+        The current date for filtering future demonstrations.
 
-    Returns:
-        list: A list of filtered demonstrations matching the criteria.
+    Returns
+    -------
+
+    
     """
     # Fetch demonstrations from MongoDB
     demonstrations = mongo.demonstrations.find(query)
@@ -106,15 +119,22 @@ def filter_demonstrations(query, search_query, show_past, today):
 @admin_required
 @permission_required("CREATE_DEMO")
 def create_demo():
-    """
-    Create a new demonstration.
-
+    """Create a new demonstration.
+    
     Renders the form for creating a demonstration or handles the form submission.
     
     Changelog:
     ----------
     v2.5.0:
     - Permission required to create a demonstration.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
     if request.method == "POST":
         # Handle form submission for creating a new demonstration
@@ -140,10 +160,19 @@ def create_demo():
 @admin_required
 @permission_required("EDIT_DEMO")
 def edit_demo(demo_id):
-    """
-    Edit demonstration details.
-
+    """Edit demonstration details.
+    
     Fetches the demonstration data by ID for editing or processes the edit form submission.
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     # Fetch demonstration data by ID
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -171,16 +200,21 @@ def edit_demo(demo_id):
 
 
 def handle_demo_form(request, is_edit=False, demo_id=None):
-    """
-    Handle form submission for creating or editing a demonstration.
+    """Handle form submission for creating or editing a demonstration.
 
-    Args:
-        request: The incoming request object containing form data.
-        is_edit (bool): Whether this is an edit operation.
-        demo_id (str): The ID of the demonstration being edited, if applicable.
+    Parameters
+    ----------
+    request :
+        The incoming request object containing form data.
+    is_edit : bool
+        Whether this is an edit operation. (Default value = False)
+    demo_id : str
+        The ID of the demonstration being edited, if applicable. (Default value = None)
 
-    Returns:
-        Redirect to the appropriate page based on the success or failure of the operation.
+    Returns
+    -------
+
+    
     """
     # Collect demonstration data from the form
     demonstration_data = collect_demo_data(request)    
@@ -216,16 +250,19 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
 
 
 def collect_demo_data(request):
-    """
-    Collect demonstration data from the request form.
-
+    """Collect demonstration data from the request form.
+    
     This function extracts and returns relevant data from the submitted form.
 
-    Args:
-        request: The incoming request object containing form data.
+    Parameters
+    ----------
+    request :
+        The incoming request object containing form data.
 
-    Returns:
-        dict: A dictionary containing the collected demonstration data.
+    Returns
+    -------
+
+    
     """
     # We could basically just get the demo id and then use the same function as in the edit_demo functiot
     
@@ -282,7 +319,18 @@ def collect_demo_data(request):
 
 
 def is_valid_latitude(lat):
-    """Validate latitude value."""
+    """Validate latitude value.
+
+    Parameters
+    ----------
+    lat :
+        
+
+    Returns
+    -------
+
+    
+    """
     try:
         lat = float(lat)
         return -90 <= lat <= 90
@@ -291,7 +339,18 @@ def is_valid_latitude(lat):
 
 
 def is_valid_longitude(lon):
-    """Validate longitude value."""
+    """Validate longitude value.
+
+    Parameters
+    ----------
+    lon :
+        
+
+    Returns
+    -------
+
+    
+    """
     try:
         lon = float(lon)
         return -180 <= lon <= 180
@@ -300,17 +359,20 @@ def is_valid_longitude(lon):
 
 
 def collect_organizers(request):
-    """
-    Collect organizer data from the request form.
-
+    """Collect organizer data from the request form.
+    
     This function extracts multiple organizers' information from the form and returns a list
     of Organizer objects.
 
-    Args:
-        request: The incoming request object containing form data.
+    Parameters
+    ----------
+    request :
+        The incoming request object containing form data.
 
-    Returns:
-        list: A list of Organizer objects, each containing name, email, website, and organization ID.
+    Returns
+    -------
+
+    
     """
     organizers = []
     i = 1
@@ -389,7 +451,18 @@ def delete_demo():
 @admin_required
 @permission_required("DELETE_DEMO")
 def confirm_delete_demo(demo_id):
-    """Render a confirmation page before deleting a demonstration."""
+    """Render a confirmation page before deleting a demonstration.
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     # Fetch the demonstration data from the database
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
@@ -411,7 +484,18 @@ def confirm_delete_demo(demo_id):
 @admin_required
 @permission_required("ACCEPT_DEMO")
 def accept_demo(demo_id):
-    """Accept an existing demonstration by updating its status."""
+    """Accept an existing demonstration by updating its status.
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     # Ensure the request is JSON
     if request.headers.get("Content-Type") != "application/json":
         return (

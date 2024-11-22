@@ -3,12 +3,25 @@ from flask_babel import _
 
 
 def flash_message(message, category="message"):
-    """flash_message a message with a specific category.
+    """
+    Flash a message with a specific category.
 
-    Changelog:
+    Parameters
     ----------
+    message : str
+        The message to be flashed.
+    category : str, optional
+        The category of the message (default is "message").
+
+    Notes
+    -----
+    By default, the message is translated.
+
+    Changelog
+    ---------
     v2.5.0:
-    - By default translate the message
+        - By default translate the message
+
     """
     categories = {
         "info": "info",

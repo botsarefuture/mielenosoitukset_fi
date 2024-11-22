@@ -8,6 +8,7 @@ collection = db["demonstrations"]
 
 
 def find_duplicates():
+    """ """
     # Aggregation pipeline to find duplicates based on the specified fields
     pipeline = [
         {
@@ -33,6 +34,7 @@ def find_duplicates():
 
 
 def remove_duplicates():
+    """ """
     duplicates = find_duplicates()
     removed_count = 0
 
@@ -48,6 +50,7 @@ def remove_duplicates():
 
 
 def main():
+    """ """
     removed_count = remove_duplicates()
     print(f"Removed {removed_count} duplicate demonstrations.")
 

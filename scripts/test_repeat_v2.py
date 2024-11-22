@@ -4,8 +4,10 @@ from scripts.repeat_v2 import calculate_next_dates
 
 
 class TestCalculateNextDates(unittest.TestCase):
+    """ """
 
     def test_daily_frequency(self):
+        """ """
         demo_date = datetime(2023, 1, 1)
         repeat_schedule = {"frequency": "daily", "interval": 1}
         next_dates = calculate_next_dates(demo_date, repeat_schedule)
@@ -14,6 +16,7 @@ class TestCalculateNextDates(unittest.TestCase):
         self.assertEqual(next_dates[1], demo_date + timedelta(days=1))
 
     def test_weekly_frequency(self):
+        """ """
         demo_date = datetime(2023, 1, 1)
         repeat_schedule = {"frequency": "weekly", "interval": 1}
         next_dates = calculate_next_dates(demo_date, repeat_schedule)
@@ -22,6 +25,7 @@ class TestCalculateNextDates(unittest.TestCase):
         self.assertEqual(next_dates[1], demo_date + timedelta(weeks=1))
 
     def test_monthly_frequency(self):
+        """ """
         demo_date = datetime(2023, 1, 1)
         repeat_schedule = {"frequency": "monthly", "interval": 1}
         next_dates = calculate_next_dates(demo_date, repeat_schedule)
@@ -30,6 +34,7 @@ class TestCalculateNextDates(unittest.TestCase):
         self.assertEqual(next_dates[1], demo_date + relativedelta(months=1))
 
     def test_yearly_frequency(self):
+        """ """
         demo_date = datetime(2023, 1, 1)
         repeat_schedule = {"frequency": "yearly", "interval": 1}
         next_dates = calculate_next_dates(demo_date, repeat_schedule)
@@ -38,6 +43,7 @@ class TestCalculateNextDates(unittest.TestCase):
         self.assertEqual(next_dates[1], demo_date + relativedelta(years=1))
 
     def test_custom_interval(self):
+        """ """
         demo_date = datetime(2023, 1, 1)
         repeat_schedule = {"frequency": "daily", "interval": 2}
         next_dates = calculate_next_dates(demo_date, repeat_schedule)

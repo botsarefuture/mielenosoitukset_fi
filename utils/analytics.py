@@ -9,12 +9,21 @@ db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 
 def log_demo_view(demo_id, user_id=None, session_id=None):
-    """
-    This function logs a demonstration view by inserting a new document into the "views" collection in the database.
+    """This function logs a demonstration view by inserting a new document into the "views" collection in the database.
 
-    :param demo_id: The ObjectId of the demonstration that was viewed.
-    :param user_id: The ObjectId of the user who viewed the demonstration.
-    :param session_id: The session ID of the user who viewed the demonstration.
+    Parameters
+    ----------
+    demo_id :
+        The ObjectId of the demonstration that was viewed.
+    user_id :
+        The ObjectId of the user who viewed the demonstration. (Default value = None)
+    session_id :
+        The session ID of the user who viewed the demonstration. (Default value = None)
+
+    Returns
+    -------
+
+    
     """
     view_data = {
         "demo_id": ObjectId(demo_id),
@@ -29,11 +38,19 @@ def log_demo_view(demo_id, user_id=None, session_id=None):
     mongo.analytics.insert_one(view_data)
     
 def get_demo_views(demo_id=None, json=False):
-    """
-    This function retrieves all views of a demonstration from the "views" collection in the database.
+    """This function retrieves all views of a demonstration from the "views" collection in the database.
 
-    :param demo_id: The ObjectId of the demonstration for which views are to be retrieved.
-    :return: A list of dictionaries containing the view data for each view of the demonstration.
+    Parameters
+    ----------
+    demo_id :
+        The ObjectId of the demonstration for which views are to be retrieved. (Default value = None)
+    json :
+        Default value = False)
+
+    Returns
+    -------
+
+    
     """
     if not json:
         if not demo_id:
@@ -48,6 +65,7 @@ def get_demo_views(demo_id=None, json=False):
             return stringify_object_ids(list(mongo.analytics.find({"demo_id": ObjectId(demo_id)})))
         
 class DemoViewCount:
+    """ """
     def __init__(self, demo_id, count):
         self.id = demo_id
         self.views = count
@@ -59,6 +77,18 @@ class DemoViewCount:
         return f"Demo ID: {self.id}, Count: {self.views}"
 
 def count_per_demo(data):
+    """
+
+    Parameters
+    ----------
+    data :
+        
+
+    Returns
+    -------
+
+    
+    """
     demo_count = {}
     for view in data:
         demo_id = view.get("demo_id")
@@ -80,9 +110,16 @@ def count_per_demo(data):
 # And we could still fetch the data every time the report
 
 def prep():
-    """
-    This function prepares the analytics data for reporting by counting the number of views per demonstration
+    """This function prepares the analytics data for reporting by counting the number of views per demonstration
     and saving the data to the "prepped_analytics" collection in the database.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
     data = get_demo_views()
     demo_count = count_per_demo(data)
@@ -93,11 +130,17 @@ def prep():
     mongo.prepped_analytics.insert_many(prepped_data)
     
 def get_prepped_data(demo_id=None):
-    """
-    This function retrieves the prepped analytics data from the "prepped_analytics" collection in the database.
+    """This function retrieves the prepped analytics data from the "prepped_analytics" collection in the database.
 
-    :param demo_id: The ObjectId of the demonstration for which prepped analytics data is to be retrieved.
-    :return: A list of dictionaries containing the prepped analytics data for each demonstration.
+    Parameters
+    ----------
+    demo_id :
+        The ObjectId of the demonstration for which prepped analytics data is to be retrieved. (Default value = None)
+
+    Returns
+    -------
+
+    
     """
     if not demo_id:
         return mongo.prepped_analytics.find()

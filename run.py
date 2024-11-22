@@ -4,6 +4,7 @@ from app import create_app
 app = create_app()
 
 def main():
+    """ """
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in ('true', '1', 't')

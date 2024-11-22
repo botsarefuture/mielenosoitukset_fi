@@ -459,11 +459,12 @@
     <a href="{{ url_for('admin.stats') }}" class="button stats-button">
       <i class="fas fa-chart-line"></i> {{ _('Tilastot') }}
     </a>
-  </div>
 
   <div id="stats-content">
     <!-- Stats will be injected here by JavaScript -->
   </div>
+</div>
+
 </div>
 
 <script>
@@ -473,7 +474,7 @@
       .then((data) => {
         const statsContent = document.getElementById("stats-content");
         statsContent.innerHTML = `
-          <p><strong>{{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
+          <p><strong><i class="fa-solid fa-eye"></i> {{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
           <p><strong>{{ _('Osallistujat:') }}</strong> ${data.participants}</p>
         `;
       })

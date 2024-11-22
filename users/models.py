@@ -14,51 +14,7 @@ mongo = db.get_db()
 VALID_WINDOW = 5 # TODO: #226 Move this to a configuration file
 
 class User(UserMixin):
-    """
-    User class represents a user in the system with various attributes and methods to manage user data and interactions.
-    
-    Attributes:
-        id (str): Unique identifier for the user.
-        username (str): Username of the user.
-        email (str, optional): Email address of the user.
-        password_hash (str): Hashed password of the user.
-        displayname (str, optional): Display name of the user.
-        profile_picture (str, optional): URL to the user's profile picture.
-        bio (str, optional): Bio of the user.
-        followers (list): List of user IDs who follow this user.
-        following (list): List of user IDs this user is following.
-        organizations (list): List of organizations the user is part of.
-        global_admin (bool): Indicates if the user is a global admin.
-        confirmed (bool): Indicates if the user's email is confirmed.
-        permissions (dict): Dictionary of permissions for the user.
-        global_permissions (list): List of global permissions for the user.
-        role (str): Role of the user, default is "user".
-        banned (bool): Indicates if the user is banned.
-        mfa_enabled (bool): Indicates if MFA is enabled for the user.
-        _id (str): Alias for id.
-        
-    Methods:
-        from_db(user_doc): Create a User instance from a database document.
-        check_password(password): Verify the provided password against the stored password hash.
-        create_user(username, password, email, displayname=None, profile_picture=None, bio=None): Create a new user dictionary with a hashed password.
-        add_organization(db, organization_id, role="member", permissions=None): Add or update an organization for the user, including role and permissions.
-        is_member_of_organization(organization_id): Check if the user is a member of a specific organization.
-        change_password(db, new_password): Change the user's password and update the database.
-        update_displayname(db, displayname): Update the user's display name and database record.
-        update_profile_picture(db, profile_picture): Update the user's profile picture and database record.
-        update_bio(db, bio): Update the user's bio and database record.
-        save(db): Save the current state of the user to the database.
-        to_dict(): Convert the User object to a dictionary for database storage.
-        follow_user(db, user_id_to_follow): Add a user to the followers list of this user.
-        unfollow_user(db, user_id_to_unfollow): Remove a user from the followers list of this user.
-        has_permission(permission, organization_id=None): Verify if the user possesses a certain permission either on a global level or within a specified organization.
-        is_following(user_id): Check if this user is following another user.
-        ban_user(): Ban the user.
-        unban_user(): Unban the user.
-        enable_mfa(): Enable MFA for the user.
-        disable_mfa(): Disable MFA for the user.
-        __repr__(): Return a string representation of the User object.
-    """
+    """User class represents a user in the system with various attributes and methods to manage user data and interactions."""
     
     def __init__(
         self,
@@ -102,8 +58,17 @@ class User(UserMixin):
 
     @staticmethod
     def from_db(user_doc):
-        """
-        Create a User instance from a database document.
+        """Create a User instance from a database document.
+
+        Parameters
+        ----------
+        user_doc :
+            
+
+        Returns
+        -------
+
+        
         """
         global_admin = user_doc.get("global_admin", False)
         if user_doc.get("role") == "global_admin":
@@ -132,8 +97,17 @@ class User(UserMixin):
         )
 
     def check_password(self, password):
-        """
-        Verify the provided password against the stored password hash.
+        """Verify the provided password against the stored password hash.
+
+        Parameters
+        ----------
+        password :
+            
+
+        Returns
+        -------
+
+        
         """
         return check_password_hash(self.password_hash, password)
 
@@ -141,8 +115,27 @@ class User(UserMixin):
     def create_user(
         username, password, email, displayname=None, profile_picture=None, bio=None
     ):
-        """
-        Create a new user dictionary with a hashed password.
+        """Create a new user dictionary with a hashed password.
+
+        Parameters
+        ----------
+        username :
+            param password:
+        email :
+            param displayname:  (Default value = None)
+        profile_picture :
+            Default value = None)
+        bio :
+            Default value = None)
+        password :
+            
+        displayname :
+            (Default value = None)
+
+        Returns
+        -------
+
+        
         """
         password_hash = generate_password_hash(password)
         return {
@@ -164,8 +157,21 @@ class User(UserMixin):
         }
 
     def add_organization(self, organization_id=None, role="member", permissions=None):
-        """
-        Add or update an organization for the user, including role and permissions.
+        """Add or update an organization for the user, including role and permissions.
+
+        Parameters
+        ----------
+        organization_id :
+            Default value = None)
+        role :
+            Default value = "member")
+        permissions :
+            Default value = None)
+
+        Returns
+        -------
+
+        
         """
         if organization_id is None:
             logger.error("Organization ID is required to add organization.")
@@ -198,14 +204,32 @@ class User(UserMixin):
         logger.info("Organization updated successfully.")
 
     def is_member_of_organization(self, organization_id):
-        """
-        Check if the user is a member of a specific organization.
+        """Check if the user is a member of a specific organization.
+
+        Parameters
+        ----------
+        organization_id :
+            
+
+        Returns
+        -------
+
+        
         """
         return any(org["org_id"] == str(organization_id) for org in self.organizations)
 
     def change_password(self, new_password):
-        """
-        Change the user's password and update the database.
+        """Change the user's password and update the database.
+
+        Parameters
+        ----------
+        new_password :
+            
+
+        Returns
+        -------
+
+        
         """
         new_password_hash = generate_password_hash(new_password)
         self.password_hash = new_password_hash
@@ -214,35 +238,67 @@ class User(UserMixin):
         logger.info("Password updated successfully.")
 
     def update_displayname(self, displayname):
-        """
-        Update the user's display name and database record.
+        """Update the user's display name and database record.
+
+        Parameters
+        ----------
+        displayname :
+            
+
+        Returns
+        -------
+
+        
         """
         self.displayname = displayname
         self.save()
         logger.info("Display name updated successfully.")
 
     def update_profile_picture(self, profile_picture):
-        """
-        Update the user's profile picture and database record.
+        """Update the user's profile picture and database record.
+
+        Parameters
+        ----------
+        profile_picture :
+            
+
+        Returns
+        -------
+
+        
         """
         self.profile_picture = profile_picture
         self.save()
         logger.info("Profile picture updated successfully.")
 
     def update_bio(self, bio):
-        """
-        Update the user's bio and database record.
+        """Update the user's bio and database record.
+
+        Parameters
+        ----------
+        bio :
+            
+
+        Returns
+        -------
+
+        
         """
         self.bio = bio
         self.save()
         logger.info("Bio updated successfully.")
 
     def save(self):
-        """
-        This method updates the user's information in the MongoDB collection.
+        """This method updates the user's information in the MongoDB collection.
         It finds the user by their unique ID and sets the user's data to the current state.
-        Returns:
-            None
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        
         """
         data = self.to_dict()
         del data["_id"]  # Remove the _id field from the data
@@ -252,8 +308,17 @@ class User(UserMixin):
         )
 
     def to_dict(self, json=False):
-        """
-        Convert the User object to a dictionary for database storage.
+        """Convert the User object to a dictionary for database storage.
+
+        Parameters
+        ----------
+        json :
+            Default value = False)
+
+        Returns
+        -------
+
+        
         """
         data = self.__dict__.copy()
         if json and "_id" in data:
@@ -270,8 +335,17 @@ class User(UserMixin):
         return data
 
     def follow_user(self, user_id_to_follow):
-        """
-        Add a user to the followers list of this user.
+        """Add a user to the followers list of this user.
+
+        Parameters
+        ----------
+        user_id_to_follow :
+            
+
+        Returns
+        -------
+
+        
         """
         if isinstance(user_id_to_follow, User): # Check if the user_id_to_follow is a User object
             user_id_to_follow = user_id_to_follow.id
@@ -282,8 +356,17 @@ class User(UserMixin):
             logger.info("Started following user successfully.")
 
     def unfollow_user(self, user_id_to_unfollow):
-        """
-        Remove a user from the followers list of this user.
+        """Remove a user from the followers list of this user.
+
+        Parameters
+        ----------
+        user_id_to_unfollow :
+            
+
+        Returns
+        -------
+
+        
         """
         if user_id_to_unfollow in self.following:
             self.following.remove(user_id_to_unfollow)
@@ -291,39 +374,21 @@ class User(UserMixin):
             logger.info("Stopped following user successfully.")
 
     def has_permission(self, permission, organization_id=None):
-        """
-        This method verifies if the user possesses a certain permission either on a global level or within a specified organization.
+        """This method verifies if the user possesses a certain permission either on a global level or within a specified organization.
         It first checks the global permissions, then the organization-specific permissions if an organization ID is provided,
         and finally checks the permissions dictionary for organization-specific permissions.
 
-        Args:
-            permission (str): The permission to check for.
-            organization_id (str, optional): The ID of the organization to check the permission against. Defaults to None.
+        Parameters
+        ----------
+        permission : str
+            The permission to check for.
+        organization_id : str
+            The ID of the organization to check the permission against. Defaults to None.
 
-        Returns:
-            bool: True if the user has the specified permission, either globally or within the given organization; False otherwise.
+        Returns
+        -------
 
-        Global Permissions:
-            The method first checks if the specified permission exists in the user's global permissions.
-            If it does, the method returns True.
-
-        Organization-specific Permissions:
-            If an organization ID is provided, the method iterates through the user's organizations to find a match with the given ID.
-            If a match is found and the specified permission exists in the organization's permissions, the method returns True.
-
-        Permissions Dictionary:
-            If the permission is not found in the global or organization-specific permissions, the method checks the permissions dictionary.
-            It iterates through the dictionary to see if the specified permission exists in any of the organization's permissions.
-            If found, the method returns True.
-
-        Example:
-            ```python
-            user = User(global_permissions=['read'], organizations=[{'org_id': '1', 'permissions': ['write']}], permissions={'2': ['delete']})
-            user.has_permission('write', '1')  # Returns True
-            user.has_permission('delete', '2')  # Returns True
-            user.has_permission('read')  # Returns True
-            user.has_permission('update')  # Returns False
-            ```
+        
         """
         
         # Check global permissions first
@@ -345,7 +410,18 @@ class User(UserMixin):
         return False
 
     def is_following(self, user_id):
-        """Check if this user is following another user."""
+        """Check if this user is following another user.
+
+        Parameters
+        ----------
+        user_id :
+            
+
+        Returns
+        -------
+
+        
+        """
         
         if isinstance(user_id, User): # Check if the user_id is a User object
             return self.is_following(user_id.id) # If it is, check the user_id's id
@@ -382,6 +458,7 @@ class User(UserMixin):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin}, banned={self.banned}, mfa_enabled={self.mfa_enabled})>"
 
 class _2faToken:
+    """ """
     def __init__(self, token, user_id):
         self.token = token
         self.user_id = user_id
@@ -394,7 +471,18 @@ class _2faToken:
         ...
     
     def check_token(self, token):
-        """Check if the provided token matches the stored token."""
+        """Check if the provided token matches the stored token.
+
+        Parameters
+        ----------
+        token :
+            
+
+        Returns
+        -------
+
+        
+        """
         ...
 
 class MFAToken:
@@ -406,8 +494,16 @@ class MFAToken:
         'secret': 'secret here',
         'created_at': datetime.datetime(2022, 1, 1, 0, 0),
         'in_use': True
-        
+    
     }
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
     def __init__(self, user_id, secret):
         self.user_id = user_id
@@ -420,19 +516,45 @@ class MFAToken:
         return f"<MFAToken(user_id={self.user_id})>"
 
     def check_token(self, token):
+        """
+
+        Parameters
+        ----------
+        token :
+            
+
+        Returns
+        -------
+
+        
+        """
         return self.totp.verify(token, valid_window=VALID_WINDOW)
     
 class UserMFA:
+    """ """
     def __init__(self, user_id) -> None:
         self.user_id = user_id
         self.secrets = self.get_secrets()
         self.secrets_ = [MFAToken(user_id, secret) for secret in self.secrets]
     
     def get_secrets(self):
+        """ """
         mfas = mongo.mfas.find({"user_id": ObjectId(self.user_id)})
         return [mfa["secret"] for mfa in mfas]
 
     def verify_token(self, token):
+        """
+
+        Parameters
+        ----------
+        token :
+            
+
+        Returns
+        -------
+
+        
+        """
         for secret in self.secrets_:
             if secret.check_token(token):
                 return True
@@ -440,16 +562,30 @@ class UserMFA:
         return False
     
     def add_secret(self, secret):
+        """
+
+        Parameters
+        ----------
+        secret :
+            
+
+        Returns
+        -------
+
+        
+        """
         mongo.mfas.insert_one({"user_id": ObjectId(self.user_id), "secret": secret})
         self.secrets.append(secret)
         self.secrets_.append(MFAToken(self.user_id, secret))
     
     def generate_secret(self):
+        """ """
         secret = pyotp.random_base32()
         self.add_secret(secret)
         return secret
     
     def to_dict(self):
+        """ """
         return {
             "user_id": ObjectId(self.user_id),
             "secrets": self.secrets
@@ -458,6 +594,7 @@ class UserMFA:
     
 
 class AnonymousUser(AnonymousUserMixin):
+    """ """
     def __init__(self):
         self.id = None
         self.username = "Anonymous"
@@ -477,70 +614,180 @@ class AnonymousUser(AnonymousUserMixin):
         self.mfa_enabled = False
 
     def add_organization(self, db, organization_id, role="member", permissions=None):
-        """
-        Add or update an organization for the user, including role and permissions.
+        """Add or update an organization for the user, including role and permissions.
+
+        Parameters
+        ----------
+        db :
+            param organization_id:
+        role :
+            Default value = "member")
+        permissions :
+            Default value = None)
+        organization_id :
+            
+
+        Returns
+        -------
+
+        
         """
         logger.critical(
             f"Trying to add organization to AnonymousUser"
         )  # TODO: Handle this case more gracefully
 
     def is_member_of_organization(self, organization_id):
-        """
-        Check if the user is a member of a specific organization.
+        """Check if the user is a member of a specific organization.
+
+        Parameters
+        ----------
+        organization_id :
+            
+
+        Returns
+        -------
+
+        
         """
         return False
 
     def change_password(self, db, new_password):
-        """
-        Change the user's password and update the database.
+        """Change the user's password and update the database.
+
+        Parameters
+        ----------
+        db :
+            param new_password:
+        new_password :
+            
+
+        Returns
+        -------
+
+        
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_displayname(self, db, displayname):
-        """
-        Update the user's display name and database record.
+        """Update the user's display name and database record.
+
+        Parameters
+        ----------
+        db :
+            param displayname:
+        displayname :
+            
+
+        Returns
+        -------
+
+        
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_profile_picture(self, db, profile_picture):
-        """
-        Update the user's profile picture and database record.
+        """Update the user's profile picture and database record.
+
+        Parameters
+        ----------
+        db :
+            param profile_picture:
+        profile_picture :
+            
+
+        Returns
+        -------
+
+        
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def update_bio(self, db, bio):
-        """
-        Update the user's bio and database record.
+        """Update the user's bio and database record.
+
+        Parameters
+        ----------
+        db :
+            param bio:
+        bio :
+            
+
+        Returns
+        -------
+
+        
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def follow_user(self, db, user_id_to_follow):
-        """
-        Add a user to the followers list of this user.
+        """Add a user to the followers list of this user.
+
+        Parameters
+        ----------
+        db :
+            param user_id_to_follow:
+        user_id_to_follow :
+            
+
+        Returns
+        -------
+
+        
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def unfollow_user(self, db, user_id_to_unfollow):
-        """
-        Remove a user from the followers list of this user.
+        """Remove a user from the followers list of this user.
+
+        Parameters
+        ----------
+        db :
+            param user_id_to_unfollow:
+        user_id_to_unfollow :
+            
+
+        Returns
+        -------
+
+        
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
 
     def has_permission(self, organization_id, permission):
-        """
-        Check if the user has a specific permission in a given organization or globally.
+        """Check if the user has a specific permission in a given organization or globally.
+
+        Parameters
+        ----------
+        organization_id :
+            param permission:
+        permission :
+            
+
+        Returns
+        -------
+
+        
         """
         return False
 
     def can_use(self, permission):
-        """
-        DEPRECATED: Use has_permission instead.
+        """DEPRECATED: Use has_permission instead.
+
+        Parameters
+        ----------
+        permission :
+            
+
+        Returns
+        -------
+
+        
         """
         warnings.warn(
             "can_use is deprecated and will be removed in a future release. "
@@ -563,7 +810,18 @@ class AnonymousUser(AnonymousUserMixin):
         return False
 
     def is_following(self, user_id):
-        """Check if this user is following another user."""
+        """Check if this user is following another user.
+
+        Parameters
+        ----------
+        user_id :
+            
+
+        Returns
+        -------
+
+        
+        """
         return False
 
     def __repr__(self):

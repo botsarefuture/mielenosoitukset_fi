@@ -3,32 +3,17 @@ from logging.handlers import SMTPHandler
 from config import Config
 
 def setup_logger():
-    """
-    Sets up the logger for the Mielenosoitukset.fi application.
-
+    """Sets up the logger for the Mielenosoitukset.fi application.
+    
     This function configures the logging settings based on the DEBUG flag in the Config class.
     It sets the logging level, formats the log messages, and adds handlers for console output
     and email notifications for critical errors in production.
+    
+    Returns
+    -------
+    logging.Logger: The configured logger instance.
 
-    Returns:
-        logging.Logger: Configured logger instance.
-
-    Handlers:
-        - StreamHandler: Outputs log messages to the console.
-        - SMTPHandler: Sends email notifications for critical errors when not in DEBUG mode.
-
-    Logging Levels:
-        - DEBUG: Detailed information, typically of interest only when diagnosing problems.
-        - INFO: Confirmation that things are working as expected.
-        - CRITICAL: A serious error, indicating that the program itself may be unable to continue running.
-
-    Config:
-        - Config.DEBUG (bool): Flag to determine if the application is in debug mode.
-        - Config.MAIL_SERVER (str): SMTP server address for sending emails.
-        - Config.MAIL_PORT (int): SMTP server port.
-        - Config.MAIL_USERNAME (str): Username for the SMTP server.
-        - Config.MAIL_PASSWORD (str): Password for the SMTP server.
-        - Config.ADMIN_EMAIL (str): Email address to send critical error notifications.
+           
     """
     
     # Set the logging level based on the DEBUG flag in Config

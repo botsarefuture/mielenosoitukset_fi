@@ -1,4 +1,4 @@
-<div id="demo-toolbox" class="toolbox-sticky">
+<div id="demo-toolbox" class="toolbox">
     <div class="toolbox-header">
         <h3>{{ _('Työkalupakki') }}</h3>
     </div>
@@ -42,8 +42,13 @@
             <!-- Stats will be injected here by JavaScript -->
         </div>
         {% endif %}
+
+    </div>
+
+    <div class="toolbox-footer">
+        
         <!-- the toggle here -->
-        <button class="button toggle-toolbox" onclick="toggleToolbox()">
+        <button id="toolbar-toggle" class="button toggle-toolbox" onclick="toggleToolbox()">
             <i class="fa-solid fa-toolbox"></i>
         </button>
     </div>

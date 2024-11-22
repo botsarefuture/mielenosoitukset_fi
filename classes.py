@@ -438,23 +438,110 @@ def event_type_convertor(event_type: str) -> str:
         If the event type is not already standardized and not one of the expected values ("marssi", "paikallaan", "muut").
     """
     
-    cv = {
+    event_type_mapping = {
         "marssi": "MARCH",
         "paikallaan": "STAY_STILL",
         "muut": "OTHER"
     }
     
     if not valid_event_type(event_type):
-        if event_type in ["marssi", "paikallaan", "muut"]:
-            return cv[event_type]
+        if event_type in event_type_mapping.keys():
+            return event_type_mapping[event_type]
+        
         else:
             raise ValueError(f"Invalid event type: {event_type}")
     
     else:
         return event_type
-        
+    
+
 class Demonstration(BaseModel):
-    """A class to represent a demonstration event."""
+    """
+    A class to represent a demonstration event.
+
+    This class encapsulates the details of a demonstration event, including its title, date, time, location, organizers, and other relevant information. It provides methods to initialize, validate, and manipulate demonstration events.
+
+    Parameters
+    ----------
+    title : str
+        The title of the event.
+    date : str
+        The date of the event.
+    start_time : str
+        The start time of the event.
+    end_time : str
+        The end time of the event.
+    facebook : str
+        The Facebook link for the event.
+    city : str
+        The city where the event is held.
+    address : str
+        The address of the event.
+    route : str
+        The route of the event if it is a march.
+    organizers : list, optional
+        A list of organizers. Defaults to None.
+    approved : bool, optional
+        Whether the event is approved. Defaults to False.
+    linked_organizations : dict, optional
+        Linked organizations. Defaults to None.
+    img : optional
+        Image associated with the event. Defaults to None.
+    _id : optional
+        The unique identifier for the event. Defaults to None.
+    description : str, optional
+        Description of the event. Defaults to None.
+    tags : list, optional
+        Tags associated with the event. Defaults to None.
+    parent : ObjectId, optional
+        Parent event ID for recurring events. Defaults to None.
+    created_datetime : optional
+        The datetime when the event was created. Defaults to None.
+    recurring : bool, optional
+        Whether the event is recurring. Defaults to False.
+    topic : str, optional
+        The topic of the event. Deprecated. Defaults to None.
+    type : str, optional
+        The type of the event. Defaults to None.
+    repeat_schedule : RepeatSchedule, optional
+        The repeat schedule for recurring events. Defaults to None.
+    repeating : bool, optional
+        Whether the event is repeating. Defaults to False.
+    latitude : str, optional
+        Latitude of the event location. Defaults to None.
+    longitude : str, optional
+        Longitude of the event location. Defaults to None.
+    event_type : optional
+        The type of the event. Defaults to None.
+    save_flag : bool, optional
+        Flag to save the event. Defaults to False.
+    hide : bool, optional
+        Flag to hide the event. Defaults to False.
+    aliases : list, optional
+        Aliases for the event. Defaults to None.
+    in_past : bool, optional
+        Whether the event is in the past. Defaults to False.
+
+    Notes
+    -----
+    .. deprecated:: 1.6.0
+        `topic` will be removed in a future version.
+
+    Methods
+    -------
+    alias_fix()
+        Ensures that all aliases are of type ObjectId.
+    merge(id_of_other_demo)
+        Merge another demonstration into this one.
+    update_self_from_recurring(recurring_demo)
+        Update the demonstration details using a recurring demonstration.
+    to_dict(json=False)
+        Convert instance to dictionary, including organizers as dictionaries.
+    validate_fields(title, date, start_time, city, address)
+        Validates that all required fields are provided.
+    save()
+        Save or update the demonstration in the database.
+    """
     
     def __init__(
         self,
@@ -491,41 +578,73 @@ class Demonstration(BaseModel):
         """
         Initialize a new demonstration event.
 
-        Args:
-            title (str): The title of the event.
-            date (str): The date of the event.
-            start_time (str): The start time of the event.
-            end_time (str): The end time of the event.
-            facebook (str): The Facebook link for the event.
-            city (str): The city where the event is held.
-            address (str): The address of the event.
-            route (str): The route of the event if it is a march.
-            organizers (list, optional): A list of organizers. Defaults to None.
-            approved (bool, optional): Whether the event is approved. Defaults to False.
-            linked_organizations (dict, optional): Linked organizations. Defaults to None.
-            img (optional): Image associated with the event. Defaults to None.
-            _id (optional): The unique identifier for the event. Defaults to None.
-            description (str, optional): Description of the event. Defaults to None.
-            tags (list, optional): Tags associated with the event. Defaults to None.
-            parent (ObjectId, optional): Parent event ID for recurring events. Defaults to None.
-            created_datetime (optional): The datetime when the event was created. Defaults to None.
-            recurring (bool, optional): Whether the event is recurring. Defaults to False.
-            topic (str, optional): The topic of the event. Deprecated. Defaults to None.
-            type (str, optional): The type of the event. Defaults to None.
-            repeat_schedule (RepeatSchedule, optional): The repeat schedule for recurring events. Defaults to None.
-            repeating (bool, optional): Whether the event is repeating. Defaults to False.
-            latitude (str, optional): Latitude of the event location. Defaults to None.
-            longitude (str, optional): Longitude of the event location. Defaults to None.
-            event_type (optional): The type of the event. Defaults to None.
-            save_flag (bool, optional): Flag to save the event. Defaults to False.
-            hide (bool, optional): Flag to hide the event. Defaults to False.
-            aliases (list, optional): Aliases for the event. Defaults to None.
-            
-        .. deprecated:: 1.6.0
-          `ndobj_old` will be removed in NumPy 2.0.0, it is replaced by
-          `ndobj_new` because the latter works also with array subclasses.
-        """
+        Parameters
+        ----------
+        title : str
+            The title of the event.
+        date : str
+            The date of the event.
+        start_time : str
+            The start time of the event.
+        end_time : str
+            The end time of the event.
+        facebook : str
+            The Facebook link for the event.
+        city : str
+            The city where the event is held.
+        address : str
+            The address of the event.
+        route : str
+            The route of the event if it is a march.
+        organizers : list, optional
+            A list of organizers. Defaults to None.
+        approved : bool, optional
+            Whether the event is approved. Defaults to False.
+        linked_organizations : dict, optional
+            Linked organizations. Defaults to None.
+        img : optional
+            Image associated with the event. Defaults to None.
+        _id : optional
+            The unique identifier for the event. Defaults to None.
+        description : str, optional
+            Description of the event. Defaults to None.
+        tags : list, optional
+            Tags associated with the event. Defaults to None.
+        parent : ObjectId, optional
+            Parent event ID for recurring events. Defaults to None.
+        created_datetime : optional
+            The datetime when the event was created. Defaults to None.
+        recurring : bool, optional
+            Whether the event is recurring. Defaults to False.
+        topic : str, optional
+            **[Depraced]**
+            The topic of the event. Deprecated. Defaults to None.
+        type : str, optional
+            The type of the event. Defaults to None.
+        repeat_schedule : RepeatSchedule, optional
+            The repeat schedule for recurring events. Defaults to None.
+        repeating : bool, optional
+            Whether the event is repeating. Defaults to False.
+        latitude : str, optional
+            Latitude of the event location. Defaults to None.
+        longitude : str, optional
+            Longitude of the event location. Defaults to None.
+        event_type : optional
+            The type of the event. Defaults to None.
+        save_flag : bool, optional
+            Flag to save the event. Defaults to False.
+        hide : bool, optional
+            Flag to hide the event. Defaults to False.
+        aliases : list, optional
+            Aliases for the event. Defaults to None.
+        in_past : bool, optional
+            Whether the event is in the past. Defaults to False.
 
+        Notes
+        -----
+        .. deprecated:: 1.6.0
+            `topic` will be removed in a future version.
+        """
         self.save_flag = save_flag
 
         self.hide = hide
@@ -592,12 +711,11 @@ class Demonstration(BaseModel):
 
         self.aliases = aliases or []
         self.alias_fix()
-    
+
         if self.save_flag: # Save the demonstration if the save_flag is set
             self.save() # Save the demonstration
 
         self.validate_fields(title, date, start_time, city, address) # Validate required fields
-        
         
 
     def alias_fix(self):
@@ -683,7 +801,7 @@ class Demonstration(BaseModel):
 
         self.save()
         
-    def update_self_from_recurring(self, recurring_demo):
+    def update_self_from_recurring(self, recurring_demo: 'RecurringDemonstration'):
         """Update the demonstration details using a recurring demonstration.
         
         This method updates the demonstration instance with the details from a recurring
@@ -697,9 +815,20 @@ class Demonstration(BaseModel):
 
         Returns
         -------
-
+        None
         
+        Raises
+        ------
+        ValueError
+            If the provided demonstration is not a RecurringDemonstration instance.
+
+        See Also
+        --------
+        RecurringDemonstration : A class representing a recurring demonstration.
         """
+        if not isinstance(recurring_demo, RecurringDemonstration):
+            raise ValueError("The provided demonstration is not a RecurringDemonstration instance.")
+        
         self.title = recurring_demo.title
         self.description = recurring_demo.description
         self.tags = recurring_demo.tags
@@ -708,19 +837,23 @@ class Demonstration(BaseModel):
         self.save()
 
     def to_dict(self, json=False):
-        """Convert instance to dictionary, including organizers as dictionaries.
+        """
+        Convert instance to dictionary, including organizers as dictionaries.
 
         Parameters
         ----------
-        json : bool
-            If True, convert the instance to a JSON-compatible dictionary. (Default value = False)
+        json : bool, optional
+            If True, convert the instance to a JSON-compatible dictionary. Defaults to False.
 
         Returns
         -------
-
-        
+        dict
+            A dictionary representation of the instance, with organizers and aliases converted appropriately.
+            
+        See Also
+        --------
+        BaseModel.to_dict : Convert the instance to a dictionary.
         """
-
         data = super().to_dict(json=json)
         data["organizers"] = [
             org.to_dict(json=json) if isinstance(org, Organizer) else org
@@ -728,9 +861,10 @@ class Demonstration(BaseModel):
         ]
         data["aliases"] = [str(alias) for alias in self.aliases]
         return data
-
+    
     def validate_fields(self, title, date, start_time, city, address):
-        """Validates that all required fields are provided.
+        """
+        Validates that all required fields are provided.
 
         Parameters
         ----------
@@ -747,10 +881,13 @@ class Demonstration(BaseModel):
 
         Returns
         -------
+        None
 
-        
+        Raises
+        ------
+        ValueError
+            If any of the required fields are missing.
         """
-        
         if not title or not date or not start_time or not city or not address:
             missing_fields = []
             if not title:

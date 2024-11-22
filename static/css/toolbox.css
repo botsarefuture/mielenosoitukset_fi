@@ -121,3 +121,15 @@
         height: 30px;
     }
 }
+
+demo-toolbar-buttons,
+org-toolbar-buttons {
+    all: inherit;
+    display: none;
+}
+
+demo-toolbar-buttons.display,
+org-toolbar-buttons.display {
+    display: inherit;
+}
+

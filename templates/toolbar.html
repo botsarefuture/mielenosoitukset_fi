@@ -1,60 +1,92 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}">
+
 <div id="demo-toolbox" class="toolbox">
     <div class="toolbox-header">
         <h3>{{ _('Työkalupakki') }}</h3>
     </div>
 
     <div id="toolbox-buttons" class="toolbox-buttons">
-        <!-- Approve Button -->
-        {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-        <button class="button accept-button" onclick="acceptDemo('{{ demo['_id'] }}')">
-            <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
-        </button>
-        {% endif %}
+        <demo-toolbar-buttons>
+            {% if demo %}
+            <!-- Approve Button -->
+            {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
+            <button class="button accept-button" onclick="acceptDemo('{{ demo['_id'] }}')">
+                <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
+            </button>
+            {% endif %}
 
-        <!-- Edit Button -->
-        {% if current_user.has_permission("EDIT_DEMO") %}
-        <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="button edit-button">
-            <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
-        </a>
-        {% endif %}
+            <!-- Edit Button -->
+            {% if current_user.has_permission("EDIT_DEMO") %}
+            <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="button edit-button">
+                <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
+            </a>
+            {% endif %}
 
-        <!-- View Button -->
-        {% if current_user.has_permission("VIEW_DEMO") %}
-        <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="button view-button">
-            <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
-        </a>
-        {% endif %}
+            <!-- View Button -->
+            {% if current_user.has_permission("VIEW_DEMO") %}
+            <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="button view-button">
+                <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
+            </a>
+            {% endif %}
 
-        <!-- Delete Button -->
-        {% if current_user.has_permission("DELETE_DEMO") %}
-        <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo['_id'] }}')">
-            <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
-        </button>
-        {% endif %}
+            <!-- Delete Button -->
+            {% if current_user.has_permission("DELETE_DEMO") %}
+            <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo['_id'] }}')">
+                <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
+            </button>
+            {% endif %}
 
-        <!-- Stats Button -->
-        {% if current_user.has_permission("VIEW_ANALYTICS") %}
-        <a href="{{ url_for('admin.stats') }}" class="button stats-button">
-            <i class="fas fa-chart-line"></i> {{ _('Tilastot') }}
-        </a>
+            <!-- Stats Button -->
+            {% if current_user.has_permission("VIEW_ANALYTICS") %}
+            <a href="{{ url_for('admin.stats') }}" class="button stats-button">
+                <i class="fas fa-chart-line"></i> {{ _('Tilastot') }}
+            </a>
 
-        <div id="stats-content">
-            <!-- Stats will be injected here by JavaScript -->
-        </div>
-        {% endif %}
+            <div id="stats-content">
+                <!-- Stats will be injected here by JavaScript -->
+            </div>
+            {% endif %}
+            {% endif %}
 
+        </demo-toolbar-buttons>
+        <org-toolbar-buttons>
+            {% if organization %}
+            <!-- Edit Button -->
+            {% if current_user.has_permission("EDIT_ORGANIZATION") %}
+            <a href="{{ url_for('admin_organization.edit_organization', org_id=organization['_id']) }}" class="button edit-button">
+                <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
+            </a>
+            {% endif %}
+
+            <!-- View Button -->
+            {% if current_user.has_permission("VIEW_ORGANIZATION") %}
+            <a href="{{ url_for('organization_detail', org_id=organization['_id']) }}" class="button view-button">
+                <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
+            </a>
+            {% endif %}
+
+            <!-- Delete Button -->
+            {% if current_user.has_permission("DELETE_ORGANIZATION") %}
+            <button class="button delete-button" onclick="openModal(event, '{{ organization.name }}', '{{ organization['_id'] }}')">
+                <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
+            </button>
+            {% endif %}
+            {% endif %}
+        </org-toolbar-buttons>
     </div>
 
+
+
+    <!-- DO NOT REMOVE BELOW -->
     <div class="toolbox-footer">
-        
-        <!-- the toggle here -->
         <button id="toolbar-toggle" class="button toggle-toolbox" onclick="toggleToolbox()">
             <i class="fa-solid fa-toolbox"></i>
         </button>
     </div>
+    <!-- DO NOT REMOVE ABOVE -->
 </div>
 
-{% if current_user.has_permission("VIEW_ANALYTICS") %}
+{% if current_user.has_permission("VIEW_ANALYTICS") and demo %}
 <script>
     function get_demo_stats(demoId) {
         fetch(`/api/demo/${demoId}/stats`)
@@ -74,5 +106,18 @@
     document.addEventListener("DOMContentLoaded", () => {
         get_demo_stats("{{ demo['_id'] }}");
     });
+</script>
+{% endif %}
+
+{% if demo %}
+<script>
+    document.getElementsByTagName("demo-toolbar-buttons")[0].classList.add("display");
+</script>
+{% endif %}
+
+{# Display orgasm toolbar #}
+{% if organization %}
+<script>
+    document.getElementsByTagName("org-toolbar-buttons")[0].classList.add("display");
 </script>
 {% endif %}

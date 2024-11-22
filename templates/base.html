@@ -8,9 +8,7 @@
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
 
   {% block meta %}
-
   <!-- meta content will be inserted here -->
-
   {% endblock %}
 
   {% for lang_code, url in alternate_urls.items() %}
@@ -30,23 +28,9 @@
   <!-- END of stylesheets -->
 
   <!-- Matomo -->
-  <script>
-    var _paq = (window._paq = window._paq || []);
-    _paq.push(["trackPageView"]);
-    _paq.push(["enableLinkTracking"]);
-    (function () {
-      var u = "//matomo.luova.club/";
-      _paq.push(["setTrackerUrl", u + "matomo.php"]);
-      _paq.push(["setSiteId", "1"]);
-      var d = document,
-        g = d.createElement("script"),
-        s = d.getElementsByTagName("script")[0];
-      g.async = true;
-      g.src = u + "matomo.js";
-      s.parentNode.insertBefore(g, s);
-    })();
-  </script>
+  <script src="{{ url_for('static', filename='js/matomo.js') }}"></script>
   <!-- End Matomo Code -->
+
 </head>
 
 <body>
@@ -55,6 +39,7 @@
 
   <!-- Navigation Bar -->
   {% include "header.html" %}
+
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -116,6 +101,7 @@
 
     </div>
   </footer>
+  </body>
 
   <!-- JavaScript for Navigation Menu Toggle and Dropdown -->
   <script>
@@ -155,114 +141,25 @@
         }
       }, 10000);
     }
-    /*
-    function checkForNewFlashMessages() {
-      fetch("/get_flash_messages")
-        .then((response) => response.json())
-        .then((data) => {
-          if (data && data.messages && data.messages.length > 0) {
-            data.messages.forEach((flash) => {
-              displayFlashMessage(flash.category, flash.message);
-            });
-          }
-        })
-        .catch((error) => console.error("Error fetching flash messages:", error));
-    }
-
-    setInterval(checkForNewFlashMessages, 5000);*/
   </script>
 
-  <script>
-    let currentmarg = "";
-    function displayMarqueeMessage(message, style, h2_style) {
-      if (message !== currentmarg) {
-        currentmarg = message;
-        const marqueeElement = document.querySelector(".marquee");
-        marqueeElement.innerHTML = `<h2 style="${h2_style}">${message}</h2>`;
-        marqueeElement.style.display = "block"; // Show marquee
-        marqueeElement.style = style; // Apply additional styles if any
-      } else {
-        console.log("The marquee is the same already");
-      }
-    }
-
-    function checkForNewMarqueeMessages() {
-      fetch("/marquee")
-        .then((response) => response.json())
-        .then((data) => {
-          const marqueeElement = document.querySelector(".marquee");
-          if (data.message !== "NO") {
-            displayMarqueeMessage(data.message, data.style, data.h2_style);
-          } else {
-            marqueeElement.style.display = "none"; // Hide if no message
-          }
-        })
-        .catch((error) => console.error("Error fetching marquee message:", error));
-    }
-
-    // Check for new marquee messages every 5 seconds
-    setInterval(checkForNewMarqueeMessages, 5000);
-
-    document.addEventListener("DOMContentLoaded", function () {
-      checkForNewMarqueeMessages(); // Initial check on page load
-    });
-  </script>
-
-  <script>
-    function applyPreferredTheme() {
-      const savedTheme = localStorage.getItem("theme");
-      const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const themeIcon = document.getElementById("theme-icon");
-
-      if (savedTheme) {
-        if (savedTheme === "dark") {
-          document.documentElement.classList.add("dark");
-          document.documentElement.classList.remove("light");
-          themeIcon.classList.remove("fa-moon");
-          themeIcon.classList.add("fa-sun");
-        } else {
-          document.documentElement.classList.add("light");
-          document.documentElement.classList.remove("dark");
-          themeIcon.classList.remove("fa-sun");
-          themeIcon.classList.add("fa-moon");
-        }
-      } else if (prefersDarkMode) {
-        document.documentElement.classList.add("dark");
-        document.documentElement.classList.remove("light");
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-      } else {
-        document.documentElement.classList.add("light");
-        document.documentElement.classList.remove("dark");
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
-      }
-    }
-
-    function toggleDarkMode() {
-      document.documentElement.classList.toggle("dark");
-      document.documentElement.classList.toggle("light");
-
-      const themeIcon = document.getElementById("theme-icon");
-
-      if (document.documentElement.classList.contains("dark")) {
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-        localStorage.setItem("theme", "dark");
-      } else {
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
-        localStorage.setItem("theme", "light");
-      }
-    }
-
-    applyPreferredTheme();
-  </script>
+<script src="{{ url_for('static', filename='js/marquee.js') }}"></script>
+<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 <script>
   function toggleNavbar() {
     const navLinks = document.querySelector('.nav-links');
     navLinks.classList.toggle('active');
   }
+</script>
+<script>
+  // Activators
+  document.addEventListener("DOMContentLoaded", function () {
+    applyPreferredTheme(); // Apply the preferred theme on page load
+    checkForNewMarqueeMessages(); // Initial check on page load
+    // Check for new marquee messages every 5 seconds
+    setInterval(checkForNewMarqueeMessages, 5000);
+
+  });
 </script>
   {% block scripts %} {% endblock %}
 </body>

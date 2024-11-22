@@ -1,0 +1,111 @@
+.modal {
+    display: none; /* Hidden by default, if not hidden the flex */
+    position: absolute; /* Stay in place */
+    z-index: 100010000; /* Sit on top of everything else */
+    left: 0;
+    top: 0; /* 300px from the top */
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: visible; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    -webkit-backdrop-filter: blur(5px); /* Safari */
+    backdrop-filter: blur(5px); /* Blur background */
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+    color: var(--text-color);
+}
+
+.modal.display {
+    display: flex;
+}
+
+.body .modal.display {
+    overflow: hidden; /* Prevent background scrolling when modal is displayed */
+}
+
+.modal-content {
+    background-color: var(--container-background);
+    margin: 0; /* Centered */
+    padding: 20px;
+    border-radius: 10px; /* Rounded corners */
+    width: 60%; /* Could be more or less, depending on screen size */
+    max-width: 800px; /* Set a maximum width for better responsiveness */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Add shadow */
+    animation: fadeIn 0.5s; /* Fade-in effect */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--admin-section-text-color);
+}
+
+.close-button {
+    color: var(--close-button-color);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    background: var(--red-darker);
+    padding: 0.5em;
+    border-radius: 50%;
+    height: 1.5em;
+    width: 1.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--close-button-hover-color);
+    background-color: var(--red);
+}
+
+.modal-body {
+    padding: 20px 0;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.modal-footer {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    text-align: start;
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping of columns */
+}
+
+.modal-footer label,
+.modal-footer p {
+    margin-right: 10px;
+    text-align: start;
+    flex: 1 1 45%; /* Adjust the width of columns */
+    max-width: 45%; /* Fix the width of each column */
+    box-sizing: border-box; /* Ensure padding and border are included in the width */
+}
+
+.modal-footer p {
+	margin: 5px 0;
+	border: 1px solid var(--border-color);
+	padding: 5px;
+	border-radius: 5px;
+	text-align: start;
+	width: auto;
+	max-width: 300px;
+	overflow-wrap: break-word;
+}

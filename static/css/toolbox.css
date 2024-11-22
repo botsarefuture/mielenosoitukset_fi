@@ -1,18 +1,21 @@
 /* Toolbox styling */
 .toolbox-sticky {
-    position: sticky;
+    position: fixed; /* Keep it in place */
     top: 0;
+    right: 0; /* Fix to the right side */
+    height: 100%; /* Full height */
     background: var(--background-light);
     padding: 1rem 2rem;
-    z-index: 9999;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000001;
+    border-left: 1px solid rgba(0, 0, 0, 0.1); /* Border on the left */
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1); /* Shadow for right side */
     display: flex;
-    justify-content: space-between;
+    flex-direction: column; /* Stack items vertically */
+    justify-content: start; /* Space between items */
     align-items: center;
-    border-radius: 50px;  /* More rounded for a modern style */
-    max-width: 700px;      /* Adjust for better visual balance */
-    margin: 1rem auto;     /* Center it horizontally with spacing */
+    border-radius: 0; /* Remove border-radius */
+    max-width: 300px; /* Adjust width */
+    margin: 0; /* Remove margin */
     transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -27,6 +30,7 @@
 /* Button container */
 .toolbox-buttons {
     display: flex;
+    flex-direction: column; /* Stack buttons vertically */
     gap: 10px;
 }
 
@@ -36,7 +40,7 @@
     border: none;
     padding: 8px 15px;
     color: white;
-    border-radius: 20px; /* More rounded for a sleek look */
+    border-radius: 20px; /* Rounded look */
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s ease, transform 0.2s ease;
@@ -48,7 +52,7 @@
 
 .toolbox .button:hover {
     background: var(--primary-button-hover-color);
-    transform: translateY(-2px); /* Subtle lift effect */
+    transform: translateY(-2px); /* Lift effect */
 }
 
 /* Collapse button ('xxx') */
@@ -61,13 +65,15 @@
     color: white;
     padding: 5px;
     border-radius: 50%;
-    width: 36px;  /* Increased size for better usability */
-    height: 36px; /* Increased size for better usability */
+    width: 100%;  /* Full width */
+    height: 36px; /* Increased size */
     display: flex;
     justify-content: center;
     align-items: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: background 0.3s ease, transform 0.3s ease;
+    margin-top: auto; /* Push to the bottom */
+    margin-bottom: 1rem; /* Add some space */
 }
 
 .toggle-toolbox:hover {
@@ -87,12 +93,11 @@
     }
 
     .toolbox-buttons {
-        flex-direction: column; /* Stack buttons vertically on smaller screens */
-        gap: 5px; /* Reduced gap for compactness */
+        gap: 5px; /* Reduced gap */
     }
 
     .toggle-toolbox {
-        width: 30px; /* Slightly smaller on mobile */
-        height: 30px; /* Slightly smaller on mobile */
+        width: 30px; /* Smaller on mobile */
+        height: 30px; /* Smaller on mobile */
     }
 }

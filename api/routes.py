@@ -212,3 +212,25 @@ def get_demo_stats_route(demo_id):
     stats = get_prepped_data(ObjectId(demo_id))
     print(stats)
     return jsonify(stringify_object_ids(stats))
+
+@api_bp.route("/admin/demo/info/<demo_id>", methods=["GET"])
+def get_demo_info(demo_id):
+    """Get the information for a demonstration
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
+    
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    
+    if demo is None:
+        abort(404, description="Mielenosoitusta ei löytynyt.")
+    
+    return jsonify(stringify_object_ids(demo))

@@ -88,6 +88,8 @@
 {% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='/css/modal.css' )}}" />
+
 <style>
   /* Main Container */
   #main {
@@ -403,90 +405,8 @@
 
 {% block content %}
 
-{% if current_user.is_authenticated and current_user.has_permission("TOOLBOX") %}
-
-<div id="demo-toolbox" class="toolbox-sticky">
-  <div class="toolbox-header">
-    <h3>{{ _('Työkalupakki') }}</h3>
-    <button class="toggle-toolbox" onclick="toggleToolbox()">
-      <i class="fa fa-times"></i>
-    </button>
-  </div>
-
-  <div id="toolbox-buttons" class="toolbox-buttons">
-    <!-- Approve Button -->
-    {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-    <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
-      <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
-    </button>
-    {% endif %}
-
-    <!-- Edit Button -->
-    {% if current_user.has_permission("EDIT_DEMO") %}
-    <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">
-      <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
-    </a>
-    {% endif %}
-
-    <!-- View Button -->
-    {% if current_user.has_permission("VIEW_DEMO") %}
-    <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
-      <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
-    </a>
-    {% endif %}
-
-    <!-- Delete Button -->
-    {% if current_user.has_permission("DELETE_DEMO") %}
-    <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
-      <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
-    </button>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-<!-- here comes stats for admins -->
-{% if current_user.has_permission("VIEW_ANALYTICS") %}
-<div id="demo-stats" class="toolbox-sticky">
-  <div class="toolbox-header">
-    <h3>{{ _('Tilastot') }}</h3>
-    <button class="toggle-toolbox" onclick="toggleToolbox()">
-      <i class="fa fa-times"></i>
-    </button>
-  </div>
-
-  <div id="toolbox-buttons" class="toolbox-buttons">
-    <a href="{{ url_for('admin.stats') }}" class="button stats-button">
-      <i class="fas fa-chart-line"></i> {{ _('Tilastot') }}
-    </a>
-
-  <div id="stats-content">
-    <!-- Stats will be injected here by JavaScript -->
-  </div>
-</div>
-
-</div>
-
-<script>
-  function get_demo_stats(demoId) {
-    fetch(`/api/demo/${demoId}/stats`)
-      .then((response) => response.json())
-      .then((data) => {
-        const statsContent = document.getElementById("stats-content");
-        statsContent.innerHTML = `
-          <p><strong><i class="fa-solid fa-eye"></i> {{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
-          <p><strong>{{ _('Osallistujat:') }}</strong> ${data.participants}</p>
-        `;
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    get_demo_stats("{{ demo['_id'] }}");
-  });
-</script>
+{% if current_user.is_authenticated or current_user.super_user %}
+{% include 'toolbar.html' %}
 {% endif %}
 
 <div id="main">
@@ -816,4 +736,9 @@
   populateOrganizers(data.demo.organizers);
   populateDemoDetails(data.demo);
 </script>
+<script>
+  let demoId = "{{ demo['_id'] }}";
+</script>
+<script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
+
 {% endblock %}

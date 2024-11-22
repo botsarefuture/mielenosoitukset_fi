@@ -1,0 +1,10 @@
+{
+    "OPTION_1": {
+        "name": "Option 1",
+        "description": "Option 1 description."
+    },
+    "OPTION_2": {
+        "name": "Option 2",
+        "description": "Option 2 description."
+    }
+}

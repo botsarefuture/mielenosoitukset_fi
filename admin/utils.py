@@ -12,14 +12,25 @@ mongo = db_manager.get_db()
 
 
 def get_org_name(org_id: str) -> str:
-    """
-    Retrieve the name of the organization based on its ID.
+    """Retrieve the name of the organization based on its ID.
 
-    Parameters:
-        org_id (str): The ID of the organization to retrieve.
+    Parameters
+    ----------
+    org_id :
+        str
+    org_id :
+        str:
+    org_id : str :
+        
+    org_id : str :
+        
+    org_id: str :
+        
 
-    Returns:
-        str: The name of the organization or 'Unknown Organization' if not found.
+    Returns
+    -------
+
+    
     """
     try:
         result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -34,17 +45,25 @@ def get_org_name(org_id: str) -> str:
 
 
 def get_org_details(org_id: str) -> Organization:
-    """
-    Retrieve detailed information about an organization based on its ID.
+    """Retrieve detailed information about an organization based on its ID.
 
-    Parameters:
-        org_id (str): The ID of the organization to retrieve.
+    Parameters
+    ----------
+    org_id :
+        str
+    org_id :
+        str:
+    org_id : str :
+        
+    org_id : str :
+        
+    org_id: str :
+        
 
-    Returns:
-        Organization: An instance of the Organization class with the organization's details.
+    Returns
+    -------
 
-    Raises:
-        ValueError: If the organization is not found.
+    
     """
     try:
         result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -58,13 +77,37 @@ def get_org_details(org_id: str) -> Organization:
 
 
 def log_admin_action(user, action: str, details: str):
-    """
-    Log an admin action to MongoDB.
+    """Log an admin action to MongoDB.
 
-    Parameters:
-        user: The user object performing the action.
-        action (str): A description of the action performed.
-        details (str): Additional details about the action.
+    Parameters
+    ----------
+    user :
+        The user object performing the action
+    action :
+        str
+    details :
+        str
+    action :
+        str:
+    details :
+        str:
+    action : str :
+        
+    details : str :
+        
+    action : str :
+        
+    details : str :
+        
+    action: str :
+        
+    details: str :
+        
+
+    Returns
+    -------
+
+    
     """
     try:
         mongo.admin_logs.insert_one(

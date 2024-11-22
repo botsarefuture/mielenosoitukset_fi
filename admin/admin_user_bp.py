@@ -47,15 +47,19 @@ USER_ACCESS_LEVELS = {
 }
 
 def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
-    """
-    Compare the access levels of two users.
-    Args:
-        user1: An object representing the first user, which must have a 'role' attribute.
-        user2: An object representing the second user, which must have a 'role' attribute.
-    Returns:
-        bool: True if user1 has a higher access level than user2, False otherwise.
-    Raises:
-        ValueError: If either user1 or user2 has an invalid role not present in USER_ACCESS_LEVELS.
+    """Compare the access levels of two users.
+
+    Parameters
+    ----------
+    user1 :
+        An object representing the first user, which must have a 'role' attribute.
+    user2 :
+        raises ValueError: If either user1 or user2 has an invalid role not present in USER_ACCESS_LEVELS.
+
+    Returns
+    -------
+
+    
     """
     if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
         raise ValueError("Invalid user role")
@@ -68,7 +72,7 @@ def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
 @permission_required("EDIT_USER")
 def edit_user(user_id):
     """Edit user details.
-
+    
     Changelog:
     ----------
     v2.5.0:
@@ -78,6 +82,16 @@ def edit_user(user_id):
     
     v2.4.0:
     - Modified to use valid_email instead of depraced is_valid_email
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
     """
     
     user = User.from_db(mongo.users.find_one({"_id": ObjectId(user_id)}))
@@ -95,6 +109,7 @@ def edit_user(user_id):
         # TODO: #180 Ensure this stops the handling of the request
 
     if request.method == "POST":
+        print(request.form)
         username = request.form.get("username")
         email = request.form.get("email")
         role = request.form.get("role")
@@ -133,10 +148,12 @@ def edit_user(user_id):
             
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
+        print(request.form)
+        
         # Collect organizations and permissions
         orgs = [
             {
-                "org_id": org_id,
+                "org_id": ObjectId(org_id),
                 "role": "admin",
                 "permissions": request.form.getlist(f"permissions_{org_id}"),
             }
@@ -162,7 +179,7 @@ def edit_user(user_id):
 
     # Prepare to render the edit user form
     user_orgs = [
-        {"_id": org.get("org_id"), "role": org.get("role")}
+        {"_id": str(org.get("org_id")), "role": org.get("role")}
         for org in user.organizations
     ]
     org_ids = [org.get("org_id") for org in user_orgs]
@@ -180,6 +197,40 @@ def edit_user(user_id):
         user_organizations=user_orgs,
     )
 
+class UserOrg:
+    """ """
+    def __init__(self, org_id, user, role, permissions):
+        self.org_id = org_id
+        self.user = user
+        self.role = role
+        self.permissions = permissions # Validate permissions
+        
+    def __str__(self):
+        return f"UserOrg({self.org_id}, {self.user}, {self.role}, {self.permissions})"
+    
+    def to_dict(self):
+        """ """
+        return {
+            "org_id": ObjectId(self.org_id),
+            "role": self.role if self.role in ["global_admin", "admin", "user"] else "user",
+            "permissions": self.permissions
+        }
+        
+    @staticmethod
+    def from_dict(data):
+        """
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        
+        """
+        return UserOrg(data.get("org_id"), data.get("user"), data.get("role"), data.get("permissions"))
 
 @admin_user_bp.route("/save_user/<user_id>", methods=["POST"])
 @login_required
@@ -187,12 +238,22 @@ def edit_user(user_id):
 @permission_required("EDIT_USER")
 def save_user(user_id):
     """Save updated user details, permissions, and send email notification.
-
+    
     Changelog:
     ----------
-
+    
     v2.4.0:
     - Modified to use valid_email instead of depraced is_valid_email
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
     """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
@@ -200,7 +261,7 @@ def save_user(user_id):
         return redirect(url_for("admin_user.user_control"))
 
     user = User.from_db(user)
-
+    print(request.form)
     # Get form data
     username = request.form.get("username")
     email = request.form.get("email")
@@ -231,28 +292,25 @@ def save_user(user_id):
     if not valid_email(email):
         flash_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
-
+    
     # Fetch organization names for notification
     organizations = mongo.organizations.find(
         {"_id": {"$in": [ObjectId(org_id) for org_id in organization_ids]}}
     )
+    
+    # Use User class for updating stuff
+    user.username = username
+    user.email = email
+    user.role = role
+    user.organizations = [
+        UserOrg(org_id, user, "admin", request.form.getlist(f"permissions_{org_id}")).to_dict()
+        for org_id in organization_ids]
+    
+    user.permissions = {org_id: request.form.getlist(f"permissions_{org_id}") for org_id in organization_ids}
+    user.confirmed = confirmed
+    
     org_names = [org["name"] for org in organizations]
-
-    # Update user information in the database
-    mongo.users.update_one(
-        {"_id": ObjectId(user_id)},
-        {
-            "$set": {
-                "username": username,
-                "email": email,
-                "role": role,
-                "organizations": [
-                    {"org_id": org_id, "role": "admin"} for org_id in organization_ids
-                ],
-                "confirmed": confirmed,
-            }
-        },
-    )
+    user.save()
 
     # Prepare the email notification content
     permission_summary_html = "<p>Sinulla on seuraavat oikeudet:</p>"
@@ -274,7 +332,7 @@ def save_user(user_id):
         subject="Tilisi tiedot on päivitetty",
         recipients=[email],
         context={
-            "user_name": user.displayname or username,
+            "user_name": user.displayname or user.username,
             "role": role,
             "organization_names": ", ".join(org_names),
             "action": "päivitetty",
@@ -293,15 +351,24 @@ import warnings
 
 
 def is_valid_email(email):
-    """
-    Deprecated: This function is deprecated and will be removed in future versions.
+    """Deprecated: This function is deprecated and will be removed in future versions.
     Please use `valid_email` from `utils.py` instead.
-
+    
     Usage:
         from utils import valid_email
         is_valid = valid_email(email)
-
+    
     Utility function to validate email format.
+
+    Parameters
+    ----------
+    email :
+        
+
+    Returns
+    -------
+
+    
     """
     warnings.warn(
         "is_valid_email is deprecated; use valid_email from ../utils.py instead.",
@@ -317,7 +384,18 @@ def is_valid_email(email):
 @admin_required
 @permission_required("DELETE_USER")
 def delete_user(user_id):
-    """Delete a user from the system."""
+    """Delete a user from the system.
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if user:
         mongo.users.delete_one({"_id": ObjectId(user_id)})

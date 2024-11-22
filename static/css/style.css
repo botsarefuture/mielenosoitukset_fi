@@ -2,20 +2,11 @@
 @import url("form.css");
 @import url("buttons.css");
 @import url("table.css");
-
 @import url("variables.css");
-
-/* Import fonts */
-
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: "Montserrat", sans-serif;
   font-optical-sizing: auto;
   font-weight: 700;
@@ -31,38 +22,26 @@ html {
 
 secondary .wrapper {
   display: flex;
-  /* Use flexbox for layout */
   flex-direction: column;
-  /* Stack items vertically */
   min-height: 100vh;
-  /* Full viewport height */
 }
 
-/* General Styles */
-html,
-body {
+html, body {
   height: 100%;
-  /* Ensure the body takes the full height of the viewport */
   margin: 0;
   background: var(--background) !important;
-  /* Updated to match the style guide */
   color: var(--primary-text-color);
-  /* Text color for consistency */
   overflow-x: hidden;
   max-width: 100%;
 }
 
-/* Navbar Styles */
 .navbar {
   background: var(--background);
-  /* Dark Blue from the guide */
   padding: 15px;
   display: flex;
   justify-content: space-between;
-  /* Ensures even spacing between items */
   align-items: center;
   position: relative;
-  /* Ensure dropdown menus position correctly */
 }
 
 .navbar .container {
@@ -97,7 +76,6 @@ header .logo {
 
 .navbar .nav-links a {
   color: var(--white);
-  /* White text */
   text-decoration: none;
   padding: 5px 10px;
   border-radius: 5px;
@@ -105,10 +83,8 @@ header .logo {
 
 .navbar .nav-links a:hover {
   background: var(--orange);
-  /* Orange from the guide */
 }
 
-/* Profile Dropdown */
 .profile-dropdown {
   display: flex;
   align-items: center;
@@ -148,35 +124,27 @@ header .logo {
   background: var(--orange);
 }
 
-/* Toggle Button for Mobile Navigation */
 .navbar-toggle {
   display: none;
   background: none;
   border: none;
   color: var(--white);
-  /* White text */
   font-size: 1.5em;
   cursor: pointer;
 }
 
-/* Main Content Styles */
 .main {
   flex: 1;
-  /* Allow the main content to grow and fill available space */
 }
 
-/* Footer Styles */
 .footer {
   background: var(--blue);
-  /* Dark Blue from the guide */
   color: var(--white);
-  /* White text */
   text-align: center;
   padding: 20px 0;
   width: 100%;
 }
 
-/* Delete form styling */
 .delete-form {
   display: inline;
 }
@@ -185,7 +153,6 @@ header .logo {
   display: flex;
   align-items: center;
   background: var(--red) !important;
-  /* Red background for delete button */
   color: var(--white);
   border: none;
   border-radius: 5px;
@@ -202,11 +169,9 @@ header .logo {
 
 .delete-button:hover {
   background: var(--error-color);
-  /* Darker red on hover */
 }
 
-.footer-links,
-.social-media-links {
+.footer-links, .social-media-links {
   list-style: none;
   text-align: center;
   padding: 0;
@@ -222,8 +187,7 @@ header .logo {
   text-align: center;
 }
 
-.footer-links li,
-.social-media-links li {
+.footer-links li, .social-media-links li {
   display: inline;
 }
 
@@ -249,21 +213,17 @@ header .logo {
   background: var(--orange);
 }
 
-.footer-links a,
-.social-media-links a {
+.footer-links a, .social-media-links a {
   text-decoration: none;
   color: var(--white);
-  /* Adjust this according to your theme */
 }
 
 .social-media-links a i {
   margin-right: 8px;
 }
 
-/* Structure for the layout */
 header {
   flex: 0 0 auto;
-  /* Header in the first row, does not grow */
 }
 
 @media (max-width: 1024px) {
@@ -274,75 +234,52 @@ header {
 
 footer {
   flex: 0 0 auto;
-  /* Footer in the last row, does not grow */
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .navbar .nav-links {
     flex-direction: column;
-    /* Stack nav links vertically */
     width: 100vw;
-    /* Full viewport width */
     height: 100vh;
-    /* Full viewport height */
     position: fixed;
-    /* Fix position to cover the entire screen */
     left: 0;
-    /* Align to the left */
     top: 0;
-    /* Align to the top */
     background: var(--blue);
-    /* Dark Blue from the guide */
     display: none;
-    /* Hide by default on small screens */
     z-index: 1000;
-    /* Ensure the dropdown appears above other content */
   }
 
   .navbar .nav-links.active {
     display: flex;
-    /* Show when active */
   }
 
   .navbar .nav-links li {
     margin: 20px 0;
-    /* Space between links */
     text-align: center;
-    /* Center-align text */
   }
 
   .navbar .nav-links a {
     display: block;
-    /* Make links block level */
     padding: 20px;
-    /* Larger padding for touch targets */
     font-size: 1.5em;
-    /* Increase font size for readability */
     color: white;
-    /* White text for contrast */
   }
 
   .navbar-toggle {
     display: block;
-    /* Show toggle button on small screens */
   }
 }
 
 @media (max-width: 480px) {
   header .logo {
     font-size: 1.2em;
-    /* Slightly smaller logo text on very small screens */
   }
 
   .footer {
     padding: 15px 0;
-    /* Reduce footer padding on small screens */
   }
 }
 
-/* Ensure the entire container is clickable */
-/* Ensure the entire container is clickable */
 .demo-link {
   text-decoration: none;
   color: inherit;
@@ -358,7 +295,6 @@ footer {
   transition: background 0.3s ease;
 }
 
-/* Add hover effect for better UX */
 .demo-container:hover {
   background: #f0f0f0;
   border-color: #ccc;
@@ -380,8 +316,7 @@ span i {
   margin-right: 0.5em;
 }
 
-.location i,
-.city i {
+.location i, .city i {
   font-size: 1.2em;
   color: var(--blue-light);
 }
@@ -430,7 +365,6 @@ span i {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -438,10 +372,7 @@ span i {
 
 .spinning-message h2 {
   font-size: 2rem;
-  /* Adjust font size as needed */
   color: var(--red);
-  /* Red color for the text */
-  /* Optional: Add some text shadow for a festive touch */
   text-shadow: 1px 1px 2px var(--black);
 }
 
@@ -457,7 +388,6 @@ span i {
   text-align: center;
   cursor: pointer;
   padding: 0 !important;
-  /* margin: auto; */
 }
 
 .link {
@@ -486,16 +416,13 @@ span i {
 
 .full-width {
   width: 100%;
-  /* Ensures the element takes the full width of its container */
   box-sizing: border-box;
-  /* Includes padding and border in the element's total width */
 }
 
 .mb-4 {
   margin-bottom: 1rem;
 }
 
-/* Padding Utility Classes */
 .pd-5px {
   padding: 5px;
 }
@@ -512,7 +439,6 @@ span i {
   padding: 20px;
 }
 
-/* Margin Utility Classes */
 .mg-5px {
   margin: 5px;
 }
@@ -529,7 +455,6 @@ span i {
   margin: 20px;
 }
 
-/* Padding Top Utility Classes */
 .pt-5px {
   padding-top: 5px;
 }
@@ -546,7 +471,6 @@ span i {
   padding-top: 20px;
 }
 
-/* Margin Top Utility Classes */
 .mt-5px {
   margin-top: 5px;
 }
@@ -563,7 +487,6 @@ span i {
   margin-top: 20px;
 }
 
-/* Padding Bottom Utility Classes */
 .pb-5px {
   padding-bottom: 5px;
 }
@@ -580,7 +503,6 @@ span i {
   padding-bottom: 20px;
 }
 
-/* Margin Bottom Utility Classes */
 .mb-5px {
   margin-bottom: 5px;
 }
@@ -597,7 +519,6 @@ span i {
   margin-bottom: 20px;
 }
 
-/* Padding Left Utility Classes */
 .pl-5px {
   padding-left: 5px;
 }
@@ -614,7 +535,6 @@ span i {
   padding-left: 20px;
 }
 
-/* Margin Left Utility Classes */
 .ml-5px {
   margin-left: 5px;
 }
@@ -631,7 +551,6 @@ span i {
   margin-left: 20px;
 }
 
-/* Padding Right Utility Classes */
 .pr-5px {
   padding-right: 5px;
 }
@@ -648,7 +567,6 @@ span i {
   padding-right: 20px;
 }
 
-/* Margin Right Utility Classes */
 .mr-5px {
   margin-right: 5px;
 }
@@ -665,7 +583,6 @@ span i {
   margin-right: 20px;
 }
 
-/* Additional Margin Utility Classes */
 .mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -694,7 +611,6 @@ span i {
   margin-bottom: 2rem;
 }
 
-/* Additional Padding Utility Classes */
 .pd-1 {
   padding: 0.25rem;
 }
@@ -728,7 +644,6 @@ span i {
 }
 
 @media screen and (min-width: 769px) {
-
   .mb-only {
     visibility: hidden !important;
     display: none;
@@ -739,7 +654,6 @@ span i {
     display: none;
   }
 }
-
 
 @media (max-width: 768px) {
   .mb-only {
@@ -779,7 +693,6 @@ span i {
   0% {
     transform: translateX(100%);
   }
-
   100% {
     transform: translateX(-100%);
   }
@@ -799,13 +712,6 @@ span i {
   animation: marquee linear infinite;
 }
 
-/* When any object is not visible, resize to width: 0; height: 0;
-so when, 'visiblitity: hidden' is applied, it doesn't take up space */
-
-/* When any object is not visible, resize to width: 0; height: 0;
-so when, 'visiblitity: hidden' is applied, it doesn't take up space */
-
-/* Highlight Text */
 .highlight {
   background-color: var(--highlight-bg);
   color: var(--highlight-text);
@@ -813,7 +719,6 @@ so when, 'visiblitity: hidden' is applied, it doesn't take up space */
   border-radius: 3px;
 }
 
-/* Card Style Container */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -824,14 +729,14 @@ so when, 'visiblitity: hidden' is applied, it doesn't take up space */
 }
 
 .error_body {
-	background: var(--error-color) !important;
-	display: flex;
-	justify-content: center;
-	justify-items: center;
-	align-content: center;
-	align-items: center;
-	width: 100vw;
-	height: 100vh;
+  background: var(--error-color) !important;
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  align-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
 }
 
 .error_body h1 {
@@ -846,7 +751,6 @@ so when, 'visiblitity: hidden' is applied, it doesn't take up space */
   color: var(--white);
 }
 
-/* Animate error body to be very scary */
 @keyframes scary {
   0% {
     transform: rotate(0deg);
@@ -868,5 +772,3 @@ so when, 'visiblitity: hidden' is applied, it doesn't take up space */
 .scary {
   animation: scary 0.5s infinite;
 }
-
-/* Animate error body to be very scary */

@@ -1,42 +1,33 @@
-/* Toolbox styling */
-.toolbox-sticky {
-    position: sticky;
-    top: 0;
-    background: var(--background-light);
-    padding: 1rem 2rem;
-    z-index: 9999;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 50px;  /* More rounded for a modern style */
-    max-width: 700px;      /* Adjust for better visual balance */
-    margin: 1rem auto;     /* Center it horizontally with spacing */
-    transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Header with title and close button */
+/* HEADER */
 .toolbox-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    height: 10%;
 }
 
-/* Button container */
+.toolbox-header h3 {
+    margin: 0;
+    font-size: 24px;
+    color: var(--admin-section-text-color);
+    text-align: center;
+}
+
+/* BODY (BUTTONS) */
 .toolbox-buttons {
     display: flex;
+    flex-direction: column;
     gap: 10px;
+    height: 80%;
 }
 
-/* Individual button styles */
 .toolbox .button {
     background: var(--primary-color);
     border: none;
     padding: 8px 15px;
     color: white;
-    border-radius: 20px; /* More rounded for a sleek look */
+    border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s ease, transform 0.2s ease;
@@ -48,10 +39,9 @@
 
 .toolbox .button:hover {
     background: var(--primary-button-hover-color);
-    transform: translateY(-2px); /* Subtle lift effect */
+    transform: translateY(-2px);
 }
 
-/* Collapse button ('xxx') */
 .toggle-toolbox {
     background: var(--red);
     border: none;
@@ -61,13 +51,15 @@
     color: white;
     padding: 5px;
     border-radius: 50%;
-    width: 36px;  /* Increased size for better usability */
-    height: 36px; /* Increased size for better usability */
+    width: 100%;
+    height: 36px;
     display: flex;
     justify-content: center;
     align-items: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: background 0.3s ease, transform 0.3s ease;
+    margin-top: auto;
+    margin-bottom: 1rem;
 }
 
 .toggle-toolbox:hover {
@@ -79,20 +71,65 @@
     transform: scale(0.95);
 }
 
-/* Responsive adjustments */
+#toolbar-toggle {
+    margin-top: 0.5em;
+}
+
+/* FOOTER */
+.toolbox-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 10%;
+    margin: auto;
+    position: relative;
+    flex-direction: column;
+}
+
+/* OTHERS */
+.toolbox {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    background: var(--background-light);
+    padding: 1rem 2rem;
+    z-index: 1000001;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 300px;
+    margin: 0;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
 @media (max-width: 768px) {
-    .toolbox-sticky {
-        padding: 0.5rem 1rem; /* Reduce padding on mobile */
-        max-width: 100%; /* Full width for small screens */
+    .toolbox {
+        padding: 0.5rem 1rem;
+        max-width: 100%;
     }
 
     .toolbox-buttons {
-        flex-direction: column; /* Stack buttons vertically on smaller screens */
-        gap: 5px; /* Reduced gap for compactness */
+        gap: 5px;
     }
 
     .toggle-toolbox {
-        width: 30px; /* Slightly smaller on mobile */
-        height: 30px; /* Slightly smaller on mobile */
+        width: 30px;
+        height: 30px;
     }
 }
+
+demo-toolbar-buttons,
+org-toolbar-buttons {
+    all: inherit;
+    display: none;
+}
+
+demo-toolbar-buttons.display,
+org-toolbar-buttons.display {
+    display: inherit;
+}
+

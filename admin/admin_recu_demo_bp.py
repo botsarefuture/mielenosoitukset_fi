@@ -74,6 +74,7 @@ def create_recu_demo():
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
         city_list=CITY_LIST,
+        all_organizations=list(mongo.organizations.find())
     )
 
 
@@ -83,11 +84,21 @@ def create_recu_demo():
 @permission_required("EDIT_RECURRING_DEMO")
 def edit_recu_demo(demo_id):
     """Edit recurring demonstration details.
-
+    
     Changelog:
     ---------
     v2.4.0:
     - Fixed some typos in flash_messages
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
@@ -110,7 +121,22 @@ def edit_recu_demo(demo_id):
 
 
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
-    """Handle form submission for creating or editing a recurring demonstration."""
+    """Handle form submission for creating or editing a recurring demonstration.
+
+    Parameters
+    ----------
+    request :
+        param is_edit:  (Default value = False)
+    demo_id :
+        Default value = None)
+    is_edit :
+        (Default value = False)
+
+    Returns
+    -------
+
+    
+    """
     title = request.form.get("title")
     date = request.form.get("date")
     start_time = request.form.get("start_time")
@@ -129,11 +155,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     organizers = []
     for i in range(1, 10):  # Assuming a maximum of 9 organizers
         name = request.form.get(f"organizer_name_{i}")
-        if not name:  # Stop if no more organizer names are found
+        _id = request.form.get(f"organizer_id_{i}")
+
+        if not name and not _id:  # Stop if no more organizer names are found
             break
         website = request.form.get(f"organizer_website_{i}")
         email = request.form.get(f"organizer_email_{i}")
-        organizers.append(Organizer(name=name, email=email, website=website))
+        organizers.append(Organizer(name=name, email=email, website=website, organization_id=_id))
 
     # Get the repeat schedule details
     repeat_schedule = {
@@ -158,9 +186,14 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "linked_organizations": request.form.getlist("linked_organizations"),
         "created_until": request.form.get("created_until"),
         "repeating": request.form.get("repeating") == "on",
+        # Please make sure that the id of the organization, is still an ObjectId
         "organizers": [org.to_dict() for org in organizers],
     }
 
+    for organizer in demonstration_data["organizers"]:
+        if "organization_id" in organizer:
+            organizer["organization_id"] = ObjectId(organizer["organization_id"])
+    
     try:
         if is_edit:
             mongo.recu_demos.update_one(
@@ -193,7 +226,18 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
 @admin_required
 @permission_required("DELETE_RECURRING_DEMO")
 def delete_recu_demo(demo_id):
-    """Delete a recurring demonstration from the database."""
+    """Delete a recurring demonstration from the database.
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
@@ -215,11 +259,21 @@ def delete_recu_demo(demo_id):
 @permission_required("DELETE_RECURRING_DEMO")
 def confirm_delete_recu_demo(demo_id):
     """Render a confirmation page before deleting a recurring demonstration.
-
+    
     Changelog:
     ----------
     v2.4.0:
     - Fixed some typos in flash_messagees
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 

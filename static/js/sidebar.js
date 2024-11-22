@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerbar = document.getElementById('headerbar');
 
     // Ensure the required elements exist before running logic
-    if (!sidebar || !toggleButton || !hiddenIcons || !hiddenToggleButton || !mainContent) {
+    if (!sidebar || !toggleButton || !hiddenIcons || !hiddenToggleButton || !mainContent || !headerbar) {
         console.error('Required elements are missing. Please check the element selectors.');
         return;
     }
@@ -49,9 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Function to toggle the sidebar and adjust main content
-    const toggleSidebar = () => {
+    function toggleSidebar () {
         const isHidden = sidebar.classList.toggle('hidden');
-        localStorage.setItem('sidebarHidden', isHidden); // Save sidebar state
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('sidebarHidden', isHidden); // Save sidebar state
+        }
 
         if (isHidden) {
             hiddenIcons.style.display = 'flex'; // Show hidden icons

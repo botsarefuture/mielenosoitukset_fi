@@ -10,9 +10,16 @@ from config import Config
 
 
 class EmailSender:
-    """
-    The EmailSender class handles sending emails by processing email jobs from a queue.
+    """The EmailSender class handles sending emails by processing email jobs from a queue.
     It uses SMTP to send emails and supports templated email content.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
 
     def __init__(self, config=Config):
@@ -27,17 +34,13 @@ class EmailSender:
         self.start_worker()
 
     def start_worker(self):
-        """
-        Starts a background thread to process the email queue.
-        """
+        """Starts a background thread to process the email queue."""
         worker_thread = threading.Thread(target=self.process_queue)
         worker_thread.daemon = True
         worker_thread.start()
 
     def process_queue(self):
-        """
-        Continuously processes email jobs from the queue and sends them.
-        """
+        """Continuously processes email jobs from the queue and sends them."""
         while True:
             email_job_data = self.queue_collection.find_one_and_delete({})
             if email_job_data:
@@ -46,11 +49,17 @@ class EmailSender:
             time.sleep(5)  # Sleep for 5 seconds before checking the queue again
 
     def send_email(self, email_job):
-        """
-        Sends an email using the details from the EmailJob instance.
+        """Sends an email using the details from the EmailJob instance.
 
-        Args:
-            email_job (EmailJob): The EmailJob instance containing the email details.
+        Parameters
+        ----------
+        email_job : EmailJob
+            The EmailJob instance containing the email details.
+
+        Returns
+        -------
+
+        
         """
         try:
             # Determine SMTP settings and sender information
@@ -97,15 +106,25 @@ class EmailSender:
             # Optionally, requeue the email or log the error
 
     def queue_email(self, template_name, subject, recipients, context, sender=None):
-        """
-        Queues an email for sending using the provided template and context.
+        """Queues an email for sending using the provided template and context.
 
-        Args:
-            template_name (str): The name of the email template file.
-            subject (str): The subject of the email.
-            recipients (list[str]): A list of recipient email addresses.
-            context (dict): A dictionary of context variables to render the email template.
-            sender (Sender, optional): An instance of the Sender class. Defaults to None.
+        Parameters
+        ----------
+        template_name : str
+            The name of the email template file.
+        subject : str
+            The subject of the email.
+        recipients : list[str]
+            A list of recipient email addresses.
+        context : dict
+            A dictionary of context variables to render the email template.
+        sender : Sender
+            An instance of the Sender class. Defaults to None.
+
+        Returns
+        -------
+
+        
         """
         template = self.env.get_template(template_name)
         body = template.render(context)
@@ -115,15 +134,25 @@ class EmailSender:
         self.queue_collection.insert_one(email_job.to_dict()) # TODO: #194 Handle potential database insertion errors
 
     def send_now(self, template_name, subject, recipients, context, sender=None):
-        """
-        Sends an email immediately using the provided template and context.
+        """Sends an email immediately using the provided template and context.
 
-        Args:
-            template_name (str): The name of the email template file.
-            subject (str): The subject of the email.
-            recipients (list[str]): A list of recipient email addresses.
-            context (dict): A dictionary of context variables to render the email template.
-            sender (Sender, optional): An instance of the Sender class. Defaults to None.
+        Parameters
+        ----------
+        template_name : str
+            The name of the email template file.
+        subject : str
+            The subject of the email.
+        recipients : list[str]
+            A list of recipient email addresses.
+        context : dict
+            A dictionary of context variables to render the email template.
+        sender : Sender
+            An instance of the Sender class. Defaults to None.
+
+        Returns
+        -------
+
+        
         """
         template = self.env.get_template(template_name)
         body = template.render(context)

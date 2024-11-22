@@ -475,7 +475,9 @@
   </nav>
   <script>console.log("{{ current_user.role }}")</script>
 
-  {% if current_user.role != "user" and current_user.is_authenticated %}
-  {% include "sidebar.html" %}
-  {% endif %}
+  
 </header>
+{% if current_user.role != "user" and current_user.is_authenticated %}
+{% include "sidebar.html" %}
+{% include "toolbar.html" %}
+{% endif %}

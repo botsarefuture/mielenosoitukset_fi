@@ -12,7 +12,24 @@ class Config:
     logger = logging.getLogger(__name__)
 
     def load_yaml(file_path: str) -> Dict[str, Any]:
-        """Load configuration from a YAML file."""
+        """Load configuration from a YAML file.
+
+        Parameters
+        ----------
+        file_path :
+            str:
+        file_path : str :
+            
+        file_path : str :
+            
+        file_path: str :
+            
+
+        Returns
+        -------
+
+        
+        """
         try:
             with open(file_path, "r") as file:
                 config = yaml.safe_load(file) or {}

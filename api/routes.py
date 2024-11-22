@@ -5,6 +5,7 @@ from database_manager import DatabaseManager
 import json
 from classes import Demonstration
 from utils.database import stringify_object_ids
+from utils.analytics import get_demo_views, get_prepped_data
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -13,6 +14,7 @@ api_bp = Blueprint("api", __name__)
 
 @api_bp.route("/demonstrations", methods=["GET"])
 def get_demonstrations():
+    """ """
     search_query = request.args.get("search", "").lower()
     today = datetime.now()
 
@@ -42,6 +44,18 @@ def get_demonstrations():
 
 @api_bp.route("/demonstration/<demo_id>", methods=["GET"])
 def get_demonstration_detail(demo_id):
+    """
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
 
     if demo is None:
@@ -56,9 +70,7 @@ def get_demonstration_detail(demo_id):
 
 @api_bp.route("/demonstration", methods=["POST"])
 def create_demonstration():
-    """
-    Create a new demonstration and store it in the database.
-    """
+    """Create a new demonstration and store it in the database."""
     data = request.get_json()
 
     # Validate required fields
@@ -105,8 +117,17 @@ def create_demonstration():
 
 @api_bp.route("/demo/<demo_id>/like", methods=["POST"])
 def like_demo(demo_id):
-    """
-    Like a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
+    """Like a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -122,8 +143,17 @@ def like_demo(demo_id):
 
 @api_bp.route("/demo/<demo_id>/unlike", methods=["POST"])
 def unlike_demo(demo_id):
-    """
-    unLike a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
+    """unLike a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -139,8 +169,17 @@ def unlike_demo(demo_id):
 
 @api_bp.route("/demo/<demo_id>/likes", methods=["GET"])
 def get_likes(demo_id):
-    """
-    Get the number of likes for a demonstration
+    """Get the number of likes for a demonstration
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
     """
     
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -154,3 +193,44 @@ def get_likes(demo_id):
         return jsonify({"likes": 0})
     
     return jsonify({"likes": likes["likes"]})
+
+@api_bp.route("/demo/<demo_id>/stats", methods=["GET"])
+def get_demo_stats_route(demo_id):
+    """Get the statistics for a demonstration
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
+    
+    stats = get_prepped_data(ObjectId(demo_id))
+    print(stats)
+    return jsonify(stringify_object_ids(stats))
+
+@api_bp.route("/admin/demo/info/<demo_id>", methods=["GET"])
+def get_demo_info(demo_id):
+    """Get the information for a demonstration
+
+    Parameters
+    ----------
+    demo_id :
+        
+
+    Returns
+    -------
+
+    
+    """
+    
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    
+    if demo is None:
+        abort(404, description="Mielenosoitusta ei löytynyt.")
+    
+    return jsonify(stringify_object_ids(demo))

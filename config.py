@@ -4,9 +4,8 @@ import logging
 
 
 class Config:
-    """
-    Configuration class to load and manage application settings.
-
+    """Configuration class to load and manage application settings.
+    
     Attributes:
         config (dict): Loaded configuration from the YAML file.
         MONGO_URI (str): MongoDB URI.
@@ -26,20 +25,28 @@ class Config:
         SECRET_KEY (str): S3 secret key.
         ENDPOINT_URL (str): S3 endpoint URL.
         ADMIN_EMAIL (str): Admin email address.
-
+    
     Methods:
     --------
         load_yaml(file_path: str) -> Dict[str, Any]:
             Load configuration from a YAML file.
         init_config() -> None:
             Initialize configuration and log validation messages.
-            
+    
     Changelog:
     ----------
     v2.6.0:
     - Moved babel configuration to the config file.
     - Added a method to initialize the configuration and log validation messages.
     - Updated the docstring.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
 
     # Configure logging for configuration loading
@@ -48,18 +55,16 @@ class Config:
 
     @staticmethod
     def load_yaml(file_path: str) -> Dict[str, Any]:
-        """
-        Load configuration from a YAML file.
+        """Load configuration from a YAML file.
 
-        Args:
-            file_path (str): The path to the YAML file.
+        Parameters
+        ----------
+        file_path: str :
+            
 
-        Returns:
-            Dict[str, Any]: The configuration loaded from the YAML file. 
-                            Returns an empty dictionary if loading fails.
+        Returns
+        -------
 
-        Raises:
-            Exception: If there is an error reading the file or parsing the YAML content.
         """
 
         try:
@@ -109,16 +114,23 @@ class Config:
 
     @classmethod
     def init_config(cls) -> None:
-        """
-        Initialize configuration and log validation messages.
-
+        """Initialize configuration and log validation messages.
+        
         This method checks for the presence of essential configuration variables
         and logs warnings if they are not set or if they use default insecure values.
-
+        
         Warnings:
             - Logs a warning if `MONGO_URI` is not set.
             - Logs a warning if either `MAIL_USERNAME` or `MAIL_PASSWORD` is not set.
             - Logs a warning if `SECRET_KEY` is set to the default value "secret_key".
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        
         """
 
         if not cls.MONGO_URI:

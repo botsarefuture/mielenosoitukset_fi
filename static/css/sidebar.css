@@ -1,4 +1,3 @@
-
 @import url("variables.css");
 
 /* Sidebar container */
@@ -204,15 +203,62 @@
 }
 
 span.icon {
-	margin-right: 20px;
-	width: 16px;
-	height: 16px;
-	align-self: center;
-	justify-self: center;
-	vertical-align: center;
-	text-align: center;
+  margin-right: 20px;
+  width: 16px;
+  height: 16px;
+  align-self: center;
+  justify-self: center;
+  vertical-align: center;
+  text-align: center;
 }
 
 .sidebar-title {
   text-align: center;
+}
+
+li {
+  list-style: none;
+}
+
+.beta-label {
+  background: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
+  color: var(--primary-text-color); /* Using primary text color variable for contrast */
+  border-radius: 3px; /* Rounded corners */
+  padding: 2px 5px; /* Padding for spacing */
+  font-size: 12px; /* Smaller font size */
+  margin-left: 5px; /* Space between text and label */
+}
+
+.ddos-button {
+  background: var(--red); /* Using red color variable for the button */
+  color: var(--primary-button-text-color); /* Using primary button text color variable for white text */
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.ddos-button i {
+  margin-right: 8px;
+}
+
+.sidebar-section {
+background-color: var(--orange);
+padding: 5px;
+}
+
+.dangerous-action {
+background-color: var(--red) !important;
+color: white !important;
+padding: 5px;
+border-radius: 5px;
+border: black 1px solid;
+
+}
+
+.dangerous-action:hover {
+background-color: var(--red-dark) !important;
 }

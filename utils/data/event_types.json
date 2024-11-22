@@ -1,0 +1,18 @@
+{
+    "STAY_STILL": {
+        "name": "Stay Still",
+        "description": "A protest where participants remain in one place."
+    },
+    "MARCH": {
+        "name": "March",
+        "description": "A protest where participants walk from one location to another."
+    },
+    "ROAD_BLOCK": {
+        "name": "Road Block",
+        "description": "A protest where participants block a road or intersection."
+    },
+    "OTHER": {
+        "name": "Other",
+        "description": "A protest that does not fit into the other categories."
+    }
+}

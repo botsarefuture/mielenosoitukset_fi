@@ -11,6 +11,7 @@ user_orgs_bp = Blueprint("user_orgs", __name__,  url_prefix="/orgs")
 
 @user_orgs_bp.route("/accept_invite", methods=["GET"])
 def accept_invite():
+    """ """
     if not current_user.is_authenticated:
         flash_message("Kirjaudu sisään liittyäksesi organisaatioon.", "info")
         return redirect(url_for("users.auth.login", next=request.url))

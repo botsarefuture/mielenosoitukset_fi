@@ -62,7 +62,20 @@ def organization_control():
 
 
 def construct_query(search_query, org_limiter):
-    """Construct the query for organizations based on search input."""
+    """Construct the query for organizations based on search input.
+
+    Parameters
+    ----------
+    search_query :
+        param org_limiter:
+    org_limiter :
+        
+
+    Returns
+    -------
+
+    
+    """
     query = {}
 
     if search_query:
@@ -85,7 +98,18 @@ def construct_query(search_query, org_limiter):
 @admin_required
 @permission_required("EDIT_ORGANIZATION")
 def edit_organization(org_id):
-    """Edit organization details."""
+    """Edit organization details.
+
+    Parameters
+    ----------
+    org_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     log_admin_action(
         current_user, "Edit Organization", f"Editing organization {org_id}"
     )
@@ -104,12 +128,19 @@ def edit_organization(org_id):
 
 
 def invite_to_organization(invitee_email, organization_id):
-    """
-    Send an invitation email to a user to join an organization.
+    """Send an invitation email to a user to join an organization.
 
-    Args:
-        invitee_email (str): The email address of the person being invited.
-        organization_id (str): The ID of the organization.
+    Parameters
+    ----------
+    invitee_email : str
+        The email address of the person being invited.
+    organization_id : str
+        The ID of the organization.
+
+    Returns
+    -------
+
+    
     """
     try:
         organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
@@ -148,7 +179,18 @@ def invite_to_organization(invitee_email, organization_id):
         flash_message(f"Kutsun lähettäminen epäonnistui: {e}", "error")
 
 def update_organization(org_id):
-    """Update organization details based on form input."""
+    """Update organization details based on form input.
+
+    Parameters
+    ----------
+    org_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     name = request.form.get("name")
     email = request.form.get("email")
 
@@ -177,12 +219,26 @@ def update_organization(org_id):
 
 def validate_organization_fields(name, email, org_id):
     """Validate required fields for organization.
-
+    
     Changelog:
     ----------
-
+    
     v2.4.0:
     - Modified code to use valid_email instead of depraced is_valid_email.
+
+    Parameters
+    ----------
+    name :
+        param email:
+    org_id :
+        
+    email :
+        
+
+    Returns
+    -------
+
+    
     """
     
     if not name or not email:
@@ -210,7 +266,7 @@ def get_social_media_links():
 @permission_required("CREATE_ORGANIZATION")
 def create_organization():
     """Create a new organization.
-
+    
     Changelog:
     ----------
     v2.5.0:
@@ -219,6 +275,13 @@ def create_organization():
     v2.4.0:
     - Added validation for organization fields.
     - Added logging for organization creation.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     
     """
     if request.method == "POST":
@@ -260,7 +323,18 @@ def insert_organization():
 @admin_required
 @permission_required("DELETE_ORGANIZATION")
 def delete_organization(org_id):
-    """Delete an organization."""
+    """Delete an organization.
+
+    Parameters
+    ----------
+    org_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
@@ -289,7 +363,18 @@ def delete_organization(org_id):
 @admin_required
 @permission_required("DELETE_ORGANIZATION")
 def confirm_delete_organization(org_id):
-    """Render a confirmation page before deleting an organization."""
+    """Render a confirmation page before deleting an organization.
+
+    Parameters
+    ----------
+    org_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
@@ -312,6 +397,7 @@ def confirm_delete_organization(org_id):
 @admin_required
 @permission_required("INVITE_TO_ORGANIZATION")
 def invite():
+    """ """
     invitee_email = request.form.get("invitee_email")
     organization_id = request.form.get("organization_id")
     print(invitee_email, organization_id)
@@ -323,5 +409,17 @@ def invite():
 @admin_required
 @permission_required("VIEW_ORGANIZATION")
 def view_organization(org_id):
+    """
+
+    Parameters
+    ----------
+    org_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
     return render_template("admin/organizations/view.html", organization=organization)    

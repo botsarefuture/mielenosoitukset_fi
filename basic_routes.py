@@ -410,7 +410,9 @@ def init_routes(app):
         Display details of a specific demonstration and save map coordinates if available.
         """
         # Fetch the demonstration details from MongoDB
-        result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
+        result = demonstrations_collection.find_one(
+            {"$or": [{"_id": ObjectId(demo_id)}, {"aliases": {"$in": [ObjectId(demo_id)]}}]}
+        )
         if result:
             demo = Demonstration.from_dict(result)
         else:

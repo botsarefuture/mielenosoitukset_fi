@@ -25,6 +25,7 @@ from database_manager import DatabaseManager
 from wrappers import admin_required, permission_required
 
 from utils.flashing import flash_message
+from utils.analytics import get_demo_views
 
 # Constants
 LOG_FILE_PATH = "app.log"
@@ -41,6 +42,7 @@ login_manager.login_view = "users.auth.login"
 
 
 class DemoViewCount:
+    """ """
     def __init__(self, demo_id, count):
         self.id = demo_id
         self.views = count
@@ -52,6 +54,18 @@ class DemoViewCount:
         return f"Demo ID: {self.id}, Count: {self.views}"
 
 def count_per_demo(data):
+    """
+
+    Parameters
+    ----------
+    data :
+        
+
+    Returns
+    -------
+
+    
+    """
     demo_count = {}
     for view in data:
         demo_id = view.get("demo_id")
@@ -64,15 +78,21 @@ def count_per_demo(data):
     return demo_count
 
 
-from flask import Blueprint, render_template
-from utils.analytics import get_demo_views
-
-
-
 # User loader function
 @login_manager.user_loader
 def load_user(user_id):
-    """Load a user from the database using their ID."""
+    """Load a user from the database using their ID.
+
+    Parameters
+    ----------
+    user_id :
+        
+
+    Returns
+    -------
+
+    
+    """
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     return User.from_db(user_doc) if user_doc else None
 
@@ -82,16 +102,23 @@ def load_user(user_id):
 @login_required
 def admin_logout():
     """Handle admin logout and log the action.
-
+    
     This function is deprecated as of version 2.4.0 and will be
     removed in version 2.5.0. Please use the `logout` function
     from `auth` instead.
-
+    
     Changelog:
     ----------
     v2.4.0:
     - Depraced this function.
 
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    
     """
     # Raise a deprecation warning
     warnings.warn(
@@ -208,10 +235,96 @@ def manage_marquee():
 @admin_required
 @permission_required("VIEW_ANALYTICS")
 def admin_analytics():
+    """ """
     return demo_analytics()
 
 def demo_analytics():
+    """ """
     data = get_demo_views()
     data = count_per_demo(data)
     
     return render_template('admin/analytics.html', data=data)
+
+def send_red_alert_email(user):
+    """Send a red alert email to the user.
+
+    Parameters
+    ----------
+    user :
+        
+
+    Returns
+    -------
+
+    
+    """
+    # Use email_sender
+    from emailer import EmailSender
+    email_sender = EmailSender()
+    email_sender.queue_email(
+        template_name="red_alert_email.html",
+        subject="Red Alert",
+        recipients=[user.email],
+        context={"username": user.username},
+    )
+
+def initiate_red_alert():
+    """Initiate a red alert."""
+    # 1. Send email to all admins
+    # 2. Log the red alert
+    # 3. Implement your red alert logic here
+    
+    
+    # 1. Send email to all admins
+    admins = mongo.users.find({"role":{"$in": ["admin", "global_admin"]}}) # Assuming the role is "admin" or "global_admin"
+        
+    for admin in admins:
+        send_red_alert_email(admin)
+    
+    # 2. Log the red alert
+    logger.critical("Red alert initiated")
+    
+    # 3. Marquee should show the red alert
+    with open("marquee_config.json", "r") as f:
+        marquee_config = json.load(f)
+        marquee_config["message"] = "RED ALERT "
+        marquee_config["style"] = "background-color: red; padding: 0px !important;"
+        marquee_config["h2_style"] = "color: white;"
+    
+    with open("marquee_config.json", "w") as f:
+        json.dump(marquee_config, f, indent=4)
+    
+    return "Red alert initiated"
+
+@admin_bp.route('/shutdown', methods=["POST"])
+@login_required
+@admin_required
+@permission_required("SHUTDOWN_SERVER")
+def shutdown():
+    """Shutdown the server securely."""
+    if not current_user.has_role("admin"):
+        logger.warning(f"Unauthorized shutdown attempt by user {current_user.username}")
+        mongo.users.update_one({"_id": current_user.id}, {"$set": {"banned": True}})
+        initiate_red_alert()
+        return "Unauthorized", 403
+
+
+    logger.info(f"Server shutdown initiated by user {current_user.username}")
+    os.system("shutdown -h now")
+    return "Server shutting down..."
+
+def validate_mfa_token(token):
+    """Validate the MFA token.
+
+    Parameters
+    ----------
+    token :
+        
+
+    Returns
+    -------
+
+    
+    """
+    # Implement your MFA token validation logic here
+    return True  # Placeholder for actual validation logic

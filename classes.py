@@ -8,6 +8,7 @@ from flask import url_for
 from users.models import User
 from database_manager import DatabaseManager
 from utils.database import stringify_object_ids
+from utils.validators import valid_event_type, return_exists
 
 DB = DatabaseManager().get_instance().get_db()
 
@@ -262,7 +263,21 @@ class Organization(BaseModel):
             role,
             permissions
         ).save()
-            
+        
+def event_type_convertor(event_type):
+    cv = {
+        "marssi": "MARCH",
+        "paikallaan": "STAY_STILL",
+        "muut": "OTHER"
+    }
+    
+    if not valid_event_type(event_type):
+        if event_type in ["marssi", "paikallaan", "muut"]:
+            return cv[event_type]
+    
+    else:
+        return event_type
+        
 class Demonstration(BaseModel):
     """
     A class to represent a demonstration event.
@@ -384,7 +399,11 @@ class Demonstration(BaseModel):
         self.latitude = latitude
         self.longitude = longitude
 
-        self.event_type = type or event_type
+        self.event_type = event_type_convertor(type or event_type)
+        
+        if not valid_event_type(self.event_type):
+            raise ValueError(f"Invalid event type: {self.event_type}")
+        
         self.route = route  # If the demonstration is a march, this handles the route
 
         self.img = img
@@ -393,7 +412,9 @@ class Demonstration(BaseModel):
         self.facebook = facebook
 
         self.approved = approved
-        self.linked_organizations = linked_organizations or {}
+        self.linked_organizations = linked_organizations or {} # What is this used for? 
+        # TODO: #232 Remove linked_organizations if not used
+        
         self._id = _id or ObjectId()
         self.tags = tags or []
 
@@ -402,13 +423,8 @@ class Demonstration(BaseModel):
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
         self.repeat_schedule = repeat_schedule
-        self.repeating = repeating
-        self.recurring = recurring
-        if not self.repeating:
-            self.repeating = recurring
-
-        elif not self.recurring:
-            self.recurring = repeating
+        self.repeating, self.recurring = return_exists(repeating, recurring, False)          
+        
 
         # DEPRECATED
         self.topic = topic or None # Deprecated

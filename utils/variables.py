@@ -40,3 +40,4 @@ def load_from_file(_filename):
 
 CITY_LIST = load_from_file("city_list.json")
 PERMISSIONS_GROUPS = load_from_file("permission_groups.json")
+EVENT_TYPES = load_from_file("event_types.json")

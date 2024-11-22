@@ -183,7 +183,11 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
         Redirect to the appropriate page based on the success or failure of the operation.
     """
     # Collect demonstration data from the form
-    demonstration_data = collect_demo_data(request)
+    demonstration_data = collect_demo_data(request)    
+    
+    from utils.admin.demonstration import fix_organizers
+    
+    demonstration_data = fix_organizers(demonstration_data)
 
     try:
         if is_edit and demo_id:
@@ -223,6 +227,9 @@ def collect_demo_data(request):
     Returns:
         dict: A dictionary containing the collected demonstration data.
     """
+    # We could basically just get the demo id and then use the same function as in the edit_demo functiot
+    
+    
     # Collect basic form data
     title = request.form.get("title")
     date = request.form.get("date")
@@ -242,8 +249,17 @@ def collect_demo_data(request):
     # Process organizers and tags
     organizers = collect_organizers(request)
     tags = collect_tags(request)
+    
+    description = request.form.get("description")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
 
-    # Return the collected data as a dictionary
+    # Validate latitude and longitude if provided
+    if latitude and not is_valid_latitude(latitude):
+        raise ValueError(_("Virheellinen leveysaste."))
+    if longitude and not is_valid_longitude(longitude):
+        raise ValueError(_("Virheellinen pituusaste."))
+
     return {
         "title": title,
         "date": date,
@@ -257,7 +273,30 @@ def collect_demo_data(request):
         "organizers": [org.to_dict() for org in organizers],
         "approved": approved,
         "tags": tags,
+        "description": description,
+        "latitude": latitude,
+        "longitude": longitude,
     }
+    
+    
+
+
+def is_valid_latitude(lat):
+    """Validate latitude value."""
+    try:
+        lat = float(lat)
+        return -90 <= lat <= 90
+    except ValueError:
+        return False
+
+
+def is_valid_longitude(lon):
+    """Validate longitude value."""
+    try:
+        lon = float(lon)
+        return -180 <= lon <= 180
+    except ValueError:
+        return False
 
 
 def collect_organizers(request):

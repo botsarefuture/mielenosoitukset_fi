@@ -11,21 +11,17 @@
 <style>
     #main {
         background: var(--background);
-        padding: 20px;
+        padding: 40px;
         margin: 0 auto;
-        width: 540px;  /* 1080px */
-        height: 540px; /* 1080px */
-        border: 1px solid var(--orange);
+        width: 1080px;  /* 1080px */
+        height: 1080px; /* 1080px */
+        border: 2px solid var(--orange);
         animation: fadeIn 1s ease-in-out;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
-    }
-
-    #main *:not(#main .topics *) {
-        zoom: 1.2;
     }
 
     #main img {
@@ -36,44 +32,45 @@
     }
 
     h1 {
-        font-size: 2.5em;
-        margin-bottom: 20px;
+        font-size: 5em;
+        margin-bottom: 40px;
         overflow-wrap: break-word;
         color: var(--primary-text-color);
     }
 
     .city {
-        font-size: 1.5em;
-        margin-bottom: 20px;
+        font-size: 3em;
+        margin-bottom: 40px;
         color: var(--primary-strong-text-color);
     }
 
     .address {
-        font-size: 1.2em;
-        margin-bottom: 20px;
+        font-size: 2.4em;
+        margin-bottom: 40px;
         color: var(--secondary-text-color);
     }
 
     .topics ul {
         list-style: none;
         padding: 0;
-        margin: 10px 0;
+        margin: 20px 0;
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
     }
 
     .topics li {
-        margin: 5px;
+        margin: 10px;
     }
 
     .tag {
-        padding: 8px 12px;
+        padding: 16px 24px;
         background: var(--blue-light);
         color: #fff;
-        border-radius: 100px;
+        border-radius: 200px;
         display: inline-block;
         transition: background 0.3s ease;
+        font-size: 200%;
     }
 
     .tag:hover {
@@ -81,8 +78,8 @@
     }
 
     .countdown {
-        margin-top: 20px;
-        padding: 20px;
+        margin-top: 40px;
+        padding: 40px;
         background: var(--background);
         border-radius: 8px;
         text-align: center;
@@ -144,7 +141,7 @@
         </ul>
     </div>
     
-    <p style="font-size: 1.5em;">
+    <p style="font-size: 3em;">
         {{ demo['date'] }} {{ demo['start_time'] }}
         {% if demo['end_time'] %}
         &rarr; {{ demo['end_time'] }}
@@ -155,6 +152,7 @@
 {% endblock %}
 {% block scripts %}
 <script>
+    // force the browser to set 50% zoom level
     const data = {
         demo: {{ demo | tojson }}
     };
@@ -169,8 +167,7 @@
 
     // Use html2canvas to take a screenshot
     html2canvas(mainElement, {
-        scale: 2, // Capture at 2x resolution for higher-quality images
-        useCORS: true // Ensures cross-origin content is handled correctly
+        scale: 1, // Capture at 2x resolution for higher-quality images
     }).then(canvas => {
         // Prepare the download link
         const link = document.createElement("a");

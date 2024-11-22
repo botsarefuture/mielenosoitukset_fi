@@ -1,5 +1,6 @@
 from flask import Request
 from typing import List
+from bson.objectid import ObjectId
 
 
 def collect_tags(request: Request) -> List[str]:
@@ -36,3 +37,12 @@ def collect_tags(request: Request) -> List[str]:
             tags.append(tag_name)
 
     return tags
+
+def fix_organizers(data):
+    for organizer in data["organizers"]:
+        if isinstance(organizer["organization_id"], dict) and "$oid" in organizer["organization_id"]:
+            organizer["organization_id"] = ObjectId(organizer["organization_id"]["$oid"])
+        elif isinstance(organizer["organization_id"], str):
+            organizer["organization_id"] = ObjectId(organizer["organization_id"])
+            
+    return data

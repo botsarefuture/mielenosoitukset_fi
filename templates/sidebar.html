@@ -37,6 +37,11 @@
     .ddos-button i {
       margin-right: 8px;
     }
+
+    .sidebar-section {
+	background-color: var(--orange);
+	padding: 5px;
+}
 </style>
   
 <div class="container-sidebar bg-header-footer pc-only" style="z-index: 100000000000;">
@@ -107,6 +112,36 @@
                     <span class="icon"><i class="fas fa-sign-out-alt"></i></span> {{ _('Kirjaudu ulos') }}
                 </a>
             </li>
+            <!-- here show per page extra buttons, such as edit, when we're on demo page -->
+            {% if 'demo' in template or demo %}
+            <div class="sidebar-section">
+                <div class="sidebar-title">{{ _('Mielenosoituksen hallinnat') }}</div>
+                <li>
+                    <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}">
+                        <span class="icon"><i class="fas fa-edit"></i></span> {{ _('Muokkaa') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_demo.delete_demo', demo_id=demo['_id']) }}">
+                        <span class="icon"><i class="fas fa-trash-alt"></i></span> {{ _('Poista') }}
+                    </a>
+                </li>
+            </div>
+            {% endif %}
+
+            {# Same but for organizations #}
+            {% if 'org' in template or org %}
+            <div class="sidebar-section">
+                <div class="sidebar-title">{{ _('Organisaation hallinta') }}</div>
+                <li>
+                    <a href="{{ url_for('admin_org.edit_organization', org_id=org['_id']) }}">
+                        <span class="icon"><i class="fas fa-edit"></i></span> {{ _('Muokkaa') }}
+                    </a>
+                </li>
+            </div>
+            {% endif %}
+            
+
         </ul>
     </nav>
 

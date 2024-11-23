@@ -88,14 +88,13 @@
   display: none; /* Hide by default */
   left: 0; /* Align to the left edge of the screen */
   height: 100%;
-  top: 50%; /* Center vertically */
-  transform: translateY(-50%); /* Adjust for vertical centering */
+  top: 0; /* Center vertically */
   display: flex;
   flex-direction: column;
   background: var(--blue); /* Background color matching the sidebar */
   padding: 10px; /* Padding for spacing */
-  border-radius: 5px; /* Rounded corners for consistency */
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+  margin-top: auto;
 }
 
 /* Toggle button styling in hidden icons */

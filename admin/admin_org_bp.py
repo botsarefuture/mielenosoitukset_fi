@@ -178,6 +178,7 @@ def invite_to_organization(invitee_email, organization_id):
         logger.error(f"Kutsun lähettäminen epäonnistui: {e}")
         flash_message(f"Kutsun lähettäminen epäonnistui: {e}", "error")
 
+
 def update_organization(org_id):
     """Update organization details based on form input.
 

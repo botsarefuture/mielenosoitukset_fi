@@ -385,7 +385,7 @@ class Organization(BaseModel):
         if not isinstance(email, str):
             raise TypeError("Email must be a string.")
         
-        return any(member["email"] == email for member in self.members)
+        return any(member.email == email for member in self.members)
     
     from typing import Union
 

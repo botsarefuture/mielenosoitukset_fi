@@ -20,6 +20,7 @@ DEMO_FILTER : dict
 
 from bson.objectid import ObjectId
 from datetime import datetime
+from database_manager import DatabaseManager
 
 DEMO_FILTER = {"approved": True, "$or": [{"hide": {"$exists": False}}, {"hide": False}]}
 
@@ -123,3 +124,15 @@ def revert_stringified_object_ids(data):
                 return data
     else:
         return data
+
+def get_database_manager():
+    """
+    Get the database manager instance.
+
+    Returns
+    -------
+    :class:'Database'
+        The database instance.
+    """
+    db_manager = DatabaseManager()
+    return db_manager.get_instance().get_db()

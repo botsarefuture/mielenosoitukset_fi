@@ -113,3 +113,41 @@ def return_exists(var1, var2, default=None):
     
     else:
         return default, default
+    
+
+def event_type_convertor(event_type: str) -> str:
+    """
+    Parameters
+    ----------
+    event_type : str
+        The event type to be converted. Expected values are "marssi", "paikallaan", "muut", 
+        or any valid event type.
+    
+    Returns
+    -------
+    standardized_event_type : str
+        The standardized event type. Returns "MARCH" for "marssi", "STAY_STILL" for "paikallaan",
+        "OTHER" for "muut", or the original event type if it is already valid.
+        
+    Raises
+    ------
+    ValueError
+        If the event type is not already standardized and not one of the expected values ("marssi", "paikallaan", "muut").
+    """
+    
+    event_type_mapping = {
+        "marssi": "MARCH",
+        "paikallaan": "STAY_STILL",
+        "muut": "OTHER"
+    }
+    
+    if not valid_event_type(event_type):
+        if event_type in event_type_mapping.keys():
+            return event_type_mapping[event_type]
+        
+        else:
+            raise ValueError(f"Invalid event type: {event_type}")
+    
+    else:
+        return event_type
+    

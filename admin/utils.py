@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from pymongo.errors import PyMongoError
 
 from database_manager import DatabaseManager
-from classes import Organization
+from utils.classes import Organization
 from utils.logger import logger
 
 db_manager = DatabaseManager().get_instance()

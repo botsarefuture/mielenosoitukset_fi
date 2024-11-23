@@ -5,7 +5,7 @@ from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from config import Config
-from classes import Demonstration, RecurringDemonstration
+from utils.classes import Demonstration, RecurringDemonstration
 import time
 
 # Configure logging

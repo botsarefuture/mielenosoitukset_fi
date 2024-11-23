@@ -3,7 +3,7 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from database_manager import DatabaseManager
 import json
-from classes import Demonstration
+from utils.classes import Demonstration
 from utils.database import stringify_object_ids
 from utils.analytics import get_demo_views, get_prepped_data
 

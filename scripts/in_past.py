@@ -34,7 +34,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
 
 # Import necessary modules
-classes = importlib.import_module("classes")
+classes = importlib.import_module("utils.classes")
 database_manager = importlib.import_module("database_manager")
 if __name__ == "__main__":
     app = importlib.import_module("app").create_app()

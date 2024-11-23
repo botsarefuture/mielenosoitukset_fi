@@ -95,6 +95,36 @@ class User(UserMixin):
             banned=user_doc.get("banned", False),  # Fetch banned status
             mfa_enabled=user_doc.get("mfa_enabled", False),  # Fetch MFA status
         )
+        
+    @staticmethod
+    def from_OID(user_id: ObjectId):
+        """Create a User instance from a database document.
+
+        Parameters
+        ----------
+        user_id : ObjectId
+            User ID to fetch from the database
+            
+
+        Returns
+        -------
+        User : User
+            User instance created from the database document
+
+        
+        """
+        if isinstance(user_id, str):
+            # Convert the string to an ObjectId, and for security reasons, also redirect
+            logger.warning("User ID is a string. Converting to ObjectId.")
+            return User.from_OID(ObjectId(user_id))
+            
+        user_doc = mongo.users.find_one({"_id": user_id})
+        # If the Cursor object has no data, return None
+        if not user_doc:
+            logger.error("User not found.")
+            raise ValueError("User not found.")
+        
+        return User.from_db(user_doc)
 
     def check_password(self, password):
         """Verify the provided password against the stored password hash.
@@ -456,6 +486,9 @@ class User(UserMixin):
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin}, banned={self.banned}, mfa_enabled={self.mfa_enabled})>"
+    
+    def __str__(self):
+        return self.displayname or self.username
 
 class _2faToken:
     """ """

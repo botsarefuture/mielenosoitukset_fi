@@ -27,6 +27,8 @@ from wrappers import admin_required, permission_required
 from utils.flashing import flash_message
 from utils.analytics import get_demo_views
 
+from utils.classes import AdminActivity
+
 # Constants
 LOG_FILE_PATH = "app.log"
 
@@ -141,6 +143,11 @@ def admin_dashboard():
     """Render the admin dashboard."""
     return render_template("admin/dashboard.html")
 
+def get_admin_activity():
+    """Get the admin activity log."""
+    activity = mongo.admin_logs.find({}).sort("_id", -1)
+    return [AdminActivity.from_dict(doc) for doc in activity]
+
 
 # Admin statistics page
 @admin_bp.route("/stats")
@@ -165,7 +172,9 @@ def stats():
         total_organizations=total_organizations,
         role_counts=role_counts,
         active_users=active_users,
-        data=data
+        data=data,
+        recent_activity=get_admin_activity(),
+        
     )
 
 

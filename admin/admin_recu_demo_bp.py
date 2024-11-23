@@ -5,14 +5,14 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required
 from utils.flashing import flash_message
 
-from classes import RecurringDemonstration, Organizer
+from utils.classes import RecurringDemonstration, Organizer
 from utils.variables import CITY_LIST
 from wrappers import permission_required, admin_required
 
 from utils.admin.demonstration import collect_tags
 from .utils import mongo
 
-from classes import RecurringDemonstration
+from utils.classes import RecurringDemonstration
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"

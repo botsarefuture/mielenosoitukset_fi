@@ -14,7 +14,7 @@ import datetime
 import importlib
 from urllib.parse import urlparse
 
-from classes import Organization
+from utils.classes import Organization
 from utils.auth import (
     generate_confirmation_token,
     verify_confirmation_token,

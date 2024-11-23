@@ -22,7 +22,7 @@ from flask_login import current_user
 from bson.objectid import ObjectId
 
 from utils.s3 import upload_image
-from classes import Organizer, Demonstration, Organization
+from utils.classes import Organizer, Demonstration, Organization
 from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST

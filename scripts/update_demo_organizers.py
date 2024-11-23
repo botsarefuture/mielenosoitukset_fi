@@ -16,7 +16,7 @@ sys.path.append(parent_dir)
 database_manager = importlib.import_module("database_manager")
 DatabaseManager = database_manager.DatabaseManager
 
-classes = importlib.import_module("classes")
+classes = importlib.import_module("utils.classes")
 Demonstration = classes.Demonstration
 
 # Configure logger

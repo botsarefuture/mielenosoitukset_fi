@@ -19,7 +19,7 @@ from utils.auth import (
 from utils.flashing import flash_message
 from utils.s3 import upload_image
 from database_manager import DatabaseManager
-from classes import Organization
+from utils.classes import Organization
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 import importlib

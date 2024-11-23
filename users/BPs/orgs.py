@@ -3,7 +3,7 @@ from flask_login import current_user
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from utils.flashing import flash_message
-from classes import Organization
+from utils.classes import Organization
 
 mongo = DatabaseManager().get_instance().get_db()
 

@@ -20,7 +20,7 @@ from utils.flashing import flash_message
 from utils.validators import valid_email
 from wrappers import admin_required, permission_required
 from .utils import log_admin_action, mongo, get_org_name as get_organization_name
-from classes import Organization
+from utils.classes import Organization
 
 
 # Create a Blueprint for admin organization management

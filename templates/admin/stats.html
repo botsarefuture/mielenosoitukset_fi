@@ -18,6 +18,9 @@
         margin-top: 20px;
     }
 </style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
+
 {% endblock %}
 
 {% block main_content %}
@@ -27,32 +30,52 @@
 
     <div class="stats-overview">
         <h2>{{ _('Käyttäjät') }}</h2>
-        <p>{{ _('Rekisteröityneet käyttäjät:') }} <strong>{{ total_users }}</strong></p>
-        <p>{{ _('Sähköpostiosoitteensa vahvistaneet käyttäjät:') }} <strong>{{ active_users }}</strong></p>
+        <stats>
+            <stat>
+            <stitle>{{ _('Käyttäjiä') }}</stitle>
+            <snum>{{ total_users }}</snum>
+        </stat>
+        <stat>
+            <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
+            <sdisc>Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa</sdisc>
+            <snum>{{ active_users }}</snum>
+        </stat>
+        <stat>
+            <stitle>{{ _('Rekisteröidyt organisaatiot') }}</stitle>
+            <snum>{{ total_organizations }}</snum>
+        </stat>
+        <last-updated>
+            <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
+        </last-updated>
 
-        <h2>{{ _('Organisaatiot') }}</h2>
-        <p>{{ _('Rekisteröidyt organisaatiot:') }} <strong>{{ total_organizations }}</strong></p>
-
-        <h2>{{ _('Viimeisimmät aktiviteetit') }}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>{{ _('Aktiviteetti') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for activity in recent_activities %}
-                <tr>
-                    <td>{{ activity }}</td>
-                </tr>
-                {% endfor %}
-                {% if not recent_activities %}
-                <tr>
-                    <td>{{ _('Ei aktiivisuuksia vielä.') }}</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
+        </stats>
+<br>
+        <h2 class="admin-section-title">{{ _('Viimeisimmät aktiviteetit') }}</h2>
+        <activities>
+            {% for activity in recent_activity %}
+            <activity>
+            <activity-title><i class="fas fa-tasks"></i> {{ activity.action }}</activity-title>
+            <activity-content>
+                <aby><i class="fas fa-user"></i> {{ activity.by }}</aby>
+                <atime><i class="fas fa-clock"></i> {{ activity.date_time }}</atime>
+                <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('Katso lisää') }}</aaction>
+            </activity-content>
+            <activity-extra>
+                <aip>
+                    <i class="fas fa-globe"></i> {{ _('IP-osoite') }}:                        
+                </aip>
+                <asession>
+                    <i class="fas fa-user-secret"></i> {{ _('Istunto') }}:
+                </asession>
+            </activity-extra>
+            </activity>
+            {% endfor %}
+            {% if not recent_activities %}
+            <div class="no-data">
+            <p>{{ _('Ei aktiivisuuksia vielä.') }}</p>
+            </div>
+            {% endif %}
+        </activities>
     </div>
 
     <div class="analytics-container" style="margin-top: 40px;">
@@ -91,4 +114,5 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
 {% endblock %}

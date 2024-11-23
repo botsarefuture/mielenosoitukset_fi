@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 
 from flask_babel import _
 
-from classes import Demonstration, Organizer
+from utils.classes import Demonstration, Organizer
 from utils.admin.demonstration import collect_tags
 from utils.database import DEMO_FILTER
 from utils.flashing import flash_message

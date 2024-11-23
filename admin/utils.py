@@ -100,7 +100,7 @@ def log_admin_action(user, action: str, details: str):
                 "email": user.email,
                 "action": action,
                 "details": details,
-                "timestamp": datetime.now(datetime.timezone.utc),
+                "timestamp": datetime.now(), # TODO: Use UTC time
             }
         )
         logger.info(f"Admin action logged: {action} by user {user.email}")

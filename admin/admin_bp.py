@@ -12,6 +12,8 @@ from flask import (
     request,
     send_file,
     url_for,
+    stream_template,
+    stream_with_context,
 )
 from flask_login import (
     LoginManager,
@@ -28,6 +30,7 @@ from utils.flashing import flash_message
 from utils.analytics import get_demo_views
 
 from utils.classes import AdminActivity
+from .utils import AdminActParser, log_admin_action_V2
 
 # Constants
 LOG_FILE_PATH = "app.log"
@@ -41,6 +44,12 @@ mongo = db_manager.get_db()
 
 login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
+
+from .utils import AdminActParser, log_admin_action_V2
+@admin_bp.before_request
+def log_request_info():
+    """Log request information before handling it."""
+    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
 
 
 class DemoViewCount:
@@ -148,10 +157,24 @@ def admin_dashboard():
     return render_template("admin/dashboard.html")
 
 
-def get_admin_activity():
-    """Get the admin activity log."""
-    activity = mongo.admin_logs.find({}).sort("_id", -1)
-    return [AdminActivity.from_dict(doc) for doc in activity]
+def get_admin_activity(page=1, per_page=20):
+    """Get the admin activity log with pagination.
+
+    Parameters
+    ----------
+    page : int, optional
+        The page number to retrieve, by default 1
+    per_page : int, optional
+        The number of items per page, by default 20
+
+    Returns
+    -------
+    list
+        A list of admin activity logs for the specified page
+    """
+    skip = (page - 1) * per_page
+    activity = mongo.admin_logs.find({}).sort("_id", -1).skip(skip).limit(per_page)
+    return [AdminActivity.from_dict(doc).to_dict(True) for doc in activity]
 
 
 # Admin statistics page
@@ -181,6 +204,47 @@ def stats():
         recent_activity=get_admin_activity(),
     )
 
+@admin_bp.route("/logs")
+@login_required
+@admin_required
+@permission_required("VIEW_LOGS")
+def logs():
+    # the admin logs are get via: get_admin_activity()
+    # there is thousands of actions, so somehow stream it idk
+    return render_template("admin/logs.html")
+
+@admin_bp.route("/api/logs")
+@login_required
+@admin_required
+@permission_required("VIEW_LOGS")
+def api_logs():
+    """API endpoint to fetch admin logs with pagination.
+
+    Parameters
+    ----------
+    page : int, optional
+        The page number to retrieve, by default 1
+    per_page : int, optional
+        The number of items per page, by default 20
+
+    Returns
+    -------
+    dict
+        A dictionary containing the logs and pagination info
+    """
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    logs = get_admin_activity(page, per_page)
+    total_logs = mongo.admin_logs.count_documents({})
+    total_pages = (total_logs + per_page - 1) // per_page
+
+    return {
+        "logs": logs,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages,
+        "total_logs": total_logs,
+    }, {"Content-Type": "application/json"}
 
 def get_user_role_counts():
     """Fetch the count of users by role."""

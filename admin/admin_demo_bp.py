@@ -12,10 +12,16 @@ from utils.database import DEMO_FILTER
 from utils.flashing import flash_message
 from utils.variables import CITY_LIST
 from wrappers import admin_required, permission_required
-from .utils import mongo
+from .utils import mongo, log_admin_action_V2, AdminActParser
+
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
+
+@admin_demo_bp.before_request
+def log_request_info():
+    """Log request information before handling it."""
+    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
 
 
 @admin_demo_bp.route("/")

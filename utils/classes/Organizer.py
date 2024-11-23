@@ -1,6 +1,7 @@
 from bson import ObjectId
 from .BaseModel import BaseModel
 from utils.database import get_database_manager
+from flask import url_for
 
 DB = get_database_manager()
 

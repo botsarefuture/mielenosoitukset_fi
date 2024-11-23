@@ -14,6 +14,7 @@
         text-align: center;
         margin: 1rem 0;
     }
+
     .back-button {
         margin-top: 20px;
     }
@@ -29,54 +30,44 @@
     <p>{{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}</p>
 
     <div class="stats-overview">
-        <h2>{{ _('Käyttäjät') }}</h2>
         <stats>
             <stat>
-            <stitle>{{ _('Käyttäjiä') }}</stitle>
-            <snum>{{ total_users }}</snum>
-        </stat>
-        <stat>
-            <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
-            <sdisc>Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa</sdisc>
-            <snum>{{ active_users }}</snum>
-        </stat>
-        <stat>
-            <stitle>{{ _('Rekisteröidyt organisaatiot') }}</stitle>
-            <snum>{{ total_organizations }}</snum>
-        </stat>
-        <last-updated>
-            <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
-        </last-updated>
-
+                <stitle>{{ _('Käyttäjiä') }}</stitle>
+                <snum>{{ total_users }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
+                <sdisc>{{ _('Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa') }}</sdisc>
+                <snum>{{ active_users }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Organisaatioita') }}</stitle>
+                <snum>{{ total_organizations }}</snum>
+            </stat>
+            <div style="width: 100%; background-color: transparent; height: 1px;"></div>
+            <stat>
+                <stitle>{{ _('Mielenosoituksia') }}</stitle>
+                <snum>{{ total_demos }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Katselukerrat') }}</stitle>
+                <sdisc>{{ _('Kaikkien mielenosoitusten katselukerrat') }}</sdisc>
+                <snum>{{ total_views }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Keskimääräinen katselukerrat') }}</stitle>
+                <sdisc>{{ _('Keskimääräinen katselukerrat mielenosoituksille') }}</sdisc>
+                <snum>{{ avg_views }}</snum>
+            </stat>
+            <last-updated>
+                <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
+            </last-updated>
         </stats>
-<br>
-        <h2 class="admin-section-title">{{ _('Viimeisimmät aktiviteetit') }}</h2>
-        <activities>
-            {% for activity in recent_activity %}
-            <activity>
-            <activity-title><i class="fas fa-tasks"></i> {{ activity.action }}</activity-title>
-            <activity-content>
-                <aby><i class="fas fa-user"></i> {{ activity.by }}</aby>
-                <atime><i class="fas fa-clock"></i> {{ activity.date_time }}</atime>
-                <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('Katso lisää') }}</aaction>
-            </activity-content>
-            <activity-extra>
-                <aip>
-                    <i class="fas fa-globe"></i> {{ _('IP-osoite') }}:                        
-                </aip>
-                <asession>
-                    <i class="fas fa-user-secret"></i> {{ _('Istunto') }}:
-                </asession>
-            </activity-extra>
-            </activity>
-            {% endfor %}
-            {% if not recent_activities %}
-            <div class="no-data">
-            <p>{{ _('Ei aktiivisuuksia vielä.') }}</p>
-            </div>
-            {% endif %}
-        </activities>
+        <br>
     </div>
+
+        <!-- this will be moved elsewhere before the end of year -->
+     <!-- alert user about that -->
 
     <div class="analytics-container" style="margin-top: 40px;">
         <h2 id="tabletitle">{{ _('Mielenosoitus analytiikka') }}</h2>

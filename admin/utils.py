@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from bson.objectid import ObjectId
 from pymongo.errors import PyMongoError
@@ -81,33 +82,16 @@ def log_admin_action(user, action: str, details: str):
 
     Parameters
     ----------
-    user :
-        The user object performing the action
-    action :
-        str
-    details :
-        str
-    action :
-        str:
-    details :
-        str:
-    action : str :
-
-    details : str :
-
-    action : str :
-
-    details : str :
-
-    action: str :
-
-    details: str :
-
+    user : User
+        The user object performing the action.
+    action : str
+        The action performed by the admin.
+    details : str
+        Additional details about the action.
 
     Returns
     -------
-
-
+    None
     """
     try:
         mongo.admin_logs.insert_one(
@@ -116,7 +100,7 @@ def log_admin_action(user, action: str, details: str):
                 "email": user.email,
                 "action": action,
                 "details": details,
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(datetime.timezone.utc),
             }
         )
         logger.info(f"Admin action logged: {action} by user {user.email}")
@@ -125,3 +109,62 @@ def log_admin_action(user, action: str, details: str):
 
 
 # TODO: Transfer organization-related functions to utils.organizations
+
+
+def dictify_object(obj):
+    """Convert an object to a dictionary."""
+    if isinstance(obj, dict):
+        return {k: dictify_object(v) for k, v in obj.items()}
+    elif hasattr(obj, "__dict__"):
+        return {k: dictify_object(v) for k, v in obj.__dict__.items()}
+    elif isinstance(obj, (list, tuple, set)):
+        return type(obj)(dictify_object(v) for v in obj)
+    return obj
+
+
+def log_admin_action_V2(aact: dict):
+    """Log an admin action to MongoDB.
+
+    Parameters
+    ----------
+    
+
+    Returns
+    -------
+    None
+    """
+    try:
+        to_insert = {
+            "timestamp": datetime.now(),
+        }
+        to_insert.update(aact)
+                
+        mongo.admin_logs.insert_one(
+            to_insert
+        )
+    except PyMongoError as e:
+        logger.error(f"Error logging admin action: {e}")
+
+class AdminActParser:
+    """Class to parse admin activity logs and handle request data."""
+
+    def __init__(self):
+        
+        pass
+
+    def log_request_info(self, request, user):
+        """Log request information and user details."""
+        try:
+            print("request", request)
+            print("user", user)
+            import json
+            request_data = json.loads(json.dumps({**request}, skipkeys=True, default=str))
+           
+
+            # Combine with user details
+            user_data = user.to_dict() if hasattr(user, "to_dict") else dictify_object(user)
+
+            return {"request": request_data, "user": user_data}
+        except Exception as e:
+            logger.exception(f"Error parsing request info: {e}")
+            return {}

@@ -86,3 +86,50 @@ class AdminActivity(BaseModel):
             timestamp=data.get("timestamp"),
             _id=ObjectId(data["_id"]) if data.get("_id") else None,
         )
+
+class UserDataFormatter:
+    def __init__(self, data):
+        self.data = data
+
+    def format_timestamp(self):
+        timestamp = self.data.get("timestamp", {}).get("$date")
+        if timestamp:
+            return datetime.fromisoformat(timestamp[:-1]).strftime("%Y-%m-%d %H:%M:%S")
+        return "Unknown"
+
+    def format_request(self):
+        request = self.data.get("request", {})
+        formatted_request = {
+            "Method": request.get("method", "Unknown"),
+            "URL": request.get("url", "Unknown"),
+            "Remote Address": request.get("remote_addr", "Unknown"),
+            "User Agent": request.get("headers", "").split("User-Agent: ")[-1].split("\r\n")[0],
+        }
+        return formatted_request
+
+    def format_user(self):
+        user = self.data.get("user", {})
+        formatted_user = {
+            "Username": user.get("username", "Unknown"),
+            "Display Name": user.get("displayname", "Unknown"),
+            "Email": user.get("email", "Unknown"),
+            "Bio": user.get("bio", "None"),
+            "Profile Picture": user.get("profile_picture", "None"),
+            "Role": user.get("role", "Unknown"),
+            "Global Admin": "Yes" if user.get("global_admin") else "No",
+            "Banned": "Yes" if user.get("banned") else "No",
+        }
+        return formatted_user
+
+    def format_permissions(self):
+        permissions = self.data.get("user", {}).get("global_permissions", [])
+        return permissions if permissions else ["No permissions found"]
+
+    def display(self):
+        formatted_data = {
+            "Timestamp": self.format_timestamp(),
+            "Request": self.format_request(),
+            "User": self.format_user(),
+            "Permissions": self.format_permissions(),
+        }
+        return formatted_data

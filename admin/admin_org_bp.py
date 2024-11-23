@@ -26,6 +26,13 @@ from utils.classes import Organization
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
+from .utils import AdminActParser, log_admin_action_V2
+@admin_org_bp.before_request
+def log_request_info():
+    """Log request information before handling it."""
+    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+
+
 from emailer.EmailSender import EmailSender
 from utils.flashing import flash_message
 from utils.logger import logger

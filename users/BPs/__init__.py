@@ -17,6 +17,7 @@ from .auth import auth_bp
 from .orgs import user_orgs_bp
 from .profile import profile_bp
 
+
 def create_user_blueprint():
     """Create and configure the main user Blueprint, registering sub-Blueprints."""
     user_bp = Blueprint("users", __name__, template_folder="templates")
@@ -24,6 +25,7 @@ def create_user_blueprint():
     user_bp.register_blueprint(user_orgs_bp)
     user_bp.register_blueprint(profile_bp)
     return user_bp
+
 
 # Create the user blueprint
 user_bp = create_user_blueprint()

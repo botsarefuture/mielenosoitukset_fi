@@ -7,8 +7,9 @@ for module in modules:
     if os.path.basename(module) == "__init__.py":
         continue
     module_name = os.path.basename(module)[:-3]
-    class_name = ''.join([part for part in module_name.split('_')])
+    class_name = "".join([part for part in module_name.split("_")])
     exec(f"from .{module_name} import {class_name}")
 
 from utils.database import get_database_manager
+
 DB = get_database_manager()

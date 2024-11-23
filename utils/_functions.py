@@ -11,11 +11,13 @@ get_cur_dir() -> str
 load_version() -> str
     Loads the current version of the application from the VERSION file.
 """
+
 import os
+
 
 def get_cur_dir() -> str:
     """Returns the current directory of the file where this function is called.
-    
+
     This function determines the full path of the file using `__file__`,
     then extracts and returns the directory part of the path.
 
@@ -28,16 +30,18 @@ def get_cur_dir() -> str:
     _CUR_DIR = os.path.dirname(_FULL_PATH)
     return _CUR_DIR
 
+
 _CUR_DIR = get_cur_dir()  # Get the current directory of the file
+
 
 def load_version() -> str:
     """Load the current version of the application from the VERSION file.
-    
+
     Returns
     -------
     str
         The version string currently running.
-    
+
     Changelog
     ---------
     v2.4.0:

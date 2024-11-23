@@ -4,8 +4,10 @@ from utils.database import get_database_manager
 
 DB = get_database_manager()
 
+
 class Organizer(BaseModel):
     """ """
+
     def __init__(
         self,
         name: str = None,
@@ -34,7 +36,7 @@ class Organizer(BaseModel):
         Returns
         -------
 
-        
+
         """
         data = super().to_dict(json)
         return data

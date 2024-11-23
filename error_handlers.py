@@ -8,15 +8,16 @@ def register_error_handlers(app: Flask):
     Parameters
     ----------
     app : Flask :
-        
+
     app: Flask :
-        
+
 
     Returns
     -------
 
-    
+
     """
+
     @app.errorhandler(400)
     def bad_request(error):
         """Handle Bad Request (400) errors.
@@ -29,14 +30,14 @@ def register_error_handlers(app: Flask):
         Returns
         -------
 
-        
+
         """
         return render_template("errors/400.html"), 400
 
     @app.errorhandler(401)
     def unauthorized(error):
         """Handle Unauthorized (401) errors.
-        
+
         This function logs the details of the 401 Unauthorized error, including the
         request path and the remote address of the client that attempted the request.
         Optionally, it can send this data to a monitoring service.
@@ -49,7 +50,7 @@ def register_error_handlers(app: Flask):
         Returns
         -------
 
-        
+
         """
         # Log the 401 error details
         logger.warning(
@@ -68,12 +69,12 @@ def register_error_handlers(app: Flask):
         Parameters
         ----------
         error :
-            
+
 
         Returns
         -------
 
-        
+
         """
         logger.critical(error)
         return render_template("errors/403.html"), 403
@@ -85,12 +86,12 @@ def register_error_handlers(app: Flask):
         Parameters
         ----------
         error :
-            
+
 
         Returns
         -------
 
-        
+
         """
         logger.warning(error)
         return render_template("errors/404.html"), 404
@@ -102,12 +103,12 @@ def register_error_handlers(app: Flask):
         Parameters
         ----------
         error :
-            
+
 
         Returns
         -------
 
-        
+
         """
         logger.error(error)
         return render_template("errors/500.html"), 500

@@ -1,5 +1,6 @@
 from utils.database import stringify_object_ids
 
+
 class BaseModel:
     """Mixin class for common methods like `to_dict` and `from_dict`."""
 
@@ -10,13 +11,13 @@ class BaseModel:
         Parameters
         ----------
         data : dict
-            
+
 
         Returns
         -------
-        
 
-        
+
+
         """
         return cls(**data)
 
@@ -27,11 +28,11 @@ class BaseModel:
         ----------
         json : bool, default=False
             If True, convert ObjectId to string.
-            
+
         Returns
         -------
 
-        
+
         """
         data = self.__dict__.copy()
         if json and "_id" in data:

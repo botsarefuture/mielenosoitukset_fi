@@ -13,7 +13,10 @@ from utils.logger import logger
 
 mongo = DatabaseManager().get_instance().get_db()
 
-profile_bp = Blueprint("profile", __name__, template_folder="/users/profile/", url_prefix="/profile")
+profile_bp = Blueprint(
+    "profile", __name__, template_folder="/users/profile/", url_prefix="/profile"
+)
+
 
 @profile_bp.route("/")
 @profile_bp.route("/<username>")
@@ -28,7 +31,7 @@ def profile(username=None):
     Returns
     -------
 
-    
+
     """
     if username is None:
         if current_user.is_authenticated:
@@ -43,6 +46,7 @@ def profile(username=None):
     else:
         flash_message("Käyttäjäprofiilia ei löytynyt.", "warning")
         return redirect(url_for("index"))
+
 
 @profile_bp.route("/edit", methods=["GET", "POST"])
 @login_required
@@ -95,12 +99,12 @@ def follow(username):
     Parameters
     ----------
     username :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         user_to_follow = User.from_db(mongo.users.find_one({"username": username}))
@@ -112,16 +116,17 @@ def follow(username):
         else:
             flash_message("Käyttäjää ei löytynyt.", "danger")
             logger.warning(f"User {username} not found for following.")
-            
+
     except Exception as e:
         flash_message("Tapahtui virhe.", "danger")
         logger.error(f"Error following user {username}: {e}")
-        
+
     referrer = request.referrer or "/"
-    referrer = referrer.replace('\\', '')
+    referrer = referrer.replace("\\", "")
     if not urlparse(referrer).netloc and not urlparse(referrer).scheme:
         return redirect(referrer, code=302)
     return redirect("/", code=302)
+
 
 @profile_bp.route("/unfollow/<username>", methods=["POST"])
 @login_required
@@ -131,32 +136,32 @@ def unfollow(username):
     Parameters
     ----------
     username :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         user_to_unfollow = User.from_db(mongo.users.find_one({"username": username}))
         if user_to_unfollow:
             current_user.unfollow_user(user_to_unfollow.id)
-            
+
             flash_message(f"Lopetit käyttäjän {username} seuraamisen.", "success")
-            
+
             logger.debug(f"User {current_user.username} unfollowed {username}.")
         else:
             flash_message("Käyttäjää ei löytynyt", "danger")
-            
+
             logger.warning(f"User {username} not found for unfollowing.")
-            
+
     except Exception as e:
         flash_message("Tapahtui virhe.", "danger")
         logger.error(f"Error unfollowing user {username}: {e}")
-        
+
     referrer = request.referrer or "/"
-    referrer = referrer.replace('\\', '')
+    referrer = referrer.replace("\\", "")
     if not urlparse(referrer).netloc and not urlparse(referrer).scheme:
         return redirect(referrer, code=302)
     return redirect("/", code=302)

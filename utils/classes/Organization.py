@@ -7,8 +7,10 @@ from utils.database import get_database_manager
 
 DB = get_database_manager()
 
+
 class Organization(BaseModel):
     """ """
+
     def __init__(
         self,
         name: str,
@@ -19,7 +21,7 @@ class Organization(BaseModel):
         members: List[User] = None,
         verified: bool = False,
         _id=None,
-        invitations = None
+        invitations=None,
     ):
         self.name = name
         self.description = description
@@ -30,15 +32,16 @@ class Organization(BaseModel):
         self.verified = verified
         self._id = _id or ObjectId()
         self.invitations = invitations or []
-        
+
         self.init_members()
 
     def init_members(self):
         """Initialize the members list."""
-        self.members = [User.from_db(DB["users"].find_one(
-            {"_id": ObjectId(member["user_id"])})) for member in self.members]
-        
-    
+        self.members = [
+            User.from_db(DB["users"].find_one({"_id": ObjectId(member["user_id"])}))
+            for member in self.members
+        ]
+
     def save(self):
         """Save the organization to MongoDB."""
         DB["organizations"].update_one(
@@ -71,25 +74,25 @@ class Organization(BaseModel):
         ----------
         email : str
             The email address of the user to check.
-            
+
         Returns
         -------
         bool
             True if the user is a member, False otherwise.
-            
+
         Raises
         ------
         TypeError
             If the email is not a string.
 
-        
+
         """
-        
+
         if not isinstance(email, str):
             raise TypeError("Email must be a string.")
-        
+
         return any(member.email == email for member in self.members)
-    
+
     from typing import Union
 
     def add_member(self, member: Union[ObjectId, User], role="member", permissions=[]):
@@ -110,13 +113,8 @@ class Organization(BaseModel):
         """
         if isinstance(member, User):
             member = ObjectId(member._id)
-        
+
         elif isinstance(member, str):
             member = ObjectId(member)
-        
-        Membership(
-            member,
-            self._id,
-            role,
-            permissions
-        ).save()
+
+        Membership(member, self._id, role, permissions).save()

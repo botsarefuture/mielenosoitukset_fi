@@ -3,6 +3,7 @@ from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from users.models import User
 
+
 class MFA:
     """
     A class to manage Multi-Factor Authentication (MFA) for users.
@@ -26,7 +27,9 @@ class MFA:
         elif isinstance(user, User):
             self.user = user
         elif isinstance(user, ObjectId):
-            user = User.from_db(DatabaseManager().get_instance().get_db().users.find_one({"_id": user}))
+            user = User.from_db(
+                DatabaseManager().get_instance().get_db().users.find_one({"_id": user})
+            )
         else:
             raise ValueError("User must be a User object, a dict, or an ObjectId")
 
@@ -93,7 +96,9 @@ class MFA:
         str
             The provisioning URI for the given secret.
         """
-        return pyotp.totp.TOTP(secret).provisioning_uri(name=self.user.username, issuer_name="Mielenosoitukset.fi")
+        return pyotp.totp.TOTP(secret).provisioning_uri(
+            name=self.user.username, issuer_name="Mielenosoitukset.fi"
+        )
 
     def verify_mfa(self, token):
         """

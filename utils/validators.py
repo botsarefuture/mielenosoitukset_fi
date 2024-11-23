@@ -25,6 +25,7 @@ import re
 from typing import Union
 from utils.variables import EVENT_TYPES
 
+
 def valid_email(email):
     """
     Check if the given email address is valid.
@@ -48,7 +49,8 @@ def valid_email(email):
     email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     return re.match(email_regex, email) is not None
 
-def valid_event_type(event_type: Union[str, 'EventType']):
+
+def valid_event_type(event_type: Union[str, "EventType"]):
     """
     Check if the given event type is valid.
 
@@ -68,6 +70,7 @@ def valid_event_type(event_type: Union[str, 'EventType']):
         - Added this function.
     """
     return event_type in EVENT_TYPES
+
 
 def return_exists(var1, var2, default=None):
     """
@@ -104,50 +107,49 @@ def return_exists(var1, var2, default=None):
     """
     if var1 and var2:
         return var1, var2
-    
+
     elif var1 and not var2:
         return var1, var1
-    
+
     elif var2 and not var1:
         return var2, var2
-    
+
     else:
         return default, default
-    
+
 
 def event_type_convertor(event_type: str) -> str:
     """
     Parameters
     ----------
     event_type : str
-        The event type to be converted. Expected values are "marssi", "paikallaan", "muut", 
+        The event type to be converted. Expected values are "marssi", "paikallaan", "muut",
         or any valid event type.
-    
+
     Returns
     -------
     standardized_event_type : str
         The standardized event type. Returns "MARCH" for "marssi", "STAY_STILL" for "paikallaan",
         "OTHER" for "muut", or the original event type if it is already valid.
-        
+
     Raises
     ------
     ValueError
         If the event type is not already standardized and not one of the expected values ("marssi", "paikallaan", "muut").
     """
-    
+
     event_type_mapping = {
         "marssi": "MARCH",
         "paikallaan": "STAY_STILL",
-        "muut": "OTHER"
+        "muut": "OTHER",
     }
-    
+
     if not valid_event_type(event_type):
         if event_type in event_type_mapping.keys():
             return event_type_mapping[event_type]
-        
+
         else:
             raise ValueError(f"Invalid event type: {event_type}")
-    
+
     else:
         return event_type
-    

@@ -7,8 +7,10 @@ from .Demonstration import Demonstration
 from .RepeatSchedule import RepeatSchedule
 from .Organizer import Organizer
 
+
 class RecurringDemonstration(Demonstration):
     """ """
+
     def __init__(
         self,
         title: str,
@@ -77,7 +79,7 @@ class RecurringDemonstration(Demonstration):
 
     def calculate_next_dates(self) -> List[datetime]:
         """Calculate the next demonstration dates based on the frequency and interval.
-        
+
         This method calculates the upcoming demonstration dates starting from the initial
         date (`self.date`) and continues until one year from the current date. The calculation
         is based on the frequency and interval specified in `self.repeat_schedule`.
@@ -88,7 +90,7 @@ class RecurringDemonstration(Demonstration):
         Returns
         -------
 
-        
+
         """
 
         next_dates = []
@@ -123,7 +125,7 @@ class RecurringDemonstration(Demonstration):
 
     def update_demo(self, **kwargs) -> None:
         """Update demonstration details using keyword arguments.
-        
+
         This method allows updating the attributes of the demonstration instance
         by passing keyword arguments. Only the attributes with non-None values
         will be updated.
@@ -131,12 +133,12 @@ class RecurringDemonstration(Demonstration):
         Parameters
         ----------
         **kwargs :
-            
+
 
         Returns
         -------
 
-        
+
         """
 
         for attr, value in kwargs.items():
@@ -154,18 +156,18 @@ class RecurringDemonstration(Demonstration):
         Returns
         -------
 
-        
+
         """
 
         data = super().to_dict(json=json)  # Call the parent to_dict
-        
+
         if isinstance(self.repeat_schedule, dict):
             self.repeat_schedule = RepeatSchedule.from_dict(self.repeat_schedule)
-        
+
         data["repeat_schedule"] = (
             self.repeat_schedule.to_dict() if self.repeat_schedule else None
         )
-        
+
         if self.created_until:
             if isinstance(self.created_until, datetime):
                 data["created_until"] = self.created_until.strftime("%d.%m.%Y")
@@ -193,22 +195,22 @@ class RecurringDemonstration(Demonstration):
         Any :
             returns: An instance of the RecurringDemonstration class.
         data : Dict[str :
-            
+
         Any] :
-            
+
         data : Dict[str :
-            
+
         data : Dict[str :
-            
+
         data : Dict[str :
-            
+
         data: Dict[str :
-            
+
 
         Returns
         -------
 
-        
+
         """
 
         created_until = (

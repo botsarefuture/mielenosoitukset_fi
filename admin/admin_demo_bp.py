@@ -24,7 +24,7 @@ admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 @permission_required("LIST_DEMOS")
 def demo_control():
     """Render the demonstration control panel with a list of demonstrations.
-    
+
     Filters demonstrations by search query, approval status, and whether past events should be shown.
 
     Parameters
@@ -33,7 +33,7 @@ def demo_control():
     Returns
     -------
 
-    
+
     """
     # Limit demonstrations by organization if the user is not a global admin
     if not current_user.global_admin:
@@ -50,10 +50,9 @@ def demo_control():
 
     # Construct the base query to fetch demonstrations
     # Remove the "approved" filter to allow for dynamic filtering based on user input
-    filter = DEMO_FILTER.copy() # Copy the base filter to avoid modifying the original
+    filter = DEMO_FILTER.copy()  # Copy the base filter to avoid modifying the original
     del filter["approved"]
     query = filter
-    
 
     if approved_only:
         query["approved"] = True
@@ -95,7 +94,7 @@ def filter_demonstrations(query, search_query, show_past, today):
     Returns
     -------
 
-    
+
     """
     # Fetch demonstrations from MongoDB
     demonstrations = mongo.demonstrations.find(query)
@@ -120,9 +119,9 @@ def filter_demonstrations(query, search_query, show_past, today):
 @permission_required("CREATE_DEMO")
 def create_demo():
     """Create a new demonstration.
-    
+
     Renders the form for creating a demonstration or handles the form submission.
-    
+
     Changelog:
     ----------
     v2.5.0:
@@ -134,7 +133,7 @@ def create_demo():
     Returns
     -------
 
-    
+
     """
     if request.method == "POST":
         # Handle form submission for creating a new demonstration
@@ -161,18 +160,18 @@ def create_demo():
 @permission_required("EDIT_DEMO")
 def edit_demo(demo_id):
     """Edit demonstration details.
-    
+
     Fetches the demonstration data by ID for editing or processes the edit form submission.
 
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     # Fetch demonstration data by ID
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -214,13 +213,13 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
     Returns
     -------
 
-    
+
     """
     # Collect demonstration data from the form
-    demonstration_data = collect_demo_data(request)    
-    
+    demonstration_data = collect_demo_data(request)
+
     from utils.admin.demonstration import fix_organizers
-    
+
     demonstration_data = fix_organizers(demonstration_data)
 
     try:
@@ -251,7 +250,7 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
 
 def collect_demo_data(request):
     """Collect demonstration data from the request form.
-    
+
     This function extracts and returns relevant data from the submitted form.
 
     Parameters
@@ -262,11 +261,10 @@ def collect_demo_data(request):
     Returns
     -------
 
-    
+
     """
     # We could basically just get the demo id and then use the same function as in the edit_demo functiot
-    
-    
+
     # Collect basic form data
     title = request.form.get("title")
     date = request.form.get("date")
@@ -286,7 +284,7 @@ def collect_demo_data(request):
     # Process organizers and tags
     organizers = collect_organizers(request)
     tags = collect_tags(request)
-    
+
     description = request.form.get("description")
     latitude = request.form.get("latitude")
     longitude = request.form.get("longitude")
@@ -314,8 +312,6 @@ def collect_demo_data(request):
         "latitude": latitude,
         "longitude": longitude,
     }
-    
-    
 
 
 def is_valid_latitude(lat):
@@ -324,12 +320,12 @@ def is_valid_latitude(lat):
     Parameters
     ----------
     lat :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         lat = float(lat)
@@ -344,12 +340,12 @@ def is_valid_longitude(lon):
     Parameters
     ----------
     lon :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         lon = float(lon)
@@ -360,7 +356,7 @@ def is_valid_longitude(lon):
 
 def collect_organizers(request):
     """Collect organizer data from the request form.
-    
+
     This function extracts multiple organizers' information from the form and returns a list
     of Organizer objects.
 
@@ -372,7 +368,7 @@ def collect_organizers(request):
     Returns
     -------
 
-    
+
     """
     organizers = []
     i = 1
@@ -456,12 +452,12 @@ def confirm_delete_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     # Fetch the demonstration data from the database
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -489,12 +485,12 @@ def accept_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     # Ensure the request is JSON
     if request.headers.get("Content-Type") != "application/json":
@@ -514,7 +510,10 @@ def accept_demo(demo_id):
     # Validate that the demo ID exists
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        return jsonify({"status": "ERROR", "message": "Demonstration not found."}), 404 # FIXME: Default in Finnish, then use '_' function to translate into english
+        return (
+            jsonify({"status": "ERROR", "message": "Demonstration not found."}),
+            404,
+        )  # FIXME: Default in Finnish, then use '_' function to translate into english
 
     demo = Demonstration.from_dict(demo_data)
 
@@ -531,4 +530,7 @@ def accept_demo(demo_id):
         )
     except Exception as e:
         logging.error("An error occurred while accepting the demonstration: %s", str(e))
-        return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500
+        return (
+            jsonify({"status": "ERROR", "message": "An internal error has occurred."}),
+            500,
+        )

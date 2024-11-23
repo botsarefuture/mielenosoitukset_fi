@@ -4,6 +4,7 @@ from bson import ObjectId
 from .BaseModel import BaseModel
 from users.models import User
 
+
 class AdminActivity(BaseModel):
     """Class to represent an admin activity."""
 
@@ -58,7 +59,7 @@ class AdminActivity(BaseModel):
             A dictionary representation of the AdminActivity instance.
         """
         data = super().to_dict(json=json)
-               
+
         data["by"] = self.by.to_dict(json=json)
         return data
 

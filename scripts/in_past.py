@@ -38,7 +38,9 @@ classes = importlib.import_module("utils.classes")
 database_manager = importlib.import_module("database_manager")
 if __name__ == "__main__":
     app = importlib.import_module("app").create_app()
-variables = importlib.import_module("utils.variables") # Import the utils module, not the file
+variables = importlib.import_module(
+    "utils.variables"
+)  # Import the utils module, not the file
 
 # Get the database instance
 DatabaseManager = database_manager.DatabaseManager
@@ -47,13 +49,16 @@ RecurringDemonstration = classes.RecurringDemonstration
 db_manager = DatabaseManager().get_instance()
 db = db_manager.get_db()
 
+
 def is_future_demo(demo_date, today):
     """Check if the demonstration is in the future."""
     return demo_date >= today
 
+
 def fetch_upcoming_demos():
     """Fetch upcoming demonstrations that are not in the past."""
     return list(db["demonstrations"].find(variables.DEMO_FILTER))
+
 
 def hide_past_demos(demos, today):
     """
@@ -70,7 +75,7 @@ def hide_past_demos(demos, today):
         Prints an error message if there is an issue processing a demonstration.
     """
     stats = {"total": 0, "hidden": 0, "errors": 0}
-    
+
     for demo in demos:
         stats["total"] += 1
         try:
@@ -87,8 +92,9 @@ def hide_past_demos(demos, today):
         except Exception as e:
             stats["errors"] += 1
             print(f"Error processing demonstration {demo['_id']}: {e}")
-    
+
     return stats
+
 
 def hide_past():
     """Mark past demonstrations as hidden and output statistics."""
@@ -101,6 +107,7 @@ def hide_past():
         print(f"Total errors: {stats['errors']}")
     except Exception as e:
         print(f"Error hiding past demonstrations: {e}")
+
 
 if __name__ == "__main__":
     with app.app_context():

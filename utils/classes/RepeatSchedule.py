@@ -4,13 +4,14 @@ from typing import Any, Dict, Optional
 
 class RepeatSchedule:
     """ """
+
     def __init__(
         self, frequency: str, interval: int, weekday: Optional[datetime] = None
     ):
         self.frequency = frequency
         self.interval = interval
         self.weekday = weekday
-        
+
         print(frequency, interval, weekday)
 
     def as_string(self) -> str:
@@ -32,7 +33,7 @@ class RepeatSchedule:
             if self.interval > 1
             else frequency_map.get(self.frequency, "unknown") + weekday_str
         )
-    
+
     def __str__(self) -> str:
         frequency_map = {
             "daily": "daily",
@@ -70,29 +71,27 @@ class RepeatSchedule:
         data :
             Dict[str:
         Any :
-            
+
         data : Dict[str :
-            
+
         Any] :
-            
+
         data : Dict[str :
-            
+
         data : Dict[str :
-            
+
         data : Dict[str :
-            
+
         data: Dict[str :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return cls(
             frequency=data["frequency"],
             interval=data["interval"],
             weekday=data.get("weekday"),
         )
-
-

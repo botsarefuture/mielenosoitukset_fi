@@ -45,6 +45,7 @@ login_manager.login_view = "users.auth.login"
 
 class DemoViewCount:
     """ """
+
     def __init__(self, demo_id, count):
         self.id = demo_id
         self.views = count
@@ -55,18 +56,19 @@ class DemoViewCount:
     def __str__(self):
         return f"Demo ID: {self.id}, Count: {self.views}"
 
+
 def count_per_demo(data):
     """
 
     Parameters
     ----------
     data :
-        
+
 
     Returns
     -------
 
-    
+
     """
     demo_count = {}
     for view in data:
@@ -75,8 +77,10 @@ def count_per_demo(data):
             demo_count[demo_id] += 1
         else:
             demo_count[demo_id] = 1
-    
-    demo_count = [DemoViewCount(demo_id, count) for demo_id, count in demo_count.items()]
+
+    demo_count = [
+        DemoViewCount(demo_id, count) for demo_id, count in demo_count.items()
+    ]
     return demo_count
 
 
@@ -88,12 +92,12 @@ def load_user(user_id):
     Parameters
     ----------
     user_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     return User.from_db(user_doc) if user_doc else None
@@ -104,11 +108,11 @@ def load_user(user_id):
 @login_required
 def admin_logout():
     """Handle admin logout and log the action.
-    
+
     This function is deprecated as of version 2.4.0 and will be
     removed in version 2.5.0. Please use the `logout` function
     from `auth` instead.
-    
+
     Changelog:
     ----------
     v2.4.0:
@@ -120,7 +124,7 @@ def admin_logout():
     Returns
     -------
 
-    
+
     """
     # Raise a deprecation warning
     warnings.warn(
@@ -143,6 +147,7 @@ def admin_dashboard():
     """Render the admin dashboard."""
     return render_template("admin/dashboard.html")
 
+
 def get_admin_activity():
     """Get the admin activity log."""
     activity = mongo.admin_logs.find({}).sort("_id", -1)
@@ -164,7 +169,7 @@ def stats():
 
     data = get_demo_views()
     data = count_per_demo(data)
-    
+
     # Render statistics template
     return render_template(
         "admin/stats.html",
@@ -174,7 +179,6 @@ def stats():
         active_users=active_users,
         data=data,
         recent_activity=get_admin_activity(),
-        
     )
 
 
@@ -238,8 +242,7 @@ def manage_marquee():
     )
 
 
-
-@admin_bp.route('/demo_analytics')
+@admin_bp.route("/demo_analytics")
 @login_required
 @admin_required
 @permission_required("VIEW_ANALYTICS")
@@ -247,12 +250,14 @@ def admin_analytics():
     """ """
     return demo_analytics()
 
+
 def demo_analytics():
     """ """
     data = get_demo_views()
     data = count_per_demo(data)
-    
-    return render_template('admin/analytics.html', data=data)
+
+    return render_template("admin/analytics.html", data=data)
+
 
 def send_red_alert_email(user):
     """Send a red alert email to the user.
@@ -260,15 +265,16 @@ def send_red_alert_email(user):
     Parameters
     ----------
     user :
-        
+
 
     Returns
     -------
 
-    
+
     """
     # Use email_sender
     from emailer import EmailSender
+
     email_sender = EmailSender()
     email_sender.queue_email(
         template_name="red_alert_email.html",
@@ -277,35 +283,38 @@ def send_red_alert_email(user):
         context={"username": user.username},
     )
 
+
 def initiate_red_alert():
     """Initiate a red alert."""
     # 1. Send email to all admins
     # 2. Log the red alert
     # 3. Implement your red alert logic here
-    
-    
+
     # 1. Send email to all admins
-    admins = mongo.users.find({"role":{"$in": ["admin", "global_admin"]}}) # Assuming the role is "admin" or "global_admin"
-        
+    admins = mongo.users.find(
+        {"role": {"$in": ["admin", "global_admin"]}}
+    )  # Assuming the role is "admin" or "global_admin"
+
     for admin in admins:
         send_red_alert_email(admin)
-    
+
     # 2. Log the red alert
     logger.critical("Red alert initiated")
-    
+
     # 3. Marquee should show the red alert
     with open("marquee_config.json", "r") as f:
         marquee_config = json.load(f)
         marquee_config["message"] = "RED ALERT "
         marquee_config["style"] = "background-color: red; padding: 0px !important;"
         marquee_config["h2_style"] = "color: white;"
-    
+
     with open("marquee_config.json", "w") as f:
         json.dump(marquee_config, f, indent=4)
-    
+
     return "Red alert initiated"
 
-@admin_bp.route('/shutdown', methods=["POST"])
+
+@admin_bp.route("/shutdown", methods=["POST"])
 @login_required
 @admin_required
 @permission_required("SHUTDOWN_SERVER")
@@ -317,10 +326,10 @@ def shutdown():
         initiate_red_alert()
         return "Unauthorized", 403
 
-
     logger.info(f"Server shutdown initiated by user {current_user.username}")
     os.system("shutdown -h now")
     return "Server shutting down..."
+
 
 def validate_mfa_token(token):
     """Validate the MFA token.
@@ -328,12 +337,12 @@ def validate_mfa_token(token):
     Parameters
     ----------
     token :
-        
+
 
     Returns
     -------
 
-    
+
     """
     # Implement your MFA token validation logic here
     return True  # Placeholder for actual validation logic

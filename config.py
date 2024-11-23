@@ -5,7 +5,7 @@ import logging
 
 class Config:
     """Configuration class to load and manage application settings.
-    
+
     Attributes:
         config (dict): Loaded configuration from the YAML file.
         MONGO_URI (str): MongoDB URI.
@@ -25,14 +25,14 @@ class Config:
         SECRET_KEY (str): S3 secret key.
         ENDPOINT_URL (str): S3 endpoint URL.
         ADMIN_EMAIL (str): Admin email address.
-    
+
     Methods:
     --------
         load_yaml(file_path: str) -> Dict[str, Any]:
             Load configuration from a YAML file.
         init_config() -> None:
             Initialize configuration and log validation messages.
-    
+
     Changelog:
     ----------
     v2.6.0:
@@ -46,7 +46,7 @@ class Config:
     Returns
     -------
 
-    
+
     """
 
     # Configure logging for configuration loading
@@ -60,7 +60,7 @@ class Config:
         Parameters
         ----------
         file_path: str :
-            
+
 
         Returns
         -------
@@ -97,7 +97,7 @@ class Config:
     BABEL_DEFAULT_LOCALE = BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
     BABEL_SUPPORTED_LOCALES = BABEL_CONFIG.get("SUPPORTED_LOCALES", ["en"])
     BABEL_LANGUAGES = BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
-    
+
     # Flask Configuration
     SECRET_KEY = config.get("SECRET_KEY", "secret_key")
     PORT = config.get("PORT", 8000)
@@ -115,10 +115,10 @@ class Config:
     @classmethod
     def init_config(cls) -> None:
         """Initialize configuration and log validation messages.
-        
+
         This method checks for the presence of essential configuration variables
         and logs warnings if they are not set or if they use default insecure values.
-        
+
         Warnings:
             - Logs a warning if `MONGO_URI` is not set.
             - Logs a warning if either `MAIL_USERNAME` or `MAIL_PASSWORD` is not set.
@@ -130,7 +130,7 @@ class Config:
         Returns
         -------
 
-        
+
         """
 
         if not cls.MONGO_URI:

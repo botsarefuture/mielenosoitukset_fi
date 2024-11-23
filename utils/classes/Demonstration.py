@@ -7,6 +7,7 @@ from bson import ObjectId
 
 DB = get_database_manager()
 
+
 class Demonstration(BaseModel):
     """
     A class to represent a demonstration event.
@@ -94,7 +95,7 @@ class Demonstration(BaseModel):
     save()
         Save or update the demonstration in the database.
     """
-    
+
     def __init__(
         self,
         title: str,
@@ -215,10 +216,10 @@ class Demonstration(BaseModel):
         self.longitude = longitude
 
         self.event_type = event_type_convertor(type or event_type)
-        
+
         if not valid_event_type(self.event_type):
             raise ValueError(f"Invalid event type: {self.event_type}")
-        
+
         self.route = route  # If the demonstration is a march, this handles the route
 
         self.img = img
@@ -227,26 +228,26 @@ class Demonstration(BaseModel):
         self.facebook = facebook
 
         self.approved = approved
-        self.linked_organizations = linked_organizations or {} # What is this used for? 
+        self.linked_organizations = linked_organizations or {}  # What is this used for?
         # TODO: #232 Remove linked_organizations if not used
-        
-        self._id = _id or ObjectId() # Unique ID for the demonstration
-        self.tags = tags or [] # Tags for the demonstration
+
+        self._id = _id or ObjectId()  # Unique ID for the demonstration
+        self.tags = tags or []  # Tags for the demonstration
 
         self.created_datetime = created_datetime or None
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
         self.repeat_schedule = repeat_schedule
-        self.repeating, self.recurring = return_exists(repeating, recurring, False)          
+        self.repeating, self.recurring = return_exists(repeating, recurring, False)
 
         # DEPRECATED
-        self.topic = topic or None # Deprecated
+        self.topic = topic or None  # Deprecated
 
         if len(self.tags) == 0 and isinstance(self.topic, str):
             self.tags.append(topic.lower())  # Temporary fix for tags
-            self.topic = None # Remove topic
-            self.save_flag = True # Save the demonstration to update the tags
+            self.topic = None  # Remove topic
+            self.save_flag = True  # Save the demonstration to update the tags
             # TODO: #190 Remove this after all demonstrations have been updated
             # with the correct tags
 
@@ -255,8 +256,8 @@ class Demonstration(BaseModel):
             Organizer.from_dict(org) if isinstance(org, dict) else org
             for org in (organizers or [])
         ]
-        
-        self.in_past = in_past # Whether or not in past
+
+        self.in_past = in_past  # Whether or not in past
         if self.in_past == True:
             self.hide = True
             self.save_flag = True
@@ -264,11 +265,12 @@ class Demonstration(BaseModel):
         self.aliases = aliases or []
         self.alias_fix()
 
-        if self.save_flag: # Save the demonstration if the save_flag is set
-            self.save() # Save the demonstration
+        if self.save_flag:  # Save the demonstration if the save_flag is set
+            self.save()  # Save the demonstration
 
-        self.validate_fields(title, date, start_time, city, address) # Validate required fields
-        
+        self.validate_fields(
+            title, date, start_time, city, address
+        )  # Validate required fields
 
     def alias_fix(self):
         """
@@ -290,14 +292,13 @@ class Demonstration(BaseModel):
         >>> demo.alias_fix()
         """
         aliases = self.aliases.copy()
-        
+
         for alias in aliases:
             if not isinstance(alias, ObjectId):
                 alias = ObjectId(alias)
-        
+
         self.aliases = aliases
-        
-                
+
     def merge(self, id_of_other_demo):
         """
         Merge another demonstration into this one.
@@ -324,13 +325,15 @@ class Demonstration(BaseModel):
         See Also
         --------
         save : Save the demonstration to the database.
-        
+
         Examples
         --------
         >>> demo = Demonstration(...)
         >>> demo.merge("60f8e1e7a1b9c9b8f6b3f3b2") # Merge the demonstration with ID "60f8e1e7a1b9c9b8f6b3f3b2" into the current demonstration.
         """
-        other_demo_data = DB["demonstrations"].find_one({"_id": ObjectId(id_of_other_demo)})
+        other_demo_data = DB["demonstrations"].find_one(
+            {"_id": ObjectId(id_of_other_demo)}
+        )
         if not other_demo_data:
             raise ValueError(f"Demonstration with id {id_of_other_demo} not found.")
 
@@ -346,16 +349,19 @@ class Demonstration(BaseModel):
 
         # Ensure the merged demonstration can be found by both IDs
         DB["demonstrations"].update_one(
-            {"_id": ObjectId(id_of_other_demo)}, {"$set": {"merged_into": self._id, "hide": True}}
+            {"_id": ObjectId(id_of_other_demo)},
+            {"$set": {"merged_into": self._id, "hide": True}},
         )
 
-        self.aliases.append(ObjectId(id_of_other_demo))  # Make sure that this gets saved
+        self.aliases.append(
+            ObjectId(id_of_other_demo)
+        )  # Make sure that this gets saved
 
         self.save()
-        
-    def update_self_from_recurring(self, recurring_demo: 'RecurringDemonstration'):
+
+    def update_self_from_recurring(self, recurring_demo: "RecurringDemonstration"):
         """Update the demonstration details using a recurring demonstration.
-        
+
         This method updates the demonstration instance with the details from a recurring
         demonstration. The details that are updated include the title, description, tags,
         and organizers.
@@ -368,7 +374,7 @@ class Demonstration(BaseModel):
         Returns
         -------
         None
-        
+
         Raises
         ------
         ValueError
@@ -379,13 +385,15 @@ class Demonstration(BaseModel):
         RecurringDemonstration : A class representing a recurring demonstration.
         """
         if not isinstance(recurring_demo, RecurringDemonstration):
-            raise ValueError("The provided demonstration is not a RecurringDemonstration instance.")
-        
+            raise ValueError(
+                "The provided demonstration is not a RecurringDemonstration instance."
+            )
+
         self.title = recurring_demo.title
         self.description = recurring_demo.description
         self.tags = recurring_demo.tags
         self.organizers = recurring_demo.organizers
-        
+
         self.save()
 
     def to_dict(self, json=False):
@@ -401,7 +409,7 @@ class Demonstration(BaseModel):
         -------
         dict
             A dictionary representation of the instance, with organizers and aliases converted appropriately.
-            
+
         See Also
         --------
         BaseModel.to_dict : Convert the instance to a dictionary.
@@ -413,7 +421,7 @@ class Demonstration(BaseModel):
         ]
         data["aliases"] = [str(alias) for alias in self.aliases]
         return data
-    
+
     def validate_fields(self, title, date, start_time, city, address):
         """
         Validates that all required fields are provided.
@@ -457,7 +465,7 @@ class Demonstration(BaseModel):
 
     def save(self):
         """Save or update the demonstration in the database.
-        
+
         This method converts the demonstration object to a dictionary and checks if it
         already exists in the database. If it does, the existing entry is updated.
         Otherwise, a new entry is inserted.
@@ -468,12 +476,12 @@ class Demonstration(BaseModel):
         Returns
         -------
 
-        
+
         """
-        
+
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary
-        
+
         if data.get("aliases") is None:
             raise ValueError("Aliases are missing.")
 
@@ -482,11 +490,16 @@ class Demonstration(BaseModel):
             # Update existing entry
             result = DB["demonstrations"].replace_one({"_id": self._id}, data)
             if result.modified_count:
-                print("Demonstration updated successfully.") # TODO: #191 Use utils.logger instead of print
+                print(
+                    "Demonstration updated successfully."
+                )  # TODO: #191 Use utils.logger instead of print
             else:
-                print("No changes were made to the demonstration.") # TODO: #191 Use utils.logger instead of print
+                print(
+                    "No changes were made to the demonstration."
+                )  # TODO: #191 Use utils.logger instead of print
         else:
             # Insert new entry
             DB["demonstrations"].insert_one(data)
-            print("Demonstration saved successfully.") # TODO: #191 Use utils.logger instead of print
-
+            print(
+                "Demonstration saved successfully."
+            )  # TODO: #191 Use utils.logger instead of print

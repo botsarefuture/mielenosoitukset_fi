@@ -15,7 +15,7 @@ from flask import (
     Response,
     get_flashed_messages,
     jsonify,
-    session
+    session,
 )
 from flask_login import current_user
 
@@ -50,13 +50,15 @@ def generate_alternate_urls(app, endpoint, **values):
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
 
+
 def init_routes(app):
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
         try:
             # Define the root XML element for the sitemap
-            urlset = ET.Element("urlset",
-                                {"xmlns:xhtml":"http://www.w3.org/1999/xhtml"})
+            urlset = ET.Element(
+                "urlset", {"xmlns:xhtml": "http://www.w3.org/1999/xhtml"}
+            )
 
             # Static routes to include in the sitemap
             routes = [
@@ -65,7 +67,7 @@ def init_routes(app):
                 {"loc": "demonstrations"},
                 {"loc": "info"},
                 {"loc": "privacy"},
-                {"loc": "contact"}
+                {"loc": "contact"},
             ]
 
             # Iterate over each static route and language
@@ -77,25 +79,36 @@ def init_routes(app):
                 # Add alternate language links for each URL
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
-                        url, "{http://www.w3.org/1999/xhtml}link",
+                        url,
+                        "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True)
+                        href=url_for(
+                            route["loc"], lang_code=alt_lang_code, _external=True
+                        ),
                     )
 
             # Add dynamic routes for each demonstration
             for demo in demonstrations_collection.find():
                 demo_url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(demo_url, "loc")
-                loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
+                loc.text = url_for(
+                    "demonstration_detail", demo_id=str(demo["_id"]), _external=True
+                )
 
                 # Add alternate language links for each demonstration URL
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
-                        demo_url, "{http://www.w3.org/1999/xhtml}link",
+                        demo_url,
+                        "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True)
+                        href=url_for(
+                            "demonstration_detail",
+                            demo_id=str(demo["_id"]),
+                            lang_code=alt_lang_code,
+                            _external=True,
+                        ),
                     )
 
             # Convert the XML tree to a string and return as response
@@ -107,14 +120,15 @@ def init_routes(app):
             app.logger.error(f"Error generating sitemap: {e}")
             return Response(status=500)
 
-
     @app.context_processor
     def inject_alternate_urls():
         """
         Inject alternate URLs into the template context.
         """
         if request.view_args:
-            alternate_urls = generate_alternate_urls(app, request.endpoint, **request.view_args)
+            alternate_urls = generate_alternate_urls(
+                app, request.endpoint, **request.view_args
+            )
             return dict(alternate_urls=alternate_urls)
         else:
             return dict(alternate_urls={})
@@ -398,7 +412,9 @@ def init_routes(app):
         demo = Demonstration.to_dict(demo, True)
 
         # Log the view
-        log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+        log_demo_view(
+            demo_id, current_user._id if current_user.is_authenticated else None
+        )
 
         # Pass demo details and coordinates to the template
         return render_template("detail.html", demo=demo)
@@ -411,7 +427,12 @@ def init_routes(app):
         """
         # Fetch the demonstration details from MongoDB
         result = demonstrations_collection.find_one(
-            {"$or": [{"_id": ObjectId(demo_id)}, {"aliases": {"$in": [ObjectId(demo_id)]}}]}
+            {
+                "$or": [
+                    {"_id": ObjectId(demo_id)},
+                    {"aliases": {"$in": [ObjectId(demo_id)]}},
+                ]
+            }
         )
         if result:
             demo = Demonstration.from_dict(result)
@@ -459,12 +480,13 @@ def init_routes(app):
         demo = Demonstration.to_dict(demo, True)
 
         # Log the view
-        log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+        log_demo_view(
+            demo_id, current_user._id if current_user.is_authenticated else None
+        )
 
         # Pass demo details and coordinates to the template
         return render_template("preview.html", demo=demo)
 
-    
     @app.route("/info")
     def info():
         return render_template("info.html")
@@ -617,10 +639,10 @@ def init_routes(app):
     @app.route("/500")
     def _500():
         return abort(500)
-    
+
     @app.route("/set_language/<lang>")
     def set_language(lang):
-        # List of supported languages        
+        # List of supported languages
         supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
 
         # Validate the language parameter
@@ -630,9 +652,9 @@ def init_routes(app):
 
         # Set the language cookie
         session["locale"] = lang
-        
+
         session.modified = True
-        
+
         referrer = request.referrer
         if referrer and referrer.startswith(request.host_url):
             return redirect(referrer)
@@ -644,17 +666,15 @@ def init_routes(app):
     # /en/demonstrations: render '/demonstrations' with the language set to 'en'
     @app.before_request
     def preprocess_url():
-        """
-        
-        """
+        """ """
         supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
         path = request.path.strip("/").split("/")
-        
+
         if path and path[0] in supported_languages:
             lang = path[0]
             session["locale"] = lang
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
-    
+
     #

@@ -10,21 +10,26 @@ app = Flask(__name__)
 db_manager = DatabaseManager().get_instance()
 db = db_manager.get_db()
 
+
 def is_future_demo(demo, today):
     """Check if the demonstration is in the future."""
     demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
     return demo_date >= today
+
 
 def get_upcoming_demonstrations():
     """Fetch upcoming demonstrations."""
     try:
         current_time = datetime.now().date()
         upcoming_demos = list(db["demonstrations"].find({"approved": True}))
-        future_demos = [demo for demo in upcoming_demos if is_future_demo(demo, current_time)]
+        future_demos = [
+            demo for demo in upcoming_demos if is_future_demo(demo, current_time)
+        ]
         return future_demos
     except Exception as e:
         print(f"Error fetching upcoming demonstrations: {e}")
         return []
+
 
 def send_newsletter_to_users():
     """Render newsletters for each user and queue them for sending."""
@@ -47,6 +52,7 @@ def send_newsletter_to_users():
             context=context,
         )
         print(f"Newsletter queued for user: {user.get('email')}")
+
 
 with app.app_context():
     send_newsletter_to_users()

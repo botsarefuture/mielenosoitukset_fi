@@ -30,6 +30,7 @@ import datetime
 import jwt
 from flask import current_app
 
+
 def _generate_token(data, expiration):
     """
     Generate a token using the provided data and expiration time.
@@ -55,7 +56,7 @@ def _generate_token(data, expiration):
         },
         current_app.config["SECRET_KEY"],
         algorithm="HS256",
-    )   
+    )
 
 
 def _verify_token(token: str) -> Tuple[Optional[dict], int]:
@@ -80,26 +81,27 @@ def _verify_token(token: str) -> Tuple[Optional[dict], int]:
         -1 if the token has expired,
         0 if the token is invalid,
         1 if the token is valid.
-    
+
     Raises
     ------
     jwt.ExpiredSignatureError
         If the token has expired.
-    
+
     jwt.InvalidTokenError
         If the token is invalid.
     """
     try:
         data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
         return data, 1
-    
+
     except jwt.ExpiredSignatureError:
         current_app.logger.warning("Token has expired.")
         return None, -1
-    
+
     except jwt.InvalidTokenError:
         current_app.logger.warning("Invalid token.")
         return None, 0
+
 
 def generate_reset_token(email: str) -> str:
     """
@@ -116,6 +118,7 @@ def generate_reset_token(email: str) -> str:
         The generated JWT token.
     """
     return _generate_token({"email": email}, datetime.timedelta(hours=1))
+
 
 def verify_reset_token(token: str) -> Optional[str]:
     """
@@ -136,6 +139,7 @@ def verify_reset_token(token: str) -> Optional[str]:
         return data.get("email")
     return None
 
+
 def generate_confirmation_token(email: str) -> str:
     """
     Generate an account confirmation token for the given email address.
@@ -151,6 +155,7 @@ def generate_confirmation_token(email: str) -> str:
         The generated JWT token.
     """
     return _generate_token({"email": email}, datetime.timedelta(hours=1))
+
 
 def verify_confirmation_token(token: str) -> Optional[str]:
     """

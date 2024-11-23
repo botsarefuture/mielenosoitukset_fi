@@ -6,6 +6,7 @@ from config import Config  # Import the Config class
 
 class DatabaseManager:
     """ """
+
     _instance = None  # Singleton instance
     _lock = Lock()  # Ensure thread-safe initialization
 
@@ -64,7 +65,7 @@ class DatabaseManager:
         Returns
         -------
 
-        
+
         """
         if self.client is None:
             logger.info("MongoDB client not initialized. Initializing now.")

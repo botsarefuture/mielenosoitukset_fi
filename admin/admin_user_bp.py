@@ -40,13 +40,11 @@ def user_control():
         "admin/user/list.html", users=users_cursor, search_query=search_query
     )
 
-USER_ACCESS_LEVELS = {
-    "global_admin": 3,
-    "admin": 2,
-    "user": 1
-}
 
-def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
+USER_ACCESS_LEVELS = {"global_admin": 3, "admin": 2, "user": 1}
+
+
+def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
     """Compare the access levels of two users.
 
     Parameters
@@ -59,12 +57,13 @@ def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
     Returns
     -------
 
-    
+
     """
     if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
         raise ValueError("Invalid user role")
-    
+
     return USER_ACCESS_LEVELS[user1.role] > USER_ACCESS_LEVELS[user2.role]
+
 
 @admin_user_bp.route("/edit_user/<user_id>", methods=["GET", "POST"])
 @login_required
@@ -72,28 +71,28 @@ def compare_user_levels(user1, user2): # Check if the user1 is higher than user2
 @permission_required("EDIT_USER")
 def edit_user(user_id):
     """Edit user details.
-    
+
     Changelog:
     ----------
     v2.5.0:
     - Added permission_required decorator to enforce access control.
     - Added admin_required decorator to enforce global admin access.
     - Added support for user permissions and global permissions.
-    
+
     v2.4.0:
     - Modified to use valid_email instead of depraced is_valid_email
 
     Parameters
     ----------
     user_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     user = User.from_db(mongo.users.find_one({"_id": ObjectId(user_id)}))
     organizations = stringify_object_ids(list(mongo.organizations.find()))
 
@@ -101,10 +100,13 @@ def edit_user(user_id):
         flash_message("Käyttäjää ei löytynyt.", "error")
         return redirect(url_for("admin_user.user_control"))
 
-    # Check if the current user has the right to edit the target user 
+    # Check if the current user has the right to edit the target user
     if user != current_user and compare_user_levels(current_user, user) is False:
-        flash_message("Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.", "error")
-        return redirect(url_for("admin_user.user_control")) 
+        flash_message(
+            "Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.",
+            "error",
+        )
+        return redirect(url_for("admin_user.user_control"))
         # SECURITY: Prevents users from editing users with higher access levels \
         # TODO: #180 Ensure this stops the handling of the request
 
@@ -114,14 +116,16 @@ def edit_user(user_id):
         email = request.form.get("email")
         role = request.form.get("role")
         organization_ids = request.form.getlist("organizations")
-        confirmed = request.form.get("confirmed") == "on" # Check if the user is confirmed
+        confirmed = (
+            request.form.get("confirmed") == "on"
+        )  # Check if the user is confirmed
 
         # Validate user input
-        if not username or not email: # Check if the username and email are provided
+        if not username or not email:  # Check if the username and email are provided
             flash_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        if not valid_email(email): # Check if the email is valid
+        if not valid_email(email):  # Check if the email is valid
             flash_message("Virheellinen sähköpostimuoto.", "error")
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
@@ -131,25 +135,29 @@ def edit_user(user_id):
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # Ensure that users cannot escalate their own role or the role of others to a higher level than their own
-        if USER_ACCESS_LEVELS.get(role, 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
-            flash_message("Et voi korottaa omaa tai toisen käyttäjän roolia korkeammalle kuin oma roolisi.", "error")
+        if USER_ACCESS_LEVELS.get(role, 0) > USER_ACCESS_LEVELS.get(
+            current_user.role, 0
+        ):
+            flash_message(
+                "Et voi korottaa omaa tai toisen käyttäjän roolia korkeammalle kuin oma roolisi.",
+                "error",
+            )
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # Ensure global admins cannot lower their role
         if (
-            user is not None # Check if the user exists
-            and user.role == "global_admin" # Check if the user is a global admin
-            and current_user._id == user_id # Check if the user is editing themselves
-            and role != "global_admin" # Check if the user is trying to lower their role
+            user is not None  # Check if the user exists
+            and user.role == "global_admin"  # Check if the user is a global admin
+            and current_user._id == user_id  # Check if the user is editing themselves
+            and role
+            != "global_admin"  # Check if the user is trying to lower their role
         ):
-            flash_message(
-                "Superkäyttäjät eivät voi alentaa itseään.", "error"
-            )
-            
+            flash_message("Superkäyttäjät eivät voi alentaa itseään.", "error")
+
             return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         print(request.form)
-        
+
         # Collect organizations and permissions
         orgs = [
             {
@@ -197,25 +205,29 @@ def edit_user(user_id):
         user_organizations=user_orgs,
     )
 
+
 class UserOrg:
     """ """
+
     def __init__(self, org_id, user, role, permissions):
         self.org_id = org_id
         self.user = user
         self.role = role
-        self.permissions = permissions # Validate permissions
-        
+        self.permissions = permissions  # Validate permissions
+
     def __str__(self):
         return f"UserOrg({self.org_id}, {self.user}, {self.role}, {self.permissions})"
-    
+
     def to_dict(self):
         """ """
         return {
             "org_id": ObjectId(self.org_id),
-            "role": self.role if self.role in ["global_admin", "admin", "user"] else "user",
-            "permissions": self.permissions
+            "role": (
+                self.role if self.role in ["global_admin", "admin", "user"] else "user"
+            ),
+            "permissions": self.permissions,
         }
-        
+
     @staticmethod
     def from_dict(data):
         """
@@ -223,14 +235,20 @@ class UserOrg:
         Parameters
         ----------
         data :
-            
+
 
         Returns
         -------
 
-        
+
         """
-        return UserOrg(data.get("org_id"), data.get("user"), data.get("role"), data.get("permissions"))
+        return UserOrg(
+            data.get("org_id"),
+            data.get("user"),
+            data.get("role"),
+            data.get("permissions"),
+        )
+
 
 @admin_user_bp.route("/save_user/<user_id>", methods=["POST"])
 @login_required
@@ -238,22 +256,22 @@ class UserOrg:
 @permission_required("EDIT_USER")
 def save_user(user_id):
     """Save updated user details, permissions, and send email notification.
-    
+
     Changelog:
     ----------
-    
+
     v2.4.0:
     - Modified to use valid_email instead of depraced is_valid_email
 
     Parameters
     ----------
     user_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
@@ -292,23 +310,29 @@ def save_user(user_id):
     if not valid_email(email):
         flash_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
-    
+
     # Fetch organization names for notification
     organizations = mongo.organizations.find(
         {"_id": {"$in": [ObjectId(org_id) for org_id in organization_ids]}}
     )
-    
+
     # Use User class for updating stuff
     user.username = username
     user.email = email
     user.role = role
     user.organizations = [
-        UserOrg(org_id, user, "admin", request.form.getlist(f"permissions_{org_id}")).to_dict()
-        for org_id in organization_ids]
-    
-    user.permissions = {org_id: request.form.getlist(f"permissions_{org_id}") for org_id in organization_ids}
+        UserOrg(
+            org_id, user, "admin", request.form.getlist(f"permissions_{org_id}")
+        ).to_dict()
+        for org_id in organization_ids
+    ]
+
+    user.permissions = {
+        org_id: request.form.getlist(f"permissions_{org_id}")
+        for org_id in organization_ids
+    }
     user.confirmed = confirmed
-    
+
     org_names = [org["name"] for org in organizations]
     user.save()
 
@@ -353,22 +377,22 @@ import warnings
 def is_valid_email(email):
     """Deprecated: This function is deprecated and will be removed in future versions.
     Please use `valid_email` from `utils.py` instead.
-    
+
     Usage:
         from utils import valid_email
         is_valid = valid_email(email)
-    
+
     Utility function to validate email format.
 
     Parameters
     ----------
     email :
-        
+
 
     Returns
     -------
 
-    
+
     """
     warnings.warn(
         "is_valid_email is deprecated; use valid_email from ../utils.py instead.",
@@ -389,12 +413,12 @@ def delete_user(user_id):
     Parameters
     ----------
     user_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if user:

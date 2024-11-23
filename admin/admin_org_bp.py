@@ -32,6 +32,7 @@ from utils.logger import logger
 
 email_sender = EmailSender()
 
+
 # Organization control panel
 @admin_org_bp.route("/")
 @login_required
@@ -69,12 +70,12 @@ def construct_query(search_query, org_limiter):
     search_query :
         param org_limiter:
     org_limiter :
-        
+
 
     Returns
     -------
 
-    
+
     """
     query = {}
 
@@ -103,12 +104,12 @@ def edit_organization(org_id):
     Parameters
     ----------
     org_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     log_admin_action(
         current_user, "Edit Organization", f"Editing organization {org_id}"
@@ -140,12 +141,12 @@ def invite_to_organization(invitee_email, organization_id):
     Returns
     -------
 
-    
+
     """
     try:
         organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
         org = Organization.from_dict(organization)
-        
+
         if invitee_email in org.invitations:
             flash_message("Kutsu on jo lähetetty tälle sähköpostiosoitteelle.", "error")
             return
@@ -153,9 +154,12 @@ def invite_to_organization(invitee_email, organization_id):
         if org.is_member(invitee_email):
             flash_message("Käyttäjä on jo jäsen organisaatiossa.", "error")
             return
-        
-        
-        invite_url = url_for('users.user_orgs.accept_invite', organization_id=organization_id, _external=True)
+
+        invite_url = url_for(
+            "users.user_orgs.accept_invite",
+            organization_id=organization_id,
+            _external=True,
+        )
         email_sender.queue_email(
             template_name="invite_to_organization.html",
             subject=f"Kutsu liittyä organisaatioon {get_organization_name(organization_id)}",
@@ -164,15 +168,15 @@ def invite_to_organization(invitee_email, organization_id):
                 "invite_url": invite_url,
                 "inviter_name": current_user.displayname or current_user.username,
                 "organization_name": get_organization_name(organization_id),
-            }
+            },
         )
-        
+
         # Add invitation into db
         mongo.organizations.update_one(
             {"_id": ObjectId(organization_id)},
             {"$addToSet": {"invitations": invitee_email}},
-        ) # Add the email to the invitations list in the organization document.
-        
+        )  # Add the email to the invitations list in the organization document.
+
         flash_message("Kutsu lähetetty onnistuneesti.", "success")
     except Exception as e:
         logger.error(f"Kutsun lähettäminen epäonnistui: {e}")
@@ -185,12 +189,12 @@ def update_organization(org_id):
     Parameters
     ----------
     org_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     name = request.form.get("name")
     email = request.form.get("email")
@@ -220,10 +224,10 @@ def update_organization(org_id):
 
 def validate_organization_fields(name, email, org_id):
     """Validate required fields for organization.
-    
+
     Changelog:
     ----------
-    
+
     v2.4.0:
     - Modified code to use valid_email instead of depraced is_valid_email.
 
@@ -232,16 +236,16 @@ def validate_organization_fields(name, email, org_id):
     name :
         param email:
     org_id :
-        
+
     email :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     if not name or not email:
         flash_message("Nimi ja sähköpostiosoite ovat pakollisia.", "error")
         return False
@@ -267,12 +271,12 @@ def get_social_media_links():
 @permission_required("CREATE_ORGANIZATION")
 def create_organization():
     """Create a new organization.
-    
+
     Changelog:
     ----------
     v2.5.0:
     - Removed gettext as it is not needed here.
-    
+
     v2.4.0:
     - Added validation for organization fields.
     - Added logging for organization creation.
@@ -283,11 +287,13 @@ def create_organization():
     Returns
     -------
 
-    
+
     """
     if request.method == "POST":
         if insert_organization():
-            flash_message("Organisaatio luotu onnistuneesti.") # Removed gettext as it is not needed here.
+            flash_message(
+                "Organisaatio luotu onnistuneesti."
+            )  # Removed gettext as it is not needed here.
             return redirect(url_for("admin_org.organization_control"))
 
     return render_template("admin/organizations/form.html")
@@ -329,12 +335,12 @@ def delete_organization(org_id):
     Parameters
     ----------
     org_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
@@ -369,12 +375,12 @@ def confirm_delete_organization(org_id):
     Parameters
     ----------
     org_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
@@ -387,11 +393,13 @@ def confirm_delete_organization(org_id):
         "admin/organizations/confirm_delete.html", organization=organization
     )
 
+
 # TODO: #174 Add unit tests for all routes and functions.
 # TODO: #175 Implement pagination for the organization control panel.
 # TODO: #176 Add error handling for database operations.
 # TODO: #177 Refactor common code into utility functions.
 # TODO: #179 #178 Improve the user interface for organization forms.
+
 
 @admin_org_bp.route("/invite", methods=["POST"])
 @login_required
@@ -405,6 +413,7 @@ def invite():
     invite_to_organization(invitee_email, ObjectId(organization_id))
     return redirect(url_for("admin_org.organization_control"))
 
+
 @admin_org_bp.route("/view/<org_id>")
 @login_required
 @admin_required
@@ -415,12 +424,12 @@ def view_organization(org_id):
     Parameters
     ----------
     org_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-    return render_template("admin/organizations/view.html", organization=organization)    
+    return render_template("admin/organizations/view.html", organization=organization)

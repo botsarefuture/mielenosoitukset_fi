@@ -32,8 +32,10 @@ def recu_demo_control():
 
     # Construct query based on approval status
     query = {"approved": approved_status} if approved_status else {}
-    recurring_demos = [RecurringDemonstration.from_dict(recudemo) for recudemo in list(mongo.recu_demos.find(query))] #  .recu_demos.find(query)
-    
+    recurring_demos = [
+        RecurringDemonstration.from_dict(recudemo)
+        for recudemo in list(mongo.recu_demos.find(query))
+    ]  #  .recu_demos.find(query)
 
     # Filter based on search query and date
     filtered_recurring_demos = [
@@ -74,7 +76,7 @@ def create_recu_demo():
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
         city_list=CITY_LIST,
-        all_organizations=list(mongo.organizations.find())
+        all_organizations=list(mongo.organizations.find()),
     )
 
 
@@ -84,7 +86,7 @@ def create_recu_demo():
 @permission_required("EDIT_RECURRING_DEMO")
 def edit_recu_demo(demo_id):
     """Edit recurring demonstration details.
-    
+
     Changelog:
     ---------
     v2.4.0:
@@ -93,12 +95,12 @@ def edit_recu_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
@@ -135,7 +137,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     Returns
     -------
 
-    
+
     """
     title = request.form.get("title")
     date = request.form.get("date")
@@ -161,7 +163,9 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             break
         website = request.form.get(f"organizer_website_{i}")
         email = request.form.get(f"organizer_email_{i}")
-        organizers.append(Organizer(name=name, email=email, website=website, organization_id=_id))
+        organizers.append(
+            Organizer(name=name, email=email, website=website, organization_id=_id)
+        )
 
     # Get the repeat schedule details
     repeat_schedule = {
@@ -193,7 +197,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     for organizer in demonstration_data["organizers"]:
         if "organization_id" in organizer:
             organizer["organization_id"] = ObjectId(organizer["organization_id"])
-    
+
     try:
         if is_edit:
             mongo.recu_demos.update_one(
@@ -231,12 +235,12 @@ def delete_recu_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
@@ -259,7 +263,7 @@ def delete_recu_demo(demo_id):
 @permission_required("DELETE_RECURRING_DEMO")
 def confirm_delete_recu_demo(demo_id):
     """Render a confirmation page before deleting a recurring demonstration.
-    
+
     Changelog:
     ----------
     v2.4.0:
@@ -268,12 +272,12 @@ def confirm_delete_recu_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 

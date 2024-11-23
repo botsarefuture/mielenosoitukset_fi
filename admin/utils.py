@@ -21,16 +21,16 @@ def get_org_name(org_id: str) -> str:
     org_id :
         str:
     org_id : str :
-        
+
     org_id : str :
-        
+
     org_id: str :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -54,16 +54,16 @@ def get_org_details(org_id: str) -> Organization:
     org_id :
         str:
     org_id : str :
-        
+
     org_id : str :
-        
+
     org_id: str :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -92,22 +92,22 @@ def log_admin_action(user, action: str, details: str):
     details :
         str:
     action : str :
-        
+
     details : str :
-        
+
     action : str :
-        
+
     details : str :
-        
+
     action: str :
-        
+
     details: str :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         mongo.admin_logs.insert_one(

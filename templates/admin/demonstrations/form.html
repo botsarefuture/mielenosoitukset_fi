@@ -211,7 +211,7 @@
                 <option value="">{{ _('Valitse järjestö') }}</option>
                 {% if current_user.global_admin %}
                 {% for organization in all_organizations %}
-                <option value="{{ organization.org_id }}">{{ organization.name }}</option>
+                <option value="{{ organization._id }}">{{ organization.name }}</option>
                 {% endfor %}
                 {% else %}
                 {% for organization in current_user.organizations %}

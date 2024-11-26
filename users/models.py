@@ -456,8 +456,6 @@ class User(UserMixin):
         if isinstance(user_id, User):  # Check if the user_id is a User object
             return self.is_following(user_id.id)  # If it is, check the user_id's id
 
-        print(self.following, user_id, user_id in self.following)
-
         return user_id in self.following
 
     def ban_user(self):

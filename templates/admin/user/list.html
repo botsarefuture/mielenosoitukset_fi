@@ -80,9 +80,15 @@
         }
     }
 </style>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/deleteModal.css') }}"
+/>
 
 {% endblock %}
 {% block main_content %}
+<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
+
 
 <div class="table-container">
     <h2 id="tabletitle">Käyttäjät</h2>
@@ -111,7 +117,7 @@
         </thead>
         <tbody>
             {% for user in users %}
-            <tr>
+            <tr id="user-{{ user._id }}">
                 <td>{{ user.displayname or user.username }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.role }}</td>
@@ -121,7 +127,15 @@
                     <a href="{{ url_for('admin_user.edit_user', user_id=user._id) }}" class="button edit-button"><i class="fas fa-edit"></i> {{ _('Muokkaa') }}</a>
                     {% endif %}
                     {% if current_user.has_permission("DELETE_USER") %}
-                    <button onclick="alert('this feature is not ready');" class="button delete-button"><i class="fas fa-trash-alt"></i> {{ _('Poista') }}</button>
+                    <button
+              style="width: 132px !important"
+              type="button"
+              class="delete-button button"
+              onclick="openModal(event, '{{ user.displayname and user.username or user.username }}', '{{ user._id }}', 'user')"
+            >
+              <i class="fas fa-trash-alt"></i
+              ><span class="delete-text">{{ _('Poista') }}</span>
+            </button>
                     {% endif %}
                     {% else %}
                     <div class="insufficient-perm" style="color: #ccc">{{ _('Ei riittäviä oikeuksia.') }}</div>
@@ -137,4 +151,24 @@
     </div>
     {% endif %}
 </div>
+
+
+<div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3>{{ _('Poista käyttäjä') }}</h3>
+      <p>
+        {{ _('Oletko varma, että haluat poistaa käyttäjän') }}
+        <strong id="userTitle"></strong>?
+      </p>
+      <div class="button-container">
+        <button type="button" class="button delete-confirm" id="confirmDelete">
+          {{ _('Kyllä, poista') }}
+        </button>
+        <button type="button" class="button" onclick="closeModal()">
+          {{ _('Peruuta') }}
+        </button>
+      </div>
+    </div>
+  </div>
 {% endblock %}

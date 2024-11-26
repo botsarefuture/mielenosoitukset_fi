@@ -48,8 +48,16 @@ login_manager.login_view = "users.auth.login"
 from .utils import AdminActParser, log_admin_action_V2
 @admin_bp.before_request
 def log_request_info():
-    """Log request information before handling it."""
-    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+    try:
+        """Log request information before handling it."""
+        if current_user and current_user is not None:
+            log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+        else:
+            log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, {}))
+    except Exception as e:
+        logger.error(e)
+        pass
+
 
 
 class DemoViewCount:
@@ -110,42 +118,6 @@ def load_user(user_id):
     """
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     return User.from_db(user_doc) if user_doc else None
-
-
-# Admin logout route
-@admin_bp.route("/logout")
-@login_required
-def admin_logout():
-    """Handle admin logout and log the action.
-
-    This function is deprecated as of version 2.4.0 and will be
-    removed in version 2.5.0. Please use the `logout` function
-    from `auth` instead.
-
-    Changelog:
-    ----------
-    v2.4.0:
-    - Depraced this function.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-
-    """
-    # Raise a deprecation warning
-    warnings.warn(
-        "admin_logout is deprecated as of version 2.4.0 and will be removed in version 2.5.0. "
-        "Please use the `logout` function from `project.root.auth` instead.",
-        DeprecationWarning,
-    )
-
-    username = current_user.username
-    logout_user()
-    logger.info(f"User {username} logged out successfully.")
-    return redirect(url_for("users.auth.login"))
 
 
 # Admin dashboard
@@ -232,11 +204,16 @@ def api_logs():
     dict
         A dictionary containing the logs and pagination info
     """
-    page = int(request.args.get("page", 1))
-    per_page = int(request.args.get("per_page", 20))
-    logs = get_admin_activity(page, per_page)
-    total_logs = mongo.admin_logs.count_documents({})
-    total_pages = (total_logs + per_page - 1) // per_page
+    try:
+        page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 20))
+        logs = get_admin_activity(page, per_page)
+        total_logs = mongo.admin_logs.count_documents({})
+        total_pages = (total_logs + per_page - 1) // per_page
+        
+    except Exception as e:
+        logger.error(e)
+        raise Exception from e
 
     return {
         "logs": logs,

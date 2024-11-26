@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 from bson import ObjectId
 from .BaseModel import BaseModel
 from users.models import User
+from utils.logger import logger
 
 
 class AdminActivity(BaseModel):
@@ -35,14 +36,14 @@ class AdminActivity(BaseModel):
         _id : ObjectId, optional
             The unique identifier for the activity. Defaults to None.
         """
-        self.user_id = user_id
-        self.email = email
-        self.action = action
-        self.details = details
-        self.timestamp = timestamp or datetime.utcnow()
-        self.date_time = self.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        self._user_id = user_id
+        self._email = email
+        self._action = action
+        self._details = details
+        self._timestamp = timestamp or datetime.utcnow()
+        self._date_time = self._timestamp.strftime("%Y-%m-%d %H:%M:%S")
         self._id = _id or ObjectId()
-        self.by = User.from_OID(user_id)
+        self._by = User.from_OID(user_id)
 
     def to_dict(self, json=False) -> Dict[str, Any]:
         """
@@ -59,8 +60,18 @@ class AdminActivity(BaseModel):
             A dictionary representation of the AdminActivity instance.
         """
         data = super().to_dict(json=json)
-
-        data["by"] = self.by.to_dict(json=json)
+        try:
+            data.update({
+                "user_id": str(self._user_id),
+                "email": self._email,
+                "action": self._action,
+                "details": self._details,
+                "timestamp": self._timestamp.isoformat() if json else self._timestamp,
+                "_id": str(self._id),
+                "by": self._by.to_dict(json=json)
+            })
+        except Exception as e:
+            logger.error(e)
         return data
 
     @classmethod
@@ -79,11 +90,11 @@ class AdminActivity(BaseModel):
             An instance of the AdminActivity class.
         """
         return cls(
-            user_id=ObjectId(data["user_id"]),
-            email=data["email"],
-            action=data["action"],
-            details=data["details"],
-            timestamp=data.get("timestamp"),
+            user_id=ObjectId(data["user"]["id"]),
+            email=data["user"]["email"],
+            action=data["request"],
+            details="",
+            timestamp=datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") and isinstance(data.get("timestamp"), str) else None,
             _id=ObjectId(data["_id"]) if data.get("_id") else None,
         )
 

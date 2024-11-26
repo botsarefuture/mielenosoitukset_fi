@@ -21,6 +21,7 @@ DEMO_FILTER : dict
 from bson.objectid import ObjectId
 from datetime import datetime
 from database_manager import DatabaseManager
+from users.models import User
 
 DEMO_FILTER = {"approved": True, "$or": [{"hide": {"$exists": False}}, {"hide": False}]}
 
@@ -70,6 +71,8 @@ def stringify_object_ids(data):
         return str(data)
     elif isinstance(data, datetime):
         return data.strftime("%d.%m.%Y")  # Convert datetime to Finnish date format
+    elif isinstance(data, User):
+        return data.to_dict(True)
     else:
         return data
 

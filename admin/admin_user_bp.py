@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 
 from users.models import User
@@ -410,27 +410,60 @@ def is_valid_email(email):
 
 
 # Delete user
-@admin_user_bp.route("/delete_user/<user_id>", methods=["POST"])
+@admin_user_bp.route("/delete_user", methods=["POST"])
 @login_required
 @admin_required
 @permission_required("DELETE_USER")
-def delete_user(user_id):
+def delete_user():
     """Delete a user from the system.
-
-    Parameters
-    ----------
-    user_id :
-
 
     Returns
     -------
-
-
+    response : flask.Response
+        A JSON response or a redirect to the user control panel.
     """
-    user = mongo.users.find_one({"_id": ObjectId(user_id)})
-    if user:
-        mongo.users.delete_one({"_id": ObjectId(user_id)})
-        flash_message("Käyttäjä poistettu onnistuneesti.", "approved")
+    json_mode = request.headers.get("Content-Type") == "application/json"
+
+    # Extract user_id from either form data or JSON body
+    user_id = request.form.get("user_id") or (
+        request.json.get("user_id") if json_mode else None
+    )
+
+    if not user_id:
+        error_message = "Käyttäjän tunniste puuttuu."
+        return (
+            jsonify({"status": "ERROR", "message": error_message})
+            if json_mode
+            else redirect(url_for("admin_user.user_control"))
+        )
+
+    # Fetch the user from the database
+    user_data = mongo.users.find_one({"_id": ObjectId(user_id)})
+
+    if not user_data:
+        error_message = "Käyttäjää ei löydy."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        else:
+            flash_message(error_message, "error")
+            return redirect(url_for("admin_user.user_control"))
+
+    # Check if the current user has the right to delete the target user
+    target_user = User.from_db(user_data)
+    if compare_user_levels(current_user, target_user) is False:
+        error_message = "Et voi poistaa käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        else:
+            flash_message(error_message, "error")
+            return redirect(url_for("admin_user.user_control"))
+
+    # Perform deletion
+    mongo.users.delete_one({"_id": ObjectId(user_id)})
+
+    success_message = "Käyttäjä poistettu onnistuneesti."
+    if json_mode:
+        return jsonify({"status": "OK", "message": success_message})
     else:
-        flash_message("Käyttäjää ei löydy.", "error")
-    return redirect(url_for("admin_user.user_control"))
+        flash_message(success_message, "approved")
+        return redirect(url_for("admin_user.user_control"))

@@ -92,14 +92,17 @@
                 // here assign to that activity element, the whole activity json object as a string
                 activityElement.setAttribute('data-activity', JSON.stringify(activity));
                 activityElement.innerHTML = `
-                    <activity-title><i class="fas fa-tasks"></i> ${activity.action}</activity-title>
+                    <activity-title><i class="fas fa-tasks"></i> ${activity.action.method} ${activity.action.url}</activity-title>
                     <activity-content>
-                        <aby><i class="fas fa-user"></i> ${activity.by.displayname||activity.by.username}</aby>
-                        <atime><i class="fas fa-clock"></i> ${activity.date_time}</atime>
+                        <aby style="display: flex; align-items: center;">
+                            ${activity.by.profile_picture ? `<img src="${activity.by.profile_picture}" style="width: 1.5em; height: 1.5em; border-radius: 50px; margin-right: 0.5em;">` : '<i class="fas fa-user" style="margin-right: 0.5em;"></i>'} 
+                            ${activity.by.displayname || activity.by.username}
+                        </aby>
+                        <atime><i class="fas fa-clock"></i> ${activity.timestamp}</atime>
                         <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('View More') }}</aaction>
                     </activity-content>
                     <activity-extra>
-                        <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${activity.ip_address}</aip>
+                        <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${activity.action.remote_addr}</aip>
                         <asession><i class="fas fa-user-secret"></i> {{ _('Session') }}: ${activity.session_id}</asession>
                     </activity-extra>
                 `;

@@ -1,4 +1,6 @@
 from utils.database import stringify_object_ids
+from bson import ObjectId
+from users.models import User
 
 
 class BaseModel:
@@ -37,7 +39,14 @@ class BaseModel:
         data = self.__dict__.copy()
         if json and "_id" in data:
             data["_id"] = str(data["_id"])
-
+        if json and any(isinstance(value, ObjectId) for value in data.values()) or  any(isinstance(value, User) for value in data.values()):
+            for key, value in data.items():
+                if isinstance(value, ObjectId):
+                    data[key] = str(value)
+                
+                if isinstance(value, User):
+                    data[key] = value.to_dict()
+                    
         if json:
             # Replace None with None-equivalent in JSON format
             data = stringify_object_ids(data)

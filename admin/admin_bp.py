@@ -46,6 +46,7 @@ login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
 
 from .utils import AdminActParser, log_admin_action_V2
+
 @admin_bp.before_request
 def log_request_info():
     try:
@@ -154,35 +155,43 @@ def get_admin_activity(page=1, per_page=20):
 @login_required
 @admin_required
 def stats():
-    """Render statistics page with user and organization data."""
-    total_users = mongo.users.count_documents({})
-    active_users = mongo.users.count_documents({"confirmed": True})
-    total_organizations = mongo.organizations.count_documents({})
+    """Render statistics page with user and organization data.
 
-    # Count users by role
-    role_counts = get_user_role_counts()
+    Returns
+    -------
+    str
+        Rendered HTML template for the statistics page
+    """
+    try:
+        total_users = mongo.users.count_documents({})
+        active_users = mongo.users.count_documents({"confirmed": True})
+        total_organizations = mongo.organizations.count_documents({})
 
-    data = get_demo_views()
-    data = count_per_demo(data)
+        # Count users by role
+        role_counts = get_user_role_counts()
 
-    # Render statistics template
-    return render_template(
-        "admin/stats.html",
-        total_users=total_users,
-        total_organizations=total_organizations,
-        role_counts=role_counts,
-        active_users=active_users,
-        data=data,
-        recent_activity=get_admin_activity(),
-    )
+        data = get_demo_views()
+        data = count_per_demo(data)
+
+        # Render statistics template
+        return render_template(
+            "admin/stats.html",
+            total_users=total_users,
+            total_organizations=total_organizations,
+            role_counts=role_counts,
+            active_users=active_users,
+            data=data
+        )
+    except Exception as e:
+        logger.error(f"Error rendering stats page: {e}")
+        flash_message("An error occurred while loading statistics.", "danger")
+        return redirect(url_for("admin.admin_dashboard"))
 
 @admin_bp.route("/logs")
 @login_required
 @admin_required
 @permission_required("VIEW_LOGS")
 def logs():
-    # the admin logs are get via: get_admin_activity()
-    # there is thousands of actions, so somehow stream it idk
     return render_template("admin/logs.html")
 
 @admin_bp.route("/api/logs")

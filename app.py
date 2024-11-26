@@ -14,6 +14,7 @@ from scripts.update_demo_organizers import main as update_main
 from scripts.in_past import hide_past
 from utils.analytics import prep
 import sys
+from AM import am_bp
 
 
 from utils import VERSION
@@ -107,6 +108,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_org_bp)
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    app.register_blueprint(am_bp.am_bp, url_prefix="/am/")
 
     # Import and initialize routes
     import basic_routes

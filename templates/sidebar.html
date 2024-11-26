@@ -51,7 +51,6 @@
             </li>
             {% endif %}
             {% if current_user.has_permission("VIEW_ANALYTICS") %}
-            <meter value="0.6">60%</meter>
             <li>
                 <a href="{{ url_for('admin.stats') }}">
                     <span class="icon"><i class="fas fa-chart-line"></i></span> {{ _('Tilastot') }}

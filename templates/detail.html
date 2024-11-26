@@ -155,26 +155,26 @@
           "Content-Type": "application/json",
         },
       })
-      .then((response) => response.json())
-      .then((data) => {
-        document.getElementById("like-count").innerText = data.likes;
-        liked = !liked;
-        document.cookie = `liked_${demoId}=${liked}; path=/`;
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("like-count").innerText = data.likes;
+          liked = !liked;
+          document.cookie = `liked_${demoId}=${liked}; path=/`;
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
     }
 
     function get_likes(demoId) {
       fetch(`/api/demo/${demoId}/likes`)
-      .then((response) => response.json())
-      .then((data) => {
-        document.getElementById("like-count").innerText = data.likes;
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
+        .then((response) => response.json())
+        .then((data) => {
+          document.getElementById("like-count").innerText = data.likes;
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -202,7 +202,7 @@
     </ul>
   </div>
 
-  
+
 
   {% if demo['description'] %}
   <div class="container" style="
@@ -335,12 +335,14 @@
         nameParagraph.innerHTML = `<strong>{{ _('Nimi:') }}</strong><br />${org.name}`;
         organizerDiv.appendChild(nameParagraph);
 
-        if (org.organization_id) {
+        if (org.organization_id && org.organization_id !== "None") {
           const profileLink = document.createElement("a");
-          profileLink.href = org.url;
+          profileLink.href = org.url || '#';
           profileLink.classList.add("org-profile-link");
           profileLink.innerText = "{{ _('Mielenosoitukset.fi -profiili') }}";
-          organizerDiv.appendChild(profileLink);
+          if (org.url) {
+            organizerDiv.appendChild(profileLink);
+          }
         }
 
         if (org.website) {
@@ -380,7 +382,7 @@
           <p><strong>{{ _('Päivämäärä:') }}</strong><br />${demo.date}</p>
           <p><strong>{{ _('Alkaa klo:') }}</strong><br />${demo.start_time}</p>
           <p><strong>{{ _('Päättyy klo:') }}</strong><br />${demo.end_time}</p>
-          <p><strong>{{ _('Alkupaikka:') }}</strong><br />${demo.address}, ${demo.city}</p>
+          <p><strong>${demo.type === "MARCH" ? "{{ _('Alkupaikka:') }}" : "{{ _('Sijainti:') }}"}</strong><br />${demo.address}, ${demo.city}</p>
       `;
 
     if (demo.route && demo.route !== "None") {
@@ -392,7 +394,7 @@
     }
 
     if (demo.facebook) {
-      detailsHTML += `<a href="${demo.facebook}" target="_blank" class="facebook-button">{{ _('Facebook-tapahtuma') }}</a>`;
+      detailsHTML += `<a class="action-button facebook-button" href="${demo.facebook}" target="_blank" class="facebook-button">{{ _('Facebook-tapahtuma') }} <i class="fas fa-external-link-alt"></i></a>`;
     }
 
     demoDetailsDiv.innerHTML = detailsHTML;

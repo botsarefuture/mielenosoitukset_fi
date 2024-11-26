@@ -2,27 +2,27 @@ import logging
 from logging.handlers import SMTPHandler
 from config import Config
 
+
 def setup_logger():
     """Sets up the logger for the Mielenosoitukset.fi application.
-    
+
     This function configures the logging settings based on the DEBUG flag in the Config class.
     It sets the logging level, formats the log messages, and adds handlers for console output
     and email notifications for critical errors in production.
-    
+
     Returns
     -------
     logging.Logger: The configured logger instance.
 
-           
+
     """
-    
+
     # Set the logging level based on the DEBUG flag in Config
     log_level = logging.DEBUG if Config.DEBUG else logging.INFO
 
     # Configure logging format
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", 
-        "%Y-%m-%d %H:%M:%S"
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S"
     )
 
     # Create a logger instance
@@ -50,6 +50,7 @@ def setup_logger():
         logger.addHandler(email_handler)
 
     return logger
+
 
 # Initialize the logger
 logger = setup_logger()

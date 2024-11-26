@@ -11,11 +11,12 @@ from database_manager import DatabaseManager
 db = DatabaseManager().get_instance()
 mongo = db.get_db()
 
-VALID_WINDOW = 5 # TODO: #226 Move this to a configuration file
+VALID_WINDOW = 5  # TODO: #226 Move this to a configuration file
+
 
 class User(UserMixin):
     """User class represents a user in the system with various attributes and methods to manage user data and interactions."""
-    
+
     def __init__(
         self,
         user_id,
@@ -63,12 +64,12 @@ class User(UserMixin):
         Parameters
         ----------
         user_doc :
-            
+
 
         Returns
         -------
 
-        
+
         """
         global_admin = user_doc.get("global_admin", False)
         if user_doc.get("role") == "global_admin":
@@ -96,18 +97,48 @@ class User(UserMixin):
             mfa_enabled=user_doc.get("mfa_enabled", False),  # Fetch MFA status
         )
 
+    @staticmethod
+    def from_OID(user_id: ObjectId):
+        """Create a User instance from a database document.
+
+        Parameters
+        ----------
+        user_id : ObjectId
+            User ID to fetch from the database
+
+
+        Returns
+        -------
+        User : User
+            User instance created from the database document
+
+
+        """
+        if isinstance(user_id, str):
+            # Convert the string to an ObjectId, and for security reasons, also redirect
+            logger.warning("User ID is a string. Converting to ObjectId.")
+            return User.from_OID(ObjectId(user_id))
+
+        user_doc = mongo.users.find_one({"_id": user_id})
+        # If the Cursor object has no data, return None
+        if not user_doc:
+            logger.error("User not found.")
+            raise ValueError("User not found.")
+
+        return User.from_db(user_doc)
+
     def check_password(self, password):
         """Verify the provided password against the stored password hash.
 
         Parameters
         ----------
         password :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return check_password_hash(self.password_hash, password)
 
@@ -128,14 +159,14 @@ class User(UserMixin):
         bio :
             Default value = None)
         password :
-            
+
         displayname :
             (Default value = None)
 
         Returns
         -------
 
-        
+
         """
         password_hash = generate_password_hash(password)
         return {
@@ -171,12 +202,12 @@ class User(UserMixin):
         Returns
         -------
 
-        
+
         """
         if organization_id is None:
             logger.error("Organization ID is required to add organization.")
             return
-        
+
         # Check if the organization already exists in the user's organizations
         existing_org = next(
             (org for org in self.organizations if org["org_id"] == organization_id),
@@ -190,10 +221,9 @@ class User(UserMixin):
                     "role": role,
                     "permissions": permissions or [],
                 }
-            ) # Add the organization to the user's organizations
+            )  # Add the organization to the user's organizations
             # TODO: #199 A class for representing organizations  and roles would be better
-            
-            
+
         else:
             existing_org["role"] = role
             existing_org["permissions"] = permissions or existing_org.get(
@@ -209,12 +239,12 @@ class User(UserMixin):
         Parameters
         ----------
         organization_id :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return any(org["org_id"] == str(organization_id) for org in self.organizations)
 
@@ -224,12 +254,12 @@ class User(UserMixin):
         Parameters
         ----------
         new_password :
-            
+
 
         Returns
         -------
 
-        
+
         """
         new_password_hash = generate_password_hash(new_password)
         self.password_hash = new_password_hash
@@ -243,12 +273,12 @@ class User(UserMixin):
         Parameters
         ----------
         displayname :
-            
+
 
         Returns
         -------
 
-        
+
         """
         self.displayname = displayname
         self.save()
@@ -260,12 +290,12 @@ class User(UserMixin):
         Parameters
         ----------
         profile_picture :
-            
+
 
         Returns
         -------
 
-        
+
         """
         self.profile_picture = profile_picture
         self.save()
@@ -277,12 +307,12 @@ class User(UserMixin):
         Parameters
         ----------
         bio :
-            
+
 
         Returns
         -------
 
-        
+
         """
         self.bio = bio
         self.save()
@@ -298,14 +328,12 @@ class User(UserMixin):
         Returns
         -------
 
-        
+
         """
         data = self.to_dict()
         del data["_id"]  # Remove the _id field from the data
-        
-        mongo.users.update_one(
-            {"_id": ObjectId(self._id)}, {"$set": data}, upsert=True
-        )
+
+        mongo.users.update_one({"_id": ObjectId(self._id)}, {"$set": data}, upsert=True)
 
     def to_dict(self, json=False):
         """Convert the User object to a dictionary for database storage.
@@ -318,20 +346,20 @@ class User(UserMixin):
         Returns
         -------
 
-        
+
         """
         data = self.__dict__.copy()
         if json and "_id" in data:
             data["_id"] = str(data["_id"])
-            
+
         # If user organizations has ObjectId, stringiyf
         for org in data.get("organizations", []):
             if isinstance(org.get("org_id"), ObjectId):
                 org["org_id"] = str(org["org_id"])
-        
+
         # dont include the MFA in the dict
         del data["mfa"]
-        
+
         return data
 
     def follow_user(self, user_id_to_follow):
@@ -340,16 +368,18 @@ class User(UserMixin):
         Parameters
         ----------
         user_id_to_follow :
-            
+
 
         Returns
         -------
 
-        
+
         """
-        if isinstance(user_id_to_follow, User): # Check if the user_id_to_follow is a User object
+        if isinstance(
+            user_id_to_follow, User
+        ):  # Check if the user_id_to_follow is a User object
             user_id_to_follow = user_id_to_follow.id
-            
+
         if user_id_to_follow not in self.following:
             self.following.append(user_id_to_follow)
             self.save()
@@ -361,12 +391,12 @@ class User(UserMixin):
         Parameters
         ----------
         user_id_to_unfollow :
-            
+
 
         Returns
         -------
 
-        
+
         """
         if user_id_to_unfollow in self.following:
             self.following.remove(user_id_to_unfollow)
@@ -388,9 +418,9 @@ class User(UserMixin):
         Returns
         -------
 
-        
+
         """
-        
+
         # Check global permissions first
         if permission in self.global_permissions:
             return True
@@ -415,19 +445,17 @@ class User(UserMixin):
         Parameters
         ----------
         user_id :
-            
+
 
         Returns
         -------
 
-        
-        """
-        
-        if isinstance(user_id, User): # Check if the user_id is a User object
-            return self.is_following(user_id.id) # If it is, check the user_id's id
 
-        print(self.following, user_id, user_id in self.following)
-        
+        """
+
+        if isinstance(user_id, User):  # Check if the user_id is a User object
+            return self.is_following(user_id.id)  # If it is, check the user_id's id
+
         return user_id in self.following
 
     def ban_user(self):
@@ -457,44 +485,50 @@ class User(UserMixin):
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin}, banned={self.banned}, mfa_enabled={self.mfa_enabled})>"
 
+    def __str__(self):
+        return self.displayname or self.username
+
+
 class _2faToken:
     """ """
+
     def __init__(self, token, user_id):
         self.token = token
         self.user_id = user_id
-    
+
     def __repr__(self):
         return f"<2faToken(user_id={self.user_id})>"
 
     def generate_token(self):
         """Generate a new 2FA token."""
         ...
-    
+
     def check_token(self, token):
         """Check if the provided token matches the stored token.
 
         Parameters
         ----------
         token :
-            
+
 
         Returns
         -------
 
-        
+
         """
         ...
 
+
 class MFAToken:
     """We have this kind of data sctructure for MFA tokens.
-    
+
     {
         '_id': ObjectId('_id here'),
         'user_id': ObjectId('userid here'),
         'secret': 'secret here',
         'created_at': datetime.datetime(2022, 1, 1, 0, 0),
         'in_use': True
-    
+
     }
 
     Parameters
@@ -503,15 +537,16 @@ class MFAToken:
     Returns
     -------
 
-    
+
     """
+
     def __init__(self, user_id, secret):
         self.user_id = user_id
         self.secret = secret
         self.created_at = datetime.datetime.now()
         self.in_use = True
         self.totp = pyotp.TOTP(secret)
-    
+
     def __repr__(self):
         return f"<MFAToken(user_id={self.user_id})>"
 
@@ -521,22 +556,24 @@ class MFAToken:
         Parameters
         ----------
         token :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return self.totp.verify(token, valid_window=VALID_WINDOW)
-    
+
+
 class UserMFA:
     """ """
+
     def __init__(self, user_id) -> None:
         self.user_id = user_id
         self.secrets = self.get_secrets()
         self.secrets_ = [MFAToken(user_id, secret) for secret in self.secrets]
-    
+
     def get_secrets(self):
         """ """
         mfas = mongo.mfas.find({"user_id": ObjectId(self.user_id)})
@@ -548,53 +585,50 @@ class UserMFA:
         Parameters
         ----------
         token :
-            
+
 
         Returns
         -------
 
-        
+
         """
         for secret in self.secrets_:
             if secret.check_token(token):
                 return True
-        
+
         return False
-    
+
     def add_secret(self, secret):
         """
 
         Parameters
         ----------
         secret :
-            
+
 
         Returns
         -------
 
-        
+
         """
         mongo.mfas.insert_one({"user_id": ObjectId(self.user_id), "secret": secret})
         self.secrets.append(secret)
         self.secrets_.append(MFAToken(self.user_id, secret))
-    
+
     def generate_secret(self):
         """ """
         secret = pyotp.random_base32()
         self.add_secret(secret)
         return secret
-    
+
     def to_dict(self):
         """ """
-        return {
-            "user_id": ObjectId(self.user_id),
-            "secrets": self.secrets
-        }
-    
-    
+        return {"user_id": ObjectId(self.user_id), "secrets": self.secrets}
+
 
 class AnonymousUser(AnonymousUserMixin):
     """ """
+
     def __init__(self):
         self.id = None
         self.username = "Anonymous"
@@ -625,12 +659,12 @@ class AnonymousUser(AnonymousUserMixin):
         permissions :
             Default value = None)
         organization_id :
-            
+
 
         Returns
         -------
 
-        
+
         """
         logger.critical(
             f"Trying to add organization to AnonymousUser"
@@ -642,12 +676,12 @@ class AnonymousUser(AnonymousUserMixin):
         Parameters
         ----------
         organization_id :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return False
 
@@ -659,12 +693,12 @@ class AnonymousUser(AnonymousUserMixin):
         db :
             param new_password:
         new_password :
-            
+
 
         Returns
         -------
 
-        
+
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
@@ -677,12 +711,12 @@ class AnonymousUser(AnonymousUserMixin):
         db :
             param displayname:
         displayname :
-            
+
 
         Returns
         -------
 
-        
+
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
@@ -695,12 +729,12 @@ class AnonymousUser(AnonymousUserMixin):
         db :
             param profile_picture:
         profile_picture :
-            
+
 
         Returns
         -------
 
-        
+
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
@@ -713,12 +747,12 @@ class AnonymousUser(AnonymousUserMixin):
         db :
             param bio:
         bio :
-            
+
 
         Returns
         -------
 
-        
+
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
@@ -731,12 +765,12 @@ class AnonymousUser(AnonymousUserMixin):
         db :
             param user_id_to_follow:
         user_id_to_follow :
-            
+
 
         Returns
         -------
 
-        
+
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
@@ -749,12 +783,12 @@ class AnonymousUser(AnonymousUserMixin):
         db :
             param user_id_to_unfollow:
         user_id_to_unfollow :
-            
+
 
         Returns
         -------
 
-        
+
         """
         # FIXME: This method should not be implemented for AnonymousUser
         ...
@@ -767,12 +801,12 @@ class AnonymousUser(AnonymousUserMixin):
         organization_id :
             param permission:
         permission :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return False
 
@@ -782,12 +816,12 @@ class AnonymousUser(AnonymousUserMixin):
         Parameters
         ----------
         permission :
-            
+
 
         Returns
         -------
 
-        
+
         """
         warnings.warn(
             "can_use is deprecated and will be removed in a future release. "
@@ -815,53 +849,56 @@ class AnonymousUser(AnonymousUserMixin):
         Parameters
         ----------
         user_id :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return False
 
     def __repr__(self):
         return f"<AnonymousUser(username={self.username})>"
 
+
 class X:
     """Class X that handles dynamic method and attribute access."""
+
     # THIS IS A VIRUS
     # DO NOT RUN THIS CODE
     # IT WILL PRINT A LOT OF MESSAGES
     # AND POTENTIALLY BREAK YOUR CODE
-    
+
     # YOU HAVE BEEN WARNED
     # DO NOT RUN THIS CODE
     # IT WILL PRINT A LOT OF MESSAGES
-    
+
     # If this is initted or imported, shutdown the computer
-    
+
     def __new__(cls):
 
-        print("You have been infected by the X class virus. Please remove this code immediately.")
+        print(
+            "You have been infected by the X class virus. Please remove this code immediately."
+        )
         print("Shutting down the computer is adviced to prevent further damage.")
         print("Goodbye.")
         try:
             while True:
                 print("...")
-        
-        
+
         except KeyboardInterrupt:
             if os.name == "nt":
                 os.system("shutdown /s /t 1")
-            
+
             if os == "posix":
                 os.system("shutdown now")
-            
+
             if os == "darwin":
                 os.system("shutdown -h now")
-        
-        sys.exit()   
-    
+
+        sys.exit()
+
     def __init__(self):
         pass
 
@@ -878,8 +915,10 @@ class X:
         method : function
             A function that prints the method name and arguments.
         """
+
         def method(*args, **kwargs):
             print(f"Called method {name} with args: {args} and kwargs: {kwargs}")
+
         return method
 
     def __setattr__(self, name, value):
@@ -941,18 +980,18 @@ class X:
             The user-friendly string representation of the object.
         """
         return "X class"
-    
-class Y():
+
+
+class Y:
     """
     Class Y that does nothing, but is here to shut shit down when Project2029's red alert is activated
-    
-    
+
+
     """
-    
+
     def __init__(self):
         pass
-    
-    
+
     def activate_red_alert(self):
         """Activate red alert for Project2029."""
         print("Red alert activated. Shutting down the system.")

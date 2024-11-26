@@ -5,7 +5,6 @@ import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
 from flask_babel import _, refresh
-
 from flask import (
     render_template,
     redirect,
@@ -15,21 +14,19 @@ from flask import (
     Response,
     get_flashed_messages,
     jsonify,
-    session
+    session,
 )
 from flask_login import current_user
-
 from bson.objectid import ObjectId
-
 from utils.s3 import upload_image
-from classes import Organizer, Demonstration, Organization
+from utils.classes import Organizer, Demonstration, Organization
 from database_manager import DatabaseManager
 from emailer.EmailSender import EmailSender
 from utils.variables import CITY_LIST
 from utils.flashing import flash_message
 from utils.database import DEMO_FILTER
 from utils.analytics import log_demo_view
-from wrappers import permission_required
+from utils.wrappers import permission_required
 from werkzeug.utils import secure_filename
 
 email_sender = EmailSender()
@@ -38,7 +35,6 @@ email_sender = EmailSender()
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
-
 
 def generate_alternate_urls(app, endpoint, **values):
     """
@@ -54,59 +50,44 @@ def init_routes(app):
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
         try:
-            # Define the root XML element for the sitemap
-            urlset = ET.Element("urlset",
-                                {"xmlns:xhtml":"http://www.w3.org/1999/xhtml"})
-
-            # Static routes to include in the sitemap
+            urlset = ET.Element("urlset", {"xmlns:xhtml": "http://www.w3.org/1999/xhtml"})
             routes = [
                 {"loc": "index"},
                 {"loc": "submit"},
                 {"loc": "demonstrations"},
                 {"loc": "info"},
                 {"loc": "privacy"},
-                {"loc": "contact"}
+                {"loc": "contact"},
             ]
-
-            # Iterate over each static route and language
             for route in routes:
                 url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(url, "loc")
                 loc.text = url_for(route["loc"], _external=True)
-
-                # Add alternate language links for each URL
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
-                        url, "{http://www.w3.org/1999/xhtml}link",
+                        url,
+                        "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True)
+                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True),
                     )
-
-            # Add dynamic routes for each demonstration
             for demo in demonstrations_collection.find():
                 demo_url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(demo_url, "loc")
                 loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
-
-                # Add alternate language links for each demonstration URL
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
-                        demo_url, "{http://www.w3.org/1999/xhtml}link",
+                        demo_url,
+                        "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True)
+                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True),
                     )
-
-            # Convert the XML tree to a string and return as response
             xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
             return Response(xml_str, mimetype="application/xml")
-
         except Exception as e:
-            # Log error if sitemap generation fails and return an empty response
             app.logger.error(f"Error generating sitemap: {e}")
             return Response(status=500)
-
 
     @app.context_processor
     def inject_alternate_urls():
@@ -122,15 +103,11 @@ def init_routes(app):
     @app.route("/")
     def index():
         search_query = request.args.get("search", "")
-        today = date.today()  # Use date.today() to get only the date part
-
+        today = date.today()
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
-
         filtered_demonstrations = []
         for demo in demonstrations:
-            demo_date = datetime.strptime(
-                demo["date"], "%d.%m.%Y"
-            ).date()  # Convert to date object
+            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
             if demo_date >= today:
                 if (
                     search_query.lower() in demo["title"].lower()
@@ -138,11 +115,7 @@ def init_routes(app):
                     or search_query.lower() in demo["address"].lower()
                 ):
                     filtered_demonstrations.append(demo)
-
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
-        )
-
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
         return render_template("index.html", demonstrations=filtered_demonstrations)
 
     @app.route("/submit", methods=["GET", "POST"])
@@ -151,7 +124,6 @@ def init_routes(app):
         Handle submission of a new demonstration.
         """
         if request.method == "POST":
-            # Get form data
             title = request.form.get("title")
             date = request.form.get("date")
             description = request.form.get("description", "")
@@ -164,27 +136,17 @@ def init_routes(app):
             route = request.form.get("route") if event_type == "marssi" else None
             tags = request.form.get("tags", None)
             tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
-
             img = request.files.get("image")
-
             photo_url = ""
-
             if img:
-                # Save the uploaded file temporarily
                 filename = secure_filename(img.filename)
                 temp_file_path = os.path.join("uploads", filename)
                 img.save(temp_file_path)
-
-                # Define the bucket name and upload the file
-                bucket_name = "mielenosoitukset-fi1"  # Your S3 bucket name
+                bucket_name = "mielenosoitukset-fi1"
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
-
-            # Validation for form data
             if not title or not date or not start_time or not city or not address:
                 flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
                 return redirect(url_for("submit"))
-
-            # Get organizers from the form and create Organizer instances
             organizers = []
             i = 1
             while f"organizer_name_{i}" in request.form:
@@ -195,8 +157,6 @@ def init_routes(app):
                 )
                 organizers.append(organizer)
                 i += 1
-
-            # Create a Demonstration instance
             demonstration = Demonstration(
                 title=title,
                 date=date,
@@ -213,17 +173,9 @@ def init_routes(app):
                 description=description,
                 tags=tags,
             )
-
-            # Save to MongoDB
             mongo.demonstrations.insert_one(demonstration.to_dict())
-
-            flash_message(
-                "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
-                "success",
-            )
-
+            flash_message("Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.", "success")
             return redirect(url_for("index"))
-
         return render_template("submit.html", city_list=CITY_LIST)
 
     @app.route("/demonstrations")
@@ -231,7 +183,6 @@ def init_routes(app):
         """
         List all upcoming approved demonstrations, optionally filtered by search query.
         """
-        # Get pagination parameters
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
         search_query = request.args.get("search", "").lower()
@@ -239,70 +190,27 @@ def init_routes(app):
         location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
         today = date.today()
-
-        # Retrieve all approved demonstrations
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
-
-        # Filter upcoming demonstrations
-        filtered_demonstrations = filter_demonstrations(
-            demonstrations,
-            today,
-            search_query,
-            city_query,
-            location_query,
-            date_query,
-        )
-
-        # Sort the results by date
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
-        )
-
-        # Pagination logic
+        filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
         total_demos = len(filtered_demonstrations)
-        total_pages = (total_demos + per_page - 1) // per_page  # Calculate total pages
+        total_pages = (total_demos + per_page - 1) // per_page
         start = (page - 1) * per_page
         end = start + per_page
-
-        # Get the items for the current page
         paginated_demonstrations = filtered_demonstrations[start:end]
+        return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages)
 
-        return render_template(
-            "list.html",
-            demonstrations=paginated_demonstrations,
-            page=page,
-            total_pages=total_pages,
-        )
-
-    def filter_demonstrations(
-        demonstrations,
-        today,
-        search_query,
-        city_query,
-        location_query,
-        date_query,
-    ):
+    def filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query):
         """
         Filter the demonstrations based on various criteria.
         """
         filtered = []
-        added_demo_ids = set()  # To keep track of added demo IDs
-
+        added_demo_ids = set()
         for demo in demonstrations:
             if is_future_demo(demo, today):
-                if (
-                    matches_filters(
-                        demo,
-                        search_query,
-                        city_query,
-                        location_query,
-                        date_query,
-                    )
-                    and demo["_id"] not in added_demo_ids
-                ):
+                if matches_filters(demo, search_query, city_query, location_query, date_query) and demo["_id"] not in added_demo_ids:
                     filtered.append(demo)
                     added_demo_ids.add(demo["_id"])
-
         return filtered
 
     def is_future_demo(demo, today):
@@ -312,9 +220,7 @@ def init_routes(app):
         demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
         return demo_date >= today
 
-    def matches_filters(
-        demo, search_query, city_query, location_query, date_query  # , topic_query
-    ):
+    def matches_filters(demo, search_query, city_query, location_query, date_query):
         """
         Check if the demonstration matches the filtering criteria.
         """
@@ -324,25 +230,15 @@ def init_routes(app):
             or search_query in demo["address"].lower()
         )
         matches_city = city_query in demo["city"].lower() if city_query else True
-        matches_location = (
-            location_query in demo["address"].lower() if location_query else True
-        )
+        matches_location = location_query in demo["address"].lower() if location_query else True
         matches_date = True
-
         if date_query:
             try:
                 parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
-                matches_date = (
-                    parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
-                )
+                matches_date = parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
             except ValueError:
-                flash_message(
-                    _(
-                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
-                    )
-                )
+                flash_message(_("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."))
                 matches_date = False
-
         return matches_search and matches_city and matches_location and matches_date
 
     @app.route("/demonstration/<demo_id>")
@@ -350,57 +246,34 @@ def init_routes(app):
         """
         Display details of a specific demonstration and save map coordinates if available.
         """
-        # Fetch the demonstration details from MongoDB
         result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
         if result:
             demo = Demonstration.from_dict(result)
         else:
             abort(404)
-
         if not demo:
-            flash_message(
-                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
-                "error",
-            )
+            flash_message(_("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error")
             return redirect(url_for("demonstrations"))
-
         if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
-
-        # Check if longitude is None to trigger geocoding
         if not demo.longitude:
-            # Build the address query (assuming 'address' and 'city' fields in the demo)
             address_query = f"{demo.address}, {demo.city}"
-
-            # Geocode API URL
-            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"  # FIXME: Use variable for the api key!
-
+            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
             try:
-                # Make the request to the Geocode API
                 response = requests.get(api_url)
                 response.raise_for_status()
                 geocode_data = response.json()
-
-                # Get latitude and longitude from the response
                 if geocode_data:
                     latitude = geocode_data[0].get("lat", "None")
                     longitude = geocode_data[0].get("lon", "None")
-
-                    # Save coordinates to the database if they are fetched
                     if latitude and longitude:
                         demo.latitude = latitude
                         demo.longitude = longitude
                         demo.save()
-
             except (requests.exceptions.RequestException, IndexError):
                 ...
-
         demo = Demonstration.to_dict(demo, True)
-
-        # Log the view
         log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
-
-        # Pass demo details and coordinates to the template
         return render_template("detail.html", demo=demo)
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])
@@ -409,62 +282,43 @@ def init_routes(app):
         """
         Display details of a specific demonstration and save map coordinates if available.
         """
-        # Fetch the demonstration details from MongoDB
         result = demonstrations_collection.find_one(
-            {"$or": [{"_id": ObjectId(demo_id)}, {"aliases": {"$in": [ObjectId(demo_id)]}}]}
+            {
+                "$or": [
+                    {"_id": ObjectId(demo_id)},
+                    {"aliases": {"$in": [ObjectId(demo_id)]}},
+                ]
+            }
         )
         if result:
             demo = Demonstration.from_dict(result)
         else:
             abort(404)
-
         if not demo:
-            flash_message(
-                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
-                "error",
-            )
+            flash_message(_("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error")
             return redirect(url_for("demonstrations"))
-
         if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
-
-        # Check if longitude is None to trigger geocoding
         if not demo.longitude:
-            # Build the address query (assuming 'address' and 'city' fields in the demo)
             address_query = f"{demo.address}, {demo.city}"
-
-            # Geocode API URL
-            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"  # FIXME: Use variable for the api key!
-
+            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
             try:
-                # Make the request to the Geocode API
                 response = requests.get(api_url)
                 response.raise_for_status()
                 geocode_data = response.json()
-
-                # Get latitude and longitude from the response
                 if geocode_data:
                     latitude = geocode_data[0].get("lat", "None")
                     longitude = geocode_data[0].get("lon", "None")
-
-                    # Save coordinates to the database if they are fetched
                     if latitude and longitude:
                         demo.latitude = latitude
                         demo.longitude = longitude
                         demo.save()
-
             except (requests.exceptions.RequestException, IndexError):
                 ...
-
         demo = Demonstration.to_dict(demo, True)
-
-        # Log the view
         log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
-
-        # Pass demo details and coordinates to the template
         return render_template("preview.html", demo=demo)
 
-    
     @app.route("/info")
     def info():
         return render_template("info.html")
@@ -480,181 +334,96 @@ def init_routes(app):
             email = request.form.get("email")
             subject = request.form.get("subject")
             message = request.form.get("message")
-
-            # Validate form data
             if not name or not email or not message:
                 flash_message("Kaikki kentät ovat pakollisia!", "error")
                 return redirect(url_for("contact"))
-
-            # Create email job
             email_sender.queue_email(
                 template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
                 recipients=["tuki@mielenosoitukset.fi"],
-                context={
-                    "name": name,
-                    "email": email,
-                    "subject": subject,
-                    "message": message,
-                },
+                context={"name": name, "email": email, "subject": subject, "message": message},
             )
-
             flash_message("Viesti lähetetty onnistuneesti!", "success")
             return redirect(url_for("contact"))
-
         return render_template("contact.html")
 
     @app.route("/organization/<org_id>")
     def org(org_id):
-        # Fetch the organization details
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-
         if _org is None:
             flash_message("Organisaatiota ei löytynyt.", "error")
             return redirect(url_for("index"))
-
         _org = Organization.from_dict(_org)
-
-        today = date.today()  # Get today's date
-
-        # Fetch upcoming demonstrations linked to this organization via organizers list
+        today = date.today()
         upcoming_demos_cursor = mongo.demonstrations.find(
             {
                 "organizers": {
                     "$elemMatch": {
-                        "organization_id": ObjectId(
-                            org_id
-                        )  # Match the organization_id within the organizers list
+                        "organization_id": ObjectId(org_id)
                     }
                 },
-                "approved": True,  # Ensure the demonstration is approved
+                "approved": True,
             }
         )
-
-        # Filter and sort the demonstrations
         upcoming_demos = []
         for demo in upcoming_demos_cursor:
-            demo_date = datetime.strptime(
-                demo["date"], "%d.%m.%Y"
-            ).date()  # Convert date string to date object
-
-            if demo_date >= today:  # Only keep upcoming demos
+            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            if demo_date >= today:
                 upcoming_demos.append(demo)
-
-        # Sort by date
-        upcoming_demos.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
-        )
-
-        # Render the organization page with the sorted upcoming demonstrations
-        return render_template(
-            "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
-        )
+        upcoming_demos.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        return render_template("organizations/details.html", org=_org, upcoming_demos=upcoming_demos)
 
     @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):
-        # Create a case-insensitive regex pattern for the tag
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
-
-        # Fetch demonstrations that include the specified tag (case-insensitive)
         demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
-
-        # Pagination logic
         page = int(request.args.get("page", 1))
-        per_page = int(
-            request.args.get("per_page", 10) or 10
-        )  # Adjust per_page as necessary
-
-        # Get the total number of documents matching the query
+        per_page = int(request.args.get("per_page", 10) or 10)
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
-        total_pages = (total_demos + per_page - 1) // per_page  # Calculate total pages
-
-        # Fetch the demonstrations cursor
+        total_pages = (total_demos + per_page - 1) // per_page
         demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)
-
-        # Get the paginated demonstrations using skip and limit directly on the cursor
-        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(
-            per_page
-        )
-
-        # Convert paginated_demos to a list to pass to the template
+        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(per_page)
         paginated_demos_list = list(paginated_demos)
+        return render_template("tag_list.html", demonstrations=paginated_demos_list, page=page, total_pages=total_pages, tag_name=tag_name)
 
-        # Render the tag_detail template and pass necessary variables
-        return render_template(
-            "tag_list.html",
-            demonstrations=paginated_demos_list,
-            page=page,
-            total_pages=total_pages,
-            tag_name=tag_name,
-        )
-
-    # This is the route that provides the flash_message messages as JSON
     @app.route("/get_flash_messages", methods=["GET"])
     def get_flash_message_messages():
-        # Retrieve flash_messageed messages with categories
         messages = get_flashed_messages(with_categories=True)
-
-        # If there are no messages, return an empty array
         if not messages:
             return jsonify(messages=[])
-
-        # Format the flash_message messages into a JSON object
-        flash_message_data = [
-            {"category": category, "message": message} for category, message in messages
-        ]
-
-        # Return the JSON response
+        flash_message_data = [{"category": category, "message": message} for category, message in messages]
         return jsonify(messages=flash_message_data)
 
     @app.route("/marquee", methods=["GET"])
     def marquee():
         with open("marquee_config.json", "r") as config_file:
             config = json.load(config_file)
-
         return jsonify(config)
 
     @app.route("/500")
     def _500():
         return abort(500)
-    
+
     @app.route("/set_language/<lang>")
     def set_language(lang):
-        # List of supported languages        
         supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
-
-        # Validate the language parameter
         if lang not in supported_languages:
             flash_message("Unsupported language selected.", "error")
             return redirect(request.referrer)
-
-        # Set the language cookie
         session["locale"] = lang
-        
         session.modified = True
-        
         referrer = request.referrer
         if referrer and referrer.startswith(request.host_url):
             return redirect(referrer)
         return redirect(url_for("index"))
 
-    # Here, add a thing that can handle /<lang>/<page>
-    # As an example:
-    # /en/: render '/' with the language set to 'en'
-    # /en/demonstrations: render '/demonstrations' with the language set to 'en'
     @app.before_request
     def preprocess_url():
-        """
-        
-        """
         supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
         path = request.path.strip("/").split("/")
-        
         if path and path[0] in supported_languages:
             lang = path[0]
             session["locale"] = lang
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
-    
-    #

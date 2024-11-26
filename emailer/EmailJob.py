@@ -8,7 +8,7 @@ class Sender:
     Returns
     -------
 
-    
+
     """
 
     def __init__(
@@ -55,7 +55,7 @@ class Sender:
         Returns
         -------
 
-        
+
         """
         return cls(
             email_server=data.get("email_server"),
@@ -109,7 +109,7 @@ class EmailJob:
         Returns
         -------
 
-        
+
         """
         sender_data = data.get("sender")
         sender = Sender.from_dict(sender_data) if sender_data else None

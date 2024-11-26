@@ -19,13 +19,13 @@ class EmailSender:
     Returns
     -------
 
-    
+
     """
 
     def __init__(self, config=Config):
         """
         Initializes the EmailSender instance with the Flask app configuration.
-       """
+        """
         self.config = Config()
         self.db_manager = DatabaseManager().get_instance()
         self.db = self.db_manager.get_db()
@@ -59,7 +59,7 @@ class EmailSender:
         Returns
         -------
 
-        
+
         """
         try:
             # Determine SMTP settings and sender information
@@ -102,7 +102,7 @@ class EmailSender:
                 server.sendmail(sender_address, email_job.recipients, msg.as_string())
 
         except Exception as e:
-            print(f"Failed to send email: {str(e)}") # TODO: #192 Log the error
+            print(f"Failed to send email: {str(e)}")  # TODO: #192 Log the error
             # Optionally, requeue the email or log the error
 
     def queue_email(self, template_name, subject, recipients, context, sender=None):
@@ -124,14 +124,16 @@ class EmailSender:
         Returns
         -------
 
-        
+
         """
         template = self.env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
             subject=subject, recipients=recipients, body=body, html=body, sender=sender
         )
-        self.queue_collection.insert_one(email_job.to_dict()) # TODO: #194 Handle potential database insertion errors
+        self.queue_collection.insert_one(
+            email_job.to_dict()
+        )  # TODO: #194 Handle potential database insertion errors
 
     def send_now(self, template_name, subject, recipients, context, sender=None):
         """Sends an email immediately using the provided template and context.
@@ -152,12 +154,11 @@ class EmailSender:
         Returns
         -------
 
-        
+
         """
         template = self.env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
             subject=subject, recipients=recipients, body=body, html=body, sender=sender
         )
-        self.send_email(email_job) # TODO: #195 Handle potential email sending errors
-
+        self.send_email(email_job)  # TODO: #195 Handle potential email sending errors

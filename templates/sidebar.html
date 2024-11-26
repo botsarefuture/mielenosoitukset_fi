@@ -57,6 +57,11 @@
                     <span class="beta-label">{{ _('Beta') }}</span> <!-- Beta label added -->
                 </a>
             </li>
+            <li>
+                <a href="{{ url_for('admin.admin_analytics') }}">
+                    <span class="icon"><i class="fas fa-chart-bar"></i></span> {{ _('Mielenosoitusten analytiikka') }}
+                </a>
+            </li>
             {% endif %}
             <!-- Add Marquee Management Link -->
             {% if current_user.has_permission("MANAGE_MARQUEE") %}
@@ -66,11 +71,7 @@
                 </a>
             </li>
             {% endif %}
-            <li>
-                <a href="{{ url_for('admin.admin_analytics') }}">
-                    <span class="icon"><i class="fas fa-chart-bar"></i></span> {{ _('Mielenosoitusten analytiikka') }}
-                </a>
-            </li>
+            
             
             <li>
                 <!-- admin.admin_logout has been depraced in v2.4.0. -->

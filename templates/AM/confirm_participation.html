@@ -1,0 +1,31 @@
+{% extends 'AM/base.html' %}
+{% block title %}Osallistumisesi vahvistettu!{% endblock %}
+{% block content %}
+<style>
+    .container-main-content {
+        padding: 20px;
+        max-width: 800px;
+        background-color: var(--container-background);
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        color: var(--primary-text-color);
+        text-align: center;
+    }
+
+    p {
+        font-size: 1.2em;
+        margin-bottom: 20px;
+        color: var(--secondary-text-color);
+    }
+</style>
+<div class="container-main-content">
+    <h1>Osallistumisesi on nyt vahvistettu</h1>
+    <p>Osallistumisesi tapahtumaan "{{ action.name }}" on vahvistettu.</p>
+    <p>Kiitos!</p>
+</div>
+{% endblock %}

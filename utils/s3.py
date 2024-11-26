@@ -42,35 +42,37 @@ def retry_with_graze(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
     Returns
     -------
 
-    
+
     """
+
     def decorator(func):
         """
 
         Parameters
         ----------
         func :
-            
+
 
         Returns
         -------
 
-        
+
         """
+
         def wrapper(*args, **kwargs):
             """
 
             Parameters
             ----------
             *args :
-                
+
             **kwargs :
-                
+
 
             Returns
             -------
 
-            
+
             """
             retries = 0
             while retries < max_retries:
@@ -106,22 +108,22 @@ def convert_to_jpg(image_path: str, output_path: str) -> str:
     output_path :
         str:
     image_path : str :
-        
+
     output_path : str :
-        
+
     image_path : str :
-        
+
     output_path : str :
-        
+
     image_path: str :
-        
+
     output_path: str :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         with Image.open(image_path) as img:
@@ -146,22 +148,22 @@ def generate_next_id(bucket_name: str, image_type: str) -> int:
     image_type :
         str:
     bucket_name : str :
-        
+
     image_type : str :
-        
+
     bucket_name : str :
-        
+
     image_type : str :
-        
+
     bucket_name: str :
-        
+
     image_type: str :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=image_type)
@@ -192,28 +194,28 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     image_type :
         str:
     bucket_name : str :
-        
+
     image_path : str :
-        
+
     image_type : str :
-        
+
     bucket_name : str :
-        
+
     image_path : str :
-        
+
     image_type : str :
-        
+
     bucket_name: str :
-        
+
     image_path: str :
-        
+
     image_type: str :
-        
+
 
     Returns
     -------
 
-    
+
     """
     _id = generate_next_id(bucket_name, image_type)
     if _id is None:

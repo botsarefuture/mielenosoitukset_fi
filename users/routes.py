@@ -14,16 +14,17 @@ import datetime
 import importlib
 from urllib.parse import urlparse
 
-from classes import Organization
+from utils.classes import Organization
 from utils.auth import (
     generate_confirmation_token,
     verify_confirmation_token,
     generate_reset_token,
     verify_reset_token,
-    
 )
 
-EmailSender = importlib.import_module('emailer.EmailSender', "mielenosoitukset_fi").EmailSender
+EmailSender = importlib.import_module(
+    "emailer.EmailSender", "mielenosoitukset_fi"
+).EmailSender
 from bson.objectid import ObjectId
 from database_manager import DatabaseManager
 from utils.s3 import upload_image  # Import your S3 upload function
@@ -46,12 +47,12 @@ def verify_emailer(email, username):
     email :
         param username:
     username :
-        
+
 
     Returns
     -------
 
-    
+
     """
     token = generate_confirmation_token(email)
     confirmation_url = url_for("auth.confirm_email", token=token, _external=True)
@@ -114,12 +115,12 @@ def confirm_email(token):
     Parameters
     ----------
     token :
-        
+
 
     Returns
     -------
 
-    
+
     """
     email = verify_confirmation_token(token)
     if email:
@@ -172,7 +173,7 @@ def login():
         if user.confirmed:
             login_user(user)
             if next_page:
-                next_page = next_page.replace('\\', '')
+                next_page = next_page.replace("\\", "")
                 if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
                     return redirect(next_page)  # Safe to redirect
             return redirect(url_for("index"))  # Redirect to the index
@@ -183,7 +184,7 @@ def login():
             )
             verify_emailer(user.email, username)
             if next_page:
-                next_page = next_page.replace('\\', '')
+                next_page = next_page.replace("\\", "")
                 if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
                     return redirect(next_page)  # Safe to redirect
             return redirect(url_for("index"))  # Redirect to the index
@@ -241,12 +242,12 @@ def password_reset(token):
     Parameters
     ----------
     token :
-        
+
 
     Returns
     -------
 
-    
+
     """
     email = verify_reset_token(token)
     if not email:
@@ -285,7 +286,7 @@ def profile(username=None):
     Returns
     -------
 
-    
+
     """
     if username is None:
         if current_user.is_authenticated:
@@ -349,39 +350,44 @@ def edit_profile():
             # Clean up the temporary file
             os.remove(temp_file_path)
 
-        return redirect(url_for("users.profile.profile", username=current_user.username))
+        return redirect(
+            url_for("users.profile.profile", username=current_user.username)
+        )
 
     return render_template("edit_profile.html")
 
+
 @auth_bp.route("/accept_invite", methods=["GET"])
-#@login_required # Don't require login to accept invite
+# @login_required # Don't require login to accept invite
 def accept_invite():
     """ """
     if not current_user.is_authenticated:
         flash_message("Kirjaudu sisään liittyäksesi organisaatioon.", "info")
         return redirect(url_for("users.auth.login", next=request.url))
-    
+
     organization_id = request.args.get("organization_id")
     organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
     org = Organization.from_dict(organization)
 
-    if organization["invitations"] and current_user.email in organization["invitations"]:
-        
+    if (
+        organization["invitations"]
+        and current_user.email in organization["invitations"]
+    ):
+
         organization["invitations"].remove(current_user.email)
         mongo.organizations.update_one(
             {"_id": ObjectId(organization_id)},
             {"$set": {"invitations": organization["invitations"]}},
         )
         org.add_member(current_user, role="member", permissions=[])
-        
+
     else:
         flash_message("Kutsua ei löytynyt.", "warning")
         return redirect(url_for("index"))
-    
-    
 
     flash_message(f"Liityit organisaatioon {organization.get('name')}.", "success")
     return redirect(url_for("org", org_id=organization_id))
+
 
 # TODO:
 # - Add MFAs
@@ -391,4 +397,3 @@ def accept_invite():
 #   - Language
 #   - Notification settings
 #   - Profile settings
-

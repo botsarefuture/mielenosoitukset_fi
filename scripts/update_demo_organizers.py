@@ -16,14 +16,14 @@ sys.path.append(parent_dir)
 database_manager = importlib.import_module("database_manager")
 DatabaseManager = database_manager.DatabaseManager
 
-classes = importlib.import_module("classes")
+classes = importlib.import_module("utils.classes")
 Demonstration = classes.Demonstration
 
 # Configure logger
 logger = logging.getLogger("DemoUpdater")
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -82,7 +82,7 @@ def update_demo_organizers(demo: Dict) -> None:
     if demo.get("recurring") or demo.get("parent"):
         logger.info(f"Skipping recurring demonstration with ID {demo['_id']}")
         return
-    
+
     demonstration = Demonstration.from_dict(demo)
     organizers = demonstration.organizers
 
@@ -92,7 +92,9 @@ def update_demo_organizers(demo: Dict) -> None:
             organizer.organization_id = org_id
 
             if organization is None:
-                logger.error(f"Organization with ID {organizer.organization_id} not found, skipping...")
+                logger.error(
+                    f"Organization with ID {organizer.organization_id} not found, skipping..."
+                )
                 continue
         else:
             # Try to match organizer's name with organization name
@@ -102,7 +104,9 @@ def update_demo_organizers(demo: Dict) -> None:
                 logger.info(f"Matched organization by name: {organization['name']}")
                 organizer.organization_id = ObjectId(organization["_id"])
             else:
-                logger.warning(f"Could not match organizer {organizer.name} with any organization.")
+                logger.warning(
+                    f"Could not match organizer {organizer.name} with any organization."
+                )
                 continue
 
     # After processing, update the demonstration with the correct organization id

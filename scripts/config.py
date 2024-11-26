@@ -19,16 +19,16 @@ class Config:
         file_path :
             str:
         file_path : str :
-            
+
         file_path : str :
-            
+
         file_path: str :
-            
+
 
         Returns
         -------
 
-        
+
         """
         try:
             with open(file_path, "r") as file:

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Ilmoittautuminen: {{ action.name }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/AM/styles.css">
+
+<div class="container">
+    <div class="progress-bar">
+        <div class="step active" id="step-1">1</div>
+        <div class="step" id="step-2">2</div>
+        <div class="step" id="step-3">3</div>
+        <div class="step" id="step-4">4</div>
+        <div class="step" id="step-5">5</div>
+    </div>
+
+    <form id="signup-form" method="post" action="{{ url_for('am.submit_signup', action_id=action.action_id) }}">
+        <page id="page-1" class="active">
+            <h1>Tervetuloa ilmoittautumaan "{{ action.name }}" -aktioon!</h1>
+            <div class="alert">
+                <strong>Huomio:</strong> Tämä ilmoittautumistyökalu on vielä kehitysvaiheessa. Olisimme todella kiitollisia,
+                jos voisit antaa meille palautetta sen käytettävyydestä!
+            </div>
+            <div class="action-info">
+                <h2>Aktion kuvaus</h2>
+                {{ action.description | safe }}
+            </div>
+            <div class="navigation">
+                <button class="btn" type="button" onclick="navigateToPage(2)">Siirry seuraavalle sivulle</button>
+            </div>
+        </page>
+
+        <page id="page-2">
+            <h2>Roolien valinta</h2>
+            <p>Valitse rooli, johon haluat osallistua:</p>
+            <roles>
+                {% for role in roles %}
+                <div class="role {{ role.risk.color }}">
+                    <label>
+                        <input type="checkbox" name="roles" value="{{ role.name }}">
+                        <strong>{{ role.name }}</strong>
+                    </label>
+                    <div class="description">
+                        <p>{{ role.description }}</p>
+                    </div>
+                    <div class="risk">
+                        <em>{{ role.risk.description }}</em>
+                    </div>
+                    <div class="recruit_status">
+                        <label>
+                            <div class="persons">
+                                {{ role.persons_needed }} / {{ role.persons_assigned }} henkilöä on valittu tähän rooliin
+                            </div>
+                            <meter value="{{ role.persons_assigned }}" min="0" max="{{ role.persons_needed }}"></meter>
+                        </label>
+                        <div class="remaining">
+                            <strong>{{ role.persons_remaining }}</strong> henkilöä tarvitaan edelleen
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </roles>
+            <input type="hidden" name="selected_roles" id="hidden-roles" value="">
+            <div class="navigation">
+                <button class="btn" type="button" onclick="navigateToPage(1)">Palaa edelliselle sivulle</button>
+                <button class="btn" type="button" onclick="navigateToPage(3)">Siirry seuraavalle sivulle</button>
+            </div>
+        </page>
+
+        <page id="page-3">
+            <h2>Yhteystietojen täyttäminen</h2>
+            <label for="name">Nimimerkki: <i>(tämän ei tarvitse olla oikea nimesi)</i></label>
+            <input type="text" id="name" name="name" required>
+            <label for="email">Sähköposti:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="phone">Puhelinnumero:</label>
+            <input type="tel" id="phone" name="phone" required>
+            <div class="navigation">
+                <button class="btn" type="button" onclick="navigateToPage(2)">Palaa edelliselle sivulle</button>
+                <button class="btn" type="button" onclick="navigateToPage(4)">Siirry seuraavalle sivulle</button>
+            </div>
+        </page>
+
+        <page id="page-4">
+            <h2>Valintojen tarkistus</h2>
+            <h3>Valitut roolit:</h3>
+            <ul id="review-roles" aria-live="polite">
+                <!-- Valitut roolit näytetään täällä -->
+            </ul>
+            <h3>Yhteystiedot:</h3>
+            <p><strong>Nimimerkki:</strong> <span id="review-name"></span></p>
+            <p><strong>Sähköposti:</strong> <span id="review-email"></span></p>
+            <p><strong>Puhelinnumero:</strong> <span id="review-phone"></span></p>
+            <div class="navigation">
+                <button class="btn" type="button" onclick="navigateToPage(3)">Palaa edelliselle sivulle</button>
+                <button class="btn" type="button" onclick="navigateToPage(5)">Vahvista ja lähetä</button>
+            </div>
+        </page>
+
+        <page id="page-5">
+            <h2>Kiitos ilmoittautumisestasi!</h2>
+            <p>Olet valinnut osallistuvasi "{{ action.name }}"-aktiiviteettiin. Alla näet valitsemasi roolit:</p>
+            <ul id="selected-roles" aria-live="polite">
+                <!-- Valitut roolit näytetään täällä -->
+            </ul>
+            <p>Saamme sinulle lisätietoja lähitulevaisuudessa.</p>
+            <p>Jos sinulla on kysyttävää tai haluat perua ilmoittautumisesi, ota rohkeasti yhteyttä!</p>
+            <a class="btn-signup" href="/">Palaa etusivulle</a>
+        </page>
+    </form>
+</div>
+
+<script>
+    function navigateToPage(pageNumber) {
+        const pages = document.querySelectorAll('page');
+        const form = document.getElementById('signup-form');
+        const hiddenRoles = document.getElementById('hidden-roles');
+        if (pageNumber === 4) {
+            const selectedRoles = Array.from(form.querySelectorAll('input[name="roles"]:checked'))
+                .map(input => input.nextElementSibling.textContent.trim());
+            const reviewRoles = document.getElementById('review-roles');
+            reviewRoles.innerHTML = selectedRoles.length
+                ? selectedRoles.map(role => `<li>${role}</li>`).join('')
+                : '<li>Ei valittuja rooleja</li>';
+            hiddenRoles.value = selectedRoles.join(',');
+
+            document.getElementById('review-name').textContent = form.querySelector('input[name="name"]').value;
+            document.getElementById('review-email').textContent = form.querySelector('input[name="email"]').value;
+            document.getElementById('review-phone').textContent = form.querySelector('input[name="phone"]').value;
+        }
+        if (pageNumber === 5) {
+            form.submit();
+        }
+        pages.forEach((page, index) => {
+            page.classList.toggle('active', index + 1 === pageNumber);
+        });
+        updateProgressBar(pageNumber);
+    }
+
+    function updateProgressBar(step) {
+        const steps = document.querySelectorAll('.progress-bar .step');
+        steps.forEach((stepElement, index) => {
+            stepElement.classList.toggle('active', index + 1 <= step);
+        });
+    }
+</script>
+{% endblock %}

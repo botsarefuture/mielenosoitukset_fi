@@ -3,7 +3,7 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from database_manager import DatabaseManager
 import json
-from classes import Demonstration
+from utils.classes import Demonstration
 from utils.database import stringify_object_ids
 from utils.analytics import get_demo_views, get_prepped_data
 
@@ -49,12 +49,12 @@ def get_demonstration_detail(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id), "approved": True})
 
@@ -115,6 +115,7 @@ def create_demonstration():
         201,
     )
 
+
 @api_bp.route("/demo/<demo_id>/like", methods=["POST"])
 def like_demo(demo_id):
     """Like a demonstration. Prevent one session from liking more than once, and one ip liking more than twice a week
@@ -122,24 +123,27 @@ def like_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if demo is None:
         abort(404, description="Mielenosoitusta ei löytynyt.")
 
-    mongo.demo_likes.update_one({"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": 1}}, upsert=True)
-    
+    mongo.demo_likes.update_one(
+        {"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": 1}}, upsert=True
+    )
+
     likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})["likes"]
-    
+
     return jsonify({"likes": likes})
+
 
 @api_bp.route("/demo/<demo_id>/unlike", methods=["POST"])
 def unlike_demo(demo_id):
@@ -148,24 +152,27 @@ def unlike_demo(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if demo is None:
         abort(404, description="Mielenosoitusta ei löytynyt.")
 
-    mongo.demo_likes.update_one({"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": -1}}, upsert=True)
-    
+    mongo.demo_likes.update_one(
+        {"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": -1}}, upsert=True
+    )
+
     likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})["likes"]
-    
+
     return jsonify({"likes": likes})
+
 
 @api_bp.route("/demo/<demo_id>/likes", methods=["GET"])
 def get_likes(demo_id):
@@ -174,25 +181,26 @@ def get_likes(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
 
     if demo is None:
         abort(404, description="Mielenosoitusta ei löytynyt.")
-    
+
     likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})
-    
+
     if likes is None:
         return jsonify({"likes": 0})
-    
+
     return jsonify({"likes": likes["likes"]})
+
 
 @api_bp.route("/demo/<demo_id>/stats", methods=["GET"])
 def get_demo_stats_route(demo_id):
@@ -201,17 +209,18 @@ def get_demo_stats_route(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     stats = get_prepped_data(ObjectId(demo_id))
     print(stats)
     return jsonify(stringify_object_ids(stats))
+
 
 @api_bp.route("/admin/demo/info/<demo_id>", methods=["GET"])
 def get_demo_info(demo_id):
@@ -220,17 +229,17 @@ def get_demo_info(demo_id):
     Parameters
     ----------
     demo_id :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    
+
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    
+
     if demo is None:
         abort(404, description="Mielenosoitusta ei löytynyt.")
-    
+
     return jsonify(stringify_object_ids(demo))

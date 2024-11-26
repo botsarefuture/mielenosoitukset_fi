@@ -13,6 +13,7 @@ OIDifySOID(soid):
 
 from bson.objectid import ObjectId
 
+
 def OIDifySOID(soid):
     """
     Convert a string representation of an ObjectId to an ObjectId.
@@ -30,7 +31,7 @@ def OIDifySOID(soid):
     .. deprecated:: 2.8.0
         `OIDifySOID` will be removed in v2.9.0, it is replaced by
         `utils.database.revert_stringified_object_ids` and `utils.database.stringify_object_ids`.
-        
+
     See Also
     --------
     utils.database.revert_stringified_object_ids: A function that converts all string representations of ObjectId back to ObjectId instances.

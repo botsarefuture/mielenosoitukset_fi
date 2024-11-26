@@ -5,7 +5,7 @@ from flask import (
     redirect,
     url_for,
     current_app,
-    session
+    session,
 )
 from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
@@ -19,7 +19,7 @@ from utils.auth import (
 from utils.flashing import flash_message
 from utils.s3 import upload_image
 from database_manager import DatabaseManager
-from classes import Organization
+from utils.classes import Organization
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 import importlib
@@ -27,7 +27,9 @@ import os
 import jwt
 import datetime
 
-EmailSender = importlib.import_module('emailer.EmailSender', "mielenosoitukset_fi").EmailSender
+EmailSender = importlib.import_module(
+    "emailer.EmailSender", "mielenosoitukset_fi"
+).EmailSender
 
 email_sender = EmailSender()
 db_manager = DatabaseManager().get_instance()
@@ -44,12 +46,12 @@ def verify_emailer(email, username):
     email :
         param username:
     username :
-        
+
 
     Returns
     -------
 
-    
+
     """
     token = generate_confirmation_token(email)
     confirmation_url = url_for("users.auth.confirm_email", token=token, _external=True)
@@ -111,12 +113,12 @@ def confirm_email(token):
     Parameters
     ----------
     token :
-        
+
 
     Returns
     -------
 
-    
+
     """
     email = verify_confirmation_token(token)
     if email:
@@ -134,10 +136,11 @@ def confirm_email(token):
 
     return redirect(url_for("users.auth.login"))
 
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     next_page = request.args.get("next", "")
-    next_page = next_page.replace('\\', '')
+    next_page = next_page.replace("\\", "")
     if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
         safe_next_page = next_page
     else:
@@ -154,7 +157,9 @@ def login():
         user_doc = mongo.users.find_one({"username": username})
 
         if not user_doc:
-            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+            flash_message(
+                f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error"
+            )
             return redirect(url_for("users.auth.login", next=next_page))
 
         user = User.from_db(user_doc)
@@ -163,7 +168,9 @@ def login():
             return redirect(url_for("users.auth.login", next=next_page))
 
         if not user.confirmed:
-            flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
+            flash_message(
+                "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
+            )
             verify_emailer(user.email, username)
             return redirect(url_for("users.auth.login", next=next_page))
 
@@ -177,28 +184,30 @@ def login():
 
     return render_template("users/auth/login.html", next=next_page)
 
+
 @auth_bp.route("/verify_mfa", methods=["GET", "POST"])
 def verify_mfa():
     """ """
     if not session.get("mfa_required"):
         return redirect(url_for("users.auth.login"))
-    
+
     if request.method == "POST":
         token = request.form.get("token")
         next = request.args.get("next")
         user = current_user
-        
+
         if UserMFA(user._id).verify_mfa(token):
             login_user(user)
             session["mfa_required"] = False
             session["modified"] = True
-            
+
             return redirect(next or url_for("index"))
-        
+
         flash_message("Väärä MFA-koodi", "error")
         return redirect(url_for("users.auth.verify_mfa"))
-    
+
     return render_template("users/auth/verify_mfa.html")
+
 
 @auth_bp.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -209,13 +218,15 @@ def settings():
     if request.method == "POST":
         user_data = request.form.to_dict()
 
-        if 'mfa_enabled' in user_data:
-            user_data['mfa_enabled'] = user_data['mfa_enabled'] == 'on'
-            mongo.users.update_one({"_id": user._id}, {"$set": {"mfa_enabled": user_data['mfa_enabled']}})
-            user.enable_mfa() if user_data['mfa_enabled'] else user.disable_mfa()
+        if "mfa_enabled" in user_data:
+            user_data["mfa_enabled"] = user_data["mfa_enabled"] == "on"
+            mongo.users.update_one(
+                {"_id": user._id}, {"$set": {"mfa_enabled": user_data["mfa_enabled"]}}
+            )
+            user.enable_mfa() if user_data["mfa_enabled"] else user.disable_mfa()
 
             # Send the user email, including the info on how to start using mfa
-            if user_data['mfa_enabled']:
+            if user_data["mfa_enabled"]:
                 try:
                     email_sender.queue_email(
                         template_name="auth/mfa_enabled.html",
@@ -224,7 +235,10 @@ def settings():
                         context={"user_name": user.displayname or user.username},
                     )
                 except Exception as e:
-                    flash_message(f"Virhe kaksivaiheisen todennuksen käyttöönoton viestin lähettämisessä: {e}", "error")
+                    flash_message(
+                        f"Virhe kaksivaiheisen todennuksen käyttöönoton viestin lähettämisessä: {e}",
+                        "error",
+                    )
             else:
                 try:
                     email_sender.queue_email(
@@ -234,25 +248,31 @@ def settings():
                         context={"user_name": user.displayname or user.username},
                     )
                 except Exception as e:
-                    flash_message(f"Virhe kaksivaiheisen todennuksen poistamisen viestin lähettämisessä: {e}", "error")
+                    flash_message(
+                        f"Virhe kaksivaiheisen todennuksen poistamisen viestin lähettämisessä: {e}",
+                        "error",
+                    )
 
         flash_message("Asetukset päivitetty.", "success")
         return redirect(url_for("users.auth.settings"))
 
-    #return render_template("users/auth/settings.html", user=user)
+    # return render_template("users/auth/settings.html", user=user)
     if user.mfa_enabled and not user.mfa_secret:
         user_mfa = user.mfa
         secret = user_mfa.generate_secret()
         print(secret)
-        #mongo.users.update_one({"_id": user._id}, {"$set": {"mfa_secret": user_mfa.secret}})
-        #user.mfa.add_secret = user_mfa.secret
+        # mongo.users.update_one({"_id": user._id}, {"$set": {"mfa_secret": user_mfa.secret}})
+        # user.mfa.add_secret = user_mfa.secret
 
     if user.mfa_enabled:
         user_mfa = user.mfa
         qr_code_url = user_mfa.get_qr_code_url()
-        return render_template("users/auth/settings.html", user=user, qr_code_url=qr_code_url)
+        return render_template(
+            "users/auth/settings.html", user=user, qr_code_url=qr_code_url
+        )
 
     return render_template("users/auth/settings.html", user=user)
+
 
 @auth_bp.route("/logout")
 @login_required
@@ -272,7 +292,9 @@ def password_reset_request():
 
         if user:
             token = generate_reset_token(email)
-            reset_url = url_for("users.auth.password_reset", token=token, _external=True)
+            reset_url = url_for(
+                "users.auth.password_reset", token=token, _external=True
+            )
 
             try:
                 email_sender.queue_email(
@@ -281,9 +303,13 @@ def password_reset_request():
                     recipients=[email],
                     context={"reset_url": reset_url, "user_name": user.get("username")},
                 )
-                flash_message("Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info")
+                flash_message(
+                    "Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info"
+                )
             except Exception as e:
-                flash_message(f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error")
+                flash_message(
+                    f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error"
+                )
 
             return redirect(url_for("users.auth.login"))
 
@@ -300,16 +326,18 @@ def password_reset(token):
     Parameters
     ----------
     token :
-        
+
 
     Returns
     -------
 
-    
+
     """
     email = verify_reset_token(token)
     if not email:
-        flash_message("Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning")
+        flash_message(
+            "Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning"
+        )
         return redirect(url_for("users.auth.password_reset_request"))
 
     if request.method == "POST":
@@ -322,7 +350,7 @@ def password_reset(token):
 
         user = User.from_db(user_doc)
         user.change_password(password)
-        
+
         # Notify user about their password being changed via email
         try:
             email_sender.queue_email(
@@ -330,14 +358,15 @@ def password_reset(token):
                 subject="Salasanan vaihto",
                 recipients=[email],
                 context={"user_name": user.displayname or user.username},
-                )
+            )
         except Exception as e:
-            flash_message(f"Virhe salasanan vaihtoviestin lähettämisessä: {e}", "error")        
+            flash_message(f"Virhe salasanan vaihtoviestin lähettämisessä: {e}", "error")
 
         flash_message("Salasanasi on päivitetty onnistuneesti.", "success")
         return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/password_reset.html", token=token)
+
 
 # TODO:
 # - Add MFAs

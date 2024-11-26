@@ -5,7 +5,7 @@ from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from config import Config
-from classes import Demonstration, RecurringDemonstration
+from utils.classes import Demonstration, RecurringDemonstration
 import time
 
 # Configure logging
@@ -18,6 +18,7 @@ db = client["mielenosoitukset"]
 recu_demos_collection = db["recu_demos"]
 demonstrations_collection = db["demonstrations"]
 
+
 # Helper function to calculate the next dates
 def calculate_next_dates(start_date, schedule):
     """
@@ -27,12 +28,12 @@ def calculate_next_dates(start_date, schedule):
     start_date :
         param schedule:
     schedule :
-        
+
 
     Returns
     -------
 
-    
+
     """
     frequency = schedule.get("frequency")
     interval = schedule.get("interval", 1)
@@ -58,6 +59,7 @@ def calculate_next_dates(start_date, schedule):
     logger.debug(f"Calculated next dates: {next_dates}")
     return next_dates
 
+
 # Remove invalid child demonstrations
 def remove_invalid_child_demonstrations(parent_demo, valid_dates):
     """
@@ -67,12 +69,12 @@ def remove_invalid_child_demonstrations(parent_demo, valid_dates):
     parent_demo :
         param valid_dates:
     valid_dates :
-        
+
 
     Returns
     -------
 
-    
+
     """
     valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
@@ -81,6 +83,7 @@ def remove_invalid_child_demonstrations(parent_demo, valid_dates):
         if demo["date"] not in valid_date_strings:
             demonstrations_collection.delete_one({"_id": demo["_id"]})
             logger.info(f"Deleted invalid child demonstration {demo['_id']}")
+
 
 def get(object, key, default=None):
     """
@@ -92,18 +95,19 @@ def get(object, key, default=None):
     default :
         Default value = None)
     key :
-        
+
 
     Returns
     -------
 
-    
+
     """
-    result = object.get(key,default)
+    result = object.get(key, default)
     if result is None:
         return default
     else:
         return result
+
 
 # Process a single demonstration
 def process_demo(demo):
@@ -112,18 +116,20 @@ def process_demo(demo):
     Parameters
     ----------
     demo :
-        
+
 
     Returns
     -------
 
-    
+
     """
     try:
         demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
         print(demo_date)
         schedule = demo.get("repeat_schedule", {})
-        created_until = datetime.strptime(get(demo, "created_until", "01.01.1900"), "%d.%m.%Y")
+        created_until = datetime.strptime(
+            get(demo, "created_until", "01.01.1900"), "%d.%m.%Y"
+        )
         print(created_until)
 
         next_dates = calculate_next_dates(demo_date, schedule)
@@ -136,32 +142,45 @@ def process_demo(demo):
                 continue
 
             next_date_str = next_date.strftime("%d.%m.%Y")
-            existing_demo = demonstrations_collection.find_one({"date": next_date_str, "parent": demo["_id"]})
+            existing_demo = demonstrations_collection.find_one(
+                {"date": next_date_str, "parent": demo["_id"]}
+            )
 
             if existing_demo:
-                Demonstration(**existing_demo).update_self_from_recurring(RecurringDemonstration(**demo))
+                Demonstration(**existing_demo).update_self_from_recurring(
+                    RecurringDemonstration(**demo)
+                )
             else:
                 new_demo_data = demo.copy()
-                new_demo_data.update({
-                    "date": next_date_str,
-                    "parent": demo["_id"],
-                    "recurring": True,
-                })
+                new_demo_data.update(
+                    {
+                        "date": next_date_str,
+                        "parent": demo["_id"],
+                        "recurring": True,
+                    }
+                )
                 new_demo_data.pop("created_until", None)
                 new_demo_data.pop("_id", None)
                 new_demo = Demonstration(**new_demo_data)
 
                 bulk_operations.append(
-                    UpdateOne({"date": next_date_str, "parent": demo["_id"]}, {"$setOnInsert": new_demo.to_dict()}, upsert=True)
+                    UpdateOne(
+                        {"date": next_date_str, "parent": demo["_id"]},
+                        {"$setOnInsert": new_demo.to_dict()},
+                        upsert=True,
+                    )
                 )
 
         if bulk_operations:
             result = demonstrations_collection.bulk_write(bulk_operations)
-            logger.info(f"Processed {result.upserted_count} demonstrations for parent {demo['_id']}")
+            logger.info(
+                f"Processed {result.upserted_count} demonstrations for parent {demo['_id']}"
+            )
     except Exception as e:
         logger.error(f"Error processing demonstration {demo.get('_id')}: {e}")
 
         raise RuntimeWarning from e
+
 
 # Handle all repeating demonstrations
 def handle_repeating_demonstrations():
@@ -174,9 +193,12 @@ def handle_repeating_demonstrations():
                 future.result()
     except Exception as e:
         logger.error(f"Error handling repeating demonstrations: {e}")
+
+
 # Find duplicate demonstrations
 def find_duplicates():
     """ """
+
     def demo_match(demo1, demo2):
         """
 
@@ -185,27 +207,34 @@ def find_duplicates():
         demo1 :
             param demo2:
         demo2 :
-            
+
 
         Returns
         -------
 
-        
+
         """
         return (
-            demo1["title"] == demo2["title"] and
-            demo1["date"] == demo2["date"] and
-            demo1["city"] == demo2["city"] and
-            demo1["address"] == demo2["address"] and
-            (demo1.get("event_type") == demo2.get("event_type") or demo1.get("type") == demo2.get("type"))
+            demo1["title"] == demo2["title"]
+            and demo1["date"] == demo2["date"]
+            and demo1["city"] == demo2["city"]
+            and demo1["address"] == demo2["address"]
+            and (
+                demo1.get("event_type") == demo2.get("event_type")
+                or demo1.get("type") == demo2.get("type")
+            )
         )
 
-    demos = list(demonstrations_collection.find({"hide": False, "in_past": False, "recurring": True}))
+    demos = list(
+        demonstrations_collection.find(
+            {"hide": False, "in_past": False, "recurring": True}
+        )
+    )
     duplicates = []
 
     for i, demo in enumerate(demos):
         duplicate_group = {"ids": [demo["_id"]]}
-        for other_demo in demos[i+1:]:
+        for other_demo in demos[i + 1 :]:
             if demo_match(demo, other_demo):
                 duplicate_group["ids"].append(other_demo["_id"])
 
@@ -213,6 +242,7 @@ def find_duplicates():
             duplicates.append(duplicate_group)
 
     return duplicates
+
 
 # Merge duplicate demonstrations
 def merge_duplicates():
@@ -234,6 +264,7 @@ def merge_duplicates():
     logger.info(f"Merged {merged_count} duplicate demonstrations.")
     return merged_count
 
+
 # Main function
 def main():
     """ """
@@ -241,6 +272,7 @@ def main():
     handle_repeating_demonstrations()
     total_merged = merge_duplicates()
     logger.info(f"Total duplicates merged: {total_merged}")
+
 
 if __name__ == "__main__":
     main()

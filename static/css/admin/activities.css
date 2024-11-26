@@ -1,0 +1,82 @@
+activity aby, activity atime {
+    font-size: 0.8em; /* Increased font size */
+    color: var(--secondary-text-color);
+    text-align: center;
+    margin-top: 0.3em; /* Increased margin */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+activity {
+    cursor: pointer; /* Change cursor to pointer to indicate clickable */
+    transition: max-height 0.3s ease-out; /* Smooth transition for expanding */
+    display: block;
+    background: var(--blue-darker);
+    border-radius: 0.4em;
+    margin: 10px 0; /* Increased margin */
+    padding: 1.2em; /* Increased padding */
+    color: var(--primary-text-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
+}
+
+activity.expanded {
+    max-height: 600px; /* Increased expanded height */
+}
+
+activity activity-extra {
+    display: none; /* Hide extra info by default */
+    font-size: 0.8em; /* Increased font size */
+    color: var(--secondary-text-color);
+    text-align: center;
+    margin-top: 0.5em; /* Increased margin */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.4em; /* Increased line height */
+}
+
+activity.expanded activity-extra {
+    display: block; /* Show extra info when expanded */
+}
+
+activity:hover {
+    background: var(--blue-dark);
+}
+
+activity-title {
+    font-size: 1.4em; /* Increased font size */
+    font-weight: bold;
+    margin-bottom: 0.5em; /* Increased margin */
+    color: var(--secondary-text-color);
+    text-align: center;
+}
+
+activity-content {
+    font-size: 1.2em; /* Increased font size */
+    color: var(--primary-text-color);
+    text-align: left;
+    line-height: 1.6em; /* Increased line height */
+}
+
+aaction {
+    cursor: pointer;
+    color: var(--link-color);
+    text-decoration: underline;
+    margin-top: 0.6em; /* Increased margin */
+    display: inline-block;
+}
+
+activities {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: var(--background);
+    padding: 3em;
+    border-radius: 1em;
+    width: 80%;
+    align-self: center;
+    margin: auto;
+    gap: 20px;
+}

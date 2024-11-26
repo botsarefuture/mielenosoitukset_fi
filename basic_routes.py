@@ -26,7 +26,7 @@ from utils.variables import CITY_LIST
 from utils.flashing import flash_message
 from utils.database import DEMO_FILTER
 from utils.analytics import log_demo_view
-from wrappers import permission_required
+from utils.wrappers import permission_required
 from werkzeug.utils import secure_filename
 
 email_sender = EmailSender()

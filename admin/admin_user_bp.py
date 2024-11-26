@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 
 from users.models import User
 from emailer.EmailSender import EmailSender
-from wrappers import admin_required, permission_required
+from utils.wrappers import admin_required, permission_required
 from utils.variables import PERMISSIONS_GROUPS
 from utils.validators import valid_email
 from utils.database import stringify_object_ids

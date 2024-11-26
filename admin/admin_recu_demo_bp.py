@@ -7,7 +7,7 @@ from utils.flashing import flash_message
 
 from utils.classes import RecurringDemonstration, Organizer
 from utils.variables import CITY_LIST
-from wrappers import permission_required, admin_required
+from utils.wrappers import permission_required, admin_required
 
 from utils.admin.demonstration import collect_tags
 from .utils import mongo

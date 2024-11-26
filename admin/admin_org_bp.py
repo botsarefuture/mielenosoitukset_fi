@@ -18,7 +18,7 @@ from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from utils.flashing import flash_message
 from utils.validators import valid_email
-from wrappers import admin_required, permission_required
+from utils.wrappers import admin_required, permission_required
 from .utils import log_admin_action, mongo, get_org_name as get_organization_name
 from utils.classes import Organization
 

@@ -11,7 +11,7 @@ from utils.admin.demonstration import collect_tags
 from utils.database import DEMO_FILTER
 from utils.flashing import flash_message
 from utils.variables import CITY_LIST
-from wrappers import admin_required, permission_required
+from utils.wrappers import admin_required, permission_required
 from .utils import mongo, log_admin_action_V2, AdminActParser
 
 

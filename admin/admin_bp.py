@@ -24,7 +24,7 @@ from flask_login import (
 )
 from users.models import User  # Import User model
 from database_manager import DatabaseManager
-from wrappers import admin_required, permission_required
+from utils.wrappers import admin_required, permission_required
 
 from utils.flashing import flash_message
 from utils.analytics import get_demo_views

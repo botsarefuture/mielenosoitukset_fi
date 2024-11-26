@@ -305,3 +305,33 @@
   #like-count::after {
     content: ")";
   }
+
+  .action-button.facebook-button {
+    background-color: var(--blue-darker);
+    color: var(--white);
+    padding: 1em;
+    margin: 2em 0em;
+    display: block;
+    text-align: center;
+  }
+
+  .action-button.facebook-button:hover {
+    background-color: var(--blue);
+    color: var(--white);
+    padding: 1em;
+    margin: 2em 0em;
+    display: block;
+    text-align: center;
+    animation: bojaa 1.5s infinite;
+  }
+  @keyframes bojaa {
+    0%, 100% {
+      border: var(--neon-green) 4px dashed;
+      transform: scale(1);
+    }
+
+    50% {
+      border: var(--white) 4px dashed;
+      transform: scale(1.1);
+    }
+  }

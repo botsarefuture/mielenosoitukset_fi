@@ -67,10 +67,11 @@ function updateModalContent(demo_info) {
         <label>Title:</label> <p>${demo_info.title}</p>
         <label>Recurring:</label> <p>${demo_info.recurring}</p>
         <label>Repeat Schedule:</label> <div>
+        ${demo_info.repeat_schedule != null ? `
             <p>Frequency: ${demo_info.repeat_schedule.frequency}</p>
             <p>Interval: ${demo_info.repeat_schedule.interval}</p>
             <p>End Date: ${demo_info.repeat_schedule.end_date}</p>
-            <p>Weekday: ${demo_info.repeat_schedule.weekday}</p>
+            <p>Weekday: ${demo_info.repeat_schedule.weekday}</p>` : "Not repeating"}
         </div>
     
         <label>Organizers:</label> <p>${demo_info.organizers.map(org => org.name).join(', ')}</p>

@@ -1,13 +1,22 @@
 """
+Copyright:
+-----------
+    Verso Vuorenmaa 2024
+
+Description:
+-------------
+    
 This script is responsible for hiding past demonstrations in the database.
 
 Modules:
+--------
     datetime: Provides classes for manipulating dates and times.
     importlib: Provides the implementation of the import statement.
     os: Provides a way of using operating system dependent functionality.
     sys: Provides access to some variables used or maintained by the interpreter.
 
 Functions:
+----------
     is_future_demo(demo_date, today):
         Checks if the given demonstration date is in the future compared to today's date.
     
@@ -21,7 +30,11 @@ Functions:
         Main function that marks past demonstrations as hidden by fetching the upcoming demonstrations and processing them.
 
 Usage:
+------
     This script is intended to be run as a standalone module. When executed, it will mark past demonstrations as hidden in the database.
+    
+.. versionadded:: 2.4.0
+    Added the ability to hide past demonstrations in the database.
 """
 
 import importlib

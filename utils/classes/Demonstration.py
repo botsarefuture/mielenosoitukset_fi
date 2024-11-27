@@ -385,7 +385,7 @@ class Demonstration(BaseModel):
         --------
         RecurringDemonstration : A class representing a recurring demonstration.
         """
-        if not isinstance(recurring_demo, Demonstration):
+        if not isinstance(recurring_demo, Demonstration): # RecurringDemonstration is a subclass of Demonstration, so it will return True
             raise ValueError(
                 "The provided demonstration is not a RecurringDemonstration instance."
             )

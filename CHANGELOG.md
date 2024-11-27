@@ -1,42 +1,75 @@
-🌈🦄✨ **v2.8.0** – *The Ultimate Glow-Up Edition!* 🌟  
-### 🌟 **Added**  
-- 🌟 **All-new User Profile Management** – Redefine how users shine! Add custom avatars, profile themes, and even sparkle animations! ✨💃  
-- 🎉 **Advanced Role System** – Create roles like *Mystic Unicorn*, *Cosmic Overlord*, or *Chief Fun Officer*. Everyone deserves a fancy title! 🌌👑  
-- 🔔 **Smart Notifications** – Now with emojis, sound effects, and customizable vibes for every ping! 🎵✨  
-- 💖 **AI-Powered User Preferences** – Personalize everything effortlessly; we now predict what you love before you even click! 🧠💡  
-- ⚙️ **One-Click Settings Sync** – Move between devices without missing a beat. Your sparkly settings follow you! 🛠️🌈  
-- 🛡️ **Quantum-Level Privacy** – Your secrets are now locked in another dimension (probably safe)! 🔐🚀  
-- 🚀 **Guardian Mode** – Automatically detects threats and engages the *Intergalactic Unicorn Defense Protocol*. 🦄🛡️  
+# Changelog  
 
-### 🛠️ **Fixed**  
-- ✅ **Infinite Sync Issue Solved** – No more waiting for the circle of doom! Data syncs faster than a shooting star! 🌠💾  
-- 🐞 **Crash-Free Startup** – App stability so solid, it might just be your new therapist. 🛋️🖥️  
+## v2.8.2 – **The Polished Performance Edition** 🌟  
 
-### ✨ **Changed**  
-- 📦 **Dependencies Leveled-Up** – Now running on the *next-next-gen* versions. Even the dependencies are thriving! 🌟📈  
-- 🏎️ **Turbo-Powered Performance** – Refactored for speeds rivaling a supersonic unicorn in flight! 🐎💨  
+### 🚫 Deprecations  
+- **Leaflet Attribution Control**: Deprecated method for hiding Leaflet attribution control.  
 
----
+### ✨ Updates  
+- **Logging Level**: Updated logging level for recurring demonstrations.  
+- **Type Checking**: Improved type checking in the Demonstration class.  
+- **Documentation**: Enhanced script documentation and copyright notice.  
 
-🌈🦄✨ **v2.7.0** – *The Navigator’s Dream* 🌟  
-### 🌟 **Added**  
-- 🌐 **Language Navigation 2.0** – Now with immersive translation! Speak Klingon? We got you! 🖖🌍  
+---  
 
----
+## v2.8.1 – **The Sparkly Bug Fix Edition** 🌟  
 
-🌈🦄✨ **v2.6.0** – *The Foundation for Greatness* 🌟  
-### 🌟 **Added**  
-- 🔒 **Next-Gen User Authentication** – Includes face recognition for pets! Because why not? 🐶🐾  
-- 🔐 **Ultra-Fortress Data Encryption** – Data so secure, even you might forget the password. 🛡️🗝️  
-- 🎨 **UI Glow-Up** – Every button now has subtle rainbows. Look good, feel good. 🌈✨  
-- 🌍 **Universal Language Support** – Speak emoji? Translate to 🌮🍦🛸 instantly. 🌟🗺️  
+### 🛠️ Fixes  
+- **Critical Bug Fix**: Resolved an issue causing app crashes during profile picture uploads.  
+- **Minor Bug Fixes**: Addressed various small bugs affecting app behavior.  
 
-### 🛠️ **Fixed**  
-- ✅ **Data Synced in Light-Speed Mode** – Faster than a cat typing on a keyboard. 😺⌨️  
-- 🐛 **Crash-Proof** – Your app is now indestructible. Tested against chaos mode! 💥🦾  
+### ✨ Updates  
+- **Dependency Updates**: Upgraded to the latest versions to enhance performance and security.  
 
-### ✨ **Changed**  
-- 📦 **Dependencies Upgraded Beyond Infinity** – Can’t see the edges of this improvement. 📈💎  
-- 🏎️ **Hyper-Optimized Refactoring** – Less code, more ✨magic✨.  
+### 🚫 Deprecations  
+- **Feature Removals**: Discontinued outdated functionalities no longer in use.  
 
-🦄💫 Ready to ride the rainbow of awesomeness? Let’s go! 🚀
+---  
+
+## v2.8.0 – **The Ultimate Glow-Up Edition** 🌟  
+
+### 🌟 New Features  
+- **Enhanced User Profiles**: Introduced custom avatars, profile themes, and animations.  
+- **Advanced Role Management**: Create and assign unique roles with a personalized flair.  
+- **Smart Notifications**: Added emojis, sound effects, and custom notification settings.  
+- **AI-Driven Personalization**: Seamless customization based on user preferences.  
+- **One-Click Settings Sync**: Sync settings across devices effortlessly.  
+- **Enhanced Privacy**: Improved data security measures for top-notch confidentiality.  
+- **Guardian Mode**: Detect and neutralize threats automatically.  
+
+### 🛠️ Fixes  
+- **Improved Sync Performance**: Eliminated delays in data synchronization.  
+- **Crash-Free Startup**: Enhanced app stability for a smoother experience.  
+
+### ✨ Updates  
+- **Dependency Optimization**: Leveraged next-gen versions for improved functionality.  
+- **Performance Boost**: Streamlined app operations for faster, more efficient use.  
+
+---  
+
+## v2.7.0 – **The Navigator’s Dream** 🌟  
+
+### 🌟 New Features  
+- **Language Navigation 2.0**: Now includes immersive and comprehensive translation capabilities.  
+
+---  
+
+## v2.6.0 – **The Foundation for Greatness** 🌟  
+
+### 🌟 New Features  
+- **Advanced Authentication**: Added new user login features, including face recognition.  
+- **Fortress-Level Encryption**: Reinforced data security with cutting-edge encryption.  
+- **UI Enhancements**: Subtle design updates for a cleaner and more vibrant interface.  
+- **Universal Language Support**: Expanded support for multiple languages and emojis.  
+
+### 🛠️ Fixes  
+- **Faster Data Syncing**: Optimized for quicker and more reliable synchronization.  
+- **Crash Resistance**: Improved stability under high-load scenarios.  
+
+### ✨ Updates  
+- **Dependency Improvements**: Upgraded backend components for scalability.  
+- **Code Refinement**: Enhanced codebase efficiency for improved performance.  
+
+---  
+
+Enjoy a more secure, efficient, and polished experience! 🚀  

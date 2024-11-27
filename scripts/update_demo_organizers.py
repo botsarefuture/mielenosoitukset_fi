@@ -80,7 +80,7 @@ def update_demo_organizers(demo: Dict) -> None:
         demo (dict): The demonstration document.
     """
     if demo.get("recurring") or demo.get("parent"):
-        logger.info(f"Skipping recurring demonstration with ID {demo['_id']}")
+        logger.debug(f"Skipping recurring demonstration with ID {demo['_id']}")
         return
 
     demonstration = Demonstration.from_dict(demo)

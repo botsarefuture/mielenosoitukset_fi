@@ -94,118 +94,154 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* Inline #15 | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
+
+  .repeating-alert {
+    background-color: var(--yellow);
+    color: var(--black);
+    padding: 1em;
+    border-radius: 0.5em;
+    text-align: center;
+  }
+
+  .repeating-alert strong {
+    font-size: 1.5em;
+    display: block;
+  }
+
+  /* Element | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
+
+  .display-all {
+    display: block;
+    margin-top: 0.5em;
+  }
+</style>
 
 <div id="main">
 
-  <!-- IMAGE -->
-  {% if demo['img'] %}
-  {% if demo['img'] !=
-  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
-  %}
-  <img src="{{ demo['img'] }}" alt="Event Image" />
-  {% endif %}
-  {% endif %}
+  {% if demo["recurring"] and demo['repeat_schedule'] %}
+  <div class="repeating-alert">
+    <strong>Tämä mielenosoitus on toistuva.</strong><br>
+    {{ generate_demo_sentence(demo) }}
 
-  <!-- NAME OR TITLE -->
-  <h1>{{ demo['title'] }}</h1>
-
-  <!-- Social Media Share Buttons -->
-  <div class="button-container">
-    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-      target="_blank" class="facebook-button button">
-      {{ _('Jaa Facebookissa') }}
-    </a>
-
-    <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-      target="_blank" class="twitter-button button">
-      {{ _('Jaa Xssä') }}
-    </a>
-
-    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-      target="_blank" class="linkedin-button button">
-      {{ _('Jaa LinkedInissä') }}
-    </a>
+    <br>
+    Klikkaa alla olevaa nappia nähdäksesi kaikki tämän mielenosoituksen sisarukset
+    <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all"
+       style="display: block; margin-top: 0.5em;">Näytä kaikki sisarukset</a>
   </div>
+{% endif %}
 
-  <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
-  <div class="button-container">
-    <button class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')">
-      <i class="fas fa-thumbs-up"></i> {{ _('Osallistun') }}
-    </button>
-    <div class="like-count">
-      <p>{{ _('Osallistuu:') }}</p>
-      <i class="fas fa-thumbs-up"></i>
-      <p id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</p>
-    </div>
+
+<!-- IMAGE -->
+{% if demo['img'] %}
+{% if demo['img'] !=
+"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
+%}
+<img src="{{ demo['img'] }}" alt="Event Image" />
+{% endif %}
+{% endif %}
+
+<!-- NAME OR TITLE -->
+<h1>{{ demo['title'] }}</h1>
+
+<!-- Social Media Share Buttons -->
+<div class="button-container">
+  <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+    target="_blank" class="facebook-button button">
+    {{ _('Jaa Facebookissa') }}
+  </a>
+
+  <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
+    target="_blank" class="twitter-button button">
+    {{ _('Jaa Xssä') }}
+  </a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
+    target="_blank" class="linkedin-button button">
+    {{ _('Jaa LinkedInissä') }}
+  </a>
+</div>
+
+<!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
+<div class="button-container">
+  <button class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')">
+    <i class="fas fa-thumbs-up"></i> {{ _('Osallistun') }}
+  </button>
+  <div class="like-count">
+    <p>{{ _('Osallistuu:') }}</p>
+    <i class="fas fa-thumbs-up"></i>
+    <p id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</p>
   </div>
-  <script>
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
+</div>
+<script>
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
 
-    let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
+  let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
 
-    function toggleLike(demoId) {
-      const url = liked ? `/api/demo/${demoId}/unlike` : `/api/demo/${demoId}/like`;
-      fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+  function toggleLike(demoId) {
+    const url = liked ? `/api/demo/${demoId}/unlike` : `/api/demo/${demoId}/like`;
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("like-count").innerText = data.likes;
+        liked = !liked;
+        document.cookie = `liked_${demoId}=${liked}; path=/`;
       })
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById("like-count").innerText = data.likes;
-          liked = !liked;
-          document.cookie = `liked_${demoId}=${liked}; path=/`;
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        });
-    }
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
 
-    function get_likes(demoId) {
-      fetch(`/api/demo/${demoId}/likes`)
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById("like-count").innerText = data.likes;
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        });
-    }
+  function get_likes(demoId) {
+    fetch(`/api/demo/${demoId}/likes`)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("like-count").innerText = data.likes;
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      get_likes("{{ demo['_id'] }}");
-    });
-  </script>
+  document.addEventListener("DOMContentLoaded", () => {
+    get_likes("{{ demo['_id'] }}");
+  });
+</script>
 
-  <!-- add a separator line here -->
-  <hr style="margin: 20px 0;">
+<!-- add a separator line here -->
+<hr style="margin: 20px 0;">
 
-  <!-- TAGS -->
-  <div class="topics">
-    <ul>
-      {% if demo["tags"] and demo["tags"]|length > 0 %}
-      {% for tag in demo["tags"] %}
-      <li>
-        <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
-          <span class="tag">#{{ tag }}</span>
-        </a>
-      </li>
-      {% endfor %}
-      {% endif %}
+<!-- TAGS -->
+<div class="topics">
+  <ul>
+    {% if demo["tags"] and demo["tags"]|length > 0 %}
+    {% for tag in demo["tags"] %}
+    <li>
+      <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
+        <span class="tag">#{{ tag }}</span>
+      </a>
+    </li>
+    {% endfor %}
+    {% endif %}
 
 
-    </ul>
-  </div>
+  </ul>
+</div>
 
 
 
-  {% if demo['description'] %}
-  <div class="container" style="
+{% if demo['description'] %}
+<div class="container" style="
       margin-top: 20px;
       padding: 20px;
       background: var(--background);
@@ -214,42 +250,42 @@
       box-shadow: var(--box-shadow);
     ">
 
-    <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
-    {{ demo['description']|safe }} <!-- IN FUTURE: use demo['description'][selected_language] -->
-  </div>
-  {% endif %}
-  <div class="countdown">
-    <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
-    <div id="timer" style="font-size: 24px; color: var(--primary-strong-text-color)"></div>
-  </div>
-  <br />
-  <div class="map">
-    <div id="map" style="height: 300px"></div>
-  </div>
-  <br />
+  <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
+  {{ demo['description']|safe }} <!-- IN FUTURE: use demo['description'][selected_language] -->
+</div>
+{% endif %}
+<div class="countdown">
+  <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
+  <div id="timer" style="font-size: 24px; color: var(--primary-strong-text-color)"></div>
+</div>
+<br />
+<div class="map">
+  <div id="map" style="height: 300px"></div>
+</div>
+<br />
 
-  <div id="subcontainer1">
-    <div id="infocontainer">
-      <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
-      <div id="demo-details">
-        <!-- Demo details will be injected here by JavaScript -->
-      </div>
+<div id="subcontainer1">
+  <div id="infocontainer">
+    <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
+    <div id="demo-details">
+      <!-- Demo details will be injected here by JavaScript -->
     </div>
-
-    <div id="orginfo">
-      <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>
-      <div class="organizers-list" id="organizers-list">
-        <!-- Organizers will be injected here by JavaScript -->
-      </div>
-      <p id="no-organizers" style="display: none">
-        {{ _('Ei järjestäjätietoja saatavilla.') }}
-      </p>
-    </div>
-
-    <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
-    <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
-
   </div>
+
+  <div id="orginfo">
+    <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>
+    <div class="organizers-list" id="organizers-list">
+      <!-- Organizers will be injected here by JavaScript -->
+    </div>
+    <p id="no-organizers" style="display: none">
+      {{ _('Ei järjestäjätietoja saatavilla.') }}
+    </p>
+  </div>
+
+  <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
+  <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
+
+</div>
 </div>
 {% endblock %}
 

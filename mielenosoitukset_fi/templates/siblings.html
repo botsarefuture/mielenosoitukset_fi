@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<style>
+    .info-box {
+	background: var(--yellow);
+	color: var(--black);
+	padding: 1em;
+	border-radius: 0.5em;
+	text-align: center;
+	margin-bottom: 2em;
+	display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% import 'macros.html' as macros %}
+
+<div class="container-main-content">
+    <h1 class="admin-section-title">{{ _('Sisarusmielenosoitukset') }}</h1>
+    <div class="info-box">
+        <p>{{ _('Tässä on lista muista mielenosoituksista, jotka ovat osa samaa toistumoa.') }}</p>
+    </div>
+
+    <div class="container-grid">
+        {% if siblings and siblings|length > 0 %}
+            {% for demo in siblings %}
+                {{ macros.demo_card(demo) }}
+            {% endfor %}
+        {% else %}
+            <div class="grid-item no-results">{{ _('Ei löytynyt sisarusmielenosoituksia.') }}</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

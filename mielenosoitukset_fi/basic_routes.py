@@ -28,6 +28,8 @@ from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import permission_required
 from werkzeug.utils import secure_filename
+from mielenosoitukset_fi.a import generate_demo_sentence
+
 
 email_sender = EmailSender()
 
@@ -47,6 +49,11 @@ def generate_alternate_urls(app, endpoint, **values):
     return alternate_urls
 
 def init_routes(app):
+    # register genereate_demo_sentence function
+    @app.context_processor
+    def inject_demo_sentence():
+        return dict(generate_demo_sentence=generate_demo_sentence)
+    
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
         try:
@@ -319,6 +326,20 @@ def init_routes(app):
         log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
         return render_template("preview.html", demo=demo)
 
+    @app.route("/demonstration/<parent>/children", methods=["GET"])
+    def siblings_meeting(parent):
+        result = demonstrations_collection.find({"parent": ObjectId(parent), "hide": False})
+        
+        """
+        List all sibling demonstrations of a recurring demonstration.
+        """
+        siblings = []
+        for demo in result:
+            siblings.append(Demonstration.from_dict(demo))
+        siblings.sort(key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date())
+        return render_template("siblings.html", siblings=siblings)
+        
+    
     @app.route("/info")
     def info():
         return render_template("info.html")

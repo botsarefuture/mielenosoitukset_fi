@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.8.6 – **The Organization Enhancement Edition** 🌟
+
+### 🌟 New Features
+- **API Endpoint for Organizations**: Added a new API endpoint to create new organizations.
+
+### ✨ Updates
+- **Organization Insertion Logic**: Enhanced the logic for inserting organizations to ensure data integrity.
+- **Admin Interface**: Updated the admin interface to support the new organization creation feature.
+
 ## v2.8.5 – **The Organizer Fix Edition** 🌟
 
 ### 🛠️ Fixes

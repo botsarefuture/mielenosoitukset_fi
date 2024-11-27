@@ -1,4 +1,10 @@
-# Changelog  
+# Changelog
+
+## v2.8.5 – **The Organizer Fix Edition** 🌟
+
+### 🛠️ Fixes
+- **Organization ID Assignment**: Fixed the `fix_organizers` function to handle `None` values properly.
+
 
 ## v2.8.4 – **The Modernization Edition** 🌟
 

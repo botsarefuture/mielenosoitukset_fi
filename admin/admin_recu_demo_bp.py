@@ -134,17 +134,17 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
 
     Parameters
     ----------
-    request :
-        param is_edit:  (Default value = False)
-    demo_id :
-        Default value = None)
-    is_edit :
-        (Default value = False)
+    request : flask.Request
+        The request object containing form data.
+    is_edit : bool, optional
+        Flag indicating if the form is for editing an existing demonstration (default is False).
+    demo_id : str, optional
+        The ID of the demonstration being edited (default is None).
 
     Returns
     -------
-
-
+    flask.Response
+        Redirect response to the appropriate page after form handling.
     """
     title = request.form.get("title")
     date = request.form.get("date")
@@ -177,8 +177,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     # Get the repeat schedule details
     repeat_schedule = {
         "frequency": request.form.get("frequency_type"),
-        "interval": int(request.form.get("interval", 1)),
+        "interval": int(request.form.get("frequency_interval", 1)),
         "weekday": request.form.get("weekday"),
+        "monthly_option": request.form.get("monthly_option"),
+        "day_of_month": request.form.get("day_of_month"),
+        "nth_weekday": request.form.get("nth_weekday"),
+        "weekday_of_month": request.form.get("weekday_of_month"),
+        "end_date": request.form.get("end_date"),
     }
 
     demonstration_data = {
@@ -252,7 +257,7 @@ def delete_recu_demo(demo_id):
     demo_data = mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
 
     if not demo_data:
-        flash_message("Toistuva mielenosoitus ei löytynyt.")
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
 
     if "confirm_delete" in request.form:

@@ -5,6 +5,7 @@ from utils.validators import event_type_convertor, valid_event_type, return_exis
 from .RepeatSchedule import RepeatSchedule
 from bson import ObjectId
 
+
 DB = get_database_manager()
 
 
@@ -359,7 +360,7 @@ class Demonstration(BaseModel):
 
         self.save()
 
-    def update_self_from_recurring(self, recurring_demo: "RecurringDemonstration"):
+    def update_self_from_recurring(self, recurring_demo: 'RecurringDemonstration'):
         """Update the demonstration details using a recurring demonstration.
 
         This method updates the demonstration instance with the details from a recurring
@@ -384,7 +385,7 @@ class Demonstration(BaseModel):
         --------
         RecurringDemonstration : A class representing a recurring demonstration.
         """
-        if not isinstance(recurring_demo, RecurringDemonstration):
+        if not isinstance(recurring_demo, Demonstration):
             raise ValueError(
                 "The provided demonstration is not a RecurringDemonstration instance."
             )

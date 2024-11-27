@@ -106,6 +106,36 @@
     }
 </script>
 
+<script>
+    document.getElementById('frequency_type').addEventListener('change', function () {
+        const frequencyType = this.value;
+        const monthlyOptions = document.getElementById('monthly-options');
+        if (frequencyType === 'monthly') {
+            monthlyOptions.style.display = 'block';
+        } else {
+            monthlyOptions.style.display = 'none';
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('monthly_option').addEventListener('change', function () {
+        const monthlyOption = this.value;
+        const dayOfMonthContainer = document.getElementById('day-of-month-container');
+        const nthWeekdayContainer = document.getElementById('nth-weekday-container');
+        if (monthlyOption === 'day_of_month') {
+            dayOfMonthContainer.style.display = 'block';
+            nthWeekdayContainer.style.display = 'none';
+        } else if (monthlyOption === 'nth_weekday') {
+            dayOfMonthContainer.style.display = 'none';
+            nthWeekdayContainer.style.display = 'block';
+        } else {
+            dayOfMonthContainer.style.display = 'none';
+            nthWeekdayContainer.style.display = 'none';
+        }
+    });
+</script>
+
 {% endblock %}
 
 {% block main_content %}
@@ -272,6 +302,7 @@
         </div>
 
         <div class="form-group">
+            <!-- if monthly, dont display this -->
             <label for="weekday">Viikonpäivä</label>
             <select name="weekday" id="weekday" class="form-control">
                 <option value="" disabled {% if not demo %}selected{% endif %}>Valitse viikonpäivä</option>
@@ -289,6 +320,42 @@
                     Lauantai</option>
                 <option value="sunday" {% if demo and demo.repeat_schedule.weekday=='sunday' %}selected{% endif %}>
                     Sunnuntai</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="monthly-options" style="display: none;">
+            <label for="monthly_option">Kuukausittainen toistuvuus</label>
+            <select name="monthly_option" id="monthly_option" class="form-control">
+                <option value="" disabled selected>Valitse kuukausittainen toistuvuus</option>
+                <option value="day_of_month" {% if demo and demo.repeat_schedule.monthly_option=='day_of_month' %}selected{% endif %}>Kuukauden päivä</option>
+                <option value="nth_weekday" {% if demo and demo.repeat_schedule.monthly_option=='nth_weekday' %}selected{% endif %}>Kuukauden n. viikonpäivä</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="day-of-month-container" style="display: none;">
+            <label for="day_of_month">Kuukauden päivä</label>
+            <input type="number" name="day_of_month" id="day_of_month" class="form-control" min="1" max="31" value="{{ demo.repeat_schedule.day_of_month if demo and demo.repeat_schedule.monthly_option=='day_of_month' else '' }}">
+        </div>
+
+        <div class="form-group" id="nth-weekday-container" style="display: none;">
+            <label for="nth_weekday">Kuukauden n. viikonpäivä</label>
+            <select name="nth_weekday" id="nth_weekday" class="form-control">
+                <option value="" disabled selected>Valitse viikonpäivä</option>
+                <option value="first" {% if demo and demo.repeat_schedule.nth_weekday=='first' %}selected{% endif %}>Ensimmäinen</option>
+                <option value="second" {% if demo and demo.repeat_schedule.nth_weekday=='second' %}selected{% endif %}>Toinen</option>
+                <option value="third" {% if demo and demo.repeat_schedule.nth_weekday=='third' %}selected{% endif %}>Kolmas</option>
+                <option value="fourth" {% if demo and demo.repeat_schedule.nth_weekday=='fourth' %}selected{% endif %}>Neljäs</option>
+                <option value="last" {% if demo and demo.repeat_schedule.nth_weekday=='last' %}selected{% endif %}>Viimeinen</option>
+            </select>
+            <select name="weekday_of_month" id="weekday_of_month" class="form-control mt-2">
+                <option value="" disabled selected>Valitse viikonpäivä</option>
+                <option value="monday" {% if demo and demo.repeat_schedule.weekday_of_month=='monday' %}selected{% endif %}>Maanantai</option>
+                <option value="tuesday" {% if demo and demo.repeat_schedule.weekday_of_month=='tuesday' %}selected{% endif %}>Tiistai</option>
+                <option value="wednesday" {% if demo and demo.repeat_schedule.weekday_of_month=='wednesday' %}selected{% endif %}>Keskiviikko</option>
+                <option value="thursday" {% if demo and demo.repeat_schedule.weekday_of_month=='thursday' %}selected{% endif %}>Torstai</option>
+                <option value="friday" {% if demo and demo.repeat_schedule.weekday_of_month=='friday' %}selected{% endif %}>Perjantai</option>
+                <option value="saturday" {% if demo and demo.repeat_schedule.weekday_of_month=='saturday' %}selected{% endif %}>Lauantai</option>
+                <option value="sunday" {% if demo and demo.repeat_schedule.weekday_of_month=='sunday' %}selected{% endif %}>Sunnuntai</option>
             </select>
         </div>
 

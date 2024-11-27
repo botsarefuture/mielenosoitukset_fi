@@ -3,10 +3,10 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pymongo import MongoClient, UpdateOne
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta, weekday
 from config import Config
 from utils.classes import Demonstration, RecurringDemonstration
-import time
+from traceback import format_exc
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,19 +21,19 @@ demonstrations_collection = db["demonstrations"]
 
 # Helper function to calculate the next dates
 def calculate_next_dates(start_date, schedule):
-    """
+    """Calculate the next dates for a recurring demonstration based on the schedule.
 
     Parameters
     ----------
-    start_date :
-        param schedule:
-    schedule :
-
+    start_date : datetime
+        The start date of the demonstration.
+    schedule : dict
+        The repeat schedule containing frequency, interval, and other details.
 
     Returns
     -------
-
-
+    list of datetime
+        The list of next dates for the recurring demonstration.
     """
     frequency = schedule.get("frequency")
     interval = schedule.get("interval", 1)
@@ -50,7 +50,36 @@ def calculate_next_dates(start_date, schedule):
         elif frequency == "weekly":
             start_date += timedelta(weeks=interval)
         elif frequency == "monthly":
-            start_date += relativedelta(months=interval)
+            if schedule.get("monthly_option") == "day_of_month":
+                start_date += relativedelta(months=interval)
+            elif schedule.get("monthly_option") == "nth_weekday":
+                nth_weekday = schedule.get("nth_weekday")
+                weekday_of_month = schedule.get("weekday_of_month")
+                if nth_weekday and weekday_of_month:
+                    start_date = start_date + relativedelta(months=interval)
+                    start_date = start_date.replace(day=1)
+                    weekday_map = {
+                        "monday": 0,
+                        "tuesday": 1,
+                        "wednesday": 2,
+                        "thursday": 3,
+                        "friday": 4,
+                        "saturday": 5,
+                        "sunday": 6,
+                    }
+                    weekday_num = weekday_map[weekday_of_month]
+                    nth_weekday_map = {
+                        "first": 1,
+                        "second": 2,
+                        "third": 3,
+                        "fourth": 4,
+                        "last": -1,
+                    }
+                    nth = nth_weekday_map[nth_weekday]
+                    if nth == -1:
+                        start_date = start_date + relativedelta(day=31, weekday=weekday(weekday_num, -1))
+                    else:
+                        start_date = start_date + relativedelta(weekday=weekday(weekday_num, nth))
         elif frequency == "yearly":
             start_date += relativedelta(years=interval)
         else:
@@ -178,7 +207,7 @@ def process_demo(demo):
             )
     except Exception as e:
         logger.error(f"Error processing demonstration {demo.get('_id')}: {e}")
-
+        logger.error(format_exc())
         raise RuntimeWarning from e
 
 

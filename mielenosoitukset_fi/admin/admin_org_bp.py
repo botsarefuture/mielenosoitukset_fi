@@ -39,6 +39,55 @@ from mielenosoitukset_fi.utils.logger import logger
 
 email_sender = EmailSender()
 
+@admin_org_bp.route("/api/new", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_ORGANIZATION")
+def create_organization_api():
+    """Create a new organization using an API endpoint.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+
+    """
+    org_name = request.json.get("name")
+    org_email = request.json.get("email", "no@email.example")
+    org_website = request.json.get("website")
+    
+    print(org_email)
+    
+    if not org_name and not org_email:
+        return {"message": "Nimi ja sähköpostiosoite ovat pakollisia."}
+    
+    #if org_email is not None and not valid_email(org_email):
+        #return {"message": "Virheellinen sähköpostiosoite."}
+    
+    org_description = request.json.get("description", "Kuvaus tulossa")
+    
+    org_data = {
+        "name": org_name,
+        "email": org_email,
+        "website": org_website,
+        "description": org_description,
+    }
+    
+    # insert
+    
+    _, _id = insert_organization(org_data)
+    
+    if not _id is None:
+        return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
+    
+    return {"message": "Virhe organisaation luonnissa."}
+    
+    if _ and _id:
+        return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
+
+    return {"message": "Virhe organisaation luonnissa."}
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -297,7 +346,7 @@ def create_organization():
 
     """
     if request.method == "POST":
-        if insert_organization():
+        if insert_organization()[0]:
             flash_message(
                 "Organisaatio luotu onnistuneesti."
             )  # Removed gettext as it is not needed here.
@@ -306,19 +355,30 @@ def create_organization():
     return render_template("admin/organizations/form.html")
 
 
-def insert_organization():
+def insert_organization(org_data=None):
     """Insert a new organization into the database."""
-    name = request.form.get("name")
-    email = request.form.get("email")
+    if org_data:
+        data_source = org_data
+    
+    else:
+        data_source = request.form
+    
+    name = data_source.get("name")
+    email = data_source.get("email")
 
-    if not validate_organization_fields(name, email, None):
-        return False
+    if not validate_organization_fields(name, email, None) and not org_data:
+        return False, None
 
-    description = request.form.get("description")
-    website = request.form.get("website")
-    social_media_links = get_social_media_links()
+    description = data_source.get("description")
+    website = data_source.get("website")
+    
+    if not org_data:
+        social_media_links = get_social_media_links()
+    
+    else:
+        social_media_links = {}
 
-    mongo.organizations.insert_one(
+    result = mongo.organizations.insert_one(
         {
             "name": name,
             "description": description,
@@ -328,7 +388,15 @@ def insert_organization():
             "members": [],
         }
     )
-    return True
+    
+    if result.inserted_id:
+        log_admin_action(
+            current_user, "Create Organization", f"Created organization {result.inserted_id}"
+        )
+        
+        return True, result.inserted_id
+
+    return False, None
 
 
 # Delete organization

@@ -30,7 +30,7 @@ class EmailSender:
         self.db_manager = DatabaseManager().get_instance()
         self.db = self.db_manager.get_db()
         self.queue_collection = self.db["email_queue"]
-        self.env = Environment(loader=FileSystemLoader("templates/emails"))
+        self.env = Environment(loader=FileSystemLoader("mielenosoitukset_fi/templates/emails"))
         self.start_worker()
 
     def start_worker(self):

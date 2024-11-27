@@ -99,6 +99,7 @@ def fix_organizers(data: dict) -> dict:
     """
     for organizer in data["organizers"]:
         if organizer["organization_id"] == None or organizer["organization_id"].lower() == "none":
+            organizer["organization_id"] = None
             continue
         
         if (

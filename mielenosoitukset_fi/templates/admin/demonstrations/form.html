@@ -196,6 +196,8 @@
                 <label for="organizer_id_{{ loop.index }}">{{ _('ID') }}</label>
                 <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}" class="form-control disabled" value="{{ organizer.organization_id }}">
                 <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
+                <!-- here a button that will create new organization with these infos and assign the id of that new org to this -->
+                <button type="button" class="btn btn-primary mt-2" onclick="createNewOrganizer(this)">{{ _('Luo uusi järjestäjä') }}</button>
             </div>
             {% else %}
             <script>addOrganizer();</script>
@@ -204,7 +206,33 @@
             <script>addOrganizer();</script>
             {% endif %}
         </div>
-        <!-- Organization Selection -->
+        <script>
+            function createNewOrganizer(button) {
+                const organizerItem = button.closest('.organizer-item');
+                const organizerName = organizerItem.querySelector('input[name^="organizer_name"]').value;
+                const organizerWebsite = organizerItem.querySelector('input[name^="organizer_website"]').value;
+                const organizerEmail = organizerItem.querySelector('input[name^="organizer_email"]').value;
+                const organizerId = organizerItem.querySelector('input[name^="organizer_id"]').value;
+                const newOrganizer = {
+                    name: organizerName,
+                    website: organizerWebsite,
+                    email: organizerEmail
+                };
+                fetch('/admin/organization/api/new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newOrganizer)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    organizerItem.querySelector('input[name^="organizer_id"]').value = data.id;
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        </script>
+       
         <div class="form-group">
             <label for="organization">{{ _('Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen') }} <span class="required">*</span></label>
             <select id="organization" name="organization" class="form-control">

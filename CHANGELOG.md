@@ -1,5 +1,14 @@
 # Changelog  
 
+## v2.9.0 – **The Structural Overhaul Edition** 🌟
+
+### ✨ Updates
+- **Project Structure**: Refactored project structure by removing unused files, adding new modules, and updating versioning.
+- **Email Templates**: Enhanced email templates for better user engagement.
+- **JavaScript Functionality**: Improved JavaScript functionality for a smoother user experience.
+
+---  
+
 ## v2.8.2 – **The Polished Performance Edition** 🌟  
 
 ### 🚫 Deprecations  

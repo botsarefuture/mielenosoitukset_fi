@@ -1,6 +1,16 @@
 # Changelog  
 
-## v2.9.0 – **The Structural Overhaul Edition** 🌟
+## v2.8.4 – **The Modernization Edition** 🌟
+
+### ✨ Updates
+- **Flask Versioning**: Updated Flask to the latest version for improved security and performance.
+- **Dependency Management**: Upgraded all dependencies to their latest versions.
+- **Documentation Overhaul**: Removed outdated documentation and added comprehensive guides for new features.
+- **Codebase Cleanup**: Refactored code to remove deprecated methods and improve readability.
+
+---  
+
+## v2.8.3 – **The Structural Overhaul Edition** 🌟
 
 ### ✨ Updates
 - **Project Structure**: Refactored project structure by removing unused files, adding new modules, and updating versioning.

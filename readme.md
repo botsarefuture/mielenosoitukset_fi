@@ -29,7 +29,7 @@
 - **Order:** Follow this import order:
   1. Standard Library imports
   2. Third-party imports
-  3. Local imports (e.g., `from database_manager import DatabaseManager`)
+  3. Local imports (e.g., `from mielenosoitukset_fi.database_manager import DatabaseManager`)
 - **Avoid Wildcard Imports:** Always import specific modules or components (e.g., `from bson.objectid import ObjectId`).
 
 ### **5. Indentation & Spacing**

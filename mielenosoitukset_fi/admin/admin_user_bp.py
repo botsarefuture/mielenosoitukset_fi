@@ -3,7 +3,7 @@ from flask import Blueprint, redirect, render_template, request, url_for, jsonif
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.users.models import User
-from emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.variables import PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.validators import valid_email

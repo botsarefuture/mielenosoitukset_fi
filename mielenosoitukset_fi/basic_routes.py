@@ -21,7 +21,7 @@ from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.s3 import upload_image
 from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization
 from mielenosoitukset_fi.database_manager import DatabaseManager
-from emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER

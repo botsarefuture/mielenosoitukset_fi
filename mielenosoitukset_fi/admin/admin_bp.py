@@ -323,7 +323,7 @@ def send_red_alert_email(user):
 
     """
     # Use email_sender
-    from emailer import EmailSender
+    from mielenosoitukset_fi.emailer import EmailSender
 
     email_sender = EmailSender()
     email_sender.queue_email(

@@ -24,7 +24,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from mielenosoitukset_fi.utils.database import get_database_manager
 from AM.models import Shift, Role, Action
 from mielenosoitukset_fi.utils.flashing import flash_message
-from emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 import hashlib
 import datetime
 from AM.utils import get_action_by_id

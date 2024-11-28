@@ -3,5 +3,5 @@ __pycache__/
 *$py.class
 config.yaml
 .venv/
-uploads/*
+*/uploads/*
 temps/*

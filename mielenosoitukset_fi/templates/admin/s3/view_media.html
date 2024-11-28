@@ -1,0 +1,194 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_org_control.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<style>
+    /* Custom styles for the media view */
+    .media-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        admin margin-top: 1rem;
+    }
+
+    .media-item {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 1rem;
+        background: #f8f9fa;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: calc(33.333% - 1rem);
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    .media-item img {
+        max-width: 100%;
+        border-radius: 5px;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+    }
+
+    .media-item img.loaded {
+        opacity: 1;
+    }
+
+    .media-item p {
+        margin: 0.5rem 0 0;
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+    .copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #007bff;
+        color: #fff;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<h1>{{ _('Media') }}</h1>
+<div class="button-container">
+    <a class="button" href="{{ url_for('admin_media_bp.dashboard') }}">
+        <i class="fas fa-upload"></i> {{ _('Upload Media') }}
+    </a>
+    <a class="button" href="{{ url_for('admin_media_bp.view_media') }}">
+        <i class="fas fa-eye"></i> {{ _('View Media') }}
+    </a>
+</div>
+<!-- New file input for uploading multiple photos -->
+<form id="upload-form" action="{{ url_for('admin_media_bp.upload_multiple') }}" method="post"
+    enctype="multipart/form-data">
+    <input type="file" id="photos" name="photos" accept="image/*" multiple>
+    <button type="submit">{{ _('Upload Photos') }}</button>
+</form>
+<div class="media-container">
+    {% for item in media %}
+    <div class="media-item">
+        <img src="{{ item.url }}" alt="Media" onload="this.classList.add('loaded')">
+        <p>{{ _('Uploaded at:') }} {{ item.uploaded_at }}</p>
+        <p>{{ _('Uploader ID:') }} {{ item.uploader }}</p>
+        <a class="button" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">
+            <i class="fas fa-download"></i> {{ _('Download') }}
+        </a>
+        <button class="copy-button" onclick="copyToClipboard('{{ item.url }}')">
+            <i class="fas fa-copy"></i> {{ _('Copy Link') }}
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    /**
+    * Copy the provided text to the clipboard.
+    *
+    * @param {string} text - The text to copy.
+    */
+    function copyToClipboard(text) {
+        console.log('Copying text to clipboard:', text);
+        navigator.clipboard.writeText(text).then(function () {
+            alert('Link copied to clipboard');
+        }, function (err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
+
+    /**
+    * Handle the file upload via the form.
+    *
+    * @param {Event} event - The form submission event.
+    */
+    document.getElementById('upload-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const files = document.getElementById('photos').files;
+        const existingUrls = Array.from(document.querySelectorAll('.media-item img')).map(img => img.src);
+        const filesToUpload = Array.from(files).filter(file => !existingUrls.includes(URL.createObjectURL(file)));
+
+        if (filesToUpload.length === 0) {
+            alert('No new files to upload.');
+            return;
+        }
+
+        console.log('Files selected for upload:', filesToUpload);
+        uploadFiles(filesToUpload, 0);
+    });
+
+    /**
+    * Upload files one by one.
+    *
+    * @param {FileList} files - The list of files to upload.
+    * @param {number} index - The current index of the file being uploaded.
+    */
+    function uploadFiles(files, index) {
+        if (index >= files.length) {
+            alert('All photos uploaded successfully');
+            location.reload();
+            return;
+        }
+
+        const form_data = new FormData();
+        form_data.append('photos', files[index]);
+        console.log('Uploading file:', files[index].name);
+
+        fetch('{{ url_for('admin_media_bp.upload_multiple') }}', {
+            method: 'POST',
+            body: form_data
+        }).then(response => response.json())
+            .then(data => {
+                console.log('Upload response:', data);
+                data.forEach(element => {
+                    if (element.success) {
+                        uploadFiles(files, index + 1);
+                    } else {
+                        alert('Failed to upload photo: ' + files[index].name);
+                    }
+
+                });
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while uploading photo: ' + files[index].name);
+            });
+    }
+
+    /**
+    * Handle drag and drop file upload.
+    *
+    * @param {Event} event - The drag and drop event.
+    */
+    function handleDrop(event) {
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        console.log('Files dropped for upload:', files);
+        uploadFiles(files, 0);
+    }
+
+    /**
+    * Prevent default behavior for drag and drop events.
+    *
+    * @param {Event} event - The drag and drop event.
+    */
+    function handleDragOver(event) {
+        event.preventDefault();
+        console.log('Drag over event:', event);
+    }
+
+    // Add event listeners for drag and drop
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('drop', handleDrop);
+</script>
+{% endblock %}

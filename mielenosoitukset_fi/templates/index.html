@@ -8,20 +8,18 @@
 {% endblock %} {% block content %}
 
 <div class="container-main-content">
-  {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES")
-  %}
+
   <!-- Christmas-Themed Section -->
-  <section class="christmas-section" style="display: none">
-    <h2 style="color: #ff0000">🎄 Hyvää joulua! 🎄</h2>
-    <p style="color: #006400">
+  <section class="christmas-section container-centered">
+    <h2 class="christmas-title">🎄 Hyvää joulua! 🎄</h2>
+    <p class="christmas-message">
       Tervetuloa viettämään joulun taikaa ja lämpöä! Liity mukaan juhlistamaan
       yhteisöllisyyttä ja rakkautta.
     </p>
     <div class="buttons-div">
-      <a class="button button-primary" href="{{ url_for('celebrate') }}">Juhli kanssamme!</a>
+      <a class="button button-primary" href="#">{{ _('Juhli kanssamme!') }}</a>
     </div>
   </section>
-  {% endif %}
 
   <header class="container-welcome container-centered">
     <h2>{{ _('Tervetuloa Mielenosoitukset.fi:hin') }}</h2>

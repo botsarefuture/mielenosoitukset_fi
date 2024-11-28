@@ -30,7 +30,6 @@ from mielenosoitukset_fi.utils.wrappers import permission_required
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 
-
 email_sender = EmailSender()
 
 # Initialize MongoDB
@@ -147,7 +146,7 @@ def init_routes(app):
             photo_url = ""
             if img:
                 filename = secure_filename(img.filename)
-                temp_file_path = os.path.join("uploads", filename)
+                temp_file_path = os.path.join("mielenosoitukset_fi/uploads", filename)
                 img.save(temp_file_path)
                 bucket_name = "mielenosoitukset-fi1"
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")

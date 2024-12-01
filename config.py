@@ -108,7 +108,12 @@ class Config:
     ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
     SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
     ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
-
+    
+    # Allowed file extensions for uploads
+    ALLOWED_EXTENSIONS = S3_CONFIG.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif"})
+    UPLOADS_FOLDER = S3_CONFIG.get("UPLOADS_FOLDER", "uploads")
+    
+    
     # Admin stuff
     ADMIN_EMAIL = config.get("ADMIN_EMAIL", "verso@luova.club")
 

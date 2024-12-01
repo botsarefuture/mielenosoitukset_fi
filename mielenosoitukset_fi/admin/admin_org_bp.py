@@ -33,7 +33,7 @@ def log_request_info():
     log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
 
 
-from emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.logger import logger
 

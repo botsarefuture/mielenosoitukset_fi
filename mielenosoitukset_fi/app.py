@@ -12,6 +12,8 @@ from mielenosoitukset_fi.error_handlers import register_error_handlers
 from mielenosoitukset_fi.scripts.repeat_v2 import main as repeat_main
 from mielenosoitukset_fi.scripts.update_demo_organizers import main as update_main
 from mielenosoitukset_fi.scripts.in_past import hide_past
+from mielenosoitukset_fi.scripts.CL import main as cl_main
+
 from mielenosoitukset_fi.utils.analytics import prep
 import sys
 from mielenosoitukset_fi.AM import am_bp
@@ -26,6 +28,7 @@ if os.environ.get("FORCERUN") or (
     len(sys.argv) == 2 and sys.argv[1] == "force"
 ):  # Set this via: export FORCERUN=1
     # To unset: unset FORCERUN
+    cl_main()
     repeat_main()
     update_main()
     hide_past()
@@ -37,7 +40,7 @@ if os.environ.get("FORCERUN") or (
 scheduler = BackgroundScheduler()
 scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
 scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
-
+scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
 scheduler.add_job(prep, "interval", minutes=15)
 
 # Initialize Babel
@@ -97,6 +100,7 @@ def create_app() -> Flask:
         admin_demo_bp,
         admin_org_bp,
         admin_recu_demo_bp,
+        admin_media_bp
     )
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
@@ -106,6 +110,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
+    app.register_blueprint(admin_media_bp)
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
     app.register_blueprint(am_bp.am_bp, url_prefix="/am/")

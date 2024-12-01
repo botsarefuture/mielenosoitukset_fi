@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from datetime import datetime
-from emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 
 # Initialize the Flask app
 app = Flask(__name__)

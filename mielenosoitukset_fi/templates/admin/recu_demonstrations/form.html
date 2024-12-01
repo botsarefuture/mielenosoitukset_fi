@@ -20,7 +20,7 @@
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    let tagCount = 0;
+    let tagCount = {{ demo.tags | length | tojson }};
 
     // Lisää uusi tägi
     document.getElementById('add-tag-btn').addEventListener('click', function () {
@@ -29,10 +29,18 @@
         newTagInput.type = 'text';
         newTagInput.id = `tag_${tagCount}`;
         newTagInput.name = `tag_${tagCount}`;
-        newTagInput.className = 'form-control tag-input mt-2';
-        newTagInput.placeholder = 'Lisää tagi';
+        newTagInput.className = 'form-control tag-input';
+        newTagInput.placeholder = '{{ _("Lisää tagi") }}';
         newTagInput.required = true;
+        const remButton = document.createElement('button');
+        remButton.className = "circle-btn";
+        remButton.id = `remove_tag_${tagCount}`;
+        remButton.addEventListener("click", function () {
+            remove(tagCount);
+        })
+        remButton.innerHTML = '<i class="fa fa-times"></i>'
         document.getElementById('tags-container').appendChild(newTagInput);
+        document.getElementById('tags-container').appendChild(remButton);
     });
 </script>
 
@@ -93,16 +101,14 @@
 
 <script>
     function remove(id) {
-        ss = document.getElementById(`tag_${id}`);
-        console.log(ss);
-        ss.parentNode.removeChild(ss);
-        delete ss;
-        ca = document.getElementById(`remove_tag_${id}`);
-        ca.parentNode.removeChild(ca);
-        delete ca;
-
-        //document.removeChild(ss);        
-
+        tagElement = document.getElementById(`tag_${id}`);
+        console.log(tagElement);
+        tagElement.parentNode.removeChild(tagElement);
+        tagElement = null;
+        
+        removeButton = document.getElementById(`remove_tag_${id}`);
+        removeButton.parentNode.removeChild(removeButton);
+        removeButton = null;
     }
 </script>
 
@@ -116,11 +122,39 @@
             monthlyOptions.style.display = 'none';
         }
     });
+
+    // Initialize the display based on the default value
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const frequencyType = document.getElementById('frequency_type').value;
+        const monthlyOptions = document.getElementById('monthly-options');
+        if (frequencyType === 'monthly') {
+            monthlyOptions.style.display = 'block';
+        } else {
+            monthlyOptions.style.display = 'none';
+        }
+    });
 </script>
 
 <script>
     document.getElementById('monthly_option').addEventListener('change', function () {
         const monthlyOption = this.value;
+        const dayOfMonthContainer = document.getElementById('day-of-month-container');
+        const nthWeekdayContainer = document.getElementById('nth-weekday-container');
+        if (monthlyOption === 'day_of_month') {
+            dayOfMonthContainer.style.display = 'block';
+            nthWeekdayContainer.style.display = 'none';
+        } else if (monthlyOption === 'nth_weekday') {
+            dayOfMonthContainer.style.display = 'none';
+            nthWeekdayContainer.style.display = 'block';
+        } else {
+            dayOfMonthContainer.style.display = 'none';
+            nthWeekdayContainer.style.display = 'none';
+        }
+    });
+
+    // Initialize the display based on the default value
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const monthlyOption = document.getElementById('monthly_option').value;
         const dayOfMonthContainer = document.getElementById('day-of-month-container');
         const nthWeekdayContainer = document.getElementById('nth-weekday-container');
         if (monthlyOption === 'day_of_month') {

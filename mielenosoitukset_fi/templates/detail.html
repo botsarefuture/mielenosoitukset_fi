@@ -94,8 +94,37 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  /* Inline #15 | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
+
+  .repeating-alert {
+    background-color: var(--yellow);
+    color: var(--black);
+    padding: 1em;
+    border-radius: 0.5em;
+    text-align: center;
+    margin-top: 1em;
+  }
+
+  .repeating-alert strong {
+    font-size: 1.5em;
+    display: block;
+  }
+
+  /* Element | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
+
+  .display-all {
+    display: block;
+    margin-top: 0.5em;
+  }
+</style>
 
 <div id="main">
+  <button class="button help" style="background: var(--yellow-lighter);color: black;">
+    <i class="fa fa-question-circle"></i> Ilmoita virheestä
+  </button>
+
+
 
   <!-- IMAGE -->
   {% if demo['img'] %}
@@ -234,6 +263,19 @@
       <div id="demo-details">
         <!-- Demo details will be injected here by JavaScript -->
       </div>
+
+      {% if demo["recurring"] and demo['repeat_schedule'] %}
+      <div class="repeating-alert">       
+        <strong>Tämä mielenosoitus on toistuva.</strong><br>
+        {{ generate_demo_sentence(demo) }}
+
+        <br>
+        Klikkaa alla olevaa nappia nähdäksesi kaikki tämän mielenosoituksen sisarukset
+        <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all"
+          style="display: block; margin-top: 0.5em;">Näytä kaikki sisarukset</a>
+      </div>
+      {% endif %}
+
     </div>
 
     <div id="orginfo">
@@ -246,8 +288,12 @@
       </p>
     </div>
 
-    <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
-    <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
+
+
+    <div class="button-container">
+      <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
+      <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
+    </div>
 
   </div>
 </div>

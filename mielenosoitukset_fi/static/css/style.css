@@ -337,7 +337,8 @@ span i {
 }
 
 .christmas-section {
-  background: rgba(255, 255, 255, 0.9);
+  background: url("https://www.transparenttextures.com/patterns/brushed-alum.png");
+  background-size: cover;
   border: 2px solid var(--red);
   padding: 20px;
   border-radius: 10px;

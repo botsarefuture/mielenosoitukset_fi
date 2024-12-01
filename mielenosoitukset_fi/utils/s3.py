@@ -5,14 +5,52 @@ from PIL import Image
 from config import Config  # Import your Config class
 from mielenosoitukset_fi.utils.logger import logger
 import time
+from mielenosoitukset_fi.database_manager import DatabaseManager
 
-MAX_RETRIES = 3
-RETRY_DELAY = 2  # Initial delay in seconds
+# Constants
+db_manager = DatabaseManager().get_instance()
+mongo = db_manager.get_db()
 
+_max_retries = 3
+_retry_delay = 2  # Initial delay in seconds
 
-# Initialize the S3 client with configuration
+_self_path = os.path.dirname(os.path.abspath(__file__))
+
+# one level down and then up to uploads
+_upload_folder = os.path.join("mielenosoitukset_fi", "uploads")
+print(_upload_folder)
+
+def get_id_and_add_one(hash):
+    """
+    Get the last ID from the database and increment it by one.
+
+    Parameters
+    ----------
+    hash : str
+        The hash to use as a prefix for the ID.
+
+    Returns
+    -------
+    int
+        The next ID.
+    """
+    last_id = mongo.s3_ids.find_one_and_update(
+        {"hash": hash},
+        {"$inc": {"last_id": 1}},
+        upsert=True,
+        return_document=True,
+    )
+    return last_id["last_id"]
+
 def create_s3_client():
-    """ """
+    """
+    Initialize and return an S3 client using the provided configuration.
+
+    Returns
+    -------
+    boto3.client or None
+        The initialized S3 client or None if credentials are not found.
+    """
     try:
         return boto3.client(
             "s3",
@@ -24,55 +62,53 @@ def create_s3_client():
         logger.error("AWS credentials not found.")
         return None
 
+_s3_client = create_s3_client()
 
-s3_client = create_s3_client()
-
-
-# Retry decorator with a "graze" handler if all retries fail
-def retry_with_graze(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
+def retry_with_graze(max_retries=_max_retries, delay=_retry_delay):
     """
+    Decorator to retry a function with exponential backoff and a graze handler.
 
     Parameters
     ----------
-    max_retries :
-        Default value = MAX_RETRIES)
-    delay :
-        Default value = RETRY_DELAY)
+    max_retries : int, optional
+        Maximum number of retries (default is _max_retries).
+    delay : int, optional
+        Initial delay between retries in seconds (default is _retry_delay).
 
     Returns
     -------
-
-
+    function
+        The decorated function with retry logic.
     """
-
     def decorator(func):
         """
+        Inner decorator function.
 
         Parameters
         ----------
-        func :
-
+        func : function
+            The function to be decorated.
 
         Returns
         -------
-
-
+        function
+            The wrapped function with retry logic.
         """
-
         def wrapper(*args, **kwargs):
             """
+            Wrapper function to apply retry logic.
 
             Parameters
             ----------
-            *args :
-
-            **kwargs :
-
+            *args : tuple
+                Positional arguments for the decorated function.
+            **kwargs : dict
+                Keyword arguments for the decorated function.
 
             Returns
             -------
-
-
+            Any
+                The return value of the decorated function or None if all retries fail.
             """
             retries = 0
             while retries < max_retries:
@@ -95,35 +131,22 @@ def retry_with_graze(max_retries=MAX_RETRIES, delay=RETRY_DELAY):
 
     return decorator
 
-
-# Convert image to JPEG and save locally
 @retry_with_graze()
 def convert_to_jpg(image_path: str, output_path: str) -> str:
     """
+    Convert an image to JPEG format and save it locally.
 
     Parameters
     ----------
-    image_path :
-        str:
-    output_path :
-        str:
-    image_path : str :
-
-    output_path : str :
-
-    image_path : str :
-
-    output_path : str :
-
-    image_path: str :
-
-    output_path: str :
-
+    image_path : str
+        Path to the input image.
+    output_path : str
+        Path to save the converted JPEG image.
 
     Returns
     -------
-
-
+    str or None
+        Path to the converted JPEG image or None if conversion fails.
     """
     try:
         with Image.open(image_path) as img:
@@ -135,105 +158,90 @@ def convert_to_jpg(image_path: str, output_path: str) -> str:
         logger.error(f"Error converting image {image_path}: {e}")
         return None
 
-
-# Generate the next ID by checking the current objects in the bucket
 @retry_with_graze()
-def generate_next_id(bucket_name: str, image_type: str) -> int:
+def generate_next_id(bucket_name: str = "mielenosoitukset-fi1", image_type: str = "upload") -> int:
     """
+    Generate the next ID by checking the current objects in the S3 bucket.
 
     Parameters
     ----------
-    bucket_name :
-        str:
-    image_type :
-        str:
-    bucket_name : str :
-
-    image_type : str :
-
-    bucket_name : str :
-
-    image_type : str :
-
-    bucket_name: str :
-
-    image_type: str :
-
+    bucket_name : str
+        Name of the S3 bucket.
+    image_type : str
+        Type of the image (used as a prefix).
 
     Returns
     -------
-
-
+    int or None
+        The next ID or None if an error occurs.
     """
-    try:
-        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=image_type)
-        ids = [
-            int(obj["Key"].split("-")[-1].split(".")[0])
-            for obj in response.get("Contents", [])
-            if "-" in obj["Key"] and obj["Key"].split("-")[-1].split(".")[0].isdigit()
-        ]
-        next_id = max(ids, default=0) + 1
-        logger.info(f"Generated next ID: {next_id} for image type: {image_type}")
-        return next_id
-    except Exception as e:
-        logger.error(f"Error generating next ID for bucket '{bucket_name}': {e}")
-        return None
+    return get_id_and_add_one(gen_ha(image_type))
 
+def upload_path_gen(_id: str, image_type: str) -> str:
+    """
+    Generate the path for the uploaded image.
 
-# Upload the image to a bucket with retry logic
+    Parameters
+    ----------
+    bucket_name : str
+        Name of the S3 bucket.
+    image_type : str
+        Type of the image (used as a prefix).
+
+    Returns
+    -------
+    str
+        The path for the uploaded image.
+    """
+
+    return f"{gen_ha(image_type)}/{image_type}-{_id}.jpg"
+
+def gen_ha(image_type):
+    """generate 3 letter big letters hash for image type"""
+    return image_type[:3].upper()
+
 @retry_with_graze()
 def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     """
+    Upload an image to an S3 bucket with retry logic.
 
     Parameters
     ----------
-    bucket_name :
-        str:
-    image_path :
-        str:
-    image_type :
-        str:
-    bucket_name : str :
-
-    image_path : str :
-
-    image_type : str :
-
-    bucket_name : str :
-
-    image_path : str :
-
-    image_type : str :
-
-    bucket_name: str :
-
-    image_path: str :
-
-    image_type: str :
-
+    bucket_name : str
+        Name of the S3 bucket.
+    image_path : str
+        Path to the input image.
+    image_type : str
+        Type of the image (used as a prefix).
 
     Returns
     -------
-
-
+    str or None
+        URL of the uploaded image or None if upload fails.
     """
     _id = generate_next_id(bucket_name, image_type)
     if _id is None:
         logger.error("Failed to generate next ID.")
         return None
 
-    jpg_image_path = f"temps/{image_type}-{_id}.jpg"
+    jpg_image_path = os.path.join(_upload_folder, f"{image_type}-{_id}.jpg")
     output_image_path = convert_to_jpg(image_path, jpg_image_path)
+    
+    print(output_image_path)
+    
+    output_image_path = output_image_path.replace("\\", "/").replace("mielenosoitukset_fi/uploads/", "")
 
+    output_image_path = os.path.join(gen_ha(image_type), output_image_path)
+    
     if output_image_path is None:
         logger.error("Failed to convert image.")
         return None
 
     try:
-        s3_client.upload_file(output_image_path, bucket_name, jpg_image_path)
+        _s3_client.upload_file(jpg_image_path, bucket_name, output_image_path)
         logger.info(f"{jpg_image_path} uploaded successfully to {bucket_name}.")
-        os.remove(output_image_path)  # Remove the converted file
-        s3_file_path = f"{Config.ENDPOINT_URL}/{bucket_name}/{jpg_image_path}"
+        os.remove(jpg_image_path)  # Remove the converted file
+        s3_file_path = f"https://{bucket_name}.{Config.ENDPOINT_URL.replace("https://", "")}/{output_image_path}"
         return s3_file_path
     except ClientError as e:
         logger.error(f"Error uploading image to bucket '{bucket_name}': {e}")

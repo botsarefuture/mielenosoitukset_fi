@@ -14,7 +14,7 @@ mongo = db_manager.get_db()
 _max_retries = 3
 _retry_delay = 2  # Initial delay in seconds
 
-_self_path = os.path.dirname(os.path.abspath(__file__))
+# _self_path is not used, so it has been removed
 
 # one level down and then up to uploads
 _upload_folder = os.path.join("mielenosoitukset_fi", "uploads")
@@ -159,14 +159,12 @@ def convert_to_jpg(image_path: str, output_path: str) -> str:
         return None
 
 @retry_with_graze()
-def generate_next_id(bucket_name: str = "mielenosoitukset-fi1", image_type: str = "upload") -> int:
+def generate_next_id(image_type: str = "upload") -> int:
     """
     Generate the next ID by checking the current objects in the S3 bucket.
 
     Parameters
     ----------
-    bucket_name : str
-        Name of the S3 bucket.
     image_type : str
         Type of the image (used as a prefix).
 
@@ -183,8 +181,8 @@ def upload_path_gen(_id: str, image_type: str) -> str:
 
     Parameters
     ----------
-    bucket_name : str
-        Name of the S3 bucket.
+    _id : str
+        The ID of the image.
     image_type : str
         Type of the image (used as a prefix).
 
@@ -197,7 +195,19 @@ def upload_path_gen(_id: str, image_type: str) -> str:
     return f"{gen_ha(image_type)}/{image_type}-{_id}.jpg"
 
 def gen_ha(image_type):
-    """generate 3 letter big letters hash for image type"""
+    """
+    Generate a 3-letter uppercase hash for the image type.
+
+    Parameters
+    ----------
+    image_type : str
+        Type of the image.
+
+    Returns
+    -------
+    str
+        The 3-letter uppercase hash.
+    """
     return image_type[:3].upper()
 
 @retry_with_graze()
@@ -241,7 +251,7 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
         _s3_client.upload_file(jpg_image_path, bucket_name, output_image_path)
         logger.info(f"{jpg_image_path} uploaded successfully to {bucket_name}.")
         os.remove(jpg_image_path)  # Remove the converted file
-        s3_file_path = f"https://{bucket_name}.{Config.ENDPOINT_URL.replace("https://", "")}/{output_image_path}"
+        s3_file_path = f"https://{bucket_name}.{Config.ENDPOINT_URL.replace('https://', '')}/{output_image_path}"
         return s3_file_path
     except ClientError as e:
         logger.error(f"Error uploading image to bucket '{bucket_name}': {e}")

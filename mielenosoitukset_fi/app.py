@@ -59,7 +59,7 @@ def create_app() -> Flask:
     limiter = Limiter(
         get_remote_address,
         app=app,
-        default_limits=["100 per day", "10 per hour"],
+        default_limits=["86400 per day", "3600 per hour", "10 per second"],
         storage_uri=f"{app.config["MONGO_URI"]}/mielenosoitukset_fi.limiter",
     )
     # Locale selector function

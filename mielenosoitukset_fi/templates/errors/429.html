@@ -119,10 +119,13 @@
             button.click();
             document.body.removeChild(button);
 
-            window.onbeforeunload = function() {
-                return "Are you sure you want to leave? / Oletko varma, että haluat poistua? / Är du säker på att du vill lämna?";
-            };
+            
         });
+
+        // reload page after 10 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 10000);
     </script>
 </body>
 </html>

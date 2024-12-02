@@ -44,8 +44,9 @@ class Organizer(BaseEntity):
         organization_id: ObjectId = None,
         website: str = None,
         url: str = None,
+        _id: ObjectId = None,
     ):
-        super().__init__(name, email, website)
+        super().__init__(name, email, website, _id)
         self.organization_id = organization_id or None
         self.url = url
 

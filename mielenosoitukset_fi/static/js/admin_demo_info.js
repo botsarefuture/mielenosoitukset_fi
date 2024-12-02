@@ -20,7 +20,6 @@ async function fetchDemoInfo(demo_id) {
         console.error('There was a problem with the fetch operation:', error);
     }
 }
-
 /**
  * Updates the content of the modal with demonstration information.
  *
@@ -31,27 +30,25 @@ async function fetchDemoInfo(demo_id) {
  */
 function updateModalContent(demo_info) {
     // insert the modal into the document if it doesn't exist
-    if (!document.querySelector('.modal')) {
+    if (!document.querySelector('#demo-modal')) {
         document.body.innerHTML += `
-            <div class="modal">
-                <div class="modal-content">
+            <div class="modal" id="demo-modal">
                     <div class="modal-header">
                         <h2></h2>
-                        <span class="close-button">&times;</span>
+                        <span class="close-button" data-close-button>&times;</span>
                     </div>
                     <div class="modal-body">
                         <p></p>
                     </div>
                     <div class="modal-footer">
                     </div>
-                </div>
             </div>
         `;
     }
     // update modal content
-    document.querySelector('.modal-header h2').textContent = demo_info.title;
-    document.querySelector('.modal-body p').textContent = demo_info.description || 'No description available';
-    const modal_footer = document.querySelector('.modal-footer');
+    document.querySelector('#demo-modal .modal-header h2').textContent = demo_info.title;
+    document.querySelector('#demo-modal .modal-body p').textContent = demo_info.description || 'No description available';
+    const modal_footer = document.querySelector('#demo-modal .modal-footer');
     modal_footer.innerHTML = `
         <label>ID:</label> <p>${demo_info._id}</p>
         <label>Address:</label> <p>${demo_info.address}</p>
@@ -80,9 +77,25 @@ function updateModalContent(demo_info) {
     document.querySelector('.download-button').addEventListener('click', function () {
         downloadDemoFile();
     });
-    // add event listener to close the modal
-    document.querySelector('.close-button').addEventListener('click', function () {
-        closeModal();
+
+    // Initialize modal functionality
+    document.addEventListener('DOMContentLoaded', () => {
+        const closeModalButtons = document.querySelectorAll('[data-close-button]');
+        const overlay = document.getElementById('overlay');
+
+        closeModalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const modal = button.closest('.modal');
+                closeModal(modal);
+            });
+        });
+
+        overlay.addEventListener('click', () => {
+            const modals = document.querySelectorAll('.modal.active');
+            modals.forEach(modal => {
+                closeModal(modal);
+            });
+        });
     });
 }
 
@@ -90,7 +103,7 @@ function updateModalContent(demo_info) {
  * Displays the modal.
  */
 function showModal() {
-    document.querySelector('.modal').classList.add("display");
+    document.querySelector('#demo-modal').classList.add("display");
 }
 
 /**
@@ -100,9 +113,11 @@ function closeModal() {
     document.querySelector('.modal').classList.remove("display");
 }
 
-// when control + i is pressed, the modal will appear, and use demoId (global variable) to fetch the demo info
-document.addEventListener('keydown', function (event) {
-    if (event.ctrlKey && event.key === 'i' && event.altKey) {
-        fetchDemoInfo(demoId);
-    }
-});
+if (localStorage.getItem('user_role') && localStorage.getItem('user_role').includes('admin')) {
+    // when control + i is pressed, the modal will appear, and use demoId (global variable) to fetch the demo info
+    document.addEventListener('keydown', function (event) {
+        if (event.ctrlKey && event.key === 'i' && event.altKey) {
+            fetchDemoInfo(demoId);
+        }
+    });
+}

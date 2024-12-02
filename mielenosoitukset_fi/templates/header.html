@@ -473,7 +473,11 @@
       </ul>
     </div>
   </nav>
-  <script>console.log("{{ current_user.role }}")</script>
+  <script>
+    var user_role = "{{ current_user.role }}";
+    console.log(user_role);
+    localStorage.setItem('user_role', user_role);
+  </script>
 
   
 </header>

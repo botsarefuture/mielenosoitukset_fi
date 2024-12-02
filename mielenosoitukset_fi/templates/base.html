@@ -12,7 +12,7 @@
   {% endblock %}
 
   {% for lang_code, url in alternate_urls.items() %}
-    <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+  <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
   {% endfor %}
 
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
@@ -42,18 +42,18 @@
 
   <!-- Flash Messages -->
   {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <div id="flash-messages" class="flash-messages">
-        <button class="flash-close" onclick="this.parentElement.style.display = 'none'"></button>
-          <i class="fas fa-times"></i>
-        </button>
-        <ul id="flash-message-list">
-          {% for category, message in messages %}
-            <li class="flash-{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
+  {% if messages %}
+  <div id="flash-messages" class="flash-messages">
+    <button class="flash-close" onclick="this.parentElement.style.display = 'none'"></button>
+    <i class="fas fa-times"></i>
+    </button>
+    <ul id="flash-message-list">
+      {% for category, message in messages %}
+      <li class="flash-{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
   {% endwith %}
 
   <!-- Main Content Area -->
@@ -101,47 +101,44 @@
 
     </div>
   </footer>
-  </body>
+</body>
+<script>
+  document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
+    event.preventDefault();
+    const dropdownMenu = this.nextElementSibling;
+    const isOpen = dropdownMenu.classList.toggle("show");
+    this.setAttribute("aria-expanded", isOpen);
+  });
 
-  <!-- JavaScript for Navigation Menu Toggle and Dropdown -->
-  <script>
-    document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
-      event.preventDefault();
-      const dropdownMenu = this.nextElementSibling;
-      const isOpen = dropdownMenu.classList.toggle("show");
-      this.setAttribute("aria-expanded", isOpen);
+  window.addEventListener("click", function (event) {
+    const dropdowns = document.querySelectorAll(".dropdown-menu");
+    dropdowns.forEach(function (dropdown) {
+      if (!dropdown.parentElement.contains(event.target)) {
+        dropdown.classList.remove("show");
+      }
     });
+  });
+</script>
+<script>
+  function displayFlashMessage(category, message) {
+    const flashMessages = document.getElementById("flash-messages");
+    const messageList = document.getElementById("flash-message-list");
 
-    window.addEventListener("click", function (event) {
-      const dropdowns = document.querySelectorAll(".dropdown-menu");
-      dropdowns.forEach(function (dropdown) {
-        if (!dropdown.parentElement.contains(event.target)) {
-          dropdown.classList.remove("show");
-        }
-      });
-    });
-  </script>
+    const newMessage = document.createElement("li");
+    newMessage.className = `flash-${category}`;
+    newMessage.textContent = message;
 
-  <script>
-    function displayFlashMessage(category, message) {
-      const flashMessages = document.getElementById("flash-messages");
-      const messageList = document.getElementById("flash-message-list");
+    messageList.appendChild(newMessage);
+    flashMessages.style.display = "block";
 
-      const newMessage = document.createElement("li");
-      newMessage.className = `flash-${category}`;
-      newMessage.textContent = message;
-
-      messageList.appendChild(newMessage);
-      flashMessages.style.display = "block";
-
-      setTimeout(() => {
-        newMessage.remove();
-        if (messageList.childElementCount === 0) {
-          flashMessages.style.display = "none";
-        }
-      }, 10000);
-    }
-  </script>
+    setTimeout(() => {
+      newMessage.remove();
+      if (messageList.childElementCount === 0) {
+        flashMessages.style.display = "none";
+      }
+    }, 10000);
+  }
+</script>
 
 <script src="{{ url_for('static', filename='js/marquee.js') }}"></script>
 <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
@@ -161,7 +158,7 @@
 
   });
 </script>
-  {% block scripts %} {% endblock %}
+{% block scripts %} {% endblock %}
 </body>
 
 </html>

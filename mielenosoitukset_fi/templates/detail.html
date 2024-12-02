@@ -88,7 +88,7 @@
 {% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='/css/modal.css' )}}" />
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='/css/modal.css' )}}" />-->
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/details.css' )}}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
 {% endblock %}
@@ -119,13 +119,34 @@
   }
 </style>
 
-<div id="main">
-  <button class="button help" style="background: var(--yellow-lighter);color: black;">
+<div id="reportModal" class="modal">
+  <div class="modal-header">
+    <h2>{{ _('Ilmoita virheestä') }}</h2>
+    <span class="close" data-close-button>&times;</span>
+  </div>
+  <div class="modal-body">
+    <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, voit ilmoittaa siitä alla olevalla lomakkeella.') }}</p>
+    <form action="/report" method="POST">
+      <label for="error">{{ _('Virheen kuvaus') }}</label>
+      <textarea name="error" id="error" rows="4" required></textarea>
+      <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
+  </div>
+  <div class="modal-footer">
+    <button type="submit">{{ _('Lähetä') }}</button>
+    </form>
+  </div>
+
+</div>
+
+<div id="overlay" class="modal-overlay"></div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+
+
+<main id="main">
+  <button class="button help" data-modal-target="#reportModal" style="background: var(--yellow-lighter); color: black;">
     <i class="fa fa-question-circle"></i> Ilmoita virheestä
   </button>
-
-
-
   <!-- IMAGE -->
   {% if demo['img'] %}
   {% if demo['img'] !=
@@ -265,7 +286,7 @@
       </div>
 
       {% if demo["recurring"] and demo['repeat_schedule'] %}
-      <div class="repeating-alert">       
+      <div class="repeating-alert">
         <strong>Tämä mielenosoitus on toistuva.</strong><br>
         {{ generate_demo_sentence(demo) }}
 
@@ -296,7 +317,7 @@
     </div>
 
   </div>
-</div>
+</main>
 {% endblock %}
 
 {% block scripts %}

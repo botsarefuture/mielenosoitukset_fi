@@ -25,3 +25,17 @@
     margin-left: 0;
   }
 }
+
+.ck-content p {
+	color: black;
+}
+
+.ck-content h1,
+.ck-content h2,
+.ck-content h3,
+.ck-content h4,
+.ck-content h5,
+.ck-content h6 {
+	text-align: center;
+	color: black;
+}

@@ -14,6 +14,11 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from .utils import mongo, log_admin_action_V2, AdminActParser
 
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+
+# Secret key for generating tokens
+SECRET_KEY = "your_secret_key"
+serializer = URLSafeTimedSerializer(SECRET_KEY)
 
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
@@ -201,6 +206,79 @@ def edit_demo(demo_id):
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
         all_organizations=mongo.organizations.find(),
+    )
+    
+
+
+@admin_demo_bp.route("/generate_edit_link/<demo_id>", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("GENERATE_EDIT_LINK")
+def generate_edit_link(demo_id):
+    """Generate a secure edit link for a demonstration.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration to generate the link for.
+
+    Returns
+    -------
+    json
+        JSON response containing the edit link or an error message.
+    """
+    try:
+        token = serializer.dumps(demo_id, salt="edit-demo")
+        edit_link = url_for("admin_demo.edit_demo_with_token", token=token, _external=True)
+        return jsonify({"status": "OK", "edit_link": edit_link})
+    except Exception as e:
+        logging.error("An error occurred while generating the edit link: %s", str(e))
+        return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500
+
+@admin_demo_bp.route("/edit_demo_with_token/<token>", methods=["GET", "POST"])
+def edit_demo_with_token(token):
+    """Edit demonstration details using a secure token.
+
+    Parameters
+    ----------
+    token : str
+        The secure token for editing the demonstration.
+
+    Returns
+    -------
+    response
+        The rendered template or a redirect response.
+    """
+    try:
+        demo_id = serializer.loads(token, salt="edit-demo", max_age=3600)
+    except SignatureExpired:
+        return jsonify({"status": "ERROR", "message": "The token has expired."}), 400
+    except BadSignature:
+        return jsonify({"status": "ERROR", "message": "Invalid token."}), 400
+
+    # Fetch demonstration data by ID
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        flash_message("Mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    if request.method == "POST":
+        # Handle form submission for editing the demonstration
+        return handle_demo_form(request, is_edit=True, demo_id=demo_id)
+
+    # Convert demonstration data to a Demonstration object
+    demonstration = Demonstration.from_dict(demo_data)
+
+    # Render the edit form with pre-filled demonstration details
+    return render_template(
+        "admin/demonstrations/form.html",
+        demo=demonstration,
+        form_action=url_for("admin_demo.edit_demo_with_token", token=token),
+        title=_("Muokkaa mielenosoitusta"),
+        submit_button_text=_("Tallenna muutokset"),
+        city_list=CITY_LIST,
+        all_organizations=mongo.organizations.find(),
+        edit_demo_with_token=True,
     )
 
 

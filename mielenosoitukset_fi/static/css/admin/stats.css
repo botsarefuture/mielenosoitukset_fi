@@ -19,6 +19,10 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
+    .light stat {
+        color: var(--white) !important;
+    }
+
     stat stitle {
         font-size: 0.8em;
         font-weight: bold;
@@ -39,6 +43,10 @@
         height: 3em;
         width: 100%;
         position: relative;  /* Ensure ::after positions correctly */
+    }
+
+    .light stat stitle {
+        color: var(--white) !important;
     }
 
     stitle::text {
@@ -83,6 +91,10 @@
         margin-bottom: 0.4em;
     }
 
+    .light stat snum {
+        color: var(--white) !important;
+    }
+
     stat sdisc {
         font-size: 0.5em;
         color: var(--secondary-text-color);
@@ -98,6 +110,10 @@
 
     }
 
+    .light stat sdisc {
+        color: var(--white) !important;
+    }
+
     last-updated {
         font-size: 0.6em;
         color: var(--secondary-text-color);
@@ -107,6 +123,10 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         display: none !important; /* Hide last updated, cuz we dont care */
+    }
+
+    .light last-updated {
+        color: var(--white) !important;
     }
 
     stats {

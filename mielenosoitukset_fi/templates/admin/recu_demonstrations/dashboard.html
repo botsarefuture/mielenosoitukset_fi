@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 <style>
     .search-form {
         margin: 1rem 0;
@@ -121,7 +120,7 @@
                     <td>{{ demo.repeat_schedule.as_string() }}</td>
                     <td>{{ demo.start_time }} - {{ demo.end_time }}</td>
                     <td>{{ demo.city }}</td>
-                    <td>{% if demo.approved %}✔️{% else %}❌{% endif %}</td>
+                    <td>{% if demo.approved %}<i class="fa fa-circle-check"></i> Kyllä{% else %}<i class="fa fa-circle-xmark"></i> Ei{% endif %}</td>
                     <td class="actions-cell">
                         {% if current_user.has_permission("EDIT_DEMO") %}
                         <a href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}" class="button edit-button">

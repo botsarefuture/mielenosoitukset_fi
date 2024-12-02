@@ -290,6 +290,34 @@
 }
 
 
+/* variables.css | http://127.0.0.1:5002/static/css/variables.css */
+
+.black:root {
+  /* --primary-color: #4d79cc; */
+  /* --secondary-color: #202020; */
+  /* --background: #181818; */
+  /* --background-light: #2c2c2c; */
+  /* --input-background: #2e2e2e; */
+  /* --blue: #4d79cc; */
+  /* --blue-lighter: #4d79cc; */
+  /* --blue-light: #3366cc; */
+  /* --blue-dark: #002280; */
+  /* --alert-text: #721c24; */
+  /* --danger-bg: #f8d7da; */
+  --primary-color: #000;
+  --secondary-color: #fff;
+  --background: black;
+  --background-light: #000;
+  --input-background: #1e1111;
+  --blue: #000;
+  --blue-lighter: #022465;
+  --blue-light: #fff;
+  --blue-dark: #000;
+  --alert-text: #000;
+  --danger-bg: #9e2631;
+}
+
+
 .pride:root {
   /* Primary Colors */
   --primary-color: #ff4f4f;

@@ -83,19 +83,6 @@
             </button>
         </div>
     </div>
-
-    <!-- EMERGENCY SHUTDOWN -->
-    <div class="info-section">
-        <span class="warning-icon">🚨</span>
-        <div>
-            <h3>{{ _('Hätäpysäytys') }}</h3>
-            <p>{{ _('Pysäytä sivusto hätätilanteessa.') }}</p>
-            <button class="button button-danger" onclick="window.location.href='{{ url_for('admin.shutdown') }}'">
-                <i class="fas fa-exclamation-triangle"></i>
-                {{ _('Pysäytä') }}
-            </button>
-        </div>
-    </div>
 </div>
 
 <style>

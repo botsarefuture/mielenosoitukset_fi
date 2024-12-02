@@ -63,8 +63,9 @@
     <!-- The content from child templates will be injected here -->
     {% endblock %}
   </main>
-
+  {% if g.is_threat %}
   {% include 'alarm.html' %}
+  {% endif %}
 
   <!-- Footer -->
   <footer class="footer">

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-11-27 10:37+0200\n"
+"POT-Creation-Date: 2024-12-02 12:11+0200\n"
 "PO-Revision-Date: 2024-11-11 10:33+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: sv\n"
@@ -18,329 +18,385 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: basic_routes.py:240
+#: mielenosoitukset_fi/basic_routes.py:246
 msgid "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
 msgstr ""
 
-#: basic_routes.py:255 basic_routes.py:298
+#: mielenosoitukset_fi/basic_routes.py:261
+#: mielenosoitukset_fi/basic_routes.py:304
 msgid "Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."
 msgstr ""
 
-#: admin/admin_demo_bp.py:200
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:205
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:277
 msgid "Muokkaa mielenosoitusta"
 msgstr ""
 
-#: admin/admin_demo_bp.py:201 templates/admin/organizations/form.html:268
-#: templates/admin/user/edit.html:213 templates/users/auth/settings.html:74
-#: templates/users/profile/edit_profile.html:30
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:206
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:278
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:267
+#: mielenosoitukset_fi/templates/admin/user/edit.html:213
+#: mielenosoitukset_fi/templates/users/auth/settings.html:73
+#: mielenosoitukset_fi/templates/users/profile/edit_profile.html:30
 msgid "Tallenna muutokset"
 msgstr ""
 
-#: admin/admin_demo_bp.py:288
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:366
 msgid "Otsikko, päivämäärä ja kaupunki ovat pakollisia kenttiä."
 msgstr ""
 
-#: admin/admin_demo_bp.py:300
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:378
 msgid "Virheellinen leveysaste."
 msgstr ""
 
-#: admin/admin_demo_bp.py:302
+#: mielenosoitukset_fi/admin/admin_demo_bp.py:380
 msgid "Virheellinen pituusaste."
 msgstr ""
 
-#: admin/admin_org_bp.py:132
+#: mielenosoitukset_fi/admin/admin_org_bp.py:181
 msgid "Organisaatio päivitetty onnistuneesti."
 msgstr ""
 
-#: admin/admin_org_bp.py:363
+#: mielenosoitukset_fi/admin/admin_org_bp.py:431
 msgid "Organisaatio poistettu onnistuneesti."
 msgstr ""
 
-#: templates/AM/base.html:89 templates/base.html:69
+#: mielenosoitukset_fi/templates/AM/base.html:88
+#: mielenosoitukset_fi/templates/base.html:73
 msgid "Kaikki oikeudet pidätetään."
 msgstr ""
 
-#: templates/AM/base.html:91 templates/base.html:71
+#: mielenosoitukset_fi/templates/AM/base.html:90
+#: mielenosoitukset_fi/templates/base.html:75
 msgid "Tietoa sivustosta"
 msgstr ""
 
-#: templates/AM/base.html:93 templates/base.html:73
+#: mielenosoitukset_fi/templates/AM/base.html:92
+#: mielenosoitukset_fi/templates/base.html:77
 msgid "Tietosuojaseloste"
 msgstr ""
 
-#: templates/AM/base.html:95 templates/base.html:75 templates/contact.html:3
-#: templates/contact.html:12 templates/privacy.html:47
+#: mielenosoitukset_fi/templates/AM/base.html:94
+#: mielenosoitukset_fi/templates/base.html:79
+#: mielenosoitukset_fi/templates/contact.html:3
+#: mielenosoitukset_fi/templates/contact.html:12
+#: mielenosoitukset_fi/templates/privacy.html:47
 msgid "Ota yhteyttä"
 msgstr ""
 
-#: templates/AM/base.html:112 templates/base.html:93
-#: templates/users/auth/login.html:9 templates/users/auth/login.html:21
-#: users/templates/login.html:7 users/templates/login.html:19
+#: mielenosoitukset_fi/templates/AM/base.html:111
+#: mielenosoitukset_fi/templates/base.html:97
+#: mielenosoitukset_fi/templates/users/auth/login.html:9
+#: mielenosoitukset_fi/templates/users/auth/login.html:21
+#: mielenosoitukset_fi/users/templates/login.html:7
+#: mielenosoitukset_fi/users/templates/login.html:19
 msgid "Kirjaudu sisään"
 msgstr ""
 
-#: templates/AM/base.html:113 templates/base.html:94
-#: templates/users/auth/login.html:34 templates/users/auth/register.html:11
-#: templates/users/auth/register.html:28 users/templates/login.html:32
-#: users/templates/register.html:9 users/templates/register.html:26
+#: mielenosoitukset_fi/templates/AM/base.html:112
+#: mielenosoitukset_fi/templates/base.html:98
+#: mielenosoitukset_fi/templates/users/auth/login.html:34
+#: mielenosoitukset_fi/templates/users/auth/register.html:11
+#: mielenosoitukset_fi/templates/users/auth/register.html:28
+#: mielenosoitukset_fi/users/templates/login.html:32
+#: mielenosoitukset_fi/users/templates/register.html:9
+#: mielenosoitukset_fi/users/templates/register.html:26
 msgid "Rekisteröidy"
 msgstr ""
 
-#: templates/AM/base.html:115 templates/base.html:96 templates/header.html:450
-#: templates/sidebar.html:79
+#: mielenosoitukset_fi/templates/AM/base.html:114
+#: mielenosoitukset_fi/templates/base.html:100
+#: mielenosoitukset_fi/templates/header.html:450
+#: mielenosoitukset_fi/templates/sidebar.html:76
 msgid "Kirjaudu ulos"
 msgstr ""
 
-#: templates/contact.html:14
+#: mielenosoitukset_fi/templates/contact.html:14
 msgid ""
 "Jos sinulla on kysyttävää tai tarvitset apua, voit ottaa meihin yhteyttä "
 "seuraavilla tavoilla:"
 msgstr ""
 
-#: templates/contact.html:17 templates/info.html:126
-#: templates/organizations/details.html:25 templates/privacy.html:11
+#: mielenosoitukset_fi/templates/contact.html:17
+#: mielenosoitukset_fi/templates/info.html:126
+#: mielenosoitukset_fi/templates/organizations/details.html:25
+#: mielenosoitukset_fi/templates/privacy.html:11
 msgid "Yhteystiedot"
 msgstr ""
 
-#: templates/contact.html:18 templates/contact.html:27
+#: mielenosoitukset_fi/templates/contact.html:18
+#: mielenosoitukset_fi/templates/contact.html:27
 msgid "Sähköposti:"
 msgstr ""
 
-#: templates/contact.html:22
+#: mielenosoitukset_fi/templates/contact.html:22
 msgid "Ota yhteyttä lomakkeen kautta"
 msgstr ""
 
-#: templates/contact.html:24 templates/detail.html:335
+#: mielenosoitukset_fi/templates/contact.html:24
+#: mielenosoitukset_fi/templates/detail.html:402
 msgid "Nimi:"
 msgstr ""
 
-#: templates/contact.html:30
+#: mielenosoitukset_fi/templates/contact.html:30
 msgid "Aihe:"
 msgstr ""
 
-#: templates/contact.html:32
+#: mielenosoitukset_fi/templates/contact.html:32
 msgid "Valitse aihe"
 msgstr ""
 
-#: templates/contact.html:33
+#: mielenosoitukset_fi/templates/contact.html:33
 msgid "Tukipyyntö"
 msgstr ""
 
-#: templates/contact.html:34
+#: mielenosoitukset_fi/templates/contact.html:34
 msgid "Yleinen kysymys"
 msgstr ""
 
-#: templates/contact.html:35
+#: mielenosoitukset_fi/templates/contact.html:35
 msgid "Palautetta"
 msgstr ""
 
-#: templates/contact.html:36
+#: mielenosoitukset_fi/templates/contact.html:36
 msgid "Muu"
 msgstr ""
 
-#: templates/contact.html:39
+#: mielenosoitukset_fi/templates/contact.html:39
 msgid "Viesti:"
 msgstr ""
 
-#: templates/contact.html:42 templates/submit.html:276
+#: mielenosoitukset_fi/templates/contact.html:42
+#: mielenosoitukset_fi/templates/detail.html:135
+#: mielenosoitukset_fi/templates/submit.html:277
 msgid "Lähetä"
 msgstr ""
 
-#: templates/detail.html:116
+#: mielenosoitukset_fi/templates/detail.html:124
+msgid "Ilmoita virheestä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/detail.html:128
+msgid ""
+"Jos huomaat virheen mielenosoituksen tiedoissa, voit ilmoittaa siitä alla"
+" olevalla lomakkeella."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/detail.html:130
+msgid "Virheen kuvaus"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/detail.html:166
 msgid "Jaa Facebookissa"
 msgstr ""
 
-#: templates/detail.html:121
+#: mielenosoitukset_fi/templates/detail.html:171
 msgid "Jaa Xssä"
 msgstr ""
 
-#: templates/detail.html:126
+#: mielenosoitukset_fi/templates/detail.html:176
 msgid "Jaa LinkedInissä"
 msgstr ""
 
-#: templates/detail.html:133
+#: mielenosoitukset_fi/templates/detail.html:183
 msgid "Osallistun"
 msgstr ""
 
-#: templates/detail.html:136
+#: mielenosoitukset_fi/templates/detail.html:186
 msgid "Osallistuu:"
 msgstr ""
 
-#: templates/detail.html:217 templates/preview.html:125
+#: mielenosoitukset_fi/templates/detail.html:267
+#: mielenosoitukset_fi/templates/preview.html:125
 msgid "Mielenosoituksen esittelyteksti"
 msgstr ""
 
-#: templates/detail.html:222
+#: mielenosoitukset_fi/templates/detail.html:272
 msgid "Aikaa mielenosoituksen alkuun"
 msgstr ""
 
-#: templates/detail.html:233
+#: mielenosoitukset_fi/templates/detail.html:283
 msgid "Lisätiedot"
 msgstr ""
 
-#: templates/detail.html:240
+#: mielenosoitukset_fi/templates/detail.html:303
 msgid "Järjestäjät"
 msgstr ""
 
-#: templates/detail.html:245
+#: mielenosoitukset_fi/templates/detail.html:308
 msgid "Ei järjestäjätietoja saatavilla."
 msgstr ""
 
-#: templates/detail.html:249
+#: mielenosoitukset_fi/templates/detail.html:315
 msgid "Takaisin edelliselle sivulle"
 msgstr ""
 
-#: templates/detail.html:250
+#: mielenosoitukset_fi/templates/detail.html:316
 msgid "Takaisin kaikkiin mielenosoituksiin"
 msgstr ""
 
-#: templates/detail.html:305
+#: mielenosoitukset_fi/templates/detail.html:372
 msgid "Mielenosoitus on käynnissä!"
 msgstr ""
 
-#: templates/detail.html:310
+#: mielenosoitukset_fi/templates/detail.html:377
 msgid "Mielenosoitus on päättynyt."
 msgstr ""
 
-#: templates/detail.html:319
+#: mielenosoitukset_fi/templates/detail.html:386
 msgid "päivää"
 msgstr ""
 
-#: templates/detail.html:319
+#: mielenosoitukset_fi/templates/detail.html:386
 msgid "tuntia"
 msgstr ""
 
-#: templates/detail.html:319
+#: mielenosoitukset_fi/templates/detail.html:386
 msgid "minuuttia"
 msgstr ""
 
-#: templates/detail.html:319
+#: mielenosoitukset_fi/templates/detail.html:386
 msgid "sekuntia"
 msgstr ""
 
-#: templates/detail.html:342
+#: mielenosoitukset_fi/templates/detail.html:409
 msgid "Mielenosoitukset.fi -profiili"
 msgstr ""
 
-#: templates/detail.html:355
+#: mielenosoitukset_fi/templates/detail.html:422
 msgid "Verkkosivut:"
 msgstr ""
 
-#: templates/admin/user/confirm.html:9 templates/detail.html:366
+#: mielenosoitukset_fi/templates/admin/user/confirm.html:9
+#: mielenosoitukset_fi/templates/detail.html:433
 msgid "Sähköpostiosoite:"
 msgstr ""
 
-#: templates/detail.html:382
+#: mielenosoitukset_fi/templates/detail.html:449
 msgid "Päivämäärä:"
 msgstr ""
 
-#: templates/detail.html:383
+#: mielenosoitukset_fi/templates/detail.html:450
 msgid "Alkaa klo:"
 msgstr ""
 
-#: templates/detail.html:384
+#: mielenosoitukset_fi/templates/detail.html:451
 msgid "Päättyy klo:"
 msgstr ""
 
-#: templates/detail.html:385
+#: mielenosoitukset_fi/templates/detail.html:452
 msgid "Alkupaikka:"
 msgstr ""
 
-#: templates/detail.html:385
+#: mielenosoitukset_fi/templates/detail.html:452
 msgid "Sijainti:"
 msgstr ""
 
-#: templates/detail.html:391
+#: mielenosoitukset_fi/templates/detail.html:458
 msgid "Marssin reitti:"
 msgstr ""
 
-#: templates/detail.html:397
+#: mielenosoitukset_fi/templates/detail.html:464
 msgid "Facebook-tapahtuma"
 msgstr ""
 
-#: templates/header.html:332 templates/header.html:427
+#: mielenosoitukset_fi/templates/header.html:332
+#: mielenosoitukset_fi/templates/header.html:427
 msgid "Mielenosoitukset.fi"
 msgstr ""
 
-#: templates/header.html:359
+#: mielenosoitukset_fi/templates/header.html:359
 msgid "Avaa valikko"
 msgstr ""
 
-#: templates/header.html:422
+#: mielenosoitukset_fi/templates/header.html:422
 msgid "Sulje valikko"
 msgstr ""
 
-#: templates/header.html:432
+#: mielenosoitukset_fi/templates/header.html:432
 msgid "Etusivu"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:169 templates/header.html:433
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:167
+#: mielenosoitukset_fi/templates/header.html:433
 msgid "Mielenosoitukset"
 msgstr ""
 
-#: templates/header.html:434 templates/index.html:35 templates/submit.html:3
-#: templates/submit.html:142
+#: mielenosoitukset_fi/templates/header.html:434
+#: mielenosoitukset_fi/templates/index.html:29
+#: mielenosoitukset_fi/templates/submit.html:3
+#: mielenosoitukset_fi/templates/submit.html:143
 msgid "Ilmoita mielenosoituksesta"
 msgstr ""
 
-#: templates/header.html:442
+#: mielenosoitukset_fi/templates/header.html:442
 msgid "Profiilikuva"
 msgstr ""
 
-#: templates/header.html:449
+#: mielenosoitukset_fi/templates/header.html:449
 msgid "Profiili"
 msgstr ""
 
-#: templates/header.html:460
+#: mielenosoitukset_fi/templates/header.html:460
 msgid "Olet mobiililaitteella. Siirry PC:lle admintoimintojen käyttöä varten"
 msgstr ""
 
-#: templates/index.html:27
+#: mielenosoitukset_fi/templates/index.html:14
+msgid "Hyvää joulua!"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/index.html:16
+msgid "Mielenosoitukset.fi:n vapaaehtoistiimi toivottaa hyvää joulua kaikille!"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/index.html:21
 msgid "Tervetuloa Mielenosoitukset.fi:hin"
 msgstr ""
 
-#: templates/index.html:29
+#: mielenosoitukset_fi/templates/index.html:23
 msgid ""
 "Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista "
 "ympäri\n"
 "      Suomen."
 msgstr ""
 
-#: templates/index.html:30
+#: mielenosoitukset_fi/templates/index.html:24
 msgid ""
 "Pyrimme tekemään osallistumisesta mielenosoituksiin\n"
 "      mahdollisimman vaivatonta ja sujuvaa."
 msgstr ""
 
-#: templates/index.html:34
+#: mielenosoitukset_fi/templates/index.html:28
 msgid "Lue lisää"
 msgstr ""
 
-#: templates/index.html:59
+#: mielenosoitukset_fi/templates/index.html:53
 msgid "Suosittelemme"
 msgstr ""
 
-#: templates/index.html:77 templates/organizations/details.html:76
+#: mielenosoitukset_fi/templates/index.html:71
+#: mielenosoitukset_fi/templates/organizations/details.html:76
 msgid "Esitellyt mielenosoitukset"
 msgstr ""
 
-#: templates/index.html:82 templates/organizations/details.html:81
+#: mielenosoitukset_fi/templates/index.html:76
+#: mielenosoitukset_fi/templates/organizations/details.html:81
 msgid "Ei mielenosoituksia näytettäväksi."
 msgstr ""
 
-#: templates/index.html:89
+#: mielenosoitukset_fi/templates/index.html:83
 msgid "Näytä kaikki mielenosoitukset"
 msgstr ""
 
-#: templates/info.html:2
+#: mielenosoitukset_fi/templates/info.html:2
 msgid "Tietoa sivustosta - Mielenosoitukset.fi"
 msgstr ""
 
-#: templates/info.html:97
+#: mielenosoitukset_fi/templates/info.html:97
 msgid "Tietoa Mielenosoitukset.fi -sivustosta"
 msgstr ""
 
-#: templates/info.html:99
+#: mielenosoitukset_fi/templates/info.html:99
 msgid ""
 "Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa "
 "järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. "
@@ -349,11 +405,11 @@ msgid ""
 "helposti ja nopeasti."
 msgstr ""
 
-#: templates/info.html:103
+#: mielenosoitukset_fi/templates/info.html:103
 msgid "Mikä on Mielenosoitukset.fi?"
 msgstr ""
 
-#: templates/info.html:105
+#: mielenosoitukset_fi/templates/info.html:105
 msgid ""
 "Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja "
 "neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän "
@@ -362,29 +418,29 @@ msgid ""
 "mielipiteenilmaisua."
 msgstr ""
 
-#: templates/info.html:110
+#: mielenosoitukset_fi/templates/info.html:110
 msgid "Kuinka ilmoitan mielenosoituksesta?"
 msgstr ""
 
-#: templates/info.html:112
+#: mielenosoitukset_fi/templates/info.html:112
 msgid "Voit ilmoittaa oman mielenosoituksesi täyttämällä"
 msgstr ""
 
-#: templates/info.html:113
+#: mielenosoitukset_fi/templates/info.html:113
 msgid "ilmoituslomakkeen"
 msgstr ""
 
-#: templates/info.html:114
+#: mielenosoitukset_fi/templates/info.html:114
 msgid ""
 "Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut "
 "osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi."
 msgstr ""
 
-#: templates/info.html:119
+#: mielenosoitukset_fi/templates/info.html:119
 msgid "Kuka ylläpitää sivustoa?"
 msgstr ""
 
-#: templates/info.html:121
+#: mielenosoitukset_fi/templates/info.html:121
 msgid ""
 "Mielenosoitukset.fi ylläpidetään riippumattomana projektina "
 "vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen "
@@ -392,1339 +448,1542 @@ msgid ""
 "joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille."
 msgstr ""
 
-#: templates/info.html:128
+#: mielenosoitukset_fi/templates/info.html:128
 msgid ""
 "Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä "
 "ylläpitäjiin, voit lähettää sähköpostia osoitteeseen"
 msgstr ""
 
-#: templates/info.html:130
+#: mielenosoitukset_fi/templates/info.html:130
 msgid "tai täyttää"
 msgstr ""
 
-#: templates/info.html:131
+#: mielenosoitukset_fi/templates/info.html:131
 msgid "yhteydenottolomakkeen"
 msgstr ""
 
-#: templates/info.html:136
+#: mielenosoitukset_fi/templates/info.html:136
 msgid "Yksityisyys ja evästeet"
 msgstr ""
 
-#: templates/info.html:138
+#: mielenosoitukset_fi/templates/info.html:138
 msgid ""
 "Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme "
 "sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja "
 "tietosuojasta löydät"
 msgstr ""
 
-#: templates/info.html:139
+#: mielenosoitukset_fi/templates/info.html:139
 msgid "yksityisyydensuojakäytännöstämme"
 msgstr ""
 
-#: templates/list.html:16
+#: mielenosoitukset_fi/templates/list.html:16
 msgid "Tulevat mielenosoitukset"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:212 templates/list.html:23
-#: templates/tag_list.html:23
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:195
+#: mielenosoitukset_fi/templates/list.html:23
+#: mielenosoitukset_fi/templates/tag_list.html:23
 msgid "Hae mielenosoituksia..."
 msgstr ""
 
-#: templates/list.html:24 templates/tag_list.html:24
+#: mielenosoitukset_fi/templates/list.html:24
+#: mielenosoitukset_fi/templates/tag_list.html:24
 msgid "Hae mielenosoituksia"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:256
-#: templates/admin/recu_demonstrations/dashboard.html:112
-#: templates/list.html:35 templates/list.html:36 templates/tag_list.html:25
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:227
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:111
+#: mielenosoitukset_fi/templates/list.html:35
+#: mielenosoitukset_fi/templates/list.html:36
+#: mielenosoitukset_fi/templates/tag_list.html:25
 msgid "Kaupunki"
 msgstr ""
 
-#: templates/list.html:43 templates/list.html:44 templates/tag_list.html:27
+#: mielenosoitukset_fi/templates/list.html:43
+#: mielenosoitukset_fi/templates/list.html:44
+#: mielenosoitukset_fi/templates/tag_list.html:27
 msgid "Sijainti"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:121 templates/list.html:51
-#: templates/list.html:52 templates/submit.html:205 templates/tag_list.html:29
-#: templates/tag_list.html:30
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:174
+#: mielenosoitukset_fi/templates/list.html:51
+#: mielenosoitukset_fi/templates/list.html:52
+#: mielenosoitukset_fi/templates/submit.html:206
+#: mielenosoitukset_fi/templates/tag_list.html:29
+#: mielenosoitukset_fi/templates/tag_list.html:30
 msgid "Päivämäärä (pp.kk.vvvv)"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:246
-#: templates/admin/organizations/dashboard.html:97
-#: templates/admin/recu_demonstrations/dashboard.html:100
-#: templates/list.html:56 templates/tag_list.html:31
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:217
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:95
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:99
+#: mielenosoitukset_fi/templates/list.html:56
+#: mielenosoitukset_fi/templates/tag_list.html:31
 msgid "Hae"
 msgstr ""
 
-#: templates/list.html:65
+#: mielenosoitukset_fi/templates/list.html:65
 msgid "Ei löytynyt mielenosoituksia."
 msgstr ""
 
-#: templates/list.html:73
+#: mielenosoitukset_fi/templates/list.html:73
 msgid "Edellinen"
 msgstr ""
 
-#: templates/list.html:77 templates/tag_list.html:52
+#: mielenosoitukset_fi/templates/list.html:77
+#: mielenosoitukset_fi/templates/tag_list.html:52
 msgid "Sivu"
 msgstr ""
 
-#: templates/list.html:81
+#: mielenosoitukset_fi/templates/list.html:81
 msgid "Seuraava"
 msgstr ""
 
-#: templates/paikkakunta-dropdown.html:2
+#: mielenosoitukset_fi/templates/paikkakunta-dropdown.html:2
 msgid "Paikkakunta selection"
 msgstr ""
 
-#: templates/paikkakunta-dropdown.html:2 templates/paikkakunta-dropdown.html:5
+#: mielenosoitukset_fi/templates/paikkakunta-dropdown.html:2
+#: mielenosoitukset_fi/templates/paikkakunta-dropdown.html:5
 msgid "Paikkakunta"
 msgstr ""
 
-#: templates/paikkakunta-dropdown.html:5
+#: mielenosoitukset_fi/templates/paikkakunta-dropdown.html:5
 msgid "Open Paikkakunta dropdown"
 msgstr ""
 
-#: templates/paikkakunta-dropdown.html:7
+#: mielenosoitukset_fi/templates/paikkakunta-dropdown.html:7
 msgid "Hae paikkakunta..."
 msgstr ""
 
-#: templates/paikkakunta-dropdown.html:7
+#: mielenosoitukset_fi/templates/paikkakunta-dropdown.html:7
 msgid "Search cities"
 msgstr ""
 
-#: templates/privacy.html:6
+#: mielenosoitukset_fi/templates/privacy.html:6
 msgid "Yksityisyydensuoja ja GDPR"
 msgstr ""
 
-#: templates/privacy.html:7
+#: mielenosoitukset_fi/templates/privacy.html:7
 msgid ""
 "Mielenosoitukset.fi sitoutuu suojelemaan käyttäjiensä yksityisyyttä ja "
 "noudattamaan EU:n yleistä tietosuoja-asetusta (GDPR). Tämä osio kertoo, "
 "kuinka keräämme, käytämme ja suojelemme henkilötietojasi."
 msgstr ""
 
-#: templates/privacy.html:9
+#: mielenosoitukset_fi/templates/privacy.html:9
 msgid "Mitä tietoja keräämme?"
 msgstr ""
 
-#: templates/privacy.html:11
+#: mielenosoitukset_fi/templates/privacy.html:11
 msgid ""
 "kuten nimi ja sähköpostiosoite, jos olet yhteydessä meihin tai ilmoitat "
 "tapahtumasi sivustolla."
 msgstr ""
 
-#: templates/privacy.html:12
+#: mielenosoitukset_fi/templates/privacy.html:12
 msgid "Käyttäjätoiminta"
 msgstr ""
 
-#: templates/privacy.html:12
+#: mielenosoitukset_fi/templates/privacy.html:12
 msgid "tiedot, kuten selaushistoria, klikkaukset ja käyttämäsi laitteen tiedot."
 msgstr ""
 
-#: templates/privacy.html:13
+#: mielenosoitukset_fi/templates/privacy.html:13
 msgid "Evästetiedot"
 msgstr ""
 
-#: templates/privacy.html:13
+#: mielenosoitukset_fi/templates/privacy.html:13
 msgid ""
 "käytämme evästeitä parantaaksemme käyttökokemustasi ja kerätäksemme "
 "analytiikkaa sivuston toiminnasta."
 msgstr ""
 
-#: templates/privacy.html:16
+#: mielenosoitukset_fi/templates/privacy.html:16
 msgid "Mihin käytämme tietoja?"
 msgstr ""
 
-#: templates/privacy.html:17
+#: mielenosoitukset_fi/templates/privacy.html:17
 msgid "Keräämiämme tietoja käytetään seuraaviin tarkoituksiin:"
 msgstr ""
 
-#: templates/privacy.html:19
+#: mielenosoitukset_fi/templates/privacy.html:19
 msgid "Tarjotaksemme ja ylläpitääksemme palveluamme."
 msgstr ""
 
-#: templates/privacy.html:20
+#: mielenosoitukset_fi/templates/privacy.html:20
 msgid "Parantaaksemme käyttökokemusta ja analysoidaksemme sivuston käyttöä."
 msgstr ""
 
-#: templates/privacy.html:21
+#: mielenosoitukset_fi/templates/privacy.html:21
 msgid "Yhteydenottoon, jos olet ilmoittanut tapahtuman tai pyytänyt lisätietoja."
 msgstr ""
 
-#: templates/privacy.html:24
+#: mielenosoitukset_fi/templates/privacy.html:24
 msgid "Kenelle jaamme tietoja?"
 msgstr ""
 
-#: templates/privacy.html:25
+#: mielenosoitukset_fi/templates/privacy.html:25
 msgid ""
 "Emme jaa henkilötietojasi kolmansille osapuolille ilman suostumustasi, "
 "paitsi seuraavissa tilanteissa:"
 msgstr ""
 
-#: templates/privacy.html:27
+#: mielenosoitukset_fi/templates/privacy.html:27
 msgid "Lain vaatimukset"
 msgstr ""
 
-#: templates/privacy.html:27
+#: mielenosoitukset_fi/templates/privacy.html:27
 msgid ""
 "jos meidän on jaettava tietoja lain, viranomaispyynnön tai "
 "oikeusprosessin perusteella."
 msgstr ""
 
-#: templates/privacy.html:28
+#: mielenosoitukset_fi/templates/privacy.html:28
 msgid "Palveluntarjoajat"
 msgstr ""
 
-#: templates/privacy.html:28
+#: mielenosoitukset_fi/templates/privacy.html:28
 msgid ""
 "voimme käyttää kolmansia osapuolia teknisen tuen tai palvelun "
 "toimittamiseen (esim. analytiikka), jotka ovat GDPR:n mukaisia."
 msgstr ""
 
-#: templates/privacy.html:31
+#: mielenosoitukset_fi/templates/privacy.html:31
 msgid "Kuinka kauan säilytämme tietojasi?"
 msgstr ""
 
-#: templates/privacy.html:32
+#: mielenosoitukset_fi/templates/privacy.html:32
 msgid ""
 "Säilytämme henkilötietojasi vain niin kauan kuin on tarpeellista palvelun"
 " tarjoamisen ja lakisääteisten vaatimusten täyttämiseksi."
 msgstr ""
 
-#: templates/privacy.html:34
+#: mielenosoitukset_fi/templates/privacy.html:34
 msgid "Sinun oikeutesi"
 msgstr ""
 
-#: templates/privacy.html:35
+#: mielenosoitukset_fi/templates/privacy.html:35
 msgid "GDPR:n mukaisesti sinulla on seuraavat oikeudet:"
 msgstr ""
 
-#: templates/privacy.html:37
+#: mielenosoitukset_fi/templates/privacy.html:37
 msgid "Oikeus nähdä"
 msgstr ""
 
-#: templates/privacy.html:37
+#: mielenosoitukset_fi/templates/privacy.html:37
 msgid "voit pyytää kopion kaikista sinua koskevista henkilötiedoista."
 msgstr ""
 
-#: templates/privacy.html:38
+#: mielenosoitukset_fi/templates/privacy.html:38
 msgid "Oikeus korjata"
 msgstr ""
 
-#: templates/privacy.html:38
+#: mielenosoitukset_fi/templates/privacy.html:38
 msgid "voit pyytää virheellisten tietojen oikaisua."
 msgstr ""
 
-#: templates/privacy.html:39
+#: mielenosoitukset_fi/templates/privacy.html:39
 msgid "Oikeus poistamiseen"
 msgstr ""
 
-#: templates/privacy.html:39
+#: mielenosoitukset_fi/templates/privacy.html:39
 msgid "voit pyytää tietojesi poistamista, jos tietoja ei enää tarvita."
 msgstr ""
 
-#: templates/privacy.html:40
+#: mielenosoitukset_fi/templates/privacy.html:40
 msgid "Oikeus rajoittaa käsittelyä"
 msgstr ""
 
-#: templates/privacy.html:40
+#: mielenosoitukset_fi/templates/privacy.html:40
 msgid "voit pyytää tietojesi käsittelyn rajoittamista tietyissä tilanteissa."
 msgstr ""
 
-#: templates/privacy.html:41
+#: mielenosoitukset_fi/templates/privacy.html:41
 msgid "Oikeus vastustaa"
 msgstr ""
 
-#: templates/privacy.html:41
+#: mielenosoitukset_fi/templates/privacy.html:41
 msgid "sinulla on oikeus vastustaa tietojesi käsittelyä tietyissä tilanteissa."
 msgstr ""
 
-#: templates/privacy.html:44
+#: mielenosoitukset_fi/templates/privacy.html:44
 msgid "Evästeiden käyttö"
 msgstr ""
 
-#: templates/privacy.html:45
+#: mielenosoitukset_fi/templates/privacy.html:45
 msgid ""
 "Käytämme evästeitä ja vastaavia tekniikoita analysoidaksemme verkkosivun "
 "käyttöä ja parantaaksemme käyttökokemustasi. Voit hallita evästeasetuksia"
 " selaimesi asetuksissa."
 msgstr ""
 
-#: templates/privacy.html:48
+#: mielenosoitukset_fi/templates/privacy.html:48
 msgid ""
 "Jos sinulla on kysyttävää tietosuojakäytännöstämme tai haluat käyttää "
 "oikeuksiasi, voit ottaa yhteyttä sähköpostitse osoitteeseen"
 msgstr ""
 
-#: templates/sidebar.html:14 templates/sidebar.html:93
+#: mielenosoitukset_fi/templates/siblings.html:27
+msgid "Sisarusmielenosoitukset"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/siblings.html:29
+msgid "Tässä on lista muista mielenosoituksista, jotka ovat osa samaa toistumoa."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/siblings.html:38
+msgid "Ei löytynyt sisarusmielenosoituksia."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/sidebar.html:11
+#: mielenosoitukset_fi/templates/sidebar.html:90
 msgid "Avaa sivupalkki"
 msgstr ""
 
-#: templates/sidebar.html:15
+#: mielenosoitukset_fi/templates/sidebar.html:12
 msgid "Pääkäyttäjän"
 msgstr ""
 
-#: templates/sidebar.html:15
+#: mielenosoitukset_fi/templates/sidebar.html:12
 msgid "Superkäyttäjän"
 msgstr ""
 
-#: templates/sidebar.html:15
+#: mielenosoitukset_fi/templates/sidebar.html:12
 msgid "työkalupakki"
 msgstr ""
 
-#: templates/sidebar.html:21
+#: mielenosoitukset_fi/templates/sidebar.html:18
 msgid "Superkäyttäjän käsikirja"
 msgstr ""
 
-#: templates/sidebar.html:28
+#: mielenosoitukset_fi/templates/sidebar.html:25
 msgid "Käyttäjien hallinta"
 msgstr ""
 
-#: templates/sidebar.html:35
+#: mielenosoitukset_fi/templates/sidebar.html:32
 msgid "Organisaatioiden hallinta"
 msgstr ""
 
-#: templates/sidebar.html:42
+#: mielenosoitukset_fi/templates/sidebar.html:39
 msgid "Mielenosoitusten hallinta"
 msgstr ""
 
-#: templates/sidebar.html:49
+#: mielenosoitukset_fi/templates/sidebar.html:46
 msgid "Toistuvien mielenosoitusten hallinta"
 msgstr ""
 
-#: templates/admin/dashboard.html:66 templates/admin/dashboard.html:70
-#: templates/admin/stats.html:29 templates/sidebar.html:56
-#: templates/toolbar.html:62
+#: mielenosoitukset_fi/templates/admin/dashboard.html:66
+#: mielenosoitukset_fi/templates/admin/dashboard.html:70
+#: mielenosoitukset_fi/templates/admin/stats.html:28
+#: mielenosoitukset_fi/templates/sidebar.html:53
+#: mielenosoitukset_fi/templates/toolbar.html:62
 msgid "Tilastot"
 msgstr ""
 
-#: templates/sidebar.html:57
+#: mielenosoitukset_fi/templates/sidebar.html:54
 msgid "Beta"
 msgstr ""
 
-#: templates/sidebar.html:62
+#: mielenosoitukset_fi/templates/sidebar.html:59
 msgid "Mielenosoitusten analytiikka"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:25 templates/sidebar.html:70
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:24
+#: mielenosoitukset_fi/templates/sidebar.html:67
 msgid "Pyörörullan hallinta"
 msgstr ""
 
-#: templates/sidebar.html:88
+#: mielenosoitukset_fi/templates/sidebar.html:85
 msgid "Olet superkäyttäjätilassa."
 msgstr ""
 
-#: templates/submit.html:113
+#: mielenosoitukset_fi/templates/submit.html:114
 msgid "Järjestäjätahon..."
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:105
-#: templates/admin/organizations/form.html:225
-#: templates/admin/organizations/view.html:114
-#: templates/admin/user/list.html:112 templates/submit.html:114
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:103
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:224
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:157
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:203
+#: mielenosoitukset_fi/templates/admin/user/list.html:110
+#: mielenosoitukset_fi/templates/submit.html:115
 msgid "Nimi"
 msgstr ""
 
-#: templates/submit.html:115
+#: mielenosoitukset_fi/templates/submit.html:116
 msgid "Järjestäjän nimi"
 msgstr ""
 
-#: templates/submit.html:117
+#: mielenosoitukset_fi/templates/submit.html:118
 msgid "Verkkosivut"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:107
-#: templates/admin/organizations/form.html:237
-#: templates/admin/organizations/view.html:124
-#: templates/admin/user/edit.html:117 templates/admin/user/list.html:113
-#: templates/submit.html:120
-#: templates/users/auth/password_reset_request.html:13
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:105
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:236
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:167
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:204
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:239
+#: mielenosoitukset_fi/templates/admin/user/edit.html:117
+#: mielenosoitukset_fi/templates/admin/user/list.html:111
+#: mielenosoitukset_fi/templates/submit.html:121
+#: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:13
 msgid "Sähköpostiosoite"
 msgstr ""
 
-#: templates/submit.html:152 templates/submit.html:158
+#: mielenosoitukset_fi/templates/submit.html:153
+#: mielenosoitukset_fi/templates/submit.html:159
 msgid "Mielenosoituksen nimi"
 msgstr ""
 
-#: templates/submit.html:163
+#: mielenosoitukset_fi/templates/submit.html:164
 msgid "Tagit (pilkuilla erotettuna)"
 msgstr ""
 
-#: templates/submit.html:168
+#: mielenosoitukset_fi/templates/submit.html:169
 msgid "esim. ilmasto, tasa-arvo, oikeudet"
 msgstr ""
 
-#: templates/submit.html:172
+#: mielenosoitukset_fi/templates/submit.html:173
 msgid "Kuvausteksti"
 msgstr ""
 
-#: templates/submit.html:210
+#: mielenosoitukset_fi/templates/submit.html:211
 msgid "pp.kk.vvvv"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:125 templates/submit.html:216
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:179
+#: mielenosoitukset_fi/templates/submit.html:217
 msgid "Alkamisaika"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:129 templates/submit.html:219
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:184
+#: mielenosoitukset_fi/templates/submit.html:220
 msgid "Päättymisaika"
 msgstr ""
 
-#: templates/submit.html:223
+#: mielenosoitukset_fi/templates/submit.html:224
 msgid "Kuva (valinnainen)"
 msgstr ""
 
-#: templates/submit.html:227
+#: mielenosoitukset_fi/templates/submit.html:228
 msgid "Facebook-tapahtumalinkki (valinnainen)"
 msgstr ""
 
-#: templates/submit.html:237
+#: mielenosoitukset_fi/templates/submit.html:238
 msgid "Järjestäjä(t)"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:223 templates/submit.html:241
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:575
+#: mielenosoitukset_fi/templates/submit.html:242
 msgid "Lisää järjestäjä"
 msgstr ""
 
-#: templates/submit.html:246
+#: mielenosoitukset_fi/templates/submit.html:247
 msgid "Mielenosoituksen tyyppi"
 msgstr ""
 
-#: templates/submit.html:250
+#: mielenosoitukset_fi/templates/submit.html:251
 msgid "Valitse mielenosoituksen tyyppi"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:160 templates/submit.html:252
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:222
+#: mielenosoitukset_fi/templates/submit.html:253
 msgid "Paikallaan"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:159 templates/submit.html:253
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:219
+#: mielenosoitukset_fi/templates/submit.html:254
 msgid "Marssi"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:162 templates/submit.html:254
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:225
+#: mielenosoitukset_fi/templates/submit.html:255
 msgid "Muut"
 msgstr ""
 
-#: templates/submit.html:258
+#: mielenosoitukset_fi/templates/submit.html:259
 msgid "Reitti (vain marssille, valinnainen)"
 msgstr ""
 
-#: templates/submit.html:259
+#: mielenosoitukset_fi/templates/submit.html:260
 msgid "Reitti..."
 msgstr ""
 
-#: templates/submit.html:266 templates/submit.html:272
+#: mielenosoitukset_fi/templates/submit.html:267
+#: mielenosoitukset_fi/templates/submit.html:273
 msgid "Katuosoite"
 msgstr ""
 
-#: templates/tag_list.html:41
+#: mielenosoitukset_fi/templates/tag_list.html:41
 msgid "Ei löytynyt mielenosoituksia tällä tagilla."
 msgstr ""
 
-#: templates/tag_list.html:80
+#: mielenosoitukset_fi/templates/tag_list.html:80
 msgid "Näytä kaikki tagit"
 msgstr ""
 
-#: templates/toolbar.html:12
+#: mielenosoitukset_fi/templates/toolbar.html:12
 msgid "Työkalupakki"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:291 templates/toolbar.html:21
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:250
+#: mielenosoitukset_fi/templates/toolbar.html:21
 msgid "Hyväksy"
 msgstr ""
 
-#: templates/toolbar.html:26
+#: mielenosoitukset_fi/templates/toolbar.html:26
 msgid "Hylkää"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:305
-#: templates/admin/organizations/dashboard.html:120
-#: templates/admin/recu_demonstrations/dashboard.html:128
-#: templates/admin/user/list.html:127 templates/toolbar.html:33
-#: templates/toolbar.html:78
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:263
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:118
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:127
+#: mielenosoitukset_fi/templates/admin/user/list.html:125
+#: mielenosoitukset_fi/templates/toolbar.html:33
+#: mielenosoitukset_fi/templates/toolbar.html:78
 msgid "Muokkaa"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:319
-#: templates/admin/organizations/dashboard.html:122 templates/toolbar.html:40
-#: templates/toolbar.html:85
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:273
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:120
+#: mielenosoitukset_fi/templates/toolbar.html:40
+#: mielenosoitukset_fi/templates/toolbar.html:85
 msgid "Katsele"
 msgstr ""
 
-#: templates/toolbar.html:44
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:156
+#: mielenosoitukset_fi/templates/toolbar.html:44
 msgid "Lisätietoja"
 msgstr ""
 
-#: templates/toolbar.html:49
+#: mielenosoitukset_fi/templates/toolbar.html:49
 msgid "Mainoskuvan luontityökalu"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:336
-#: templates/admin/demonstrations/form.html:82
-#: templates/admin/demonstrations/form.html:198
-#: templates/admin/organizations/dashboard.html:121
-#: templates/admin/recu_demonstrations/dashboard.html:138
-#: templates/admin/user/list.html:137 templates/toolbar.html:55
-#: templates/toolbar.html:92
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:285
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:120
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:515
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:119
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:223
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:137
+#: mielenosoitukset_fi/templates/admin/user/list.html:135
+#: mielenosoitukset_fi/templates/toolbar.html:55
+#: mielenosoitukset_fi/templates/toolbar.html:92
 msgid "Poista"
 msgstr ""
 
-#: templates/admin/organizations/form.html:276
-#: templates/admin/organizations/macros.html:25
-#: templates/admin/organizations/view.html:154 templates/toolbar.html:99
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:275
+#: mielenosoitukset_fi/templates/admin/organizations/macros.html:25
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:262
+#: mielenosoitukset_fi/templates/toolbar.html:99
 msgid "Kutsu käyttäjiä"
 msgstr ""
 
-#: templates/toolbar.html:110
+#: mielenosoitukset_fi/templates/toolbar.html:110
 msgid "Poistu<br>organisaatiosta"
 msgstr ""
 
-#: templates/toolbar.html:138
+#: mielenosoitukset_fi/templates/toolbar.html:138
 msgid "Näyttökerrat:"
 msgstr ""
 
-#: templates/toolbar.html:139
+#: mielenosoitukset_fi/templates/toolbar.html:139
 msgid "Osallistujat:"
 msgstr ""
 
-#: templates/admin/analytics.html:30 templates/admin/stats.html:73
+#: mielenosoitukset_fi/templates/admin/analytics.html:27
+#: mielenosoitukset_fi/templates/admin/stats.html:72
 msgid "Mielenosoitus analytiikka"
 msgstr ""
 
-#: templates/admin/analytics.html:37 templates/admin/stats.html:79
+#: mielenosoitukset_fi/templates/admin/analytics.html:34
+#: mielenosoitukset_fi/templates/admin/stats.html:78
 msgid "Mielenosoituksen ID"
 msgstr ""
 
-#: templates/admin/analytics.html:38 templates/admin/stats.html:53
-#: templates/admin/stats.html:80
+#: mielenosoitukset_fi/templates/admin/analytics.html:35
+#: mielenosoitukset_fi/templates/admin/stats.html:52
+#: mielenosoitukset_fi/templates/admin/stats.html:79
 msgid "Katselukerrat"
 msgstr ""
 
-#: templates/admin/analytics.html:53 templates/admin/stats.html:94
+#: mielenosoitukset_fi/templates/admin/analytics.html:50
+#: mielenosoitukset_fi/templates/admin/stats.html:93
 msgid "Ei tietoja saatavilla."
 msgstr ""
 
-#: templates/admin/dashboard.html:34
+#: mielenosoitukset_fi/templates/admin/dashboard.html:34
 msgid "Hallintatyökalut"
 msgstr ""
 
-#: templates/admin/dashboard.html:39
+#: mielenosoitukset_fi/templates/admin/dashboard.html:39
 msgid "Huomio"
 msgstr ""
 
-#: templates/admin/dashboard.html:40
+#: mielenosoitukset_fi/templates/admin/dashboard.html:40
 msgid ""
 "Olet kirjautunut sisään superkäyttäjänä. Sinulla on laajat oikeudet, ja "
 "kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen "
 "käyttäessäsi näitä oikeuksia."
 msgstr ""
 
-#: templates/admin/dashboard.html:47
+#: mielenosoitukset_fi/templates/admin/dashboard.html:47
 msgid "Tietoturva"
 msgstr ""
 
-#: templates/admin/dashboard.html:48
+#: mielenosoitukset_fi/templates/admin/dashboard.html:48
 msgid "Pidä käyttäjätietosi turvassa. Älä jaa salasanaasi kenellekään."
 msgstr ""
 
-#: templates/admin/dashboard.html:55
+#: mielenosoitukset_fi/templates/admin/dashboard.html:55
 msgid "Ylläpito"
 msgstr ""
 
-#: templates/admin/dashboard.html:56
+#: mielenosoitukset_fi/templates/admin/dashboard.html:56
 msgid "Jos kohtaat ongelmia, ota yhteyttä ylläpitoon."
 msgstr ""
 
-#: templates/admin/dashboard.html:67
+#: mielenosoitukset_fi/templates/admin/dashboard.html:67
 msgid "Tarkastele sivuston tilastoja ja käyttäjämääriä."
 msgstr ""
 
-#: templates/admin/dashboard.html:78 templates/admin/dashboard.html:82
+#: mielenosoitukset_fi/templates/admin/dashboard.html:78
+#: mielenosoitukset_fi/templates/admin/dashboard.html:82
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:198
 msgid "Käyttäjät"
 msgstr ""
 
-#: templates/admin/dashboard.html:79
+#: mielenosoitukset_fi/templates/admin/dashboard.html:79
 msgid "Hallitse käyttäjiä ja heidän tietojaan."
 msgstr ""
 
-#: templates/admin/dashboard.html:91
-msgid "Hätäpysäytys"
-msgstr ""
-
-#: templates/admin/dashboard.html:92
-msgid "Pysäytä sivusto hätätilanteessa."
-msgstr ""
-
-#: templates/admin/dashboard.html:95
-msgid "Pysäytä"
-msgstr ""
-
-#: templates/admin/logs.html:52
+#: mielenosoitukset_fi/templates/admin/logs.html:51
 msgid "Admin Logs"
 msgstr ""
 
-#: templates/admin/logs.html:53
+#: mielenosoitukset_fi/templates/admin/logs.html:52
 msgid ""
 "Here you can view the admin activity logs and filter them by user, date, "
 "and action type."
 msgstr ""
 
-#: templates/admin/logs.html:58
+#: mielenosoitukset_fi/templates/admin/logs.html:57
 msgid "All Users"
 msgstr ""
 
-#: templates/admin/logs.html:63
+#: mielenosoitukset_fi/templates/admin/logs.html:62
 msgid "Start Date"
 msgstr ""
 
-#: templates/admin/logs.html:64
+#: mielenosoitukset_fi/templates/admin/logs.html:63
 msgid "End Date"
 msgstr ""
 
-#: templates/admin/logs.html:66
+#: mielenosoitukset_fi/templates/admin/logs.html:65
 msgid "All Actions"
 msgstr ""
 
-#: templates/admin/logs.html:71
+#: mielenosoitukset_fi/templates/admin/logs.html:70
 msgid "Filter"
 msgstr ""
 
-#: templates/admin/logs.html:87
+#: mielenosoitukset_fi/templates/admin/logs.html:86
 msgid "No activities yet."
 msgstr ""
 
-#: templates/admin/logs.html:102
+#: mielenosoitukset_fi/templates/admin/logs.html:101
 msgid "View More"
 msgstr ""
 
-#: templates/admin/logs.html:105
+#: mielenosoitukset_fi/templates/admin/logs.html:104
 msgid "IP Address"
 msgstr ""
 
-#: templates/admin/logs.html:106
+#: mielenosoitukset_fi/templates/admin/logs.html:105
 msgid "Session"
 msgstr ""
 
-#: templates/admin/logs.html:119
+#: mielenosoitukset_fi/templates/admin/logs.html:118
 msgid "Previous"
 msgstr ""
 
-#: templates/admin/logs.html:134
+#: mielenosoitukset_fi/templates/admin/logs.html:133
 msgid "Next"
 msgstr ""
 
-#: templates/admin/logs.html:146
+#: mielenosoitukset_fi/templates/admin/logs.html:145
 msgid "Recent Activities"
 msgstr ""
 
-#: templates/admin/logs.html:154
+#: mielenosoitukset_fi/templates/admin/logs.html:153
 msgid "Back to Dashboard"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:26
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:25
 msgid ""
 "Pyörörulla on sivuston yläreunaan ilmestyvää liikkuvan tekstin palkki, "
 "jota voidaan käyttää mm. huoltokatkoista ilmoittamiseen."
 msgstr ""
 
-#: templates/admin/manage_marquee.html:40
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:39
 msgid "Nykyinen pyörö:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:45
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:44
 msgid "Pyörön taustaväri:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:50
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:49
 msgid "Pyörön tekstin väri:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:54
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:53
 msgid "Tallenna pyörörulla"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:57
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:56
 msgid "Esikatselu:"
 msgstr ""
 
-#: templates/admin/manage_marquee.html:64 templates/admin/stats.html:101
+#: mielenosoitukset_fi/templates/admin/manage_marquee.html:63
+#: mielenosoitukset_fi/templates/admin/stats.html:100
 msgid "Palaa hallintapaneeliin"
 msgstr ""
 
-#: templates/admin/stats.html:30
+#: mielenosoitukset_fi/templates/admin/stats.html:29
 msgid "Tässä osiossa voit tarkastella sivuston tilastoja."
 msgstr ""
 
-#: templates/admin/stats.html:35
+#: mielenosoitukset_fi/templates/admin/stats.html:34
 msgid "Käyttäjiä"
 msgstr ""
 
-#: templates/admin/stats.html:39
+#: mielenosoitukset_fi/templates/admin/stats.html:38
 msgid "Vahvistetut käyttäjät"
 msgstr ""
 
-#: templates/admin/stats.html:40
+#: mielenosoitukset_fi/templates/admin/stats.html:39
 msgid "Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa"
 msgstr ""
 
-#: templates/admin/stats.html:44
+#: mielenosoitukset_fi/templates/admin/stats.html:43
 msgid "Organisaatioita"
 msgstr ""
 
-#: templates/admin/stats.html:49
+#: mielenosoitukset_fi/templates/admin/stats.html:48
 msgid "Mielenosoituksia"
 msgstr ""
 
-#: templates/admin/stats.html:54
+#: mielenosoitukset_fi/templates/admin/stats.html:53
 msgid "Kaikkien mielenosoitusten katselukerrat"
 msgstr ""
 
-#: templates/admin/stats.html:58
+#: mielenosoitukset_fi/templates/admin/stats.html:57
 msgid "Keskimääräinen katselukerrat"
 msgstr ""
 
-#: templates/admin/stats.html:59
+#: mielenosoitukset_fi/templates/admin/stats.html:58
 msgid "Keskimääräinen katselukerrat mielenosoituksille"
 msgstr ""
 
-#: templates/admin/stats.html:63
+#: mielenosoitukset_fi/templates/admin/stats.html:62
 msgid "Tilastot päivitetty viimeksi"
 msgstr ""
 
-#: templates/admin/demonstrations/confirm_delete.html:7
-#: templates/admin/demonstrations/confirm_delete.html:13
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:7
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:13
 msgid "Vahvista poisto"
 msgstr ""
 
-#: templates/admin/demonstrations/confirm_delete.html:8
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:8
 msgid "Oletko varma, että haluat poistaa mielenosoituksen nimeltään"
 msgstr ""
 
-#: templates/admin/demonstrations/confirm_delete.html:9
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:9
 msgid "Huomaa, että tämä toiminto ei ole palautettavissa."
 msgstr ""
 
-#: templates/admin/demonstrations/confirm_delete.html:13
-#: templates/admin/demonstrations/dashboard.html:364
-#: templates/admin/organizations/confirm_delete.html:10
-#: templates/admin/user/list.html:166
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:13
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:313
+#: mielenosoitukset_fi/templates/admin/organizations/confirm_delete.html:10
+#: mielenosoitukset_fi/templates/admin/user/list.html:164
 msgid "Kyllä, poista"
 msgstr ""
 
-#: templates/admin/demonstrations/confirm_delete.html:14
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:14
 msgid "Peruuta poisto"
 msgstr ""
 
-#: templates/admin/demonstrations/confirm_delete.html:14
-#: templates/admin/demonstrations/dashboard.html:367
-#: templates/admin/organizations/confirm_delete.html:11
-#: templates/admin/organizations/form.html:270
-#: templates/admin/user/list.html:169
+#: mielenosoitukset_fi/templates/admin/demonstrations/confirm_delete.html:14
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:316
+#: mielenosoitukset_fi/templates/admin/organizations/confirm_delete.html:11
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:269
+#: mielenosoitukset_fi/templates/admin/user/list.html:167
 msgid "Peruuta"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:102
-#: templates/admin/demonstrations/dashboard.html:225
-#: templates/admin/demonstrations/dashboard.html:242
-#: templates/admin/demonstrations/dashboard.html:280
-#: templates/admin/demonstrations/dashboard.html:281
-#: templates/admin/demonstrations/form.html:230
-#: templates/admin/recu_demonstrations/dashboard.html:95
-#: templates/admin/recu_demonstrations/form.html:277
-#: templates/admin/user/edit.html:127
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:100
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:201
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:213
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:240
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:242
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:584
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:179
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:94
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/form.html:311
+#: mielenosoitukset_fi/templates/admin/user/edit.html:127
 msgid "Kyllä"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:129
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:127
 msgid "Mielenosoitus hyväksytty onnistuneesti!"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:139
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:137
 msgid "Virhe: "
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:139
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:137
 msgid "Tuntematon virhe."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:155
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:153
 msgid "Yhteysvirhe, yritä uudelleen."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:178
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:174
 msgid "Uusi mielenosoitus"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:182
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:177
 msgid "Sinulla ei ole oikeutta luoda uusia mielenosoituksia."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:188
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:181
 msgid "Uusi toistuva mielenosoitus"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:192
-#: templates/admin/recu_demonstrations/dashboard.html:84
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:184
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:83
 msgid "Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:196
-#: templates/admin/user/list.html:141
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:188
+#: mielenosoitukset_fi/templates/admin/user/list.html:139
 msgid "Ei riittäviä oikeuksia."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:206
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:194
 msgid "Hae mielenosoituksia:"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:214
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:196
 msgid "Search demonstrations"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:217
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:198
 msgid "Näytä vain hyväksytyt mielenosoitukset:"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:222
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:199
 msgid "Approved status filter"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:228
-#: templates/admin/demonstrations/dashboard.html:240
-#: templates/admin/demonstrations/dashboard.html:280
-#: templates/admin/demonstrations/dashboard.html:281
-#: templates/admin/demonstrations/form.html:230
-#: templates/admin/recu_demonstrations/dashboard.html:96
-#: templates/admin/recu_demonstrations/form.html:277
-#: templates/admin/user/edit.html:127
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:204
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:211
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:241
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:243
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:585
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:179
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:95
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/form.html:311
+#: mielenosoitukset_fi/templates/admin/user/edit.html:127
 msgid "Ei"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:232
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:208
 msgid "Näytä menneet mielenosoitukset:"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:237
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:209
 msgid "Show past demonstrations"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:255
-#: templates/admin/demonstrations/form.html:117
-#: templates/admin/recu_demonstrations/dashboard.html:109
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:226
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:169
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:108
 msgid "Otsikko"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:257
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:228
 msgid "Päivämäärä"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:258
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:229
 msgid "Toistuva"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:259
-#: templates/admin/demonstrations/form.html:227
-#: templates/admin/recu_demonstrations/dashboard.html:113
-#: templates/admin/recu_demonstrations/form.html:273
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:230
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:580
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:112
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/form.html:307
 msgid "Hyväksytty"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:260
-#: templates/admin/organizations/dashboard.html:109
-#: templates/admin/user/list.html:115
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:231
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:107
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:206
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:241
+#: mielenosoitukset_fi/templates/admin/user/list.html:113
 msgid "Toiminnot"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:296
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:256
 msgid "Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:309
-#: templates/admin/recu_demonstrations/dashboard.html:132
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:266
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:131
 msgid "Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:323
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:277
 msgid "Ei riittäviä oikeuksia mielenosoituksen katseluun."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:340
-#: templates/admin/recu_demonstrations/dashboard.html:142
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:289
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:141
 msgid "Ei riittäviä oikeuksia mielenosoituksen poistamiseen."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:350
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:299
 msgid "Ei mielenosoituksia löytynyt."
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:357
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:306
 msgid "Poista mielenosoitus"
 msgstr ""
 
-#: templates/admin/demonstrations/dashboard.html:359
+#: mielenosoitukset_fi/templates/admin/demonstrations/dashboard.html:308
 msgid "Oletko varma, että haluat poistaa mielenosoituksen"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:29
-#: templates/admin/demonstrations/form.html:137
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:67
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:194
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/form.html:33
 msgid "Lisää tagi"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:74
-#: templates/admin/demonstrations/form.html:190
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:112
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:502
 msgid "Järjestäjätahon nimi"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:75
-#: templates/admin/demonstrations/form.html:77
-#: templates/admin/demonstrations/form.html:79
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:113
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:115
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:117
 msgid "Täytetään automaattisesti"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:76
-#: templates/admin/demonstrations/form.html:192
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:114
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:506
 msgid "Nettisivu"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:78
-#: templates/admin/demonstrations/form.html:194
-#: templates/users/auth/register.html:19 users/templates/register.html:17
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:116
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:509
+#: mielenosoitukset_fi/templates/users/auth/register.html:19
+#: mielenosoitukset_fi/users/templates/register.html:17
 msgid "Sähköposti"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:80
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:118
 msgid "Organisaation ID"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:86
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:124
 msgid "Valitse ensin järjestö!"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:133
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:153
+msgid "HUOMIO!"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:154
+msgid "Olet muokkaamassa mielenosoitusta muokkauslinkillä."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:157
+msgid ""
+"Muokkauslinkillä myöskin he joilla ei ole käyttäjätiliä sivustolle, "
+"voivat muokata\n"
+"                mielenosoituksia.\n"
+"                Muokkauslinkillä muokkaus on rajoitettua."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:161
+msgid "OK"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:189
 msgid "Tägit"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:142
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:200
 msgid "Lisää uusi tagi"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:145
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:203
 msgid "Facebook linkki"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:151
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:210
 msgid "Osoite"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:157
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:217
 msgid "Tyyppi"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:161
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:224
 msgid "Tieblokki"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:168
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:233
 msgid "Reitti (marssin)"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:172
-#: templates/admin/organizations/dashboard.html:106
-#: templates/admin/organizations/form.html:231
-#: templates/admin/organizations/view.html:119
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:238
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:104
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:230
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:162
 msgid "Kuvaus"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:176
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:481
 msgid "Leveysaste"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:180
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:486
 msgid "Pituusaste"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:183
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:495
 msgid "Järjestäjätahojen tiedot"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:196
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:512
 msgid "ID"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:209
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:518
+msgid ""
+"Luo uusi\n"
+"                    järjestäjä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:560
 msgid "Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen"
 msgstr ""
 
-#: templates/admin/demonstrations/form.html:211
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:563
 msgid "Valitse järjestö"
 msgstr ""
 
-#: templates/admin/organizations/confirm_delete.html:5
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:604
+msgid "Luo muokkauslinkki"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:614
+msgid "Muokkauslinkki"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:620
+msgid "Kopioi alla oleva linkki ja jaa se tarvittaessa:"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:624
+msgid "Sulje"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/demonstrations/form.html:651
+msgid "Mielenosoituksen tunniste puuttuu."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/confirm_delete.html:5
 msgid "Vahvista poistaminen"
 msgstr ""
 
-#: templates/admin/organizations/confirm_delete.html:6
+#: mielenosoitukset_fi/templates/admin/organizations/confirm_delete.html:6
 msgid "Haluatko varmasti poistaa organisaation"
 msgstr ""
 
-#: templates/admin/organizations/confirm_delete.html:6
+#: mielenosoitukset_fi/templates/admin/organizations/confirm_delete.html:6
 msgid "Toiminto on peruuttamaton."
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:87
-#: templates/users/profile/profile.html:36
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:85
+#: mielenosoitukset_fi/templates/users/profile/profile.html:36
 msgid "Organisaatiot"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:90
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:88
 msgid "Luo uusi organisaatio"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:94
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:92
 msgid "Hae organisaatioita:"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:95
-#: templates/admin/user/edit.html:144
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:93
+#: mielenosoitukset_fi/templates/admin/user/edit.html:144
 msgid "Hae organisaatioita..."
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:95
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:93
 msgid "Hae organisaatioita"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:108
-#: templates/admin/organizations/form.html:243
-#: templates/admin/organizations/view.html:129
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:106
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:242
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:172
 msgid "Verkkosivu"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:123
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:121
 msgid "Esikatsele"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:132
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:130
 msgid "Organisaatioita ei löytynyt."
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:139
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:137
 msgid "Kutsu henkilö"
 msgstr ""
 
-#: templates/admin/organizations/dashboard.html:140
+#: mielenosoitukset_fi/templates/admin/organizations/dashboard.html:138
 msgid "Hallitse rooleja"
 msgstr ""
 
-#: templates/admin/organizations/form.html:117
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:116
 msgid "Valitse sosiaalisen median alusta"
 msgstr ""
 
-#: templates/admin/organizations/form.html:137
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:136
 msgid "Syötä URL"
 msgstr ""
 
-#: templates/admin/organizations/form.html:220
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:219
 msgid "Muokkaa organisaatiota"
 msgstr ""
 
-#: templates/admin/organizations/form.html:220
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:219
 msgid "Uusi organisaatio"
 msgstr ""
 
-#: templates/admin/organizations/form.html:250
-#: templates/admin/organizations/view.html:135
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:249
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:178
 msgid "Onko organisaatio vahvistettu?"
 msgstr ""
 
-#: templates/admin/organizations/form.html:258
-#: templates/admin/organizations/view.html:141
-#: templates/organizations/details.html:41
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:257
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:184
+#: mielenosoitukset_fi/templates/organizations/details.html:41
 msgid "Sosiaalinen media"
 msgstr ""
 
-#: templates/admin/organizations/form.html:262
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:261
 msgid "Lisää sosiaalisen median alusta"
 msgstr ""
 
-#: templates/admin/organizations/form.html:268
+#: mielenosoitukset_fi/templates/admin/organizations/form.html:267
 msgid "Luo"
 msgstr ""
 
-#: templates/admin/organizations/macros.html:32
+#: mielenosoitukset_fi/templates/admin/organizations/macros.html:32
 msgid "Kutsuttavan sähköpostiosoite"
 msgstr ""
 
-#: templates/admin/organizations/macros.html:39
+#: mielenosoitukset_fi/templates/admin/organizations/macros.html:39
 msgid "Lähetä kutsu"
 msgstr ""
 
-#: templates/admin/organizations/view.html:111
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:154
 msgid "Organisaation tiedot"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:75
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:205
+msgid "Pääsytaso"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:217
+msgid "Admin"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:218
+msgid "Jäsen"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:222
+msgid "Tallenna"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:228
+msgid "Ei käyttäjiä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:234
+msgid "Kutsutut käyttäjät"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:240
+msgid "Kutsun tila"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:249
+msgid "Odottaa hyväksyntää"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:251
+msgid "Peruuta kutsu"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/organizations/view.html:256
+msgid "Ei kutsuttuja käyttäjiä"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:74
 msgid "Toistuvat mielenosoitukset"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:80
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:79
 msgid "Luo uusi toistuva mielenosoitus"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:90
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:89
 msgid "Hae toistuvia mielenosoituksia:"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:91
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:90
 msgid "Hae toistuvia mielenosoituksia..."
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:91
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:90
 msgid "Hae toistuvia mielenosoituksia"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:93
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:92
 msgid "Näytä vain hyväksytyt toistuvat mielenosoitukset:"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:94
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:93
 msgid "Hyväksytty status"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:110
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:109
 msgid "Toistuvuus"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:111
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:110
 msgid "Aika"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:114
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:113
 msgid "Toimet"
 msgstr ""
 
-#: templates/admin/recu_demonstrations/dashboard.html:152
+#: mielenosoitukset_fi/templates/admin/recu_demonstrations/dashboard.html:151
 msgid "Ei löytynyt toistuvia mielenosoituksia."
 msgstr ""
 
-#: templates/admin/user/confirm.html:7
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:62
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:66
+msgid "Upload Media"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:65
+msgid "Select file to upload:"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:66
+msgid "Select file to upload"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:68
+msgid "Image Type:"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:69
+msgid "Image Type"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:71
+msgid "Upload"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/dashboard.html:75
+msgid "Upload result will be displayed here."
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:63
+msgid "Media"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:69
+msgid "View Media"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:76
+msgid "Upload Photos"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:82
+msgid "Uploaded at:"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:83
+msgid "Uploader ID:"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:85
+msgid "Download"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/s3/view_media.html:88
+msgid "Copy Link"
+msgstr ""
+
+#: mielenosoitukset_fi/templates/admin/user/confirm.html:7
 msgid "Haluatko varmasti poistaa tämän käyttäjän?"
 msgstr ""
 
-#: templates/admin/user/confirm.html:8
+#: mielenosoitukset_fi/templates/admin/user/confirm.html:8
 msgid "Käyttäjänimi:"
 msgstr ""
 
-#: templates/admin/user/confirm.html:10
+#: mielenosoitukset_fi/templates/admin/user/confirm.html:10
 msgid "Rooli:"
 msgstr ""
 
-#: templates/admin/user/confirm.html:14
+#: mielenosoitukset_fi/templates/admin/user/confirm.html:14
 msgid "Kyllä, poista käyttäjä"
 msgstr ""
 
-#: templates/admin/user/confirm.html:15
+#: mielenosoitukset_fi/templates/admin/user/confirm.html:15
 msgid "Peruuta poistaminen"
 msgstr ""
 
-#: templates/admin/user/edit.html:107
+#: mielenosoitukset_fi/templates/admin/user/edit.html:107
 msgid "Muokkaa käyttäjää"
 msgstr ""
 
-#: templates/admin/user/edit.html:112 templates/users/auth/login.html:12
-#: users/templates/login.html:10
+#: mielenosoitukset_fi/templates/admin/user/edit.html:112
+#: mielenosoitukset_fi/templates/users/auth/login.html:12
+#: mielenosoitukset_fi/users/templates/login.html:10
 msgid "Käyttäjänimi"
 msgstr ""
 
-#: templates/admin/user/edit.html:123
+#: mielenosoitukset_fi/templates/admin/user/edit.html:123
 msgid "Onko sähköpostiosoite vahvistettu"
 msgstr ""
 
-#: templates/admin/user/edit.html:134 templates/admin/user/list.html:114
+#: mielenosoitukset_fi/templates/admin/user/edit.html:134
+#: mielenosoitukset_fi/templates/admin/user/list.html:112
 msgid "Rooli"
 msgstr ""
 
-#: templates/admin/user/edit.html:136
+#: mielenosoitukset_fi/templates/admin/user/edit.html:136
 msgid "Käyttäjä"
 msgstr ""
 
-#: templates/admin/user/edit.html:137
+#: mielenosoitukset_fi/templates/admin/user/edit.html:137
 msgid "Järjestelmänvalvoja"
 msgstr ""
 
-#: templates/admin/user/edit.html:138
+#: mielenosoitukset_fi/templates/admin/user/edit.html:138
 msgid "Superkäyttäjä"
 msgstr ""
 
-#: templates/admin/user/edit.html:142
+#: mielenosoitukset_fi/templates/admin/user/edit.html:142
 msgid "Organisaatiot ja oikeudet"
 msgstr ""
 
-#: templates/admin/user/edit.html:161 templates/admin/user/edit.html:191
+#: mielenosoitukset_fi/templates/admin/user/edit.html:161
+#: mielenosoitukset_fi/templates/admin/user/edit.html:191
 msgid "Valitse kaikki"
 msgstr ""
 
-#: templates/admin/user/edit.html:183
+#: mielenosoitukset_fi/templates/admin/user/edit.html:183
 msgid "Globaalit oikeudet"
 msgstr ""
 
-#: templates/admin/user/edit.html:184
+#: mielenosoitukset_fi/templates/admin/user/edit.html:184
 msgid ""
 "Globaalit oikeudet ovat vain superkäyttäjille tarkoitettuja oikeuksia, "
 "jotka antavat käyttäjän suorittaa kyseisen toiminnon mille tahansa "
 "organisaatiolle."
 msgstr ""
 
-#: templates/admin/user/list.html:150
+#: mielenosoitukset_fi/templates/admin/user/list.html:148
 msgid "Käyttäjiä ei löytynyt."
 msgstr ""
 
-#: templates/admin/user/list.html:159
+#: mielenosoitukset_fi/templates/admin/user/list.html:157
 msgid "Poista käyttäjä"
 msgstr ""
 
-#: templates/admin/user/list.html:161
+#: mielenosoitukset_fi/templates/admin/user/list.html:159
 msgid "Oletko varma, että haluat poistaa käyttäjän"
 msgstr ""
 
-#: templates/organizations/details.html:2
+#: mielenosoitukset_fi/templates/organizations/details.html:2
 msgid "Tiedot"
 msgstr ""
 
-#: templates/users/auth/login.html:17 templates/users/auth/register.html:24
-#: users/templates/login.html:15 users/templates/register.html:22
+#: mielenosoitukset_fi/templates/users/auth/login.html:17
+#: mielenosoitukset_fi/templates/users/auth/register.html:24
+#: mielenosoitukset_fi/users/templates/login.html:15
+#: mielenosoitukset_fi/users/templates/register.html:22
 msgid "Salasana"
 msgstr ""
 
-#: templates/users/auth/login.html:27 users/templates/login.html:25
+#: mielenosoitukset_fi/templates/users/auth/login.html:27
+#: mielenosoitukset_fi/users/templates/login.html:25
 msgid "Unohtuiko salasana?"
 msgstr ""
 
-#: templates/users/auth/password_reset.html:67
+#: mielenosoitukset_fi/templates/users/auth/password_reset.html:67
 msgid "Salasanan vaihtaminen"
 msgstr ""
 
-#: templates/users/auth/password_reset.html:70
+#: mielenosoitukset_fi/templates/users/auth/password_reset.html:70
 msgid "Uusi salasana"
 msgstr ""
 
-#: templates/users/auth/password_reset.html:73
+#: mielenosoitukset_fi/templates/users/auth/password_reset.html:73
 msgid "Vaihda salasana"
 msgstr ""
 
-#: templates/users/auth/password_reset_request.html:9
+#: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:9
 msgid "Unohtuiko salasanasi?"
 msgstr ""
 
-#: templates/users/auth/password_reset_request.html:10
+#: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:10
 msgid ""
 "Syötä mielenosoitukset.fi -palvelussa käyttämäsi sähköpostiosoite alla "
 "olevaan kenttään, niin lähetämme salasanan nollauslinkin sinulle "
 "sähköpostitse."
 msgstr ""
 
-#: templates/users/auth/password_reset_request.html:16
+#: mielenosoitukset_fi/templates/users/auth/password_reset_request.html:16
 msgid "Pyydä salasananvaihtoa"
 msgstr ""
 
-#: templates/users/auth/register.html:14 users/templates/register.html:12
+#: mielenosoitukset_fi/templates/users/auth/register.html:14
+#: mielenosoitukset_fi/users/templates/register.html:12
 msgid "Käyttäjätunnus"
 msgstr ""
 
-#: templates/users/auth/register.html:20 users/templates/register.html:18
+#: mielenosoitukset_fi/templates/users/auth/register.html:20
+#: mielenosoitukset_fi/users/templates/register.html:18
 msgid "Anna kelvollinen sähköpostiosoite"
 msgstr ""
 
-#: templates/users/auth/register.html:25 users/templates/register.html:23
+#: mielenosoitukset_fi/templates/users/auth/register.html:25
+#: mielenosoitukset_fi/users/templates/register.html:23
 msgid "Salasanan on oltava vähintään 8 merkkiä pitkä"
 msgstr ""
 
-#: templates/users/auth/register.html:34 users/templates/register.html:32
+#: mielenosoitukset_fi/templates/users/auth/register.html:34
+#: mielenosoitukset_fi/users/templates/register.html:32
 msgid "Kirjaudu sisään tästä"
 msgstr ""
 
-#: templates/users/auth/settings.html:3 templates/users/auth/settings.html:55
+#: mielenosoitukset_fi/templates/users/auth/settings.html:3
+#: mielenosoitukset_fi/templates/users/auth/settings.html:54
 msgid "Asetukset"
 msgstr ""
 
-#: templates/users/auth/settings.html:59
+#: mielenosoitukset_fi/templates/users/auth/settings.html:58
 msgid "Ota käyttöön kaksivaiheinen todennus:"
 msgstr ""
 
-#: templates/users/auth/settings.html:62
+#: mielenosoitukset_fi/templates/users/auth/settings.html:61
 msgid "Enable or disable two-factor authentication."
 msgstr ""
 
-#: templates/users/auth/settings.html:68
+#: mielenosoitukset_fi/templates/users/auth/settings.html:67
 msgid "Skannaa tämä QR-koodi MFA-sovelluksella:"
 msgstr ""
 
-#: templates/users/auth/settings.html:85
+#: mielenosoitukset_fi/templates/users/auth/settings.html:84
 msgid "QR Code"
 msgstr ""
 
-#: templates/users/auth/settings.html:94
+#: mielenosoitukset_fi/templates/users/auth/settings.html:93
 msgid "Close"
 msgstr ""
 
-#: templates/users/auth/verify_mfa.html:9
+#: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:9
 msgid "Vahvista MFA"
 msgstr ""
 
-#: templates/users/auth/verify_mfa.html:12
+#: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:12
 msgid "MFA-koodi"
 msgstr ""
 
-#: templates/users/auth/verify_mfa.html:16
+#: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:16
 msgid "Vahvista"
 msgstr ""
 
-#: templates/users/auth/verify_mfa.html:22
+#: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:22
 msgid "Lähetä koodi uudelleen"
 msgstr ""
 
-#: templates/users/auth/verify_mfa.html:29
+#: mielenosoitukset_fi/templates/users/auth/verify_mfa.html:29
 msgid "Takaisin kirjautumiseen"
 msgstr ""
 
-#: templates/users/profile/edit_profile.html:3
+#: mielenosoitukset_fi/templates/users/profile/edit_profile.html:3
 msgid "Muokkaa Profiilia"
 msgstr ""
 
-#: templates/users/profile/edit_profile.html:11
+#: mielenosoitukset_fi/templates/users/profile/edit_profile.html:11
 msgid "Muokkaa profiiliasi"
 msgstr ""
 
-#: templates/users/profile/edit_profile.html:15
+#: mielenosoitukset_fi/templates/users/profile/edit_profile.html:15
 msgid "Näyttönimi:"
 msgstr ""
 
-#: templates/users/profile/edit_profile.html:20
+#: mielenosoitukset_fi/templates/users/profile/edit_profile.html:20
 msgid "Profiilikuva:"
 msgstr ""
 
-#: templates/users/profile/edit_profile.html:26
+#: mielenosoitukset_fi/templates/users/profile/edit_profile.html:26
 msgid "Esittelyteksti:"
 msgstr ""
 
-#: templates/users/profile/profile.html:32
+#: mielenosoitukset_fi/templates/users/profile/profile.html:32
 msgid "Järjestelmävalvoja"
 msgstr ""
 
-#: templates/users/profile/profile.html:42
+#: mielenosoitukset_fi/templates/users/profile/profile.html:42
 msgid "Tutustu organisaatioon"
 msgstr ""
 
-#: templates/users/profile/profile.html:51
+#: mielenosoitukset_fi/templates/users/profile/profile.html:51
 msgid "Muokkaa profiilia"
 msgstr ""
 
-#: templates/users/profile/profile.html:56
+#: mielenosoitukset_fi/templates/users/profile/profile.html:56
 msgid "Lopeta seuraaminen"
 msgstr ""
 
-#: templates/users/profile/profile.html:60
+#: mielenosoitukset_fi/templates/users/profile/profile.html:60
 msgid "Seuraa"
 msgstr ""
 
@@ -1807,5 +2066,14 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Ei aktiivisuuksia vielä."
+#~ msgstr ""
+
+#~ msgid "Hätäpysäytys"
+#~ msgstr ""
+
+#~ msgid "Pysäytä sivusto hätätilanteessa."
+#~ msgstr ""
+
+#~ msgid "Pysäytä"
 #~ msgstr ""
 

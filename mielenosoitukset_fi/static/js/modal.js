@@ -1,25 +1,43 @@
 /**
- * Initializes modal functionality when the DOM content is loaded.
- * 
- * - Adds click event listeners to open modal buttons to open the respective modal.
- * - Adds click event listener to the overlay to close all active modals.
- * - Adds click event listeners to close modal buttons to close the respective modal.
- * 
- * @event DOMContentLoaded
- */
-
-/**
  * Opens the specified modal and activates the overlay.
  * 
  * @param {HTMLElement} modal - The modal element to be opened.
  */
+function openModal(modal) {
+    if (modal == null) return;
+    modal.classList.add('active');
+    // force modal to have the highest z-index value out of all items on the pag
+    modal.style.zIndex = 1000*1000;
+
+    if (overlay) {
+    overlay.classList.add('active');}
+    else {
+        console.log("Overlay not found. Waiting for it to be loaded...");
+        // wait for the overlay to be loaded
+        setTimeout(() => {
+            openModal(modal);
+        }, 100);
+    }
+}
 
 /**
  * Closes the specified modal and deactivates the overlay.
  * 
  * @param {HTMLElement} modal - The modal element to be closed.
  */
-
+function closeModal(modal) {
+    if (modal == null) return;
+    modal.classList.remove('active');
+    if (overlay) {
+    overlay.classList.remove('active');}
+    else {
+        console.log("Overlay not found. Waiting for it to be loaded...");
+        // wait for the overlay to be loaded
+        setTimeout(() => {
+            closeModal(modal);
+        }, 100);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const openModalButtons = document.querySelectorAll('[data-modal-target]');
@@ -46,16 +64,4 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal(modal);
         });
     });
-
-    function openModal(modal) {
-        if (modal == null) return;
-        modal.classList.add('active');
-        overlay.classList.add('active');
-    }
-
-    function closeModal(modal) {
-        if (modal == null) return;
-        modal.classList.remove('active');
-        overlay.classList.remove('active');
-    }
 });

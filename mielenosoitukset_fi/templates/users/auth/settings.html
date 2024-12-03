@@ -4,6 +4,10 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/settings.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+
+
+
 <style>
     .spinner {
         display: none;
@@ -27,7 +31,7 @@
 
     .tooltip .tooltiptext {
         visibility: hidden;
-        width: 120px;
+        width: 150px;
         background-color: #555;
         color: #fff;
         text-align: center;
@@ -35,9 +39,9 @@
         padding: 5px;
         position: absolute;
         z-index: 1;
-        bottom: 125%; /* Position above the tooltip element */
+        bottom: 125%;
         left: 50%;
-        margin-left: -60px;
+        margin-left: -75px;
         opacity: 0;
         transition: opacity 0.3s;
     }
@@ -46,59 +50,74 @@
         visibility: visible;
         opacity: 1;
     }
+
+    /* Cute spinner animation */
+    .spinner:before {
+        content: '🐱';
+        display: block;
+        animation: spin 1s linear infinite;
+    }
+
+    /* Cat-themed tooltip */
+    .tooltip .tooltiptext:before {
+        content: '🐾 ';
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container settings-container">
-    <h1 class="admin-section-title">{{ _('Asetukset') }}</h1>
+    <h1 class="admin-section-title"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
 
     <form id="settings-form" action="{{ url_for('users.auth.settings') }}" method="POST">
         <div class="form-group">
-            <label for="mfa_enabled">{{ _('Ota käyttöön kaksivaiheinen todennus:') }}</label>
+            <label for="mfa_enabled"><i class="fas fa-shield-alt"></i> {{ _('Ota käyttöön kaksivaiheinen todennus:') }}</label>
             <div class="tooltip">
                 <input type="checkbox" id="mfa_enabled" name="mfa_enabled" {% if current_user.mfa_enabled %}checked{% endif %}>
                 <span class="tooltiptext">{{ _('Enable or disable two-factor authentication.') }}</span>
             </div>
         </div>
 
-        {% if qr_code_url %}
-        <div class="form-group">
-            <label>{{ _('Skannaa tämä QR-koodi MFA-sovelluksella:') }}</label>
-            <img src="{{ qr_code_url }}" alt="QR Code" style="max-width: 200px; margin-top: 10px;" data-toggle="modal" data-target="#qrModal">
-        </div>
-        {% endif %}
-
-        <button type="submit" class="button btn-primary">
+        <button type="submit" class="btn btn-primary">
             <span>{{ _('Tallenna muutokset') }}</span>
             <div class="spinner" id="spinner"></div>
         </button>
     </form>
 </div>
-
+{% if qr_code_url %}
 <!-- QR Code Modal -->
-<div class="modal" id="qrModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ _('QR Code') }}</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <img src="{{ qr_code_url }}" alt="QR Code" style="width: 100%;">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Close') }}</button>
-            </div>
-        </div>
+<div class="modal" id="qrModal" style="z-index: 1000;">
+    <div class="modal-header" style="text-align: center; width: 100%;">
+        <h1 style="width: 100%;" class="modal-title" id="qrModalLabel"><i class="fas fa-qrcode"></i> {{ _('QR Code') }}</h1>
+    </div>
+    <div class="modal-body" style="text-align: center;">
+        <img style="border-radius: 1em;" src="{{ qr_code_url }}" alt="QR Code" class="img-fluid">
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-button>{{ _('Close') }}</button>
     </div>
 </div>
+<div class="modal-overlay" id="overlay"></div>
+{% endif %}
+{% endblock %}
 
+{% block scripts %}
 <script>
     document.getElementById('settings-form').addEventListener('submit', function() {
         document.getElementById('spinner').style.display = 'inline-block';
     });
 </script>
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+
+<script>
+    // js that will display the modal when the page is loaded and the qr code is available
+    document.addEventListener("DOMContentLoaded", function() {
+        const qrModal = document.getElementById('qrModal');
+
+        if (qrModal) {
+            openModal(qrModal);
+        }
+    });
+</script>
+
 {% endblock %}

@@ -1,0 +1,1 @@
+> This directory contains configuration for deployment manager, so that it can deploy the resources in the project.

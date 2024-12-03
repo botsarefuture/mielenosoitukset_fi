@@ -1,0 +1,105 @@
+{% extends 'base.html' %} 
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+{% endblock %}
+
+{% block content %}
+{% import 'macros.html' as macros %}
+
+<div class="container-main-content">
+    <h1>{{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}</h1>
+
+    <!-- Extended search form for filtering demonstrations -->
+    <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
+        <input
+            type="text"
+            name="search"
+            placeholder="{{ _('Hae mielenosoituksia...') }}"
+            aria-label="{{ _('Hae mielenosoituksia') }}"
+            value="{{ request.args.get('search', '') }}"
+        />
+        
+        {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
+            {% include 'paikkakunta-dropdown.html' %}
+        {% endif %}
+
+        <input
+            type="hidden"
+            name="city"
+            value="{{ city_name }}"
+        />
+
+        <input
+            type="text"
+            name="location"
+            placeholder="{{ _('Sijainti') }}"
+            aria-label="{{ _('Sijainti') }}"
+            value="{{ request.args.get('location', '') }}"
+        />
+
+        <input
+            type="text"
+            name="date"
+            placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
+            aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
+            value="{{ request.args.get('date', '') }}"
+        />
+
+        <button type="submit">{{ _('Hae') }}</button>
+    </form>
+
+    <div class="container-grid">
+        {% if demonstrations and demonstrations|length > 0 %}
+            {% for demo in demonstrations %}
+                {{ macros.demo_card(demo) }}
+            {% endfor %}
+        {% else %}
+            <div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=city_name, location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
+                {{ _('Edellinen') }}
+            </a>
+        {% endif %}
+
+        <span>{{ _('Sivu') }} {{ page }} / {{ total_pages }}</span>
+
+        {% if page < total_pages %}
+            <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=city_name, location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
+                {{ _('Seuraava') }}
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Dynamically set items per page based on screen size
+        let perPage;
+        if (window.innerWidth < 768) {
+            perPage = 5; // Mobile screens
+        } else if (window.innerWidth < 1200) {
+            perPage = 10; // Tablet screens
+        } else {
+            perPage = 20; // Desktop screens
+        }
+
+        // Update the URL with the per_page parameter
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set("per_page", perPage);
+        window.history.replaceState({}, "", currentUrl);
+    });
+</script>
+{% endif %}
+{% endblock %}

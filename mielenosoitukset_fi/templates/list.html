@@ -7,6 +7,51 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+/>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+<style>
+  .filter {
+	padding: 1em;
+	background: var(--blue-dark);
+	width: fit-content;
+	border-radius: 50px;
+}
+
+.filters {
+  display: flex;
+gap: 1em;
+}
+
+.suggestions {
+  background: var(--input-background);
+  width: 100%;
+  border: 1px solid var(--blue-dark);
+  border-radius: 5px;
+  z-index: 1;
+  display: none;
+  margin-top: -10px;
+}
+
+.suggestions.show {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 1em;
+  cursor: pointer;
+}
+
+.suggestion-item:hover {
+  background: var(--blue-dark);
+  color: var(--white);
+}
+
+</style>
 {% endblock %}
 
 {% block content %}
@@ -24,18 +69,85 @@
       aria-label="{{ _('Hae mielenosoituksia') }}"
       value="{{ request.args.get('search', '') }}"
     />
-    
-    {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
-      {% include 'paikkakunta-dropdown.html' %}
-    {% endif %}
-
     <input
       type="text"
-      name="city"
       placeholder="{{ _('Kaupunki') }}"
       aria-label="{{ _('Kaupunki') }}"
-      value="{{ request.args.get('city', '') }}"
+      list="city-list"
+      id="city-input"
     />
+
+    <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+      $(document).ready(function() {
+        const cityInput = $("#city-input");
+        const selectedCitiesInput = $("#city");
+        const filters = $("#filters");
+      });
+    </script>
+    <script>
+      $(document).ready(function() {
+        const cityInput = $("#city-input");
+        const selectedCitiesInput = $("#city");
+        const filters = $("#filters");
+        const citySuggestions = $("#city-suggestions");
+
+        cityInput.on("input", function() {
+          const query = cityInput.val();
+          if (query.length > 2) {
+            const filteredCities = {{ city_list | tojson  }};
+            const matchingCities = filteredCities.filter(city => city.toLowerCase().includes(query.toLowerCase()));
+            citySuggestions.empty();
+            matchingCities.forEach(function(city) {
+              const suggestionItem = $("<div>").addClass("suggestion-item").text(city);
+              citySuggestions.append(suggestionItem);
+
+              suggestionItem.on("click", function() {
+                city = suggestionItem.text();
+                console.log(city);
+                citySuggestions.empty();
+                cityInput.val('');
+                // add the city to the selected cities
+                const currentCities = selectedCitiesInput.val() ? selectedCitiesInput.val().split(',') : [];
+                if (!currentCities.includes(city)) {
+                  currentCities.push(city);
+                  selectedCitiesInput.val(currentCities.join(','));
+
+                  const filterDiv = $("<div>").addClass("filter").html(`
+                    <span>{{ _('Kaupunki') }}: ${city}</span>
+                    <a href="#" data-city="${city}">
+                      <i class="fas fa-times"></i>
+                    </a>
+                  `);
+                  filters.append(filterDiv);
+
+                  filterDiv.find("a").on("click", function(event) {
+                    event.preventDefault();
+                    const cityToRemove = $(this).data("city");
+                    const updatedCities = currentCities.filter(c => c !== cityToRemove);
+                    selectedCitiesInput.val(updatedCities.join(','));
+                    filterDiv.remove();
+                  });
+                }
+              });
+              $("#city-suggestions").addClass("show");
+            });
+          } else {
+            citySuggestions.empty();
+          }
+        });
+
+        $(document).on("click", function(event) {
+          if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
+            citySuggestions.empty();
+          }
+        });
+      });
+
+    </script>
+    <div id="city-suggestions" class="suggestions"></div>
+
 
     <input
       type="text"
@@ -48,13 +160,78 @@
     <input
       type="text"
       name="date"
+      id="date"
       placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
       aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
       value="{{ request.args.get('date', '') }}"
     />
 
+    <div class="filters" id="filters">
+      <!-- display all enabled filters here -->
+      <script>
+        document.addEventListener("DOMContentLoaded", () => {
+          const selectedCitiesInput = document.getElementById("city");
+          const filters = document.getElementById("filters");
+
+          const updateFilters = () => {
+            filters.innerHTML = '';
+            const cities = selectedCitiesInput.value.split(',');
+            cities.forEach(city => {
+              if (city) {
+                const filterDiv = document.createElement("div");
+                filterDiv.className = "filter";
+                filterDiv.innerHTML = `
+                  <span>{{ _('Kaupunki') }}: ${city}</span>
+                  <a href="#" data-city="${city}">
+                    <i class="fas fa-times"></i>
+                  </a>
+                `;
+                filters.appendChild(filterDiv);
+
+                filterDiv.querySelector("a").addEventListener("click", (event) => {
+                  event.preventDefault();
+                  const cityToRemove = event.target.closest("a").dataset.city;
+                  const updatedCities = cities.filter(c => c !== cityToRemove);
+                  selectedCitiesInput.value = updatedCities.join(',');
+                  updateFilters();
+                });
+              }
+            });
+          };
+
+          updateFilters();
+        });
+      </script>
+
+
+      <!-- Filter: Sijainti -->
+      {% if request.args.get('location') %}
+
+      <div class="filter">
+        <span>{{ _('Sijainti') }}: {{ request.args.get('location') }}</span>
+        <a href="{{ url_for('demonstrations', search=request.args.get('search', ''), city=request.args.get('city', ''), location='', date=request.args.get('date', '')) }}">
+          <i class="fas fa-times"></i>
+        </a>
+      {% endif %}
+    </div>
+
     <button type="submit">{{ _('Hae') }}</button>
   </form>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const filters = document.getElementById("filters");
+
+      // Add event listeners to remove filters dynamically
+      filters.querySelectorAll(".filter a").forEach(filterRemoveLink => {
+        filterRemoveLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          const url = new URL(filterRemoveLink.href);
+          window.location.href = url;
+        });
+      });
+    });
+  </script>
 
   <div class="container-grid">
     {% if demonstrations and demonstrations|length > 0 %}

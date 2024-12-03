@@ -183,6 +183,24 @@ def init_routes(app):
             flash_message("Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.", "success")
             return redirect(url_for("index"))
         return render_template("submit.html", city_list=CITY_LIST)
+    
+    @app.route("/report", methods=["GET", "POST"])
+    def report():
+        """
+        Handle submission of a new demonstration.
+        """
+        error = request.form.get("error")
+        _type = request.form.get("type")
+        if _type:
+            if _type == "demonstration":
+                mongo.reports.insert_one({"error": error, "demo_id": request.form.get("demo_id"), "date": datetime.now(), "user": current_user._id if current_user.is_authenticated else None, "ip": request.remote_addr})
+        
+        else:
+            mongo.reports.insert_one({"error": error, "date": datetime.now(), "user": current_user._id if current_user.is_authenticated else None, "ip": request.remote_addr})
+        
+        flash_message("Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success")
+        return redirect(request.referrer)
+
 
     @app.route("/demonstrations")
     def demonstrations():

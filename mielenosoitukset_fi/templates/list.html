@@ -107,6 +107,8 @@ gap: 1em;
                 city = suggestionItem.text();
                 console.log(city);
                 citySuggestions.empty();
+                $("#city-suggestions").removeClass("show");
+
                 cityInput.val('');
                 // add the city to the selected cities
                 const currentCities = selectedCitiesInput.val() ? selectedCitiesInput.val().split(',') : [];

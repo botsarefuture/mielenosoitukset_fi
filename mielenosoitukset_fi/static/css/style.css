@@ -773,3 +773,10 @@ span i {
 .scary {
   animation: scary 0.5s infinite;
 }
+
+.admin-description {
+
+    text-align: center;
+    width: 100%;
+    display: block;
+}

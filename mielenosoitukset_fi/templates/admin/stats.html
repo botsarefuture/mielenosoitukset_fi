@@ -2,7 +2,6 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 <style>
     .no-data {
         color: #721c24;
@@ -27,7 +26,7 @@
 {% block main_content %}
 <div class="table-container">
     <h2 id="tabletitle">{{ _('Tilastot') }}</h2>
-    <p>{{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}</p>
+    <i class="admin-description">{{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}</i>
 
     <div class="stats-overview">
         <stats>

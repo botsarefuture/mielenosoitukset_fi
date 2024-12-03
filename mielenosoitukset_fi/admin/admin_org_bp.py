@@ -507,4 +507,5 @@ def view_organization(org_id):
 
     """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    organization = Organization.from_dict(organization)
     return render_template("admin/organizations/view.html", organization=organization)

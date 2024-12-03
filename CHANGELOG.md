@@ -1,5 +1,6 @@
 # Changelog
 
+
 ## v2.8.6 – **The Organization Enhancement Edition** 🌟
 
 ### 🌟 New Features

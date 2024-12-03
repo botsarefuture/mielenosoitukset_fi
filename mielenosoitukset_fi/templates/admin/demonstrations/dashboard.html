@@ -1,47 +1,29 @@
 {% extends 'admin_base.html' %} {% block styles %}
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/form.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/table.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/admin/dash.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}" />
 
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/deleteModal.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}" />
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">-->
 
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/admin_actions_cell.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
 
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}"
-/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
 
 <!-- Font Awesome for icons -->
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-/>
 <style>
   .search-form {
     margin: 1rem 0;
     display: flex;
-    flex-wrap: wrap; /* Allows wrapping on smaller screens */
-    justify-content: space-between; /* Space out form elements */
-    align-items: center; /* Center align */
-    gap: 0.5rem; /* Space between form elements */
+    flex-wrap: wrap;
+    /* Allows wrapping on smaller screens */
+    justify-content: space-between;
+    /* Space out form elements */
+    align-items: center;
+    /* Center align */
+    gap: 0.5rem;
+    /* Space between form elements */
   }
 
   .search-input,
@@ -49,47 +31,63 @@
     padding: 0.75rem;
     border-radius: 5px;
     border: 1px solid #ccc;
-    flex: 1; /* Allow inputs to take available space */
-    min-width: 150px; /* Minimum width for better usability */
-    max-width: 300px; /* Maximum width to avoid excessive growth */
+    flex: 1;
+    /* Allow inputs to take available space */
+    min-width: 150px;
+    /* Minimum width for better usability */
+    max-width: 300px;
+    /* Maximum width to avoid excessive growth */
     transition: border-color 0.3s ease;
   }
 
   .search-input:focus,
   .filter-select:focus {
-    border-color: var(--blue); /* Primary color on focus */
-    outline: none; /* Remove outline */
+    border-color: var(--blue);
+    /* Primary color on focus */
+    outline: none;
+    /* Remove outline */
   }
 
   .search-button {
-    background: #28a745; /* Success green */
+    background: #28a745;
+    /* Success green */
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 5px;
     border: none;
     cursor: pointer;
     transition: background 0.3s ease;
-    font-weight: bold; /* Bold text for visibility */
-    display: flex; /* Align icon and text */
-    align-items: center; /* Center align icon */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    font-weight: bold;
+    /* Bold text for visibility */
+    display: flex;
+    /* Align icon and text */
+    align-items: center;
+    /* Center align icon */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* Subtle shadow */
   }
 
   .search-button:hover {
-    background: #218838; /* Darker green on hover */
+    background: #218838;
+    /* Darker green on hover */
   }
 
   /* Responsive Styles */
   @media (max-width: 768px) {
     .search-form {
-      flex-direction: column; /* Stack form elements on smaller screens */
-      align-items: flex-start; /* Align items to the start */
+      flex-direction: column;
+      /* Stack form elements on smaller screens */
+      align-items: flex-start;
+      /* Align items to the start */
     }
+
     .search-input,
     .filter-select,
     .search-button {
-      width: 100%; /* Full width for better usability */
-      margin-bottom: 0.5rem; /* Space below each element */
+      width: 100%;
+      /* Full width for better usability */
+      margin-bottom: 0.5rem;
+      /* Space below each element */
     }
   }
 </style>
@@ -172,21 +170,15 @@
     {% if current_user.has_permission("CREATE_DEMO") or
     current_user.has_permission("CREATE_RECURRING_DEMO") %} {% if
     current_user.has_permission("CREATE_DEMO") %}
-    <a
-      href="{{ url_for('admin_demo.create_demo') }}"
-      class="button create-demo-button"
-      ><i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}</a
-    >
+    <a href="{{ url_for('admin_demo.create_demo') }}" class="button create-demo-button"><i class="fas fa-plus"></i>{{
+      _('Uusi mielenosoitus') }}</a>
     {% else %}
     <div class="insuffient-perm" style="color: #ccc">
       {{ _('Sinulla ei ole oikeutta luoda uusia mielenosoituksia.') }}
     </div>
     {% endif %} {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
-    <a
-      href="{{ url_for('admin_recu_demo.create_recu_demo') }}"
-      class="button create-demo-button"
-      ><i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}</a
-    >
+    <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button"><i
+        class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}</a>
     {% else %}
     <div class="insuffient-perm" style="color: #ccc">
       {{ _('Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.') }}
@@ -198,29 +190,13 @@
     {% endif %}
   </div>
 
-  <form
-    method="GET"
-    class="search-form"
-    action="{{ url_for('admin_demo.demo_control') }}"
-  >
+  <form method="GET" class="search-form" action="{{ url_for('admin_demo.demo_control') }}">
     <label for="search" class="sr-only">{{ _('Hae mielenosoituksia:') }}</label>
-    <input
-      type="text"
-      id="search"
-      name="search"
-      class="search-input"
-      placeholder="{{ _('Hae mielenosoituksia...') }}"
-      value="{{ search_query }}"
-      aria-label="{{ _('Search demonstrations') }}"
-    />
+    <input type="text" id="search" name="search" class="search-input" placeholder="{{ _('Hae mielenosoituksia...') }}"
+      value="{{ search_query }}" aria-label="{{ _('Search demonstrations') }}" />
 
     <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
-    <select
-      name="approved"
-      id="approved"
-      class="filter-select"
-      aria-label="{{ _('Approved status filter') }}"
-    >
+    <select name="approved" id="approved" class="filter-select" aria-label="{{ _('Approved status filter') }}">
       <option value="true" {% if approved_status %}selected{% endif %}>
         {{ _('Kyllä') }}
       </option>
@@ -230,12 +206,7 @@
     </select>
 
     <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
-    <select
-      name="show_past"
-      id="show_past"
-      class="filter-select"
-      aria-label="{{ _('Show past demonstrations') }}"
-    >
+    <select name="show_past" id="show_past" class="filter-select" aria-label="{{ _('Show past demonstrations') }}">
       <option value="false" {% if not show_past %}selected{% endif %}>
         {{ _('Ei') }}
       </option>
@@ -262,82 +233,60 @@
       </thead>
       <tbody>
         {% for demo in demonstrations|sort(attribute='approved') %}
-        <tr
-          id="demo-{{ demo._id }}"
-          {%
-          if
-          not
-          demo.approved
-          %}
-          class="needs-attention"
-          {%
-          endif
-          %}
-        >
+        <tr id="demo-{{ demo._id }}" {% if not demo.approved %} class="needs-attention" {% endif %}>
           <td>{{ demo.title }}</td>
           <td>{{ demo.city }}</td>
           <td>{{ demo.date }}</td>
-          <td>{{ _('Kyllä') if demo.repeating else _('Ei') }}</td>
-          <td>{{ _('Kyllä') if demo.approved else _('Ei') }}</td>
+          <td>{% if demo.repeating %} <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }} {% else %} <i
+              class="fa-solid fa-times-circle"></i> {{ _('Ei') }} {% endif %}</td>
+          <td>{% if demo.approved %} <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }} {% else %} <i
+              class="fa-solid fa-times-circle"></i> {{ _('Ei') }} {% endif %}</td>
+
           <td class="actions-cell">
             <!-- Check if the user has permission to accept the demo -->
             {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-            <button
-              style="width: 132px; background: green"
-              type="button"
-              class="button accept-button"
-              onclick="acceptDemo('{{ demo._id }}')"
-            >
+            <button style="width: 132px; background: green" type="button" class="button accept-button"
+              onclick="acceptDemo('{{ demo._id }}')">
               <i class="fa-solid fa-check"></i>{{ _('Hyväksy') }}
             </button>
+
             {% elif not current_user.has_permission("ACCEPT_DEMO") and not
             demo.approved %}
             <div class="insuffient-perm" style="color: white">
-              {{ _('Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.') }}
+              <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei riittäviä oikeuksia mielenosoituksen hyväksymiseen.') }}
             </div>
             {% endif %}
 
             <!-- Check if the user has permission to edit the demo -->
             {% if current_user.has_permission("EDIT_DEMO") %}
-            <a
-              href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"
-              class="button edit-button"
-              ><i class="fas fa-edit"></i>{{ _('Muokkaa') }}</a
-            >
+            <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button"><i
+                class="fas fa-edit"></i>{{ _('Muokkaa') }}</a>
             {% else %}
             <div class="insuffient-perm" style="color: white">
-              {{ _('Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.') }}
+              <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.') }}
             </div>
             {% endif %}
 
             <!-- Check if the user has permission to view the demo -->
             {% if current_user.has_permission("VIEW_DEMO") %}
-            <a
-              href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"
-              class="button view-button"
-            >
+            <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
               <i class="fa-solid fa-eye"></i>{{ _('Katsele') }}
             </a>
             {% else %}
             <div class="insuffient-perm" style="color: white">
-              {{ _('Ei riittäviä oikeuksia mielenosoituksen katseluun.') }}
+              <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei riittäviä oikeuksia mielenosoituksen katseluun.') }}
             </div>
             {% endif %}
 
             <!-- Check if the user has permission to delete the demo -->
             {% if current_user.has_permission("DELETE_DEMO") %}
-            <button
-              style="width: 132px !important"
-              type="button"
-              class="delete-button button"
-              onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"
-            >
-              <i class="fas fa-trash-alt"></i
-              ><span class="delete-text">{{ _('Poista') }}</span>
+            <button style="width: 132px !important" type="button" class="delete-button button"
+              onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+              <i class="fas fa-trash-alt"></i><span class="delete-text">{{ _('Poista') }}</span>
             </button>
             {% else %}
             <div class="insuffient-perm" style="color: white">
-              {{ _('Ei riittäviä oikeuksia mielenosoituksen poistamiseen.') }}
+              <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei riittäviä oikeuksia mielenosoituksen poistamiseen.') }}
             </div>
             {% endif %}
           </td>
@@ -347,14 +296,14 @@
     </table>
   </div>
   {% else %}
-  <div class="no-results">{{ _('Ei mielenosoituksia löytynyt.') }}</div>
+  <div class="no-results"><i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}</div>
   {% endif %}
 </div>
 
 <div id="deleteModal" class="modal hidden">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
-    <h3>{{ _('Poista mielenosoitus') }}</h3>
+    <h3><i class="fa-solid fa-circle-exclamation"></i> {{ _('Poista mielenosoitus') }}</h3>
     <p>
       {{ _('Oletko varma, että haluat poistaa mielenosoituksen') }}
       <strong id="demoTitle"></strong>?

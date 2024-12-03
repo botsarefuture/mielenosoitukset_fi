@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #FFD43B, #FF0000);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #000;
+            text-align: center;
+        }
+
+        #warning_container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            animation: flash 5s infinite;
+        }
+
+        #warning_container i {
+            font-size: 5rem;
+            color: #FF0000;
+        }
+
+        #warning_container h1 {
+            font-size: 2rem;
+            margin: 0.5rem 0;
+        }
+
+        #warning_container h2 {
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        #warning_container p {
+            font-size: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 600px) {
+            #warning_container i {
+                font-size: 3rem;
+            }
+
+            #warning_container h1 {
+                font-size: 1.5rem;
+            }
+
+            #warning_container h2 {
+                font-size: 1.2rem;
+            }
+
+            #warning_container p {
+                font-size: 0.9rem;
+            }
+        }
+
+        @keyframes flash {
+            0%, 100% {
+                background-color: rgba(255, 255, 255, 0.9);
+            }
+            50% {
+                background-color: rgba(255, 255, 255, 0.7);
+            }
+        }
+
+        #warning_container h1, #warning_container h2, #warning_container p {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="warning_container">
+        <i class="fa-solid fa-triangle-exclamation fa-shake"></i>
+        <h1>429 - Too Many Requests</h1>
+        <h2>Request Limit Exceeded</h2>
+        <p>You’ve sent too many requests in a short period. Please try again later.</p>
+        <p>If you're using an automated script, contact us at <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> for API access and documentation.</p>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const all_elements = document.body.children;
+            for (let i = 0; i < all_elements.length; i++) {
+                if (all_elements[i].id !== 'warning_container') {
+                    all_elements[i].style.display = 'none';
+                }
+            }
+
+            document.documentElement.requestFullscreen();
+            
+            if (!document.fullscreenElement) {
+                document.body.requestFullscreen();
+            }
+
+            const button = document.createElement('button');
+            button.style.display = 'none';
+            document.body.appendChild(button);
+
+            button.addEventListener('click', () => {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.body.requestFullscreen) {
+                    document.body.requestFullscreen();
+                }
+            });
+
+            button.click();
+            document.body.removeChild(button);
+
+            
+        });
+
+        // reload page after 10 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 10000);
+    </script>
+</body>
+</html>

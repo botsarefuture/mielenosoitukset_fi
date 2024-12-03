@@ -47,12 +47,21 @@ scheduler.add_job(prep, "interval", minutes=15)
 babel = Babel()
 
 
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+
 def create_app() -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
-
+    limiter = Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=["86400 per day", "3600 per hour", "10 per second"],
+        storage_uri=f"{app.config["MONGO_URI"]}/mielenosoitukset_fi.limiter",
+    )
     # Locale selector function
     def get_locale():
         return session.get(

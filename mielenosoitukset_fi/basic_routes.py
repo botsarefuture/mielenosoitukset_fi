@@ -193,7 +193,7 @@ def init_routes(app):
         _type = request.form.get("type")
         if _type:
             if _type == "demonstration":
-                mongo.reports.insert_one({"error": error, "demo_id": request.form.get("demo_id"), "date": datetime.now(), "user": current_user._id if current_user.is_authenticated else None, "ip": request.remote_addr})
+                mongo.reports.insert_one({"error": error, "demo_id": ObjectId(request.form.get("demo_id")), "date": datetime.now(), "user": ObjectId(current_user._id) if current_user.is_authenticated else None, "ip": request.remote_addr})
         
         else:
             mongo.reports.insert_one({"error": error, "date": datetime.now(), "user": current_user._id if current_user.is_authenticated else None, "ip": request.remote_addr})

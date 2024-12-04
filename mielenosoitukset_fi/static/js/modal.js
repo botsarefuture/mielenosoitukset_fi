@@ -1,17 +1,60 @@
 /**
  * Opens the specified modal and activates the overlay.
  * 
- * @param {HTMLElement} modal - The modal element to be opened.
+ * @param {jQuery} modal - The modal element to be opened.
  */
-function openModal(modal) {
-    if (modal == null) return;
-    modal.classList.add('active');
-    // force modal to have the highest z-index value out of all items on the pag
-    modal.style.zIndex = 1000*1000;
 
-    if (overlay) {
-    overlay.classList.add('active');}
-    else {
+
+// when this is loaded on the page, insert jquery and css to the page
+// this is a hacky way to make sure that the modal works on the page
+
+// insert jquery
+const jqueryScript = document.createElement('script');
+jqueryScript.src = "/static/js/jQuery/jq.min.js";
+document.head.appendChild(jqueryScript);
+
+// wait for jQuery to load before using it
+jqueryScript.onload = function () {
+    $(document).ready(() => {
+        const openModalButtons = $('[data-modal-target]');
+        const closeModalButtons = $('[data-close-button]');
+        const overlay = $('#overlay');
+
+        openModalButtons.each(function () {
+            $(this).on('click', function () {
+                const modal = $($(this).data('modal-target'));
+                openModal(modal);
+            });
+        });
+
+        overlay.on('click', function () {
+            const modals = $('.modal.active');
+            modals.each(function () {
+                closeModal($(this));
+            });
+        });
+
+        closeModalButtons.each(function () {
+            $(this).on('click', function () {
+                console.log('close button clicked');
+                const modal = $(this).closest('.modal');
+                console.log(modal);
+                closeModal(modal);
+            });
+        });
+    });
+};
+
+
+function openModal(modal) {
+    if (modal.length === 0) return;
+    modal.addClass('active');
+    // force modal to have the highest z-index value out of all items on the page
+    modal.css('z-index', 1000 * 1000);
+
+    if ($('#overlay').length) {
+        $('#overlay').addClass('active');
+    } else {
         console.log("Overlay not found. Waiting for it to be loaded...");
         // wait for the overlay to be loaded
         setTimeout(() => {
@@ -23,45 +66,70 @@ function openModal(modal) {
 /**
  * Closes the specified modal and deactivates the overlay.
  * 
- * @param {HTMLElement} modal - The modal element to be closed.
+ * @param {jQuery} modal - The modal element to be closed.
  */
-function closeModal(modal) {
-    if (modal == null) return;
-    modal.classList.remove('active');
-    if (overlay) {
-    overlay.classList.remove('active');}
-    else {
-        console.log("Overlay not found. Waiting for it to be loaded...");
-        // wait for the overlay to be loaded
-        setTimeout(() => {
-            closeModal(modal);
-        }, 100);
+async function closeModal(modal) {
+    if (modal.length === 0) {
+        console.error("Modal not found.");
+        return;
+    }
+    console.log(modal);
+    modal.removeClass('active');
+    const activeModals = $('.modal.active');
+    if (activeModals.length === 0) {
+        $('#overlay').removeClass('active');
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const openModalButtons = document.querySelectorAll('[data-modal-target]');
-    const closeModalButtons = document.querySelectorAll('[data-close-button]');
-    const overlay = document.getElementById('overlay');
+// if $ is not defined, wait for it to be defined
+let interval = setInterval(() => {
+    if (window.$) {
+        clearInterval(interval);
 
-    openModalButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const modal = document.querySelector(button.dataset.modalTarget);
-            openModal(modal);
-        });
-    });
+        $(document).ready(() => {
+            const openModalButtons = $('[data-modal-target]');
+            const closeModalButtons = $('[data-close-button]');
+            const overlay = $('#overlay');
 
-    overlay.addEventListener('click', () => {
-        const modals = document.querySelectorAll('.modal.active');
-        modals.forEach(modal => {
-            closeModal(modal);
-        });
-    });
+            openModalButtons.each(function () {
+                $(this).on('click', function () {
+                    const modal = $($(this).data('modal-target'));
+                    openModal(modal);
+                });
+            });
 
-    closeModalButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const modal = button.closest('.modal');
-            closeModal(modal);
+            overlay.on('click', function () {
+                const modals = $('.modal.active');
+                modals.each(function () {
+                    closeModal($(this));
+                });
+            });
+
+
+            /**
+             * Closes the specified modal and deactivates the overlay.
+             * 
+             * @param {jQuery} modal - The modal element to be closed.
+             */
+            async function closeModal(modal) {
+                if (modal.length === 0) {
+                    console.error("Modal not found.");
+                    return;
+                }
+                modal.removeClass('active');
+                const activeModals = $('.modal.active');
+                if (activeModals.length === 0) {
+                    $('#overlay').removeClass('active');
+                }
+            }
+
+            closeModalButtons.each(function () {
+                $(this).on('click', async function () {
+                    const modal = $(this).closest('.modal');
+                    await closeModal(modal);
+                });
+            });
         });
-    });
-});
+
+    }
+}, 100);

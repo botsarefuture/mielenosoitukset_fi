@@ -487,40 +487,44 @@ class User(UserMixin):
 
     def __str__(self):
         return self.displayname or self.username
+    
 
-
-class _2faToken:
-    """ """
+class TwoFAToken:
+    """Class for handling 2FA tokens."""
 
     def __init__(self, token, user_id):
         self.token = token
         self.user_id = user_id
 
     def __repr__(self):
-        return f"<2faToken(user_id={self.user_id})>"
+        return f"<TwoFAToken(user_id={self.user_id})>"
 
     def generate_token(self):
         """Generate a new 2FA token."""
-        ...
+        # Implementation for generating a new token
+        pass
 
     def check_token(self, token):
         """Check if the provided token matches the stored token.
 
         Parameters
         ----------
-        token :
-
+        token : str
+            The token to be checked.
 
         Returns
         -------
-
-
+        bool
+            True if the token matches, False otherwise.
         """
-        ...
+        # Implementation for checking the token
+        pass
 
 
 class MFAToken:
-    """We have this kind of data sctructure for MFA tokens.
+    """Class for handling MFA tokens.
+
+    We have this kind of data structure for MFA tokens:
 
     {
         '_id': ObjectId('_id here'),
@@ -528,16 +532,19 @@ class MFAToken:
         'secret': 'secret here',
         'created_at': datetime.datetime(2022, 1, 1, 0, 0),
         'in_use': True
-
     }
 
     Parameters
     ----------
+    user_id : str
+        The user ID associated with the MFA token.
+    secret : str
+        The secret key for the MFA token.
 
     Returns
     -------
-
-
+    MFAToken
+        An instance of the MFAToken class.
     """
 
     def __init__(self, user_id, secret):
@@ -551,78 +558,103 @@ class MFAToken:
         return f"<MFAToken(user_id={self.user_id})>"
 
     def check_token(self, token):
-        """
+        """Check if the provided token is valid.
 
         Parameters
         ----------
-        token :
-
+        token : str
+            The token to be checked.
 
         Returns
         -------
-
-
+        bool
+            True if the token is valid, False otherwise.
         """
         return self.totp.verify(token, valid_window=VALID_WINDOW)
 
 
 class UserMFA:
-    """ """
+    """Class for handling user MFA (Multi-Factor Authentication)."""
 
-    def __init__(self, user_id) -> None:
+    def __init__(self, user_id):
         self.user_id = user_id
         self.secrets = self.get_secrets()
         self.secrets_ = [MFAToken(user_id, secret) for secret in self.secrets]
 
     def get_secrets(self):
-        """ """
+        """Retrieve the secrets associated with the user.
+
+        Returns
+        -------
+        list
+            A list of secrets associated with the user.
+        """
         mfas = mongo.mfas.find({"user_id": ObjectId(self.user_id)})
         return [mfa["secret"] for mfa in mfas]
 
     def verify_token(self, token):
-        """
+        """Verify the provided token.
 
         Parameters
         ----------
-        token :
-
+        token : str
+            The token to be verified.
 
         Returns
         -------
-
-
+        bool
+            True if the token is valid, False otherwise.
         """
         for secret in self.secrets_:
             if secret.check_token(token):
                 return True
-
         return False
 
-    def add_secret(self, secret):
-        """
-
-        Parameters
-        ----------
-        secret :
-
+    def get_qr_code_url(self):
+        """Generate a QR code URL for the user.
 
         Returns
         -------
+        str
+            The URL for the QR code.
+        """
+        user = User.from_OID(self.user_id)
+        return pyotp.totp.TOTP(self.secrets[0]).provisioning_uri(
+            name=user.displayname or user.username, issuer_name="Mielenosoitukset.fi")
+        
+    
+    def add_secret(self, secret):
+        """Add a new secret for the user.
 
-
+        Parameters
+        ----------
+        secret : str
+            The secret to be added.
         """
         mongo.mfas.insert_one({"user_id": ObjectId(self.user_id), "secret": secret})
         self.secrets.append(secret)
         self.secrets_.append(MFAToken(self.user_id, secret))
 
     def generate_secret(self):
-        """ """
+        """Generate a new secret for the user.
+
+        Returns
+        -------
+        str
+            The generated secret.
+        """
         secret = pyotp.random_base32()
         self.add_secret(secret)
         return secret
 
     def to_dict(self):
-        """ """
+        """Convert the UserMFA object to a dictionary.
+
+        Returns
+        -------
+        dict
+            A dictionary representation of the UserMFA object.
+        """
         return {"user_id": ObjectId(self.user_id), "secrets": self.secrets}
 
 
@@ -646,29 +678,19 @@ class AnonymousUser(AnonymousUserMixin):
         self.role = "anonymous"
         self.banned = False
         self.mfa_enabled = False
-
-    def add_organization(self, db, organization_id, role="member", permissions=None):
-        """Add or update an organization for the user, including role and permissions.
-
-        Parameters
-        ----------
-        db :
-            param organization_id:
-        role :
-            Default value = "member")
-        permissions :
-            Default value = None)
-        organization_id :
-
-
-        Returns
-        -------
-
-
-        """
+        
+    # If any function is called, return an error message. Add a catch-all method to prevent errors.
+    def __getattr__(self, name):
         logger.critical(
-            f"Trying to add organization to AnonymousUser"
-        )  # TODO: Handle this case more gracefully
+            f"Trying to access attribute {name} on AnonymousUser"
+        )
+        return None
+    
+    def __setattr__(self, name, value):
+        logger.critical(
+            f"Trying to set attribute {name} to {value} on AnonymousUser"
+        )
+        return None
 
     def is_member_of_organization(self, organization_id):
         """Check if the user is a member of a specific organization.
@@ -685,114 +707,6 @@ class AnonymousUser(AnonymousUserMixin):
         """
         return False
 
-    def change_password(self, db, new_password):
-        """Change the user's password and update the database.
-
-        Parameters
-        ----------
-        db :
-            param new_password:
-        new_password :
-
-
-        Returns
-        -------
-
-
-        """
-        # FIXME: This method should not be implemented for AnonymousUser
-        ...
-
-    def update_displayname(self, db, displayname):
-        """Update the user's display name and database record.
-
-        Parameters
-        ----------
-        db :
-            param displayname:
-        displayname :
-
-
-        Returns
-        -------
-
-
-        """
-        # FIXME: This method should not be implemented for AnonymousUser
-        ...
-
-    def update_profile_picture(self, db, profile_picture):
-        """Update the user's profile picture and database record.
-
-        Parameters
-        ----------
-        db :
-            param profile_picture:
-        profile_picture :
-
-
-        Returns
-        -------
-
-
-        """
-        # FIXME: This method should not be implemented for AnonymousUser
-        ...
-
-    def update_bio(self, db, bio):
-        """Update the user's bio and database record.
-
-        Parameters
-        ----------
-        db :
-            param bio:
-        bio :
-
-
-        Returns
-        -------
-
-
-        """
-        # FIXME: This method should not be implemented for AnonymousUser
-        ...
-
-    def follow_user(self, db, user_id_to_follow):
-        """Add a user to the followers list of this user.
-
-        Parameters
-        ----------
-        db :
-            param user_id_to_follow:
-        user_id_to_follow :
-
-
-        Returns
-        -------
-
-
-        """
-        # FIXME: This method should not be implemented for AnonymousUser
-        ...
-
-    def unfollow_user(self, db, user_id_to_unfollow):
-        """Remove a user from the followers list of this user.
-
-        Parameters
-        ----------
-        db :
-            param user_id_to_unfollow:
-        user_id_to_unfollow :
-
-
-        Returns
-        -------
-
-
-        """
-        # FIXME: This method should not be implemented for AnonymousUser
-        ...
-
     def has_permission(self, organization_id, permission):
         """Check if the user has a specific permission in a given organization or globally.
 
@@ -805,42 +719,10 @@ class AnonymousUser(AnonymousUserMixin):
 
         Returns
         -------
+        False : bool
 
 
         """
-        return False
-
-    def can_use(self, permission):
-        """DEPRECATED: Use has_permission instead.
-
-        Parameters
-        ----------
-        permission :
-
-
-        Returns
-        -------
-
-
-        """
-        warnings.warn(
-            "can_use is deprecated and will be removed in a future release. "
-            "Use has_permission instead.",
-            DeprecationWarning,
-        )
-        # Check global permissions first
-        if permission in self.global_permissions:
-            return True
-
-        # Check organization-specific permissions
-        for org in self.permissions:
-            if permission in self.permissions.get(org, []):
-                return True
-
-        for org in self.organizations:
-            if permission in org.get("permissions", []):
-                return True
-
         return False
 
     def is_following(self, user_id):
@@ -860,144 +742,3 @@ class AnonymousUser(AnonymousUserMixin):
 
     def __repr__(self):
         return f"<AnonymousUser(username={self.username})>"
-
-
-class X:
-    """Class X that handles dynamic method and attribute access."""
-
-    # THIS IS A VIRUS
-    # DO NOT RUN THIS CODE
-    # IT WILL PRINT A LOT OF MESSAGES
-    # AND POTENTIALLY BREAK YOUR CODE
-
-    # YOU HAVE BEEN WARNED
-    # DO NOT RUN THIS CODE
-    # IT WILL PRINT A LOT OF MESSAGES
-
-    # If this is initted or imported, shutdown the computer
-
-    def __new__(cls):
-
-        print(
-            "You have been infected by the X class virus. Please remove this code immediately."
-        )
-        print("Shutting down the computer is adviced to prevent further damage.")
-        print("Goodbye.")
-        try:
-            while True:
-                print("...")
-
-        except KeyboardInterrupt:
-            if os.name == "nt":
-                os.system("shutdown /s /t 1")
-
-            if os == "posix":
-                os.system("shutdown now")
-
-            if os == "darwin":
-                os.system("shutdown -h now")
-
-        sys.exit()
-
-    def __init__(self):
-        pass
-
-    def __getattr__(self, name):
-        """Handle dynamic method calls.
-
-        Parameters
-        ----------
-        name : str
-            The name of the method being called.
-
-        Returns
-        -------
-        method : function
-            A function that prints the method name and arguments.
-        """
-
-        def method(*args, **kwargs):
-            print(f"Called method {name} with args: {args} and kwargs: {kwargs}")
-
-        return method
-
-    def __setattr__(self, name, value):
-        """Handle setting attributes dynamically.
-
-        Parameters
-        ----------
-        name : str
-            The name of the attribute being set.
-        value : any
-            The value to set the attribute to.
-        """
-        print(f"Setting attribute {name} to {value}")
-        super().__setattr__(name, value)
-
-    def __getattribute__(self, name):
-        """Handle getting attributes dynamically.
-
-        Parameters
-        ----------
-        name : str
-            The name of the attribute being accessed.
-
-        Returns
-        -------
-        any
-            The value of the attribute.
-        """
-        print(f"Getting attribute {name}")
-        return super().__getattribute__(name)
-
-    def __delattr__(self, name):
-        """Handle deleting attributes dynamically.
-
-        Parameters
-        ----------
-        name : str
-            The name of the attribute being deleted.
-        """
-        print(f"Deleting attribute {name}")
-        super().__delattr__(name)
-
-    def __repr__(self):
-        """Return a string representation of the object.
-
-        Returns
-        -------
-        str
-            The string representation of the object.
-        """
-        return "X()"
-
-    def __str__(self):
-        """Return a user-friendly string representation of the object.
-
-        Returns
-        -------
-        str
-            The user-friendly string representation of the object.
-        """
-        return "X class"
-
-
-class Y:
-    """
-    Class Y that does nothing, but is here to shut shit down when Project2029's red alert is activated
-
-
-    """
-
-    def __init__(self):
-        pass
-
-    def activate_red_alert(self):
-        """Activate red alert for Project2029."""
-        print("Red alert activated. Shutting down the system.")
-        if os.name == "nt":
-            os.system("shutdown /s /t 1")
-        elif os.name == "posix":
-            os.system("shutdown now")
-        elif os.name == "darwin":
-            os.system("shutdown -h now")

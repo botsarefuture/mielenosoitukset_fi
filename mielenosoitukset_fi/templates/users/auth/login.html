@@ -5,9 +5,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="auth-container">
+<div class="auth-container" id="login-cont">
     <h1>{{ _('Kirjaudu sisään') }}</h1>
-    <form method="POST">
+    <form method="POST" id="login-form">
         <div class="form-group">
             <label for="username">{{ _('Käyttäjänimi') }}</label>
             <input type="text" id="username" name="username" required>
@@ -35,4 +35,46 @@
         </p>
     </div>
 </div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch('{{ url_for("users.auth.mfa_check") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.enabled) {
+            document.getElementById('2fa').style.display = 'block';
+            document.getElementById('login-cont').style.display = 'none';
+            document.getElementById('mfauser').value = formData.get('username');
+            document.getElementById('mfapass').value = formData.get('password');
+        } else if (data.valid) {
+            form.submit();
+        } else {
+            alert('Invalid credentials');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+</script>
+
+<div class="auth-container" style="display: none;" id="2fa">
+    <h1>{{ _('Kaksivaiheinen tunnistautuminen') }}</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="2fa_code">{{ _('Kaksivaiheisen tunnistautumisen koodi') }}</label>
+            <input type="text" id="2fa_code" name="2fa_code" required>
+        </div>
+        <input id="mfauser" type="hidden" name="username">
+        <input id="mfapass" type="hidden" name="password">
+        <button type="submit">{{ _('Vahvista') }}</button>
+    </form>
+</div>
+
+
 {% endblock %}

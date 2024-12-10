@@ -183,6 +183,24 @@ def init_routes(app):
             flash_message("Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.", "success")
             return redirect(url_for("index"))
         return render_template("submit.html", city_list=CITY_LIST)
+    
+    @app.route("/report", methods=["GET", "POST"])
+    def report():
+        """
+        Handle submission of a new demonstration.
+        """
+        error = request.form.get("error")
+        _type = request.form.get("type")
+        if _type:
+            if _type == "demonstration":
+                mongo.reports.insert_one({"error": error, "demo_id": ObjectId(request.form.get("demo_id")), "date": datetime.now(), "user": ObjectId(current_user._id) if current_user.is_authenticated else None, "ip": request.remote_addr})
+        
+        else:
+            mongo.reports.insert_one({"error": error, "date": datetime.now(), "user": current_user._id if current_user.is_authenticated else None, "ip": request.remote_addr})
+        
+        flash_message("Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success")
+        return redirect(request.referrer)
+
 
     @app.route("/demonstrations")
     def demonstrations():
@@ -192,7 +210,14 @@ def init_routes(app):
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
         search_query = request.args.get("search", "").lower()
+        
+        # if city contains , then it is a list of cities
         city_query = request.args.get("city", "").lower()
+        
+        if "," in city_query:
+            city_query = city_query.split(",")
+        
+        
         location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
         today = date.today()
@@ -204,7 +229,31 @@ def init_routes(app):
         start = (page - 1) * per_page
         end = start + per_page
         paginated_demonstrations = filtered_demonstrations[start:end]
-        return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages)
+        return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_list=CITY_LIST)    
+    
+
+    @app.route("/city/<city>")
+    def city_demos(city):
+        """
+        List all upcoming approved demonstrations, optionally filtered by search query.
+        """
+        page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 10) or 10)
+        search_query = request.args.get("search", "").lower()
+        city_query = city
+        location_query = request.args.get("location", "").lower()
+        date_query = request.args.get("date", "")
+        today = date.today()
+        demonstrations = demonstrations_collection.find(DEMO_FILTER)
+        filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        total_demos = len(filtered_demonstrations)
+        total_pages = (total_demos + per_page - 1) // per_page
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_demonstrations = filtered_demonstrations[start:end]
+        return render_template("city.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_name=city.capitalize())
+
 
     def filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query):
         """
@@ -232,10 +281,13 @@ def init_routes(app):
         """
         matches_search = (
             search_query in demo["title"].lower()
-            or search_query in demo["city"].lower()
             or search_query in demo["address"].lower()
         )
-        matches_city = city_query in demo["city"].lower() if city_query else True
+        matches_city = (
+            any(city in demo["city"].lower() for city in city_query)
+            if isinstance(city_query, list)
+            else city_query in demo["city"].lower()
+        )
         matches_location = location_query in demo["address"].lower() if location_query else True
         matches_date = True
         if date_query:

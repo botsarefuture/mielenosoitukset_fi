@@ -129,6 +129,7 @@
     <form action="/report" method="POST">
       <label for="error">{{ _('Virheen kuvaus') }}</label>
       <textarea name="error" id="error" rows="4" required></textarea>
+      <input type="hidden" name="type" value="demonstration">
       <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
   </div>
   <div class="modal-footer">

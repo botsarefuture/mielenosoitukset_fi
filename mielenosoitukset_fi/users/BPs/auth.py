@@ -26,6 +26,35 @@ import importlib
 import os
 import jwt
 import datetime
+# import stuff needed for qr code generation
+import pyqrcode
+import base64
+from io import BytesIO
+
+def generate_qr(url: str) -> str:
+    """
+    Generate a QR code for the given URL and return it as a base64-encoded string.
+
+    Parameters
+    ----------
+    url : str
+        The URL to encode in the QR code.
+
+    Returns
+    -------
+    str
+        The base64-encoded string representation of the QR code image.
+    """
+    if not isinstance(url, str) or not url.strip():
+        raise ValueError("Invalid URL. The URL must be a non-empty string.")
+
+    qr = pyqrcode.create(url)  # Generate the QR code
+    buffer = BytesIO()  # Create an in-memory bytes buffer
+    qr.png(buffer, scale=6)  # Save the QR code as a PNG into the buffer
+    buffer.seek(0)  # Reset the buffer's position to the beginning
+    img_base64 = base64.b64encode(buffer.read()).decode('utf-8')  # Convert image bytes to base64
+    return img_base64
+
 
 EmailSender = importlib.import_module(
     "mielenosoitukset_fi.emailer.EmailSender", "mielenosoitukset_fi"
@@ -136,6 +165,16 @@ def confirm_email(token):
 
     return redirect(url_for("users.auth.login"))
 
+@auth_bp.route("/2fa_check", methods=["GET", "POST"])
+def mfa_check():
+    user = mongo.users.find_one({"username": request.form.get("username")})
+    user = User.from_db(user)
+    if not user.check_password(request.form.get("password")):
+        return {"enabled": user.mfa_enabled, "valid": False}, "application/json"
+    
+    else:
+        return {"enabled": user.mfa_enabled, "valid": True}, "application/json"
+
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -174,16 +213,25 @@ def login():
             verify_emailer(user.email, username)
             return redirect(url_for("users.auth.login", next=next_page))
 
-        if user.mfa_enabled:
-            session["mfa_required"] = True
-            session["modified"] = True
-            return redirect(url_for("users.auth.verify_mfa", next=next_page))
+        if user.mfa_enabled and not meow(user, next_page):
+            return redirect(url_for("users.auth.login", next=next_page))
 
         login_user(user)
         return redirect(next_page or url_for("index"))
 
     return render_template("users/auth/login.html", next=next_page)
 
+def meow(user, next_page):
+    token = request.form.get("2fa_code")
+    if not token:
+        flash_message("Anna MFA-koodi.", "warning")
+        return redirect(url_for("users.auth.login", next=next_page))
+
+    if not UserMFA(user._id).verify_token(token):
+        flash_message("Väärä MFA-koodi.", "error")
+        return redirect(url_for("users.auth.login", next=next_page))
+
+    return True
 
 @auth_bp.route("/verify_mfa", methods=["GET", "POST"])
 def verify_mfa():
@@ -257,13 +305,17 @@ def settings():
         return redirect(url_for("users.auth.settings"))
 
     # return render_template("users/auth/settings.html", user=user)
-    if user.mfa_enabled and not user.mfa_secret:
-        user_mfa = user.mfa
+    if user.mfa_enabled:
+        user_mfa = UserMFA(user._id)
         secret = user_mfa.generate_secret()
-        print(secret)
-        # mongo.users.update_one({"_id": user._id}, {"$set": {"mfa_secret": user_mfa.secret}})
-        # user.mfa.add_secret = user_mfa.secret
-
+        qr_code_url = user_mfa.get_qr_code_url()
+        qr_code = generate_qr(qr_code_url)
+        qr_code_base64 = f"data:image/png;base64,{qr_code}"
+        
+        return render_template(
+            "users/auth/settings.html"
+            , user=user, qr_code_url=qr_code_base64
+        )
     if user.mfa_enabled:
         user_mfa = user.mfa
         qr_code_url = user_mfa.get_qr_code_url()

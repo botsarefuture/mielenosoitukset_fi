@@ -429,9 +429,9 @@
         </div>
 
 
-        <li><a href="{{ url_for('index') }}">{{ _('Etusivu') }}</a></li>
-        <li><a href="{{ url_for('demonstrations') }}">{{ _('Mielenosoitukset') }}</a></li>
-        <li><a href="{{ url_for('submit') }}">{{ _('Ilmoita mielenosoituksesta') }}</a></li>
+        <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> {{ _('Etusivu') }}</a></li>
+        <li><a href="{{ url_for('demonstrations') }}"><i class="fas fa-bullhorn"></i> {{ _('Mielenosoitukset') }}</a></li>
+        <li><a href="{{ url_for('submit') }}"><i class="fas fa-plus-circle"></i> {{ _('Ilmoita mielenosoituksesta') }}</a></li>
 
         <!-- Conditional Links for Authenticated Users -->
         {% if current_user.is_authenticated %}
@@ -446,8 +446,9 @@
             </span>
           </a>
           <ul class="dropdown-menu">
-            <li><a href="{{ url_for('users.profile.profile') }}">{{ _('Profiili') }}</a></li>
-            <li><a href="{{ url_for('users.auth.logout') }}">{{ _('Kirjaudu ulos') }}</a></li>
+            <li><a href="{{ url_for('users.profile.profile') }}"><i class="fas fa-user"></i> {{ _('Profiili') }}</a></li>
+            <li><a href="{{ url_for('users.auth.settings') }}"><i class="fas fa-cog"></i> {{ _('Asetukset') }}</a></li>
+            <li><a href="{{ url_for('users.auth.logout') }}"><i class="fas fa-sign-out-alt"></i> {{ _('Kirjaudu ulos') }}</a></li>
           </ul>
         </li>
         {% endif %}

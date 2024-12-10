@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.9.2 – **The Bug Squashing Edition** 🌟
+
+### 🛠️ Fixes
+- **Critical Bug Fix**: Resolved an issue causing app crashes during profile picture uploads.
+- **Minor Bug Fixes**: Addressed various small bugs affecting app behavior.
+
 
 ## v2.8.6 – **The Organization Enhancement Edition** 🌟
 

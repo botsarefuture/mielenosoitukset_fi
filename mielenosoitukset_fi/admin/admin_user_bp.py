@@ -19,10 +19,14 @@ admin_user_bp = Blueprint("admin_user", __name__, url_prefix="/admin/user")
 
 from .utils import AdminActParser, log_admin_action_V2
 from flask_login import current_user
+
+
 @admin_user_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
-    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+    log_admin_action_V2(
+        AdminActParser().log_request_info(request.__dict__, current_user)
+    )
 
 
 # User control panel with pagination

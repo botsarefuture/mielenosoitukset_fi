@@ -9,6 +9,7 @@ DB = get_database_manager()
 
 from mielenosoitukset_fi.utils.classes.Organizer import BaseEntity
 
+
 class Organization(BaseEntity):
     """Class representing an organization."""
 
@@ -36,8 +37,7 @@ class Organization(BaseEntity):
     def init_members(self):
         """Initialize the members list."""
         self.members = [
-            User.from_OID(ObjectId(member["user_id"]))
-            for member in self.members
+            User.from_OID(ObjectId(member["user_id"])) for member in self.members
         ]
 
     def save(self):

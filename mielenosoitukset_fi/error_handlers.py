@@ -95,7 +95,7 @@ def register_error_handlers(app: Flask):
         """
         logger.warning(error)
         return render_template("errors/404.html"), 404
-    
+
     @app.errorhandler(429)
     def too_many_requests(error):
         """Handle Too Many Requests (429) errors.
@@ -112,7 +112,7 @@ def register_error_handlers(app: Flask):
         """
         logger.warning(error)
         return render_template("errors/429.html"), 429
-    
+
     @app.errorhandler(500)
     def internal_server_error(error):
         """Handle Internal Server Error (500) errors.

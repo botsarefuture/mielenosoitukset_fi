@@ -487,7 +487,7 @@ class User(UserMixin):
 
     def __str__(self):
         return self.displayname or self.username
-    
+
 
 class TwoFAToken:
     """Class for handling 2FA tokens."""
@@ -620,9 +620,9 @@ class UserMFA:
         """
         user = User.from_OID(self.user_id)
         return pyotp.totp.TOTP(self.secrets[0]).provisioning_uri(
-            name=user.displayname or user.username, issuer_name="Mielenosoitukset.fi")
-        
-    
+            name=user.displayname or user.username, issuer_name="Mielenosoitukset.fi"
+        )
+
     def add_secret(self, secret):
         """Add a new secret for the user.
 
@@ -678,18 +678,10 @@ class AnonymousUser(AnonymousUserMixin):
         self.role = "anonymous"
         self.banned = False
         self.mfa_enabled = False
-        
+
     # If any function is called, return an error message. Add a catch-all method to prevent errors.
     def __getattr__(self, name):
-        logger.critical(
-            f"Trying to access attribute {name} on AnonymousUser"
-        )
-        return None
-    
-    def __setattr__(self, name, value):
-        logger.critical(
-            f"Trying to set attribute {name} to {value} on AnonymousUser"
-        )
+        logger.debug(f"Trying to access attribute {name} on AnonymousUser")
         return None
 
     def is_member_of_organization(self, organization_id):

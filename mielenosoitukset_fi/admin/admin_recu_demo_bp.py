@@ -20,10 +20,14 @@ admin_recu_demo_bp = Blueprint(
 
 from .utils import AdminActParser, log_admin_action_V2
 from flask_login import current_user
+
+
 @admin_recu_demo_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
-    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+    log_admin_action_V2(
+        AdminActParser().log_request_info(request.__dict__, current_user)
+    )
 
 
 @admin_recu_demo_bp.route("/")

@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime, timedelta
 
+
 def remove_files_in_directory(directory):
     """
     Remove all files in the specified directory.
@@ -20,12 +21,14 @@ def remove_files_in_directory(directory):
         except Exception as e:
             print(f"Failed to remove {file_path}. Reason: {e}")
 
+
 def main():
     """
     Main function to remove files in the 'mielenosoitukset_fi/uploads' directory every 24 hours.
     """
-    directory = 'mielenosoitukset_fi/uploads'
+    directory = "mielenosoitukset_fi/uploads"
     remove_files_in_directory(directory)
+
 
 if __name__ == "__main__":
     main()

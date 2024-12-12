@@ -26,10 +26,12 @@ import importlib
 import os
 import jwt
 import datetime
+
 # import stuff needed for qr code generation
 import pyqrcode
 import base64
 from io import BytesIO
+
 
 def generate_qr(url: str) -> str:
     """
@@ -52,7 +54,9 @@ def generate_qr(url: str) -> str:
     buffer = BytesIO()  # Create an in-memory bytes buffer
     qr.png(buffer, scale=6)  # Save the QR code as a PNG into the buffer
     buffer.seek(0)  # Reset the buffer's position to the beginning
-    img_base64 = base64.b64encode(buffer.read()).decode('utf-8')  # Convert image bytes to base64
+    img_base64 = base64.b64encode(buffer.read()).decode(
+        "utf-8"
+    )  # Convert image bytes to base64
     return img_base64
 
 
@@ -165,13 +169,14 @@ def confirm_email(token):
 
     return redirect(url_for("users.auth.login"))
 
+
 @auth_bp.route("/2fa_check", methods=["GET", "POST"])
 def mfa_check():
     user = mongo.users.find_one({"username": request.form.get("username")})
     user = User.from_db(user)
     if not user.check_password(request.form.get("password")):
         return {"enabled": user.mfa_enabled, "valid": False}, "application/json"
-    
+
     else:
         return {"enabled": user.mfa_enabled, "valid": True}, "application/json"
 
@@ -221,6 +226,7 @@ def login():
 
     return render_template("users/auth/login.html", next=next_page)
 
+
 def meow(user, next_page):
     token = request.form.get("2fa_code")
     if not token:
@@ -232,6 +238,7 @@ def meow(user, next_page):
         return redirect(url_for("users.auth.login", next=next_page))
 
     return True
+
 
 @auth_bp.route("/verify_mfa", methods=["GET", "POST"])
 def verify_mfa():
@@ -311,10 +318,9 @@ def settings():
         qr_code_url = user_mfa.get_qr_code_url()
         qr_code = generate_qr(qr_code_url)
         qr_code_base64 = f"data:image/png;base64,{qr_code}"
-        
+
         return render_template(
-            "users/auth/settings.html"
-            , user=user, qr_code_url=qr_code_base64
+            "users/auth/settings.html", user=user, qr_code_url=qr_code_base64
         )
     if user.mfa_enabled:
         user_mfa = user.mfa

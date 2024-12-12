@@ -100,7 +100,7 @@ def log_admin_action(user, action: str, details: str):
                 "email": user.email,
                 "action": action,
                 "details": details,
-                "timestamp": datetime.now(), # TODO: Use UTC time
+                "timestamp": datetime.now(),  # TODO: Use UTC time
             }
         )
         logger.info(f"Admin action logged: {action} by user {user.email}")
@@ -127,7 +127,7 @@ def log_admin_action_V2(aact: dict):
 
     Parameters
     ----------
-    
+
 
     Returns
     -------
@@ -138,18 +138,17 @@ def log_admin_action_V2(aact: dict):
             "timestamp": datetime.now(),
         }
         to_insert.update(aact)
-                
-        mongo.admin_logs.insert_one(
-            to_insert
-        )
+
+        mongo.admin_logs.insert_one(to_insert)
     except PyMongoError as e:
         logger.error(f"Error logging admin action: {e}")
+
 
 class AdminActParser:
     """Class to parse admin activity logs and handle request data."""
 
     def __init__(self):
-        
+
         pass
 
     def log_request_info(self, request, user):
@@ -158,11 +157,15 @@ class AdminActParser:
             print("request", request)
             print("user", user)
             import json
-            request_data = json.loads(json.dumps({**request}, skipkeys=True, default=str))
-           
+
+            request_data = json.loads(
+                json.dumps({**request}, skipkeys=True, default=str)
+            )
 
             # Combine with user details
-            user_data = user.to_dict() if hasattr(user, "to_dict") else dictify_object(user)
+            user_data = (
+                user.to_dict() if hasattr(user, "to_dict") else dictify_object(user)
+            )
 
             return {"request": request_data, "user": user_data}
         except Exception as e:

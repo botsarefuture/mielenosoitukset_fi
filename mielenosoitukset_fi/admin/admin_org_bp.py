@@ -27,10 +27,14 @@ from mielenosoitukset_fi.utils.classes import Organization
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
 from .utils import AdminActParser, log_admin_action_V2
+
+
 @admin_org_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
-    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+    log_admin_action_V2(
+        AdminActParser().log_request_info(request.__dict__, current_user)
+    )
 
 
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
@@ -38,6 +42,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.logger import logger
 
 email_sender = EmailSender()
+
 
 @admin_org_bp.route("/api/new", methods=["POST"])
 @login_required
@@ -57,37 +62,38 @@ def create_organization_api():
     org_name = request.json.get("name")
     org_email = request.json.get("email", "no@email.example")
     org_website = request.json.get("website")
-    
+
     print(org_email)
-    
+
     if not org_name and not org_email:
         return {"message": "Nimi ja sähköpostiosoite ovat pakollisia."}
-    
-    #if org_email is not None and not valid_email(org_email):
-        #return {"message": "Virheellinen sähköpostiosoite."}
-    
+
+    # if org_email is not None and not valid_email(org_email):
+    # return {"message": "Virheellinen sähköpostiosoite."}
+
     org_description = request.json.get("description", "Kuvaus tulossa")
-    
+
     org_data = {
         "name": org_name,
         "email": org_email,
         "website": org_website,
         "description": org_description,
     }
-    
+
     # insert
-    
+
     _, _id = insert_organization(org_data)
-    
+
     if not _id is None:
         return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
-    
+
     return {"message": "Virhe organisaation luonnissa."}
-    
+
     if _ and _id:
         return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
 
     return {"message": "Virhe organisaation luonnissa."}
+
 
 # Organization control panel
 @admin_org_bp.route("/")
@@ -359,10 +365,10 @@ def insert_organization(org_data=None):
     """Insert a new organization into the database."""
     if org_data:
         data_source = org_data
-    
+
     else:
         data_source = request.form
-    
+
     name = data_source.get("name")
     email = data_source.get("email")
 
@@ -371,10 +377,10 @@ def insert_organization(org_data=None):
 
     description = data_source.get("description")
     website = data_source.get("website")
-    
+
     if not org_data:
         social_media_links = get_social_media_links()
-    
+
     else:
         social_media_links = {}
 
@@ -388,12 +394,14 @@ def insert_organization(org_data=None):
             "members": [],
         }
     )
-    
+
     if result.inserted_id:
         log_admin_action(
-            current_user, "Create Organization", f"Created organization {result.inserted_id}"
+            current_user,
+            "Create Organization",
+            f"Created organization {result.inserted_id}",
         )
-        
+
         return True, result.inserted_id
 
     return False, None

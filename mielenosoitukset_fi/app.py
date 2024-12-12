@@ -58,7 +58,7 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     try:
-        security = FlaskAutoSec()
+        security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
         security.init_app(app)
     except Exception as e:
         Limiter(
@@ -69,7 +69,7 @@ def create_app() -> Flask:
         )
         logger.error(f"Error initializing FlaskAutoSec: {e}")
         logger.info("Using Flask-Limiter instead.")
-        
+
     # Locale selector function
     def get_locale():
         return session.get(
@@ -117,7 +117,7 @@ def create_app() -> Flask:
         admin_demo_bp,
         admin_org_bp,
         admin_recu_demo_bp,
-        admin_media_bp
+        admin_media_bp,
     )
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp

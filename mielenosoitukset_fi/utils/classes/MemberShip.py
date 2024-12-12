@@ -1,7 +1,10 @@
 from typing import List
 from bson import ObjectId
 from .BaseModel import BaseModel
-from mielenosoitukset_fi.utils.database import stringify_object_ids, get_database_manager
+from mielenosoitukset_fi.utils.database import (
+    stringify_object_ids,
+    get_database_manager,
+)
 
 DB = get_database_manager()
 

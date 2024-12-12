@@ -8,10 +8,13 @@ from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip as Membershi
 
 DB = get_database_manager()
 
+
 class BaseEntity(BaseModel):
     """Base class for shared attributes and methods."""
 
-    def __init__(self, name: str, email: str, website: str = None, _id: ObjectId = None):
+    def __init__(
+        self, name: str, email: str, website: str = None, _id: ObjectId = None
+    ):
         self.name = name
         self.email = email
         self.website = website
@@ -33,6 +36,7 @@ class BaseEntity(BaseModel):
         """
         data = super().to_dict(json)
         return data
+
 
 class Organizer(BaseEntity):
     """Class representing an individual organizer."""

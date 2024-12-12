@@ -3,7 +3,8 @@ from AM.models import Action
 from bson.objectid import ObjectId
 
 DB = get_database_manager()
-actions_collection = DB['actions']
+actions_collection = DB["actions"]
+
 
 def get_action_by_id(action_id):
     """

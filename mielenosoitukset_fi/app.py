@@ -18,6 +18,7 @@ from mielenosoitukset_fi.utils.analytics import prep
 import sys
 from mielenosoitukset_fi.AM import am_bp
 
+from flask_autosec import FlaskAutoSec
 
 from mielenosoitukset_fi.utils import VERSION
 
@@ -56,12 +57,19 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
-    limiter = Limiter(
-        get_remote_address,
-        app=app,
-        default_limits=["86400 per day", "3600 per hour", "10 per second"],
-        storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
-    )
+    try:
+        security = FlaskAutoSec()
+        security.init_app(app)
+    except Exception as e:
+        Limiter(
+            get_remote_address,
+            app=app,
+            default_limits=["86400 per day", "3600 per hour", "10 per second"],
+            storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
+        )
+        logger.error(f"Error initializing FlaskAutoSec: {e}")
+        logger.info("Using Flask-Limiter instead.")
+        
     # Locale selector function
     def get_locale():
         return session.get(

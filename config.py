@@ -115,7 +115,7 @@ class Config:
     
     
     # Admin stuff
-    ADMIN_EMAIL = config.get("ADMIN_EMAIL", "verso@luova.club")
+    ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club") # Admin email address
 
     @classmethod
     def init_config(cls) -> None:

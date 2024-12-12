@@ -78,7 +78,7 @@ gap: 1em;
     />
 
     <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
     <script>
       $(document).ready(function() {
         const cityInput = $("#city-input");

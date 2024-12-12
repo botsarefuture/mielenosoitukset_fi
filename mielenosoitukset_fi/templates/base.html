@@ -31,6 +31,7 @@
   <!-- Matomo -->
   <script src="{{ url_for('static', filename='js/matomo.js') }}"></script>
   <!-- End Matomo Code -->
+  <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 
 </head>
 
@@ -45,17 +46,74 @@
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
   <div id="flash-messages" class="flash-messages">
-    <button class="flash-close" onclick="this.parentElement.style.display = 'none'"></button>
-    <i class="fas fa-times"></i>
-    </button>
     <ul id="flash-message-list">
       {% for category, message in messages %}
-      <li class="flash-{{ category }}">{{ message }}</li>
+      <li>
+        <div class="{{ category }}">
+          <button class="flash-close"><i class="fas fa-times"></i></button>
+          {{ message }}
+        </div>
+      </li>
       {% endfor %}
     </ul>
   </div>
   {% endif %}
   {% endwith %}
+
+  <style>
+    .flash-messages {
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1rem;
+      background-color: #f8d7da;
+      color: #721c24;
+      text-align: center;
+    }
+
+    .flash-messages ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .flash-messages li {
+      margin-bottom: 0.5rem;
+    }
+
+    .flash-messages .error,
+    .flash-messages .danger {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .flash-messages .info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .flash-messages .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .flash-messages .warning {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .flash-messages .flash-close {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 0.5rem;
+    }
+  </style>
 
   <!-- Main Content Area -->
   <main class="container-main-content">
@@ -123,6 +181,7 @@
     });
   });
 </script>
+
 <script>
   function displayFlashMessage(category, message) {
     const flashMessages = document.getElementById("flash-messages");
@@ -142,9 +201,13 @@
       }
     }, 10000);
   }
-</script>
 
-<script src="{{ url_for('static', filename='js/marquee.js') }}"></script>
+  $(document).ready(function() {
+    $(".flash-close").click(function() {
+      $(this).parent().parent().hide();
+    });
+  });
+</script>
 <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 <script>
   function toggleNavbar() {

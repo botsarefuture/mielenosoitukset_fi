@@ -225,7 +225,7 @@ def login():
             verify_emailer(user.email, username)
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        if user.mfa_enabled and not meow(user, next_page):
+        if user.mfa_enabled and not meow(user):
             let_login = False
             return redirect(url_for("users.auth.login", next=safe_next_page))
 

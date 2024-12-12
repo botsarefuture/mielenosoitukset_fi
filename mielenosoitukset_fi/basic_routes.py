@@ -37,6 +37,7 @@ db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
 
+
 def generate_alternate_urls(app, endpoint, **values):
     """
     Generate alternate URLs for supported languages.
@@ -47,16 +48,19 @@ def generate_alternate_urls(app, endpoint, **values):
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
 
+
 def init_routes(app):
     # register genereate_demo_sentence function
     @app.context_processor
     def inject_demo_sentence():
         return dict(generate_demo_sentence=generate_demo_sentence)
-    
+
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
         try:
-            urlset = ET.Element("urlset", {"xmlns:xhtml": "http://www.w3.org/1999/xhtml"})
+            urlset = ET.Element(
+                "urlset", {"xmlns:xhtml": "http://www.w3.org/1999/xhtml"}
+            )
             routes = [
                 {"loc": "index"},
                 {"loc": "submit"},
@@ -75,19 +79,28 @@ def init_routes(app):
                         "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True),
+                        href=url_for(
+                            route["loc"], lang_code=alt_lang_code, _external=True
+                        ),
                     )
             for demo in demonstrations_collection.find():
                 demo_url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(demo_url, "loc")
-                loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
+                loc.text = url_for(
+                    "demonstration_detail", demo_id=str(demo["_id"]), _external=True
+                )
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
                         demo_url,
                         "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True),
+                        href=url_for(
+                            "demonstration_detail",
+                            demo_id=str(demo["_id"]),
+                            lang_code=alt_lang_code,
+                            _external=True,
+                        ),
                     )
             xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
             return Response(xml_str, mimetype="application/xml")
@@ -101,7 +114,9 @@ def init_routes(app):
         Inject alternate URLs into the template context.
         """
         if request.view_args:
-            alternate_urls = generate_alternate_urls(app, request.endpoint, **request.view_args)
+            alternate_urls = generate_alternate_urls(
+                app, request.endpoint, **request.view_args
+            )
             return dict(alternate_urls=alternate_urls)
         else:
             return dict(alternate_urls={})
@@ -121,7 +136,9 @@ def init_routes(app):
                     or search_query.lower() in demo["address"].lower()
                 ):
                     filtered_demonstrations.append(demo)
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        filtered_demonstrations.sort(
+            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        )
         return render_template("index.html", demonstrations=filtered_demonstrations)
 
     @app.route("/submit", methods=["GET", "POST"])
@@ -180,10 +197,13 @@ def init_routes(app):
                 tags=tags,
             )
             mongo.demonstrations.insert_one(demonstration.to_dict())
-            flash_message("Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.", "success")
+            flash_message(
+                "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
+                "success",
+            )
             return redirect(url_for("index"))
         return render_template("submit.html", city_list=CITY_LIST)
-    
+
     @app.route("/report", methods=["GET", "POST"])
     def report():
         """
@@ -193,14 +213,34 @@ def init_routes(app):
         _type = request.form.get("type")
         if _type:
             if _type == "demonstration":
-                mongo.reports.insert_one({"error": error, "demo_id": ObjectId(request.form.get("demo_id")), "date": datetime.now(), "user": ObjectId(current_user._id) if current_user.is_authenticated else None, "ip": request.remote_addr})
-        
-        else:
-            mongo.reports.insert_one({"error": error, "date": datetime.now(), "user": current_user._id if current_user.is_authenticated else None, "ip": request.remote_addr})
-        
-        flash_message("Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success")
-        return redirect(request.referrer)
+                mongo.reports.insert_one(
+                    {
+                        "error": error,
+                        "demo_id": ObjectId(request.form.get("demo_id")),
+                        "date": datetime.now(),
+                        "user": (
+                            ObjectId(current_user._id)
+                            if current_user.is_authenticated
+                            else None
+                        ),
+                        "ip": request.remote_addr,
+                    }
+                )
 
+        else:
+            mongo.reports.insert_one(
+                {
+                    "error": error,
+                    "date": datetime.now(),
+                    "user": current_user._id if current_user.is_authenticated else None,
+                    "ip": request.remote_addr,
+                }
+            )
+
+        flash_message(
+            "Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success"
+        )
+        return redirect(request.referrer)
 
     @app.route("/demonstrations")
     def demonstrations():
@@ -210,27 +250,35 @@ def init_routes(app):
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
         search_query = request.args.get("search", "").lower()
-        
+
         # if city contains , then it is a list of cities
         city_query = request.args.get("city", "").lower()
-        
+
         if "," in city_query:
             city_query = city_query.split(",")
-        
-        
+
         location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
         today = date.today()
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        filtered_demonstrations = filter_demonstrations(
+            demonstrations, today, search_query, city_query, location_query, date_query
+        )
+        filtered_demonstrations.sort(
+            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        )
         total_demos = len(filtered_demonstrations)
         total_pages = (total_demos + per_page - 1) // per_page
         start = (page - 1) * per_page
         end = start + per_page
         paginated_demonstrations = filtered_demonstrations[start:end]
-        return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_list=CITY_LIST)    
-    
+        return render_template(
+            "list.html",
+            demonstrations=paginated_demonstrations,
+            page=page,
+            total_pages=total_pages,
+            city_list=CITY_LIST,
+        )
 
     @app.route("/city/<city>")
     def city_demos(city):
@@ -245,17 +293,28 @@ def init_routes(app):
         date_query = request.args.get("date", "")
         today = date.today()
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
+        filtered_demonstrations = filter_demonstrations(
+            demonstrations, today, search_query, city_query, location_query, date_query
+        )
+        filtered_demonstrations.sort(
+            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        )
         total_demos = len(filtered_demonstrations)
         total_pages = (total_demos + per_page - 1) // per_page
         start = (page - 1) * per_page
         end = start + per_page
         paginated_demonstrations = filtered_demonstrations[start:end]
-        return render_template("city.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_name=city.capitalize())
+        return render_template(
+            "city.html",
+            demonstrations=paginated_demonstrations,
+            page=page,
+            total_pages=total_pages,
+            city_name=city.capitalize(),
+        )
 
-
-    def filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query):
+    def filter_demonstrations(
+        demonstrations, today, search_query, city_query, location_query, date_query
+    ):
         """
         Filter the demonstrations based on various criteria.
         """
@@ -263,7 +322,12 @@ def init_routes(app):
         added_demo_ids = set()
         for demo in demonstrations:
             if is_future_demo(demo, today):
-                if matches_filters(demo, search_query, city_query, location_query, date_query) and demo["_id"] not in added_demo_ids:
+                if (
+                    matches_filters(
+                        demo, search_query, city_query, location_query, date_query
+                    )
+                    and demo["_id"] not in added_demo_ids
+                ):
                     filtered.append(demo)
                     added_demo_ids.add(demo["_id"])
         return filtered
@@ -288,14 +352,22 @@ def init_routes(app):
             if isinstance(city_query, list)
             else city_query in demo["city"].lower()
         )
-        matches_location = location_query in demo["address"].lower() if location_query else True
+        matches_location = (
+            location_query in demo["address"].lower() if location_query else True
+        )
         matches_date = True
         if date_query:
             try:
                 parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
-                matches_date = parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+                matches_date = (
+                    parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+                )
             except ValueError:
-                flash_message(_("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."))
+                flash_message(
+                    _(
+                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+                    )
+                )
                 matches_date = False
         return matches_search and matches_city and matches_location and matches_date
 
@@ -310,7 +382,10 @@ def init_routes(app):
         else:
             abort(404)
         if not demo:
-            flash_message(_("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error")
+            flash_message(
+                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
+                "error",
+            )
             return redirect(url_for("demonstrations"))
         if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
@@ -331,7 +406,9 @@ def init_routes(app):
             except (requests.exceptions.RequestException, IndexError):
                 ...
         demo = Demonstration.to_dict(demo, True)
-        log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+        log_demo_view(
+            demo_id, current_user._id if current_user.is_authenticated else None
+        )
         return render_template("detail.html", demo=demo)
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])
@@ -353,7 +430,10 @@ def init_routes(app):
         else:
             abort(404)
         if not demo:
-            flash_message(_("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."), "error")
+            flash_message(
+                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
+                "error",
+            )
             return redirect(url_for("demonstrations"))
         if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
@@ -374,13 +454,17 @@ def init_routes(app):
             except (requests.exceptions.RequestException, IndexError):
                 ...
         demo = Demonstration.to_dict(demo, True)
-        log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+        log_demo_view(
+            demo_id, current_user._id if current_user.is_authenticated else None
+        )
         return render_template("preview.html", demo=demo)
 
     @app.route("/demonstration/<parent>/children", methods=["GET"])
     def siblings_meeting(parent):
-        result = demonstrations_collection.find({"parent": ObjectId(parent), "hide": False})
-        
+        result = demonstrations_collection.find(
+            {"parent": ObjectId(parent), "hide": False}
+        )
+
         """
         List all sibling demonstrations of a recurring demonstration.
         """
@@ -389,8 +473,7 @@ def init_routes(app):
             siblings.append(Demonstration.from_dict(demo))
         siblings.sort(key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date())
         return render_template("siblings.html", siblings=siblings)
-        
-    
+
     @app.route("/info")
     def info():
         return render_template("info.html")
@@ -413,7 +496,12 @@ def init_routes(app):
                 template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
                 recipients=["tuki@mielenosoitukset.fi"],
-                context={"name": name, "email": email, "subject": subject, "message": message},
+                context={
+                    "name": name,
+                    "email": email,
+                    "subject": subject,
+                    "message": message,
+                },
             )
             flash_message("Viesti lähetetty onnistuneesti!", "success")
             return redirect(url_for("contact"))
@@ -429,11 +517,7 @@ def init_routes(app):
         today = date.today()
         upcoming_demos_cursor = mongo.demonstrations.find(
             {
-                "organizers": {
-                    "$elemMatch": {
-                        "organization_id": ObjectId(org_id)
-                    }
-                },
+                "organizers": {"$elemMatch": {"organization_id": ObjectId(org_id)}},
                 "approved": True,
             }
         )
@@ -442,8 +526,12 @@ def init_routes(app):
             demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
             if demo_date >= today:
                 upcoming_demos.append(demo)
-        upcoming_demos.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date())
-        return render_template("organizations/details.html", org=_org, upcoming_demos=upcoming_demos)
+        upcoming_demos.sort(
+            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+        )
+        return render_template(
+            "organizations/details.html", org=_org, upcoming_demos=upcoming_demos
+        )
 
     @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):
@@ -454,16 +542,26 @@ def init_routes(app):
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
         total_pages = (total_demos + per_page - 1) // per_page
         demonstrations_cursor = mongo.demonstrations.find(demonstrations_query)
-        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(per_page)
+        paginated_demos = demonstrations_cursor.skip((page - 1) * per_page).limit(
+            per_page
+        )
         paginated_demos_list = list(paginated_demos)
-        return render_template("tag_list.html", demonstrations=paginated_demos_list, page=page, total_pages=total_pages, tag_name=tag_name)
+        return render_template(
+            "tag_list.html",
+            demonstrations=paginated_demos_list,
+            page=page,
+            total_pages=total_pages,
+            tag_name=tag_name,
+        )
 
     @app.route("/get_flash_messages", methods=["GET"])
     def get_flash_message_messages():
         messages = get_flashed_messages(with_categories=True)
         if not messages:
             return jsonify(messages=[])
-        flash_message_data = [{"category": category, "message": message} for category, message in messages]
+        flash_message_data = [
+            {"category": category, "message": message} for category, message in messages
+        ]
         return jsonify(messages=flash_message_data)
 
     @app.route("/marquee", methods=["GET"])

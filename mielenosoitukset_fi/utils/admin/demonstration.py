@@ -16,8 +16,10 @@ from flask import Request
 from typing import List
 from bson.objectid import ObjectId
 
-def rlace(item: object, old: str, new: str = ''):
+
+def rlace(item: object, old: str, new: str = ""):
     item = item.replace(old, new)
+
 
 def collect_tags(request: Request) -> List[str]:
     """
@@ -60,7 +62,7 @@ def collect_tags(request: Request) -> List[str]:
     for key in tag_keys:
         tag_name = request.form.get(key, "").strip()
         if tag_name:  # Only add non-empty, trimmed tags
-            # Tags should have '#' in front of them 
+            # Tags should have '#' in front of them
             rlace(tag_name, "#", "")
             tags.append(tag_name)
 
@@ -98,10 +100,13 @@ def fix_organizers(data: dict) -> dict:
     }
     """
     for organizer in data["organizers"]:
-        if organizer["organization_id"] == None or organizer["organization_id"].lower() == "none":
+        if (
+            organizer["organization_id"] == None
+            or organizer["organization_id"].lower() == "none"
+        ):
             organizer["organization_id"] = None
             continue
-        
+
         if (
             isinstance(organizer["organization_id"], dict)
             and "$oid" in organizer["organization_id"]
@@ -109,7 +114,7 @@ def fix_organizers(data: dict) -> dict:
             organizer["organization_id"] = ObjectId(
                 organizer["organization_id"]["$oid"]
             )
-            
+
         elif isinstance(organizer["organization_id"], str):
             organizer["organization_id"] = ObjectId(organizer["organization_id"])
 

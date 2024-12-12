@@ -23,10 +23,13 @@ serializer = URLSafeTimedSerializer(SECRET_KEY)
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
+
 @admin_demo_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
-    log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+    log_admin_action_V2(
+        AdminActParser().log_request_info(request.__dict__, current_user)
+    )
 
 
 @admin_demo_bp.route("/")
@@ -207,7 +210,6 @@ def edit_demo(demo_id):
         city_list=CITY_LIST,
         all_organizations=mongo.organizations.find(),
     )
-    
 
 
 @admin_demo_bp.route("/generate_edit_link/<demo_id>", methods=["POST"])
@@ -229,11 +231,17 @@ def generate_edit_link(demo_id):
     """
     try:
         token = serializer.dumps(demo_id, salt="edit-demo")
-        edit_link = url_for("admin_demo.edit_demo_with_token", token=token, _external=True)
+        edit_link = url_for(
+            "admin_demo.edit_demo_with_token", token=token, _external=True
+        )
         return jsonify({"status": "OK", "edit_link": edit_link})
     except Exception as e:
         logging.error("An error occurred while generating the edit link: %s", str(e))
-        return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500
+        return (
+            jsonify({"status": "ERROR", "message": "An internal error has occurred."}),
+            500,
+        )
+
 
 @admin_demo_bp.route("/edit_demo_with_token/<token>", methods=["GET", "POST"])
 def edit_demo_with_token(token):

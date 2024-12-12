@@ -35,22 +35,28 @@ class RepeatSchedule:
         }
 
         weekday_str = (
-            f" on {self.weekday}"
-            if self.frequency == "weekly" and self.weekday
-            else ""
+            f" on {self.weekday}" if self.frequency == "weekly" and self.weekday else ""
         )
 
         monthly_str = ""
         if self.frequency == "monthly":
             if self.monthly_option == "day_of_month" and self.day_of_month:
                 monthly_str = f" on day {self.day_of_month} of each month"
-            elif self.monthly_option == "nth_weekday" and self.nth_weekday and self.weekday_of_month:
-                monthly_str = f" on the {self.nth_weekday} {self.weekday_of_month} of each month"
+            elif (
+                self.monthly_option == "nth_weekday"
+                and self.nth_weekday
+                and self.weekday_of_month
+            ):
+                monthly_str = (
+                    f" on the {self.nth_weekday} {self.weekday_of_month} of each month"
+                )
 
         return (
             f"every {self.interval} {frequency_map.get(self.frequency, 'unknown')}s{weekday_str}{monthly_str}"
             if self.interval > 1
-            else frequency_map.get(self.frequency, "unknown") + weekday_str + monthly_str
+            else frequency_map.get(self.frequency, "unknown")
+            + weekday_str
+            + monthly_str
         )
 
     def __str__(self) -> str:

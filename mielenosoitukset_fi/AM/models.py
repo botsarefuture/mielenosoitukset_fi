@@ -8,7 +8,14 @@ class Shift:
 
     @classmethod
     def from_dict(cls, data):
-        return cls(data['_id'], data['start_time'], data['end_time'], data['role'], data['volunteers'])
+        return cls(
+            data["_id"],
+            data["start_time"],
+            data["end_time"],
+            data["role"],
+            data["volunteers"],
+        )
+
 
 class Risk:
     """
@@ -21,14 +28,16 @@ class Risk:
     description : str
         The description of the risk.
     """
+
     def __init__(self, color, description):
         self.color = color or "YELLOW"
         self.description = description or "UNKNOWN"
 
     @classmethod
     def from_dict(cls, data):
-        return cls(data['color'], data['description'])
-    
+        return cls(data["color"], data["description"])
+
+
 class Role:
     """
     Role within an action.
@@ -42,7 +51,10 @@ class Role:
     risk : dict, optional
         The risk associated with the role.
     """
-    def __init__(self, name, description, risk=None, persons_needed=1, persons_assigned=1):
+
+    def __init__(
+        self, name, description, risk=None, persons_needed=1, persons_assigned=1
+    ):
         self.name = name
         self.description = description
         self.risk = Risk.from_dict(risk) if risk else Risk(None, None)
@@ -52,7 +64,8 @@ class Role:
 
     @classmethod
     def from_dict(cls, data):
-        return cls(data['name'], data['description'], data.get('risk'))
+        return cls(data["name"], data["description"], data.get("risk"))
+
 
 class Action:
     """
@@ -69,6 +82,7 @@ class Action:
     roles : list
         The roles associated with the action.
     """
+
     def __init__(self, action_id, name, description, roles):
         self.action_id = action_id
         self.name = name
@@ -77,8 +91,9 @@ class Action:
 
     @classmethod
     def from_dict(cls, data):
-        return cls(data['_id'], data['name'], data['description'], data['roles'])
-    
+        return cls(data["_id"], data["name"], data["description"], data["roles"])
+
+
 """
 Example data:
 {

@@ -21,7 +21,6 @@ def main():
 
     The application is then started with the specified debug mode and port number.
     """
-    """ """
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in (

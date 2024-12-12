@@ -47,18 +47,20 @@ login_manager.login_view = "users.auth.login"
 
 from .utils import AdminActParser, log_admin_action_V2
 
+
 @admin_bp.before_request
 def log_request_info():
     try:
         """Log request information before handling it."""
         if current_user and current_user is not None:
-            log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, current_user))
+            log_admin_action_V2(
+                AdminActParser().log_request_info(request.__dict__, current_user)
+            )
         else:
             log_admin_action_V2(AdminActParser().log_request_info(request.__dict__, {}))
     except Exception as e:
         logger.error(e)
         pass
-
 
 
 class DemoViewCount:
@@ -180,12 +182,13 @@ def stats():
             total_organizations=total_organizations,
             role_counts=role_counts,
             active_users=active_users,
-            data=data
+            data=data,
         )
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")
         flash_message("An error occurred while loading statistics.", "danger")
         return redirect(url_for("admin.admin_dashboard"))
+
 
 @admin_bp.route("/logs")
 @login_required
@@ -193,6 +196,7 @@ def stats():
 @permission_required("VIEW_LOGS")
 def logs():
     return render_template("admin/logs.html")
+
 
 @admin_bp.route("/api/logs")
 @login_required
@@ -219,7 +223,7 @@ def api_logs():
         logs = get_admin_activity(page, per_page)
         total_logs = mongo.admin_logs.count_documents({})
         total_pages = (total_logs + per_page - 1) // per_page
-        
+
     except Exception as e:
         logger.error(e)
         raise Exception from e
@@ -231,6 +235,7 @@ def api_logs():
         "total_pages": total_pages,
         "total_logs": total_logs,
     }, {"Content-Type": "application/json"}
+
 
 def get_user_role_counts():
     """Fetch the count of users by role."""

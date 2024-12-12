@@ -77,9 +77,13 @@ def calculate_next_dates(start_date, schedule):
                     }
                     nth = nth_weekday_map[nth_weekday]
                     if nth == -1:
-                        start_date = start_date + relativedelta(day=31, weekday=weekday(weekday_num, -1))
+                        start_date = start_date + relativedelta(
+                            day=31, weekday=weekday(weekday_num, -1)
+                        )
                     else:
-                        start_date = start_date + relativedelta(weekday=weekday(weekday_num, nth))
+                        start_date = start_date + relativedelta(
+                            weekday=weekday(weekday_num, nth)
+                        )
         elif frequency == "yearly":
             start_date += relativedelta(years=interval)
         else:

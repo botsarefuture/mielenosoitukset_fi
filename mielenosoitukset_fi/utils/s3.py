@@ -20,6 +20,7 @@ _retry_delay = 2  # Initial delay in seconds
 _upload_folder = os.path.join("mielenosoitukset_fi", "uploads")
 print(_upload_folder)
 
+
 def get_id_and_add_one(hash):
     """
     Get the last ID from the database and increment it by one.
@@ -42,6 +43,7 @@ def get_id_and_add_one(hash):
     )
     return last_id["last_id"]
 
+
 def create_s3_client():
     """
     Initialize and return an S3 client using the provided configuration.
@@ -62,7 +64,9 @@ def create_s3_client():
         logger.error("AWS credentials not found.")
         return None
 
+
 _s3_client = create_s3_client()
+
 
 def retry_with_graze(max_retries=_max_retries, delay=_retry_delay):
     """
@@ -80,6 +84,7 @@ def retry_with_graze(max_retries=_max_retries, delay=_retry_delay):
     function
         The decorated function with retry logic.
     """
+
     def decorator(func):
         """
         Inner decorator function.
@@ -94,6 +99,7 @@ def retry_with_graze(max_retries=_max_retries, delay=_retry_delay):
         function
             The wrapped function with retry logic.
         """
+
         def wrapper(*args, **kwargs):
             """
             Wrapper function to apply retry logic.
@@ -131,6 +137,7 @@ def retry_with_graze(max_retries=_max_retries, delay=_retry_delay):
 
     return decorator
 
+
 @retry_with_graze()
 def convert_to_jpg(image_path: str, output_path: str) -> str:
     """
@@ -158,6 +165,7 @@ def convert_to_jpg(image_path: str, output_path: str) -> str:
         logger.error(f"Error converting image {image_path}: {e}")
         return None
 
+
 @retry_with_graze()
 def generate_next_id(image_type: str = "upload") -> int:
     """
@@ -174,6 +182,7 @@ def generate_next_id(image_type: str = "upload") -> int:
         The next ID or None if an error occurs.
     """
     return get_id_and_add_one(gen_ha(image_type))
+
 
 def upload_path_gen(_id: str, image_type: str) -> str:
     """
@@ -194,6 +203,7 @@ def upload_path_gen(_id: str, image_type: str) -> str:
 
     return f"{gen_ha(image_type)}/{image_type}-{_id}.jpg"
 
+
 def gen_ha(image_type):
     """
     Generate a 3-letter uppercase hash for the image type.
@@ -209,6 +219,7 @@ def gen_ha(image_type):
         The 3-letter uppercase hash.
     """
     return image_type[:3].upper()
+
 
 @retry_with_graze()
 def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
@@ -236,13 +247,15 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
 
     jpg_image_path = os.path.join(_upload_folder, f"{image_type}-{_id}.jpg")
     output_image_path = convert_to_jpg(image_path, jpg_image_path)
-    
+
     print(output_image_path)
-    
-    output_image_path = output_image_path.replace("\\", "/").replace("mielenosoitukset_fi/uploads/", "")
+
+    output_image_path = output_image_path.replace("\\", "/").replace(
+        "mielenosoitukset_fi/uploads/", ""
+    )
 
     output_image_path = os.path.join(gen_ha(image_type), output_image_path)
-    
+
     if output_image_path is None:
         logger.error("Failed to convert image.")
         return None

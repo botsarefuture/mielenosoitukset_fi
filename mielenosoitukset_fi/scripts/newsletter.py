@@ -15,6 +15,7 @@ db = db_manager.get_db()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def is_future_demo(demo: dict, today: datetime.date) -> bool:
     """
     Check if the demonstration is in the future.
@@ -34,6 +35,7 @@ def is_future_demo(demo: dict, today: datetime.date) -> bool:
     demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
     return demo_date >= today
 
+
 def get_upcoming_demonstrations() -> list:
     """
     Fetch upcoming demonstrations.
@@ -46,11 +48,14 @@ def get_upcoming_demonstrations() -> list:
     try:
         current_date = datetime.now().date()
         approved_demos = list(db["demonstrations"].find({"approved": True}))
-        future_demos = [demo for demo in approved_demos if is_future_demo(demo, current_date)]
+        future_demos = [
+            demo for demo in approved_demos if is_future_demo(demo, current_date)
+        ]
         return future_demos
     except Exception as e:
         logger.error(f"Error fetching upcoming demonstrations: {e}")
         return []
+
 
 def send_newsletter_to_users() -> None:
     """
@@ -79,6 +84,7 @@ def send_newsletter_to_users() -> None:
             context=context,
         )
         logger.info(f"Newsletter queued for user: {user.get('email')}")
+
 
 with app.app_context():
     send_newsletter_to_users()

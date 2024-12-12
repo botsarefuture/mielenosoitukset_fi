@@ -61,15 +61,19 @@ class AdminActivity(BaseModel):
         """
         data = super().to_dict(json=json)
         try:
-            data.update({
-                "user_id": str(self._user_id),
-                "email": self._email,
-                "action": self._action,
-                "details": self._details,
-                "timestamp": self._timestamp.isoformat() if json else self._timestamp,
-                "_id": str(self._id),
-                "by": self._by.to_dict(json=json)
-            })
+            data.update(
+                {
+                    "user_id": str(self._user_id),
+                    "email": self._email,
+                    "action": self._action,
+                    "details": self._details,
+                    "timestamp": (
+                        self._timestamp.isoformat() if json else self._timestamp
+                    ),
+                    "_id": str(self._id),
+                    "by": self._by.to_dict(json=json),
+                }
+            )
         except Exception as e:
             logger.error(e)
         return data
@@ -94,9 +98,14 @@ class AdminActivity(BaseModel):
             email=data["user"]["email"],
             action=data["request"],
             details="",
-            timestamp=datetime.fromisoformat(data["timestamp"]) if data.get("timestamp") and isinstance(data.get("timestamp"), str) else None,
+            timestamp=(
+                datetime.fromisoformat(data["timestamp"])
+                if data.get("timestamp") and isinstance(data.get("timestamp"), str)
+                else None
+            ),
             _id=ObjectId(data["_id"]) if data.get("_id") else None,
         )
+
 
 class UserDataFormatter:
     def __init__(self, data):
@@ -114,7 +123,9 @@ class UserDataFormatter:
             "Method": request.get("method", "Unknown"),
             "URL": request.get("url", "Unknown"),
             "Remote Address": request.get("remote_addr", "Unknown"),
-            "User Agent": request.get("headers", "").split("User-Agent: ")[-1].split("\r\n")[0],
+            "User Agent": request.get("headers", "")
+            .split("User-Agent: ")[-1]
+            .split("\r\n")[0],
         }
         return formatted_request
 

@@ -1,7 +1,11 @@
 from .BaseModel import BaseModel
 from .Organizer import Organizer
 from mielenosoitukset_fi.utils.database import get_database_manager
-from mielenosoitukset_fi.utils.validators import event_type_convertor, valid_event_type, return_exists
+from mielenosoitukset_fi.utils.validators import (
+    event_type_convertor,
+    valid_event_type,
+    return_exists,
+)
 from .RepeatSchedule import RepeatSchedule
 from bson import ObjectId
 
@@ -360,7 +364,7 @@ class Demonstration(BaseModel):
 
         self.save()
 
-    def update_self_from_recurring(self, recurring_demo: 'RecurringDemonstration'):
+    def update_self_from_recurring(self, recurring_demo: "RecurringDemonstration"):
         """Update the demonstration details using a recurring demonstration.
 
         This method updates the demonstration instance with the details from a recurring
@@ -385,7 +389,9 @@ class Demonstration(BaseModel):
         --------
         RecurringDemonstration : A class representing a recurring demonstration.
         """
-        if not isinstance(recurring_demo, Demonstration): # RecurringDemonstration is a subclass of Demonstration, so it will return True
+        if not isinstance(
+            recurring_demo, Demonstration
+        ):  # RecurringDemonstration is a subclass of Demonstration, so it will return True
             raise ValueError(
                 "The provided demonstration is not a RecurringDemonstration instance."
             )

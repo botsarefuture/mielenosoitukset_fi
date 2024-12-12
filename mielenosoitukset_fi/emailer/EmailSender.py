@@ -37,10 +37,12 @@ class EmailSender:
         self._db_manager = DatabaseManager().get_instance()
         self._db = self._db_manager.get_db()
         self._queue_collection = self._db["email_queue"]
-        self._env = Environment(loader=FileSystemLoader("mielenosoitukset_fi/templates/emails"))
+        self._env = Environment(
+            loader=FileSystemLoader("mielenosoitukset_fi/templates/emails")
+        )
         self._logger = logger
-        self._mailer_name = getattr(self._config, 'MAILER_NAME', 'MielenosoituksetMail')
-        self._mailer_version = getattr(self._config, 'MAILER_VERSION', '1.0')
+        self._mailer_name = getattr(self._config, "MAILER_NAME", "MielenosoituksetMail")
+        self._mailer_version = getattr(self._config, "MAILER_VERSION", "1.0")
         self.start_worker()
 
     def start_worker(self):
@@ -195,7 +197,9 @@ class EmailSender:
             try:
                 self.send_email(email_job)
             except Exception as e:
-                print(f"Failed to send email immediately: {str(e)}")  # TODO: Log the error
+                print(
+                    f"Failed to send email immediately: {str(e)}"
+                )  # TODO: Log the error
                 if attempt < retry_attempts - 1:
                     print("Retrying in 1 hour...")
                     threading.Timer(3600, attempt_send, [attempt + 1]).start()

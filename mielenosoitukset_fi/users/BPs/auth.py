@@ -172,13 +172,16 @@ def confirm_email(token):
 
 @auth_bp.route("/2fa_check", methods=["GET", "POST"])
 def mfa_check():
-    user = mongo.users.find_one({"username": request.form.get("username")})
-    user = User.from_db(user)
-    if not user.check_password(request.form.get("password")):
-        return {"enabled": user.mfa_enabled, "valid": False}, "application/json"
+    try:
+        user = mongo.users.find_one({"username": request.form.get("username")})
+        user = User.from_db(user)
+        if not user.check_password(request.form.get("password")):
+            return {"enabled": user.mfa_enabled, "valid": False}, "application/json"
 
-    else:
-        return {"enabled": user.mfa_enabled, "valid": True}, "application/json"
+        else:
+            return {"enabled": user.mfa_enabled, "valid": True}, "application/json"
+    except Exception as e:
+        return {"enabled": False, "valid": False}, "application/json"
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])

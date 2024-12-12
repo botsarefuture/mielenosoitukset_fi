@@ -185,57 +185,68 @@ def mfa_check():
 def login():
     next_page = request.args.get("next", "")
     next_page = next_page.replace("\\", "")
+    
     if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
         safe_next_page = next_page
     else:
         safe_next_page = url_for("index")
 
     if request.method == "POST":
+        let_login = True
+        
         username = request.form.get("username")
         password = request.form.get("password")
 
         if not username or not password:
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
-            return redirect(url_for("users.auth.login", next=next_page))
+            let_login = False
+            return redirect(url_for("users.auth.login", next=safe_next_page))
 
         user_doc = mongo.users.find_one({"username": username})
 
         if not user_doc:
+            let_login = False
             flash_message(
                 f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error"
             )
-            return redirect(url_for("users.auth.login", next=next_page))
+            return redirect(url_for("users.auth.login", next=safe_next_page))
 
         user = User.from_db(user_doc)
         if not user.check_password(password):
+            let_login = False
             flash_message("Käyttäjänimi tai salasana on väärin.", "error")
-            return redirect(url_for("users.auth.login", next=next_page))
+            return redirect(url_for("users.auth.login", next=safe_next_page))
 
         if not user.confirmed:
+            let_login = False
             flash_message(
                 "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
             )
             verify_emailer(user.email, username)
-            return redirect(url_for("users.auth.login", next=next_page))
+            return redirect(url_for("users.auth.login", next=safe_next_page))
 
         if user.mfa_enabled and not meow(user, next_page):
-            return redirect(url_for("users.auth.login", next=next_page))
+            let_login = False
+            return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        login_user(user)
-        return redirect(next_page or url_for("index"))
+        
+        if let_login:
+            login_user(user)
+            
+        return redirect(safe_next_page)
 
-    return render_template("users/auth/login.html", next=next_page)
+    return render_template("users/auth/login.html", next=safe_next_page)
 
 
-def meow(user, next_page):
+def meow(user):
     token = request.form.get("2fa_code")
     if not token:
         flash_message("Anna MFA-koodi.", "warning")
-        return redirect(url_for("users.auth.login", next=next_page))
+        return False
 
     if not UserMFA(user._id).verify_token(token):
         flash_message("Väärä MFA-koodi.", "error")
-        return redirect(url_for("users.auth.login", next=next_page))
+        return False
 
     return True
 

@@ -16,6 +16,13 @@ paths:
         - Demonstrations
       summary: Get all approved demonstrations
       description: Fetch a list of upcoming approved demonstrations.
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Search term to filter demonstrations by title, city, tags, or address.
+          schema:
+            type: string
       responses:
         200:
           description: A list of approved demonstrations.
@@ -153,72 +160,185 @@ paths:
         404:
           description: Demonstration not found or not approved.
 
-  /demonstration:
+  /demo/{demo_id}/like:
     post:
       tags:
         - Demonstrations
-      summary: Create a new demonstration
-      description: Submit a new demonstration to the database for approval.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                  example: "New Protest"
-                date:
-                  type: string
-                  example: "08.09.2024"
-                start_time:
-                  type: string
-                  example: "10:00"
-                end_time:
-                  type: string
-                  example: "12:00"
-                topic:
-                  type: string
-                  example: "Climate Action Now"
-                city:
-                  type: string
-                  example: "Helsinki"
-                address:
-                  type: string
-                  example: "City Center"
-                type:
-                  type: string
-                  example: "marssi"
-                route:
-                  type: string
-                  example: "Starting from City Center"
-                organizers:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                        example: "Climate Group"
-                      email:
-                        type: string
-                        example: "contact@climategroup.org"
-                      website:
-                        type: string
-                        example: "https://climategroup.org"
+      summary: Like a demonstration
+      description: Increment the like count for a specific demonstration.
+      parameters:
+        - name: demo_id
+          in: path
+          required: true
+          description: The unique ID of the demonstration.
+          schema:
+            type: string
       responses:
-        201:
-          description: Demonstration created successfully.
+        200:
+          description: Like count updated successfully.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
+                  likes:
+                    type: integer
+                    example: 10
+        404:
+          description: Demonstration not found.
+
+  /demo/{demo_id}/unlike:
+    post:
+      tags:
+        - Demonstrations
+      summary: Unlike a demonstration
+      description: Decrement the like count for a specific demonstration.
+      parameters:
+        - name: demo_id
+          in: path
+          required: true
+          description: The unique ID of the demonstration.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Like count updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                    example: 8
+        404:
+          description: Demonstration not found.
+
+  /demo/{demo_id}/likes:
+    get:
+      tags:
+        - Demonstrations
+      summary: Get like count for a demonstration
+      description: Retrieve the current like count for a specific demonstration.
+      parameters:
+        - name: demo_id
+          in: path
+          required: true
+          description: The unique ID of the demonstration.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Like count retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                    example: 10
+        404:
+          description: Demonstration not found.
+
+  /demo/{demo_id}/stats:
+    get:
+      tags:
+        - Demonstrations
+      summary: Get statistics for a demonstration
+      description: Retrieve statistics for a specific demonstration.
+      parameters:
+        - name: demo_id
+          in: path
+          required: true
+          description: The unique ID of the demonstration.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Statistics retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: object
+                    additionalProperties:
+                      type: string
+        404:
+          description: Demonstration not found.
+
+  /admin/demo/info/{demo_id}:
+    get:
+      tags:
+        - Demonstrations
+      summary: Get detailed information for a demonstration (Admin)
+      description: Retrieve detailed information for a specific demonstration.
+      parameters:
+        - name: demo_id
+          in: path
+          required: true
+          description: The unique ID of the demonstration.
+          schema:
+            type: string
+      responses:
+        200:
+          description: Detailed information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _id:
                     type: string
-                    example: "Mielenosoitus ilmoitettu onnistuneesti!"
-        400:
-          description: Bad request. Validation failed.
-        500:
-          description: Internal server error.
+                    example: "66d05a1b90514a48b5a9f180"
+                  title:
+                    type: string
+                    example: "Kiehumispisteen katujuhla 7.9."
+                  date:
+                    type: string
+                    example: "07.09.2024"
+                  start_time:
+                    type: string
+                    example: "13:00"
+                  end_time:
+                    type: string
+                    example: "21:00"
+                  topic:
+                    type: string
+                    example: "Kansalaistorille kokoonnumme vastarintaan."
+                  facebook:
+                    type: string
+                    example: ""
+                  city:
+                    type: string
+                    example: "Helsinki"
+                  address:
+                    type: string
+                    example: "Kansalaistori"
+                  type:
+                    type: string
+                    example: "marssi"
+                  route:
+                    type: string
+                    example: "Kansalaistori, kulkue kohti VM"
+                  organizers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: "Elokapina"
+                        email:
+                          type: string
+                          example: "info@elokapina.me"
+                        website:
+                          type: string
+                          example: "https://elokapina.fi/"
+                  approved:
+                    type: boolean
+                    example: true
+        404:
+          description: Demonstration not found.

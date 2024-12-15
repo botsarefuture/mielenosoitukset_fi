@@ -34,6 +34,15 @@ def api_exception_handler(error):
 @api_bp.route("/demonstrations", methods=["GET"])
 def get_demonstrations():
     search_query = request.args.get("search", "").lower()
+    city_query = request.args.get("city", "").lower()
+    title_query = request.args.get("title", "").lower()
+    tag_query = request.args.get("tag", "").lower()
+    approved_query = request.args.get("approved", "").lower()
+    recurring_query = request.args.get("recurring", "").lower()
+    in_past_query = request.args.get("in_past", "").lower()
+    
+    print(in_past_query)
+    
     today = datetime.now()
 
     demonstrations = mongo.demonstrations.find({"approved": True})
@@ -41,13 +50,15 @@ def get_demonstrations():
 
     for demo in demonstrations:
         demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
-        if demo_date >= today:
+        if demo_date >= today or in_past_query == "true":
             demo = stringify_object_ids(demo)  # Convert ObjectId to string
             if (
-                search_query in demo["title"].lower()
-                or search_query in demo["city"].lower()
-                or search_query in demo["tags"].lower()
-                or search_query in demo["address"].lower()
+                (search_query in demo["title"].lower() or search_query == "")
+                and (city_query in demo["city"].lower() or city_query == "")
+                and (title_query in demo["title"].lower() or title_query == "")
+                and (tag_query in [tag.lower() for tag in demo["tags"]] or tag_query == "")
+                and (approved_query == "" or approved_query == str(demo["approved"]))
+                and (recurring_query == "" or recurring_query == str(demo["recurring"]))
             ):
                 filtered_demonstrations.append(demo)
 

@@ -176,10 +176,12 @@ def mfa_check():
         user = mongo.users.find_one({"username": request.form.get("username")})
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
-            return {"enabled": user.mfa_enabled, "valid": False}, "application/json"
+            return {"enabled": False, "valid": False}, "application/json" # Do not give 
+        # user 
 
         else:
             return {"enabled": user.mfa_enabled, "valid": True}, "application/json"
+        
     except Exception as e:
         return {"enabled": False, "valid": False}, "application/json"
 

@@ -4,7 +4,7 @@ botocore==1.35.70
 Flask==3.1.0
 flask_babel==4.0.0
 Flask_Cors==5.0.0
-Flask_Limiter==3.8.0
+Flask_Limiter==3.9.2
 Flask_Login==0.6.3
 itsdangerous==2.2.0
 Jinja2==3.1.4

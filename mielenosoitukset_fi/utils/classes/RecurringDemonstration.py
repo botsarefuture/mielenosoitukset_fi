@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional
 from bson import ObjectId
 from dateutil.relativedelta import relativedelta
 
+from mielenosoitukset_fi.database_manager import DatabaseManager
+
 from .Demonstration import Demonstration
 from .RepeatSchedule import RepeatSchedule
 from .Organizer import Organizer
@@ -265,3 +267,24 @@ class RecurringDemonstration(Demonstration):
             str: A string containing the title, start time, and end time of the demonstration.
         """
         return f"<RecurringDemonstration(title={self.title}, start_time={self.start_time}, end_time={self.end_time})>"
+
+    @classmethod
+    def from_id(cls, _id: str) -> "RecurringDemonstration":
+        """Create an instance of RecurringDemonstration from an ObjectId string.
+
+        Parameters
+        ----------
+        _id : str
+            The ObjectId string to create the instance from.
+
+        Returns
+        -------
+        RecurringDemonstration
+            An instance of the RecurringDemonstration class.
+        """
+        db_man = DatabaseManager.get_instance()
+        mongo = db_man.get_db()
+        
+        data = mongo.recu_demos.find_one({"_id": ObjectId(_id)})
+        return cls.from_dict(data)
+        return cls(_id=_id)

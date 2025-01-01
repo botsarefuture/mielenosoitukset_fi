@@ -111,8 +111,6 @@
     display: block;
   }
 
-  /* Element | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
-
   .display-all {
     display: block;
     margin-top: 0.5em;
@@ -149,12 +147,8 @@
     <i class="fa fa-question-circle"></i> Ilmoita virheestä
   </button>
   <!-- IMAGE -->
-  {% if demo['img'] %}
-  {% if demo['img'] !=
-  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
-  %}
+  {% if demo['img'] and demo['img'] != "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z" %}
   <img src="{{ demo['img'] }}" alt="Event Image" />
-  {% endif %}
   {% endif %}
 
   <!-- NAME OR TITLE -->
@@ -283,18 +277,40 @@
     <div id="infocontainer">
       <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
       <div id="demo-details">
-        <!-- Demo details will be injected here by JavaScript -->
+        <p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
+        <p><strong>{{ _('Alkaa klo:') }}</strong><br>{{ demo['start_time'] }}</p>
+        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>
+        <p>
+          <strong>
+            {% if demo['type'] == 'MARCH' %}
+              {{ _('Alkupaikka:') }}
+            {% else %}
+              {{ _('Sijainti:') }}
+            {% endif %}
+          </strong>
+          <br>{{ demo['address'] }}, {{ demo['city'] }}
+        </p>
+        {% if demo['route'] and demo['route'] != 'None' %}
+        <div class="route">
+          <p><strong>{{ _('Marssin reitti:') }}</strong></p>
+          <p>{{ demo['route'] }}</p>
+        </div>
+        {% endif %}
+        {% if demo['facebook'] %}
+        <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">
+          {{ _('Facebook-tapahtuma') }} <i class="fas fa-external-link-alt"></i>
+        </a>
+        {% endif %}
       </div>
 
       {% if demo["recurring"] and demo['repeat_schedule'] %}
       <div class="repeating-alert">
-        <strong>Tämä mielenosoitus on toistuva.</strong><br>
+        <strong>Mielenosoitus toistuu säännöllisesti</strong><br>
         {{ generate_demo_sentence(demo) }}
-
         <br>
-        Klikkaa alla olevaa nappia nähdäksesi kaikki tämän mielenosoituksen sisarukset
-        <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all"
-          style="display: block; margin-top: 0.5em;">Näytä kaikki sisarukset</a>
+        <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all">
+            <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
+        </a>
       </div>
       {% endif %}
 
@@ -303,11 +319,33 @@
     <div id="orginfo">
       <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>
       <div class="organizers-list" id="organizers-list">
-        <!-- Organizers will be injected here by JavaScript -->
+        {% if demo['organizers'] and demo['organizers']|length > 0 %}
+        {% for org in demo['organizers'] %}
+        <div class="organizer-info">
+          <p><strong>{{ _('Nimi:') }}</strong><br />{{ org.name }}</p>
+          {% if org.organization_id and org.organization_id != "None" %}
+            <a href="{{ org.url if org.url else '#' }}" class="org-profile-link">
+              {{ _('Mielenosoitukset.fi -profiili') }}
+            </a>
+          {% endif %}
+          {% if org.website %}
+          <p>
+            <strong>{{ _('Verkkosivut:') }}</strong><br />
+            <a href="{{ org.website }}" target="_blank" class="org-website">{{ org.website }}</a>
+          </p>
+          {% endif %}
+          {% if org.email %}
+          <p>
+            <strong>{{ _('Sähköpostiosoite:') }}</strong><br />
+            <a href="mailto:{{ org.email }}" class="org-email">{{ org.email }}</a>
+          </p>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <p id="no-organizers">{{ _('Ei järjestäjätietoja saatavilla.') }}</p>
+        {% endif %}
       </div>
-      <p id="no-organizers" style="display: none">
-        {{ _('Ei järjestäjätietoja saatavilla.') }}
-      </p>
     </div>
 
 
@@ -389,94 +427,11 @@
 
   setInterval(updateCountdown, 1000);
 
-  // Populates the organizers' information in the HTML
-  function populateOrganizers(organizers) {
-    const organizersListDiv = document.getElementById("organizers-list");
-    const noOrganizersText = document.getElementById("no-organizers");
-
-    if (organizers && organizers.length > 0) {
-      organizers.forEach((org) => {
-        const organizerDiv = document.createElement("div");
-        organizerDiv.classList.add("organizer-info");
-
-        const nameParagraph = document.createElement("p");
-        nameParagraph.innerHTML = `<strong>{{ _('Nimi:') }}</strong><br />${org.name}`;
-        organizerDiv.appendChild(nameParagraph);
-
-        if (org.organization_id && org.organization_id !== "None") {
-          const profileLink = document.createElement("a");
-          profileLink.href = org.url || '#';
-          profileLink.classList.add("org-profile-link");
-          profileLink.innerText = "{{ _('Mielenosoitukset.fi -profiili') }}";
-          if (org.url) {
-            organizerDiv.appendChild(profileLink);
-          }
-        }
-
-        if (org.website) {
-          const websiteLink = document.createElement("a");
-          websiteLink.href = org.website;
-          websiteLink.target = "_blank";
-          websiteLink.classList.add("org-website");
-          websiteLink.innerText = org.website;
-          const websiteParagraph = document.createElement("p");
-          websiteParagraph.innerHTML = `<strong>{{ _('Verkkosivut:') }}</strong><br />`;
-          websiteParagraph.appendChild(websiteLink);
-          organizerDiv.appendChild(websiteParagraph);
-        }
-
-        if (org.email) {
-          const emailLink = document.createElement("a");
-          emailLink.href = `mailto:${org.email}`;
-          emailLink.classList.add("org-email");
-          emailLink.innerText = org.email;
-          const emailParagraph = document.createElement("p");
-          emailParagraph.innerHTML = `<strong>{{ _('Sähköpostiosoite:') }}</strong><br />`;
-          emailParagraph.appendChild(emailLink);
-          organizerDiv.appendChild(emailParagraph);
-        }
-
-        organizersListDiv.appendChild(organizerDiv);
-      });
-    } else {
-      noOrganizersText.style.display = "block";
-    }
-  }
-
-  // Populates the demo details in the HTML
-  function populateDemoDetails(demo) {
-    const demoDetailsDiv = document.getElementById("demo-details");
-    let detailsHTML = `
-          <p><strong>{{ _('Päivämäärä:') }}</strong><br />${demo.date}</p>
-          <p><strong>{{ _('Alkaa klo:') }}</strong><br />${demo.start_time}</p>
-          <p><strong>{{ _('Päättyy klo:') }}</strong><br />${demo.end_time}</p>
-          <p><strong>${demo.type === "MARCH" ? "{{ _('Alkupaikka:') }}" : "{{ _('Sijainti:') }}"}</strong><br />${demo.address}, ${demo.city}</p>
-      `;
-
-    if (demo.route && demo.route !== "None") {
-      detailsHTML += `
-              <div class="route">
-                  <p><strong>{{ _('Marssin reitti:') }}</strong></p>
-                  <p>${demo.route}</p>
-              </div>`;
-    }
-
-    if (demo.facebook) {
-      detailsHTML += `<a class="action-button facebook-button" href="${demo.facebook}" target="_blank" class="facebook-button">{{ _('Facebook-tapahtuma') }} <i class="fas fa-external-link-alt"></i></a>`;
-    }
-
-    demoDetailsDiv.innerHTML = detailsHTML;
-  }
-
   // Toggle display for toolbox buttons
   function toggleToolbox() {
     const toolboxButtons = document.getElementById("toolbox-buttons");
     toolboxButtons.style.display = toolboxButtons.style.display === 'none' ? 'flex' : 'none';
   }
-
-  // Initial population calls
-  populateOrganizers(data.demo.organizers);
-  populateDemoDetails(data.demo);
 </script>
 <script>
   let demoId = "{{ demo['_id'] }}";

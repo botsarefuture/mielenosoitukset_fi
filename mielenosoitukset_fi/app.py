@@ -22,6 +22,8 @@ from flask_autosec import FlaskAutoSec
 
 from mielenosoitukset_fi.utils import VERSION
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 import os
 
 # if env var forcerun
@@ -69,6 +71,9 @@ def create_app() -> Flask:
         )
         logger.error(f"Error initializing FlaskAutoSec: {e}")
         logger.info("Using Flask-Limiter instead.")
+    
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
+        
 
     # Locale selector function
     def get_locale():

@@ -177,7 +177,6 @@ def mfa_check():
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return {"enabled": False, "valid": False}, "application/json" # Do not give 
-        # user 
 
         else:
             return {"enabled": user.mfa_enabled, "valid": True}, "application/json"

@@ -9,13 +9,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <style>
     .info-box {
-	background: var(--yellow);
-	color: var(--black);
-	padding: 1em;
-	border-radius: 0.5em;
-	text-align: center;
-	margin-bottom: 2em;
-	display: block;
+    background: var(--yellow);
+    color: var(--black);
+    padding: 1em;
+    border-radius: 0.5em;
+    text-align: center;
+    margin-bottom: 2em;
+    display: block;
 }
 </style>
 {% endblock %}
@@ -24,7 +24,9 @@
 {% import 'macros.html' as macros %}
 
 <div class="container-main-content">
-    <h1 class="admin-section-title">{{ _('Sisarusmielenosoitukset') }}</h1>
+    <h1 class="admin-section-title">{{ parent_demo.title }}
+
+    </h1>
     <div class="info-box">
         <p>{{ _('Tässä on lista muista mielenosoituksista, jotka ovat osa samaa toistumoa.') }}</p>
     </div>
@@ -35,7 +37,7 @@
                 {{ macros.demo_card(demo) }}
             {% endfor %}
         {% else %}
-            <div class="grid-item no-results">{{ _('Ei löytynyt sisarusmielenosoituksia.') }}</div>
+            <div class="grid-item no-results">{{ _('Ei löytynyt toistumomielenosoituksia.') }}</div>
         {% endif %}
     </div>
 </div>

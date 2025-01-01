@@ -19,7 +19,7 @@ from flask import (
 from flask_login import current_user
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.s3 import upload_image
-from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization
+from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization, RecurringDemonstration
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.variables import CITY_LIST
@@ -464,6 +464,9 @@ def init_routes(app):
         result = demonstrations_collection.find(
             {"parent": ObjectId(parent), "hide": False}
         )
+        
+        # also get the parent from repeated demonstrations
+        parent_demo = RecurringDemonstration.from_id(parent)
 
         """
         List all sibling demonstrations of a recurring demonstration.
@@ -472,7 +475,7 @@ def init_routes(app):
         for demo in result:
             siblings.append(Demonstration.from_dict(demo))
         siblings.sort(key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date())
-        return render_template("siblings.html", siblings=siblings)
+        return render_template("siblings.html", siblings=siblings, parent_demo=parent_demo)
 
     @app.route("/info")
     def info():

@@ -72,7 +72,7 @@ def create_app() -> Flask:
         logger.error(f"Error initializing FlaskAutoSec: {e}")
         logger.info("Using Flask-Limiter instead.")
     
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         
 
     # Locale selector function

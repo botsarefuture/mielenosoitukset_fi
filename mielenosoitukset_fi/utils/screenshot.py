@@ -5,7 +5,6 @@ import tempfile
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils import _CUR_DIR
-from mielenosoitukset_fi.utils.screenshot import create_screenshot
 from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
 
 # Set XDG_CACHE_HOME to a writable directory

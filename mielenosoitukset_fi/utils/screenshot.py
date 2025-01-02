@@ -3,7 +3,7 @@ import imgkit
 import os
 
 # Specify the path to the wkhtmltoimage binary
-config = imgkit.config(wkhtmltoimage='/bin/wkhtmltoimage')
+config = imgkit.config()
 
 def create_screenshot(demo_data, output_path="../static/demo_preview/"):
     """

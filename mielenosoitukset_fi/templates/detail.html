@@ -19,10 +19,12 @@
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
 <meta property="og:locale" content="fi_FI" />
-<meta property="og:determiner" content="the" />
 <meta property="og:updated_time"
   content="{{ demo['updated_time'] if demo['updated_time'] else '2025-01-01T00:00:00' }}" />
 <meta property="og:see_also" content="{{ demo['related_links'] if demo['related_links'] else '' }}" />
+<meta property="og:event:start_time" content="{{ demo['start_time'] }}" />
+<meta property="og:event:end_time" content="{{ demo['end_time'] }}" />
+<meta property="og:event:location" content="{{ demo['address'] }}, {{ demo['city'] }}" />
 
 <!-- Twitter Card Meta Tags -->
 <meta name="twitter:card" content="summary_large_image" />
@@ -30,19 +32,24 @@
 <meta name="twitter:description"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
 <meta name="twitter:image"
-content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
+  content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta name="twitter:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta name="twitter:site" content="@Mielenosoitukset" />
 <meta name="twitter:creator" content="@Mielenosoitukset" />
 <meta name="twitter:image:alt"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen kuva' }}" />
+<meta name="twitter:label1" content="Päivämäärä" />
+<meta name="twitter:data1" content="{{ demo['date'] }}" />
+<meta name="twitter:label2" content="Paikka" />
+<meta name="twitter:data2" content="{{ demo['city'] }}" />
 
 <!-- Facebook Open Graph App ID -->
 <meta property="fb:app_id" content="{{ demo['fb_app_id'] if demo['fb_app_id'] else '' }}" />
+<meta property="fb:pages" content="{{ demo['fb_page_id'] if demo['fb_page_id'] else '' }}" />
 
 <!-- Additional Social Media Meta Tags -->
-<meta property="article:author" content="{{ demo['organizers'][0]["name"] if demo['organizers']
-  else 'Tuntematon kirjoittaja' }}" />
+<meta property="article:author"
+  content="{{ demo['organizers'][0]['name'] if demo['organizers'] else 'Tuntematon kirjoittaja' }}" />
 <meta property="article:section" content="{{ demo['section'] if demo['section'] else 'Tapahtumat' }}" />
 <meta property="article:tag" content="{{ demo['tags'] if demo['tags'] else 'mielenosoitus, tapahtuma' }}" />
 
@@ -71,8 +78,8 @@ content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static'
   "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
   "organizer": {
     "@type": "Organization",
-    "name": "{{ demo['organizers'][0].name if demo['organizers'] and demo['organizers'][0].name else 'Tuntematon' }}",
-    "url": "{{ url_for('org', org_id=demo['organizers'][0].organization_id) if demo['organizers'] and demo['organizers'][0].organization_id else '#' }}"
+    "name": "{{ demo['organizers'][0]['name'] if demo['organizers'] and demo['organizers'][0]['name'] else 'Tuntematon' }}",
+    "url": "{{ url_for('org', org_id=demo['organizers'][0]['organization_id']) if demo['organizers'] and demo['organizers'][0]['organization_id'] else '#' }}"
   },
   "offers": {
     "@type": "Offer",
@@ -147,7 +154,9 @@ content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static'
     <i class="fa fa-question-circle"></i> Ilmoita virheestä
   </button>
   <!-- IMAGE -->
-  {% if demo['img'] and demo['img'] != "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z" %}
+  {% if demo['img'] and demo['img'] !=
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
+  %}
   <img src="{{ demo['img'] }}" alt="Event Image" />
   {% endif %}
 
@@ -283,9 +292,9 @@ content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static'
         <p>
           <strong>
             {% if demo['type'] == 'MARCH' %}
-              {{ _('Alkupaikka:') }}
+            {{ _('Alkupaikka:') }}
             {% else %}
-              {{ _('Sijainti:') }}
+            {{ _('Sijainti:') }}
             {% endif %}
           </strong>
           <br>{{ demo['address'] }}, {{ demo['city'] }}
@@ -309,7 +318,7 @@ content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static'
         {{ generate_demo_sentence(demo) }}
         <br>
         <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all">
-            <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
+          <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
         </a>
       </div>
       {% endif %}
@@ -324,9 +333,9 @@ content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static'
         <div class="organizer-info">
           <p><strong>{{ _('Nimi:') }}</strong><br />{{ org.name }}</p>
           {% if org.organization_id and org.organization_id != "None" %}
-            <a href="{{ org.url if org.url else '#' }}" class="org-profile-link">
-              {{ _('Mielenosoitukset.fi -profiili') }}
-            </a>
+          <a href="{{ org.url if org.url else '#' }}" class="org-profile-link">
+            {{ _('Mielenosoitukset.fi -profiili') }}
+          </a>
           {% endif %}
           {% if org.website %}
           <p>

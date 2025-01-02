@@ -282,7 +282,7 @@ class Demonstration(BaseModel):
 
         self.preview_image = preview_image
         
-        if self.preview_image is not None and not self.preview_image.startswith("/static/demo_preview/"):
+        if self.preview_image is not None and self.preview_image.startswith("/static/demo_preview/"):
             # add https://mielenosoitukset.fi/ to the beginning of the URL
             self.preview_image = "https://mielenosoitukset.fi" + self.preview_image
             self.save_flag = True # Save the demonstration to update the preview image

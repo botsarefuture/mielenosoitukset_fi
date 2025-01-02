@@ -282,6 +282,10 @@ class Demonstration(BaseModel):
 
         self.preview_image = preview_image
         
+        def build_url(self):
+            return '/static/demo_preview/' + str(self._id) + '.png'
+    
+            
         if self.preview_image is not None and self.preview_image.startswith("/static/demo_preview/"):
             # add https://mielenosoitukset.fi/ to the beginning of the URL
             self.preview_image = "https://mielenosoitukset.fi" + self.preview_image

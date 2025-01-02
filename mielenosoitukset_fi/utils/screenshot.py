@@ -1,3 +1,4 @@
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 import argparse
 import os
 import tempfile
@@ -46,8 +47,12 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
                 raise ValueError("Invalid demonstration data provided.")
         
         try:
-            with current_app.app_context():
-                html_content = render_template("preview.html", demo=demo_data)
+            env = Environment(
+            loader=FileSystemLoader(os.path.join(_CUR_DIR, 'templates')),
+            autoescape=select_autoescape(['html', 'xml'])
+            )
+            template = env.get_template("preview.html")
+            html_content = template.render(demo=demo_data)
         except Exception as e:
             logger.error(f"Failed to render HTML content: {e}")
             return None

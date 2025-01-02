@@ -48,7 +48,7 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
         
         try:
             env = Environment(
-            loader=FileSystemLoader(os.path.join(_CUR_DIR, 'templates')),
+            loader=FileSystemLoader(os.path.join(_CUR_DIR, '../templates')),
             autoescape=select_autoescape(['html', 'xml'])
             )
             template = env.get_template("preview.html")

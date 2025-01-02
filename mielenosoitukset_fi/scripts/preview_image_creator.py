@@ -40,7 +40,7 @@ def run():
         if demo.preview_image: # If the demonstration does not have a preview image
             continue
             
-        result = trigger_screenshot(demo._id) # Trigger the screenshot creation for the demonstration
+        result = trigger_screenshot(demo._id, True) # Trigger the screenshot creation for the demonstration
         if result:
             logger.info(f"Screenshot created for demonstration: {demo._id}")
         

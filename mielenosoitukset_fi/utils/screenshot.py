@@ -69,7 +69,7 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
     
 import threading
 
-def trigger_screenshot(demo_id):
+def trigger_screenshot(demo_id, wait=False):
     """
     Trigger the creation of a screenshot for a given demonstration ID.
 
@@ -103,8 +103,16 @@ def trigger_screenshot(demo_id):
             return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
 
     try:
+        if wait:
+            with current_app.app_context():
+                create_screenshot_thread(demo_id)
+                return True
+            
         thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
         thread.start()
+        if wait:
+            thread.join()
+
         return True
     
     except Exception as e:

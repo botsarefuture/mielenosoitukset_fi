@@ -81,6 +81,8 @@ class Demonstration(BaseModel):
         Whether the event is in the past. Defaults to False.
     preview_image : str, optional
         URL of the preview image for the event. Defaults to None.
+    merged_into : ObjectId, optional
+        ID of the demonstration this one is merged into. Defaults to None.
 
     Notes
     -----
@@ -135,6 +137,7 @@ class Demonstration(BaseModel):
         aliases=None,
         in_past=False,
         preview_image: str = None,
+        merged_into: ObjectId = None,  # Added parameter
     ):
         """
         Initialize a new demonstration event.
@@ -202,6 +205,8 @@ class Demonstration(BaseModel):
             Whether the event is in the past. Defaults to False.
         preview_image : str, optional
             URL of the preview image for the event. Defaults to None.
+        merged_into : ObjectId, optional
+            ID of the demonstration this one is merged into. Defaults to None.
 
         Notes
         -----
@@ -276,6 +281,7 @@ class Demonstration(BaseModel):
         self.alias_fix()
 
         self.preview_image = preview_image
+        self.merged_into = merged_into  # Assign new parameter
 
         if self.save_flag:  # Save the demonstration if the save_flag is set
             self.save()  # Save the demonstration
@@ -435,6 +441,7 @@ class Demonstration(BaseModel):
         ]
         data["aliases"] = [str(alias) for alias in self.aliases]
         data["preview_image"] = self.preview_image
+        data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         return data
 
     def validate_fields(self, title, date, start_time, city, address):

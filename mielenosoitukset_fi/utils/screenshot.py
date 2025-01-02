@@ -98,9 +98,10 @@ def trigger_screenshot(demo_id, wait=False):
         screenshot_path = create_screenshot(demo)
         if screenshot_path is None:
             with current_app.app_context():
-                return url_for("static", filename="img/e.png")
+                return None
+            
         with current_app.app_context():
-            return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
+            return '/static/demo_preview/' + str(demo_id) + '.png'
 
     try:
         if wait:

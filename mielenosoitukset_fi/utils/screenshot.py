@@ -1,4 +1,4 @@
-from flask import render_template, url_for
+from flask import current_app, render_template, url_for
 import imgkit
 import os
 import tempfile
@@ -37,9 +37,11 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
                 demo_data = demo_data.to_dict(True)
             else:
                 raise ValueError("Invalid demonstration data provided.")
-        
-        html_content = render_template("preview.html", demo=demo_data)
+        with current_app.app_context():
+            html_content = render_template("preview.html", demo=demo_data)
+                    
         filename = f"{demo_data['_id']}.png"
+        
         if os.path.exists(os.path.join(output_path, filename)):
             return f"/static/demo_preview/{filename}"
         
@@ -78,8 +80,8 @@ def trigger_screenshot(demo_id):
 
     Returns
     -------
-    Response
-        Redirects to the screenshot URL if successful, otherwise to an error image.
+    bool
+        True if the thread starts successfully, False otherwise.
     """
     def create_screenshot_thread(demo_id):
         _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")

@@ -40,7 +40,7 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
         filename = f"{demo_data['_id']}.png"
         full_path = os.path.join(output_path, filename)
         
-        _return_path = full_path.replace(base_path, "").replace("../", "/")
+        _return_path = full_path.replace("/var/www/mielensotukset_fi/mielenosoitukset_fi/", "").replace("../", "/")
         
         try:
             success = imgkit.from_string(html_content, full_path, config=config)

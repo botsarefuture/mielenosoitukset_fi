@@ -28,6 +28,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 import os
 
+from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
+
 # Initialize Babel
 babel = Babel()
 
@@ -133,6 +135,7 @@ def create_app() -> Flask:
             return f"Pong from {VERSION}"
         
     @app.route("/screenshot/<demo_id>")
+    @depracated_endpoint
     def screenshot(demo_id):
         # check if the screenshot is already created
         from mielenosoitukset_fi.utils import _CUR_DIR

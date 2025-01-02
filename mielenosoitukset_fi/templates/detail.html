@@ -14,7 +14,7 @@
 <meta property="og:description"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
 <meta property="og:image"
-  content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_preview/' + demo['_id'], _external=True) }}" />
+  content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
@@ -30,7 +30,7 @@
 <meta name="twitter:description"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
 <meta name="twitter:image"
-content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_preview/' + demo['_id'], _external=True) }}" />
+content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta name="twitter:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta name="twitter:site" content="@Mielenosoitukset" />
 <meta name="twitter:creator" content="@Mielenosoitukset" />

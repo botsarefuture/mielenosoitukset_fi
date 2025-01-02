@@ -30,7 +30,12 @@ def create_screenshot(demo_data, output_path="../static/demo_preview/"):
         output_path = os.path.join(base_path, output_path)
         os.makedirs(output_path, exist_ok=True)
         
-        demo_data = demo_data.to_dict(True)
+        if type(demo_data) != dict:
+            if hasattr(demo_data, "to_dict"):
+                demo_data = demo_data.to_dict(True)
+            else:
+                raise ValueError("Invalid demonstration data provided.")
+        
         html_content = render_template("preview.html", demo=demo_data)
         filename = f"{demo_data['_id']}.png"
         full_path = os.path.join(output_path, filename)

@@ -16,6 +16,7 @@ from mielenosoitukset_fi.scripts.CL import main as cl_main
 
 from mielenosoitukset_fi.utils.analytics import prep
 import sys
+import os
 from mielenosoitukset_fi.AM import am_bp
 
 from flask_autosec import FlaskAutoSec
@@ -153,7 +154,9 @@ def create_app() -> Flask:
     @app.route("/screenshot/<demo_id>")
     def screenshot(demo_id):
         # check if the screenshot is already created
-        if os.path.exists(f"static/demo_preview/{demo_id}.png"):
+        from mielenosoitukset_fi.utils import _CUR_DIR
+        _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
+        if os.path.exists(_path):
             return redirect(f"/static/demo_preview/{demo_id}.png")
         
         from mielenosoitukset_fi.utils.screenshot import create_screenshot

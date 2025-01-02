@@ -100,7 +100,7 @@ def trigger_screenshot(demo_id):
 
     thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
     thread.start()
-    thread.join()
+
 if __name__ == "__main__":
     demo_data = {
         "_id": "demo_id",

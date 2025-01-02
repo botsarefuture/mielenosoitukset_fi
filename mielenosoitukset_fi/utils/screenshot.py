@@ -22,15 +22,15 @@ def create_screenshot(demo_data, output_path="../static/demo_preview/"):
 
     Returns
     -------
-    str
-        Full path of the created PNG file.
+    str or None
+        Full path of the created PNG file, or None if creation failed.
     """
     try:
         base_path = os.path.abspath(os.path.dirname(__file__))
         output_path = os.path.join(base_path, output_path)
         os.makedirs(output_path, exist_ok=True)
         
-        if type(demo_data) != dict:
+        if not isinstance(demo_data, dict):
             if hasattr(demo_data, "to_dict"):
                 demo_data = demo_data.to_dict(True)
             else:
@@ -41,14 +41,24 @@ def create_screenshot(demo_data, output_path="../static/demo_preview/"):
         full_path = os.path.join(output_path, filename)
         
         _return_path = full_path.replace(base_path, "").replace("../", "/")
-
-        imgkit.from_string(html_content, full_path, config=config)
-        logger.info(f"Screenshot created at: {full_path}")
-        return _return_path
+        
+        try:
+            success = imgkit.from_string(html_content, full_path, config=config)
+            if not success:
+                logger.error("Failed to create screenshot.")
+                return None
+        except Exception as e:
+            logger.error(f"Failed to create screenshot: {e}")
+            return None
+        finally:
+            if success:
+                logger.info(f"Screenshot created at: {full_path}")
+            return _return_path
+        
     except Exception as e:
         logger.error(f"Failed to create screenshot: {e}")
-        raise
-
+        return None
+    
 if __name__ == "__main__":
     demo_data = {
         "title": "Demo Title",

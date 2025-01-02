@@ -168,6 +168,8 @@ def create_app() -> Flask:
         if screenshot_path is None:
             return redirect(url_for("static", filename="img/e.png"))
         return redirect(url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/")))
+    
+    
 
     @app.context_processor
     def utility_processor():

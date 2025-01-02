@@ -1,9 +1,12 @@
-from flask import render_template
+from flask import render_template, url_for
 import imgkit
 import os
 import tempfile
 
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils import _CUR_DIR
+from mielenosoitukset_fi.utils.screenshot import create_screenshot
+from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
 
 # Set XDG_CACHE_HOME to a writable directory
 os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
@@ -62,6 +65,36 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
     except Exception as e:
         logger.error(f"Failed to create screenshot: {e}")
         return None
+    
+def trigger_screenshot(demo_id):
+    """
+    Trigger the creation of a screenshot for a given demonstration ID.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration.
+
+    Returns
+    -------
+    Response
+        Redirects to the screenshot URL if successful, otherwise to an error image.
+    """
+    _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
+    if os.path.exists(_path):
+        return f"/static/demo_preview/{demo_id}.png"
+    
+    from DatabaseManager import DatabaseManager
+    db_man = DatabaseManager.get_instance()
+    mongo = db_man.get_db()
+    from bson import ObjectId
+    
+    data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo = Demonstration.from_dict(data)
+    screenshot_path = create_screenshot(demo)
+    if screenshot_path is None:
+        return url_for("static", filename="img/e.png")
+    return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
     
 if __name__ == "__main__":
     demo_data = {

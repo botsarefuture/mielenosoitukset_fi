@@ -27,6 +27,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import permission_required
+from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 
@@ -409,6 +410,7 @@ def init_routes(app):
         log_demo_view(
             demo_id, current_user._id if current_user.is_authenticated else None
         )
+        trigger_screenshot(demo_id)
         return render_template("detail.html", demo=demo)
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])

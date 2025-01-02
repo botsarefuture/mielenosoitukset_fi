@@ -28,8 +28,6 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
         Full path of the created PNG file, or None if creation failed.
     """
     try:
-        #base_path = os.path.abspath(os.path.dirname(__file__))
-        #output_path = os.path.join(base_path, output_path)
         os.makedirs(output_path, exist_ok=True)
         
         if not isinstance(demo_data, dict):
@@ -42,7 +40,7 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
         filename = f"{demo_data['_id']}.png"
         full_path = os.path.join(output_path, filename)
         
-        _return_path = full_path.replace("/var/www/mielensotukset_fi/mielenosoitukset_fi/", "").replace("../", "/")
+        _return_path = full_path.replace("/var/www/mielenosoitukset_fi/mielenosoitukset_fi/", "").replace("../", "/")
         
         try:
             success = imgkit.from_string(html_content, full_path, config=config)
@@ -54,7 +52,6 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
             logger.error(f"Failed to create screenshot: {e}")
             return None
 
-
         if success:
             logger.info(f"Screenshot created at: {full_path}")
         return _return_path
@@ -65,6 +62,7 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
     
 if __name__ == "__main__":
     demo_data = {
+        "_id": "demo_id",
         "title": "Demo Title",
         "date": "2022-12-31",
         "location": "Demo Location",

@@ -1,4 +1,4 @@
-from flask import Flask, request, session, g
+from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
 from flask_login import LoginManager
 from bson.objectid import ObjectId
@@ -149,6 +149,20 @@ def create_app() -> Flask:
         @app.route("/ping")
         def ping():
             return f"Pong from {VERSION}"
+        
+    @app.route("/screenshot/<demo_id>")
+    def screenshot(demo_id):
+        # check if the screenshot is already created
+        if os.path.exists(f"static/demo_preview/{demo_id}.png"):
+            return redirect(f"/static/demo_preview/{demo_id}.png")
+        
+        from mielenosoitukset_fi.utils.screenshot import create_screenshot
+        from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
+        data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        demo = Demonstration.from_dict(data)
+        screenshot_path = create_screenshot(demo)
+        print(screenshot_path)
+        return redirect(url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/")))
 
     @app.context_processor
     def utility_processor():

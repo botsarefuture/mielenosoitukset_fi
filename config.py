@@ -101,7 +101,7 @@ class Config:
     # Flask Configuration
     SECRET_KEY = config.get("SECRET_KEY", "secret_key")
     PORT = config.get("PORT", 8000)
-    DEBUG = config.get("DEBUG", False)
+    DEBUG = config.get("DEBUG", True)
 
     # S3 Configuration
     S3_CONFIG = config.get("S3", {})

@@ -1,7 +1,9 @@
-from flask import current_app, render_template, url_for
-import imgkit
+import argparse
 import os
 import tempfile
+import threading
+from flask import current_app, has_app_context, render_template, url_for
+import imgkit
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils import _CUR_DIR
@@ -32,13 +34,23 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
     try:
         os.makedirs(output_path, exist_ok=True)
         
+        if not has_app_context():
+            raise ValueError("No Flask application context found.")
+        
+            
+        
         if not isinstance(demo_data, dict):
             if hasattr(demo_data, "to_dict"):
                 demo_data = demo_data.to_dict(True)
             else:
                 raise ValueError("Invalid demonstration data provided.")
-        with current_app.app_context():
-            html_content = render_template("preview.html", demo=demo_data)
+        
+        try:
+            with current_app.app_context():
+                html_content = render_template("preview.html", demo=demo_data)
+        except Exception as e:
+            logger.error(f"Failed to render HTML content: {e}")
+            return None
                     
         filename = f"{demo_data['_id']}.png"
         
@@ -66,8 +78,6 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
     except Exception as e:
         logger.error(f"Failed to create screenshot: {e}")
         return None
-    
-import threading
 
 def trigger_screenshot(demo_id, wait=False):
     """
@@ -95,7 +105,8 @@ def trigger_screenshot(demo_id, wait=False):
         
         data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
         demo = Demonstration.from_dict(data)
-        screenshot_path = create_screenshot(demo)
+        with current_app.app_context():
+            screenshot_path = create_screenshot(demo)
         if screenshot_path is None:
             with current_app.app_context():
                 return None
@@ -104,16 +115,10 @@ def trigger_screenshot(demo_id, wait=False):
             return '/static/demo_preview/' + str(demo_id) + '.png'
 
     try:
-        if wait:
-            with current_app.app_context():
-                create_screenshot_thread(demo_id)
-                return True
-            
-        thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
-        thread.start()
-        if wait:
-            thread.join()
-
+        with current_app.app_context():
+            create_screenshot_thread(demo_id)
+            return True
+        
         return True
     
     except Exception as e:
@@ -121,18 +126,18 @@ def trigger_screenshot(demo_id, wait=False):
         return False
     
     return True
-    
+
+def main():
+    parser = argparse.ArgumentParser(description="Create a screenshot for a demonstration.")
+    parser.add_argument("demo_id", type=str, help="The ID of the demonstration.")
+    parser.add_argument("--wait", action="store_true", help="Wait for the screenshot to be created.")
+    args = parser.parse_args()
+
+    success = trigger_screenshot(args.demo_id, args.wait)
+    if success:
+        print("Screenshot creation triggered successfully.")
+    else:
+        print("Failed to trigger screenshot creation.")
 
 if __name__ == "__main__":
-    demo_data = {
-        "_id": "demo_id",
-        "title": "Demo Title",
-        "date": "2022-12-31",
-        "location": "Demo Location",
-        "description": "This is a demonstration description.",
-    }
-    try:
-        screenshot_path = create_screenshot(demo_data)
-        print(f"Screenshot saved at: {screenshot_path}")
-    except Exception as e:
-        print(f"Error: {e}")
+    main()

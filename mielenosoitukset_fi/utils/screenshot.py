@@ -47,13 +47,15 @@ def create_screenshot(demo_data, output_path="../static/demo_preview/"):
             if not success:
                 logger.error("Failed to create screenshot.")
                 return None
+            
         except Exception as e:
             logger.error(f"Failed to create screenshot: {e}")
             return None
-        finally:
-            if success:
-                logger.info(f"Screenshot created at: {full_path}")
-            return _return_path
+
+
+        if success:
+            logger.info(f"Screenshot created at: {full_path}")
+        return _return_path
         
     except Exception as e:
         logger.error(f"Failed to create screenshot: {e}")

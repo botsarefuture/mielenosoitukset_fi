@@ -8,7 +8,6 @@ from mielenosoitukset_fi.utils.logger import logger
 # Set XDG_CACHE_HOME to a writable directory
 os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
 config = imgkit.config()
-config = imgkit.config()
 
 def create_screenshot(demo_data, output_path="../static/demo_preview/"):
     """

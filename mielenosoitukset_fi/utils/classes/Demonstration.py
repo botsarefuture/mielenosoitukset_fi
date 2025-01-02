@@ -281,6 +281,12 @@ class Demonstration(BaseModel):
         self.alias_fix()
 
         self.preview_image = preview_image
+        
+        if self.preview_image.startswith("/static/demo_preview/"):
+            # add https://mielenosoitukset.fi/ to the beginning of the URL
+            self.preview_image = "https://mielenosoitukset.fi" + self.preview_image
+            self.save_flag = True # Save the demonstration to update the preview image
+        
         self.merged_into = merged_into  # Assign new parameter
 
         if self.save_flag:  # Save the demonstration if the save_flag is set

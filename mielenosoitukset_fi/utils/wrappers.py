@@ -178,3 +178,49 @@ def permission_required(permission_name):
         return decorated_function
 
     return decorator
+
+def depracated_endpoint(f):
+    """Decorator to mark a route as deprecated.
+
+    This decorator adds a warning message to the route's docstring to inform users that the route is deprecated.
+
+    Changelog:
+    ----------
+    v2.6.0:
+        - Added deprecated warning message to the route's docstring.
+        - Enhanced logging for deprecated routes.
+        - Improved function documentation for clarity.
+
+    Parameters
+    ----------
+    f : function
+        The route function to be marked as deprecated.
+
+    Returns
+    -------
+    function
+        The wrapped function with the deprecated warning added to the docstring.
+
+    """
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+
+        **kwargs :
+
+
+        Returns
+        -------
+
+
+        """
+        logger.warning(f"Deprecated route accessed: {f.__name__}")
+        flash_message("This endpoint is deprecated and no longer available.")
+        return abort(410)  # 410 Gone
+
+    return decorated_function

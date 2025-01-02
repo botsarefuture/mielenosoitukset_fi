@@ -96,6 +96,23 @@ def register_error_handlers(app: Flask):
         logger.warning(error)
         return render_template("errors/404.html"), 404
 
+    @app.errorhandler(410)
+    def gone(error):
+        """Handle Gone (410) errors.
+
+        Parameters
+        ----------
+        error :
+
+
+        Returns
+        -------
+
+
+        """
+        logger.warning(error)
+        return render_template("errors/410.html"), 410
+    
     @app.errorhandler(429)
     def too_many_requests(error):
         """Handle Too Many Requests (429) errors.

@@ -14,7 +14,7 @@
 <meta property="og:description"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
 <meta property="og:image"
-  content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
+  content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta property="og:type" content="event" />
 <meta property="og:site_name" content="Mielenosoitukset.fi" />
@@ -30,7 +30,7 @@
 <meta name="twitter:description"
   content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
 <meta name="twitter:image"
-content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
+content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta name="twitter:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
 <meta name="twitter:site" content="@Mielenosoitukset" />
 <meta name="twitter:creator" content="@Mielenosoitukset" />
@@ -41,7 +41,7 @@ content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_pre
 <meta property="fb:app_id" content="{{ demo['fb_app_id'] if demo['fb_app_id'] else '' }}" />
 
 <!-- Additional Social Media Meta Tags -->
-<meta property="article:author" content="{{ demo['organizers'][0][" name"] if demo['organizers']
+<meta property="article:author" content="{{ demo['organizers'][0]["name"] if demo['organizers']
   else 'Tuntematon kirjoittaja' }}" />
 <meta property="article:section" content="{{ demo['section'] if demo['section'] else 'Tapahtumat' }}" />
 <meta property="article:tag" content="{{ demo['tags'] if demo['tags'] else 'mielenosoitus, tapahtuma' }}" />
@@ -67,7 +67,7 @@ content="{{ demo['img'] if demo['img'] else url_for('static', filename='demo_pre
     }
   },
   "description": "{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}",
-  "image": "{{ demo['img'] if demo['img'] else url_for('screenshot', demo_id=demo['_id'], _external=True) }}",
+  "image": "{{ demo['preview_image'] if demo['preview_image'] else url_for('screenshot', demo_id=demo['_id'], _external=True) }}",
   "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
   "organizer": {
     "@type": "Organization",

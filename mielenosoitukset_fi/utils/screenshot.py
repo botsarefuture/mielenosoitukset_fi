@@ -98,8 +98,17 @@ def trigger_screenshot(demo_id):
             return url_for("static", filename="img/e.png")
         return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
 
-    thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
-    thread.start()
+    try:
+        thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
+        thread.start()
+        return True
+    
+    except Exception as e:
+        logger.error(f"Failed to trigger screenshot creation: {e}")
+        return False
+    
+    return True
+    
 
 if __name__ == "__main__":
     demo_data = {

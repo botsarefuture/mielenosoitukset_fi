@@ -26,7 +26,7 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
-from mielenosoitukset_fi.utils.wrappers import permission_required
+from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
@@ -410,14 +410,17 @@ def init_routes(app):
         log_demo_view(
             demo_id, current_user._id if current_user.is_authenticated else None
         )
-        trigger_screenshot(demo_id)
         return render_template("detail.html", demo=demo)
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])
     @permission_required("VIEW_DEMO")
+    @depracated_endpoint
     def preview(demo_id):
         """
         Display details of a specific demonstration and save map coordinates if available.
+        
+        .. deprecated:: 3.0
+            This route will be removed in the next version.
         """
         result = demonstrations_collection.find_one(
             {
@@ -439,6 +442,7 @@ def init_routes(app):
             return redirect(url_for("demonstrations"))
         if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
+            
         if not demo.longitude:
             address_query = f"{demo.address}, {demo.city}"
             api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
@@ -455,6 +459,7 @@ def init_routes(app):
                         demo.save()
             except (requests.exceptions.RequestException, IndexError):
                 ...
+                
         demo = Demonstration.to_dict(demo, True)
         log_demo_view(
             demo_id, current_user._id if current_user.is_authenticated else None
@@ -494,9 +499,11 @@ def init_routes(app):
             email = request.form.get("email")
             subject = request.form.get("subject")
             message = request.form.get("message")
+            
             if not name or not email or not message:
                 flash_message("Kaikki kentät ovat pakollisia!", "error")
                 return redirect(url_for("contact"))
+            
             email_sender.queue_email(
                 template_name="customer_support/new_ticket.html",
                 subject="Uusi tukipyyntö!",
@@ -508,7 +515,8 @@ def init_routes(app):
                     "message": message,
                 },
             )
-            flash_message("Viesti lähetetty onnistuneesti!", "success")
+            
+            flash_message("Yhteydenottopyyntö välitetty onnistuneesti!", "success")
             return redirect(url_for("contact"))
         return render_template("contact.html")
 

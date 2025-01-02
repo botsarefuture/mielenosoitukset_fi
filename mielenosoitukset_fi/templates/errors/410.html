@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fi" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>410 POISSA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            background: var(--orange);
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px var(--error-color);
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #e74c3c;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .warning {
+            color: #831205 !important;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .flash-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            animation: flash 1s linear infinite;
+        }
+
+        @keyframes flash {
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .flash-message p {
+            margin: 0;
+            color: black;
+        }
+    </style>
+</head>
+
+<body class="error_body">
+    <div class="container">
+        <h1>410 POISSA</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-message">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <p class="warning">Anteeksi, mutta pyyntösi ei voitu käsitellä. <br> Tämä resurssi on poistettu pysyvästi.</p>
+        <div class="button-container">
+            <a class="button" href="https://mielenosoitukset.fi/contact">Ota yhteyttä</a>
+            <a class="button" href="/">Palaa etusivulle</a>
+        </div>
+    </div>
+</body>
+
+</html>

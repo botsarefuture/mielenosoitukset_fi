@@ -79,6 +79,8 @@ class Demonstration(BaseModel):
         Aliases for the event. Defaults to None.
     in_past : bool, optional
         Whether the event is in the past. Defaults to False.
+    preview_image : str, optional
+        URL of the preview image for the event. Defaults to None.
 
     Notes
     -----
@@ -132,6 +134,7 @@ class Demonstration(BaseModel):
         hide=False,
         aliases=None,
         in_past=False,
+        preview_image: str = None,
     ):
         """
         Initialize a new demonstration event.
@@ -197,6 +200,8 @@ class Demonstration(BaseModel):
             Aliases for the event. Defaults to None.
         in_past : bool, optional
             Whether the event is in the past. Defaults to False.
+        preview_image : str, optional
+            URL of the preview image for the event. Defaults to None.
 
         Notes
         -----
@@ -269,6 +274,8 @@ class Demonstration(BaseModel):
 
         self.aliases = aliases or []
         self.alias_fix()
+
+        self.preview_image = preview_image
 
         if self.save_flag:  # Save the demonstration if the save_flag is set
             self.save()  # Save the demonstration
@@ -427,6 +434,7 @@ class Demonstration(BaseModel):
             for org in self.organizers
         ]
         data["aliases"] = [str(alias) for alias in self.aliases]
+        data["preview_image"] = self.preview_image
         return data
 
     def validate_fields(self, title, date, start_time, city, address):

@@ -13,6 +13,7 @@ from mielenosoitukset_fi.scripts.repeat_v2 import main as repeat_main
 from mielenosoitukset_fi.scripts.update_demo_organizers import main as update_main
 from mielenosoitukset_fi.scripts.in_past import hide_past
 from mielenosoitukset_fi.scripts.CL import main as cl_main
+from mielenosoitukset_fi.scripts.preview_image_creator import run as run_preview
 
 from mielenosoitukset_fi.utils.analytics import prep
 import sys
@@ -26,26 +27,6 @@ from mielenosoitukset_fi.utils import VERSION
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import os
-
-# if env var forcerun
-if os.environ.get("FORCERUN") or (
-    len(sys.argv) == 2 and sys.argv[1] == "force"
-):  # Set this via: export FORCERUN=1
-    # To unset: unset FORCERUN
-    cl_main()
-    repeat_main()
-    update_main()
-    hide_past()
-    prep()
-    exit()
-
-
-# Create and configure the scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
-scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
-scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
-scheduler.add_job(prep, "interval", minutes=15)
 
 # Initialize Babel
 babel = Babel()
@@ -188,6 +169,33 @@ def create_app() -> Flask:
             get_lang_name=get_lang_name,
         )
 
+    
+    # if env var forcerun
+    if os.environ.get("FORCERUN") or (
+        len(sys.argv) == 2 and sys.argv[1] == "force"
+    ):  # Set this via: export FORCERUN=1
+        # To unset: unset FORCERUN
+        
+
+        with app.app_context():
+            cl_main()
+            repeat_main()
+            update_main()
+            hide_past()
+            prep()
+            run_preview()
+        exit()
+
+    # Create and configure the scheduler
+    scheduler = BackgroundScheduler()
+    with app.app_context():
+        scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
+        scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
+        scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
+        scheduler.add_job(prep, "interval", minutes=15)
+        scheduler.add_job(run_preview, "interval", hours=24)  # Run every 24 hours
+
+        
     with app.app_context():
         scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours
         scheduler.start()

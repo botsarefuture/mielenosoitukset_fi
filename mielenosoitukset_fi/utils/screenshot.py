@@ -9,7 +9,7 @@ from mielenosoitukset_fi.utils.logger import logger
 os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
 config = imgkit.config()
 
-def create_screenshot(demo_data, output_path="../static/demo_preview/"):
+def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview/"):
     """
     Create a PNG screenshot from the preview template.
 
@@ -26,8 +26,8 @@ def create_screenshot(demo_data, output_path="../static/demo_preview/"):
         Full path of the created PNG file, or None if creation failed.
     """
     try:
-        base_path = os.path.abspath(os.path.dirname(__file__))
-        output_path = os.path.join(base_path, output_path)
+        #base_path = os.path.abspath(os.path.dirname(__file__))
+        #output_path = os.path.join(base_path, output_path)
         os.makedirs(output_path, exist_ok=True)
         
         if not isinstance(demo_data, dict):

@@ -97,8 +97,10 @@ def trigger_screenshot(demo_id):
         demo = Demonstration.from_dict(data)
         screenshot_path = create_screenshot(demo)
         if screenshot_path is None:
-            return url_for("static", filename="img/e.png")
-        return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
+            with current_app.app_context():
+                return url_for("static", filename="img/e.png")
+        with current_app.app_context():
+            return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
 
     try:
         thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))

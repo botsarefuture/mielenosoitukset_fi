@@ -12,7 +12,7 @@
 <!-- Open Graph Meta Tags -->
 <meta property="og:title" content="{{ demo['title'] if demo['title'] else 'Mielenosoitus' }}" />
 <meta property="og:description"
-  content="{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}" />
+  content="{{ demo['title'] }} -mielenosoitus kaupungissa {{ demo['city'] }}. {{ demo['date'] }}"/>
 <meta property="og:image"
   content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />

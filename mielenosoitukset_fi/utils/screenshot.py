@@ -65,6 +65,8 @@ def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/miele
         logger.error(f"Failed to create screenshot: {e}")
         return None
     
+import threading
+
 def trigger_screenshot(demo_id):
     """
     Trigger the creation of a screenshot for a given demonstration ID.
@@ -79,22 +81,26 @@ def trigger_screenshot(demo_id):
     Response
         Redirects to the screenshot URL if successful, otherwise to an error image.
     """
-    _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
-    if os.path.exists(_path):
-        return f"/static/demo_preview/{demo_id}.png"
-    
-    from DatabaseManager import DatabaseManager
-    db_man = DatabaseManager.get_instance()
-    mongo = db_man.get_db()
-    from bson import ObjectId
-    
-    data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    demo = Demonstration.from_dict(data)
-    screenshot_path = create_screenshot(demo)
-    if screenshot_path is None:
-        return url_for("static", filename="img/e.png")
-    return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
-    
+    def create_screenshot_thread(demo_id):
+        _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
+        if os.path.exists(_path):
+            return f"/static/demo_preview/{demo_id}.png"
+        
+        from DatabaseManager import DatabaseManager
+        db_man = DatabaseManager.get_instance()
+        mongo = db_man.get_db()
+        from bson import ObjectId
+        
+        data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        demo = Demonstration.from_dict(data)
+        screenshot_path = create_screenshot(demo)
+        if screenshot_path is None:
+            return url_for("static", filename="img/e.png")
+        return url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/"))
+
+    thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
+    thread.start()
+    thread.join()
 if __name__ == "__main__":
     demo_data = {
         "_id": "demo_id",

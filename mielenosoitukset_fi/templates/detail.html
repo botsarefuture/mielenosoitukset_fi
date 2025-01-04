@@ -311,6 +311,11 @@
       target="_blank" class="linkedin-button button">
       {{ _('Jaa LinkedInissä') }}
     </a>
+
+    <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button">
+      {{ _('Lataa graafinen materiaali') }}
+    </a>
+    
   </div>
 
   <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->

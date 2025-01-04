@@ -8,6 +8,7 @@ from flask_babel import _, refresh
 from flask import (
     render_template,
     redirect,
+    send_file,
     url_for,
     request,
     abort,
@@ -599,6 +600,16 @@ def init_routes(app):
         if referrer and referrer.startswith(request.host_url):
             return redirect(referrer)
         return redirect(url_for("index"))
+    
+    @app.route("/download_material/<demo_id>", methods=["GET"])
+    def download_material(demo_id):
+        
+        return send_file(f"static/demo_preview/{demo_id}.png", as_attachment=True)
+        
+        if request.referrer != url_for("download_material"):
+            flash_message("Virheellinen pyyntö.", "error")
+            return redirect(url_for("index"))
+        return render_template("download_material.html")
 
     @app.before_request
     def preprocess_url():

@@ -78,6 +78,16 @@
             </div>
         </div>
 
+        <div class="form-group">
+            <label for="email"><i class="fas fa-envelope"></i> {{ _('Sähköposti:') }}</label>
+            <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="displayname"><i class="fas fa-user"></i> {{ _('Näyttönimi:') }}</label>
+            <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname }}">
+        </div>
+        
         <button type="submit" class="btn btn-primary">
             <span>{{ _('Tallenna muutokset') }}</span>
             <div class="spinner" id="spinner"></div>

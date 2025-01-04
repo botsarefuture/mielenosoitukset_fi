@@ -31,6 +31,7 @@ import datetime
 import pyqrcode
 import base64
 from io import BytesIO
+from flask import jsonify
 
 
 def generate_qr(url: str) -> str:
@@ -170,19 +171,27 @@ def confirm_email(token):
     return redirect(url_for("users.auth.login"))
 
 
-@auth_bp.route("/2fa_check", methods=["GET", "POST"])
+@auth_bp.route("/2fa_check", methods=["POST"])
 def mfa_check():
+    """
+    Check if the user has MFA enabled and if the provided credentials are valid.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the MFA status and validity of the credentials.
+    """
+
     try:
         user = mongo.users.find_one({"username": request.form.get("username")})
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
-            return {"enabled": False, "valid": False}, "application/json" # Do not give 
+            return jsonify({"enabled": False, "valid": False})
 
-        else:
-            return {"enabled": user.mfa_enabled, "valid": True}, "application/json"
-        
+        return jsonify({"enabled": user.mfa_enabled, "valid": True})
+
     except Exception as e:
-        return {"enabled": False, "valid": False}, "application/json"
+        return jsonify({"enabled": False, "valid": False})
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])

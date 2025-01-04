@@ -45,7 +45,7 @@
             </button>
             {% endif %}
 
-            <a href="{{ url_for('static', filename='demo_preview/' + demo['_id'] + '.png') }}" class="button preview-button" download>
+            <a href="{{ url_for('static', filename='demo_preview/' + str(demo['_id']) + '.png') }}" class="button preview-button" download>
                 <i class="fas fa-image"></i> {{ _('Lataa mainoskuva') }}
             </a>
 

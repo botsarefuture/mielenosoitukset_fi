@@ -236,6 +236,15 @@ class Demonstration(BaseModel):
             raise ValueError(f"Invalid event type: {self.event_type}")
 
         self.route = route  # If the demonstration is a march, this handles the route
+        
+        if self.route is not None:
+            try:
+                rou = self.route.split(",")
+                if len(rou) > 1:
+                    self.route = rou
+            except:
+                pass
+
 
         self.img = img
 

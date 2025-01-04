@@ -12,7 +12,7 @@
 <!-- Open Graph Meta Tags -->
 <meta property="og:title" content="{{ demo['title'] if demo['title'] else 'Mielenosoitus' }}" />
 <meta property="og:description"
-  content="{{ demo['title'] }} -mielenosoitus kaupungissa {{ demo['city'] }}. {{ demo['date'] }}"/>
+  content="{{ demo['title'] }} -mielenosoitus kaupungissa {{ demo['city'] }}. {{ demo['date'] }}" />
 <meta property="og:image"
   content="{{ demo['preview_image'] if demo['preview_image'] else url_for('static', filename='demo_preview/' + demo['_id'] + '.png', _external=True) }}" />
 <meta property="og:url" content="{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}" />
@@ -122,6 +122,132 @@
     display: block;
     margin-top: 0.5em;
   }
+
+  #date {
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0;
+    color: var(--primary-strong-text-color);
+  }
+
+  #basicshit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  #basicshit h1 {
+    margin: 10px 0;
+    padding: 0;
+    font-size: 2.5em;
+    color: var(--primary-strong-text-color);
+  }
+
+  #basicshit img {
+    max-width: 100%;
+    max-height: 400px;
+    margin: 10px 0;
+    border-radius: 10px;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1em;
+  }
+
+  .button:hover {
+    background-color: var(--primary-dark-color);
+  }
+
+  .like-count {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 1em;
+    color: var(--primary-strong-text-color);
+  }
+
+  .like-count i {
+    color: var(--primary-color);
+  }
+
+  .topics {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .topics .tag {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+  }
+
+  .topics .tag:hover {
+    background-color: var(--primary-dark-color);
+  }
+
+  main .container {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--background);
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: var(--box-shadow);
+  }
+
+  .countdown {
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .map {
+    margin: 20px 0;
+  }
+
+  .subtitle {
+    font-size: 1.5em;
+    color: var(--primary-strong-text-color);
+    margin-bottom: 10px;
+  }
+
+  .repeating-alert {
+    background-color: var(--yellow);
+    color: var(--black);
+    padding: 1em;
+    border-radius: 0.5em;
+    text-align: center;
+    margin-top: 1em;
+  }
+
+  .repeating-alert strong {
+    font-size: 1.5em;
+    display: block;
+  }
+
+  .display-all {
+    display: block;
+    margin-top: 0.5em;
+  }
 </style>
 
 <div id="reportModal" class="modal">
@@ -160,8 +286,14 @@
   <img src="{{ demo['img'] }}" alt="Event Image" />
   {% endif %}
 
-  <!-- NAME OR TITLE -->
-  <h1>{{ demo['title'] }}</h1>
+  <div id="basicshit">
+    <!-- NAME OR TITLE -->
+    <h1>{{ demo['title'] }}</h1>
+
+    <p id="date">
+      {{ demo['date'] }} {{ _('klo') }} {{ demo['start_time'] }} - {{ demo['end_time'] }}
+    </p>
+  </div>
 
   <!-- Social Media Share Buttons -->
   <div class="button-container">
@@ -277,34 +409,40 @@
     <div id="timer" style="font-size: 24px; color: var(--primary-strong-text-color)"></div>
   </div>
   <br />
-  <div class="map">
-    <div id="map" style="height: 300px"></div>
+  <!-- the location text -->
+  <div class="container">
+    <h2 class="subtitle">{{ _('Sijainti') }}</h2>
+    <p>{{ demo['address'] }}, {{ demo['city'] }}</p>
+    {% if demo['route'] and demo['route'] != 'None' %}
+    <div class="route">
+      <p><strong>{{ _('Marssin reitti:') }}</strong></p>
+      {% if demo['route'] is string %}
+      <p>{{ demo['route'] }}</p>
+      {% elif demo['route'] is iterable %}
+      <ol>
+        {% for step in demo['route'] %}
+        <li>{{ step }}</li>
+        {% endfor %}
+      </ol>
+      {% endif %}
+    </div>
+    {% endif %}
+    <div class="map">
+      <div id="map" style="height: 300px"></div>
+    </div>
   </div>
+
   <br />
 
   <div id="subcontainer1">
+    {% if demo['facebook'] or demo['recurring'] %}
     <div id="infocontainer">
       <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
       <div id="demo-details">
-        <p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
+        <!--<p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
         <p><strong>{{ _('Alkaa klo:') }}</strong><br>{{ demo['start_time'] }}</p>
-        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>
-        <p>
-          <strong>
-            {% if demo['type'] == 'MARCH' %}
-            {{ _('Alkupaikka:') }}
-            {% else %}
-            {{ _('Sijainti:') }}
-            {% endif %}
-          </strong>
-          <br>{{ demo['address'] }}, {{ demo['city'] }}
-        </p>
-        {% if demo['route'] and demo['route'] != 'None' %}
-        <div class="route">
-          <p><strong>{{ _('Marssin reitti:') }}</strong></p>
-          <p>{{ demo['route'] }}</p>
-        </div>
-        {% endif %}
+        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>-->
+
         {% if demo['facebook'] %}
         <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">
           {{ _('Facebook-tapahtuma') }} <i class="fas fa-external-link-alt"></i>
@@ -324,6 +462,8 @@
       {% endif %}
 
     </div>
+
+    {% endif %}
 
     <div id="orginfo">
       <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>

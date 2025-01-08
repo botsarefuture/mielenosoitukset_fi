@@ -444,9 +444,6 @@
     <div id="infocontainer">
       <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
       <div id="demo-details">
-        <!--<p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
-        <p><strong>{{ _('Alkaa klo:') }}</strong><br>{{ demo['start_time'] }}</p>
-        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>-->
 
         {% if demo['facebook'] %}
         <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">
@@ -505,7 +502,9 @@
 
 
     <div class="button-container">
+      {% if request.referrer is defined %}
       <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
+      {% endif %}
       <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
     </div>
 

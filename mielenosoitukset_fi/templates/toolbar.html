@@ -44,9 +44,7 @@
                 <i class="fa-solid fa-info"></i> {{ _('Lisätietoja') }}
             </button>
             {% endif %}
-
-
-
+            
             <!-- Delete Button -->
             {% if current_user.has_permission("DELETE_DEMO") %}
             <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo['_id'] }}')">

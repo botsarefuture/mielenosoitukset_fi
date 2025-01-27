@@ -1,68 +1,68 @@
 @import url("admin_actions_cell.css");
 
 /* Container for the entire organization table */
-.organization-table {
+.organization_table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Add shadow for depth */
+    box-shadow: 0 2px 10px var(--box_shadow_color); /* Use variable for shadow */
 }
 
 /* Table header styling */
-.organization-table-header {
+.organization_table_header {
     font-weight: bold;
-    background: #007bff; /* Highlight header */
-    color: white; /* Text color for header */
+    background: var(--primary_color); /* Highlight header using primary color */
+    color: var(--white); /* Text color for header */
 }
 
 /* Common cell styling */
-.table-cell {
+.table_cell {
     padding: 12px; /* Increased padding for better touch targets */
-    border: 1px solid #ddd;
+    border: 1px solid var(--border_color);
     vertical-align: middle;
 }
 
 /* Table row styling */
-.organization-table-row {
+.organization_table_row {
     transition: background 0.3s; /* Smooth transition for hover */
 }
 
-.organization-table-row:nth-child(even) {
-    background: #f9f9f9; /* Light gray for even rows */
+.organization_table_row:nth-child(even) {
+    background: var(--background_light); /* Light gray for even rows */
 }
 
-.organization-table-row:hover {
-    background: #f1f1f1; /* Highlight on hover */
+.organization_table_row:hover {
+    background: var(--hover_bg_color); /* Highlight on hover */
 }
 
 /* Delete form styling */
-.delete-form {
+.delete_form {
     display: inline; /* Keep form inline for button grouping */
 }
 
 /* Styling for create organization button */
-.create-organization-button {
+.create_organization_button {
     padding: 10px 20px;
-    background: var(--highlight-color-orange); /* Use your defined variable */
+    background: var(--orange); /* Use defined orange variable */
     border: none;
-    border-radius: 4px;
-    color: white;
+    border-radius: var(--border_radius);
+    color: var(--white);
     cursor: pointer;
     font-size: 16px;
     margin-bottom: 20px;
     transition: background 0.3s; /* Smooth transition on hover */
 }
 
-.create-organization-button:hover {
-    background: var(--error-color); /* Change to error color on hover */
+.create_organization_button:hover {
+    background: var(--error_color); /* Change to error color on hover */
 }
 
 /* No organizations message styling */
-.no-organizations .table-cell {
+.no_organizations .table_cell {
     text-align: center;
     font-style: italic;
-    color: #666;
+    color: var(--secondary_text_color);
     padding: 20px;
-    border: 1px solid #ddd;
-    background: #fafafa; /* Light background for emphasis */
+    border: 1px solid var(--border_color);
+    background: var(--background_light); /* Light background for emphasis */
 }

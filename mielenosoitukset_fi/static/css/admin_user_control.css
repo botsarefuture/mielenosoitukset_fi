@@ -20,7 +20,7 @@
 }
 
 .user-table-row:nth-child(even) {
-    background: var(--primary-color);
+    background: var(--primary_color);
 }
 
 /* Removed specific styling for .actions-cell to avoid conflict */
@@ -35,14 +35,14 @@
 .search-input {
     padding: 8px;
     font-size: 14px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border_color);
     border-radius: 4px 0 0 4px;
     width: 250px;
     outline: none;
 }
 
 .search-input:focus {
-    border-color: var(--focus-color);
+    border-color: var(--focus_color);
 }
 
 .search-button {
@@ -63,9 +63,9 @@
 .no-users .table-cell {
     text-align: center;
     font-style: italic;
-    color: var(--primary-color);
+    color: var(--primary_color);
     padding: 20px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border_color);
 }
 
 /* Removed redundant button styles to avoid conflict with admin_actions_cell.css */

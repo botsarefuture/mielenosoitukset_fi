@@ -1,13 +1,13 @@
 /* Remove Button Styles */
 .btn-danger {
-    background: var(--error_color); /* Bootstrap danger color */
-    border-color: var(--red_dark); /* Bootstrap danger border color */
+    background: var(--error-color); /* Bootstrap danger color */
+    border-color: var(--red-dark); /* Bootstrap danger border color */
     color: white; /* Text color for better contrast */
 }
 
 .btn-danger:hover {
-    background: var(--red_darker); /* Darker shade for hover effect */
-    border-color: var(--red_dark); /* Darker border color on hover */
+    background: var(--red-darker); /* Darker shade for hover effect */
+    border-color: var(--red-dark); /* Darker border color on hover */
     color: white; /* Text color remains white */
 }
 
@@ -30,7 +30,7 @@
 	display: grid;
 	flex-direction: column;
 	/* gap: 5p; */
-	background: var(--background_light);
+	background: var(--background-light);
 	padding: 2%;
 	border-radius: 5px;
 	/* margin-top: ; */

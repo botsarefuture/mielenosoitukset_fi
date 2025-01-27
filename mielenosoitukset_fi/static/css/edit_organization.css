@@ -5,14 +5,14 @@
   max-width: 600px;
   margin: 20px auto;
   padding: 20px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background: var(--background);
+  border-radius: var(--border_radius);
+  box-shadow: var(--box_shadow);
 }
 
 h1 {
   font-size: 24px;
-  color: #0033a0;
+  color: var(--primary_color);
   margin-bottom: 20px;
 }
 
@@ -20,7 +20,7 @@ h1 {
 form label {
   display: block;
   font-size: 16px;
-  color: #333333;
+  color: var(--primary_text_color);
   margin-bottom: 5px;
 }
 
@@ -31,7 +31,7 @@ form textarea {
   width: 100%;
   padding: 10px;
   font-size: 16px;
-  border: 1px solid #cccccc;
+  border: 1px solid var(--border_color);
   border-radius: 4px;
   box-sizing: border-box;
 }
@@ -42,7 +42,7 @@ form textarea {
 
 form input:focus,
 form textarea:focus {
-  border-color: #0033a0;
+  border-color: var(--focus_color);
   outline: none;
 }
 
@@ -50,29 +50,29 @@ form textarea:focus {
 .submit-button {
   display: inline-block;
   padding: 10px 20px;
-  background: #0033a0;
-  color: #ffffff;
+  background: var(--primary_color);
+  color: var(--primary_button_text_color);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--border_radius);
   font-size: 16px;
   cursor: pointer;
   transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .submit-button:hover {
-  background: #002580;
+  background: var(--primary_button_hover_color);
   transform: scale(1.05);
 }
 
 .submit-button:active {
-  background: #001f4d;
+  background: var(--primary_button_active_color);
 }
 
 /* Back link */
 .back-link {
   display: inline-block;
   margin-top: 20px;
-  color: #009b77;
+  color: var(--secondary_color);
   text-decoration: none;
   font-size: 16px;
 }

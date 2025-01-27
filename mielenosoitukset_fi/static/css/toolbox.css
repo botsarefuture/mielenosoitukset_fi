@@ -10,7 +10,7 @@
 .toolbox-header h3 {
     margin: 0;
     font-size: 24px;
-    color: var(--admin-section-text-color);
+    color: var(--admin_section_text_color);
     text-align: center;
 }
 
@@ -23,7 +23,7 @@
 }
 
 .toolbox .button {
-    background: var(--primary-color);
+    background: var(--primary_color);
     border: none;
     padding: 8px 15px;
     color: white;
@@ -38,7 +38,7 @@
 }
 
 .toolbox .button:hover {
-    background: var(--primary-button-hover-color);
+    background: var(--primary_button_hover_color);
     transform: translateY(-2px);
 }
 
@@ -63,7 +63,7 @@
 }
 
 .toggle-toolbox:hover {
-    background: var(--dark-red);
+    background: var(--dark_red);
     transform: scale(1.1);
 }
 
@@ -93,7 +93,7 @@
     top: 0;
     right: 0;
     height: 100vh;
-    background: var(--background-light);
+    background: var(--background_light);
     padding: 1rem 2rem;
     z-index: 1000001;
     border-left: 1px solid rgba(0, 0, 0, 0.1);
@@ -132,4 +132,3 @@ demo-toolbar-buttons.display,
 org-toolbar-buttons.display {
     display: inherit;
 }
-

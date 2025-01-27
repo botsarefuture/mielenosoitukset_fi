@@ -4,7 +4,7 @@
 .container-form {
     max-width: 800px;
     margin: auto;
-    background: var(--container_background);
+    background: var(--container-background);
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
@@ -36,14 +36,14 @@ label {
 .form-control {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border_color);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     transition: border-color 0.3s;
 }
 
 /* Input focus styles */
 .form-control:focus {
-    border-color: var(--focus_color);
+    border-color: var(--focus-color);
     outline: none;
 }
 
@@ -51,8 +51,8 @@ label {
 .dropbtn {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border_color);
-    background: var(--container_background);
+    border: 1px solid var(--border-color);
+    background: var(--container-background);
     text-align: left;
     cursor: pointer;
 }
@@ -102,11 +102,11 @@ label {
 }
 
 .btn-primary {
-    background: var(--primary_button_color);
+    background: var(--primary-button-color);
 }
 
 .btn-secondary {
-    background: var(--secondary_button_color);
+    background: var(--secondary-button-color);
 }
 
 .btn-danger {

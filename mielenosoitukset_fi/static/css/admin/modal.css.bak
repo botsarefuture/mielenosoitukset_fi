@@ -7,7 +7,7 @@
     width: 80%;
     max-width: 600px;
     background-color: var(--background);
-    box-shadow: var(--box_shadow);
+    box-shadow: var(--box-shadow);
     z-index: 1000;
     border-radius: 8px;
     overflow: hidden;
@@ -21,8 +21,8 @@
 /* Modal header */
 .modal-header {
     padding: 15px;
-    background-color: var(--background_light);
-    border-bottom: 1px solid var(--border_color);
+    background-color: var(--background-light);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -31,7 +31,7 @@
 .modal-header h2 {
     margin: 0;
     font-size: 1.5em;
-    color: var(--primary_text_color);
+    color: var(--primary-text-color);
 }
 
 .modal-header .close {
@@ -43,22 +43,22 @@
     padding: 20px;
     max-height: 400px;
     overflow-y: auto;
-    color: var(--primary_text_color);
+    color: var(--primary-text-color);
 }
 
 /* Modal footer */
 .modal-footer {
     padding: 10px;
-    background-color: var(--background_light);
-    border-top: 1px solid var(--border_color);
+    background-color: var(--background-light);
+    border-top: 1px solid var(--border-color);
     text-align: right;
 }
 
 /* Modal footer */
 .modal-footer {
     padding: 10px;
-    background-color: var(--background_light);
-    border-top: 1px solid var(--border_color);
+    background-color: var(--background-light);
+    border-top: 1px solid var(--border-color);
     text-align: right;
 }
 
@@ -71,23 +71,23 @@
 }
 
 .modal-footer .btn-primary {
-    background-color: var(--primary_button_color);
-    color: var(--primary_button_text_color);
+    background-color: var(--primary-button-color);
+    color: var(--primary-button-text-color);
 }
 
 .modal-footer .btn-primary:hover {
-    background-color: var(--primary_button_hover_color);
-    color: var(--primary_button_hover_text_color);
+    background-color: var(--primary-button-hover-color);
+    color: var(--primary-button-hover-text-color);
 }
 
 .modal-footer .btn-secondary {
-    background-color: var(--secondary_button_color);
-    color: var(--secondary_button_text_color);
+    background-color: var(--secondary-button-color);
+    color: var(--secondary-button-text-color);
 }
 
 .modal-footer .btn-secondary:hover {
-    background-color: var(--secondary_button_hover_color);
-    color: var(--secondary_button_hover_text_color);
+    background-color: var(--secondary-button-hover-color);
+    color: var(--secondary-button-hover-text-color);
 }
 
 /* Modal overlay */

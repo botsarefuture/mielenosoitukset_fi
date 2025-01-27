@@ -22,7 +22,7 @@ h1 {
     display: inline-block;
     padding: 10px 20px;
     background: var(--orange);
-    color: #FFFFFF;
+    color: var(--white);
     text-decoration: none;
     border-radius: 5px;
     font-size: 16px;
@@ -32,7 +32,7 @@ h1 {
 }
 
 .create-link:hover {
-    background: var(--orange-dark);
+    background: var(--orange_dark);
     /* TODO: Add hover effects or animations to enhance user interaction */
 }
 
@@ -56,7 +56,7 @@ h1 {
 }
 
 .organization-link:hover {
-    color: var(--orange-dark);
+    color: var(--orange_dark);
     /* TODO: Add more interactive effects, such as underline or shadow, on hover */
 }
 

@@ -127,7 +127,7 @@
     font-size: 1.2em;
     margin: 0;
     padding: 0;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
   }
 
   #basicshit {
@@ -142,7 +142,7 @@
     margin: 10px 0;
     padding: 0;
     font-size: 2.5em;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
   }
 
   #basicshit img {
@@ -160,7 +160,7 @@
   }
 
   .button {
-    background-color: var(--primary-color);
+    background-color: var(--primary_color);
     color: white;
     padding: 10px 20px;
     border: none;
@@ -168,10 +168,13 @@
     cursor: pointer;
     text-decoration: none;
     font-size: 1em;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
   }
 
   .button:hover {
-    background-color: var(--primary-dark-color);
+    transform: translateY(-2px);
+    box-shadow: var(--box_shadow);
+    filter: brightness(1.1);
   }
 
   .like-count {
@@ -179,11 +182,11 @@
     align-items: center;
     gap: 5px;
     font-size: 1em;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
   }
 
   .like-count i {
-    color: var(--primary-color);
+    color: var(--primary_color);
   }
 
   .topics {
@@ -195,15 +198,17 @@
   }
 
   .topics .tag {
-    background-color: var(--primary-color);
+    background-color: var(--primary_color);
     color: white;
     padding: 5px 10px;
     border-radius: 5px;
     text-decoration: none;
+    transition: transform 0.2s, background-color 0.2s;
   }
 
   .topics .tag:hover {
-    background-color: var(--primary-dark-color);
+    background-color: var(--primary_button_hover_color);
+    transform: translateY(-2px);
   }
 
   main .container {
@@ -212,7 +217,7 @@
     background: var(--background);
     border-radius: 8px;
     text-align: center;
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--box_shadow);
   }
 
   .countdown {
@@ -226,7 +231,7 @@
 
   .subtitle {
     font-size: 1.5em;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
     margin-bottom: 10px;
   }
 
@@ -247,6 +252,23 @@
   .display-all {
     display: block;
     margin-top: 0.5em;
+  }
+
+  p {
+    color: var(--primary_text_color);
+  }
+
+
+  /* Inline #10 | http://127.0.0.1:5002/demonstration/6740f7dbe4ff6ff3b4c36a54 */
+
+  .countdown {
+    background: black;
+  }
+
+  /* Element | http://127.0.0.1:5002/demonstration/6740f7dbe4ff6ff3b4c36a54 */
+
+  #timer {
+    color: white !important;
   }
 </style>
 
@@ -276,7 +298,7 @@
 
 
 <main id="main">
-  <button class="button help" data-modal-target="#reportModal" style="background: var(--yellow-lighter); color: black;">
+  <button class="button help" data-modal-target="#reportModal" style="background: var(--yellow_lighter); color: black;">
     <i class="fa fa-question-circle"></i> Ilmoita virheestä
   </button>
   <!-- IMAGE -->
@@ -315,7 +337,7 @@
     <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button">
       {{ _('Lataa graafinen materiaali') }}
     </a>
-    
+
   </div>
 
   <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
@@ -402,7 +424,7 @@
       background: var(--background);
       border-radius: 8px;
       text-align: center;
-      box-shadow: var(--box-shadow);
+      box-shadow: var(--box_shadow);
     ">
 
     <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
@@ -411,7 +433,7 @@
   {% endif %}
   <div class="countdown">
     <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
-    <div id="timer" style="font-size: 24px; color: var(--primary-strong-text-color)"></div>
+    <div id="timer" style="font-size: 24px; color: var(--primary_strong_text_color)"></div>
   </div>
   <br />
   <!-- the location text -->
@@ -444,6 +466,9 @@
     <div id="infocontainer">
       <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
       <div id="demo-details">
+        <!--<p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
+        <p><strong>{{ _('Alkaa klo:') }}</strong><br>{{ demo['start_time'] }}</p>
+        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>-->
 
         {% if demo['facebook'] %}
         <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">

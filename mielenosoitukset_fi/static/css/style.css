@@ -11,7 +11,7 @@ h1, h2, h3, h4, h5, h6 {
   font-optical-sizing: auto;
   font-weight: 700;
   font-style: normal;
-  color: var(--header-color);
+  color: var(--header_color);
 }
 
 html {
@@ -30,7 +30,7 @@ html, body {
   height: 100%;
   margin: 0;
   background: var(--background) !important;
-  color: var(--primary-text-color);
+  color: var(--primary_text_color);
   overflow-x: hidden;
   max-width: 100%;
 }
@@ -168,7 +168,7 @@ header .logo {
 }
 
 .delete-button:hover {
-  background: var(--error-color);
+  background: var(--error_color);
 }
 
 .footer-links, .social-media-links {
@@ -206,7 +206,7 @@ header .logo {
   text-decoration: none;
   padding: 5px 10px;
   border-radius: 5px;
-  background: var(--primary-color);
+  background: var(--primary_color);
 }
 
 .auth-buttons a:hover {
@@ -289,7 +289,7 @@ footer {
 .demo-container {
   padding: 10px;
   background: var(--white);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border_color);
   border-radius: 8px;
   margin-bottom: 10px;
   transition: background 0.3s ease;
@@ -301,11 +301,11 @@ footer {
 }
 
 .insuffient-perm {
-  background: var(--red-light);
+  background: var(--red_light);
   color: var(--white);
   padding: 20px;
   border-radius: 5px;
-  border-color: var(--red-darker);
+  border-color: var(--red_darker);
   border-width: 2px;
   text-align: center;
   font-weight: 700;
@@ -318,12 +318,12 @@ span i {
 
 .location i, .city i {
   font-size: 1.2em;
-  color: var(--blue-light);
+  color: var(--blue_light);
 }
 
 .cancel-button {
   background: var(--yellow) !important;
-  color: var(--text-secondary-color);
+  color: var(--text_secondary_color);
   display: inline-flex;
   align-items: center;
   align-self: center;
@@ -384,7 +384,7 @@ span i {
   font-size: 1em;
   font-weight: bold;
   border-radius: 50%;
-  background-color: var(--red-darker);
+  background-color: var(--red_darker);
   color: white;
   text-align: center;
   cursor: pointer;
@@ -392,27 +392,27 @@ span i {
 }
 
 .link {
-  color: var(--link-color);
+  color: var(--link_color);
 }
 
 .link:hover {
-  color: var(--link-hover-color);
+  color: var(--link_hover_color);
 }
 
 .admin-btn.create-btn {
-  background: var(--admin-create-btn-bg);
+  background: var(--admin_create_btn_bg);
 }
 
 .admin-btn.create-btn:hover {
-  background: var(--admin-create-btn-hover-bg);
+  background: var(--admin_create_btn_hover_bg);
 }
 
 .button {
-  background: var(--primary-button-color);
+  background: var(--primary_button_color);
 }
 
 .button:hover {
-  background: var(--primary-button-hover-color);
+  background: var(--primary_button_hover_color);
 }
 
 .full-width {
@@ -714,15 +714,15 @@ span i {
 }
 
 .highlight {
-  background-color: var(--highlight-bg);
-  color: var(--highlight-text);
+  background-color: var(--highlight_bg);
+  color: var(--highlight_text);
   padding: 5px;
   border-radius: 3px;
 }
 
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--card_bg);
+  border: 1px solid var(--card_border);
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -730,7 +730,7 @@ span i {
 }
 
 .error_body {
-  background: var(--error-color) !important;
+  background: var(--error_color) !important;
   display: flex;
   justify-content: center;
   justify-items: center;
@@ -782,12 +782,12 @@ span i {
 }
 
 .no-results {
-  background: var(--highlight-bg);
-  color: var(--highlight-text);
+  background: var(--highlight_bg);
+  color: var(--highlight_text);
   padding: 10px;
   border-radius: 5px;
   text-align: center;
-  border: 2px dashed var(--highlight-border);
+  border: 2px dashed var(--highlight_border);
   animation: border-animation 1s infinite, flash 1s infinite;
   /* make unclickable */
   pointer-events: none;
@@ -820,3 +820,9 @@ span i {
   }
 }
 
+
+header .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}

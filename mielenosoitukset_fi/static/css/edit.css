@@ -1,17 +1,18 @@
-/* Styling for the event editing form */
+/* Updated Styling for the event editing form using variables */
+
 .form-container {
     max-width: 800px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 30px; /* Add padding for spacing */
-    background: #ffffff; /* White background */
-    border: 1px solid #ddd; /* Light gray border */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    background: var(--background); /* White background */
+    border: 1px solid var(--border_color); /* Light gray border */
+    border-radius: var(--border_radius); /* Rounded corners */
+    box-shadow: var(--box_shadow); /* Subtle shadow for depth */
     box-sizing: border-box;
 }
 
 h2 {
-    color: #0033A0; /* Dark Blue */
+    color: var(--primary_color); /* Dark Blue */
     margin-bottom: 20px; /* Space below the heading */
     text-align: center; /* Center align heading */
 }
@@ -24,7 +25,7 @@ label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px; /* Space below label */
-    color: #333; /* Dark gray for better readability */
+    color: var(--primary_text_color); /* Dark gray for better readability */
 }
 
 input[type="text"],
@@ -33,8 +34,8 @@ textarea,
 select {
     width: 100%; /* Full width of the container */
     padding: 10px; /* Padding inside the form elements */
-    border: 1px solid #ccc; /* Light gray border */
-    border-radius: 4px; /* Rounded corners for inputs */
+    border: 1px solid var(--border_color); /* Light gray border */
+    border-radius: var(--border_radius); /* Rounded corners for inputs */
     box-sizing: border-box;
     font-size: 16px; /* Increase font size for readability */
 }
@@ -48,16 +49,16 @@ input[type="text"]:focus,
 input[type="email"]:focus,
 select:focus,
 textarea:focus {
-    border-color: #0033A0; /* Dark blue border on focus */
+    border-color: var(--focus_color); /* Dark blue border on focus */
     outline: none; /* Remove default outline */
 }
 
 .submit-button {
-    background: #0033A0; /* Dark Blue */
-    color: #ffffff; /* White text */
+    background: var(--primary_button_color); /* Dark Blue */
+    color: var(--primary_button_text_color); /* White text */
     border: none;
     padding: 15px 20px; /* Padding inside the button */
-    border-radius: 4px; /* Rounded corners */
+    border-radius: var(--border_radius); /* Rounded corners */
     font-size: 16px; /* Font size for the button text */
     cursor: pointer; /* Pointer cursor on hover */
     transition: background 0.3s ease; /* Smooth transition */
@@ -66,7 +67,7 @@ textarea:focus {
 }
 
 .submit-button:hover {
-    background: #002080; /* Darker blue on hover */
+    background: var(--primary_button_hover_color); /* Darker blue on hover */
 }
 
 @media (max-width: 768px) {
@@ -84,15 +85,15 @@ textarea:focus {
     max-width: 900px;
     margin: 20px auto;
     padding: 30px;
-    background: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background: var(--background);
+    border: 1px solid var(--border_color);
+    border-radius: var(--border_radius);
+    box-shadow: var(--box_shadow);
 }
 
 /* Header styling */
 h2 {
-    color: #0033A0;
+    color: var(--primary_color);
     margin-bottom: 20px;
     text-align: center;
 }
@@ -112,37 +113,37 @@ textarea,
 select {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid var(--border_color);
+    border-radius: var(--border_radius);
     box-sizing: border-box;
 }
 
 /* Button styling */
 button {
-    background: #0033A0;
-    color: #ffffff;
+    background: var(--primary_button_color);
+    color: var(--primary_button_text_color);
     border: none;
     padding: 10px 20px;
-    border-radius: 4px;
+    border-radius: var(--border_radius);
     cursor: pointer;
     font-size: 16px;
     transition: background 0.3s ease;
 }
 
 button:hover {
-    background: #0066cc;
+    background: var(--primary_button_hover_color);
 }
 
 /* Add organizer button specific styling */
 .add-organizer-button {
-    background: #f0f0f0;
-    color: #0033A0;
-    border: 1px solid #ddd;
+    background: var(--background_light);
+    color: var(--primary_color);
+    border: 1px solid var(--border_color);
     font-size: 14px;
 }
 
 .add-organizer-button:hover {
-    background: #e0e0e0;
+    background: var(--hover_bg_color);
 }
 
 /* Optional section styling */
@@ -158,5 +159,5 @@ button:hover {
 /* Placeholder styling */
 input::placeholder,
 textarea::placeholder {
-    color: #888;
+    color: var(--placeholder_color);
 }

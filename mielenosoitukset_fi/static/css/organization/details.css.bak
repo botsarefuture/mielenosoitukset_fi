@@ -33,7 +33,7 @@
 
 /* Base styles for the organization container */
 .org-container {
-  /*background: linear-gradient(135deg, var(--background) 0%, var(--background_light) 100%); /* Gradient background */
+  /*background: linear-gradient(135deg, var(--background) 0%, var(--background-light) 100%); /* Gradient background */
   padding: 40px; /* Updated padding for more space */
   border-radius: 12px; /* Adjusted border radius */
   box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25); /* Enhanced shadow for depth */
@@ -50,7 +50,7 @@
 .org-header {
   text-align: center; /* Centering text */
   margin-bottom: 30px; /* Increased margin for separation */
-  background: var(--admin_section_title_color); /* Gradient for header */
+  background: var(--admin-section-title-color); /* Gradient for header */
   padding: 20px 20px 25px; /* Top/bottom and side padding */
   border-bottom: 3px solid #e0e0e0; /* Bottom border for separation */
   border-radius: 12px; /* Rounded corners for header */
@@ -59,7 +59,7 @@
 
 .org-header h1 {
   margin: 0; /* Remove default margin */
-  color: var(--admin_section_text_color); /* Text color */
+  color: var(--admin-section-text-color); /* Text color */
   font-size: 2.75em; /* Font size */
   font-weight: bold; /* Bold text */
   margin-bottom: 12px; /* Space below the heading */
@@ -128,7 +128,7 @@
 .demo-box h3 {
   margin: 0; /* Remove default margin */
   text-align: center; /* Center text */
-  color: var(--header_color); /* Heading color */
+  color: var(--header-color); /* Heading color */
 }
 
 .demo-box p {
@@ -187,7 +187,7 @@
 
 /* Upcoming title styles */
 #upcoming-title {
-  color: var(--header_color) !important; /* Title color */
+  color: var(--header-color) !important; /* Title color */
   margin-top: 50px !important; /* Top margin */
   margin-bottom: 30px !important; /* Bottom margin */
   font-size: 1.75em !important; /* Font size for title */
@@ -216,7 +216,7 @@
   font-weight: 900; /* Font weight */
   content: '\f336'; /* Unicode for the check badge icon */
   margin-right: 8px; /* Space between icon and text */
-  color: var(--green_light); /* Icon color */
+  color: var(--green-light); /* Icon color */
 }
 
 /* Additional styles for improved responsiveness and layout */

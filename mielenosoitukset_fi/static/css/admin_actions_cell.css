@@ -1,12 +1,12 @@
 /* Align the action cell header to center */
-.actions-cell-header {
+.actions_cell_header {
     text-align: center; /* Center align the header */
     font-weight: bold; /* Bold text for emphasis */
     padding: 0.5rem; /* Padding for better spacing */
 }
 
 /* Actions Cell Styles */
-.actions-cell {
+.actions_cell {
     display: table-cell; /* Display as table cell */
     vertical-align: middle; /* Vertically center the content */
     text-align: right; /* Align buttons to the right */
@@ -15,8 +15,6 @@
     position: relative; /* Allow positioning adjustments if needed */
 }
 
-.actions-cell a,  .actions-cell button {
+.actions_cell a, .actions_cell button {
     margin-right: 0.5rem; /* Margin to the right for links */
 }
-
-

@@ -1,56 +1,88 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
+
+{% block meta %}
+<!-- General Meta Tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="{{ _('Lista tulevista mielenosoituksista') }}" />
+<meta name="keywords" content="mielenosoitus, tapahtuma, Helsinki" />
+<meta name="author" content="Mielenosoitukset.fi" />
+<meta name="robots" content="index, follow" />
 {% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-/>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <style>
   .filter {
-	padding: 1em;
-	background: var(--blue-dark);
-	width: fit-content;
-	border-radius: 50px;
-}
+    padding: 1em;
+    background: var(--blue-dark);
+    width: fit-content;
+    border-radius: 50px;
+    color: var(--white);
+  }
 
-.filters {
-  display: flex;
-gap: 1em;
-}
+  .filters {
+    display: flex;
+    gap: 1em;
+  }
 
-.suggestions {
-  background: var(--input-background);
-  width: 100%;
-  border: 1px solid var(--blue-dark);
-  border-radius: 5px;
-  z-index: 1;
-  display: none;
-  margin-top: -10px;
-}
+  .suggestions {
+    background: var(--input-background);
+    width: 100%;
+    border: 1px solid var(--blue-dark);
+    border-radius: 5px;
+    z-index: 1;
+    display: none;
+    margin-top: -10px;
+  }
 
-.suggestions.show {
-  display: block;
-}
+  .suggestions.show {
+    display: block;
+  }
 
-.suggestion-item {
-  padding: 1em;
-  cursor: pointer;
-}
+  .suggestion-item {
+    padding: 1em;
+    cursor: pointer;
+  }
 
-.suggestion-item:hover {
-  background: var(--blue-dark);
-  color: var(--white);
-}
+  .suggestion-item:hover {
+    background: var(--blue-dark);
+    color: var(--white);
+  }
 
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    margin-bottom: 2em;
+  }
+
+  .search-form input {
+    padding: 0.5em;
+    border: 1px solid var(--blue-dark);
+    border-radius: 5px;
+  }
+
+  .button {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1em;
+  }
+
+  .button:hover {
+    background-color: var(--primary-dark-color);
+    color: white;
+  }
 </style>
 {% endblock %}
 
@@ -60,7 +92,6 @@ gap: 1em;
 <div class="container-main-content">
   <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
 
-  <!-- Extended search form for filtering demonstrations -->
   <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
     <input
       type="text"
@@ -74,82 +105,11 @@ gap: 1em;
       placeholder="{{ _('Kaupunki') }}"
       aria-label="{{ _('Kaupunki') }}"
       list="city-list"
-      id="city-input"
+      id="city_input"
     />
 
     <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}" />
-    <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
-    <script>
-      $(document).ready(function() {
-        const cityInput = $("#city-input");
-        const selectedCitiesInput = $("#city");
-        const filters = $("#filters");
-      });
-    </script>
-    <script>
-      $(document).ready(function() {
-        const cityInput = $("#city-input");
-        const selectedCitiesInput = $("#city");
-        const filters = $("#filters");
-        const citySuggestions = $("#city-suggestions");
-
-        cityInput.on("input", function() {
-          const query = cityInput.val();
-          if (query.length > 2) {
-            const filteredCities = {{ city_list | tojson  }};
-            const matchingCities = filteredCities.filter(city => city.toLowerCase().includes(query.toLowerCase()));
-            citySuggestions.empty();
-            matchingCities.forEach(function(city) {
-              const suggestionItem = $("<div>").addClass("suggestion-item").text(city);
-              citySuggestions.append(suggestionItem);
-
-              suggestionItem.on("click", function() {
-                city = suggestionItem.text();
-                console.log(city);
-                citySuggestions.empty();
-                $("#city-suggestions").removeClass("show");
-
-                cityInput.val('');
-                // add the city to the selected cities
-                const currentCities = selectedCitiesInput.val() ? selectedCitiesInput.val().split(',') : [];
-                if (!currentCities.includes(city)) {
-                  currentCities.push(city);
-                  selectedCitiesInput.val(currentCities.join(','));
-
-                  const filterDiv = $("<div>").addClass("filter").html(`
-                    <span>{{ _('Kaupunki') }}: ${city}</span>
-                    <a href="#" data-city="${city}">
-                      <i class="fas fa-times"></i>
-                    </a>
-                  `);
-                  filters.append(filterDiv);
-
-                  filterDiv.find("a").on("click", function(event) {
-                    event.preventDefault();
-                    const cityToRemove = $(this).data("city");
-                    const updatedCities = currentCities.filter(c => c !== cityToRemove);
-                    selectedCitiesInput.val(updatedCities.join(','));
-                    filterDiv.remove();
-                  });
-                }
-              });
-              $("#city-suggestions").addClass("show");
-            });
-          } else {
-            citySuggestions.empty();
-          }
-        });
-
-        $(document).on("click", function(event) {
-          if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
-            citySuggestions.empty();
-          }
-        });
-      });
-
-    </script>
-    <div id="city-suggestions" class="suggestions"></div>
-
+    <div class="suggestions" id="city_suggestions"></div>
 
     <input
       type="text"
@@ -169,71 +129,18 @@ gap: 1em;
     />
 
     <div class="filters" id="filters">
-      <!-- display all enabled filters here -->
-      <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const selectedCitiesInput = document.getElementById("city");
-          const filters = document.getElementById("filters");
-
-          const updateFilters = () => {
-            filters.innerHTML = '';
-            const cities = selectedCitiesInput.value.split(',');
-            cities.forEach(city => {
-              if (city) {
-                const filterDiv = document.createElement("div");
-                filterDiv.className = "filter";
-                filterDiv.innerHTML = `
-                  <span>{{ _('Kaupunki') }}: ${city}</span>
-                  <a href="#" data-city="${city}">
-                    <i class="fas fa-times"></i>
-                  </a>
-                `;
-                filters.appendChild(filterDiv);
-
-                filterDiv.querySelector("a").addEventListener("click", (event) => {
-                  event.preventDefault();
-                  const cityToRemove = event.target.closest("a").dataset.city;
-                  const updatedCities = cities.filter(c => c !== cityToRemove);
-                  selectedCitiesInput.value = updatedCities.join(',');
-                  updateFilters();
-                });
-              }
-            });
-          };
-
-          updateFilters();
-        });
-      </script>
-
-
-      <!-- Filter: Sijainti -->
       {% if request.args.get('location') %}
-
       <div class="filter">
         <span>{{ _('Sijainti') }}: {{ request.args.get('location') }}</span>
         <a href="{{ url_for('demonstrations', search=request.args.get('search', ''), city=request.args.get('city', ''), location='', date=request.args.get('date', '')) }}">
           <i class="fas fa-times"></i>
         </a>
+      </div>
       {% endif %}
     </div>
 
-    <button type="submit">{{ _('Hae') }}</button>
+    <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const filters = document.getElementById("filters");
-
-      // Add event listeners to remove filters dynamically
-      filters.querySelectorAll(".filter a").forEach(filterRemoveLink => {
-        filterRemoveLink.addEventListener("click", (event) => {
-          event.preventDefault();
-          const url = new URL(filterRemoveLink.href);
-          window.location.href = url;
-        });
-      });
-    });
-  </script>
 
   <div class="container-grid">
     {% if demonstrations and demonstrations|length > 0 %}
@@ -245,10 +152,9 @@ gap: 1em;
     {% endif %}
   </div>
 
-  <!-- Pagination Controls -->
   <div class="pagination">
     {% if page > 1 %}
-      <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
+      <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}" class="button">
         {{ _('Edellinen') }}
       </a>
     {% endif %}
@@ -256,7 +162,7 @@ gap: 1em;
     <span>{{ _('Sivu') }} {{ page }} / {{ total_pages }}</span>
 
     {% if page < total_pages %}
-      <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
+      <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}" class="button">
         {{ _('Seuraava') }}
       </a>
     {% endif %}
@@ -266,22 +172,85 @@ gap: 1em;
 {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Dynamically set items per page based on screen size
-    let perPage;
+    let per_page;
     if (window.innerWidth < 768) {
-      perPage = 5; // Mobile screens
+      per_page = 5;
     } else if (window.innerWidth < 1200) {
-      perPage = 10; // Tablet screens
+      per_page = 10;
     } else {
-      perPage = 20; // Desktop screens
+      per_page = 20;
     }
 
-    // Update the URL with the per_page parameter
     const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set("per_page", perPage);
+    currentUrl.searchParams.set("per_page", per_page);
     window.history.replaceState({}, "", currentUrl);
   });
 </script>
 {% endif %}
 {% endblock %}
 
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script>
+  $(document).ready(function() {
+    const cityInput = $("#city_input");
+    const selectedCitiesInput = $("#city");
+    const filters = $("#filters");
+    const citySuggestions = $("#city_suggestions");
+
+    cityInput.on("input", function() {
+      const query = cityInput.val();
+      if (query.length > 2) {
+        const filteredCities = {{ city_list | tojson }};
+        const matchingCities = filteredCities.filter(city => city.toLowerCase().includes(query.toLowerCase()));
+        citySuggestions.empty();
+        matchingCities.forEach(function(city) {
+          const suggestionItem = $("<div>").addClass("suggestion-item").text(city);
+          citySuggestions.append(suggestionItem);
+
+          suggestionItem.on("click", function() {
+            const selectedCity = suggestionItem.text();
+            citySuggestions.empty();
+            $("#city_suggestions").removeClass("show");
+
+            cityInput.val('');
+            const currentCities = selectedCitiesInput.val() ? selectedCitiesInput.val().split(',') : [];
+            if (!currentCities.includes(selectedCity)) {
+              currentCities.push(selectedCity);
+              selectedCitiesInput.val(currentCities.join(','));
+
+              const filterDiv = $("<div>").addClass("filter").html(`
+                <span>{{ _('Kaupunki') }}: ${selectedCity}</span>
+                <a href="#" data-city="${selectedCity}">
+                  <i class="fas fa-times"></i>
+                </a>
+              `);
+              filters.append(filterDiv);
+
+              filterDiv.find("a").on("click", function(event) {
+                event.preventDefault();
+                const cityToRemove = $(this).data("city");
+                const updatedCities = currentCities.filter(c => c !== cityToRemove);
+                selectedCitiesInput.val(updatedCities.join(','));
+                filterDiv.remove();
+              });
+            }
+          });
+          $("#city_suggestions").addClass("show");
+        });
+      } else {
+        citySuggestions.empty();
+      }
+    });
+
+    $(document).on("click", function(event) {
+      if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
+        citySuggestions.empty();
+      }
+    });
+  });
+</script>
+{% endblock %}

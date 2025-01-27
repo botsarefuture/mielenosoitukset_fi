@@ -1,21 +1,21 @@
 .container {
-  max-width: var(--container-max-width, 1200px);
+  max-width: var(--container_max_width, 1200px);
   margin: 0 auto;
-  padding: var(--container-padding, 20px);
+  padding: var(--container_padding, 20px);
 }
 
 main .profile-container { /* This change closes #163 */
-  background: var(--container-background);
+  background: var(--container_background);
   text-align: center;
   display: grid;
   align-items: center;
-  border-radius: var(--border-radius, 4px);
-  border: 2px solid var(--border-color);
+  border-radius: var(--border_radius, 4px);
+  border: 2px solid var(--border_color);
 }
 
 .profile-header {
-  padding: var(--header-padding, 30px);
-  border-radius: var(--header-border-radius, 10px);
+  padding: var(--header_padding, 30px);
+  border-radius: var(--header_border_radius, 10px);
 }
 
 .profile-details {
@@ -25,52 +25,52 @@ main .profile-container { /* This change closes #163 */
 }
 
 .profile-details .profile-picture {
-  margin-bottom: var(--profile-picture-margin-bottom, 20px);
-  width: var(--profile-picture-size, 150px);
-  height: var(--profile-picture-size, 150px);
+  margin-bottom: var(--profile_picture_margin_bottom, 20px);
+  width: var(--profile_picture_size, 150px);
+  height: var(--profile_picture_size, 150px);
 }
 
 .profile-img {
-  width: var(--profile-picture-size, 150px);
-  height: var(--profile-picture-size, 150px);
+  width: var(--profile_picture_size, 150px);
+  height: var(--profile_picture_size, 150px);
   border-radius: 50%;
-  border: 4px solid var(--border-color);
-  box-shadow: 0 2px 8px var(--box-shadow-color);
+  border: 4px solid var(--border_color);
+  box-shadow: 0 2px 8px var(--box_shadow_color);
   object-fit: cover;
   box-sizing: border-box;
 }
 
 .user-name {
-  font-size: var(--user-name-font-size, 2.2em);
+  font-size: var(--user_name_font_size, 2.2em);
   font-weight: bold;
-  color: var(--primary-text-color);
-  margin: var(--user-name-margin, 10px 0);
+  color: var(--primary_text_color);
+  margin: var(--user_name_margin, 10px 0);
 }
 
 .email,
 .bio {
-  font-size: var(--email-bio-font-size, 1.1em);
-  margin: var(--email-bio-margin, 5px 0);
+  font-size: var(--email_bio_font_size, 1.1em);
+  margin: var(--email_bio_margin, 5px 0);
   text-align: center;
-  color: var(--primary-text-color);
+  color: var(--primary_text_color);
 }
 
 .badge-admin {
   background: var(--green);
-  color: var(--primary-text-color);
-  padding: var(--badge-padding, 6px 12px);
-  border-radius: var(--badge-border-radius, 20px);
-  font-size: var(--badge-font-size, 0.9em);
-  margin-top: var(--badge-margin-top, 10px);
+  color: var(--primary_text_color);
+  padding: var(--badge_padding, 6px 12px);
+  border-radius: var(--badge_border_radius, 20px);
+  font-size: var(--badge_font_size, 0.9em);
+  margin-top: var(--badge_margin_top, 10px);
   display: block;
 }
 
 .organizations {
   width: 100%;
-  margin-top: var(--organizations-margin-top, 20px);
+  margin-top: var(--organizations_margin_top, 20px);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: var(--organizations-gap, 20px);
+  gap: var(--organizations_gap, 20px);
 }
 
 .organizations-title {
@@ -78,10 +78,10 @@ main .profile-container { /* This change closes #163 */
 }
 
 .org-container {
-  background: var(--background-light);
-  border: 2px solid var(--border-color);
-  border-radius: var(--org-container-border-radius, 8px);
-  padding: var(--org-container-padding, 15px);
+  background: var(--background_light);
+  border: 2px solid var(--border_color);
+  border-radius: var(--org_container_border_radius, 8px);
+  padding: var(--org_container_padding, 15px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
@@ -96,64 +96,64 @@ main .profile-container { /* This change closes #163 */
 
 .org-container p {
   margin-top: 0;
-  font-size: var(--org-container-font-size, 1.2em);
+  font-size: var(--org_container_font_size, 1.2em);
   font-weight: bold;
-  color: var(--primary-text-color);
+  color: var(--primary_text_color);
   text-align: center;
-  margin-bottom: var(--org-container-margin-bottom, 2rem);
+  margin-bottom: var(--org_container_margin_bottom, 2rem);
 }
 
 .org-link {
   display: inline-block;
-  margin-top: var(--org-link-margin-top, 10px);
-  padding: var(--org-link-padding, 8px 12px);
-  background: var(--primary-button-color);
-  color: var(--primary-button-text-color);
+  margin-top: var(--org_link_margin_top, 10px);
+  padding: var(--org_link_padding, 8px 12px);
+  background: var(--primary_button_color);
+  color: var(--primary_button_text_color);
   text-decoration: none;
-  border-radius: var(--org-link-border-radius, 5px);
+  border-radius: var(--org_link_border_radius, 5px);
   transition: background 0.3s;
   margin-top: auto;
 }
 
 .org-link:hover {
-  background: var(--primary-button-hover-color);
-  color: var(--primary-button-hover-text-color);
+  background: var(--primary_button_hover_color);
+  color: var(--primary_button_hover_text_color);
 }
 
 .button-group {
-  margin-top: var(--button-group-margin-top, 20px);
+  margin-top: var(--button_group_margin_top, 20px);
 }
 
 .btn {
-  padding: var(--btn-padding, 10px 15px);
+  padding: var(--btn_padding, 10px 15px);
   border: none;
-  border-radius: var(--btn-border-radius, 5px);
+  border-radius: var(--btn_border_radius, 5px);
   cursor: pointer;
-  font-size: var(--btn-font-size, 1em);
-  margin: var(--btn-margin, 5px);
+  font-size: var(--btn_font_size, 1em);
+  margin: var(--btn_margin, 5px);
   transition: background 0.3s, transform 0.2s;
 }
 
 .btn-edit {
-  background: var(--secondary-button-color);
-  color: var(--secondary-button-text-color);
+  background: var(--secondary_button_color);
+  color: var(--secondary_button_text_color);
   text-decoration: none;
 }
 
 .btn-edit:hover {
-  background: var(--secondary-button-hover-color);
-  color: var(--secondary-button-hover-text-color);
+  background: var(--secondary_button_hover_color);
+  color: var(--secondary_button_hover_text_color);
   text-decoration: none;
   transition: background 0.3s, transform 0.2s;
 }
 
 .btn-follow {
-  background: var(--blue-lighter);
+  background: var(--blue_lighter);
   color: white;
 }
 
 .btn-unfollow {
-  background: var(--orange-light);
+  background: var(--orange_light);
   color: white;
 }
 
@@ -168,33 +168,33 @@ main .profile-container { /* This change closes #163 */
   }
 
   .profile-img {
-    width: var(--profile-img-mobile-size, 120px);
-    height: var(--profile-img-mobile-size, 120px);
+    width: var(--profile_img_mobile_size, 120px);
+    height: var(--profile_img_mobile_size, 120px);
   }
 
   .user-name {
-    font-size: var(--user-name-mobile-font-size, 1.8em);
+    font-size: var(--user_name_mobile_font_size, 1.8em);
   }
 
   .email,
   .bio {
-    font-size: var(--email-bio-mobile-font-size, 1em);
+    font-size: var(--email_bio_mobile_font_size, 1em);
   }
 
   .btn {
     width: 100%;
-    margin: var(--btn-mobile-margin, 10px 0);
+    margin: var(--btn_mobile_margin, 10px 0);
   }
 
   .org-container {
-    padding: var(--org-container-mobile-padding, 10px);
+    padding: var(--org_container_mobile_padding, 10px);
   }
 
   .org-container p {
-    font-size: var(--org-container-mobile-font-size, 1em);
+    font-size: var(--org_container_mobile_font_size, 1em);
   }
 
   .org-link {
-    padding: var(--org-link-mobile-padding, 8px 10px);
+    padding: var(--org_link_mobile_padding, 8px 10px);
   }
 }

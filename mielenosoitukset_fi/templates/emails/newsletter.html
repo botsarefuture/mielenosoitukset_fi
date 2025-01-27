@@ -6,13 +6,13 @@
     <title>Uusimmat Mielenosoitukset</title>
     <style>
         :root {
-            --primary-color: #0033a0;
-            --secondary-color: #f0f0f0;
+            --primary_color: #0033a0;
+            --secondary_color: #f0f0f0;
             --background: #ffffff;
-            --border-color: #ddd;
-            --text-color: #333;
-            --hover-bg-color: #e0e0e0;
-            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --border_color: #ddd;
+            --text_color: #333;
+            --hover_bg_color: #e0e0e0;
+            --box_shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         body {
             font-family: Arial, sans-serif;
@@ -26,7 +26,7 @@
             margin: auto; 
             padding: 20px; 
             border-radius: 8px; 
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--box_shadow);
         }
         .header {
             text-align: center; 
@@ -42,7 +42,7 @@
             margin-top: 20px;
         }
         .demo { 
-            border-bottom: 1px solid var(--border-color); 
+            border-bottom: 1px solid var(--border_color); 
             padding: 10px 0; 
         }
         .demo:last-child { 
@@ -55,24 +55,24 @@
         }
         .grid-item {
             background: var(--background); 
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border_color);
             border-radius: 8px; 
             padding: 15px; 
-            box-shadow: var(--box-shadow);
+            box-shadow: var(--box_shadow);
             display: flex; 
             flex-direction: column; 
             justify-content: space-between;
             transition: transform 0.3s, box-shadow 0.3s;
         }
         .grid-item:hover {
-            background: var(--hover-bg-color); 
+            background: var(--hover_bg_color); 
             transform: translateY(-4px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
         .grid-item .title {
             font-size: 18px; 
             font-weight: bold; 
-            color: var(--primary-color);
+            color: var(--primary_color);
             margin-bottom: 10px; 
             text-decoration: none;
         }
@@ -82,7 +82,7 @@
         .date-time { 
             margin-bottom: 10px; 
             font-size: 14px; 
-            color: var(--text-color); 
+            color: var(--text_color); 
         }
         .tag {
             padding: 8px 12px; 

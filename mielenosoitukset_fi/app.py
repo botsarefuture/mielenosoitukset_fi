@@ -157,6 +157,13 @@ def create_app() -> Flask:
 
     @app.context_processor
     def utility_processor():
+        def get_admin_tasks():
+            # check if any demonstrations are waiting for approval
+            waiting = list(mongo.demonstrations.find({"approved": False, "hide": False}))
+            print(waiting)
+            
+            return waiting
+            
         def get_org_name(org_id):
             return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
 
@@ -170,6 +177,7 @@ def create_app() -> Flask:
             get_org_name=get_org_name,
             get_supported_locales=get_supported_locales,
             get_lang_name=get_lang_name,
+            tasks=get_admin_tasks(),
         )
 
     

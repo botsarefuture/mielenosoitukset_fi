@@ -65,14 +65,14 @@ def handle_repeating_demonstrations():
         for demo in repeating_demos:
             try:
                 # Parse the current demonstration's date
-                demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+                demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
                 repeat_schedule = demo.get("repeat_schedule", {})
 
                 # Calculate the next dates based on the repeat schedule
                 next_dates = calculate_next_dates(demo_date, repeat_schedule)
 
                 for next_date in next_dates:
-                    next_date_str = next_date.strftime("%d.%m.%Y")
+                    next_date_str = next_date.strftime("%Y-%m-%d")  # modified to ISO-8601 format
 
                     # Check if a document with the same date and parent already exists
                     existing_demo = collection.find_one(
@@ -114,7 +114,7 @@ def handle_repeating_demonstrations():
                         # Prepare a new demonstration for the next scheduled date
                         new_demo = {
                             "title": demo["title"],
-                            "date": next_date_str,
+                            "date": next_date_str,  # modified to ISO-8601 format
                             "start_time": demo["start_time"],
                             "end_time": demo["end_time"],
                             "topic": demo["topic"],

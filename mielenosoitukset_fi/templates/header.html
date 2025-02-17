@@ -4,11 +4,40 @@
     navLinks.classList.toggle('active');
   }
 </script>
+<style>
 
+/* Element | http://127.0.0.1:5002/admin/recu_demo/ */
+
+div.pc-only:nth-child(7) > li:nth-child(1) > button:nth-child(1) {
+  padding: 10px !important;
+  padding: 0 !important;
+  width: fit-content;
+  height: fit-content;
+  line-height: inherit;
+  background: unset;
+}
+
+/* Inline #19 | http://127.0.0.1:5002/admin/recu_demo/ */
+
+element:hover {
+  scale: 1.5;
+}
+
+#darkmk:hover {
+  scale: 1.5;
+}
+
+/* Element | http://127.0.0.1:5002/admin/recu_demo/ */
+
+#darkmk {
+  transition: all 1s;
+}
+
+</style>
 <style>
   /* Base Styles */
   .navbar {
-    background: var(--primary-color);
+    background: var(--primary_color);
     padding: 10px 20px;
     position: relative;
     z-index: 1000000;
@@ -63,7 +92,7 @@
       position: fixed;
       left: 0;
       top: 83.5px;
-      background: var(--primary-color);
+      background: var(--primary_color);
       display: none;
       z-index: 999999;
       overflow-y: auto;
@@ -139,7 +168,7 @@
     }
 
     .navbar {
-      background: var(--primary-color);
+      background: var(--primary_color);
     }
   }
 
@@ -228,7 +257,7 @@
 
   /* Styles for Top Header */
   .top-header {
-    background: var(--container-background);
+    background: var(--container_background);
     padding: 10px 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
@@ -372,7 +401,7 @@
                 justify-content: space-around;
                 align-items: center;
                 width: 100vw;
-                background-color: var(--blue-darker);
+                background-color: var(--blue_darker);
                 margin: 0;
                 /* margin-top: 1.5em; */
                 padding: 0.5em;
@@ -380,8 +409,8 @@
               }
 
               .theme-button {
-                background-color: var(--primary-button-color);
-                color: var(--primary-button-text-color);
+                background-color: var(--primary_button_color);
+                color: var(--primary_button_text_color);
                 border: none;
                 /* padding: 10px 20px; */
                 border-radius: 50% !important;

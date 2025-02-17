@@ -1,25 +1,27 @@
 {% macro demo_card(demo) %}
-<article class="grid-item" data-href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" aria-label="Demonstration card">
+<article class="grid-item" data-href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}"
+    aria-label="Demonstration card">
     <header class="title">{{ demo['title'] }}</header>
     <div class="details">
         <div class="date-time">
-            <span class="date">{{ demo['date'] }}</span> |
-            <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
+            <!-- Date reformatted to Finnish format -->
+            <span class="date">{{ demo['date'] | date('%d.%m.%Y') }}</span> |
+            <span class="time">{{ demo['start_time'] | date('%H:%M') }} - {{ demo['end_time'] | date('%H:%M') }}</span>
         </div>
         <div class="topics">
             <ul>
                 {% if demo['tags'] and demo['tags']|length > 0 %}
-                    {% for tag in demo['tags'] %}
-                        <li>
-                            <a href="{{ url_for('tag_detail', tag_name=tag) }}">
-                                <span class="tag">#{{ tag }}</span>
-                            </a>
-                        </li>
-                    {% endfor %}
+                {% for tag in demo['tags'] %}
+                <li>
+                    <a href="{{ url_for('tag_detail', tag_name=tag) }}">
+                        <span class="tag">#{{ tag }}</span>
+                    </a>
+                </li>
+                {% endfor %}
                 {% else %}
-                    <li>
-                        <span class="tag">#{{ demo['topic'] }}</span>
-                    </li>
+                <li>
+                    <span class="tag">#{{ demo['topic'] }}</span>
+                </li>
                 {% endif %}
             </ul>
         </div>

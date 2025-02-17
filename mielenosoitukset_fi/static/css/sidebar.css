@@ -44,7 +44,7 @@
 }
 
 .sidebar-toggle:hover {
-  background: var(--orange-darker); /* Darker orange on hover */
+  background: var(--orange_darker); /* Darker orange on hover */
   transform: scale(1.1); /* Slightly enlarge button on hover */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
 }
@@ -65,8 +65,8 @@
 }
 
 .sidebar-nav a {
-  color: var(--secondary-button-text-color);
-  background: var(--secondary-button-color);
+  color: var(--secondary_button_text_color);
+  background: var(--secondary_button_color);
   font-weight: bold;
   text-decoration: none;
   display: flex; /* Flex display for alignment */
@@ -78,8 +78,8 @@
 
 /* Hover effect for sidebar links */
 .sidebar-nav a:hover {
-  background: var(--secondary-button-hover-color); /* Highlight on hover */
-  color: var(--secondary-button-hover-text-color);
+  background: var(--secondary_button_hover_color); /* Highlight on hover */
+  color: var(--secondary_button_hover_text_color);
 }
 
 /* Hidden icons section styling */
@@ -111,7 +111,7 @@
 
 /* Hover effect on the hidden icons toggle button */
 .hidden-icons .sidebar-toggle:hover {
-  background: var(--orange-darker); /* Background color on hover */
+  background: var(--orange_darker); /* Background color on hover */
   border-radius: 5%; /* Round button on hover */
   color: #ffffff; /* Icon color on hover */
 }
@@ -134,7 +134,7 @@
 
 /* Hover effect on hidden icons */
 .hidden-icons a:hover {
-  background: var(--orange-darker); /* Background color on hover */
+  background: var(--orange_darker); /* Background color on hover */
   font-size: 30px; /* Increase icon size on hover */
   color: #ffffff; /* Icon color on hover */
 }
@@ -163,7 +163,8 @@
     box-shadow: none;
     display: none;
   }
-  
+
+
 
   .sidebar-nav {
     flex-direction: column;
@@ -187,9 +188,9 @@
 .sidebar-info {
   margin-top: 20px;
   padding: 10px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--border_color);
   background: var(--yellow); /* Light orange for warnings */
-  color: var(--orange-darker); /* Darker text color for visibility */
+  color: var(--orange_darker); /* Darker text color for visibility */
   display: flex;
   align-items: center;
   font-size: 14px;
@@ -220,8 +221,8 @@ li {
 }
 
 .beta-label {
-  background: var(--hover-bg-color); /* Using hover background color variable for a light gray effect */
-  color: var(--primary-text-color); /* Using primary text color variable for contrast */
+  background: var(--hover_bg_color); /* Using hover background color variable for a light gray effect */
+  color: var(--primary_text_color); /* Using primary text color variable for contrast */
   border-radius: 3px; /* Rounded corners */
   padding: 2px 5px; /* Padding for spacing */
   font-size: 12px; /* Smaller font size */
@@ -230,7 +231,7 @@ li {
 
 .ddos-button {
   background: var(--red); /* Using red color variable for the button */
-  color: var(--primary-button-text-color); /* Using primary button text color variable for white text */
+  color: var(--primary_button_text_color); /* Using primary button text color variable for white text */
   padding: 10px 15px;
   border: none;
   border-radius: 5px;
@@ -259,5 +260,5 @@ border: black 1px solid;
 }
 
 .dangerous-action:hover {
-background-color: var(--red-dark) !important;
+background-color: var(--red_dark) !important;
 }

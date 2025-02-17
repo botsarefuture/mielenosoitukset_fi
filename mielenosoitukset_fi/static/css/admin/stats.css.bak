@@ -7,9 +7,9 @@
         border-radius: 0.4em;
         margin: 8px 0;
         font-size: 1.8em;
-        background: var(--blue_darker);
+        background: var(--blue-darker);
         border: 2px solid #ccc;
-        color: var(--primary_text_color);
+        color: var(--primary-text-color);
         z-index: 1;
         width: auto;
         max-width: 250px;
@@ -35,7 +35,7 @@
         white-space: normal;
         line-height: 1.2em;
         /*! max-height: 2.9em; */
-        color: var(--secondary_text_color);
+        color: var(--secondary-text-color);
         text-align: center;
         flex: 0 0 35%;
         text-transform: uppercase;
@@ -68,7 +68,7 @@
         display: block;
         width: 100%;
         height: 1px;
-        background: var(--secondary_text_color);
+        background: var(--secondary-text-color);
         margin: 0.4em 0;
         position: absolute;  /* Position relative to stitle */
         top: 3em;            /* Place after the 3em height */
@@ -79,7 +79,7 @@
     
     stat snum {
         border-radius: 0.4em;
-        color: var(--primary_text_color);
+        color: var(--primary-text-color);
         z-index: 1;
         width: auto;
         font-size: 2em;
@@ -97,7 +97,7 @@
 
     stat sdisc {
         font-size: 0.5em;
-        color: var(--secondary_text_color);
+        color: var(--secondary-text-color);
         text-align: center;
         margin-top: 0.2em;
         margin-bottom: 0.2em;
@@ -116,7 +116,7 @@
 
     last-updated {
         font-size: 0.6em;
-        color: var(--secondary_text_color);
+        color: var(--secondary-text-color);
         text-align: center;
         margin-top: 0.4em;
         overflow: hidden;

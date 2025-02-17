@@ -3,16 +3,16 @@
     max-width: 400px; /* Limit width for better focus */
     margin: 0 auto; /* Center the container horizontally */
     padding: 40px; /* Add padding for spacing */
-    background: var(--container-background); /* Background color */
-    border: 1px solid var(--border-color); /* Border color */
+    background: var(--container_background); /* Background color */
+    border: 1px solid var(--border_color); /* Border color */
     border-radius: 8px; /* Rounded corners */
-    box-shadow: var(--box-shadow); /* Box shadow for depth */
+    box-shadow: var(--box_shadow); /* Box shadow for depth */
     box-sizing: border-box;
     text-align: center; /* Center align text */
 }
 
 h1 {
-    color: var(--header-color); /* Header color */
+    color: var(--header_color); /* Header color */
     margin-bottom: 20px; /* Space below the heading */
     font-size: 24px; /* Font size */
 }
@@ -25,30 +25,30 @@ label {
     display: block;
     font-weight: bold;
     margin-bottom: 5px; /* Space below label */
-    color: var(--primary-text-color); /* Label color */
+    color: var(--primary_text_color); /* Label color */
 }
 
 input[type="text"], input[type="email"], input[type="password"] {
     width: 100%; /* Full width */
     padding: 10px; /* Padding inside input */
-    border: 1px solid var(--border-color); /* Border color */
+    border: 1px solid var(--border_color); /* Border color */
     border-radius: 4px; /* Rounded corners */
     box-sizing: border-box;
     font-size: 16px; /* Font size */
-    background: var(--input-background); /* Input background color */
-    color: var(--primary-text-color); /* Input text color */
+    background: var(--input_background); /* Input background color */
+    color: var(--primary_text_color); /* Input text color */
 }
 
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-    border-color: var(--focus-color); /* Border color on focus */
+    border-color: var(--focus_color); /* Border color on focus */
     outline: none; /* Remove default outline */
 }
 
 button[type="submit"] {
-    background: var(--primary-button-color); /* Button background color */
-    color: var(--primary-button-text-color); /* Button text color */
+    background: var(--primary_button_color); /* Button background color */
+    color: var(--primary_button_text_color); /* Button text color */
     border: none;
     padding: 15px 20px; /* Padding inside the button */
     border-radius: 4px; /* Rounded corners */
@@ -58,8 +58,8 @@ button[type="submit"] {
 }
 
 button[type="submit"]:hover {
-    background: var(--primary-button-hover-color); /* Button background color on hover */
-    color: var(--primary-button-hover-text-color); /* Button text color on hover */
+    background: var(--primary_button_hover_color); /* Button background color on hover */
+    color: var(--primary_button_hover_text_color); /* Button text color on hover */
 }
 
 .forgot-password {
@@ -68,24 +68,24 @@ button[type="submit"]:hover {
 }
 
 .forgot-password a {
-    color: var(--link-color); /* Link color */
+    color: var(--link_color); /* Link color */
     text-decoration: none; /* Remove underline */
 }
 
 .forgot-password a:hover {
     text-decoration: underline; /* Underline on hover */
-    color: var(--link-hover-color); /* Link color on hover */
+    color: var(--link_hover_color); /* Link color on hover */
 }
 
 .register-link a {
-    color: var(--link-color); /* Link color */
+    color: var(--link_color); /* Link color */
     text-decoration: none; /* Remove underline */
     font-weight: bold; /* Bold text */
 }
 
 .register-link a:hover {
     text-decoration: underline; /* Underline on hover */
-    color: var(--link-hover-color); /* Link color on hover */
+    color: var(--link_hover_color); /* Link color on hover */
 }
 
 /* Responsive Design */
@@ -98,7 +98,7 @@ button[type="submit"]:hover {
 
 /* Accessibility Enhancements */
 input:focus {
-    outline: 2px solid var(--focus-color); /* Outline for accessibility */
+    outline: 2px solid var(--focus_color); /* Outline for accessibility */
 }
 
 @media (prefers-reduced-motion: reduce) {

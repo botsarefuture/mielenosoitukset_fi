@@ -32,7 +32,7 @@ def is_future_demo(demo: dict, today: datetime.date) -> bool:
     bool
         True if the demonstration is in the future, False otherwise.
     """
-    demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+    demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
     return demo_date >= today
 
 

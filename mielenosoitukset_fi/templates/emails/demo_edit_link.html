@@ -1,0 +1,84 @@
+<!-- filepath: /home/verso/Desktop/mosoitukset_fi_v3/mielenosoitukset_fi/mielenosoitukset_fi/templates/emails/demo_edit_link.html -->
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muokkaa mielenosoitusta</title>
+    <style>
+        body {
+            background-color: #f4f4f4;
+            color: #333;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #0033A0;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content p {
+            margin: 10px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #0033A0;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1em;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background-color: #002a6d;
+        }
+        .footer {
+            background-color: #f4f4f4;
+            color: #888;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Muokkaa mielenosoitusta</h1>
+        </div>
+        <div class="content">
+            <p>Hei,</p>
+            <p>Sinut on kutsuttu muokkaamaan mielenosoitusta.</p>
+            <p>Klikkaa alla olevaa painiketta päästäksesi muokkaamaan mielenosoituksen tietoja:</p>
+            <p style="text-align: center;">
+                <a href="{{ edit_link }}" class="btn">Muokkaa mielenosoitusta</a>
+            </p>
+            <p>Jos et tunnista tätä pyyntöä, jätä tämä viesti huomiotta.</p>
+            <p>Ystävällisin terveisin,<br>Tiimimme</p>
+        </div>
+        <div class="footer">
+            <p>Tämä on automaattinen viesti, älä vastaa tähän sähköpostiin.</p>
+        </div>
+    </div>
+</body>
+</html>

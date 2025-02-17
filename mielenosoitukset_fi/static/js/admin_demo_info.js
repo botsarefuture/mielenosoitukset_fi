@@ -103,14 +103,24 @@ function updateModalContent(demo_info) {
  * Displays the modal.
  */
 function showModal() {
-    document.querySelector('#demo-modal').classList.add("display");
+    const modal = document.querySelector('#demo-modal');
+    modal.classList.add("display", "active");
+    // Activate overlay to hide other content
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.style.display = 'block';
+    }
 }
 
 /**
- * Closes the modal.
+ * Closes the modal and hides the overlay.
  */
-function closeModal() {
-    document.querySelector('.modal').classList.remove("display");
+function closeModal(modal) {
+    modal.classList.remove("active", "display");
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
 }
 
 if (localStorage.getItem('user_role') && localStorage.getItem('user_role').includes('admin')) {

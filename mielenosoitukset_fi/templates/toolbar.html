@@ -4,6 +4,41 @@
 <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 {% endif %}
 
+<style>
+
+/* Inline #16 | http://127.0.0.1:5002/demonstrations?search=&city=Helsinki&location=&display_date_start=17.02.2025&display_date_end=04.09.2032&date_start=2025-02-17&date_end=2032-09-04 */
+
+.sidebar-nav li:hover {
+  background: var(--primary_button_hover_color) !important;
+  padding: 1em;
+}
+
+/* sidebar.css | http://127.0.0.1:5002/static/css/sidebar.css */
+
+.sidebar-nav a {
+  /* background: var(--secondary_button_color); */
+  background-color: unset;
+}
+
+.sidebar-nav a:hover {
+  background: unset !important;
+  color: unset !important;
+  /* color: var(--secondary_button_hover_text_color); */
+}
+
+.sidebar-nav li {
+  background: var(--secondary_button_color);
+  transition: all 0.5s;
+}
+.tasks {
+	color: light-dark(black, white);
+	text-align: center;
+	background: light-dark(white, black);
+	padding: 5px;
+}
+
+
+</style>
 
 {% import 'admin/organizations/macros.html' as org_macros %}
 

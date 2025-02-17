@@ -287,6 +287,91 @@ def verify_mfa():
 
     return render_template("users/auth/verify_mfa.html")
 
+@auth_bp.route("/api/v1/settings/", methods=["POST"])
+@login_required
+def settings_api():
+    """
+    Update settings for the current user by comparing the provided data with the existing data.
+    For any field that differs, update the database, send an email notification, and start a process.
+    
+    This now includes additional settings such as language, dark_mode, and city selections.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    flask.Response
+        A JSON response indicating whether settings were updated.
+    """
+    user = current_user
+    user_data = request.form.to_dict()
+    changed_fields = {}
+
+    # Build current_user_data from attributes (use underscore field names)
+    current_user_data = {
+        "username": getattr(user, "username", None),
+        "email": getattr(user, "email", None),
+        "mfa_enabled": getattr(user, "mfa_enabled", None),
+        "language": getattr(user, "language", None),
+        "dark_mode": getattr(user, "dark_mode", None),
+        "city": getattr(user, "city", None),
+        # add other fields as needed
+    }
+
+    for field, new_value in user_data.items():
+        current_value = current_user_data.get(field)
+        if current_value is None or str(current_value) != str(new_value):
+            changed_fields[field] = {"old": current_value, "new": new_value}
+            setattr(user, field, new_value)
+
+    if changed_fields:
+        # Update the user's document in the database
+        mongo.users.update_one({"_id": user._id}, {"$set": user_data})
+
+        # Send an email notification about the changes
+        try:
+            email_sender.queue_email(
+                template_name="auth/settings_changed.html",
+                subject="Käyttäjäasetusten muutokset",
+                recipients=[user.email],
+                context={
+                    "changed_fields": changed_fields,
+                    "user_name": user.displayname or user.username,
+                },
+            )
+        except Exception as e:
+            flash_message(f"Virhe asetusten muutosviestin lähettämisessä: {e}", "error")
+
+        # Start the process associated with the changed settings
+        process_settings_change(user, changed_fields)
+
+        return jsonify({
+            "status": "success",
+            "message": "Asetukset päivitetty ja ilmoitus lähetetty.",
+            "changed_fields": changed_fields
+        })
+    else:
+        return jsonify({
+            "status": "success",
+            "message": "Ei muutoksia asetuksissa."
+        })
+
+
+def process_settings_change(user, changed_fields):
+    """
+    Start the process for handling changed settings.
+
+    Parameters
+    ----------
+    user : User
+        The current user object.
+    changed_fields : dict
+        A dictionary containing the fields that were changed.
+    """
+    # This is a placeholder for any additional process that should be started.
+    current_app.logger.info(f"User {user._id} settings changed: {changed_fields}")
 
 @auth_bp.route("/settings", methods=["GET", "POST"])
 @login_required

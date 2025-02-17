@@ -10,9 +10,9 @@
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem;
-    background-color: var(--background_color);
-    border-radius: var(--border_radius);
-    box-shadow: var(--box_shadow);
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
 }
 
 .progress-bar {
@@ -24,7 +24,7 @@
 .progress-bar .step {
     width: 2rem;
     height: 2rem;
-    background-color: var(--border_color);
+    background-color: var(--border-color);
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -34,7 +34,7 @@
 }
 
 .progress-bar .step.active {
-    background-color: var(--primary_color);
+    background-color: var(--primary-color);
 }
 
 page {
@@ -54,30 +54,30 @@ page.active {
 
 .role {
     padding: 1.5rem;
-    border: 1px solid var(--border_color);
-    border-radius: var(--border_radius);
-    box-shadow: var(--box_shadow);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .role:hover {
     transform: translateY(-5px);
-    box-shadow: var(--box_shadow_hover);
+    box-shadow: var(--box-shadow-hover);
 }
 
 .role.GREEN {
-    background-color: var(--success_bg);
-    color: var(--success_text);
+    background-color: var(--success-bg);
+    color: var(--success-text);
 }
 
 .role.YELLOW {
-    background-color: var(--warning_bg);
-    color: var(--warning_text);
+    background-color: var(--warning-bg);
+    color: var(--warning-text);
 }
 
 .role.RED {
-    background-color: var(--danger_bg);
-    color: var(--danger_text);
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
 }
 
 .role .name {
@@ -93,9 +93,9 @@ page.active {
 .role .recruit_status {
     margin-top: 1rem;
     padding: 1rem;
-    border-top: 1px solid var(--border_color);
-    background-color: var(--background_color);
-    border-radius: 0 0 var(--border_radius) var(--border_radius);
+    border-top: 1px solid var(--border-color);
+    background-color: var(--background-color);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
 form {
@@ -112,13 +112,13 @@ form input,
 form select,
 form button {
     padding: 0.75rem;
-    border: 1px solid var(--border_color);
-    border-radius: var(--border_radius);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     width: 100%;
 }
 
 form button {
-    background-color: var(--primary_color);
+    background-color: var(--primary-color);
     color: white;
     border: none;
     cursor: pointer;
@@ -127,48 +127,48 @@ form button {
 
 form button:hover,
 form button:focus {
-    background-color: var(--primary_hover);
+    background-color: var(--primary-hover);
 }
 
 form input:invalid {
-    border: 2px solid var(--danger_bg);
+    border: 2px solid var(--danger-bg);
 }
 
 form input:invalid:focus {
     outline: none;
-    box-shadow: 0 0 5px var(--danger_bg);
+    box-shadow: 0 0 5px var(--danger-bg);
 }
 
 meter {
     width: 100%;
     margin-top: 0.5rem;
     height: 1rem;
-    background-color: var(--primary_hover);
-    border-radius: var(--border_radius);
+    background-color: var(--primary-hover);
+    border-radius: var(--border-radius);
 }
 
 .alert {
     padding: 1rem;
-    background-color: var(--alert_bg);
-    color: var(--alert_text);
-    border-radius: var(--border_radius);
+    background-color: var(--alert-bg);
+    color: var(--alert-text);
+    border-radius: var(--border-radius);
     margin-top: 1rem;
     text-align: center;
 }
 
 .alert.success {
-    background-color: var(--success_bg);
-    color: var(--success_text);
+    background-color: var(--success-bg);
+    color: var(--success-text);
 }
 
 .alert.warning {
-    background-color: var(--warning_bg);
-    color: var(--warning_text);
+    background-color: var(--warning-bg);
+    color: var(--warning-text);
 }
 
 .alert.danger {
-    background-color: var(--danger_bg);
-    color: var(--danger_text);
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
 }
 
 .navigation {
@@ -176,9 +176,9 @@ meter {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background-color: var(--primary_color);
+    background-color: var(--primary-color);
     color: white;
-    border-bottom: 1px solid var(--border_color);
+    border-bottom: 1px solid var(--border-color);
     width: 100%;
     position: relative;
     bottom: 0;
@@ -195,22 +195,22 @@ meter {
 
 .navigation a:hover,
 .navigation a:focus {
-    background-color: var(--primary_hover);
-    border-radius: var(--border_radius);
+    background-color: var(--primary-hover);
+    border-radius: var(--border-radius);
 }
 
 .navigation button {
-    background-color: var(--primary_color);
+    background-color: var(--primary-color);
     color: white;
     border: none;
     padding: 0.5rem 1rem;
-    border-radius: var(--border_radius);
+    border-radius: var(--border-radius);
     cursor: pointer;
     transition: background-color 0.3s;
 }
 
 .navigation button:hover {
-    background-color: var(--primary_hover);
+    background-color: var(--primary-hover);
 }
 
 @media (max-width: 768px) {
@@ -241,10 +241,10 @@ h1 {
 button {
     display: inline-block;
     padding: 0.75rem 1.5rem;
-    background-color: var(--primary_color);
+    background-color: var(--primary-color);
     color: white;
     text-align: center;
-    border-radius: var(--border_radius);
+    border-radius: var(--border-radius);
     text-decoration: none;
     transition: background-color 0.3s;
 }
@@ -253,7 +253,7 @@ button {
 .btn-signup:focus,
 button:hover,
 button:focus {
-    background-color: var(--primary_hover);
+    background-color: var(--primary-hover);
 }
 
 .review {

@@ -92,7 +92,7 @@ def hide_past_demos(demos, today):
     for demo in demos:
         stats["total"] += 1
         try:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
             if not is_future_demo(demo_date, today):
                 try:
                     demonstration_instance = Demonstration.from_dict(demo)

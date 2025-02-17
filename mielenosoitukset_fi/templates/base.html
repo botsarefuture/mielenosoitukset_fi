@@ -20,21 +20,16 @@
 
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
 
-  <!-- START of stylesheets -->
-
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}" />
-    {% block styles %} {% endblock %}
-
-  <!-- END of stylesheets -->
+  {% block styles %} {% endblock %}
 
   <!-- Matomo -->
   <script src="{{ url_for('static', filename='js/matomo.js') }}"></script>
-  <!-- End Matomo Code -->
   <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
-
 </head>
 
 <body>
@@ -62,6 +57,7 @@
   {% endif %}
   {% endwith %}
 
+  <!-- Inline Flash Messages Styles -->
   <style>
     .flash-messages {
       top: 0;
@@ -115,6 +111,46 @@
       right: 0;
       padding: 0.5rem;
     }
+
+    .footer-links a:hover,
+    .social-media-links a:hover {
+      background: var(--primary_button_hover_color);
+      padding: 0.5em;
+      border-radius: 0.5em;
+    }
+
+    .flash-messages .flash-close {
+      background: red;
+      height: 32px;
+      width: 32px;
+      line-height: 16px;
+      border-radius: 50%;
+    }
+
+    .flash-messages {
+      background-color: unset;
+    }
+
+    #flash-messages {
+      gap: 30px;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #flash-messages ul {
+      display: inherit;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #flash-messages div {
+      width: 100%;
+      padding: 1rem;
+    }
+
+    .flash-close:hover {
+      background: darkred;
+    }
   </style>
 
   <!-- Main Content Area -->
@@ -131,13 +167,14 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="container-header-footer">
-      <p>&copy; 2025 Mielenosoitukset.fi - {{ _('Kaikki oikeudet pidätetään.') }}</p>
+      <p style="color: var(--secondary_color);">&copy; 2025 Mielenosoitukset.fi - {{ _('Kaikki oikeudet pidätetään.') }}
+      </p>
       <ul class="footer-links">
         <li><a href="{{ url_for('info') }}">{{ _('Tietoa sivustosta') }}</a></li>
         |
         <li><a href="{{ url_for('privacy') }}">{{ _('Tietosuojaseloste') }}</a></li>
         |
-        <li><a href="{{ url_for('contact')}}">{{ _('Ota yhteyttä') }}</a></li>
+        <li><a href="{{ url_for('contact') }}">{{ _('Ota yhteyttä') }}</a></li>
       </ul>
       <ul class="social-media-links">
         <li>
@@ -151,7 +188,7 @@
           </a>
         </li>
       </ul>
-      <!-- ADD THE LOGIN LINK HERE-->
+      <!-- Authentication Links -->
       <ul class="footer-links">
         <div class="auth-buttons">
           {% if not current_user.is_authenticated %}
@@ -166,69 +203,84 @@
 
     </div>
   </footer>
-</body>
-<script>
-  document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
-    event.preventDefault();
-    const dropdownMenu = this.nextElementSibling;
-    const isOpen = dropdownMenu.classList.toggle("show");
-    this.setAttribute("aria-expanded", isOpen);
-  });
 
-  window.addEventListener("click", function (event) {
-    const dropdowns = document.querySelectorAll(".dropdown-menu");
-    dropdowns.forEach(function (dropdown) {
-      if (!dropdown.parentElement.contains(event.target)) {
-        dropdown.classList.remove("show");
-      }
+  <!-- Scripts -->
+  <script>
+    document.querySelector(".dropdown-toggle").addEventListener("click", function (event) {
+      event.preventDefault();
+      const dropdownMenu = this.nextElementSibling;
+      const isOpen = dropdownMenu.classList.toggle("show");
+      this.setAttribute("aria-expanded", isOpen);
     });
-  });
-</script>
 
-<script>
-  function displayFlashMessage(category, message) {
-    const flashMessages = document.getElementById("flash-messages");
-    const messageList = document.getElementById("flash-message-list");
-
-    const newMessage = document.createElement("li");
-    newMessage.className = `flash-${category}`;
-    newMessage.textContent = message;
-
-    messageList.appendChild(newMessage);
-    flashMessages.style.display = "block";
-
-    setTimeout(() => {
-      newMessage.remove();
-      if (messageList.childElementCount === 0) {
-        flashMessages.style.display = "none";
-      }
-    }, 10000);
-  }
-
-  $(document).ready(function() {
-    $(".flash-close").click(function() {
-      $(this).parent().parent().hide();
+    window.addEventListener("click", function (event) {
+      const dropdowns = document.querySelectorAll(".dropdown-menu");
+      dropdowns.forEach(function (dropdown) {
+        if (!dropdown.parentElement.contains(event.target)) {
+          dropdown.classList.remove("show");
+        }
+      });
     });
-  });
-</script>
-<script src="{{ url_for('static', filename='js/theme.js') }}"></script>
-<script>
-  function toggleNavbar() {
-    const navLinks = document.querySelector('.nav-links');
-    navLinks.classList.toggle('active');
-  }
-</script>
-<script>
-  // Activators
-  document.addEventListener("DOMContentLoaded", function () {
-    applyPreferredTheme(); // Apply the preferred theme on page load
-    checkForNewMarqueeMessages(); // Initial check on page load
-    // Check for new marquee messages every 5 seconds
-    setInterval(checkForNewMarqueeMessages, 5000);
+  </script>
 
-  });
-</script>
-{% block scripts %} {% endblock %}
+  <script>
+    /**
+     * Display a flash message.
+     *
+     * Parameters
+     * ----------
+     * category : str
+     *     The flash message category.
+     * message : str
+     *     The message to display.
+     */
+    function displayFlashMessage(category, message) {
+      const flashMessages = document.getElementById("flash-messages");
+      const messageList = document.getElementById("flash-message-list");
+
+      const newMessage = document.createElement("li");
+      newMessage.className = `flash-${category}`;
+      newMessage.textContent = message;
+
+      messageList.appendChild(newMessage);
+      flashMessages.style.display = "block";
+
+      setTimeout(() => {
+        newMessage.remove();
+        if (messageList.childElementCount === 0) {
+          flashMessages.style.display = "none";
+        }
+      }, 10000);
+    }
+  </script>
+
+  <script>
+    $(document).ready(function () {
+      $(".flash-close").click(function () {
+        $(this).parent().parent().hide();
+      });
+    });
+  </script>
+
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script>
+    function toggleNavbar() {
+      const nav_links = document.querySelector('.nav-links');
+      nav_links.classList.toggle('active');
+    }
+  </script>
+
+  <script>
+    // Activators
+    document.addEventListener("DOMContentLoaded", function () {
+      applyPreferredTheme();  // Apply the preferred theme on page load
+      checkForNewMarqueeMessages();  // Initial check on page load
+      // Check for new marquee messages every 5 seconds
+      setInterval(checkForNewMarqueeMessages, 5000);
+    });
+  </script>
+
+  {% block scripts %} {% endblock %}
 </body>
 
 </html>

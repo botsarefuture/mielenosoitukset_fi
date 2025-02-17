@@ -49,7 +49,7 @@ def get_demonstrations():
     filtered_demonstrations = []
 
     for demo in demonstrations:
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
         if demo_date >= today or in_past_query == "true":
             demo = stringify_object_ids(demo)  # Convert ObjectId to string
             if (
@@ -63,7 +63,7 @@ def get_demonstrations():
                 filtered_demonstrations.append(demo)
 
     # Sort by date in ascending order
-    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y"))
+    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
 
     return jsonify(filtered_demonstrations), 200
 

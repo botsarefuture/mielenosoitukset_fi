@@ -3,9 +3,9 @@
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
-    background: var(--background_light);
+    background: var(--background-light);
     border-radius: 8px;
-    box-shadow: 0 4px 8px var(--box_shadow);
+    box-shadow: 0 4px 8px var(--box-shadow);
 }
 
 .form-group {
@@ -15,7 +15,7 @@
 .form-group label {
     display: block;
     font-size: 16px;
-    color: var(--primary_text_color);
+    color: var(--primary-text-color);
     margin-bottom: 5px;
 }
 
@@ -23,7 +23,7 @@
 .form-group textarea {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border_color);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 16px;
     box-sizing: border-box;
@@ -48,5 +48,5 @@ button.btn-primary {
 }
 
 button.btn-primary:hover {
-    background: var(--blue_dark);
+    background: var(--blue-dark);
 }

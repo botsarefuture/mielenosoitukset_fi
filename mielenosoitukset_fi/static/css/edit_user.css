@@ -1,62 +1,62 @@
 @import url("buttons.css");
 
 /* edit_user.css */
-.edit-user-panel {
+.edit_user_panel {
   max-width: 1000px; /* Set a fixed maximum width */
   margin: 20px auto;
   padding: 20px; /* Reduced padding inside the container */
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border_radius);
+  box-shadow: var(--box_shadow);
 }
 
-.edit-user-panel h2 {
+.edit_user_panel h2 {
   margin-bottom: 20px; /* Reduced margin below the heading */
   font-size: 28px; /* Slightly smaller heading size */
 }
 
-.form-group {
+.form_group {
   margin-bottom: 20px; /* Reduced space between form groups */
 }
 
-.form-group label {
+.form_group label {
   display: block;
   font-weight: bold;
   margin-bottom: 8px; /* Reduced margin below the label */
 }
 
-.form-group input,
-.form-group select {
+.form_group input,
+.form_group select {
   width: 100%; /* Full width */
   padding: 10px; /* Reduced padding inside input and select fields */
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border_color);
   border-radius: 4px; /* Slightly smaller border radius */
   box-sizing: border-box; /* Ensure padding is included in the width */
   font-size: 14px; /* Smaller font size for better fit */
 }
 
-.search-input {
+.search_input {
   width: calc(100% - 22px); /* Adjust width to fit the container */
   padding: 10px; /* Reduced padding inside the search input */
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border_color);
   border-radius: 4px;
   margin-bottom: 20px; /* Reduced space below the search input */
   box-sizing: border-box;
   font-size: 14px; /* Smaller font size */
 }
 
-.organization-list {
+.organization_list {
   display: flex;
   flex-wrap: wrap; /* Wrap items to prevent overflow */
   gap: 10px; /* Reduced gap between items */
   margin-top: 10px; /* Reduced space above the list */
 }
 
-.organization-item {
+.organization_item {
   flex: 1 1 calc(33% - 10px); /* Flex basis to ensure items fit without overflow */
   display: flex;
   align-items: center;
   padding: 10px; /* Reduced padding inside each list item */
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border_color);
   border-radius: 4px; /* Smaller border radius */
   margin-bottom: 10px; /* Reduced margin between list items */
   cursor: pointer;
@@ -64,11 +64,11 @@
   transition: background 0.3s ease;
 }
 
-.organization-item:hover {
-  background: var(--hover-bg-color);
+.organization_item:hover {
+  background: var(--hover_bg_color);
 }
 
-.submit-button {
+.submit_button {
   border: none;
   padding: 10px 20px; /* Reduced padding inside the button */
   border-radius: 4px;

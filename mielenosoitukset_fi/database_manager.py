@@ -53,6 +53,8 @@ class DatabaseManager:
                     )
                     self._default_db_name = self._config.MONGO_DBNAME or "testdb"
                     self._client = None
+                    logger.warning(self._config)
+
                     self._databases = {}  # Cache for database instances
                     self._initialized = False
                     DatabaseManager._instance = self

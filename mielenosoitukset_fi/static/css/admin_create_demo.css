@@ -1,9 +1,7 @@
-
-
 /* Form styling */
 form {
-    background: #fff;
-    border-radius: 8px;
+    background: var(--white);
+    border-radius: var(--border_radius);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     padding: 20px;
 }
@@ -18,14 +16,14 @@ form {
     display: block;
     font-weight: bold;
     margin-bottom: 5px;
-    color: #333;
+    color: var(--primary_text_color);
 }
 
 /* Input field styling */
 .form-control {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border_color);
     border-radius: 4px;
     box-sizing: border-box;
     font-size: 14px;
@@ -33,7 +31,7 @@ form {
 }
 
 .form-control:focus {
-    border-color: var(--focus-color);
+    border-color: var(--focus_color);
     outline: none;
 }
 
@@ -44,9 +42,9 @@ form {
 
 /* Button styling */
 .submit-button {
-    background: var(--primary-button-color);
+    background: var(--primary_button_color);
     border: none;
-    color: #fff;
+    color: var(--primary_button_text_color);
     padding: 10px 20px;
     text-align: center;
     text-decoration: none;
@@ -58,15 +56,15 @@ form {
 }
 
 .submit-button:hover {
-    background: var(--primary-button-hover-color) !important;
+    background: var(--primary_button_hover_color) !important;
 }
 
 /* Dynamic entry fields styling */
 #manual-entry-fields {
     margin-top: 20px;
     padding: 15px;
-    background: #f9f9f9;
-    border: 1px solid #ddd;
+    background: var(--background_light);
+    border: 1px solid var(--border_color);
     border-radius: 4px;
 }
 
@@ -74,13 +72,13 @@ form {
 h2 {
     margin-bottom: 20px;
     font-size: 24px;
-    color: #333;
+    color: var(--primary_text_color);
 }
 
 h4 {
     margin-top: 30px;
     font-size: 18px;
-    color: #333;
+    color: var(--primary_text_color);
 }
 
 /* Responsive adjustments */

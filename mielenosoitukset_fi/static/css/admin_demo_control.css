@@ -11,14 +11,14 @@
 
 .search-input, .filter-select {
     padding: 10px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border_color);
     border-radius: 5px;
 }
 
 .search-button {
     padding: 10px 20px;
-    color: var(--primary-button-text-color);
-    background: var(--primary-button-color);
+    color: var(--primary_button_text_color);
+    background: var(--primary_button_color);
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -34,10 +34,10 @@
 .demo-table-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border_color);
 }
 
 .table-cell {
     padding: 10px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border_color);
 }

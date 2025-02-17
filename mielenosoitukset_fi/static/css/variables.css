@@ -1,352 +1,587 @@
-.light:root {
+:root {
+  color-scheme: light dark;
+  
   /* Primary Colors */
-  --primary-color: #0033a0;
-  --secondary-color: #f0f0f0;
+  --primary_color: light-dark(
+    #0033a0, #4d79cc
+  );
 
-  /* Christmas Colors */
-  --chrismast-primary: #ff0000;
-  --chrismast-secondary: #00ff00;
-  --chrismast-accent: #ffff00;
-
-  --primary-text-color: #333;
-  --secondary-text-color: #666;
+  
+  --secondary_color: light-dark(
+    #f0f0f0,
+    #202020
+  );
 
   /* Background Colors */
-  --background: #ffffff;
-  --background-light: #f0f0f0;
-  --input-background: #f9f9f9;
-  --hover-bg-color: #e0e0e0;
-  --container-background: #f9f9f9;
+
+  --background: light-dark(
+    #ffffff,
+    #181818
+  );
+
+  --background_light: light-dark(
+    #f0f0f0,
+    #2c2c2c
+  );
+
+  --input_background: light-dark(
+    #f9f9f9,
+    #2e2e2e
+  );
+
+  /* Christmas Colors */
+  --chrismast_primary: light-dark(
+    #ff0000,
+    #ff0000
+  );
+
+  --chrismast_secondary: light-dark(
+    #00ff00,
+    #00ff00
+  );
+
+  --chrismast_accent: light-dark(
+    #ffff00,
+    #ffff00
+  );
+
+  /* Primary Text Color */
+  --primary_text_color: light-dark(
+    #333,
+    #f0f0f0
+  );
+
+  /* Secondary Text Color */
+  --secondary_text_color: light-dark(
+    #666,
+    #c0c0c0
+  );
+
+  /* Background Colors */
+  --hover_bg_color: light-dark(
+    #e0e0e0,
+    #3d3d3d
+  );
+
+  --container_background: light-dark(
+    #f9f9f9,
+    #2e2e2e
+  );
 
   /* Borders and Shadows */
-  --border-color: #ddd;
-  --box-shadow-color: rgba(0, 0, 0, 0.15);
-  --box-shadow: 0 0 20px var(--box-shadow-color);
+  --border_color: light-dark(
+    #ddd,
+    #444
+  );
+
+  --box_shadow_color: light-dark(
+    rgba(0, 0, 0, 0.15),
+    rgba(255, 255, 255, 0.15)
+  );
+
+  --cmast_shadow_color: light-dark(
+    var(--chrismast_secondary),
+    var(--chrismast_secondary)
+  );
+
+  --box_shadow: light-dark(
+    0 0 20px var(--box_shadow_color),
+    0 0 20px var(--box_shadow_color)
+  );
 
   /* Text Colors */
-  --placeholder-color: #888;
-  --focus-color: #0066cc;
-  --error-color: #cc0000;
+  --placeholder_color: light-dark(
+    #888,
+    #bbb
+  );
+
+  --focus_color: light-dark(
+    #0066cc,
+    #4d79cc
+  );
+
+  --error_color: light-dark(
+    #cc0000,
+    #ff4d4d
+  );
 
   /* Button Colors */
-  --primary-button-color: var(--primary-color);
-  --primary-button-text-color: white;
-  --primary-button-hover-color: #002280;
-  --primary-button-hover-text-color: white;
+  --primary_button_color: light-dark(
+    var(--primary_color),
+    var(--blue_light)
+  );
 
-  --secondary-button-color: var(--black);
-  --secondary-button-text-color: var(--white);
-  --secondary-button-hover-color: #e0e0e0;
-  --secondary-button-hover-text-color: #000;
+  --primary_button_text_color: light-dark(
+    white,
+    white
+  );
+
+  --primary_button_hover_color: light-dark(
+    #002280,
+    var(--blue_darker)
+  );
+
+  --primary_button_hover_text_color: light-dark(
+    white,
+    white
+  );
+
+  --secondary_button_color: light-dark(
+    var(--black_light),
+    var(--black_dark)
+  );
+
+  --secondary_button_text_color: light-dark(
+    var(--white),
+    var(--white_light)
+  );
+
+  --secondary_button_hover_color: light-dark(
+    #e0e0e0,
+    #4d4d4d
+  );
+
+  --secondary_button_hover_text_color: light-dark(
+    #000,
+    #fff
+  );
 
   /* Black and White Shades */
-  --white: #ffffff;
-  --white-lighter: #f9f9f9;
-  --white-light: #f0f0f0;
-  --white-dark: #d0d0d0;
-  --black: #000000;
-  --black-lighter: #1a1a1a;
-  --black-light: #333333;
-  --black-dark: #4d4d4d;
-  --black-darker: #666666;
+  --white: light-dark(
+    #ffffff,
+    #ffffff
+  );
+
+  --white_lighter: light-dark(
+    #f9f9f9,
+    #f9f9f9
+  );
+
+  --white_light: light-dark(
+    #f0f0f0,
+    #f0f0f0
+  );
+
+  --white_dark: light-dark(
+    #d0d0d0,
+    #d0d0d0
+  );
+
+  --black: light-dark(
+    #000000,
+    #000000
+  );
+
+  --black_lighter: light-dark(
+    #1a1a1a,
+    #1a1a1a
+  );
+
+  --black_light: light-dark(
+    #333333,
+    #333333
+  );
+
+  --black_dark: light-dark(
+    #4d4d4d,
+    #4d4d4d
+  );
+
+  --black_darker: light-dark(
+    #666666,
+    #666666
+  );
 
   /* Blue Colors */
-  --blue: #0033a0;
-  --blue-lighter: #4d79cc;
-  --blue-light: #3366cc;
-  --blue-dark: #002280;
-  --blue-darker: #001160;
+  --blue: light-dark(
+    #0033a0,
+    #4d79cc
+  );
+
+  --blue_lighter: light-dark(
+    #4d79cc,
+    #4d79cc
+  );
+
+  --blue_light: light-dark(
+    #3366cc,
+    #3366cc
+  );
+
+  --blue_dark: light-dark(
+    #002280,
+    #002280
+  );
+
+  --blue_darker: light-dark(
+    #001160,
+    #001160
+  );
 
   /* Orange Colors */
-  --orange: #ff6600;
-  --orange-lighter: #ff9966;
-  --orange-light: #ff8533;
-  --orange-dark: #cc5200;
-  --orange-darker: #993d00;
+  --orange: light-dark(
+    #ff6600,
+    #ff6600
+  );
+
+  --orange_lighter: light-dark(
+    #ff9966,
+    #ff9966
+  );
+
+  --orange_light: light-dark(
+    #ff8533,
+    #ff8533
+  );
+
+  --orange_dark: light-dark(
+    #cc5200,
+    #cc5200
+  );
+
+  --orange_darker: light-dark(
+    #993d00,
+    #993d00
+  );
 
   /* Red Colors */
-  --red: #ff4d4d;
-  --red-lighter: #ff8585;
-  --red-light: #ff6666;
-  --red-dark: #cc3d3d;
-  --red-darker: #993030;
+  --red: light-dark(
+    #ff4d4d,
+    #ff4d4d
+  );
+
+  --red_lighter: light-dark(
+    #ff8585,
+    #ff8585
+  );
+
+  --red_light: light-dark(
+    #ff6666,
+    #ff6666
+  );
+
+  --red_dark: light-dark(
+    #cc3d3d,
+    #cc3d3d
+  );
+
+  --red_darker: light-dark(
+    #993030,
+    #993030
+  );
 
   /* Green Colors */
-  --green: #28a745;
-  --green-lighter: #71d78e;
-  --green-light: #4cc476;
-  --green-dark: #218838;
-  --green-darker: #196c2a;
+  --green: light-dark(
+    #28a745,
+    #28a745
+  );
+
+  --green_lighter: light-dark(
+    #71d78e,
+    #71d78e
+  );
+
+  --green_light: light-dark(
+    #4cc476,
+    #4cc476
+  );
+
+  --green_dark: light-dark(
+    #218838,
+    #218838
+  );
+
+  --green_darker: light-dark(
+    #196c2a,
+    #196c2a
+  );
 
   /* Yellow Colors */
-  --yellow: #ffcc00;
-  --yellow-lighter: #ffdb4d;
-  --yellow-light: #ffe580;
-  --yellow-dark: #cc9900;
-  --yellow-darker: #996600;
+  --yellow: light-dark(
+    #ffcc00,
+    #ffcc00
+  );
+
+  --yellow_lighter: light-dark(
+    #ffdb4d,
+    #ffdb4d
+  );
+
+  --yellow_light: light-dark(
+    #ffe580,
+    #ffe580
+  );
+
+  --yellow_dark: light-dark(
+    #cc9900,
+    #cc9900
+  );
+
+  --yellow_darker: light-dark(
+    #996600,
+    #996600
+  );
 
   /* Neon Green Colors */
-  --neon-green: #39ff14;
-  --neon-green-lighter: #66ff66;
-  --neon-green-light: #4cff4c;
-  --neon-green-dark: #2eb82e;
-  --neon-green-darker: #1f7a1f;
+  --neon_green: light-dark(
+    #39ff14,
+    #39ff14
+  );
+
+  --neon_green_lighter: light-dark(
+    #66ff66,
+    #66ff66
+  );
+
+  --neon_green_light: light-dark(
+    #4cff4c,
+    #4cff4c
+  );
+
+  --neon_green_dark: light-dark(
+    #2eb82e,
+    #2eb82e
+  );
+
+  --neon_green_darker: light-dark(
+    #1f7a1f,
+    #1f7a1f
+  );
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color);
-  --admin-section-text-color: var(--white);
-  --admin-create-btn-bg: var(--green);
-  --admin-create-btn-hover-bg: var(--green-dark);
+  --admin_section_title_color: light-dark(
+    var(--focus_color),
+    var(--focus_color)
+  );
+
+  --admin_section_text_color: light-dark(
+    var(--white),
+    var(--white)
+  );
+
+  --admin_create_btn_bg: light-dark(
+    var(--green),
+    var(--green_dark)
+  );
+
+  --admin_create_btn_hover_bg: light-dark(
+    var(--green_dark),
+    var(--green_dark)
+  );
 
   /* Link Colors */
-  --link-color: var(--blue);
-  --link-hover-color: var(--orange);
+  --link_color: light-dark(
+    var(--blue),
+    var(--blue_light)
+  );
+
+  --link_hover_color: light-dark(
+    var(--orange),
+    var(--orange)
+  );
 
   /* Header Colors */
-  --primary-strong-text-color: var(--blue);
-  --header-color: var(--blue);
+  --primary_strong_text_color: light-dark(
+    var(--blue),
+    var(--blue_light)
+  );
+
+  --header_color: light-dark(
+    var(--blue),
+    var(--blue_light)
+  );
 
   /* Table Row Colors for Light Theme */
-  --tr-bg-color-1: #f9f9f9;
-  --tr-txt-color-1: #333;
-  --tr-bg-color-2: #ffffff;
-  --tr-txt-color-2: #333;
+  --tr_bg_color_1: light-dark(
+    #f9f9f9,
+    #333
+  );
+
+  --tr_txt_color_1: light-dark(
+    #333,
+    #f0f0f0
+  );
+
+  --tr_bg_color_2: light-dark(
+    #ffffff,
+    #444
+  );
+
+  --tr_txt_color_2: light-dark(
+    #333,
+    #f0f0f0
+  );
 
   /* Hover colors for row color 1 */
-  --tr-bg-color-1-hover: #e5f3ff;
-  --tr-txt-color-1-hover: #004080;
+  --tr_bg_color_1_hover: light-dark(
+    #e5f3ff,
+    #666
+  );
+
+  --tr_txt_color_1_hover: light-dark(
+    #004080,
+    #fff
+  );
 
   /* Hover colors for row color 2 */
-  --tr-bg-color-2-hover: #fff6e5;
-  --tr-txt-color-2-hover: #804000;
+  --tr_bg_color_2_hover: light-dark(
+    #fff6e5,
+    #555
+  );
 
-  --auth-button-bg-color: var(--secondary-color);
+  --tr_txt_color_2_hover: light-dark(
+    #804000,
+    #fff
+  );
 
-  --alert-bg: #f8d7da;
-  --alert-text: #721c24;
+  --auth_button_bg_color: light-dark(
+    var(--secondary_color),
+    var(--secondary_color)
+  );
 
-  --success-bg: #d4edda;
-  --success-text: #155724;
+  --alert_bg: light-dark(
+    #f8d7da,
+    #f8d7da
+  );
 
-  --warning-bg: #fff3cd;
-  --warning-text: #856404;
+  --alert_text: light-dark(
+    #721c24,
+    #000
+  );
 
-  --danger-bg: #f8d7da;
-  --danger-text: #721c24;
+  --success_bg: light-dark(
+    #d4edda,
+    #d4edda
+  );
 
-  --border-radius: 8px;
-  --primary-hover: #002280;
+  --success_text: light-dark(
+    #155724,
+    #155724
+  );
 
-  --alert {
-    padding: 1rem;
-    background-color: var(--alert-bg);
-    color: var(--alert-text);
-    border-radius: var(--border-radius);
-    margin-top: 1rem;
-    text-align: center;
-  }
+  --warning_bg: light-dark(
+    #fff3cd,
+    #fff3cd
+  );
+
+  --warning_text: light-dark(
+    #856404,
+    #856404
+  );
+
+  --danger_bg: light-dark(
+    #f8d7da,
+    #9e2631
+  );
+
+  --danger_text: light-dark(
+    #721c24,
+    #000
+  );
+
+  --border_radius: 8px;
+
+  --primary_hover: light-dark(
+    #002280,
+    #002280
+  );
+
+  --alert: light-dark(
+    {
+      padding: 1rem;
+      background-color: var(--alert_bg);
+      color: var(--alert_text);
+      border-radius: var(--border_radius);
+      margin-top: 1rem;
+      text-align: center;
+    },
+    {
+      padding: 1rem;
+      background-color: var(--alert_bg);
+      color: var(--alert_text);
+      border-radius: var(--border_radius);
+      margin-top: 1rem;
+      text-align: center;
+    }
+  );
+
+  --container_background: light-dark(
+    #ffffff,
+    #2e2e2e
+  );
+
+  --box_shadow: light-dark(
+    0 0 20px var(--box_shadow_color),
+    0 0 20px var(--box_shadow_color)
+  );
 }
 
-.dark:root {
-  /* Primary Colors */
-  --primary-color: #4d79cc;
-  --secondary-color: #202020;
+.light {
+  color-scheme: light;
+}
 
-  /* Christmas Colors */
-  --chrismast-primary: #ff0000;
-  --chrismast-secondary: #00ff00;
-  --chrismast-accent: #ffff00;
-
-  --primary-text-color: #f0f0f0;
-  --secondary-text-color: #c0c0c0;
-
-  /* Background Colors */
-  --background: #181818;
-  --background-light: #2c2c2c;
-  --input-background: #2e2e2e;
-  --hover-bg-color: #3d3d3d;
-  --container-background: #2e2e2e;
-
-  /* Borders and Shadows */
-  --border-color: #444;
-  --box-shadow-color: rgba(255, 255, 255, 0.15);
-  --cmast-shadow-color: var(--chrismast-secondary);
-  --box-shadow: 0 0 20px var(--box-shadow-color);
-
-  /* Text Colors */
-  --placeholder-color: #bbb;
-  --focus-color: #4d79cc;
-  --error-color: #ff4d4d;
-
-  /* Button Colors */
-  --primary-button-color: var(--blue-light);
-  --primary-button-text-color: white;
-  --primary-button-hover-color: var(--blue-darker);
-  --primary-button-hover-text-color: white;
-
-  --secondary-button-color: var(--black-light);
-  --secondary-button-text-color: var(--white);
-  --secondary-button-hover-color: var(--black-dark);
-  --secondary-button-hover-text-color: var(--white-light);
-
-  /* Blue Colors */
-  --blue: #4d79cc;
-  --blue-lighter: #4d79cc;
-  --blue-light: #3366cc;
-  --blue-dark: #002280;
-  --blue-darker: #001160;
-
-  /* Orange Colors */
-  --orange: #ff6600;
-  --orange-lighter: #ff9966;
-  --orange-light: #ff8533;
-  --orange-dark: #cc5200;
-  --orange-darker: #993d00;
-
-  /* Red Colors */
-  --red: #ff4d4d;
-  --red-lighter: #ff8585;
-  --red-light: #ff6666;
-  --red-dark: #cc3d3d;
-  --red-darker: #993030;
-
-  /* Green Colors */
-  --green: #28a745;
-  --green-lighter: #71d78e;
-  --green-light: #4cc476;
-  --green-dark: #218838;
-  --green-darker: #196c2a;
-
-  /* Yellow Colors */
-  --yellow: #ffcc00;
-  --yellow-lighter: #ffdb4d;
-  --yellow-light: #ffe580;
-  --yellow-dark: #cc9900;
-  --yellow-darker: #996600;
-
-  /* Neon Green Colors */
-  --neon-green: #39ff14;
-  --neon-green-lighter: #66ff66;
-  --neon-green-light: #4cff4c;
-  --neon-green-dark: #2eb82e;
-  --neon-green-darker: #1f7a1f;
-
-  /* Black and White Shades */
-  --white: #ffffff;
-  --white-lighter: #f9f9f9;
-  --white-light: #f0f0f0;
-  --white-dark: #d0d0d0;
-  --black: #000000;
-  --black-lighter: #1a1a1a;
-  --black-light: #333333;
-  --black-dark: #4d4d4d;
-  --black-darker: #666666;
-
-  /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color);
-  --admin-section-text-color: var(--white);
-  --admin-create-btn-bg: var(--green);
-  --admin-create-btn-hover-bg: var(--green-dark);
-
-  /* Link Colors */
-  --link-color: var(--blue-light);
-  --link-hover-color: var(--orange);
-
-  /* Header Colors */
-  --primary-strong-text-color: var(--blue-light);
-  --header-color: var(--blue-light);
-
-  /* Table Row Colors for Dark Theme */
-  --tr-bg-color-1: #333;
-  --tr-txt-color-1: #f0f0f0;
-  --tr-bg-color-2: #444;
-  --tr-txt-color-2: #f0f0f0;
-
-  /* Hover colors for row color 1 */
-  --tr-bg-color-1-hover: #666;
-  --tr-txt-color-1-hover: #fff;
-
-  /* Hover colors for row color 2 */
-  --tr-bg-color-2-hover: #555;
-  --tr-txt-color-2-hover: #fff;
-
-  --auth-button-bg-color: var(--secondary-color);
-
-  --alert-bg: #f8d7da;
-  --alert-text: #721c24;
-
-  --success-bg: #d4edda;
-  --success-text: #155724;
-
-  --warning-bg: #fff3cd;
-  --warning-text: #856404;
-
-  --danger-bg: #f8d7da;
-  --danger-text: #721c24;
-
-  --border-radius: 8px;
-  --primary-hover: #002280;
-  
+.dark {
+  color-scheme: dark;
 }
 
 
 /* variables.css | http://127.0.0.1:5002/static/css/variables.css */
 
 .black:root {
-  /* --primary-color: #4d79cc; */
-  /* --secondary-color: #202020; */
+  /* --primary_color: #4d79cc; */
+  /* --secondary_color: #202020; */
   /* --background: #181818; */
-  /* --background-light: #2c2c2c; */
-  /* --input-background: #2e2e2e; */
+  /* --background_light: #2c2c2c; */
+  /* --input_background: #2e2e2e; */
   /* --blue: #4d79cc; */
-  /* --blue-lighter: #4d79cc; */
-  /* --blue-light: #3366cc; */
-  /* --blue-dark: #002280; */
-  /* --alert-text: #721c24; */
-  /* --danger-bg: #f8d7da; */
-  --primary-color: #000;
-  --secondary-color: #fff;
+  /* --blue_lighter: #4d79cc; */
+  /* --blue_light: #3366cc; */
+  /* --blue_dark: #002280; */
+  /* --alert_text: #721c24; */
+  /* --danger_bg: #f8d7da; */
+  --primary_color: #000;
+  --secondary_color: #fff;
   --background: black;
-  --background-light: #000;
-  --input-background: #1e1111;
+  --background_light: #000;
+  --input_background: #1e1111;
   --blue: #000;
-  --blue-lighter: #022465;
-  --blue-light: #fff;
-  --blue-dark: #000;
-  --alert-text: #000;
-  --danger-bg: #9e2631;
+  --blue_lighter: #022465;
+  --blue_light: #fff;
+  --blue_dark: #000;
+  --alert_text: #000;
+  --danger_bg: #9e2631;
 }
 
 
 .pride:root {
   /* Primary Colors */
-  --primary-color: #ff4f4f;
+  --primary_color: #ff4f4f;
   /* Red */
-  --secondary-color: #ffcc00;
+  --secondary_color: #ffcc00;
   /* Yellow */
 
-  --primary-text-color: #ffffff;
+  --primary_text_color: #ffffff;
   /* Primary text color */
-  --secondary-text-color: #f0f0f0;
+  --secondary_text_color: #f0f0f0;
   /* Secondary text color */
 
   /* Background Colors */
   --background: linear-gradient(135deg, rgba(255, 79, 79, 1), rgba(255, 156, 0, 1), rgba(255, 204, 0, 1), rgba(40, 167, 69, 1), rgba(0, 123, 255, 1), rgba(111, 66, 193, 1));
-  --background-light: #f0f0f0;
+  --background_light: #f0f0f0;
   /* Light background for containers */
-  --input-background: #f9f9f9;
+  --input_background: #f9f9f9;
   /* Input field background */
-  --hover-bg-color: #e0e0e0;
+  --hover_bg_color: #e0e0e0;
   /* Hover background color */
-  --container-background: #ffffff;
+  --container_background: #ffffff;
   /* White for container background */
 
   /* Borders and Shadows */
-  --border-color: #ddd;
+  --border_color: #ddd;
   /* Border color */
-  --box-shadow-color: rgba(0, 0, 0, 0.15);
+  --box_shadow_color: rgba(0, 0, 0, 0.15);
   /* Box shadow color */
-  --box-shadow: 0 0 20px var(--box-shadow-color),
+  --box_shadow: 0 0 20px var(--box_shadow_color),
     0 0 10px var(--red),
     0 0 10px var(--orange),
     0 0 10px var(--yellow),
@@ -356,50 +591,50 @@
   /* Box shadow with pride colors */
 
   /* Text Colors */
-  --placeholder-color: #888;
+  --placeholder_color: #888;
   /* Placeholder text color */
-  --focus-color: #0066cc;
+  --focus_color: #0066cc;
   /* Focus color */
-  --error-color: #cc0000;
+  --error_color: #cc0000;
   /* Error color */
 
   /* Button Colors */
-  --primary-button-color: var(--primary-color);
+  --primary_button_color: var(--primary_color);
   /* Primary button color */
-  --primary-button-text-color: white;
+  --primary_button_text_color: white;
   /* Primary button text color */
-  --primary-button-hover-color: #c30000;
+  --primary_button_hover_color: #c30000;
   /* Darker red for hover */
-  --primary-button-hover-text-color: white;
+  --primary_button_hover_text_color: white;
   /* Primary button hover text color */
 
-  --secondary-button-color: var(--secondary-color);
+  --secondary_button_color: var(--secondary_color);
   /* Secondary button color */
-  --secondary-button-text-color: #333;
+  --secondary_button_text_color: #333;
   /* Secondary button text color */
-  --secondary-button-hover-color: #e0e0e0;
+  --secondary_button_hover_color: #e0e0e0;
   /* Secondary button hover color */
-  --secondary-button-hover-text-color: #000;
+  --secondary_button_hover_text_color: #000;
   /* Secondary button hover text color */
 
   /* Black and White Shades */
   --white: #ffffff;
   /* White color */
-  --white-lighter: #f9f9f9;
+  --white_lighter: #f9f9f9;
   /* Lighter shade of white */
-  --white-light: #f0f0f0;
+  --white_light: #f0f0f0;
   /* Light shade of white */
-  --white-dark: #d0d0d0;
+  --white_dark: #d0d0d0;
   /* Darker shade of white */
   --black: #000000;
   /* Black color */
-  --black-lighter: #1a1a1a;
+  --black_lighter: #1a1a1a;
   /* Lighter shade of black */
-  --black-light: #333333;
+  --black_light: #333333;
   /* Light shade of black */
-  --black-dark: #4d4d4d;
+  --black_dark: #4d4d4d;
   /* Darker shade of black */
-  --black-darker: #666666;
+  --black_darker: #666666;
   /* Even darker shade of black */
 
   /* Colors of the Pride Flag */
@@ -417,68 +652,68 @@
   /* Purple */
 
   /* Neon Green Colors */
-  --neon-green: #39ff14;
-  --neon-green-lighter: #66ff66;
-  --neon-green-light: #4cff4c;
-  --neon-green-dark: #2eb82e;
-  --neon-green-darker: #1f7a1f;
+  --neon_green: #39ff14;
+  --neon_green_lighter: #66ff66;
+  --neon_green_light: #4cff4c;
+  --neon_green_dark: #2eb82e;
+  --neon_green_darker: #1f7a1f;
 
   /* Admin Stuff */
-  --admin-section-title-color: var(--focus-color);
+  --admin_section_title_color: var(--focus_color);
   /* Admin section title color */
-  --admin-section-text-color: var(--white);
+  --admin_section_text_color: var(--white);
   /* Admin section text color */
-  --admin-create-btn-bg: var(--green);
+  --admin_create_btn_bg: var(--green);
   /* Admin create button background */
-  --admin-create-btn-hover-bg: var(--green-dark);
+  --admin_create_btn_hover_bg: var(--green_dark);
   /* Admin create button hover background */
 
   /* Link Colors */
-  --link-color: var(--blue);
+  --link_color: var(--blue);
   /* Link color */
-  --link-hover-color: var(--orange);
+  --link_hover_color: var(--orange);
   /* Link hover color */
 
   /* Header Colors */
-  --primary-strong-text-color: var(--blue);
+  --primary_strong_text_color: var(--blue);
   /* Strong text color */
-  --header-color: var(--blue);
+  --header_color: var(--blue);
   /* Header color */
 
   /* Table Row Colors for Pride Theme */
-  --tr-bg-color-1: #f2f2f2;
+  --tr_bg_color_1: #f2f2f2;
   /* Row 1 background color */
-  --tr-txt-color-1: #333;
+  --tr_txt_color_1: #333;
   /* Row 1 text color */
-  --tr-bg-color-2: #ffffff;
+  --tr_bg_color_2: #ffffff;
   /* Row 2 background color */
-  --tr-txt-color-2: #333;
+  --tr_txt_color_2: #333;
   /* Row 2 text color */
 
   /* Hover colors for row color 1 */
-  --tr-bg-color-1-hover: #ffcc00;
+  --tr_bg_color_1_hover: #ffcc00;
   /* Hover background color for row 1 */
-  --tr-txt-color-1-hover: #004080;
+  --tr_txt_color_1_hover: #004080;
   /* Hover text color for row 1 */
 
   /* Hover colors for row color 2 */
-  --tr-bg-color-2-hover: #ff4f4f;
+  --tr_bg_color_2_hover: #ff4f4f;
   /* Hover background color for row 2 */
-  --tr-txt-color-2-hover: #804000;
+  --tr_txt_color_2_hover: #804000;
   /* Hover text color for row 2 */
 
-  --auth-button-bg-color: var(--secondary-color);
+  --auth_button_bg_color: var(--secondary_color);
 }
 
 
 .admin-section-title {
-  color: var(--admin-section-text-color);
+  color: var(--admin_section_text_color);
   padding: 1.5rem;
-  background: var(--admin-section-title-color);
+  background: var(--admin_section_title_color);
   text-align: center;
   margin: 0 0 2rem 0;
   border-radius: 8px;
-  box-shadow: 0 4px 10px var(--box-shadow-color);
+  box-shadow: 0 4px 10px var(--box_shadow_color);
   text-transform: uppercase;
   letter-spacing: 1px;
    /* try to only break words, but if it's not enought, break all pls */
@@ -488,27 +723,27 @@
 }
 
 .link {
-  color: var(--link-color);
+  color: var(--link_color);
 }
 
 .link:hover {
-  color: var(--link-hover-color);
+  color: var(--link_hover_color);
 }
 
 .admin-btn.create-btn {
-  background: var(--admin-create-btn-bg);
+  background: var(--admin_create_btn_bg);
 }
 
 .admin-btn.create-btn:hover {
-  background: var(--admin-create-btn-hover-bg);
+  background: var(--admin_create_btn_hover_bg);
 }
 
 .button {
-  background: var(--primary-button-color);
+  background: var(--primary_button_color);
 }
 
 .button:hover {
-  background: var(--primary-button-hover-color);
+  background: var(--primary_button_hover_color);
 }
 
 .full-width {
@@ -567,7 +802,7 @@
 
 
 .link {
-  color: var(--link-color);
+  color: var(--link_color);
   text-decoration: none;
   /* gap: 20px; */
   /* display: inline-flex; */

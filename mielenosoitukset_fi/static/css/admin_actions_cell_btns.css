@@ -1,20 +1,20 @@
 .button, .actions-cell a, .actions-cell button {
-	display: flex;
-	align-items: center;
-	padding: 0.5rem 1rem !important;
-	border: none;
-	border-radius: 5px;
-	color: #fff;
-	text-decoration: none;
-	text-align: center;
-	cursor: pointer;
-	font-size: 14px;
-	width: 100px;
-	margin-left: 5px;
-	transition: background 0.3s ease, transform 0.2s ease;
-	box-shadow: var(--box-shadow);
-	gap: 5px;
-	margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem !important;
+    border: none;
+    border-radius: 5px;
+    color: var(--white);
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100px;
+    margin-left: 5px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: var(--box_shadow);
+    gap: 5px;
+    margin-bottom: 5px;
 }
 
 .actions-cell button {
@@ -30,11 +30,11 @@
 
 /* Specific Button Styles */
 .edit-button {
-    background: var(--focus-color); /* Edit button color */
+    background: var(--focus_color); /* Edit button color */
 }
 
 .edit-button:hover {
-    background: var(--primary-button-hover-color); /* Edit button hover color */
+    background: var(--primary_button_hover_color); /* Edit button hover color */
 }
 
 .delete-button {
@@ -42,18 +42,18 @@
 }
 
 .delete-button:hover {
-    background: var(--red-dark) !important; /* Darker color on hover */
+    background: var(--red_darker) !important; /* Darker color on hover */
 }
 
 .view-button {
-    background: var(--primary-button-color); /* Secondary button color */
+    background: var(--primary_button_color); /* Secondary button color */
 }
 
 /* Hover effects for action items */
 .actions-cell a:hover,
 .actions-cell button:hover,
 .button:hover {
-    background: #0056b3; /* Darker blue on hover */
+    background: var(--primary_hover); /* Darker blue on hover */
     transform: translateY(-2px); /* Lift effect on hover */
 }
 

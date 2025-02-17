@@ -127,7 +127,7 @@
     font-size: 1.2em;
     margin: 0;
     padding: 0;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
   }
 
   #basicshit {
@@ -142,7 +142,7 @@
     margin: 10px 0;
     padding: 0;
     font-size: 2.5em;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
   }
 
   #basicshit img {
@@ -160,7 +160,7 @@
   }
 
   .button {
-    background-color: var(--primary-color);
+    background-color: var(--primary_color);
     color: white;
     padding: 10px 20px;
     border: none;
@@ -168,10 +168,13 @@
     cursor: pointer;
     text-decoration: none;
     font-size: 1em;
+    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
   }
 
   .button:hover {
-    background-color: var(--primary-dark-color);
+    transform: translateY(-2px);
+    box-shadow: var(--box_shadow);
+    filter: brightness(1.1);
   }
 
   .like-count {
@@ -179,11 +182,11 @@
     align-items: center;
     gap: 5px;
     font-size: 1em;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
   }
 
   .like-count i {
-    color: var(--primary-color);
+    color: var(--primary_color);
   }
 
   .topics {
@@ -195,15 +198,17 @@
   }
 
   .topics .tag {
-    background-color: var(--primary-color);
+    background-color: var(--primary_color);
     color: white;
     padding: 5px 10px;
     border-radius: 5px;
     text-decoration: none;
+    transition: transform 0.2s, background-color 0.2s;
   }
 
   .topics .tag:hover {
-    background-color: var(--primary-dark-color);
+    background-color: var(--primary_button_hover_color);
+    transform: translateY(-2px);
   }
 
   main .container {
@@ -212,7 +217,7 @@
     background: var(--background);
     border-radius: 8px;
     text-align: center;
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--box_shadow);
   }
 
   .countdown {
@@ -226,7 +231,7 @@
 
   .subtitle {
     font-size: 1.5em;
-    color: var(--primary-strong-text-color);
+    color: var(--primary_strong_text_color);
     margin-bottom: 10px;
   }
 
@@ -247,6 +252,23 @@
   .display-all {
     display: block;
     margin-top: 0.5em;
+  }
+
+  p {
+    color: var(--primary_text_color);
+  }
+
+
+  /* Inline #10 | http://127.0.0.1:5002/demonstration/6740f7dbe4ff6ff3b4c36a54 */
+
+  .countdown {
+    background: black;
+  }
+
+  /* Element | http://127.0.0.1:5002/demonstration/6740f7dbe4ff6ff3b4c36a54 */
+
+  #timer {
+    color: white !important;
   }
 </style>
 
@@ -276,7 +298,7 @@
 
 
 <main id="main">
-  <button class="button help" data-modal-target="#reportModal" style="background: var(--yellow-lighter); color: black;">
+  <button class="button help" data-modal-target="#reportModal" style="background: var(--yellow_lighter); color: black;">
     <i class="fa fa-question-circle"></i> Ilmoita virheestä
   </button>
   <!-- IMAGE -->
@@ -315,7 +337,7 @@
     <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button">
       {{ _('Lataa graafinen materiaali') }}
     </a>
-    
+
   </div>
 
   <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
@@ -402,7 +424,7 @@
       background: var(--background);
       border-radius: 8px;
       text-align: center;
-      box-shadow: var(--box-shadow);
+      box-shadow: var(--box_shadow);
     ">
 
     <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
@@ -411,7 +433,7 @@
   {% endif %}
   <div class="countdown">
     <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
-    <div id="timer" style="font-size: 24px; color: var(--primary-strong-text-color)"></div>
+    <div id="timer" style="font-size: 24px; color: var(--primary_strong_text_color)"></div>
   </div>
   <br />
   <!-- the location text -->
@@ -444,6 +466,9 @@
     <div id="infocontainer">
       <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
       <div id="demo-details">
+        <!--<p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
+        <p><strong>{{ _('Alkaa klo:') }}</strong><br>{{ demo['start_time'] }}</p>
+        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>-->
 
         {% if demo['facebook'] %}
         <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">
@@ -513,6 +538,51 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+  /**
+   * Updates the countdown to the event using ISO-8601 date.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  function updateCountdown() {
+    const demoDate = data.demo.date; // ISO-8601 format (yyyy-mm-dd)
+    const demoTime = data.demo.start_time;
+    const demoEnds = data.demo.end_time;
+    // Directly combine ISO-8601 date and time
+    const eventDateStr = `${demoDate}T${demoTime}`;
+    const eventDate = new Date(eventDateStr);
+    const now = new Date();
+    const timeRemaining = eventDate - now;
+    const time_until_end = new Date(`${demoDate}T${demoEnds}`) - now;
+    const timerElement = document.getElementById("timer");
+
+    if (timeRemaining <= 0 && time_until_end >= 0) { // Event is ongoing
+      timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
+      return;
+    }
+
+    if (time_until_end <= 0) {
+      timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
+      return;
+    }
+
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
+  }
+
+  setInterval(updateCountdown, 1000);
+
+</script>
 
 <!-- Leaflet JS and Map Integration -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
@@ -540,46 +610,6 @@
     }
   }
 
-  // Converts Finnish date format (dd.mm.yyyy) to ISO (yyyy-mm-dd)
-  function formatFinnishDate(dateString) {
-    const [day, month, year] = dateString.split(".").map(Number);
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  }
-
-  // Updates the countdown to the event
-  function updateCountdown() {
-    const demoDate = data.demo.date;
-    const demoTime = data.demo.start_time;
-    const demoEnds = data.demo.end_time;
-    const eventDateStr = `${formatFinnishDate(demoDate)}T${demoTime}`;
-    const eventDate = new Date(eventDateStr);
-    const now = new Date();
-    const timeRemaining = eventDate - now;
-    const TimeUntilEnd = new Date(`${formatFinnishDate(demoDate)}T${demoEnds}`) - now;
-
-
-    const timerElement = document.getElementById("timer");
-
-    if (timeRemaining <= 0 && TimeUntilEnd >= 0) { // Event is ongoing
-      timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
-      return;
-    }
-
-    if (TimeUntilEnd <= 0) {
-      timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
-      return;
-    }
-
-    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-    timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
-  }
-
-  setInterval(updateCountdown, 1000);
-
   // Toggle display for toolbox buttons
   function toggleToolbox() {
     const toolboxButtons = document.getElementById("toolbox-buttons");
@@ -590,5 +620,5 @@
   let demoId = "{{ demo['_id'] }}";
 </script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}"
 {% endblock %}

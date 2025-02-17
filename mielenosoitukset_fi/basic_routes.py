@@ -130,7 +130,7 @@ def init_routes(app):
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
         filtered_demonstrations = []
         for demo in demonstrations:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
             if demo_date >= today:
                 if (
                     search_query.lower() in demo["title"].lower()
@@ -139,7 +139,7 @@ def init_routes(app):
                 ):
                     filtered_demonstrations.append(demo)
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         return render_template("index.html", demonstrations=filtered_demonstrations)
 
@@ -248,39 +248,38 @@ def init_routes(app):
     def demonstrations():
         """
         List all upcoming approved demonstrations, optionally filtered by search query.
+
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        response : flask.Response
+            Renders the full list template or the demo cards partial if AJAX.
         """
         page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 10) or 10)
+        per_page = int(request.args.get("per_page", 20) or 20)
         search_query = request.args.get("search", "").lower()
-
-        # if city contains , then it is a list of cities
         city_query = request.args.get("city", "").lower()
-
         if "," in city_query:
             city_query = city_query.split(",")
-
         location_query = request.args.get("location", "").lower()
         date_query = request.args.get("date", "")
         today = date.today()
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = filter_demonstrations(
-            demonstrations, today, search_query, city_query, location_query, date_query
-        )
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
-        )
+        filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
+        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
         total_demos = len(filtered_demonstrations)
         total_pages = (total_demos + per_page - 1) // per_page
         start = (page - 1) * per_page
         end = start + per_page
         paginated_demonstrations = filtered_demonstrations[start:end]
-        return render_template(
-            "list.html",
-            demonstrations=paginated_demonstrations,
-            page=page,
-            total_pages=total_pages,
-            city_list=CITY_LIST,
-        )
+        # Return demo cards partial if AJAX request detected
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return render_template("demo_cards.html", demonstrations=paginated_demonstrations)
+        return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_list=CITY_LIST)
 
     @app.route("/city/<city>")
     def city_demos(city):
@@ -299,7 +298,7 @@ def init_routes(app):
             demonstrations, today, search_query, city_query, location_query, date_query
         )
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         total_demos = len(filtered_demonstrations)
         total_pages = (total_demos + per_page - 1) // per_page
@@ -338,39 +337,66 @@ def init_routes(app):
         """
         Check if the demonstration is in the future.
         """
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
         return demo_date >= today
 
     def matches_filters(demo, search_query, city_query, location_query, date_query):
         """
         Check if the demonstration matches the filtering criteria.
+        
+        Parameters
+        ----------
+        demo : dict
+            The demonstration document
+        search_query : str
+            Search term to filter by title and address
+        city_query : str or list
+            City or cities to filter by
+        location_query : str
+            Location to filter by address
+        date_query : str
+            Date range query in format 'YYYY-MM-DD,YYYY-MM-DD' or single date 'YYYY-MM-DD'
+            
+        Returns
+        -------
+        bool
+            True if demo matches all filters, False otherwise
         """
         matches_search = (
             search_query in demo["title"].lower()
             or search_query in demo["address"].lower()
         )
+        
         matches_city = (
             any(city in demo["city"].lower() for city in city_query)
             if isinstance(city_query, list)
             else city_query in demo["city"].lower()
-        )
+        ) if city_query else True
+        
         matches_location = (
             location_query in demo["address"].lower() if location_query else True
         )
+
         matches_date = True
-        if date_query:
-            try:
-                parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
-                matches_date = (
-                    parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
-                )
-            except ValueError:
-                flash_message(
-                    _(
-                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
-                    )
-                )
-                matches_date = False
+        try:
+            # Handle date range
+            if request.args and request.args.get("date_start") and request.args.get("date_end"):
+                start_date_str = request.args.get("date_start")
+                end_date_str = request.args.get("date_end")
+                try:
+                    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                    demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
+                    matches_date = start_date <= demo_date <= end_date
+                except ValueError:
+                    matches_date = True
+    
+        except ValueError:
+            flash_message(
+                _("Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa vvvv-kk-pp.")
+            )
+            matches_date = False
+
         return matches_search and matches_city and matches_location and matches_date
 
     @app.route("/demonstration/<demo_id>")
@@ -482,7 +508,7 @@ def init_routes(app):
         siblings = []
         for demo in result:
             siblings.append(Demonstration.from_dict(demo))
-        siblings.sort(key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date())
+        siblings.sort(key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date())
         return render_template("siblings.html", siblings=siblings, parent_demo=parent_demo)
 
     @app.route("/info")
@@ -537,11 +563,11 @@ def init_routes(app):
         )
         upcoming_demos = []
         for demo in upcoming_demos_cursor:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
             if demo_date >= today:
                 upcoming_demos.append(demo)
         upcoming_demos.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         return render_template(
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos

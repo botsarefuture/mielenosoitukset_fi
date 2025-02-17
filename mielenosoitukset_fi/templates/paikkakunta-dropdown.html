@@ -1,15 +1,18 @@
 <div class="form-group required">
-  <label for="city" aria-label="{{ _('Paikkakunta selection') }}">{{ _('Paikkakunta') }}<span class="required-asterisk" aria-hidden="true">*</span></label>
+  <label for="city" aria-label="{{ _('Paikkakunta selection') }}">{{ _('Paikkakunta') }}<span class="required-asterisk"
+      aria-hidden="true">*</span></label>
   <br><br>
   <div id="paikkakunta-drop" class="dropdown">
-    <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false" aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
+    <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
+      aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
     <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
-      <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()" aria-label="{{ _('Search cities') }}" />
+      <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
+        aria-label="{{ _('Search cities') }}" />
       <!-- List of cities -->
       {% for city in city_list %}
-      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" 
-         {% if demo is defined and demo.city == city %} class="selected" {% endif %}>
-         {{ city }}
+      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if demo is
+        defined and demo.city==city %} class="selected" {% endif %}>
+        {{ city }}
       </a>
       {% endfor %}
     </div>
@@ -64,11 +67,11 @@
 
   .dropdown-content {
     display: none;
-    background: var(--input-background);
+    background: var(--input_background);
     width: 100%;
     max-height: 300px;
     overflow-y: auto;
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--box_shadow);
     z-index: 1;
     border-radius: 5px;
     animation: fadeIn 0.3s ease-in-out;
@@ -77,7 +80,7 @@
   .dropbtn {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border_color);
     background: var(--background);
     cursor: pointer;
     border-radius: 5px;
@@ -91,7 +94,7 @@
     content: '▼';
     font-size: 12px;
     margin-left: 10px;
-    color: var(--icon-color);
+    color: var(--icon_color);
   }
 
   .dropdown-content input {
@@ -99,27 +102,28 @@
     padding: 8px;
     box-sizing: border-box;
     border: none;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--input-background);
+    border-bottom: 1px solid var(--border_color);
+    background: var(--input_background);
     outline: none;
   }
 
   .dropdown-content a {
-    color: var(--primary-text-color);
+    color: var(--primary_text_color);
     padding: 10px;
     text-decoration: none;
     display: block;
     transition: background 0.2s ease;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border_color);
   }
 
   .dropdown-content a:hover {
-    background: var(--hover-bg-color);
+    background: var(--hover_bg_color);
   }
 
   /* Highlight selected city */
   .dropdown-content a.selected {
-    background: var(--selected-bg-color); /* Optional: define a color for the selected city */
+    background: var(--selected_bg_color);
+    /* Optional: define a color for the selected city */
   }
 
   @keyframes fadeIn {
@@ -127,6 +131,7 @@
       opacity: 0;
       transform: translateY(-10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -135,5 +140,5 @@
 </style>
 
 {% if demo is defined %}
-  <script>selectCity("{{ demo.city }}");</script>
-  {% endif %}
+<script>selectCity("{{ demo.city }}");</script>
+{% endif %}

@@ -1,17 +1,17 @@
 /* organization_detail.css */
 
 /* Container for organization details */
-.organization-container {
+.organization_container {
     max-width: 800px;
     margin: 20px auto;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px var(--box-shadow-color);
+    border-radius: var(--border_radius);
+    box-shadow: 0 4px 8px var(--box_shadow_color);
     /* TODO: Add media queries for better responsiveness on smaller screens */
 }
 
 /* Header for organization title */
-h1.organization-title {
+h1.organization_title {
     font-size: 28px;
     color: var(--blue);
     margin-bottom: 15px;
@@ -19,80 +19,81 @@ h1.organization-title {
 }
 
 /* Paragraph styling for organization description */
-p.organization-description {
+p.organization_description {
     font-size: 16px;
     line-height: 1.5;
-    color: var(--text-primary-color);
+    color: var(--primary_text_color);
     margin-bottom: 15px;
     /* TODO: Ensure consistent line-height and margin with other text elements across the site */
 }
 
 /* Styling for email and website paragraphs */
-p.organization-email,
-p.organization-website {
+p.organization_email,
+p.organization_website {
     font-size: 16px;
     margin-bottom: 15px;
     /* TODO: Consider adding responsive font sizes or spacing for better readability on mobile devices */
 }
 
 /* Styling for website link */
-a.organization-website-link {
-    color: #009B77;
+a.organization_website_link {
+    color: var(--link_color);
     text-decoration: none;
 }
 
-a.organization-website-link:hover {
+a.organization_website_link:hover {
+    color: var(--link_hover_color);
     text-decoration: underline;
     /* TODO: Add focus styles for better accessibility */
 }
 
 /* Button container styling */
-.button-container {
+.button_container {
     margin-top: 20px;
     /* TODO: Add padding or margin adjustments for better spacing */
 }
 
 /* Edit button styling */
-.edit-link {
+.edit_link {
     display: inline-block;
     padding: 10px 20px;
-    background: #0033A0;
-    color: #FFFFFF;
+    background: var(--primary_color);
+    color: var(--primary_button_text_color);
     text-decoration: none;
-    border-radius: 5px;
+    border-radius: var(--border_radius);
     font-size: 16px;
     margin-right: 10px;
     transition: background 0.3s ease, transform 0.3s ease;
 }
 
-.edit-link:hover {
-    background: #002580;
+.edit_link:hover {
+    background: var(--primary_hover);
     transform: scale(1.05);
 }
 
-.edit-link:active {
-    background: #001f4d;
+.edit_link:active {
+    background: var(--blue_dark);
 }
 
 /* Delete button styling */
-.delete-form button {
-    background: #E03C31;
-    color: #FFFFFF;
+.delete_form button {
+    background: var(--danger_bg);
+    color: var(--danger_text);
     border: none;
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: var(--border_radius);
     transition: background 0.3s ease, transform 0.3s ease;
 }
 
-.delete-form button:hover {
-    background: #BF2B23;
+.delete_form button:hover {
+    background: var(--danger_text);
     transform: scale(1.05);
 }
 
-.delete-form button:active {
-    background: #a81e1a;
+.delete_form button:active {
+    background: var(--danger_text);
 }
 
 /* TODOs and Comments */

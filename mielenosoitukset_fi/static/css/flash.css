@@ -14,41 +14,41 @@
 #flash-messages li {
     padding: 0.75rem 1rem;
     margin-bottom: 0.5rem;
-    border-radius: 4px;
-    color: #fff;
+    border-radius: var(--border_radius);
+    color: var(--white);
     font-weight: bold;
     display: flex;
     align-items: center;
     word-wrap: break-word; /* Prevents long words from overflowing */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow for better visibility */
+    box-shadow: var(--box_shadow);
     transition: background 0.3s ease, transform 0.3s ease; /* Smooth transition for color and hover effects */
     animation: slide-in 0.3s ease-out forwards; /* Animation to slide in the flash messages */
 }
 
 /* Default background color (for fallback purposes) */
 #flash-messages .message {
-    background: var(--focus-color);
+    background: var(--focus_color);
 }
 
 /* Success message styling */
-#flash-messages .flash-success {
-    background: #28a745; /* Green for success */
+#flash-messages .flash_success {
+    background: var(--green);
 }
 
 /* Error message styling */
-#flash-messages .flash-error {
-    background: #dc3545; /* Red for errors */
+#flash-messages .flash_error {
+    background: var(--red);
 }
 
 /* Informational message styling */
-#flash-messages .flash-info {
-    background: #17a2b8; /* Blue for informational messages */
+#flash-messages .flash_info {
+    background: var(--blue);
 }
 
 /* Warning message styling */
-#flash-messages .flash-warning {
-    background: #ffc107; /* Yellow for warnings */
-    color: #212529; /* Dark text for better readability */
+#flash-messages .flash_warning {
+    background: var(--yellow);
+    color: var(--secondary_text_color);
 }
 
 /* Optional hover effect for better interactivity */

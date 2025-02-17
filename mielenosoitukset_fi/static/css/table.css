@@ -8,12 +8,12 @@ table {
 th, td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border_color);
 }
 
 th {
   background: var(--background); /* Retain dark blue for headers */
-  color: var(--primary-text-color);
+  color: var(--primary_text_color);
   font-weight: bold;
 }
 
@@ -22,32 +22,32 @@ td {
 }
 
 tr:nth-child(even) {
-  background: var(--tr-bg-color-1);
-  color: var(--tg-txt-color-1);
+  background: var(--tr_bg_color_1);
+  color: var(--tr_txt_color_1);
 }
 
 tr:nth-child(even):hover {
-  background: var(--tr-bg-color-1-hover);
-  color: var(--tg-txt-color-1-hover);
+  background: var(--tr_bg_color_1_hover);
+  color: var(--tr_txt_color_1_hover);
 }
 
 tr:nth-child(odd) {
-  background: var(--tr-bg-color-2);
-  color: var(--tg-txt-color-2);
+  background: var(--tr_bg_color_2);
+  color: var(--tr_txt_color_2);
 }
 
 tr:nth-child(odd):hover {
-  background: var(--tr-bg-color-2-hover);
-  color: var(--tg-txt-color-2-hover);
+  background: var(--tr_bg_color_2_hover);
+  color: var(--tr_txt_color_2_hover);
 }
 
 tr.needs-attention {
-  background: var(--yellow-dark);
+  background: var(--yellow_dark);
   color: var(--black);
 }
 
 tr.needs-attention:hover {
-  background: var(--yellow-darker);
+  background: var(--yellow_darker);
 }
 
 /* Responsive Table Styles */
@@ -63,7 +63,7 @@ tr.needs-attention:hover {
   }
   td {
     text-align: right;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border_color);
   }
   tr {
     display: block;
@@ -80,9 +80,9 @@ tr.needs-attention:hover {
 /* Table Container */
 .table-container {
   margin-top: 2rem;
-  background: var(--container-background);
+  background: var(--container_background);
   border-radius: 8px;
-  box-shadow: 0 4px 20px var(--box-shadow-color);
+  box-shadow: 0 4px 20px var(--box_shadow_color);
   padding: 20px;
   overflow: hidden;
 }
@@ -95,18 +95,18 @@ tr.needs-attention:hover {
 .table-container th, .table-container td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border_color);
 }
 
 /* Table Title */
 #tabletitle {
-  color: var(--admin-section-text-color);
+  color: var(--admin_section_text_color);
   padding: 1.5rem;
-  background: var(--admin-section-title-color);
+  background: var(--admin_section_title_color);
   text-align: center;
   margin: 2rem 0;
   border-radius: 8px;
-  box-shadow: 0 4px 10px var(--box-shadow-color);
+  box-shadow: 0 4px 10px var(--box_shadow_color);
   text-transform: uppercase;
   letter-spacing: 1px;
   word-break: break-all;

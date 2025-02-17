@@ -1,56 +1,104 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+{% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
+
+{% block meta %}
+<!-- General Meta Tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="{{ _('Lista tulevista mielenosoituksista') }}" />
+<meta name="keywords" content="mielenosoitus, tapahtuma, Helsinki" />
+<meta name="author" content="Mielenosoitukset.fi" />
+<meta name="robots" content="index, follow" />
 {% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
-/>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="{{ url_for('static', filename='js/date.js') }}"></script>
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <style>
   .filter {
-	padding: 1em;
-	background: var(--blue-dark);
-	width: fit-content;
-	border-radius: 50px;
-}
+    padding: 1em;
+    background: var(--blue_dark);
+    width: fit-content;
+    border-radius: 50px;
+    color: var(--white);
+  }
 
-.filters {
-  display: flex;
-gap: 1em;
-}
+  .filters {
+    display: flex;
+    gap: 1em;
+  }
 
-.suggestions {
-  background: var(--input-background);
-  width: 100%;
-  border: 1px solid var(--blue-dark);
-  border-radius: 5px;
-  z-index: 1;
-  display: none;
-  margin-top: -10px;
-}
+  .suggestions {
+    background: var(--input_background);
+    width: 100%;
+    border: 1px solid var(--blue_dark);
+    border-radius: 5px;
+    z-index: 1;
+    display: none;
+    margin-top: -10px;
+  }
 
-.suggestions.show {
-  display: block;
-}
+  .suggestions.show {
+    display: block;
+  }
 
-.suggestion-item {
-  padding: 1em;
-  cursor: pointer;
-}
+  .suggestion-item {
+    padding: 1em;
+    cursor: pointer;
+  }
 
-.suggestion-item:hover {
-  background: var(--blue-dark);
-  color: var(--white);
-}
+  .suggestion-item:hover {
+    background: var(--blue_dark);
+    color: var(--white);
+  }
 
+  .search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    margin-bottom: 2em;
+  }
+
+  .search-form input {
+    padding: 0.5em;
+    border: 1px solid var(--blue_dark);
+    border-radius: 5px;
+  }
+
+  .button {
+    background-color: var(--primary_color);
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1em;
+  }
+
+  .button:hover {
+    background-color: var(--primary_dark_color);
+    color: white;
+  }
+
+  .invalid-date {
+    border-color: red !important;
+  }
+
+  .date-error {
+    color: red;
+    font-size: 0.9em;
+    display: none;
+  }
+
+  .date-range {
+    display: flex;
+    gap: 1em;
+    align-items: center;
+  }
 </style>
 {% endblock %}
 
@@ -60,180 +108,43 @@ gap: 1em;
 <div class="container-main-content">
   <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
 
-  <!-- Extended search form for filtering demonstrations -->
-  <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
-    <input
-      type="text"
-      name="search"
-      placeholder="{{ _('Hae mielenosoituksia...') }}"
-      aria-label="{{ _('Hae mielenosoituksia') }}"
-      value="{{ request.args.get('search', '') }}"
-    />
-    <input
-      type="text"
-      placeholder="{{ _('Kaupunki') }}"
-      aria-label="{{ _('Kaupunki') }}"
-      list="city-list"
-      id="city-input"
-    />
+  <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form" id="search-form">
+    <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}"
+      aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ request.args.get('search', '') }}" />
+    <input type="text" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" list="city-list"
+      id="city_input" />
 
     <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}" />
-    <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
-    <script>
-      $(document).ready(function() {
-        const cityInput = $("#city-input");
-        const selectedCitiesInput = $("#city");
-        const filters = $("#filters");
-      });
-    </script>
-    <script>
-      $(document).ready(function() {
-        const cityInput = $("#city-input");
-        const selectedCitiesInput = $("#city");
-        const filters = $("#filters");
-        const citySuggestions = $("#city-suggestions");
+    <div class="suggestions" id="city_suggestions"></div>
 
-        cityInput.on("input", function() {
-          const query = cityInput.val();
-          if (query.length > 2) {
-            const filteredCities = {{ city_list | tojson  }};
-            const matchingCities = filteredCities.filter(city => city.toLowerCase().includes(query.toLowerCase()));
-            citySuggestions.empty();
-            matchingCities.forEach(function(city) {
-              const suggestionItem = $("<div>").addClass("suggestion-item").text(city);
-              citySuggestions.append(suggestionItem);
+    <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}"
+      value="{{ request.args.get('location', '') }}" />
 
-              suggestionItem.on("click", function() {
-                city = suggestionItem.text();
-                console.log(city);
-                citySuggestions.empty();
-                $("#city-suggestions").removeClass("show");
-
-                cityInput.val('');
-                // add the city to the selected cities
-                const currentCities = selectedCitiesInput.val() ? selectedCitiesInput.val().split(',') : [];
-                if (!currentCities.includes(city)) {
-                  currentCities.push(city);
-                  selectedCitiesInput.val(currentCities.join(','));
-
-                  const filterDiv = $("<div>").addClass("filter").html(`
-                    <span>{{ _('Kaupunki') }}: ${city}</span>
-                    <a href="#" data-city="${city}">
-                      <i class="fas fa-times"></i>
-                    </a>
-                  `);
-                  filters.append(filterDiv);
-
-                  filterDiv.find("a").on("click", function(event) {
-                    event.preventDefault();
-                    const cityToRemove = $(this).data("city");
-                    const updatedCities = currentCities.filter(c => c !== cityToRemove);
-                    selectedCitiesInput.val(updatedCities.join(','));
-                    filterDiv.remove();
-                  });
-                }
-              });
-              $("#city-suggestions").addClass("show");
-            });
-          } else {
-            citySuggestions.empty();
-          }
-        });
-
-        $(document).on("click", function(event) {
-          if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
-            citySuggestions.empty();
-          }
-        });
-      });
-
-    </script>
-    <div id="city-suggestions" class="suggestions"></div>
-
-
-    <input
-      type="text"
-      name="location"
-      placeholder="{{ _('Sijainti') }}"
-      aria-label="{{ _('Sijainti') }}"
-      value="{{ request.args.get('location', '') }}"
-    />
-
-    <input
-      type="text"
-      name="date"
-      id="date"
-      placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
-      aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
-      value="{{ request.args.get('date', '') }}"
-    />
+    <div class="date-range">
+      <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
+        aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" value="{{ request.args.get('display_date_start', '') }}" />
+      <span>-</span>
+      <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
+        aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" value="{{ request.args.get('display_date_end', '') }}" />
+    </div>
+    <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
+    <input type="hidden" name="date_start" id="iso_date_start">
+    <input type="hidden" name="date_end" id="iso_date_end">
 
     <div class="filters" id="filters">
-      <!-- display all enabled filters here -->
-      <script>
-        document.addEventListener("DOMContentLoaded", () => {
-          const selectedCitiesInput = document.getElementById("city");
-          const filters = document.getElementById("filters");
-
-          const updateFilters = () => {
-            filters.innerHTML = '';
-            const cities = selectedCitiesInput.value.split(',');
-            cities.forEach(city => {
-              if (city) {
-                const filterDiv = document.createElement("div");
-                filterDiv.className = "filter";
-                filterDiv.innerHTML = `
-                  <span>{{ _('Kaupunki') }}: ${city}</span>
-                  <a href="#" data-city="${city}">
-                    <i class="fas fa-times"></i>
-                  </a>
-                `;
-                filters.appendChild(filterDiv);
-
-                filterDiv.querySelector("a").addEventListener("click", (event) => {
-                  event.preventDefault();
-                  const cityToRemove = event.target.closest("a").dataset.city;
-                  const updatedCities = cities.filter(c => c !== cityToRemove);
-                  selectedCitiesInput.value = updatedCities.join(',');
-                  updateFilters();
-                });
-              }
-            });
-          };
-
-          updateFilters();
-        });
-      </script>
-
-
-      <!-- Filter: Sijainti -->
       {% if request.args.get('location') %}
-
       <div class="filter">
         <span>{{ _('Sijainti') }}: {{ request.args.get('location') }}</span>
-        <a href="{{ url_for('demonstrations', search=request.args.get('search', ''), city=request.args.get('city', ''), location='', date=request.args.get('date', '')) }}">
+        <a
+          href="{{ url_for('demonstrations', search=request.args.get('search', ''), city=request.args.get('city', ''), location='', date=request.args.get('date', '')) }}">
           <i class="fas fa-times"></i>
         </a>
+      </div>
       {% endif %}
     </div>
 
-    <button type="submit">{{ _('Hae') }}</button>
+    <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const filters = document.getElementById("filters");
-
-      // Add event listeners to remove filters dynamically
-      filters.querySelectorAll(".filter a").forEach(filterRemoveLink => {
-        filterRemoveLink.addEventListener("click", (event) => {
-          event.preventDefault();
-          const url = new URL(filterRemoveLink.href);
-          window.location.href = url;
-        });
-      });
-    });
-  </script>
 
   <div class="container-grid">
     {% if demonstrations and demonstrations|length > 0 %}
@@ -244,44 +155,319 @@ gap: 1em;
       <div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>
     {% endif %}
   </div>
-
-  <!-- Pagination Controls -->
-  <div class="pagination">
-    {% if page > 1 %}
-      <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
-        {{ _('Edellinen') }}
-      </a>
-    {% endif %}
-
-    <span>{{ _('Sivu') }} {{ page }} / {{ total_pages }}</span>
-
-    {% if page < total_pages %}
-      <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=request.args.get('city', ''), location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
-        {{ _('Seuraava') }}
-      </a>
-    {% endif %}
+  <!-- Add a persistent scroll sentinel -->
+  <div id="scroll_sentinel"></div>
+  <!-- Loading spinner for infinite scroll -->
+  <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
   </div>
 </div>
 
 {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Dynamically set items per page based on screen size
-    let perPage;
+    let per_page;
     if (window.innerWidth < 768) {
-      perPage = 5; // Mobile screens
+      per_page = 5;
     } else if (window.innerWidth < 1200) {
-      perPage = 10; // Tablet screens
+      per_page = 10;
     } else {
-      perPage = 20; // Desktop screens
+      per_page = 20;
     }
 
-    // Update the URL with the per_page parameter
     const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set("per_page", perPage);
+    currentUrl.searchParams.set("per_page", per_page);
     window.history.replaceState({}, "", currentUrl);
   });
 </script>
 {% endif %}
 {% endblock %}
 
+{% block scripts %}
+<!-- Removed old pagination code -->
+
+<script>
+  window.today = true;
+</script>
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script>
+  $(document).ready(function () {
+    const cityInput = $("#city_input");
+    const selectedCitiesInput = $("#city");
+    const filters = $("#filters");
+    const citySuggestions = $("#city_suggestions");
+    // Store the city list rendered by the server
+    const cityList = {{ city_list | tojson }};
+
+    cityInput.on("input", function () {
+      const query = cityInput.val();
+      if (query.length > 2) {
+        const matchingCities = cityList.filter(city =>
+          city.toLowerCase().includes(query.toLowerCase())
+        );
+        citySuggestions.empty();
+
+        matchingCities.forEach(function (city) {
+          const suggestionItem = $("<div>")
+            .addClass("suggestion-item")
+            .text(city);
+          citySuggestions.append(suggestionItem);
+
+          suggestionItem.on("click", function (event) {
+            event.stopPropagation();  // Added to prevent bubbling causing premature hide
+            const selectedCity = suggestionItem.text();
+            citySuggestions.empty();
+            citySuggestions.removeClass("show");
+
+            cityInput.val("");
+            const currentCities = selectedCitiesInput.val()
+              ? selectedCitiesInput.val().split(",")
+              : [];
+            if (!currentCities.includes(selectedCity)) {
+              currentCities.push(selectedCity);
+              selectedCitiesInput.val(currentCities.join(","));
+
+              const filterDiv = $("<div>")
+                .addClass("filter")
+                .html(`
+                  <span>{{ _('Kaupunki') }}: ${selectedCity}</span>
+                  <a href="#" data-city="${selectedCity}">
+                    <i class="fas fa-times"></i>
+                  </a>
+                `);
+              filters.append(filterDiv);
+
+              filterDiv.find("a").on("click", function (event) {
+                event.preventDefault();
+                const cityToRemove = $(this).data("city");
+                const updatedCities = currentCities.filter(c => c !== cityToRemove);
+                selectedCitiesInput.val(updatedCities.join(","));
+                filterDiv.remove();
+              });
+            }
+          });
+        });
+        citySuggestions.addClass("show");
+      } else {
+        citySuggestions.empty();
+        citySuggestions.removeClass("show");
+      }
+    });
+
+    $(document).on("click", function (event) {
+      if (
+        !citySuggestions.is(event.target) &&
+        citySuggestions.has(event.target).length === 0
+      ) {
+        citySuggestions.empty();
+        citySuggestions.removeClass("show");
+      }
+    });
+
+    function isValidDateRange(startStr, endStr) {
+      if (!startStr && !endStr) return true;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (startStr) {
+        const startParts = startStr.split(".");
+        if (startParts.length !== 3) return false;
+        const startDate = new Date(
+          parseInt(startParts[2]),
+          parseInt(startParts[1]) - 1,
+          parseInt(startParts[0])
+        );
+        if (startDate < today) return false;
+
+        if (endStr) {
+          const endParts = endStr.split(".");
+          if (endParts.length !== 3) return false;
+          const endDate = new Date(
+            parseInt(endParts[2]),
+            parseInt(endParts[1]) - 1,
+            parseInt(endParts[0])
+          );
+          if (endDate < startDate) return false;
+        }
+      }
+
+      return true;
+    }
+
+    $("#search-form").on("submit", function (e) {
+      const startInput = $("#date_start");
+      const endInput = $("#date_end");
+      const dateError = $("#date-error");
+      const startValue = startInput.val();
+      const endValue = endInput.val();
+
+      if (!isValidDateRange(startValue, endValue)) {
+        e.preventDefault();
+        startInput.addClass("invalid-date");
+        endInput.addClass("invalid-date");
+        dateError.show();
+        return false;
+      }
+
+      startInput.removeClass("invalid-date");
+      endInput.removeClass("invalid-date");
+      dateError.hide();
+
+      if (startValue) {
+        const parts = startValue.split(".");
+        if (parts.length === 3) {
+          const isoDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(
+            2,
+            "0"
+          )}`;
+          $("#iso_date_start").val(isoDate);
+        }
+      }
+
+      if (endValue) {
+        const parts = endValue.split(".");
+        if (parts.length === 3) {
+          const isoDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(
+            2,
+            "0"
+          )}`;
+          $("#iso_date_end").val(isoDate);
+        }
+      }
+    });
+
+    $("#date_start, #date_end").on("input", function () {
+      $("#date_start, #date_end").removeClass("invalid-date");
+      $("#date-error").hide();
+    });
+
+    // Initialize Flatpickr for date range
+    const dateConfig = {
+      dateFormat: "d.m.Y",
+      minDate: "today",
+      allowInput: true,
+      locale: {
+        firstDayOfWeek: 1,
+        weekdays: {
+          shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+          longhand: [
+            "Sunnuntai",
+            "Maanantai",
+            "Tiistai",
+            "Keskiviikko",
+            "Torstai",
+            "Perjantai",
+            "Lauantai"
+          ]
+        },
+        months: {
+          shorthand: [
+            "Tam",
+            "Hel",
+            "Mar",
+            "Huht",
+            "Tou",
+            "Kes",
+            "Hele",
+            "Elok",
+            "Syys",
+            "Lok",
+            "Marr",
+            "Jou"
+          ],
+          longhand: [
+            "Tammikuu",
+            "Helmikuu",
+            "Maaliskuu",
+            "Huhtikuu",
+            "Toukokuu",
+            "Kesäkuu",
+            "Heinäkuu",
+            "Elokuu",
+            "Syyskuu",
+            "Lokakuu",
+            "Marraskuu",
+            "Joulukuu"
+          ]
+        }
+      }
+    };
+
+    const startPicker = flatpickr("#date_start", {
+      ...dateConfig,
+      onChange: function (selectedDates) {
+        if (selectedDates[0]) {
+          endPicker.set("minDate", selectedDates[0]);
+        }
+      }
+    });
+
+    const endPicker = flatpickr("#date_end", {
+      ...dateConfig,
+      onChange: function (selectedDates) {
+        if (selectedDates[0]) {
+          startPicker.set("maxDate", selectedDates[0]);
+        }
+      }
+    });
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    let current_page = parseInt('{{ request.args.get("page", 1) }}');
+    const total_pages = parseInt('{{ total_pages }}');
+    let is_loading = false;
+    const scroll_sentinel = document.getElementById('scroll_sentinel');
+
+    /**
+     * Load more demonstration cards when needed.
+     *
+     * Returns
+     * -------
+     * None
+     */
+    function load_more_content() {
+      if (is_loading || current_page >= total_pages) return;
+      is_loading = true;
+      // (Optional) Log the load attempt for debugging:
+      console.log('Loading page:', current_page + 1);
+
+      const url_params = new URLSearchParams(window.location.search);
+      url_params.set('page', current_page + 1);
+
+      fetch(`${window.location.pathname}?${url_params.toString()}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const new_demos = doc.querySelector('.container-grid').innerHTML;
+          document.querySelector('.container-grid').insertAdjacentHTML('beforeend', new_demos);
+          current_page++;
+          setup_grid_navigation();
+          is_loading = false;
+        })
+        .catch(error => {
+          console.error('Error loading more content:', error);
+          is_loading = false;
+        });
+    }
+
+    // Use IntersectionObserver on the scroll sentinel
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !is_loading && current_page < total_pages) {
+          load_more_content();
+        }
+      });
+    }, { rootMargin: '1000px' });
+
+    observer.observe(scroll_sentinel);
+  });
+</script>
+{% endblock %}

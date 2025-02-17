@@ -13,7 +13,7 @@
     justify-content: center;
     align-items: center;
     margin: auto;
-    color: var(--text-color);
+    color: var(--text_color);
 }
 
 .modal.display {
@@ -25,7 +25,7 @@
 }
 
 .modal-content {
-    background-color: var(--container-background);
+    background-color: var(--container_background);
     margin: 0;
     padding: 20px;
     border-radius: 10px;
@@ -44,22 +44,22 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border_color);
     padding-bottom: 10px;
 }
 
 .modal-header h2 {
     margin: 0;
     font-size: 24px;
-    color: var(--admin-section-text-color);
+    color: var(--admin_section_text_color);
 }
 
-.close-button {
-    color: var(--close-button-color);
+.close_button {
+    color: var(--close_button_color);
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    background: var(--red-darker);
+    background: var(--red_darker);
     padding: 0.5em;
     border-radius: 50%;
     height: 1.5em;
@@ -70,21 +70,21 @@
     transition: background-color 0.3s, color 0.3s;
 }
 
-.close-button:hover,
-.close-button:focus {
-    color: var(--close-button-hover-color);
+.close_button:hover,
+.close_button:focus {
+    color: var(--close_button_hover_color);
     background-color: var(--red);
 }
 
 .modal-body {
     padding: 20px 0;
-    color: var(--text-color);
+    color: var(--text_color);
     line-height: 1.6;
 }
 
 .modal-footer {
     padding-top: 10px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--border_color);
     text-align: start;
     display: flex;
     flex-wrap: wrap;
@@ -101,7 +101,7 @@
 
 .modal-footer p {
     margin: 5px 0;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border_color);
     padding: 5px;
     border-radius: 5px;
     text-align: start;
@@ -109,3 +109,65 @@
     max-width: 300px;
     overflow-wrap: break-word;
 }
+
+
+
+/* modal.css | http://127.0.0.1:5002/static/css/admin/modal.css */
+
+.modal {
+    /* box-shadow: var(--box-shadow); */
+    box-shadow: var(--box_shadow);
+  }
+  
+  .modal-header {
+    /* background-color: var(--background-light); */
+    /* border-bottom: 1px solid var(--border-color); */
+    background-color: var(--background_light);
+    border-bottom: 1px solid var(--border_color);
+  }
+  
+  .modal-body {
+    /* color: var(--primary-text-color); */
+    color: var(--primary_text_color);
+  }
+  
+  .modal-footer {
+    /* background-color: var(--background-light); */
+    /* border-top: 1px solid var(--border-color); */
+    background-color: var(--background_light);
+    border-top: 1px solid var(--border_color);
+  }
+  
+  .modal-footer .btn-secondary {
+    /* background-color: var(--secondary-button-color); */
+    /* color: var(--secondary-button-text-color); */
+    background-color: var(--secondary_button_color);
+    color: var(--secondary_button_text_color);
+  }
+  
+  .modal-header .close {
+    background: red;
+    border: none;
+    border-radius: 50%;
+    padding: 0.5rem;
+    width: 32px;
+    height: 32px;
+    line-height: 16px;
+    font-size: x-large;
+  }
+  
+  /* Inline #23 | http://127.0.0.1:5002/admin/demo/edit_demo/67977ba272760eed05681292 */
+  
+  .modal-header .close:hover {
+    background: darkred;
+  }
+
+
+/* modal.css | http://127.0.0.1:5002/static/css/modal.css */
+
+.modal.display {
+    /* display: flex; */
+    display: unset;
+    transform: translateX(calc(100vw/3));
+  }
+  

@@ -544,3 +544,28 @@ class Demonstration(BaseModel):
             print(
                 "Demonstration saved successfully."
             )  # TODO: #191 Use utils.logger instead of print
+
+    @classmethod
+    def load_by_id(cls, demo_id: str) -> "Demonstration":
+        """
+        Load a demonstration by its unique identifier.
+
+        Parameters
+        ----------
+        demo_id : str
+            The unique identifier of the demonstration.
+
+        Returns
+        -------
+        Demonstration
+            An instance of Demonstration loaded from the database.
+
+        Raises
+        ------
+        ValueError
+            If the demonstration with the provided id is not found.
+        """
+        data = DB["demonstrations"].find_one({"_id": ObjectId(demo_id)})
+        if not data:
+            raise ValueError(f"Demonstration with id {demo_id} not found.")
+        return cls.from_dict(data)

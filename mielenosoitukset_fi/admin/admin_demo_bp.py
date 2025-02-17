@@ -23,6 +23,11 @@ serializer = URLSafeTimedSerializer(SECRET_KEY)
 # Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.utils.flashing import flash_message
+from mielenosoitukset_fi.utils.logger import logger
+
+email_sender = EmailSender()
 
 @admin_demo_bp.before_request
 def log_request_info():
@@ -211,6 +216,51 @@ def edit_demo(demo_id):
         all_organizations=mongo.organizations.find(),
     )
 
+@admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("GENERATE_EDIT_LINK")
+def send_edit_link(demo_id):
+    """
+    Send a secure edit link via email for a demonstration.
+
+    This function generates a secure edit link for a demonstration and sends it
+    to the provided email address.
+
+    Parameters
+    ----------
+    demo_id : str
+        The unique identifier of the demonstration.
+
+    Returns
+    -------
+    flask.Response
+        JSON response containing the edit link if successful, or an error message otherwise.
+    """
+    try:
+        data = request.get_json() if request.is_json else request.form
+        email = data.get("email")
+        edit_link = data.get("edit_link")
+
+        if not email:
+            return jsonify(
+                {"status": "ERROR", "message": "Email address is required."}
+            ), 400
+
+        demo = Demonstration.load_by_id(demo_id)
+        email_sender.queue_email(
+            template_name="demo_edit_link.html",
+            subject=f"Muokkauslinkki mielenosoitukseen: {demo.title}",
+            context={"edit_link": edit_link, "demo_id": demo_id},
+            recipients=[email]
+        )
+        logging.info("Sending edit link to email: %s", email)
+
+        return jsonify({"status": "OK", "message": "Email sent successfully."})
+
+    except Exception as e:
+        logging.error("Error sending edit link email: %s", str(e))
+        return jsonify({"status": "ERROR", "message": "Internal server error."}), 500
 
 @admin_demo_bp.route("/generate_edit_link/<demo_id>", methods=["POST"])
 @login_required
@@ -576,15 +626,14 @@ def accept_demo(demo_id):
 
     Parameters
     ----------
-    demo_id :
-
+    demo_id : str
+        The ID of the demonstration to be accepted.
 
     Returns
     -------
-
-
+    flask.Response
+        A JSON response with the operation status.
     """
-    # Ensure the request is JSON
     if request.headers.get("Content-Type") != "application/json":
         return (
             jsonify(
@@ -602,27 +651,15 @@ def accept_demo(demo_id):
     # Validate that the demo ID exists
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_data:
-        return (
-            jsonify({"status": "ERROR", "message": "Demonstration not found."}),
-            404,
-        )  # FIXME: Default in Finnish, then use '_' function to translate into english
+        error_msg = _("Demonstration not found.")
+        return jsonify({"status": "ERROR", "message": error_msg}), 404
 
     demo = Demonstration.from_dict(demo_data)
 
-    # Update the approved status
     try:
         demo.approved = True
         demo.save()
-
-        return (
-            jsonify(
-                {"status": "OK", "message": "Demonstration accepted successfully."}
-            ),
-            200,
-        )
+        return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
     except Exception as e:
         logging.error("An error occurred while accepting the demonstration: %s", str(e))
-        return (
-            jsonify({"status": "ERROR", "message": "An internal error has occurred."}),
-            500,
-        )
+        return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500

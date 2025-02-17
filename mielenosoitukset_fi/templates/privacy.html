@@ -6,54 +6,53 @@
 <style>
     /* Professional styling for Privacy Section */
 
-.privacy-section {
-    background-color: #f9f9f9;
-    padding: 60px 20px;
-}
+    .privacy-section {
+        background-color: #f9f9f9;
+        padding: 60px 20px;
+    }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
 
-.subtitle {
-    font-size: 2rem;
-    color: #333333;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 10px;
-}
+    .subtitle {
+        font-size: 2rem;
+        color: #333333;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 10px;
+    }
 
-.text {
-    font-size: 1rem;
-    color: #555555;
-    line-height: 1.6;
-    margin-bottom: 15px;
-}
+    .text {
+        font-size: 1rem;
+        color: #555555;
+        line-height: 1.6;
+        margin-bottom: 15px;
+    }
 
-.text ul {
-    list-style-type: disc;
-    margin-left: 20px;
-}
+    .text ul {
+        list-style-type: disc;
+        margin-left: 20px;
+    }
 
-.text li {
-    margin-bottom: 10px;
-}
+    .text li {
+        margin-bottom: 10px;
+    }
 
-.link {
-    color: #1a73e8;
-    text-decoration: none;
-}
+    .link {
+        color: #1a73e8;
+        text-decoration: none;
+    }
 
-.link:hover {
-    text-decoration: underline;
-}
+    .link:hover {
+        text-decoration: underline;
+    }
 
-strong {
-    color: #333333;
-}
-
+    strong {
+        color: #333333;
+    }
 </style>
 {% endblock %}
 
@@ -62,13 +61,18 @@ strong {
 <section class="section privacy-section">
     <div class="container">
         <h2 class="subtitle">{{ _('Yksityisyydensuoja ja GDPR') }}</h2>
-        <p class="text">{{ _('Mielenosoitukset.fi sitoutuu suojelemaan käyttäjiensä yksityisyyttä ja noudattamaan EU:n yleistä tietosuoja-asetusta (GDPR). Tämä osio kertoo, kuinka keräämme, käytämme ja suojelemme henkilötietojasi.') }}</p>
+        <p class="text">{{ _('Mielenosoitukset.fi sitoutuu suojelemaan käyttäjiensä yksityisyyttä ja noudattamaan EU:n
+            yleistä tietosuoja-asetusta (GDPR). Tämä osio kertoo, kuinka keräämme, käytämme ja suojelemme
+            henkilötietojasi.') }}</p>
 
         <h3 class="subtitle">{{ _('Mitä tietoja keräämme?') }}</h3>
         <ul class="text">
-            <li><strong>{{ _('Yhteystiedot') }}</strong>: {{ _('kuten nimi ja sähköpostiosoite, jos olet yhteydessä meihin tai ilmoitat tapahtumasi sivustolla.') }}</li>
-            <li><strong>{{ _('Käyttäjätoiminta') }}</strong>: {{ _('tiedot, kuten selaushistoria, klikkaukset ja käyttämäsi laitteen tiedot.') }}</li>
-            <li><strong>{{ _('Evästetiedot') }}</strong>: {{ _('käytämme evästeitä parantaaksemme käyttökokemustasi ja kerätäksemme analytiikkaa sivuston toiminnasta.') }}</li>
+            <li><strong>{{ _('Yhteystiedot') }}</strong>: {{ _('kuten nimi ja sähköpostiosoite, jos olet yhteydessä
+                meihin tai ilmoitat tapahtumasi sivustolla.') }}</li>
+            <li><strong>{{ _('Käyttäjätoiminta') }}</strong>: {{ _('tiedot, kuten selaushistoria, klikkaukset ja
+                käyttämäsi laitteen tiedot.') }}</li>
+            <li><strong>{{ _('Evästetiedot') }}</strong>: {{ _('käytämme evästeitä parantaaksemme käyttökokemustasi ja
+                kerätäksemme analytiikkaa sivuston toiminnasta.') }}</li>
         </ul>
 
         <h3 class="subtitle">{{ _('Mihin käytämme tietoja?') }}</h3>
@@ -80,31 +84,41 @@ strong {
         </ul>
 
         <h3 class="subtitle">{{ _('Kenelle jaamme tietoja?') }}</h3>
-        <p class="text">{{ _('Emme jaa henkilötietojasi kolmansille osapuolille ilman suostumustasi, paitsi seuraavissa tilanteissa:') }}</p>
+        <p class="text">{{ _('Emme jaa henkilötietojasi kolmansille osapuolille ilman suostumustasi, paitsi seuraavissa
+            tilanteissa:') }}</p>
         <ul class="text">
-            <li><strong>{{ _('Lain vaatimukset') }}</strong>: {{ _('jos meidän on jaettava tietoja lain, viranomaispyynnön tai oikeusprosessin perusteella.') }}</li>
-            <li><strong>{{ _('Palveluntarjoajat') }}</strong>: {{ _('voimme käyttää kolmansia osapuolia teknisen tuen tai palvelun toimittamiseen (esim. analytiikka), jotka ovat GDPR:n mukaisia.') }}</li>
+            <li><strong>{{ _('Lain vaatimukset') }}</strong>: {{ _('jos meidän on jaettava tietoja lain,
+                viranomaispyynnön tai oikeusprosessin perusteella.') }}</li>
+            <li><strong>{{ _('Palveluntarjoajat') }}</strong>: {{ _('voimme käyttää kolmansia osapuolia teknisen tuen
+                tai palvelun toimittamiseen (esim. analytiikka), jotka ovat GDPR:n mukaisia.') }}</li>
         </ul>
 
         <h3 class="subtitle">{{ _('Kuinka kauan säilytämme tietojasi?') }}</h3>
-        <p class="text">{{ _('Säilytämme henkilötietojasi vain niin kauan kuin on tarpeellista palvelun tarjoamisen ja lakisääteisten vaatimusten täyttämiseksi.') }}</p>
+        <p class="text">{{ _('Säilytämme henkilötietojasi vain niin kauan kuin on tarpeellista palvelun tarjoamisen ja
+            lakisääteisten vaatimusten täyttämiseksi.') }}</p>
 
         <h3 class="subtitle">{{ _('Sinun oikeutesi') }}</h3>
         <p class="text">{{ _('GDPR:n mukaisesti sinulla on seuraavat oikeudet:') }}</p>
         <ul class="text">
-            <li><strong>{{ _('Oikeus nähdä') }}</strong>: {{ _('voit pyytää kopion kaikista sinua koskevista henkilötiedoista.') }}</li>
+            <li><strong>{{ _('Oikeus nähdä') }}</strong>: {{ _('voit pyytää kopion kaikista sinua koskevista
+                henkilötiedoista.') }}</li>
             <li><strong>{{ _('Oikeus korjata') }}</strong>: {{ _('voit pyytää virheellisten tietojen oikaisua.') }}</li>
-            <li><strong>{{ _('Oikeus poistamiseen') }}</strong>: {{ _('voit pyytää tietojesi poistamista, jos tietoja ei enää tarvita.') }}</li>
-            <li><strong>{{ _('Oikeus rajoittaa käsittelyä') }}</strong>: {{ _('voit pyytää tietojesi käsittelyn rajoittamista tietyissä tilanteissa.') }}</li>
-            <li><strong>{{ _('Oikeus vastustaa') }}</strong>: {{ _('sinulla on oikeus vastustaa tietojesi käsittelyä tietyissä tilanteissa.') }}</li>
+            <li><strong>{{ _('Oikeus poistamiseen') }}</strong>: {{ _('voit pyytää tietojesi poistamista, jos tietoja ei
+                enää tarvita.') }}</li>
+            <li><strong>{{ _('Oikeus rajoittaa käsittelyä') }}</strong>: {{ _('voit pyytää tietojesi käsittelyn
+                rajoittamista tietyissä tilanteissa.') }}</li>
+            <li><strong>{{ _('Oikeus vastustaa') }}</strong>: {{ _('sinulla on oikeus vastustaa tietojesi käsittelyä
+                tietyissä tilanteissa.') }}</li>
         </ul>
 
         <h3 class="subtitle">{{ _('Evästeiden käyttö') }}</h3>
-        <p class="text">{{ _('Käytämme evästeitä ja vastaavia tekniikoita analysoidaksemme verkkosivun käyttöä ja parantaaksemme käyttökokemustasi. Voit hallita evästeasetuksia selaimesi asetuksissa.') }}</p>
+        <p class="text">{{ _('Käytämme evästeitä ja vastaavia tekniikoita analysoidaksemme verkkosivun käyttöä ja
+            parantaaksemme käyttökokemustasi. Voit hallita evästeasetuksia selaimesi asetuksissa.') }}</p>
 
         <h3 class="subtitle">{{ _('Ota yhteyttä') }}</h3>
-        <p class="text">{{ _('Jos sinulla on kysyttävää tietosuojakäytännöstämme tai haluat käyttää oikeuksiasi, voit ottaa yhteyttä sähköpostitse osoitteeseen') }} <a class="link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.</p>
+        <p class="text">{{ _('Jos sinulla on kysyttävää tietosuojakäytännöstämme tai haluat käyttää oikeuksiasi, voit
+            ottaa yhteyttä sähköpostitse osoitteeseen') }} <a class="link"
+                href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>.</p>
     </div>
 </section>
 {% endblock %}
-

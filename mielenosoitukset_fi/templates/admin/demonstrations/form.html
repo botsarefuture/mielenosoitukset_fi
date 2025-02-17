@@ -48,6 +48,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -598,32 +600,37 @@
     </form>
 </div>
 <div>
-{% if current_user.is_authenticated %}
+    {% if current_user.is_authenticated %}
     <!-- Button for generating edit link -->
     <div class="text-center mt-4">
-        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki')
-            }}</button>
+        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">
+            {{ _('Luo muokkauslinkki') }}
+        </button>
     </div>
 
+    <!-- Modal overlay (used by modal.js) -->
+    <div id="overlay" class="modal-overlay"></div>
+
     <!-- Modal for displaying the generated edit link -->
-    <div class="modal fade" id="editLinkModal" tabindex="-1" role="dialog" aria-labelledby="editLinkModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
-                    <input type="text" id="edit-link-input" class="form-control" readonly>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ _('Sulje') }}</button>
-                </div>
+    <div class="modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
+            <button type="button" class="close" data-close-button>
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
+            <input type="text" id="edit_link" class="form-control" readonly>
+            <hr>
+            <div class="form-group">
+                <label for="edit_link_email">{{ _('Lähetä sähköpostilla') }}</label>
+                <input type="email" id="edit_link_email" name="edit_link_email" class="form-control" placeholder="{{ _('Syötä sähköpostiosoite') }}">
             </div>
+            <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
         </div>
     </div>
 
@@ -640,8 +647,9 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'OK') {
-                            document.getElementById('edit-link-input').value = data.edit_link;
-                            document.getElementById('editLinkModal').classList.add('show');
+                            document.getElementById('edit_link').value = data.edit_link;
+                            // Use the modal.js openModal function to display the modal.
+                            openModal($('#editLinkModal'));
                         } else {
                             alert(data.message);
                         }
@@ -651,54 +659,40 @@
                 alert('{{ _("Mielenosoituksen tunniste puuttuu.") }}');
             }
         });
+
+        // Send edit link via email using modal.js functionality for closing the modal
+        document.getElementById('send_email_btn').addEventListener('click', function () {
+            const email = document.getElementById('edit_link_email').value;
+            const editLink = document.getElementById('edit_link').value;
+            const demoId = "{{ demo._id if demo else '' }}";
+            if (email && demoId && editLink) {
+                fetch(`/admin/demo/send_edit_link_email/${demoId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: email, edit_link: editLink })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'OK') {
+                        alert('{{ _("Sähköposti lähetetty onnistuneesti!") }}');
+                        closeModal($('#editLinkModal'));
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                alert('{{ _("Syötä ensin sähköpostiosoite!") }}');
+            }
+        });
     </script>
     <style>
         .text-center.mt-4 {
             margin-top: 20px;
         }
-
-        #generate-edit-link-btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        #generate-edit-link-btn:hover {
-            background-color: #0056b3;
-        }
-
-        .modal-content {
-            padding: 20px;
-        }
-
-        .modal-header {
-            border-bottom: none;
-        }
-
-        .modal-title {
-            font-size: 20px;
-        }
-
-        .modal-body p {
-            margin-bottom: 10px;
-        }
-
-        #edit-link-input {
-            font-size: 14px;
-            padding: 10px;
-        }
-
-        #editLinkModal {
-            display: none;
-        }
-
-        #editLinkModal.show {
-            display: block;
-        }
     </style>
-</div>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+
 {% endif %}
+
 {% endblock %}

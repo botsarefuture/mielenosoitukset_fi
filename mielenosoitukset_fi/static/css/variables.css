@@ -479,10 +479,7 @@
     #000
   );
 
-  --border_radius: light-dark(
-    8px,
-    8px
-  );
+  --border_radius: 8px;
 
   --primary_hover: light-dark(
     #002280,

@@ -109,7 +109,7 @@ def remove_invalid_child_demonstrations(parent_demo, valid_dates):
 
 
     """
-    valid_date_strings = {d.strftime("%d.%m.%Y") for d in valid_dates}
+    valid_date_strings = {d.strftime("%Y-%m-%d") for d in valid_dates}
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
 
     for demo in child_demos:

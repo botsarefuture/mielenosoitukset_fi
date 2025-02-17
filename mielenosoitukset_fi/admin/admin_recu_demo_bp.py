@@ -61,7 +61,7 @@ def recu_demo_control():
 
     # Sort the filtered recurring demonstrations by date
     filtered_recurring_demos.sort(
-        key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date()
+        key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date()
     )
 
     return render_template(

@@ -130,7 +130,7 @@ def init_routes(app):
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
         filtered_demonstrations = []
         for demo in demonstrations:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
             if demo_date >= today:
                 if (
                     search_query.lower() in demo["title"].lower()

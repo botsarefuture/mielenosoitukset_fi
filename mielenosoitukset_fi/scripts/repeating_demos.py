@@ -65,7 +65,7 @@ def handle_repeating_demonstrations():
         for demo in repeating_demos:
             try:
                 # Parse the current demonstration's date
-                demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+                demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
                 repeat_schedule = demo.get("repeat_schedule", {})
 
                 # Calculate the next dates based on the repeat schedule

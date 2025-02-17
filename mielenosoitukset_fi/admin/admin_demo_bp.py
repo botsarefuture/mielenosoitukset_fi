@@ -84,7 +84,7 @@ def demo_control():
 
     # Sort filtered demonstrations by date
     filtered_demos.sort(
-        key=lambda demo: datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        key=lambda demo: datetime.strptime(demo["date"], "%Y-%m-%d").date()
     )
 
     return render_template(

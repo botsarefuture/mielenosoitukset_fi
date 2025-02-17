@@ -49,7 +49,7 @@ def get_demonstrations():
     filtered_demonstrations = []
 
     for demo in demonstrations:
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
         if demo_date >= today or in_past_query == "true":
             demo = stringify_object_ids(demo)  # Convert ObjectId to string
             if (
@@ -106,7 +106,7 @@ def unlike_demo(demo_id):
     )
 
     likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)}).get("likes", 0)
-    return jsonify({"likes": likes})
+    return jsonify({"likes": likes))
 
 
 @api_bp.route("/demo/<demo_id>/likes", methods=["GET"])

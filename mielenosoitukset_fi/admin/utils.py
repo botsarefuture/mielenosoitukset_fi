@@ -13,25 +13,18 @@ mongo = db_manager.get_db()
 
 
 def get_org_name(org_id: str) -> str:
-    """Retrieve the name of the organization based on its ID.
+    """
+    Retrieve the name of the organization.
 
     Parameters
     ----------
-    org_id :
-        str
-    org_id :
-        str:
-    org_id : str :
-
-    org_id : str :
-
-    org_id: str :
-
+    org_id : str
+        The organization ID.
 
     Returns
     -------
-
-
+    str
+        The organization name if found; otherwise "Unknown Organization".
     """
     try:
         result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -46,25 +39,23 @@ def get_org_name(org_id: str) -> str:
 
 
 def get_org_details(org_id: str) -> Organization:
-    """Retrieve detailed information about an organization based on its ID.
+    """
+    Retrieve detailed information about an organization.
 
     Parameters
     ----------
-    org_id :
-        str
-    org_id :
-        str:
-    org_id : str :
-
-    org_id : str :
-
-    org_id: str :
-
+    org_id : str
+        The organization ID.
 
     Returns
     -------
+    Organization
+        An Organization object containing detailed information.
 
-
+    Raises
+    ------
+    ValueError
+        If the organization is not found or retrieval fails.
     """
     try:
         result = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -78,14 +69,15 @@ def get_org_details(org_id: str) -> Organization:
 
 
 def log_admin_action(user, action: str, details: str):
-    """Log an admin action to MongoDB.
+    """
+    Log an admin action to MongoDB.
 
     Parameters
     ----------
     user : User
-        The user object performing the action.
+        The user performing the action.
     action : str
-        The action performed by the admin.
+        The action performed.
     details : str
         Additional details about the action.
 
@@ -100,7 +92,7 @@ def log_admin_action(user, action: str, details: str):
                 "email": user.email,
                 "action": action,
                 "details": details,
-                "timestamp": datetime.now(),  # TODO: Use UTC time
+                "timestamp": datetime.utcnow(),  # using UTC time
             }
         )
         logger.info(f"Admin action logged: {action} by user {user.email}")
@@ -112,7 +104,19 @@ def log_admin_action(user, action: str, details: str):
 
 
 def dictify_object(obj):
-    """Convert an object to a dictionary."""
+    """
+    Convert an object to a dictionary.
+
+    Parameters
+    ----------
+    obj : any
+        The object to be converted.
+
+    Returns
+    -------
+    dict or equivalent
+        The dictionary representation of the object.
+    """
     if isinstance(obj, dict):
         return {k: dictify_object(v) for k, v in obj.items()}
     elif hasattr(obj, "__dict__"):
@@ -123,11 +127,13 @@ def dictify_object(obj):
 
 
 def log_admin_action_V2(aact: dict):
-    """Log an admin action to MongoDB.
+    """
+    Log an admin action (version 2) to MongoDB.
 
     Parameters
     ----------
-
+    aact : dict
+        A dictionary containing the admin action details.
 
     Returns
     -------
@@ -135,7 +141,7 @@ def log_admin_action_V2(aact: dict):
     """
     try:
         to_insert = {
-            "timestamp": datetime.now(),
+            "timestamp": datetime.utcnow(),
         }
         to_insert.update(aact)
 
@@ -145,28 +151,34 @@ def log_admin_action_V2(aact: dict):
 
 
 class AdminActParser:
-    """Class to parse admin activity logs and handle request data."""
+    """
+    Parse admin activity logs and handle request data.
+    """
 
     def __init__(self):
-
         pass
 
     def log_request_info(self, request, user):
-        """Log request information and user details."""
+        """
+        Log request and user information.
+
+        Parameters
+        ----------
+        request : dict
+            The HTTP request data.
+        user : User
+            The user object.
+
+        Returns
+        -------
+        dict
+            A dictionary with parsed request and user data.
+        """
         try:
-            print("request", request)
-            print("user", user)
             import json
 
-            request_data = json.loads(
-                json.dumps({**request}, skipkeys=True, default=str)
-            )
-
-            # Combine with user details
-            user_data = (
-                user.to_dict() if hasattr(user, "to_dict") else dictify_object(user)
-            )
-
+            request_data = json.loads(json.dumps({**request}, skipkeys=True, default=str))
+            user_data = user.to_dict() if hasattr(user, "to_dict") else dictify_object(user)
             return {"request": request_data, "user": user_data}
         except Exception as e:
             logger.exception(f"Error parsing request info: {e}")

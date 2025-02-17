@@ -79,3 +79,4 @@ class Config:
 
 # Initialize the configuration
 Config.init_config()
+

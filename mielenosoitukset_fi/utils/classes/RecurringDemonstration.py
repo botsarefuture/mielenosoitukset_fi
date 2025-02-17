@@ -172,16 +172,9 @@ class RecurringDemonstration(Demonstration):
 
         if self.created_until:
             if isinstance(self.created_until, datetime):
-                data["created_until"] = self.created_until.strftime("%d.%m.%Y")
+                data["created_until"] = self.created_until.isoformat()
             else:
-                # Transform this to datetime object, and then make the strftime call
-                data["created_until"] = (
-                    datetime.strptime(data["created_until"], "%d.%m.%Y").strftime(
-                        "%d.%m.%Y"
-                    )
-                    if self.created_until is not None
-                    else None
-                )
+                data["created_until"] = datetime.fromisoformat(data["created_until"]).isoformat() if self.created_until is not None else None
         return data
 
     @classmethod
@@ -204,8 +197,6 @@ class RecurringDemonstration(Demonstration):
 
         data : Dict[str :
 
-        data : Dict[str :
-
         data: Dict[str :
 
 
@@ -216,9 +207,7 @@ class RecurringDemonstration(Demonstration):
         """
 
         created_until = (
-            datetime.strptime(data["created_until"], "%d.%m.%Y")
-            if data.get("created_until")
-            else datetime.now()
+            datetime.fromisoformat(data["created_until"]) if data.get("created_until") else datetime.now()
         )
 
         return cls(

@@ -8,6 +8,7 @@ from mielenosoitukset_fi.utils.validators import (
 )
 from .RepeatSchedule import RepeatSchedule
 from bson import ObjectId
+from datetime import datetime  # Added import for datetime
 
 
 DB = get_database_manager()
@@ -213,6 +214,20 @@ class Demonstration(BaseModel):
         .. deprecated:: 1.6.0
             `topic` will be removed in a future version.
         """
+        # Convert date and time fields to ISO8601 format
+        self.date = self._to_iso8601_date(date)
+        
+        if self.date != date:
+            self.save_flag = True
+            
+        self.start_time = self._to_iso8601_time(start_time)
+        if self.start_time != start_time:
+            self.save_flag = True
+            
+        self.end_time = self._to_iso8601_time(end_time)
+        if self.end_time != end_time:
+            self.save_flag = True
+
         self.save_flag = save_flag
 
         self.hide = hide
@@ -220,9 +235,7 @@ class Demonstration(BaseModel):
         self.title = title
         self.description = description
 
-        self.date = date
-        self.start_time = start_time
-        self.end_time = end_time
+        # Removed direct assignment for date, start_time, end_time
 
         self.city = city
         self.address = address
@@ -274,6 +287,7 @@ class Demonstration(BaseModel):
             self.save_flag = True  # Save the demonstration to update the tags
             # TODO: #190 Remove this after all demonstrations have been updated
             # with the correct tags
+        
 
         # Initialize organizers
         self.organizers = [
@@ -569,3 +583,61 @@ class Demonstration(BaseModel):
         if not data:
             raise ValueError(f"Demonstration with id {demo_id} not found.")
         return cls.from_dict(data)
+
+    def _to_iso8601_date(self, date_str: str) -> str:
+        """
+        Convert a date string to ISO8601 date format (YYYY-MM-DD).
+
+        Parameters
+        ----------
+        date_str : str
+            The date string.
+
+        Returns
+        -------
+        str
+            The ISO8601 formatted date string.
+
+        Raises
+        ------
+        ValueError
+            If date_str is not in the correct format.
+        """
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+            return dt.date().isoformat()
+        except ValueError as e:
+            raise ValueError(f"Date is not in ISO8601 format (YYYY-MM-DD): {date_str}") from e
+
+    def _to_iso8601_time(self, time_str: str) -> str:
+        """
+        Convert a time string to ISO8601 time format (HH:MM:SS).
+
+        If the provided time string is in the format HH:MM, it will be converted to HH:MM:00.
+        
+        Parameters
+        ----------
+        time_str : str
+            The time string.
+
+        Returns
+        -------
+        str
+            The ISO8601 formatted time string.
+
+        Raises
+        ------
+        ValueError
+            If time_str is not in a recognized time format.
+        """
+        try:
+            # If time_str is in HH:MM format, append seconds as "00"
+            if time_str.count(":") == 1:
+                dt = datetime.strptime(time_str, "%H:%M")
+                return dt.time().replace(second=0).isoformat()
+            else:
+                dt = datetime.strptime(time_str, "%H:%M:%S")
+                return dt.time().isoformat()
+            
+        except ValueError as e:
+            raise ValueError(f"Time is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}") from e

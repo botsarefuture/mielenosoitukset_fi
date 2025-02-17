@@ -157,11 +157,11 @@ def process_demo(demo):
 
     """
     try:
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y")
+        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")  # modified to ISO-8601
         print(demo_date)
         schedule = demo.get("repeat_schedule", {})
         created_until = datetime.strptime(
-            get(demo, "created_until", "01.01.1900"), "%d.%m.%Y"
+            get(demo, "created_until", "1900-01-01"), "%Y-%m-%d"  # modified default and ISO-8601
         )
         print(created_until)
 
@@ -174,7 +174,7 @@ def process_demo(demo):
                 logger.debug(f"Skipping {next_date} (before {created_until})")
                 continue
 
-            next_date_str = next_date.strftime("%d.%m.%Y")
+            next_date_str = next_date.strftime("%Y-%m-%d")  # modified to ISO-8601
             existing_demo = demonstrations_collection.find_one(
                 {"date": next_date_str, "parent": demo["_id"]}
             )

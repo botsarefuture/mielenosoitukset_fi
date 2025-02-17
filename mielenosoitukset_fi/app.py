@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
 from flask_login import LoginManager
@@ -128,6 +129,33 @@ def create_app() -> Flask:
 
     logger.info("Flask application created successfully.")
 
+    # pylint: disable=unused-function
+    @app.template_filter("date")
+    def date_filter(value, format_):
+        """
+        Format a date object into a string.
+
+        Parameters
+        ----------
+        value : datetime.date or datetime.datetime
+            The date object to format.
+        format_ : str, optional
+            The format string (default is '%Y-%m-%d').
+
+        Returns
+        -------
+        str
+            The formatted date string.
+        """
+        try:
+            # We want the output to be in the format_, the input is iso 8601
+            va = datetime.fromisoformat(value)
+            return va.strftime(format_)
+        except Exception:
+            logger.critical("fd")
+            return value
+
+    
     if app.debug:
 
         @app.route("/ping")

@@ -142,3 +142,39 @@ def get_database_manager():
     """
     db_manager = DatabaseManager()
     return db_manager.get_instance().get_db()
+
+
+def finnish_to_iso(finnish_date: str) -> str:
+    """
+    Convert Finnish date format (dd.mm.yyyy) to ISO 8601 format (yyyy-mm-dd).
+
+    Parameters
+    ----------
+    finnish_date : str
+        Date string in Finnish format.
+
+    Returns
+    -------
+    str
+        Date string in ISO 8601 format.
+    """
+    from datetime import datetime
+    return datetime.strptime(finnish_date, "%d.%m.%Y").strftime("%Y-%m-%d")
+
+
+def iso_to_finnish(iso_date: str) -> str:
+    """
+    Convert ISO 8601 date format (yyyy-mm-dd) to Finnish format (dd.mm.yyyy).
+
+    Parameters
+    ----------
+    iso_date : str
+        Date string in ISO 8601 format.
+
+    Returns
+    -------
+    str
+        Date string in Finnish format.
+    """
+    from datetime import datetime
+    return datetime.strptime(iso_date, "%Y-%m-%d").strftime("%d.%m.%Y")

@@ -139,7 +139,7 @@ def init_routes(app):
                 ):
                     filtered_demonstrations.append(demo)
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         return render_template("index.html", demonstrations=filtered_demonstrations)
 
@@ -267,7 +267,7 @@ def init_routes(app):
             demonstrations, today, search_query, city_query, location_query, date_query
         )
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         total_demos = len(filtered_demonstrations)
         total_pages = (total_demos + per_page - 1) // per_page
@@ -299,7 +299,7 @@ def init_routes(app):
             demonstrations, today, search_query, city_query, location_query, date_query
         )
         filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         total_demos = len(filtered_demonstrations)
         total_pages = (total_demos + per_page - 1) // per_page
@@ -338,7 +338,7 @@ def init_routes(app):
         """
         Check if the demonstration is in the future.
         """
-        demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
         return demo_date >= today
 
     def matches_filters(demo, search_query, city_query, location_query, date_query):
@@ -360,14 +360,14 @@ def init_routes(app):
         matches_date = True
         if date_query:
             try:
-                parsed_date = datetime.strptime(date_query, "%d.%m.%Y").date()
+                parsed_date = datetime.strptime(date_query, "%Y-%m-%d").date()
                 matches_date = (
-                    parsed_date == datetime.strptime(demo["date"], "%d.%m.%Y").date()
+                    parsed_date == datetime.strptime(demo["date"], "%Y-%m-%d").date()
                 )
             except ValueError:
                 flash_message(
                     _(
-                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa pp.kk.vvvv."
+                        "Virheellinen päivämäärän muoto. Ole hyvä ja käytä muotoa vvvv-kk-pp."
                     )
                 )
                 matches_date = False
@@ -482,7 +482,7 @@ def init_routes(app):
         siblings = []
         for demo in result:
             siblings.append(Demonstration.from_dict(demo))
-        siblings.sort(key=lambda x: datetime.strptime(x.date, "%d.%m.%Y").date())
+        siblings.sort(key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date())
         return render_template("siblings.html", siblings=siblings, parent_demo=parent_demo)
 
     @app.route("/info")
@@ -537,11 +537,11 @@ def init_routes(app):
         )
         upcoming_demos = []
         for demo in upcoming_demos_cursor:
-            demo_date = datetime.strptime(demo["date"], "%d.%m.%Y").date()
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
             if demo_date >= today:
                 upcoming_demos.append(demo)
         upcoming_demos.sort(
-            key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y").date()
+            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
         return render_template(
             "organizations/details.html", org=_org, upcoming_demos=upcoming_demos

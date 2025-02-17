@@ -82,7 +82,7 @@ def demo_control():
     # Filter demonstrations based on search query, approval status, and date
     filtered_demos = filter_demonstrations(query, search_query, show_past, today)
 
-    # Sort filtered demonstrations by date
+    # Sort filtered demonstrations by date using ISO date format
     filtered_demos.sort(
         key=lambda demo: datetime.strptime(demo["date"], "%Y-%m-%d").date()
     )
@@ -122,7 +122,7 @@ def filter_demonstrations(query, search_query, show_past, today):
     filtered_demos = [
         demo
         for demo in demonstrations
-        if (show_past or datetime.strptime(demo["date"], "%d.%m.%Y").date() >= today)
+        if (show_past or datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today)
         and any(
             search_query in demo[field].lower()
             for field in ["title", "city", "address"]

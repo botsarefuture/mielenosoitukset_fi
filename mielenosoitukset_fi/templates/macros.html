@@ -3,8 +3,9 @@
     <header class="title">{{ demo['title'] }}</header>
     <div class="details">
         <div class="date-time">
-            <span class="date">{{ demo['date'] }}</span> |
-            <span class="time">{{ demo['start_time'] }} - {{ demo['end_time'] }}</span>
+            <!-- Date reformatted to Finnish format -->
+            <span class="date">{{ demo['date'] | date('%d.%m.%Y') }}</span> |
+            <span class="time">{{ demo['start_time'] | date('%H:%M') }} - {{ demo['end_time'] | date('%H:%M') }}</span>
         </div>
         <div class="topics">
             <ul>

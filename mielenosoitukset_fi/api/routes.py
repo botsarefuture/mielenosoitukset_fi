@@ -63,7 +63,7 @@ def get_demonstrations():
                 filtered_demonstrations.append(demo)
 
     # Sort by date in ascending order
-    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%d.%m.%Y"))
+    filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
 
     return jsonify(filtered_demonstrations), 200
 
@@ -106,7 +106,7 @@ def unlike_demo(demo_id):
     )
 
     likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)}).get("likes", 0)
-    return jsonify({"likes": likes))
+    return jsonify({"likes": likes})
 
 
 @api_bp.route("/demo/<demo_id>/likes", methods=["GET"])

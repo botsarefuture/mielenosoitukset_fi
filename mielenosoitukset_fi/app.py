@@ -168,7 +168,10 @@ def create_app() -> Flask:
     def screenshot(demo_id):
         # check if the screenshot is already created
         from mielenosoitukset_fi.utils import _CUR_DIR
-        _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
+        base_path = os.path.join(_CUR_DIR, "static/demo_preview")
+        _path = os.path.normpath(os.path.join(base_path, f"{demo_id}.png"))
+        if not _path.startswith(base_path):
+            raise Exception("Invalid path")
         if os.path.exists(_path):
             return redirect(f"/static/demo_preview/{demo_id}.png")
         

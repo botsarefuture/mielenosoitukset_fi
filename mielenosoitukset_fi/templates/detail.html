@@ -538,6 +538,51 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+  /**
+   * Updates the countdown to the event using ISO-8601 date.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  function updateCountdown() {
+    const demoDate = data.demo.date; // ISO-8601 format (yyyy-mm-dd)
+    const demoTime = data.demo.start_time;
+    const demoEnds = data.demo.end_time;
+    // Directly combine ISO-8601 date and time
+    const eventDateStr = `${demoDate}T${demoTime}`;
+    const eventDate = new Date(eventDateStr);
+    const now = new Date();
+    const timeRemaining = eventDate - now;
+    const time_until_end = new Date(`${demoDate}T${demoEnds}`) - now;
+    const timerElement = document.getElementById("timer");
+
+    if (timeRemaining <= 0 && time_until_end >= 0) { // Event is ongoing
+      timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
+      return;
+    }
+
+    if (time_until_end <= 0) {
+      timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
+      return;
+    }
+
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
+  }
+
+  setInterval(updateCountdown, 1000);
+
+</script>
 
 <!-- Leaflet JS and Map Integration -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
@@ -565,46 +610,6 @@
     }
   }
 
-  // Converts Finnish date format (dd.mm.yyyy) to ISO (yyyy-mm-dd)
-  function formatFinnishDate(dateString) {
-    const [day, month, year] = dateString.split(".").map(Number);
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  }
-
-  // Updates the countdown to the event
-  function updateCountdown() {
-    const demoDate = data.demo.date;
-    const demoTime = data.demo.start_time;
-    const demoEnds = data.demo.end_time;
-    const eventDateStr = `${formatFinnishDate(demoDate)}T${demoTime}`;
-    const eventDate = new Date(eventDateStr);
-    const now = new Date();
-    const timeRemaining = eventDate - now;
-    const TimeUntilEnd = new Date(`${formatFinnishDate(demoDate)}T${demoEnds}`) - now;
-
-
-    const timerElement = document.getElementById("timer");
-
-    if (timeRemaining <= 0 && TimeUntilEnd >= 0) { // Event is ongoing
-      timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
-      return;
-    }
-
-    if (TimeUntilEnd <= 0) {
-      timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
-      return;
-    }
-
-    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-    timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
-  }
-
-  setInterval(updateCountdown, 1000);
-
   // Toggle display for toolbox buttons
   function toggleToolbox() {
     const toolboxButtons = document.getElementById("toolbox-buttons");
@@ -615,5 +620,5 @@
   let demoId = "{{ demo['_id'] }}";
 </script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}"
 {% endblock %}

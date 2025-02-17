@@ -144,6 +144,7 @@ def create_app() -> Flask:
 
         Returns
         -------
+        
         str
             The formatted date string.
         """

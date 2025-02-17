@@ -1,0 +1,6 @@
+{% import 'macros.html' as macros %}
+<div class="container-grid">
+    {% for demo in demonstrations %}
+        {{ macros.demo_card(demo) }}
+    {% endfor %}
+</div>

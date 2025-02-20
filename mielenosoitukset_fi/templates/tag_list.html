@@ -65,31 +65,6 @@
   document.addEventListener("DOMContentLoaded", () => {
     const topics = document.getElementsByClassName("topics");
 
-    Array.from(topics).forEach((topic, index) => {
-      const tagList = topic.querySelector("ul");
-      if (tagList) {
-        const tags = tagList.children;
-        const maxVisibleTags = 1;
-
-        if (tags.length > maxVisibleTags) {
-          for (let i = maxVisibleTags; i < tags.length; i++) {
-            tags[i].style.display = "none";
-          }
-
-          const showMoreButton = document.createElement("button");
-          showMoreButton.innerText = "{{ _('Näytä kaikki tagit') }}";
-          showMoreButton.classList.add("show-more-button");
-          showMoreButton.onclick = function () {
-            for (let i = maxVisibleTags; i < tags.length; i++) {
-              tags[i].style.display = "block";
-            }
-            showMoreButton.style.display = "none";
-          };
-
-          topic.appendChild(showMoreButton);
-        }
-      }
-    });
 
     let perPage = 10;
     if (window.innerWidth < 768) {

@@ -313,7 +313,7 @@
     <h1>{{ demo['title'] }}</h1>
 
     <p id="date">
-      {{ demo['date'] }} {{ _('klo') }} {{ demo['start_time'] }} - {{ demo['end_time'] }}
+      {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
     </p>
   </div>
 

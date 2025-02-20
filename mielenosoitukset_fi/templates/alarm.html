@@ -1,130 +1,104 @@
-<!-- This is a simple HTML template that can be used to display a warning message to the user. -->
-<!-- It is designed to be displayed on top of all other content and prevent the user from interacting with the page. -->
+<!-- Official Security Alert: Access Blocked (Finglish) -->
+<!-- 
+    This template displays a mandatory security alert overlay.
+    It notifies the user in Finglish that access has been blocked due to suspicious activity.
+-->
 
-<div id="warning_container">
-    <i class="fa-solid fa-triangle-exclamation fa-shake"></i>
-    <h1>WARNING!</h1>
-    <h2>We have detected malicious activity!</h2>
-    <p>Our system has detected a potential security threat from your IP address. Please contact us immediately to resolve the issue.</p>
+<div id="security-warning">
+    <i class="fa-solid fa-ban"></i>
     
-    <h1>VAROITUS!</h1>
-    <h2>Olemme havainneet haitallista toimintaa!</h2>
-    <p>Järjestelmämme on havainnut mahdollisen tietoturvauhan IP-osoitteestasi. Ota meihin välittömästi yhteyttä ratkaistaksesi ongelman.</p>
-    
-    <h1>VARNING!</h1>
-    <h2>Vi har upptäckt skadlig aktivitet!</h2>
-    <p>Vårt system har upptäckt ett potentiellt säkerhetshot från din IP-adress. Kontakta oss omedelbart för att lösa problemet.</p>
+    <h1>Access Blocked</h1>
+    <h2>Your access on blokattu!</h2>
+    <p>
+        We detected epäilyttävä activity from your IP, so your access is permanently blocked.
+        If you think this is a mistake, please contact our security tiimi ASAP.
+    </p>
 </div>
 
 <style>
-    #warning_container {
+    /* Security Alert Overlay Styles */
+    #security-warning {
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background-color: #FFD43B;
-        color: #000;
-        font-family: 'Arial', sans-serif;
+        width: 100%;
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        z-index: 9999;
+        z-index: 10000;
         padding: 1rem;
         box-sizing: border-box;
         text-align: center;
+        background-color: #f8f8f8;
+        color: #333;
+        font-family: 'Helvetica', Arial, sans-serif;
+        border: 4px solid #C00;
     }
 
-    #warning_container i {
-        font-size: 5rem;
+    #security-warning i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #C00;
     }
 
-    #warning_container h1 {
-        font-size: 2rem;
+    #security-warning h1 {
+        font-size: 2.5rem;
+        margin: 0.5rem 0;
+        font-weight: bold;
+    }
+
+    #security-warning h2 {
+        font-size: 1.75rem;
         margin: 0.5rem 0;
     }
 
-    #warning_container h2 {
-        font-size: 1.5rem;
+    #security-warning p {
+        font-size: 1.125rem;
         margin: 0.5rem 0;
-    }
-
-    #warning_container p {
-        font-size: 1rem;
-        margin: 0.5rem 0;
+        max-width: 600px;
     }
 
     @media (max-width: 600px) {
-        #warning_container i {
+        #security-warning i {
             font-size: 3rem;
         }
 
-        #warning_container h1 {
+        #security-warning h1 {
+            font-size: 2rem;
+        }
+
+        #security-warning h2 {
             font-size: 1.5rem;
         }
 
-        #warning_container h2 {
-            font-size: 1.2rem;
+        #security-warning p {
+            font-size: 1rem;
         }
-
-        #warning_container p {
-            font-size: 0.9rem;
-        }
-    }
-
-    /* make background flash */
-    @keyframes flash {
-        0%, 100% {
-            background-color: #FFD43B;
-            color: #FF0000;
-        }
-        50% {
-            background-color: #FF0000;
-            color: #FFD43B;
-        }
-    }
-
-    /* Ensure text is always visible */
-    #warning_container h1, #warning_container h2, #warning_container p {
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    #warning_container {
-        animation: flash 5s infinite;
     }
 </style>
 
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
     $(document).ready(function() {
-        // Disable all other elements
-        $('body').children().not('#warning_container').hide();
+        // Hide all content except the security warning overlay
+        $('body').children().not('#security-warning').hide();
 
-        // try to enable fullscreen
-        document.documentElement.requestFullscreen();
-        
-        // if fullscreen is not enabled, try to enable it on the body
-        if (!document.fullscreenElement) {
-            document.body.requestFullscreen();
+        // Attempt to enable fullscreen mode for maximum visibility
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(function(error) {
+                console.error("Fullscreen request failed:", error);
+            });
+        } else if (document.body.requestFullscreen) {
+            document.body.requestFullscreen().catch(function(error) {
+                console.error("Fullscreen request failed:", error);
+            });
         }
 
-        // simulate button clicking to enable fullscreen: 1. create button, 2. click it 3. remove it
-        const button = $('<button>').hide().appendTo('body');
-
-        button.on('click', function() {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            } else if (document.body.requestFullscreen) {
-                document.body.requestFullscreen();
-            }
-        });
-
-        button.trigger('click').remove();
-
-        // Prevent navigation away from the page
+        // Prevent navigation away from the blocked access page
         window.onbeforeunload = function() {
-            return "Are you sure you want to leave? / Oletko varma, että haluat poistua? / Är du säker på att du vill lämna?";
+            return "Your access is blocked. Are you sure you want to leave this page?";
         };
     });
 </script>

@@ -2,20 +2,27 @@
  * Toggles between dark and light mode.
  */
 function toggleDarkMode() {
-    document.documentElement.classList.toggle("dark");
-    document.documentElement.classList.toggle("light");
+    const isDarkMode = $("html").toggleClass("dark").hasClass("dark");
 
-    const themeIcon = document.getElementById("theme-icon");
-
-    if (document.documentElement.classList.contains("dark")) {
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-        localStorage.setItem("theme", "dark");
+    if (!isDarkMode) {
+        $("html").toggleClass("light");
     } else {
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
-        localStorage.setItem("theme", "light");
+        $("html").toggleClass("light");
     }
+
+    // Select all theme icons
+    const themeIcons = $(".theme-icon");
+
+    console.log(isDarkMode);
+
+    // Update the icons based on the theme
+    themeIcons.each(function () {
+        $(this).toggleClass("fa-moon", isDarkMode);
+        $(this).toggleClass("fa-sun", !isDarkMode);
+    });
+
+    // Store the theme in localStorage
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
 }
 
 /**
@@ -24,29 +31,19 @@ function toggleDarkMode() {
 function applyPreferredTheme() {
     const savedTheme = localStorage.getItem("theme");
     const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const themeIcon = document.getElementById("theme-icon");
 
-    if (savedTheme) {
-        if (savedTheme === "dark") {
-            document.documentElement.classList.add("dark");
-            document.documentElement.classList.remove("light");
-            themeIcon.classList.remove("fa-moon");
-            themeIcon.classList.add("fa-sun");
-        } else {
-            document.documentElement.classList.add("light");
-            document.documentElement.classList.remove("dark");
-            themeIcon.classList.remove("fa-sun");
-            themeIcon.classList.add("fa-moon");
-        }
-    } else if (prefersDarkMode) {
-        document.documentElement.classList.add("dark");
-        document.documentElement.classList.remove("light");
-        themeIcon.classList.remove("fa-moon");
-        themeIcon.classList.add("fa-sun");
-    } else {
-        document.documentElement.classList.add("light");
-        document.documentElement.classList.remove("dark");
-        themeIcon.classList.remove("fa-sun");
-        themeIcon.classList.add("fa-moon");
-    }
+    // Determine the active theme
+    let theme = savedTheme || (prefersDarkMode ? "dark" : "light");
+
+    // Apply the theme to the document
+    $("html").toggleClass("dark", theme === "dark");
+    $("html").toggleClass("light", theme !== "dark");
+
+    // Select all theme icons and update based on the applied theme
+    const themeIcons = $(".theme-icon");
+
+    themeIcons.each(function () {
+        $(this).toggleClass("fa-moon", theme === "dark");
+        $(this).toggleClass("fa-sun", theme !== "dark");
+    });
 }

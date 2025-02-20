@@ -20,7 +20,7 @@ function displayMarqueeMessage(message, style, h2_style) {
     marqueeElement.style.display = "block"; // Show marquee
     marqueeElement.style = style; // Apply additional styles if any
   } else {
-    console.log("The marquee is the same already");
+    console.debug("The marquee is the same already");
   }
 }
 

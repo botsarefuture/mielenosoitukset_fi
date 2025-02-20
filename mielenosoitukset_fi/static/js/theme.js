@@ -13,8 +13,6 @@ function toggleDarkMode() {
     // Select all theme icons
     const themeIcons = $(".theme-icon");
 
-    console.log(isDarkMode);
-
     // Update the icons based on the theme
     themeIcons.each(function () {
         $(this).toggleClass("fa-moon", isDarkMode);

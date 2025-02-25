@@ -418,27 +418,69 @@
 </script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    /**
+     * Updates the demo list stored in localStorage.
+     * It collects all demo cards (with class "grid-item") in the container,
+     * retrieves their data attributes, and saves an ordered list.
+     */
+    function updateDemoList() {
+      const demoCards = document.querySelectorAll('.container-grid .grid-item');
+      const demoList = [];
+  
+      demoCards.forEach((card, index) => {
+        // Use dataset for modern access to data attributes.
+        const demoId = card.dataset.demoId || index;
+        const demoUrl = card.dataset.href;
+  
+        demoList.push({
+          id: demoId,
+          url: demoUrl,
+          order: index
+        });
+      });
+  
+      localStorage.setItem('demoList', JSON.stringify(demoList));
+      console.log("Updated demo list:", demoList);
+    }
+  
+    // Update the demo list on initial page load.
+    updateDemoList();
+  
+    // Infinite scroll variables.
     let current_page = parseInt('{{ request.args.get("page", 1) }}');
     const total_pages = parseInt('{{ total_pages }}');
     let is_loading = false;
     const scroll_sentinel = document.getElementById('scroll_sentinel');
-
+    // Cache preloaded content by page number.
+    const preloadedContent = {};
+  
     /**
-     * Load more demonstration cards when needed.
-     *
-     * Returns
-     * -------
-     * None
+     * Displays a message indicating that the end of content has been reached.
      */
-    function load_more_content() {
-      if (is_loading || current_page >= total_pages) return;
-      is_loading = true;
-      // (Optional) Log the load attempt for debugging:
-      console.log('Loading page:', current_page + 1);
-
+    function showEndMessage() {
+      if (!document.getElementById('end-of-content-message')) {
+        const messageEl = document.createElement("div");
+        messageEl.id = "end-of-content-message";
+        messageEl.textContent = "You've reached the end!";
+        messageEl.style.textAlign = "center";
+        messageEl.style.padding = "1em";
+        document.querySelector('.container-grid').insertAdjacentElement("afterend", messageEl);
+        // Optionally remove the loading spinner.
+        const spinner = document.querySelector('#loading-spinner');
+        if (spinner) spinner.remove();
+      }
+    }
+  
+    /**
+     * Preloads content for the specified page and caches it.
+     * @param {number} page - The page number to preload.
+     */
+    function preloadContent(page) {
+      if (page > total_pages || preloadedContent[page]) return;
+      
       const url_params = new URLSearchParams(window.location.search);
-      url_params.set('page', current_page + 1);
-
+      url_params.set('page', page);
+      
       fetch(`${window.location.pathname}?${url_params.toString()}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       })
@@ -446,28 +488,108 @@
         .then(html => {
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
-          const new_demos = doc.querySelector('.container-grid').innerHTML;
-          document.querySelector('.container-grid').insertAdjacentHTML('beforeend', new_demos);
-          current_page++;
-          setup_grid_navigation();
-          is_loading = false;
+          preloadedContent[page] = doc.querySelector('.container-grid').innerHTML;
         })
         .catch(error => {
-          console.error('Error loading more content:', error);
-          is_loading = false;
+          console.error('Error preloading content:', error);
         });
     }
-
-    // Use IntersectionObserver on the scroll sentinel
+  
+    /**
+     * Loads more content, either using preloaded content or fetching it directly.
+     * After appending new demos, it updates the demo list in localStorage.
+     */
+    function load_more_content() {
+      if (is_loading || current_page >= total_pages) {
+        if (current_page >= total_pages) showEndMessage();
+        return;
+      }
+      is_loading = true;
+      const nextPage = current_page + 1;
+  
+      const insertContent = (content) => {
+        document.querySelector('.container-grid').insertAdjacentHTML('beforeend', content);
+        current_page++;
+        // After inserting new content, update the stored demo list.
+        updateDemoList();
+        is_loading = false;
+        if (current_page >= total_pages) {
+          showEndMessage();
+        } else {
+          preloadContent(current_page + 1);
+        }
+      };
+  
+      if (preloadedContent[nextPage]) {
+        console.log('Using preloaded content for page:', nextPage);
+        insertContent(preloadedContent[nextPage]);
+        delete preloadedContent[nextPage];
+      } else {
+        console.log('Fetching content for page:', nextPage);
+        const url_params = new URLSearchParams(window.location.search);
+        url_params.set('page', nextPage);
+        fetch(`${window.location.pathname}?${url_params.toString()}`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+          .then(response => response.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const new_demos = doc.querySelector('.container-grid').innerHTML;
+            insertContent(new_demos);
+          })
+          .catch(error => {
+            console.error('Error loading more content:', error);
+            is_loading = false;
+          });
+      }
+    }
+  
+    // Preload the next page if there is more content.
+    if (current_page < total_pages) {
+      preloadContent(current_page + 1);
+    }
+  
+    // Use IntersectionObserver to trigger loading when near the bottom.
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && !is_loading && current_page < total_pages) {
           load_more_content();
+          setup_grid_navigation();
+
         }
       });
     }, { rootMargin: '1000px' });
-
+  
     observer.observe(scroll_sentinel);
   });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Collect all demo cards in order.
+    const demoCards = document.querySelectorAll('.container-grid .grid-item');
+    const demoList = [];
+
+    demoCards.forEach((card, index) => {
+      // Assuming each demo card has a data attribute 'data-demo-id'
+      // and contains a link to its detail page.
+      const demoId = card.getAttribute('data-demo-id') || index;
+      const demoUrl = card.getAttribute('data-href');
+
+      demoList.push({
+        id: demoId,
+        url: demoUrl,
+        order: index
+      });
+    });
+
+    // Save the list in localStorage (or use sessionStorage if preferred)
+    localStorage.setItem('demoList', JSON.stringify(demoList));
+    console.log("Saved demo list:", demoList);
+  });
+</script>
+<script>
+  
 </script>
 {% endblock %}

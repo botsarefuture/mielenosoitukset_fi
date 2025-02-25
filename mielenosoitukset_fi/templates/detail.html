@@ -271,6 +271,113 @@
     color: white !important;
   }
 </style>
+<!-- Make sure to include Font Awesome in your <head> -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
+<style>
+  /* Navigator Container */
+  #navigator {
+   left: -20px;
+   top: -20px;
+   position: fixed;
+  }
+
+  /* Button Styling */
+  #navigator button {
+    width: 10em;
+    background: #333;
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  #navigator button:hover {
+    background: #444;
+
+  }
+
+  #navigator #prev-demo-button:hover {
+    transform: translateX(-10px);
+
+  }
+
+  #navigator #next-demo-button:hover {
+    transform: translateX(10px);
+  }
+
+  #navigator button:active {
+    background: #333;
+    transform: translateX(0);
+  }
+
+  #navigator button i {
+    margin: 0 0.5em;
+    font-size: 1.2em;
+  }
+
+  /* Fixed Previous Button */
+  #prev-demo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    width: max-content;
+    z-index: 10;
+  }
+
+  /* Fixed Previous Button */
+  #next-demo {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    width: max-content;
+    z-index: 10;
+  }
+
+
+  /* Remove Button Border if It's on the Same Line */
+  #navigator button:focus {
+    outline: none;
+  }
+
+  @media screen and (max-width: 768px) {
+  /* Adjustments for smaller screens */
+  #navigator {
+    display: none;
+  }
+
+}
+</style>
+
+<div id="navigator">
+  <!-- Fixed Previous Button -->
+  <div id="prev-demo">
+    <button id="prev-demo-button">
+      <i class="fas fa-chevron-left"></i>
+      Previous
+    </button>
+  </div>
+
+  <div id="next-demo">
+  <!-- Next Button -->
+  <button id="next-demo-button">
+    Next
+    <i class="fas fa-chevron-right"></i>
+  </button>
+  </div>
+</div>
+
 
 <div id="reportModal" class="modal">
   <div class="modal-header">
@@ -313,7 +420,7 @@
     <h1>{{ demo['title'] }}</h1>
 
     <p id="date">
-      {{ demo['date'] }} {{ _('klo') }} {{ demo['start_time'] }} - {{ demo['end_time'] }}
+      {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
     </p>
   </div>
 
@@ -620,5 +727,70 @@
   let demoId = "{{ demo['_id'] }}";
 </script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}"
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}">
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Retrieve the demo list from localStorage.
+    const demoListStr = localStorage.getItem("demoList");
+    if (!demoListStr) {
+      console.warn("No demo list found in localStorage.");
+      return;
+    }
+    const demoList = JSON.parse(demoListStr);
+
+    // Get the current page URL path.
+    const currentUrl = window.location.pathname;
+
+    // Find the index of the demo in the list that matches the current URL.
+    const currentIndex = demoList.findIndex(demo => demo.url === currentUrl);
+
+    if (currentIndex !== -1) {
+      const currentDemo = demoList[currentIndex];
+      console.log("Current demo ID:", currentDemo.id);
+
+      // Optionally, display the current demo ID on the page.
+      const outputEl = document.getElementById("demo-id-output");
+      if (outputEl) {
+        outputEl.textContent = "Demo ID: " + currentDemo.id;
+      }
+
+      // Determine the previous and next demos.
+      const previousDemo = currentIndex > 0 ? demoList[currentIndex - 1] : null;
+      const nextDemo = currentIndex < demoList.length - 1 ? demoList[currentIndex + 1] : null;
+
+      // Store the previous and next demo objects globally if needed.
+      window.previousdemo = previousDemo;
+      window.nextdemo = nextDemo;
+
+      console.log("Previous demo:", previousDemo);
+      console.log("Next demo:", nextDemo);
+
+      // Optionally, wire up navigation buttons if they exist.
+      const prevButton = document.getElementById("prev-demo-button");
+      if (prevButton) {
+        if (previousDemo) {
+          prevButton.addEventListener("click", () => {
+            window.location.href = previousDemo.url;
+          });
+        } else {
+          prevButton.style.display = "none"; // Hide if no previous demo.
+        }
+      }
+
+      const nextButton = document.getElementById("next-demo-button");
+      if (nextButton) {
+        if (nextDemo) {
+          nextButton.addEventListener("click", () => {
+            window.location.href = nextDemo.url;
+          });
+        } else {
+          nextButton.style.display = "none"; // Hide if no next demo.
+        }
+      }
+    } else {
+      console.warn("No matching demo found for URL:", currentUrl);
+    }
+  });
+</script>
+
 {% endblock %}

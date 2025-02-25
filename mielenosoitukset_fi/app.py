@@ -31,6 +31,8 @@ import os
 
 from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
 
+from flask_caching import Cache  # Added for caching
+
 # Initialize Babel
 babel = Babel()
 
@@ -58,6 +60,9 @@ def create_app() -> Flask:
         logger.info("Using Flask-Limiter instead.")
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
+
+    # Initialize Flask-Caching
+    cache = Cache(app)
         
 
     # Locale selector function
@@ -153,13 +158,53 @@ def create_app() -> Flask:
             va = datetime.fromisoformat(value)
             return va.strftime(format_)
         except Exception:
-            logger.critical("fd")
             return value
+
+    from datetime import datetime, date, time
+    from datetime import datetime, date, time
+
+    @app.template_filter("time")
+    def time_filter(value, format_='%H:%M'):
+        """
+        Format a time object into a string.
+
+        Parameters
+        ----------
+        value : datetime.date, datetime.datetime, datetime.time or str
+            The date/time object to format.
+        format_ : str, optional
+            The format string (default is '%H:%M').
+
+        Returns
+        -------
+        str
+            The formatted date string.
+        """
+        try:
+            # If the value is a string, try to convert it to a time object
+            if isinstance(value, str):
+                # Try to parse the string into a time object
+                value = datetime.strptime(value, '%H:%M:%S').time()
+
+            if isinstance(value, time):  # Check if value is a time object
+                return value.strftime(format_)
+            elif isinstance(value, datetime):  # If it's a datetime object
+                return value.time().strftime(format_)
+            elif isinstance(value, date):  # If it's a date object
+                return value.strftime(format_)
+            else:
+                return value  # If it's not a recognized type, return as-is
+        except Exception as e:
+            return f"Error formatting time: {e}"
+
+
+
 
     
     if app.debug:
 
         @app.route("/ping")
+        @cache.cached(timeout=30)  # Cache the response for 30 seconds
         def ping():
             return f"Pong from {VERSION}"
         

@@ -31,6 +31,7 @@ from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_e
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
+from flask_caching import Cache  # New import for caching
 
 email_sender = EmailSender()
 
@@ -52,6 +53,9 @@ def generate_alternate_urls(app, endpoint, **values):
 
 
 def init_routes(app):
+    # Retrieve the cache instance from app extensions
+    cache = app.extensions.get("cache")
+    
     # register genereate_demo_sentence function
     @app.context_processor
     def inject_demo_sentence():
@@ -638,7 +642,7 @@ def init_routes(app):
         return render_template("download_material.html")
 
     @app.before_request
-    def preprocess_url():
+    def preprocess_url():  
         supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
         path = request.path.strip("/").split("/")
         if path and path[0] in supported_languages:
@@ -647,3 +651,5 @@ def init_routes(app):
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
+        
+        

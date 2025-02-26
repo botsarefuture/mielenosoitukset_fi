@@ -277,9 +277,9 @@
 <style>
   /* Navigator Container */
   #navigator {
-   left: -20px;
-   top: -20px;
-   position: fixed;
+    left: -20px;
+    top: -20px;
+    position: fixed;
   }
 
   /* Button Styling */
@@ -352,12 +352,13 @@
   }
 
   @media screen and (max-width: 768px) {
-  /* Adjustments for smaller screens */
-  #navigator {
-    display: none;
-  }
 
-}
+    /* Adjustments for smaller screens */
+    #navigator {
+      display: none;
+    }
+
+  }
 </style>
 
 <div id="navigator">
@@ -370,11 +371,11 @@
   </div>
 
   <div id="next-demo">
-  <!-- Next Button -->
-  <button id="next-demo-button">
-    Next
-    <i class="fas fa-chevron-right"></i>
-  </button>
+    <!-- Next Button -->
+    <button id="next-demo-button">
+      Next
+      <i class="fas fa-chevron-right"></i>
+    </button>
   </div>
 </div>
 
@@ -420,7 +421,8 @@
     <h1>{{ demo['title'] }}</h1>
 
     <p id="date">
-      {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
+      {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{
+      demo['end_time'] | time('%H:%M') }}
     </p>
   </div>
 
@@ -734,6 +736,8 @@
     const demoListStr = localStorage.getItem("demoList");
     if (!demoListStr) {
       console.warn("No demo list found in localStorage.");
+      $("#prev-demo-button").remove();
+      $("#next-demo-button").remove();
       return;
     }
     const demoList = JSON.parse(demoListStr);

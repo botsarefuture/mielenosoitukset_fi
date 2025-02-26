@@ -630,6 +630,9 @@ class Demonstration(BaseModel):
         ValueError
             If time_str is not in a recognized time format.
         """
+        if time_str is None:
+            return None
+        
         try:
             # If time_str is in HH:MM format, append seconds as "00"
             if time_str.count(":") == 1:

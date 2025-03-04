@@ -63,7 +63,7 @@ def init_routes(app):
 
     @app.route("/robots.txt")
     def robottext():
-        return '''User-agent: *
+        return '''User-agent: *\n
 Disallow: /admin/
 '''
         

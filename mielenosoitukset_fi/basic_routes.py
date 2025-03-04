@@ -61,12 +61,28 @@ def init_routes(app):
     def inject_demo_sentence():
         return dict(generate_demo_sentence=generate_demo_sentence)
 
+    @app.route("/robots.txt")
+    def robottext():
+        return '''User-agent: *
+Disallow: /admin/
+'''
+        
+    from flask import Response, url_for
+    import xml.etree.ElementTree as ET
+    from flask import Flask, Response, url_for
+    import xml.etree.ElementTree as ET
+
+
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
         try:
-            urlset = ET.Element(
-                "urlset", {"xmlns:xhtml": "http://www.w3.org/1999/xhtml"}
-            )
+            # Define the sitemap root element with both the sitemap and XHTML namespaces
+            urlset = ET.Element("urlset", {
+                "xmlns": "http://www.google.com/schemas/sitemap/0.84",
+                "xmlns:xhtml": "http://www.w3.org/1999/xhtml"
+            })
+            
+            # List of static routes
             routes = [
                 {"loc": "index"},
                 {"loc": "submit"},
@@ -75,44 +91,48 @@ def init_routes(app):
                 {"loc": "privacy"},
                 {"loc": "contact"},
             ]
+            
+            # Add static URLs to the sitemap
             for route in routes:
                 url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(url, "loc")
                 loc.text = url_for(route["loc"], _external=True)
+                
+                # Add alternate language versions
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
                         url,
                         "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for(
-                            route["loc"], lang_code=alt_lang_code, _external=True
-                        ),
+                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True)
                     )
+            
+            # Add demonstration URLs to the sitemap
             for demo in demonstrations_collection.find():
                 demo_url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(demo_url, "loc")
-                loc.text = url_for(
-                    "demonstration_detail", demo_id=str(demo["_id"]), _external=True
-                )
+                loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
+                
+                # Add alternate language versions for each demonstration
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
                         demo_url,
                         "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for(
-                            "demonstration_detail",
-                            demo_id=str(demo["_id"]),
-                            lang_code=alt_lang_code,
-                            _external=True,
-                        ),
+                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True)
                     )
+            
+            # Convert the tree to a string and send as response
             xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
-            return Response(xml_str, mimetype="application/xml")
+            return Response(xml_str, mimetype="text/xml", content_type='text/xml')
+        
         except Exception as e:
             app.logger.error(f"Error generating sitemap: {e}")
             return Response(status=500)
+
+
 
     @app.context_processor
     def inject_alternate_urls():

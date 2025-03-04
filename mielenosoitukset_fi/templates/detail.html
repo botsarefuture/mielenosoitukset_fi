@@ -270,6 +270,66 @@
   #timer {
     color: white !important;
   }
+
+/* modal.css | http://127.0.0.1:5002/static/css/admin/modal.css */
+
+.modal {
+  background-color: var(--background) !important;
+  box-shadow: var(--box_shadow) !important;
+  overflow: hidden !important;
+}
+
+.modal.active {
+  display: block !important;
+}
+
+.modal-body {
+  padding: 20px !important;
+}
+
+/* modal.css | http://127.0.0.1:5002/static/css/modal.css */
+
+.modal {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  justify-content: center;  /* Optional: centers the modal */
+  align-items: center;      /* Optional: centers the modal */
+}
+
+/* Additional styles for modal content, like buttons or text, can go here */
+
+/* modal.css | http://127.0.0.1:5002/static/css/admin/modal.css */
+
+.modal.active {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 80% !important;
+  background-color: var(--background) !important;
+  transform: translate(-50%, -50%) !important; /* Centers the modal */
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 9999; /* Ensure modal is above other content */
+}
+
+/* Header, Body, Footer styles */
+.modal-header,
+.modal-body,
+.modal-footer {
+  width: -moz-available; /* Makes the width expand to available space */
+}
+
+/* Element | http://127.0.0.1:5002/demonstration/66ca1d6189570d02646b1a72 */
+
+#reportModal {
+  height: max-content !important; /* Ensures the modal height adapts to content */
+}
+
 </style>
 <!-- Make sure to include Font Awesome in your <head> -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
@@ -692,6 +752,7 @@
   setInterval(updateCountdown, 1000);
 
 </script>
+
 
 <!-- Leaflet JS and Map Integration -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>

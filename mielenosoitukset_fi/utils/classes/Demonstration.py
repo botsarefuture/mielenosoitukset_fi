@@ -607,7 +607,11 @@ class Demonstration(BaseModel):
             dt = datetime.strptime(date_str, "%Y-%m-%d")
             return dt.date().isoformat()
         except ValueError as e:
-            raise ValueError(f"Date is not in ISO8601 format (YYYY-MM-DD): {date_str}") from e
+            try:
+                dt = datetime.strptime(date_str, "%d.%m.%Y")
+                return dt.date().isoformat()
+            except:
+                raise ValueError(f"Date is not in ISO8601 format (YYYY-MM-DD): {date_str}") from e
 
     def _to_iso8601_time(self, time_str: str) -> str:
         """

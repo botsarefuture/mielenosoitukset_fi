@@ -366,10 +366,12 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
 
     try:
         if is_edit and demo_id:
+            demo = Demonstration.from_dict(demonstration_data)
+            demo.save()
             # Update the existing demonstration
-            mongo.demonstrations.update_one(
-                {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
-            )
+            #mongo.demonstrations.update_one(
+            #    {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
+            #)
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
             # Insert a new demonstration

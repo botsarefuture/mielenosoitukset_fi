@@ -699,7 +699,7 @@ class AnonymousUser(AnonymousUserMixin):
         """
         return False
 
-    def has_permission(self, organization_id, permission):
+    def has_permission(self, permission):
         """Check if the user has a specific permission in a given organization or globally.
 
         Parameters

@@ -634,7 +634,7 @@ class Demonstration(BaseModel):
         ValueError
             If time_str is not in a recognized time format.
         """
-        if time_str is None:
+        if is_none(time_str):
             return None
         
         try:
@@ -647,4 +647,13 @@ class Demonstration(BaseModel):
                 return dt.time().isoformat()
             
         except ValueError as e:
-            raise ValueError(f"Time is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}") from e
+            raise ValueError(f"Time {time_str} is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}") from e
+        
+def is_none(s):
+    if s is None:
+        return True
+    
+    if isinstance(s, str) and not s.strip():
+        return True
+    
+    return False

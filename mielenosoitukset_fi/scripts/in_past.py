@@ -68,8 +68,11 @@ def is_future_demo(demo_date, today):
     return demo_date >= today
 
 
-def fetch_upcoming_demos():
+def fetch_upcoming_demos(_tr: bool = False):
     """Fetch upcoming demonstrations that are not in the past."""
+    if _tr:
+        return list(db["demonstrations"].find())
+    
     return list(db["demonstrations"].find(variables.DEMO_FILTER))
 
 
@@ -109,11 +112,11 @@ def hide_past_demos(demos, today):
     return stats
 
 
-def hide_past():
+def hide_past(_tr:bool=False):
     """Mark past demonstrations as hidden and output statistics."""
     try:
         today = datetime.now().date()
-        demos = fetch_upcoming_demos()
+        demos = fetch_upcoming_demos(_tr)
         stats = hide_past_demos(demos, today)
         print(f"Total demonstrations processed: {stats['total']}")
         print(f"Total demonstrations hidden: {stats['hidden']}")
@@ -124,5 +127,10 @@ def hide_past():
 
 if __name__ == "__main__":
     with app.app_context():
-        hide_past()
+        if os.getenv("also_past"):
+            hide_past(True)
+        else:
+            hide_past()
         print("Past demonstrations hidden successfully.")
+        
+        

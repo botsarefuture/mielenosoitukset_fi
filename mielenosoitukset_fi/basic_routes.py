@@ -109,7 +109,7 @@ Disallow: /admin/
                     )
             
             # Add demonstration URLs to the sitemap
-            for demo in demonstrations_collection.find():
+            for demo in demonstrations_collection.find(DEMO_FILTER):
                 demo_url = ET.SubElement(urlset, "url")
                 loc = ET.SubElement(demo_url, "loc")
                 loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
@@ -433,6 +433,7 @@ Disallow: /admin/
             demo = Demonstration.from_dict(result)
         else:
             abort(404)
+      
         if not demo:
             flash_message(
                 _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),

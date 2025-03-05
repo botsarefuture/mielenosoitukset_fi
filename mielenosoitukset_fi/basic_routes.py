@@ -440,8 +440,10 @@ Disallow: /admin/
                 "error",
             )
             return redirect(url_for("demonstrations"))
-        if not demo.approved and not current_user.has_permission("VIEW_DEMO"):
+        
+        if not demo.approved and not current_user.has_permission("VIEW_DEMO") or demo.hide and not current_user.has_permission("VIEW_DEMO"):
             abort(401)
+            
         if not demo.longitude:
             address_query = f"{demo.address}, {demo.city}"
             api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"

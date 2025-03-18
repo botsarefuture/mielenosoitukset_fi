@@ -363,11 +363,15 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
     from mielenosoitukset_fi.utils.admin.demonstration import fix_organizers
 
     demonstration_data = fix_organizers(demonstration_data)
-
+    
+    if demo_id and demonstration_data.get("_id") is None:
+        demonstration_data["_id"] = ObjectId(demo_id)
+        
     try:
         if is_edit and demo_id:
             demo = Demonstration.from_dict(demonstration_data)
             demo.save()
+            
             # Update the existing demonstration
             #mongo.demonstrations.update_one(
             #    {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}

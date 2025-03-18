@@ -1,6 +1,6 @@
 // Configuration objects for date and time pickers
 const date_picker_config = {
-    dateFormat: "d.m.Y",
+    dateFormat: "Y-m-d",
     altInput: true,
     altFormat: "d.m.Y",
     allowInput: true,

@@ -204,7 +204,6 @@ def edit_demo(demo_id):
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
-
     # Render the edit form with pre-filled demonstration details
     return render_template(
         "admin/demonstrations/form.html",

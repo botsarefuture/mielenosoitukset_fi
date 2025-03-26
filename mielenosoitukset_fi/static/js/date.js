@@ -44,6 +44,15 @@ function initializeDatePickers() {
         date_picker_config.minDate = 'today';
     }
     
+    // find one with #date, and if it has a value, convert it from iso8001 to d.m.Y
+    let date = document.querySelector("#date");
+    if (date.value) {
+        console.log(date.value
+        );
+        let dateObj = new Date(date.value);
+        date.value = dateObj.toLocaleDateString('fi-FI');
+    }
+
     flatpickr("#date", date_picker_config);
     flatpickr("#start_time", time_picker_config);
     flatpickr("#end_time", time_picker_config);

@@ -257,6 +257,10 @@ def login():
             flash_message("Kirjautuminen epäonnistui.", "error")
             return redirect(url_for("users.auth.login", next=safe_next_page))
             
+        # remove the next page from session
+        if session.get("next_page"):
+            del session["next_page"]
+            session.modified = True
         return redirect(safe_next_page)
 
     return render_template("users/auth/login.html", next=safe_next_page)

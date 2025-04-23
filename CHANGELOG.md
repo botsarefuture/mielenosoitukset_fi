@@ -1,5 +1,18 @@
 # Changelog
 
+## v3.0.0 – **Evolution Edition** 🚀
+ 
+### 🌟 New Features
+- **Redesigned UI**: Implemented a new responsive layout with an improved grid system and refined color themes.
+- **Enhanced Field Naming**: Updated all field names to use underscore formatting for consistency.
+ 
+### 🛠️ Fixes
+- **Critical Crash Fixes**: Resolved issues causing app crashes during profile picture uploads and improved data synchronization.
+ 
+### ✨ Updates
+- **Performance Optimization**: Migrated legacy features and optimized module interactions.
+- **Deprecation Guidelines Update**: Revised deprecation guidelines to align with the latest project standards.
+
 ## v2.9.2 – **The Bug Squashing Edition** 🌟
 
 ### 🛠️ Fixes

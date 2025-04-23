@@ -199,10 +199,17 @@ def login():
     next_page = request.args.get("next", "")
     next_page = next_page.replace("\\", "")
     
+    if not next_page and session.get("next_page"):
+        next_page = session.get("next_page")
+        
+    
     if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
         safe_next_page = next_page
     else:
         safe_next_page = url_for("index")
+        
+    session["next_page"] = safe_next_page
+    session.modified = True
 
     if request.method == "POST":
         let_login = True
@@ -246,6 +253,14 @@ def login():
         if let_login:
             login_user(user)
             
+        else:
+            flash_message("Kirjautuminen epäonnistui.", "error")
+            return redirect(url_for("users.auth.login", next=safe_next_page))
+            
+        # remove the next page from session
+        if session.get("next_page"):
+            del session["next_page"]
+            session.modified = True
         return redirect(safe_next_page)
 
     return render_template("users/auth/login.html", next=safe_next_page)

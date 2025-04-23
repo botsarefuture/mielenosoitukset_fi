@@ -403,6 +403,92 @@ class User(UserMixin):
             self.save()
             logger.info("Stopped following user successfully.")
 
+    def _permissions_for(self, organization_id=None):
+        """Get the list of permissions for the user, optionally filtered by organization.
+
+        Parameters
+        ----------
+        organization_id : str or None, optional
+            The organization ID to filter permissions for. If None, returns all permissions.
+
+        Returns
+        -------
+        list of str
+            List of permissions for the user (global and/or organization-specific).
+        """
+        if not organization_id:
+            permissions = set(self.global_permissions)
+        else:
+            permissions = set(self.permissions.get(str(organization_id), []))
+
+        if organization_id:
+            # Add permissions from organizations
+            for org in self.organizations:
+                if org["org_id"] == str(organization_id):
+                    permissions.update(org.get("permissions", []))
+            # Add permissions from permissions dict
+            org_perms = self.permissions.get(str(organization_id), [])
+            permissions.update(org_perms)
+        else:
+            # All org-specific permissions
+            for org in self.organizations:
+                permissions.update(org.get("permissions", []))
+            for org_perms in self.permissions.values():
+                permissions.update(org_perms)
+        return list(permissions)
+    
+    def _perm_in(self, permission, organization_id=None):
+        """Check if a specific permission exists for the user, optionally filtered by organization.
+
+        Parameters
+        ----------
+        permission : str
+            The permission to check for.
+        organization_id : str or None, optional
+            The organization ID to filter permissions for. If None, checks all permissions.
+
+        Returns
+        -------
+        bool
+            True if the permission exists, False otherwise.
+        """
+        if organization_id:
+            return permission in self._permissions_for(organization_id)
+        else:
+            # ids of organizations, where the user has the permission
+            org_ids = [
+                org["org_id"]
+                for org in self.organizations
+                if permission in org.get("permissions", [])
+            ]
+            return org_ids
+        return permission in self._permissions_for(organization_id)
+
+    def all_permissions_with_organizations(self):
+        """Get a mapping of all permissions the user has and the organizations for which they apply.
+
+        Returns
+        -------
+        dict
+            Dictionary where keys are permission names and values are lists of organization IDs (or 'global').
+        """
+        perm_map = {}
+        # Global permissions
+        for perm in self.global_permissions:
+            perm_map.setdefault(perm, []).append("global")
+        # Organization permissions from organizations list
+        for org in self.organizations:
+            for perm in org.get("permissions", []):
+                perm_map.setdefault(perm, []).append(str(org["org_id"]))
+        # Organization permissions from permissions dict
+        for org_id, perms in self.permissions.items():
+            for perm in perms:
+                perm_map.setdefault(perm, []).append(str(org_id))
+        # Remove duplicates in org lists
+        for perm in perm_map:
+            perm_map[perm] = list(set(perm_map[perm]))
+        return perm_map
+    
     def has_permission(self, permission, organization_id=None):
         """This method verifies if the user possesses a certain permission either on a global level or within a specified organization.
         It first checks the global permissions, then the organization-specific permissions if an organization ID is provided,

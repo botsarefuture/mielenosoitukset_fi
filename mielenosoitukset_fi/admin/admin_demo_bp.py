@@ -76,8 +76,18 @@ def demo_control():
     if approved_only:
         query["approved"] = True
 
-    if user_org_ids:
-        query["organizers"] = {"$elemMatch": {"organization_id": {"$in": user_org_ids}}}
+    if not current_user.global_admin:
+        # If the user does not have the global right to view all demos,
+        # restrict to demos the user can edit: either via their organization or by specific edit right.
+        _where = current_user._perm_in("EDIT_DEMO")
+        print(_where)
+                
+        query["$or"] = [
+            {"organizers": {"$elemMatch": {"organization_id": {"$in": [ObjectId(org_id) for org_id in _where]}}}},
+            {"editors": current_user.id}
+        ]
+#        else:
+ #           query["organizers"] = {"$elemMatch": {"organization_id": {"$in": user_org_ids}}}
 
     # Filter demonstrations based on search query, approval status, and date
     filtered_demos = filter_demonstrations(query, search_query, show_past, today)

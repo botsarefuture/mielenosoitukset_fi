@@ -117,7 +117,7 @@ def generate_reset_token(email: str) -> str:
     str
         The generated JWT token.
     """
-    return _generate_token({"email": email}, datetime.timedelta(hours=1))
+    return _generate_token({"email": email}, 3600)
 
 
 def verify_reset_token(token: str) -> Optional[str]:

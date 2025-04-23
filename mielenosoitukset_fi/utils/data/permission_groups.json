@@ -45,6 +45,10 @@
         {
             "name": "ACCEPT_DEMO",
             "description": "Can accept demos."
+        },
+        {
+            "name": "GENERATE_EDIT_LINK",
+            "description": "Generate edit link for demo."
         }
     ],
     "User Management": [

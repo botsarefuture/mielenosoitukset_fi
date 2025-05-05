@@ -197,6 +197,23 @@
     0% { transform: rotate(0deg);}
     100% { transform: rotate(360deg);}
   }
+  #report-selection-btn {
+    position: absolute;
+    z-index: 2000;
+    display: none;
+    padding: 6px 14px;
+    background: #ffc107;
+    color: #222;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #report-selection-btn:hover {
+    background: #ffdb5c;
+  }
 </style>
 {% endblock %}
 
@@ -913,6 +930,8 @@
     </div>
 
   </div>
+  <!-- Floating report button for text selection -->
+  <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
 </main>
 {% endblock %}
 
@@ -1299,5 +1318,75 @@
       });
     }
   });
+</script>
+<script>
+/**
+ * Shows a floating "report error" button when user selects text.
+ *
+ * Parameters
+ * ----------
+ * None.
+ *
+ * Returns
+ * -------
+ * None.
+ */
+document.addEventListener("DOMContentLoaded", function() {
+  const reportBtn = document.getElementById("report-selection-btn");
+  let selectedText = "";
+
+  document.addEventListener("mouseup", function(e) {
+    // Delay to allow selection to register
+    setTimeout(function() {
+      const selection = window.getSelection();
+      console.log(selection);
+      selectedText = selection && selection.toString().trim();
+      if (selectedText && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        // Only show if selection is in main content
+        const main = document.getElementById("main");
+        if (main && main.contains(selection.anchorNode)) {
+          reportBtn.style.display = "block";
+          // Position button above selection
+          const scrollY = window.scrollY || window.pageYOffset;
+          const scrollX = window.scrollX || window.pageXOffset;
+          reportBtn.style.top = (rect.top + scrollY - reportBtn.offsetHeight - 8) + "px";
+          reportBtn.style.left = (rect.left + scrollX) + "px";
+        } else {
+          reportBtn.style.display = "none";
+        }
+      } else {
+        reportBtn.style.display = "none";
+      }
+    }, 10);
+  });
+
+  // Hide button on scroll or click elsewhere
+  document.addEventListener("scroll", function() {
+    reportBtn.style.display = "none";
+  });
+  document.addEventListener("mousedown", function(e) {
+    if (!reportBtn.contains(e.target)) {
+      reportBtn.style.display = "none";
+    }
+  });
+
+  // When user clicks the floating report button, open modal and prefill error field
+  reportBtn.addEventListener("click", function() {
+    // Open the modal
+    var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("report-modal"));
+    modal.show();
+    // Prefill the error textarea
+    var textarea = document.getElementById("error");
+    if (textarea && selectedText) {
+      textarea.value = "{{ _('Virheellinen kohta:') }}\n" + selectedText + "\n\n";
+      textarea.focus();
+    }
+    reportBtn.style.display = "none";
+    // Optionally clear selection
+    window.getSelection().removeAllRanges();
+  });
+});
 </script>
 {% endblock %}

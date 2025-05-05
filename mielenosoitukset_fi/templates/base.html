@@ -15,7 +15,12 @@
   {% endblock %}
 
   {% for lang_code, url in alternate_urls.items() %}
+  {% if lang_code != session.get('locale', 'fi') %}
+
   <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+
+  {% else %}
+  {% endif %}
   {% endfor %}
 
   <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>

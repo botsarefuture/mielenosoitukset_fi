@@ -133,3 +133,44 @@ let interval = setInterval(() => {
 
     }
 }, 100);
+
+/**
+ * Initializes modal functionality for opening and closing modals.
+ *
+ * Parameters
+ * ----------
+ * None.
+ *
+ * Returns
+ * -------
+ * None.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("overlay");
+  const modals = document.querySelectorAll(".modal");
+  const closeButtons = document.querySelectorAll("[data-close-modal]");
+
+  // Close modal function
+  function closeModal() {
+    modals.forEach((modal) => modal.classList.remove("active"));
+    overlay.classList.remove("active");
+  }
+
+  // Attach close event to close buttons and overlay
+  closeButtons.forEach((button) =>
+    button.addEventListener("click", closeModal)
+  );
+  overlay.addEventListener("click", closeModal);
+
+  // Open modal function
+  function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add("active");
+      overlay.classList.add("active");
+    }
+  }
+
+  // Expose openModal globally for external use
+  window.openModal = openModal;
+});

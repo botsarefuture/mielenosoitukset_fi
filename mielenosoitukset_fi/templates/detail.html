@@ -52,7 +52,6 @@
   content="{{ demo['organizers'][0]['name'] if demo['organizers'] else 'Tuntematon kirjoittaja' }}" />
 <meta property="article:section" content="{{ demo['section'] if demo['section'] else 'Tapahtumat' }}" />
 <meta property="article:tag" content="{{ demo['tags'] if demo['tags'] else 'mielenosoitus, tapahtuma' }}" />
-
 <!-- JSON-LD Structured Data -->
 <script type="application/ld+json">
 {
@@ -64,13 +63,10 @@
   "location": {
     "@type": "Place",
     "name": "{{ demo['topic'] if demo['topic'] else 'Tuntematon paikka' }}",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "{{ demo['address'] if demo['address'] else 'Ei saatavilla' }}",
-      "addressLocality": "{{ demo['city'] if demo['city'] else 'Ei saatavilla' }}",
-      "addressRegion": "FI",
-      "postalCode": "{{ demo['postal_code'] if demo['postal_code'] else 'Ei saatavilla' }}",
-      "addressCountry": "FI"
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "{{ demo['latitude'] if demo['latitude'] else '' }}",
+      "longitude": "{{ demo['longitude'] if demo['longitude'] else '' }}"
     }
   },
   "description": "{{ demo['description'] if demo['description'] else 'Mielenosoituksen tiedot.' }}",
@@ -80,27 +76,136 @@
     "@type": "Organization",
     "name": "{{ demo['organizers'][0]['name'] if demo['organizers'] and demo['organizers'][0]['name'] else 'Tuntematon' }}",
     "url": "{{ url_for('org', org_id=demo['organizers'][0]['organization_id']) if demo['organizers'] and demo['organizers'][0]['organization_id'] else '#' }}"
-  },
-  "offers": {
-    "@type": "Offer",
-    "url": "{{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}",
-    "price": "{{ demo['price'] if demo['price'] else '0.00' }}",
-    "priceCurrency": "{{ demo['currency'] if demo['currency'] else 'EUR' }}"
   }
 }
 </script>
-{% for lang_code, url in alternate_urls.items() %}
-<link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
-{% endfor %}
+
 {% endblock %}
+
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='/css/modal.css' )}}" />-->
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/details.css' )}}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<style>
+  /* Loading overlay styles */
+  #loading-overlay {
+    position: fixed;
+    z-index: 9999;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
+  }
+  #loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .loading-spinner {
+    border: 8px solid #eee;
+    border-top: 8px solid #007bff;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1em;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+  /* Small element loading overlay */
+  .element-loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .element-loading-spinner {
+    border: 4px solid #eee;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    animation: spin 1s linear infinite;
+  }
+  .button.like-button.liked, .button.like-button[aria-pressed="true"] {
+    background-color: #218838;
+    color: #fff;
+    font-weight: bold;
+  }
+  .button.like-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  .button.like-button.processing {
+    background: repeating-linear-gradient(90deg, #007bff 0 20px, #218838 20px 40px);
+    color: #fff;
+    opacity: 0.8;
+    font-weight: bold;
+    position: relative;
+  }
+  .button.like-button.processing::after {
+    content: "";
+    display: inline-block;
+    margin-left: 8px;
+    width: 18px;
+    height: 18px;
+    border: 3px solid #fff;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  /* Error report processing */
+  #report-error-form .processing-indicator {
+    display: none;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
+  #report-error-form.processing .processing-indicator {
+    display: inline-block;
+  }
+  #report-error-form.processing button[type="submit"] {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+    background: repeating-linear-gradient(90deg, #007bff 0 20px, #ffc107 20px 40px);
+    color: #fff;
+    position: relative;
+  }
+  #report-error-form.processing button[type="submit"]::after {
+    content: "";
+    display: inline-block;
+    margin-left: 8px;
+    width: 18px;
+    height: 18px;
+    border: 3px solid #fff;
+    border-top: 3px solid #ffc107;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+  }
+</style>
 {% endblock %}
 
 {% block content %}
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div style="font-size:1.2em; color:#333;">Ladataan...</div>
+</div>
 <style>
   /* Inline #15 | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
 
@@ -273,62 +378,18 @@
 
 /* modal.css | http://127.0.0.1:5002/static/css/admin/modal.css */
 
-.modal {
-  background-color: var(--background) !important;
-  box-shadow: var(--box_shadow) !important;
-  overflow: hidden !important;
-}
+  /* Center modals horizontally and vertically */
+  .modal-dialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Full viewport height */
+  }
 
-.modal.active {
-  display: block !important;
-}
-
-.modal-body {
-  padding: 20px !important;
-}
-
-/* modal.css | http://127.0.0.1:5002/static/css/modal.css */
-
-.modal {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  justify-content: center;  /* Optional: centers the modal */
-  align-items: center;      /* Optional: centers the modal */
-}
-
-/* Additional styles for modal content, like buttons or text, can go here */
-
-/* modal.css | http://127.0.0.1:5002/static/css/admin/modal.css */
-
-.modal.active {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  width: 80% !important;
-  background-color: var(--background) !important;
-  transform: translate(-50%, -50%) !important; /* Centers the modal */
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  z-index: 9999; /* Ensure modal is above other content */
-}
-
-/* Header, Body, Footer styles */
-.modal-header,
-.modal-body,
-.modal-footer {
-  width: -moz-available; /* Makes the width expand to available space */
-}
-
-/* Element | http://127.0.0.1:5002/demonstration/66ca1d6189570d02646b1a72 */
-
-#reportModal {
-  height: max-content !important; /* Ensures the modal height adapts to content */
-}
+  /* Ensure the modal has the highest z-index */
+  .modal {
+    z-index: 1055 !important; /* Higher than Bootstrap's default z-index */
+  }
 
 </style>
 <!-- Make sure to include Font Awesome in your <head> -->
@@ -440,34 +501,116 @@
 </div>
 
 
-<div id="reportModal" class="modal">
-  <div class="modal-header">
-    <h2>{{ _('Ilmoita virheestä') }}</h2>
-    <span class="close" data-close-button>&times;</span>
-  </div>
-  <div class="modal-body">
-    <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, voit ilmoittaa siitä alla olevalla lomakkeella.') }}</p>
-    <form action="/report" method="POST">
-      <label for="error">{{ _('Virheen kuvaus') }}</label>
-      <textarea name="error" id="error" rows="4" required></textarea>
-      <input type="hidden" name="type" value="demonstration">
-      <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
-  </div>
-  <div class="modal-footer">
-    <button type="submit">{{ _('Lähetä') }}</button>
-    </form>
-  </div>
+<!-- Report Error Modal -->
+<div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reportModalLabel">{{ _('Ilmoita virheestä') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, voit ilmoittaa siitä alla olevalla lomakkeella.') }}</p>
+        <form id="report-error-form" action="/report" method="POST" autocomplete="off">
+          <label for="error" class="form-label">{{ _('Virheen kuvaus') }}</label>
+          <textarea name="error" id="error" class="form-control" rows="4" required></textarea>
+          <input type="hidden" name="type" value="demonstration">
+          <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
+          <span class="processing-indicator">
+            <span style="display:inline-block;width:18px;height:18px;border:3px solid #fff;border-top:3px solid #ffc107;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;"></span>
+            <span style="color:#ffc107;">{{ _('Käsitellään...') }}</span>
+          </span>
+          <div id="report-error-result" style="margin-top:10px;"></div>
+        </form>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+        /**
+         * Handles AJAX submission of the error report form.
+         *
+         * Parameters
+         * ----------
+         * None.
+         *
+         * Returns
+         * -------
+         * None.
+         */
+        $(function() {
+          $("#report-error-form").on("submit", function(e) {
+            e.preventDefault();
+            var $form = $(this);
+            $form.addClass("processing");
+            $form.find('button[type="submit"]').prop("disabled", true);
+            $form.find(".processing-indicator").show();
+            $("#report-error-result").empty();
 
+            $.ajax({
+              url: $form.attr("action"),
+              method: $form.attr("method"),
+              data: $form.serialize(),
+              success: function(response) {
+                // Show thank you and countdown
+                var seconds = 3;
+                $("#report-error-result").html(
+                  '<div class="alert alert-success">{{ _("Kiitos ilmoituksesta!") }}<br>' +
+                  '<span id="report-close-countdown">' + seconds + '</span> {{ _("s kuluttua ikkuna sulkeutuu.") }}</div>'
+                );
+                $form[0].reset();
+                // Countdown and close modal
+                var interval = setInterval(function() {
+                  seconds -= 1;
+                  $("#report-close-countdown").text(seconds);
+                  if (seconds <= 0) {
+                    clearInterval(interval);
+                    var modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
+                    if (modal) modal.hide();
+                  }
+                }, 1000);
+              },
+              error: function(xhr) {
+                $("#report-error-result").html('<div class="alert alert-danger">{{ _("Virhe lähetyksessä. Yritä uudelleen.") }}</div>');
+              },
+              complete: function() {
+                $form.removeClass("processing");
+                $form.find('button[type="submit"]').prop("disabled", false);
+                $form.find(".processing-indicator").hide();
+              }
+            });
+          });
+          // Hide processing indicator initially
+          $("#report-error-form .processing-indicator").hide();
+        });
+        </script>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" form="report-error-form" class="btn btn-primary">{{ _('Lähetä') }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div id="overlay" class="modal-overlay"></div>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
-<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
-
+<!-- Past Demonstration Modal -->
+<div class="modal fade" id="past-demo-modal" tabindex="-1" aria-labelledby="pastDemoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pastDemoModalLabel">{{ _('Huomio') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Tämä mielenosoitus on jo menneisyydessä.') }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <main id="main">
-  <button class="button help" data-modal-target="#reportModal" style="background: var(--yellow_lighter); color: black;">
-    <i class="fa fa-question-circle"></i> Ilmoita virheestä
+  <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#report-modal">
+    <i class="fa fa-question-circle"></i> {{ _('Ilmoita virheestä') }}
   </button>
   <!-- IMAGE -->
   {% if demo['img'] and demo['img'] !=
@@ -511,8 +654,8 @@
 
   <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
   <div class="button-container">
-    <button class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')">
-      <i class="fas fa-thumbs-up"></i> {{ _('Osallistun') }}
+    <button id="like-button" class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')" aria-pressed="false">
+      <i class="fas fa-thumbs-up"></i> <span id="like-btn-text">{{ _('Osallistun') }}</span>
     </button>
     <div class="like-count">
       <p>{{ _('Osallistuu:') }}</p>
@@ -521,6 +664,18 @@
     </div>
   </div>
   <script>
+    /**
+     * Gets a cookie value by name.
+     *
+     * Parameters
+     * ----------
+     * name : str
+     *     Cookie name.
+     *
+     * Returns
+     * -------
+     * str or undefined
+     */
     function getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -528,8 +683,29 @@
     }
 
     let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
+    let likeRequestInProgress = false;
 
+    /**
+     * Toggles the like state for the demonstration.
+     *
+     * Parameters
+     * ----------
+     * demoId : str
+     *     The demonstration id.
+     *
+     * Returns
+     * -------
+     * None.
+     */
     function toggleLike(demoId) {
+      if (likeRequestInProgress) return;
+      likeRequestInProgress = true;
+      const likeButton = document.getElementById("like-button");
+      const likeBtnText = document.getElementById("like-btn-text");
+      likeButton.disabled = true;
+      likeButton.classList.add("processing");
+      likeBtnText.textContent = "{{ _('Käsitellään...') }}";
+
       const url = liked ? `/api/demo/${demoId}/unlike` : `/api/demo/${demoId}/like`;
       fetch(url, {
         method: "POST",
@@ -542,12 +718,37 @@
           document.getElementById("like-count").innerText = data.likes;
           liked = !liked;
           document.cookie = `liked_${demoId}=${liked}; path=/`;
+          // Update button state
+          likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
+          if (liked) {
+            likeButton.classList.add("liked");
+          } else {
+            likeButton.classList.remove("liked");
+          }
         })
         .catch((error) => {
           console.error('Error:', error);
+        })
+        .finally(() => {
+          likeRequestInProgress = false;
+          likeButton.disabled = false;
+          likeButton.classList.remove("processing");
+          likeBtnText.textContent = "{{ _('Osallistun') }}";
         });
     }
 
+    /**
+     * Fetches the current like count and updates the UI.
+     *
+     * Parameters
+     * ----------
+     * demoId : str
+     *     The demonstration id.
+     *
+     * Returns
+     * -------
+     * None.
+     */
     function get_likes(demoId) {
       fetch(`/api/demo/${demoId}/likes`)
         .then((response) => response.json())
@@ -561,6 +762,12 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       get_likes("{{ demo['_id'] }}");
+      // Set initial button state
+      const likeButton = document.getElementById("like-button");
+      likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
+      if (liked) {
+        likeButton.classList.add("liked");
+      }
     });
   </script>
 
@@ -606,25 +813,28 @@
   </div>
   <br />
   <!-- the location text -->
-  <div class="container">
-    <h2 class="subtitle">{{ _('Sijainti') }}</h2>
-    <p>{{ demo['address'] }}, {{ demo['city'] }}</p>
+  <div class="container mt-4">
+    <h2 class="subtitle text-center">{{ _('Sijainti') }}</h2>
+    <p class="text-center">{{ demo['address'] }}, {{ demo['city'] }}</p>
     {% if demo['route'] and demo['route'] != 'None' %}
-    <div class="route">
+    <div class="route mt-3">
       <p><strong>{{ _('Marssin reitti:') }}</strong></p>
       {% if demo['route'] is string %}
       <p>{{ demo['route'] }}</p>
       {% elif demo['route'] is iterable %}
-      <ol>
+      <ol class="list-group list-group-numbered">
         {% for step in demo['route'] %}
-        <li>{{ step }}</li>
+        <li class="list-group-item">{{ step }}</li>
         {% endfor %}
       </ol>
       {% endif %}
     </div>
     {% endif %}
-    <div class="map">
-      <div id="map" style="height: 300px"></div>
+    <div class="map mt-4">
+      <div id="map-container" style="position:relative;">
+        <div id="map" class="rounded shadow" style="height: 300px;"></div>
+        <!-- The loading overlay will be injected here by JS if needed -->
+      </div>
     </div>
   </div>
 
@@ -709,6 +919,45 @@
 {% block scripts %}
 <script>
   /**
+   * Checks if the demonstration date is in the past and shows a warning popup.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  document.addEventListener("DOMContentLoaded", () => {
+    const demoDate = new Date("{{ demo['date'] }}T{{ demo['start_time'] if demo['start_time'] else '00:00:00' }}");
+    const now = new Date();
+
+    if (demoDate < now) {
+      const pastDemoModal = new bootstrap.Modal(document.getElementById("past-demo-modal"));
+      pastDemoModal.show();
+    }
+  });
+
+  /**
+   * Closes the past demonstration modal.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  function closePastDemoModal() {
+    document.getElementById("past-demo-modal").classList.remove("active");
+    document.getElementById("overlay").classList.remove("active");
+  
+  }
+</script>
+<script>
+  /**
    * Updates the countdown to the event using ISO-8601 date.
    *
    * Parameters
@@ -790,7 +1039,7 @@
   let demoId = "{{ demo['_id'] }}";
 </script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}">
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}">-->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     // Retrieve the demo list from localStorage.
@@ -858,4 +1107,197 @@
   });
 </script>
 
+<script>
+  /**
+   * Initializes modal functionality for the "Report Error" button.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  document.addEventListener("DOMContentLoaded", () => {
+    const reportButton = document.querySelector("[data-modal-target='#report-modal']");
+    const overlay = document.getElementById("overlay");
+    const reportModal = document.getElementById("report-modal");
+
+    // Open modal function
+    reportButton.addEventListener("click", () => {
+      reportModal.classList.add("active");
+      overlay.classList.add("active");
+    });
+
+    // Close modal function
+    const closeButtons = document.querySelectorAll("[data-close-modal]");
+    closeButtons.forEach((button) =>
+      button.addEventListener("click", () => {
+        reportModal.classList.remove("active");
+        overlay.classList.remove("active");
+      })
+    );
+
+    overlay.addEventListener("click", () => {
+      reportModal.classList.remove("active");
+      overlay.classList.remove("active");
+    });
+  });
+</script>
+<!-- Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"  crossorigin="anonymous"></script>
+<script>
+  /**
+   * Initializes the "Past Demonstration" modal if the event is in the past.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  document.addEventListener("DOMContentLoaded", () => {
+    const demo_date = new Date("{{ demo['date'] }}T{{ demo['start_time'] if demo['start_time'] else '00:00:00' }}");
+    const now = new Date();
+
+    if (demo_date < now) {
+      const past_demo_modal = new bootstrap.Modal(document.getElementById("past-demo-modal"));
+      past_demo_modal.show();
+    }
+  });
+</script>
+<script>
+  /**
+   * Hides the loading overlay when the DOM is ready.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  document.addEventListener("DOMContentLoaded", function() {
+    var overlay = document.getElementById("loading-overlay");
+    if (overlay) {
+      overlay.classList.add("hidden");
+      setTimeout(function() {
+        overlay.style.display = "none";
+      }, 400);
+    }
+  });
+</script>
+<script>
+  /**
+   * Shows a loading spinner overlay on top of the given element.
+   *
+   * Parameters
+   * ----------
+   * element_id : str
+   *     The id of the element to overlay.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  function showElementLoading(element_id) {
+    /**
+    Displays a loading spinner overlay on the specified element.
+
+    Parameters
+    ----------
+    element_id : str
+        The id of the element to overlay.
+
+    Returns
+    -------
+    None
+    */
+    var el = document.getElementById(element_id);
+    if (!el) return;
+    // Prevent duplicate overlays
+    if (el.querySelector('.element-loading-overlay')) return;
+    var overlay = document.createElement('div');
+    overlay.className = 'element-loading-overlay';
+    var spinner = document.createElement('div');
+    spinner.className = 'element-loading-spinner';
+    overlay.appendChild(spinner);
+    // Ensure parent is positioned
+    if (getComputedStyle(el).position === 'static') {
+      el.style.position = 'relative';
+    }
+    el.appendChild(overlay);
+  }
+
+  /**
+   * Hides the loading spinner overlay from the given element.
+   *
+   * Parameters
+   * ----------
+   * element_id : str
+   *     The id of the element to remove overlay from.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  function hideElementLoading(element_id) {
+    /**
+    Removes the loading spinner overlay from the specified element.
+
+    Parameters
+    ----------
+    element_id : str
+        The id of the element to remove overlay from.
+
+    Returns
+    -------
+    None
+    */
+    var el = document.getElementById(element_id);
+    if (!el) return;
+    var overlay = el.querySelector('.element-loading-overlay');
+    if (overlay) el.removeChild(overlay);
+  }
+</script>
+<script>
+  // Example usage for the map: show spinner until map is loaded
+  document.addEventListener("DOMContentLoaded", function() {
+    showElementLoading('map-container');
+  });
+  window.addEventListener('load', function() {
+    hideElementLoading('map-container');
+  });
+</script>
+<script>
+  // ...existing code...
+
+  /**
+   * Shows processing state for the error report form.
+   *
+   * Parameters
+   * ----------
+   * None.
+   *
+   * Returns
+   * -------
+   * None.
+   */
+  document.addEventListener("DOMContentLoaded", function() {
+    var reportForm = document.getElementById("report-error-form");
+    if (reportForm) {
+      reportForm.addEventListener("submit", function(e) {
+        // Show processing state
+        reportForm.classList.add("processing");
+        // Optionally, prevent double submit
+        var submitBtn = reportForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+      });
+    }
+  });
+</script>
 {% endblock %}

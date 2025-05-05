@@ -102,7 +102,11 @@ def hide_past_demos(demos, today):
                 except Exception as e:
                     demonstration_instance = RecurringDemonstration.from_dict(demo)
                 demonstration_instance.in_past = True
-                demonstration_instance.hide = True
+                
+                # demonstration_instance.hide = True
+                # lets not hide the demonstration, just mark it as in_past
+                # CHANGE 2.5.2025: Marking the demonstration as in_past instead of hiding it
+                
                 demonstration_instance.save()
                 stats["hidden"] += 1
         except Exception as e:

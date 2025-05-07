@@ -261,6 +261,128 @@ h1 {
 .hide-cards {
   display: none !important;
 }
+/* Modern demo card improvements */
+.demo-card {
+  background: var(--color-card-bg);
+  border-radius: 1.1em;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 1.5px 4px rgba(0,86,179,0.04);
+  padding: 1.5em 1.3em 1.2em 1.3em;
+  margin-bottom: 1.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  transition: box-shadow 0.18s, transform 0.18s, border 0.18s;
+  border: 1.5px solid var(--color-title-accent, #e3f0ff);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.demo-card:hover, .demo-card:focus {
+  box-shadow: 0 6px 24px rgba(0,86,179,0.13), 0 2px 8px rgba(0,0,0,0.08);
+  border-color: var(--color-primary);
+  transform: translateY(-2px) scale(1.012);
+  z-index: 2;
+}
+.demo-card-title {
+  font-size: 1.25em;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 0.2em;
+  line-height: 1.2;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.demo-card-date-time {
+  font-size: 1.05em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+  margin-bottom: 0.1em;
+}
+.demo-card-date-time i {
+  color: var(--color-primary);
+  margin-right: 0.3em;
+}
+.demo-card-location-row {
+  font-size: 1.05em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+}
+.demo-card-location-row i {
+  color: var(--color-primary);
+  margin-right: 0.3em;
+}
+.demo-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.2em;
+}
+.demo-table-tag, .demo-card-tag {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border-radius: 0.5em;
+  padding: 0.13em 0.8em;
+  font-size: 1em;
+  font-weight: 600;
+  margin-right: 0.1em;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+.demo-table-tag:hover, .demo-card-tag:hover {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+.demo-card .demo-card-actions {
+  margin-top: 0.7em;
+  display: flex;
+  gap: 0.7em;
+  align-items: center;
+}
+.demo-card-action-btn {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border: none;
+  border-radius: 0.5em;
+  padding: 0.3em 1em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.demo-card-action-btn:hover, .demo-card-action-btn:focus {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+.demo-card .demo-card-badge {
+  position: absolute;
+  top: 1.1em;
+  right: 1.1em;
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+  font-size: 0.95em;
+  font-weight: 700;
+  border-radius: 1em;
+  padding: 0.2em 1em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 600px) {
+  .demo-card { padding: 1em 0.7em; }
+  .demo-card-title { font-size: 1.08em; }
+  .demo-card-date-time, .demo-card-location-row { font-size: 0.98em; }
+}
 </style>
 {% endblock %}
 
@@ -335,21 +457,43 @@ const cityList = {{ city_list | tojson }};
  */
 document.addEventListener("DOMContentLoaded", function() {
   function renderDemoCard(demo) {
+    // Modern, user-friendly card with actions and badge for today
+    const isToday = (() => {
+      if (!demo.date_display) return false;
+      const today = new Date();
+      const [d, m, y] = demo.date_display.split(".");
+      return (
+        today.getDate() === parseInt(d, 10) &&
+        today.getMonth() + 1 === parseInt(m, 10) &&
+        today.getFullYear() === parseInt(y, 10)
+      );
+    })();
     return `
-      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo._id}">
-        <div class="demo-card-title">${demo.title}</div>
+      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo._id}" tabindex="0" onclick="window.location='/demonstration/${demo._id}'" onkeypress="if(event.key==='Enter'){window.location='/demonstration/${demo._id}'}">
+        ${isToday ? `<span class="demo-card-badge">{{ _('Tänään') }}</span>` : ""}
+        <div class="demo-card-title">
+          <span>${demo.title}</span>
+        </div>
         <div class="demo-card-date-time">
-          <i class="fa-regular fa-calendar"></i> ${demo.date_display}
-          <i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}
+          <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
+          <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display}${demo.end_time_display ? ' - ' + demo.end_time_display : ''}</span>
         </div>
         <div class="demo-card-location-row">
-          <i class="fa-solid fa-city"></i> ${demo.city}
-          <i class="fa-solid fa-location-dot"></i> ${demo.address}
+          <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city}</span>
+          <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address}</span>
         </div>
         <div class="demo-card-tags">
           ${(demo.tags && demo.tags.length > 0)
-            ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(' ')
-            : `<span class="demo-table-tag">#${demo.topic || ''}</span>`}
+            ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(' ')
+            : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ''}</span>`}
+        </div>
+        <div class="demo-card-actions">
+          <button class="demo-card-action-btn" onclick="event.stopPropagation();window.open('/demonstration/${demo._id}','_self')">
+            <i class="fa-solid fa-arrow-right"></i> {{ _('Avaa') }}
+          </button>
+          <button class="demo-card-action-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(window.location.origin + '/demonstration/${demo._id}');this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _('Kopioitu!') }}';setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _('Kopioi linkki') }}'},1200)">
+            <i class="fa-solid fa-link"></i> {{ _('Kopioi linkki') }}
+          </button>
         </div>
       </div>
     `;

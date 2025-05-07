@@ -3,44 +3,122 @@
 {% block title %} {{_('Ilmoita mielenosoituksesta') }} {%endblock %}
 
 {% block styles %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/submit.css') }}"
-/>
-<!-- Include Flatpickr CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-
 <link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
-<link
-  rel="stylesheet"
-  href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css"
-/>
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
 <style>
-  .required {
-    color: var(--primary_text_color);
-  }
-  .required-asterisk {
-    color: var(--red);
-    margin-left: 5px;
-  }
-  .optional-section {
-    display: none;
-  }
-  @media (max-width: 600px) {
-    .container-form {
-      padding: 10px;
-    }
-    .editor-container__editor {
-      width: 100%;
-    }
-    .add-organizer-button,
-    .submit-button {
-      width: 100%;
-    }
-    .editor-container_include-block-toolbar {
-      margin-left: 0;
-    }
-  }
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --red: #e53935;
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+}
+h1 {
+  color: var(--color-primary);
+  font-size: 2.1em;
+  font-weight: 800;
+  margin-bottom: 1.2em;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+.container-form {
+  background: none;
+  border-radius: 1em;
+  box-shadow: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2em;
+}
+label {
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.3em;
+}
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="time"],
+input[type="file"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.7em 1em;
+  border: 1px solid var(--color-title-accent);
+  border-radius: 0.5em;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 1em;
+  margin-bottom: 0.5em;
+  transition: border 0.2s;
+}
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="email"]:focus,
+input[type="time"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+.required-asterisk {
+  color: var(--red);
+  margin-left: 5px;
+}
+.add-organizer-button,
+.submit-button {
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 0.7em 1.5em;
+  border: none;
+  border-radius: 2em;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  margin-top: 0.5em;
+}
+.add-organizer-button:hover,
+.submit-button:hover {
+  background-color: #003d80;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,86,179,0.08);
+  filter: brightness(1.08);
+}
+.organizer {
+  background: var(--color-title-accent);
+  border-radius: 0.7em;
+  padding: 1em;
+  margin-bottom: 0.7em;
+}
+@media (max-width: 600px) {
+  .container-main-content { padding: 1em 0.5em; }
+  h1 { font-size: 1.3em; }
+  .container-form { padding: 0; }
+}
 </style>
 {% endblock %}
 {% block scripts %}
@@ -132,11 +210,22 @@
       marchRouteContainer.style.display = "none";
     }
   });
+
+  // Prevent form submission if terms are not accepted
+  document.querySelector("form").addEventListener("submit", function(e) {
+    var terms = document.getElementById("accept_terms");
+    if (!terms.checked) {
+      e.preventDefault();
+      terms.focus();
+      alert("{{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') }}");
+      return false;
+    }
+  });
 </script>
 
 {% endblock %}
 {% block content %}
-<div class="container container-main-content">
+<div class="container-main-content">
   <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
 
   <form
@@ -270,6 +359,60 @@
       placeholder="{{ _('Katuosoite') }}"
       required
     />
+
+    <!-- Submitter Information Section -->
+    <hr>
+    <h2 style="color: var(--color-primary); font-size: 1.15em; margin-bottom: 0.5em;">{{ _('Ilmoittajan tiedot') }}</h2>
+    <label for="submitter_role" class="required">
+      {{ _('Roolisi (esim. mielenosoituksen järjestäjä, osallistuja, tms.)') }}<span class="required-asterisk">*</span>
+    </label>
+    <input
+      type="text"
+      id="submitter_role"
+      name="submitter_role"
+      placeholder="{{ _('Roolisi') }}"
+      required
+    />
+
+    <label for="submitter_email" class="required">
+      {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
+    </label>
+    <input
+      type="email"
+      id="submitter_email"
+      name="submitter_email"
+      placeholder="esim. nimi@email.com"
+      required
+    />
+
+    <label for="submitter_name" class="required">
+      {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
+    </label>
+    <input
+      type="text"
+      id="submitter_name"
+      name="submitter_name"
+      placeholder="{{ _('Nimi tai nimimerkki') }}"
+      required
+    />
+
+    <!-- Terms and Privacy Agreement -->
+    <div style="margin: 1.2em 0 0.5em 0; display: flex; align-items: flex-start;">
+      <input
+        type="checkbox"
+        id="accept_terms"
+        name="accept_terms"
+        required
+        style="margin-right: 0.7em; margin-top: 0.2em;"
+      />
+      <label for="accept_terms" style="font-weight: 400; color: var(--color-text-secondary);">
+        {{ _('Hyväksyn') }}
+        <a href="{{ url_for('terms') }}" target="_blank">{{ _('käyttöehdot') }}</a>
+        {{ _('ja olen lukenut') }}
+        <a href="{{ url_for('privacy') }}" target="_blank">{{ _('tietosuojaselosteen') }}</a>.
+        <span class="required-asterisk">*</span>
+      </label>
+    </div>
 
     <button id="submit" type="submit" class="submit-button">{{ _('Lähetä') }}</button>
   </form>

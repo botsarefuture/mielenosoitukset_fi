@@ -39,6 +39,7 @@ email_sender = EmailSender()
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
+submitters_collection = mongo["submitters"]  # <-- Add this line
 
 
 def generate_alternate_urls(app, endpoint, **values):
@@ -413,6 +414,13 @@ Disallow: /admin/
         )
         return render_template("index.html", demonstrations=filtered_demonstrations)
 
+    @app.route("/terms")
+    def terms():
+        """
+        Render the terms and conditions page.
+        """
+        return render_template("terms.html")
+    
     @app.route("/submit", methods=["GET", "POST"])
     def submit():
         """
@@ -433,14 +441,23 @@ Disallow: /admin/
             tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
             img = request.files.get("image")
             photo_url = ""
+            # --- Submitter info fields ---
+            submitter_role = request.form.get("submitter_role")
+            submitter_email = request.form.get("submitter_email")
+            submitter_name = request.form.get("submitter_name")
+            accept_terms = request.form.get("accept_terms")
+            # --- End submitter fields ---
+
             if img:
                 filename = secure_filename(img.filename)
                 temp_file_path = os.path.join("mielenosoitukset_fi/uploads", filename)
                 img.save(temp_file_path)
+                print(f"Image saved to {temp_file_path}")
                 bucket_name = "mielenosoitukset-fi1"
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
-            if not title or not date or not start_time or not city or not address:
-                flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
+            # --- Add submitter info to required fields check ---
+            if not title or not date or not start_time or not city or not address or not submitter_role or not submitter_email or not submitter_name or not accept_terms:
+                flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot sekä hyväksy käyttöehdot ja tietosuojaseloste.", "error")
                 return redirect(url_for("submit"))
             organizers = []
             i = 1
@@ -468,7 +485,22 @@ Disallow: /admin/
                 description=description,
                 tags=tags,
             )
-            mongo.demonstrations.insert_one(demonstration.to_dict())
+            demo_dict = demonstration.to_dict()
+            result = mongo.demonstrations.insert_one(demo_dict)
+            demo_id = result.inserted_id
+
+            # --- Save submitter info in separate collection ---
+            submitter_doc = {
+                "demonstration_id": demo_id,
+                "submitter_role": submitter_role,
+                "submitter_email": submitter_email,
+                "submitter_name": submitter_name,
+                "accept_terms": bool(accept_terms),
+                "submitted_at": datetime.utcnow(),
+            }
+            submitters_collection.insert_one(submitter_doc)
+            # --- End submitter info ---
+
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",

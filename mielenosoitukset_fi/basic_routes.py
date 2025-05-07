@@ -109,7 +109,7 @@ def format_demo_for_api(demo):
 
 
 def filter_demonstrations_api(
-    demonstrations, today, search_query, city_query, location_query, date_start, date_end
+    demonstrations, today, search_query, city_query, location_query, date_start, date_end, tag_query=None
 ):
     """
     Filter the demonstrations for the API based on various criteria.
@@ -130,6 +130,8 @@ def filter_demonstrations_api(
         Start date (YYYY-MM-DD).
     date_end : str
         End date (YYYY-MM-DD).
+    tag_query : str or None
+        Tag to filter by.
 
     Returns
     -------
@@ -174,6 +176,11 @@ def filter_demonstrations_api(
                     continue
             except Exception:
                 pass
+        # Tag filter
+        if tag_query:
+            tags = [t.lower() for t in demo.get("tags", [])]
+            if tag_query.lower() not in tags:
+                continue
         if demo["_id"] not in added_demo_ids:
             filtered.append(demo)
             added_demo_ids.add(demo["_id"])
@@ -221,7 +228,7 @@ def get_api_pagination_args():
     Returns
     -------
     dict
-        Contains page, per_page, search, city, location, date_start, date_end.
+        Contains page, per_page, search, city, location, date_start, date_end, tag.
     """
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20) or 20)
@@ -230,6 +237,7 @@ def get_api_pagination_args():
     location_query = request.args.get("location", "").lower()
     date_start = parse_date_arg(request.args.get("date_start", ""))
     date_end = parse_date_arg(request.args.get("date_end", ""))
+    tag_query = request.args.get("tag", "").strip().lower() or None
     return dict(
         page=page,
         per_page=per_page,
@@ -238,6 +246,7 @@ def get_api_pagination_args():
         location_query=location_query,
         date_start=date_start,
         date_end=date_end,
+        tag_query=tag_query,
     )
 
 
@@ -292,6 +301,7 @@ def add_api_routes(app):
             args["location_query"],
             args["date_start"],
             args["date_end"],
+            args.get("tag_query"),
         )
         filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
         paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
@@ -393,6 +403,15 @@ Disallow: /admin/
             return dict(alternate_urls=alternate_urls)
         else:
             return dict(alternate_urls={})
+        
+    # inject city list to the template context
+    @app.context_processor
+    def inject_city_list():
+        """
+        Inject the city list into the template context.
+        """
+        return dict(city_list=CITY_LIST)
+    
 
     @app.route("/")
     def index():

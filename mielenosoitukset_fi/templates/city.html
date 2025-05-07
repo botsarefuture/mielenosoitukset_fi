@@ -634,69 +634,129 @@ h1 {
   .demo-card-title { font-size: 1.08em; }
   .demo-card-date-time, .demo-card-location-row { font-size: 0.98em; }
 }
+.city-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
+  color: #fff;
+  border-radius: 1.2em;
+  padding: 1.5em 1em 1.2em 1em;
+  margin-bottom: 2em;
+  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.city-banner .city-label {
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.13);
+  padding: 0.3em 1.2em;
+  border-radius: 2em;
+  margin-bottom: 0.7em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+.city-banner .city-name {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
+  margin-bottom: 0.2em;
+  letter-spacing: 0.04em;
+  display: inline-block;
+}
+.city-banner .city-desc {
+  font-size: 1.15em;
+  font-weight: 400;
+  color: #e3f0ff;
+  margin-top: 0.2em;
+  text-align: center;
+  max-width: 600px;
+}
+@media (max-width: 600px) {
+  .city-banner .city-name { font-size: 1.3em; }
+  .city-banner { padding: 1em 0.5em; }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-main-content">
-    <h1>{{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}</h1>
-    <div class="view-toggle-group" id="view-toggle-group">
-      <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
-        <i class="fa-solid fa-table-cells-large"></i>
-      </button>
-      <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
-        <i class="fa-solid fa-list"></i>
-      </button>
+  <div class="city-banner">
+    <div class="city-label">
+      <i class="fa-solid fa-city"></i>
+      {{ _('Kaupunki') }}
     </div>
-    <form method="GET" action="#" class="search-form" id="search-form">
-        <input
-            type="text"
-            name="search"
-            placeholder="{{ _('Hae mielenosoituksia...') }}"
-            aria-label="{{ _('Hae mielenosoituksia') }}"
-            value="{{ request.args.get('search', '') }}"
-        />
-        <input type="hidden" name="city" value="{{ city_name }}" />
-        <input
-            type="text"
-            name="location"
-            placeholder="{{ _('Sijainti') }}"
-            aria-label="{{ _('Sijainti') }}"
-            value="{{ request.args.get('location', '') }}"
-        />
-        <div class="date-range">
-          <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
-            aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
-          <span>-</span>
-          <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
-            aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
-        </div>
-        <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
-        <input type="hidden" name="date_start" id="iso_date_start">
-        <input type="hidden" name="date_end" id="iso_date_end">
-        <div class="filters" id="filters"></div>
-        <button type="submit" class="button">{{ _('Hae') }}</button>
-    </form>
-    <div class="container-grid" id="demo-container-grid"></div>
-    <div class="demo-table-container" id="demo-table-container" style="display: none;">
-      <table class="demo-table">
-        <thead>
-          <tr>
-            <th>{{ _('Päivä') }}</th>
-            <th>{{ _('Aika') }}</th>
-            <th>{{ _('Otsikko') }}</th>
-            <th>{{ _('Kaupunki') }}</th>
-            <th>{{ _('Sijainti') }}</th>
-            <th>{{ _('Aiheet / tagit') }}</th>
-          </tr>
-        </thead>
-        <tbody id="demo-table-body"></tbody>
-      </table>
+    <div class="city-name">{{ city_name }}</div>
+    <div class="city-desc">
+      {{ _('Näet tässä vain mielenosoitukset, jotka järjestetään kaupungissa') }}
+      <span style="font-weight:700;">{{ city_name }}</span>.<br>
+      {{ _('Voit hakea, suodattaa ja selata vain tämän kaupungin tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.') }}
     </div>
-    <div id="scroll_sentinel"></div>
-    <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
-      <i class="fas fa-spinner fa-spin fa-2x"></i>
-    </div>
-    <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
+  </div>
+  <h1 style="margin-top:0;">
+    {{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}
+  </h1>
+  <div class="view-toggle-group" id="view-toggle-group">
+    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
+      <i class="fa-solid fa-table-cells-large"></i>
+    </button>
+    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
+      <i class="fa-solid fa-list"></i>
+    </button>
+  </div>
+  <form method="GET" action="#" class="search-form" id="search-form">
+      <input
+          type="text"
+          name="search"
+          placeholder="{{ _('Hae mielenosoituksia...') }}"
+          aria-label="{{ _('Hae mielenosoituksia') }}"
+          value="{{ request.args.get('search', '') }}"
+      />
+      <input type="hidden" name="city" value="{{ city_name }}" />
+      <input
+          type="text"
+          name="location"
+          placeholder="{{ _('Sijainti') }}"
+          aria-label="{{ _('Sijainti') }}"
+          value="{{ request.args.get('location', '') }}"
+      />
+      <div class="date-range">
+        <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
+          aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
+        <span>-</span>
+        <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
+          aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
+      </div>
+      <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
+      <input type="hidden" name="date_start" id="iso_date_start">
+      <input type="hidden" name="date_end" id="iso_date_end">
+      <div class="filters" id="filters"></div>
+      <button type="submit" class="button">{{ _('Hae') }}</button>
+  </form>
+  <div class="container-grid" id="demo-container-grid"></div>
+  <div class="demo-table-container" id="demo-table-container" style="display: none;">
+    <table class="demo-table">
+      <thead>
+        <tr>
+          <th>{{ _('Päivä') }}</th>
+          <th>{{ _('Aika') }}</th>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Sijainti') }}</th>
+          <th>{{ _('Aiheet / tagit') }}</th>
+        </tr>
+      </thead>
+      <tbody id="demo-table-body"></tbody>
+    </table>
+  </div>
+  <div id="scroll_sentinel"></div>
+  <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+  </div>
+  <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
 </div>
 {% endblock %}

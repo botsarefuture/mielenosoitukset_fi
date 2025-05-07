@@ -1,131 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warning</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #FFD43B, #FF0000);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #000;
-            text-align: center;
-        }
+{% extends 'base.html' %}
 
-        #warning_container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            animation: flash 5s infinite;
-        }
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<style>
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.hero-error {
+  background: linear-gradient(90deg, var(--color-bg-hero) 0%, var(--color-bg) 100%);
+  padding: 2.5em 1em 2em 1em;
+  border-radius: 1.5em;
+  margin-bottom: 2em;
+  box-shadow: var(--color-shadow);
+  text-align: center;
+  color: var(--color-text);
+}
+.hero-error h2 {
+  font-size: 2.2em;
+  margin-bottom: 0.5em;
+}
+.hero-error p {
+  font-size: 1.15em;
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5em;
+}
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  padding: 2em 1em 1.5em 1em;
+  margin-bottom: 2em;
+  color: var(--color-text);
+  text-align: center;
+}
+.button.button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1.05em;
+  padding: 0.7em 1.5em;
+  border-radius: 2em;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  margin-top: 1.5em;
+}
+.button.button-primary:hover {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--color-shadow-hover);
+  filter: brightness(1.15);
+}
+@media (max-width: 600px) {
+  .hero-error { padding: 1.2em 0.5em; }
+  .section-card { padding: 1em 0.5em; }
+  .hero-error h2 { font-size: 1.3em; }
+}
+</style>
+{% endblock %}
 
-        #warning_container i {
-            font-size: 5rem;
-            color: #FF0000;
-        }
-
-        #warning_container h1 {
-            font-size: 2rem;
-            margin: 0.5rem 0;
-        }
-
-        #warning_container h2 {
-            font-size: 1.5rem;
-            margin: 0.5rem 0;
-        }
-
-        #warning_container p {
-            font-size: 1rem;
-            margin: 0.5rem 0;
-        }
-
-        @media (max-width: 600px) {
-            #warning_container i {
-                font-size: 3rem;
-            }
-
-            #warning_container h1 {
-                font-size: 1.5rem;
-            }
-
-            #warning_container h2 {
-                font-size: 1.2rem;
-            }
-
-            #warning_container p {
-                font-size: 0.9rem;
-            }
-        }
-
-        @keyframes flash {
-            0%, 100% {
-                background-color: rgba(255, 255, 255, 0.9);
-            }
-            50% {
-                background-color: rgba(255, 255, 255, 0.7);
-            }
-        }
-
-        #warning_container h1, #warning_container h2, #warning_container p {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-    </style>
-</head>
-<body>
-    <div id="warning_container">
-        <i class="fa-solid fa-triangle-exclamation fa-shake"></i>
-        <h1>429 - Too Many Requests</h1>
-        <h2>Request Limit Exceeded</h2>
-        <p>You’ve sent too many requests in a short period. Please try again later.</p>
-        <p>If you're using an automated script, contact us at <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> for API access and documentation.</p>
-    </div>
-
-
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const all_elements = document.body.children;
-            for (let i = 0; i < all_elements.length; i++) {
-                if (all_elements[i].id !== 'warning_container') {
-                    all_elements[i].style.display = 'none';
-                }
-            }
-
-            document.documentElement.requestFullscreen();
-            
-            if (!document.fullscreenElement) {
-                document.body.requestFullscreen();
-            }
-
-            const button = document.createElement('button');
-            button.style.display = 'none';
-            document.body.appendChild(button);
-
-            button.addEventListener('click', () => {
-                if (document.documentElement.requestFullscreen) {
-                    document.documentElement.requestFullscreen();
-                } else if (document.body.requestFullscreen) {
-                    document.body.requestFullscreen();
-                }
-            });
-
-            button.click();
-            document.body.removeChild(button);
-
-            
-        });
-
-        // reload page after 10 seconds
-        setTimeout(() => {
-            window.location.reload();
-        }, 10000);
-    </script>
-</body>
-</html>
+{% block content %}
+<div class="container-main-content">
+  <section class="hero-error">
+    <h2>
+      <span aria-hidden="true"><i class="fa-solid fa-triangle-exclamation"></i></span>
+      429 - Liikaa pyyntöjä
+    </h2>
+    <p>
+      Olet lähettänyt liikaa pyyntöjä lyhyessä ajassa.<br>
+      Yritä hetken kuluttua uudelleen.
+    </p>
+    <p>
+      Jos käytät automaattista skriptiä, ota yhteyttä <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> saadaksesi API-oikeudet ja dokumentaation.
+    </p>
+    <a class="button button-primary" href="/">
+      <span aria-hidden="true"><i class="fa-solid fa-house"></i></span> Palaa etusivulle
+    </a>
+  </section>
+</div>
+{% endblock %}

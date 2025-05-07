@@ -2,144 +2,141 @@
 {% block title %}{{ _('Tietoa sivustosta - Mielenosoitukset.fi') }}{% endblock %} 
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <style>
-  :root {
-    /* Colors */
-    --info_background: #f7f8fa; /* Soft, clean background */
-    --info_text_color: #333; /* Dark, readable text */
-    --info_accent_color: #0033a0; /* Primary blue for accents */
-    --info_secondary_color: #f0f0f0; /* Light gray for secondary sections */
-    --info_link_color: #ff6600; /* Bright orange for links */
-    --info_link_hover_color: #cc5200; /* Darker orange on hover */
-    --info_border_color: #ddd; /* Subtle borders */
-    --info_box_shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for elements */
-  }
-
-  .info-page {
-    background: var(--container_background);
-    color: var(--primary_text_color);
-    padding: 20px;
-    line-height: 1.6;
-  }
-
-  .info-page p {
-    margin-bottom: 20px;
-  }
-
-  .info-page a {
-    color: var(--link_color);
-    text-decoration: underline;
-  }
-
-  .info-page a:hover {
-    color: var(--link_hover_color);
-  }
-
-  .info-box {
-    background: var(--secondary_color);
-    border: 1px solid var(--border_color);
-    padding: 20px;
-    box-shadow: var(--box_shadow);
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-
-  .info-box strong {
-    color: var(--primary_strong_text_color);
-  }
-
-  .info-list {
-    list-style-type: none;
-    padding-left: 0;
-  }
-
-  .info-list li {
-    background: var(--secondary_color);
-    border: 1px solid var(--border_color);
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    box-shadow: var(--box_shadow);
-  }
-
-  /* Special Button Styling */
-  .info-button {
-    background: var(--primary_button_color);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  .info-button:hover {
-    background: var(--primary_button_hover_color);
-  }
-
-  /* Responsive */
-  @media screen and (max-width: 768px) {
-    .info-page {
-      padding: 15px;
-    }
-
-    .info-box {
-      padding: 15px;
-    }
-  }
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+}
+.section-title {
+  font-size: 2.2em;
+  font-weight: 800;
+  margin-bottom: 1.2em;
+  color: var(--color-primary);
+  letter-spacing: 0.01em;
+  padding: 0.3em 0.8em;
+  background: var(--color-title-accent);
+  border-radius: 0.6em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  display: block;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+  transition: background 0.2s, color 0.2s;
+}
+.section-title:after {
+  content: '';
+  display: block;
+  margin: 0.4em auto 0 auto;
+  width: 2.5em;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  opacity: 0.25;
+}
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  padding: 2em 1em 1.5em 1em;
+  margin-bottom: 2em;
+  color: var(--color-text);
+}
+.section-card h2 {
+  font-size: 1.3em;
+  color: var(--color-primary);
+  font-weight: 700;
+  margin-bottom: 0.7em;
+}
+.section-card p {
+  color: var(--color-text-secondary);
+  font-size: 1.08em;
+  margin-bottom: 0.5em;
+}
+.section-card a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.section-card a:hover {
+  color: #ff6600;
+}
+@media (max-width: 600px) {
+  .container-main-content { padding: 1em 0.5em; }
+  .section-title { font-size: 1.3em; }
+  .section-card { padding: 1em 0.5em; }
+}
 </style>
 {% endblock %} 
 
 {% block content %}
-<section class="info-page info-section">
-  <div class="container">
-    <h1 class="title">{{ _('Tietoa Mielenosoitukset.fi -sivustosta') }}</h1>
+<div class="container-main-content">
+  <h1 class="section-title">{{ _('Tietoa Mielenosoitukset.fi -sivustosta') }}</h1>
+  <section class="section-card">
     <p>
       {{ _('Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.') }}
     </p>
-
-    <div class="info-box">
-      <h2 class="subtitle">{{ _('Mikä on Mielenosoitukset.fi?') }}</h2>
-      <p>
-        {{ _('Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.') }}
-      </p>
-    </div>
-
-    <div class="info-box">
-      <h2 class="subtitle">{{ _('Kuinka ilmoitan mielenosoituksesta?') }}</h2>
-      <p>
-        {{ _('Voit ilmoittaa oman mielenosoituksesi täyttämällä') }} 
-        <a class="link" href="{{ url_for('submit') }}">{{ _('ilmoituslomakkeen') }}</a>.
-        {{ _('Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi.') }}
-      </p>
-    </div>
-
-    <div class="info-box">
-      <h2 class="subtitle">{{ _('Kuka ylläpitää sivustoa?') }}</h2>
-      <p>
-        {{ _('Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.') }}
-      </p>
-    </div>
-
-    <div class="info-box">
-      <h2 class="subtitle">{{ _('Yhteystiedot') }}</h2>
-      <p>
-        {{ _('Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit lähettää sähköpostia osoitteeseen') }} 
-        <a class="link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>
-        {{ _('tai täyttää') }} 
-        <a class="link" href="{{ url_for('contact') }}">{{ _('yhteydenottolomakkeen') }}</a>.
-      </p>
-    </div>
-
-    <div class="info-box">
-      <h2 class="subtitle">{{ _('Yksityisyys ja evästeet') }}</h2>
-      <p>
-        {{ _('Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät') }} 
-        <a class="link" href="{{ url_for('privacy') }}">{{ _('yksityisyydensuojakäytännöstämme') }}</a>.
-      </p>
-    </div>
-  </div>
-</section>
+  </section>
+  <section class="section-card">
+    <h2>{{ _('Mikä on Mielenosoitukset.fi?') }}</h2>
+    <p>
+      {{ _('Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.') }}
+    </p>
+  </section>
+  <section class="section-card">
+    <h2>{{ _('Kuinka ilmoitan mielenosoituksesta?') }}</h2>
+    <p>
+      {{ _('Voit ilmoittaa oman mielenosoituksesi täyttämällä') }} 
+      <a class="link" href="{{ url_for('submit') }}">{{ _('ilmoituslomakkeen') }}</a>.
+      {{ _('Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi.') }}
+    </p>
+  </section>
+  <section class="section-card">
+    <h2>{{ _('Kuka ylläpitää sivustoa?') }}</h2>
+    <p>
+      {{ _('Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.') }}
+    </p>
+  </section>
+  <section class="section-card">
+    <h2>{{ _('Yhteystiedot') }}</h2>
+    <p>
+      {{ _('Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit lähettää sähköpostia osoitteeseen') }} 
+      <a class="link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>
+      {{ _('tai täyttää') }} 
+      <a class="link" href="{{ url_for('contact') }}">{{ _('yhteydenottolomakkeen') }}</a>.
+    </p>
+  </section>
+  <section class="section-card">
+    <h2>{{ _('Yksityisyys ja evästeet') }}</h2>
+    <p>
+      {{ _('Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät') }} 
+      <a class="link" href="{{ url_for('privacy') }}">{{ _('yksityisyydensuojakäytännöstämme') }}</a>.
+    </p>
+  </section>
+</div>
 {% endblock %}
 

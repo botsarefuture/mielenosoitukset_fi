@@ -84,855 +84,739 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='/css/modal.css' )}}" />-->
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/details.css' )}}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
-<!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 <style>
-  /* Loading overlay styles */
-  #loading-overlay {
-    position: fixed;
-    z-index: 9999;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(255,255,255,0.85);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.3s;
-  }
-  #loading-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .loading-spinner {
-    border: 8px solid #eee;
-    border-top: 8px solid #007bff;
-    border-radius: 50%;
-    width: 60px; height: 60px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1em;
-  }
-  @keyframes spin {
-    0% { transform: rotate(0deg);}
-    100% { transform: rotate(360deg);}
-  }
-  /* Small element loading overlay */
-  .element-loading-overlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(255,255,255,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    pointer-events: none;
-  }
-  .element-loading-spinner {
-    border: 4px solid #eee;
-    border-top: 4px solid #007bff;
-    border-radius: 50%;
-    width: 32px; height: 32px;
-    animation: spin 1s linear infinite;
-  }
-  .button.like-button.liked, .button.like-button[aria-pressed="true"] {
-    background-color: #218838;
-    color: #fff;
-    font-weight: bold;
-  }
-  .button.like-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-  .button.like-button.processing {
-    background: repeating-linear-gradient(90deg, #007bff 0 20px, #218838 20px 40px);
-    color: #fff;
-    opacity: 0.8;
-    font-weight: bold;
-    position: relative;
-  }
-  .button.like-button.processing::after {
-    content: "";
-    display: inline-block;
-    margin-left: 8px;
-    width: 18px;
-    height: 18px;
-    border: 3px solid #fff;
-    border-top: 3px solid #007bff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-  }
-  /* Error report processing */
-  #report-error-form .processing-indicator {
-    display: none;
-    margin-left: 10px;
-    vertical-align: middle;
-  }
-  #report-error-form.processing .processing-indicator {
-    display: inline-block;
-  }
-  #report-error-form.processing button[type="submit"] {
-    opacity: 0.7;
-    cursor: not-allowed;
-    pointer-events: none;
-    background: repeating-linear-gradient(90deg, #007bff 0 20px, #ffc107 20px 40px);
-    color: #fff;
-    position: relative;
-  }
-  #report-error-form.processing button[type="submit"]::after {
-    content: "";
-    display: inline-block;
-    margin-left: 8px;
-    width: 18px;
-    height: 18px;
-    border: 3px solid #fff;
-    border-top: 3px solid #ffc107;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-  }
-  @keyframes spin {
-    0% { transform: rotate(0deg);}
-    100% { transform: rotate(360deg);}
-  }
-  #report-selection-btn {
-    position: absolute;
-    z-index: 2000;
-    display: none;
-    padding: 6px 14px;
-    background: #ffc107;
-    color: #222;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  #report-selection-btn:hover {
-    background: #ffdb5c;
-  }
+main {
+  /* All CSS below is now scoped to main */
+}
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --primary_color: var(--color-primary);
+  --primary_dark_color: light-dark(#003d80, #0056b3);
+  --background: var(--color-card-bg);
+  --primary_text_color: var(--color-text);
+  --primary_strong_text_color: var(--color-primary);
+  --box_shadow: var(--color-shadow);
+  --yellow: #ffe066;
+  --black: #222;
+}
+main body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+main .container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+main h1, main .subtitle {
+  color: var(--color-primary);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+main h1 {
+  font-size: 2.1em;
+  margin-bottom: 0.5em;
+}
+main .subtitle {
+  font-size: 1.5em;
+  margin-bottom: 0.7em;
+}
+main .button-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+main .button {
+  background-color: var(--primary_color);
+  color: #fff;
+  padding: 0.7em 1.5em;
+  border: none;
+  border-radius: 2em;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+main .button:hover {
+  background-color: var(--primary_dark_color);
+  color: #fff;
+  box-shadow: var(--color-shadow-hover);
+  filter: brightness(1.08);
+}
+main .like-count {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 1em;
+  color: var(--primary_strong_text_color);
+}
+main .like-count i {
+  color: var(--primary_color);
+}
+main .topics ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+main .topics .tag {
+  background-color: var(--primary_color);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: transform 0.2s, background-color 0.2s;
+}
+main .topics .tag:hover {
+  background-color: var(--primary_dark_color);
+  transform: translateY(-2px);
+}
+main #basicshit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 20px;
+}
+main #basicshit h1 {
+  margin: 10px 0;
+  padding: 0;
+  font-size: 2.5em;
+  color: var(--primary_strong_text_color);
+}
+main #basicshit img {
+  max-width: 100%;
+  max-height: 400px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+main #date {
+  font-size: 1.2em;
+  margin: 0;
+  padding: 0;
+  color: var(--primary_strong_text_color);
+}
+main .container {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--background);
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: var(--box_shadow);
+}
+main .countdown {
+  margin: 20px 0;
+  text-align: center;
+  background: var(--color-title-accent);
+  border-radius: 0.7em;
+  padding: 1em 0.5em;
+}
+main .map {
+  margin: 20px 0;
+}
+main #orginfo, main #infocontainer {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  background: var(--color-title-accent);
+  border-radius: 0.7em;
+  padding: 1.2em 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+}
+main .organizers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2em;
+  justify-content: center;
+}
+main .organizer-info {
+  background: var(--color-card-bg);
+  border-radius: 0.7em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  padding: 1em 1.2em;
+  min-width: 220px;
+  max-width: 320px;
+}
+main .back-link {
+  background: var(--color-title-accent);
+  color: var(--color-primary);
+  border-radius: 2em;
+  padding: 0.5em 1.2em;
+  margin: 0 0.5em;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+main .back-link:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+@media (max-width: 600px) {
+  main .container-main-content { padding: 1em 0.5em; }
+  main h1 { font-size: 1.3em; }
+  main .subtitle { font-size: 1.1em; }
+  main .organizer-info { min-width: 140px; padding: 0.7em 0.5em; }
+}
+main .repeating-alert {
+  background-color: var(--yellow);
+  color: var(--black);
+  padding: 1em;
+  border-radius: 0.5em;
+  text-align: center;
+  margin-top: 1em;
+}
+main .repeating-alert strong {
+  font-size: 1.2em;
+  display: block;
+}
+main .display-all {
+  display: block;
+  margin-top: 0.5em;
+}
+/* Floating report button styles */
+#report-selection-btn {
+  position: absolute;
+  z-index: 2000;
+  display: none;
+  padding: 6px 14px;
+  background: #ffc107;
+  color: #222;
+  border: none;
+  border-radius: 5px;
+  font-size: 1em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: background 0.2s;
+  pointer-events: auto;
+}
+#report-selection-btn:hover {
+  background: #ffdb5c;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Loading overlay -->
-<div id="loading-overlay">
-  <div class="loading-spinner"></div>
-  <div style="font-size:1.2em; color:#333;">Ladataan...</div>
-</div>
-<style>
-  /* Inline #15 | https://mielenosoitukset.fi/demonstration/674745c474a2f44a793c2f65 */
+<div class="container-main-content">
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div style="font-size:1.2em; color:#333;">Ladataan...</div>
+  </div>
+  <!-- Make sure to include Font Awesome in your <head> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 
-  .repeating-alert {
-    background-color: var(--yellow);
-    color: var(--black);
-    padding: 1em;
-    border-radius: 0.5em;
-    text-align: center;
-    margin-top: 1em;
-  }
-
-  .repeating-alert strong {
-    font-size: 1.5em;
-    display: block;
-  }
-
-  .display-all {
-    display: block;
-    margin-top: 0.5em;
-  }
-
-  #date {
-    font-size: 1.2em;
-    margin: 0;
-    padding: 0;
-    color: var(--primary_strong_text_color);
-  }
-
-  #basicshit {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  #basicshit h1 {
-    margin: 10px 0;
-    padding: 0;
-    font-size: 2.5em;
-    color: var(--primary_strong_text_color);
-  }
-
-  #basicshit img {
-    max-width: 100%;
-    max-height: 400px;
-    margin: 10px 0;
-    border-radius: 10px;
-  }
-
-  .button-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-  }
-
-  .button {
-    background-color: var(--primary_color);
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 1em;
-    transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
-  }
-
-  .button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--box_shadow);
-    filter: brightness(1.1);
-  }
-
-  .like-count {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 1em;
-    color: var(--primary_strong_text_color);
-  }
-
-  .like-count i {
-    color: var(--primary_color);
-  }
-
-  .topics {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin: 20px 0;
-  }
-
-  .topics .tag {
-    background-color: var(--primary_color);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    text-decoration: none;
-    transition: transform 0.2s, background-color 0.2s;
-  }
-
-  .topics .tag:hover {
-    background-color: var(--primary_button_hover_color);
-    transform: translateY(-2px);
-  }
-
-  main .container {
-    margin-top: 20px;
-    padding: 20px;
-    background: var(--background);
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: var(--box_shadow);
-  }
-
-  .countdown {
-    margin: 20px 0;
-    text-align: center;
-  }
-
-  .map {
-    margin: 20px 0;
-  }
-
-  .subtitle {
-    font-size: 1.5em;
-    color: var(--primary_strong_text_color);
-    margin-bottom: 10px;
-  }
-
-  .repeating-alert {
-    background-color: var(--yellow);
-    color: var(--black);
-    padding: 1em;
-    border-radius: 0.5em;
-    text-align: center;
-    margin-top: 1em;
-  }
-
-  .repeating-alert strong {
-    font-size: 1.5em;
-    display: block;
-  }
-
-  .display-all {
-    display: block;
-    margin-top: 0.5em;
-  }
-
-  p {
-    color: var(--primary_text_color);
-  }
-
-
-  /* Inline #10 | http://127.0.0.1:5002/demonstration/6740f7dbe4ff6ff3b4c36a54 */
-
-  .countdown {
-    background: black;
-  }
-
-  /* Element | http://127.0.0.1:5002/demonstration/6740f7dbe4ff6ff3b4c36a54 */
-
-  #timer {
-    color: white !important;
-  }
-
-/* modal.css | http://127.0.0.1:5002/static/css/admin/modal.css */
-
-  /* Center modals horizontally and vertically */
-  .modal-dialog {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh; /* Full viewport height */
-  }
-
-  /* Ensure the modal has the highest z-index */
-  .modal {
-    z-index: 1055 !important; /* Higher than Bootstrap's default z-index */
-  }
-
-</style>
-<!-- Make sure to include Font Awesome in your <head> -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-
-<style>
-  /* Navigator Container */
-  #navigator {
-    left: -20px;
-    top: -20px;
-    position: fixed;
-  }
-
-  /* Button Styling */
-  #navigator button {
-    width: 10em;
-    background: #333;
-    color: #fff;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1em;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-  }
-
-  #navigator button:hover {
-    background: #444;
-
-  }
-
-  #navigator #prev-demo-button:hover {
-    transform: translateX(-10px);
-
-  }
-
-  #navigator #next-demo-button:hover {
-    transform: translateX(10px);
-  }
-
-  #navigator button:active {
-    background: #333;
-    transform: translateX(0);
-  }
-
-  #navigator button i {
-    margin: 0 0.5em;
-    font-size: 1.2em;
-  }
-
-  /* Fixed Previous Button */
-  #prev-demo {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    width: max-content;
-    z-index: 10;
-  }
-
-  /* Fixed Previous Button */
-  #next-demo {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    width: max-content;
-    z-index: 10;
-  }
-
-
-  /* Remove Button Border if It's on the Same Line */
-  #navigator button:focus {
-    outline: none;
-  }
-
-  @media screen and (max-width: 768px) {
-
-    /* Adjustments for smaller screens */
+  <style>
+    /* Navigator Container */
     #navigator {
-      display: none;
+      left: -20px;
+      top: -20px;
+      position: fixed;
     }
 
-  }
-</style>
-
-<div id="navigator">
-  <!-- Fixed Previous Button -->
-  <div id="prev-demo">
-    <button id="prev-demo-button">
-      <i class="fas fa-chevron-left"></i>
-      Previous
-    </button>
-  </div>
-
-  <div id="next-demo">
-    <!-- Next Button -->
-    <button id="next-demo-button">
-      Next
-      <i class="fas fa-chevron-right"></i>
-    </button>
-  </div>
-</div>
-
-
-<!-- Report Error Modal -->
-<div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="reportModalLabel">{{ _('Ilmoita virheestä') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, voit ilmoittaa siitä alla olevalla lomakkeella.') }}</p>
-        <form id="report-error-form" action="/report" method="POST" autocomplete="off">
-          <label for="error" class="form-label">{{ _('Virheen kuvaus') }}</label>
-          <textarea name="error" id="error" class="form-control" rows="4" required></textarea>
-          <input type="hidden" name="type" value="demonstration">
-          <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
-          <span class="processing-indicator">
-            <span style="display:inline-block;width:18px;height:18px;border:3px solid #fff;border-top:3px solid #ffc107;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;"></span>
-            <span style="color:#ffc107;">{{ _('Käsitellään...') }}</span>
-          </span>
-          <div id="report-error-result" style="margin-top:10px;"></div>
-        </form>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
-        /**
-         * Handles AJAX submission of the error report form.
-         *
-         * Parameters
-         * ----------
-         * None.
-         *
-         * Returns
-         * -------
-         * None.
-         */
-        $(function() {
-          $("#report-error-form").on("submit", function(e) {
-            e.preventDefault();
-            var $form = $(this);
-            $form.addClass("processing");
-            $form.find('button[type="submit"]').prop("disabled", true);
-            $form.find(".processing-indicator").show();
-            $("#report-error-result").empty();
-
-            $.ajax({
-              url: $form.attr("action"),
-              method: $form.attr("method"),
-              data: $form.serialize(),
-              success: function(response) {
-                // Show thank you and countdown
-                var seconds = 3;
-                $("#report-error-result").html(
-                  '<div class="alert alert-success">{{ _("Kiitos ilmoituksesta!") }}<br>' +
-                  '<span id="report-close-countdown">' + seconds + '</span> {{ _("s kuluttua ikkuna sulkeutuu.") }}</div>'
-                );
-                $form[0].reset();
-                // Countdown and close modal
-                var interval = setInterval(function() {
-                  seconds -= 1;
-                  $("#report-close-countdown").text(seconds);
-                  if (seconds <= 0) {
-                    clearInterval(interval);
-                    var modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
-                    if (modal) modal.hide();
-                  }
-                }, 1000);
-              },
-              error: function(xhr) {
-                $("#report-error-result").html('<div class="alert alert-danger">{{ _("Virhe lähetyksessä. Yritä uudelleen.") }}</div>');
-              },
-              complete: function() {
-                $form.removeClass("processing");
-                $form.find('button[type="submit"]').prop("disabled", false);
-                $form.find(".processing-indicator").hide();
-              }
-            });
-          });
-          // Hide processing indicator initially
-          $("#report-error-form .processing-indicator").hide();
-        });
-        </script>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" form="report-error-form" class="btn btn-primary">{{ _('Lähetä') }}</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Past Demonstration Modal -->
-<div class="modal fade" id="past-demo-modal" tabindex="-1" aria-labelledby="pastDemoModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="pastDemoModalLabel">{{ _('Huomio') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>{{ _('Tämä mielenosoitus on jo menneisyydessä.') }}</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<main id="main">
-  <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#report-modal">
-    <i class="fa fa-question-circle"></i> {{ _('Ilmoita virheestä') }}
-  </button>
-  <!-- IMAGE -->
-  {% if demo['img'] and demo['img'] !=
-  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
-  %}
-  <img src="{{ demo['img'] }}" alt="Event Image" />
-  {% endif %}
-
-  <div id="basicshit">
-    <!-- NAME OR TITLE -->
-    <h1>{{ demo['title'] }}</h1>
-
-    <p id="date">
-      {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{
-      demo['end_time'] | time('%H:%M') }}
-    </p>
-  </div>
-
-  <!-- Social Media Share Buttons -->
-  <div class="button-container">
-    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-      target="_blank" class="facebook-button button">
-      {{ _('Jaa Facebookissa') }}
-    </a>
-
-    <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-      target="_blank" class="twitter-button button">
-      {{ _('Jaa Xssä') }}
-    </a>
-
-    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-      target="_blank" class="linkedin-button button">
-      {{ _('Jaa LinkedInissä') }}
-    </a>
-
-    <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button">
-      {{ _('Lataa graafinen materiaali') }}
-    </a>
-
-  </div>
-
-  <!-- LET PEOPLE LIKE THE DEMONSTRATION / OSALLISTUN -->
-  <div class="button-container">
-    <button id="like-button" class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')" aria-pressed="false">
-      <i class="fas fa-thumbs-up"></i> <span id="like-btn-text">{{ _('Osallistun') }}</span>
-    </button>
-    <div class="like-count">
-      <p>{{ _('Osallistuu:') }}</p>
-      <i class="fas fa-thumbs-up"></i>
-      <p id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</p>
-    </div>
-  </div>
-  <script>
-    /**
-     * Gets a cookie value by name.
-     *
-     * Parameters
-     * ----------
-     * name : str
-     *     Cookie name.
-     *
-     * Returns
-     * -------
-     * str or undefined
-     */
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-    }
-
-    let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
-    let likeRequestInProgress = false;
-
-    /**
-     * Toggles the like state for the demonstration.
-     *
-     * Parameters
-     * ----------
-     * demoId : str
-     *     The demonstration id.
-     *
-     * Returns
-     * -------
-     * None.
-     */
-    function toggleLike(demoId) {
-      if (likeRequestInProgress) return;
-      likeRequestInProgress = true;
-      const likeButton = document.getElementById("like-button");
-      const likeBtnText = document.getElementById("like-btn-text");
-      likeButton.disabled = true;
-      likeButton.classList.add("processing");
-      likeBtnText.textContent = "{{ _('Käsitellään...') }}";
-
-      const url = liked ? `/api/demo/${demoId}/unlike` : `/api/demo/${demoId}/like`;
-      fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById("like-count").innerText = data.likes;
-          liked = !liked;
-          document.cookie = `liked_${demoId}=${liked}; path=/`;
-          // Update button state
-          likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
-          if (liked) {
-            likeButton.classList.add("liked");
-          } else {
-            likeButton.classList.remove("liked");
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        })
-        .finally(() => {
-          likeRequestInProgress = false;
-          likeButton.disabled = false;
-          likeButton.classList.remove("processing");
-          likeBtnText.textContent = "{{ _('Osallistun') }}";
-        });
-    }
-
-    /**
-     * Fetches the current like count and updates the UI.
-     *
-     * Parameters
-     * ----------
-     * demoId : str
-     *     The demonstration id.
-     *
-     * Returns
-     * -------
-     * None.
-     */
-    function get_likes(demoId) {
-      fetch(`/api/demo/${demoId}/likes`)
-        .then((response) => response.json())
-        .then((data) => {
-          document.getElementById("like-count").innerText = data.likes;
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      get_likes("{{ demo['_id'] }}");
-      // Set initial button state
-      const likeButton = document.getElementById("like-button");
-      likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
-      if (liked) {
-        likeButton.classList.add("liked");
-      }
-    });
-  </script>
-
-  <!-- add a separator line here -->
-  <hr style="margin: 20px 0;">
-
-  <!-- TAGS -->
-  <div class="topics">
-    <ul>
-      {% if demo["tags"] and demo["tags"]|length > 0 %}
-      {% for tag in demo["tags"] %}
-      <li>
-        <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
-          <span class="tag">#{{ tag }}</span>
-        </a>
-      </li>
-      {% endfor %}
-      {% endif %}
-
-
-    </ul>
-  </div>
-
-
-
-  {% if demo['description'] %}
-  <div class="container" style="
-      margin-top: 20px;
-      padding: 20px;
-      background: var(--background);
-      border-radius: 8px;
+    /* Button Styling */
+    #navigator button {
+      width: 10em;
+      background: #333;
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
       text-align: center;
-      box-shadow: var(--box_shadow);
-    ">
+    }
 
-    <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
-    {{ demo['description']|safe }} <!-- IN FUTURE: use demo['description'][selected_language] -->
-  </div>
-  {% endif %}
-  <div class="countdown">
-    <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
-    <div id="timer" style="font-size: 24px; color: var(--primary_strong_text_color)"></div>
-  </div>
-  <br />
-  <!-- the location text -->
-  <div class="container mt-4">
-    <h2 class="subtitle text-center">{{ _('Sijainti') }}</h2>
-    <p class="text-center">{{ demo['address'] }}, {{ demo['city'] }}</p>
-    {% if demo['route'] and demo['route'] != 'None' %}
-    <div class="route mt-3">
-      <p><strong>{{ _('Marssin reitti:') }}</strong></p>
-      {% if demo['route'] is string %}
-      <p>{{ demo['route'] }}</p>
-      {% elif demo['route'] is iterable %}
-      <ol class="list-group list-group-numbered">
-        {% for step in demo['route'] %}
-        <li class="list-group-item">{{ step }}</li>
-        {% endfor %}
-      </ol>
-      {% endif %}
+    #navigator button:hover {
+      background: #444;
+
+    }
+
+    #navigator #prev-demo-button:hover {
+      transform: translateX(-10px);
+
+    }
+
+    #navigator #next-demo-button:hover {
+      transform: translateX(10px);
+    }
+
+    #navigator button:active {
+      background: #333;
+      transform: translateX(0);
+    }
+
+    #navigator button i {
+      margin: 0 0.5em;
+      font-size: 1.2em;
+    }
+
+    /* Fixed Previous Button */
+    #prev-demo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      width: max-content;
+      z-index: 10;
+    }
+
+    /* Fixed Previous Button */
+    #next-demo {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      width: max-content;
+      z-index: 10;
+    }
+
+
+    /* Remove Button Border if It's on the Same Line */
+    #navigator button:focus {
+      outline: none;
+    }
+
+    @media screen and (max-width: 768px) {
+
+      /* Adjustments for smaller screens */
+      #navigator {
+        display: none;
+      }
+
+    }
+  </style>
+
+  <div id="navigator">
+    <!-- Fixed Previous Button -->
+    <div id="prev-demo">
+      <button id="prev-demo-button">
+        <i class="fas fa-chevron-left"></i>
+        Previous
+      </button>
     </div>
-    {% endif %}
-    <div class="map mt-4">
-      <div id="map-container" style="position:relative;">
-        <div id="map" class="rounded shadow" style="height: 300px;"></div>
-        <!-- The loading overlay will be injected here by JS if needed -->
-      </div>
+
+    <div id="next-demo">
+      <!-- Next Button -->
+      <button id="next-demo-button">
+        Next
+        <i class="fas fa-chevron-right"></i>
+      </button>
     </div>
   </div>
 
-  <br />
 
-  <div id="subcontainer1">
-    {% if demo['facebook'] or demo['recurring'] %}
-    <div id="infocontainer">
-      <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
-      <div id="demo-details">
-        <!--<p><strong>{{ _('Päivämäärä:') }}</strong><br>{{ demo['date'] }}</p>
-        <p><strong>{{ _('Alkaa klo:') }}</strong><br>{{ demo['start_time'] }}</p>
-        <p><strong>{{ _('Päättyy klo:') }}</strong><br>{{ demo['end_time'] }}</p>-->
-
-        {% if demo['facebook'] %}
-        <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">
-          {{ _('Facebook-tapahtuma') }} <i class="fas fa-external-link-alt"></i>
-        </a>
-        {% endif %}
-      </div>
-
-      {% if demo["recurring"] and demo['repeat_schedule'] %}
-      <div class="repeating-alert">
-        <strong>Mielenosoitus toistuu säännöllisesti</strong><br>
-        {{ generate_demo_sentence(demo) }}
-        <br>
-        <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all">
-          <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
-        </a>
-      </div>
-      {% endif %}
-
-    </div>
-
-    {% endif %}
-
-    <div id="orginfo">
-      <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>
-      <div class="organizers-list" id="organizers-list">
-        {% if demo['organizers'] and demo['organizers']|length > 0 %}
-        {% for org in demo['organizers'] %}
-        <div class="organizer-info">
-          <p><strong>{{ _('Nimi:') }}</strong><br />{{ org.name }}</p>
-          {% if org.organization_id and org.organization_id != "None" %}
-          <a href="{{ org.url if org.url else '#' }}" class="org-profile-link">
-            {{ _('Mielenosoitukset.fi -profiili') }}
-          </a>
-          {% endif %}
-          {% if org.website %}
-          <p>
-            <strong>{{ _('Verkkosivut:') }}</strong><br />
-            <a href="{{ org.website }}" target="_blank" class="org-website">{{ org.website }}</a>
-          </p>
-          {% endif %}
-          {% if org.email %}
-          <p>
-            <strong>{{ _('Sähköpostiosoite:') }}</strong><br />
-            <a href="mailto:{{ org.email }}" class="org-email">{{ org.email }}</a>
-          </p>
-          {% endif %}
+  <!-- Report Error Modal -->
+  <div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="reportModalLabel">{{ _('Ilmoita virheestä') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        {% endfor %}
-        {% else %}
-        <p id="no-organizers">{{ _('Ei järjestäjätietoja saatavilla.') }}</p>
-        {% endif %}
+        <div class="modal-body">
+          <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, voit ilmoittaa siitä alla olevalla lomakkeella.') }}</p>
+          <form id="report-error-form" action="/report" method="POST" autocomplete="off">
+            <label for="error" class="form-label">{{ _('Virheen kuvaus') }}</label>
+            <textarea name="error" id="error" class="form-control" rows="4" required></textarea>
+            <input type="hidden" name="type" value="demonstration">
+            <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
+            <span class="processing-indicator">
+              <span style="display:inline-block;width:18px;height:18px;border:3px solid #fff;border-top:3px solid #ffc107;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;"></span>
+              <span style="color:#ffc107;">{{ _('Käsitellään...') }}</span>
+            </span>
+            <div id="report-error-result" style="margin-top:10px;"></div>
+          </form>
+          <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+          <script>
+          /**
+           * Handles AJAX submission of the error report form.
+           *
+           * Parameters
+           * ----------
+           * None.
+           *
+           * Returns
+           * -------
+           * None.
+           */
+          $(function() {
+            $("#report-error-form").on("submit", function(e) {
+              e.preventDefault();
+              var $form = $(this);
+              $form.addClass("processing");
+              $form.find('button[type="submit"]').prop("disabled", true);
+              $form.find(".processing-indicator").show();
+              $("#report-error-result").empty();
+
+              $.ajax({
+                url: $form.attr("action"),
+                method: $form.attr("method"),
+                data: $form.serialize(),
+                success: function(response) {
+                  // Show thank you and countdown
+                  var seconds = 3;
+                  $("#report-error-result").html(
+                    '<div class="alert alert-success">{{ _("Kiitos ilmoituksesta!") }}<br>' +
+                    '<span id="report-close-countdown">' + seconds + '</span> {{ _("s kuluttua ikkuna sulkeutuu.") }}</div>'
+                  );
+                  $form[0].reset();
+                  // Countdown and close modal
+                  var interval = setInterval(function() {
+                    seconds -= 1;
+                    $("#report-close-countdown").text(seconds);
+                    if (seconds <= 0) {
+                      clearInterval(interval);
+                      var modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
+                      if (modal) modal.hide();
+                    }
+                  }, 1000);
+                },
+                error: function(xhr) {
+                  $("#report-error-result").html('<div class="alert alert-danger">{{ _("Virhe lähetyksessä. Yritä uudelleen.") }}</div>');
+                },
+                complete: function() {
+                  $form.removeClass("processing");
+                  $form.find('button[type="submit"]').prop("disabled", false);
+                  $form.find(".processing-indicator").hide();
+                }
+              });
+            });
+            // Hide processing indicator initially
+            $("#report-error-form .processing-indicator").hide();
+          });
+          </script>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" form="report-error-form" class="btn btn-primary">{{ _('Lähetä') }}</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        </div>
       </div>
     </div>
+  </div>
 
+  <!-- Past Demonstration Modal -->
+  <div class="modal fade" id="past-demo-modal" tabindex="-1" aria-labelledby="pastDemoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="pastDemoModalLabel">{{ _('Huomio') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>{{ _('Tämä mielenosoitus on jo menneisyydessä.') }}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <main id="main">
+    <div class="button-container" style="margin-bottom: 1.2em;">
+      <button class="button btn btn-warning" data-bs-toggle="modal" data-bs-target="#report-modal">
+        <i class="fa fa-question-circle"></i> {{ _('Ilmoita virheestä') }}
+      </button>
+    </div>
+    <!-- IMAGE -->
+    {% if demo['img'] and demo['img'] !=
+    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAJQAlAMBIgACEQEDEQH/xAAcAAEBAQADAQEBAAAAAAAAAAAAAQIDBAYHBQj/xAA8EAACAQIDAggMBAcAAAAAAAAAAQIDEQQFBkHRBxIhUVVhkbITFBYXIjE1VHF0kpRCgaHwIyQyM2LC4f/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDxgAAAAAAAAAAAoAgKAIAAAAAAAAAAAAAAAAUFQAFsVICWFjdhYDFiHJYlgMWIbaM2AyCsgAAAAAAAAApCgVFSCRtARI0kVI2kBmwsbSLYDjaFjksSwHE0ZaOVowwOMyzkaMMDIKyAAAAAAFKiFQGkjaRmJvYwP2sBpfPMww0MTg8sr1aE+WE/RSl1q7R2lorUnRFb6obz1euM4zLKMq03HLMZUwqq4SXHVNL0rRp29a632nlFrDUfTGI7I7gL5F6j6JrfVDeXyM1H0TW+qG8eV+oul8R2R3F8rtRdL4jsjuAnkXqPomt9UN5HovUfRNb6obz9bJcZrbPVUlluPxE4U3aVSThGKfNdr1nQzXUOrcrxFXC43MsVRr01yxah+TTtyrrA8/mGBxWX4mWGx2HqUK8Um4TVnZ7TqNH0HhgSWc4BpevC/wCzPAMDiaMM5JGGBghSAAAAAAFRpGUaQG4m/wALMRNbGB9B4TPZelvlJ92kfj6M0zV1Fj+LLjQwVFp16q7q63+i/I9ZqnI8Vn8dKYPCK0fFJurVa9GlHi0uV9fMtvae6yjLMLlGX0sFgqfEpU1t9cntbe1sDw2tdC4elgPHsioOEqEf4tCLcuPFbVe/KubafN0f0cfKuETSniFWeb5dT/lKjvXpxX9qT/Ev8X+j6nyB2+DvVOV5blc8vzGssNOFWU41JJ2mn1rb/wAPNcIed4XPc3dbApuhRo+DVRqzm7t3+HKdrRekKuf1PGcZx6OXwf8AVHklVfNHq53+1rXGiauTUamNy3wlbAcX01LlnR+PPHr7ecDtcMHtjAfKvvM8BI9/wwe2MB8q+8z5+wMMwzbMMDDMmmZAAAAAABpEKgNpm78j+BxpmtgH9IZJ7GwHy1Puo7x4LIeEXI6eUYSljZ1qFelSjTnBUnJXStdNbDv+cfTXvVb7ee4D1xirShWpTpVYxnTnFxlGSumn60zyvnG0371W+3nuL5xdN+9Vvt57gPUUKNPD0oUaMIwpQSjCEVZRS2I1OKnFxkk01Zpq6Z5Tzi6b96rfbz3EfCNpv3qt9vPcB5Thh5M5wHyz7zPn7PTa/wBQ4bUGb06uCjPwFCl4OM5qzm73btsR5ZsCSMMrZlgZIVkAAAAAABSADSNpmCoDkTNJnEmaTA5bjjHGpFuBu5LmbkbArZlsjZGwFzLFyMAQAAAAAAAAAAW5ABq5UZFwN3LcwANNi5kXAtyEuABAAAAAAAAAAAAAAAAAAKCACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/Z"
+    %}
+    <img src="{{ demo['img'] }}" alt="Event Image" />
+    {% endif %}
+
+    <div id="basicshit">
+      <h1>{{ demo['title'] }}</h1>
+      <p id="date">
+        {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{
+        demo['end_time'] | time('%H:%M') }}
+      </p>
+    </div>
 
     <div class="button-container">
-      {% if request.referrer is defined %}
-      <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
-      {% endif %}
-      <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+        target="_blank" class="facebook-button button">
+        {{ _('Jaa Facebookissa') }}
+      </a>
+      <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
+        target="_blank" class="twitter-button button">
+        {{ _('Jaa Xssä') }}
+      </a>
+      <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
+        target="_blank" class="linkedin-button button">
+        {{ _('Jaa LinkedInissä') }}
+      </a>
+      <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button">
+        {{ _('Lataa graafinen materiaali') }}
+      </a>
     </div>
 
-  </div>
-  <!-- Floating report button for text selection -->
-  <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
-</main>
+    <div class="button-container">
+      <button id="like-button" class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')" aria-pressed="false">
+        <i class="fas fa-thumbs-up"></i> <span id="like-btn-text">{{ _('Osallistun') }}</span>
+      </button>
+      <div class="like-count">
+        <p>{{ _('Osallistuu:') }}</p>
+        <i class="fas fa-thumbs-up"></i>
+        <p id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</p>
+      </div>
+    </div>
+    <script>
+      /**
+       * Gets a cookie value by name.
+       *
+       * Parameters
+       * ----------
+       * name : str
+       *     Cookie name.
+       *
+       * Returns
+       * -------
+       * str or undefined
+       */
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+      }
+
+      let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
+      let likeRequestInProgress = false;
+
+      /**
+       * Toggles the like state for the demonstration.
+       *
+       * Parameters
+       * ----------
+       * demoId : str
+       *     The demonstration id.
+       *
+       * Returns
+       * -------
+       * None.
+       */
+      function toggleLike(demoId) {
+        if (likeRequestInProgress) return;
+        likeRequestInProgress = true;
+        const likeButton = document.getElementById("like-button");
+        const likeBtnText = document.getElementById("like-btn-text");
+        likeButton.disabled = true;
+        likeButton.classList.add("processing");
+        likeBtnText.textContent = "{{ _('Käsitellään...') }}";
+
+        const url = liked ? `/api/demo/${demoId}/unlike` : `/api/demo/${demoId}/like`;
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("like-count").innerText = data.likes;
+            liked = !liked;
+            document.cookie = `liked_${demoId}=${liked}; path=/`;
+            // Update button state
+            likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
+            if (liked) {
+              likeButton.classList.add("liked");
+            } else {
+              likeButton.classList.remove("liked");
+            }
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          })
+          .finally(() => {
+            likeRequestInProgress = false;
+            likeButton.disabled = false;
+            likeButton.classList.remove("processing");
+            likeBtnText.textContent = "{{ _('Osallistun') }}";
+          });
+      }
+
+      /**
+       * Fetches the current like count and updates the UI.
+       *
+       * Parameters
+       * ----------
+       * demoId : str
+       *     The demonstration id.
+       *
+       * Returns
+       * -------
+       * None.
+       */
+      function get_likes(demoId) {
+        fetch(`/api/demo/${demoId}/likes`)
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("like-count").innerText = data.likes;
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        get_likes("{{ demo['_id'] }}");
+        // Set initial button state
+        const likeButton = document.getElementById("like-button");
+        likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
+        if (liked) {
+          likeButton.classList.add("liked");
+        }
+      });
+    </script>
+
+    <hr style="margin: 20px 0;">
+
+    <div class="topics">
+      <ul>
+        {% if demo["tags"] and demo["tags"]|length > 0 %}
+        {% for tag in demo["tags"] %}
+        <li>
+          <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
+            <span class="tag">#{{ tag }}</span>
+          </a>
+        </li>
+        {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+
+    {% if demo['description'] %}
+    <div class="container">
+      <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
+      {{ demo['description']|safe }}
+    </div>
+    {% endif %}
+
+    <div class="countdown">
+      <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
+      <div id="timer" style="font-size: 24px; color: var(--primary_strong_text_color)"></div>
+    </div>
+
+    <div class="container mt-4">
+      <h2 class="subtitle text-center">{{ _('Sijainti') }}</h2>
+      <p class="text-center">{{ demo['address'] }}, {{ demo['city'] }}</p>
+      {% if demo['route'] and demo['route'] != 'None' %}
+      <div class="route mt-3">
+        <p><strong>{{ _('Marssin reitti:') }}</strong></p>
+        {% if demo['route'] is string %}
+        <p>{{ demo['route'] }}</p>
+        {% elif demo['route'] is iterable %}
+        <ol class="list-group list-group-numbered">
+          {% for step in demo['route'] %}
+          <li class="list-group-item">{{ step }}</li>
+          {% endfor %}
+        </ol>
+        {% endif %}
+      </div>
+      {% endif %}
+      <div class="map mt-4">
+        <div id="map-container" style="position:relative;">
+          <div id="map" class="rounded shadow" style="height: 300px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="subcontainer1">
+      {% if demo['facebook'] or demo['recurring'] %}
+      <div id="infocontainer">
+        <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
+        <div id="demo-details">
+          {% if demo['facebook'] %}
+          <a class="action-button facebook-button" href="{{ demo['facebook'] }}" target="_blank">
+            {{ _('Facebook-tapahtuma') }} <i class="fas fa-external-link-alt"></i>
+          </a>
+          {% endif %}
+        </div>
+        {% if demo["recurring"] and demo['repeat_schedule'] %}
+        <div class="repeating-alert">
+          <strong>Mielenosoitus toistuu säännöllisesti</strong><br>
+          {{ generate_demo_sentence(demo) }}
+          <br>
+          <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all">
+            <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div id="orginfo">
+        <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>
+        <div class="organizers-list" id="organizers-list">
+          {% if demo['organizers'] and demo['organizers']|length > 0 %}
+          {% for org in demo['organizers'] %}
+          <div class="organizer-info">
+            <p><strong>{{ _('Nimi:') }}</strong><br />{{ org.name }}</p>
+            {% if org.organization_id and org.organization_id != "None" %}
+            <a href="{{ org.url if org.url else '#' }}" class="org-profile-link">
+              {{ _('Mielenosoitukset.fi -profiili') }}
+            </a>
+            {% endif %}
+            {% if org.website %}
+            <p>
+              <strong>{{ _('Verkkosivut:') }}</strong><br />
+              <a href="{{ org.website }}" target="_blank" class="org-website">{{ org.website }}</a>
+            </p>
+            {% endif %}
+            {% if org.email %}
+            <p>
+              <strong>{{ _('Sähköpostiosoite:') }}</strong><br />
+              <a href="mailto:{{ org.email }}" class="org-email">{{ org.email }}</a>
+            </p>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% else %}
+          <p id="no-organizers">{{ _('Ei järjestäjätietoja saatavilla.') }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="button-container">
+        {% if request.referrer is defined %}
+        <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
+        {% endif %}
+        <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
+      </div>
+    </div>
+    <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
+  </main>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -1335,31 +1219,46 @@ document.addEventListener("DOMContentLoaded", function() {
   const reportBtn = document.getElementById("report-selection-btn");
   let selectedText = "";
 
-  document.addEventListener("mouseup", function(e) {
-    // Delay to allow selection to register
-    setTimeout(function() {
-      const selection = window.getSelection();
-      console.log(selection);
-      selectedText = selection && selection.toString().trim();
-      if (selectedText && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        // Only show if selection is in main content
-        const main = document.getElementById("main");
-        if (main && main.contains(selection.anchorNode)) {
-          reportBtn.style.display = "block";
-          // Position button above selection
-          const scrollY = window.scrollY || window.pageYOffset;
-          const scrollX = window.scrollX || window.pageXOffset;
-          reportBtn.style.top = (rect.top + scrollY - reportBtn.offsetHeight - 8) + "px";
-          reportBtn.style.left = (rect.left + scrollX) + "px";
-        } else {
-          reportBtn.style.display = "none";
+  function showReportBtnAtSelection() {
+    const selection = window.getSelection();
+    selectedText = selection && selection.toString().trim();
+    if (selectedText && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      // Only show if selection is in main content
+      const main = document.getElementById("main");
+      // Check if anchorNode is inside main
+      let node = selection.anchorNode;
+      let insideMain = false;
+      while (node) {
+        if (node === main) {
+          insideMain = true;
+          break;
         }
+        node = node.parentNode;
+      }
+      if (insideMain) {
+        reportBtn.style.display = "block";
+        reportBtn.style.position = "absolute";
+        // Position button above selection, or below if near top
+        const scrollY = window.scrollY || window.pageYOffset;
+        const scrollX = window.scrollX || window.pageXOffset;
+        let top = rect.top + scrollY - reportBtn.offsetHeight - 8;
+        if (top < 0) {
+          top = rect.bottom + scrollY + 8;
+        }
+        reportBtn.style.top = top + "px";
+        reportBtn.style.left = (rect.left + scrollX) + "px";
       } else {
         reportBtn.style.display = "none";
       }
-    }, 10);
+    } else {
+      reportBtn.style.display = "none";
+    }
+  }
+
+  document.addEventListener("mouseup", function(e) {
+    setTimeout(showReportBtnAtSelection, 10);
   });
 
   // Hide button on scroll or click elsewhere
@@ -1374,17 +1273,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // When user clicks the floating report button, open modal and prefill error field
   reportBtn.addEventListener("click", function() {
-    // Open the modal
     var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("report-modal"));
     modal.show();
-    // Prefill the error textarea
     var textarea = document.getElementById("error");
     if (textarea && selectedText) {
       textarea.value = "{{ _('Virheellinen kohta:') }}\n" + selectedText + "\n\n";
       textarea.focus();
     }
     reportBtn.style.display = "none";
-    // Optionally clear selection
     window.getSelection().removeAllRanges();
   });
 });

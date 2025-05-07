@@ -30,7 +30,7 @@ html, body {
   height: 100%;
   margin: 0;
   background: var(--background) !important;
-  color: var(--primary_text_color);
+  color: var(--primary_text_color) !important;
   overflow-x: hidden;
   max-width: 100%;
 }
@@ -820,6 +820,42 @@ span i {
   }
 }
 
+/* Pride theme header/footer accent */
+.pride .navbar,
+.pride .top-header,
+.pride footer {
+  border-bottom: 4px solid;
+  border-image: linear-gradient(90deg, #ff4f4f, #ff9c00, #ffcc00, #28a745, #007bff, #6f42c1) 1;
+  animation: pride-rainbow 5s linear infinite;
+}
+
+/* Pride theme for buttons */
+.pride .button,
+.pride button,
+.pride .theme-button {
+  background: linear-gradient(90deg, #ff4f4f, #ff9c00, #ffcc00, #28a745, #007bff, #6f42c1);
+  color: #fff !important;
+  border: none;
+  font-weight: bold;
+  box-shadow: 0 0 10px #ff4f4f;
+  transition: background 0.3s;
+}
+
+.pride .button:hover,
+.pride button:hover,
+.pride .theme-button:hover {
+  background: linear-gradient(90deg, #6f42c1, #007bff, #28a745, #ffcc00, #ff9c00, #ff4f4f);
+  color: #fff !important;
+}
+
+/* Pride theme for tags */
+.pride .tag {
+  background: linear-gradient(90deg, #ff4f4f, #ff9c00, #ffcc00, #28a745, #007bff, #6f42c1);
+  color: #fff;
+  border-radius: 100px;
+  font-weight: bold;
+  box-shadow: 0 0 5px #ff4f4f;
+}
 
 header .container {
   max-width: 1200px;

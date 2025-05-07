@@ -39,6 +39,7 @@ email_sender = EmailSender()
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
+submitters_collection = mongo["submitters"]  # <-- Add this line
 
 
 def generate_alternate_urls(app, endpoint, **values):
@@ -50,6 +51,262 @@ def generate_alternate_urls(app, endpoint, **values):
         with app.test_request_context():
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
+
+def format_demo_for_api(demo):
+    """
+    Format a demonstration document for API output.
+
+    Parameters
+    ----------
+    demo : dict
+        The demonstration document from MongoDB.
+
+    Returns
+    -------
+    dict
+        Dictionary with only the fields needed for API rendering.
+    """
+    def fmt_time(t):
+        """
+        Format time string to HH:MM.
+
+        Parameters
+        ----------
+        t : str
+
+        Returns
+        -------
+        str
+        """
+        if not t:
+            return ""
+        try:
+            try:
+                return datetime.strptime(t, "%H:%M:%S").strftime("%H:%M")
+            except ValueError:
+                return datetime.strptime(t, "%H:%M").strftime("%H:%M")
+        except Exception:
+            print(t)
+            return t
+
+    try:
+        date_obj = datetime.strptime(demo.get("date", ""), "%Y-%m-%d")
+        date_display = date_obj.strftime("%d.%m.%Y")
+    except Exception:
+        date_display = demo.get("date", "")
+
+    return {
+        "_id": str(demo.get("_id")),
+        "title": demo.get("title", ""),
+        "date_display": date_display,
+        "start_time_display": fmt_time(demo.get("start_time")),
+        "end_time_display": fmt_time(demo.get("end_time")),
+        "city": demo.get("city", ""),
+        "address": demo.get("address", ""),
+        "tags": demo.get("tags", []),
+        "topic": demo.get("topic", ""),
+    }
+
+
+def filter_demonstrations_api(
+    demonstrations, today, search_query, city_query, location_query, date_start, date_end, tag_query=None
+):
+    """
+    Filter the demonstrations for the API based on various criteria.
+
+    Parameters
+    ----------
+    demonstrations : iterable
+        Demonstration documents.
+    today : date
+        Today's date.
+    search_query : str
+        Search term.
+    city_query : str or list
+        City/cities.
+    location_query : str
+        Location.
+    date_start : str
+        Start date (YYYY-MM-DD).
+    date_end : str
+        End date (YYYY-MM-DD).
+    tag_query : str or None
+        Tag to filter by.
+
+    Returns
+    -------
+    list
+        Filtered demonstration dicts.
+    """
+    filtered = []
+    added_demo_ids = set()
+    for demo in demonstrations:
+        # Only approved and not hidden
+        if not demo.get("approved", True) or demo.get("hide", False):
+            continue
+        try:
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
+        except Exception:
+            continue
+        if demo_date < today:
+            continue
+        # Search
+        if search_query:
+            if search_query not in demo.get("title", "").lower() and \
+               search_query not in demo.get("address", "").lower():
+                continue
+        # City
+        if city_query:
+            if isinstance(city_query, list):
+                if not any(city in demo.get("city", "").lower() for city in city_query):
+                    continue
+            else:
+                if city_query not in demo.get("city", "").lower():
+                    continue
+        # Location
+        if location_query:
+            if location_query not in demo.get("address", "").lower():
+                continue
+        # Date range
+        if date_start and date_end:
+            try:
+                start_date = datetime.strptime(date_start, "%Y-%m-%d").date()
+                end_date = datetime.strptime(date_end, "%Y-%m-%d").date()
+                if not (start_date <= demo_date <= end_date):
+                    continue
+            except Exception:
+                pass
+        # Tag filter
+        if tag_query:
+            tags = [t.lower() for t in demo.get("tags", [])]
+            if tag_query.lower() not in tags:
+                continue
+        if demo["_id"] not in added_demo_ids:
+            filtered.append(demo)
+            added_demo_ids.add(demo["_id"])
+    return filtered
+
+
+def parse_city_query(city_query):
+    """
+    Parse the city query string into a list if needed.
+
+    Parameters
+    ----------
+    city_query : str
+
+    Returns
+    -------
+    str or list
+    """
+    if "," in city_query:
+        return [c.strip().lower() for c in city_query.split(",") if c.strip()]
+    return city_query.lower() if city_query else ""
+
+
+def parse_date_arg(arg):
+    """
+    Parse a date argument from request args.
+
+    Parameters
+    ----------
+    arg : str
+
+    Returns
+    -------
+    str or None
+    """
+    if arg and re.match(r"\d{4}-\d{2}-\d{2}", arg):
+        return arg
+    return None
+
+
+def get_api_pagination_args():
+    """
+    Get pagination and filter arguments from request.args.
+
+    Returns
+    -------
+    dict
+        Contains page, per_page, search, city, location, date_start, date_end, tag.
+    """
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20) or 20)
+    search_query = request.args.get("search", "").lower()
+    city_query = parse_city_query(request.args.get("city", ""))
+    location_query = request.args.get("location", "").lower()
+    date_start = parse_date_arg(request.args.get("date_start", ""))
+    date_end = parse_date_arg(request.args.get("date_end", ""))
+    tag_query = request.args.get("tag", "").strip().lower() or None
+    return dict(
+        page=page,
+        per_page=per_page,
+        search_query=search_query,
+        city_query=city_query,
+        location_query=location_query,
+        date_start=date_start,
+        date_end=date_end,
+        tag_query=tag_query,
+    )
+
+
+def paginate_list(items, page, per_page):
+    """
+    Paginate a list.
+
+    Parameters
+    ----------
+    items : list
+    page : int
+    per_page : int
+
+    Returns
+    -------
+    tuple
+        (paginated_items, total_pages)
+    """
+    total = len(items)
+    total_pages = (total + per_page - 1) // per_page
+    start = (page - 1) * per_page
+    end = start + per_page
+    return items[start:end], total_pages
+
+
+def add_api_routes(app):
+    """
+    Register API routes for demonstrations.
+
+    Parameters
+    ----------
+    app : Flask
+    """
+    @app.route("/api/v1/demonstrations", methods=["GET"])
+    def api_demonstrations():
+        """
+        API endpoint for demonstration list.
+
+        Returns
+        -------
+        response : flask.Response
+            JSON with keys: demonstrations, total_pages
+        """
+        args = get_api_pagination_args()
+        today = date.today()
+        demos_cursor = demonstrations_collection.find(DEMO_FILTER)
+        filtered = filter_demonstrations_api(
+            demos_cursor,
+            today,
+            args["search_query"],
+            args["city_query"],
+            args["location_query"],
+            args["date_start"],
+            args["date_end"],
+            args.get("tag_query"),
+        )
+        filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
+        paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
+        result = [format_demo_for_api(demo) for demo in paginated]
+        return jsonify(demonstrations=result, total_pages=total_pages)
 
 
 def init_routes(app):
@@ -146,6 +403,15 @@ Disallow: /admin/
             return dict(alternate_urls=alternate_urls)
         else:
             return dict(alternate_urls={})
+        
+    # inject city list to the template context
+    @app.context_processor
+    def inject_city_list():
+        """
+        Inject the city list into the template context.
+        """
+        return dict(city_list=CITY_LIST)
+    
 
     @app.route("/")
     def index():
@@ -167,6 +433,13 @@ Disallow: /admin/
         )
         return render_template("index.html", demonstrations=filtered_demonstrations)
 
+    @app.route("/terms")
+    def terms():
+        """
+        Render the terms and conditions page.
+        """
+        return render_template("terms.html")
+    
     @app.route("/submit", methods=["GET", "POST"])
     def submit():
         """
@@ -187,14 +460,23 @@ Disallow: /admin/
             tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
             img = request.files.get("image")
             photo_url = ""
+            # --- Submitter info fields ---
+            submitter_role = request.form.get("submitter_role")
+            submitter_email = request.form.get("submitter_email")
+            submitter_name = request.form.get("submitter_name")
+            accept_terms = request.form.get("accept_terms")
+            # --- End submitter fields ---
+
             if img:
                 filename = secure_filename(img.filename)
                 temp_file_path = os.path.join("mielenosoitukset_fi/uploads", filename)
                 img.save(temp_file_path)
+                print(f"Image saved to {temp_file_path}")
                 bucket_name = "mielenosoitukset-fi1"
                 photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
-            if not title or not date or not start_time or not city or not address:
-                flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot.", "error")
+            # --- Add submitter info to required fields check ---
+            if not title or not date or not start_time or not city or not address or not submitter_role or not submitter_email or not submitter_name or not accept_terms:
+                flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot sekä hyväksy käyttöehdot ja tietosuojaseloste.", "error")
                 return redirect(url_for("submit"))
             organizers = []
             i = 1
@@ -222,7 +504,22 @@ Disallow: /admin/
                 description=description,
                 tags=tags,
             )
-            mongo.demonstrations.insert_one(demonstration.to_dict())
+            demo_dict = demonstration.to_dict()
+            result = mongo.demonstrations.insert_one(demo_dict)
+            demo_id = result.inserted_id
+
+            # --- Save submitter info in separate collection ---
+            submitter_doc = {
+                "demonstration_id": demo_id,
+                "submitter_role": submitter_role,
+                "submitter_email": submitter_email,
+                "submitter_name": submitter_name,
+                "accept_terms": bool(accept_terms),
+                "submitted_at": datetime.utcnow(),
+            }
+            submitters_collection.insert_one(submitter_doc)
+            # --- End submitter info ---
+
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
@@ -674,5 +971,7 @@ Disallow: /admin/
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
-        
-        
+
+    add_api_routes(app)
+
+

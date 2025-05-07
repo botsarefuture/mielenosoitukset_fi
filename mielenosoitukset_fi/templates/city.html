@@ -1,105 +1,762 @@
 {% extends 'base.html' %} 
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script>
+const cityList = [{{ city_name|tojson }}]; // Only the locked city
+</script>
+<script>
+/**
+ * Numpydoc:
+ * Fetches demonstration data from the API and renders cards or table rows.
+ * Handles infinite scroll, search, and view toggling.
+ * City is locked to the current city.
+ */
+document.addEventListener("DOMContentLoaded", function() {
+  function renderDemoCard(demo) {
+    const isToday = (() => {
+      if (!demo.date_display) return false;
+      const today = new Date();
+      const [d, m, y] = demo.date_display.split(".");
+      return (
+        today.getDate() === parseInt(d, 10) &&
+        today.getMonth() + 1 === parseInt(m, 10) &&
+        today.getFullYear() === parseInt(y, 10)
+      );
+    })();
+    return `
+      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo._id}" tabindex="0" onclick="window.location='/demonstration/${demo._id}'" onkeypress="if(event.key==='Enter'){window.location='/demonstration/${demo._id}'}">
+        ${isToday ? `<span class="demo-card-badge">{{ _('Tänään') }}</span>` : ""}
+        <div class="demo-card-title">
+          <span>${demo.title}</span>
+        </div>
+        <div class="demo-card-date-time">
+          <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
+          <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display}${demo.end_time_display ? ' - ' + demo.end_time_display : ''}</span>
+        </div>
+        <div class="demo-card-location-row">
+          <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city}</span>
+          <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address}</span>
+        </div>
+        <div class="demo-card-tags">
+          ${(demo.tags && demo.tags.length > 0)
+            ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(' ')
+            : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ''}</span>`}
+        </div>
+        <div class="demo-card-actions">
+          <button class="demo-card-action-btn" onclick="event.stopPropagation();window.open('/demonstration/${demo._id}','_self')">
+            <i class="fa-solid fa-arrow-right"></i> {{ _('Avaa') }}
+          </button>
+          <button class="demo-card-action-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(window.location.origin + '/demonstration/${demo._id}');this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _('Kopioitu!') }}';setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _('Kopioi linkki') }}'},1200)">
+            <i class="fa-solid fa-link"></i> {{ _('Kopioi linkki') }}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDemoTableRow(demo) {
+    return `
+      <tr onclick="window.location='/demonstration/${demo._id}'" style="cursor:pointer;">
+        <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
+        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}</td>
+        <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>
+        <td><i class="fa-solid fa-city"></i> ${demo.city}</td>
+        <td><i class="fa-solid fa-location-dot"></i> ${demo.address}</td>
+        <td>
+          <span class="demo-table-tags">
+            ${(demo.tags && demo.tags.length > 0)
+              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(' ')
+              : `<span class="demo-table-tag">#${demo.topic || ''}</span>`}
+          </span>
+        </td>
+      </tr>
+    `;
+  }
+
+  let page = 1;
+  let per_page = 20;
+  let total_pages = 1;
+  let is_loading = false;
+  let last_query = {};
+  let view = localStorage.getItem("demoView") || "grid";
+  const gridContainer = document.getElementById("demo-container-grid");
+  const tableContainer = document.getElementById("demo-table-container");
+  const tableBody = document.getElementById("demo-table-body");
+  const spinner = document.getElementById("loading-spinner");
+  const endMsg = document.getElementById("end-of-content-message");
+  const scrollSentinel = document.getElementById("scroll_sentinel");
+
+  function getQuery() {
+    const form = document.getElementById("search-form");
+    const data = new FormData(form);
+    let query = {};
+    for (const [k, v] of data.entries()) {
+      if (v) query[k] = v;
+    }
+    // Lock city to current city
+    query.city = "{{ city_name }}";
+    if (query.display_date_start) {
+      const parts = query.display_date_start.split(".");
+      if (parts.length === 3) query.date_start = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+    }
+    if (query.display_date_end) {
+      const parts = query.display_date_end.split(".");
+      if (parts.length === 3) query.date_end = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+    }
+    return query;
+  }
+
+  function buildApiUrl(query, page) {
+    const params = new URLSearchParams(query);
+    params.set("page", page);
+    params.set("per_page", per_page);
+    return `/api/v1/demonstrations?${params.toString()}`;
+  }
+
+  function clearContent() {
+    gridContainer.innerHTML = "";
+    tableBody.innerHTML = "";
+    endMsg.style.display = "none";
+    spinner.style.display = "block";
+  }
+
+  function showEndMessage() {
+    spinner.style.display = "none";
+    endMsg.style.display = "";
+    endMsg.textContent = "You've reached the end!";
+  }
+
+  function renderDemos(demos, append = false) {
+    if (view === "grid") {
+      if (!append) gridContainer.innerHTML = "";
+      gridContainer.innerHTML += demos.map(renderDemoCard).join("");
+    } else {
+      if (!append) tableBody.innerHTML = "";
+      tableBody.innerHTML += demos.map(renderDemoTableRow).join("");
+    }
+  }
+
+  function fetchAndRenderDemos(opts = {reset: false, append: false}) {
+    if (is_loading) return;
+    is_loading = true;
+    spinner.style.display = "block";
+    let query = getQuery();
+    if (opts.reset) {
+      page = 1;
+      last_query = query;
+      clearContent();
+    } else {
+      query = last_query;
+    }
+    fetch(buildApiUrl(query, page))
+      .then(r => r.json())
+      .then(data => {
+        total_pages = data.total_pages;
+        if (!total_pages) {
+          total_pages = 1;
+        };
+        if (view === "grid" && data.demonstrations.length === 0 && page === 1) {
+          gridContainer.innerHTML = `<div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>`;
+        } else if (view === "list" && data.demonstrations.length === 0 && page === 1) {
+          tableBody.innerHTML = `<tr><td colspan="6">{{ _('Ei löytynyt mielenosoituksia.') }}</td></tr>`;
+        } else {
+          renderDemos(data.demonstrations, opts.append);
+        }
+        if (page >= total_pages) showEndMessage();
+        else spinner.style.display = "block";
+        is_loading = false;
+      })
+      .catch(() => {
+        spinner.style.display = "none";
+        is_loading = false;
+      });
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !is_loading && page < total_pages) {
+        page++;
+        fetchAndRenderDemos({append: true});
+      }
+    });
+  }, { rootMargin: '1000px' });
+  observer.observe(scrollSentinel);
+
+  function setView(newView) {
+    view = newView;
+    localStorage.setItem("demoView", view);
+    if (view === "list") {
+      document.querySelector(".container-main-content").classList.add("list-view");
+      document.getElementById("list-view-btn").classList.add("active");
+      document.getElementById("grid-view-btn").classList.remove("active");
+      gridContainer.classList.add("hide-cards");
+      tableContainer.style.display = "";
+    } else {
+      document.querySelector(".container-main-content").classList.remove("list-view");
+      document.getElementById("grid-view-btn").classList.add("active");
+      document.getElementById("list-view-btn").classList.remove("active");
+      gridContainer.classList.remove("hide-cards");
+      tableContainer.style.display = "none";
+    }
+    fetchAndRenderDemos({reset: true});
+  }
+  document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
+  document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
+
+  document.getElementById("search-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    setView(view);
+  });
+
+  // Date picker
+  const dateConfig = {
+    dateFormat: "d.m.Y",
+    minDate: "today",
+    allowInput: true,
+    locale: {
+      firstDayOfWeek: 1,
+      weekdays: {
+        shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+        longhand: [
+          "Sunnuntai",
+          "Maanantai",
+          "Tiistai",
+          "Keskiviikko",
+          "Torstai",
+          "Perjantai",
+          "Lauantai"
+        ]
+      },
+      months: {
+        shorthand: [
+          "Tam", "Hel", "Mar", "Huht", "Tou", "Kes", "Hele", "Elok", "Syys", "Lok", "Marr", "Jou"
+        ],
+        longhand: [
+          "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
+          "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"
+        ]
+      }
+    }
+  };
+  const startPicker = flatpickr("#date_start", {
+    ...dateConfig,
+    onChange: function (selectedDates) {
+      if (selectedDates[0]) {
+        endPicker.set("minDate", selectedDates[0]);
+      }
+    }
+  });
+  const endPicker = flatpickr("#date_end", {
+    ...dateConfig,
+    onChange: function (selectedDates) {
+      if (selectedDates[0]) {
+        startPicker.set("maxDate", selectedDates[0]);
+      }
+    }
+  });
+
+  setView(view);
+});
+</script>
 {% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<style>
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-grid-item: light-dark(#888, #aaa);
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --blue_dark: var(--color-primary);
+  --white: light-dark(#fff, #23272a);
+  --input_background: light-dark(#f9f9f9, #23272a);
+  --primary_color: var(--color-primary);
+  --primary_dark_color: light-dark(#003d80, #0056b3);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+}
+h1 {
+  color: var(--color-primary);
+  font-size: 2.1em;
+  font-weight: 800;
+  margin-bottom: 1.2em;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+.filter {
+  padding: 0.7em 1.2em;
+  background: var(--blue_dark);
+  border-radius: 2em;
+  color: var(--white);
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+.filters {
+  display: flex;
+  gap: 1em;
+  flex-wrap: wrap;
+  margin-bottom: 0.5em;
+}
+.suggestions {
+  background: var(--input_background);
+  width: 100%;
+  border: 1px solid var(--blue_dark);
+  border-radius: 0.5em;
+  z-index: 10;
+  display: none;
+  margin-top: -10px;
+  position: absolute;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.suggestions.show {
+  display: block;
+}
+.suggestion-item {
+  padding: 0.7em 1em;
+  cursor: pointer;
+  border-radius: 0.4em;
+  transition: background 0.2s, color 0.2s;
+}
+.suggestion-item:hover {
+  background: var(--blue_dark);
+  color: var(--white);
+}
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-bottom: 2em;
+  position: relative;
+}
+.search-form input[type="text"] {
+  padding: 0.6em 1em;
+  border: 1px solid var(--blue_dark);
+  border-radius: 0.5em;
+  background: var(--input_background);
+  font-size: 1em;
+  color: var(--color-text);
+  transition: border 0.2s;
+}
+.button {
+  background-color: var(--primary_color);
+  color: #fff;
+  padding: 0.7em 1.5em;
+  border: none;
+  border-radius: 2em;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.button:hover {
+  background-color: var(--primary_dark_color);
+  color: #fff;
+  box-shadow: var(--color-shadow-hover);
+  filter: brightness(1.08);
+}
+.invalid-date {
+  border-color: red !important;
+}
+.date-error {
+  color: red;
+  font-size: 0.98em;
+  display: none;
+  margin-top: -0.5em;
+  margin-bottom: 0.5em;
+}
+.date-range {
+  display: flex;
+  gap: 1em;
+  align-items: center;
+}
+.view-toggle-group {
+  display: flex;
+  gap: 0.5em;
+  justify-content: flex-end;
+  margin-bottom: 1em;
+}
+.view-toggle-btn {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border: none;
+  border-radius: 0.5em;
+  padding: 0.4em 1.2em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.view-toggle-btn.active,
+.view-toggle-btn:hover {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+@media (max-width: 600px) {
+  .view-toggle-group {
+    justify-content: center;
+  }
+  .container-main-content {
+    padding: 1em 0.5em;
+  }
+  h1 {
+    font-size: 1.3em;
+  }
+}
+.demo-table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 2em;
+}
+.demo-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+.demo-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-card-bg, #fff);
+  color: var(--color-text, #222);
+  border-radius: 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  font-size: 1em;
+}
+.demo-table th, .demo-table td {
+  padding: 1em 0.7em;
+  text-align: left;
+  border-bottom: 1px solid var(--color-title-accent, #e3f0ff);
+  vertical-align: middle;
+}
+.demo-table th {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  font-size: 1.08em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.demo-table tr:last-child td {
+  border-bottom: none;
+}
+.demo-table .demo-table-title {
+  font-weight: 700;
+  color: var(--color-primary, #0056b3);
+  font-size: 1.08em;
+}
+.demo-table .demo-table-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em;
+}
+.demo-table-tag {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border-radius: 0.4em;
+  padding: 0.1em 0.6em;
+  font-size: 0.98em;
+  font-weight: 500;
+  margin-right: 0.2em;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.demo-table-tag:hover {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+.demo-table .demo-table-link {
+  color: var(--color-primary, #0056b3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (max-width: 900px) {
+  .demo-table th, .demo-table td { padding: 0.7em 0.3em; font-size: 0.98em; }
+}
+@media (max-width: 600px) {
+  .demo-table th, .demo-table td { padding: 0.5em 0.2em; font-size: 0.95em; }
+  .demo-table { font-size: 0.95em; }
+}
+.container-grid {
+  transition: display 0.2s;
+}
+.hide-cards {
+  display: none !important;
+}
+/* Modern demo card improvements */
+.demo-card {
+  background: var(--color-card-bg);
+  border-radius: 1.1em;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 1.5px 4px rgba(0,86,179,0.04);
+  padding: 1.5em 1.3em 1.2em 1.3em;
+  margin-bottom: 1.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  transition: box-shadow 0.18s, transform 0.18s, border 0.18s;
+  border: 1.5px solid var(--color-title-accent, #e3f0ff);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.demo-card:hover, .demo-card:focus {
+  box-shadow: 0 6px 24px rgba(0,86,179,0.13), 0 2px 8px rgba(0,0,0,0.08);
+  border-color: var(--color-primary);
+  transform: translateY(-2px) scale(1.012);
+  z-index: 2;
+}
+.demo-card-title {
+  font-size: 1.25em;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 0.2em;
+  line-height: 1.2;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.demo-card-date-time {
+  font-size: 1.05em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+  margin-bottom: 0.1em;
+}
+.demo-card-date-time i {
+  color: var(--color-primary);
+  margin-right: 0.3em;
+}
+.demo-card-location-row {
+  font-size: 1.05em;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+}
+.demo-card-location-row i {
+  color: var(--color-primary);
+  margin-right: 0.3em;
+}
+.demo-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.2em;
+}
+.demo-table-tag, .demo-card-tag {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border-radius: 0.5em;
+  padding: 0.13em 0.8em;
+  font-size: 1em;
+  font-weight: 600;
+  margin-right: 0.1em;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+.demo-table-tag:hover, .demo-card-tag:hover {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+.demo-card .demo-card-actions {
+  margin-top: 0.7em;
+  display: flex;
+  gap: 0.7em;
+  align-items: center;
+}
+.demo-card-action-btn {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border: none;
+  border-radius: 0.5em;
+  padding: 0.3em 1em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.demo-card-action-btn:hover, .demo-card-action-btn:focus {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+.demo-card .demo-card-badge {
+  position: absolute;
+  top: 1.1em;
+  right: 1.1em;
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+  font-size: 0.95em;
+  font-weight: 700;
+  border-radius: 1em;
+  padding: 0.2em 1em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 600px) {
+  .demo-card { padding: 1em 0.7em; }
+  .demo-card-title { font-size: 1.08em; }
+  .demo-card-date-time, .demo-card-location-row { font-size: 0.98em; }
+}
+.city-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
+  color: #fff;
+  border-radius: 1.2em;
+  padding: 1.5em 1em 1.2em 1em;
+  margin-bottom: 2em;
+  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.city-banner .city-label {
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.13);
+  padding: 0.3em 1.2em;
+  border-radius: 2em;
+  margin-bottom: 0.7em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+.city-banner .city-name {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
+  margin-bottom: 0.2em;
+  letter-spacing: 0.04em;
+  display: inline-block;
+}
+.city-banner .city-desc {
+  font-size: 1.15em;
+  font-weight: 400;
+  color: #e3f0ff;
+  margin-top: 0.2em;
+  text-align: center;
+  max-width: 600px;
+}
+@media (max-width: 600px) {
+  .city-banner .city-name { font-size: 1.3em; }
+  .city-banner { padding: 1em 0.5em; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-{% import 'macros.html' as macros %}
-
 <div class="container-main-content">
-    <h1>{{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}</h1>
-
-    <!-- Extended search form for filtering demonstrations -->
-    <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form">
-        <input
-            type="text"
-            name="search"
-            placeholder="{{ _('Hae mielenosoituksia...') }}"
-            aria-label="{{ _('Hae mielenosoituksia') }}"
-            value="{{ request.args.get('search', '') }}"
-        />
-        
-        {% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
-            {% include 'paikkakunta-dropdown.html' %}
-        {% endif %}
-
-        <input
-            type="hidden"
-            name="city"
-            value="{{ city_name }}"
-        />
-
-        <input
-            type="text"
-            name="location"
-            placeholder="{{ _('Sijainti') }}"
-            aria-label="{{ _('Sijainti') }}"
-            value="{{ request.args.get('location', '') }}"
-        />
-
-        <input
-            type="text"
-            name="date"
-            placeholder="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
-            aria-label="{{ _('Päivämäärä (pp.kk.vvvv)') }}"
-            value="{{ request.args.get('date', '') }}"
-        />
-
-        <button type="submit">{{ _('Hae') }}</button>
-    </form>
-
-    <div class="container-grid">
-        {% if demonstrations and demonstrations|length > 0 %}
-            {% for demo in demonstrations %}
-                {{ macros.demo_card(demo) }}
-            {% endfor %}
-        {% else %}
-            <div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>
-        {% endif %}
+  <div class="city-banner">
+    <div class="city-label">
+      <i class="fa-solid fa-city"></i>
+      {{ _('Kaupunki') }}
     </div>
-
-    <!-- Pagination Controls -->
-    <div class="pagination">
-        {% if page > 1 %}
-            <a href="{{ url_for('demonstrations', page=page-1, per_page=per_page, search=request.args.get('search', ''), city=city_name, location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
-                {{ _('Edellinen') }}
-            </a>
-        {% endif %}
-
-        <span>{{ _('Sivu') }} {{ page }} / {{ total_pages }}</span>
-
-        {% if page < total_pages %}
-            <a href="{{ url_for('demonstrations', page=page+1, per_page=per_page, search=request.args.get('search', ''), city=city_name, location=request.args.get('location', ''), date=request.args.get('date', '')) }}">
-                {{ _('Seuraava') }}
-            </a>
-        {% endif %}
+    <div class="city-name">{{ city_name }}</div>
+    <div class="city-desc">
+      {{ _('Näet tässä vain mielenosoitukset, jotka järjestetään kaupungissa') }}
+      <span style="font-weight:700;">{{ city_name }}</span>.<br>
+      {{ _('Voit hakea, suodattaa ja selata vain tämän kaupungin tapahtumia. Jos haluat nähdä kaikki mielenosoitukset, palaa yleisnäkymään.') }}
     </div>
+  </div>
+  <h1 style="margin-top:0;">
+    {{ _('Tulevat mielenosoitukset kaupungissa: ') }} {{ city_name }}
+  </h1>
+  <div class="view-toggle-group" id="view-toggle-group">
+    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
+      <i class="fa-solid fa-table-cells-large"></i>
+    </button>
+    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
+      <i class="fa-solid fa-list"></i>
+    </button>
+  </div>
+  <form method="GET" action="#" class="search-form" id="search-form">
+      <input
+          type="text"
+          name="search"
+          placeholder="{{ _('Hae mielenosoituksia...') }}"
+          aria-label="{{ _('Hae mielenosoituksia') }}"
+          value="{{ request.args.get('search', '') }}"
+      />
+      <input type="hidden" name="city" value="{{ city_name }}" />
+      <input
+          type="text"
+          name="location"
+          placeholder="{{ _('Sijainti') }}"
+          aria-label="{{ _('Sijainti') }}"
+          value="{{ request.args.get('location', '') }}"
+      />
+      <div class="date-range">
+        <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
+          aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
+        <span>-</span>
+        <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
+          aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
+      </div>
+      <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
+      <input type="hidden" name="date_start" id="iso_date_start">
+      <input type="hidden" name="date_end" id="iso_date_end">
+      <div class="filters" id="filters"></div>
+      <button type="submit" class="button">{{ _('Hae') }}</button>
+  </form>
+  <div class="container-grid" id="demo-container-grid"></div>
+  <div class="demo-table-container" id="demo-table-container" style="display: none;">
+    <table class="demo-table">
+      <thead>
+        <tr>
+          <th>{{ _('Päivä') }}</th>
+          <th>{{ _('Aika') }}</th>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Sijainti') }}</th>
+          <th>{{ _('Aiheet / tagit') }}</th>
+        </tr>
+      </thead>
+      <tbody id="demo-table-body"></tbody>
+    </table>
+  </div>
+  <div id="scroll_sentinel"></div>
+  <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+  </div>
+  <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
 </div>
-
-{% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        // Dynamically set items per page based on screen size
-        let perPage;
-        if (window.innerWidth < 768) {
-            perPage = 5; // Mobile screens
-        } else if (window.innerWidth < 1200) {
-            perPage = 10; // Tablet screens
-        } else {
-            perPage = 20; // Desktop screens
-        }
-
-        // Update the URL with the per_page parameter
-        const currentUrl = new URL(window.location.href);
-        currentUrl.searchParams.set("per_page", perPage);
-        window.history.replaceState({}, "", currentUrl);
-    });
-</script>
-{% endif %}
 {% endblock %}

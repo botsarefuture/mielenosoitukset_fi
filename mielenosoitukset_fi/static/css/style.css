@@ -30,7 +30,7 @@ html, body {
   height: 100%;
   margin: 0;
   background: var(--background) !important;
-  color: var(--primary_text_color);
+  color: var(--primary_text_color) !important;
   overflow-x: hidden;
   max-width: 100%;
 }

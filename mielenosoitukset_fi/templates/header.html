@@ -446,7 +446,7 @@ element:hover {
             <button class="button theme-button" style="font-size: 2em;" onclick="toggleDarkMode()">
               <i class="fa-solid fa-moon theme-icon"></i>
             </button>
-
+   
             <!-- close button here -->
             <button class="button navbar-toggle" aria-label="{{ _('Sulje valikko') }}" onclick="toggleNavbar()">
               <i class="fas fa-times"></i>
@@ -498,6 +498,7 @@ element:hover {
               <i class="fa-solid fa-moon theme-icon"></i>
             </button>
           </li>
+          
         </div>
 
       </ul>
@@ -507,6 +508,7 @@ element:hover {
     var user_role = "{{ current_user.role }}";
     console.log(user_role);
     localStorage.setItem('user_role', user_role);
+    
   </script>
 
   

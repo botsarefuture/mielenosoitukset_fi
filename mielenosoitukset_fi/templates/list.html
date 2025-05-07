@@ -18,578 +18,605 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <style>
-  .filter {
-    padding: 1em;
-    background: var(--blue_dark);
-    width: fit-content;
-    border-radius: 50px;
-    color: var(--white);
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-grid-item: light-dark(#888, #aaa);
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --blue_dark: var(--color-primary);
+  --white: light-dark(#fff, #23272a);
+  --input_background: light-dark(#f9f9f9, #23272a);
+  --primary_color: var(--color-primary);
+  --primary_dark_color: light-dark(#003d80, #0056b3);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+}
+h1 {
+  color: var(--color-primary);
+  font-size: 2.1em;
+  font-weight: 800;
+  margin-bottom: 1.2em;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+.filter {
+  padding: 0.7em 1.2em;
+  background: var(--blue_dark);
+  border-radius: 2em;
+  color: var(--white);
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+.filters {
+  display: flex;
+  gap: 1em;
+  flex-wrap: wrap;
+  margin-bottom: 0.5em;
+}
+.suggestions {
+  background: var(--input_background);
+  width: 100%;
+  border: 1px solid var(--blue_dark);
+  border-radius: 0.5em;
+  z-index: 10;
+  display: none;
+  margin-top: -10px;
+  position: absolute;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.suggestions.show {
+  display: block;
+}
+.suggestion-item {
+  padding: 0.7em 1em;
+  cursor: pointer;
+  border-radius: 0.4em;
+  transition: background 0.2s, color 0.2s;
+}
+.suggestion-item:hover {
+  background: var(--blue_dark);
+  color: var(--white);
+}
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-bottom: 2em;
+  position: relative;
+}
+.search-form input[type="text"] {
+  padding: 0.6em 1em;
+  border: 1px solid var(--blue_dark);
+  border-radius: 0.5em;
+  background: var(--input_background);
+  font-size: 1em;
+  color: var(--color-text);
+  transition: border 0.2s;
+}
+.button {
+  background-color: var(--primary_color);
+  color: #fff;
+  padding: 0.7em 1.5em;
+  border: none;
+  border-radius: 2em;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1.05em;
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.button:hover {
+  background-color: var(--primary_dark_color);
+  color: #fff;
+  box-shadow: var(--color-shadow-hover);
+  filter: brightness(1.08);
+}
+.invalid-date {
+  border-color: red !important;
+}
+.date-error {
+  color: red;
+  font-size: 0.98em;
+  display: none;
+  margin-top: -0.5em;
+  margin-bottom: 0.5em;
+}
+.date-range {
+  display: flex;
+  gap: 1em;
+  align-items: center;
+}
+.view-toggle-group {
+  display: flex;
+  gap: 0.5em;
+  justify-content: flex-end;
+  margin-bottom: 1em;
+}
+.view-toggle-btn {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border: none;
+  border-radius: 0.5em;
+  padding: 0.4em 1.2em;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+.view-toggle-btn.active,
+.view-toggle-btn:hover {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+@media (max-width: 600px) {
+  .view-toggle-group {
+    justify-content: center;
   }
-
-  .filters {
-    display: flex;
-    gap: 1em;
+  .container-main-content {
+    padding: 1em 0.5em;
   }
-
-  .suggestions {
-    background: var(--input_background);
-    width: 100%;
-    border: 1px solid var(--blue_dark);
-    border-radius: 5px;
-    z-index: 1;
-    display: none;
-    margin-top: -10px;
+  h1 {
+    font-size: 1.3em;
   }
-
-  .suggestions.show {
-    display: block;
-  }
-
-  .suggestion-item {
-    padding: 1em;
-    cursor: pointer;
-  }
-
-  .suggestion-item:hover {
-    background: var(--blue_dark);
-    color: var(--white);
-  }
-
-  .search-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    margin-bottom: 2em;
-  }
-
-  .search-form input {
-    padding: 0.5em;
-    border: 1px solid var(--blue_dark);
-    border-radius: 5px;
-  }
-
-  .button {
-    background-color: var(--primary_color);
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 1em;
-  }
-
-  .button:hover {
-    background-color: var(--primary_dark_color);
-    color: white;
-  }
-
-  .invalid-date {
-    border-color: red !important;
-  }
-
-  .date-error {
-    color: red;
-    font-size: 0.9em;
-    display: none;
-  }
-
-  .date-range {
-    display: flex;
-    gap: 1em;
-    align-items: center;
-  }
+}
+.demo-table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 2em;
+}
+.demo-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+.demo-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-card-bg, #fff);
+  color: var(--color-text, #222);
+  border-radius: 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  font-size: 1em;
+}
+.demo-table th, .demo-table td {
+  padding: 1em 0.7em;
+  text-align: left;
+  border-bottom: 1px solid var(--color-title-accent, #e3f0ff);
+  vertical-align: middle;
+}
+.demo-table th {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  font-size: 1.08em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.demo-table tr:last-child td {
+  border-bottom: none;
+}
+.demo-table .demo-table-title {
+  font-weight: 700;
+  color: var(--color-primary, #0056b3);
+  font-size: 1.08em;
+}
+.demo-table .demo-table-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em;
+}
+.demo-table-tag {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  border-radius: 0.4em;
+  padding: 0.1em 0.6em;
+  font-size: 0.98em;
+  font-weight: 500;
+  margin-right: 0.2em;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.demo-table-tag:hover {
+  background: var(--color-primary, #0056b3);
+  color: #fff;
+}
+.demo-table .demo-table-link {
+  color: var(--color-primary, #0056b3);
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (max-width: 900px) {
+  .demo-table th, .demo-table td { padding: 0.7em 0.3em; font-size: 0.98em; }
+}
+@media (max-width: 600px) {
+  .demo-table th, .demo-table td { padding: 0.5em 0.2em; font-size: 0.95em; }
+  .demo-table { font-size: 0.95em; }
+}
+.container-grid {
+  transition: display 0.2s;
+}
+.hide-cards {
+  display: none !important;
+}
 </style>
 {% endblock %}
 
 {% block content %}
-{% import 'macros.html' as macros %}
-
 <div class="container-main-content">
   <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
-
-  <form method="GET" action="{{ url_for('demonstrations') }}" class="search-form" id="search-form">
+  <div class="view-toggle-group" id="view-toggle-group">
+    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
+      <i class="fa-solid fa-table-cells-large"></i>
+    </button>
+    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
+      <i class="fa-solid fa-list"></i>
+    </button>
+  </div>
+  <form method="GET" action="#" class="search-form" id="search-form">
     <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}"
-      aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ request.args.get('search', '') }}" />
-    <input type="text" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" list="city-list"
-      id="city_input" />
-
-    <input type="hidden" name="city" id="city" value="{{ request.args.get('city', '') }}" />
+      aria-label="{{ _('Hae mielenosoituksia') }}" />
+    <input type="text" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" id="city_input" />
+    <input type="hidden" name="city" id="city" />
     <div class="suggestions" id="city_suggestions"></div>
-
-    <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}"
-      value="{{ request.args.get('location', '') }}" />
-
+    <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}" />
     <div class="date-range">
       <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
-        aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" value="{{ request.args.get('display_date_start', '') }}" />
+        aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
       <span>-</span>
       <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
-        aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" value="{{ request.args.get('display_date_end', '') }}" />
+        aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
     </div>
     <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
     <input type="hidden" name="date_start" id="iso_date_start">
     <input type="hidden" name="date_end" id="iso_date_end">
-
-    <div class="filters" id="filters">
-      {% if request.args.get('location') %}
-      <div class="filter">
-        <span>{{ _('Sijainti') }}: {{ request.args.get('location') }}</span>
-        <a
-          href="{{ url_for('demonstrations', search=request.args.get('search', ''), city=request.args.get('city', ''), location='', date=request.args.get('date', '')) }}">
-          <i class="fas fa-times"></i>
-        </a>
-      </div>
-      {% endif %}
-    </div>
-
+    <div class="filters" id="filters"></div>
     <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
-
-  <div class="container-grid">
-    {% if demonstrations and demonstrations|length > 0 %}
-      {% for demo in demonstrations %}
-        {{ macros.demo_card(demo) }}
-      {% endfor %}
-    {% else %}
-      <div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>
-    {% endif %}
+  <div class="container-grid" id="demo-container-grid"></div>
+  <div class="demo-table-container" id="demo-table-container" style="display: none;">
+    <table class="demo-table">
+      <thead>
+        <tr>
+          <th>{{ _('Päivä') }}</th>
+          <th>{{ _('Aika') }}</th>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Sijainti') }}</th>
+          <th>{{ _('Aiheet / tagit') }}</th>
+        </tr>
+      </thead>
+      <tbody id="demo-table-body"></tbody>
+    </table>
   </div>
-  <!-- Add a persistent scroll sentinel -->
   <div id="scroll_sentinel"></div>
-  <!-- Loading spinner for infinite scroll -->
   <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
     <i class="fas fa-spinner fa-spin fa-2x"></i>
   </div>
+  <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
 </div>
-
-{% if current_user.is_authenticated and current_user.has_permission("BETA_FEATURES") %}
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    let per_page;
-    if (window.innerWidth < 768) {
-      per_page = 5;
-    } else if (window.innerWidth < 1200) {
-      per_page = 10;
-    } else {
-      per_page = 20;
-    }
-
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set("per_page", per_page);
-    window.history.replaceState({}, "", currentUrl);
-  });
-</script>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
-<!-- Removed old pagination code -->
-
-<script>
-  window.today = true;
-</script>
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
-  $(document).ready(function () {
-    const cityInput = $("#city_input");
-    const selectedCitiesInput = $("#city");
-    const filters = $("#filters");
-    const citySuggestions = $("#city_suggestions");
-    // Store the city list rendered by the server
-    const cityList = {{ city_list | tojson }};
-
-    cityInput.on("input", function () {
-      const query = cityInput.val();
-      if (query.length > 2) {
-        const matchingCities = cityList.filter(city =>
-          city.toLowerCase().includes(query.toLowerCase())
-        );
-        citySuggestions.empty();
-
-        matchingCities.forEach(function (city) {
-          const suggestionItem = $("<div>")
-            .addClass("suggestion-item")
-            .text(city);
-          citySuggestions.append(suggestionItem);
-
-          suggestionItem.on("click", function (event) {
-            event.stopPropagation();  // Added to prevent bubbling causing premature hide
-            const selectedCity = suggestionItem.text();
-            citySuggestions.empty();
-            citySuggestions.removeClass("show");
-
-            cityInput.val("");
-            const currentCities = selectedCitiesInput.val()
-              ? selectedCitiesInput.val().split(",")
-              : [];
-            if (!currentCities.includes(selectedCity)) {
-              currentCities.push(selectedCity);
-              selectedCitiesInput.val(currentCities.join(","));
-
-              const filterDiv = $("<div>")
-                .addClass("filter")
-                .html(`
-                  <span>{{ _('Kaupunki') }}: ${selectedCity}</span>
-                  <a href="#" data-city="${selectedCity}">
-                    <i class="fas fa-times"></i>
-                  </a>
-                `);
-              filters.append(filterDiv);
-
-              filterDiv.find("a").on("click", function (event) {
-                event.preventDefault();
-                const cityToRemove = $(this).data("city");
-                const updatedCities = currentCities.filter(c => c !== cityToRemove);
-                selectedCitiesInput.val(updatedCities.join(","));
-                filterDiv.remove();
-              });
-            }
-          });
-        });
-        citySuggestions.addClass("show");
-      } else {
-        citySuggestions.empty();
-        citySuggestions.removeClass("show");
-      }
-    });
-
-    $(document).on("click", function (event) {
-      if (
-        !citySuggestions.is(event.target) &&
-        citySuggestions.has(event.target).length === 0
-      ) {
-        citySuggestions.empty();
-        citySuggestions.removeClass("show");
-      }
-    });
-
-    function isValidDateRange(startStr, endStr) {
-      if (!startStr && !endStr) return true;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (startStr) {
-        const startParts = startStr.split(".");
-        if (startParts.length !== 3) return false;
-        const startDate = new Date(
-          parseInt(startParts[2]),
-          parseInt(startParts[1]) - 1,
-          parseInt(startParts[0])
-        );
-        if (startDate < today) return false;
-
-        if (endStr) {
-          const endParts = endStr.split(".");
-          if (endParts.length !== 3) return false;
-          const endDate = new Date(
-            parseInt(endParts[2]),
-            parseInt(endParts[1]) - 1,
-            parseInt(endParts[0])
-          );
-          if (endDate < startDate) return false;
-        }
-      }
-
-      return true;
-    }
-
-    $("#search-form").on("submit", function (e) {
-      const startInput = $("#date_start");
-      const endInput = $("#date_end");
-      const dateError = $("#date-error");
-      const startValue = startInput.val();
-      const endValue = endInput.val();
-
-      if (!isValidDateRange(startValue, endValue)) {
-        e.preventDefault();
-        startInput.addClass("invalid-date");
-        endInput.addClass("invalid-date");
-        dateError.show();
-        return false;
-      }
-
-      startInput.removeClass("invalid-date");
-      endInput.removeClass("invalid-date");
-      dateError.hide();
-
-      if (startValue) {
-        const parts = startValue.split(".");
-        if (parts.length === 3) {
-          const isoDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(
-            2,
-            "0"
-          )}`;
-          $("#iso_date_start").val(isoDate);
-        }
-      }
-
-      if (endValue) {
-        const parts = endValue.split(".");
-        if (parts.length === 3) {
-          const isoDate = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(
-            2,
-            "0"
-          )}`;
-          $("#iso_date_end").val(isoDate);
-        }
-      }
-    });
-
-    $("#date_start, #date_end").on("input", function () {
-      $("#date_start, #date_end").removeClass("invalid-date");
-      $("#date-error").hide();
-    });
-
-    // Initialize Flatpickr for date range
-    const dateConfig = {
-      dateFormat: "d.m.Y",
-      minDate: "today",
-      allowInput: true,
-      locale: {
-        firstDayOfWeek: 1,
-        weekdays: {
-          shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
-          longhand: [
-            "Sunnuntai",
-            "Maanantai",
-            "Tiistai",
-            "Keskiviikko",
-            "Torstai",
-            "Perjantai",
-            "Lauantai"
-          ]
-        },
-        months: {
-          shorthand: [
-            "Tam",
-            "Hel",
-            "Mar",
-            "Huht",
-            "Tou",
-            "Kes",
-            "Hele",
-            "Elok",
-            "Syys",
-            "Lok",
-            "Marr",
-            "Jou"
-          ],
-          longhand: [
-            "Tammikuu",
-            "Helmikuu",
-            "Maaliskuu",
-            "Huhtikuu",
-            "Toukokuu",
-            "Kesäkuu",
-            "Heinäkuu",
-            "Elokuu",
-            "Syyskuu",
-            "Lokakuu",
-            "Marraskuu",
-            "Joulukuu"
-          ]
-        }
-      }
-    };
-
-    const startPicker = flatpickr("#date_start", {
-      ...dateConfig,
-      onChange: function (selectedDates) {
-        if (selectedDates[0]) {
-          endPicker.set("minDate", selectedDates[0]);
-        }
-      }
-    });
-
-    const endPicker = flatpickr("#date_end", {
-      ...dateConfig,
-      onChange: function (selectedDates) {
-        if (selectedDates[0]) {
-          startPicker.set("maxDate", selectedDates[0]);
-        }
-      }
-    });
-  });
+const cityList = {{ city_list | tojson }};
 </script>
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    /**
-     * Updates the demo list stored in localStorage.
-     * It collects all demo cards (with class "grid-item") in the container,
-     * retrieves their data attributes, and saves an ordered list.
-     */
-    function updateDemoList() {
-      const demoCards = document.querySelectorAll('.container-grid .grid-item');
-      const demoList = [];
-  
-      demoCards.forEach((card, index) => {
-        // Use dataset for modern access to data attributes.
-        const demoId = card.dataset.demoId || index;
-        const demoUrl = card.dataset.href;
-  
-        demoList.push({
-          id: demoId,
-          url: demoUrl,
-          order: index
-        });
-      });
-  
-      localStorage.setItem('demoList', JSON.stringify(demoList));
-      console.log("Updated demo list:", demoList);
+/**
+ * Numpydoc:
+ * Fetches demonstration data from the API and renders cards or table rows.
+ * Handles infinite scroll, search, and view toggling.
+ * All demonstration rendering is done via JavaScript.
+ */
+document.addEventListener("DOMContentLoaded", function() {
+  function renderDemoCard(demo) {
+    return `
+      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo._id}">
+        <div class="demo-card-title">${demo.title}</div>
+        <div class="demo-card-date-time">
+          <i class="fa-regular fa-calendar"></i> ${demo.date_display}
+          <i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}
+        </div>
+        <div class="demo-card-location-row">
+          <i class="fa-solid fa-city"></i> ${demo.city}
+          <i class="fa-solid fa-location-dot"></i> ${demo.address}
+        </div>
+        <div class="demo-card-tags">
+          ${(demo.tags && demo.tags.length > 0)
+            ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(' ')
+            : `<span class="demo-table-tag">#${demo.topic || ''}</span>`}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDemoTableRow(demo) {
+    return `
+      <tr onclick="window.location='/demonstration/${demo._id}'" style="cursor:pointer;">
+        <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
+        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}</td>
+        <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>
+        <td><i class="fa-solid fa-city"></i> ${demo.city}</td>
+        <td><i class="fa-solid fa-location-dot"></i> ${demo.address}</td>
+        <td>
+          <span class="demo-table-tags">
+            ${(demo.tags && demo.tags.length > 0)
+              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(' ')
+              : `<span class="demo-table-tag">#${demo.topic || ''}</span>`}
+          </span>
+        </td>
+      </tr>
+    `;
+  }
+
+  let page = 1;
+  let per_page = 20;
+  let total_pages = 1;
+  let is_loading = false;
+  let last_query = {};
+  let view = localStorage.getItem("demoView") || "grid";
+  const gridContainer = document.getElementById("demo-container-grid");
+  const tableContainer = document.getElementById("demo-table-container");
+  const tableBody = document.getElementById("demo-table-body");
+  const spinner = document.getElementById("loading-spinner");
+  const endMsg = document.getElementById("end-of-content-message");
+  const scrollSentinel = document.getElementById("scroll_sentinel");
+
+  function getQuery() {
+    const form = document.getElementById("search-form");
+    const data = new FormData(form);
+    let query = {};
+    for (const [k, v] of data.entries()) {
+      if (v) query[k] = v;
     }
-  
-    // Update the demo list on initial page load.
-    updateDemoList();
-  
-    // Infinite scroll variables.
-    let current_page = parseInt('{{ request.args.get("page", 1) }}');
-    const total_pages = parseInt('{{ total_pages }}');
-    let is_loading = false;
-    const scroll_sentinel = document.getElementById('scroll_sentinel');
-    // Cache preloaded content by page number.
-    const preloadedContent = {};
-  
-    /**
-     * Displays a message indicating that the end of content has been reached.
-     */
-    function showEndMessage() {
-      if (!document.getElementById('end-of-content-message')) {
-        const messageEl = document.createElement("div");
-        messageEl.id = "end-of-content-message";
-        messageEl.textContent = "You've reached the end!";
-        messageEl.style.textAlign = "center";
-        messageEl.style.padding = "1em";
-        document.querySelector('.container-grid').insertAdjacentElement("afterend", messageEl);
-        // Optionally remove the loading spinner.
-        const spinner = document.querySelector('#loading-spinner');
-        if (spinner) spinner.remove();
-      }
+    if (query.display_date_start) {
+      const parts = query.display_date_start.split(".");
+      if (parts.length === 3) query.date_start = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
     }
-  
-    /**
-     * Preloads content for the specified page and caches it.
-     * @param {number} page - The page number to preload.
-     */
-    function preloadContent(page) {
-      if (page > total_pages || preloadedContent[page]) return;
-      
-      const url_params = new URLSearchParams(window.location.search);
-      url_params.set('page', page);
-      
-      fetch(`${window.location.pathname}?${url_params.toString()}`, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          preloadedContent[page] = doc.querySelector('.container-grid').innerHTML;
-        })
-        .catch(error => {
-          console.error('Error preloading content:', error);
-        });
+    if (query.display_date_end) {
+      const parts = query.display_date_end.split(".");
+      if (parts.length === 3) query.date_end = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
     }
-  
-    /**
-     * Loads more content, either using preloaded content or fetching it directly.
-     * After appending new demos, it updates the demo list in localStorage.
-     */
-    function load_more_content() {
-      if (is_loading || current_page >= total_pages) {
-        if (current_page >= total_pages) showEndMessage();
-        return;
-      }
-      is_loading = true;
-      const nextPage = current_page + 1;
-  
-      const insertContent = (content) => {
-        document.querySelector('.container-grid').insertAdjacentHTML('beforeend', content);
-        current_page++;
-        // After inserting new content, update the stored demo list.
-        updateDemoList();
-        is_loading = false;
-        if (current_page >= total_pages) {
-          showEndMessage();
+    return query;
+  }
+
+  function buildApiUrl(query, page) {
+    const params = new URLSearchParams(query);
+    params.set("page", page);
+    params.set("per_page", per_page);
+    return `/api/v1/demonstrations?${params.toString()}`;
+  }
+
+  function clearContent() {
+    gridContainer.innerHTML = "";
+    tableBody.innerHTML = "";
+    endMsg.style.display = "none";
+    spinner.style.display = "block";
+  }
+
+  function showEndMessage() {
+    spinner.style.display = "none";
+    endMsg.style.display = "";
+    endMsg.textContent = "You've reached the end!";
+  }
+
+  function renderDemos(demos, append = false) {
+    if (view === "grid") {
+      if (!append) gridContainer.innerHTML = "";
+      gridContainer.innerHTML += demos.map(renderDemoCard).join("");
+    } else {
+      if (!append) tableBody.innerHTML = "";
+      tableBody.innerHTML += demos.map(renderDemoTableRow).join("");
+    }
+  }
+
+  function fetchAndRenderDemos(opts = {reset: false, append: false}) {
+    if (is_loading) return;
+    is_loading = true;
+    spinner.style.display = "block";
+    let query = getQuery();
+    if (opts.reset) {
+      page = 1;
+      last_query = query;
+      clearContent();
+    } else {
+      query = last_query;
+    }
+    fetch(buildApiUrl(query, page))
+      .then(r => r.json())
+      .then(data => {
+        total_pages = data.total_pages;
+        console.log("Total pages:", total_pages);
+        if (!total_pages) {
+          total_pages = 1;
+        };
+        if (view === "grid" && data.demonstrations.length === 0 && page === 1) {
+          gridContainer.innerHTML = `<div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>`;
+        } else if (view === "list" && data.demonstrations.length === 0 && page === 1) {
+          tableBody.innerHTML = `<tr><td colspan="6">{{ _('Ei löytynyt mielenosoituksia.') }}</td></tr>`;
         } else {
-          preloadContent(current_page + 1);
+          renderDemos(data.demonstrations, opts.append);
         }
-      };
-  
-      if (preloadedContent[nextPage]) {
-        console.log('Using preloaded content for page:', nextPage);
-        insertContent(preloadedContent[nextPage]);
-        delete preloadedContent[nextPage];
-      } else {
-        console.log('Fetching content for page:', nextPage);
-        const url_params = new URLSearchParams(window.location.search);
-        url_params.set('page', nextPage);
-        fetch(`${window.location.pathname}?${url_params.toString()}`, {
-          headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-          .then(response => response.text())
-          .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const new_demos = doc.querySelector('.container-grid').innerHTML;
-            insertContent(new_demos);
-          })
-          .catch(error => {
-            console.error('Error loading more content:', error);
-            is_loading = false;
-          });
+        if (page >= total_pages) showEndMessage();
+        else spinner.style.display = "block";
+        is_loading = false;
+      })
+      .catch(() => {
+        spinner.style.display = "none";
+        is_loading = false;
+      });
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !is_loading && page < total_pages) {
+        page++;
+        fetchAndRenderDemos({append: true});
+      }
+    });
+  }, { rootMargin: '1000px' });
+  observer.observe(scrollSentinel);
+
+  function setView(newView) {
+    view = newView;
+    localStorage.setItem("demoView", view);
+    if (view === "list") {
+      document.querySelector(".container-main-content").classList.add("list-view");
+      document.getElementById("list-view-btn").classList.add("active");
+      document.getElementById("grid-view-btn").classList.remove("active");
+      gridContainer.classList.add("hide-cards");
+      tableContainer.style.display = "";
+    } else {
+      document.querySelector(".container-main-content").classList.remove("list-view");
+      document.getElementById("grid-view-btn").classList.add("active");
+      document.getElementById("list-view-btn").classList.remove("active");
+      gridContainer.classList.remove("hide-cards");
+      tableContainer.style.display = "none";
+    }
+    fetchAndRenderDemos({reset: true});
+  }
+  document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
+  document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
+
+  document.getElementById("search-form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    setView(view);
+  });
+
+  // ...existing code for city suggestions and date picker...
+  const cityInput = $("#city_input");
+  const selectedCitiesInput = $("#city");
+  const filters = $("#filters");
+  const citySuggestions = $("#city_suggestions");
+  cityInput.on("input", function () {
+    const query = cityInput.val();
+    if (query.length > 2) {
+      const matchingCities = cityList.filter(city =>
+        city.toLowerCase().includes(query.toLowerCase())
+      );
+      citySuggestions.empty();
+      matchingCities.forEach(function (city) {
+        const suggestionItem = $("<div>")
+          .addClass("suggestion-item")
+          .text(city);
+        citySuggestions.append(suggestionItem);
+        suggestionItem.on("click", function (event) {
+          event.stopPropagation();
+          const selectedCity = suggestionItem.text();
+          citySuggestions.empty();
+          citySuggestions.removeClass("show");
+          cityInput.val("");
+          const currentCities = selectedCitiesInput.val()
+            ? selectedCitiesInput.val().split(",")
+            : [];
+          if (!currentCities.includes(selectedCity)) {
+            currentCities.push(selectedCity);
+            selectedCitiesInput.val(currentCities.join(","));
+            const filterDiv = $("<div>")
+              .addClass("filter")
+              .html(`<span>{{ _('Kaupunki') }}: ${selectedCity}</span>
+                <a href="#" data-city="${selectedCity}">
+                  <i class="fas fa-times"></i>
+                </a>`);
+            filters.append(filterDiv);
+            filterDiv.find("a").on("click", function (event) {
+              event.preventDefault();
+              const cityToRemove = $(this).data("city");
+              const updatedCities = currentCities.filter(c => c !== cityToRemove);
+              selectedCitiesInput.val(updatedCities.join(","));
+              filterDiv.remove();
+            });
+          }
+        });
+      });
+      citySuggestions.addClass("show");
+    } else {
+      citySuggestions.empty();
+      citySuggestions.removeClass("show");
+    }
+  });
+  $(document).on("click", function (event) {
+    if (
+      !citySuggestions.is(event.target) &&
+      citySuggestions.has(event.target).length === 0
+    ) {
+      citySuggestions.empty();
+      citySuggestions.removeClass("show");
+    }
+  });
+
+  const dateConfig = {
+    dateFormat: "d.m.Y",
+    minDate: "today",
+    allowInput: true,
+    locale: {
+      firstDayOfWeek: 1,
+      weekdays: {
+        shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+        longhand: [
+          "Sunnuntai",
+          "Maanantai",
+          "Tiistai",
+          "Keskiviikko",
+          "Torstai",
+          "Perjantai",
+          "Lauantai"
+        ]
+      },
+      months: {
+        shorthand: [
+          "Tam", "Hel", "Mar", "Huht", "Tou", "Kes", "Hele", "Elok", "Syys", "Lok", "Marr", "Jou"
+        ],
+        longhand: [
+          "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
+          "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"
+        ]
       }
     }
-  
-    // Preload the next page if there is more content.
-    if (current_page < total_pages) {
-      preloadContent(current_page + 1);
+  };
+  const startPicker = flatpickr("#date_start", {
+    ...dateConfig,
+    onChange: function (selectedDates) {
+      if (selectedDates[0]) {
+        endPicker.set("minDate", selectedDates[0]);
+      }
     }
-  
-    // Use IntersectionObserver to trigger loading when near the bottom.
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && !is_loading && current_page < total_pages) {
-          load_more_content();
-          setup_grid_navigation();
-
-        }
-      });
-    }, { rootMargin: '1000px' });
-  
-    observer.observe(scroll_sentinel);
   });
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    // Collect all demo cards in order.
-    const demoCards = document.querySelectorAll('.container-grid .grid-item');
-    const demoList = [];
-
-    demoCards.forEach((card, index) => {
-      // Assuming each demo card has a data attribute 'data-demo-id'
-      // and contains a link to its detail page.
-      const demoId = card.getAttribute('data-demo-id') || index;
-      const demoUrl = card.getAttribute('data-href');
-
-      demoList.push({
-        id: demoId,
-        url: demoUrl,
-        order: index
-      });
-    });
-
-    // Save the list in localStorage (or use sessionStorage if preferred)
-    localStorage.setItem('demoList', JSON.stringify(demoList));
-    console.log("Saved demo list:", demoList);
+  const endPicker = flatpickr("#date_end", {
+    ...dateConfig,
+    onChange: function (selectedDates) {
+      if (selectedDates[0]) {
+        startPicker.set("maxDate", selectedDates[0]);
+      }
+    }
   });
-</script>
-<script>
-  
+
+  setView(view);
+});
 </script>
 {% endblock %}

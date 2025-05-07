@@ -705,6 +705,65 @@
   --auth_button_bg_color: var(--secondary_color);
 }
 
+.pride:root {
+  /* Colors of the Pride Flag */
+  --red: #ff4f4f;
+  --orange: #ff9c00;
+  --yellow: #ffcc00;
+  --green: #28a745;
+  --blue: #007bff;
+  --purple: #6f42c1;
+
+  --primary_color: var(--red);
+  --secondary_color: var(--yellow);
+
+  --primary_text_color: #ffffff;
+  --secondary_text_color: #f0f0f0;
+
+  --background: #1a1a1a;
+  --background_light: #222;
+  --input_background: #222;
+  --hover_bg_color: #333;
+  --container_background: #222;
+
+  --border_color: #ffcc00;
+  --box_shadow_color: rgba(255, 79, 79, 0.15);
+
+  --focus_color: var(--blue);
+  --error_color: var(--red);
+
+  --primary_button_color: var(--blue);
+  --primary_button_text_color: white;
+  --primary_button_hover_color: var(--purple);
+  --primary_button_hover_text_color: white;
+
+  --secondary_button_color: var(--orange);
+  --secondary_button_text_color: var(--red);
+  --secondary_button_hover_color: var(--yellow);
+  --secondary_button_hover_text_color: var(--blue);
+
+  --admin_section_title_color: var(--focus_color);
+  --admin_section_text_color: var(--white);
+  --admin_create_btn_bg: var(--green);
+  --admin_create_btn_hover_bg: var(--green_dark);
+
+  --link_color: var(--blue);
+  --link_hover_color: var(--orange);
+
+  --primary_strong_text_color: var(--red);
+  --header_color: var(--red);
+
+  --highlight_bg: var(--yellow);
+  --highlight_text: var(--red);
+
+  --card_bg: var(--background_light);
+  --card_border: var(--yellow);
+
+  --box_shadow: 0 0 20px var(--box_shadow_color);
+
+  /* Pride rainbow animation for special elements */
+  --pride-rainbow-animation: pride-rainbow 5s linear infinite;
+}
 
 .admin-section-title {
   color: var(--admin_section_text_color);

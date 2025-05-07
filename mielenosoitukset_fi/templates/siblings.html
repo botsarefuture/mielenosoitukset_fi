@@ -8,14 +8,105 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <style>
-    .info-box {
-    background: var(--yellow);
-    color: var(--black);
-    padding: 1em;
-    border-radius: 0.5em;
-    text-align: center;
-    margin-bottom: 2em;
-    display: block;
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --white: light-dark(#fff, #23272a);
+  --input_background: light-dark(#f9f9f9, #23272a);
+  --primary_color: var(--color-primary);
+  --primary_dark_color: light-dark(#003d80, #0056b3);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text, #222);
+}
+.container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+}
+@media (max-width: 600px) {
+  .container-main-content {
+    padding: 1em 0.5em;
+  }
+  h1 {
+    font-size: 1.3em;
+  }
+}
+.siblings-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
+  color: #fff;
+  border-radius: 1.2em;
+  padding: 1.5em 1em 1.2em 1em;
+  margin-bottom: 2em;
+  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.siblings-banner .siblings-label {
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.13);
+  padding: 0.3em 1.2em;
+  border-radius: 2em;
+  margin-bottom: 0.7em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+.siblings-banner .siblings-title {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
+  margin-bottom: 0.2em;
+  letter-spacing: 0.04em;
+  display: inline-block;
+}
+.siblings-banner .siblings-desc {
+  font-size: 1.15em;
+  font-weight: 400;
+  color: #e3f0ff;
+  margin-top: 0.2em;
+  text-align: center;
+  max-width: 600px;
+}
+@media (max-width: 600px) {
+  .siblings-banner .siblings-title { font-size: 1.3em; }
+  .siblings-banner { padding: 1em 0.5em; }
+}
+.info-box {
+  background: var(--color-title-accent, #e3f0ff);
+  color: var(--color-primary, #0056b3);
+  padding: 1em;
+  border-radius: 0.5em;
+  text-align: center;
+  margin-bottom: 2em;
+  display: block;
+  font-size: 1.08em;
+}
+.container-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5em;
+  margin-top: 1em;
+  justify-content: center;
+}
+.grid-item.no-results {
+  width: 100%;
+  text-align: center;
+  color: var(--color-primary, #0056b3);
+  font-size: 1.1em;
+  margin-top: 2em;
 }
 </style>
 {% endblock %}
@@ -24,21 +115,27 @@
 {% import 'macros.html' as macros %}
 
 <div class="container-main-content">
-    <h1 class="admin-section-title">{{ parent_demo.title }}
-
-    </h1>
-    <div class="info-box">
-        <p>{{ _('Tässä on lista muista mielenosoituksista, jotka ovat osa samaa toistumoa.') }}</p>
+  <div class="siblings-banner">
+    <div class="siblings-label">
+      <i class="fa-solid fa-repeat"></i>
+      {{ _('Toistuva mielenosoitus') }}
     </div>
-
-    <div class="container-grid">
-        {% if siblings and siblings|length > 0 %}
-            {% for demo in siblings %}
-                {{ macros.demo_card(demo) }}
-            {% endfor %}
-        {% else %}
-            <div class="grid-item no-results">{{ _('Ei löytynyt toistumomielenosoituksia.') }}</div>
-        {% endif %}
+    <div class="siblings-title">{{ parent_demo.title }}</div>
+    <div class="siblings-desc">
+      {{ _('Tässä on lista muista mielenosoituksista, jotka ovat osa samaa toistumoa.') }}
     </div>
+  </div>
+  <h1 style="margin-top:0;">
+    {{ _('Toistumon mielenosoitukset') }}
+  </h1>
+  <div class="container-grid">
+    {% if siblings and siblings|length > 0 %}
+      {% for demo in siblings %}
+        {{ macros.demo_card(demo) }}
+      {% endfor %}
+    {% else %}
+      <div class="grid-item no-results">{{ _('Ei löytynyt toistumomielenosoituksia.') }}</div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

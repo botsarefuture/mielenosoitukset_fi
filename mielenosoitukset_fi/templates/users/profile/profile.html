@@ -6,6 +6,180 @@
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+<style>
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --primary_color: var(--color-primary);
+  --primary_dark_color: light-dark(#003d80, #0056b3);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.profile-container {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
+  color: #fff;
+  border-radius: 1.2em;
+  padding: 1.5em 1em 1.2em 1em;
+  margin-bottom: 2em;
+  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.profile-details {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2em;
+  width: 100%;
+}
+.profile-picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 2px 12px rgba(0,86,179,0.13);
+  background: #fff;
+}
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  color: #fff;
+  min-width: 220px;
+}
+.user-name {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
+  margin-bottom: 0.2em;
+  letter-spacing: 0.04em;
+  display: inline-block;
+}
+.badge-admin {
+  background: rgba(255,255,255,0.13);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 2em;
+  padding: 0.3em 1.2em;
+  margin-left: 0.5em;
+  font-size: 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+.organizations-title {
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.13);
+  padding: 0.3em 1.2em;
+  border-radius: 2em;
+  margin-bottom: 0.7em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: inline-block;
+  color: #fff;
+}
+.organizations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-bottom: 1em;
+}
+.org-container {
+  background: var(--color-title-accent);
+  border-radius: 0.7em;
+  padding: 0.7em 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  min-width: 160px;
+  text-align: center;
+}
+.org-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-weight: 600;
+}
+.org-link:hover {
+  color: var(--primary_dark_color);
+}
+.button-group {
+  margin-top: 1em;
+  display: flex;
+  gap: 1em;
+}
+.btn {
+  padding: 0.5em 1.2em;
+  border-radius: 2em;
+  border: none;
+  font-weight: 700;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+}
+.btn-edit {
+  background: var(--color-title-accent);
+  color: var(--color-primary);
+}
+.btn-edit:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-follow {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-follow:hover {
+  background: var(--primary_dark_color);
+}
+.btn-unfollow {
+  background: #fff;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+.btn-unfollow:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+@media (max-width: 600px) {
+  .profile-container { padding: 1em 0.5em; }
+  .profile-header { padding: 1em 0.5em; }
+  .profile-details { flex-direction: column; gap: 1em; }
+  .user-name { font-size: 1.3em; }
+  .organizations-title { font-size: 1em; }
+}
+</style>
 
 <div class="container profile-container" style="text-align: center;">
     <!-- Profiilin Otsikko -->
@@ -68,44 +242,5 @@
         </div>
     </div>
 
-    <!-- Postaukset (commented out for now) -->
-    <!--
-    <div class="profile-posts">
-        <h2 class="rebellious-heading">
-            {% if user.username == current_user.username %}
-                Mielenosoitukset, joihin osallistuit
-            {% else %}
-                Mielenosoitukset, joihin osallistui
-            {% endif %}
-        </h2>
-
-        {% for protest in user.protests %}
-            <div class="post">
-                <h3 class="post-title">{{ protest.title }}</h3>
-                <p class="post-date-location">{{ protest.date }} - {{ protest.location }}</p>
-                <p class="post-description">{{ protest.description }}</p>
-                <div class="post-actions">
-                    {% if current_user.has_liked(protest) %}
-                        <form action="{{ url_for('protest.unlike', protest_id=protest.id) }}" method="POST">
-                            <button type="submit" class="btn btn-unlike">Tykkää pois</button>
-                        </form>
-                    {% else %}
-                        <form action="{{ url_for('protest.like', protest_id=protest.id) }}" method="POST">
-                            <button type="submit" class="btn btn-like">Tykkää</button>
-                        </form>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
-    </div>
-    -->
-
-    <!-- Upcoming protests message (commented out for now) -->
-    <!--
-    <div class="coming-soon">
-        <h3 class="soon-heading">Mielenosoitukset ovat tulossa pian!</h3>
-        <p class="soon-description">Pysy kuulolla ja valmistaudu osallistumaan!</p>
-    </div>
-    -->
 </div>
 {% endblock %}

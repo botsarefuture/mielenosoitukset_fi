@@ -1,41 +1,212 @@
-{% extends "base.html" %} {% import 'macros.html' as macros %} {% block title %}
-{{ org.name }} - {{ _('Tiedot') }} {% endblock %} {% block scripts %}
+{% extends "base.html" %}
+{% import 'macros.html' as macros %}
+{% block title %}
+{{ org.name }} - {{ _('Tiedot') }}
+{% endblock %}
+{% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-{% endblock %} {% block styles %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/organization/details.css') }}"
-/>
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/demo.css') }}"
-/>
-{% endblock %} {% block content %}
+{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<style>
+:root {
+  --color-bg: light-dark(#f9f9f9, #181a1b);
+  --color-bg-hero: light-dark(#e3f0ff, #23272a);
+  --color-card-bg: light-dark(#fff, #23272a);
+  --color-text: light-dark(#222, #f3f3f3);
+  --color-text-secondary: light-dark(#444, #c7c7c7);
+  --color-primary: light-dark(#0056b3, #4ea1ff);
+  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
+  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
+  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --primary_color: var(--color-primary);
+  --primary_dark_color: light-dark(#003d80, #0056b3);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.container-main-content {
+  background: var(--color-card-bg);
+  border-radius: 1.2em;
+  box-shadow: var(--color-shadow);
+  padding: 2em 1em 2em 1em;
+  margin-bottom: 2em;
+  margin-top: 1.5em;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.org-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
+  color: #fff;
+  border-radius: 1.2em;
+  padding: 1.5em 1em 1.2em 1em;
+  margin-bottom: 2em;
+  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+}
+.org-banner .org-label {
+  font-size: 1.2em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.13);
+  padding: 0.3em 1.2em;
+  border-radius: 2em;
+  margin-bottom: 0.7em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+.org-banner .org-name {
+  font-size: 2.2em;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
+  margin-bottom: 0.2em;
+  letter-spacing: 0.04em;
+  display: inline-block;
+}
+.org-banner .org-desc {
+  font-size: 1.15em;
+  font-weight: 400;
+  color: #e3f0ff;
+  margin-top: 0.2em;
+  text-align: center;
+  max-width: 600px;
+}
+.section-title {
+  font-size: 2.2em;
+  font-weight: 800;
+  margin-bottom: 1.2em;
+  color: var(--color-primary);
+  letter-spacing: 0.01em;
+  padding: 0.3em 0.8em;
+  border-left: none;
+  background: var(--color-title-accent);
+  border-radius: 0.6em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  display: block;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+  transition: background 0.2s, color 0.2s;
+}
+.section-title:after {
+  content: '';
+  display: block;
+  margin: 0.4em auto 0 auto;
+  width: 2.5em;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-primary);
+  opacity: 0.25;
+}
+.org-header h1 {
+  color: var(--color-primary);
+  font-size: 2.1em;
+  font-weight: 800;
+  margin-bottom: 0.5em;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+.org-description {
+  font-size: 1.15em;
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5em;
+  text-align: center;
+}
+.contact-info {
+  margin: 2em auto 2em auto;
+  background: var(--color-title-accent);
+  border-radius: 0.7em;
+  padding: 1.2em 1em;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  max-width: 600px;
+}
+.contact-methods p {
+  margin: 0.5em 0;
+  font-size: 1.08em;
+  color: var(--color-text);
+}
+.contact-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-weight: 600;
+}
+.contact-link:hover {
+  color: var(--primary_dark_color);
+}
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
+  justify-content: center;
+}
+.some-icon {
+  margin-right: 0.5em;
+  color: var(--color-primary);
+}
+.admin-section-title {
+  font-size: 1.5em;
+  color: var(--color-primary);
+  font-weight: 800;
+  margin-bottom: 1em;
+  text-align: center;
+  background: var(--color-title-accent);
+  border-radius: 0.6em;
+  padding: 0.3em 0.8em;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+.container-grid {
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .container-main-content { padding: 1em 0.5em; }
+  .org-banner .org-name { font-size: 1.3em; }
+  .org-banner { padding: 1em 0.5em; }
+  .section-title { font-size: 1.3em; }
+  .admin-section-title { font-size: 1.1em; }
+}
+</style>
+{% endblock %}
+{% block content %}
 
-<div class="container-centered">
-  <div class="org-header">
-    <h1>
-      {{ org.name }}{% if org.verified %}<span class="check-icon"></span>{%
-      endif %}
-    </h1>
-    <p class="org-description">{{ org.description }}</p>
+<div class="container-main-content">
+  <div class="org-banner">
+    <div class="org-label">
+      <i class="fa-solid fa-building"></i>
+      {{ _('Järjestäjä') }}
+    </div>
+    <div class="org-name">{{ org.name }}</div>
+    <div class="org-desc">{{ org.description }}</div>
   </div>
 
   <div class="contact-info">
     <h2 class="section-title">{{ _('Yhteystiedot') }}</h2>
     <div class="contact-methods">
+      {% if org.email %}
       <p>
         <i class="fa-solid fa-envelope some-icon"></i>
-        <a href="mailto:{{ org.email }}" class="link contact-link"
-          >{{ org.email }}</a
-        >
-      </p></div>
+        <a href="mailto:{{ org.email }}" class="link contact-link">{{ org.email }}</a>
+      </p>
+      {% endif %}
+      {% if org.website %}
       <p>
         <i class="fa-solid fa-external-link some-icon"></i>
-        <a href="{{ org.website }}" target="_blank" class="link contact-link"
-          >{{ org.website }}</a
-        >
+        <a href="{{ org.website }}" target="_blank" class="link contact-link">{{ org.website }}</a>
       </p>
+      {% endif %}
     </div>
     {% if org.social_media_links %}
     <h3 class="section-title">{{ _('Sosiaalinen media') }}</h3>
@@ -47,12 +218,10 @@
         class="some-icon link"
       >
       {% set social_link = org.social_media_links[social].split("/") %}
-{% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else social_link[-2] if social_link | length > 1 else "" %}
-
-<i class="fa-brands fa-{{ social }} some-icon"></i>
-{{ '@' + username if username and username[0] != '@' else username }}
-
-            </a>
+      {% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else social_link[-2] if social_link | length > 1 else "" %}
+      <i class="fa-brands fa-{{ social }} some-icon"></i>
+      {{ '@' + username if username and username[0] != '@' else username }}
+      </a>
       {% endfor %}
       <br>
     </div>
@@ -60,26 +229,15 @@
     {% endif %}
   </div>
   <br>
-</div>
-
   {% if upcoming_demos %}
-  <section
-    style="
-      display: flex;
-      flex-direction: column;
-      align-content: center;
-      width: 100%;
-      align-items: center;
-    "
-  >
+  <section style="display: flex; flex-direction: column; align-content: center; width: 100%; align-items: center;">
     <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
       {{ _('Esitellyt mielenosoitukset') }}
     </h2>
     <div class="container-grid" style="width: 100%">
-      {% if upcoming_demos %} {% for demo in upcoming_demos %} {{
-      macros.demo_card(demo) }} {% endfor %} {% else %}
-      <div class="grid-item">{{ _('Ei mielenosoituksia näytettäväksi.') }}</div>
-      {% endif %}
+      {% for demo in upcoming_demos %}
+        {{ macros.demo_card(demo) }}
+      {% endfor %}
     </div>
   </section>
   {% endif %}

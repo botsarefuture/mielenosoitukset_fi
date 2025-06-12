@@ -126,4 +126,21 @@
 
 ---  
 
-Enjoy a more secure, efficient, and polished experience! 🚀  
+## [Unreleased]
+### Added
+- Email notification to tuki@mielenosoitukset.fi when a new demonstration is submitted (uses underscore field names, numpydoc docstrings).
+- User can subscribe to demonstration reminders (muistutus) via email; reminders are sent 1 week before, the day before at 9:00, and the day of at 9:00 or at least 2 hours before the event.
+- Reminder subscription form as a popup/modal, styled for light/dark mode and always visible above the header.
+- All popups and modals use z-index above the header (1000001 for backdrop, 1000002 for modal) codebase-wide.
+- All main CSS and button styles use color variables and light-dark() for full theme support.
+
+### Changed
+- UI containers and popups have improved contrast, spacing, and a cleaner look in both light and dark modes.
+- All buttons have visible background and border in all color modes.
+- Reminder subscribe button is grouped with social/share buttons.
+
+### Fixed
+- Modals/popups are never hidden behind the header.
+- Removed visible borders from stacked containers for a cleaner UI.
+
+Enjoy a more secure, efficient, and polished experience! 🚀

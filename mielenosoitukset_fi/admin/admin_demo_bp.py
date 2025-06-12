@@ -544,10 +544,10 @@ def collect_organizers(request):
         # Create an Organizer object and append to the list
         organizers.append(
             Organizer(
-                name=name.strip() if name else None,
-                email=email.strip() if email else None,
-                website=website.strip() if website else None,
-                organization_id=organizer_id.strip() if organizer_id else None,
+                name=name.strip() if name else "",
+                email=email.strip() if email else "",
+                website=website.strip() if website else "",
+                organization_id=ObjectId(organizer_id) if organizer_id else None,
             )
         )
 
@@ -678,3 +678,34 @@ def accept_demo(demo_id):
     except Exception as e:
         logging.error("An error occurred while accepting the demonstration: %s", str(e))
         return jsonify({"status": "ERROR", "message": "An internal error has occurred."}), 500
+
+@admin_demo_bp.route("/get_submitter_info/<demo_id>", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO")
+def get_submitter_info(demo_id):
+    """
+    Get submitter information for a demonstration.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration.
+
+    Returns
+    -------
+    flask.Response
+        JSON response with submitter info or error message.
+    """
+    submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+    if not submitter:
+        return jsonify({"status": "ERROR", "message": "Submitter not found."}), 404
+
+    submitter_info = {
+        "submitter_name": submitter.get("submitter_name", "-"),
+        "submitter_email": submitter.get("submitter_email", "-"),
+        "submitter_role": submitter.get("submitter_role", "-"),
+        "accept_terms": submitter.get("accept_terms", False),
+        "submitted_at": str(submitter.get("submitted_at", "-")),
+    }
+    return jsonify({"status": "OK", "submitter": submitter_info})

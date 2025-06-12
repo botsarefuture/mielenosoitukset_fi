@@ -9,7 +9,7 @@
   background-color: var(--background);
   box-shadow: var(--box_shadow);
   border-radius: 8px;
-  z-index: 1000;
+  z-index: 1000002 !important;
 }
 
 .modal.active {
@@ -81,3 +81,5 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+.modal-backdrop { z-index: 1000001 !important; }

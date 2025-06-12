@@ -89,9 +89,6 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 <style>
-main {
-  /* All CSS below is now scoped to main */
-}
 :root {
   --color-bg: light-dark(#f9f9f9, #181a1b);
   --color-bg-hero: light-dark(#e3f0ff, #23272a);
@@ -109,8 +106,28 @@ main {
   --primary_strong_text_color: var(--color-primary);
   --box_shadow: var(--color-shadow);
   --yellow: #ffe066;
-  --black: #222;
+  --black: light-dark(#222, #f3f3f3);
 }
+
+.button, .btn, .btn-primary, .btn-warning, .btn-secondary {
+  background: var(--primary_color) !important;
+  color: #fff !important;
+  border: 2px solid var(--primary_dark_color) !important;
+  border-radius: 2em !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  font-weight: 600;
+  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+}
+.button:hover, .btn:hover, .btn-primary:hover, .btn-warning:hover, .btn-secondary:hover {
+  background: var(--primary_dark_color) !important;
+  color: #fff !important;
+  border-color: var(--primary_color) !important;
+}
+
+/* Modal z-index fix */
+.modal-backdrop { z-index: 1000001 !important; }
+.modal { z-index: 1000002 !important; }
+
 main body {
   background: var(--color-bg);
   color: var(--color-text);
@@ -118,16 +135,17 @@ main body {
 main .container-main-content {
   background: var(--color-card-bg);
   border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
+  box-shadow: var(--box_shadow);
   padding: 2em 1em 2em 1em;
   margin-bottom: 2em;
   margin-top: 1.5em;
   max-width: 900px;
   margin-left: auto;
   margin-right: auto;
+  border: none;
 }
 main h1, main .subtitle {
-  color: var(--color-primary);
+  color: var(--primary_color);
   font-weight: 800;
   letter-spacing: 0.01em;
   text-align: center;
@@ -150,7 +168,7 @@ main .button {
   background-color: var(--primary_color);
   color: #fff;
   padding: 0.7em 1.5em;
-  border: none;
+  border: 2px solid var(--primary_dark_color);
   border-radius: 2em;
   cursor: pointer;
   text-decoration: none;
@@ -164,6 +182,7 @@ main .button:hover {
   color: #fff;
   box-shadow: var(--color-shadow-hover);
   filter: brightness(1.08);
+  border-color: var(--primary_color);
 }
 main .like-count {
   display: flex;
@@ -186,7 +205,7 @@ main .topics ul {
 }
 main .topics .tag {
   background-color: var(--primary_color);
-  color: white;
+  color: #fff;
   padding: 5px 10px;
   border-radius: 5px;
   text-decoration: none;
@@ -225,63 +244,25 @@ main .container {
   margin-top: 20px;
   padding: 20px;
   background: var(--background);
-  border-radius: 8px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   text-align: center;
-  box-shadow: var(--box_shadow);
+  border: none;
+  margin-bottom: 24px;
 }
-main .countdown {
-  margin: 20px 0;
-  text-align: center;
-  background: var(--color-title-accent);
-  border-radius: 0.7em;
-  padding: 1em 0.5em;
-}
-main .map {
-  margin: 20px 0;
+main .container:last-child {
+  margin-bottom: 0;
 }
 main #orginfo, main #infocontainer {
-  margin-top: 2em;
-  margin-bottom: 2em;
+  border: none;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
   background: var(--color-title-accent);
   border-radius: 0.7em;
-  padding: 1.2em 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-}
-main .organizers-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2em;
-  justify-content: center;
-}
-main .organizer-info {
-  background: var(--color-card-bg);
-  border-radius: 0.7em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  padding: 1em 1.2em;
-  min-width: 220px;
-  max-width: 320px;
-}
-main .back-link {
-  background: var(--color-title-accent);
-  color: var(--color-primary);
-  border-radius: 2em;
-  padding: 0.5em 1.2em;
-  margin: 0 0.5em;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-}
-main .back-link:hover {
-  background: var(--color-primary);
-  color: #fff;
-}
-@media (max-width: 600px) {
-  main .container-main-content { padding: 1em 0.5em; }
-  main h1 { font-size: 1.3em; }
-  main .subtitle { font-size: 1.1em; }
-  main .organizer-info { min-width: 140px; padding: 0.7em 0.5em; }
+  margin-bottom: 24px;
 }
 main .repeating-alert {
+  border: none;
+  box-shadow: none;
   background-color: var(--yellow);
   color: var(--black);
   padding: 1em;
@@ -297,7 +278,6 @@ main .display-all {
   display: block;
   margin-top: 0.5em;
 }
-/* Floating report button styles */
 #report-selection-btn {
   position: absolute;
   z-index: 2000;
@@ -316,6 +296,85 @@ main .display-all {
 #report-selection-btn:hover {
   background: #ffdb5c;
 }
+
+#reminder-modal .modal-content {
+  background: var(--color-card-bg);
+  color: var(--color-text);
+  border-radius: 1em;
+  box-shadow: var(--box_shadow);
+}
+#reminder-modal .modal-header, #reminder-modal .modal-footer {
+  background: var(--color-title-accent);
+  color: var(--primary_color);
+  border-top-left-radius: 1em;
+  border-top-right-radius: 1em;
+}
+#reminder-modal .modal-title {
+  color: var(--primary_color);
+}
+#reminder-modal .form-control {
+  background: var(--background);
+  color: var(--primary_text_color);
+  border: 1px solid var(--primary_color);
+}
+#reminder-modal .form-control:focus {
+  border-color: var(--primary_dark_color);
+  box-shadow: 0 0 0 2px var(--primary_color);
+}
+#reminder-modal .button {
+  background: var(--primary_color);
+  color: #fff;
+}
+#reminder-modal .button:hover {
+  background: var(--primary_dark_color);
+}
+/* Popup/modal base styles for all modals on the page */
+.modal-content {
+  background: var(--color-card-bg);
+  color: var(--color-text);
+  border-radius: 1em;
+  box-shadow: var(--box_shadow);
+}
+.modal-header, .modal-footer {
+  background: var(--color-title-accent);
+  color: var(--primary_color);
+  border-top-left-radius: 1em;
+  border-top-right-radius: 1em;
+}
+.modal-title {
+  color: var(--primary_color);
+}
+.form-control {
+  background: var(--background);
+  color: var(--primary_text_color);
+  border: 1px solid var(--primary_color);
+}
+.form-control:focus {
+  border-color: var(--primary_dark_color);
+  box-shadow: 0 0 0 2px var(--primary_color);
+}
+.button, .btn-primary, .btn-warning, .btn-secondary {
+  background: var(--primary_color) !important;
+  color: #fff !important;
+  border: none;
+}
+.button:hover, .btn-primary:hover, .btn-warning:hover, .btn-secondary:hover {
+  background: var(--primary_dark_color) !important;
+}
+.alert-success, .alert-danger {
+  color: var(--primary_text_color);
+  background: var(--color-title-accent);
+  border: 1px solid var(--primary_color);
+}
+
+.button-container.reminder-top {
+  justify-content: flex-start;
+  position: relative;
+}
+
+
+/* Ensure all modals are above the header */
+
 </style>
 {% endblock %}
 
@@ -563,22 +622,25 @@ main .display-all {
       </p>
     </div>
 
-    <div class="button-container">
+    <div class="button-container" style="gap: 10px; flex-wrap: wrap;">
       <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-        target="_blank" class="facebook-button button">
-        {{ _('Jaa Facebookissa') }}
+      target="_blank" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
+      <i class="fab fa-facebook-f"></i> {{ _('Jaa Facebookissa') }}
       </a>
       <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-        target="_blank" class="twitter-button button">
-        {{ _('Jaa Xssä') }}
+      target="_blank" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
+      <i class="fab fa-x-twitter"></i> {{ _('Jaa Xssä') }}
       </a>
       <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-        target="_blank" class="linkedin-button button">
-        {{ _('Jaa LinkedInissä') }}
+      target="_blank" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
+      <i class="fab fa-linkedin-in"></i> {{ _('Jaa LinkedInissä') }}
       </a>
-      <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button">
-        {{ _('Lataa graafinen materiaali') }}
+      <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
+      <i class="fas fa-download"></i> {{ _('Lataa graafinen materiaali') }}
       </a>
+      <button class="button btn btn-primary" id="open-reminder-btn" style="display: flex; align-items: center; gap: 0.5em;">
+      <i class="fas fa-bell"></i> {{ _('Tilaa muistutus sähköpostiisi') }}
+      </button>
     </div>
 
     <div class="button-container">
@@ -815,6 +877,45 @@ main .display-all {
       </div>
     </div>
     <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
+
+   
+    <div class="modal fade" id="reminder-modal" tabindex="-1" aria-labelledby="reminderModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reminderModalLabel">{{ _('Tilaa muistutus sähköpostiisi') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="reminder-form" method="POST" action="{{ url_for('subscribe_reminder', demo_id=demo['_id']) }}">
+              <input type="email" name="user_email" class="form-control" placeholder="Sähköpostiosoite" required style="margin-bottom:10px;">
+              <button type="submit" class="button">{{ _('Tilaa muistutus') }}</button>
+            </form>
+            <div id="reminder-result" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    document.getElementById('open-reminder-btn').addEventListener('click', function() {
+      var modal = new bootstrap.Modal(document.getElementById('reminder-modal'));
+      modal.show();
+    });
+    document.getElementById('reminder-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var form = this;
+      var formData = new FormData(form);
+      fetch(form.action, {method: 'POST', body: formData})
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('reminder-result').innerHTML = data.message;
+          if(data.status === 'OK') form.reset();
+        })
+        .catch(() => {
+          document.getElementById('reminder-result').innerHTML = 'Virhe tilauksessa.';
+        });
+    });
+    </script>
   </main>
 </div>
 {% endblock %}

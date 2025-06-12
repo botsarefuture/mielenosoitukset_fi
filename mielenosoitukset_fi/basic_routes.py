@@ -520,6 +520,24 @@ Disallow: /admin/
             submitters_collection.insert_one(submitter_doc)
             # --- End submitter info ---
 
+            # --- Notify support team ---
+            # Send email to tuki@mielenosoitukset.fi when a new demonstration is submitted
+            email_sender.queue_email(
+                template_name="new_demo_notification.html",
+                subject="Uusi mielenosoitus ilmoitettu",
+                recipients=["tuki@mielenosoitukset.fi"],
+                context={
+                    "title": title,
+                    "date": date,
+                    "city": city,
+                    "address": address,
+                    "submitter_name": submitter_name,
+                    "submitter_email": submitter_email,
+                    "submitter_role": submitter_role,
+                },
+            )
+            # --- End notify support team ---
+
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
@@ -971,6 +989,36 @@ Disallow: /admin/
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
+
+    @app.route("/subscribe_reminder/<demo_id>", methods=["POST"])
+    def subscribe_reminder(demo_id):
+        """
+        Subscribe a user to demonstration reminders.
+
+        Parameters
+        ----------
+        demo_id : str
+            The demonstration ObjectId as a string.
+
+        Returns
+        -------
+        flask.Response
+            JSON response with status and message.
+        """
+        user_email = request.form.get("user_email")
+        if not user_email:
+            return jsonify({"status": "ERROR", "message": "Sähköpostiosoite vaaditaan."})
+        reminders_collection = mongo["demo_reminders"]
+        # Prevent duplicate subscriptions
+        existing = reminders_collection.find_one({"demonstration_id": ObjectId(demo_id), "user_email": user_email})
+        if existing:
+            return jsonify({"status": "OK", "message": "Olet jo tilannut muistutuksen tälle mielenosoitukselle."})
+        reminders_collection.insert_one({
+            "demonstration_id": ObjectId(demo_id),
+            "user_email": user_email,
+            "created_at": datetime.utcnow(),
+        })
+        return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
 
     add_api_routes(app)
 

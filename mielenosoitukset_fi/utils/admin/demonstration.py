@@ -100,22 +100,12 @@ def fix_organizers(data: dict) -> dict:
     }
     """
     for organizer in data["organizers"]:
-        if (
-            organizer["organization_id"] == None
-            or organizer["organization_id"].lower() == "none"
-        ):
+        org_id = organizer["organization_id"]
+        if org_id is None or (isinstance(org_id, str) and org_id.lower() == "none"):
             organizer["organization_id"] = None
             continue
-
-        if (
-            isinstance(organizer["organization_id"], dict)
-            and "$oid" in organizer["organization_id"]
-        ):
-            organizer["organization_id"] = ObjectId(
-                organizer["organization_id"]["$oid"]
-            )
-
-        elif isinstance(organizer["organization_id"], str):
-            organizer["organization_id"] = ObjectId(organizer["organization_id"])
-
+        if isinstance(org_id, dict) and "$oid" in org_id:
+            organizer["organization_id"] = ObjectId(org_id["$oid"])
+        elif isinstance(org_id, str):
+            organizer["organization_id"] = ObjectId(org_id)
     return data

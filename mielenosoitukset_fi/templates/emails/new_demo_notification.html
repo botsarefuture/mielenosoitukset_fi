@@ -1,0 +1,23 @@
+{#
+new_demo_notification.html
+Notification email for new demonstration submissions.
+#}
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>Uusi mielenosoitus ilmoitettu</title>
+</head>
+<body>
+    <h2>Uusi mielenosoitus ilmoitettu</h2>
+    <p><strong>Otsikko:</strong> {{ title }}</p>
+    <p><strong>Päivämäärä:</strong> {{ date }}</p>
+    <p><strong>Kaupunki:</strong> {{ city }}</p>
+    <p><strong>Osoite:</strong> {{ address }}</p>
+    <hr>
+    <p><strong>Ilmoittajan nimi:</strong> {{ submitter_name }}</p>
+    <p><strong>Ilmoittajan sähköposti:</strong> {{ submitter_email }}</p>
+    <p><strong>Ilmoittajan rooli:</strong> {{ submitter_role }}</p>
+    <p>Tarkista ja hyväksy uusi ilmoitus ylläpitosivulta.</p>
+</body>
+</html>

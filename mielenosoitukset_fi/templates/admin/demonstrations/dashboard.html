@@ -159,6 +159,37 @@
         console.error("Virhe:", error);
       });
   }
+
+  function showSubmitterInfoModal(demoId) {
+    // Fetch submitter info using demoId
+    fetch(`/admin/demo/get_submitter_info/${demoId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "OK") {
+          // Populate modal content with submitter info
+          const submitterInfoContent = `
+            <p><strong>{{ _('Nimi') }}:</strong> ${data.submitter.name}</p>
+            <p><strong>{{ _('Sähköposti') }}:</strong> ${data.submitter.email}</p>
+            <p><strong>{{ _('Puhelin') }}:</strong> ${data.submitter.phone || '{{ _('Ei saatavilla') }}'}</p>
+            <p><strong>{{ _('Organisaatio') }}:</strong> ${data.submitter.organization || '{{ _('Ei saatavilla') }}'}</p>
+          `;
+          document.getElementById("submitter-info-content").innerHTML = submitterInfoContent;
+
+          // Show the modal
+          document.getElementById("submitterInfoModal").classList.remove("hidden");
+        } else {
+          // Handle error (e.g., show a flash message)
+          console.error("Error fetching submitter info:", data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  function closeSubmitterInfoModal() {
+    document.getElementById("submitterInfoModal").classList.add("hidden");
+  }
 </script>
 
 {% endblock %} {% block main_content %}
@@ -272,6 +303,10 @@
             <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
               <i class="fa-solid fa-eye"></i>{{ _('Katsele') }}
             </a>
+            <!-- Button to show submitter info -->
+            <button type="button" class="button info-button" onclick="showSubmitterInfo('{{ demo._id }}')">
+              <i class="fa-solid fa-user"></i>{{ _('Näytä ilmoittajan tiedot') }}
+            </button>
             {% else %}
             <div class="insuffient-perm" style="color: white">
               <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei riittäviä oikeuksia mielenosoituksen katseluun.') }}
@@ -318,5 +353,51 @@
     </div>
   </div>
 </div>
+
+<!-- Modal for submitter info -->
+<div id="submitterInfoModal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close" onclick="closeSubmitterModal()">&times;</span>
+    <h3><i class="fa-solid fa-user"></i> {{ _('Ilmoittajan tiedot') }}</h3>
+    <div id="submitter-info-content">
+      <!-- Content will be filled by JS -->
+    </div>
+    <div class="button-container">
+      <button type="button" class="button" onclick="closeSubmitterModal()">{{ _('Sulje') }}</button>
+    </div>
+  </div>
+</div>
+<script>
+function showSubmitterInfo(demoId) {
+  fetch(`/admin/demo/get_submitter_info/${demoId}`)
+    .then(r => r.json())
+    .then(data => {
+      const modal = document.getElementById('submitterInfoModal');
+      const content = document.getElementById('submitter-info-content');
+      if (data.status === 'OK') {
+        const s = data.submitter;
+        content.innerHTML = `
+          <p><strong>Nimi:</strong> ${s.submitter_name}</p>
+          <p><strong>Sähköposti:</strong> ${s.submitter_email}</p>
+          <p><strong>Rooli:</strong> ${s.submitter_role}</p>
+          <p><strong>Hyväksynyt ehdot:</strong> ${s.accept_terms ? 'Kyllä' : 'Ei'}</p>
+          <p><strong>Ilmoitettu:</strong> ${s.submitted_at}</p>
+        `;
+      } else {
+        content.innerHTML = `<p style='color:red;'>${data.message || 'Tietoja ei löytynyt.'}</p>`;
+      }
+      modal.classList.remove('hidden');
+    })
+    .catch(() => {
+      const modal = document.getElementById('submitterInfoModal');
+      const content = document.getElementById('submitter-info-content');
+      content.innerHTML = `<p style='color:red;'>Virhe haettaessa tietoja.</p>`;
+      modal.classList.remove('hidden');
+    });
+}
+function closeSubmitterModal() {
+  document.getElementById('submitterInfoModal').classList.add('hidden');
+}
+</script>
 
 {% endblock %}

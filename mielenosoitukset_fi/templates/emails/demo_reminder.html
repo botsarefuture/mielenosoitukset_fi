@@ -1,0 +1,29 @@
+{#
+demo_reminder.html
+Email template for demonstration reminder.
+#}
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>Muistutus: {{ title }}</title>
+</head>
+<body>
+    <h2>Muistutus mielenosoituksesta</h2>
+    <p><strong>Otsikko:</strong> {{ title }}</p>
+    <p><strong>Päivämäärä:</strong> {{ date }}</p>
+    <p><strong>Aika:</strong> {{ start_time }}</p>
+    <p><strong>Kaupunki:</strong> {{ city }}</p>
+    <p><strong>Osoite:</strong> {{ address }}</p>
+    <hr>
+    {% if stage == 'week_before' %}
+    <p>Tämä on muistutus: mielenosoitus järjestetään viikon kuluttua.</p>
+    {% elif stage == 'day_before' %}
+    <p>Tämä on muistutus: mielenosoitus järjestetään huomenna.</p>
+    {% elif stage == 'day_of' %}
+    <p>Tämä on muistutus: mielenosoitus järjestetään tänään.</p>
+    {% endif %}
+    <p>Lisätiedot ja mahdolliset muutokset löydät osoitteesta:<br>
+    <a href="https://mielenosoitukset.fi/demonstration/{{ demo_id }}">https://mielenosoitukset.fi/demonstration/{{ demo_id }}</a></p>
+</body>
+</html>

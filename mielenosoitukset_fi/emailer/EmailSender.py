@@ -71,7 +71,8 @@ class EmailSender:
             time.sleep(5)  # Sleep for 5 seconds before checking the queue again
 
     def send_email(self, email_job):
-        """Sends an email using the details from the EmailJob instance.
+        """
+        Sends an email using the details from the EmailJob instance.
 
         Parameters
         ----------
@@ -101,20 +102,46 @@ class EmailSender:
                     self._config.MAIL_USE_TLS or True
                 )  # Default to True if not specified
 
-            msg = MIMEMultipart("alternative")
+            has_attachments = bool(getattr(email_job, "attachments", []))
+            if has_attachments:
+                msg = MIMEMultipart("mixed")
+                alt_part = MIMEMultipart("alternative")
+            else:
+                msg = MIMEMultipart("alternative")
+                alt_part = msg
+
             msg["Subject"] = email_job.subject
             msg["From"] = sender_address
             msg["To"] = ", ".join(email_job.recipients)
-
-            # Add a custom X-Mailer header
             msg["X-Mailer"] = f"{self._mailer_name}/{self._mailer_version}"
 
             if email_job.body:
-                msg.attach(MIMEText(email_job.body, "plain"))
+                alt_part.attach(MIMEText(email_job.body, "plain"))
             if email_job.html:
-                msg.attach(MIMEText(email_job.html, "html"))
+                alt_part.attach(MIMEText(email_job.html, "html"))
 
-            # Send the email using SMTP
+            if has_attachments:
+                msg.attach(alt_part)
+                for attachment in email_job.attachments:
+                    from email.mime.base import MIMEBase
+                    from email import encoders
+                    maintype, subtype = attachment["mime_type"].split("/")
+                    part = MIMEBase(maintype, subtype, name=attachment["filename"])
+                    part.set_payload(attachment["content"])
+                    encoders.encode_base64(part)
+                    part.add_header(
+                        "Content-Disposition",
+                        f'attachment; filename="{attachment["filename"]}"',
+                    )
+                    if attachment["mime_type"] == "text/calendar":
+                        part.add_header(
+                            "Content-Type",
+                            f'text/calendar; method=REQUEST; charset=UTF-8; name="{attachment["filename"]}"'
+                        )
+                    else:
+                        part.add_header("Content-Type", attachment["mime_type"])
+                    msg.attach(part)
+
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 if use_tls:
                     server.starttls()
@@ -125,7 +152,7 @@ class EmailSender:
             self._logger.error(f"Failed to send email: {str(e)}")
             # Optionally, requeue the email or log the error
 
-    def queue_email(self, template_name, subject, recipients, context, sender=None):
+    def queue_email(self, template_name, subject, recipients, context, sender=None, attachments=None):
         """Queues an email for sending using the provided template and context.
 
         Parameters
@@ -140,6 +167,8 @@ class EmailSender:
             A dictionary of context variables to render the email template.
         sender : Sender, optional
             An instance of the Sender class. Defaults to None.
+        attachments : list[dict], optional
+            List of attachments (dicts with filename, content, mime_type).
 
         Returns
         -------
@@ -148,10 +177,9 @@ class EmailSender:
         template = self._env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
-            subject=subject, recipients=recipients, body=body, html=body, sender=sender
+            subject=subject, recipients=recipients, body=body, html=body, sender=sender, attachments=attachments
         )
         retry_attempts = 3
-
         def attempt_insert(attempt):
             try:
                 self._queue_collection.insert_one(email_job.to_dict())
@@ -162,11 +190,9 @@ class EmailSender:
                     threading.Timer(3600, attempt_insert, [attempt + 1]).start()
                 else:
                     print("Max retry attempts reached. Email not queued.")
-                    # Optionally, handle the error (e.g., log to a file, notify admin, etc.)
-
         attempt_insert(0)
 
-    def send_now(self, template_name, subject, recipients, context, sender=None):
+    def send_now(self, template_name, subject, recipients, context, sender=None, attachments=None):
         """Sends an email immediately using the provided template and context.
 
         Parameters
@@ -181,6 +207,8 @@ class EmailSender:
             A dictionary of context variables to render the email template.
         sender : Sender, optional
             An instance of the Sender class. Defaults to None.
+        attachments : list[dict], optional
+            List of attachments (dicts with filename, content, mime_type).
 
         Returns
         -------
@@ -189,10 +217,9 @@ class EmailSender:
         template = self._env.get_template(template_name)
         body = template.render(context)
         email_job = EmailJob(
-            subject=subject, recipients=recipients, body=body, html=body, sender=sender
+            subject=subject, recipients=recipients, body=body, html=body, sender=sender, attachments=attachments
         )
         retry_attempts = 3
-
         def attempt_send(attempt):
             try:
                 self.send_email(email_job)
@@ -205,6 +232,17 @@ class EmailSender:
                     threading.Timer(3600, attempt_send, [attempt + 1]).start()
                 else:
                     print("Max retry attempts reached. Email not sent.")
-                    # Optionally, handle the error (e.g., log to a file, notify admin, etc.)
-
         attempt_send(0)
+
+    def _die_when_no_jobs(self):
+        """Waits until there are no email jobs in the queue, then stops the sender.
+
+        Returns
+        -------
+        bool
+            True if the queue became empty and the sender should stop, False otherwise.
+        """
+        while self._queue_collection.count_documents({}) > 0:
+            time.sleep(1)
+        self._logger.info("No email jobs in the queue. Stopping EmailSender.")
+        return True

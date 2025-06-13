@@ -1,5 +1,20 @@
 # Changelog
 
+## v3.1.0 – **The Reminder Revolution Edition** 🌟
+ 
+### 🌟 New Features
+- **Email Reminder System**: Added an email reminder system for demonstrations, including .ics calendar attachment compatible with Gmail and Google Calendar.
+- **Popup/Modal UI for Reminders**: Introduced a new UI for reminder subscription, with full light/dark mode and accessibility support.
+
+### 🛠️ Fixes
+- **Critical Crash Fixes**: Resolved issues causing app crashes during profile picture uploads and improved data synchronization.
+- **.ics Encoding and Attachment Fixes**: Fixed .ics encoding and attachment issues for calendar compatibility.
+
+### ✨ Updates
+- **Performance Optimization**: Migrated legacy features and optimized module interactions.
+- **Deprecation Guidelines Update**: Revised deprecation guidelines to align with the latest project standards.
+- **Email Sending Refactor**: Refactored email sending to support robust .ics attachments and production-ready error handling.
+
 ## v3.0.0 – **Evolution Edition** 🚀
  
 ### 🌟 New Features

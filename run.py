@@ -1,5 +1,7 @@
 import os
+import sys
 from mielenosoitukset_fi.app import create_app
+from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders
 
 app = create_app()
 
@@ -21,6 +23,12 @@ def main():
 
     The application is then started with the specified debug mode and port number.
     """
+    if len(sys.argv) > 1 and sys.argv[1] == "demo_sche":
+        # Usage: python3 run.py demo_sche test@example.com
+        override_email = sys.argv[2] if len(sys.argv) > 2 else None
+        send_reminders(override_email=override_email, force_all=True)
+        return
+
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in (

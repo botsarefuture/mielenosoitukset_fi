@@ -64,9 +64,17 @@ def should_send_reminder(demo_date, demo_time, now, stage):
         return False
     return False
 
-def main():
+
+def send_reminders(override_email=None, force_all=False):
     """
-    Main function to send demonstration reminders.
+    Send demonstration reminders to subscribers or to a specific email if override_email is given.
+
+    Parameters
+    ----------
+    override_email : str or None
+        If provided, send all reminders to this email address instead of the subscriber's email.
+    force_all : bool
+        If True, send all reminders regardless of timing.
     """
     db_manager = DatabaseManager().get_instance()
     db = db_manager.get_db()
@@ -81,17 +89,40 @@ def main():
             continue
         demo_obj = Demonstration.from_dict(demo)
         demo_date = datetime.strptime(demo_obj.date, "%Y-%m-%d").date()
-        demo_time = datetime.strptime(demo_obj.start_time, "%H:%M").time()
+        demo_time = parse_time_string(demo_obj.start_time)
         sent_stages = reminder.get("sent_stages", [])
         for stage, _ in REMINDER_STAGES:
-            if stage in sent_stages:
+            if stage in sent_stages and not override_email:
                 continue
-            if should_send_reminder(demo_date, demo_time, now, stage):
-                # Send email
+            if force_all or should_send_reminder(demo_date, demo_time, now, stage):
+                ical_event = generate_ical_event(
+                    title=demo_obj.title,
+                    start_date=demo_obj.date,
+                    start_time=demo_obj.start_time,
+                    city=demo_obj.city,
+                    address=demo_obj.address,
+                    description=getattr(demo_obj, 'description', None),
+                )
+                
+                # save ical event as an attachment
+                ical_event = ical_event.encode("utf-8")
+                with open(f"{demo_obj.title}_{demo_obj.date}.ics", "wb") as f:
+                    f.write(ical_event)
+                if isinstance(ical_event, str):
+                    ical_content = ical_event.encode("utf-8")
+                else:
+                    ical_content = ical_event
+                attachments = [
+                    {
+                        "filename": f"{demo_obj.title}_{demo_obj.date}.ics",
+                        "content": ical_content,
+                        "mime_type": "text/calendar"
+                    }
+                ]
                 email_sender.queue_email(
                     template_name="demo_reminder.html",
                     subject=f"Muistutus: {demo_obj.title} {demo_obj.date}",
-                    recipients=[reminder["user_email"]],
+                    recipients=[override_email or reminder["user_email"]],
                     context={
                         "title": demo_obj.title,
                         "date": demo_obj.date,
@@ -99,12 +130,88 @@ def main():
                         "city": demo_obj.city,
                         "address": demo_obj.address,
                         "stage": stage,
+                        "ical_event": ical_event,
+                        "demo_id": str(demo_obj._id),
                     },
+                    attachments=attachments
                 )
-                reminders.update_one(
-                    {"_id": reminder["_id"]},
-                    {"$push": {"sent_stages": stage}}
-                )
+                if not override_email and not force_all:
+                    reminders.update_one(
+                        {"_id": reminder["_id"]},
+                        {"$push": {"sent_stages": stage}}
+                    )
+    email_sender._die_when_no_jobs()
+    
+
+
+def parse_time_string(time_str):
+    """
+    Parse a time string in 'HH:MM' or 'HH:MM:SS' format.
+
+    Parameters
+    ----------
+    time_str : str
+        The time string to parse.
+
+    Returns
+    -------
+    datetime.time
+        The parsed time object.
+
+    Raises
+    ------
+    ValueError
+        If the time string is not in a recognized format.
+    """
+    from datetime import datetime
+    for fmt in ("%H:%M", "%H:%M:%S"):
+        try:
+            return datetime.strptime(time_str, fmt).time()
+        except ValueError:
+            continue
+    raise ValueError(f"Invalid time format: {time_str}")
+
+
+def generate_ical_event(title, start_date, start_time, city, address, description=None):
+    """
+    Generate an iCalendar (ICS) event string for a demonstration.
+
+    Parameters
+    ----------
+    title : str
+        Event title.
+    start_date : str
+        Event date in 'YYYY-MM-DD' format.
+    start_time : str
+        Event start time in 'HH:MM' or 'HH:MM:SS' format.
+    city : str
+        Event city.
+    address : str
+        Event address.
+    description : str, optional
+        Event description.
+
+    Returns
+    -------
+    str
+        iCalendar event as a string.
+    """
+    from datetime import datetime, timedelta
+    dt_fmt = "%Y%m%dT%H%M%S"
+    dt = datetime.strptime(f"{start_date} {start_time[:5]}", "%Y-%m-%d %H:%M")
+    dtend = dt + timedelta(hours=2)  # Default: 2h event
+    dtstart_str = dt.strftime(dt_fmt)
+    dtend_str = dtend.strftime(dt_fmt)
+    ical = f"""BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Mielenosoitukset.fi//EN\nBEGIN:VEVENT\nSUMMARY:{title}\nDTSTART:{dtstart_str}\nDTEND:{dtend_str}\nLOCATION:{address}, {city}\nDESCRIPTION:{description or ''}\nEND:VEVENT\nEND:VCALENDAR"""
+    return ical
+
+
+def main():
+    """
+    Main function to send demonstration reminders.
+    """
+    send_reminders()
+
 
 if __name__ == "__main__":
     main()

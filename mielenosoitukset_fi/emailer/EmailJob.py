@@ -68,9 +68,27 @@ class Sender:
 
 
 class EmailJob:
-    """The EmailJob class represents an email task, encapsulating all the details required to send an email."""
+    """The EmailJob class represents an email task, encapsulating all the details required to send an email.
 
-    def __init__(self, subject, recipients, body=None, html=None, sender=None):
+    Parameters
+    ----------
+    subject : str
+        The subject of the email.
+    recipients : list of str
+        List of recipient email addresses.
+    body : str, optional
+        Plain text body of the email.
+    html : str, optional
+        HTML content of the email.
+    sender : Sender, optional
+        Sender instance.
+    attachments : list of dict, optional
+        List of attachments, each as dict with keys: filename, content, mime_type.
+    """
+
+    def __init__(
+        self, subject, recipients, body=None, html=None, sender=None, attachments=None
+    ):
         """
         Initializes an EmailJob instance with the provided details.
 
@@ -80,12 +98,16 @@ class EmailJob:
             body (str, optional): The plain text body of the email. Defaults to None.
             html (str, optional): The HTML content of the email. Defaults to None.
             sender (Sender, optional): An instance of the Sender class. Defaults to None.
+            attachments (list[dict], optional): A list of attachments for the email. Each attachment
+                should be a dictionary containing 'filename', 'content', and 'mime_type' keys.
+                Defaults to None.
         """
         self.subject = subject
         self.recipients = recipients
         self.body = body
         self.html = html
         self.sender = sender  # Store a Sender instance if provided
+        self.attachments = attachments or []  # Initialize attachments as an empty list if None
 
     def to_dict(self):
         """Converts the EmailJob instance to a dictionary format for storage in a database."""
@@ -95,6 +117,7 @@ class EmailJob:
             "body": self.body,
             "html": self.html,
             "sender": self.sender.to_dict() if self.sender else None,
+            "attachments": self.attachments,
         }
 
     @classmethod
@@ -108,8 +131,8 @@ class EmailJob:
 
         Returns
         -------
-
-
+        EmailJob
+            The created EmailJob instance.
         """
         sender_data = data.get("sender")
         sender = Sender.from_dict(sender_data) if sender_data else None
@@ -119,4 +142,5 @@ class EmailJob:
             body=data.get("body"),
             html=data.get("html"),
             sender=sender,
+            attachments=data.get("attachments", []),
         )

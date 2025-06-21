@@ -81,9 +81,8 @@ def get_unapproved_demonstrations():
     today = datetime.now()
     has_unapproved = mongo.demonstrations.count_documents({
         "approved": False,
-        "hide": False,
-        "date": {"$gte": today.strftime("%Y-%m-%d")}
-    }) > 0
+        "hide": False
+        }) > 0
     return jsonify({"has_unapproved": has_unapproved}), 200
 
 @api_bp.route("/demonstration/<demo_id>", methods=["GET"])

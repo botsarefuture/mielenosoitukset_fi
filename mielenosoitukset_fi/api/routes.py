@@ -11,7 +11,7 @@ from mielenosoitukset_fi.api.exceptions import (
     BadRequestException,
     DemoNotApprovedException,
     DemoNotFoundException,
-    
+
 )
 
 # Database instance
@@ -81,6 +81,7 @@ def get_unapproved_demonstrations():
     today = datetime.now()
     has_unapproved = mongo.demonstrations.count_documents({
         "approved": False,
+        "hide": False,
         "date": {"$gte": today.strftime("%Y-%m-%d")}
     }) > 0
     return jsonify({"has_unapproved": has_unapproved}), 200

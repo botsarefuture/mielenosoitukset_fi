@@ -43,7 +43,72 @@ class RecurringDemonstration(Demonstration):
         save_flag=False,
         hide=False,
         created_until: Optional[datetime] = None,
+        cover_picture: str = None,  # Added field
     ):
+        """
+        Initialize a new recurring demonstration event.
+
+        Parameters
+        ----------
+        title : str
+            The title of the demonstration.
+        date : str
+            The date of the demonstration in YYYY-MM-DD format.
+        start_time : str
+            The start time of the demonstration in HH:MM format.
+        end_time : str
+            The end time of the demonstration in HH:MM format.
+        facebook : str
+            The Facebook event URL.
+        city : str
+            The city where the demonstration will take place.
+        address : str
+            The address of the demonstration location.
+        route : str
+            The route of the demonstration.
+        organizers : list, optional
+            A list of organizers for the demonstration. Defaults to None.
+        approved : bool, optional
+            Whether the demonstration is approved. Defaults to False.
+        linked_organizations : dict, optional
+            A dictionary of linked organizations. Defaults to None.
+        img : optional
+            An image for the demonstration. Defaults to None.
+        _id : optional
+            The ID of the demonstration. Defaults to None.
+        description : str, optional
+            A description of the demonstration. Defaults to None.
+        tags : list, optional
+            A list of tags for the demonstration. Defaults to None.
+        parent : ObjectId, optional
+            The parent ID for the demonstration. Defaults to None.
+        created_datetime : optional
+            The creation date and time of the demonstration. Defaults to None.
+        recurring : bool, optional
+            Whether the demonstration is recurring. Defaults to False.
+        topic : str, optional
+            The topic of the demonstration. Defaults to None.
+        type : str, optional
+            The type of the demonstration. Defaults to None.
+        repeat_schedule : RepeatSchedule, optional
+            The repeat schedule for the demonstration. Defaults to None.
+        repeating : bool, optional
+            Whether the demonstration is repeating. Defaults to False.
+        latitude : str, optional
+            The latitude of the demonstration location. Defaults to None.
+        longitude : str, optional
+            The longitude of the demonstration location. Defaults to None.
+        event_type : optional
+            The event type. Defaults to None.
+        save_flag : bool, optional
+            Whether to save the demonstration. Defaults to False.
+        hide : bool, optional
+            Whether to hide the demonstration. Defaults to False.
+        created_until : Optional[datetime], optional
+            The date until which the demonstration is created. Defaults to None.
+        cover_picture : str, optional
+            URL of the cover picture for the event. Defaults to None.
+        """
 
         super().__init__(
             title,
@@ -73,6 +138,7 @@ class RecurringDemonstration(Demonstration):
             event_type=event_type,
             save_flag=save_flag,
             hide=hide,
+            cover_picture=cover_picture,  # Pass to parent
         )
 
         # Set created_until to now if not provided

@@ -84,6 +84,8 @@ class Demonstration(BaseModel):
         URL of the preview image for the event. Defaults to None.
     merged_into : ObjectId, optional
         ID of the demonstration this one is merged into. Defaults to None.
+    cover_picture : str, optional
+        URL of the cover picture for the event. Defaults to None.
 
     Notes
     -----
@@ -139,6 +141,7 @@ class Demonstration(BaseModel):
         in_past=False,
         preview_image: str = None,
         merged_into: ObjectId = None,  # Added parameter
+        cover_picture: str = None,  # Added field
     ):
         """
         Initialize a new demonstration event.
@@ -208,6 +211,8 @@ class Demonstration(BaseModel):
             URL of the preview image for the event. Defaults to None.
         merged_into : ObjectId, optional
             ID of the demonstration this one is merged into. Defaults to None.
+        cover_picture : str, optional
+            URL of the cover picture for the event. Defaults to None.
 
         Notes
         -----
@@ -315,6 +320,7 @@ class Demonstration(BaseModel):
             self.save_flag = True # Save the demonstration to update the preview image
         
         self.merged_into = merged_into  # Assign new parameter
+        self.cover_picture = cover_picture
 
         if self.save_flag:  # Save the demonstration if the save_flag is set
             self.save()  # Save the demonstration

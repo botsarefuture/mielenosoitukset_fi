@@ -399,6 +399,18 @@
                 value="{{ demo.repeat_schedule.end_date if demo else '' }}">
         </div>
 
+        <!-- Cover Photo URL and Upload -->
+        <div class="form-group">
+            <label for="cover_picture">Cover Photo</label>
+            <input type="text" id="cover_picture" name="cover_picture" class="form-control" value="{{ demo.cover_picture if demo and demo.cover_picture else '' }}" placeholder="Enter image URL or upload below">
+            <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2">
+            {% if demo and demo.cover_picture %}
+            <div class="mt-2">
+                <img src="{{ demo.cover_picture }}" alt="Cover Photo Preview" style="max-width: 300px; max-height: 200px;">
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Submit Button -->
         <div class="text-center">
             <button type="submit" class="btn btn-submit mt-3">{{ submit_button_text }}</button>

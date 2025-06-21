@@ -434,6 +434,11 @@ h1 {
 
 {% block content %}
 <div class="container-main-content">
+  {% if tag and tag.cover_picture %}
+  <div class="tag-cover-picture">
+    <img src="{{ tag.cover_picture }}" alt="Tag Cover Photo" style="width:100%;max-height:300px;object-fit:cover;">
+  </div>
+  {% endif %}
   <div class="tag-banner">
     <div class="tag-label">
       <i class="fa-solid fa-hashtag"></i>

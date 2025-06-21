@@ -206,6 +206,20 @@
             <input type="url" id="facebook" name="facebook" class="form-control"
                 value="{{ demo.facebook if demo and demo.facebook else '' }}">
         </div>
+        <div class="form-group">
+            <label for="cover_picture">{{ _('Kansikuva') }}</label>
+            <input type="text" id="cover_picture" name="cover_picture" class="form-control"
+            value="{{ demo.cover_picture if demo and demo.cover_picture else '' }}"
+            placeholder="{{ _('Syötä kuvan URL tai lataa alla') }}">
+            <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2">
+            {% if demo and demo.cover_picture %}
+            <div class="mt-2">
+            <img src="{{ demo.cover_picture }}" alt="{{ _('Kansikuvan esikatselu') }}"
+                style="max-width: 300px; max-height: 200px;">
+            </div>
+            {% endif %}
+        </div>
+
         {% include "paikkakunta-dropdown.html" %}
         <!-- Address Field -->
         <div class="form-group">

@@ -406,22 +406,22 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
 
 
 def collect_demo_data(request):
-    """Collect demonstration data from the request form.
+    """
+    Collect demonstration data from the request form, including cover picture support.
 
-    This function extracts and returns relevant data from the submitted form.
+    This function extracts and returns relevant data from the submitted form, including
+    handling a cover picture as a file upload or URL.
 
     Parameters
     ----------
-    request :
-        The incoming request object containing form data.
+    request : flask.Request
+        The incoming request object containing form data and files.
 
     Returns
     -------
-
-
+    dict
+        Dictionary of demonstration data, including the cover_picture field if provided.
     """
-    # We could basically just get the demo id and then use the same function as in the edit_demo functiot
-
     # Collect basic form data
     title = request.form.get("title")
     date = request.form.get("date")
@@ -452,6 +452,20 @@ def collect_demo_data(request):
     if longitude and not is_valid_longitude(longitude):
         raise ValueError(_("Virheellinen pituusaste."))
 
+    # Handle cover picture (file upload or URL)
+    cover_picture = request.form.get("cover_picture")
+    file = request.files.get("cover_picture_file")
+    if file and file.filename:
+        import os
+        from werkzeug.utils import secure_filename
+        static_dir = os.path.join(os.path.dirname(__file__), '../../static/demo_preview')
+        os.makedirs(static_dir, exist_ok=True)
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(static_dir, filename)
+        file.save(file_path)
+        # Use a URL relative to static
+        cover_picture = f"/static/demo_preview/{filename}"
+
     return {
         "title": title,
         "date": date,
@@ -468,6 +482,7 @@ def collect_demo_data(request):
         "description": description,
         "latitude": latitude,
         "longitude": longitude,
+        "cover_picture": cover_picture,  # Add cover_picture to output
     }
 
 

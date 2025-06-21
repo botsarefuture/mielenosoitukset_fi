@@ -9,7 +9,9 @@ from flask_cors import CORS
 from mielenosoitukset_fi.api.exceptions import (
     ApiException,
     BadRequestException,
+    DemoNotApprovedException,
     DemoNotFoundException,
+    
 )
 
 # Database instance
@@ -66,7 +68,22 @@ def get_demonstrations():
     filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
 
     return jsonify(filtered_demonstrations), 200
+@api_bp.route("/unapproved-demonstrations", methods=["GET"])
+def get_unapproved_demonstrations():
+    """
+    Check if there are unapproved demonstrations that are not in the past.
 
+    Returns
+    -------
+    flask.Response
+        JSON response with a boolean field 'has_unapproved' indicating if there are unapproved demonstrations.
+    """
+    today = datetime.now()
+    has_unapproved = mongo.demonstrations.count_documents({
+        "approved": False,
+        "date": {"$gte": today.strftime("%Y-%m-%d")}
+    }) > 0
+    return jsonify({"has_unapproved": has_unapproved}), 200
 
 @api_bp.route("/demonstration/<demo_id>", methods=["GET"])
 def get_demonstration_detail(demo_id):

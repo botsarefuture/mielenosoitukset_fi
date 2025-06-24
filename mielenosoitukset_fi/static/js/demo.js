@@ -15,7 +15,17 @@ function setup_grid_navigation(selector = '.grid-item') {
     document.querySelectorAll(selector).forEach(item => {
         item.addEventListener('click', function(e) {
             if (!e.target.closest('a')) {
-                window.location.href = this.getAttribute('data-href');
+                const href = this.getAttribute('data-href');
+                try {
+                    const url = new URL(href, window.location.origin);
+                    if (url.origin === window.location.origin) {
+                        window.location.href = url.href;
+                    } else {
+                        console.error('Invalid URL:', href);
+                    }
+                } catch (e) {
+                    console.error('Malformed URL:', href);
+                }
             }
         });
     });

@@ -1,13 +1,13 @@
 APScheduler==3.11.0
 boto3==1.35.30
 botocore==1.35.70
-Flask==3.1.0
+Flask==3.1.1
 flask_babel==4.0.0
 Flask_Cors==5.0.0
 Flask_Limiter==3.8.0
 Flask_Login==0.6.3
 itsdangerous==2.2.0
-Jinja2==3.1.4
+Jinja2==3.1.6
 Pillow==11.0.0
 PyJWT==2.10.1
 pymongo==4.6.3
@@ -15,7 +15,7 @@ pyotp==2.9.0
 pyqrcode==1.2.1
 python_dateutil==2.8.2
 PyYAML==6.0.2
-Requests==2.32.3
+Requests==2.32.4
 Werkzeug==3.1.3
 flask_autosec @ git+https://github.com/botsarefuture/flask_autosec.git@main
 imgkit==1.2.0

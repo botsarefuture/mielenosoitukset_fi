@@ -110,13 +110,24 @@
 </div>
 
 <script>
+    function escapeHTML(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
     function navigateToPage(pageNumber) {
         const pages = document.querySelectorAll('page');
         const form = document.getElementById('signup-form');
         const hiddenRoles = document.getElementById('hidden-roles');
         if (pageNumber === 4) {
             const selectedRoles = Array.from(form.querySelectorAll('input[name="roles"]:checked'))
-                .map(input => input.nextElementSibling.textContent.trim());
+                .map(input => escapeHTML(input.nextElementSibling.textContent.trim()));
             const reviewRoles = document.getElementById('review-roles');
             reviewRoles.innerHTML = selectedRoles.length
                 ? selectedRoles.map(role => `<li>${role}</li>`).join('')

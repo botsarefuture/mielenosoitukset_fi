@@ -748,11 +748,16 @@ document.addEventListener("DOMContentLoaded", function() {
             currentCities.push(selectedCity);
             selectedCitiesInput.val(currentCities.join(","));
             const filterDiv = $("<div>")
-              .addClass("filter")
-              .html(`<span>{{ _('Kaupunki') }}: ${selectedCity}</span>
-                <a href="#" data-city="${selectedCity}">
-                  <i class="fas fa-times"></i>
-                </a>`);
+              .addClass("filter");
+            filterDiv.append(
+              $("<span>").text(`{{ _('Kaupunki') }}: ${selectedCity}`)
+            );
+            filterDiv.append(
+              $("<a>")
+                .attr("href", "#")
+                .attr("data-city", selectedCity)
+                .append($("<i>").addClass("fas fa-times"))
+            );
             filters.append(filterDiv);
             filterDiv.find("a").on("click", function (event) {
               event.preventDefault();

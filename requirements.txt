@@ -1,5 +1,5 @@
 APScheduler==3.11.0
-boto3==1.35.30
+boto3==1.38.43
 botocore==1.35.70
 Flask==3.1.1
 flask_babel==4.0.0

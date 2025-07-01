@@ -11,6 +11,7 @@
     box-sizing: border-box;
 }
 
+
 h2 {
     color: var(--primary_color); /* Dark Blue */
     margin-bottom: 20px; /* Space below the heading */

@@ -1,0 +1,100 @@
+{% extends 'admin_base.html' %}
+
+
+{% block styles %}
+<style>
+    .info-section {
+        margin-top: 30px;
+        padding: 15px;
+        border: 1px solid var(--border_color);
+        border-radius: 5px;
+        background: var(--container_background);
+        display: flex;
+        align-items: center;
+    }
+
+    .info-section h3 {
+        margin-top: 0;
+    }
+
+    .info-section p {
+        margin: 5px 0;
+        flex: 1;
+    }
+
+    .warning-icon {
+        font-size: 36px;
+        color: #ffcc00;
+        margin-right: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<h2>{{ _('Hallintatyökalut') }}</h2>
+<div class="info-grid">
+    <div class="info-section">
+        <span class="warning-icon">⚠️</span>
+        <div>
+            <h3>{{ _('Huomio') }}</h3>
+            <p>{{ _('Olet kirjautunut sisään superkäyttäjänä. Sinulla on laajat oikeudet, ja kaikki tekemäsi toimenpiteet voidaan jäljittää sinuun. Ole huolellinen käyttäessäsi näitä oikeuksia.') }}</p>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <span class="warning-icon">🔒</span>
+        <div>
+            <h3>{{ _('Tietoturva') }}</h3>
+            <p>{{ _('Pidä käyttäjätietosi turvassa. Älä jaa salasanaasi kenellekään.') }}</p>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <span class="warning-icon">🔧</span>
+        <div>
+            <h3>{{ _('Ylläpito') }}</h3>
+            <p>{{ _('Jos kohtaat ongelmia, ota yhteyttä ylläpitoon.') }}</p>
+            <p>Kiireellisissä asioissa helpdesk: 
+                <a href="tel:+358123456789">+358 123 456 789</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <span class="warning-icon">📊</span>
+        <div>
+            <h3>{{ _('Tilastot') }}</h3>
+            <p>{{ _('Tarkastele sivuston tilastoja ja käyttäjämääriä.') }}</p>
+            <button class="button" onclick="window.location.href='{{ url_for('admin.stats') }}'">
+                <i class="fas fa-chart-line"></i>
+                {{ _('Tilastot') }}
+            </button>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <span class="warning-icon">📧</span>
+        <div>
+            <h3>{{ _('Käyttäjät') }}</h3>
+            <p>{{ _('Hallitse käyttäjiä ja heidän tietojaan.') }}</p>
+            <button class="button" onclick="window.location.href='{{ url_for('admin_user.user_control') }}'">
+                <i class="fas fa-users"></i>
+                {{ _('Käyttäjät') }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+
+
+{% endblock %}

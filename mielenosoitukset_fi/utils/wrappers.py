@@ -78,8 +78,10 @@ def admin_required(f):
 
     return decorated_function
 
+def has_demo_permission(current_user, _id, permission_name):
+    raise NotImplementedError("This function hasn't been implemented yet.")
 
-def permission_required(permission_name):
+def permission_required(permission_name, _id=None, _type=None):
     """Decorator to enforce specific permission requirements for route access.
 
     This decorator checks:
@@ -150,9 +152,16 @@ def permission_required(permission_name):
                 logger.info("Global admin access granted.")
                 return f(*args, **kwargs)
 
+            if _type == "DEMONSTRATION":
+                has = has_demo_permission(current_user, _id, permission_name)
+                if has:
+                    f(*args, **kwargs)
+                    
+                                
             # Check if the user has the specified permission via user role permissions
             if current_user.has_permission(
-                permission_name
+                permission_name,
+                _id
             ):  # DEPRACED: Use has_permission instead
                 logger.info(
                     f"User {current_user.username} has permission '{permission_name}' via role."

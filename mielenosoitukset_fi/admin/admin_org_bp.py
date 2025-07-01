@@ -13,20 +13,21 @@ v2.4.0:
 """
 
 from bson.objectid import ObjectId
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
+from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.validators import valid_email
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from .utils import log_admin_action, mongo, get_org_name as get_organization_name
-from mielenosoitukset_fi.utils.classes import Organization
+from mielenosoitukset_fi.utils.classes import Organization, MemberShip
 
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
-from .utils import AdminActParser, log_admin_action_V2
+from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
 
 @admin_org_bp.before_request
@@ -107,7 +108,7 @@ def organization_control():
     )  # Admin action logging has been in use since V2.4.0, and it helps us keep track who did what.
 
     org_limiter = (
-        [ObjectId(org.get("org_id")) for org in current_user.organizations]
+        [ObjectId(org) for org in current_user.org_ids()]
         if not current_user.global_admin
         else None
     )
@@ -118,7 +119,7 @@ def organization_control():
     organizations = mongo.organizations.find(query)
 
     return render_template(
-        "admin/organizations/dashboard.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}organizations/dashboard.html",
         organizations=organizations,
         search_query=search_query,
     )
@@ -173,6 +174,12 @@ def edit_organization(org_id):
 
 
     """
+    if not current_user.has_permission("EDIT_ORGANIZATION", org_id):
+        log_admin_action(
+            current_user, "Edit Organization (insuffient permissions)", f"Tried editing organization {org_id}")
+        abort(403)
+        
+        
     log_admin_action(
         current_user, "Edit Organization", f"Editing organization {org_id}"
     )
@@ -185,9 +192,9 @@ def edit_organization(org_id):
                 current_user, "Update Organization", f"Updated organization {org_id}"
             )
             flash_message(_("Organisaatio päivitetty onnistuneesti."))
-            return redirect(url_for("admin_org.organization_control"))
+            return redirect(request.referrer)
 
-    return render_template("admin/organizations/form.html", organization=organization)
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html", organization=organization)
 
 
 def invite_to_organization(invitee_email, organization_id):
@@ -358,7 +365,7 @@ def create_organization():
             )  # Removed gettext as it is not needed here.
             return redirect(url_for("admin_org.organization_control"))
 
-    return render_template("admin/organizations/form.html")
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html")
 
 
 def insert_organization(org_data=None):
@@ -473,7 +480,7 @@ def confirm_delete_organization(org_id):
         return redirect(url_for("admin_org.organization_control"))
 
     return render_template(
-        "admin/organizations/confirm_delete.html", organization=organization
+        f"{_ADMIN_TEMPLATE_FOLDER}organizations/confirm_delete.html", organization=organization
     )
 
 
@@ -516,4 +523,67 @@ def view_organization(org_id):
     """
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
     organization = Organization.from_dict(organization)
-    return render_template("admin/organizations/view.html", organization=organization)
+    
+    
+    memberships = MemberShip.all_in_organization(organization_id=ObjectId(org_id))
+    members = []
+    for m in memberships:
+        user = User.from_OID(m.user_id)
+        user.role = m.role
+        user.permissions = m.permissions
+        user._ship_id = m._id
+        members.append(user)
+
+    
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}organizations/view.html",
+        organization=organization,
+        memberships=members
+    )
+
+@admin_org_bp.route("/api/change_access_level/", methods=["POST"])
+@admin_required
+def change_access_level():
+    data = request.json
+
+    user_id = data.get("user_id")
+    organization_id = data.get("organization_id")
+    role = data.get("role")
+    
+    if not role in ["member", "admin", "owner"]:
+        return jsonify({"error": "Invalid role. Role must be one of these: \n'member', 'admin', 'owner'"}), 400
+        
+    
+    
+    organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+    organization = Organization.from_dict(organization)
+    
+    if organization.is_member(None, user_id):
+        organization.update_member(user_id, role)
+    
+    else:
+        flash_message("Ei käyttäjää.", "error")
+    
+
+    
+    return jsonify({"status": "OK"}), 200
+
+@admin_org_bp.route("/api/delete_membership/", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_ORGANIZATION")
+def delete_membership():
+    # TODO: #342 require admin or owner level access to the organization, or global level edit_organization access, or superuser status.
+    
+    data = request.get_json()
+    membership_id = data.get("membership_id")
+
+    if not membership_id:
+        return jsonify({"error": "Membership ID puuttuu"}), 400
+
+    result = mongo.memberships.delete_one({"_id": ObjectId(membership_id)})
+    
+    if result.deleted_count == 1:
+        return jsonify({"message": "Käyttäjä poistettu organisaatiosta"}), 200
+    else:
+        return jsonify({"error": "Poisto epäonnistui"}), 500

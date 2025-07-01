@@ -1,0 +1,712 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<!-- Include CSS and JS files -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/submit.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo_checkbox.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
+<!-- Include Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .alert.alert-info {
+        background: var(--alert_bg);
+        color: var(--black);
+        padding: 1em;
+        text-align: center;
+    }
+
+    .alert h2 {
+        color: var(--danger_bg);
+        background: var(--alert_text);
+        padding: 1em;
+        border-radius: 0.5em;
+        margin-top: 0;
+    }
+
+    .alert>p:nth-child(2) {
+        text-transform: uppercase;
+        color: var(--secondary_color);
+    }
+
+    .alert #ok.button {
+        border: var(--danger_text) 3px dashed;
+        padding: 0.5em 1em;
+        border-radius: 0.5em;
+        cursor: pointer;
+
+        background: var(--secondary_button_color);
+        margin-top: 0.5em;
+    }
+
+    .alert #ok.button:hover {
+        background: var(--secondary_button_hover_color);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+<!-- Include Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+
+<script>
+    let tagCount = {{ demo.tags | length | tojson }};
+
+    // Lisää uusi tägi
+    document.getElementById('add-tag-btn').addEventListener('click', function () {
+        tagCount++;
+        const newTagInput = document.createElement('input');
+        newTagInput.type = 'text';
+        newTagInput.id = `tag_${tagCount}`;
+        newTagInput.name = `tag_${tagCount}`;
+        newTagInput.className = 'form-control tag-input';
+        newTagInput.placeholder = '{{ _("Lisää tagi") }}';
+        newTagInput.required = true;
+        const remButton = document.createElement('button');
+        remButton.className = "circle-btn";
+        remButton.id = `remove_tag_${tagCount}`;
+        remButton.addEventListener("click", function () {
+            remove(tagCount);
+        })
+        remButton.innerHTML = '<i class="fa fa-times"></i>'
+        document.getElementById('tags-container').appendChild(newTagInput);
+        document.getElementById('tags-container').appendChild(remButton);
+    });
+</script>
+
+<script>
+    // City Selector JS functions
+    function selectCity(city) {
+        document.querySelector('.dropbtn').textContent = city;
+        document.getElementById('selected-city').value = city;
+        document.getElementById('dropdown-content').style.display = 'none';
+    }
+
+    function filterFunction() {
+        let input, filter, div, a;
+        input = document.getElementById('searchInput');
+        filter = input.value.toUpperCase();
+        div = document.getElementById('dropdown-content');
+        a = div.getElementsByTagName('a');
+        for (let i = 0; i < a.length; i++) {
+            let txtValue = a[i].textContent || a[i].innerText;
+            a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    // Organizer JS functions
+    let organizerCount = {{ (demo.organizers | length if demo and demo.organizers else 0) | tojson }};
+
+    function addOrganizer() {
+        const selectedOrgId = document.getElementById('organization').value;
+        if (selectedOrgId) {
+            organizerCount++;
+            const newOrganizer = document.createElement('div');
+            newOrganizer.className = 'form-group organizer-item';
+            newOrganizer.innerHTML = `
+                <hr>
+                <label for="organizer_name_${organizerCount}_">{{ _('Järjestäjätahon nimi') }}</label>
+                <input type="text" id="organizer_name_${organizerCount}_" name="organizer_name_${organizerCount}_" class="form-control disabled" disabled="disabled" value="{{ _('Täytetään automaattisesti') }}">
+                <label for="organizer_website_${organizerCount}_">{{ _('Nettisivu') }}</label>
+                <input type="url" id="organizer_website_${organizerCount}_" name="organizer_website_${organizerCount}_" class="form-control disabled" disabled="disabled" value="{{ _('Täytetään automaattisesti') }}">
+                <label for="organizer_email_${organizerCount}_">{{ _('Sähköposti') }}</label>
+                <input type="email" id="organizer_email_${organizerCount}_" name="organizer_email_${organizerCount}_" class="form-control disabled" disabled="disabled" value="{{ _('Täytetään automaattisesti') }}">
+                <label for="organizer_id_${organizerCount}">{{ _('Organisaation ID') }}</label>
+                <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedOrgId}">
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
+            `;
+            document.getElementById('organizers-container').appendChild(newOrganizer);
+        } else {
+            alert('{{ _("Valitse ensin järjestö!") }}');
+        }
+    }
+
+    function removeOrganizer(button) {
+        button.closest('.organizer-item').remove();
+    }
+</script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+<script>
+    function remove(id) {
+        tagElement = document.getElementById(`tag_${id}`);
+        console.log(tagElement);
+        tagElement.parentNode.removeChild(tagElement);
+        tagElement = null;
+
+        removeButton = document.getElementById(`remove_tag_${id}`);
+        removeButton.parentNode.removeChild(removeButton);
+        removeButton = null;
+    }
+</script>
+{% endblock %}
+
+{% block main_content %}
+<!-- Main content container -->
+<div class="container container-form">
+    {% if edit_demo_with_token is defined and edit_demo_with_token %}
+    <div id="alert1" class="alert alert-info" role="alert">
+        <h2>{{ _('HUOMIO!') }}</h2>
+        <p>{{ _('Olet muokkaamassa mielenosoitusta muokkauslinkillä.') }}</p>
+        <details>
+            <summary>{{ _('Lisätietoja') }}</summary>
+            <p>{{ _('Muokkauslinkillä myöskin he joilla ei ole käyttäjätiliä sivustolle, voivat muokata
+                mielenosoituksia.
+                Muokkauslinkillä muokkaus on rajoitettua.') }}</p>
+        </details>
+        <button id="ok" class="button" onclick="document.getElementById('alert1').remove()">{{ _('OK')
+            }}</button>
+    </div>
+    {% endif %}
+    <h2 class="admin-section-title form-title">{{ title }}</h2>
+    <form method="POST" action="{{ form_action }}">
+        <!-- Form fields with required indicators -->
+        <div class="form-group">
+            <label for="title">{{ _('Otsikko') }} <span class="required">*</span></label>
+            <input type="text" id="title" name="title" class="form-control"
+                value="{{ demo.title if demo and demo.title else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="date">{{ _('Päivämäärä (pp.kk.vvvv)') }} <span class="required">*</span></label>
+            <input type="text" id="date" name="date" class="form-control"
+                value="{{ demo.date if demo and demo.date else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="start_time">{{ _('Alkamisaika') }} <span class="required">*</span></label>
+            <input type="text" id="start_time" name="start_time" class="form-control"
+                value="{{ demo.start_time if demo and demo.start_time else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="end_time">{{ _('Päättymisaika') }}</label>
+            <input type="text" id="end_time" name="end_time" class="form-control"
+                value="{{ demo.end_time if demo and demo.end_time else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="tags">{{ _('Tägit') }}</label>
+            <div id="tags-container">
+                {% if demo and demo.tags %}
+                {% for tag in demo.tags %}
+                <input type="text" id="tag_{{ loop.index }}" name="tag_{{ loop.index }}" class="form-control tag-input"
+                    value="{{ tag }}" placeholder="{{ _('Lisää tagi') }}" required>
+                <button class="circle-btn" id="remove_tag_{{ loop.index }}"
+                    onclick="remove({{ loop.index | tojson }})"><i class="fa fa-times"></i></button>
+                {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-primary mt-2" id="add-tag-btn">{{ _('Lisää uusi tagi') }}</button>
+        </div>
+        <div class="form-group">
+            <label for="facebook">{{ _('Facebook linkki') }}</label>
+            <input type="url" id="facebook" name="facebook" class="form-control"
+                value="{{ demo.facebook if demo and demo.facebook else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="cover_picture">{{ _('Kansikuva') }}</label>
+            <input type="text" id="cover_picture" name="cover_picture" class="form-control"
+            value="{{ demo.cover_picture if demo and demo.cover_picture else '' }}"
+            placeholder="{{ _('Syötä kuvan URL tai lataa alla') }}">
+            <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2">
+            {% if demo and demo.cover_picture %}
+            <div class="mt-2">
+            <img src="{{ demo.cover_picture }}" alt="{{ _('Kansikuvan esikatselu') }}"
+                style="max-width: 300px; max-height: 200px;">
+            </div>
+            {% endif %}
+        </div>
+
+        {% include "paikkakunta-dropdown.html" %}
+        <!-- Address Field -->
+        <div class="form-group">
+            <label for="address">{{ _('Osoite') }} <span class="required">*</span></label>
+            <input type="text" id="address" name="address" class="form-control"
+                value="{{ demo.address if demo and demo.address else '' }}" required>
+        </div>
+
+        <!-- Event Type Selector -->
+        <div class="form-group">
+            <label for="type">{{ _('Tyyppi') }} <span class="required">*</span></label>
+            <select id="type" name="type" class="form-control" required>
+                <option value="MARCH" {% if demo and demo.event_type=='MARCH' %}selected{% endif %}>{{ _('Marssi') }}
+                </option>
+                <option value="STAY_STILL" {% if demo and demo.event_type=='STAY_STILL' %}selected{% endif %}>{{
+                    _('Paikallaan') }}</option>
+                <option value="ROAD_BLOCK" {% if demo and demo.event_type=='ROAD_BLOCK' %}selected{% endif %}>{{
+                    _('Tieblokki') }}</option>
+                <option value="OTHER" {% if demo and demo.event_type=='OTHER' %}selected{% endif %}>{{ _('Muut') }}
+                </option>
+            </select>
+        </div>
+
+        <!-- March Route Input -->
+        <div id="march-route-container" class="form-group" {% if demo and demo.event_type !='MARCH'
+            %}style="display:none;" {% endif %}>
+            <label for="route">{{ _('Reitti (marssin)') }}</label>
+            <input type="text" id="route" name="route" class="form-control"
+                value="{{ demo.route if demo and demo.route else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="description">{{ _('Kuvaus') }}</label>
+            <div>
+                <div class="main-container">
+                    <div class="editor-container editor-container_classic-editor editor-container_include-block-toolbar"
+                        id="editor-container">
+                        <div class="editor-container__editor">
+                            <div id="editor">{{ demo.description if demo and demo.description else '' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script type="importmap">
+            {
+                "imports": {
+                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+                }
+            }
+            </script>
+            <script type="module">
+                
+                import {
+                    ClassicEditor,
+                    AccessibilityHelp,
+                    Autoformat,
+                    AutoImage,
+                    Autosave,
+                    BalloonToolbar,
+                    BlockQuote,
+                    BlockToolbar,
+                    Bold,
+                    CloudServices,
+                    Essentials,
+                    Heading,
+                    ImageBlock,
+                    ImageCaption,
+                    ImageInline,
+                    ImageInsertViaUrl,
+                    ImageResize,
+                    ImageStyle,
+                    ImageTextAlternative,
+                    ImageToolbar,
+                    ImageUpload,
+                    Indent,
+                    IndentBlock,
+                    Italic,
+                    Link,
+                    LinkImage,
+                    List,
+                    ListProperties,
+                    MediaEmbed,
+                    Paragraph,
+                    PasteFromOffice,
+                    SelectAll,
+                    Table,
+                    TableCaption,
+                    TableCellProperties,
+                    TableColumnResize,
+                    TableProperties,
+                    TableToolbar,
+                    TextTransformation,
+                    TodoList,
+                    Underline,
+                    Undo
+                } from 'ckeditor5';
+
+                const editorConfig = {
+                    toolbar: {
+                        items: [
+                            'undo',
+                            'redo',
+                            '|',
+                            'heading',
+                            '|',
+                            'bold',
+                            'italic',
+                            'underline',
+                            '|',
+                            'link',
+                            'mediaEmbed',
+                            'insertTable',
+                            'blockQuote',
+                            '|',
+                            'bulletedList',
+                            'numberedList',
+                            'todoList',
+                            'outdent',
+                            'indent'
+                        ],
+                        shouldNotGroupWhenFull: true // Enable grouping when toolbar is full
+                    },
+                    plugins: [
+                        AccessibilityHelp,
+                        Autoformat,
+                        AutoImage,
+                        Autosave,
+                        BalloonToolbar,
+                        BlockQuote,
+                        BlockToolbar,
+                        Bold,
+                        CloudServices,
+                        Essentials,
+                        Heading,
+                        ImageBlock,
+                        ImageCaption,
+                        ImageInline,
+                        ImageInsertViaUrl,
+                        ImageResize,
+                        ImageStyle,
+                        ImageTextAlternative,
+                        ImageToolbar,
+                        ImageUpload,
+                        Indent,
+                        IndentBlock,
+                        Italic,
+                        Link,
+                        LinkImage,
+                        List,
+                        ListProperties,
+                        MediaEmbed,
+                        Paragraph,
+                        PasteFromOffice,
+                        SelectAll,
+                        Table,
+                        TableCaption,
+                        TableCellProperties,
+                        TableColumnResize,
+                        TableProperties,
+                        TableToolbar,
+                        TextTransformation,
+                        TodoList,
+                        Underline,
+                        Undo
+                    ],
+                    balloonToolbar: ['bold', 'italic', '|', 'link', '|', 'bulletedList', 'numberedList'],
+                    blockToolbar: ['bold', 'italic', '|', 'link', 'insertTable', '|', 'bulletedList', 'numberedList', 'outdent', 'indent'],
+                    heading: {
+                        options: [
+                            {
+                                model: 'paragraph',
+                                title: 'Leipäteksti',
+                                class: 'ck-heading_paragraph'
+                            },
+                            {
+                                model: 'heading1',
+                                view: 'h1',
+                                title: 'Otsikko 1',
+                                class: 'ck-heading_heading1'
+                            },
+                            {
+                                model: 'heading2',
+                                view: 'h2',
+                                title: 'Otsikko 2',
+                                class: 'ck-heading_heading2'
+                            },
+                            {
+                                model: 'heading3',
+                                view: 'h3',
+                                title: 'Otsikko 3',
+                                class: 'ck-heading_heading3'
+                            },
+                            {
+                                model: 'heading4',
+                                view: 'h4',
+                                title: 'Otsikko 4',
+                                class: 'ck-heading_heading4'
+                            },
+                            {
+                                model: 'heading5',
+                                view: 'h5',
+                                title: 'Otsikko 5',
+                                class: 'ck-heading_heading5'
+                            },
+                            {
+                                model: 'heading6',
+                                view: 'h6',
+                                title: 'Otsikko 6',
+                                class: 'ck-heading_heading6'
+                            }
+                        ]
+                    },
+                    image: {
+                        toolbar: [
+                            'toggleImageCaption',
+                            'imageTextAlternative',
+                            '|',
+                            'imageStyle:inline',
+                            'imageStyle:wrapText',
+                            'imageStyle:breakText',
+                            '|',
+                            'resizeImage'
+                        ]
+                    },
+                    initialData:
+                        '<h1>Tähän voit syöttää mielenosoituksen tarkemmat tiedot &lt;3</h1><p>:3</p>',
+                    link: {
+                        addTargetToExternalLinks: true,
+                        defaultProtocol: 'https://',
+                        decorators: {
+                            toggleDownloadable: {
+                                mode: 'manual',
+                                label: 'Downloadable',
+                                attributes: {
+                                    download: 'file'
+                                }
+                            }
+                        }
+                    },
+                    list: {
+                        properties: {
+                            styles: true,
+                            startIndex: true,
+                            reversed: true
+                        }
+                    },
+                    placeholder: 'Type or paste your content here!',
+                    table: {
+                        contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties']
+                    }
+                };
+
+                ClassicEditor.create(document.querySelector('#editor'), editorConfig).then(NewEditor => {
+                    editor = NewEditor;
+                    editor.model.document.on('change:data', () => {
+                        document.getElementById('description').value = editor.getData();
+                    });
+                });
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    const editorData = document.getElementById('description').value;
+                    
+                    editor.setData(editorData);
+                });
+            </script>
+            <script>
+            </script>
+            <input type="hidden" value="{{ demo.description if demo and demo.description else '' }}" id="description"
+                name="description" />
+            
+            <input type="hidden" id="description" name="description" />
+        </div>
+        {% if current_user.is_authenticated %}
+        <div class="form-group">
+            <label for="latitude">{{ _('Leveysaste') }}</label>
+            <input type="text" id="latitude" name="latitude" class="form-control"
+                value="{{ demo.latitude if demo and demo.latitude else '' }}">
+        </div>
+        <div class="form-group">
+            <label for="longitude">{{ _('Pituusaste') }}</label>
+            <input type="text" id="longitude" name="longitude" class="form-control"
+                value="{{ demo.longitude if demo and demo.longitude else '' }}">
+        </div>
+        {% else %}
+        <input type="hidden" id="latitude" name="latitude" value="{{ demo.latitude if demo and demo.latitude else '' }}">
+        <input type="hidden" id="longitude" name="longitude" value="{{ demo.longitude if demo and demo.longitude else '' }}">
+        {% endif %}
+
+        <h4>{{ _('Järjestäjätahojen tiedot') }}<span class="required">*</span></h4>
+        <!-- Organizers Section -->
+        <div id="organizers-container" class="container-columns">
+            {% if demo and demo.organizers %}
+            {% for organizer in demo.organizers %}
+            <div class="form-group organizer-item">
+                <hr>
+                <label for="organizer_name_{{ loop.index }}">{{ _('Järjestäjätahon nimi') }} <span
+                        class="required">*</span></label>
+                <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.name }}" required>
+                <label for="organizer_website_{{ loop.index }}">{{ _('Nettisivu') }}</label>
+                <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.website }}">
+                <label for="organizer_email_{{ loop.index }}">{{ _('Sähköposti') }}</label>
+                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                    class="form-control" value="{{ organizer.email }}">
+                <label for="organizer_id_{{ loop.index }}">{{ _('ID') }}</label>
+                <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
+                    class="form-control disabled" value="{{ organizer.organization_id }}">
+                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista')
+                    }}</button>
+                <!-- here a button that will create new organization with these infos and assign the id of that new org to this -->
+                <button type="button" class="btn btn-primary mt-2" onclick="createNewOrganizer(this)">{{ _('Luo uusi
+                    järjestäjä') }}</button>
+            </div>
+            {% else %}
+            <script>addOrganizer();</script>
+            {% endfor %}
+            {% else %}
+            <script>addOrganizer();</script>
+            {% endif %}
+        </div>
+        <script>
+            function createNewOrganizer(button) {
+                {% if current_user.is_authenticated %}
+                const organizerItem = button.closest('.organizer-item');
+                const organizerName = organizerItem.querySelector('input[name^="organizer_name"]').value;
+                const organizerWebsite = organizerItem.querySelector('input[name^="organizer_website"]').value;
+                const organizerEmail = organizerItem.querySelector('input[name^="organizer_email"]').value;
+                const organizerId = organizerItem.querySelector('input[name^="organizer_id"]').value;
+                const newOrganizer = {
+                    name: organizerName,
+                    website: organizerWebsite,
+                    email: organizerEmail
+                };
+                fetch('/admin/organization/api/new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newOrganizer)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        organizerItem.querySelector('input[name^="organizer_id"]').value = data.id;
+                    })
+                    .catch(error => console.error('Error:', error));
+                {% else %}
+                alert("Sinun tulee olla sisäänkirjautunut tehdäksesi näin.");
+                {% endif %}
+            }
+        </script>
+
+        <div class="form-group">
+            <label for="organization">{{ _('Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen') }} <span
+                    class="required">*</span></label>
+            <select id="organization" name="organization" class="form-control">
+                <option value="">{{ _('Valitse järjestö') }}</option>
+                {% if current_user.global_admin %}
+                {% for organization in all_organizations %}
+                <option value="{{ organization._id }}">{{ organization.name }}</option>
+                {% endfor %}
+                {% else %}
+                {% for organization in current_user.organizations %}
+                <option value="{{ organization.org_id }}">{{ get_org_name(organization.org_id) }}</option>
+                {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+        <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">{{ _('Lisää järjestäjä') }}</button>
+        {% if current_user.is_authenticated %}
+        <!-- Approval Checkbox -->
+        <div class="approval-wrapper mt-4">
+            <div class="form-group" id="approval-container">
+                <label for="approved">{{ _('Hyväksytty') }}</label>
+                <div>
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
+                        demo.approved %}checked{% endif %}>
+                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{%
+                        else %}{{ _('Ei') }}{% endif %}</span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <input type="hidden" id="approved" name="approved" value="{{ demo.approved if demo and demo.approved else
+            '' }}">
+        {% endif %}
+        
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button type="submit" class="btn btn-submit mt-3">{{ submit_button_text }}</button>
+        </div>
+    </form>
+</div>
+<div>
+    {% if current_user.is_authenticated %}
+    <!-- Button for generating edit link -->
+    <div class="text-center mt-4">
+        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">
+            {{ _('Luo muokkauslinkki') }}
+        </button>
+    </div>
+
+    <!-- Modal overlay (used by modal.js) -->
+    <div id="overlay" class="modal-overlay"></div>
+
+    <!-- Modal for displaying the generated edit link -->
+    <div class="modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
+            <button type="button" class="close" data-close-button>
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
+            <input type="text" id="edit_link" class="form-control" readonly>
+            <hr>
+            <div class="form-group">
+                <label for="edit_link_email">{{ _('Lähetä sähköpostilla') }}</label>
+                <input type="email" id="edit_link_email" name="edit_link_email" class="form-control" placeholder="{{ _('Syötä sähköpostiosoite') }}">
+            </div>
+            <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-edit-link-btn').addEventListener('click', function () {
+            const demoId = "{{ demo._id if demo else '' }}";
+            if (demoId) {
+                fetch(`/admin/demo/generate_edit_link/${demoId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK') {
+                            document.getElementById('edit_link').value = data.edit_link;
+                            // Use the modal.js openModal function to display the modal.
+                            openModal($('#editLinkModal'));
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                alert('{{ _("Mielenosoituksen tunniste puuttuu.") }}');
+            }
+        });
+
+        // Send edit link via email using modal.js functionality for closing the modal
+        document.getElementById('send_email_btn').addEventListener('click', function () {
+            const email = document.getElementById('edit_link_email').value;
+            const editLink = document.getElementById('edit_link').value;
+            const demoId = "{{ demo._id if demo else '' }}";
+            if (email && demoId && editLink) {
+                fetch(`/admin/demo/send_edit_link_email/${demoId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: email, edit_link: editLink })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'OK') {
+                        alert('{{ _("Sähköposti lähetetty onnistuneesti!") }}');
+                        closeModal($('#editLinkModal'));
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            } else {
+                alert('{{ _("Syötä ensin sähköpostiosoite!") }}');
+            }
+        });
+    </script>
+    <style>
+        .text-center.mt-4 {
+            margin-top: 20px;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+
+{% endif %}
+
+{% endblock %}

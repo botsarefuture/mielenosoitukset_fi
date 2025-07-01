@@ -137,33 +137,33 @@
     </div>
 </div>
 <!-- Hidden icons section -->
-<div class="hidden-icons container-centered bg-main-content" style="z-index: 1000000;">
-    <a class="hidden-icon" id="hiddentoggle" aria-label="{{ _('Avaa sivupalkki') }}">&#9776;</a>
-    <!-- Sidebar Toggle Button -->
-    {% if current_user.global_admin %}
-    <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon"><i class="fas fa-book"></i></a>
-    {% endif %}
-    {% if current_user.has_permission("LIST_USERS") %}
-    <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>
-    {% endif %}
-    {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
-    <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>
-    {% endif %}
-    {% if current_user.has_permission("LIST_DEMOS") %}
-    <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>
-    {% endif %}
-    {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
-    <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="hidden-icon"><i class="fas fa-redo-alt"></i></a>
-    {% endif %}
-    {% if current_user.has_permission("VIEW_ANALYTICS") %}
-    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a>
-    {% endif %}
-    {% if current_user.has_permission("MANAGE_MARQUEE") %}
-    <a href="{{ url_for('admin.manage_marquee') }}" class="hidden-icon"><i class="fas fa-scroll"></i></a>
-    <!-- Marquee Management Hidden Icon -->
-    {% endif %}
-    <a href="{{ url_for('admin.admin_analytics') }}" class="hidden-icon"><i class="fas fa-chart-bar"></i></a>
-    <a href="{{ url_for('users.auth.logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
-</div>
-
+<!--<div class="hidden-icons container-centered bg-main-content" style="z-index: 1000000;">-->
+<!--    <a class="hidden-icon" id="hiddentoggle" aria-label="{{ _('Avaa sivupalkki') }}">&#9776;</a>-->
+<!--    <!-- Sidebar Toggle Button -->-->
+<!--    {% if current_user.global_admin %}-->
+<!--    <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon"><i class="fas fa-book"></i></a>-->
+<!--    {% endif %}-->
+<!--    {% if current_user.has_permission("LIST_USERS") %}-->
+<!--    <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>-->
+<!--    {% endif %}-->
+<!--    {% if current_user.has_permission("LIST_ORGANIZATIONS") %}-->
+<!--    <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>-->
+<!--    {% endif %}-->
+<!--    {% if current_user.has_permission("LIST_DEMOS") %}-->
+<!--    <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>-->
+<!--    {% endif %}-->
+<!--    {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}-->
+<!--    <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="hidden-icon"><i class="fas fa-redo-alt"></i></a>-->
+<!--    {% endif %}-->
+<!--    {% if current_user.has_permission("VIEW_ANALYTICS") %}-->
+<!--    <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a>-->
+<!--    {% endif %}-->
+<!--    {% if current_user.has_permission("MANAGE_MARQUEE") %}-->
+<!--    <a href="{{ url_for('admin.manage_marquee') }}" class="hidden-icon"><i class="fas fa-scroll"></i></a>-->
+<!--    <!-- Marquee Management Hidden Icon -->-->
+<!--    {% endif %}-->
+<!--    <a href="{{ url_for('admin.admin_analytics') }}" class="hidden-icon"><i class="fas fa-chart-bar"></i></a>-->
+<!--    <a href="{{ url_for('users.auth.logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>-->
+<!--</div>-->
+-->
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Union
 from bson import ObjectId
 from .BaseModel import BaseModel
 from mielenosoitukset_fi.utils.database import (
@@ -10,118 +10,174 @@ DB = get_database_manager()
 
 
 class MemberShip(BaseModel):
-    """ """
+    """
+    Represents a user's membership in an organization.
+
+    Attributes:
+        _id: ObjectId of the membership.
+        user_id: ObjectId of the user.
+        organization_id: ObjectId of the organization.
+        role: Role string ('member', 'admin', 'owner').
+        permissions: Optional list of custom permissions.
+    """
+
+    VALID_ROLES = ["member", "admin", "owner"]
+
+    DEFAULT_PERMISSIONS = {
+        "member": [
+            "INVITE_TO_ORGANIZATION",
+            "VIEW_ORGANIZATION",
+            "LIST_ORGANIZATIONS"
+        ],
+        "admin": [
+            # ORG
+            "INVITE_TO_ORGANIZATION",
+            "VIEW_ORGANIZATION",
+            "LIST_ORGANIZATIONS",
+            "EDIT_ORGANIZATION",
+            # DEMO
+            "CREATE_DEMO",
+            "EDIT_DEMO",
+            "VIEW_DEMO",
+            "LIST_DEMOS",
+            "GENERATE_EDIT_LINK",
+            # RECUDEMO
+            "CREATE_RECURRING_DEMO",
+            "EDIT_RECURRING_DEMO",
+            "VIEW_RECURRING_DEMO",
+            "LIST_RECURRING_DEMOS"
+        ],
+        "owner": [
+            # ORG
+            "INVITE_TO_ORGANIZATION",
+            "VIEW_ORGANIZATION",
+            "LIST_ORGANIZATIONS",
+            "EDIT_ORGANIZATION",
+            "DELETE_ORGANIZATION",
+            # DEMO
+            "CREATE_DEMO",
+            "EDIT_DEMO",
+            "VIEW_DEMO",
+            "LIST_DEMOS",
+            "GENERATE_EDIT_LINK",
+            "DELETE_DEMO",
+            # RECUDEMO
+            "CREATE_RECURRING_DEMO",
+            "EDIT_RECURRING_DEMO",
+            "VIEW_RECURRING_DEMO",
+            "LIST_RECURRING_DEMOS",
+            "DELETE_RECURRING_DEMO"
+        ]
+    }
 
     def __init__(
         self,
         user_id: ObjectId,
         organization_id: ObjectId,
-        role: str,
-        permissions: List[str] = None,
+        role: str = "member",
+        permissions: Optional[List[str]] = None,
+        _id: Optional[ObjectId] = None,
     ):
         self.user_id = user_id
         self.organization_id = organization_id
-        self.role = role
-        self.permissions = permissions or []
+        self.role = role if role in self.VALID_ROLES else "member"
+
+        # Combine default + custom permissions
+        default_perms = set(self.DEFAULT_PERMISSIONS[self.role])
+        custom_perms = set(permissions or [])
+        self.permissions = sorted(default_perms | custom_perms)
+
+        # Prevent duplicate memberships
+        if _id:
+            self._id = _id
+        else:
+            existing = self._find_by_user_and_org(user_id, organization_id)
+            self._id = existing._id if existing else ObjectId()
 
     def save(self):
-        """Save the membership to MongoDB."""
-        # Save to users info, as user["organizations"], and to organization["members"]
-        user = DB["users"].find_one({"_id": self.user_id})
-        organization = DB["organizations"].find_one({"_id": self.organization_id})
+        """Ensure unique user/org combo and upsert safely."""
+        existing = DB["memberships"].find_one({
+            "user_id": self.user_id,
+            "organization_id": self.organization_id
+        })
 
-        if user and organization:
-            # Update user's organizations
-            if "organizations" not in user:
-                user["organizations"] = []
-            if self.organization_id not in user["organizations"]:
-                user["organizations"].append(
-                    {
-                        "org_id": self.organization_id,
-                        "role": self.role,
-                        "permissions": self.permissions,
-                    }
-                )
+        if existing:
+            self._id = existing["_id"]
+            # Merge permissions in case previous entry missed any default
+            existing_perms = set(existing.get("permissions", []))
+            default_perms = set(self.DEFAULT_PERMISSIONS[self.role])
+            merged = default_perms | existing_perms | set(self.permissions)
+            self.permissions = sorted(merged)
 
-            DB["users"].update_one(
-                {"_id": ObjectId(self.user_id)},
-                {"$set": {"organizations": user["organizations"]}},
-            )
+        DB["memberships"].update_one(
+            {
+                "user_id": self.user_id,
+                "organization_id": self.organization_id
+            },
+            {
+                "$set": {
+                    "role": self.role,
+                    "permissions": self.permissions
+                }
+            },
+            upsert=True
+        )
 
-            # Update organization's members
-            if "members" not in organization:
-                organization["members"] = []
-            if self.user_id not in [
-                member["user_id"] for member in organization["members"]
-            ]:
-                organization["members"].append(
-                    {
-                        "user_id": self.user_id,
-                        "role": self.role,
-                        "permissions": self.permissions,
-                    }
-                )
-            DB["organizations"].update_one(
-                {"_id": self.organization_id},
-                {"$set": {"members": organization["members"]}},
-            )
+    def insert_to_db(self):
+        """Alias for save()."""
+        self.save()
 
     @classmethod
-    def from_dict(cls, data: dict):
-        """Create a Membership instance from a dictionary.
+    def from_dict(cls, data: dict) -> "MemberShip":
+        """Create a Membership from dictionary data."""
+        if data.get("_id") is None:
+            result = cls._find_by_user_and_org(data["user_id"], data["organization_id"])
+            if result is not None:
+                return result
 
-        Parameters
-        ----------
-        data :
-            dict:
-        data : dict :
+        return cls(
+            _id=data.get("_id") or ObjectId(),
+            user_id=data["user_id"],
+            organization_id=data["organization_id"],
+            role=data.get("role", "member"),
+            permissions=data.get("permissions", []),
+        )
 
-        data : dict :
-
-        data : dict :
-
-        data : dict :
-
-        data: dict :
-
-
-        Returns
-        -------
-
-
-        """
-        return cls(**data)
-
-    def to_dict(self, json=False):
-        """Convert instance to dictionary.
-
-        Parameters
-        ----------
-        json : bool, default=False
-            If True, the dictionary will be JSON serializable.
-
-        Returns
-        -------
-        dict
-            The instance as a dictionary.
-
-        See Also
-        --------
-        utils.database.stringify_object_ids : Replace None with None-equivalent in JSON format.
-
-
-        """
-        data = self.__dict__.copy()
-        if json and "_id" in data:
-            data["_id"] = str(data["_id"])
+    def to_dict(self, json: bool = False) -> dict:
+        """Serialize membership to dict (optionally JSON-safe)."""
+        data = {
+            "_id": str(self._id) if json else self._id,
+            "user_id": str(self.user_id) if json else self.user_id,
+            "organization_id": str(self.organization_id) if json else self.organization_id,
+            "role": self.role,
+            "permissions": self.permissions,
+        }
 
         if json:
-            # Replace None with None-equivalent in JSON format
             data = stringify_object_ids(data)
 
         return data
 
-    def insert_to_db(self):
-        """Insert the membership to the database."""
-        # Same as in save method
-        self.save()
+    @classmethod
+    def _find_by_user_and_org(cls, user_id, org_id):
+        """Find one membership for this user+org combo."""
+        result = DB["memberships"].find_one({
+            "user_id": ObjectId(user_id),
+            "organization_id": ObjectId(org_id)
+        })
+
+        if result is not None:
+            return cls.from_dict(result)
+        return None
+
+    @classmethod
+    def all_in_organization(cls, organization_id: Union[str, ObjectId]) -> List["MemberShip"]:
+        """Fetch all memberships in a specific organization."""
+        organization_id = ObjectId(organization_id)
+        return [cls.from_dict(doc) for doc in DB["memberships"].find({"organization_id": organization_id})]
+
+    @classmethod
+    def all_per_user(cls, user_id: Union[str, ObjectId]) -> List["MemberShip"]:
+        """Fetch all memberships belonging to a user."""
+        user_id = ObjectId(user_id)
+        return [cls.from_dict(doc) for doc in DB["memberships"].find({"user_id": user_id})]

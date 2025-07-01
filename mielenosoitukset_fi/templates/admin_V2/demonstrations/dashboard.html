@@ -1,0 +1,370 @@
+{% extends 'admin_base.html' %} {% block styles %}
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_control.css') }}">-->
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dash.css') }}" />
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/deleteModal.css') }}" />
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}">-->
+<!--
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
+-->
+<style>
+  .search-and-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .search-and-filter {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-form {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+  }
+</style>
+{% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
+<script>
+  function acceptSty(demoId) {
+    demo = document.getElementById(`demo-${demoId}`);
+
+    demo.children[4].innerText = "{{ _('Kyllä') }}";
+
+    demo.children[5].children[0].remove();
+
+    demo.classList.remove("needs-attention");
+  }
+
+  function acceptDemo(demoId) {
+    fetch(`/admin/demo/accept_demo/${demoId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}), // You can add additional data here if needed,
+      redirect: "manual",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const flashMessagesDiv = document.getElementById("flash-messages");
+        const flashMessageList = flashMessagesDiv.querySelector("ul");
+        const newMessage = document.createElement("li");
+
+        // Clear previous messages
+        flashMessageList.innerHTML = ""; // Clear previous messages
+
+        if (data.status === "OK") {
+          newMessage.classList.add("flash-info");
+          newMessage.textContent = "{{ _('Mielenosoitus hyväksytty onnistuneesti!') }}";
+          flashMessageList.appendChild(newMessage);
+
+          acceptSty(demoId);
+
+          // Optionally, you can refresh the page or update the UI
+          //location.reload(); // Reload the page to reflect changes
+        } else {
+          newMessage.classList.add("flash-error");
+          newMessage.textContent =
+            "{{ _('Virhe: ') }}" + (data.message || "{{ _('Tuntematon virhe.') }}");
+          flashMessageList.appendChild(newMessage);
+        }
+
+        // Show the flash messages and set a timeout to hide them
+        flashMessagesDiv.style.display = "block";
+        setTimeout(() => {
+          flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+        }, 3000);
+      })
+      .catch((error) => {
+        const flashMessagesDiv = document.getElementById("flash-messages");
+        const flashMessageList = flashMessagesDiv.querySelector("ul");
+        const newMessage = document.createElement("li");
+
+        newMessage.classList.add("flash-error");
+        newMessage.textContent = "{{ _('Yhteysvirhe, yritä uudelleen.') }}";
+        flashMessageList.appendChild(newMessage);
+        flashMessagesDiv.style.display = "block";
+        setTimeout(() => {
+          flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
+        }, 3000);
+        console.error("Virhe:", error);
+      });
+  }
+
+  function showSubmitterInfoModal(demoId) {
+    // Fetch submitter info using demoId
+    fetch(`/admin/demo/get_submitter_info/${demoId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "OK") {
+          // Populate modal content with submitter info
+          const submitterInfoContent = `
+            <p><strong>{{ _('Nimi') }}:</strong> ${data.submitter.name}</p>
+            <p><strong>{{ _('Sähköposti') }}:</strong> ${data.submitter.email}</p>
+            <p><strong>{{ _('Puhelin') }}:</strong> ${data.submitter.phone || '{{ _('Ei saatavilla') }}'
+        }</p >
+          <p><strong>{{ _('Organisaatio') }}:</strong> ${data.submitter.organization || '{{ _('Ei saatavilla') }}'}</p>
+          `;
+          document.getElementById("submitter-info-content").innerHTML = submitterInfoContent;
+
+          // Show the modal
+          document.getElementById("submitterInfoModal").classList.remove("hidden");
+        } else {
+          // Handle error (e.g., show a flash message)
+          console.error("Error fetching submitter info:", data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  function closeSubmitterInfoModal() {
+    document.getElementById("submitterInfoModal").classList.add("hidden");
+  }
+</script>
+
+{% endblock %} {% block main_content %}
+
+<section class="dashboard-container">
+  <!-- Intro card -->
+  <div class="introduction">
+    <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
+    <p class="muted">
+      {{ _('Täältä voit hallita mielenosoituksia, joihin sinulla on käyttöoikeus.') }}<br>
+      {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 3.1: Mielenosoitusten
+      hallintapaneeli, etusivu.') }}
+    </p>
+  </div>
+
+  <div class="dashboard-panel">
+
+    <div class="flex justify-center mb-4">
+      {% if current_user.has_permission("CREATE_DEMO") %}
+      <a href="{{ url_for('admin_demo.create_demo') }}" class="btn new-item">
+        <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
+      </a>
+      {% else %}
+      <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+        <i class="fas fa-ban"></i>{{ _('Uusi mielenosoitus') }}
+      </a>
+      {% endif %}
+
+      {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
+      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="btn new-item">
+        <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
+      </a>
+      {% else %}
+      <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+        <i class="fas fa-ban"></i>{{ _('Uusi toistuva mielenosoitus') }}
+      </a>
+      {% endif %}
+    </div>
+
+
+    <div class="search-and-filter">
+      <!-- Client-side search bar -->
+      <div class="search-bar">
+        <label for="search" class="sr-only">{{ _('Hae mielenosoituksia:') }}</label>
+        <input type="search" id="search" class="search-input" placeholder="{{ _('Hae mielenosoituksia...') }}"
+          aria-label="{{ _('Hae mielenosoituksia') }}">
+        <button type="button" id="search-btn" class="search-button">
+          <i class="fas fa-search"></i>{{ _('Hae') }}
+        </button>
+      </div>
+
+      <!-- Server-side filters -->
+      <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="filter-form">
+        <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
+        <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
+          <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
+          <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+        </select>
+
+        <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
+        <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
+          <option value="false" {% if not show_past %}selected{% endif %}>{{ _('Ei') }}</option>
+          <option value="true" {% if show_past %}selected{% endif %}>{{ _('Kyllä') }}</option>
+        </select>
+      </form>
+    </div>
+
+
+  </div>
+
+  <!-- Demonstrations table -->
+  {% if demonstrations %}
+  <div class="table-container" style="background:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Päivämäärä') }}</th>
+          <th>{{ _('Toistuva') }}</th>
+          <th>{{ _('Hyväksytty') }}</th>
+          <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for demo in demonstrations|sort(attribute='approved') %}
+        <tr id="demo-{{ demo._id }}" {% if not demo.approved %}class="needs-attention" {% endif %}>
+          <td>{{ demo.title }}</td>
+          <td>{{ demo.city }}</td>
+          <td>{{ demo.date }}</td>
+          <td>{% if demo.repeating %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else %}<i
+              class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
+          <td data-col="approved">{% if demo.approved %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else
+            %}<i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
+
+          <td class="actions-cell">
+            {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
+            <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
+              <i class="fa-solid fa-check"></i>{{ _('Hyväksy') }}
+            </button>
+            {% elif not demo.approved %}
+            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+              <i class="fas fa-ban"></i>{{ _('Hyväksy') }}
+            </a>
+            {% endif %}
+
+            {% if current_user.has_permission("EDIT_DEMO") %}
+            <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">
+              <i class="fas fa-edit"></i>{{ _('Muokkaa') }}
+            </a>
+            {% else %}
+            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+              <i class="fas fa-ban"></i>{{ _('Muokkaa') }}
+            </a>
+            {% endif %}
+
+            {% if current_user.has_permission("VIEW_DEMO") %}
+            <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
+              <i class="fa-solid fa-eye"></i>{{ _('Katsele') }}
+            </a>
+            <button type="button" class="button info-button" onclick="showSubmitterInfoModal('{{ demo._id }}')">
+              <i class="fa-solid fa-user"></i>{{ _('Ilmoittaja') }}
+            </button>
+            {% else %}
+            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+              <i class="fas fa-ban"></i>{{ _('Katsele') }}
+            </a>
+            {% endif %}
+
+            {% if current_user.has_permission("DELETE_DEMO") %}
+            <button type="button" class="button delete-button"
+              onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+              <i class="fas fa-trash-alt"></i>{{ _('Poista') }}
+            </button>
+            {% else %}
+            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
+              <i class="fas fa-ban"></i>{{ _('Poista') }}
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="no-results">
+    <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}
+  </div>
+  {% endif %}
+
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3><i class="fa-solid fa-circle-exclamation"></i> {{ _('Poista mielenosoitus') }}</h3>
+      <p>
+        {{ _('Oletko varma, että haluat poistaa mielenosoituksen') }}
+        <strong id="demoTitle"></strong>?
+      </p>
+      <div class="button-container">
+        <button type="button" class="button delete-confirm" id="confirmDelete">
+          {{ _('Kyllä, poista') }}
+        </button>
+        <button type="button" class="button" onclick="closeModal()">
+          {{ _('Peruuta') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for submitter info -->
+  <div id="submitterInfoModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close" onclick="closeSubmitterModal()">&times;</span>
+      <h3><i class="fa-solid fa-user"></i> {{ _('Ilmoittajan tiedot') }}</h3>
+      <div id="submitter-info-content">
+        <!-- Content will be filled by JS -->
+      </div>
+      <div class="button-container">
+        <button type="button" class="button" onclick="closeSubmitterModal()">{{ _('Sulje') }}</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('search');
+      const searchBtn = document.getElementById('search-btn');
+      const rows = document.querySelectorAll('.table-container tbody tr');
+
+      const filterRows = () => {
+        const term = searchInput.value.trim().toLowerCase();
+        rows.forEach(row => {
+          row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+        });
+      };
+
+      searchInput.addEventListener('input', filterRows);
+      searchBtn.addEventListener('click', filterRows);
+    });
+  </script>
+
+  <script>
+function showSubmitterInfo(demoId) {
+  fetch(`/ admin / demo / get_submitter_info / ${ demoId } `)
+    .then(r => r.json())
+    .then(data => {
+      const modal = document.getElementById('submitterInfoModal');
+      const content = document.getElementById('submitter-info-content');
+      if (data.status === 'OK') {
+        const s = data.submitter;
+        content.innerHTML = `
+          < p > <strong>Nimi:</strong> ${ s.submitter_name }</p >
+          <p><strong>Sähköposti:</strong> ${s.submitter_email}</p>
+          <p><strong>Rooli:</strong> ${s.submitter_role}</p>
+          <p><strong>Hyväksynyt ehdot:</strong> ${s.accept_terms ? 'Kyllä' : 'Ei'}</p>
+          <p><strong>Ilmoitettu:</strong> ${s.submitted_at}</p>
+        `;
+      } else {
+        content.innerHTML = `< p style = 'color:red;' > ${ data.message || 'Tietoja ei löytynyt.' }</p > `;
+      }
+      modal.classList.remove('hidden');
+    })
+    .catch(() => {
+      const modal = document.getElementById('submitterInfoModal');
+      const content = document.getElementById('submitter-info-content');
+      content.innerHTML = `< p style = 'color:red;' > Virhe haettaessa tietoja.</p >`;
+      modal.classList.remove('hidden');
+    });
+}
+function closeSubmitterModal() {
+  document.getElementById('submitterInfoModal').classList.add('hidden');
+}
+  </script>
+
+  {% endblock %}

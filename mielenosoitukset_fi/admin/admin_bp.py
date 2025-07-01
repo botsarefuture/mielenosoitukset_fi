@@ -30,7 +30,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 
 from mielenosoitukset_fi.utils.classes import AdminActivity
-from .utils import AdminActParser, log_admin_action_V2
+from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
 # Constants
 LOG_FILE_PATH = "app.log"
@@ -129,7 +129,7 @@ def load_user(user_id):
 @admin_required
 def admin_dashboard():
     """Render the admin dashboard."""
-    return render_template("admin/dashboard.html")
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html")
 
 
 def get_admin_activity(page=1, per_page=20):
@@ -177,7 +177,7 @@ def stats():
 
         # Render statistics template
         return render_template(
-            "admin/stats.html",
+            f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
             total_users=total_users,
             total_organizations=total_organizations,
             role_counts=role_counts,
@@ -195,7 +195,7 @@ def stats():
 @admin_required
 @permission_required("VIEW_LOGS")
 def logs():
-    return render_template("admin/logs.html")
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}logs.html")
 
 
 @admin_bp.route("/api/logs")
@@ -290,7 +290,7 @@ def manage_marquee():
         return redirect(url_for("admin.manage_marquee"))
 
     return render_template(
-        "admin/manage_marquee.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}manage_marquee.html",
         current_message=marquee_config["message"],
         background_color=marquee_config["style"].split(": ")[1].split(";")[0],
         text_color=marquee_config["h2_style"].split(": ")[1],
@@ -311,7 +311,7 @@ def demo_analytics():
     data = get_demo_views()
     data = count_per_demo(data)
 
-    return render_template("admin/analytics.html", data=data)
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 
 
 def send_red_alert_email(user):

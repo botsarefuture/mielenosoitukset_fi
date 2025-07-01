@@ -1,0 +1,108 @@
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}" />
+<style>
+    .no-data {
+        color: #721c24;
+        font-weight: bold;
+        background: #f8d7da;
+        padding: 20px;
+        border: 1px dashed #f5c6cb;
+        border-radius: 5px;
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .back-button {
+        margin-top: 20px;
+    }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
+
+{% endblock %}
+
+{% block main_content %}
+<div class="table-container">
+    <h2 id="tabletitle">{{ _('Tilastot') }}</h2>
+    <i class="admin-description">{{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}</i>
+
+    <div class="stats-overview">
+        <stats>
+            <stat>
+                <stitle>{{ _('Käyttäjiä') }}</stitle>
+                <snum>{{ total_users }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
+                <sdisc>{{ _('Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa') }}</sdisc>
+                <snum>{{ active_users }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Organisaatioita') }}</stitle>
+                <snum>{{ total_organizations }}</snum>
+            </stat>
+            <div style="width: 100%; background-color: transparent; height: 1px;"></div>
+            <stat>
+                <stitle>{{ _('Mielenosoituksia') }}</stitle>
+                <snum>{{ total_demos }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Katselukerrat') }}</stitle>
+                <sdisc>{{ _('Kaikkien mielenosoitusten katselukerrat') }}</sdisc>
+                <snum>{{ total_views }}</snum>
+            </stat>
+            <stat>
+                <stitle>{{ _('Keskimääräinen katselukerrat') }}</stitle>
+                <sdisc>{{ _('Keskimääräinen katselukerrat mielenosoituksille') }}</sdisc>
+                <snum>{{ avg_views }}</snum>
+            </stat>
+            <last-updated>
+                <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
+            </last-updated>
+        </stats>
+        <br>
+    </div>
+
+        <!-- this will be moved elsewhere before the end of year -->
+     <!-- alert user about that -->
+
+    <div class="analytics-container" style="margin-top: 40px;">
+        <h2 id="tabletitle">{{ _('Mielenosoitus analytiikka') }}</h2>
+
+        {% if data %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ _('Mielenosoituksen ID') }}</th>
+                    <th>{{ _('Katselukerrat') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for demo in data %}
+                <tr>
+                    <td>{{ demo.id }}</td>
+                    <td>{{ demo.views }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">
+            <p>{{ _('Ei tietoja saatavilla.') }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="back-button">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
+            <i class="fas fa-arrow-left"></i>{{ _('Palaa hallintapaneeliin') }}
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+{% endblock %}

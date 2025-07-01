@@ -12,7 +12,7 @@ from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
-from .utils import mongo, log_admin_action_V2, AdminActParser
+from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
 
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
@@ -98,7 +98,7 @@ def demo_control():
     )
 
     return render_template(
-        "admin/demonstrations/dashboard.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=filtered_demos,
         search_query=search_query,
         approved_status=approved_only,
@@ -173,7 +173,7 @@ def create_demo():
 
     # Render the demonstration creation form
     return render_template(
-        "admin/demonstrations/form.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
         organizations=organizations,
         form_action=url_for("admin_demo.create_demo"),
         title="Luo mielenosoitus",
@@ -216,7 +216,7 @@ def edit_demo(demo_id):
     demonstration = Demonstration.from_dict(demo_data)
     # Render the edit form with pre-filled demonstration details
     return render_template(
-        "admin/demonstrations/form.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
         demo=demonstration,
         form_action=url_for("admin_demo.edit_demo", demo_id=demo_id),
         title=_("Muokkaa mielenosoitusta"),
@@ -338,7 +338,7 @@ def edit_demo_with_token(token):
 
     # Render the edit form with pre-filled demonstration details
     return render_template(
-        "admin/demonstrations/form.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
         demo=demonstration,
         form_action=url_for("admin_demo.edit_demo_with_token", token=token),
         title=_("Muokkaa mielenosoitusta"),
@@ -643,7 +643,7 @@ def confirm_delete_demo(demo_id):
 
     # Render the confirmation template with the demonstration details
     return render_template(
-        "admin/demonstrations/confirm_delete.html", demo=demonstration
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/confirm_delete.html", demo=demonstration
     )
 
 

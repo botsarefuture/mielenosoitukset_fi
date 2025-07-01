@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from bson import ObjectId
 from .BaseModel import BaseModel
-from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.logger import logger
 
 
@@ -18,24 +17,6 @@ class AdminActivity(BaseModel):
         timestamp: Optional[datetime] = None,
         _id: Optional[ObjectId] = None,
     ):
-        """
-        Initialize an AdminActivity instance.
-
-        Parameters
-        ----------
-        user_id : ObjectId
-            The ID of the user performing the action.
-        email : str
-            The email of the user performing the action.
-        action : str
-            The action performed by the user.
-        details : str
-            Additional details about the action.
-        timestamp : datetime, optional
-            The timestamp of the action. Defaults to the current time.
-        _id : ObjectId, optional
-            The unique identifier for the activity. Defaults to None.
-        """
         self._user_id = user_id
         self._email = email
         self._action = action
@@ -43,22 +24,12 @@ class AdminActivity(BaseModel):
         self._timestamp = timestamp or datetime.utcnow()
         self._date_time = self._timestamp.strftime("%Y-%m-%d %H:%M:%S")
         self._id = _id or ObjectId()
+
+        # 🧠 Lazy import to avoid circular import
+        from mielenosoitukset_fi.users.models import User
         self._by = User.from_OID(user_id)
 
     def to_dict(self, json=False) -> Dict[str, Any]:
-        """
-        Convert the AdminActivity instance to a dictionary.
-
-        Parameters
-        ----------
-        json : bool, optional
-            If True, convert the instance to a JSON-compatible dictionary. Defaults to False.
-
-        Returns
-        -------
-        dict
-            A dictionary representation of the AdminActivity instance.
-        """
         data = super().to_dict(json=json)
         try:
             data.update(
@@ -80,19 +51,6 @@ class AdminActivity(BaseModel):
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AdminActivity":
-        """
-        Create an AdminActivity instance from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-            A dictionary containing the data to initialize the instance.
-
-        Returns
-        -------
-        AdminActivity
-            An instance of the AdminActivity class.
-        """
         return cls(
             user_id=ObjectId(data["user"]["id"]),
             email=data["user"]["email"],

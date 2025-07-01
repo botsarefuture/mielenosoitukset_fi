@@ -1,579 +1,237 @@
-import pyotp
-import datetime
-from mielenosoitukset_fi.utils.logger import logger
-
-import warnings
+from typing import List, Dict, Union, Optional
+from bson import ObjectId
 from flask_login import UserMixin, AnonymousUserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from bson.objectid import ObjectId
-from mielenosoitukset_fi.database_manager import DatabaseManager
+import pyotp, datetime
 
-db = DatabaseManager().get_instance()
+from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip
+#from mielenosoitukset_fi.utils.classes.BaseModel import BaseModel  # if still needed
+
+db  = DatabaseManager().get_instance()
 mongo = db.get_db()
 
-VALID_WINDOW = 5  # TODO: #226 Move this to a configuration file
-
+VALID_WINDOW = 5          # TODO → move to config
+DEFAULT_ROLE = "user"
 
 class User(UserMixin):
-    """User class represents a user in the system with various attributes and methods to manage user data and interactions."""
+    """
+    MongoDB‑backed application user.
+    Memberships live in the `memberships` collection – we derive org/role data on‑demand.
+    """
+
+    # ---------- INIT / FACTORIES -------------------------------------------------
 
     def __init__(
         self,
-        user_id,
-        username,
-        password_hash,
-        email=None,
-        displayname=None,
-        profile_picture=None,
-        bio=None,
-        followers=None,
-        following=None,
-        organizations=None,
-        global_admin=False,
-        confirmed=False,
-        permissions=None,
-        global_permissions=None,  # Added global permissions
-        role=None,
-        banned=False,  # Added banned attribute
-        mfa_enabled=False,  # Added MFA attribute
+        user_id: ObjectId,
+        username: str,
+        password_hash: str,
+        *,
+        email: Optional[str] = None,
+        displayname: Optional[str] = None,
+        profile_picture: Optional[str] = None,
+        bio: Optional[str] = None,
+        followers: Optional[List[str]] = None,
+        following: Optional[List[str]] = None,
+        global_admin: bool = False,
+        confirmed: bool = False,
+        global_permissions: Optional[List[str]] = None,
+        role: str = DEFAULT_ROLE,
+        banned: bool = False,
+        mfa_enabled: bool = False,
     ):
-        self.id = str(user_id)
-        self.username = username
-        self.email = email
-        self.password_hash = password_hash
-        self.displayname = displayname
-        self.profile_picture = profile_picture
-        self.bio = bio
-        self.followers = followers or []
-        self.following = following or []
-        self.organizations = organizations or []
-        self.global_admin = global_admin
-        self.confirmed = confirmed
-        self.permissions = permissions or {}
-        self.global_permissions = global_permissions or []  # Ensure it's a list
-        self.role = role or "user"
-        self.banned = banned  # Initialize banned attribute
-        self.mfa_enabled = mfa_enabled  # Initialize MFA attribute
-        self._id = self.id  # Alias for id
-        self.mfa = UserMFA(self.id)  # Initialize MFA for the user
+        self.id                = str(user_id)  # flask‑login expects .id str
+        self._id               = ObjectId(user_id)
+        self.username          = username
+        self.email             = email
+        self.password_hash     = password_hash
+        self.displayname       = displayname
+        self.profile_picture   = profile_picture
+        self.bio               = bio
+        self.followers         = followers or []
+        self.following         = following or []
+        self.global_admin      = global_admin
+        self.confirmed         = confirmed
+        self.global_permissions= global_permissions or []
+        self.role              = role
+        self.banned            = banned
+        self.mfa_enabled       = mfa_enabled
+        self.mfa               = UserMFA(self._id)  # see helper class below
 
-    @staticmethod
-    def from_db(user_doc):
-        """Create a User instance from a database document.
+        # CACHED memberships (lazy)  --------------------------------------------
+        self._memberships: Optional[List[MemberShip]] = None
 
-        Parameters
-        ----------
-        user_doc :
+    # ---------- CLASS HELPERS ----------------------------------------------------
 
-
-        Returns
-        -------
-
-
-        """
-        global_admin = user_doc.get("global_admin", False)
-        if user_doc.get("role") == "global_admin":
-            global_admin = True
-
-        return User(
-            user_id=user_doc["_id"],
-            username=user_doc["username"],
-            email=user_doc.get("email", None),
-            password_hash=user_doc["password_hash"],
-            displayname=user_doc.get("displayname", None),
-            profile_picture=user_doc.get("profile_picture", None),
-            bio=user_doc.get("bio", None),
-            followers=user_doc.get("followers", []),
-            following=user_doc.get("following", []),
-            organizations=user_doc.get("organizations", []),
-            global_admin=global_admin,
-            confirmed=user_doc.get("confirmed", False),
-            permissions=user_doc.get("permissions", {}),
-            global_permissions=user_doc.get(
-                "global_permissions", []
-            ),  # Fetch global permissions
-            role=user_doc.get("role", "user"),
-            banned=user_doc.get("banned", False),  # Fetch banned status
-            mfa_enabled=user_doc.get("mfa_enabled", False),  # Fetch MFA status
+    @classmethod
+    def from_db(cls, doc: dict) -> "User":
+        return cls(
+            user_id         = doc["_id"],
+            username        = doc["username"],
+            password_hash   = doc["password_hash"],
+            email           = doc.get("email"),
+            displayname     = doc.get("displayname"),
+            profile_picture = doc.get("profile_picture"),
+            bio             = doc.get("bio"),
+            followers       = doc.get("followers", []),
+            following       = doc.get("following", []),
+            global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
+            confirmed       = doc.get("confirmed", False),
+            global_permissions = doc.get("global_permissions", []),
+            role            = doc.get("role", DEFAULT_ROLE),
+            banned          = doc.get("banned", False),
+            mfa_enabled     = doc.get("mfa_enabled", False),
         )
 
-    @staticmethod
-    def from_OID(user_id: ObjectId):
-        """Create a User instance from a database document.
+    @classmethod
+    def from_OID(cls, oid: Union[str, ObjectId]) -> "User":
+        if isinstance(oid, str):
+            oid = ObjectId(oid)
+        doc = mongo.users.find_one({"_id": oid})
+        if not doc:
+            raise ValueError("User not found")
+        return cls.from_db(doc)
 
-        Parameters
-        ----------
-        user_id : ObjectId
-            User ID to fetch from the database
+    # ---------- MEMBERSHIP / ORG / PERMS ----------------------------------------
 
+    @property
+    def memberships(self) -> List[MemberShip]:
+        """Lazy‑load & cache MemberShip rows for this user."""
+        if self._memberships is None:
+            self._memberships = MemberShip.all_per_user(self._id)
+        return self._memberships
 
-        Returns
-        -------
-        User : User
-            User instance created from the database document
-
-
+    def org_ids(self) -> List[ObjectId]:
+        return [m.organization_id for m in self.memberships]
+    
+    def _permission_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
-        if isinstance(user_id, str):
-            # Convert the string to an ObjectId, and for security reasons, also redirect
-            logger.warning("User ID is a string. Converting to ObjectId.")
-            return User.from_OID(ObjectId(user_id))
+        Return a list of scopes (organization IDs or the literal string "global")
+        in which this user has *permission*.
 
-        user_doc = mongo.users.find_one({"_id": user_id})
-        # If the Cursor object has no data, return None
-        if not user_doc:
-            logger.error("User not found.")
-            raise ValueError("User not found.")
-
-        return User.from_db(user_doc)
-
-    def check_password(self, password):
-        """Verify the provided password against the stored password hash.
-
-        Parameters
-        ----------
-        password :
-
-
-        Returns
-        -------
-
-
+        • If the permission is in the user’s global_permissions,
+          the list will contain the string "global".
+        • For every membership that contains the permission,
+          the organization_id of that membership is included.
+        The list is deduplicated and keeps a predictable order.
         """
+        scopes: List[Union[str, ObjectId]] = []
+
+        # 1️⃣ global scope
+        if permission in self.global_permissions:
+            scopes.append("global")
+
+        # 2️⃣ per‑organization scope
+        scopes.extend(
+            m.organization_id
+            for m in self.memberships
+            if permission in m.permissions
+        )
+
+        # remove duplicates while preserving order (Python 3.7+ keeps dict order)
+        return list(dict.fromkeys(scopes))
+    
+    def membership_for(self, organization_id: Union[str, ObjectId]) -> Optional[MemberShip]:
+        oid = ObjectId(organization_id)
+        return next((m for m in self.memberships if m.organization_id == oid), None)
+
+    def role_in(self, organization_id: Union[str, ObjectId]) -> Optional[str]:
+        m = self.membership_for(organization_id)
+        return m.role if m else None
+
+    # ---------- PASSWORD / LOGIN -------------------------------------------------
+
+    def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
-    @staticmethod
-    def create_user(
-        username, password, email, displayname=None, profile_picture=None, bio=None
-    ):
-        """Create a new user dictionary with a hashed password.
+    # ---------- PERMISSION HANDLING ---------------------------------------------
 
-        Parameters
-        ----------
-        username :
-            param password:
-        email :
-            param displayname:  (Default value = None)
-        profile_picture :
-            Default value = None)
-        bio :
-            Default value = None)
-        password :
-
-        displayname :
-            (Default value = None)
-
-        Returns
-        -------
-
-
-        """
-        password_hash = generate_password_hash(password)
-        return {
-            "username": username,
-            "password_hash": password_hash,
-            "email": email,
-            "displayname": displayname,
-            "profile_picture": profile_picture,
-            "bio": bio,
-            "followers": [],
-            "organizations": [],
-            "global_admin": False,
-            "confirmed": False,
-            "permissions": [],
-            "global_permissions": [],  # Initialize global permissions
-            "following": [],
-            "banned": False,  # Initialize banned status
-            "mfa_enabled": False,  # Initialize MFA status
-        }
-
-    def add_organization(self, organization_id=None, role="member", permissions=None):
-        """Add or update an organization for the user, including role and permissions.
-
-        Parameters
-        ----------
-        organization_id :
-            Default value = None)
-        role :
-            Default value = "member")
-        permissions :
-            Default value = None)
-
-        Returns
-        -------
-
-
-        """
+    def permissions_for(self, organization_id: Optional[Union[str, ObjectId]] = None) -> List[str]:
         if organization_id is None:
-            logger.error("Organization ID is required to add organization.")
-            return
-
-        # Check if the organization already exists in the user's organizations
-        existing_org = next(
-            (org for org in self.organizations if org["org_id"] == organization_id),
-            None,
-        )
-
-        if not existing_org:
-            self.organizations.append(
-                {
-                    "org_id": organization_id,
-                    "role": role,
-                    "permissions": permissions or [],
-                }
-            )  # Add the organization to the user's organizations
-            # TODO: #199 A class for representing organizations  and roles would be better
-
+            # global scope
+            perms = set(self.global_permissions)
         else:
-            existing_org["role"] = role
-            existing_org["permissions"] = permissions or existing_org.get(
-                "permissions", []
-            )
-
-        self.save()
-        logger.info("Organization updated successfully.")
-
-    def is_member_of_organization(self, organization_id):
-        """Check if the user is a member of a specific organization.
-
-        Parameters
-        ----------
-        organization_id :
-
-
-        Returns
-        -------
-
-
-        """
-        return any(org["org_id"] == str(organization_id) for org in self.organizations)
-
-    def change_password(self, new_password):
-        """Change the user's password and update the database.
-
-        Parameters
-        ----------
-        new_password :
-
-
-        Returns
-        -------
-
-
-        """
-        new_password_hash = generate_password_hash(new_password)
-        self.password_hash = new_password_hash
-
-        self.save()
-        logger.info("Password updated successfully.")
-
-    def update_displayname(self, displayname):
-        """Update the user's display name and database record.
-
-        Parameters
-        ----------
-        displayname :
-
-
-        Returns
-        -------
-
-
-        """
-        self.displayname = displayname
-        self.save()
-        logger.info("Display name updated successfully.")
-
-    def update_profile_picture(self, profile_picture):
-        """Update the user's profile picture and database record.
-
-        Parameters
-        ----------
-        profile_picture :
-
-
-        Returns
-        -------
-
-
-        """
-        self.profile_picture = profile_picture
-        self.save()
-        logger.info("Profile picture updated successfully.")
-
-    def update_bio(self, bio):
-        """Update the user's bio and database record.
-
-        Parameters
-        ----------
-        bio :
-
-
-        Returns
-        -------
-
-
-        """
-        self.bio = bio
-        self.save()
-        logger.info("Bio updated successfully.")
-
-    def save(self):
-        """This method updates the user's information in the MongoDB collection.
-        It finds the user by their unique ID and sets the user's data to the current state.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-
-        """
-        data = self.to_dict()
-        del data["_id"]  # Remove the _id field from the data
-
-        mongo.users.update_one({"_id": ObjectId(self._id)}, {"$set": data}, upsert=True)
-
-    def to_dict(self, json=False):
-        """Convert the User object to a dictionary for database storage.
-
-        Parameters
-        ----------
-        json :
-            Default value = False)
-
-        Returns
-        -------
-
-
-        """
-        data = self.__dict__.copy()
-        if json and "_id" in data:
-            data["_id"] = str(data["_id"])
-
-        # If user organizations has ObjectId, stringiyf
-        for org in data.get("organizations", []):
-            if isinstance(org.get("org_id"), ObjectId):
-                org["org_id"] = str(org["org_id"])
-
-        # dont include the MFA in the dict
-        del data["mfa"]
-
-        return data
-
-    def follow_user(self, user_id_to_follow):
-        """Add a user to the followers list of this user.
-
-        Parameters
-        ----------
-        user_id_to_follow :
-
-
-        Returns
-        -------
-
-
-        """
-        if isinstance(
-            user_id_to_follow, User
-        ):  # Check if the user_id_to_follow is a User object
-            user_id_to_follow = user_id_to_follow.id
-
-        if user_id_to_follow not in self.following:
-            self.following.append(user_id_to_follow)
-            self.save()
-            logger.info("Started following user successfully.")
-
-    def unfollow_user(self, user_id_to_unfollow):
-        """Remove a user from the followers list of this user.
-
-        Parameters
-        ----------
-        user_id_to_unfollow :
-
-
-        Returns
-        -------
-
-
-        """
-        if user_id_to_unfollow in self.following:
-            self.following.remove(user_id_to_unfollow)
-            self.save()
-            logger.info("Stopped following user successfully.")
-
-    def _permissions_for(self, organization_id=None):
-        """Get the list of permissions for the user, optionally filtered by organization.
-
-        Parameters
-        ----------
-        organization_id : str or None, optional
-            The organization ID to filter permissions for. If None, returns all permissions.
-
-        Returns
-        -------
-        list of str
-            List of permissions for the user (global and/or organization-specific).
-        """
-        if not organization_id:
-            permissions = set(self.global_permissions)
-        else:
-            permissions = set(self.permissions.get(str(organization_id), []))
-
-        if organization_id:
-            # Add permissions from organizations
-            for org in self.organizations:
-                if org["org_id"] == str(organization_id):
-                    permissions.update(org.get("permissions", []))
-            # Add permissions from permissions dict
-            org_perms = self.permissions.get(str(organization_id), [])
-            permissions.update(org_perms)
-        else:
-            # All org-specific permissions
-            for org in self.organizations:
-                permissions.update(org.get("permissions", []))
-            for org_perms in self.permissions.values():
-                permissions.update(org_perms)
-        return list(permissions)
-    
-    def _perm_in(self, permission, organization_id=None):
-        """Check if a specific permission exists for the user, optionally filtered by organization.
-
-        Parameters
-        ----------
-        permission : str
-            The permission to check for.
-        organization_id : str or None, optional
-            The organization ID to filter permissions for. If None, checks all permissions.
-
-        Returns
-        -------
-        bool
-            True if the permission exists, False otherwise.
-        """
-        if organization_id:
-            return permission in self._permissions_for(organization_id)
-        else:
-            # ids of organizations, where the user has the permission
-            org_ids = [
-                org["org_id"]
-                for org in self.organizations
-                if permission in org.get("permissions", [])
-            ]
-            return org_ids
-        return permission in self._permissions_for(organization_id)
-
-    def all_permissions_with_organizations(self):
-        """Get a mapping of all permissions the user has and the organizations for which they apply.
-
-        Returns
-        -------
-        dict
-            Dictionary where keys are permission names and values are lists of organization IDs (or 'global').
-        """
-        perm_map = {}
-        # Global permissions
-        for perm in self.global_permissions:
-            perm_map.setdefault(perm, []).append("global")
-        # Organization permissions from organizations list
-        for org in self.organizations:
-            for perm in org.get("permissions", []):
-                perm_map.setdefault(perm, []).append(str(org["org_id"]))
-        # Organization permissions from permissions dict
-        for org_id, perms in self.permissions.items():
-            for perm in perms:
-                perm_map.setdefault(perm, []).append(str(org_id))
-        # Remove duplicates in org lists
-        for perm in perm_map:
-            perm_map[perm] = list(set(perm_map[perm]))
-        return perm_map
-    
-    def has_permission(self, permission, organization_id=None):
-        """This method verifies if the user possesses a certain permission either on a global level or within a specified organization.
-        It first checks the global permissions, then the organization-specific permissions if an organization ID is provided,
-        and finally checks the permissions dictionary for organization-specific permissions.
-
-        Parameters
-        ----------
-        permission : str
-            The permission to check for.
-        organization_id : str
-            The ID of the organization to check the permission against. Defaults to None.
-
-        Returns
-        -------
-
-
-        """
-
-        # Check global permissions first
-        if permission in self.global_permissions:
+            ms = self.membership_for(organization_id)
+            perms = set(ms.permissions) if ms else set()
+        return list(perms)
+
+    def has_permission(self, perm: str, organization_id: Optional[Union[str, ObjectId]]=None, strict=False) -> bool:
+        if perm in self.global_permissions:
             return True
-
-        # If organization_id is provided, check organization-specific permissions
+        
         if organization_id:
-            for org in self.organizations:
-                if org["org_id"] == str(organization_id):
-                    if permission in org.get("permissions", []):
-                        return True
+            ms = self.membership_for(organization_id)
+            if ms:
+                print(ms.permissions)
+                print(ms.organization_id)
+            
+            return bool(ms and perm in ms.permissions)
+        # if org not specified, check all org memberships
+        return any(perm in m.permissions for m in self.memberships)
 
-        # Check organization-specific permissions in the permissions dictionary
-        for org in self.permissions:
-            if permission in self.permissions.get(org, []):
-                return True
+    # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 
-        return False
+    def follow_user(self, other_id: Union[str, "User"]):
+        oid = str(other_id._id) if isinstance(other_id, User) else str(other_id)
+        if oid not in self.following:
+            self.following.append(oid)
+            self.save()
 
-    def is_following(self, user_id):
-        """Check if this user is following another user.
-
-        Parameters
-        ----------
-        user_id :
-
-
-        Returns
-        -------
-
-
-        """
-
-        if isinstance(user_id, User):  # Check if the user_id is a User object
-            return self.is_following(user_id.id)  # If it is, check the user_id's id
-
-        return user_id in self.following
+    def unfollow_user(self, other_id: Union[str, "User"]):
+        oid = str(other_id._id) if isinstance(other_id, User) else str(other_id)
+        if oid in self.following:
+            self.following.remove(oid)
+            self.save()
 
     def ban_user(self):
-        """Ban the user."""
         self.banned = True
         self.save()
-        logger.info("User banned successfully.")
 
     def unban_user(self):
-        """Unban the user."""
         self.banned = False
         self.save()
-        logger.info("User unbanned successfully.")
 
-    def enable_mfa(self):
-        """Enable MFA for the user."""
-        self.mfa_enabled = True
-        self.save()
-        logger.info("MFA enabled successfully.")
+    # ---------- CRUD -------------------------------------------------------------
 
-    def disable_mfa(self):
-        """Disable MFA for the user."""
-        self.mfa_enabled = False
-        self.save()
-        logger.info("MFA disabled successfully.")
+    def save(self):
+        """Persist user (does **not** touch memberships)."""
+        doc = self.to_dict()
+        doc.pop("_id", None)
+        mongo.users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
+        # invalidate cache after save
+        self._memberships = None
+
+    # ---------- SERIALISATION ----------------------------------------------------
+
+    def to_dict(self, json: bool = False) -> Dict:
+        d = {
+            "_id": str(self._id) if json else self._id,
+            "username": self.username,
+            "password_hash": self.password_hash,
+            "email": self.email,
+            "displayname": self.displayname,
+            "profile_picture": self.profile_picture,
+            "bio": self.bio,
+            "followers": self.followers,
+            "following": self.following,
+            "global_admin": self.global_admin,
+            "confirmed": self.confirmed,
+            "global_permissions": self.global_permissions,
+            "role": self.role,
+            "banned": self.banned,
+            "mfa_enabled": self.mfa_enabled,
+        }
+        return d
+
+    # ---------- STRING MAGIC -----------------------------------------------------
 
     def __repr__(self):
-        return f"<User(username={self.username}, email={self.email}, global_admin={self.global_admin}, banned={self.banned}, mfa_enabled={self.mfa_enabled})>"
+        return f"<User {self.username} ({self._id})>"
 
     def __str__(self):
         return self.displayname or self.username
-
 
 class TwoFAToken:
     """Class for handling 2FA tokens."""
@@ -785,7 +443,7 @@ class AnonymousUser(AnonymousUserMixin):
         """
         return False
 
-    def has_permission(self, permission):
+    def has_permission(self, permission, strict=False):
         """Check if the user has a specific permission in a given organization or globally.
 
         Parameters

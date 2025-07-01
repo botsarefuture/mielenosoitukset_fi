@@ -1,0 +1,10 @@
+<div class="form-group">
+        <label for="cover_picture">Cover Photo</label>
+        <input type="text" id="cover_picture" name="cover_picture" class="form-control" value="{{ tag.cover_picture if tag and tag.cover_picture else '' }}" placeholder="Enter image URL or upload below">
+        <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2">
+        {% if tag and tag.cover_picture %}
+        <div class="mt-2">
+            <img src="{{ tag.cover_picture }}" alt="Cover Photo Preview" style="max-width: 300px; max-height: 200px;">
+        </div>
+        {% endif %}
+    </div>

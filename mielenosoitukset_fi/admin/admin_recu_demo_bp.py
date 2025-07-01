@@ -10,7 +10,7 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
-from .utils import mongo
+from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration
 
@@ -65,7 +65,7 @@ def recu_demo_control():
     )
 
     return render_template(
-        "admin/recu_demonstrations/dashboard.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/dashboard.html",
         recurring_demos=filtered_recurring_demos,
         search_query=search_query,
         approved_status=approved_status,
@@ -82,7 +82,7 @@ def create_recu_demo():
         return handle_recu_demo_form(request, is_edit=False)
 
     return render_template(
-        "admin/recu_demonstrations/form.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
         form_action=url_for("admin_recu_demo.create_recu_demo"),
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
@@ -124,7 +124,7 @@ def edit_recu_demo(demo_id):
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
     return render_template(
-        "admin/recu_demonstrations/form.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
@@ -303,5 +303,5 @@ def confirm_delete_recu_demo(demo_id):
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
     return render_template(
-        "admin/recu_demonstrations/confirm_delete.html", demo=recurring_demo
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/confirm_delete.html", demo=recurring_demo
     )

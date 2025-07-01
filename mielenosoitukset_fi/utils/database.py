@@ -21,7 +21,6 @@ DEMO_FILTER : dict
 from bson.objectid import ObjectId
 from datetime import datetime
 from mielenosoitukset_fi.database_manager import DatabaseManager
-from mielenosoitukset_fi.users.models import User
 
 DEMO_FILTER = {"approved": True, "$or": [{"hide": {"$exists": False}}, {"hide": False}]}
 
@@ -71,7 +70,8 @@ def stringify_object_ids(data):
         return str(data)
     elif isinstance(data, datetime):
         return data.strftime("%Y-%m-%d")  # Convert datetime to ISO 8601 date format
-    elif isinstance(data, User):
+    elif isinstance(data, object) and data.__class__.__name__ == "User":
+       # from mielenosoitukset_fi.users.models import User
         return data.to_dict(True)
     else:
         return data

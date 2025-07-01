@@ -183,3 +183,6 @@ class AdminActParser:
         except Exception as e:
             logger.exception(f"Error parsing request info: {e}")
             return {}
+
+
+_ADMIN_TEMPLATE_FOLDER = "admin_V2/" # if we want to go back to the previous ones, use "admin/"

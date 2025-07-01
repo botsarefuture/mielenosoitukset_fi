@@ -1,0 +1,161 @@
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}" />
+<style>
+    .no-data {
+        color: #721c24;
+        font-weight: bold;
+        background: #f8d7da;
+        padding: 20px;
+        border: 1px dashed #f5c6cb;
+        border-radius: 5px;
+        text-align: center;
+        margin: 1rem 0;
+    }
+    .back-button {
+        margin-top: 20px;
+    }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .pagination a {
+        margin: 0 5px;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .pagination a.active {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+    }
+    .filter-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    .filter-container select, .filter-container input {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="table-container">
+    <h2 id="tabletitle">{{ _('Admin Logs') }}</h2>
+    <p>{{ _('Here you can view the admin activity logs and filter them by user, date, and action type.') }}</p>
+
+    <div class="filter-container">
+        <form method="GET" action="{{ url_for('admin.logs') }}">
+            <select name="user">
+                <option value="">{{ _('All Users') }}</option>
+                {% for user in users %}
+                <option value="{{ user.id }}" {% if request.args.get('user') == user.id %}selected{% endif %}>{{ user.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}" placeholder="{{ _('Start Date') }}">
+            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}" placeholder="{{ _('End Date') }}">
+            <select name="action_type">
+                <option value="">{{ _('All Actions') }}</option>
+                {% for action in action_types %}
+                <option value="{{ action }}" {% if request.args.get('action_type') == action %}selected{% endif %}>{{ action }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">{{ _('Filter') }}</button>
+        </form>
+    </div>
+    <script>
+
+        async function fetchLogs(page = 1) {
+            const response = await fetch('{{ url_for("admin.api_logs") }}' + `?page=${page}`);
+            const data = await response.json();
+            renderLogs(data.logs);
+            renderPagination(data.page, data.total_pages);
+        }
+
+        function renderLogs(logs) {
+            const logsOverview = document.querySelector('.logs-overview activities');
+            logsOverview.innerHTML = '';
+            if (logs.length === 0) {
+                logsOverview.innerHTML = '<div class="no-data"><p>{{ _("No activities yet.") }}</p></div>';
+                return;
+            }
+            logs.forEach(activity => {
+                const activityElement = document.createElement('activity');
+                // here assign to that activity element, the whole activity json object as a string
+                activityElement.setAttribute('data-activity', JSON.stringify(activity));
+                activityElement.innerHTML = `
+                    <activity-title><i class="fas fa-tasks"></i> ${activity.action.method} ${activity.action.url}</activity-title>
+                    <activity-content>
+                        <aby style="display: flex; align-items: center;">
+                            ${activity.by.profile_picture ? `<img src="${activity.by.profile_picture}" style="width: 1.5em; height: 1.5em; border-radius: 50px; margin-right: 0.5em;">` : '<i class="fas fa-user" style="margin-right: 0.5em;"></i>'} 
+                            ${activity.by.displayname || activity.by.username}
+                        </aby>
+                        <atime><i class="fas fa-clock"></i> ${activity.timestamp}</atime>
+                        <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('View More') }}</aaction>
+                    </activity-content>
+                    <activity-extra>
+                        <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${activity.action.remote_addr}</aip>
+                        <asession><i class="fas fa-user-secret"></i> {{ _('Session') }}: ${activity.session_id}</asession>
+                    </activity-extra>
+                `;
+                logsOverview.appendChild(activityElement);
+            });
+        }
+
+        function renderPagination(currentPage, totalPages) {
+            const pagination = document.querySelector('.pagination');
+            pagination.innerHTML = '';
+            if (currentPage > 1) {
+                const prevLink = document.createElement('a');
+                prevLink.href = `#`;
+                prevLink.innerHTML = `&laquo; {{ _('Previous') }}`;
+                prevLink.onclick = () => fetchLogs(currentPage - 1);
+                pagination.appendChild(prevLink);
+            }
+            for (let p = 1; p <= totalPages; p++) {
+                const pageLink = document.createElement('a');
+                pageLink.href = `#`;
+                pageLink.innerHTML = p;
+                pageLink.className = p === currentPage ? 'active' : '';
+                pageLink.onclick = () => fetchLogs(p);
+                pagination.appendChild(pageLink);
+            }
+            if (currentPage < totalPages) {
+                const nextLink = document.createElement('a');
+                nextLink.href = `#`;
+                nextLink.innerHTML = `{{ _('Next') }} &raquo;`;
+                nextLink.onclick = () => fetchLogs(currentPage + 1);
+                pagination.appendChild(nextLink);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchLogs();
+        });
+    </script>
+
+    <div class="logs-overview">
+        <h2 class="admin-section-title">{{ _('Recent Activities') }}</h2>
+        <activities></activities>
+    </div>
+
+    <div class="pagination"></div>
+
+    <div class="back-button">
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
+            <i class="fas fa-arrow-left"></i>{{ _('Back to Dashboard') }}
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+{% endblock %}

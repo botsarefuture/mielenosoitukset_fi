@@ -24,6 +24,7 @@ jqueryScript.onload = function () {
             $(this).on('click', function () {
                 const modal = $($(this).data('modal-target'));
                 openModal(modal);
+                console.log("Opened modal", $(this).data('modal-target'))
             });
         });
 
@@ -47,6 +48,7 @@ jqueryScript.onload = function () {
 
 
 function openModal(modal) {
+    console.log(modal.length);
     if (modal.length === 0) return;
     modal.addClass('active');
     // force modal to have the highest z-index value out of all items on the page
@@ -163,13 +165,30 @@ document.addEventListener("DOMContentLoaded", () => {
   overlay.addEventListener("click", closeModal);
 
   // Open modal function
-  function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add("active");
-      overlay.classList.add("active");
+  //function openModal(modalId) {
+  //  const modal = document.getElementById(modalId);
+  //  if (modal) {
+  //    modal.classList.add("active");
+  //    overlay.classList.add("active");
+  //  }
+  //}
+  function openModal(modal) {
+    console.log(modal.length);
+    if (modal.length === 0) return;
+    modal.addClass('active');
+    // force modal to have the highest z-index value out of all items on the page
+    modal.css('z-index', 1000 * 1000);
+
+    if ($('#overlay').length) {
+        $('#overlay').addClass('active');
+    } else {
+        console.log("Overlay not found. Waiting for it to be loaded...");
+        // wait for the overlay to be loaded
+        setTimeout(() => {
+            openModal(modal);
+        }, 100);
     }
-  }
+}
 
   // Expose openModal globally for external use
   window.openModal = openModal;

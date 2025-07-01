@@ -1,0 +1,91 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Toistuvat mielenosoitukset{% endblock %}
+
+{% block styles %}
+
+{% endblock %}
+
+{% block main_content %}
+<div class="table-container">
+    <h2 id="tabletitle">{{ _('Toistuvat mielenosoitukset') }}</h2>
+
+    <div class="flex justify-center mb-4">
+        {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
+        <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button create-demo-button">
+            <i class="fas fa-plus-circle"></i>{{ _('Luo uusi toistuva mielenosoitus') }}
+        </a>
+        {% else %}
+        <div class="insuffient-perm" style="color: #ccc">
+            {{ _('Sinulla ei ole oikeutta luoda uusia toistuvia mielenosoituksia.') }}
+        </div>
+        {% endif %}
+    </div>
+
+    <form method="GET" class="search-form" action="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+        <label for="search" class="sr-only">{{ _('Hae toistuvia mielenosoituksia:') }}</label>
+        <input type="text" id="search" name="search" class="search-input" placeholder="{{ _('Hae toistuvia mielenosoituksia...') }}" value="{{ search_query }}" aria-label="{{ _('Hae toistuvia mielenosoituksia') }}">
+
+        <label for="approved">{{ _('Näytä vain hyväksytyt toistuvat mielenosoitukset:') }}</label>
+        <select name="approved" id="approved" class="filter-select" aria-label="{{ _('Hyväksytty status') }}">
+            <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
+            <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+        </select>
+
+        <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>{{ _('Hae') }}
+        </button>
+    </form>
+
+    {% if recurring_demos %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ _('Otsikko') }}</th>
+                    <th>{{ _('Toistuvuus') }}</th> <!-- FIXED #215 -->
+                    <th>{{ _('Aika') }}</th>
+                    <th>{{ _('Kaupunki') }}</th>
+                    <th>{{ _('Hyväksytty') }}</th>
+                    <th class="actions-cell-header">{{ _('Toimet') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for demo in recurring_demos %}
+                <tr>
+                    <td>{{ demo.title }}</td>
+                    <td>{{ demo.repeat_schedule.as_string() }}</td>
+                    <td>{{ demo.start_time }} - {{ demo.end_time }}</td>
+                    <td>{{ demo.city }}</td>
+                    <td>{% if demo.approved %}<i class="fa fa-circle-check"></i> Kyllä{% else %}<i class="fa fa-circle-xmark"></i> Ei{% endif %}</td>
+                    <td class="actions-cell">
+                        {% if current_user.has_permission("EDIT_DEMO") %}
+                        <a href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}" class="button edit-button">
+                            <i class="fas fa-edit"></i>{{ _('Muokkaa') }}
+                        </a>
+                        {% else %}
+                        <div class="insuffient-perm" style="color: white">
+                            {{ _('Ei riittäviä oikeuksia mielenosoituksen muokkaamiseen.') }}
+                        </div>
+                        {% endif %}
+
+                        {% if current_user.has_permission("DELETE_DEMO") %}
+                        <a href="{{ url_for('admin_recu_demo.confirm_delete_recu_demo', demo_id=demo._id) }}" class="button delete-button">
+                            <i class="fas fa-trash-alt"></i>{{ _('Poista') }}
+                        </a>
+                        {% else %}
+                        <div class="insuffient-perm" style="color: white">
+                            {{ _('Ei riittäviä oikeuksia mielenosoituksen poistamiseen.') }}
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-results">{{ _('Ei löytynyt toistuvia mielenosoituksia.') }}</div>
+    {% endif %}
+</div>
+{% endblock %}

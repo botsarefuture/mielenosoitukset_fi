@@ -16,7 +16,10 @@ os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
 os.environ["XDG_RUNTIME_DIR"] = tempfile.mkdtemp()
 config = imgkit.config()
 
-def create_screenshot(demo_data, output_path="/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview"):
+save_path = os.environ.get("demo_image_save_path", "/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview")
+
+
+def create_screenshot(demo_data, output_path=save_path):
     """
     Create a PNG screenshot from the preview template.
 

@@ -3,6 +3,7 @@
 
 <!DOCTYPE html>
 <html lang="{{ session.get('locale', 'fi') }}" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,23 +20,23 @@
     <!-- Page-specific styles -->
     {% block styles %}{% endblock %}
 </head>
+
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
 
     {# ==== SIDEBAR + CONTENT WRAPPER ==== #}
     <div class="d-flex flex-grow-1">
 
         {# ---------- Sidebar (desktop) ---------- #}
-        <aside id="sidebar"
-               class="container-sidebar bg-dark text-light pc-only d-flex flex-column flex-shrink-0"
-               style="z-index:100000000000;">
+        <aside id="sidebar" class="container-sidebar bg-dark text-light pc-only d-flex flex-column flex-shrink-0"
+            style="z-index:100000000000;">
             <a class="sidebar-toggle text-light fs-2" id="maintoggle"
-               aria-label="{{ _('Avaa sivupalkki') }}">&#9776;</a>
+                aria-label="{{ _('Avaa sivupalkki') }}">&#9776;</a>
 
             <h2 class="sidebar-title text-center px-3 py-2">
                 {% if current_user.global_admin %}
-                    {{ _('Pääkäyttäjän') }}
+                {{ _('Pääkäyttäjän') }}
                 {% else %}
-                    {{ _('Superkäyttäjän') }}
+                {{ _('Superkäyttäjän') }}
                 {% endif %}
                 {{ _('työkalupakki') }}
             </h2>
@@ -44,22 +45,22 @@
             <div class="tasks p-3">
                 <h3 class="h6 text-uppercase">{{ _('Tehtävät') }}</h3>
                 {% if tasks %}
-                    <p class="small mb-1">{{ _('Seuraavaksi:') }} {{ tasks[0].title }}</p>
-                    <progress value="{{ tasks_amount_done }}" max="{{ tasks_amount_total }}" id="progress"
-                              class="w-100 mb-2"></progress>
+                <p class="small mb-1">{{ _('Seuraavaksi:') }} {{ tasks[0].title }}</p>
+                <progress value="{{ tasks_amount_done }}" max="{{ tasks_amount_total }}" id="progress"
+                    class="w-100 mb-2"></progress>
 
-                    <ul class="list-unstyled small">
-                        {% for task in tasks %}
-                        <li>
-                            <a href="{{ url_for('admin_demo.edit_demo', demo_id=task._id) }}"
-                               class="link-light text-decoration-none">
-                                {{ task.title }}
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
+                <ul class="list-unstyled small">
+                    {% for task in tasks %}
+                    <li>
+                        <a href="{{ url_for('admin_demo.edit_demo', demo_id=task._id) }}"
+                            class="link-light text-decoration-none">
+                            {{ task.title }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
                 {% else %}
-                    <p class="small">{{ _('Ei tehtäviä.') }}</p>
+                <p class="small">{{ _('Ei tehtäviä.') }}</p>
                 {% endif %}
             </div>
 
@@ -68,44 +69,44 @@
                 <ul class="list-unstyled px-3">
                     {% if current_user.global_admin %}
                     <li><a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link link-light">
-                        <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}</a></li>
+                            <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}</a></li>
                     {% endif %}
 
                     {% if current_user.has_permission("LIST_USERS") %}
                     <li><a href="{{ url_for('admin_user.user_control') }}" class="nav-link link-light">
-                        <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}</a></li>
+                            <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}</a></li>
                     {% endif %}
 
                     {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
                     <li><a href="{{ url_for('admin_org.organization_control') }}" class="nav-link link-light">
-                        <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}</a></li>
+                            <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}</a></li>
                     {% endif %}
 
                     {% if current_user.has_permission("LIST_DEMOS") %}
                     <li><a href="{{ url_for('admin_demo.demo_control') }}" class="nav-link link-light">
-                        <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}</a></li>
+                            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}</a></li>
                     {% endif %}
 
                     {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
                     <li><a href="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="nav-link link-light">
-                        <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}</a></li>
+                            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}</a></li>
                     {% endif %}
 
                     {% if current_user.has_permission("VIEW_ANALYTICS") %}
                     <li><a href="{{ url_for('admin.stats') }}" class="nav-link link-light">
-                        <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
-                        <span class="badge bg-warning text-dark ms-1">{{ _('Beta') }}</span></a></li>
+                            <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
+                            <span class="badge bg-warning text-dark ms-1">{{ _('Beta') }}</span></a></li>
                     <li><a href="{{ url_for('admin.admin_analytics') }}" class="nav-link link-light">
-                        <i class="fas fa-chart-bar me-2"></i>{{ _('Mielenosoitusten analytiikka') }}</a></li>
+                            <i class="fas fa-chart-bar me-2"></i>{{ _('Mielenosoitusten analytiikka') }}</a></li>
                     {% endif %}
 
                     {% if current_user.has_permission("MANAGE_MARQUEE") %}
                     <li><a href="{{ url_for('admin.manage_marquee') }}" class="nav-link link-light">
-                        <i class="fas fa-scroll me-2"></i>{{ _('Pyörörullan hallinta') }}</a></li>
+                            <i class="fas fa-scroll me-2"></i>{{ _('Pyörörullan hallinta') }}</a></li>
                     {% endif %}
 
                     <li><a href="{{ url_for('users.auth.logout') }}" class="nav-link link-light">
-                        <i class="fas fa-sign-out-alt me-2"></i>{{ _('Kirjaudu ulos') }}</a></li>
+                            <i class="fas fa-sign-out-alt me-2"></i>{{ _('Kirjaudu ulos') }}</a></li>
                 </ul>
             </nav>
 
@@ -114,37 +115,6 @@
             </div>
         </aside>
 
-        {# ---------- Hidden icon rail (mobile) ---------- #}
-        <!--<div class="hidden-icons container-centered bg-main-content"
-             style="z-index:1000000;">
-            <a class="hidden-icon" id="hiddentoggle"
-               aria-label="{{ _('Avaa sivupalkki') }}">&#9776;</a>
-
-            {% if current_user.global_admin %}
-            <a href="{{ url_for('admin.admin_dashboard') }}" class="hidden-icon"><i class="fas fa-book"></i></a>
-            {% endif %}
-            {% if current_user.has_permission("LIST_USERS") %}
-            <a href="{{ url_for('admin_user.user_control') }}" class="hidden-icon"><i class="fas fa-users"></i></a>
-            {% endif %}
-            {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
-            <a href="{{ url_for('admin_org.organization_control') }}" class="hidden-icon"><i class="fas fa-building"></i></a>
-            {% endif %}
-            {% if current_user.has_permission("LIST_DEMOS") %}
-            <a href="{{ url_for('admin_demo.demo_control') }}" class="hidden-icon"><i class="fas fa-bullhorn"></i></a>
-            {% endif %}
-            {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
-            <a href="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="hidden-icon"><i class="fas fa-redo-alt"></i></a>
-            {% endif %}
-            {% if current_user.has_permission("VIEW_ANALYTICS") %}
-            <a href="{{ url_for('admin.stats') }}" class="hidden-icon"><i class="fas fa-chart-line"></i></a>
-            {% endif %}
-            {% if current_user.has_permission("MANAGE_MARQUEE") %}
-            <a href="{{ url_for('admin.manage_marquee') }}" class="hidden-icon"><i class="fas fa-scroll"></i></a>
-            {% endif %}
-            <a href="{{ url_for('admin.admin_analytics') }}" class="hidden-icon"><i class="fas fa-chart-bar"></i></a>
-            <a href="{{ url_for('users.auth.logout') }}" class="hidden-icon"><i class="fas fa-sign-out-alt"></i></a>
-        </div>-->
-
         {# ---------- Main content area ---------- #}
         <main class="flex-grow-1 px-3 py-4">
             {# flash messages #}
@@ -152,7 +122,7 @@
             {% if messages %}
             {% for category, message in messages %}
             <div class="alert alert-{{ 'warning' if category in ('error','danger') else category }} alert-dismissible fade show"
-                 role="alert">
+                role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -172,17 +142,18 @@
     <!-- Bootstrap bundle (+Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Your sidebar toggling logic -->
- <!--   <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>-->
-    <script>
-  const sidebar = document.querySelector('.container-sidebar');
-  const toggleBtn = document.getElementById('maintoggle');
 
-  toggleBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    document.querySelector('main').classList.toggle('collapsed');
-  });
+<script>
+        const sidebar = document.querySelector('.container-sidebar');
+        const toggleBtn = document.getElementById('maintoggle');
+
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            document.querySelector('main').classList.toggle('collapsed');
+        });
 
     </script>
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

@@ -458,11 +458,12 @@ def collect_demo_data(request):
     if file and file.filename:
         import os
         from werkzeug.utils import secure_filename
-        static_dir = os.path.join(os.path.dirname(__file__), '../../static/demo_preview')
+        static_dir = os.path.join(os.path.dirname(__file__), '../static/demo_preview')
         os.makedirs(static_dir, exist_ok=True)
         filename = secure_filename(file.filename)
         file_path = os.path.join(static_dir, filename)
         file.save(file_path)
+        
         # Use a URL relative to static
         cover_picture = f"/static/demo_preview/{filename}"
 

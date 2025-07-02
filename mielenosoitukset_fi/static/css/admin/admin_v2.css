@@ -89,13 +89,15 @@
 }
 
 .save-button {
-    background-color: light-dark(#4caf50, #81c784); /* fresh green vibes */
+    background-color: light-dark(#4caf50, #81c784);
+    /* fresh green vibes */
     color: white;
     border: 1px solid transparent;
 }
 
 .save-button:hover {
-    background-color: light-dark(#388e3c, #519657); /* darker green on hover */
+    background-color: light-dark(#388e3c, #519657);
+    /* darker green on hover */
     border-color: light-dark(#2e7d32, #4a7c43);
     color: white;
 }
@@ -183,6 +185,10 @@
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-panel .dashboard-panel {
+    background-color: light-dark(#f0f0f0, #2e2e2e);
 }
 
 .search-bar {
@@ -299,7 +305,7 @@ table input[type="checkbox"] {
 .introduction p {
     font-size: 1rem;
     line-height: 1.6;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
     margin-top: 0.25rem;
 }
 
@@ -319,6 +325,21 @@ table input[type="checkbox"] {
     }
 }
 
-.actions-cell, .actions-cell-header {
+.actions-cell,
+.actions-cell-header {
     width: min-content;
+}
+
+.required {
+    color: var(--red);
+}
+
+
+
+.btn-submit {
+    background: var(--green_light);
+}
+
+.btn-submit:hover {
+    background-color: var(--green_darker);
 }

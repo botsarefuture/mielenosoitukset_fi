@@ -5,13 +5,13 @@ const date_picker_config = {
     altFormat: "d.m.Y",
     allowInput: true,
     locale: {
-        firstDayOfWeek: 1, // Fixed typo from firstDayOfTheWee
+        firstDayOfWeek: 1, // Monday as first day
         weekdays: {
             shorthand: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La'],
             longhand: ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
         },
         months: {
-            shorthand: ['Tam', 'Hel', 'Mar', 'Huht', 'Tou', 'Kes', 'Hele', 'Elok', 'Syys', 'Lok', 'Marr', 'Jou'],
+            shorthand: ['Tam', 'Hel', 'Mar', 'Huht', 'Tou', 'Kes', 'Hele', 'Elo', 'Syys', 'Lok', 'Marr', 'Jou'],
             longhand: ['Tammikuu', 'Helmikuu', 'Maaliskuu', 'Huhtikuu', 'Toukokuu', 'Kesäkuu', 'Heinäkuu', 'Elokuu', 'Syyskuu', 'Lokakuu', 'Marraskuu', 'Joulukuu']
         }
     }
@@ -27,31 +27,13 @@ const time_picker_config = {
     time_24hr: true
 };
 
-/**
- * Initialize date and time pickers with given configurations
- *
- * Parameters
- * ----------
- * None
- *
- * Returns
- * -------
- * void
- */
 function initializeDatePickers() {
-    
-    if (window.today == true) {
+    // Set minDate only if window.today is true (you can set window.today somewhere else)
+    if (window.today === true) {
         date_picker_config.minDate = 'today';
     }
     
-    // find one with #date, and if it has a value, convert it from iso8001 to d.m.Y
-    let date = document.querySelector("#date");
-    if (date.value) {
-        console.log(date.value
-        );
-        let dateObj = new Date(date.value);
-        date.value = dateObj.toLocaleDateString('fi-FI');
-    }
+ 
 
     flatpickr("#date", date_picker_config);
     flatpickr("#start_time", time_picker_config);

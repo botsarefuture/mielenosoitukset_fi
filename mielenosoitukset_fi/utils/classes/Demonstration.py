@@ -142,6 +142,7 @@ class Demonstration(BaseModel):
         preview_image: str = None,
         merged_into: ObjectId = None,  # Added parameter
         cover_picture: str = None,  # Added field
+        created_until = None
     ):
         """
         Initialize a new demonstration event.

@@ -122,10 +122,8 @@
     /* Social dropdown styling */
     .social-media-container {
         display: flex;
-        gap: 0.5rem;
         align-items: center;
         margin-bottom: 0.75rem;
-        flex-wrap: wrap;
     }
 
     .dropdown-selected {
@@ -141,6 +139,11 @@
     #social-media-list .form-control {
         border-radius: 0 8px 8px 0;
         border-left: none;
+    }
+
+    .social-media-container p.form-control {
+        margin-bottom: 0;
+        height: 45.2px;
     }
 </style>
 
@@ -227,8 +230,25 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="container mt-4" id="view">
-    <h2 class="admin-section-title form-title">{{ _('Organisaation tiedot') }}</h2>
+<div class="dashboard-container mt-4" id="view">
+    <div class="dashboard-actions">
+        <a class="button-edit" href="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}">
+            <i class="fa fa-pen"></i> {{ _('Muokkaa') }}
+        </a>
+        
+    </div>
+    
+    <!-- Intro card -->
+    <div class="introduction">
+        <h1 id="tabletitle">{{ _('Organisaation tiedot') }}</h1>
+        <p class="muted">
+            Tällä sivulla näet valitsemasi organisaation keskeiset tiedot ja käyttäjähallinnan. <br>
+            Voit tarkastella organisaation nimeä, kuvausta, yhteystietoja ja sosiaalisen median linkkejä. <br>
+            Lisäksi voit hallita organisaation jäsenten rooleja, poistaa käyttäjiä ja tarkastella tai peruuttaa
+            lähetettyjä kutsuja. <br>
+            Lisätietoa löydät hallinnoijan käsikirjan kohdasta 2.2: <strong>Organisaation yhteenveto</strong>.
+        </p>
+    </div>
 
     <div class="form-group">
         <label>{{ _('Nimi') }}</label>
@@ -274,6 +294,7 @@
             {% endfor %}
         </div>
     </div>
+
     <div class="form-group">
         <label>{{ _('Käyttäjät') }}</label>
         <table class="table">
@@ -307,7 +328,8 @@
                             data-org-id="{{ organization._id }}">
                             {{ _('Tallenna') }}
                         </button>
-                        <button data-ship-id="{{ user._ship_id }}" class="button delete-role-btn">{{ _('Poista') }}</button>
+                        <button data-ship-id="{{ user._ship_id }}" class="button delete-role-btn">{{ _('Poista')
+                            }}</button>
                     </td>
                 </tr>
                 {% else %}
@@ -317,6 +339,7 @@
                 {% endfor %}
             </tbody>
         </table>
+
         <div class="form-group">
             <label>{{ _('Kutsutut käyttäjät') }}</label>
             <table class="table">

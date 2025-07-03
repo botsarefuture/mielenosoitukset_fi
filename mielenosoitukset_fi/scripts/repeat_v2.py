@@ -18,29 +18,23 @@ db = client["mielenosoitukset"]
 recu_demos_collection = db["recu_demos"]
 demonstrations_collection = db["demonstrations"]
 
-
-# Helper function to calculate the next dates
 def calculate_next_dates(start_date, schedule):
-    """Calculate the next dates for a recurring demonstration based on the schedule.
-
-    Parameters
-    ----------
-    start_date : datetime
-        The start date of the demonstration.
-    schedule : dict
-        The repeat schedule containing frequency, interval, and other details.
-
-    Returns
-    -------
-    list of datetime
-        The list of next dates for the recurring demonstration.
-    """
+    """Calculate the next dates for a recurring demonstration based on the schedule."""
     frequency = schedule.get("frequency")
     interval = schedule.get("interval", 1)
     current_date = datetime.now()
     next_dates = []
 
-    end_date = current_date + relativedelta(years=1)
+    # Parse optional end_date if defined
+    end_date_str = schedule.get("end_date")
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        except Exception as e:
+            logger.warning(f"Invalid end_date format '{end_date_str}', ignoring it.")
+            end_date = current_date + relativedelta(years=1)
+    else:
+        end_date = current_date + relativedelta(years=1)
 
     while start_date <= end_date:
         if start_date >= current_date:
@@ -91,6 +85,7 @@ def calculate_next_dates(start_date, schedule):
 
     logger.debug(f"Calculated next dates: {next_dates}")
     return next_dates
+
 
 
 # Remove invalid child demonstrations

@@ -343,3 +343,42 @@ table input[type="checkbox"] {
 .btn-submit:hover {
     background-color: var(--green_darker);
 }
+
+.dashboard-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+.dashboard-actions .button-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    background-color: var(--green);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.dashboard-actions .button-edit:hover {
+    background-color: var(--green_darker);
+}
+
+.version {
+    background: var(--yellow);
+    color: black;
+    padding: 0.25em 0.5em;
+    border-radius: 0.5em;
+    width: fit-content;
+    margin: auto;
+    margin-top: 0.5rem;
+    font-size: 0.75em;
+    font-weight: bold;
+  }
+  

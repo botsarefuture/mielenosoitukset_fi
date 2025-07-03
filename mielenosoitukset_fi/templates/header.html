@@ -5,34 +5,32 @@
   }
 </script>
 <style>
+  /* Element | http://127.0.0.1:5002/admin/recu_demo/ */
 
-/* Element | http://127.0.0.1:5002/admin/recu_demo/ */
+  div.pc-only:nth-child(7)>li:nth-child(1)>button:nth-child(1) {
+    padding: 10px !important;
+    padding: 0 !important;
+    width: fit-content;
+    height: fit-content;
+    line-height: inherit;
+    background: unset;
+  }
 
-div.pc-only:nth-child(7) > li:nth-child(1) > button:nth-child(1) {
-  padding: 10px !important;
-  padding: 0 !important;
-  width: fit-content;
-  height: fit-content;
-  line-height: inherit;
-  background: unset;
-}
+  /* Inline #19 | http://127.0.0.1:5002/admin/recu_demo/ */
 
-/* Inline #19 | http://127.0.0.1:5002/admin/recu_demo/ */
+  element:hover {
+    scale: 1.5;
+  }
 
-element:hover {
-  scale: 1.5;
-}
+  #darkmk:hover {
+    scale: 1.5;
+  }
 
-#darkmk:hover {
-  scale: 1.5;
-}
+  /* Element | http://127.0.0.1:5002/admin/recu_demo/ */
 
-/* Element | http://127.0.0.1:5002/admin/recu_demo/ */
-
-#darkmk {
-  transition: all 1s;
-}
-
+  #darkmk {
+    transition: all 1s;
+  }
 </style>
 <style>
   /* Base Styles */
@@ -382,10 +380,7 @@ element:hover {
       margin: 0 auto;
       font-size: 2em;
       background-color: unset;
-      " 
-
-      
-      aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
+      " aria-label="{{ _('Avaa valikko') }}" onclick="toggleNavbar()">
         <i class="fas fa-bars"></i>
       </button>
 
@@ -441,12 +436,12 @@ element:hover {
             </style>
 
 
-            
+
             <!-- theme change button here-->
             <button class="button theme-button" style="font-size: 2em;" onclick="toggleDarkMode()">
               <i class="fa-solid fa-moon theme-icon"></i>
             </button>
-   
+
             <!-- close button here -->
             <button class="button navbar-toggle" aria-label="{{ _('Sulje valikko') }}" onclick="toggleNavbar()">
               <i class="fas fa-times"></i>
@@ -459,8 +454,10 @@ element:hover {
 
 
         <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> {{ _('Etusivu') }}</a></li>
-        <li><a href="{{ url_for('demonstrations') }}"><i class="fas fa-bullhorn"></i> {{ _('Mielenosoitukset') }}</a></li>
-        <li><a href="{{ url_for('submit') }}"><i class="fas fa-plus-circle"></i> {{ _('Ilmoita mielenosoituksesta') }}</a></li>
+        <li><a href="{{ url_for('demonstrations') }}"><i class="fas fa-bullhorn"></i> {{ _('Mielenosoitukset') }}</a>
+        </li>
+        <li><a href="{{ url_for('submit') }}"><i class="fas fa-plus-circle"></i> {{ _('Ilmoita mielenosoituksesta')
+            }}</a></li>
 
         <!-- Conditional Links for Authenticated Users -->
         {% if current_user.is_authenticated %}
@@ -475,9 +472,11 @@ element:hover {
             </span>
           </a>
           <ul class="dropdown-menu">
-            <li><a href="{{ url_for('users.profile.profile') }}"><i class="fas fa-user"></i> {{ _('Profiili') }}</a></li>
+            <li><a href="{{ url_for('users.profile.profile') }}"><i class="fas fa-user"></i> {{ _('Profiili') }}</a>
+            </li>
             <li><a href="{{ url_for('users.auth.settings') }}"><i class="fas fa-cog"></i> {{ _('Asetukset') }}</a></li>
-            <li><a href="{{ url_for('users.auth.logout') }}"><i class="fas fa-sign-out-alt"></i> {{ _('Kirjaudu ulos') }}</a></li>
+            <li><a href="{{ url_for('users.auth.logout') }}"><i class="fas fa-sign-out-alt"></i> {{ _('Kirjaudu ulos')
+                }}</a></li>
           </ul>
         </li>
         {% endif %}
@@ -498,7 +497,7 @@ element:hover {
               <i class="fa-solid fa-moon theme-icon"></i>
             </button>
           </li>
-          
+
         </div>
 
       </ul>
@@ -508,12 +507,11 @@ element:hover {
     var user_role = "{{ current_user.role }}";
     console.log(user_role);
     localStorage.setItem('user_role', user_role);
-    
+
   </script>
 
-  
+
 </header>
 {% if current_user.role != "user" and current_user.is_authenticated %}
-{% include "sidebar.html" %}
 {% include "toolbar.html" %}
 {% endif %}

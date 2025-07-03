@@ -1,7 +1,7 @@
 import os
 import sys
 from mielenosoitukset_fi.app import create_app
-from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders
+from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders_scheduled as send_reminders
 
 app = create_app()
 

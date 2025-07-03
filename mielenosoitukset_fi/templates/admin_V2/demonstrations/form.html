@@ -5,104 +5,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
 <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-
-<style>
-    .alert.alert-info {
-        background: var(--alert_bg);
-        color: var(--black);
-        padding: 1em;
-        text-align: center;
-        border-radius: 0.5em;
-        margin-bottom: 1rem;
-    }
-
-    .alert h2 {
-        color: var(--danger_bg);
-        background: var(--alert_text);
-        padding: 1em;
-        border-radius: 0.5em;
-        margin: 0 0 1rem 0;
-    }
-
-    .alert>p:nth-child(2) {
-        text-transform: uppercase;
-        color: var(--secondary_color);
-    }
-
-    .alert #ok.button {
-        border: 3px dashed var(--danger_text);
-        padding: 0.5em 1em;
-        border-radius: 0.5em;
-        cursor: pointer;
-        background: var(--secondary_button_color);
-        margin-top: 0.5em;
-        transition: background-color 0.3s ease;
-    }
-
-    .alert #ok.button:hover {
-        background: var(--secondary_button_hover_color);
-    }
-
-    /* Disabled input styling for readonly fields */
-    input[readonly] {
-        background-color: var(--gray-100, #f3f4f6);
-        color: var(--gray-500, #6b7280);
-        cursor: not-allowed;
-    }
-
-    .circle-btn {
-        border: none;
-        background: #e53e3e;
-        color: white;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        margin-left: 0.5rem;
-        transition: background-color 0.2s ease;
-    }
-
-    .circle-btn:hover {
-        background: #c53030;
-    }
-
-
-
-
-    .dashboard-panel.form-group.organizer-item {
-        width: 400px;
-        align-items: stretch;
-        flex-grow: 1;
-        flex-shrink: 1;
-    }
-
-
-    #organizers-container {
-        display: flex;
-        align-content: start;
-        align-items: stretch;
-        gap: 20px;
-        flex-wrap: wrap;
-    }
-
-    .tag-pill .remove-route-btn {
-        background: transparent;
-        border: none;
-        margin-left: 0.3rem;
-        cursor: pointer;
-        font-weight: bold;
-        color: #666;
-        transition: color 0.2s ease;
-    }
-
-    .tag-pill .remove-route-btn:hover {
-        color: #e63946;
-    }
-
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo.css' )}}">
 {% endblock %}
 
 {% block scripts %}
@@ -328,7 +231,7 @@
             </script>
 
             <script type="module">
-                import { initClassicEditor } from '{{ url_for('static', filename='js/ckeditor-init.js') }}';
+                import { initClassicEditor } from '{{ url_for('static', filename='js / ckeditor - init.js') }}';
                 initClassicEditor('#editor', 'description');
             </script>
         </section>
@@ -355,33 +258,6 @@
                 </div>
             </div>
         </section>
-
-        <style>
-            .tag-pill {
-                display: inline-flex;
-                align-items: center;
-                background-color: #efefff;
-                color: #4a4a8a;
-                padding: 0.25rem 0.6rem;
-                border-radius: 9999px;
-                font-size: 0.875rem;
-                user-select: none;
-            }
-
-            .tag-pill .remove-tag-btn {
-                background: transparent;
-                border: none;
-                margin-left: 0.3rem;
-                cursor: pointer;
-                font-weight: bold;
-                color: #888;
-                transition: color 0.2s ease;
-            }
-
-            .tag-pill .remove-tag-btn:hover {
-                color: #e63946;
-            }
-        </style>
 
         <script>
             (() => {

@@ -3,7 +3,21 @@ import sys
 from mielenosoitukset_fi.app import create_app
 from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders_scheduled as send_reminders
 
+from pp import rollup_events
+
+import threading
+
 app = create_app()
+def run_rollup_in_thread():
+    def target():
+        try:
+            rollup_events()
+        except Exception as e:
+            print(f"❌ Rollup thread crashed: {e}")
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    return thread
 
 
 def main():
@@ -45,6 +59,8 @@ def main():
             "LANGUAGES": {"fi": "Suomi"},
         }
     )  # Change the default language to Finnish
+    
+    run_rollup_in_thread()
 
     app.run(debug=debug, port=port)
 

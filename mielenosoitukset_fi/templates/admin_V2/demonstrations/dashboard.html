@@ -21,9 +21,57 @@
       align-items: center;
     }
   }
+
+  .modal-dark {
+    background-color: light-dark(#fff, #1e1e2f);
+    color: light-dark(#000, #eee);
+    border-color: light-dark(#ccc, #444);
+  }
+
+  .modal-dark .modal-header,
+  .modal-dark .modal-footer {
+    background-color: light-dark(#f8f9fa, #2a2a3d);
+    border-color: light-dark(#ccc, #444);
+    color: light-dark(#000, #eee);
+  }
+
+  .modal-dark .btn-close {
+    filter: none;
+    /* reset if needed */
+  }
+
+  .modal-dark .btn-danger {
+    background-color: light-dark(#dc3545, #e03e3e);
+    border-color: light-dark(#b02a37, #b32b2b);
+  }
+
+  .modal-dark .btn-danger:hover {
+    background-color: light-dark(#c82333, #c32b2b);
+    border-color: light-dark(#a71d2a, #912020);
+  }
+
+  .modal-dark .btn-secondary {
+    color: light-dark(#6c757d, #ccc);
+    border-color: light-dark(#6c757d, #666);
+  }
+
+  .modal-dark .btn-secondary:hover {
+    background-color: light-dark(#e2e6ea, #444);
+    color: light-dark(#000, #fff);
+  }
+
+  /* smooth fade/slide when a row is removed */
+tr.fade‑out {
+  opacity: 0;
+  height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  transition: opacity 2s ease, height 2s ease, padding 2s ease;
+}
+
 </style>
 {% endblock %} {% block scripts %}
-<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>
+<!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
 <script>
   function acceptSty(demoId) {
     demo = document.getElementById(`demo-${demoId}`);
@@ -98,13 +146,13 @@
       .then((data) => {
         if (data.status === "OK") {
           // Populate modal content with submitter info
-          const submitterInfoContent = `
+          const submitterInfoContent =`
             <p><strong>{{ _('Nimi') }}:</strong> ${data.submitter.name}</p>
             <p><strong>{{ _('Sähköposti') }}:</strong> ${data.submitter.email}</p>
             <p><strong>{{ _('Puhelin') }}:</strong> ${data.submitter.phone || '{{ _('Ei saatavilla') }}'
         }</p >
           <p><strong>{{ _('Organisaatio') }}:</strong> ${data.submitter.organization || '{{ _('Ei saatavilla') }}'}</p>
-          `;
+         `;
           document.getElementById("submitter-info-content").innerHTML = submitterInfoContent;
 
           // Show the modal
@@ -272,39 +320,48 @@
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}
   </div>
   {% endif %}
-
-  <div id="deleteModal" class="modal hidden">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h3><i class="fa-solid fa-circle-exclamation"></i> {{ _('Poista mielenosoitus') }}</h3>
-      <p>
-        {{ _('Oletko varma, että haluat poistaa mielenosoituksen') }}
-        <strong id="demoTitle"></strong>?
-      </p>
-      <div class="button-container">
-        <button type="button" class="button delete-confirm" id="confirmDelete">
-          {{ _('Kyllä, poista') }}
-        </button>
-        <button type="button" class="button" onclick="closeModal()">
-          {{ _('Peruuta') }}
-        </button>
+  <!-- Delete Confirmation Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" id="deleteModalContent">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger" id="deleteModalLabel">
+            <i class="fa-solid fa-circle-exclamation me-2"></i> {{ _('Poista mielenosoitus') }}
+          </h5>
+          <button type="button" class="btn-close" aria-label="{{ _('Sulje') }}" id="deleteModalCloseBtn"></button>
+        </div>
+        <div class="modal-body">
+          {{ _('Oletko varma, että haluat poistaa mielenosoituksen') }}
+          <strong id="demoTitle"></strong>?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="confirmDelete">{{ _('Kyllä, poista') }}</button>
+          <button type="button" class="btn btn-secondary" id="cancelDelete">{{ _('Peruuta') }}</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal for submitter info -->
-  <div id="submitterInfoModal" class="modal hidden">
-    <div class="modal-content">
-      <span class="close" onclick="closeSubmitterModal()">&times;</span>
-      <h3><i class="fa-solid fa-user"></i> {{ _('Ilmoittajan tiedot') }}</h3>
-      <div id="submitter-info-content">
-        <!-- Content will be filled by JS -->
-      </div>
-      <div class="button-container">
-        <button type="button" class="button" onclick="closeSubmitterModal()">{{ _('Sulje') }}</button>
+  <!-- Submitter Info Modal -->
+  <div class="modal fade" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" id="submitterInfoModalContent">
+        <div class="modal-header">
+          <h5 class="modal-title" id="submitterInfoLabel">
+            <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
+          </h5>
+          <button type="button" class="btn-close" aria-label="{{ _('Sulje') }}" id="submitterInfoCloseBtn"></button>
+        </div>
+        <div class="modal-body" id="submitter-info-content">
+          <!-- Filled dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="closeSubmitterInfo">{{ _('Sulje') }}</button>
+        </div>
       </div>
     </div>
   </div>
+
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const searchInput = document.getElementById('search');
@@ -324,36 +381,171 @@
   </script>
 
   <script>
-function showSubmitterInfo(demoId) {
-  fetch(`/ admin / demo / get_submitter_info / ${ demoId } `)
-    .then(r => r.json())
-    .then(data => {
-      const modal = document.getElementById('submitterInfoModal');
-      const content = document.getElementById('submitter-info-content');
-      if (data.status === 'OK') {
-        const s = data.submitter;
-        content.innerHTML = `
-          < p > <strong>Nimi:</strong> ${ s.submitter_name }</p >
-          <p><strong>Sähköposti:</strong> ${s.submitter_email}</p>
-          <p><strong>Rooli:</strong> ${s.submitter_role}</p>
-          <p><strong>Hyväksynyt ehdot:</strong> ${s.accept_terms ? 'Kyllä' : 'Ei'}</p>
-          <p><strong>Ilmoitettu:</strong> ${s.submitted_at}</p>
-        `;
-      } else {
-        content.innerHTML = `< p style = 'color:red;' > ${ data.message || 'Tietoja ei löytynyt.' }</p > `;
-      }
-      modal.classList.remove('hidden');
+document.addEventListener('DOMContentLoaded', () => {
+  const deleteModalEl = document.getElementById('deleteModal');
+  const deleteModal = new bootstrap.Modal(deleteModalEl);
+  const submitterModalEl = document.getElementById('submitterInfoModal');
+  const submitterModal = new bootstrap.Modal(submitterModalEl);
+
+  // Dark mode toggle for modals (adjust if your dark mode class is on <html> or <body>)
+  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+  if (isDark) {
+    deleteModalEl.querySelector('.modal-content').classList.add('modal-dark');
+    submitterModalEl.querySelector('.modal-content').classList.add('modal-dark');
+  }
+
+  // Fast delete mode flag
+  let fastDeleteMode = false;
+
+  function updateDeleteButtonTexts() {
+  document.querySelectorAll('.delete-button').forEach(btn => {
+    const icon = btn.querySelector('i');
+    if (icon) {
+      btn.innerHTML = icon.outerHTML + (fastDeleteMode ? ' Pikapoisto' : ' {{ _("Poista") }}');
+    } else {
+      // fallback if no icon found
+      btn.textContent = fastDeleteMode ? 'Pikapoisto' : '{{ _("Poista") }}';
+    }
+  });
+}
+
+
+  // Listen Shift key down/up globally
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Shift') {
+      fastDeleteMode = true;
+      updateDeleteButtonTexts();
+      console.log('Fast delete mode enabled.');
+    }
+    if (e.key === 'Escape') {
+      deleteModal.hide();
+      console.log('Modal closed via Escape.');
+    }
+  });
+
+  document.addEventListener('keyup', e => {
+    if (e.key === 'Shift') {
+      fastDeleteMode = false;
+      updateDeleteButtonTexts();
+      console.log('Fast delete mode disabled.');
+    }
+  });
+// Helper: Animate then remove the row
+function animateAndRemoveRow(rowEl) {
+      if (!rowEl) return;
+      rowEl.classList.add('fade-out');
+      rowEl.addEventListener('transitionend', () => rowEl.remove(), { once: true });
+    }
+  // Open delete modal or fast-delete immediately if shift pressed
+  window.openModal = (event, title, id) => {
+    event.preventDefault();
+
+   
+
+    // Inside your main script:
+    if (fastDeleteMode) {
+      // Fast delete directly without modal
+      fetch("/admin/demo/delete_demo", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ demo_id: id }),
+        redirect: 'manual'
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'OK') {
+            const row = document.getElementById(`demo-${id}`);
+            animateAndRemoveRow(row);
+            console.log(`Demo ${id} deleted instantly (pikapoisto).`);
+          } else {
+            alert(data.message || '{{ _("Virhe poistettaessa.") }}');
+          }
+        })
+        .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
+
+      return;
+    }
+
+
+    // Normal modal open flow
+    document.getElementById('demoTitle').textContent = title;
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    confirmDeleteBtn.dataset.id = id;
+    deleteModal.show();
+  };
+
+  // Close delete modal handlers
+  document.getElementById('deleteModalCloseBtn').onclick = () => deleteModal.hide();
+  document.getElementById('cancelDelete').onclick = () => deleteModal.hide();
+
+  // Confirm delete button (normal modal delete)
+  document.getElementById('confirmDelete').addEventListener('click', () => {
+    const id = document.getElementById('confirmDelete').dataset.id;
+    if (!id) return;
+
+    fetch("/admin/demo/delete_demo", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ demo_id: id }),
+      redirect: 'manual'
     })
-    .catch(() => {
-      const modal = document.getElementById('submitterInfoModal');
-      const content = document.getElementById('submitter-info-content');
-      content.innerHTML = `< p style = 'color:red;' > Virhe haettaessa tietoja.</p >`;
-      modal.classList.remove('hidden');
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'OK') {
+          // Remove the row
+          const row = document.getElementById(`demo-${ id }`);
+          if (row) row.remove();
+          deleteModal.hide();
+        } else {
+          alert(data.message || '{{ _("Virhe poistettaessa.") }}');
+        }
+      })
+      .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
+  });
+
+  // Show submitter info modal and fetch data
+  window.showSubmitterInfoModal = (demoId) => {
+    fetch(`/admin/demo/get_submitter_info/${ demoId }`)
+      .then(res => res.json())
+      .then(data => {
+        const content = document.getElementById('submitter-info-content');
+        if (data.status === 'OK') {
+          const s = data.submitter;
+          content.innerHTML =`
+          < p > <strong>{{ _('Nimi') }}:</strong> ${ s.name }</p >
+            <p><strong>{{ _('Sähköposti') }}:</strong> ${s.email}</p>
+            <p><strong>{{ _('Puhelin') }}:</strong> ${s.phone || '{{ _("Ei saatavilla") }}'}</p>
+            <p><strong>{{ _('Organisaatio') }}:</strong> ${s.organization || '{{ _("Ei saatavilla") }}'}</p>
+       `;
+        } else {
+          content.innerHTML =`< p class="text-danger" > ${ data.message || '{{ _("Tietoja ei löytynyt.") }}' }</p >`;
+        }
+        submitterModal.show();
+      })
+      .catch(() => {
+        const content = document.getElementById('submitter-info-content');
+        content.innerHTML =`< p class="text-danger" > {{ _("Virhe haettaessa tietoja.") }}</p >`;
+        submitterModal.show();
+      });
+  };
+
+  // Close submitter info modal
+  document.getElementById('submitterInfoCloseBtn').onclick = () => submitterModal.hide();
+  document.getElementById('closeSubmitterInfo').onclick = () => submitterModal.hide();
+
+  // Initial button text update
+  updateDeleteButtonTexts();
+});
+
+
+function animateAndRemoveRow(rowEl) {
+  if (!rowEl) return;
+  rowEl.classList.add('fade-out');
+  // after the transition completes, nuke the node for good
+  rowEl.addEventListener('transitionend', () => rowEl.remove(), { once:true });
 }
-function closeSubmitterModal() {
-  document.getElementById('submitterInfoModal').classList.add('hidden');
-}
+
+
   </script>
 
   {% endblock %}

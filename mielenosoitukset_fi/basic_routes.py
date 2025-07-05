@@ -944,13 +944,7 @@ Disallow: /admin/
         flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
-        return jsonify(messages=flash_message_data)
-
-    @app.route("/marquee", methods=["GET"])
-    def marquee():
-        with open("marquee_config.json", "r") as config_file:
-            config = json.load(config_file)
-        return jsonify(config)
+        return jsonify(messages=flash_message_data
 
     @app.route("/500")
     def _500():

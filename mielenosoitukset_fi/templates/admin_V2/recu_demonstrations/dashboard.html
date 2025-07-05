@@ -24,6 +24,45 @@
       align-items: center;
     }
   }
+
+  .modal-dark .modal-content {
+  background-color: light-dark(#fff, #1e1e2f);
+  color: light-dark(#000, #eee);
+  border: 1px solid light-dark(#ccc, #444);
+}
+
+.modal-dark .modal-header,
+.modal-dark .modal-footer {
+  background-color: light-dark(#f8f9fa, #2a2a3d);
+  border-color: light-dark(#ccc, #444);
+  color: light-dark(#000, #eee);
+}
+
+.modal-dark .btn-close {
+  filter: none; /* reset or add styles if needed */
+}
+
+/* Buttons in modal */
+.modal-dark .btn-danger {
+  background-color: light-dark(#dc3545, #e03e3e);
+  border-color: light-dark(#b02a37, #b32b2b);
+}
+
+.modal-dark .btn-danger:hover {
+  background-color: light-dark(#c82333, #c32b2b);
+  border-color: light-dark(#a71d2a, #912020);
+}
+
+.modal-dark .btn-outline-secondary {
+  color: light-dark(#6c757d, #ccc);
+  border-color: light-dark(#6c757d, #666);
+}
+
+.modal-dark .btn-outline-secondary:hover {
+  background-color: light-dark(#e2e6ea, #444);
+  color: light-dark(#000, #fff);
+}
+
 </style>
 {% endblock %}
 
@@ -127,56 +166,73 @@
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei löytynyt toistuvia mielenosoituksia.') }}
   </div>
   {% endif %}
-
-  <!-- Delete modal (same structure as dashboard) -->
-  <div id="deleteModal" class="modal hidden">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h3><i class="fa-solid fa-circle-exclamation"></i> {{ _('Poista toistuva mielenosoitus') }}</h3>
-      <p>
-        {{ _('Oletko varma, että haluat poistaa toistuvan mielenosoituksen') }}
-        <strong id="demoTitle"></strong>?
-      </p>
-      <div class="button-container">
-        <button type="button" class="button delete-confirm" id="confirmDelete">
-          {{ _('Kyllä, poista') }}
-        </button>
-        <button type="button" class="button" onclick="closeModal()">
-          {{ _('Peruuta') }}
-        </button>
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-describedby="deleteModalDesc" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+  
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="deleteModalLabel">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            {{ _('Poista toistuva mielenosoitus') }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+        </div>
+  
+        <div class="modal-body" id="deleteModalDesc">
+          <p class="mb-0">
+            {{ _('Oletko varma, että haluat poistaa toistuvan mielenosoituksen') }}
+            <strong id="demoTitle"></strong>?
+          </p>
+        </div>
+  
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="confirmDelete" aria-describedby="deleteModalDesc">
+            {{ _('Kyllä, poista') }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            {{ _('Peruuta') }}
+          </button>
+        </div>
+  
       </div>
     </div>
   </div>
-
+  
 </section>
 
 <script>
-  // Reuse your dashboard's modal JS functions (adapt if needed)
+  document.addEventListener('DOMContentLoaded', () => {
+  const deleteModalEl = document.getElementById('deleteModal');
+  const deleteModal = new bootstrap.Modal(deleteModalEl, {
+    keyboard: true,
+    backdrop: 'static'
+  });
+  const demoTitleEl = document.getElementById('demoTitle');
+  const confirmDeleteBtn = document.getElementById('confirmDelete');
 
-  function openModal(event, title, id, type = 'single') {
+  window.openModal = (event, title, id, type = 'single') => {
     event.preventDefault();
-    document.getElementById('demoTitle').textContent = title;
-    // Store id and type for delete action
-    document.getElementById('confirmDelete').dataset.id = id;
-    document.getElementById('confirmDelete').dataset.type = type;
-    document.getElementById('deleteModal').classList.remove('hidden');
-  }
+    demoTitleEl.textContent = title;
+    confirmDeleteBtn.dataset.id = id;
+    confirmDeleteBtn.dataset.type = type;
+    confirmDeleteBtn.disabled = false; // reset disabled state
+    deleteModal.show();
+    confirmDeleteBtn.focus();
+  };
 
-  function closeModal() {
-    document.getElementById('deleteModal').classList.add('hidden');
-    document.getElementById('confirmDelete').dataset.id = '';
-    document.getElementById('confirmDelete').dataset.type = '';
-  }
-
-  document.getElementById('confirmDelete').addEventListener('click', () => {
-    const id = document.getElementById('confirmDelete').dataset.id;
-    const type = document.getElementById('confirmDelete').dataset.type;
+  confirmDeleteBtn.addEventListener('click', () => {
+    const id = confirmDeleteBtn.dataset.id;
+    const type = confirmDeleteBtn.dataset.type;
     let url = '';
     if (type === 'recu') {
       url = `/admin/recu_demo/delete_recu_demo/${id}`;
     } else {
       url = `/admin/demo/delete_demo/${id}`;
     }
+
+    // Disable buttons to prevent double clicks
+    confirmDeleteBtn.disabled = true;
+
     fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -184,14 +240,17 @@
     })
     .then(res => res.json())
     .then(data => {
-      if(data.status === 'OK'){
+      if (data.status === 'OK') {
         location.reload();
       } else {
         alert(data.message || '{{ _("Virhe poistettaessa.") }}');
       }
     })
-    .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
+    .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'))
+    .finally(() => deleteModal.hide());
   });
+});
+
 
   // Simple client-side search filter (optional)
   document.addEventListener('DOMContentLoaded', () => {
@@ -205,5 +264,17 @@
       });
     });
   });
+
+  document.addEventListener('DOMContentLoaded', () => {
+  const deleteModalEl = document.getElementById('deleteModal');
+  const htmlEl = document.documentElement; // <html> element
+
+  if (htmlEl.classList.contains('dark')) {
+    deleteModalEl.classList.add('modal-dark');
+  } else {
+    deleteModalEl.classList.remove('modal-dark');
+  }
+});
+
 </script>
 {% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}{% endblock %}
+
+{% block styles %}
+<style>
+  .chart-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background: var(--container_background);
+    border: 1px solid var(--border_color);
+    border-radius: 12px;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<section class="dashboard-container">
+  <h1>{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}</h1>
+  <form method="get" style="margin-bottom: 1rem;">
+  <label for="interval">{{ _('Jaa aikavälit:') }}</label>
+  <select name="interval" onchange="this.form.submit()">
+    <option value="1" {% if interval == 1 %}selected{% endif %}>1 min</option>
+    <option value="5" {% if interval == 5 %}selected{% endif %}>5 min</option>
+    <option value="15" {% if interval == 15 %}selected{% endif %}>15 min</option>
+    <option value="30" {% if interval == 30 %}selected{% endif %}>30 min</option>
+    <option value="60" {% if interval == 60 %}selected{% endif %}>1 tunti</option>
+    <option value="120" {% if interval == 120 %}selected{% endif %}>2 tuntia</option>
+  </select>
+</form>
+
+  <div class="dashboard-panel">
+    <canvas id="totalViewsChart"></canvas>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('totalViewsChart').getContext('2d');
+  const interval = {{ interval | int }};
+  const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+
+  const chartColors = {
+    text: isDark ? '#eee' : '#222',
+    grid: isDark ? '#444' : '#ccc',
+    background: isDark ? '#1e1e2f' : '#fff',
+    line: isDark ? '#ff79c6' : '#d6336c',
+  };
+
+  let chartInstance;
+
+  function renderChart(labels, data) {
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '{{ _("Katselukerrat yhteensä") }}',
+          data: data,
+          fill: true,
+          borderColor: chartColors.line,
+          backgroundColor: chartColors.line + '66',
+          tension: 0.3,
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: { display: true, text: '{{ _("Aika (tunnit:minuutit)") }}' },
+            ticks: { color: chartColors.text },
+            grid: { color: chartColors.grid },
+            maxTicksLimit: 12,
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: '{{ _("Näytöt") }}' },
+            ticks: { color: chartColors.text },
+            grid: { color: chartColors.grid },
+          }
+        },
+        plugins: {
+          legend: {
+            labels: { color: chartColors.text }
+          },
+          tooltip: {
+            backgroundColor: chartColors.background,
+            titleColor: chartColors.text,
+            bodyColor: chartColors.text,
+            mode: 'index',
+            intersect: false,
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false,
+        }
+      }
+    });
+  }
+
+  function fetchAnalytics() {
+    fetch(`/admin/api/analytics/overall_24h?interval=${interval}`)
+      .then(res => res.json())
+      .then(({ labels, data }) => {
+        renderChart(labels, data);
+      })
+      .catch(err => {
+        console.error("❌ Failed to fetch analytics:", err);
+      });
+  }
+
+  // Initial chart
+  fetchAnalytics();
+
+  // Auto-refresh every 1 minute (60,000 ms)
+  setInterval(fetchAnalytics, 60000);
+</script>
+{% endblock %}

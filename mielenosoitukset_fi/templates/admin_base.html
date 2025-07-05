@@ -95,18 +95,19 @@
                     {% if current_user.has_permission("VIEW_ANALYTICS") %}
                     <li><a href="{{ url_for('admin.stats') }}" class="nav-link link-light">
                             <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
-                            <span class="badge bg-warning text-dark ms-1">{{ _('Beta') }}</span></a></li>
-                    <li><a href="{{ url_for('admin.admin_analytics') }}" class="nav-link link-light">
-                            <i class="fas fa-chart-bar me-2"></i>{{ _('Mielenosoitusten analytiikka') }}</a></li>
+                        </a></li>
+
                     {% endif %}
 
-                    {% if current_user.has_permission("MANAGE_MARQUEE") %}
-                    <li><a href="{{ url_for('admin.manage_marquee') }}" class="nav-link link-light">
-                            <i class="fas fa-scroll me-2"></i>{{ _('Pyörörullan hallinta') }}</a></li>
-                    {% endif %}
+               
 
-                    <li><a href="{{ url_for('users.auth.logout') }}" class="nav-link link-light">
-                            <i class="fas fa-sign-out-alt me-2"></i>{{ _('Kirjaudu ulos') }}</a></li>
+                    <li>
+                        <a href="#" id="logoutLink" class="nav-link link-light" role="button" aria-haspopup="true"
+                            aria-expanded="false">
+                            <i class="fas fa-sign-out-alt me-2"></i>{{ _('Kirjaudu ulos') }}
+                        </a>
+                    </li>
+
                 </ul>
             </nav>
 
@@ -144,7 +145,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Your sidebar toggling logic -->
 
-<script>
+    <script>
         const sidebar = document.querySelector('.container-sidebar');
         const toggleBtn = document.getElementById('maintoggle');
 
@@ -154,7 +155,82 @@
         });
 
     </script>
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutLink = document.getElementById("logoutLink");
+  const logoutModalEl = document.getElementById("logoutConfirmModal");
+  const logoutModal = new bootstrap.Modal(logoutModalEl);
+  const countdownEl = document.getElementById("countdown");
+  const confirmLogoutBtn = document.getElementById("confirmLogoutBtn");
+  const cancelBtn = document.getElementById("cancelLogoutBtn");
+
+  let countdownTimer = null;
+  let countdownValue = 5;
+
+  function startCountdown() {
+    countdownValue = 5;
+    countdownEl.textContent = countdownValue;
+
+    countdownTimer = setInterval(() => {
+      countdownValue--;
+      countdownEl.textContent = countdownValue;
+
+      if (countdownValue <= 0) {
+        clearInterval(countdownTimer);
+        // Automaattisesti siirrytään logout-linkkiin
+        window.location.href = confirmLogoutBtn.href;
+      }
+    }, 1000);
+  }
+
+  function stopCountdown() {
+    clearInterval(countdownTimer);
+  }
+
+  logoutLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    logoutModal.show();
+    startCountdown();
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    stopCountdown();
+  });
+
+  logoutModalEl.addEventListener("hidden.bs.modal", () => {
+    stopCountdown();
+  });
+
+  // Jos käyttäjä klikkaa "Kirjaudu ulos nyt", perutaan countdown ja mennään heti ulos
+  confirmLogoutBtn.addEventListener("click", () => {
+    stopCountdown();
+  });
+});
+
+    </script>
     {% block scripts %}{% endblock %}
+    <!-- Logout confirmation modal -->
+<div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutConfirmLabel">{{ _('Vahvista uloskirjautuminen') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Oletko varma, että haluat kirjautua ulos?') }}</p>
+        <p><small>{{ _('Uloskirjautuminen tapahtuu automaattisesti 5 sekunnin kuluttua, ellei peruuteta.') }}</small></p>
+        <p id="countdown" class="fw-bold text-center fs-4">5</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="cancelLogoutBtn" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <a href="{{ url_for('users.auth.logout') }}" id="confirmLogoutBtn" class="btn btn-danger">{{ _('Kirjaudu ulos nyt') }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 </body>
 
 </html>

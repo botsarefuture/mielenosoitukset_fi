@@ -944,7 +944,7 @@ Disallow: /admin/
         flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
-        return jsonify(messages=flash_message_data
+        return jsonify(messages=flash_message_data)
 
     @app.route("/500")
     def _500():

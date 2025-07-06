@@ -18,6 +18,7 @@ from flask import (
     url_for,
     stream_template,
     stream_with_context,
+    jsonify
 )
 from flask_login import (
     LoginManager,

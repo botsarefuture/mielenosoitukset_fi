@@ -946,12 +946,6 @@ Disallow: /admin/
         ]
         return jsonify(messages=flash_message_data)
 
-    @app.route("/marquee", methods=["GET"])
-    def marquee():
-        with open("marquee_config.json", "r") as config_file:
-            config = json.load(config_file)
-        return jsonify(config)
-
     @app.route("/500")
     def _500():
         return abort(500)

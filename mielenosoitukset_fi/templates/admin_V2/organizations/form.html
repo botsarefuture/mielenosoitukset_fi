@@ -1,0 +1,369 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+
+<style>
+    /* ---------- Card wrapper ---------- */
+    .container {
+        /* background-color and color vars are covered in .dashboard-container */
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        max-width: 1000px;
+        margin: 2rem auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 700;
+        /* color var already defined for primary */
+        text-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+        margin-bottom: 1.5rem;
+    }
+
+    /* ---------- Generic form controls ---------- */
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        /* color var for text already defined */
+    }
+
+    .form-control {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        padding: .6rem 1rem;
+        font-size: .95rem;
+        width: 100%;
+    }
+
+    input.form-control::placeholder {
+        color: light-dark(#1a1a1a, #ccc);
+    }
+
+    /* ---------- Social media section ---------- */
+    .social-media-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+        flex: 1;
+    }
+
+    .custom-dropdown {
+        position: relative;
+        flex: 0 0 auto;
+        min-width: 160px;
+        max-width: 200px;
+    }
+
+    .dropdown-selected {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .dropdown-selected i {
+        margin-left: 0.5rem;
+    }
+
+    .dropdown-list {
+        display: none;
+        position: absolute;
+        top: calc(100% + 0.2rem);
+        left: 0;
+        width: 100%;
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        overflow: hidden;
+    }
+
+    .dropdown-list div {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        gap: 0.5rem;
+        transition: background-color 0.2s;
+    }
+
+    .dropdown-list div:hover {
+        background-color: var(--row-hover);
+    }
+
+    .social-media-container input[type="url"] {
+        flex-grow: 1;
+        min-width: 150px;
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .remove-btn {
+        color: var(--danger);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.4rem;
+        transition: color 0.2s ease;
+    }
+
+    .remove-btn:hover {
+        color: var(--primary-hover);
+    }
+
+    /* Button inside social media group */
+    #add-social-media {
+        margin-top: 0.5rem;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    #add-social-media:hover {
+        background-color: var(--primary-hover);
+    }
+
+    /* Remove button top right corner in dashboard-panel */
+    .dashboard-panel .remove-btn {
+        position: relative;
+        top: 8px;
+        left: 8px;
+        background: transparent;
+        border-radius: 50%;
+        transition: color 0.2s ease;
+        z-index: 5;
+        user-select: none;
+    }
+
+    .dashboard-panel .remove-btn:hover {
+        color: var(--danger-dark, #a00);
+        background-color: rgba(255, 0, 0, 0.1);
+    }
+
+    #social-media-list {
+        display: flex;
+        gap: 0.5em;
+        /*! flex-basis: max-content; */
+        flex-flow: row;
+        flex-wrap: wrap;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ---------- Dropdown helpers ----------
+    function toggleDropdown(sel) {
+        const list = sel.nextElementSibling;
+        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', e => {
+        const opt = e.target.closest('.dropdown-list div');
+        if (opt) {
+            const value = opt.dataset.value;
+            const text = opt.innerHTML;
+            const dropdown = opt.closest('.custom-dropdown');
+            dropdown.querySelector('.dropdown-selected').innerHTML = text + ' <i class="fas fa-caret-down"></i>';
+            dropdown.querySelector('input[type="hidden"]').value = value;
+            dropdown.querySelector('.dropdown-list').style.display = 'none';
+        }
+        if (!e.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.dropdown-list').forEach(dl => dl.style.display = 'none');
+        }
+    });
+
+    // ---------- Social media entry factory ----------
+    function createSocial(platform = '', url = '') {
+        const list = document.getElementById('social-media-list');
+        const panel = document.createElement('div');
+        panel.className = 'dashboard-panel';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'social-media-container';
+
+        wrap.innerHTML = `
+  <div class="custom-dropdown">
+    <div class="dropdown-selected" onclick="toggleDropdown(this)">{{ _('Valitse alusta') }} <i class="fas fa-caret-down"></i></div>
+    <div class="dropdown-list">
+      <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
+      <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
+      <div data-value="instagram"><i class="fab fa-instagram"></i> Instagram</div>
+      <div data-value="linkedin"><i class="fab fa-linkedin"></i> LinkedIn</div>
+      <div data-value="tiktok"><i class="fab fa-tiktok"></i> TikTok</div>
+      <div data-value="youtube"><i class="fab fa-youtube"></i> YouTube</div>
+      <div data-value="snapchat"><i class="fab fa-snapchat"></i> Snapchat</div>
+    </div>
+    <input type="hidden" name="social_media_platform[]">
+  </div>
+  <input type="url" name="social_media_url[]" placeholder="{{ _('Syötä URL') }}" class="form-control flex-grow" />
+`;
+
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        removeBtn.title = "{{ _('Poista') }}";
+        removeBtn.onclick = () => panel.remove();
+
+        panel.appendChild(removeBtn);
+        panel.appendChild(wrap);
+        list.appendChild(panel);
+
+        // Set initial values if given
+        if (platform) {
+            wrap.querySelector('input[type="hidden"]').value = platform;
+            wrap.querySelector('.dropdown-selected').innerHTML = `<i class="fab fa-${platform}"></i> ${platform.charAt(0).toUpperCase() + platform.slice(1)} <i class="fas fa-caret-down"></i>`;
+        }
+        if (url) {
+            wrap.querySelector('input[type="url"]').value = url;
+        }
+
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('add-social-media').addEventListener('click', () => createSocial());
+        {% if organization %}
+        {% for p, u in organization.get('social_media_links', {}).items() %} createSocial('{{p}}', '{{u}}'); {% endfor %}
+        {% endif %}
+    });
+</script>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-container" id="org-form">
+    <!-- Intro card -->
+    <div class="introduction">
+        <h1 id="tabletitle">{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h1>
+        <p class="muted">
+            {{ _('Tällä lomakkeella voit luoda tai muokata organisaatioita, joihin sinulla on käyttöoikeus.') }}<br>
+            {% if organization %}
+            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.3: Organisaation
+            muokkaaminen.') }}
+            {% else %}
+            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.2: Uuden organisaation
+            luominen.') }}
+            {% endif %}
+        </p>
+    </div>
+
+
+    <form method="POST"
+        action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
+
+        <div class="form-group">
+            <label for="name">{{ _('Nimi') }} <span class="required">*</span></label>
+            <input id="name" name="name" class="form-control" required
+                value="{{ organization.name if organization else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="description">{{ _('Kuvaus') }} <span class="required">*</span></label>
+            <textarea id="description" name="description" class="form-control"
+                required>{{ organization.description if organization else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="email">{{ _('Sähköpostiosoite') }} <span class="required">*</span></label>
+            <input type="email" id="email" name="email" class="form-control" required
+                value="{{ organization.email if organization else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="website">{{ _('Verkkosivu') }}</label>
+            <input type="url" id="website" name="website" class="form-control"
+                value="{{ organization.website if organization else '' }}">
+        </div>
+
+        {% if organization %}
+        <div class="form-group">
+            <label for="verified">{{ _('Onko organisaatio vahvistettu?') }}</label>
+            <input type="checkbox" id="verified" name="verified" {% if organization.verified %}checked{% endif %}>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label>{{ _('Sosiaalinen media') }}</label>
+            <div id="social-media-list"></div>
+            <button type="button" id="add-social-media" class="button">{{ _('Lisää sosiaalisen median alusta')
+                }}</button>
+        </div>
+
+        <div class="form-buttons">
+            <button type="submit" class="button save-button">{% if organization %}{{ _('Tallenna muutokset') }}{% else %}{{
+                _('Luo') }}{% endif %}</button>
+            <a href="{{ url_for('admin_org.organization_control') }}" class="button cancel-button">{{ _('Peruuta') }}</a>
+        </div>
+    </form>
+
+    {% if organization %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
+        {{ _('Kutsu käyttäjiä') }}
+    </button>
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm"> {# You can use modal-md or modal-lg if needed #}
+            <div class="modal-content shadow rounded-4 border-0"
+                style="background-color: var(--container-bg); color: var(--text);">
+
+                <form method="POST"
+                    action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjiä') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="{{ _('Sulje') }}"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label for="invitee_email" class="form-label">
+                                {{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span>
+                            </label>
+                            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required
+                                placeholder="sähköposti@domain.fi">
+                        </div>
+                        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta')
+                            }}</button>
+                        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

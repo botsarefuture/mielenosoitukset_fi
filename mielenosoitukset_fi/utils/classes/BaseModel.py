@@ -1,6 +1,5 @@
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from bson import ObjectId
-from mielenosoitukset_fi.users.models import User
 
 
 class BaseModel:
@@ -8,19 +7,7 @@ class BaseModel:
 
     @classmethod
     def from_dict(cls, data):
-        """Create an instance from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-
-
-        Returns
-        -------
-
-
-
-        """
+        """Create an instance from a dictionary."""
         return cls(**data)
 
     def to_dict(self, json=False):
@@ -29,30 +16,27 @@ class BaseModel:
         Parameters
         ----------
         json : bool, default=False
-            If True, convert ObjectId to string.
+            If True, convert ObjectId to string and handle nested models.
 
         Returns
         -------
-
-
+        dict
         """
         data = self.__dict__.copy()
-        if json and "_id" in data:
-            data["_id"] = str(data["_id"])
-        if (
-            json
-            and any(isinstance(value, ObjectId) for value in data.values())
-            or any(isinstance(value, User) for value in data.values())
-        ):
+
+        if json:
+            if "_id" in data:
+                data["_id"] = str(data["_id"])
+
             for key, value in data.items():
                 if isinstance(value, ObjectId):
                     data[key] = str(value)
+                elif (
+                    isinstance(value, object)
+                    and value.__class__.__name__ == "User"
+                ):
+                    data[key] = value.to_dict(True)
 
-                if isinstance(value, User):
-                    data[key] = value.to_dict()
-
-        if json:
-            # Replace None with None-equivalent in JSON format
             data = stringify_object_ids(data)
 
         return data

@@ -1,0 +1,698 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<!-- Core CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo.css' )}}">
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+
+<script>
+
+    // Organizers logic
+    let organizerCount = {{ demo.organizers| length if demo and demo.organizers else 0 }};
+
+    function addOrganizer() {
+        const orgSelect = document.getElementById('organization');
+        const selectedId = orgSelect.value;
+
+        if (!selectedId) {
+            alert('{{ _("Valitse ensin järjestö!") }}');
+            return;
+        }
+
+        organizerCount++;
+        const container = document.getElementById('organizers-container');
+        const organizerDiv = document.createElement('div');
+        organizerDiv.classList.add('dashboard-panel', 'form-group', 'organizer-item');
+
+        organizerDiv.innerHTML = `
+            <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="required">*</span></label>
+            <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control disabled" disabled value="{{ _('Täytetään automaattisesti') }}">
+            <label for="organizer_website_${organizerCount}">{{ _('Nettisivu') }}</label>
+            <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control disabled" disabled value="{{ _('Täytetään automaattisesti') }}">
+            <label for="organizer_email_${organizerCount}">{{ _('Sähköposti') }}</label>
+            <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control disabled" disabled value="{{ _('Täytetään automaattisesti') }}">
+            <label for="organizer_id_${organizerCount}">{{ _('Organisaation ID') }}</label>
+            <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedId}">
+            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
+        `;
+
+        container.appendChild(organizerDiv);
+    }
+
+    function removeOrganizer(button) {
+        button.closest('.organizer-item').remove();
+    }
+
+    function createNewOrganizer(button) {
+        {% if current_user.is_authenticated %}
+        const organizerItem = button.closest('.organizer-item');
+        const name = organizerItem.querySelector('input[id^="organizer_name"]').value;
+        const website = organizerItem.querySelector('input[id^="organizer_website"]').value;
+        const email = organizerItem.querySelector('input[id^="organizer_email"]').value;
+
+        fetch('/admin/organization/api/new', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, website, email })
+        })
+            .then(res => res.json())
+            .then(data => {
+                organizerItem.querySelector('input[id^="organizer_id"]').value = data.id;
+            })
+            .catch(err => {
+                console.error('Organizer creation error:', err);
+                alert('{{ _("Järjestäjän luonti epäonnistui.") }}');
+            });
+        {% else %}
+        alert('{{ _("Sinun tulee olla sisäänkirjautunut tehdäksesi näin.") }}');
+        {% endif %}
+    }
+
+    // City Selector functions
+    function selectCity(city) {
+        document.querySelector('.dropbtn').textContent = city;
+        document.getElementById('selected-city').value = city;
+        document.getElementById('dropdown-content').style.display = 'none';
+    }
+
+    function filterFunction() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toUpperCase();
+        const div = document.getElementById('dropdown-content');
+        const aTags = div.getElementsByTagName('a');
+        for (let a of aTags) {
+            const txtValue = a.textContent || a.innerText;
+            a.style.display = txtValue.toUpperCase().includes(filter) ? '' : 'none';
+        }
+    }
+</script>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-container">
+
+    <!-- Page intro -->
+    <section class="introduction">
+        <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
+        <p class="text-muted max-w-xl">{{ _('Täältä voit lisätä tai muokata mielenosoituksia helposti.') }}<br>
+            {{ _('Muistathan tallentaa tekemäsi muutokset lomakkeen lopussa.') }}
+        </p>
+    </section>
+
+    {% if edit_demo_with_token %}
+    <section class="alert alert-info" role="alert" id="alert1">
+        <h2>{{ _('HUOMIO!') }}</h2>
+        <p>{{ _('Olet muokkaamassa mielenosoitusta muokkauslinkillä.') }}</p>
+        <details>
+            <summary>{{ _('Lisätietoja') }}</summary>
+            <p>{{ _('Muokkauslinkillä myöskin he joilla ei ole käyttäjätiliä sivustolle, voivat muokata
+                mielenosoituksia. Muokkauslinkillä muokkaus on rajoitettua.') }}</p>
+        </details>
+        <button id="ok" class="button" onclick="document.getElementById('alert1').remove()">{{ _('OK') }}</button>
+    </section>
+    {% endif %}
+
+    <form method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
+
+        <!-- Basic Info Section -->
+        <section class="form-section dashboard-panel mb-8">
+            <h2 class="text-xl font-semibold mb-4">{{ _('Perustiedot') }}</h2>
+
+            <div class="form-group">
+                <label for="title">{{ _('Otsikko') }} <span class="required">*</span></label>
+                <input type="text" id="title" name="title" class="form-control" value="{{ demo.title if demo else '' }}"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="type">{{ _('Tyyppi') }} <span class="required">*</span></label>
+                <select id="type" name="type" class="form-control" required>
+                    <option value="MARCH" {% if demo and demo.event_type=='MARCH' %}selected{% endif %}>{{ _('Marssi')
+                        }}</option>
+                    <option value="STAY_STILL" {% if demo and demo.event_type=='STAY_STILL' %}selected{% endif %}>{{
+                        _('Paikallaan') }}</option>
+                    <option value="ROAD_BLOCK" {% if demo and demo.event_type=='ROAD_BLOCK' %}selected{% endif %}>{{
+                        _('Tieblokki') }}</option>
+                    <option value="OTHER" {% if demo and demo.event_type=='OTHER' %}selected{% endif %}>{{ _('Muut') }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="date">{{ _('Päivämäärä (pp.kk.vvvv)') }} <span class="required">*</span></label>
+                <input type="text" id="date" name="date" class="form-control" value="{{ demo.date if demo else '' }}"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="start_time">{{ _('Alkamisaika') }} <span class="required">*</span></label>
+                <input type="text" id="start_time" name="start_time" class="form-control"
+                    value="{{ demo.start_time if demo else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="end_time">{{ _('Päättymisaika') }}</label>
+                <input type="text" id="end_time" name="end_time" class="form-control"
+                    value="{{ demo.end_time if demo else '' }}">
+            </div>
+
+            {% if demo and (demo.date or demo.start_time or demo.end_time) %}
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    const maxWait = 5000;
+                    const interval = 100;
+                    const start = Date.now();
+
+                    const dateValues = {
+                        {% if demo.date %} "date": "{{ demo.date }}", {% endif %}
+                        {% if demo.start_time %}"start_time": "{{ demo.start_time }}", {% endif %}
+                {% if demo.end_time %} "end_time": "{{ demo.end_time }}"{% endif %}
+                    };
+
+                const trySetFlatpickrDate = (id, value) => {
+                    const input = document.getElementById(id);
+                    if (input?._flatpickr) {
+                        try {
+                            input._flatpickr.setDate(value, true);
+                        } catch (err) {
+                            console.error(`Failed to set flatpickr date on #${id}:`, err);
+                        }
+                        return true;
+                    }
+                    return false;
+                };
+
+                const waitForFlatpickrs = () => {
+                    let allReady = true;
+                    for (const [id, value] of Object.entries(dateValues)) {
+                        allReady = trySetFlatpickrDate(id, value) && allReady;
+                    }
+                    if (!allReady && Date.now() - start < maxWait) {
+                        setTimeout(waitForFlatpickrs, interval);
+                    } else if (!allReady) {
+                        console.warn("Not all flatpickr fields were ready in time.");
+                    }
+                };
+
+                waitForFlatpickrs();
+                });
+            </script>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="description">{{ _('Kuvaus') }}</label>
+                <div class="main-container">
+                    <div id="editor-container"
+                        class="editor-container editor-container_classic-editor editor-container_include-block-toolbar">
+                        <div class="editor-container__editor">
+                            <div id="editor"></div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="description" name="description" value="{{ demo.description if demo else '' }}">
+            </div>
+
+            <script type="importmap">
+            {
+                "imports": {
+                    "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+                    "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+                }
+            }
+            </script>
+
+            <script type="module">
+                import { initClassicEditor } from '{{ url_for('static', filename='js / ckeditor - init.js') }}';
+                initClassicEditor('#editor', 'description');
+            </script>
+        </section>
+
+        <section class="form-section dashboard-panel">
+            <h2>{{ _('SEO / tagit') }}</h2>
+            <div class="form-group">
+                <label for="tag-input">{{ _('Tägit') }}</label>
+                <div id="tags-wrapper" class="tags-wrapper"
+                    style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+                    <!-- Existing tags rendered here as pills -->
+                    {% if demo and demo.tags %}
+                    {% for tag in demo.tags %}
+                    <span class="tag-pill">
+                        {{ tag }}
+                        <button type="button" class="remove-tag-btn" aria-label="Remove tag">&times;</button>
+                        <input type="hidden" name="tags[]" value="{{ tag }}">
+                    </span>
+                    {% endfor %}
+                    {% endif %}
+                    <!-- Input for new tags -->
+                    <input type="text" id="tag-input" placeholder="{{ _('Kirjoita ja paina enter lisätäksesi tagin') }}"
+                        style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+                </div>
+            </div>
+        </section>
+
+        <script>
+            (() => {
+                const tagsWrapper = document.getElementById('tags-wrapper');
+                const tagInput = document.getElementById('tag-input');
+
+                // Function to handle remove click (to reuse)
+                function onRemoveClick(e) {
+                    e.target.closest('.tag-pill').remove();
+                }
+
+                // Attach remove listeners to all existing remove buttons
+                tagsWrapper.querySelectorAll('.remove-tag-btn').forEach(btn => {
+                    btn.addEventListener('click', onRemoveClick);
+                });
+
+                // Function to create a tag pill element
+                function createTagElement(tagText) {
+                    const span = document.createElement('span');
+                    span.className = 'tag-pill';
+                    span.textContent = tagText;
+
+                    // Create hidden input for form submission
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'tags[]';
+                    hiddenInput.value = tagText;
+
+                    // Remove button
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'remove-tag-btn';
+                    removeBtn.setAttribute('aria-label', 'Remove tag');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.addEventListener('click', onRemoveClick); // add listener here
+
+                    span.appendChild(removeBtn);
+                    span.appendChild(hiddenInput);
+
+                    return span;
+                }
+
+                // Add tag on enter key pressed
+                tagInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const newTag = tagInput.value.trim();
+
+                        if (newTag === '') return;
+
+                        // Check for duplicates (case insensitive)
+                        const existingTags = Array.from(tagsWrapper.querySelectorAll('input[name="tags[]"]'))
+                            .map(input => input.value.toLowerCase());
+
+                        if (existingTags.includes(newTag.toLowerCase())) {
+                            alert('{{ _("Tagi on jo lisätty.") }}');
+                            tagInput.value = '';
+                            return;
+                        }
+
+                        // Create and add new tag pill
+                        const newTagElem = createTagElement(newTag);
+                        // Insert before the input field (keep input last)
+                        tagsWrapper.insertBefore(newTagElem, tagInput);
+
+                        tagInput.value = '';
+                    }
+                });
+
+                // Clicking the wrapper focuses the input
+                tagsWrapper.addEventListener('click', () => {
+                    tagInput.focus();
+                });
+            })();
+
+        </script>
+
+
+        <!-- Social & Cover Picture -->
+        <section class="form-section dashboard-panel mb-8">
+            <h2>Sekalaiset</h2>
+            <div class="form-group">
+                <label for="facebook">{{ _('Facebook linkki') }}</label>
+                <input type="url" id="facebook" name="facebook" class="form-control"
+                    value="{{ demo.facebook if demo else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="cover_picture">{{ _('Kansikuva') }}</label>
+                <input type="text" id="cover_picture" name="cover_picture" class="form-control"
+                    placeholder="{{ _('Syötä kuvan URL tai lataa alla') }}"
+                    value="{{ demo.cover_picture if demo else '' }}">
+                <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2"
+                    accept="image/*">
+                {% if demo and demo.cover_picture %}
+                <div class="mt-2">
+                    <img src="{{ demo.cover_picture }}" alt="{{ _('Kansikuvan esikatselu') }}"
+                        style="max-width: 300px; max-height: 200px; object-fit: contain; border-radius: 0.25rem;">
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Location Section -->
+        <section class="form-section dashboard-panel mb-8">
+            <h2 class="text-xl font-semibold mb-4">{{ _('Sijaintiedot') }}</h2>
+
+            {% include "paikkakunta-dropdown.html" %}
+
+            <div class="form-group">
+                <label for="address" class="block font-medium mb-1">{{ _('Osoite') }} <span
+                        class="text-red-500">*</span></label>
+                <input type="text" id="address" name="address" class="form-control w-full"
+                    value="{{ demo.address if demo else '' }}" required>
+            </div>
+
+            <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="latitude" class="block font-medium mb-1">{{ _('Leveysaste') }}</label>
+                    <input type="text" id="latitude" name="latitude"
+                        class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
+                        value="{{ demo.latitude if demo else '' }}" {% if not current_user.is_authenticated %}readonly{%
+                        endif %}>
+                </div>
+                <div>
+                    <label for="longitude" class="block font-medium mb-1">{{ _('Pituusaste') }}</label>
+                    <input type="text" id="longitude" name="longitude"
+                        class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
+                        value="{{ demo.longitude if demo else '' }}" {% if not current_user.is_authenticated
+                        %}readonly{% endif %}>
+                </div>
+            </div>
+
+            <div id="march-route-container" class="form-group"
+                style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
+                <label>{{ _('Reitti (marssin)') }}</label>
+                <div id="route-tags-wrapper" class="tags-wrapper"
+                    style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+                    <!-- Existing route points rendered as pills -->
+                    {% if demo and demo.route %}
+                    {% for point in demo.route.split(',') %}
+                    {% set point_trimmed = point.strip() %}
+                    {% if point_trimmed %}
+                    <span class="tag-pill">
+                        {{ point_trimmed }}
+                        <button type="button" class="remove-route-btn" aria-label="Remove route point">&times;</button>
+                        <input type="hidden" name="route[]" value="{{ point_trimmed }}">
+                    </span>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    <!-- Input for new route points -->
+                    <input type="text" id="route-input"
+                        placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
+                        style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+                </div>
+            </div>
+
+            <script>
+                (() => {
+                    const routeWrapper = document.getElementById('route-tags-wrapper');
+                    const routeInput = document.getElementById('route-input');
+                    const typeSelect = document.getElementById('type');
+                    const marchRouteContainer = document.getElementById('march-route-container');
+
+                    function onRemoveRouteClick(e) {
+                        e.target.closest('.tag-pill').remove();
+                    }
+
+                    // Attach listeners to existing remove buttons
+                    routeWrapper.querySelectorAll('.remove-route-btn').forEach(btn => {
+                        btn.addEventListener('click', onRemoveRouteClick);
+                    });
+
+                    function createRouteElement(pointText) {
+                        const span = document.createElement('span');
+                        span.className = 'tag-pill';
+                        span.textContent = pointText;
+
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'route[]';
+                        hiddenInput.value = pointText;
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'remove-route-btn';
+                        removeBtn.setAttribute('aria-label', 'Remove route point');
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.addEventListener('click', onRemoveRouteClick);
+
+                        span.appendChild(removeBtn);
+                        span.appendChild(hiddenInput);
+                        return span;
+                    }
+
+                    routeInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const newPoint = routeInput.value.trim();
+                            if (newPoint === '') return;
+
+                            // Avoid duplicates (case insensitive)
+                            const existingPoints = Array.from(routeWrapper.querySelectorAll('input[name="route[]"]'))
+                                .map(input => input.value.toLowerCase());
+                            if (existingPoints.includes(newPoint.toLowerCase())) {
+                                alert('{{ _("Reittipiste on jo lisätty.") }}');
+                                routeInput.value = '';
+                                return;
+                            }
+
+                            const newRouteElem = createRouteElement(newPoint);
+                            routeWrapper.insertBefore(newRouteElem, routeInput);
+                            routeInput.value = '';
+                        }
+                    });
+
+                    // Show/hide route container based on type selection
+                    function updateRouteVisibility() {
+                        if (typeSelect.value === 'MARCH') {
+                            marchRouteContainer.style.display = 'block';
+                        } else {
+                            marchRouteContainer.style.display = 'none';
+                        }
+                    }
+
+                    typeSelect.addEventListener('change', updateRouteVisibility);
+
+                    // Init visibility on page load
+                    document.addEventListener('DOMContentLoaded', updateRouteVisibility);
+
+                    // Clicking wrapper focuses input
+                    routeWrapper.addEventListener('click', () => {
+                        routeInput.focus();
+                    });
+                })();
+
+            </script>
+
+        </section>
+
+        <!-- Organizers Section -->
+        <section class="form-section dashboard-panel mb-8">
+            <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="required">*</span>
+            </h2>
+
+            <div id="organizers-container">
+                {% if demo and demo.organizers %}
+                {% for organizer in demo.organizers %}
+                <div class="dashboard-panel form-group organizer-item">
+                    <label for="organizer_name_{{ loop.index }}">{{ _('Järjestäjätahon nimi') }} <span
+                            class="required">*</span></label>
+                    <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                        class="form-control" value="{{ organizer.name }}" required>
+                    <label for="organizer_website_{{ loop.index }}">{{ _('Nettisivu') }}</label>
+                    <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                        class="form-control" value="{{ organizer.website }}">
+                    <label for="organizer_email_{{ loop.index }}">{{ _('Sähköposti') }}</label>
+                    <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                        class="form-control" value="{{ organizer.email }}">
+                    <label for="organizer_id_{{ loop.index }}">{{ _('ID') }}</label>
+                    <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
+                        class="form-control disabled" value="{{ organizer.organization_id }}" readonly>
+                    <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{
+                        _('Poista') }}</button>
+                    <button type="button" class="btn btn-primary mt-2" onclick="createNewOrganizer(this)">{{ _('Luo uusi
+                        järjestäjä') }}</button>
+                </div>
+                {% endfor %}
+                {% else %}
+                <script>addOrganizer();</script>
+                {% endif %}
+            </div>
+
+            <div class="form-group mt-4">
+                <label for="organization">{{ _('Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen') }} <span
+                        class="required">*</span></label>
+                <select id="organization" name="organization" class="form-control">
+                    <option value="">{{ _('Valitse järjestö') }}</option>
+                    {% if current_user.global_admin %}
+                    {% for organization in all_organizations %}
+                    <option value="{{ organization._id }}">{{ organization.name }}</option>
+                    {% endfor %}
+                    {% else %}
+                    {% for organization in current_user.organizations %}
+                    <option value="{{ organization.org_id }}">{{ get_org_name(organization.org_id) }}</option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+                <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">{{ _('Lisää järjestäjä')
+                    }}</button>
+            </div>
+        </section>
+        <script>
+            // Helper: check if string is a valid ObjectId (24 hex chars)
+            function isValidObjectId(id) {
+                return /^[a-fA-F0-9]{24}$/.test(id);
+            }
+
+            function updateCreateButtons() {
+                document.querySelectorAll('.organizer-item').forEach(item => {
+                    const idInput = item.querySelector('input[name^="organizer_id"]');
+                    const createBtn = item.querySelector('button.btn-primary');
+
+                    if (!idInput || !createBtn) return;
+
+                    if (isValidObjectId(idInput.value)) {
+                        createBtn.style.display = 'none';
+                    } else {
+                        createBtn.style.display = 'inline-block';
+                    }
+                });
+            }
+
+            // Run on page load
+            document.addEventListener('DOMContentLoaded', updateCreateButtons);
+
+            // Also run whenever organizer_id inputs change (to cover user edits)
+            document.getElementById('organizers-container').addEventListener('input', (e) => {
+                if (e.target && e.target.name.startsWith('organizer_id')) {
+                    updateCreateButtons();
+                }
+            });
+
+            // You may want to call updateCreateButtons() after adding new organizers in your addOrganizer function as well:
+            // e.g., after appending new organizer: updateCreateButtons();
+        </script>
+
+
+        <!-- Approval Section -->
+        {% if current_user.is_authenticated %}
+        <section class="form-section dashboard-panel mb-8">
+            <div class="form-group" id="approval-container">
+                <label for="approved">{{ _('Hyväksytty') }}</label>
+                <div>
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
+                        demo.approved %}checked{% endif %}>
+                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{%
+                        else %}{{ _('Ei') }}{% endif %}</span>
+                </div>
+            </div>
+        </section>
+        {% else %}
+        <input type="hidden" id="approved" name="approved"
+            value="{{ demo.approved if demo and demo.approved else '' }}">
+        {% endif %}
+
+        <!-- Submit Section -->
+        <section class="form-section text-center mb-12">
+            <button type="submit" class="btn btn-submit mt-3">{{ submit_button_text }}</button>
+        </section>
+    </form>
+</div>
+
+<!-- Edit Link Modal Section -->
+{% if current_user.is_authenticated %}
+<div>
+    <div class="text-center mt-4">
+        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki')
+            }}</button>
+    </div>
+
+    <div id="overlay" class="modal-overlay"></div>
+
+    <div class="modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
+            <button type="button" class="close" data-close-button><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+            <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
+            <input type="text" id="edit_link" class="form-control" readonly>
+            <hr>
+            <div class="form-group">
+                <label for="edit_link_email">{{ _('Lähetä sähköpostilla') }}</label>
+                <input type="email" id="edit_link_email" name="edit_link_email" class="form-control"
+                    placeholder="{{ _('Syötä sähköpostiosoite') }}">
+            </div>
+            <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-edit-link-btn').addEventListener('click', () => {
+            const demoId = "{{ demo._id if demo else '' }}";
+            if (demoId) {
+                fetch(`/admin/demo/generate_edit_link/${demoId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK') {
+                            document.getElementById('edit_link').value = data.edit_link;
+                            openModal($('#editLinkModal'));
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                alert('{{ _("Mielenosoituksen tunniste puuttuu.") }}');
+            }
+        });
+
+        document.getElementById('send_email_btn').addEventListener('click', () => {
+            const email = document.getElementById('edit_link_email').value;
+            const editLink = document.getElementById('edit_link').value;
+            const demoId = "{{ demo._id if demo else '' }}";
+            if (email && demoId && editLink) {
+                fetch(`/admin/demo/send_edit_link_email/${demoId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, edit_link: editLink })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK') {
+                            alert('{{ _("Sähköposti lähetetty onnistuneesti!") }}');
+                            closeModal($('#editLinkModal'));
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                alert('{{ _("Syötä ensin sähköpostiosoite!") }}');
+            }
+        });
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+{% endblock %}

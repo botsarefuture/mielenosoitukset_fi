@@ -1,0 +1,158 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+<style>
+    .container {
+        background-color: var(--container-bg);
+        color: var(--text);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        max-width: 1000px;
+        margin: 2rem auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .form-control {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+    }
+
+    .approval-box {
+        background-color: var(--red);
+        color: var(--white);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .permissions-panel {
+        margin-top: 2rem;
+    }
+
+    .permission-category {
+        margin-bottom: 1rem;
+    }
+
+    .permission-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .permission-item label {
+        margin-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function selectAllPermissions(orgId, checked) {
+        const boxes = document.querySelectorAll(`#permissions_${orgId} input[type='checkbox']`);
+        boxes.forEach(box => box.checked = checked);
+    }
+</script>
+{% endblock %}
+
+{% block main_content %}
+<section class="container">
+    <h2 class="form-title">{{ _('Muokkaa käyttäjää') }}</h2>
+    <p class="muted">{{ _('Täällä voit muokata käyttäjän perustietoja ja hallita hänen oikeuksiaan.') }}</p>
+
+    <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
+        <div class="form-group">
+            <label for="username">{{ _('Käyttäjänimi') }}</label>
+            <input class="form-control" type="text" id="username" name="username" value="{{ user.username }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">{{ _('Sähköpostiosoite') }}</label>
+            <input class="form-control" type="email" id="email" name="email" value="{{ user.email }}" required>
+        </div>
+
+        <div class="form-group approval-box">
+            <label for="approved">{{ _('Onko sähköpostiosoite vahvistettu') }}</label>
+            <input type="checkbox" id="approved" name="confirmed" {% if user.confirmed %}checked{% endif %}>
+            <span class="status-text">{% if user.confirmed %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
+        </div>
+
+        <div class="form-group">
+            <label for="role">{{ _('Rooli') }}</label>
+            <select id="role" name="role" class="form-control" required>
+                <option value="user" {% if user.role == 'user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
+                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}</option>
+                <option value="global_admin" {% if user.role == 'global_admin' %}selected{% endif %}>{{ _('Superkäyttäjä') }}</option>
+            </select>
+        </div>
+
+        <div class="permissions-panel">
+            <h3>{{ _('Globaalit oikeudet') }}</h3>
+            <p class="muted">{{ _('Globaalit oikeudet ovat vain superkäyttäjille.') }}</p>
+            <div class="permissions-group">
+                <div class="select-all">
+                    <input type="checkbox" id="select_all_global" onchange="selectAllPermissions('global', this.checked)">
+                    <label for="select_all_global">{{ _('Valitse kaikki') }}</label>
+                </div>
+                {% for group_name, permissions in PERMISSIONS_GROUPS.items() %}
+                <div class="permission-category">
+                    <h4>{{ group_name }}</h4>
+                    <div class="permission-list" id="permissions_global">
+                        {% for perm in permissions %}
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm_global_{{ perm.name }}" name="permissions[global][]" value="{{ perm.name }}" {% if perm.name in global_permissions %}checked{% endif %}>
+                            <label for="perm_global_{{ perm.name }}">{{ perm.description }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group" style="text-align:center;">
+            <button type="submit" class="btn-primary">{{ _('Tallenna muutokset') }}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

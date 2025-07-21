@@ -1,0 +1,280 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}{{ _('Toistuvat mielenosoitukset') }}{% endblock %}
+
+{% block styles %}
+<style>
+  .search-and-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .search-and-filter {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-form {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+  }
+
+  .modal-dark .modal-content {
+  background-color: light-dark(#fff, #1e1e2f);
+  color: light-dark(#000, #eee);
+  border: 1px solid light-dark(#ccc, #444);
+}
+
+.modal-dark .modal-header,
+.modal-dark .modal-footer {
+  background-color: light-dark(#f8f9fa, #2a2a3d);
+  border-color: light-dark(#ccc, #444);
+  color: light-dark(#000, #eee);
+}
+
+.modal-dark .btn-close {
+  filter: none; /* reset or add styles if needed */
+}
+
+/* Buttons in modal */
+.modal-dark .btn-danger {
+  background-color: light-dark(#dc3545, #e03e3e);
+  border-color: light-dark(#b02a37, #b32b2b);
+}
+
+.modal-dark .btn-danger:hover {
+  background-color: light-dark(#c82333, #c32b2b);
+  border-color: light-dark(#a71d2a, #912020);
+}
+
+.modal-dark .btn-outline-secondary {
+  color: light-dark(#6c757d, #ccc);
+  border-color: light-dark(#6c757d, #666);
+}
+
+.modal-dark .btn-outline-secondary:hover {
+  background-color: light-dark(#e2e6ea, #444);
+  color: light-dark(#000, #fff);
+}
+
+</style>
+{% endblock %}
+
+{% block main_content %}
+<section class="dashboard-container">
+  <div class="introduction">
+    <h1 id="tabletitle">{{ _('Toistuvat mielenosoitukset') }}</h1>
+    <p class="muted">
+      {{ _('Täältä voit hallita toistuvia mielenosoituksia, joihin sinulla on käyttöoikeus.') }}
+    </p>
+  </div>
+
+  <div class="dashboard-panel">
+    <div class="flex justify-center mb-4">
+      {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
+      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="button new-item">
+        <i class="fas fa-plus-circle"></i> {{ _('Luo uusi toistuva mielenosoitus') }}
+      </a>
+      {% else %}
+      <a class="non-suffperm" data-tooltip="{{ _('Ei käyttöoikeutta') }}">
+        <i class="fas fa-ban"></i> {{ _('Luo uusi toistuva mielenosoitus') }}
+      </a>
+      {% endif %}
+    </div>
+
+    <form method="GET" action="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="search-and-filter filter-form">
+      <div>
+        <label for="search" class="sr-only">{{ _('Hae toistuvia mielenosoituksia:') }}</label>
+        <input type="search" id="search" name="search" class="search-input" placeholder="{{ _('Hae toistuvia mielenosoituksia...') }}"
+          value="{{ search_query }}" aria-label="{{ _('Hae toistuvia mielenosoituksia') }}">
+      </div>
+
+      <label for="approved">{{ _('Näytä vain hyväksytyt toistuvat mielenosoitukset:') }}</label>
+      <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
+        <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
+        <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+      </select>
+
+      <button type="submit" class="search-button">
+        <i class="fas fa-search"></i> {{ _('Hae') }}
+      </button>
+    </form>
+  </div>
+
+  {% if recurring_demos %}
+  <div class="table-container" style="background:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Toistuvuus') }}</th>
+          <th>{{ _('Aika') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Hyväksytty') }}</th>
+          <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for demo in recurring_demos %}
+        <tr id="recu-demo-{{ demo._id }}" {% if not demo.approved %}class="needs-attention"{% endif %}>
+          <td>{{ demo.title }}</td>
+          <td>{{ demo.repeat_schedule.as_string() }}</td>
+          <td>{{ demo.start_time }} - {{ demo.end_time }}</td>
+          <td>{{ demo.city }}</td>
+          <td data-col="approved">
+            {% if demo.approved %}
+            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+            {% else %}
+            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+            {% endif %}
+          </td>
+          <td class="actions-cell">
+            {% if current_user.has_permission("EDIT_DEMO") %}
+            <a href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}" class="button edit-button">
+              <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
+            </a>
+            {% else %}
+            <a class="non-suffperm" data-tooltip="{{ _('Ei käyttöoikeutta') }}">
+              <i class="fas fa-ban"></i> {{ _('Muokkaa') }}
+            </a>
+            {% endif %}
+
+            {% if current_user.has_permission("DELETE_DEMO") %}
+            <button type="button" class="button delete-button"
+              onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}', 'recu')">
+              <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
+            </button>
+            {% else %}
+            <a class="non-suffperm" data-tooltip="{{ _('Ei käyttöoikeutta') }}">
+              <i class="fas fa-ban"></i> {{ _('Poista') }}
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="no-results">
+    <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei löytynyt toistuvia mielenosoituksia.') }}
+  </div>
+  {% endif %}
+  <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-describedby="deleteModalDesc" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+  
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title d-flex align-items-center gap-2" id="deleteModalLabel">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            {{ _('Poista toistuva mielenosoitus') }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+        </div>
+  
+        <div class="modal-body" id="deleteModalDesc">
+          <p class="mb-0">
+            {{ _('Oletko varma, että haluat poistaa toistuvan mielenosoituksen') }}
+            <strong id="demoTitle"></strong>?
+          </p>
+        </div>
+  
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="confirmDelete" aria-describedby="deleteModalDesc">
+            {{ _('Kyllä, poista') }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            {{ _('Peruuta') }}
+          </button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+  const deleteModalEl = document.getElementById('deleteModal');
+  const deleteModal = new bootstrap.Modal(deleteModalEl, {
+    keyboard: true,
+    backdrop: 'static'
+  });
+  const demoTitleEl = document.getElementById('demoTitle');
+  const confirmDeleteBtn = document.getElementById('confirmDelete');
+
+  window.openModal = (event, title, id, type = 'single') => {
+    event.preventDefault();
+    demoTitleEl.textContent = title;
+    confirmDeleteBtn.dataset.id = id;
+    confirmDeleteBtn.dataset.type = type;
+    confirmDeleteBtn.disabled = false; // reset disabled state
+    deleteModal.show();
+    confirmDeleteBtn.focus();
+  };
+
+  confirmDeleteBtn.addEventListener('click', () => {
+    const id = confirmDeleteBtn.dataset.id;
+    const type = confirmDeleteBtn.dataset.type;
+    let url = '';
+    if (type === 'recu') {
+      url = `/admin/recu_demo/delete_recu_demo/${id}`;
+    } else {
+      url = `/admin/demo/delete_demo/${id}`;
+    }
+
+    // Disable buttons to prevent double clicks
+    confirmDeleteBtn.disabled = true;
+
+    fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({})
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'OK') {
+        location.reload();
+      } else {
+        alert(data.message || '{{ _("Virhe poistettaessa.") }}');
+      }
+    })
+    .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'))
+    .finally(() => deleteModal.hide());
+  });
+});
+
+
+  // Simple client-side search filter (optional)
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search');
+    const rows = document.querySelectorAll('.table-container tbody tr');
+
+    searchInput.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase().trim();
+      rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+      });
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+  const deleteModalEl = document.getElementById('deleteModal');
+  const htmlEl = document.documentElement; // <html> element
+
+  if (htmlEl.classList.contains('dark')) {
+    deleteModalEl.classList.add('modal-dark');
+  } else {
+    deleteModalEl.classList.remove('modal-dark');
+  }
+});
+
+</script>
+{% endblock %}

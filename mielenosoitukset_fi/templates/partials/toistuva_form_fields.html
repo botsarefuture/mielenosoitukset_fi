@@ -1,0 +1,243 @@
+<!-- partials/toistuva_form_fields.html -->
+
+<!-- Basic Information -->
+<section class="form-section dashboard-panel mb-8">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Perustiedot') }} <span class="required">*</span></h2>
+
+    <div class="form-group">
+        <label for="title" class="block font-medium mb-1">{{ _('Nimi') }} <span class="text-red-500">*</span></label>
+        <input type="text" id="title" name="title" class="form-control w-full" value="{{ demo.title if demo else '' }}"
+            required>
+    </div>
+
+    <div class="form-group">
+        <label for="description" class="block font-medium mb-1">{{ _('Kuvaus') }}</label>
+        <textarea id="description" name="description" class="form-control w-full"
+            rows="6">{{ demo.description if demo else '' }}</textarea>
+    </div>
+
+    <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="date" class="block font-medium mb-1">{{ _('Alkupäivämäärä') }} <span
+                    class="text-red-500">*</span></label>
+            <input type="text" id="date" name="date" class="form-control w-full" value="{{ demo.date if demo else '' }}"
+                required autocomplete="off">
+        </div>
+        <div>
+            <label for="end_date" class="block font-medium mb-1">{{ _('Loppupäivämäärä') }}</label>
+            <input type="text" id="end_date" name="end_date" class="form-control w-full"
+                value="{{ demo.end_date if demo else '' }}" autocomplete="off">
+        </div>
+    </div>
+
+    <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="start_time" class="block font-medium mb-1">{{ _('Alkuaika') }} <span
+                    class="text-red-500">*</span></label>
+            <input type="text" id="start_time" name="start_time" class="form-control w-full"
+                value="{{ demo.start_time if demo else '' }}" required autocomplete="off">
+        </div>
+        <div>
+            <label for="end_time" class="block font-medium mb-1">{{ _('Loppuaika') }}</label>
+            <input type="text" id="end_time" name="end_time" class="form-control w-full"
+                value="{{ demo.end_time if demo else '' }}" autocomplete="off">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="type">{{ _('Tyyppi') }} <span class="required">*</span></label>
+        <select id="type" name="type" class="form-control" required>
+            <option value="MARCH" {% if demo and demo.event_type=='MARCH' %}selected{% endif %}>{{ _('Marssi')
+                }}</option>
+            <option value="STAY_STILL" {% if demo and demo.event_type=='STAY_STILL' %}selected{% endif %}>{{
+                _('Paikallaan') }}</option>
+            <option value="ROAD_BLOCK" {% if demo and demo.event_type=='ROAD_BLOCK' %}selected{% endif %}>{{
+                _('Tieblokki') }}</option>
+            <option value="OTHER" {% if demo and demo.event_type=='OTHER' %}selected{% endif %}>{{ _('Muut') }}
+            </option>
+        </select>
+    </div>
+</section>
+
+<!-- Location -->
+<section class="form-section dashboard-panel mb-8">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Sijainti') }}</h2>
+
+    <div class="form-group">
+        <label for="address" class="block font-medium mb-1">{{ _('Osoite') }} <span
+                class="text-red-500">*</span></label>
+        <input type="text" id="address" name="address" class="form-control w-full"
+            value="{{ demo.address if demo else '' }}" required>
+    </div>
+
+    <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="latitude" class="block font-medium mb-1">{{ _('Leveysaste') }}</label>
+            <input type="text" id="latitude" name="latitude"
+                class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
+                value="{{ demo.latitude if demo else '' }}" {% if not current_user.is_authenticated %}readonly{% endif
+                %}>
+        </div>
+        <div>
+            <label for="longitude" class="block font-medium mb-1">{{ _('Pituusaste') }}</label>
+            <input type="text" id="longitude" name="longitude"
+                class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
+                value="{{ demo.longitude if demo else '' }}" {% if not current_user.is_authenticated %}readonly{% endif
+                %}>
+        </div>
+    </div>
+</section>
+
+<!-- Tags -->
+<section class="form-section dashboard-panel mb-8">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Tagit') }}</h2>
+
+    <div id="tags-wrapper" class="tags-wrapper"
+        style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+        {% if demo and demo.tags %}
+        {% for tag in demo.tags %}
+        <span class="tag-pill">
+            {{ tag }}
+            <button type="button" class="remove-tag-btn" aria-label="Poista tagi">&times;</button>
+            <input type="hidden" name="tags[]" value="{{ tag }}">
+        </span>
+        {% endfor %}
+        {% endif %}
+        <input type="text" id="tag-input" placeholder="{{ _('Kirjoita tagi ja paina enter lisätäksesi') }}"
+            style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+    </div>
+</section>
+
+<!-- March Route -->
+<section class="form-section dashboard-panel mb-8" id="march-route-container"
+    style="{% if not demo or demo.type != 'MARCH' %}display:none;{% endif %}">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Marssin reitti') }}</h2>
+
+    <div id="route-tags-wrapper" class="tags-wrapper"
+        style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+        {% if demo and demo.route %}
+        {% for point in demo.route.split(',') %}
+        {% set point_trimmed = point.strip() %}
+        {% if point_trimmed %}
+        <span class="tag-pill">
+            {{ point_trimmed }}
+            <button type="button" class="remove-route-btn" aria-label="Poista reittipiste">&times;</button>
+            <input type="hidden" name="route[]" value="{{ point_trimmed }}">
+        </span>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+        <input type="text" id="route-input" placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
+            style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+    </div>
+</section>
+
+<!-- Organizers -->
+<section class="form-section dashboard-panel mb-8">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="required">*</span></h2>
+
+    <div id="organizers-container">
+        {% if demo and demo.organizers %}
+        {% for organizer in demo.organizers %}
+        <div class="dashboard-panel form-group organizer-item">
+            <label for="organizer_name_{{ loop.index }}">{{ _('Järjestäjätahon nimi') }} <span
+                    class="required">*</span></label>
+            <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
+                class="form-control" value="{{ organizer.name }}" required>
+            <label for="organizer_website_{{ loop.index }}">{{ _('Nettisivu') }}</label>
+            <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
+                class="form-control" value="{{ organizer.website }}">
+            <label for="organizer_email_{{ loop.index }}">{{ _('Sähköposti') }}</label>
+            <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
+                class="form-control" value="{{ organizer.email }}">
+            <label for="organizer_id_{{ loop.index }}">{{ _('ID') }}</label>
+            <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
+                class="form-control disabled" value="{{ organizer.organization_id }}" readonly>
+            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista')
+                }}</button>
+            <button type="button" class="btn btn-primary mt-2" onclick="createNewOrganizer(this)">{{ _('Luo uusi
+                järjestäjä') }}</button>
+        </div>
+        {% endfor %}
+        {% else %}
+        <script>addOrganizer();</script>
+        {% endif %}
+    </div>
+
+    <div class="form-group mt-4">
+        <label for="organization">{{ _('Valitse järjestäjätaho jonka haluat lisätä mielenosoitukseen') }} <span
+                class="required">*</span></label>
+        <select id="organization" name="organization" class="form-control">
+            <option value="">{{ _('Valitse järjestö') }}</option>
+            {% if current_user.global_admin %}
+            {% for organization in all_organizations %}
+            <option value="{{ organization._id }}">{{ organization.name }}</option>
+            {% endfor %}
+            {% else %}
+            {% for organization in current_user.organizations %}
+            <option value="{{ organization.org_id }}">{{ get_org_name(organization.org_id) }}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+        <button type="button" class="btn btn-primary mt-2" onclick="addOrganizer()">{{ _('Lisää järjestäjä') }}</button>
+    </div>
+</section>
+
+<!-- Recurrence Settings -->
+<section class="form-section dashboard-panel mb-8">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Toistuvuusasetukset') }}</h2>
+
+    <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="recurrence_type" class="block font-medium mb-1">{{ _('Toistuvuustyyppi') }}</label>
+            <select id="recurrence_type" name="recurrence_type" class="form-control w-full" required>
+                {% set recurrence_type = demo.recurrence_type if demo else '' %}
+                <option value="NONE" {% if recurrence_type=='NONE' %}selected{% endif %}>{{ _('Ei toistu') }}</option>
+                <option value="DAILY" {% if recurrence_type=='DAILY' %}selected{% endif %}>{{ _('Päivittäin') }}
+                </option>
+                <option value="WEEKLY" {% if recurrence_type=='WEEKLY' %}selected{% endif %}>{{ _('Viikoittain') }}
+                </option>
+                <option value="MONTHLY" {% if recurrence_type=='MONTHLY' %}selected{% endif %}>{{ _('Kuukausittain') }}
+                </option>
+                <option value="YEARLY" {% if recurrence_type=='YEARLY' %}selected{% endif %}>{{ _('Vuosittain') }}
+                </option>
+            </select>
+        </div>
+        <div>
+            <label for="recurrence_end_date" class="block font-medium mb-1">{{ _('Toistuvuuden loppupäivä') }}</label>
+            <input type="text" id="recurrence_end_date" name="recurrence_end_date" class="form-control w-full"
+                autocomplete="off" value="{{ demo.recurrence_end_date if demo else '' }}">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="recurrence_interval" class="block font-medium mb-1">{{ _('Toistuvuusväli') }}</label>
+        <input type="number" id="recurrence_interval" name="recurrence_interval" min="1" class="form-control w-32"
+            value="{{ demo.recurrence_interval if demo else '1' }}">
+        <small class="text-muted">{{ _('Kuinka monta kertaa toisto tapahtuu (esim. joka 2. viikko)') }}</small>
+    </div>
+</section>
+
+<!-- Approval -->
+{% if current_user.is_authenticated %}
+<section class="form-section dashboard-panel mb-8">
+    <div class="form-group" id="approval-container">
+        <label for="approved">{{ _('Hyväksytty') }}</label>
+        <div>
+            <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and demo.approved
+                %}checked{% endif %}>
+            <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{% else %}{{
+                _('Ei') }}{% endif %}</span>
+        </div>
+    </div>
+</section>
+{% else %}
+<input type="hidden" id="approved" name="approved" value="{{ demo.approved if demo and demo.approved else '' }}">
+{% endif %}
+
+<!-- Submit -->
+<section class="form-section dashboard-panel">
+    <button type="submit" class="btn btn-primary px-6 py-2">{{ _('Tallenna') }}</button>
+</section>
+
+<!-- Organizer + tag + route JS should be loaded in main page -->

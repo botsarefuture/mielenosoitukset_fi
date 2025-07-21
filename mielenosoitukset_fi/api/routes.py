@@ -39,15 +39,12 @@ def get_demonstrations():
     city_query = request.args.get("city", "").lower()
     title_query = request.args.get("title", "").lower()
     tag_query = request.args.get("tag", "").lower()
-    approved_query = request.args.get("approved", "").lower()
     recurring_query = request.args.get("recurring", "").lower()
     in_past_query = request.args.get("in_past", "").lower()
-    
-    print(in_past_query)
-    
+        
     today = datetime.now()
 
-    demonstrations = mongo.demonstrations.find({"approved": True})
+    demonstrations = mongo.demonstrations.find({"approved": True, "hide": False})
     filtered_demonstrations = []
 
     for demo in demonstrations:
@@ -59,7 +56,6 @@ def get_demonstrations():
                 and (city_query in demo["city"].lower() or city_query == "")
                 and (title_query in demo["title"].lower() or title_query == "")
                 and (tag_query in [tag.lower() for tag in demo["tags"]] or tag_query == "")
-                and (approved_query == "" or approved_query == str(demo["approved"]))
                 and (recurring_query == "" or recurring_query == str(demo["recurring"]))
             ):
                 filtered_demonstrations.append(demo)
@@ -68,6 +64,7 @@ def get_demonstrations():
     filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
 
     return jsonify(filtered_demonstrations), 200
+
 @api_bp.route("/unapproved-demonstrations", methods=["GET"])
 def get_unapproved_demonstrations():
     """
@@ -102,6 +99,17 @@ def like_demo(demo_id):
 
     if demo is None:
         raise DemoNotFoundException()
+    
+    # TODO: Implement a method, to prevent spamming likes, such as checking only allow thousand likes per ip per second
+    mongo.demo_likes_objects.insert_one(
+        {
+            "demo_id": ObjectId(demo_id), 
+            "timestamp": datetime.now(),
+            "ip": request.remote_addr,
+            "user_agent": request.headers.get("User-Agent")
+        }        
+    )
+    
 
     mongo.demo_likes.update_one(
         {"demo_id": ObjectId(demo_id)}, {"$inc": {"likes": 1}}, upsert=True
@@ -141,7 +149,21 @@ def get_likes(demo_id):
 @api_bp.route("/demo/<demo_id>/stats", methods=["GET"])
 def get_demo_stats_route(demo_id):
     stats = get_prepped_data(ObjectId(demo_id))
-    return jsonify(stringify_object_ids(stats))
+    if stats is None:
+        raise DemoNotFoundException()
+    
+    # This is part of our new strategy, to return only needed data
+    to_return = {
+        "views": stats.get("views", 0),
+        "demo_id": str(demo_id),
+        "likes": 0
+    }
+    
+    # somehow get the likes there too
+    likes = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})
+    to_return["likes"] = likes.get("likes", 0) if likes else 0
+    
+    return jsonify(stringify_object_ids(to_return))
 
 
 @api_bp.route("/admin/demo/info/<demo_id>", methods=["GET"])

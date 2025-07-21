@@ -1,0 +1,411 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+
+<style>
+    :root {
+        --input-bg: light-dark(#fff, #1a1a1a);
+        --input-border: light-dark(#ccc, #444);
+        --input-text: light-dark(#111, #eee);
+    }
+
+    .container {
+        background-color: var(--container-bg);
+        color: var(--text);
+        border-radius: 16px;
+        padding: 2rem 2.5rem;
+        max-width: 1000px;
+        margin: 2rem auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .form-control {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    input.form-control::placeholder {
+        color: light-dark(#1a1a1a, #ccc);
+    }
+
+    select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg width='14' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1rem;
+    }
+
+    .table {
+        width: 100%;
+        border-spacing: 0 0.5rem;
+        color: var(--text);
+    }
+
+    thead th {
+        text-align: left;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    tbody td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    tbody tr {
+        background-color: light-dark(#fff, #1e1e1e);
+        transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+        background-color: var(--row-hover);
+    }
+
+    .button,
+    .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+        font-weight: 500;
+        margin: 0.2rem;
+    }
+
+    .button:hover,
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+    }
+
+    .no-users {
+        margin-top: 1rem;
+        background-color: var(--alert-warning-bg);
+        color: var(--alert-warning-text);
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    /* Social dropdown styling */
+    .social-media-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .dropdown-selected {
+        background: var(--input-bg);
+        color: var(--input-text);
+        border: 1px solid var(--input-border);
+        border-radius: 8px 0 0 8px;
+        padding: 0.6rem 1rem;
+        font-weight: 500;
+        width: 160px;
+    }
+
+    #social-media-list .form-control {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+    }
+
+    .social-media-container p.form-control {
+        margin-bottom: 0;
+        height: 45.2px;
+    }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<!--<script src="{{ url_for('static', filename='js/modal.js') }}"></script>-->
+<script>
+    // TODO: Add functionality to handle dropdown selection
+    // TODO: Add form validation for invitee email
+
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const saveButtons = document.querySelectorAll(".save-role-btn");
+
+        saveButtons.forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const userId = btn.dataset.userId;
+                const orgId = btn.dataset.orgId;
+                const select = btn.closest("tr").querySelector(".role-select");
+                const newRole = select.value;
+
+                const payload = {
+                    user_id: userId,
+                    organization_id: orgId,
+                    role: newRole
+                };
+
+                try {
+                    const res = await fetch("/admin/organization/api/change_access_level/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await res.json();
+                    if (res.ok) {
+                        alert("Käyttäjän rooli päivitetty onnistuneesti!");
+                    } else {
+                        alert(result.error || "Päivitys epäonnistui.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Virhe palvelinyhteydessä.");
+                }
+            });
+        });
+        const deleteButtons = document.querySelectorAll(".delete-role-btn");
+
+        deleteButtons.forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const shipId = btn.dataset.shipId;
+                if (!confirm("Haluatko varmasti poistaa tämän käyttäjän?")) return;
+
+                try {
+                    const res = await fetch("/admin/organization/api/delete_membership/", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ membership_id: shipId })
+                    });
+
+                    const result = await res.json();
+                    if (res.ok) {
+                        alert(result.message || "Käyttäjä poistettu");
+                        btn.closest("tr").remove(); // remove row from table
+                    } else {
+                        alert(result.error || "Poisto epäonnistui.");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Virhe palvelinyhteydessä.");
+                }
+            });
+        });
+
+    });
+</script>
+
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-container mt-4" id="view">
+    <div class="dashboard-actions">
+        <a class="button-edit" href="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}">
+            <i class="fa fa-pen"></i> {{ _('Muokkaa') }}
+        </a>
+        
+    </div>
+    
+    <!-- Intro card -->
+    <div class="introduction">
+        <h1 id="tabletitle">{{ _('Organisaation tiedot') }}</h1>
+        <p class="muted">
+            Tällä sivulla näet valitsemasi organisaation keskeiset tiedot ja käyttäjähallinnan. <br>
+            Voit tarkastella organisaation nimeä, kuvausta, yhteystietoja ja sosiaalisen median linkkejä. <br>
+            Lisäksi voit hallita organisaation jäsenten rooleja, poistaa käyttäjiä ja tarkastella tai peruuttaa
+            lähetettyjä kutsuja. <br>
+            Lisätietoa löydät hallinnoijan käsikirjan kohdasta 2.2: <strong>Organisaation yhteenveto</strong>.
+        </p>
+    </div>
+
+    <div class="form-group">
+        <label>{{ _('Nimi') }}</label>
+        <p class="form-control">{{ organization.name }}</p>
+    </div>
+
+    <div class="form-group">
+        <label>{{ _('Kuvaus') }}</label>
+        <p class="form-control">{{ organization.description }}</p>
+    </div>
+
+    <div class="form-group">
+        <label>{{ _('Sähköpostiosoite') }}</label>
+        <p class="form-control">{{ organization.email }}</p>
+    </div>
+
+    <div class="form-group">
+        <label>{{ _('Verkkosivu') }}</label>
+        <p class="form-control">{{ organization.website }}</p>
+    </div>
+
+    {% if organization %}
+    <div class="form-group">
+        <label>{{ _('Onko organisaatio vahvistettu?') }}</label>
+        <p class="form-control">{% if organization.verified %} <i class="fa fa-check"></i> {{ _('Kyllä') }} {% else %}
+            <i class="fa fa-ban"></i> {{ _('Ei') }}{% endif %}
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+        <label>{{ _('Sosiaalinen media') }}</label>
+
+        <div id="social-media-list">
+            {% for platform, url in organization.social_media_links.items() %}
+            <div class="social-media-container">
+                <div class="custom-dropdown">
+                    <div class="dropdown-selected"><i class="fab fa-{{ platform }}"></i> {{ platform.capitalize() }}:
+                    </div>
+                </div>
+                <p class="form-control">{{ url }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>{{ _('Käyttäjät') }}</label>
+        <table class="table">
+            {% if organization.members %}
+            <thead>
+                <tr>
+                    <th>{{ _('Nimi') }}</th>
+                    <th>{{ _('Sähköpostiosoite') }}</th>
+                    <th>{{ _('Pääsytaso') }}</th>
+                    <th>{{ _('Toiminnot') }}</th>
+                </tr>
+            </thead>
+            {% endif %}
+            <tbody>
+                {% for user in memberships %}
+                <tr>
+                    <td>{{ user.displayname or user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <select class="form-control role-select">
+                            <option value="owner" {% if user.role=='owner' %}selected{% endif %}>{{ _('Omistaja') }}
+                            </option>
+                            <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Admin') }}
+                            </option>
+                            <option value="member" {% if user.role=='member' %}selected{% endif %}>{{ _('Jäsen') }}
+                            </option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn-primary save-role-btn" data-user-id="{{ user._id }}"
+                            data-org-id="{{ organization._id }}">
+                            {{ _('Tallenna') }}
+                        </button>
+                        <button data-ship-id="{{ user._ship_id }}" class="button delete-role-btn">{{ _('Poista')
+                            }}</button>
+                    </td>
+                </tr>
+                {% else %}
+                <div class="no-users">
+                    <p>{{ _('Ei käyttäjiä') }}</p>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="form-group">
+            <label>{{ _('Kutsutut käyttäjät') }}</label>
+            <table class="table">
+                {% if organization.invited_users %}
+                <thead>
+                    <tr>
+                        <th>{{ _('Sähköpostiosoite') }}</th>
+                        <th>{{ _('Kutsun tila') }}</th>
+                        <th>{{ _('Toiminnot') }}</th>
+                    </tr>
+                </thead>
+                {% endif %}
+                <tbody>
+                    {% for invite in organization.invited_users %}
+                    <tr>
+                        <td>{{ invite.email }}</td>
+                        <td>{{ _('Odottaa hyväksyntää') }}</td>
+                        <td>
+                            <button class="button">{{ _('Peruuta kutsu') }}</button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <div class="no-users">
+                        <p>{{ _('Ei kutsuttuja käyttäjiä') }}</p>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
+            {{ _('Kutsu käyttäjiä') }}
+        </button>
+    </div>
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm"> {# You can use modal-md or modal-lg if needed #}
+            <div class="modal-content shadow rounded-4 border-0"
+                style="background-color: var(--container-bg); color: var(--text);">
+
+                <form method="POST"
+                    action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjiä') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                            aria-label="{{ _('Sulje') }}"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label for="invitee_email" class="form-label">
+                                {{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span>
+                            </label>
+                            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required
+                                placeholder="sähköposti@domain.fi">
+                        </div>
+                        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
+                    </div>
+
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta')
+                            }}</button>
+                        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

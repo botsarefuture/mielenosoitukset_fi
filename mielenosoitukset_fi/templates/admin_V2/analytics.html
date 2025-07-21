@@ -1,0 +1,159 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}{{ _('Mielenosoitusanalytiikka') }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}">
+
+<style>
+  .no-data {
+    color: var(--text_error);
+    font-weight: bold;
+    background: var(--background_alert);
+    padding: 1.5rem;
+    border: 1px dashed var(--border_alert);
+    border-radius: 8px;
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .analytics-table td,
+  .analytics-table th {
+    text-align: left;
+    padding: 1rem;
+  }
+
+  .analytics-table thead {
+    background-color: var(--table_header_bg);
+  }
+
+  .analytics-table tr:hover {
+    background-color: var(--table_row_hover);
+  }
+
+  .chart-container {
+    background: var(--container_background);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border_color);
+    margin-bottom: 2rem;
+    height: 400px;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<section class="dashboard-container">
+  <!-- Header -->
+  <div class="introduction">
+    <h1 id="tabletitle">{{ _('Mielenosoitusanalytiikka') }}</h1>
+    <p class="muted">
+      {{ _('Täältä näet mielenosoitusten katselukerrat järjestyksessä.') }}
+    </p>
+  </div>
+
+  {% if data %}
+  <!-- Chart -->
+  <div class="chart-container">
+    <canvas id="viewsChart"></canvas>
+  </div>
+
+  <!-- Table -->
+  <div class="table-container" style="background: none;">
+    <table class="analytics-table">
+      <thead>
+        <tr>
+          <th>{{ _('Mielenosoituksen ID') }}</th>
+          <th>{{ _('Katselukerrat') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for demo in data %}
+        <tr>
+          <td>{{ demo.id }}</td>
+          <td>{{ demo.views }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="no-data">
+    <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei tietoja saatavilla.') }}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const demoLabels = {{ data | map(attribute='id') | list | tojson }};
+  const demoViews = {{ data | map(attribute='views') | list | tojson }};
+
+  const ctx = document.getElementById('viewsChart').getContext('2d');
+
+  const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+
+  const chartColors = {
+    text: isDark ? '#eee' : '#222',
+    grid: isDark ? '#444' : '#ccc',
+    background: isDark ? '#1e1e2f' : '#fff',
+    bars: isDark ? '#64b5f6' : '#1976d2',
+  };
+
+  const viewsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: demoLabels,
+      datasets: [{
+        label: '{{ _("Katselukerrat") }}',
+        data: demoViews,
+        backgroundColor: chartColors.bars,
+        borderRadius: 4,
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: {
+            color: chartColors.text
+          },
+          grid: {
+            color: chartColors.grid
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: chartColors.text
+          },
+          grid: {
+            color: chartColors.grid
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            color: chartColors.text
+          }
+        },
+        tooltip: {
+          backgroundColor: chartColors.background,
+          titleColor: chartColors.text,
+          bodyColor: chartColors.text,
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

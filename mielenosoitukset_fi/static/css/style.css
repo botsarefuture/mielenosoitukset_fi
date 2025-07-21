@@ -690,29 +690,6 @@ span i {
   }
 }
 
-@keyframes marquee {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-.marquee {
-  overflow: hidden;
-  white-space: nowrap;
-  box-sizing: border-box;
-  position: relative;
-  width: 100%;
-}
-
-.marquee-content {
-  display: inline-block;
-  position: absolute;
-  animation: marquee linear infinite;
-}
-
 .highlight {
   background-color: var(--highlight_bg);
   color: var(--highlight_text);

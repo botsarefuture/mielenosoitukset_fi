@@ -1,0 +1,240 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<style>
+  .analytics-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: var(--container_background);
+    border: 1px solid var(--border_color);
+    border-radius: 8px;
+  }
+
+  h2 {
+    margin-bottom: 1rem;
+    color: var(--primary_color);
+  }
+
+  .summary {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .summary-item {
+    flex: 1 1 150px;
+    background: var(--bg_secondary);
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+  }
+
+  .summary-item h3 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .summary-item p {
+    font-size: 1.2rem;
+    color: var(--text_muted);
+  }
+
+  .chart-container {
+    background: var(--bg_secondary);
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .summary {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-container">
+  <h2>{{ demo.title }} — {{ _('Analytiikka') }}</h2>
+
+  <div class="summary">
+    <div class="summary-item">
+      <h3>{{ total_views }}</h3>
+      <p>{{ _('Näytöt yhteensä') }}</p>
+    </div>
+    <div class="summary-item">
+      <h3>{{ views_today }}</h3>
+      <p>{{ _('Näytöt tänään') }}</p>
+    </div>
+    {# Removed unique_users as it's not passed #}
+    <div class="summary-item">
+      <h3>{{ avg_views_per_minute }}</h3>
+      <p>{{ _('Keskimäärin näytöksiä/minuutti') }}</p>
+    </div>
+  </div>
+
+  <!-- Per minute today -->
+  <div class="dashboard-panel">
+    <h3>{{ _('Näytöt per minuutti tänään') }}</h3>
+    <canvas id="viewsPerMinuteChart" width="800" height="300"></canvas>
+  </div>
+
+  <!-- Per day last 30 days -->
+  <div class="dashboard-panel">
+    <h3>{{ _('Näytöt päivittäin (viimeiset 30 päivää)') }}</h3>
+    <canvas id="viewsPerDayChart" width="800" height="300"></canvas>
+  </div>
+
+  <!-- Per week last 52 weeks -->
+  <div class="dashboard-panel">
+    <h3>{{ _('Näytöt viikoittain (viimeiset 52 viikkoa)') }}</h3>
+    <canvas id="viewsPerWeekChart" width="800" height="300"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+    function isDarkMode() {
+  return document.documentElement.classList.contains('dark');
+}
+
+  // Per minute today data
+  const perMinuteLabels = {{ chart_labels|tojson }};
+  const perMinuteData = {{ chart_data|tojson }};
+
+  // Per day last 30 days data
+  const perDayLabels = {{ daily_labels|tojson }};
+  const perDayData = {{ daily_data|tojson }};
+
+  // Per week last 52 weeks data
+  const perWeekLabels = {{ weekly_labels|tojson }};
+  const perWeekData = {{ weekly_data|tojson }};
+  
+  textColor = isDarkMode() ? "#fff" : "#666";
+
+  Chart.defaults.color = `${textColor}`;
+  // Common chart options base
+  const commonOptions = {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: '{{ _("Näytöt") }}' },
+        ticks: { color: `${textColor}` }
+      },
+      x: {
+        ticks: { color: `${textColor}` }
+      }
+    },
+    plugins: {
+      legend: {
+        labels: { color: `${textColor}` }
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      }
+    },
+    interaction: {
+      mode: 'nearest',
+      axis: 'x',
+      intersect: false
+    }
+  };
+
+  // Chart 1: per minute today
+  const ctxMinute = document.getElementById('viewsPerMinuteChart').getContext('2d');
+  new Chart(ctxMinute, {
+    type: 'line',
+    data: {
+      labels: perMinuteLabels,
+      datasets: [{
+        label: '{{ _("Näytöt per minuutti") }}',
+        data: perMinuteData,
+        borderColor: 'rgba(255, 99, 132, 0.8)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        color: `${textColor}`
+      }]
+    },
+    options: {
+      ...commonOptions,
+      scales: {
+        ...commonOptions.scales,
+        x: {
+          ...commonOptions.scales.x,
+          title: { display: true, text: '{{ _("Aika (tunnit:minuutit)") }}' },
+          ticks: { maxTicksLimit: 12, color: `${textColor}` }
+        }
+      }
+    }
+  });
+
+  // Chart 2: per day last 30 days
+  const ctxDay = document.getElementById('viewsPerDayChart').getContext('2d');
+  new Chart(ctxDay, {
+    type: 'bar',
+    data: {
+      labels: perDayLabels,
+      datasets: [{
+        label: '{{ _("Näytöt per päivä") }}',
+        data: perDayData,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+        borderRadius: 3,
+        color: `${textColor}`
+
+      }]
+    },
+    options: {
+      ...commonOptions,
+      scales: {
+        ...commonOptions.scales,
+        x: {
+          ...commonOptions.scales.x,
+          title: { display: true, text: '{{ _("Päivämäärä") }}' },
+          ticks: { maxTicksLimit: 15, color: `${textColor}` }
+        }
+      }
+    }
+  });
+
+  // Chart 3: per week last 52 weeks
+  const ctxWeek = document.getElementById('viewsPerWeekChart').getContext('2d');
+  new Chart(ctxWeek, {
+    type: 'bar',
+    data: {
+      labels: perWeekLabels,
+      datasets: [{
+        label: '{{ _("Näytöt per viikko") }}',
+        data: perWeekData,
+        backgroundColor: 'rgba(255, 206, 86, 0.6)',
+        borderColor: 'rgba(255, 206, 86, 1)',
+        borderWidth: 1,
+        borderRadius: 3,
+                color: `${textColor}`
+
+      }]
+    },
+    options: {
+      ...commonOptions,
+      scales: {
+        ...commonOptions.scales,
+        x: {
+          ...commonOptions.scales.x,
+          title: { display: true, text: '{{ _("Viikko") }}' },
+          ticks: { maxTicksLimit: 15, color: `${textColor}` }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

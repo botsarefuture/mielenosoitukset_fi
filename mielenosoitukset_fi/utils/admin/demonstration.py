@@ -25,8 +25,12 @@ def collect_tags(request: Request) -> List[str]:
     """
     Collect and return a list of tags from the request form data.
 
-    This function extracts all form fields that start with 'tag_' (regardless of index),
-    ensuring that gaps in numbering don't prevent tag collection.
+    This function supports both:
+    - Old style: form fields named like 'tag_1', 'tag_2', etc.
+    - New style: multiple tags sent as 'tags[]' array.
+
+    It extracts all tags, trims whitespace, removes '#' characters,
+    and skips empty or whitespace-only tags.
 
     Parameters
     ----------
@@ -36,14 +40,19 @@ def collect_tags(request: Request) -> List[str]:
     Returns
     -------
     List[str]
-        A list of non-empty, trimmed tags from the form.
+        A list of non-empty, cleaned tags from the form.
 
     Examples
     --------
     >>> from flask import Request
+    >>> # Old style
     >>> request = Request.from_values(form={'tag_1': 'python', 'tag_2': 'flask', 'tag_3': '  '})
     >>> collect_tags(request)
     ['python', 'flask']
+    >>> # New style
+    >>> request = Request.from_values(form={'tags[]': ['palestiina', '#climate']})
+    >>> collect_tags(request)
+    ['palestiina', 'climate']
 
     Changelog
     ---------
@@ -51,22 +60,31 @@ def collect_tags(request: Request) -> List[str]:
         - Added dynamic collection of all `tag_` prefixed fields.
         - Introduced sorting of `tag_` keys by numerical index to handle gaps in numbering.
         - Enhanced handling of empty or whitespace-only tags by skipping them.
+    v4.0.0:
+        - Added support for new tag array input format using 'tags[]'.
+        - Maintained backward compatibility with old 'tag_N' style inputs.
     """
-    # Extract all keys starting with 'tag_' and sort them
+    tags = []
+
+    # New style: collect tags from tags[] array
+    raw_tags = request.form.getlist("tags[]")
+    for tag in raw_tags:
+        cleaned_tag = tag.strip().replace("#", "")
+        if cleaned_tag:
+            tags.append(cleaned_tag)
+
+    # Old style: collect tags from keys like tag_1, tag_2...
     tag_keys = sorted(
         (key for key in request.form if key.startswith("tag_")),
-        key=lambda k: int(k.split("_")[1]),
+        key=lambda k: int(k.split("_")[1]) if k.split("_")[1].isdigit() else 0,
     )
-
-    tags = []
     for key in tag_keys:
-        tag_name = request.form.get(key, "").strip()
-        if tag_name:  # Only add non-empty, trimmed tags
-            # Tags should have '#' in front of them
-            rlace(tag_name, "#", "")
+        tag_name = request.form.get(key, "").strip().replace("#", "")
+        if tag_name:
             tags.append(tag_name)
 
     return tags
+
 
 
 def fix_organizers(data: dict) -> dict:

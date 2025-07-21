@@ -1,0 +1,148 @@
+{% extends 'admin_base.html' %}
+
+
+{% block main_content %}
+<section class="dashboard-container">
+    <!-- Intro card -->
+    <div class="introduction">
+        <h1 id="tabletitle">{{ _('Organisaatiot') }}</h1>
+        <p class="muted">
+            {{ _('Täältä voit hallita organisaatioita, joihin sinulla on käyttöoikeus.') }}<br>
+            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.1: Organisaatioiden
+            hallintapaneeli, etusivu.') }}
+        </p>
+    </div>
+
+    <!-- Action panel -->
+    <div class="dashboard-panel">
+
+        <div class="flex justify-center mb-4">
+            {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
+            <a href="{{ url_for('admin_org.create_organization') }}" class="btn new-item">
+                <i class="fas fa-plus"></i>{{ _('Luo uusi organisaatio') }}
+            </a>
+            {% else %}
+            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{ _('Luo uusi
+                organisaatio') }}</a>
+            {% endif %}
+        </div>
+
+        <!-- Client‑side search (no backend round‑trip) -->
+        <div class="search-bar">
+            <label for="search" class="sr-only">{{ _('Hae organisaatioita:') }}</label>
+            <input type="search" id="search" class="search-input" placeholder="{{ _('Hae organisaatioita...') }}"
+                aria-label="{{ _('Hae organisaatioita') }}">
+            <button type="button" id="search-btn" class="search-button">
+                <i class="fas fa-search"></i>{{ _('Hae') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Table of organisations -->
+    {% if organizations %}
+    <div class="table-container" style="background:none;">
+        <table id="org-table">
+            <thead>
+                <tr>
+                    <th class="cbox-cell"><input type="checkbox" id="select-all" /></th>
+                    <th>{{ _('Nimi') }}</th>
+                    <th>{{ _('Kuvaus') }}</th>
+                    <th>{{ _('Sähköpostiosoite') }}</th>
+                    <th>{{ _('Verkkosivu') }}</th>
+                    <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for org in organizations %}
+                <tr>
+                    <td class="cbox-cell"><input type="checkbox" name="selected_orgs" value="{{ org._id }}"></td>
+                    <td>{{ org.name }}</td>
+                    <td>{{ org.description }}</td>
+                    <td>{{ org.email }}</td>
+                    <td><a href="{{ org.website }}" target="_blank" class="link">{{ org.website }}</a></td>
+                    <td class="actions-cell">
+                        {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}
+                        <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}"
+                            class="button edit-button"><i class="fas fa-edit"></i>{{ _('Muokkaa') }}</a>
+                        {% else %}
+                        <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{
+                            _('Muokkaa') }}</a>
+                        {% endif %}
+
+                        {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}
+                        <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}"
+                            class="button delete-button"><i class="fas fa-trash"></i>{{ _('Poista') }}</a>
+                        {% else %}
+                        <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{
+                            _('Poista') }}</a>
+                        {% endif %}
+
+                        {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}
+                        <a href="{{ url_for('admin_org.view_organization', org_id=org._id) }}"
+                            class="button view-button"><i class="fa-solid fa-eye"></i>{{ _('Yhteenveto') }}</a>
+                        {% else %}
+                        <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{
+                            _('Yhteenveto') }}</a>
+                        {% endif %}
+
+                        <a href="{{ url_for('org', org_id=org._id) }}" class="button view-button"><i
+                                class="fa-solid fa-eye"></i>{{ _('Katsele') }}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-orgs">
+        <p>{{ _('Organisaatioita ei löytynyt.') }}</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAll = document.getElementById('select-all');
+        const checkBoxes = document.querySelectorAll("input[name='selected_orgs']");
+
+        selectAll?.addEventListener('change', () => {
+            checkBoxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+                cb.closest('tr').classList.toggle('selected', cb.checked);
+            });
+        });
+
+        checkBoxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                cb.closest('tr').classList.toggle('selected', cb.checked);
+            });
+        });
+
+        const searchInput = document.getElementById('search');
+        const searchBtn = document.getElementById('search-btn');
+        const rows = document.querySelectorAll('#org-table tbody tr');
+
+        const filterRows = () => {
+            const term = searchInput.value.trim().toLowerCase();
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+            });
+        };
+
+        searchInput.addEventListener('input', filterRows);
+        searchBtn.addEventListener('click', filterRows);
+    });
+</script>
+{% endblock %}
+
+{% block extra_buttons %}
+<div class="extra-buttons">
+    <a href="{{ url_for('admin_org.invite_to_organization') }}" class="button invite-button"><i
+            class="fas fa-user-plus"></i>{{ _('Kutsu henkilö') }}</a>
+    <a href="{{ url_for('admin_org.manage_roles') }}" class="button manage-roles-button"><i
+            class="fas fa-user-cog"></i>{{ _('Hallitse rooleja') }}</a>
+</div>
+{% endblock %}

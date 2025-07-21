@@ -1,0 +1,323 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<!-- Core CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo.css' )}}">
+<style>
+    .alert.alert-info {
+        background: var(--alert_bg);
+        color: var(--black);
+        padding: 1em;
+        text-align: center;
+        border-radius: 0.5em;
+        margin-bottom: 1rem;
+    }
+
+    .alert h2 {
+        color: var(--danger_bg);
+        background: var(--alert_text);
+        padding: 1em;
+        border-radius: 0.5em;
+        margin-bottom: 1rem;
+    }
+
+    .circle-btn {
+        border: none;
+        background: #e53e3e;
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-left: 0.5rem;
+        transition: background-color 0.2s;
+    }
+
+    .circle-btn:hover {
+        background: #c53030;
+    }
+
+    .dashboard-panel {
+        margin-bottom: 2rem;
+    }
+
+    /* re-use all other styles from main demo page... */
+
+    .alert.alert-info {
+        background: var(--alert_bg);
+        color: var(--black);
+        padding: 1em;
+        text-align: center;
+        border-radius: 0.5em;
+        margin-bottom: 1rem;
+    }
+
+    .alert h2 {
+        color: var(--danger_bg);
+        background: var(--alert_text);
+        padding: 1em;
+        border-radius: 0.5em;
+        margin: 0 0 1rem 0;
+    }
+
+    .alert>p:nth-child(2) {
+        text-transform: uppercase;
+        color: var(--secondary_color);
+    }
+
+    .alert #ok.button {
+        border: 3px dashed var(--danger_text);
+        padding: 0.5em 1em;
+        border-radius: 0.5em;
+        cursor: pointer;
+        background: var(--secondary_button_color);
+        margin-top: 0.5em;
+        transition: background-color 0.3s ease;
+    }
+
+    .alert #ok.button:hover {
+        background: var(--secondary_button_hover_color);
+    }
+
+    /* Disabled input styling for readonly fields */
+    input[readonly] {
+        background-color: var(--gray-100, #f3f4f6);
+        color: var(--gray-500, #6b7280);
+        cursor: not-allowed;
+    }
+
+    .circle-btn {
+        border: none;
+        background: #e53e3e;
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-left: 0.5rem;
+        transition: background-color 0.2s ease;
+    }
+
+    .circle-btn:hover {
+        background: #c53030;
+    }
+
+
+
+
+    .dashboard-panel.form-group.organizer-item {
+        width: 400px;
+        align-items: stretch;
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+
+
+    #organizers-container {
+        display: flex;
+        align-content: start;
+        align-items: stretch;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .tag-pill .remove-route-btn {
+        background: transparent;
+        border: none;
+        margin-left: 0.3rem;
+        cursor: pointer;
+        font-weight: bold;
+        color: #666;
+        transition: color 0.2s ease;
+    }
+
+    .tag-pill .remove-route-btn:hover {
+        color: #e63946;
+    }
+
+    .tag-pill {
+                display: inline-flex;
+                align-items: center;
+                background-color: #efefff;
+                color: #4a4a8a;
+                padding: 0.25rem 0.6rem;
+                border-radius: 9999px;
+                font-size: 0.875rem;
+                user-select: none;
+            }
+
+            .tag-pill .remove-tag-btn {
+                background: transparent;
+                border: none;
+                margin-left: 0.3rem;
+                cursor: pointer;
+                font-weight: bold;
+                color: #888;
+                transition: color 0.2s ease;
+            }
+
+            .tag-pill .remove-tag-btn:hover {
+                color: #e63946;
+            }
+
+            .overlay {
+                backdrop-filter: blur(00.5em);
+                /* overlay that prevents user from using this page, since its not ready. */
+            }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_demo_checkbox.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.9"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+
+<script>
+   // Configuration objects for date and time pickers
+const date_picker_config = {
+    dateFormat: "Y-m-d",
+    altInput: true,
+    altFormat: "d.m.Y",
+    allowInput: true,
+    locale: {
+        firstDayOfWeek: 1, // Monday as first day
+        weekdays: {
+            shorthand: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La'],
+            longhand: ['Sunnuntai', 'Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai']
+        },
+        months: {
+            shorthand: ['Tam', 'Hel', 'Mar', 'Huht', 'Tou', 'Kes', 'Hele', 'Elo', 'Syys', 'Lok', 'Marr', 'Jou'],
+            longhand: ['Tammikuu', 'Helmikuu', 'Maaliskuu', 'Huhtikuu', 'Toukokuu', 'Kesäkuu', 'Heinäkuu', 'Elokuu', 'Syyskuu', 'Lokakuu', 'Marraskuu', 'Joulukuu']
+        }
+    }
+};
+
+const time_picker_config = {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: "H:i",
+    altInput: true,
+    altFormat: "H:i",
+    allowInput: true,
+    time_24hr: true
+};
+
+function initializeDatePickers() {
+    if (window.today === true) {
+        date_picker_config.minDate = 'today';
+    } else {
+        delete date_picker_config.minDate; // reset if needed
+    }
+
+    flatpickr("#date", date_picker_config);
+    flatpickr("#end_date", date_picker_config);
+    flatpickr("#recurrence_end_date", date_picker_config);
+
+    flatpickr("#start_time", time_picker_config);
+    flatpickr("#end_time", time_picker_config);
+}
+
+document.addEventListener("DOMContentLoaded", initializeDatePickers);
+
+
+    // Type change visibility
+    const typeSelect = document.getElementById('type');
+    const routeContainer = document.getElementById('march-route-container');
+    typeSelect && typeSelect.addEventListener('change', () => {
+        routeContainer.style.display = typeSelect.value === 'MARCH' ? 'block' : 'none';
+    });
+
+    // Tag logic
+    (function () {
+        const tagsWrapper = document.getElementById('tags-wrapper');
+        const tagInput = document.getElementById('tag-input');
+        function onRemove(e) { e.target.closest('.tag-pill').remove(); }
+        tagsWrapper.querySelectorAll('.remove-tag-btn').forEach(b => b.addEventListener('click', onRemove));
+        tagInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const v = tagInput.value.trim();
+                if (!v) return;
+                const exist = Array.from(tagsWrapper.querySelectorAll('input[name="tags[]"]')).some(i => i.value.toLowerCase() === v.toLowerCase());
+                if (exist) { alert('{{ _("Tagi on jo lisätty.") }}'); tagInput.value = ''; return; }
+                const span = document.createElement('span');
+                span.className = 'tag-pill';
+                span.textContent = v;
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 'remove-tag-btn';
+                btn.innerHTML = '&times;';
+                btn.addEventListener('click', onRemove);
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'tags[]'; inp.value = v;
+                span.appendChild(btn); span.appendChild(inp);
+                tagsWrapper.insertBefore(span, tagInput);
+                tagInput.value = '';
+            }
+        });
+        tagsWrapper.addEventListener('click', () => tagInput.focus());
+    })();
+
+    // Route-point logic
+    (function () {
+        const wrapper = document.getElementById('route-tags-wrapper');
+        const input = document.getElementById('route-input');
+        function onRemove(e) { e.target.closest('.tag-pill').remove(); }
+        wrapper.querySelectorAll('.remove-route-btn').forEach(b => b.addEventListener('click', onRemove));
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); const v = input.value.trim();
+                if (!v) return;
+                const exist = Array.from(wrapper.querySelectorAll('input[name="route[]"]')).some(i => i.value.toLowerCase() === v.toLowerCase());
+                if (exist) { alert('{{ _("Reittipiste on jo lisätty.") }}'); input.value = ''; return; }
+                const span = document.createElement('span');
+                span.className = 'tag-pill';
+                span.textContent = v;
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 'remove-route-btn'; btn.innerHTML = '&times;';
+                btn.addEventListener('click', onRemove);
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'route[]'; inp.value = v;
+                span.appendChild(btn); span.appendChild(inp);
+                wrapper.insertBefore(span, input);
+                input.value = '';
+            }
+        });
+        wrapper.addEventListener('click', () => input.focus());
+    })();
+
+    // Organizers, create logic reused
+</script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+{% endblock %}
+
+
+{% block main_content %}
+<div class="overlay"></div>
+<div class="dashboard-container">
+    <section class="introduction">
+        <h1 class="text-3xl font-bold">{{ title }}</h1>
+        <p class="text-muted max-w-xl">
+            Täällä voit luoda tai muokata toistuvaa mielenosoitusta, määrittää päiviä, reittipisteitä ja
+            toistuvuusasetuksia.<br>
+            Muista tallentaa lopuksi.
+        </p>
+    </section>
+
+    <form method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
+        {% include 'partials/toistuva_form_fields.html' %}
+        <!-- This partial holds all Basic Info, Tags, Route, Organizers, Recurrence, and Submit -->
+    </form>
+</div>
+{% endblock %}

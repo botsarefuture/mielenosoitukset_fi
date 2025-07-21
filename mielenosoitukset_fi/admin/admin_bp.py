@@ -1,12 +1,16 @@
+from datetime import datetime, timezone, timedelta
 import json
 from mielenosoitukset_fi.utils.logger import logger
 
 import os
-import warnings
+
+from collections import defaultdict
+import pytz
 
 from bson.objectid import ObjectId
 from flask import (
     Blueprint,
+    abort,
     redirect,
     render_template,
     request,
@@ -14,6 +18,7 @@ from flask import (
     url_for,
     stream_template,
     stream_with_context,
+    jsonify
 )
 from flask_login import (
     LoginManager,
@@ -30,10 +35,13 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 
 from mielenosoitukset_fi.utils.classes import AdminActivity
-from .utils import AdminActParser, log_admin_action_V2
+from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
 # Constants
 LOG_FILE_PATH = "app.log"
+
+HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
+
 
 # Blueprint setup
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
@@ -103,6 +111,11 @@ def count_per_demo(data):
     ]
     return demo_count
 
+def get_per_demo_anal(demo_id):
+    analytics = mongo["d_analytics"].find_one({"_id": ObjectId(demo_id)})
+    
+    return analytics
+
 
 # User loader function
 @login_manager.user_loader
@@ -129,7 +142,7 @@ def load_user(user_id):
 @admin_required
 def admin_dashboard():
     """Render the admin dashboard."""
-    return render_template("admin/dashboard.html")
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html")
 
 
 def get_admin_activity(page=1, per_page=20):
@@ -177,7 +190,7 @@ def stats():
 
         # Render statistics template
         return render_template(
-            "admin/stats.html",
+            f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
             total_users=total_users,
             total_organizations=total_organizations,
             role_counts=role_counts,
@@ -195,7 +208,7 @@ def stats():
 @admin_required
 @permission_required("VIEW_LOGS")
 def logs():
-    return render_template("admin/logs.html")
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}logs.html")
 
 
 @admin_bp.route("/api/logs")
@@ -244,59 +257,6 @@ def get_user_role_counts():
     )
     return {role["_id"]: role["count"] for role in user_roles}
 
-
-# Route for managing the marquee message
-@admin_bp.route("/manage-marquee", methods=["GET", "POST"])
-@login_required
-@admin_required
-@permission_required("MANAGE_MARQUEE")
-def manage_marquee():
-    """Manage the marquee message displayed on the site."""
-    config_file = "marquee_config.json"
-
-    # Load existing marquee configuration
-    if os.path.exists(config_file):
-        with open(config_file, "r") as f:
-            marquee_config = json.load(f)
-    else:
-        marquee_config = {
-            "message": "",
-            "default_message": "NO",
-            "style": "background-color: var(--background-color); padding: 0px !important;",
-            "h2_style": "color: var(--primary-color);",
-        }
-
-    if request.method == "POST":
-        # Update marquee configuration based on user input
-        new_message = request.form.get("marquee_message", "").strip()
-        background_color = request.form.get("background_color", "#ffffff")
-        text_color = request.form.get("text_color", "#000000")
-
-        marquee_config.update(
-            {
-                "message": new_message,
-                "style": f"background-color: {background_color}; padding: 0px !important;",
-                "h2_style": f"color: {text_color};",
-            }
-        )
-
-        # Save updated marquee configuration
-        with open(config_file, "w") as f:
-            json.dump(marquee_config, f, indent=4)
-
-        flash_message("Marquee message updated successfully!", "success")
-        logger.info("Marquee message updated to: %s", new_message)
-
-        return redirect(url_for("admin.manage_marquee"))
-
-    return render_template(
-        "admin/manage_marquee.html",
-        current_message=marquee_config["message"],
-        background_color=marquee_config["style"].split(": ")[1].split(";")[0],
-        text_color=marquee_config["h2_style"].split(": ")[1],
-    )
-
-
 @admin_bp.route("/demo_analytics")
 @login_required
 @admin_required
@@ -311,7 +271,7 @@ def demo_analytics():
     data = get_demo_views()
     data = count_per_demo(data)
 
-    return render_template("admin/analytics.html", data=data)
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 
 
 def send_red_alert_email(user):
@@ -339,52 +299,6 @@ def send_red_alert_email(user):
     )
 
 
-def initiate_red_alert():
-    """Initiate a red alert."""
-    # 1. Send email to all admins
-    # 2. Log the red alert
-    # 3. Implement your red alert logic here
-
-    # 1. Send email to all admins
-    admins = mongo.users.find(
-        {"role": {"$in": ["admin", "global_admin"]}}
-    )  # Assuming the role is "admin" or "global_admin"
-
-    for admin in admins:
-        send_red_alert_email(admin)
-
-    # 2. Log the red alert
-    logger.critical("Red alert initiated")
-
-    # 3. Marquee should show the red alert
-    with open("marquee_config.json", "r") as f:
-        marquee_config = json.load(f)
-        marquee_config["message"] = "RED ALERT "
-        marquee_config["style"] = "background-color: red; padding: 0px !important;"
-        marquee_config["h2_style"] = "color: white;"
-
-    with open("marquee_config.json", "w") as f:
-        json.dump(marquee_config, f, indent=4)
-
-    return "Red alert initiated"
-
-
-@admin_bp.route("/shutdown", methods=["POST"])
-@login_required
-@admin_required
-@permission_required("SHUTDOWN_SERVER")
-def shutdown():
-    """Shutdown the server securely."""
-    if not current_user.has_role("admin"):
-        logger.warning(f"Unauthorized shutdown attempt by user {current_user.username}")
-        mongo.users.update_one({"_id": current_user.id}, {"$set": {"banned": True}})
-        initiate_red_alert()
-        return "Unauthorized", 403
-
-    logger.info(f"Server shutdown initiated by user {current_user.username}")
-    os.system("shutdown -h now")
-    return "Server shutting down..."
-
 
 def validate_mfa_token(token):
     """Validate the MFA token.
@@ -401,3 +315,248 @@ def validate_mfa_token(token):
     """
     # Implement your MFA token validation logic here
     return True  # Placeholder for actual validation logic
+from datetime import timedelta
+
+@admin_bp.route("/per_demo_analytics/<demo_id>")
+def demo_analytics(demo_id):
+    try:
+        demo_oid = ObjectId(demo_id)
+    except Exception:
+        abort(404, "Invalid demo ID")
+
+    anal = get_per_demo_anal(demo_oid)
+    if not anal:
+        abort(404, "No analytics data found")
+
+    analytics = anal.get("analytics", {})
+    from mielenosoitukset_fi.utils.classes import Demonstration
+
+    demo_data = mongo["demonstrations"].find_one({"_id": demo_oid})
+    demo = Demonstration.from_dict(demo_data)
+    
+    now_utc = datetime.now(timezone.utc)
+    today_str = now_utc.strftime("%Y-%m-%d")
+
+    # --- Views per minute for today (existing) ---
+    total_views = 0
+    views_today = 0
+    labels = []
+    data = []
+
+    day_data = analytics.get(today_str, {})
+
+    for hour in range(24):
+        hour_str = str(hour)
+        hour_data = day_data.get(hour_str, {})
+        for minute in range(60):
+            minute_str = str(minute)
+            count = hour_data.get(minute_str, 0)
+            total_views += count
+            views_today += count
+            labels.append(f"{hour:02d}:{minute:02d}")
+            data.append(count)
+
+    avg_views_per_minute = (views_today / 1440) if views_today else 0
+
+    # --- NEW: Views per day for last 30 days ---
+    daily_labels = []
+    daily_data = []
+    for i in range(29, -1, -1):  # 30 days ago -> today
+        day = now_utc - timedelta(days=i)
+        day_str = day.strftime("%Y-%m-%d")
+        day_views = 0
+        day_hours = analytics.get(day_str, {})
+        for hour_data in day_hours.values():
+            day_views += sum(hour_data.values())
+        daily_labels.append(day.strftime("%d.%m"))  # day.month format
+        daily_data.append(day_views)
+
+    # --- NEW: Views per week for last 52 weeks ---
+    weekly_labels = []
+    weekly_data = []
+
+    # Create a helper to get Monday of the week for any date
+    def get_monday(date):
+        return date - timedelta(days=date.weekday())
+
+    monday_today = get_monday(now_utc)
+
+    for i in range(51, -1, -1):  # 52 weeks ago -> this week
+        week_start = monday_today - timedelta(weeks=i)
+        week_end = week_start + timedelta(days=6)
+
+        week_label = f"{week_start.strftime('%d.%m')} - {week_end.strftime('%d.%m')}"
+        weekly_labels.append(week_label)
+
+        # sum views for each day in the week
+        week_views = 0
+        for d in range(7):
+            day = week_start + timedelta(days=d)
+            day_str = day.strftime("%Y-%m-%d")
+            day_hours = analytics.get(day_str, {})
+            for hour_data in day_hours.values():
+                week_views += sum(hour_data.values())
+
+        weekly_data.append(week_views)
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}per_demo_analytics.html",
+        analytics=anal,
+        total_views=total_views,
+        views_today=views_today,
+        avg_views_per_minute=round(avg_views_per_minute, 2),
+        chart_labels=labels,
+        chart_data=data,
+        daily_labels=daily_labels,
+        daily_data=daily_data,
+        weekly_labels=weekly_labels,
+        weekly_data=weekly_data,
+        demo=demo
+    )
+
+
+from flask import render_template
+from datetime import datetime, timedelta, timezone
+
+from flask import request
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+from bson.objectid import ObjectId
+from flask import request, render_template, abort
+
+@admin_bp.route("/analytics/overall_24h")
+def analytics_overall_24h():
+    now        = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    yesterday  = now - timedelta(days=1)
+
+    # ── 1️⃣  Interval from query string ──────────────────────────
+    try:
+        interval = int(request.args.get("interval", 5))
+        assert interval in {1, 5, 15, 30, 60, 120}
+    except (ValueError, AssertionError):
+        interval = 5                                             # safe default
+
+    # ── 2️⃣  Build empty timeline – keys are **bucket start** UTC ─
+    timeline   = defaultdict(int)                               # minute‑bucket → views
+    label_map  = {}                                              # bucket → pretty label
+
+    cur = yesterday
+    while cur <= now:
+        key              = cur.strftime("%Y-%m-%d %H:%M")        # canonical key
+        timeline[key]    = 0
+        label_map[key]   = (cur.strftime("%Y-%m-%d %H:%M")
+                            if cur.date() != now.date()
+                            else cur.strftime("%H:%M"))
+        cur += timedelta(minutes=interval)
+
+    # ── 3️⃣  Aggregate all demos into those buckets ──────────────
+    for doc in mongo["d_analytics"].find({}, {"analytics": 1}):
+        analytics = doc.get("analytics", {})
+
+        # only two days are relevant for a moving 24 h window
+        for day_str in {yesterday.strftime("%Y-%m-%d"), now.strftime("%Y-%m-%d")}:
+            for hour_str, hour_data in analytics.get(day_str, {}).items():
+                for minute_str, count in hour_data.items():
+                    # zero‑pad minutes to guarantee “%M” matches
+                    minute = f"{int(minute_str):02d}"
+                    try:
+                        ts = datetime.strptime(
+                            f"{day_str} {hour_str}:{minute}", "%Y-%m-%d %H:%M"
+                        ).replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        continue
+
+                    if not (yesterday <= ts <= now):
+                        continue
+
+                    # Bucket start for this interval
+                    rounded = ts - timedelta(
+                        minutes=ts.minute % interval,
+                        seconds=ts.second,
+                        microseconds=ts.microsecond
+                    )
+
+                    key = rounded.strftime("%Y-%m-%d %H:%M")
+                    timeline[key] += count
+
+    # ── 4️⃣  Prepare data for Chart.js ───────────────────────────
+    sorted_keys = sorted(timeline.keys())
+
+    # Always (re)generate label_map here to avoid KeyErrors
+    label_map = {
+        k: (datetime.strptime(k, "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+            if datetime.strptime(k, "%Y-%m-%d %H:%M").date() != now.date()
+            else datetime.strptime(k, "%Y-%m-%d %H:%M").strftime("%H:%M"))
+        for k in sorted_keys
+    }
+
+    labels = [label_map[k] for k in sorted_keys]
+    data   = [timeline[k] for k in sorted_keys]
+
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}overall_24h_analytics.html",
+        chart_labels = labels,
+        chart_data   = data,
+        interval     = interval          # so the template can show current setting / dropdown
+    )
+
+
+@admin_bp.route("/api/analytics/overall_24h")
+def analytics_overall_24h_api():
+    now_hel = datetime.now(HELSINKI_TZ).replace(second=0, microsecond=0)
+    yesterday_hel = now_hel - timedelta(days=1)
+
+    try:
+        interval = int(request.args.get("interval", 5))
+        assert interval in {1,5,15,30,60,120}
+    except Exception:
+        interval = 5
+
+    timeline = defaultdict(int)
+
+    # Get all docs from d_analytics collection
+    for doc in mongo["d_analytics"].find({}, {"analytics": 1}):
+        analytics = doc.get("analytics", {})
+
+        for day_str, hours in analytics.items():  # "2024-11-21"
+            for hour_str, minutes in hours.items():  # "17"
+                for minute_str, count in minutes.items():  # "53"
+                    try:
+                        dt_hel = datetime.strptime(
+                            f"{day_str} {hour_str}:{minute_str}", "%Y-%m-%d %H:%M"
+                        )
+                        # attach Helsinki tz info
+                        dt_hel = HELSINKI_TZ.localize(dt_hel)
+
+                        # skip if outside last 24h window
+                        if not (yesterday_hel <= dt_hel <= now_hel):
+                            continue
+
+                        # round down to interval
+                        rounded = dt_hel - timedelta(
+                            minutes=dt_hel.minute % interval,
+                            seconds=dt_hel.second,
+                            microseconds=dt_hel.microsecond
+                        )
+                        key = rounded.strftime("%Y-%m-%d %H:%M")
+                        timeline[key] += count
+                    except Exception:
+                        continue
+
+    # Prepare output arrays
+    sorted_keys = sorted(timeline.keys())
+    labels = []
+    data = []
+
+    for k in sorted_keys:
+        dt = datetime.strptime(k, "%Y-%m-%d %H:%M").replace(tzinfo=HELSINKI_TZ)
+        label = dt.strftime("%Y-%m-%d %H:%M") if dt.date() != now_hel.date() else dt.strftime("%H:%M")
+        labels.append(label)
+        data.append(timeline[k])
+
+    return jsonify({
+        "labels": labels,
+        "data": data,
+        "interval": interval
+    })

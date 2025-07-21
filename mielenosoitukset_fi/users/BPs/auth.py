@@ -193,76 +193,74 @@ def mfa_check():
     except Exception as e:
         return jsonify({"enabled": False, "valid": False})
 
+from urllib.parse import urlparse
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    next_page = request.args.get("next", "")
+    # Get the next page from GET param or from session fallback
+    next_page = request.args.get("next") or session.get("next_page") or ""
+
+    # Sanitize next_page: remove backslashes etc.
     next_page = next_page.replace("\\", "")
-    
-    if not next_page and session.get("next_page"):
-        next_page = session.get("next_page")
-        
-    
-    if not urlparse(next_page).netloc and not urlparse(next_page).scheme:
+
+    # Check if next_page is a safe internal URL (no netloc, no scheme)
+    if next_page and (urlparse(next_page).netloc == "" and urlparse(next_page).scheme == ""):
         safe_next_page = next_page
     else:
+        # fallback default redirect page after login
         safe_next_page = url_for("index")
-        
+
+    # Prevent redirect back to login page itself to avoid loops
+    if safe_next_page == url_for("users.auth.login"):
+        safe_next_page = url_for("index")
+
+    # Save the safe next page to session in case of POST failures
     session["next_page"] = safe_next_page
     session.modified = True
+    
+    if current_user.is_authenticated:
+        return redirect(safe_next_page)
 
     if request.method == "POST":
-        let_login = True
-        
         username = request.form.get("username")
         password = request.form.get("password")
 
         if not username or not password:
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
-            let_login = False
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         user_doc = mongo.users.find_one({"username": username})
 
         if not user_doc:
-            let_login = False
-            flash_message(
-                f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error"
-            )
+            flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         user = User.from_db(user_doc)
         if not user.check_password(password):
-            let_login = False
             flash_message("Käyttäjänimi tai salasana on väärin.", "error")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         if not user.confirmed:
-            let_login = False
-            flash_message(
-                "Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi."
-            )
+            flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
+        # MFA check (assuming your meow function does this)
         if user.mfa_enabled and not meow(user):
-            let_login = False
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        
-        if let_login:
-            login_user(user)
-            
-        else:
-            flash_message("Kirjautuminen epäonnistui.", "error")
-            return redirect(url_for("users.auth.login", next=safe_next_page))
-            
-        # remove the next page from session
-        if session.get("next_page"):
-            del session["next_page"]
+        # Everything good, log the user in
+        login_user(user)
+
+        # Clear the stored next_page so it won't persist forever
+        if "next_page" in session:
+            session.pop("next_page")
             session.modified = True
+
+        # Redirect to the safe next page
         return redirect(safe_next_page)
 
+    # GET request just renders login page
     return render_template("users/auth/login.html", next=safe_next_page)
 
 

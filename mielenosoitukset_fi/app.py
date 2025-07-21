@@ -16,6 +16,8 @@ from mielenosoitukset_fi.scripts.in_past import hide_past
 from mielenosoitukset_fi.scripts.CL import main as cl_main
 from mielenosoitukset_fi.scripts.preview_image_creator import run as run_preview
 
+from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
+
 from mielenosoitukset_fi.utils.analytics import prep
 import sys
 import os
@@ -282,6 +284,7 @@ def create_app() -> Flask:
         scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
         scheduler.add_job(prep, "interval", minutes=15)
         scheduler.add_job(run_preview, "interval", hours=24)  # Run every 24 hours
+        scheduler.add_job(demo_sche, "interval", hours=1)
 
         
     with app.app_context():
@@ -289,3 +292,4 @@ def create_app() -> Flask:
         scheduler.start()
 
     return app
+

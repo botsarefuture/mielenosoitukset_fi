@@ -3,7 +3,6 @@ from .BaseModel import BaseModel
 from mielenosoitukset_fi.utils.database import get_database_manager
 from flask import url_for
 from typing import Dict, List, Union
-from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip as Membership
 
 DB = get_database_manager()

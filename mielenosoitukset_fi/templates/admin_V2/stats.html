@@ -1,0 +1,231 @@
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
+
+<style>
+  .no-data {
+    color: var(--error_text, #721c24);
+    font-weight: 600;
+    background: var(--error_bg, #f8d7da);
+    padding: 1.5rem;
+    border: 1px dashed var(--error_border, #f5c6cb);
+    border-radius: 6px;
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .back-button {
+    margin-top: 2rem;
+    text-align: left;
+  }
+
+  .analytics-container {
+    margin-top: 3rem;
+    background: var(--container_background);
+    border: 1px solid var(--border_color);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text);
+  }
+
+  th, td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border_color);
+  }
+
+  th {
+    background: var(--bg_secondary);
+    text-align: left;
+  }
+
+  tbody tr:hover {
+    background-color: var(--bg_hover);
+  }
+
+  a.demo-link {
+    color: var(--primary_color);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  a.demo-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<style>
+  th.sortable {
+    cursor: pointer;
+    position: relative;
+  }
+  th.sortable::after {
+    content: "⬍"; /* up/down arrow */
+    font-size: 0.7em;
+    color: var(--text_muted, #888);
+    position: absolute;
+    right: 8px;
+  }
+  th.sortable.asc::after {
+    content: "⬆";
+  }
+  th.sortable.desc::after {
+    content: "⬇";
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="dashboard-container">
+    <div class="introduction">
+    <h1 id="tabletitle">{{ _('Tilastot') }}</h1>
+    <p class="muted">
+      {{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}
+    </p>
+  </div>
+
+
+  <div class="stats-overview">
+    <stats>
+      <stat>
+        <stitle>{{ _('Käyttäjiä') }}</stitle>
+        <snum>{{ total_users }}</snum>
+      </stat>
+      <stat>
+        <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
+        <sdisc>{{ _('Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa') }}</sdisc>
+        <snum>{{ active_users }}</snum>
+      </stat>
+      <stat>
+        <stitle>{{ _('Organisaatioita') }}</stitle>
+        <snum>{{ total_organizations }}</snum>
+      </stat>
+      <div style="width: 100%; background-color: transparent; height: 1px;"></div>
+      <stat>
+        <stitle>{{ _('Mielenosoituksia') }}</stitle>
+        <snum>{{ total_demos }}</snum>
+      </stat>
+      <stat>
+        <stitle>{{ _('Katselukerrat') }}</stitle>
+        <sdisc>{{ _('Kaikkien mielenosoitusten katselukerrat') }}</sdisc>
+        <snum>{{ total_views }}</snum>
+      </stat>
+      <stat>
+        <stitle>{{ _('Keskimääräinen katselukerrat') }}</stitle>
+        <sdisc>{{ _('Keskimääräinen katselukerrat mielenosoituksille') }}</sdisc>
+        <snum>{{ avg_views }}</snum>
+      </stat>
+      <last-updated>
+        <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
+      </last-updated>
+    </stats>
+  </div>
+
+  <div class="analytics-container">
+    <h2>{{ _('Mielenosoitus analytiikka') }}</h2>
+<!-- 🆕 pretty 24 h overview button -->
+  <a href="{{ url_for('admin.analytics_overall_24h') }}"
+     class="btn btn-outline-primary btn-sm mb-3 d-inline-flex align-items-center gap-1">
+      <i class="fas fa-clock"></i>
+      {{ _('Yleiskatsaus • viimeiset 24 h') }}
+  </a>
+    {% if data %}
+   <table>
+  <thead>
+    <tr>
+      <th class="sortable" data-sort-key="id">{{ _('Mielenosoituksen ID') }}</th>
+      <th class="sortable" data-sort-key="views">{{ _('Katselukerrat') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for demo in data %}
+    <tr>
+      <td>
+        <a href="{{ url_for('admin.demo_analytics', demo_id=demo.id) }}" class="demo-link" title="{{ _('Näytä analytiikka') }}">
+          {{ demo.id }}
+        </a>
+      </td>
+      <td>{{ demo.views }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+    {% else %}
+    <div class="no-data">
+      <p>{{ _('Ei tietoja saatavilla.') }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="back-button">
+    <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
+      <i class="fas fa-arrow-left"></i> {{ _('Palaa hallintapaneeliin') }}
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+
+<script>
+  // Vanilla JS sorting for the demo analytics table
+  (() => {
+    const table = document.querySelector(".analytics-container table");
+    if (!table) return;
+
+    const tbody = table.querySelector("tbody");
+    const headers = table.querySelectorAll("th.sortable");
+    let sortOrder = {};  // track asc/desc per column
+
+    function sortTable(key, asc) {
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      rows.sort((a, b) => {
+        let aVal, bVal;
+
+        if (key === "id") {
+          // sort by text content of first td (demo id)
+          aVal = a.cells[0].textContent.trim();
+          bVal = b.cells[0].textContent.trim();
+          // natural string compare
+          return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        } else if (key === "views") {
+          // sort by numeric views count (2nd td)
+          aVal = parseInt(a.cells[1].textContent.trim(), 10) || 0;
+          bVal = parseInt(b.cells[1].textContent.trim(), 10) || 0;
+          return asc ? aVal - bVal : bVal - aVal;
+        }
+      });
+
+      // clear and re-append rows in new order
+      tbody.innerHTML = "";
+      rows.forEach(row => tbody.appendChild(row));
+    }
+
+    headers.forEach(header => {
+      header.addEventListener("click", () => {
+        const key = header.getAttribute("data-sort-key");
+        // toggle order
+        const asc = !sortOrder[key];
+        sortOrder = {}; // reset others
+        sortOrder[key] = asc;
+
+        // reset all header classes
+        headers.forEach(h => h.classList.remove("asc", "desc"));
+        header.classList.add(asc ? "asc" : "desc");
+
+        sortTable(key, asc);
+      });
+    });
+  })();
+</script>
+
+{% endblock %}

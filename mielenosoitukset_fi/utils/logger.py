@@ -54,5 +54,3 @@ def setup_logger():
 
 # Initialize the logger
 logger = setup_logger()
-
-# Your application will now send emails on critical errors if not in debug mode.

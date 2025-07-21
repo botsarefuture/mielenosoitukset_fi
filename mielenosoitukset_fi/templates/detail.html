@@ -614,7 +614,7 @@ main .display-all {
     <img src="{{ demo['img'] }}" alt="Event Image" />
     {% endif %}
 
-    {% if demo.cover_picture %}
+    {% if demo.cover_picture and not demo.cover_picture == 'None' %}
     <div class="demo-cover-picture">
       <img src="{{ demo.cover_picture }}" alt="Cover Photo" style="width:100%;max-height:350px;object-fit:cover;">
     </div>

@@ -1,6 +1,4 @@
 import os
-import boto3
-from botocore.exceptions import NoCredentialsError, ClientError
 from PIL import Image
 from config import Config  # Import your Config class
 from mielenosoitukset_fi.utils.logger import logger
@@ -42,30 +40,6 @@ def get_id_and_add_one(hash):
         return_document=True,
     )
     return last_id["last_id"]
-
-
-def create_s3_client():
-    """
-    Initialize and return an S3 client using the provided configuration.
-
-    Returns
-    -------
-    boto3.client or None
-        The initialized S3 client or None if credentials are not found.
-    """
-    try:
-        return boto3.client(
-            "s3",
-            aws_access_key_id=Config.ACCESS_KEY,
-            aws_secret_access_key=Config.SECRET_KEY,
-            endpoint_url=Config.ENDPOINT_URL,
-        )
-    except NoCredentialsError:
-        logger.error("AWS credentials not found.")
-        return None
-
-
-_s3_client = create_s3_client()
 
 
 def retry_with_graze(max_retries=_max_retries, delay=_retry_delay):
@@ -183,6 +157,33 @@ def generate_next_id(image_type: str = "upload") -> int:
     """
     return get_id_and_add_one(gen_ha(image_type))
 
+def generate_next_id_local(image_type: str = "upload") -> int:
+    """
+    Generate the next ID by checking the local uploads folder for the image type.
+
+    Parameters
+    ----------
+    image_type : str
+        Type of the image (used as a prefix).
+
+    Returns
+    -------
+    int or None
+        The next ID or None if an error occurs.
+    """
+    subfolder = os.path.join(_upload_folder, gen_ha(image_type))
+    if not os.path.exists(subfolder):
+        return 1
+    files = [f for f in os.listdir(subfolder) if f.startswith(f"{image_type}-") and f.endswith(".jpg")]
+    ids = []
+    for fname in files:
+        try:
+            num = int(fname.replace(f"{image_type}-", "").replace(".jpg", ""))
+            ids.append(num)
+        except Exception:
+            continue
+    return max(ids) + 1 if ids else 1
+
 
 def upload_path_gen(_id: str, image_type: str) -> str:
     """
@@ -224,12 +225,12 @@ def gen_ha(image_type):
 @retry_with_graze()
 def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     """
-    Upload an image to an S3 bucket with retry logic.
+    Save an image locally in the uploads folder.
 
     Parameters
     ----------
     bucket_name : str
-        Name of the S3 bucket.
+        Unused. Kept for compatibility.
     image_path : str
         Path to the input image.
     image_type : str
@@ -238,34 +239,23 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     Returns
     -------
     str or None
-        URL of the uploaded image or None if upload fails.
+        Local path of the saved image or None if saving fails.
     """
-    _id = generate_next_id(bucket_name, image_type)
+    _id = generate_next_id_local(image_type)
     if _id is None:
         logger.error("Failed to generate next ID.")
-        return None
+        return ""
 
-    jpg_image_path = os.path.join(_upload_folder, f"{image_type}-{_id}.jpg")
+    # Ensure uploads subfolder exists
+    subfolder = os.path.join(_upload_folder, gen_ha(image_type))
+    os.makedirs(subfolder, exist_ok=True)
+
+    jpg_image_path = os.path.join(subfolder, f"{image_type}-{_id}.jpg").replace("mielenosoitukset_fi/", "")
     output_image_path = convert_to_jpg(image_path, jpg_image_path)
-
-    print(output_image_path)
-
-    output_image_path = output_image_path.replace("\\", "/").replace(
-        "mielenosoitukset_fi/uploads/", ""
-    )
-
-    output_image_path = os.path.join(gen_ha(image_type), output_image_path)
 
     if output_image_path is None:
         logger.error("Failed to convert image.")
-        return None
+        return ""
 
-    try:
-        _s3_client.upload_file(jpg_image_path, bucket_name, output_image_path)
-        logger.info(f"{jpg_image_path} uploaded successfully to {bucket_name}.")
-        os.remove(jpg_image_path)  # Remove the converted file
-        s3_file_path = f"https://{bucket_name}.{Config.ENDPOINT_URL.replace('https://', '')}/{output_image_path}"
-        return s3_file_path
-    except ClientError as e:
-        logger.error(f"Error uploading image to bucket '{bucket_name}': {e}")
-        return None
+    logger.info(f"Image saved locally: {output_image_path}")
+    return output_image_path

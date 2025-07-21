@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block styles %}
+<style>
+  .dashboard-container {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: var(--container_background, #fff);
+    border-radius: 18px;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  .info-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%);
+    border: 1px solid #e3e3e3;
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    transition: transform 0.18s cubic-bezier(.4,0,.2,1), box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+  }
+  .info-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+  }
+  .info-icon {
+    font-size: 2.5rem;
+    color: #6c63ff;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+  }
+  .info-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.35rem;
+    color: #222;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .info-card p {
+    margin: 0.3rem 0;
+    color: #555;
+    font-size: 1rem;
+  }
+  .info-card .button, .info-card button {
+    margin-top: 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    padding: 0.5rem 1.2rem;
+    background: #6c63ff;
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(108,99,255,0.08);
+    transition: background 0.18s;
+    cursor: pointer;
+  }
+  .info-card .button:hover, .info-card button:hover {
+    background: #5548c8;
+  }
+  .form-group label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.3rem;
+    display: block;
+  }
+  .form-group input, .form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    background: #f8fafc;
+    transition: border 0.18s;
+  }
+  .form-group input:focus, .form-group textarea:focus {
+    border-color: #6c63ff;
+    outline: none;
+  }
+  .admin-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #6c63ff;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+  .tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 150px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -75px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
+  .spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #6c63ff;
+    animation: spin 1s ease-in-out infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-container">
+  <h2>{{ _('Käyttäjän työkalut') }}</h2>
+  <div class="info-grid">
+    <div class="info-card">
+      <i class="fa-solid fa-user info-icon"></i>
+      <div>
+        <h3>{{ _('Profiili') }}</h3>
+        <div>
+          <form action="{{ url_for('users.profile.edit_profile') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="displayname">{{ _('Näyttönimi:') }}</label>
+              <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname or '' }}" required>
+            </div>
+            <div class="form-group">
+              <label for="profile_picture_file">{{ _('Profiilikuva:') }}</label>
+              <input type="file" id="profile_picture_file" name="profile_picture" accept="image/*" required>
+              <img id="preview" src="{{ current_user.profile_picture or '' }}" alt="Profiilikuva" style="max-width: 200px; margin-top: 10px;">
+            </div>
+            <div class="form-group">
+              <label for="bio">{{ _('Esittelyteksti:') }}</label>
+              <textarea id="bio" name="bio">{{ current_user.bio or '' }}</textarea>
+            </div>
+            <button type="submit" class="button btn-primary">{{ _('Tallenna muutokset') }}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="info-card">
+      <i class="fa-solid fa-cogs info-icon"></i>
+      <div>
+        <h3>{{ _('Asetukset') }}</h3>
+        <form id="settings-form" action="{{ url_for('users.auth.settings') }}" method="POST">
+          <div class="form-group">
+            <label for="mfa_enabled"><i class="fas fa-shield-alt"></i> {{ _('Ota käyttöön kaksivaiheinen todennus:') }}</label>
+            <div class="tooltip">
+              <input type="checkbox" id="mfa_enabled" name="mfa_enabled" {% if current_user.mfa_enabled %}checked{% endif %}>
+              <span class="tooltiptext">{{ _('Enable or disable two-factor authentication.') }}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="email"><i class="fas fa-envelope"></i> {{ _('Sähköposti:') }}</label>
+            <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+          </div>
+          <div class="form-group">
+            <label for="displayname"><i class="fas fa-user"></i> {{ _('Näyttönimi:') }}</label>
+            <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname }}">
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <span>{{ _('Tallenna muutokset') }}</span>
+            <div class="spinner" id="spinner"></div>
+          </button>
+        </form>
+        {% if qr_code_url %}
+        <div class="modal" id="qrModal" style="z-index: 1000;">
+          <div class="modal-header" style="text-align: center; width: 100%;">
+            <h1 style="width: 100%;" class="modal-title" id="qrModalLabel"><i class="fas fa-qrcode"></i> {{ _('QR Code') }}</h1>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <img style="border-radius: 1em;" src="{{ qr_code_url }}" alt="QR Code" class="img-fluid">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-button>{{ _('Close') }}</button>
+          </div>
+        </div>
+        <div class="modal-overlay" id="overlay"></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  document.getElementById('profile_picture_file').addEventListener('change', function() {
+    const file = this.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('preview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('settings-form').addEventListener('submit', function() {
+    document.getElementById('spinner').style.display = 'inline-block';
+  });
+</script>
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const qrModal = document.getElementById('qrModal');
+    if (qrModal) {
+      openModal(qrModal);
+    }
+  });
+</script>
+{% endblock %}

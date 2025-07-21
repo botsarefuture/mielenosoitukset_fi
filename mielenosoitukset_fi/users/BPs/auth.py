@@ -391,6 +391,9 @@ def process_settings_change(user, changed_fields):
 def settings():
     """Let users activate MFA"""
     user = current_user
+    
+    if request.method == "GET":
+        return redirect(url_for("users.profile.edit_profile"))
 
     if request.method == "POST":
         user_data = request.form.to_dict()

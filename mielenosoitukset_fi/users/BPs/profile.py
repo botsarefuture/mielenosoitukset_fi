@@ -14,7 +14,7 @@ from mielenosoitukset_fi.utils.logger import logger
 mongo = DatabaseManager().get_instance().get_db()
 
 profile_bp = Blueprint(
-    "profile", __name__, template_folder="/users/profile/", url_prefix="/profile"
+    "profile", __name__, template_folder="/users/profile", url_prefix="/profile"
 )
 
 
@@ -51,23 +51,22 @@ def profile(username=None):
 @profile_bp.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
-    """ """
+    """
+    Dashboard-like edit view for profile and settings.
+    """
     if request.method == "POST":
         displayname = request.form.get("displayname")
         bio = request.form.get("bio")
         profile_picture = request.files.get("profile_picture")
-
+        # ...existing code for profile update...
         current_user.displayname = displayname
         current_user.bio = bio
-
         if profile_picture:
             filename = secure_filename(profile_picture.filename)
             temp_file_path = os.path.join("uploads", filename)
             profile_picture.save(temp_file_path)
-
             bucket_name = "mielenosoitukset-fi1"
             photo_url = upload_image(bucket_name, temp_file_path, "profile_pics")
-
             if photo_url:
                 current_user.profile_picture = photo_url
                 mongo.users.update_one(
@@ -83,12 +82,13 @@ def edit_profile():
                 flash_message("Profiilitietosi on päivitetty.", "success")
             else:
                 flash_message("Virhekuvan lataamisessa S3:een.", "error")
-
             os.remove(temp_file_path)
-
-        return redirect(url_for("profile.profile", username=current_user.username))
-
-    return render_template("users/profile/edit_profile.html")
+        # ...existing code for settings update...
+        # You can import and call the settings logic from auth.py here if needed
+        # Or merge the logic directly for a unified update
+        # For now, just redirect to dashboard
+        return redirect(url_for("users.profile.profile", username=current_user.username))
+    return render_template("users/edit_dashboard.html")
 
 
 @profile_bp.route("/follow/<username>", methods=["POST"])

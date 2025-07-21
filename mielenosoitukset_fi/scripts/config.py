@@ -60,11 +60,6 @@ class Config:
     PORT = config.get("PORT", 8000)
     DEBUG = config.get("DEBUG", False)
 
-    # S3 Configuration
-    S3_CONFIG = config.get("S3", {})
-    ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
-    SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
-    ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
 
     @classmethod
     def init_config(cls) -> None:

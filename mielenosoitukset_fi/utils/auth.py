@@ -154,7 +154,8 @@ def generate_confirmation_token(email: str) -> str:
     str
         The generated JWT token.
     """
-    return _generate_token({"email": email}, datetime.timedelta(hours=1))
+    # Use 3600 seconds (1 hour) for expiration, as _generate_token expects seconds (int)
+    return _generate_token({"email": email}, 3600)
 
 
 def verify_confirmation_token(token: str) -> Optional[str]:
@@ -172,6 +173,6 @@ def verify_confirmation_token(token: str) -> Optional[str]:
         The email address associated with the token if the token is valid, otherwise None.
     """
     data, status = _verify_token(token)
-    if status == 1:
+    if status == 1 and data and isinstance(data, dict):
         return data.get("email")
     return None

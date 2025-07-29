@@ -16,6 +16,43 @@ VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
 
 class User(UserMixin):
+    @classmethod
+    def create_user(cls, username: str, password: str, email: str = None, displayname: str = None) -> dict:
+        """
+        Create a new user document for registration.
+
+        Parameters
+        ----------
+        username : str
+            The username for the new user.
+        password : str
+            The plaintext password (will be hashed).
+        email : str, optional
+            The user's email address.
+        displayname : str, optional
+            The user's display name.
+
+        Returns
+        -------
+        dict
+            The user document ready for insertion into the database.
+        """
+        password_hash = generate_password_hash(password)
+        user_doc = {
+            "username": username,
+            "password_hash": password_hash,
+            "email": email,
+            "displayname": displayname,
+            "global_admin": False,
+            "confirmed": False,
+            "global_permissions": [],
+            "role": DEFAULT_ROLE,
+            "banned": False,
+            "mfa_enabled": False,
+            "followers": [],
+            "following": [],
+        }
+        return user_doc
     """
     MongoDB‑backed application user.
     Memberships live in the `memberships` collection – we derive org/role data on‑demand.

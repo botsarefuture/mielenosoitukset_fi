@@ -96,6 +96,53 @@ def create_organization_api():
     return {"message": "Virhe organisaation luonnissa."}
 
 
+@admin_org_bp.route("/api/set_invite_role/", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_ORGANIZATION")
+def set_invite_role():
+    """
+    Set the role for a pending invitation (by email) for an organization.
+
+    Expects JSON: {"email": ..., "organization_id": ..., "role": ...}
+    """
+    data = request.get_json()
+    email = data.get("email")
+    org_id = data.get("organization_id")
+    role = data.get("role")
+
+    if not email or not org_id or not role:
+        return jsonify({"status": "error", "error": "Missing required fields."}), 400
+    if role not in ["owner", "admin", "member"]:
+        return jsonify({"status": "error", "error": "Invalid role."}), 400
+
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return jsonify({"status": "error", "error": "Organization not found."}), 404
+
+    # Invitations are stored as a list of dicts: [{"email": ..., "role": ...}, ...]
+    invitations = org.get("invitations", [])
+    updated = False
+    for invite in invitations:
+        if isinstance(invite, dict) and invite.get("email") == email:
+            invite["role"] = role
+            updated = True
+            break
+        # Legacy: if invite is just an email string
+        if isinstance(invite, str) and invite == email:
+            # Convert to dict with role
+            invitations[invitations.index(invite)] = {"email": email, "role": role}
+            updated = True
+            break
+
+    if not updated:
+        # If not found, add new invite
+        invitations.append({"email": email, "role": role})
+
+    mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": invitations}})
+    return jsonify({"status": "OK"}), 200
+
+
 # Organization control panel
 @admin_org_bp.route("/")
 @login_required
@@ -521,10 +568,23 @@ def view_organization(org_id):
 
 
     """
-    organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-    organization = Organization.from_dict(organization)
-    
-    
+    organization_doc = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    organization = Organization.from_dict(organization_doc)
+
+    # Get invited users (emails or dicts) from the organization document
+    invited_users_raw = organization_doc.get("invitations", [])
+    invited_users = []
+    for invite in invited_users_raw:
+        if isinstance(invite, dict):
+            # Ensure both email and role keys exist
+            invited_users.append({
+                "email": invite.get("email", ""),
+                "role": invite.get("role", "member")
+            })
+        elif isinstance(invite, str):
+            invited_users.append({"email": invite, "role": "member"})
+    # Now invited_users is always a list of dicts with email and role
+
     memberships = MemberShip.all_in_organization(organization_id=ObjectId(org_id))
     members = []
     for m in memberships:
@@ -534,11 +594,11 @@ def view_organization(org_id):
         user._ship_id = m._id
         members.append(user)
 
-    
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/view.html",
         organization=organization,
-        memberships=members
+        memberships=members,
+        invited_users=invited_users
     )
 
 @admin_org_bp.route("/api/change_access_level/", methods=["POST"])

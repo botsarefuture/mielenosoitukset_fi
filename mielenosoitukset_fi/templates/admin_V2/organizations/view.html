@@ -367,6 +367,9 @@
                         </td>
                         <td>
                             <button class="button cancel-invite-btn" data-invite-email="{{ invite.email }}">{{ _('Peruuta kutsu') }}</button>
+                            {% if current_user.global_admin %}
+                            <button class="button force-accept-invite-btn" data-invite-email="{{ invite.email }}">{{ _('Hyväksy puolesta') }}</button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% else %}
@@ -416,6 +419,28 @@
                             this.closest('tr').remove();
                         } else {
                             alert(data.error || 'Kutsun peruutus epäonnistui.');
+                        }
+                    })
+                    .catch(() => alert('Virhe palvelinyhteydessä.'));
+                });
+            });
+            document.querySelectorAll('.force-accept-invite-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    if (!confirm('Hyväksytäänkö kutsu tämän käyttäjän puolesta?')) return;
+                    const email = this.getAttribute('data-invite-email');
+                    const orgId = '{{ organization._id }}';
+                    fetch('/admin/organization/api/force_accept_invite/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, organization_id: orgId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'OK') {
+                            // Remove the row from the table
+                            this.closest('tr').remove();
+                        } else {
+                            alert(data.error || 'Kutsun hyväksyntä epäonnistui.');
                         }
                     })
                     .catch(() => alert('Virhe palvelinyhteydessä.'));

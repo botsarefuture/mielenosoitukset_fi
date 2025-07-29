@@ -67,10 +67,31 @@ document.getElementById('confirmDelete').addEventListener('click', () => {
     removeRecurringDemo(id);
   } else if (type === 'demo') {
     removeDemo(id);
+  } else if (type === 'user') {
+    removeUser(id);
   } else {
     alert('Virhe: tuntematon poistotyyppi.');
   }
 });
+
+function removeUser(id) {
+  fetch('/admin/user/delete_user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: id })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'OK') {
+        const row = document.getElementById(`user-${id}`);
+        if (row) row.remove();
+        closeModal();
+      } else {
+        alert(data.message || 'Virhe poistettaessa käyttäjää.');
+      }
+    })
+    .catch(() => alert('Yhteysvirhe, yritä uudelleen.'));
+}
 
 // Remove recurring demo
 function removeRecurringDemo(id) {

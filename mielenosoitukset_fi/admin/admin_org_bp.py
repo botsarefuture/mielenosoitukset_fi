@@ -132,6 +132,10 @@ def force_accept_invite():
     if org_obj.is_member(email):
         return jsonify({"status": "error", "error": "Käyttäjä on jo jäsen."}), 400
     org_obj.add_member(user, role=role)
+    # If org role is admin/owner, update global role if needed
+    if role in ["admin", "owner"] and user.role not in ["admin", "owner", "global_admin", "superuser"]:
+        user.role = "admin"
+        user.save()
     # Update invitations
     mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": new_invitations}})
     return jsonify({"status": "OK"}), 200

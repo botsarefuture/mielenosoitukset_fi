@@ -15,6 +15,60 @@ DB = get_database_manager()
 
 
 class Demonstration(BaseModel):
+    @classmethod
+    def from_dict(cls, data):
+        """
+        Create a Demonstration instance from a dictionary.
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary containing demonstration data.
+
+        Returns
+        -------
+        Demonstration
+            An instance of Demonstration initialized from the dictionary.
+        """
+        # Helper to get value with fallback
+        def get(key, default=None):
+            return data.get(key, default)
+
+        return cls(
+            title=get("title"),
+            date=get("date"),
+            start_time=get("start_time"),
+            end_time=get("end_time"),
+            facebook=get("facebook"),
+            city=get("city"),
+            address=get("address"),
+            route=get("route"),
+            organizers=get("organizers"),
+            approved=get("approved", False),
+            linked_organizations=get("linked_organizations"),
+            img=get("img"),
+            _id=get("_id"),
+            description=get("description"),
+            tags=get("tags"),
+            parent=get("parent"),
+            created_datetime=get("created_datetime"),
+            recurring=get("recurring", False),
+            topic=get("topic"),
+            type=get("type"),
+            repeat_schedule=get("repeat_schedule"),
+            repeating=get("repeating", False),
+            latitude=get("latitude"),
+            longitude=get("longitude"),
+            event_type=get("event_type"),
+            save_flag=get("save_flag", False),
+            hide=get("hide", False),
+            aliases=get("aliases"),
+            in_past=get("in_past", False),
+            preview_image=get("preview_image"),
+            merged_into=get("merged_into"),
+            cover_picture=get("cover_picture"),
+            created_until=get("created_until")
+        )
     """
     A class to represent a demonstration event.
 

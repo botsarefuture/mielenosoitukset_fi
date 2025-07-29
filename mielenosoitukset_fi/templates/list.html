@@ -469,7 +469,7 @@ document.addEventListener("DOMContentLoaded", function() {
       );
     })();
     return `
-      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo._id}" tabindex="0" onclick="window.location='/demonstration/${demo._id}'" onkeypress="if(event.key==='Enter'){window.location='/demonstration/${demo._id}'}">
+      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo.slug || demo.running_number || demo._id}" tabindex="0" onclick="window.location='/demonstration/${demo.slug || demo.running_number || demo._id}'" onkeypress="if(event.key==='Enter'){window.location='/demonstration/${demo.slug || demo.running_number || demo._id}'}">
         ${isToday ? `<span class="demo-card-badge">{{ _('Tänään') }}</span>` : ""}
         <div class="demo-card-title">
           <span>${demo.title}</span>
@@ -488,10 +488,10 @@ document.addEventListener("DOMContentLoaded", function() {
             : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ''}</span>`}
         </div>
         <div class="demo-card-actions">
-          <button class="demo-card-action-btn" onclick="event.stopPropagation();window.open('/demonstration/${demo._id}','_self')">
+          <button class="demo-card-action-btn" onclick="event.stopPropagation();window.open('/demonstration/'+(demo.slug || demo.running_number || demo._id),'_self')">
             <i class="fa-solid fa-arrow-right"></i> {{ _('Avaa') }}
           </button>
-          <button class="demo-card-action-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(window.location.origin + '/demonstration/${demo._id}');this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _('Kopioitu!') }}';setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _('Kopioi linkki') }}'},1200)">
+          <button class="demo-card-action-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(window.location.origin + '/demonstration/' + (demo.slug || demo.running_number || demo._id));this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _('Kopioitu!') }}';setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _('Kopioi linkki') }}'},1200)">
             <i class="fa-solid fa-link"></i> {{ _('Kopioi linkki') }}
           </button>
         </div>
@@ -501,7 +501,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function renderDemoTableRow(demo) {
     return `
-      <tr onclick="window.location='/demonstration/${demo._id}'" style="cursor:pointer;">
+      <tr onclick="window.location='/demonstration/'+(demo.slug || demo.running_number || demo._id)" style="cursor:pointer;">
         <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
         <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}</td>
         <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>

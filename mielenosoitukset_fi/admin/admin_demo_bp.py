@@ -105,6 +105,43 @@ def demo_control():
         show_past=show_past,
     )
 
+@admin_demo_bp.route("/duplicate/<demo_id>", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_DEMO")
+def duplicate_demo(demo_id):
+    """
+    Duplicate a demonstration. The duplicate will have 'approved' set to False.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration to duplicate.
+
+    Returns
+    -------
+    flask.Response
+        JSON response with new demo ID or error message.
+    """
+    from bson.objectid import ObjectId
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        return jsonify({"status": "ERROR", "message": _(u"Mielenosoitusta ei löytynyt.")}), 404
+
+    # Remove unique fields and set approved to False
+    demo_data.pop("_id", None)
+    demo_data["approved"] = False
+    demo_data["title"] = f"{demo_data['title']} (Kopio)"
+    # Set created_datetime to current time for the new demo
+    demo_data["created_datetime"] = datetime.utcnow()
+
+    # Optionally, clear other fields (like editors, submitters, etc.) if needed
+
+    new_demo = Demonstration.from_dict(demo_data)
+    new_demo.save()
+
+    return jsonify({"status": "OK", "new_demo_id": str(new_demo._id)})
+
 
 def filter_demonstrations(query, search_query, show_past, today):
     """Fetch and filter demonstrations based on search criteria.

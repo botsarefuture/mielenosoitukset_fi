@@ -1,3 +1,4 @@
+import copy
 import os
 import re
 import json
@@ -368,9 +369,9 @@ Disallow: /admin/
             # Add demonstration URLs to the sitemap
             for demo in demonstrations_collection.find(DEMO_FILTER):
                 demo_url = ET.SubElement(urlset, "url")
+                demo_id = demo.get("slug") or demo.get("running_number") or str(demo["_id"])
                 loc = ET.SubElement(demo_url, "loc")
-                loc.text = url_for("demonstration_detail", demo_id=str(demo["_id"]), _external=True)
-                
+                loc.text = url_for("demonstration_detail", demo_id=demo_id, _external=True)
                 # Add alternate language versions for each demonstration
                 for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
                     ET.SubElement(
@@ -378,7 +379,7 @@ Disallow: /admin/
                         "{http://www.w3.org/1999/xhtml}link",
                         rel="alternate",
                         hreflang=alt_lang_code,
-                        href=url_for("demonstration_detail", demo_id=str(demo["_id"]), lang_code=alt_lang_code, _external=True)
+                        href=url_for("demonstration_detail", demo_id=demo_id, lang_code=alt_lang_code, _external=True)
                     )
             
             # Convert the tree to a string and send as response
@@ -743,10 +744,9 @@ Disallow: /admin/
         """
         Display details of a specific demonstration and save map coordinates if available.
         """
-        result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
-        if result:
-            demo = Demonstration.from_dict(result)
-        else:
+        #result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
+        demo = Demonstration.load_by_id(demo_id)
+        if not demo:
             abort(404)
       
         if not demo:
@@ -775,9 +775,10 @@ Disallow: /admin/
                         demo.save()
             except (requests.exceptions.RequestException, IndexError):
                 ...
+        _demo = copy.copy(demo)
         demo = Demonstration.to_dict(demo, True)
         log_demo_view(
-            demo_id, current_user._id if current_user.is_authenticated else None
+            _demo._id, current_user._id if current_user.is_authenticated else None
         )
         return render_template("detail.html", demo=demo)
 

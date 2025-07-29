@@ -1,5 +1,5 @@
 {% macro demo_card(demo) %}
-<article class="grid-item demo-card" data-href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}"
+<article class="grid-item demo-card" data-href="{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}"
     aria-label="Demonstration card">
     <header class="demo-card-title">{{ demo['title'] }}</header>
     <div class="demo-card-details">

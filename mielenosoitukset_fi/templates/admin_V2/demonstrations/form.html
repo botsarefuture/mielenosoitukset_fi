@@ -210,7 +210,7 @@
 
             <div class="form-group">
                 <label for="description">{{ _('Kuvaus') }}</label>
-                <div class="main-container">
+                <div class="main-container" style="margin-bottom: 1.5rem;">
                     <div id="editor-container"
                         class="editor-container editor-container_classic-editor editor-container_include-block-toolbar">
                         <div class="editor-container__editor">
@@ -220,6 +220,8 @@
                 </div>
                 <input type="hidden" id="description" name="description" value="{{ demo.description if demo else '' }}">
             </div>
+
+            <div style="height: 2rem;"></div>
 
             <script type="importmap">
             {
@@ -231,7 +233,7 @@
             </script>
 
             <script type="module">
-                import { initClassicEditor } from '{{ url_for('static', filename='js / ckeditor - init.js') }}';
+                import { initClassicEditor } from '{{ url_for('static', filename='js/ckeditor-init.js') }}';
                 initClassicEditor('#editor', 'description');
             </script>
         </section>
@@ -612,12 +614,15 @@
     </form>
 </div>
 
-<!-- Edit Link Modal Section -->
+
+<!-- Edit Link Modal & Duplicate Button Section -->
 {% if current_user.is_authenticated %}
 <div>
-    <div class="text-center mt-4">
-        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki')
-            }}</button>
+    <div class="text-center mt-4" style="display: flex; gap: 1rem; justify-content: center;">
+        <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki') }}</button>
+        {% if demo and demo._id %}
+        <button type="button" class="btn btn-warning" id="duplicate-demo-btn">{{ _('Luo kopio mielenosoituksesta') }}</button>
+        {% endif %}
     </div>
 
     <div id="overlay" class="modal-overlay"></div>
@@ -687,6 +692,32 @@
                 alert('{{ _("Syötä ensin sähköpostiosoite!") }}');
             }
         });
+
+        // Duplicate demonstration functionality
+        {% if demo and demo._id %}
+        document.getElementById('duplicate-demo-btn').addEventListener('click', function() {
+            if (confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta?') }}')) {
+                fetch(`/admin/demo/duplicate/{{ demo._id }}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'OK' && data.new_demo_id) {
+                        // Open the edit page for the new demo in a popup window
+                        const url = `/admin/demo/edit_demo/${data.new_demo_id}`;
+                        window.open(url, '_blank', 'width=1000,height=800,noopener');
+                    } else {
+                        alert(data.message || 'Virhe kopioinnissa.');
+                    }
+                })
+                .catch(error => {
+                    alert('Virhe kopioinnissa.');
+                    console.error(error);
+                });
+            }
+        });
+        {% endif %}
     </script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">

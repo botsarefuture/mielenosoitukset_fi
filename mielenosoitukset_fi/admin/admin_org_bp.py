@@ -620,12 +620,20 @@ def change_access_level():
     
     if organization.is_member(None, user_id):
         organization.update_member(user_id, role)
-    
+        # If user is now admin or owner in this org, set their global role to admin
+        if role in ["admin", "owner"]:
+            try:
+                from mielenosoitukset_fi.users.models import User
+                user = User.from_OID(user_id)
+                # Only set to admin if current role is "user" or "member" (not admin, owner, superuser, etc)
+                if user.role in ["user", "member"]:
+                    user.role = "admin"
+                    user.save()
+            except Exception as e:
+                # Log or ignore, but don't break the org update
+                pass
     else:
         flash_message("Ei käyttäjää.", "error")
-    
-
-    
     return jsonify({"status": "OK"}), 200
 
 @admin_org_bp.route("/api/delete_membership/", methods=["POST"])

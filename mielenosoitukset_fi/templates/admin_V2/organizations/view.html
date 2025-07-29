@@ -343,20 +343,28 @@
         <div class="form-group">
             <label>{{ _('Kutsutut käyttäjät') }}</label>
             <table class="table">
-                {% if organization.invited_users %}
+                {% if invited_users and invited_users|length > 0 %}
                 <thead>
                     <tr>
                         <th>{{ _('Sähköpostiosoite') }}</th>
                         <th>{{ _('Kutsun tila') }}</th>
+                        <th>{{ _('Rooli') }}</th>
                         <th>{{ _('Toiminnot') }}</th>
                     </tr>
                 </thead>
                 {% endif %}
                 <tbody>
-                    {% for invite in organization.invited_users %}
+                    {% for invite in invited_users %}
                     <tr>
                         <td>{{ invite.email }}</td>
                         <td>{{ _('Odottaa hyväksyntää') }}</td>
+                        <td>
+                            <select class="form-control invited-role-select" data-invite-email="{{ invite.email }}">
+                                <option value="owner" {% if invite.role=='owner' %}selected{% endif %}>{{ _('Omistaja') }}</option>
+                                <option value="admin" {% if invite.role=='admin' %}selected{% endif %}>{{ _('Admin') }}</option>
+                                <option value="member" {% if invite.role=='member' or not invite.role %}selected{% endif %}>{{ _('Jäsen') }}</option>
+                            </select>
+                        </td>
                         <td>
                             <button class="button">{{ _('Peruuta kutsu') }}</button>
                         </td>
@@ -369,6 +377,29 @@
                 </tbody>
             </table>
         </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.invited-role-select').forEach(function(select) {
+                select.addEventListener('change', function() {
+                    const email = this.getAttribute('data-invite-email');
+                    const role = this.value;
+                    const orgId = '{{ organization._id }}';
+                    fetch('/admin/organization/api/set_invite_role/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, organization_id: orgId, role: role })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status !== 'OK') {
+                            alert(data.error || 'Roolin tallennus epäonnistui.');
+                        }
+                    })
+                    .catch(() => alert('Virhe palvelinyhteydessä.'));
+                });
+            });
+        });
+        </script>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
             {{ _('Kutsu käyttäjiä') }}
         </button>

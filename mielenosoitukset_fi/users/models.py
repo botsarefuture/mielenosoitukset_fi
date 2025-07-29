@@ -16,6 +16,66 @@ VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
 
 class User(UserMixin):
+    def _perm_in(self, permission: str) -> List[Union[str, ObjectId]]:
+        """
+        Return a list of scopes (organization IDs or the literal string "global")
+        in which this user has the given permission.
+
+        Parameters
+        ----------
+        permission : str
+            The permission to check.
+
+        Returns
+        -------
+        list of str or ObjectId
+            List of organization IDs or "global" where the user has the permission.
+        """
+        scopes = []
+        if permission in self.global_permissions:
+            scopes.append("global")
+        scopes.extend(
+            m.organization_id for m in self.memberships if permission in m.permissions
+        )
+        # Remove duplicates while preserving order
+        return list(dict.fromkeys(scopes))
+    @classmethod
+    def create_user(cls, username: str, password: str, email: str = None, displayname: str = None) -> dict:
+        """
+        Create a new user document for registration.
+
+        Parameters
+        ----------
+        username : str
+            The username for the new user.
+        password : str
+            The plaintext password (will be hashed).
+        email : str, optional
+            The user's email address.
+        displayname : str, optional
+            The user's display name.
+
+        Returns
+        -------
+        dict
+            The user document ready for insertion into the database.
+        """
+        password_hash = generate_password_hash(password)
+        user_doc = {
+            "username": username,
+            "password_hash": password_hash,
+            "email": email,
+            "displayname": displayname,
+            "global_admin": False,
+            "confirmed": False,
+            "global_permissions": [],
+            "role": DEFAULT_ROLE,
+            "banned": False,
+            "mfa_enabled": False,
+            "followers": [],
+            "following": [],
+        }
+        return user_doc
     """
     MongoDB‑backed application user.
     Memberships live in the `memberships` collection – we derive org/role data on‑demand.

@@ -15,6 +15,9 @@ DB = get_database_manager()
 
 
 class Demonstration(BaseModel):
+    # Running number and slug fields for user-friendly URLs
+    running_number: int = None
+    slug: str = None
     @classmethod
     def from_dict(cls, data):
         """
@@ -196,7 +199,9 @@ class Demonstration(BaseModel):
         preview_image: str = None,
         merged_into: ObjectId = None,  # Added parameter
         cover_picture: str = None,  # Added field
-        created_until = None
+        created_until = None,
+        running_number: int = None,
+        slug: str = None
     ):
         """
         Initialize a new demonstration event.
@@ -329,6 +334,8 @@ class Demonstration(BaseModel):
         # TODO: #232 Remove linked_organizations if not used
 
         self._id = _id or ObjectId()  # Unique ID for the demonstration
+        self.running_number = running_number
+        self.slug = slug
         self.tags = tags or []  # Tags for the demonstration
 
         self.created_datetime = created_datetime or None
@@ -536,6 +543,8 @@ class Demonstration(BaseModel):
         data["aliases"] = [str(alias) for alias in self.aliases]
         data["preview_image"] = self.preview_image
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
+        data["running_number"] = self.running_number
+        data["slug"] = self.slug
         return data
 
     def validate_fields(self, title, date, start_time, city, address):
@@ -622,6 +631,29 @@ class Demonstration(BaseModel):
 
     @classmethod
     def load_by_id(cls, demo_id: str) -> "Demonstration":
+        """
+        Load a demonstration by its unique identifier, running number, or slug.
+        """
+        # Try ObjectId
+        try:
+            data = DB["demonstrations"].find_one({"_id": ObjectId(demo_id)})
+            if data:
+                return cls.from_dict(data)
+        except Exception:
+            pass
+        # Try running_number (as int)
+        try:
+            num = int(demo_id)
+            data = DB["demonstrations"].find_one({"running_number": num})
+            if data:
+                return cls.from_dict(data)
+        except Exception:
+            pass
+        # Try slug
+        data = DB["demonstrations"].find_one({"slug": demo_id})
+        if data:
+            return cls.from_dict(data)
+        raise ValueError(f"Demonstration with id/slug/number {demo_id} not found.")
         """
         Load a demonstration by its unique identifier.
 

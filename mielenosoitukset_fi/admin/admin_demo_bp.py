@@ -56,9 +56,7 @@ def demo_control():
     """
     # Limit demonstrations by organization if the user is not a global admin
     if not current_user.global_admin:
-        user_org_ids = [
-            ObjectId(org.get("org_id")) for org in current_user.organizations
-        ]
+        user_org_ids = current_user.org_ids()
     else:
         user_org_ids = None
 

@@ -95,6 +95,42 @@ def create_organization_api():
 
     return {"message": "Virhe organisaation luonnissa."}
 
+@admin_org_bp.route("/api/cancel_invite/", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_ORGANIZATION")
+def cancel_invite():
+    """
+    Cancel (remove) a pending invitation for an organization.
+
+    Expects JSON: {"email": ..., "organization_id": ...}
+    """
+    data = request.get_json()
+    email = data.get("email")
+    org_id = data.get("organization_id")
+
+    if not email or not org_id:
+        return jsonify({"status": "error", "error": "Missing required fields."}), 400
+
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return jsonify({"status": "error", "error": "Organization not found."}), 404
+
+    invitations = org.get("invitations", [])
+    new_invitations = []
+    removed = False
+    for invite in invitations:
+        if (isinstance(invite, dict) and invite.get("email") == email) or (isinstance(invite, str) and invite == email):
+            removed = True
+            continue
+        new_invitations.append(invite)
+
+    if not removed:
+        return jsonify({"status": "error", "error": "Invitation not found."}), 404
+
+    mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": new_invitations}})
+    return jsonify({"status": "OK"}), 200
+
 
 @admin_org_bp.route("/api/set_invite_role/", methods=["POST"])
 @login_required

@@ -366,7 +366,7 @@
                             </select>
                         </td>
                         <td>
-                            <button class="button">{{ _('Peruuta kutsu') }}</button>
+                            <button class="button cancel-invite-btn" data-invite-email="{{ invite.email }}">{{ _('Peruuta kutsu') }}</button>
                         </td>
                     </tr>
                     {% else %}
@@ -393,6 +393,29 @@
                     .then(data => {
                         if (data.status !== 'OK') {
                             alert(data.error || 'Roolin tallennus epäonnistui.');
+                        }
+                    })
+                    .catch(() => alert('Virhe palvelinyhteydessä.'));
+                });
+            });
+
+            document.querySelectorAll('.cancel-invite-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    if (!confirm('Haluatko varmasti peruuttaa kutsun?')) return;
+                    const email = this.getAttribute('data-invite-email');
+                    const orgId = '{{ organization._id }}';
+                    fetch('/admin/organization/api/cancel_invite/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, organization_id: orgId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'OK') {
+                            // Remove the row from the table
+                            this.closest('tr').remove();
+                        } else {
+                            alert(data.error || 'Kutsun peruutus epäonnistui.');
                         }
                     })
                     .catch(() => alert('Virhe palvelinyhteydessä.'));

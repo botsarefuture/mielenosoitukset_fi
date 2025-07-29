@@ -1,3 +1,43 @@
+@admin_org_bp.route("/api/force_accept_invite/", methods=["POST"])
+@login_required
+@admin_required
+def force_accept_invite():
+    """
+    Superuser can force-accept an invitation on behalf of a user (by email).
+    Expects JSON: {"email": ..., "organization_id": ...}
+    """
+    if not getattr(current_user, "global_admin", False):
+        return jsonify({"status": "error", "error": "Vain superkäyttäjä voi hyväksyä kutsun puolesta."}), 403
+    data = request.get_json()
+    email = data.get("email")
+    org_id = data.get("organization_id")
+    if not email or not org_id:
+        return jsonify({"status": "error", "error": "Missing required fields."}), 400
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return jsonify({"status": "error", "error": "Organization not found."}), 404
+    # Remove invite from invitations
+    invitations = org.get("invitations", [])
+    new_invitations = [invite for invite in invitations if not ((isinstance(invite, dict) and invite.get("email") == email) or (isinstance(invite, str) and invite == email))]
+    # Add user as member (default role: member, or use invite role if present)
+    from mielenosoitukset_fi.users.models import User
+    user_doc = mongo.users.find_one({"email": email})
+    if not user_doc:
+        return jsonify({"status": "error", "error": "Käyttäjää ei löydy annetulla sähköpostilla."}), 404
+    user = User.from_db(user_doc)
+    # Find invite role if present
+    role = "member"
+    for invite in invitations:
+        if (isinstance(invite, dict) and invite.get("email") == email and invite.get("role")):
+            role = invite.get("role")
+            break
+    org_obj = Organization.from_dict(org)
+    if org_obj.is_member(email):
+        return jsonify({"status": "error", "error": "Käyttäjä on jo jäsen."}), 400
+    org_obj.add_member(user, role=role)
+    # Update invitations
+    mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": new_invitations}})
+    return jsonify({"status": "OK"}), 200
 """
 Changelog:
 ----------

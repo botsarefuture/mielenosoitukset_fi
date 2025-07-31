@@ -7,7 +7,7 @@ var _paq = (window._paq = window._paq || []);
     (function () {
       var u = "//matomo.luova.club/";
       _paq.push(["setTrackerUrl", u + "matomo.php"]);
-      _paq.push(["setSiteId", "1"]);
+      _paq.push(["setSiteId", "4"]);
       var d = document,
         g = d.createElement("script"),
         s = d.getElementsByTagName("script")[0];

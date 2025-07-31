@@ -1,11 +1,8 @@
-from datetime import datetime, timezone, timedelta
-import json
-from mielenosoitukset_fi.utils.logger import logger
-
 import os
-
-from collections import defaultdict
+import json
 import pytz
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 
 from bson.objectid import ObjectId
 from flask import (
@@ -27,14 +24,15 @@ from flask_login import (
     login_user,
     logout_user,
 )
+
 from mielenosoitukset_fi.users.models import User  # Import User model
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
-
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
-
 from mielenosoitukset_fi.utils.classes import AdminActivity
+
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
 # Constants
@@ -274,31 +272,6 @@ def demo_analytics():
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}analytics.html", data=data)
 
 
-def send_red_alert_email(user):
-    """Send a red alert email to the user.
-
-    Parameters
-    ----------
-    user :
-
-
-    Returns
-    -------
-
-
-    """
-    # Use email_sender
-    from mielenosoitukset_fi.emailer import EmailSender
-
-    email_sender = EmailSender()
-    email_sender.queue_email(
-        template_name="red_alert_email.html",
-        subject="Red Alert",
-        recipients=[user.email],
-        context={"username": user.username},
-    )
-
-
 
 def validate_mfa_token(token):
     """Validate the MFA token.
@@ -415,14 +388,6 @@ def demo_analytics(demo_id):
     )
 
 
-from flask import render_template
-from datetime import datetime, timedelta, timezone
-
-from flask import request
-from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from bson.objectid import ObjectId
-from flask import request, render_template, abort
 
 @admin_bp.route("/analytics/overall_24h")
 def analytics_overall_24h():

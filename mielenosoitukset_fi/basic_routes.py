@@ -416,8 +416,34 @@ Disallow: /admin/
 
     @app.route("/")
     def index():
+        """
+        Render the index page with recommended and featured demonstrations.
+        Uses caching for recommended demos for performance.
+        """
         search_query = request.args.get("search", "")
         today = date.today()
+        # --- Recommended demos (cached) ---
+        cache_key = "recommended_demos_v1"
+        recommended_demos = None
+        if hasattr(cache, "get") and callable(cache.get):
+            recommended_demos = cache.get(cache_key)
+        if recommended_demos is None:
+            # Get recommended demo_ids from the recommended_demos collection
+            recs = list(mongo.recommended_demos.find({}))
+            demo_ids = [ObjectId(rec["demo_id"]) for rec in recs if "demo_id" in rec]
+            # Fetch demos, filter for approved and not hidden, and not in the past
+            demos = list(mongo.demonstrations.find({"_id": {"$in": demo_ids}, "approved": True, "hide": {"$ne": True}}))
+            # Sort by recommend_till (date of demo)
+            def get_recommend_till(d):
+                rec = next((r for r in recs if str(r["demo_id"]) == str(d["_id"])), None)
+                return rec["recommend_till"] if rec else d.get("date", "9999-12-31")
+            demos.sort(key=get_recommend_till)
+            # Remove past demos
+            demos = [d for d in demos if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today]
+            recommended_demos = demos
+            if hasattr(cache, "set") and callable(cache.set):
+                cache.set(cache_key, recommended_demos, timeout=60*10)  # Cache for 10 min
+        # --- Featured/other demos ---
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
         filtered_demonstrations = []
         for demo in demonstrations:
@@ -432,7 +458,11 @@ Disallow: /admin/
         filtered_demonstrations.sort(
             key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
-        return render_template("index.html", demonstrations=filtered_demonstrations)
+        return render_template(
+            "index.html",
+            demonstrations=filtered_demonstrations,
+            recommended_demos=recommended_demos,
+        )
 
     @app.route("/terms")
     def terms():

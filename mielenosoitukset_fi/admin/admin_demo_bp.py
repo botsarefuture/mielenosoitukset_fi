@@ -1,3 +1,4 @@
+
 from datetime import date, datetime
 from bson.objectid import ObjectId
 import logging
@@ -36,6 +37,45 @@ def log_request_info():
         AdminActParser().log_request_info(request.__dict__, current_user)
     )
 
+@admin_demo_bp.route("/recommend_demo/<demo_id>", methods=["POST"])
+@login_required
+@admin_required
+def recommend_demo(demo_id):
+    """Recommend a demonstration (superuser only).
+
+    Adds the demo to the recommended_demos collection with a recommend_till date.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration to recommend.
+
+    Returns
+    -------
+    flask.Response
+        JSON response with operation status.
+    """
+    # Only allow global admins (superusers)
+    if not getattr(current_user, "global_admin", False):
+        return jsonify({"status": "ERROR", "message": _(u"Vain ylläpitäjät voivat suositella mielenosoituksia.")}), 403
+
+    # Fetch the demonstration to get its date
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        return jsonify({"status": "ERROR", "message": _(u"Mielenosoitusta ei löytynyt.")}), 404
+
+    # Use the demo's date as recommend_till
+    recommend_till = demo_data.get("date")
+    if not recommend_till:
+        return jsonify({"status": "ERROR", "message": _(u"Mielenosoituksen päivämäärä puuttuu.")}), 400
+
+    # Insert or update recommendation
+    mongo.recommended_demos.update_one(
+        {"demo_id": str(demo_id)},
+        {"$set": {"demo_id": str(demo_id), "recommend_till": recommend_till}},
+        upsert=True
+    )
+    return jsonify({"status": "OK", "message": _(u"Mielenosoitus suositeltu.")})
 
 @admin_demo_bp.route("/")
 @login_required

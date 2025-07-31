@@ -150,11 +150,11 @@ body {
   </section>
 
   <!-- Pinned Demonstrations Section -->
-  {% if pinned_demonstrations %}
+  {% if recommended_demos %}
   <section class="section-card">
     <h2 class="section-title">{{ _('Suosittelemme') }}</h2>
     <div class="grid-container">
-      {% for demo in pinned_demonstrations %}
+      {% for demo in recommended_demos %}
         {{ macros.demo_card(demo) }}
       {% endfor %}
     </div>

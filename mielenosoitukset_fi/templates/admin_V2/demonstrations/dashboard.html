@@ -266,6 +266,7 @@ tr.fade‑out {
             %}<i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
 
           <td class="actions-cell">
+
             {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
             <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
               <i class="fa-solid fa-check"></i>{{ _('Hyväksy') }}
@@ -275,6 +276,39 @@ tr.fade‑out {
               <i class="fas fa-ban"></i>{{ _('Hyväksy') }}
             </a>
             {% endif %}
+
+            {# Recommend button for global admins (superusers) #}
+            {% if current_user.global_admin %}
+            <button class="button recommend-button" onclick="recommendDemo('{{ demo._id }}', this)">
+              <i class="fa-solid fa-star"></i>{{ _('Suosittele') }}
+            </button>
+            {% endif %}
+<script>
+  function recommendDemo(demoId, btn) {
+    if (!confirm("{{ _('Haluatko varmasti suositella tätä mielenosoitusta?') }}")) return;
+    btn.disabled = true;
+    fetch(`/admin/demo/recommend_demo/${demoId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+      redirect: "manual"
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "OK") {
+          btn.innerHTML = '<i class="fa-solid fa-star"></i> {{ _('Suositeltu!') }}';
+          btn.classList.add('btn-success');
+        } else {
+          alert(data.message || '{{ _('Virhe suositellessa.') }}');
+          btn.disabled = false;
+        }
+      })
+      .catch(() => {
+        alert("{{ _('Yhteysvirhe, yritä uudelleen.') }}");
+        btn.disabled = false;
+      });
+  }
+</script>
 
             {% if current_user.has_permission("EDIT_DEMO") %}
             <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">

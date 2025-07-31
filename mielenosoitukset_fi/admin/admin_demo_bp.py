@@ -1,3 +1,13 @@
+from flask import abort
+"""
+Edit History and Diff Views
+"""
+# ...existing code...
+
+# --- Edit History and Diff Views ---
+# These must be placed after all imports and after admin_demo_bp is defined
+
+
 # Approve demo with token (magic link for admins)
 
 from datetime import date, datetime
@@ -80,7 +90,157 @@ def recommend_demo(demo_id):
     return jsonify({"status": "OK", "message": _(u"Mielenosoitus suositeltu.")})
 
 
+@admin_demo_bp.route("/edit_history/<demo_id>", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def demo_edit_history(demo_id):
+    """
+    View the edit history for a demonstration.
 
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration.
+
+    Returns
+    -------
+    flask.Response
+        Renders the edit history page.
+    """
+    history = list(mongo.demo_edit_history.find({"demo_id": str(demo_id)}).sort("edited_at", -1))
+    return render_template(
+        "admin/demonstrations/edit_history.html",
+        history=history,
+        demo_id=demo_id
+    )
+
+@admin_demo_bp.route("/view_demo_diff/<demo_id>/<history_id>", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def view_demo_diff(demo_id, history_id):
+    """
+    View the diff between a historical and current demonstration version.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration.
+    history_id : str
+        The ID of the history entry.
+
+    Returns
+    -------
+    flask.Response
+        Renders the diff page.
+    """
+    from bson.objectid import ObjectId as BsonObjectId
+    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
+    if not hist:
+        abort(404)
+    old = hist.get("demo_data", {})
+    new = mongo.demonstrations.find_one({"_id": BsonObjectId(demo_id)})
+    if not new:
+        abort(404)
+    import difflib
+    from markupsafe import Markup
+
+    def html_diff(a, b):
+        """Generate an HTML diff for two values, line by line and character by character.
+
+        Parameters
+        ----------
+        a : Any
+            Old value.
+        b : Any
+            New value.
+
+        Returns
+        -------
+        str
+            HTML-formatted diff.
+        """
+        a_str = str(a) if a is not None else ""
+        b_str = str(b) if b is not None else ""
+        a_lines = a_str.splitlines() or [""]
+        b_lines = b_str.splitlines() or [""]
+        html = []
+        sm = difflib.SequenceMatcher(None, a_lines, b_lines)
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag == "equal":
+                for line in a_lines[i1:i2]:
+                    html.append('<span class="diff-unchanged">{}</span>'.format(line))
+            elif tag == "replace":
+                # If the number of lines is the same, show char diff on the same row
+                if (i2 - i1) == (j2 - j1):
+                    for idx in range(i2 - i1):
+                        html.append('<span class="diff-line">')
+                        html.append(diff_chars(a_lines[i1 + idx], b_lines[j1 + idx]))
+                        html.append('</span>')
+                else:
+                    for line in a_lines[i1:i2]:
+                        html.append('<span class="diff-remove">{}</span>'.format(line))
+                    for line in b_lines[j1:j2]:
+                        html.append('<span class="diff-add">{}</span>'.format(line))
+            elif tag == "delete":
+                for line in a_lines[i1:i2]:
+                    html.append('<span class="diff-remove">{}</span>'.format(line))
+            elif tag == "insert":
+                for line in b_lines[j1:j2]:
+                    html.append('<span class="diff-add">{}</span>'.format(line))
+        return Markup("".join(html))
+
+    def diff_chars(a, b):
+        """Highlight character-level differences between two strings.
+
+        If there is no change, use the diff-unchanged class.
+
+        Parameters
+        ----------
+        a : str
+            Old string.
+        b : str
+            New string.
+
+        Returns
+        -------
+        str
+            HTML-formatted diff.
+        """
+        if a == b:
+            return f'<span class="diff-unchanged">{Markup.escape(a)}</span>'
+        result = []
+        sm = difflib.SequenceMatcher(None, a, b)
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag == "equal":
+                result.append(f'<span class="diff-unchanged">{Markup.escape(a[i1:i2])}</span>')
+            elif tag == "replace":
+                result.append('<span class="diff-remove">{}</span>'.format(Markup.escape(a[i1:i2])))
+                result.append('<span class="diff-add">{}</span>'.format(Markup.escape(b[j1:j2])))
+            elif tag == "delete":
+                result.append('<span class="diff-remove">{}</span>'.format(Markup.escape(a[i1:i2])))
+            elif tag == "insert":
+                result.append('<span class="diff-add">{}</span>'.format(Markup.escape(b[j1:j2])))
+        return "".join(result)
+
+
+    diffs = {}
+    all_fields = set(old.keys()) | set(new.keys())
+    for field in all_fields:
+        old_val = old.get(field, "")
+        new_val = new.get(field, "")
+        if old_val != new_val:
+            diffs[field] = {
+                "old": old_val,
+                "new": new_val,
+                "diff_html": html_diff(old_val, new_val)
+            }
+    return render_template(
+        "admin/demonstrations/demo_diff.html",
+        diffs=diffs,
+        demo_id=demo_id
+    )
 @admin_demo_bp.route("/preview_demo_with_token/<token>", methods=["GET"])
 def preview_demo_with_token(token):
     """
@@ -625,13 +785,17 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
         
     try:
         if is_edit and demo_id:
+            # --- Save previous version to history ---
+            prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+            if prev_demo:
+                mongo.demo_edit_history.insert_one({
+                    "demo_id": str(demo_id),
+                    "editor_id": str(getattr(current_user, "id", "unknown")),
+                    "edited_at": datetime.utcnow(),
+                    "demo_data": prev_demo
+                })
             demo = Demonstration.from_dict(demonstration_data)
             demo.save()
-            
-            # Update the existing demonstration
-            #mongo.demonstrations.update_one(
-            #    {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
-            #)
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
             # Insert a new demonstration
@@ -810,14 +974,23 @@ def collect_organizers(request):
             break
 
         # Create an Organizer object and append to the list
-        organizers.append(
-            Organizer(
-                name=name.strip() if name else "",
-                email=email.strip() if email else "",
-                website=website.strip() if website else "",
-                organization_id=ObjectId(organizer_id) if organizer_id else None,
+        if organizer_id:
+            organizers.append(
+                Organizer(
+                    name=name.strip() if name else "",
+                    email=email.strip() if email else "",
+                    website=website.strip() if website else "",
+                    organization_id=ObjectId(organizer_id),
+                )
             )
-        )
+        else:
+            organizers.append(
+                Organizer(
+                    name=name.strip() if name else "",
+                    email=email.strip() if email else "",
+                    website=website.strip() if website else "",
+                )
+            )
 
         i += 1  # Move to the next organizer field
 
@@ -833,9 +1006,9 @@ def delete_demo():
     json_mode = request.headers.get("Content-Type") == "application/json"
 
     # Extract demo_id from either form data or JSON body
-    demo_id = request.form.get("demo_id") or (
-        request.json.get("demo_id") if json_mode else None
-    )
+    demo_id = request.form.get("demo_id")
+    if not demo_id and json_mode and request.json:
+        demo_id = request.json.get("demo_id")
 
     if not demo_id:
         error_message = "Mielenosoituksen tunniste puuttuu."

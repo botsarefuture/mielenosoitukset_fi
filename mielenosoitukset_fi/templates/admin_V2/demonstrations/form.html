@@ -1,3 +1,6 @@
+    {% if demo and demo._id %}
+    <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}" class="btn btn-secondary" style="float:right; margin-left: 10px;">Näytä muokkaushistoria</a>
+    {% endif %}
 {% extends 'admin_base.html' %}
 
 {% block styles %}

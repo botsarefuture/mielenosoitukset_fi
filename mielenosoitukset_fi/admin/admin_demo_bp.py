@@ -114,6 +114,23 @@ def approve_demo_with_token(token):
 
     # Approve the demonstration
     mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"approved": True}})
+
+    # Notify submitter if possible
+    submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        demo = demo_data
+        email_sender.queue_email(
+            template_name="demo_submitter_approved.html",
+            subject="Mielenosoituksesi on hyväksytty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+            },
+        )
+
     flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
     return redirect(url_for("admin_demo.demo_control"))
 
@@ -810,6 +827,22 @@ def accept_demo(demo_id):
     try:
         demo.approved = True
         demo.save()
+
+        # Notify submitter if possible
+        submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+        if submitter and submitter.get("submitter_email"):
+            email_sender.queue_email(
+                template_name="demo_submitter_approved.html",
+                subject="Mielenosoituksesi on hyväksytty",
+                recipients=[submitter["submitter_email"]],
+                context={
+                    "title": demo.title,
+                    "date": demo.date,
+                    "city": demo.city,
+                    "address": demo.address,
+                },
+            )
+
         return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
     except Exception as e:
         logging.error("An error occurred while accepting the demonstration: %s", str(e))

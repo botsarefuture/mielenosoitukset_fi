@@ -1,3 +1,4 @@
+# Approve demo with token (magic link for admins)
 
 from datetime import date, datetime
 from bson.objectid import ObjectId
@@ -76,6 +77,45 @@ def recommend_demo(demo_id):
         upsert=True
     )
     return jsonify({"status": "OK", "message": _(u"Mielenosoitus suositeltu.")})
+
+
+@admin_demo_bp.route("/approve_demo_with_token/<token>", methods=["GET"])
+def approve_demo_with_token(token):
+    """
+    Approve a demonstration using a one-time token (magic link).
+
+    Parameters
+    ----------
+    token : str
+        The secure token for approving the demonstration.
+
+    Returns
+    -------
+    flask.Response
+        Redirects to the admin dashboard with a flash message.
+    """
+    try:
+        demo_id = serializer.loads(token, salt="approve-demo", max_age=86400)  # 24h expiry
+    except SignatureExpired:
+        flash_message("Hyväksymislinkki on vanhentunut.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    except BadSignature:
+        flash_message("Hyväksymislinkki on virheellinen.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        flash_message("Mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    if demo_data.get("approved"):
+        flash_message("Mielenosoitus on jo hyväksytty.", "info")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    # Approve the demonstration
+    mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"approved": True}})
+    flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
+    return redirect(url_for("admin_demo.demo_control"))
 
 @admin_demo_bp.route("/")
 @login_required

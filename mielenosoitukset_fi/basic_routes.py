@@ -535,6 +535,7 @@ Disallow: /admin/
                 description=description,
                 tags=tags,
             )
+
             demo_dict = demonstration.to_dict()
             result = mongo.demonstrations.insert_one(demo_dict)
             demo_id = result.inserted_id
@@ -551,11 +552,27 @@ Disallow: /admin/
             submitters_collection.insert_one(submitter_doc)
             # --- End submitter info ---
 
-            # --- Notify support team ---
-            # Send email to tuki@mielenosoitukset.fi when a new demonstration is submitted
+            # --- Send confirmation email to submitter ---
+            if submitter_email:
+                email_sender.queue_email(
+                    template_name="demo_submitter_confirmation.html",
+                    subject="Kiitos mielenosoituksen ilmoittamisesta",
+                    recipients=[submitter_email],
+                    context={
+                        "title": title,
+                        "date": date,
+                        "city": city,
+                        "address": address,
+                    },
+                )
+
+            # --- Notify support team with magic approve link ---
+            from mielenosoitukset_fi.admin.admin_demo_bp import serializer
+            approve_token = serializer.dumps(str(demo_id), salt="approve-demo")
+            approve_link = url_for("admin_demo.approve_demo_with_token", token=approve_token, _external=True)
             email_sender.queue_email(
-                template_name="new_demo_notification.html",
-                subject="Uusi mielenosoitus ilmoitettu",
+                template_name="admin_demo_approve_notification.html",
+                subject="Uusi mielenosoitus odottaa hyväksyntää",
                 recipients=["tuki@mielenosoitukset.fi"],
                 context={
                     "title": title,
@@ -565,9 +582,9 @@ Disallow: /admin/
                     "submitter_name": submitter_name,
                     "submitter_email": submitter_email,
                     "submitter_role": submitter_role,
+                    "approve_link": approve_link,
                 },
             )
-            # --- End notify support team ---
 
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",

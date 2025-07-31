@@ -473,6 +473,10 @@ main .display-all {
       }
 
     }
+
+    #main * {
+      box-sizing: border-box;
+    }
   </style>
 
   <div id="navigator">
@@ -620,45 +624,44 @@ main .display-all {
     </div>
     {% endif %}
 
-    <div id="basicshit">
-      <h1>{{ demo['title'] }}</h1>
-      <p id="date">
-        {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{
-        demo['end_time'] | time('%H:%M') }}
+    <section id="basicshit" class="mb-4">
+      <h1 class="display-4 fw-bold mb-2">{{ demo['title'] }}</h1>
+      <p id="date" class="lead text-primary mb-0">
+        {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
       </p>
-    </div>
+    </section>
 
-    <div class="button-container" style="gap: 10px; flex-wrap: wrap;">
+    <nav class="button-container flex-wrap mb-3" aria-label="Pikatoiminnot">
       <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-      target="_blank" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
-      <i class="fab fa-facebook-f"></i> {{ _('Jaa Facebookissa') }}
+         target="_blank" class="button btn btn-primary d-flex align-items-center gap-2" aria-label="{{ _('Jaa Facebookissa') }}">
+        <i class="fab fa-facebook-f"></i> {{ _('Jaa Facebookissa') }}
       </a>
       <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-      target="_blank" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
-      <i class="fab fa-x-twitter"></i> {{ _('Jaa Xssä') }}
+         target="_blank" class="button btn btn-primary d-flex align-items-center gap-2" aria-label="{{ _('Jaa Xssä') }}">
+        <i class="fab fa-x-twitter"></i> {{ _('Jaa Xssä') }}
       </a>
       <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-      target="_blank" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
-      <i class="fab fa-linkedin-in"></i> {{ _('Jaa LinkedInissä') }}
+         target="_blank" class="button btn btn-primary d-flex align-items-center gap-2" aria-label="{{ _('Jaa LinkedInissä') }}">
+        <i class="fab fa-linkedin-in"></i> {{ _('Jaa LinkedInissä') }}
       </a>
-      <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button btn btn-primary" style="display: flex; align-items: center; gap: 0.5em;">
-      <i class="fas fa-download"></i> {{ _('Lataa graafinen materiaali') }}
+      <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button btn btn-primary d-flex align-items-center gap-2" aria-label="{{ _('Lataa graafinen materiaali') }}">
+        <i class="fas fa-download"></i> {{ _('Lataa graafinen materiaali') }}
       </a>
-      <button class="button btn btn-primary" id="open-reminder-btn" style="display: flex; align-items: center; gap: 0.5em;">
-      <i class="fas fa-bell"></i> {{ _('Tilaa muistutus sähköpostiisi') }}
+      <button class="button btn btn-primary d-flex align-items-center gap-2" id="open-reminder-btn" aria-label="{{ _('Tilaa muistutus sähköpostiisi') }}">
+        <i class="fas fa-bell"></i> {{ _('Tilaa muistutus sähköpostiisi') }}
       </button>
-    </div>
+    </nav>
 
-    <div class="button-container">
+    <section class="button-container" aria-label="Osallistuminen">
       <button id="like-button" class="button like-button" onclick="toggleLike('{{ demo['_id'] }}')" aria-pressed="false">
         <i class="fas fa-thumbs-up"></i> <span id="like-btn-text">{{ _('Osallistun') }}</span>
       </button>
-      <div class="like-count">
-        <p>{{ _('Osallistuu:') }}</p>
+      <div class="like-count ms-3">
+        <span class="visually-hidden">{{ _('Osallistujien määrä') }}</span>
         <i class="fas fa-thumbs-up"></i>
-        <p id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</p>
+        <span id="like-count" style="margin: 0; padding: 0;">{{ demo['likes'] }}</span>
       </div>
-    </div>
+    </section>
     <script>
       /**
        * Gets a cookie value by name.
@@ -769,37 +772,37 @@ main .display-all {
 
     <hr style="margin: 20px 0;">
 
-    <div class="topics">
+    {% if demo["tags"] and demo["tags"]|length > 0 %}
+    <nav class="topics mb-3" aria-label="Tunnisteet">
       <ul>
-        {% if demo["tags"] and demo["tags"]|length > 0 %}
         {% for tag in demo["tags"] %}
         <li>
-          <a style="margin: 0; padding: 0;" href="{{ url_for('tag_detail', tag_name=tag) }}">
-            <span class="tag">#{{ tag }}</span>
+          <a href="{{ url_for('tag_detail', tag_name=tag) }}" class="tag" aria-label="#{{ tag }}">
+            #{{ tag }}
           </a>
         </li>
         {% endfor %}
-        {% endif %}
       </ul>
-    </div>
-
-    {% if demo['description'] %}
-    <div class="container">
-      <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
-      {{ demo['description']|safe }}
-    </div>
+    </nav>
     {% endif %}
 
-    <div class="countdown">
-      <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
-      <div id="timer" style="font-size: 24px; color: var(--primary_strong_text_color)"></div>
-    </div>
+    {% if demo['description'] %}
+    <section class="container mb-4" aria-label="Kuvaus">
+      <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
+      <div class="fs-5">{{ demo['description']|safe }}</div>
+    </section>
+    {% endif %}
 
-    <div class="container mt-4">
+    <section class="countdown mb-4" aria-label="Ajanlaskuri">
+      <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
+      <div id="timer" class="fs-4 text-center text-primary"></div>
+    </section>
+
+    <section class="container mt-4 mb-4" aria-label="Sijainti ja reitti">
       <h2 class="subtitle text-center">{{ _('Sijainti') }}</h2>
-      <p class="text-center">{{ demo['address'] }}, {{ demo['city'] }}</p>
+      <p class="text-center mb-2">{{ demo['address'] }}, {{ demo['city'] }}</p>
       {% if demo['route'] and demo['route'] != 'None' %}
-      <div class="route mt-3">
+      <div class="route mt-3 mb-3">
         <p><strong>{{ _('Marssin reitti:') }}</strong></p>
         {% if demo['route'] is string %}
         <p>{{ demo['route'] }}</p>
@@ -812,16 +815,16 @@ main .display-all {
         {% endif %}
       </div>
       {% endif %}
-      <div class="map mt-4">
-        <div id="map-container" style="position:relative;">
-          <div id="map" class="rounded shadow" style="height: 300px;"></div>
+      <div class="map mt-4 d-flex justify-content-center">
+        <div id="map-container" style="position:relative; width: 100%; max-width: 700px; margin: 0 auto;">
+          <div id="map" class="rounded shadow" style="height: 350px; width: 100%; min-width: 250px;"></div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div id="subcontainer1">
+    <section id="subcontainer1" class="mb-4">
       {% if demo['facebook'] or demo['recurring'] %}
-      <div id="infocontainer">
+      <section id="infocontainer" class="mb-4" aria-label="Lisätiedot">
         <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
         <div id="demo-details">
           {% if demo['facebook'] %}
@@ -831,40 +834,38 @@ main .display-all {
           {% endif %}
         </div>
         {% if demo["recurring"] and demo['repeat_schedule'] %}
-        <div class="repeating-alert">
-          <strong>Mielenosoitus toistuu säännöllisesti</strong><br>
+        <div class="repeating-alert mt-3">
+          <strong>{{ _('Mielenosoitus toistuu säännöllisesti') }}</strong><br>
           {{ generate_demo_sentence(demo) }}
           <br>
-          <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all">
+          <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all mt-2">
             <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
           </a>
         </div>
         {% endif %}
-      </div>
+      </section>
       {% endif %}
 
-      <div id="orginfo">
+      <section id="orginfo" class="mb-4" aria-label="Järjestäjät">
         <h2 class="subtitle">{{ _('Järjestäjät') }}</h2>
         <div class="organizers-list" id="organizers-list">
           {% if demo['organizers'] and demo['organizers']|length > 0 %}
           {% for org in demo['organizers'] %}
-          <div class="organizer-info">
-            <p><strong>{{ _('Nimi:') }}</strong><br />{{ org.name }}</p>
+          <div class="organizer-info mb-3 p-2 rounded bg-light border">
+            <p class="mb-1"><strong>{{ _('Nimi:') }}</strong> {{ org.name }}</p>
             {% if org.organization_id and org.organization_id != "None" %}
             <a href="{{ org.url if org.url else '#' }}" class="org-profile-link">
               {{ _('Mielenosoitukset.fi -profiili') }}
             </a>
             {% endif %}
             {% if org.website %}
-            <p>
-              <strong>{{ _('Verkkosivut:') }}</strong><br />
-              <a href="{{ org.website }}" target="_blank" class="org-website">{{ org.website }}</a>
+            <p class="mb-1">
+              <strong>{{ _('Verkkosivut:') }}</strong> <a href="{{ org.website }}" target="_blank" class="org-website">{{ org.website }}</a>
             </p>
             {% endif %}
             {% if org.email %}
-            <p>
-              <strong>{{ _('Sähköpostiosoite:') }}</strong><br />
-              <a href="mailto:{{ org.email }}" class="org-email">{{ org.email }}</a>
+            <p class="mb-1">
+              <strong>{{ _('Sähköpostiosoite:') }}</strong> <a href="mailto:{{ org.email }}" class="org-email">{{ org.email }}</a>
             </p>
             {% endif %}
           </div>
@@ -873,15 +874,15 @@ main .display-all {
           <p id="no-organizers">{{ _('Ei järjestäjätietoja saatavilla.') }}</p>
           {% endif %}
         </div>
-      </div>
+      </section>
 
-      <div class="button-container">
+      <nav class="button-container" aria-label="Takaisinlinkit">
         {% if request.referrer is defined %}
         <a class="back-link" href="{{ request.referrer }}">{{ _('Takaisin edelliselle sivulle') }}</a>
         {% endif %}
         <a class="back-link" href="{{ url_for('demonstrations') }}">{{ _('Takaisin kaikkiin mielenosoituksiin') }}</a>
-      </div>
-    </div>
+      </nav>
+    </section>
     <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
 
    
@@ -967,6 +968,45 @@ main .display-all {
   }
 </script>
 <script>
+  // Data initialization: use a single demo object for clarity
+var demoData = {{ demo | tojson | safe }};
+
+  // Map Initialization if location data is available
+  document.addEventListener("DOMContentLoaded", function() {
+    if (demoData.latitude && demoData.longitude) {
+      const map = L.map("map", {
+        center: [demoData.latitude, demoData.longitude],
+        zoom: 13,
+        scrollWheelZoom: false,
+        zoomControl: true,
+        attributionControl: true,
+      });
+      map.invalidateSize();
+      setTimeout(() => { map.invalidateSize(); }, 300);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+      L.marker([demoData.latitude, demoData.longitude])
+        .addTo(map)
+        .bindPopup(demoData.address)
+        .openPopup();
+    } else {
+      const mapElement = document.getElementById("map");
+      if (mapElement) {
+        mapElement.remove();
+      }
+    }
+  });
+
+  // Toggle display for toolbox buttons
+  function toggleToolbox() {
+    const toolboxButtons = document.getElementById("toolbox-buttons");
+    if (toolboxButtons) {
+      toolboxButtons.style.display = toolboxButtons.style.display === 'none' ? 'flex' : 'none';
+    }
+  }
+</script>
+<script>
   /**
    * Updates the countdown to the event using ISO-8601 date.
    *
@@ -978,73 +1018,47 @@ main .display-all {
    * -------
    * None.
    */
-  function updateCountdown() {
-    const demoDate = data.demo.date; // ISO-8601 format (yyyy-mm-dd)
-    const demoTime = data.demo.start_time;
-    const demoEnds = data.demo.end_time;
-    // Directly combine ISO-8601 date and time
-    const eventDateStr = `${demoDate}T${demoTime}`;
-    const eventDate = new Date(eventDateStr);
-    const now = new Date();
-    const timeRemaining = eventDate - now;
-    const time_until_end = new Date(`${demoDate}T${demoEnds}`) - now;
-    const timerElement = document.getElementById("timer");
+  document.addEventListener("DOMContentLoaded", function() {
+    function updateCountdown() {
+      const demoDate = demoData.date; // ISO-8601 format (yyyy-mm-dd)
+      const demoTime = demoData.start_time;
+      const demoEnds = demoData.end_time;
+      // Directly combine ISO-8601 date and time
+      const eventDateStr = `${demoDate}T${demoTime}`;
+      const eventDate = new Date(eventDateStr);
+      const now = new Date();
+      const timeRemaining = eventDate - now;
+      const time_until_end = new Date(`${demoDate}T${demoEnds}`) - now;
+      const timerElement = document.getElementById("timer");
 
-    if (timeRemaining <= 0 && time_until_end >= 0) { // Event is ongoing
-      timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
-      return;
+      if (!timerElement) return;
+
+      if (timeRemaining <= 0 && time_until_end >= 0) { // Event is ongoing
+        timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
+        return;
+      }
+
+      if (time_until_end <= 0) {
+        timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
+        return;
+      }
+
+      const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+      timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
     }
-
-    if (time_until_end <= 0) {
-      timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
-      return;
-    }
-
-    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-    timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
-  }
-
-  setInterval(updateCountdown, 1000);
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+  });
 
 </script>
 
 
 <!-- Leaflet JS and Map Integration -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
-<script>// Data initialization
-  const data = {
-    demo: {{ demo | tojson }}
-  };
-
-  // Map Initialization if location data is available
-  if (data.demo.latitude && data.demo.longitude) {
-    const map = L.map("map").setView([data.demo.latitude, data.demo.longitude], 13);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
-
-    L.marker([data.demo.latitude, data.demo.longitude])
-      .addTo(map)
-      .bindPopup(data.demo.address)
-      .openPopup();
-  } else {
-    const mapElement = document.getElementById("map");
-    if (mapElement) {
-      mapElement.remove();
-    }
-  }
-
-  // Toggle display for toolbox buttons
-  function toggleToolbox() {
-    const toolboxButtons = document.getElementById("toolbox-buttons");
-    toolboxButtons.style.display = toolboxButtons.style.display === 'none' ? 'flex' : 'none';
-  }
-</script>
 <script>
   let demoId = "{{ demo['_id'] }}";
 </script>
@@ -1129,31 +1143,8 @@ main .display-all {
    * -------
    * None.
    */
-  document.addEventListener("DOMContentLoaded", () => {
-    const reportButton = document.querySelector("[data-modal-target='#report-modal']");
-    const overlay = document.getElementById("overlay");
-    const reportModal = document.getElementById("report-modal");
-
-    // Open modal function
-    reportButton.addEventListener("click", () => {
-      reportModal.classList.add("active");
-      overlay.classList.add("active");
-    });
-
-    // Close modal function
-    const closeButtons = document.querySelectorAll("[data-close-modal]");
-    closeButtons.forEach((button) =>
-      button.addEventListener("click", () => {
-        reportModal.classList.remove("active");
-        overlay.classList.remove("active");
-      })
-    );
-
-    overlay.addEventListener("click", () => {
-      reportModal.classList.remove("active");
-      overlay.classList.remove("active");
-    });
-  });
+  // Remove broken modal open logic (button does not have data-modal-target)
+  // The modal is opened via Bootstrap's data-bs-toggle or JS elsewhere.
 </script>
 <!-- Bootstrap Bundle with Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"  crossorigin="anonymous"></script>
@@ -1284,8 +1275,6 @@ main .display-all {
   });
 </script>
 <script>
-  // ...existing code...
-
   /**
    * Shows processing state for the error report form.
    *

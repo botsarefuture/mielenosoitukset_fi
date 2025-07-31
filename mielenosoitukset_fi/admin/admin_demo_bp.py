@@ -828,7 +828,7 @@ def accept_demo(demo_id):
         demo.approved = True
         demo.save()
 
-        # Notify submitter if possible
+        # Notify submitter if possible (always, even if already approved)
         submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
         if submitter and submitter.get("submitter_email"):
             email_sender.queue_email(

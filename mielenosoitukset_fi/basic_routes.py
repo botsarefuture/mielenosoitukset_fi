@@ -567,9 +567,13 @@ Disallow: /admin/
                 )
 
             # --- Notify support team with magic approve link ---
-            from mielenosoitukset_fi.admin.admin_demo_bp import serializer
+            from mielenosoitukset_fi.admin.admin_demo_bp import serializer, generate_demo_preview_link
             approve_token = serializer.dumps(str(demo_id), salt="approve-demo")
             approve_link = url_for("admin_demo.approve_demo_with_token", token=approve_token, _external=True)
+            preview_link = generate_demo_preview_link(str(demo_id))
+            # Generate a reject token and link (same as approve, but with a different salt and route)
+            reject_token = serializer.dumps(str(demo_id), salt="reject-demo")
+            reject_link = url_for("admin_demo.reject_demo_with_token", token=reject_token, _external=True)
             email_sender.queue_email(
                 template_name="admin_demo_approve_notification.html",
                 subject="Uusi mielenosoitus odottaa hyväksyntää",
@@ -583,6 +587,8 @@ Disallow: /admin/
                     "submitter_email": submitter_email,
                     "submitter_role": submitter_role,
                     "approve_link": approve_link,
+                    "preview_link": preview_link,
+                    "reject_link": reject_link,
                 },
             )
 

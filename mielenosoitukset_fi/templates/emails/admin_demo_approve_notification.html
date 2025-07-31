@@ -15,9 +15,16 @@
     <p><strong>Ilmoittajan sähköposti:</strong> {{ submitter_email }}</p>
     <p><strong>Ilmoittajan rooli:</strong> {{ submitter_role }}</p>
     <hr>
-    <p>Voit hyväksyä tämän mielenosoituksen suoraan alla olevasta linkistä:</p>
-    <p><a href="{{ approve_link }}">Hyväksy mielenosoitus</a></p>
-    <p>Linkki on kertakäyttöinen ja toimii ilman kirjautumista.</p>
+    <p>Voit hyväksyä tai hylätä tämän mielenosoituksen suoraan alla olevista painikkeista:</p>
+    <p>
+        <a href="{{ approve_link }}" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:4px;margin-right:10px;">Hyväksy mielenosoitus</a>
+        <a href="{{ reject_link }}" style="display:inline-block;padding:10px 20px;background:#f44336;color:#fff;text-decoration:none;border-radius:4px;">Hylkää mielenosoitus</a>
+    </p>
+    <p>Linkit ovat kertakäyttöisiä ja toimivat ilman kirjautumista.</p>
+    <hr>
+    <p>Voit esikatsella mielenosoitusta ennen hyväksyntää:</p>
+    <p><a href="{{ preview_link }}">Esikatsele mielenosoitusta</a></p>
+    <p>Esikatselulinkki on voimassa 24 tuntia.</p>
     <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi</p>
 </body>
 </html>

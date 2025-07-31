@@ -16,13 +16,14 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
 
+from mielenosoitukset_fi.utils.database import stringify_object_ids
+
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+
 
 # Secret key for generating tokens
 SECRET_KEY = "your_secret_key"
 serializer = URLSafeTimedSerializer(SECRET_KEY)
-
-# Blueprint setup
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
@@ -79,6 +80,100 @@ def recommend_demo(demo_id):
     return jsonify({"status": "OK", "message": _(u"Mielenosoitus suositeltu.")})
 
 
+
+@admin_demo_bp.route("/preview_demo_with_token/<token>", methods=["GET"])
+def preview_demo_with_token(token):
+    """
+    Secure preview of a demonstration using a token.
+
+    Parameters
+    ----------
+    token : str
+        The secure token for previewing the demonstration.
+
+    Returns
+    -------
+    flask.Response
+        Renders the demonstration preview page or redirects with an error.
+    """
+    try:
+        demo_id = serializer.loads(token, salt="preview-demo", max_age=86400)  # 24h expiry
+    except SignatureExpired:
+        flash_message("Esikatselulinkki on vanhentunut.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    except BadSignature:
+        flash_message("Esikatselulinkki on virheellinen.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        flash_message("Mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    # Convert ObjectId to str for template compatibility
+    if isinstance(demo_data.get("_id"), ObjectId):
+        demo_data["_id"] = str(demo_data["_id"])
+    # Pass the raw dict to the template for JSON serialization compatibility
+    return render_template(
+        "detail.html",
+        demo=stringify_object_ids(demo_data),
+        preview_mode=True,
+    )
+
+@admin_demo_bp.route("/reject_demo_with_token/<token>", methods=["GET"])
+def reject_demo_with_token(token):
+    """
+    Reject a demonstration using a one-time token (magic link).
+
+    Parameters
+    ----------
+    token : str
+        The secure token for rejecting the demonstration.
+
+    Returns
+    -------
+    flask.Response
+        Redirects to the admin dashboard with a flash message.
+    """
+    try:
+        demo_id = serializer.loads(token, salt="reject-demo", max_age=86400)  # 24h expiry
+    except SignatureExpired:
+        flash_message("Hylkäyslinkki on vanhentunut.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+    except BadSignature:
+        flash_message("Hylkäyslinkki on virheellinen.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_data:
+        flash_message("Mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    if demo_data.get("approved") is False and demo_data.get("rejected") is True:
+        flash_message("Mielenosoitus on jo hylätty.", "info")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    # Mark the demonstration as rejected
+    mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"approved": False, "rejected": True}})
+
+    # Optionally, notify the submitter (if you want to send a rejection email)
+    submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        email_sender.queue_email(
+            template_name="demo_submitter_rejected.html",
+            subject="Mielenosoituksesi on hylätty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo_data.get("title", ""),
+                "date": demo_data.get("date", ""),
+                "city": demo_data.get("city", ""),
+                "address": demo_data.get("address", ""),
+            },
+        )
+
+    flash_message("Mielenosoitus hylättiin onnistuneesti!", "success")
+    return redirect(url_for("admin_demo.demo_control"))
+    
 @admin_demo_bp.route("/approve_demo_with_token/<token>", methods=["GET"])
 def approve_demo_with_token(token):
     """
@@ -114,8 +209,45 @@ def approve_demo_with_token(token):
 
     # Approve the demonstration
     mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"approved": True}})
+
+
+    # Notify submitter if possible
+    submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        demo = demo_data
+        email_sender.queue_email(
+            template_name="demo_submitter_approved.html",
+            subject="Mielenosoituksesi on hyväksytty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+            },
+        )
+
     flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
     return redirect(url_for("admin_demo.demo_control"))
+
+
+def generate_demo_preview_link(demo_id):
+    """
+    Generate a secure preview link for a demonstration using a token.
+
+    Parameters
+    ----------
+    demo_id : str
+        The ID of the demonstration.
+
+    Returns
+    -------
+    str
+        The preview link URL.
+    """
+    token = serializer.dumps(demo_id, salt="preview-demo")
+    preview_link = url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
+    return preview_link
 
 @admin_demo_bp.route("/")
 @login_required
@@ -810,6 +942,22 @@ def accept_demo(demo_id):
     try:
         demo.approved = True
         demo.save()
+
+        # Notify submitter if possible (always, even if already approved)
+        submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+        if submitter and submitter.get("submitter_email"):
+            email_sender.queue_email(
+                template_name="demo_submitter_approved.html",
+                subject="Mielenosoituksesi on hyväksytty",
+                recipients=[submitter["submitter_email"]],
+                context={
+                    "title": demo.title,
+                    "date": demo.date,
+                    "city": demo.city,
+                    "address": demo.address,
+                },
+            )
+
         return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
     except Exception as e:
         logging.error("An error occurred while accepting the demonstration: %s", str(e))

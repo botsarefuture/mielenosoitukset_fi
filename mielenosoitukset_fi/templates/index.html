@@ -151,20 +151,28 @@ body {
 
   <!-- Pinned Demonstrations Section -->
   {% if recommended_demos %}
-  <section class="section-card">
-    <h2 class="section-title">{{ _('Suosittelemme') }}</h2>
+  <section class="section-card" style="border: 2.5px solid var(--color-primary); box-shadow: 0 4px 24px rgba(0,86,179,0.10);">
+    <h2 class="section-title" style="background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-title-accent) 100%); color: #fff; letter-spacing: 0.03em;">
+      <span style="margin-right:0.5em;" aria-hidden="true"><i class="fa-solid fa-star"></i></span>{{ _('Suosittelemme') }}
+    </h2>
     <div class="grid-container">
       {% for demo in recommended_demos %}
         {{ macros.demo_card(demo) }}
       {% endfor %}
     </div>
+    <div style="text-align:center; margin-top:1.2em;">
+      <span style="color:var(--color-primary); font-weight:600; font-size:1.1em; background:var(--color-title-accent); padding:0.4em 1.2em; border-radius:1em; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+        {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
+      </span>
+    </div>
   </section>
   {% endif %}
 
   <!-- Featured Demonstrations Section -->
-  <section class="section-card" style="align-items: center;">
-    <h2 class="section-title" style="margin-top: 0; width: fit-content">
-      {{ _('Esitellyt mielenosoitukset') }}
+  {% if not recommended_demos %}
+  <section class="section-card" style="align-items: center; border: 2px dashed var(--color-primary); background: linear-gradient(90deg, var(--color-title-accent) 0%, var(--color-card-bg) 100%);">
+    <h2 class="section-title" style="margin-top: 0; width: fit-content; color: var(--color-primary);">
+      <span style="margin-right:0.5em;" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>{{ _('Esitellyt mielenosoitukset') }}
     </h2>
     <div class="container-grid" style="width: 100%">
       {% if demonstrations %}
@@ -178,7 +186,13 @@ body {
         </div>
       {% endif %}
     </div>
+    <div style="text-align:center; margin-top:1.2em;">
+      <span style="color:var(--color-primary); font-weight:500; font-size:1em; background:var(--color-title-accent); padding:0.3em 1em; border-radius:1em; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+        {{ _('Poimintoja ajankohtaisista mielenosoituksista.') }}
+      </span>
+    </div>
   </section>
+  {% endif %}
 
   <!-- Button to View All Demonstrations -->
   <div class="buttons-div">

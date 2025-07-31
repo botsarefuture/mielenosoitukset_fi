@@ -1,0 +1,16 @@
+{% extends 'admin_base.html' %}
+{% block main_content %}
+<h2>Edit History for Demonstration</h2>
+<ul class="list-group mb-3">
+  {% for entry in history %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>
+        <b>{{ entry.edited_at.strftime('%Y-%m-%d %H:%M:%S') }}</b>
+        <span class="text-muted">by {{ entry.editor_id }}</span>
+      </span>
+      <a href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}" class="btn btn-sm btn-outline-primary">Näytä muutokset</a>
+    </li>
+  {% endfor %}
+</ul>
+<a href="{{ url_for('admin_demo.edit_demo', demo_id=demo_id) }}" class="btn btn-light">Takaisin muokkaukseen</a>
+{% endblock %}

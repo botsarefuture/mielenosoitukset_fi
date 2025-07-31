@@ -1,0 +1,38 @@
+{% extends 'admin_base.html' %}
+{% block main_content %}
+<h2>Demonstration Change Diff</h2>
+<style>
+.diff-table { width: 100%; border-collapse: collapse; }
+.diff-table th, .diff-table td { padding: 6px 10px; border: 1px solid #ccc; font-family: monospace; }
+.diff-add { background: #1a7f37; color: #fff white-space: pre-wrap; }
+.diff-remove { background: #b22222; color: #fff white-space: pre-wrap; text-decoration: line-through; }
+.diff-unchanged { background: #e6f0fa; color: #222 white-space: pre-wrap; }   /* Lighter bg, darker text for readability */
+.diff-field { font-weight: bold; background: #333; color: #fff; }
+.diff-block { margin: 0; padding: 0; border: none; background: none; }
+</style>
+<table class="diff-table">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Diff</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for field, diff in diffs.items() %}
+        <tr>
+            <td class="diff-field">{{ field }}</td>
+            <td>
+                {% if diff.diff_html %}
+                    <div class="diff-block">
+                        {{ diff.diff_html }}
+                    </div>
+                {% else %}
+                    <div class="diff-unchanged">No changes</div>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo_id) }}">Back to Edit History</a>
+{% endblock %}

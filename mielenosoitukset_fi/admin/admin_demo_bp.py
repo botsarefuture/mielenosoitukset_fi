@@ -466,7 +466,12 @@ def collect_demo_data(request):
     city = request.form.get("city")
     address = request.form.get("address")
     event_type = request.form.get("type")
-    route = request.form.get("route")
+    # Handle route as a list (route[] in form-data)
+    route = request.form.getlist("route[]") or request.form.getlist("route")
+    # Fallback: if route is a single string, wrap in list
+    if not route:
+        single_route = request.form.get("route")
+        route = [single_route] if single_route else []
     approved = request.form.get("approved") == "on"
 
     # Validate required fields

@@ -395,31 +395,32 @@
                         %}readonly{% endif %}>
                 </div>
             </div>
-
-            <div id="march-route-container" class="form-group"
-                style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
-                <label>{{ _('Reitti (marssin)') }}</label>
-                <div id="route-tags-wrapper" class="tags-wrapper"
-                    style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
-                    <!-- Existing route points rendered as pills -->
-                    {% if demo and demo.route %}
-                    {% for point in demo.route.split(',') %}
-                    {% set point_trimmed = point.strip() %}
-                    {% if point_trimmed %}
-                    <span class="tag-pill">
-                        {{ point_trimmed }}
-                        <button type="button" class="remove-route-btn" aria-label="Remove route point">&times;</button>
-                        <input type="hidden" name="route[]" value="{{ point_trimmed }}">
-                    </span>
-                    {% endif %}
-                    {% endfor %}
-                    {% endif %}
-                    <!-- Input for new route points -->
-                    <input type="text" id="route-input"
-                        placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
-                        style="border:none; outline:none; flex-grow:1; min-width:150px;" />
-                </div>
-            </div>
+<div id="march-route-container" class="form-group"
+    style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
+    <label>{{ _('Reitti (marssin)') }}</label>
+    <div id="route-tags-wrapper" class="tags-wrapper"
+        style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+        
+        <!-- Existing route points rendered as pills -->
+        {% if demo and demo.route %}
+            {% for point in demo.route %}
+                {% set point_trimmed = point.strip() %}
+                {% if point_trimmed %}
+                <span class="tag-pill">
+                    {{ point_trimmed }}
+                    <button type="button" class="remove-route-btn" aria-label="Remove route point">&times;</button>
+                    <input type="hidden" name="route[]" value="{{ point_trimmed }}">
+                </span>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Input for new route points -->
+        <input type="text" id="route-input"
+            placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
+            style="border:none; outline:none; flex-grow:1; min-width:150px;" />
+    </div>
+</div>
 
             <script>
                 (() => {

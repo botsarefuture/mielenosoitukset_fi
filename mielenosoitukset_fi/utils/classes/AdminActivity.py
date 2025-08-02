@@ -29,36 +29,35 @@ class AdminActivity(BaseModel):
         from mielenosoitukset_fi.users.models import User
         self._by = User.from_OID(user_id)
 
-    def to_dict(self, json=False) -> Dict[str, Any]:
+    def to_dict(self, json: bool = False) -> Dict[str, Any]:
         data = super().to_dict(json=json)
         try:
-            data.update(
-                {
-                    "user_id": str(self._user_id),
-                    "email": self._email,
-                    "action": self._action,
-                    "details": self._details,
-                    "timestamp": (
-                        self._timestamp.isoformat() if json else self._timestamp
-                    ),
-                    "_id": str(self._id),
-                    "by": self._by.to_dict(json=json),
-                }
-            )
+            data.update({
+                "user_id": str(self._user_id),
+                "email": self._email,
+                "action": self._action,
+                "details": self._details,
+                "timestamp": (
+                    self._timestamp.isoformat() if json else self._timestamp
+                ),
+                "_id": str(self._id),
+                "by": self._by.to_dict(json=json),
+            })
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Error serializing AdminActivity: {e}")
         return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "AdminActivity":
+        user_data = data.get("user", {})
         return cls(
-            user_id=ObjectId(data["user"]["id"]),
-            email=data["user"]["email"],
-            action=data["request"],
-            details="",
+            user_id=ObjectId(user_data.get("_id")) if user_data.get("_id") else ObjectId(),
+            email=user_data.get("email", ""),
+            action=data.get("request", ""),
+            details=data.get("details", ""),
             timestamp=(
                 datetime.fromisoformat(data["timestamp"])
-                if data.get("timestamp") and isinstance(data.get("timestamp"), str)
+                if isinstance(data.get("timestamp"), str)
                 else None
             ),
             _id=ObjectId(data["_id"]) if data.get("_id") else None,
@@ -66,30 +65,39 @@ class AdminActivity(BaseModel):
 
 
 class UserDataFormatter:
-    def __init__(self, data):
+    def __init__(self, data: Dict[str, Any]):
         self.data = data
 
-    def format_timestamp(self):
-        timestamp = self.data.get("timestamp", {}).get("$date")
-        if timestamp:
-            return datetime.fromisoformat(timestamp[:-1]).strftime("%Y-%m-%d %H:%M:%S")
+    def format_timestamp(self) -> str:
+        timestamp_raw = self.data.get("timestamp", {}).get("$date")
+        try:
+            if timestamp_raw:
+                return datetime.fromisoformat(timestamp_raw.rstrip("Z")).strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            logger.warning(f"Invalid timestamp format: {e}")
         return "Unknown"
 
-    def format_request(self):
-        request = self.data.get("request", {})
-        formatted_request = {
-            "Method": request.get("method", "Unknown"),
-            "URL": request.get("url", "Unknown"),
-            "Remote Address": request.get("remote_addr", "Unknown"),
-            "User Agent": request.get("headers", "")
-            .split("User-Agent: ")[-1]
-            .split("\r\n")[0],
-        }
-        return formatted_request
+    def format_request(self) -> Dict[str, str]:
+        request_data = self.data.get("request", {})
+        headers = request_data.get("headers", "")
 
-    def format_user(self):
+        user_agent = "Unknown"
+        if isinstance(headers, str):
+            try:
+                user_agent = headers.split("User-Agent: ")[-1].split("\r\n")[0]
+            except IndexError:
+                pass
+
+        return {
+            "Method": request_data.get("method", "Unknown"),
+            "URL": request_data.get("url", "Unknown"),
+            "Remote Address": request_data.get("remote_addr", "Unknown"),
+            "User Agent": user_agent,
+        }
+
+    def format_user(self) -> Dict[str, str]:
         user = self.data.get("user", {})
-        formatted_user = {
+        return {
             "Username": user.get("username", "Unknown"),
             "Display Name": user.get("displayname", "Unknown"),
             "Email": user.get("email", "Unknown"),
@@ -99,17 +107,15 @@ class UserDataFormatter:
             "Global Admin": "Yes" if user.get("global_admin") else "No",
             "Banned": "Yes" if user.get("banned") else "No",
         }
-        return formatted_user
 
-    def format_permissions(self):
+    def format_permissions(self) -> list:
         permissions = self.data.get("user", {}).get("global_permissions", [])
         return permissions if permissions else ["No permissions found"]
 
-    def display(self):
-        formatted_data = {
+    def display(self) -> Dict[str, Any]:
+        return {
             "Timestamp": self.format_timestamp(),
             "Request": self.format_request(),
             "User": self.format_user(),
             "Permissions": self.format_permissions(),
         }
-        return formatted_data

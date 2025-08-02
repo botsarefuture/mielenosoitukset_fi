@@ -14,148 +14,175 @@
         margin: 1rem 0;
     }
     .back-button {
-        margin-top: 20px;
+        margin-top: 2rem;
+        text-align: center;
     }
     .pagination {
         display: flex;
         justify-content: center;
-        margin-top: 20px;
+        flex-wrap: wrap;
+        margin-top: 2rem;
     }
     .pagination a {
         margin: 0 5px;
-        padding: 10px 15px;
-        border: 1px solid #ddd;
+        padding: 8px 14px;
+        border: 1px solid #ccc;
         color: #007bff;
         text-decoration: none;
+        border-radius: 4px;
     }
     .pagination a.active {
         background-color: #007bff;
         color: white;
-        border: 1px solid #007bff;
+        font-weight: bold;
     }
     .filter-container {
         display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
     }
-    .filter-container select, .filter-container input {
+    .filter-container select, 
+    .filter-container input,
+    .filter-container button {
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 5px;
+        min-width: 120px;
     }
 </style>
 {% endblock %}
 
 {% block main_content %}
 <div class="table-container">
-    <h2 id="tabletitle">{{ _('Admin Logs') }}</h2>
-    <p>{{ _('Here you can view the admin activity logs and filter them by user, date, and action type.') }}</p>
+    <header>
+        <h2>{{ _('Admin Logs') }}</h2>
+        <p>{{ _('Here you can view the admin activity logs and filter them by user, date, and action type.') }}</p>
+    </header>
 
-    <div class="filter-container">
+    <section class="filter-container">
         <form method="GET" action="{{ url_for('admin.logs') }}">
             <select name="user">
                 <option value="">{{ _('All Users') }}</option>
                 {% for user in users %}
-                <option value="{{ user.id }}" {% if request.args.get('user') == user.id %}selected{% endif %}>{{ user.name }}</option>
+                <option value="{{ user.id }}" {% if request.args.get('user') == user.id %}selected{% endif %}>
+                    {{ user.name }}
+                </option>
                 {% endfor %}
             </select>
-            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}" placeholder="{{ _('Start Date') }}">
-            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}" placeholder="{{ _('End Date') }}">
+            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
             <select name="action_type">
                 <option value="">{{ _('All Actions') }}</option>
                 {% for action in action_types %}
-                <option value="{{ action }}" {% if request.args.get('action_type') == action %}selected{% endif %}>{{ action }}</option>
+                <option value="{{ action }}" {% if request.args.get('action_type') == action %}selected{% endif %}>
+                    {{ action }}
+                </option>
                 {% endfor %}
             </select>
             <button type="submit">{{ _('Filter') }}</button>
         </form>
-    </div>
-    <script>
+    </section>
 
-        async function fetchLogs(page = 1) {
-            const response = await fetch('{{ url_for("admin.api_logs") }}' + `?page=${page}`);
-            const data = await response.json();
-            renderLogs(data.logs);
-            renderPagination(data.page, data.total_pages);
-        }
-
-        function renderLogs(logs) {
-            const logsOverview = document.querySelector('.logs-overview activities');
-            logsOverview.innerHTML = '';
-            if (logs.length === 0) {
-                logsOverview.innerHTML = '<div class="no-data"><p>{{ _("No activities yet.") }}</p></div>';
-                return;
-            }
-            logs.forEach(activity => {
-                const activityElement = document.createElement('activity');
-                // here assign to that activity element, the whole activity json object as a string
-                activityElement.setAttribute('data-activity', JSON.stringify(activity));
-                activityElement.innerHTML = `
-                    <activity-title><i class="fas fa-tasks"></i> ${activity.action.method} ${activity.action.url}</activity-title>
-                    <activity-content>
-                        <aby style="display: flex; align-items: center;">
-                            ${activity.by.profile_picture ? `<img src="${activity.by.profile_picture}" style="width: 1.5em; height: 1.5em; border-radius: 50px; margin-right: 0.5em;">` : '<i class="fas fa-user" style="margin-right: 0.5em;"></i>'} 
-                            ${activity.by.displayname || activity.by.username}
-                        </aby>
-                        <atime><i class="fas fa-clock"></i> ${activity.timestamp}</atime>
-                        <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('View More') }}</aaction>
-                    </activity-content>
-                    <activity-extra>
-                        <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${activity.action.remote_addr}</aip>
-                        <asession><i class="fas fa-user-secret"></i> {{ _('Session') }}: ${activity.session_id}</asession>
-                    </activity-extra>
-                `;
-                logsOverview.appendChild(activityElement);
-            });
-        }
-
-        function renderPagination(currentPage, totalPages) {
-            const pagination = document.querySelector('.pagination');
-            pagination.innerHTML = '';
-            if (currentPage > 1) {
-                const prevLink = document.createElement('a');
-                prevLink.href = `#`;
-                prevLink.innerHTML = `&laquo; {{ _('Previous') }}`;
-                prevLink.onclick = () => fetchLogs(currentPage - 1);
-                pagination.appendChild(prevLink);
-            }
-            for (let p = 1; p <= totalPages; p++) {
-                const pageLink = document.createElement('a');
-                pageLink.href = `#`;
-                pageLink.innerHTML = p;
-                pageLink.className = p === currentPage ? 'active' : '';
-                pageLink.onclick = () => fetchLogs(p);
-                pagination.appendChild(pageLink);
-            }
-            if (currentPage < totalPages) {
-                const nextLink = document.createElement('a');
-                nextLink.href = `#`;
-                nextLink.innerHTML = `{{ _('Next') }} &raquo;`;
-                nextLink.onclick = () => fetchLogs(currentPage + 1);
-                pagination.appendChild(nextLink);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchLogs();
-        });
-    </script>
-
-    <div class="logs-overview">
-        <h2 class="admin-section-title">{{ _('Recent Activities') }}</h2>
+    <section class="logs-overview">
+        <h3 class="admin-section-title">{{ _('Recent Activities') }}</h3>
         <activities></activities>
-    </div>
+    </section>
 
     <div class="pagination"></div>
 
     <div class="back-button">
         <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
-            <i class="fas fa-arrow-left"></i>{{ _('Back to Dashboard') }}
+            <i class="fas fa-arrow-left"></i> {{ _('Back to Dashboard') }}
         </a>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script>
+    async function fetchLogs(page = 1) {
+        const res = await fetch(`{{ url_for("admin.api_logs") }}?page=${page}`);
+        const data = await res.json();
+        renderLogs(data.logs);
+        renderPagination(data.page, data.total_pages);
+    }
+
+    function renderLogs(logs) {
+        const container = document.querySelector('activities');
+        container.innerHTML = '';
+
+        if (!logs.length) {
+            container.innerHTML = '<div class="no-data">{{ _("No activities yet.") }}</div>';
+            return;
+        }
+
+        logs.forEach(log => {
+            const activity = document.createElement('activity');
+            activity.setAttribute('data-activity', JSON.stringify(log));
+            activity.innerHTML = `
+                <activity-title><i class="fas fa-tasks"></i> ${log.action.method} ${log.action.path}</activity-title>
+                <activity-content>
+                    <aby>
+                        ${log.by.profile_picture 
+                            ? `<img src="${log.by.profile_picture}" alt="Profile" class="profile-pic">` 
+                            : '<i class="fas fa-user"></i>'}
+                        ${log.by.displayname || log.by.username}
+                    </aby>
+                    <atime><i class="fas fa-clock"></i> ${log.timestamp}</atime>
+                    <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('View More') }}</aaction>
+                </activity-content>
+                <activity-extra>
+                    <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${log.action.remote_addr}</aip>
+                    <asession><i class="fas fa-user-secret"></i> {{ _('Session') }}: ${log.session_id}</asession>
+                </activity-extra>
+            `;
+            container.appendChild(activity);
+        });
+    }
+
+    function renderPagination(current, total) {
+        const pagination = document.querySelector('.pagination');
+        pagination.innerHTML = '';
+
+        const createPageLink = (text, page, isActive = false) => {
+            const a = document.createElement('a');
+            a.href = '#';
+            a.textContent = text;
+            if (isActive) a.classList.add('active');
+            a.onclick = e => {
+                e.preventDefault();
+                fetchLogs(page);
+            };
+            return a;
+        };
+
+        if (current > 1) {
+            pagination.appendChild(createPageLink('« {{ _("Previous") }}', current - 1));
+        }
+
+        for (let i = 1; i <= total; i++) {
+            pagination.appendChild(createPageLink(i, i, i === current));
+        }
+
+        if (current < total) {
+            pagination.appendChild(createPageLink('{{ _("Next") }} »', current + 1));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchLogs();
+    });
+</script>
+
+<style>
+    .profile-pic {
+        width: 1.5em;
+        height: 1.5em;
+        border-radius: 50%;
+        margin-right: 0.5em;
+    }
+</style>
+
 <script src="{{ url_for('static', filename='js/activities.js') }}"></script>
 {% endblock %}

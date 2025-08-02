@@ -315,14 +315,12 @@ class Demonstration(BaseModel):
 
         self.route = route  # If the demonstration is a march, this handles the route
         
-        if self.route is not None:
+        if self.route is not None and not isinstance(self.route, list):
             try:
-                rou = self.route.split(",")
-                if len(rou) > 1:
-                    self.route = rou
-            except:
+                self.route = [x.strip() for x in self.route.split(",") if x.strip()]
+            except Exception:
                 pass
-
+        
 
         self.img = img
 

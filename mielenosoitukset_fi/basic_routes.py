@@ -10,6 +10,7 @@ from flask import (
     render_template,
     redirect,
     send_file,
+    send_from_directory,
     url_for,
     request,
     abort,
@@ -1068,6 +1069,15 @@ Disallow: /admin/
         })
         return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
 
+    @app.route("/manifest.json")
+    def manifest():
+        """
+        Serve the web app manifest file.
+        """
+        return send_from_directory(
+            os.path.join(app.root_path, "static"), "manifest.json", mimetype="application/json"
+        )
+    
     add_api_routes(app)
 
 

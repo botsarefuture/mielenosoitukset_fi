@@ -471,7 +471,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ? `<span class="demo-card-badge">{{ _("Tänään") }}</span>` 
     : "";
 
-  const imageUrl = demo.img || demo.cover_image || "/static/img/default-demo.jpg"; // fallback
+  const imageUrl = demo.img || demo.cover_image || `/download_material/${demo._id}`; // fallback
 
   return `
     <div class="grid-item demo-card" 

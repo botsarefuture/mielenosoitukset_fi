@@ -450,68 +450,89 @@ const cityList = {{ city_list | tojson }};
 </script>
 <script>
 /**
- * Numpydoc:
  * Fetches demonstration data from the API and renders cards or table rows.
  * Handles infinite scroll, search, and view toggling.
- * All demonstration rendering is done via JavaScript.
  */
-document.addEventListener("DOMContentLoaded", function() {
-  function renderDemoCard(demo) {
-    // Modern, user-friendly card with actions and badge for today
-    const isToday = (() => {
-      if (!demo.date_display) return false;
-      const today = new Date();
-      const [d, m, y] = demo.date_display.split(".");
-      return (
-        today.getDate() === parseInt(d, 10) &&
-        today.getMonth() + 1 === parseInt(m, 10) &&
-        today.getFullYear() === parseInt(y, 10)
-      );
-    })();
-    return `
-      <div class="grid-item demo-card" data-demo-id="${demo._id}" data-href="/demonstration/${demo.slug || demo.running_number || demo._id}" tabindex="0" onclick="window.location='/demonstration/${demo.slug || demo.running_number || demo._id}'" onkeypress="if(event.key==='Enter'){window.location='/demonstration/${demo.slug || demo.running_number || demo._id}'}">
-        ${isToday ? `<span class="demo-card-badge">{{ _('Tänään') }}</span>` : ""}
-        <div class="demo-card-title">
-          <span>${demo.title}</span>
-        </div>
-        <div class="demo-card-date-time">
-          <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
-          <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display}${demo.end_time_display ? ' - ' + demo.end_time_display : ''}</span>
-        </div>
-        <div class="demo-card-location-row">
-          <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city}</span>
-          <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address}</span>
-        </div>
-        <div class="demo-card-tags">
-          ${(demo.tags && demo.tags.length > 0)
-            ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(' ')
-            : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ''}</span>`}
-        </div>
-        <div class="demo-card-actions">
-          <button class="demo-card-action-btn" onclick="event.stopPropagation();window.open('/demonstration/'+(demo.slug || demo.running_number || demo._id),'_self')">
-            <i class="fa-solid fa-arrow-right"></i> {{ _('Avaa') }}
-          </button>
-          <button class="demo-card-action-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(window.location.origin + '/demonstration/' + (demo.slug || demo.running_number || demo._id));this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _('Kopioitu!') }}';setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _('Kopioi linkki') }}'},1200)">
-            <i class="fa-solid fa-link"></i> {{ _('Kopioi linkki') }}
-          </button>
-        </div>
-      </div>
-    `;
+document.addEventListener("DOMContentLoaded", function () {
+  function isTodayDate(dateStr) {
+    if (!dateStr) return false;
+    const today = new Date();
+    const [d, m, y] = dateStr.split(".");
+    return (
+      today.getDate() === parseInt(d, 10) &&
+      today.getMonth() + 1 === parseInt(m, 10) &&
+      today.getFullYear() === parseInt(y, 10)
+    );
   }
 
+  function renderDemoCard(demo) {
+  const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
+  const todayBadge = isTodayDate(demo.date_display)
+    ? `<span class="demo-card-badge">{{ _("Tänään") }}</span>` 
+    : "";
+
+  const imageUrl = demo.img || demo.cover_image || "/static/img/default-demo.jpg"; // fallback
+
+  return `
+    <div class="grid-item demo-card" 
+         data-demo-id="${demo._id}" 
+         tabindex="0"
+         onclick="window.location='${demoUrl}'" 
+         onkeypress="if(event.key==='Enter'){window.location='${demoUrl}'}">
+
+      ${todayBadge}
+
+      <div class="demo-card-image">
+        <img src="${imageUrl}" alt="${demo.title}" loading="lazy">
+      </div>
+
+      <div class="demo-card-title">
+        <span>${demo.title}</span>
+      </div>
+
+      <div class="demo-card-date-time">
+        <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
+        <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</span>
+      </div>
+
+      <div class="demo-card-location-row">
+        <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city || ""}</span>
+        <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</span>
+      </div>
+
+      <div class="demo-card-tags">
+        ${(demo.tags && demo.tags.length > 0)
+          ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(" ")
+          : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ""}</span>`}
+      </div>
+
+      <div class="demo-card-actions">
+        <button class="demo-card-action-btn" onclick="event.stopPropagation(); window.location='${demoUrl}'">
+          <i class="fa-solid fa-arrow-right"></i> {{ _("Avaa") }}
+        </button>
+        <button class="demo-card-action-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '${demoUrl}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _("Kopioitu!") }}'; setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _("Kopioi linkki") }}'},1200)">
+          <i class="fa-solid fa-link"></i> {{ _("Kopioi linkki") }}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+
   function renderDemoTableRow(demo) {
+    const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
     return `
-      <tr onclick="window.location='/demonstration/'+(demo.slug || demo.running_number || demo._id)" style="cursor:pointer;">
+      <tr onclick="window.location='${demoUrl}'" style="cursor:pointer;">
         <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
-        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display} - ${demo.end_time_display}</td>
+        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</td>
         <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>
-        <td><i class="fa-solid fa-city"></i> ${demo.city}</td>
-        <td><i class="fa-solid fa-location-dot"></i> ${demo.address}</td>
+        <td><i class="fa-solid fa-city"></i> ${demo.city || ""}</td>
+        <td><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</td>
         <td>
           <span class="demo-table-tags">
             ${(demo.tags && demo.tags.length > 0)
-              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(' ')
-              : `<span class="demo-table-tag">#${demo.topic || ''}</span>`}
+              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(" ")
+              : `<span class="demo-table-tag">#${demo.topic || ""}</span>`}
           </span>
         </td>
       </tr>
@@ -524,6 +545,7 @@ document.addEventListener("DOMContentLoaded", function() {
   let is_loading = false;
   let last_query = {};
   let view = localStorage.getItem("demoView") || "grid";
+
   const gridContainer = document.getElementById("demo-container-grid");
   const tableContainer = document.getElementById("demo-table-container");
   const tableBody = document.getElementById("demo-table-body");
@@ -538,14 +560,15 @@ document.addEventListener("DOMContentLoaded", function() {
     for (const [k, v] of data.entries()) {
       if (v) query[k] = v;
     }
-    if (query.display_date_start) {
-      const parts = query.display_date_start.split(".");
-      if (parts.length === 3) query.date_start = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-    }
-    if (query.display_date_end) {
-      const parts = query.display_date_end.split(".");
-      if (parts.length === 3) query.date_end = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-    }
+    ["display_date_start", "display_date_end"].forEach(field => {
+      if (query[field]) {
+        const parts = query[field].split(".");
+        if (parts.length === 3) {
+          const key = field === "display_date_start" ? "date_start" : "date_end";
+          query[key] = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+        }
+      }
+    });
     return query;
   }
 
@@ -566,7 +589,7 @@ document.addEventListener("DOMContentLoaded", function() {
   function showEndMessage() {
     spinner.style.display = "none";
     endMsg.style.display = "";
-    endMsg.textContent = "You've reached the end!";
+    endMsg.textContent = _("Olet saavuttanut lopun");
   }
 
   function renderDemos(demos, append = false) {
@@ -579,35 +602,31 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   }
 
-  function fetchAndRenderDemos(opts = {reset: false, append: false}) {
+  function fetchAndRenderDemos({reset = false, append = false} = {}) {
     if (is_loading) return;
     is_loading = true;
     spinner.style.display = "block";
-    let query = getQuery();
-    if (opts.reset) {
+    let query = reset ? getQuery() : last_query;
+    if (reset) {
       page = 1;
       last_query = query;
       clearContent();
-    } else {
-      query = last_query;
     }
     fetch(buildApiUrl(query, page))
       .then(r => r.json())
       .then(data => {
-        total_pages = data.total_pages;
-        console.log("Total pages:", total_pages);
-        if (!total_pages) {
-          total_pages = 1;
-        };
-        if (view === "grid" && data.demonstrations.length === 0 && page === 1) {
-          gridContainer.innerHTML = `<div class="grid-item no-results">{{ _('Ei löytynyt mielenosoituksia.') }}</div>`;
-        } else if (view === "list" && data.demonstrations.length === 0 && page === 1) {
-          tableBody.innerHTML = `<tr><td colspan="6">{{ _('Ei löytynyt mielenosoituksia.') }}</td></tr>`;
+        total_pages = data.total_pages || 1;
+        const noResults = data.demonstrations.length === 0 && page === 1;
+        if (noResults) {
+          if (view === "grid") {
+            gridContainer.innerHTML = `<div class="grid-item no-results">${_("Ei löytynyt mielenosoituksia.")}</div>`;
+          } else {
+            tableBody.innerHTML = `<tr><td colspan="6">${_("Ei löytynyt mielenosoituksia.")}</td></tr>`;
+          }
         } else {
-          renderDemos(data.demonstrations, opts.append);
+          renderDemos(data.demonstrations, append);
         }
         if (page >= total_pages) showEndMessage();
-        else spinner.style.display = "block";
         is_loading = false;
       })
       .catch(() => {
@@ -616,27 +635,28 @@ document.addEventListener("DOMContentLoaded", function() {
       });
   }
 
-  const observer = new IntersectionObserver((entries) => {
+  const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
       if (entry.isIntersecting && !is_loading && page < total_pages) {
         page++;
         fetchAndRenderDemos({append: true});
       }
     });
-  }, { rootMargin: '1000px' });
+  }, { rootMargin: "1000px" });
   observer.observe(scrollSentinel);
 
   function setView(newView) {
     view = newView;
     localStorage.setItem("demoView", view);
+    const mainContent = document.querySelector(".container-main-content");
     if (view === "list") {
-      document.querySelector(".container-main-content").classList.add("list-view");
+      mainContent.classList.add("list-view");
       document.getElementById("list-view-btn").classList.add("active");
       document.getElementById("grid-view-btn").classList.remove("active");
       gridContainer.classList.add("hide-cards");
       tableContainer.style.display = "";
     } else {
-      document.querySelector(".container-main-content").classList.remove("list-view");
+      mainContent.classList.remove("list-view");
       document.getElementById("grid-view-btn").classList.add("active");
       document.getElementById("list-view-btn").classList.remove("active");
       gridContainer.classList.remove("hide-cards");
@@ -647,16 +667,17 @@ document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
   document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
 
-  document.getElementById("search-form").addEventListener("submit", function(e) {
+  document.getElementById("search-form").addEventListener("submit", e => {
     e.preventDefault();
     setView(view);
   });
 
-  // ...existing code for city suggestions and date picker...
+  // City autocomplete
   const cityInput = $("#city_input");
   const selectedCitiesInput = $("#city");
   const filters = $("#filters");
   const citySuggestions = $("#city_suggestions");
+
   cityInput.on("input", function () {
     const query = cityInput.val();
     if (query.length > 2) {
@@ -664,53 +685,40 @@ document.addEventListener("DOMContentLoaded", function() {
         city.toLowerCase().includes(query.toLowerCase())
       );
       citySuggestions.empty();
-      matchingCities.forEach(function (city) {
-        const suggestionItem = $("<div>")
-          .addClass("suggestion-item")
-          .text(city);
-        citySuggestions.append(suggestionItem);
-        suggestionItem.on("click", function (event) {
-          event.stopPropagation();
-          const selectedCity = suggestionItem.text();
-          citySuggestions.empty();
-          citySuggestions.removeClass("show");
-          cityInput.val("");
-          const currentCities = selectedCitiesInput.val()
-            ? selectedCitiesInput.val().split(",")
-            : [];
-          if (!currentCities.includes(selectedCity)) {
-            currentCities.push(selectedCity);
-            selectedCitiesInput.val(currentCities.join(","));
-            const filterDiv = $("<div>")
-              .addClass("filter")
-              .html(`<span>{{ _('Kaupunki') }}: ${selectedCity}</span>
-                <a href="#" data-city="${selectedCity}">
-                  <i class="fas fa-times"></i>
-                </a>`);
-            filters.append(filterDiv);
-            filterDiv.find("a").on("click", function (event) {
-              event.preventDefault();
-              const cityToRemove = $(this).data("city");
-              const updatedCities = currentCities.filter(c => c !== cityToRemove);
-              selectedCitiesInput.val(updatedCities.join(","));
-              filterDiv.remove();
-            });
-          }
-        });
+      matchingCities.forEach(city => {
+        $("<div>").addClass("suggestion-item").text(city)
+          .appendTo(citySuggestions)
+          .on("click", function (event) {
+            event.stopPropagation();
+            const selectedCity = city;
+            citySuggestions.empty().removeClass("show");
+            cityInput.val("");
+            const currentCities = selectedCitiesInput.val()
+              ? selectedCitiesInput.val().split(",")
+              : [];
+            if (!currentCities.includes(selectedCity)) {
+              currentCities.push(selectedCity);
+              selectedCitiesInput.val(currentCities.join(","));
+              const filterDiv = $(`<div class="filter"><span>${_("Kaupunki")}: ${selectedCity}</span><a href="#" data-city="${selectedCity}"><i class="fas fa-times"></i></a></div>`);
+              filters.append(filterDiv);
+              filterDiv.find("a").on("click", function (event) {
+                event.preventDefault();
+                const cityToRemove = $(this).data("city");
+                selectedCitiesInput.val(currentCities.filter(c => c !== cityToRemove).join(","));
+                filterDiv.remove();
+              });
+            }
+          });
       });
       citySuggestions.addClass("show");
     } else {
-      citySuggestions.empty();
-      citySuggestions.removeClass("show");
+      citySuggestions.empty().removeClass("show");
     }
   });
+
   $(document).on("click", function (event) {
-    if (
-      !citySuggestions.is(event.target) &&
-      citySuggestions.has(event.target).length === 0
-    ) {
-      citySuggestions.empty();
-      citySuggestions.removeClass("show");
+    if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
+      citySuggestions.empty().removeClass("show");
     }
   });
 
@@ -722,38 +730,27 @@ document.addEventListener("DOMContentLoaded", function() {
       firstDayOfWeek: 1,
       weekdays: {
         shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
-        longhand: [
-          "Sunnuntai",
-          "Maanantai",
-          "Tiistai",
-          "Keskiviikko",
-          "Torstai",
-          "Perjantai",
-          "Lauantai"
-        ]
+        longhand: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"]
       },
       months: {
-        shorthand: [
-          "Tam", "Hel", "Mar", "Huht", "Tou", "Kes", "Hele", "Elok", "Syys", "Lok", "Marr", "Jou"
-        ],
-        longhand: [
-          "Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu",
-          "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"
-        ]
+        shorthand: ["Tam", "Hel", "Maa", "Huh", "Tou", "Kes", "Hei", "Elo", "Syy", "Lok", "Mar", "Jou"],
+        longhand: ["Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu", "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"]
       }
     }
   };
+
   const startPicker = flatpickr("#date_start", {
     ...dateConfig,
-    onChange: function (selectedDates) {
+    onChange: selectedDates => {
       if (selectedDates[0]) {
         endPicker.set("minDate", selectedDates[0]);
       }
     }
   });
+
   const endPicker = flatpickr("#date_end", {
     ...dateConfig,
-    onChange: function (selectedDates) {
+    onChange: selectedDates => {
       if (selectedDates[0]) {
         startPicker.set("maxDate", selectedDates[0]);
       }
@@ -763,4 +760,5 @@ document.addEventListener("DOMContentLoaded", function() {
   setView(view);
 });
 </script>
+
 {% endblock %}

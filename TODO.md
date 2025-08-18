@@ -2,9 +2,9 @@
 
 ## Admin UI
 
-- [ ] Use `dashboard-container` for all mainlevel containers.
+- [x] Use `dashboard-container` for all mainlevel containers.
 
-- [ ] Use `dashboard-panel` for all panels.
+- [x] Use `dashboard-panel` for all panels.
 
 - [ ] Link all the other view pages too.
 

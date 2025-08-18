@@ -19,6 +19,7 @@ from flask_login import current_user, login_required
 from flask_babel import _
 
 from mielenosoitukset_fi.utils.classes import Demonstration, Organizer
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.flashing import flash_message
@@ -872,16 +873,15 @@ def collect_demo_data(request):
     cover_picture = request.form.get("cover_picture")
     file = request.files.get("cover_picture_file")
     if file and file.filename:
-        import os
         from werkzeug.utils import secure_filename
-        static_dir = os.path.join(os.path.dirname(__file__), '../static/demo_preview')
-        os.makedirs(static_dir, exist_ok=True)
         filename = secure_filename(file.filename)
-        file_path = os.path.join(static_dir, filename)
-        file.save(file_path)
-        
-        # Use a URL relative to static
-        cover_picture = f"/static/demo_preview/{filename}"
+        bucket_name = "mielenosoitukset-fi1"
+        s3_url = upload_image_fileobj(bucket_name, file.stream, filename, "demo_preview")
+        if s3_url:
+            # Use the S3 URL as cover picture
+            cover_picture = s3_url
+        else:
+            logger.error("Failed to upload cover picture to S3; falling back to provided URL if any")
 
     return {
         "title": title,

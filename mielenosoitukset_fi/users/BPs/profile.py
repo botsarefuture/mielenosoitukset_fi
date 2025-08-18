@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 import os
 
 from mielenosoitukset_fi.users.models import User
-from mielenosoitukset_fi.utils.s3 import upload_image
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.logger import logger
 
 mongo = DatabaseManager().get_instance().get_db()
@@ -62,11 +62,8 @@ def edit_profile():
 
         if profile_picture:
             filename = secure_filename(profile_picture.filename)
-            temp_file_path = os.path.join("uploads", filename)
-            profile_picture.save(temp_file_path)
-
             bucket_name = "mielenosoitukset-fi1"
-            photo_url = upload_image(bucket_name, temp_file_path, "profile_pics")
+            photo_url = upload_image_fileobj(bucket_name, profile_picture.stream, filename, "profile_pics")
 
             if photo_url:
                 current_user.profile_picture = photo_url
@@ -83,8 +80,6 @@ def edit_profile():
                 flash_message("Profiilitietosi on päivitetty.", "success")
             else:
                 flash_message("Virhekuvan lataamisessa S3:een.", "error")
-
-            os.remove(temp_file_path)
 
         return redirect(url_for("profile.profile", username=current_user.username))
 

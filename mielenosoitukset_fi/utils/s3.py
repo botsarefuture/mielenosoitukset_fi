@@ -1,4 +1,5 @@
 import os
+import io
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 from PIL import Image
@@ -18,7 +19,7 @@ _retry_delay = 2  # Initial delay in seconds
 
 # one level down and then up to uploads
 _upload_folder = os.path.join("mielenosoitukset_fi", "uploads")
-print(_upload_folder)
+# keep _upload_folder for compatibility; new helpers avoid writing to disk
 
 
 def get_id_and_add_one(hash):
@@ -166,6 +167,33 @@ def convert_to_jpg(image_path: str, output_path: str) -> str:
         return None
 
 
+def convert_image_fileobj_to_jpeg_bytes(fileobj) -> bytes:
+    """
+    Convert an image file-like object to JPEG bytes in-memory.
+
+    Parameters
+    ----------
+    fileobj : file-like
+        File-like object containing the image data.
+
+    Returns
+    -------
+    bytes or None
+        JPEG-encoded image bytes, or None on error.
+    """
+    try:
+        fileobj.seek(0)
+        with Image.open(fileobj) as img:
+            img = img.convert("RGB")
+            out = io.BytesIO()
+            img.save(out, format="JPEG")
+            out.seek(0)
+            return out.read()
+    except Exception as e:
+        logger.error(f"Error converting image from fileobj: {e}")
+        return None
+
+
 @retry_with_graze()
 def generate_next_id(image_type: str = "upload") -> int:
     """
@@ -184,7 +212,7 @@ def generate_next_id(image_type: str = "upload") -> int:
     return get_id_and_add_one(gen_ha(image_type))
 
 
-def upload_path_gen(_id: str, image_type: str) -> str:
+def upload_path_gen(_id, image_type: str) -> str:
     """
     Generate the path for the uploaded image.
 
@@ -240,32 +268,61 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     str or None
         URL of the uploaded image or None if upload fails.
     """
-    _id = generate_next_id(bucket_name, image_type)
-    if _id is None:
-        logger.error("Failed to generate next ID.")
-        return None
-
-    jpg_image_path = os.path.join(_upload_folder, f"{image_type}-{_id}.jpg")
-    output_image_path = convert_to_jpg(image_path, jpg_image_path)
-
-    print(output_image_path)
-
-    output_image_path = output_image_path.replace("\\", "/").replace(
-        "mielenosoitukset_fi/uploads/", ""
-    )
-
-    output_image_path = os.path.join(gen_ha(image_type), output_image_path)
-
-    if output_image_path is None:
-        logger.error("Failed to convert image.")
-        return None
-
+    # Backwards-compatible wrapper that reads the local file into memory
     try:
-        _s3_client.upload_file(jpg_image_path, bucket_name, output_image_path)
-        logger.info(f"{jpg_image_path} uploaded successfully to {bucket_name}.")
-        os.remove(jpg_image_path)  # Remove the converted file
-        s3_file_path = f"https://{bucket_name}.{Config.ENDPOINT_URL.replace('https://', '')}/{output_image_path}"
-        return s3_file_path
-    except ClientError as e:
+        with open(image_path, "rb") as f:
+            jpeg_bytes = convert_image_fileobj_to_jpeg_bytes(f)
+            if jpeg_bytes is None:
+                logger.error("Failed to convert image to JPEG bytes")
+                return None
+            _id = generate_next_id(image_type)
+            if _id is None:
+                logger.error("Failed to generate next ID.")
+                return None
+            object_key = upload_path_gen(_id, image_type)
+            # Use put_object to upload bytes
+            _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
+            # Return canonical CDN URL as requested
+            s3_file_path = f"https://cdn.mielenosoitukset.fi/{object_key}"
+            logger.info(f"Uploaded {image_path} to s3://{bucket_name}/{object_key}")
+            return s3_file_path
+    except Exception as e:
         logger.error(f"Error uploading image to bucket '{bucket_name}': {e}")
+        return None
+
+
+@retry_with_graze()
+def upload_image_fileobj(bucket_name: str, fileobj, filename: str, image_type: str) -> str:
+    """
+    Upload a file-like object (Flask FileStorage.stream or similar) to S3 after converting to JPEG in-memory.
+
+    Parameters
+    ----------
+    bucket_name : str
+    fileobj : file-like
+    filename : str
+        Original filename (used for logging).
+    image_type : str
+
+    Returns
+    -------
+    str or None
+        Public URL of uploaded image or None on failure.
+    """
+    try:
+        jpeg_bytes = convert_image_fileobj_to_jpeg_bytes(fileobj)
+        if jpeg_bytes is None:
+            logger.error("Conversion to JPEG failed for uploaded fileobj")
+            return None
+        _id = generate_next_id(image_type)
+        if _id is None:
+            logger.error("Failed to generate next ID.")
+            return None
+        object_key = upload_path_gen(_id, image_type)
+        _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
+        s3_file_path = f"https://cdn.mielenosoitukset.fi/{object_key}"
+        logger.info(f"Uploaded in-memory file {filename} to s3://{bucket_name}/{object_key}")
+        return s3_file_path
+    except Exception as e:
+        logger.error(f"Error uploading fileobj to S3: {e}")
         return None

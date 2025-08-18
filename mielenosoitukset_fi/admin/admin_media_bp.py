@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 import os
-from mielenosoitukset_fi.utils.s3 import upload_image
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.database_manager import DatabaseManager
 
@@ -53,13 +53,11 @@ def upload_file():
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(file_path)
+        bucket_name = "mielenosoitukset.fi"
+        image_type = request.form.get("image_type", "default")
 
-        bucket_name = "mielenosoitukset-fi1"
-        image_type = request.form.get("image_type")
-
-        s3_url = upload_image(bucket_name, file_path, image_type)
+        # Upload straight from the file storage stream
+        s3_url = upload_image_fileobj(bucket_name, file.stream, filename, image_type)
         if s3_url:
             mongo.media.insert_one(
                 {
@@ -68,8 +66,6 @@ def upload_file():
                     "uploader": ObjectId(current_user._id),
                 }
             )
-            os.remove(file_path)
-
             return jsonify({"success": True, "url": s3_url}), 200
         else:
             return jsonify({"error": "Failed to upload to S3"}), 500
@@ -123,13 +119,10 @@ def upload_multiple():
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(file_path)
-
-            bucket_name = "mielenosoitukset-fi1"
+            bucket_name = "mielenosoitukset.fi"
             image_type = request.form.get("image_type", "default")
 
-            s3_url = upload_image(bucket_name, file_path, image_type)
+            s3_url = upload_image_fileobj(bucket_name, file.stream, filename, image_type)
             if s3_url:
                 mongo.media.insert_one(
                     {
@@ -138,7 +131,6 @@ def upload_multiple():
                         "uploader": ObjectId(current_user._id),
                     }
                 )
-                os.remove(file_path)
                 responses.append({"success": True, "url": s3_url})
             else:
                 responses.append({"error": f"Failed to upload {filename} to S3"})

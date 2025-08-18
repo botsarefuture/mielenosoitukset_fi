@@ -191,10 +191,10 @@ body {
 
         <div class="profile-details">
             <div class="profile-picture">
-                <img src="{{ user.profile_picture or 'https://fsn1.your-objectstorage.com/mielenosoitukset-fi1/default-pfp.jpg' }}" 
+       <img src="{{ user.profile_picture or 'https://cdn.mielenosoitukset.fi/default-pfp.jpg' }}" 
                      alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva" 
                      class="profile-img" 
-                     onerror="this.onerror=null; this.src='https://fsn1.your-objectstorage.com/mielenosoitukset-fi1/default-pfp.jpg';">
+         onerror="this.onerror=null; this.src='https://cdn.mielenosoitukset.fi/default-pfp.jpg';">
             </div>
 
             <div class="profile-info">

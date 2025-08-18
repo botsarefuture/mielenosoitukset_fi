@@ -21,7 +21,7 @@ from flask import (
 )
 from flask_login import current_user
 from bson.objectid import ObjectId
-from mielenosoitukset_fi.utils.s3 import upload_image
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization, RecurringDemonstration
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
@@ -500,12 +500,10 @@ Disallow: /admin/
             # --- End submitter fields ---
 
             if img:
-                filename = secure_filename(img.filename)
-                temp_file_path = os.path.join("mielenosoitukset_fi/uploads", filename)
-                img.save(temp_file_path)
-                print(f"Image saved to {temp_file_path}")
-                bucket_name = "mielenosoitukset-fi1"
-                photo_url = upload_image(bucket_name, temp_file_path, "demo_pics")
+                    filename = secure_filename(img.filename)
+                    bucket_name = "mielenosoitukset.fi"
+                    # upload directly from the file storage stream to S3 (no disk)
+                    photo_url = upload_image_fileobj(bucket_name, img.stream, filename, "demo_pics")
             # --- Add submitter info to required fields check ---
             if not title or not date or not start_time or not city or not address or not submitter_role or not submitter_email or not submitter_name or not accept_terms:
                 flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot sekä hyväksy käyttöehdot ja tietosuojaseloste.", "error")

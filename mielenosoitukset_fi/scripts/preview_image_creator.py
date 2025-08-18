@@ -13,7 +13,8 @@ from flask import current_app
 from DatabaseManager import DatabaseManager
 
 from mielenosoitukset_fi.utils.classes import Demonstration
-from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
+from mielenosoitukset_fi.utils.screenshot import trigger_screenshot, save_path
+from mielenosoitukset_fi.utils.s3 import upload_image
 
 from mielenosoitukset_fi.utils.logger import logger
 
@@ -40,15 +41,28 @@ def run():
         if demo.preview_image: # If the demonstration does not have a preview image
             continue
             
-        result = trigger_screenshot(demo._id, True) # Trigger the screenshot creation for the demonstration
+        result = trigger_screenshot(demo._id, True)  # Trigger the screenshot creation for the demonstration
         if result:
             logger.info(f"Screenshot created for demonstration: {demo._id}")
-        
         else:
             logger.warning(f"Failed to create screenshot for demonstration: {demo._id}")
-            
-        if demo.img is None:
-            demo.preview_image = '/static/demo_preview/' + str(demo._id) + '.png'
-            demo.save()
+
+        # Determine the file that should have been created
+        local_file = os.path.join(save_path, f"{demo._id}.png")
+        if os.path.exists(local_file):
+            # Upload to S3 and set the CDN URL as preview_image
+            bucket_name = "mielenosoitukset.fi"
+            s3_url = upload_image(bucket_name, local_file, "demo_preview")
+            if s3_url:
+                demo.preview_image = s3_url
+                demo.save()
+                try:
+                    os.remove(local_file)
+                except Exception:
+                    logger.debug(f"Could not remove local preview file: {local_file}")
+            else:
+                logger.error(f"Failed to upload preview image for demo {demo._id} to S3")
+        else:
+            logger.warning(f"Expected preview image not found at {local_file} for demo {demo._id}")
         
     logger.info("All screenshots created.") # Print a message when all screenshots have been created

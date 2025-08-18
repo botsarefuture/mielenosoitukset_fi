@@ -1018,13 +1018,33 @@ Disallow: /admin/
     
     @app.route("/download_material/<demo_id>", methods=["GET"])
     def download_material(demo_id):
-        
-        return send_file(f"static/demo_preview/{demo_id}.png", as_attachment=True)
-        
-        if request.referrer != url_for("download_material"):
-            flash_message("Virheellinen pyyntö.", "error")
-            return redirect(url_for("index"))
-        return render_template("download_material.html")
+        # Try to find the demonstration and use its S3/CDN preview_image if available
+        try:
+            # Accept both ObjectId and slug/running_number strings
+            query = {
+                "$or": [
+                    {"_id": ObjectId(demo_id)},
+                    {"slug": demo_id},
+                    {"running_number": demo_id},
+                ]
+            }
+        except Exception:
+            query = {"$or": [{"slug": demo_id}, {"running_number": demo_id}]}
+
+        demo = demonstrations_collection.find_one(query)
+        if demo:
+            preview_url = demo.get("preview_image") or demo.get("img")
+            if preview_url and preview_url.startswith("http"):
+                # Redirect to the CDN/S3 URL so the client can download directly
+                return redirect(preview_url)
+
+        # Fallback to a local static file if it exists
+        local_path = os.path.join(app.root_path, "static", "demo_preview", f"{demo_id}.png")
+        if os.path.exists(local_path):
+            return send_file(local_path, as_attachment=True)
+
+        flash_message(_("Esikatselukuva ei löytynyt."), "error")
+        return redirect(url_for("index"))
 
     @app.before_request
     def preprocess_url():  

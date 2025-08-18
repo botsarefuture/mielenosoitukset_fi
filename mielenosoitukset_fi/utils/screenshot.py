@@ -63,6 +63,20 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
                     except Exception:
                         # leave date as-is if it can't be parsed
                         pass
+                # Format start_time and end_time to HH:MM if present
+                for tkey in ("start_time", "end_time"):
+                    tval = demo_for_template.get(tkey)
+                    if tval:
+                        try:
+                            # Try HH:MM:SS then HH:MM
+                            try:
+                                parsed_t = _dt.strptime(tval, "%H:%M:%S")
+                            except Exception:
+                                parsed_t = _dt.strptime(tval, "%H:%M")
+                            demo_for_template[tkey] = parsed_t.strftime("%H:%M")
+                        except Exception:
+                            # leave as-is on failure
+                            pass
             except Exception:
                 pass
 

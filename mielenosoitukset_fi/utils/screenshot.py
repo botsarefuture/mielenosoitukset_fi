@@ -3,6 +3,7 @@ import argparse
 import os
 import tempfile
 import threading
+import io
 from flask import current_app, has_app_context, render_template, url_for
 import imgkit
 
@@ -19,7 +20,7 @@ config = imgkit.config()
 save_path = os.environ.get("demo_image_save_path", "/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview")
 
 
-def create_screenshot(demo_data, output_path=save_path):
+def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
     """
     Create a PNG screenshot from the preview template.
 
@@ -28,61 +29,72 @@ def create_screenshot(demo_data, output_path=save_path):
     demo_data : dict
         Dictionary containing the demonstration data.
     output_path : str, optional
-        Directory path where the screenshot PNG will be saved.
+        Directory path where the screenshot PNG will be saved if return_bytes is False.
+    return_bytes : bool, optional
+        If True, return PNG bytes instead of writing to disk.
 
     Returns
     -------
-    str or None
-        Full path of the created PNG file, or None if creation failed.
+    str or bytes or None
+        If return_bytes is False: returns the relative static path (e.g. '/static/demo_preview/{id}.png') or None on failure.
+        If return_bytes is True: returns PNG bytes or None on failure.
     """
     try:
-        os.makedirs(output_path, exist_ok=True)
-        
         if not has_app_context():
             raise ValueError("No Flask application context found.")
-        
-            
-        
+
         if not isinstance(demo_data, dict):
             if hasattr(demo_data, "to_dict"):
                 demo_data = demo_data.to_dict(True)
             else:
                 raise ValueError("Invalid demonstration data provided.")
-        
+
         try:
             env = Environment(
-            loader=FileSystemLoader(os.path.join(_CUR_DIR, '../templates')),
-            autoescape=select_autoescape(['html', 'xml'])
+                loader=FileSystemLoader(os.path.join(_CUR_DIR, '../templates')),
+                autoescape=select_autoescape(['html', 'xml'])
             )
             template = env.get_template("preview.html")
             html_content = template.render(demo=demo_data)
         except Exception as e:
             logger.error(f"Failed to render HTML content: {e}")
             return None
-                    
+
         filename = f"{demo_data['_id']}.png"
-        
-        if os.path.exists(os.path.join(output_path, filename)):
-            return f"/static/demo_preview/{filename}"
-        
+
+        # If caller wants bytes, render into an in-memory buffer
+        if return_bytes:
+            try:
+                # Ask imgkit to return the result as bytes by passing False as output_path
+                data = imgkit.from_string(html_content, False, config=config)
+                if not data:
+                    logger.error("No data produced when rendering screenshot to bytes.")
+                    return None
+                logger.info(f"Screenshot rendered to bytes for: {demo_data['_id']}")
+                return data
+            except Exception as e:
+                logger.error(f"Failed to render screenshot to bytes: {e}")
+                return None
+
+        # Otherwise, write to disk (backwards compatible)
+        os.makedirs(output_path, exist_ok=True)
         full_path = os.path.join(output_path, filename)
-        
-        _return_path = full_path.replace("/var/www/mielenosoitukset_fi/mielenosoitukset_fi/", "").replace("../", "/")
-        
+
+        if os.path.exists(full_path):
+            return f"/static/demo_preview/{filename}"
+
         try:
             success = imgkit.from_string(html_content, full_path, config=config)
             if not success:
                 logger.error("Failed to create screenshot.")
                 return None
-            
         except Exception as e:
             logger.error(f"Failed to create screenshot: {e}")
             return None
 
-        if success:
-            logger.info(f"Screenshot created at: {full_path}")
-        return _return_path
-        
+        logger.info(f"Screenshot created at: {full_path}")
+        return full_path.replace("/var/www/mielenosoitukset_fi/mielenosoitukset_fi/", "").replace("../", "/")
+
     except Exception as e:
         logger.error(f"Failed to create screenshot: {e}")
         return None

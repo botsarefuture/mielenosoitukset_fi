@@ -262,18 +262,48 @@ def create_app() -> Flask:
     
     # if env var forcerun
     if os.environ.get("FORCERUN") or (
-        len(sys.argv) == 2 and sys.argv[1] == "force"
+        len(sys.argv) > 1 and sys.argv[1] == "force"
     ):  # Set this via: export FORCERUN=1
         # To unset: unset FORCERUN
         
+        # Usage: python3 run.py force [task1,task2,...]
+        available_tasks = {
+            "cl_main": cl_main,
+            "repeat_main": repeat_main,
+            "update_main": update_main,
+            "hide_past": hide_past,
+            "prep": prep,
+            "run_preview": run_preview,
+        }
 
-        with app.app_context():
-            cl_main()
-            repeat_main()
-            update_main()
-            hide_past()
-            prep()
-            run_preview()
+        def run_selected_tasks(selected):
+            """Run selected maintenance tasks.
+
+            Parameters
+            ----------
+            selected : list of str
+            List of task names to run.
+            """
+            with app.app_context():
+                for task_name in selected:
+                    if task_name == "run_preview":
+                        i = input("Run force update? (y/n): ")
+                        if i.lower() in ["y", "n"]:
+                            available_tasks[task_name](force=(i.lower() == "y"))
+                        else:
+                            print("Invalid input, not running force update.")
+                    elif task_name in available_tasks:
+                        available_tasks[task_name]()
+                    else:
+                        print(f"Unknown task: {task_name}")
+
+        if len(sys.argv) > 2:
+            # User specified tasks as comma-separated list
+            tasks = [t.strip() for t in sys.argv[2].split(",")]
+            run_selected_tasks(tasks)
+        else:
+            # Run all tasks
+            run_selected_tasks(list(available_tasks.keys()))
         exit()
 
     # Create and configure the scheduler

@@ -50,12 +50,28 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
                 raise ValueError("Invalid demonstration data provided.")
 
         try:
+            # Prepare a copy of the demo data for the template to avoid mutating the source
+            demo_for_template = dict(demo_data)
+            # Format date to Finnish format DD.MM.YYYY if possible
+            try:
+                if demo_for_template.get("date"):
+                    from datetime import datetime as _dt
+
+                    try:
+                        parsed = _dt.strptime(demo_for_template["date"], "%Y-%m-%d")
+                        demo_for_template["date"] = parsed.strftime("%d.%m.%Y")
+                    except Exception:
+                        # leave date as-is if it can't be parsed
+                        pass
+            except Exception:
+                pass
+
             env = Environment(
                 loader=FileSystemLoader(os.path.join(_CUR_DIR, '../templates')),
                 autoescape=select_autoescape(['html', 'xml'])
             )
             template = env.get_template("preview.html")
-            html_content = template.render(demo=demo_data)
+            html_content = template.render(demo=demo_for_template)
         except Exception as e:
             logger.error(f"Failed to render HTML content: {e}")
             return None

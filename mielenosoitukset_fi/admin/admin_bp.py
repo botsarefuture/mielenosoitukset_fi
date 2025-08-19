@@ -289,9 +289,9 @@ def validate_mfa_token(token):
     # Implement your MFA token validation logic here
     return True  # Placeholder for actual validation logic
 from datetime import timedelta
-
 @admin_bp.route("/per_demo_analytics/<demo_id>")
 def demo_analytics(demo_id):
+    from mielenosoitukset_fi.utils.classes import Demonstration
     try:
         demo_oid = ObjectId(demo_id)
     except Exception:
@@ -302,36 +302,40 @@ def demo_analytics(demo_id):
         abort(404, "No analytics data found")
 
     analytics = anal.get("analytics", {})
-    from mielenosoitukset_fi.utils.classes import Demonstration
-
     demo_data = mongo["demonstrations"].find_one({"_id": demo_oid})
     demo = Demonstration.from_dict(demo_data)
-    
+
     now_utc = datetime.now(timezone.utc)
     today_str = now_utc.strftime("%Y-%m-%d")
 
-    # --- Views per minute for today (existing) ---
+    # --- Initialize variables ---
     total_views = 0
     views_today = 0
     labels = []
     data = []
 
+    # --- Per minute today ---
     day_data = analytics.get(today_str, {})
-
     for hour in range(24):
         hour_str = str(hour)
         hour_data = day_data.get(hour_str, {})
         for minute in range(60):
             minute_str = str(minute)
             count = hour_data.get(minute_str, 0)
-            total_views += count
+            total_views += count  # will sum all-time later
             views_today += count
             labels.append(f"{hour:02d}:{minute:02d}")
             data.append(count)
 
+    # --- Add total views from all previous days ---
+    for day_str, day_hours in analytics.items():
+        if day_str != today_str:
+            for hour_data in day_hours.values():
+                total_views += sum(hour_data.values())
+
     avg_views_per_minute = (views_today / 1440) if views_today else 0
 
-    # --- NEW: Views per day for last 30 days ---
+    # --- Views per day last 30 days ---
     daily_labels = []
     daily_data = []
     for i in range(29, -1, -1):  # 30 days ago -> today
@@ -341,14 +345,13 @@ def demo_analytics(demo_id):
         day_hours = analytics.get(day_str, {})
         for hour_data in day_hours.values():
             day_views += sum(hour_data.values())
-        daily_labels.append(day.strftime("%d.%m"))  # day.month format
+        daily_labels.append(day.strftime("%d.%m"))
         daily_data.append(day_views)
 
-    # --- NEW: Views per week for last 52 weeks ---
+    # --- Views per week last 52 weeks ---
     weekly_labels = []
     weekly_data = []
 
-    # Create a helper to get Monday of the week for any date
     def get_monday(date):
         return date - timedelta(days=date.weekday())
 
@@ -357,11 +360,9 @@ def demo_analytics(demo_id):
     for i in range(51, -1, -1):  # 52 weeks ago -> this week
         week_start = monday_today - timedelta(weeks=i)
         week_end = week_start + timedelta(days=6)
-
         week_label = f"{week_start.strftime('%d.%m')} - {week_end.strftime('%d.%m')}"
         weekly_labels.append(week_label)
 
-        # sum views for each day in the week
         week_views = 0
         for d in range(7):
             day = week_start + timedelta(days=d)
@@ -369,9 +370,9 @@ def demo_analytics(demo_id):
             day_hours = analytics.get(day_str, {})
             for hour_data in day_hours.values():
                 week_views += sum(hour_data.values())
-
         weekly_data.append(week_views)
 
+    # --- Render template ---
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}per_demo_analytics.html",
         analytics=anal,
@@ -387,6 +388,155 @@ def demo_analytics(demo_id):
         demo=demo
     )
 
+
+from datetime import datetime, timedelta, timezone
+from collections import defaultdict
+from bson.objectid import ObjectId
+import math
+
+def recommend_demos_no_user(top_n=5, weights=None):
+    if weights is None:
+        weights = {"trending": 0.5, "popularity": 0.3, "recency": 0.1, "category": 0.1}
+
+    now_utc = datetime.now(timezone.utc)
+    yesterday_utc = now_utc - timedelta(days=1)
+
+    demo_scores = {}
+    category_trending = defaultdict(int)
+
+    # --- Step 1: Aggregate analytics and build category trending ---
+    for doc in mongo["d_analytics"].find({}, {"analytics": 1}):
+        demo_id = str(doc["_id"])
+        analytics = doc.get("analytics", {})
+
+        trending_views = 0
+        total_views = 0
+
+        for day_str, hours in analytics.items():
+            for hour_str, minutes in hours.items():
+                for minute_str, count in minutes.items():
+                    try:
+                        dt = datetime.strptime(f"{day_str} {hour_str}:{minute_str}", "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+                        total_views += count
+                        if yesterday_utc <= dt <= now_utc:
+                            trending_views += count
+                    except Exception:
+                        continue
+
+        demo_scores[demo_id] = {"trending": trending_views, "popularity": total_views}
+
+        # Fetch demo tags
+        demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)}, {"tags": 1, "created_at": 1})
+        tags = demo.get("tags", []) if demo else []
+        demo_scores[demo_id]["tags"] = tags
+        demo_scores[demo_id]["created_at"] = demo.get("created_at", now_utc - timedelta(days=30)) if demo else now_utc - timedelta(days=30)
+
+        for tag in tags:
+            category_trending[tag] += trending_views
+
+    # Normalize trending and popularity
+    max_trending = max([v["trending"] for v in demo_scores.values()] + [1])
+    max_popularity = max([v["popularity"] for v in demo_scores.values()] + [1])
+    max_category = max(category_trending.values() or [1])
+
+    for demo_id, scores in demo_scores.items():
+        scores["trending"] /= max_trending
+        scores["popularity"] /= max_popularity
+        scores["recency"] = math.exp(-(now_utc - scores["created_at"]).days / 30)
+        scores["category"] = sum(category_trending[tag] for tag in scores["tags"]) / max_category
+
+        scores["final_score"] = sum(scores[k] * weights[k] for k in weights)
+
+    # Sort demos by final score
+    top_demos = sorted(demo_scores.items(), key=lambda x: x[1]["final_score"], reverse=True)[:top_n]
+
+    # Return enriched results
+    results = []
+    for d_id, scores in top_demos:
+        demo = mongo.demonstrations.find_one({"_id": ObjectId(d_id)}, {"title": 1})
+        results.append({
+            "demo_id": d_id,
+            "title": demo.get("title", "Unknown") if demo else "Unknown",
+            "score": scores["final_score"]
+        })
+
+    return results
+
+# route that returns the result of the recommend demos thin
+
+@admin_bp.route("/api/demos/recommendations")
+@login_required
+def api_demos_recommendations():
+    """
+    Get demo recommendations for a user.
+    """
+    recommendations = recommend_demos_no_user()
+    return jsonify(recommendations)
+
+from flask import jsonify
+from datetime import datetime, timedelta, timezone
+@admin_bp.route("/api/demos/nousussa")
+@login_required
+@admin_required
+@permission_required("VIEW_ANALYTICS")
+def api_demos_nousussa():
+    """
+    List demos that are 'nousussa' (rising) — sorted by views in the last 24 hours.
+    Accepts optional query parameter:
+      - limit: number of demos to return (default 5)
+    """
+    now_utc = datetime.now(timezone.utc)
+    yesterday_utc = now_utc - timedelta(days=1)
+
+    # Get limit from query string, default to 5
+    try:
+        limit = int(request.args.get("limit", 5))
+        limit = max(1, min(limit, 50))  # optional: cap at 50 to prevent abuse
+    except ValueError:
+        limit = 5
+
+    demo_views = []
+
+    # Fetch all demos analytics
+    for doc in mongo["d_analytics"].find({}, {"analytics": 1, "_id": 1}):
+        demo_id = str(doc["_id"])
+        analytics = doc.get("analytics", {})
+
+        views_last_24h = 0
+
+        for day_str, hours in analytics.items():
+            for hour_str, minutes in hours.items():
+                for minute_str, count in minutes.items():
+                    try:
+                        dt = datetime.strptime(f"{day_str} {hour_str}:{minute_str}", "%Y-%m-%d %H:%M")
+                        dt = dt.replace(tzinfo=timezone.utc)
+                        if yesterday_utc <= dt <= now_utc:
+                            views_last_24h += count
+                    except Exception:
+                        continue
+
+        if views_last_24h > 0:
+            demo_views.append({
+                "demo_id": demo_id,
+                "views_last_24h": views_last_24h
+            })
+
+    # Sort demos descending by views_last_24h
+    demo_views.sort(key=lambda x: x["views_last_24h"], reverse=True)
+
+    # Limit results
+    demo_views = demo_views[:limit]
+
+    # Optionally, fetch demo names/titles
+    for d in demo_views:
+        demo_data = mongo["demonstrations"].find_one({"_id": ObjectId(d["demo_id"])}, {"title": 1})
+        d["title"] = demo_data.get("title") if demo_data else "Unknown"
+
+    return jsonify({
+        "demos": demo_views,
+        "generated_at": now_utc.isoformat(),
+        "limit": limit
+    })
 
 
 @admin_bp.route("/analytics/overall_24h")

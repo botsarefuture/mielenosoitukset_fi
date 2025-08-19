@@ -48,9 +48,35 @@
     margin-bottom: 2rem;
   }
 
+  /* Download buttons */
+  .dashboard-actions {
+    margin: 1rem 0 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .dashboard-actions button {
+    background-color: var(--primary_color);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .dashboard-actions button:hover {
+    background-color: #ff6699; /* a cute hover pink */
+  }
+
   /* Responsive */
   @media (max-width: 600px) {
     .summary {
+      flex-direction: column;
+    }
+    .dashboard-actions {
       flex-direction: column;
     }
   }
@@ -70,27 +96,45 @@
       <h3>{{ views_today }}</h3>
       <p>{{ _('Näytöt tänään') }}</p>
     </div>
-    {# Removed unique_users as it's not passed #}
     <div class="summary-item">
       <h3>{{ avg_views_per_minute }}</h3>
       <p>{{ _('Keskimäärin näytöksiä/minuutti') }}</p>
     </div>
   </div>
 
+  <div class="dashboard-actions">
+    <button onclick="downloadChart('viewsPerMinuteChart', 'views_per_minute.png')">
+      {{ _('Lataa per minuutti PNG') }}
+    </button>
+    <button onclick="downloadChart('viewsPerDayChart', 'views_per_day.png')">
+      {{ _('Lataa per päivä PNG') }}
+    </button>
+    <button onclick="downloadChart('viewsPerWeekChart', 'views_per_week.png')">
+      {{ _('Lataa per viikko PNG') }}
+    </button>
+    <button onclick="downloadAllCharts()">
+      {{ _('Lataa kaikki PNG') }}
+    </button>
+    <button onclick="downloadDashboard()">
+    {{ _('Lataa koko dashboard PNG') }}
+</button>
+
+  </div>
+
   <!-- Per minute today -->
-  <div class="dashboard-panel">
+  <div class="dashboard-panel chart-container">
     <h3>{{ _('Näytöt per minuutti tänään') }}</h3>
     <canvas id="viewsPerMinuteChart" width="800" height="300"></canvas>
   </div>
 
   <!-- Per day last 30 days -->
-  <div class="dashboard-panel">
+  <div class="dashboard-panel chart-container">
     <h3>{{ _('Näytöt päivittäin (viimeiset 30 päivää)') }}</h3>
     <canvas id="viewsPerDayChart" width="800" height="300"></canvas>
   </div>
 
   <!-- Per week last 52 weeks -->
-  <div class="dashboard-panel">
+  <div class="dashboard-panel chart-container">
     <h3>{{ _('Näytöt viikoittain (viimeiset 52 viikkoa)') }}</h3>
     <canvas id="viewsPerWeekChart" width="800" height="300"></canvas>
   </div>
@@ -98,143 +142,122 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-
-    function isDarkMode() {
+function isDarkMode() {
   return document.documentElement.classList.contains('dark');
 }
 
-  // Per minute today data
-  const perMinuteLabels = {{ chart_labels|tojson }};
-  const perMinuteData = {{ chart_data|tojson }};
+textColor = isDarkMode() ? "#fff" : "#666";
 
-  // Per day last 30 days data
-  const perDayLabels = {{ daily_labels|tojson }};
-  const perDayData = {{ daily_data|tojson }};
+// --- Data ---
+const perMinuteLabels = {{ chart_labels|tojson }};
+const perMinuteData = {{ chart_data|tojson }};
+const perDayLabels = {{ daily_labels|tojson }};
+const perDayData = {{ daily_data|tojson }};
+const perWeekLabels = {{ weekly_labels|tojson }};
+const perWeekData = {{ weekly_data|tojson }};
 
-  // Per week last 52 weeks data
-  const perWeekLabels = {{ weekly_labels|tojson }};
-  const perWeekData = {{ weekly_data|tojson }};
-  
-  textColor = isDarkMode() ? "#fff" : "#666";
+// --- Chart default options ---
+const commonOptions = {
+  responsive: true,
+  backgroundColor: '#fff', // ensures background when exporting
+  scales: {
+    y: { beginAtZero: true, title: { display: true, text: '{{ _("Näytöt") }}' }, ticks: { color: textColor } },
+    x: { ticks: { color: textColor } }
+  },
+  plugins: { legend: { labels: { color: textColor } }, tooltip: { mode: 'index', intersect: false } },
+  interaction: { mode: 'nearest', axis: 'x', intersect: false }
+};
 
-  Chart.defaults.color = `${textColor}`;
-  // Common chart options base
-  const commonOptions = {
-    responsive: true,
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: { display: true, text: '{{ _("Näytöt") }}' },
-        ticks: { color: `${textColor}` }
-      },
-      x: {
-        ticks: { color: `${textColor}` }
-      }
-    },
-    plugins: {
-      legend: {
-        labels: { color: `${textColor}` }
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-      }
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
-    }
-  };
-
-  // Chart 1: per minute today
-  const ctxMinute = document.getElementById('viewsPerMinuteChart').getContext('2d');
-  new Chart(ctxMinute, {
-    type: 'line',
-    data: {
-      labels: perMinuteLabels,
-      datasets: [{
-        label: '{{ _("Näytöt per minuutti") }}',
-        data: perMinuteData,
-        borderColor: 'rgba(255, 99, 132, 0.8)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 0,
-        color: `${textColor}`
-      }]
-    },
-    options: {
-      ...commonOptions,
-      scales: {
-        ...commonOptions.scales,
-        x: {
-          ...commonOptions.scales.x,
-          title: { display: true, text: '{{ _("Aika (tunnit:minuutit)") }}' },
-          ticks: { maxTicksLimit: 12, color: `${textColor}` }
+// Helper to add background to chart for PNG export
+function setChartBackground(chart, color = '#fff') {
+    chart.options.plugins.background = {
+        beforeDraw: (chart) => {
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, chart.width, chart.height);
+            ctx.restore();
         }
-      }
-    }
-  });
+    };
+    chart.update();
+}
 
-  // Chart 2: per day last 30 days
-  const ctxDay = document.getElementById('viewsPerDayChart').getContext('2d');
-  new Chart(ctxDay, {
-    type: 'bar',
-    data: {
-      labels: perDayLabels,
-      datasets: [{
-        label: '{{ _("Näytöt per päivä") }}',
-        data: perDayData,
-        backgroundColor: 'rgba(54, 162, 235, 0.6)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1,
-        borderRadius: 3,
-        color: `${textColor}`
+// --- Charts ---
+const ctxMinute = document.getElementById('viewsPerMinuteChart').getContext('2d');
+const perMinuteChart = new Chart(ctxMinute, {
+  type: 'line',
+  data: { labels: perMinuteLabels, datasets: [{ label: '{{ _("Näytöt per minuutti") }}', data: perMinuteData, borderColor: 'rgba(255, 99, 132, 0.8)', backgroundColor: 'rgba(255, 99, 132, 0.2)', fill: true, tension: 0.3, pointRadius: 0 }] },
+  options: commonOptions
+});
+setChartBackground(perMinuteChart);
 
-      }]
-    },
-    options: {
-      ...commonOptions,
-      scales: {
-        ...commonOptions.scales,
-        x: {
-          ...commonOptions.scales.x,
-          title: { display: true, text: '{{ _("Päivämäärä") }}' },
-          ticks: { maxTicksLimit: 15, color: `${textColor}` }
-        }
-      }
-    }
-  });
+const ctxDay = document.getElementById('viewsPerDayChart').getContext('2d');
+const perDayChart = new Chart(ctxDay, {
+  type: 'bar',
+  data: { labels: perDayLabels, datasets: [{ label: '{{ _("Näytöt per päivä") }}', data: perDayData, backgroundColor: 'rgba(54, 162, 235, 0.6)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1, borderRadius: 3 }] },
+  options: commonOptions
+});
+setChartBackground(perDayChart);
 
-  // Chart 3: per week last 52 weeks
-  const ctxWeek = document.getElementById('viewsPerWeekChart').getContext('2d');
-  new Chart(ctxWeek, {
-    type: 'bar',
-    data: {
-      labels: perWeekLabels,
-      datasets: [{
-        label: '{{ _("Näytöt per viikko") }}',
-        data: perWeekData,
-        backgroundColor: 'rgba(255, 206, 86, 0.6)',
-        borderColor: 'rgba(255, 206, 86, 1)',
-        borderWidth: 1,
-        borderRadius: 3,
-                color: `${textColor}`
+const ctxWeek = document.getElementById('viewsPerWeekChart').getContext('2d');
+const perWeekChart = new Chart(ctxWeek, {
+  type: 'bar',
+  data: { labels: perWeekLabels, datasets: [{ label: '{{ _("Näytöt per viikko") }}', data: perWeekData, backgroundColor: 'rgba(255, 206, 86, 0.6)', borderColor: 'rgba(255, 206, 86, 1)', borderWidth: 1, borderRadius: 3 }] },
+  options: commonOptions
+});
+setChartBackground(perWeekChart);
+function downloadChart(chartId, filename, bgColor = '#121212') { // dark bg
+    const chartCanvas = document.getElementById(chartId);
+    const ctx = chartCanvas.getContext('2d');
 
-      }]
-    },
-    options: {
-      ...commonOptions,
-      scales: {
-        ...commonOptions.scales,
-        x: {
-          ...commonOptions.scales.x,
-          title: { display: true, text: '{{ _("Viikko") }}' },
-          ticks: { maxTicksLimit: 15, color: `${textColor}` }
-        }
-      }
-    }
-  });
+    // Save current canvas
+    const backup = ctx.getImageData(0, 0, chartCanvas.width, chartCanvas.height);
+
+    // Draw dark background
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+    // Export PNG
+    const link = document.createElement('a');
+    link.href = chartCanvas.toDataURL('image/png');
+    link.download = filename;
+    link.click();
+
+    // Restore original canvas
+    ctx.putImageData(backup, 0, 0);
+}
+
+// Download all charts with dark background
+function downloadAllCharts() {
+    downloadChart('viewsPerMinuteChart', 'views_per_minute.png', '#121212');
+    downloadChart('viewsPerDayChart', 'views_per_day.png', '#121212');
+    downloadChart('viewsPerWeekChart', 'views_per_week.png', '#121212');
+}
+
 </script>
+<!-- html2canvas library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+function downloadDashboard() {
+    const container = document.querySelector('.dashboard-container');
+    // Temporarily hide the action buttons
+    const buttons = container.querySelector('.dashboard-actions');
+    buttons.style.display = 'none';
+
+    // Export
+    html2canvas(container, { backgroundColor: '#121212' }).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/png');
+        link.download = 'dashboard.png';
+        link.click();
+
+        // Restore buttons
+        buttons.style.display = '';
+    });
+}
+</script>
+
 {% endblock %}

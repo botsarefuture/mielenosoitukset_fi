@@ -4,46 +4,75 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Primary Meta Tags -->
+  <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
   <meta name="description" content="Mielenosoitukset.fi - Tietoa mielenosoituksista ja aktivismista Suomessa." />
   <meta name="keywords" content="mielenosoitukset, aktivismi, Suomi" />
   <meta name="robots" content="index, follow" />
   <meta name="author" content="Mielenosoitukset.fi" />
   <meta name="theme-color" content="#007bff" />
+
+  <!-- Favicons -->
   <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon_apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon_favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/icon_favicon-16x16.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="/static/icons/icon_favicon-48x48.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="/static/icons/icon_favicon-96x96.png">
   <link rel="manifest" href="/manifest.json">
   <link rel="shortcut icon" href="/static/icons/favicon.ico" type="image/x-icon">
-  <meta name="theme-color" content="#0047AB">
 
-  {% block meta %}
-  <!-- meta content will be inserted here -->
-  {% endblock %}
-
+  <!-- Alternate URLs for i18n -->
   {% for lang_code, url in alternate_urls.items() %}
-  {% if lang_code != session.get('locale', 'fi') %}
-
-  <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
-
-  {% else %}
-  {% endif %}
+    {% if lang_code != session.get('locale', 'fi') %}
+      <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+    {% endif %}
   {% endfor %}
 
-  <title>{% block title %}Mielenosoitukset.fi{% endblock %}</title>
+  <!-- Open Graph / Facebook -->
+  <meta property="og:title" content="{% block og_title %}Mielenosoitukset.fi{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
+  <meta property="og:image" content="{% block og_image %}/static/images/og-default.jpg{% endblock %}" />
+  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mielenosoitukset.fi" />
+  <meta property="og:locale" content="{{ session.get('locale', 'fi') }}_FI" />
+
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{% block twitter_title %}Mielenosoitukset.fi{% endblock %}" />
+  <meta name="twitter:description" content="{% block twitter_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
+  <meta name="twitter:image" content="{% block twitter_image %}/static/images/og-default.jpg{% endblock %}" />
+  <meta name="twitter:site" content="@Mielenosoitukset" />
+  <meta name="twitter:creator" content="@Mielenosoitukset" />
+  <meta name="twitter:image:alt" content="Mielenosoituksen kuva" />
+
+  <!-- Article / Optional -->
+  {% if article_tags %}
+    {% for tag in article_tags %}
+      <meta property="article:tag" content="{{ tag }}" />
+    {% endfor %}
+  {% endif %}
+  {% if article_author %}
+    <meta property="article:author" content="{{ article_author }}" />
+  {% endif %}
+  {% if article_section %}
+    <meta property="article:section" content="{{ article_section }}" />
+  {% endif %}
+
+  {% block meta %}{% endblock %}
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/flash.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/header.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}" />
-  {% block styles %} {% endblock %}
+  {% block styles %}{% endblock %}
 
-  <!-- Matomo -->
+  <!-- Scripts -->
   <script src="{{ url_for('static', filename='js/matomo.js') }}"></script>
   <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 </head>
+
 
 <body>
   <!-- Scrolling Marquee Message Section -->

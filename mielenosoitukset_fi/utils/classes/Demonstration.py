@@ -1,3 +1,4 @@
+import string
 from .BaseModel import BaseModel
 from .Organizer import Organizer
 from mielenosoitukset_fi.utils.database import get_database_manager
@@ -143,7 +144,8 @@ class Demonstration(BaseModel):
         ID of the demonstration this one is merged into. Defaults to None.
     cover_picture : str, optional
         URL of the cover picture for the event. Defaults to None.
-
+    formatted_date: str, optional
+        Formatted date for the event. Defaults to None.
     Notes
     -----
     .. deprecated:: 1.6.0
@@ -201,7 +203,8 @@ class Demonstration(BaseModel):
         cover_picture: str = None,  # Added field
         created_until = None,
         running_number: int = None,
-        slug: str = None
+        slug: str = None,
+        formatted_date: str = None
     ):
         """
         Initialize a new demonstration event.
@@ -273,7 +276,8 @@ class Demonstration(BaseModel):
             ID of the demonstration this one is merged into. Defaults to None.
         cover_picture : str, optional
             URL of the cover picture for the event. Defaults to None.
-
+        formatted_date: str, optional
+            Formatted date for the event. Defaults to None.
         Notes
         -----
         .. deprecated:: 1.6.0
@@ -292,6 +296,8 @@ class Demonstration(BaseModel):
         self.end_time = self._to_iso8601_time(end_time)
         if self.end_time != end_time:
             self.save_flag = True
+
+        self.formatted_date = self._format_date()
 
         self.save_flag = save_flag
 
@@ -388,6 +394,16 @@ class Demonstration(BaseModel):
         self.validate_fields(
             title, date, start_time, city, address
         )  # Validate required fields
+
+
+    def _format_date(self):
+        if self.date:
+            try:
+                return datetime.strptime(self.date, '%Y-%m-%d').strftime('%d.%m.%Y')
+            except ValueError:
+                return self.date  # fallback if the format is wrong
+        return None
+
 
     def alias_fix(self):
         """

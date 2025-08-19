@@ -2,7 +2,6 @@ import copy
 import os
 import re
 import json
-from folium import Element
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date

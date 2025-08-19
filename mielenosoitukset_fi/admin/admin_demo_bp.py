@@ -1,3 +1,4 @@
+import sys
 from flask import abort
 """
 Edit History and Diff Views
@@ -436,16 +437,28 @@ def demo_control():
     search_query = request.args.get("search", "").lower()
     approved_only = request.args.get("approved", "false").lower() == "true"
     show_past = request.args.get("show_past", "false").lower() == "true"
+    show_hidden = request.args.get("show_hidden", "false").lower() == "true"
+    
     today = date.today()
 
     # Construct the base query to fetch demonstrations
     # Remove the "approved" filter to allow for dynamic filtering based on user input
     filter = DEMO_FILTER.copy()  # Copy the base filter to avoid modifying the original
+    
     del filter["approved"]
     query = filter
 
+    if show_hidden:
+        del query['$or']  # Remove the hide condition if showing hidden demos
+    
     if approved_only:
         query["approved"] = True
+        
+    if not show_hidden:
+        # Only include documents where hide is False or not set
+        query["$or"] = [{"hide": False}, {"hide": {"$exists": False}}]
+        
+    
 
     if not current_user.global_admin:
         # If the user does not have the global right to view all demos,
@@ -546,6 +559,15 @@ def filter_demonstrations(query, search_query, show_past, today):
             for field in ["title", "city", "address"]
         )
     ]
+    
+   
+    
+    # lets calculate the amount of which of those demos are in the past
+    past_demos_count = sum(
+        1 for demo in filtered_demos
+        if datetime.strptime(demo["date"], "%Y-%m-%d").date() < today
+    )
+  
 
     return filtered_demos
 

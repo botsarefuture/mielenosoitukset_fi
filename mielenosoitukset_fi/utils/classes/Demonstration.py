@@ -361,9 +361,14 @@ class Demonstration(BaseModel):
         ]
 
         self.in_past = in_past  # Whether or not in past
-        if self.in_past == True:
-            self.hide = True
-            self.save_flag = True
+        
+        # FIXED: 19.2.2025
+        # Old logic was to hide all the demonstrations that are in the past
+        # This is no longer the case, as we want to keep past demonstrations visible
+        # If issues arise, this might be reverted        
+        #if self.in_past == True:
+            #self.hide = True
+            #self.save_flag = True
 
         self.aliases = aliases or []
         self.alias_fix()

@@ -105,58 +105,7 @@ tr.fade‑out {
           newMessage.classList.add("flash-info");
           newMessage.textContent = "{{ _('Mielenosoitus hyväksytty onnistuneesti!') }}";
           flashMessageList.appendChild(newMessage);
-
           acceptSty(demoId);
-
-          // Optionally, you can refresh the page or update the UI
-          //location.reload(); // Reload the page to reflect changes
-        } else {
-          newMessage.classList.add("flash-error");
-          newMessage.textContent =
-            "{{ _('Virhe: ') }}" + (data.message || "{{ _('Tuntematon virhe.') }}");
-          flashMessageList.appendChild(newMessage);
-        }
-
-        // Show the flash messages and set a timeout to hide them
-        flashMessagesDiv.style.display = "block";
-        setTimeout(() => {
-          flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
-        }, 3000);
-      })
-      .catch((error) => {
-        const flashMessagesDiv = document.getElementById("flash-messages");
-        const flashMessageList = flashMessagesDiv.querySelector("ul");
-        const newMessage = document.createElement("li");
-
-        newMessage.classList.add("flash-error");
-        newMessage.textContent = "{{ _('Yhteysvirhe, yritä uudelleen.') }}";
-        flashMessageList.appendChild(newMessage);
-        flashMessagesDiv.style.display = "block";
-        setTimeout(() => {
-          flashMessagesDiv.style.display = "none"; // Hide after 3 seconds
-        }, 3000);
-        console.error("Virhe:", error);
-      });
-  }
-
-  function showSubmitterInfoModal(demoId) {
-    // Fetch submitter info using demoId
-    fetch(`/admin/demo/get_submitter_info/${demoId}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.status === "OK") {
-          // Populate modal content with submitter info
-          const submitterInfoContent =`
-            <p><strong>{{ _('Nimi') }}:</strong> ${data.submitter.name}</p>
-            <p><strong>{{ _('Sähköposti') }}:</strong> ${data.submitter.email}</p>
-            <p><strong>{{ _('Puhelin') }}:</strong> ${data.submitter.phone || '{{ _('Ei saatavilla') }}'
-        }</p >
-          <p><strong>{{ _('Organisaatio') }}:</strong> ${data.submitter.organization || '{{ _('Ei saatavilla') }}'}</p>
-         `;
-          document.getElementById("submitter-info-content").innerHTML = submitterInfoContent;
-
-          // Show the modal
-          document.getElementById("submitterInfoModal").classList.remove("hidden");
         } else {
           // Handle error (e.g., show a flash message)
           console.error("Error fetching submitter info:", data.message);
@@ -165,10 +114,6 @@ tr.fade‑out {
       .catch((error) => {
         console.error("Error:", error);
       });
-  }
-
-  function closeSubmitterInfoModal() {
-    document.getElementById("submitterInfoModal").classList.add("hidden");
   }
 </script>
 
@@ -266,83 +211,41 @@ tr.fade‑out {
             %}<i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
 
           <td class="actions-cell">
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
+              </button>
+              <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
+                {% if not demo.approved %}
+                  {% if current_user.has_permission("ACCEPT_DEMO") %}
+                    <li><button class="dropdown-item" type="button" onclick="acceptDemo('{{ demo._id }}')"><i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</button></li>
+                  {% else %}
+                    <li><span class="dropdown-item disabled"><i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</span></li>
+                  {% endif %}
+                {% endif %}
 
-            {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-            <button class="button accept-button" onclick="acceptDemo('{{ demo._id }}')">
-              <i class="fa-solid fa-check"></i>{{ _('Hyväksy') }}
-            </button>
-            {% elif not demo.approved %}
-            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
-              <i class="fas fa-ban"></i>{{ _('Hyväksy') }}
-            </a>
-            {% endif %}
+                {% if current_user.global_admin %}
+                  <li><button class="dropdown-item" type="button" onclick="recommendDemo('{{ demo._id }}', this)"><i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}</button></li>
+                {% endif %}
 
-            {# Recommend button for global admins (superusers) #}
-            {% if current_user.global_admin %}
-            <button class="button recommend-button" onclick="recommendDemo('{{ demo._id }}', this)">
-              <i class="fa-solid fa-star"></i>{{ _('Suosittele') }}
-            </button>
-            {% endif %}
-<script>
-  function recommendDemo(demoId, btn) {
-    if (!confirm("{{ _('Haluatko varmasti suositella tätä mielenosoitusta?') }}")) return;
-    btn.disabled = true;
-    fetch(`/admin/demo/recommend_demo/${demoId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-      redirect: "manual"
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "OK") {
-          btn.innerHTML = '<i class="fa-solid fa-star"></i> {{ _('Suositeltu!') }}';
-          btn.classList.add('btn-success');
-        } else {
-          alert(data.message || '{{ _('Virhe suositellessa.') }}');
-          btn.disabled = false;
-        }
-      })
-      .catch(() => {
-        alert("{{ _('Yhteysvirhe, yritä uudelleen.') }}");
-        btn.disabled = false;
-      });
-  }
-</script>
+                {% if current_user.has_permission("EDIT_DEMO") %}
+                  <li><a class="dropdown-item" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>
+                {% endif %}
 
-            {% if current_user.has_permission("EDIT_DEMO") %}
-            <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}" class="button edit-button">
-              <i class="fas fa-edit"></i>{{ _('Muokkaa') }}
-            </a>
-            {% else %}
-            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
-              <i class="fas fa-ban"></i>{{ _('Muokkaa') }}
-            </a>
-            {% endif %}
+                {% if current_user.has_permission("VIEW_DEMO") %}
+                  <li><a class="dropdown-item" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"><i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}</a></li>
+                  <li><button class="dropdown-item" type="button" onclick="showSubmitterInfoModal('{{ demo._id }}')"><i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}</button></li>
+                {% endif %}
 
-            {% if current_user.has_permission("VIEW_DEMO") %}
-            <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="button view-button">
-              <i class="fa-solid fa-eye"></i>{{ _('Katsele') }}
-            </a>
-            <button type="button" class="button info-button" onclick="showSubmitterInfoModal('{{ demo._id }}')">
-              <i class="fa-solid fa-user"></i>{{ _('Ilmoittaja') }}
-            </button>
-            {% else %}
-            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
-              <i class="fas fa-ban"></i>{{ _('Katsele') }}
-            </a>
-            {% endif %}
+                <li><a class="dropdown-item" href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}"><i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}</a></li>
 
-            {% if current_user.has_permission("DELETE_DEMO") %}
-            <button type="button" class="button delete-button"
-              onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
-              <i class="fas fa-trash-alt"></i>{{ _('Poista') }}
-            </button>
-            {% else %}
-            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta">
-              <i class="fas fa-ban"></i>{{ _('Poista') }}
-            </a>
-            {% endif %}
+                {% if current_user.has_permission("DELETE_DEMO") %}
+                  <li><button class="dropdown-item text-danger" type="button" onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"><i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</button></li>
+                {% else %}
+                  <li><span class="dropdown-item disabled"><i class="fas fa-ban me-2"></i>{{ _('Poista') }}</span></li>
+                {% endif %}
+              </ul>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -545,20 +448,22 @@ function animateAndRemoveRow(rowEl) {
         const content = document.getElementById('submitter-info-content');
         if (data.status === 'OK') {
           const s = data.submitter;
-          content.innerHTML =`
-          < p > <strong>{{ _('Nimi') }}:</strong> ${ s.name }</p >
-            <p><strong>{{ _('Sähköposti') }}:</strong> ${s.email}</p>
-            <p><strong>{{ _('Puhelin') }}:</strong> ${s.phone || '{{ _("Ei saatavilla") }}'}</p>
-            <p><strong>{{ _('Organisaatio') }}:</strong> ${s.organization || '{{ _("Ei saatavilla") }}'}</p>
-       `;
+          // Support both older and newer response shapes: sample uses submitter_name / submitter_email / submitter_role
+          content.innerHTML = `
+            <p><strong>{{ _('Nimi') }}:</strong> ${s.submitter_name || s.name || ''}</p>
+            <p><strong>{{ _('Sähköposti') }}:</strong> ${s.submitter_email || s.email || ''}</p>
+            <p><strong>{{ _('Rooli') }}:</strong> ${s.submitter_role || s.role || '{{ _("Ei saatavilla") }}'}</p>
+            <p><strong>{{ _('Hyväksynyt ehdot') }}:</strong> ${(s.accept_terms === true || s.accept_terms === 'true') ? '{{ _("Kyllä") }}' : '{{ _("Ei") }}'}</p>
+            <p><strong>{{ _('Ilmoitettu') }}:</strong> ${s.submitted_at || '{{ _("Ei saatavilla") }}'}</p>
+          `;
         } else {
-          content.innerHTML =`< p class="text-danger" > ${ data.message || '{{ _("Tietoja ei löytynyt.") }}' }</p >`;
+          content.innerHTML = `<p class="text-danger">${data.message || '{{ _("Tietoja ei löytynyt.") }}'}</p>`;
         }
         submitterModal.show();
       })
       .catch(() => {
         const content = document.getElementById('submitter-info-content');
-        content.innerHTML =`< p class="text-danger" > {{ _("Virhe haettaessa tietoja.") }}</p >`;
+        content.innerHTML = `<p class="text-danger">{{ _("Virhe haettaessa tietoja.") }}</p>`;
         submitterModal.show();
       });
   };
@@ -572,14 +477,40 @@ function animateAndRemoveRow(rowEl) {
 });
 
 
-function animateAndRemoveRow(rowEl) {
-  if (!rowEl) return;
-  rowEl.classList.add('fade-out');
-  // after the transition completes, nuke the node for good
-  rowEl.addEventListener('transitionend', () => rowEl.remove(), { once:true });
-}
+// animateAndRemoveRow is implemented earlier (kept single canonical implementation)
 
 
+  </script>
+
+  <script>
+    // Safe recommend function placed outside of inline HTML to avoid Jinja-in-JS parsing issues.
+    function recommendDemo(demoId, btn) {
+      if (!confirm("{{ _('Haluatko varmasti suositella tätä mielenosoitusta?') }}")) return;
+      btn.disabled = true;
+
+      fetch(`/admin/demo/recommend_demo/${demoId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        redirect: 'manual'
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'OK') {
+            // replace button content safely: keep icon and set label text
+            const icon = btn.querySelector('i')?.outerHTML || '';
+            btn.innerHTML = icon + ' ' + "{{ _('Suositeltu!') }}";
+            btn.classList.add('btn-success');
+          } else {
+            alert(data.message || "{{ _('Virhe suositellessa.') }}");
+            btn.disabled = false;
+          }
+        })
+        .catch(() => {
+          alert("{{ _('Yhteysvirhe, yritä uudelleen.') }}");
+          btn.disabled = false;
+        });
+    }
   </script>
 
   {% endblock %}

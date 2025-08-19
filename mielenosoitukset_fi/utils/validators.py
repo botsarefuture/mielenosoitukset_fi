@@ -149,7 +149,8 @@ def event_type_convertor(event_type: str) -> str:
             return event_type_mapping[event_type]
 
         else:
-            raise ValueError(f"Invalid event type: {event_type}")
+            # raise ValueError(f"Invalid event type: {event_type}") # fIXED A SILI BUG
+            return "STAY_STILL"
 
     else:
         return event_type

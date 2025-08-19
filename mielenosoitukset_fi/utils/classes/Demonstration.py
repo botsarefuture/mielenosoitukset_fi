@@ -313,8 +313,10 @@ class Demonstration(BaseModel):
 
         self.latitude = latitude
         self.longitude = longitude
+        
+        
 
-        self.event_type = event_type_convertor(type or event_type)
+        self.event_type = event_type_convertor(type or event_type or "STAY_STILL")
 
         if not valid_event_type(self.event_type):
             raise ValueError(f"Invalid event type: {self.event_type}")

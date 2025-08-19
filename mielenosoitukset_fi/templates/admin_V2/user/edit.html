@@ -99,6 +99,9 @@
 <section class="container">
     <h2 class="form-title">{{ _('Muokkaa käyttäjää') }}</h2>
     <p class="muted">{{ _('Täällä voit muokata käyttäjän perustietoja ja hallita hänen oikeuksiaan.') }}</p>
+    <div class="muted" style="font-size:0.95rem; background:var(--muted-bg, #f8f9fa); padding:0.75rem; border-radius:8px;">
+        {{ _('Vinkki: Muutokset tallennetaan painamalla "Tallenna muutokset". Käyttäjien oikeudet vaikuttavat heidän näkyviinsä toimintoihin.') }}
+    </div>
 
     <form method="POST" action="{{ url_for('admin_user.save_user', user_id=user.id) }}">
         <div class="form-group">
@@ -113,8 +116,11 @@
 
         <div class="form-group approval-box">
             <label for="approved">{{ _('Onko sähköpostiosoite vahvistettu') }}</label>
-            <input type="checkbox" id="approved" name="confirmed" {% if user.confirmed %}checked{% endif %}>
-            <span class="status-text">{% if user.confirmed %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <input type="checkbox" id="approved" name="confirmed" {% if user.confirmed %}checked{% endif %}>
+                <span class="status-text">{% if user.confirmed %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
+                <small class="muted">{{ _('Merkitse valituksi jos käyttäjän sähköposti on vahvistettu.') }}</small>
+            </div>
         </div>
 
         <div class="form-group">
@@ -152,6 +158,7 @@
 
         <div class="form-group" style="text-align:center;">
             <button type="submit" class="btn-primary">{{ _('Tallenna muutokset') }}</button>
+            <a href="{{ url_for('admin_user.user_control') }}" class="btn" style="margin-left:0.75rem;">{{ _('Peruuta') }}</a>
         </div>
     </form>
 </section>

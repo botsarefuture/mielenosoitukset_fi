@@ -226,6 +226,23 @@
     background:#004080;
 }
 
+@media(max-width: 768px){
+    .year-calendar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .month-grid th, .month-grid td { font-size: 10px; padding: 2px; }
+    .demo-cell { font-size: 9px; }
+    #demo-preview {
+        position: fixed !important; /* ensure preview doesn't get cut off on small screens */
+        max-width: 90%;
+        left: 5% !important;
+        top: 50% !important;
+        transform: translateY(-50%);
+    }
+}
+
+
 </style>
 
 <!-- Onboarding Overlay -->
@@ -298,6 +315,9 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script>
 $(function() {
+    // ---------------------------
+    // Onboarding
+    // ---------------------------
     if (!localStorage.getItem('calendarOnboardingDone')) {
         const $overlay = $('#calendar-onboarding');
         const $tooltip = $overlay.find('.onboarding-tooltip');
@@ -342,13 +362,19 @@ $(function() {
 
             // Calculate tooltip position dynamically
             let top = offset.top - tooltipHeight - 12;
-            if (top < $(window).scrollTop() + 10) { // too high? place below
+            if (top < $(window).scrollTop() + 10) {
                 top = offset.top + elHeight + 12;
             }
 
             let left = offset.left + elWidth / 2 - tooltipWidth / 2;
             if (left < 10) left = 10;
             if (left + tooltipWidth > $(window).width() - 10) left = $(window).width() - tooltipWidth - 10;
+
+            // On mobile, force fixed center
+            if ($(window).width() <= 768) {
+                top = $(window).scrollTop() + 100;
+                left = ($(window).width() - tooltipWidth) / 2;
+            }
 
             $tooltip.css({ top: top + 'px', left: left + 'px', 'z-index': 1000003 });
         }
@@ -363,59 +389,70 @@ $(function() {
             }
         });
 
-        // Start onboarding
         showStep(stepIndex);
-
-        // Recalculate position on resize/scroll
         $(window).on('resize scroll', function() {
             showStep(stepIndex);
         });
     }
-});
 
-$(function() {
+    // ---------------------------
+    // Demo preview hover & touch
+    // ---------------------------
     const preview = $('#demo-preview');
     let hoverTimeout;
 
-    $('.demo-cell').hover(function(e) {
-        const el = $(this);
-        hoverTimeout = setTimeout(function() {
-            const title = el.data('title');
-            const desc = el.data('desc');
-            const img = el.data('img');
+    function showPreview(el) {
+        const title = el.data('title');
+        const desc = el.data('desc');
+        const img = el.data('img');
 
-            let html = '';
-            if(img) html += `<img src="${img}" alt="${title}">`;
-            html += `<strong>${title}</strong>`;
-            if(desc) html += `<p>${desc}</p>`;
+        let html = '';
+        if(img) html += `<img src="${img}" alt="${title}">`;
+        html += `<strong>${title}</strong>`;
+        if(desc) html += `<p>${desc}</p>`;
+        preview.html(html).fadeIn(200);
+    }
 
-            preview.html(html).fadeIn(200);
-        }, 150);
-    }, function() {
+    $('.demo-cell').on('mouseenter touchstart', function(e) {
+        e.stopPropagation();
+        hoverTimeout = setTimeout(() => showPreview($(this)), 150);
+    });
+
+    $('.demo-cell').on('mouseleave touchend', function() {
         clearTimeout(hoverTimeout);
         preview.fadeOut(200);
     });
 
-    $('.demo-cell').mousemove(function(e) {
-        const offset = 15;
-        const windowWidth = $(window).width();
-        const windowHeight = $(window).height();
-        const previewWidth = preview.outerWidth();
-        const previewHeight = preview.outerHeight();
-        let left = e.pageX + offset;
-        let top = e.pageY + offset;
-        if(left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
-        if(top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
-        preview.css({ top: top + 'px', left: left + 'px' });
+    $('.demo-cell').on('mousemove', function(e) {
+        if(window.innerWidth > 768){ // desktop only
+            const offset = 15;
+            const windowWidth = $(window).width();
+            const windowHeight = $(window).height();
+            const previewWidth = preview.outerWidth();
+            const previewHeight = preview.outerHeight();
+            let left = e.pageX + offset;
+            let top = e.pageY + offset;
+            if(left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
+            if(top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
+            preview.css({ top: top + 'px', left: left + 'px' });
+        }
     });
 
-    // Prefetch all month links for smooth navigation
+    // Hide preview when clicking/touching outside on mobile
+    $(document).on('touchstart', function(e){
+        if(!$(e.target).closest('.demo-cell').length){
+            preview.fadeOut(200);
+        }
+    });
+
+    // ---------------------------
+    // Prefetch month links
+    // ---------------------------
     $('.calendar-year-nav a').each(function(){
         const url = $(this).attr('href');
         $('<link/>', { rel: 'prefetch', href: url }).appendTo('head');
-        $.get(url, data => {}); // cache the content
+        $.get(url, data => {}); // cache
     });
-
 });
 </script>
 {% endblock %}

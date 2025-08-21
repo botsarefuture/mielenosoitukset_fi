@@ -98,6 +98,41 @@
     .calendar-grid th, .calendar-grid td { font-size: 12px; padding: 3px; }
     .demo-cell { font-size: 10px; }
 }
+
+/* --- Mobile modal overlay --- */
+#mobile-warning {
+    display:none;
+    position:fixed;
+    top:0; left:0; width:100%; height:100%;
+    backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.5);
+    z-index:10000000;
+    text-align:center;
+}
+#mobile-warning .modal-content {
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    background:#fff;
+    padding:30px 20px;
+    border-radius:12px;
+    max-width:300px;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+#mobile-warning h2 { color:#ff3366; margin-bottom:15px; }
+#mobile-warning p { color:#333; margin-bottom:20px; }
+#mobile-warning button {
+    background:#ff3366;
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    font-weight:600;
+    cursor:pointer;
+    font-size:14px;
+}
+#mobile-warning button:hover { background:#ff4d91; }
 </style>
 
 <h1>{{ month_name|e }} {{ year }}</h1>
@@ -144,9 +179,31 @@
 
 <div id="demo-preview" aria-hidden="true"></div>
 
+<!-- Mobile Warning Modal -->
+<div id="mobile-warning">
+    <div class="modal-content">
+        <h2>Mobiililaite ei tuettu 😢</h2>
+        <p>Kalenterinäkymä toimii vain tietokoneella. Siirrytään lista-näkymään?</p>
+        <button id="mobile-redirect">Siirry lista-näkymään</button>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script>
 $(function() {
+    // --- Mobile detection ---
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if(isMobile){
+        $('#mobile-warning').fadeIn(200);
+        $('body').css('overflow','hidden'); // lock scroll
+
+        $('#mobile-redirect').on('click', function(){
+            window.location.href = "{{ url_for('demonstrations') }}";
+        });
+
+        return; // stop calendar JS
+    }
+
     const preview = $('#demo-preview');
     let hoverTimeout;
 

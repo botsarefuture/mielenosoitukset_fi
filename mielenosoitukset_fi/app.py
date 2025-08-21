@@ -127,7 +127,6 @@ def create_app() -> Flask:
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
-    app.register_blueprint(am_bp.am_bp, url_prefix="/am/")
 
     # Import and initialize routes
     import basic_routes

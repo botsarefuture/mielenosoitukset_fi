@@ -27,7 +27,7 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
-from mielenosoitukset_fi.utils.database import DEMO_FILTER
+from mielenosoitukset_fi.utils.database import DEMO_FILTER, stringify_object_ids
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
@@ -1191,3 +1191,103 @@ Disallow: /admin/
                 "Content-Type": "application/rss+xml; charset=utf-8",
             },
         )
+    from datetime import datetime, date
+    from collections import defaultdict
+    import calendar
+    from flask import render_template
+
+    # ============================
+    # Month view
+    # ============================
+    @app.route("/calendar/")
+    @app.route("/calendar/<int:year>/<int:month>/")
+    def calendar_month_view(year=None, month=None):
+        today = date.today()
+        if year is None or month is None:
+            year, month = today.year, today.month
+
+        # Haetaan kaikki demonstraatiot
+        demonstrations = list(demonstrations_collection.find())
+
+        # Filteröidään vain kyseisen kuukauden demoja
+        month_demos = defaultdict(list)
+        for demo in demonstrations:
+            demo_date = demo.get("date")
+            if demo_date:
+                dd = datetime.strptime(demo_date, "%Y-%m-%d").date()
+                if dd.year == year and dd.month == month:
+                    month_demos[dd.day].append(demo)
+
+        # Kalenteri kuukaudelle
+        cal = calendar.Calendar(firstweekday=0)  # 0 = Monday
+        month_days = cal.monthdayscalendar(year, month)  # list of weeks, 0 = päivä ei ole tässä kuussa
+
+        # Edellinen ja seuraava kuukausi
+        prev_month = month - 1 or 12
+        prev_year = year - 1 if month == 1 else year
+        next_month = month + 1 if month != 12 else 1
+        next_year = year + 1 if month == 12 else year
+
+        # Kuukausien nimet
+        month_names = {
+            1: "Tammikuu", 2: "Helmikuu", 3: "Maaliskuu", 4: "Huhtikuu",
+            5: "Toukokuu", 6: "Kesäkuu", 7: "Heinäkuu", 8: "Elokuu",
+            9: "Syyskuu", 10: "Lokakuu", 11: "Marraskuu", 12: "Joulukuu",
+        }
+
+        return render_template(
+            "demo_views/calendar_grid.html",
+            year=year,
+            month=month,
+            month_name=month_names[month],
+            month_days=month_days,
+            month_demos=month_demos,
+            prev_year=prev_year,
+            prev_month=prev_month,
+            next_year=next_year,
+            next_month=next_month
+        )
+
+    # ============================
+    # Year view
+    # ============================
+    @app.route("/calendar/<int:year>/")
+    def calendar_year_view(year):
+        # Haetaan kaikki demonstraatiot
+        demonstrations = list(demonstrations_collection.find())
+
+        # Valmistellaan tietorakenne: month -> {weeks, days}
+        year_demos = {}
+        cal = calendar.Calendar(firstweekday=0)  # Monday
+        for month in range(1, 13):
+            month_weeks = cal.monthdayscalendar(year, month)
+            year_demos[month] = {
+                "weeks": month_weeks,
+                "days": defaultdict(list)
+            }
+
+        # Lisätään demoja oikeille päiville
+        for demo in demonstrations:
+            demo_date_str = demo.get("date")
+            if demo_date_str:
+                dd = datetime.strptime(demo_date_str, "%Y-%m-%d").date()
+                if dd.year == year:
+                    year_demos[dd.month]["days"][dd.day].append(demo)
+
+        # Kuukausien nimet
+        month_names = {
+            1: "Tammikuu", 2: "Helmikuu", 3: "Maaliskuu", 4: "Huhtikuu",
+            5: "Toukokuu", 6: "Kesäkuu", 7: "Heinäkuu", 8: "Elokuu",
+            9: "Syyskuu", 10: "Lokakuu", 11: "Marraskuu", 12: "Joulukuu",
+        }
+
+        return render_template(
+            "demo_views/calendar_year.html",
+            year=year,
+            month_names=month_names,
+            year_demos=year_demos
+        )
+
+    @app.context_processor
+    def inject_current_year():
+        return dict(current_year=datetime.now().year)

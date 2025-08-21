@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <style>
-/* Use light-dark() for color adaptation */
 :root {
   --color-bg: light-dark(#f9f9f9, #181a1b);
   --color-bg-hero: light-dark(#e3f0ff, #23272a);
@@ -22,105 +21,36 @@
   --color-grid-item: light-dark(#888, #aaa);
   --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
 }
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-}
+body { background: var(--color-bg); color: var(--color-text); }
 .hero {
   background: linear-gradient(90deg, var(--color-bg-hero) 0%, var(--color-bg) 100%);
-  padding: 2.5em 1em 2em 1em;
-  border-radius: 1.5em;
-  margin-bottom: 2em;
-  box-shadow: var(--color-shadow);
-  text-align: center;
-  color: var(--color-text);
+  padding: 2.5em 1em 2em 1em; border-radius: 1.5em; margin-bottom: 2em;
+  box-shadow: var(--color-shadow); text-align: center; color: var(--color-text);
 }
-.hero h2 {
-  font-size: 2.2em;
-  margin-bottom: 0.5em;
-}
-.hero p {
-  font-size: 1.15em;
-  color: var(--color-text-secondary);
-  margin-bottom: 1.5em;
-}
-.buttons-div {
-  display: flex;
-  gap: 1em;
-  justify-content: center;
-  margin-bottom: 1.5em;
-}
+.hero h2 { font-size: 2.2em; margin-bottom: 0.5em; }
+.hero p { font-size: 1.15em; color: var(--color-text-secondary); margin-bottom: 1.5em; }
+.buttons-div { display: flex; gap: 1em; justify-content: center; margin-bottom: 1.5em; flex-wrap: wrap; }
 .button.button-primary {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  font-size: 1.05em;
-  padding: 0.7em 1.5em;
-  border-radius: 2em;
-  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
+  display: flex; align-items: center; gap: 0.5em; font-size: 1.05em;
+  padding: 0.7em 1.5em; border-radius: 2em; transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04); background: var(--color-primary); color: #fff; border: none;
 }
-.button.button-primary:hover {
-  background: var(--color-primary);
-  color: #fff;
-  box-shadow: var(--color-shadow-hover);
-  filter: brightness(1.15);
-}
-.section-card {
-  background: var(--color-card-bg);
-  border-radius: 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  padding: 2em 1em 1.5em 1em;
-  margin-bottom: 2em;
-  color: var(--color-text);
-}
+.button.button-primary:hover { background: var(--color-primary); color: #fff; box-shadow: var(--color-shadow-hover); filter: brightness(1.15); }
+.section-card { background: var(--color-card-bg); border-radius: 1em; box-shadow: 0 1px 8px rgba(0,0,0,0.04); padding: 2em 1em 1.5em 1em; margin-bottom: 2em; color: var(--color-text); }
 .section-title {
-  font-size: 2.2em;
-  font-weight: 800;
-  margin-bottom: 1.2em;
-  color: var(--color-primary);
-  letter-spacing: 0.01em;
-  padding: 0.3em 0.8em;
-  border-left: none;
-  background: var(--color-title-accent);
-  border-radius: 0.6em;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: block;
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-  width: fit-content;
+  font-size: 2.2em; font-weight: 800; margin-bottom: 1.2em; color: var(--color-primary);
+  letter-spacing: 0.01em; padding: 0.3em 0.8em; border-left: none;
+  background: var(--color-title-accent); border-radius: 0.6em; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  display: block; text-align: center; margin-left: auto; margin-right: auto; width: fit-content;
   transition: background 0.2s, color 0.2s;
 }
 .section-title:after {
-  content: '';
-  display: block;
-  margin: 0.4em auto 0 auto;
-  width: 2.5em;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--color-primary);
-  opacity: 0.25;
+  content: ''; display: block; margin: 0.4em auto 0 auto; width: 2.5em; height: 4px; border-radius: 2px;
+  background: var(--color-primary); opacity: 0.25;
 }
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 1.5em;
-}
-.grid-item {
-  text-align: center;
-  color: var(--color-grid-item);
-  font-size: 1.1em;
-  padding: 2em 0;
-}
-@media (max-width: 600px) {
-  .hero { padding: 1.2em 0.5em; }
-  .section-card { padding: 1em 0.5em; }
-  .section-title { font-size: 1.3em; }
-}
+.grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.5em; }
+.grid-item { text-align: center; color: var(--color-grid-item); font-size: 1.1em; padding: 2em 0; }
+@media (max-width: 600px) { .hero { padding: 1.2em 0.5em; } .section-card { padding: 1em 0.5em; } .section-title { font-size: 1.3em; } }
 </style>
 {% endblock %}
 
@@ -129,14 +59,14 @@ body {
 {% endblock %}
 
 {% block content %}
-
 <div class="container-main-content">
+  
+
   <!-- Hero Section -->
   <section class="hero">
     <h2>{{ _('Tervetuloa Mielenosoitukset.fi:hin') }}</h2>
     <p>
-      {{ _('Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.') }}
-      <br>
+      {{ _('Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.') }}<br>
       {{ _('Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.') }}
     </p>
     <div class="buttons-div">
@@ -145,6 +75,9 @@ body {
       </a>
       <a class="button button-primary" href="{{ url_for('submit') }}">
         <span aria-hidden="true"><i class="fa-solid fa-plus"></i></span> {{ _('Ilmoita mielenosoituksesta') }}
+      </a>
+      <a class="button button-primary" href="{{ url_for('calendar_year_view', year=current_year) }}">
+        <span aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span> {{ _('Kalenterinäkymä') }}
       </a>
     </div>
   </section>
@@ -201,5 +134,4 @@ body {
     </a>
   </div>
 </div>
-
 {% endblock %}

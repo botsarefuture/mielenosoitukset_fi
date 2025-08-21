@@ -21,7 +21,6 @@ from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
 from mielenosoitukset_fi.utils.analytics import prep
 import sys
 import os
-from mielenosoitukset_fi.AM import am_bp
 
 from flask_autosec import FlaskAutoSec
 

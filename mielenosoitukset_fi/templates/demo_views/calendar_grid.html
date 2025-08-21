@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.css">
+
+<style>
+/* --- Calendar styles --- */
+.calendar-grid {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-family: 'Poppins', sans-serif;
+    background: #fffafc;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.calendar-grid th,
+.calendar-grid td {
+    width: 14.28%;
+    text-align: center;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+.calendar-grid th {
+    background: #f8c8dc;
+    color: #fff;
+    padding: 10px 0;
+    font-weight: 600;
+    font-size: 14px;
+}
+.calendar-grid td {
+    background: #fff0f6;
+    padding: 5px;
+    border: 1px solid #ffd6e8;
+    position: relative;
+}
+.calendar-grid td strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #ff3366;
+}
+.calendar-grid td ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.demo-cell {
+    display: block;
+    background: #ff66a3;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.demo-cell:hover {
+    background: #ff4d91;
+}
+#demo-preview {
+    position: absolute;
+    display: none;
+    background: #fffafc;
+    border: 1px solid #ffb3d1;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 300px;
+    z-index: 9999;
+}
+#demo-preview img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: 5px;
+}
+.calendar-nav, .calendar-year-nav {
+    margin-bottom: 15px;
+    text-align: center;
+}
+.calendar-nav a, .calendar-year-nav a, #year-view-btn {
+    background: #ff99c8;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.2s;
+    margin: 0 2px;
+}
+.calendar-nav a:hover, .calendar-year-nav a:hover, #year-view-btn:hover {
+    background: #ff66a3;
+}
+@media(max-width: 768px){
+    .calendar-grid th, .calendar-grid td { font-size: 12px; padding: 3px; }
+    .demo-cell { font-size: 10px; }
+}
+</style>
+
+<h1>{{ month_name|e }} {{ year }}</h1>
+
+<!-- Navigation -->
+<div class="calendar-nav">
+    <a id="prev-month-link" href="{{ url_for('calendar_month_view', year=prev_year, month=prev_month) }}">← Edellinen</a>
+    <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 Vuosi {{ year }}</a>
+    <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">Seuraava →</a>
+</div>
+
+<!-- Month Calendar Grid -->
+<table class="calendar-grid">
+    <tr>
+        <th>Ma</th><th>Ti</th><th>Ke</th><th>To</th><th>Pe</th><th>La</th><th>Su</th>
+    </tr>
+    {% for week in month_days %}
+    <tr>
+        {% for day in week %}
+        <td>
+            {% if day != 0 %}
+                <strong>{{ day|e }}</strong>
+                {% if month_demos.get(day) %}
+                    <ul>
+                        {% for demo in month_demos.get(day) %}
+                        <li>
+                            <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" 
+                               class="demo-cell"
+                               data-title="{{ demo.title|e or 'Ei otsikkoa' }}"
+                               data-desc="{{ demo.description|e or '' }}"
+                               data-img="{{ demo.preview_image|e or demo.img|e }}">
+                                {{ demo.title|e or 'Ei otsikkoa' }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            {% endif %}
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+<div id="demo-preview" aria-hidden="true"></div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script>
+$(function() {
+    const preview = $('#demo-preview');
+    let hoverTimeout;
+
+    // --- Hover preview ---
+    $('.demo-cell').hover(function(e) {
+        const el = $(this);
+        hoverTimeout = setTimeout(function() {
+            const title = el.data('title');
+            const desc = el.data('desc');
+            const img = el.data('img');
+
+            let html = '';
+            if(img) html += `<img src="${img}" alt="${title}">`;
+            html += `<strong>${title}</strong>`;
+            if(desc) html += `<p>${desc}</p>`;
+
+            preview.html(html).fadeIn(200);
+        }, 150);
+    }, function() {
+        clearTimeout(hoverTimeout);
+        preview.fadeOut(200);
+    });
+
+    $('.demo-cell').mousemove(function(e) {
+        const offset = 15;
+        const windowWidth = $(window).width();
+        const windowHeight = $(window).height();
+        const previewWidth = preview.outerWidth();
+        const previewHeight = preview.outerHeight();
+        let left = e.pageX + offset;
+        let top = e.pageY + offset;
+        if(left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
+        if(top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
+        preview.css({ top: top + 'px', left: left + 'px' });
+    });
+
+    // --- Prefetch prev/next months ---
+    const prevMonthURL = $('#prev-month-link').attr('href');
+    const nextMonthURL = $('#next-month-link').attr('href');
+    $('<link/>', { rel: 'prefetch', href: prevMonthURL }).appendTo('head');
+    $('<link/>', { rel: 'prefetch', href: nextMonthURL }).appendTo('head');
+
+    // Optional: cache HTML for instant transition
+    const cache = {};
+    [prevMonthURL, nextMonthURL].forEach(url => { $.get(url, data => cache[url] = data); });
+});
+</script>
+{% endblock %}

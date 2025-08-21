@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.css">
+
+<style>
+.year-calendar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.month-grid {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    background: #fffafc;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.month-grid th,
+.month-grid td {
+    width: 14.28%;
+    text-align: center;
+    vertical-align: top;
+    padding: 3px;
+    border: 1px solid #ffd6e8;
+}
+
+.month-grid th {
+    background: #f8c8dc;
+    color: #fff;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.month-grid td {
+    background: #fff0f6;
+    position: relative;
+}
+
+.month-grid td strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #ff3366;
+    font-size: 12px;
+}
+
+.demo-cell {
+    display: block;
+    background: #ff66a3;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 1px 3px;
+    margin-bottom: 1px;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.demo-cell:hover {
+    background: #ff4d91;
+}
+
+#demo-preview {
+    position: absolute;
+    display: none;
+    background: #fffafc;
+    border: 1px solid #ffb3d1;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 300px;
+    z-index: 9999;
+}
+
+#demo-preview img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: 5px;
+}
+
+.year-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.calendar-year-nav {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.calendar-year-nav a {
+    background: #ff99c8;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    margin: 0 2px;
+    transition: background 0.2s;
+}
+
+.calendar-year-nav a:hover {
+    background: #ff66a3;
+}
+
+@media(max-width: 768px){
+    .year-calendar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .month-grid th, .month-grid td { font-size: 10px; padding: 2px; }
+    .demo-cell { font-size: 9px; }
+}
+.onboarding-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 10000;
+    display: none;
+}
+
+.onboarding-step {
+    position: absolute;
+    text-align: center;
+}
+
+.onboarding-tooltip {
+    background: #fff;
+    color: #333;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    max-width: 250px;
+    margin: auto;
+}
+
+.onboarding-tooltip strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.onboarding-tooltip p {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.onboarding-tooltip button {
+    background: #0056b3;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.onboarding-tooltip button:hover {
+    background: #004080;
+}
+.onboarding-overlay {
+    position: fixed;
+    top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000002;
+    display: none;
+}
+
+.onboarding-tooltip {
+    position: absolute;
+    background: #fff;
+    color: #333;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    max-width: 250px;
+    text-align: center;
+    z-index: 1000003;
+    pointer-events: auto;
+}
+
+.onboarding-tooltip::after {
+    content:'';
+    position: absolute;
+    border-width: 8px;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000004;
+}
+
+.onboarding-tooltip strong {
+    display:block;
+    font-size:16px;
+    margin-bottom:6px;
+}
+
+.onboarding-tooltip p {
+    font-size:14px;
+    margin-bottom:10px;
+}
+
+.onboarding-tooltip button {
+    background:#0056b3;
+    color:#fff;
+    border:none;
+    border-radius:5px;
+    padding:6px 12px;
+    cursor:pointer;
+    font-weight:600;
+    transition: background 0.2s;
+    z-index: 1000005;
+}
+
+.onboarding-tooltip button:hover {
+    background:#004080;
+}
+
+</style>
+
+<!-- Onboarding Overlay -->
+<div id="calendar-onboarding" class="onboarding-overlay" aria-hidden="true">
+    <div class="onboarding-tooltip">
+        <strong></strong>
+        <p></p>
+        <button class="onboarding-next">Seuraava →</button>
+    </div>
+</div>
+
+
+
+<h1 class="year-header">{{ year }}</h1>
+
+<div class="calendar-year-nav">
+    <a href="{{ url_for('calendar_year_view', year=year-1) }}">← Edellinen vuosi</a>
+    <span style="margin:0 10px; font-weight:600;">{{ year }}</span>
+    <a href="{{ url_for('calendar_year_view', year=year+1) }}">Seuraava vuosi →</a>
+</div>
+
+
+<div class="year-calendar">
+    {% for month in range(1, 13) %}
+    <div>
+        <h3 style="text-align:center">
+            <a href="{{ url_for('calendar_month_view', year=year, month=month) }}" 
+               style="text-decoration:none; color:#ff3366;">
+               {{ month_names[month] }}
+            </a>
+        </h3>
+
+        <table class="month-grid">
+            <tr>
+                <th>Ma</th><th>Ti</th><th>Ke</th><th>To</th><th>Pe</th><th>La</th><th>Su</th>
+            </tr>
+            {% for week in year_demos[month]['weeks'] %}
+            <tr>
+                {% for day in week %}
+                <td>
+                    {% if day != 0 %}
+                        <strong>{{ day }}</strong>
+                        {% if year_demos[month]['days'].get(day) %}
+                        <ul style="padding:0; margin:0; list-style:none;">
+                            {% for demo in year_demos[month]['days'][day] %}
+                            <li>
+                                <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" 
+                                   class="demo-cell"
+                                   data-title="{{ demo.title|e or 'Ei otsikkoa' }}"
+                                   data-desc="{{ demo.description|e or '' }}"
+                                   data-img="{{ demo.preview_image|e or demo.img|e }}">
+                                    {{ demo.title|e or 'Ei otsikkoa' }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="demo-preview" aria-hidden="true"></div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script>
+$(function() {
+    if (!localStorage.getItem('calendarOnboardingDone')) {
+        const $overlay = $('#calendar-onboarding');
+        const $tooltip = $overlay.find('.onboarding-tooltip');
+        let stepIndex = 0;
+
+        const steps = [
+            {
+                selector: '.calendar-year-nav', 
+                title: 'Vuosinavigaatio', 
+                text: 'Klikkaa nuolia siirtyäksesi edelliseen tai seuraavaan vuoteen.'
+            },
+            {
+                selector: '.year-calendar a', 
+                title: 'Kuukausilinkit', 
+                text: 'Klikkaa kuukauden nimeä siirtyäksesi kuukausinäkymään.'
+            },
+            {
+                selector: '.demo-cell:first', 
+                title: 'Mielenosoitukset', 
+                text: 'Klikkaa mielenosoituksen nimeä siirtyäksesi yksittäisen mielenosoituksen sivulle.'
+            }
+        ];
+
+        function showStep(index) {
+            const step = steps[index];
+            const $el = $(step.selector).first();
+            if(!$el.length) return;
+
+            $tooltip.find('strong').text(step.title);
+            $tooltip.find('p').text(step.text);
+
+            $overlay.fadeIn(200).css('z-index',1000002);
+
+            // Temporarily show tooltip off-screen to measure
+            $tooltip.css({ top: -9999, left: -9999, display: 'block' });
+
+            const offset = $el.offset();
+            const elHeight = $el.outerHeight();
+            const elWidth = $el.outerWidth();
+            const tooltipHeight = $tooltip.outerHeight();
+            const tooltipWidth = $tooltip.outerWidth();
+
+            // Calculate tooltip position dynamically
+            let top = offset.top - tooltipHeight - 12;
+            if (top < $(window).scrollTop() + 10) { // too high? place below
+                top = offset.top + elHeight + 12;
+            }
+
+            let left = offset.left + elWidth / 2 - tooltipWidth / 2;
+            if (left < 10) left = 10;
+            if (left + tooltipWidth > $(window).width() - 10) left = $(window).width() - tooltipWidth - 10;
+
+            $tooltip.css({ top: top + 'px', left: left + 'px', 'z-index': 1000003 });
+        }
+
+        $tooltip.find('.onboarding-next').on('click', function() {
+            stepIndex++;
+            if(stepIndex < steps.length){
+                showStep(stepIndex);
+            } else {
+                $overlay.fadeOut(300);
+                localStorage.setItem('calendarOnboardingDone','true');
+            }
+        });
+
+        // Start onboarding
+        showStep(stepIndex);
+
+        // Recalculate position on resize/scroll
+        $(window).on('resize scroll', function() {
+            showStep(stepIndex);
+        });
+    }
+});
+
+$(function() {
+    const preview = $('#demo-preview');
+    let hoverTimeout;
+
+    $('.demo-cell').hover(function(e) {
+        const el = $(this);
+        hoverTimeout = setTimeout(function() {
+            const title = el.data('title');
+            const desc = el.data('desc');
+            const img = el.data('img');
+
+            let html = '';
+            if(img) html += `<img src="${img}" alt="${title}">`;
+            html += `<strong>${title}</strong>`;
+            if(desc) html += `<p>${desc}</p>`;
+
+            preview.html(html).fadeIn(200);
+        }, 150);
+    }, function() {
+        clearTimeout(hoverTimeout);
+        preview.fadeOut(200);
+    });
+
+    $('.demo-cell').mousemove(function(e) {
+        const offset = 15;
+        const windowWidth = $(window).width();
+        const windowHeight = $(window).height();
+        const previewWidth = preview.outerWidth();
+        const previewHeight = preview.outerHeight();
+        let left = e.pageX + offset;
+        let top = e.pageY + offset;
+        if(left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
+        if(top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
+        preview.css({ top: top + 'px', left: left + 'px' });
+    });
+
+    // Prefetch all month links for smooth navigation
+    $('.calendar-year-nav a').each(function(){
+        const url = $(this).attr('href');
+        $('<link/>', { rel: 'prefetch', href: url }).appendTo('head');
+        $.get(url, data => {}); // cache the content
+    });
+
+});
+</script>
+{% endblock %}

@@ -22,14 +22,15 @@
 
   <!-- Alternate URLs for i18n -->
   {% for lang_code, url in alternate_urls.items() %}
-    {% if lang_code != session.get('locale', 'fi') %}
-      <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
-    {% endif %}
+  {% if lang_code != session.get('locale', 'fi') %}
+  <link rel="alternate" hreflang="{{ lang_code }}" href="{{ url }}">
+  {% endif %}
   {% endfor %}
 
   <!-- Open Graph / Facebook -->
   <meta property="og:title" content="{% block og_title %}Mielenosoitukset.fi{% endblock %}" />
-  <meta property="og:description" content="{% block og_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
+  <meta property="og:description"
+    content="{% block og_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
   <meta property="og:image" content="{% block og_image %}/static/images/og-default.jpg{% endblock %}" />
   <meta property="og:url" content="{{ request.url }}" />
   <meta property="og:type" content="website" />
@@ -40,7 +41,8 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="{% block twitter_title %}Mielenosoitukset.fi{% endblock %}" />
-  <meta name="twitter:description" content="{% block twitter_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
+  <meta name="twitter:description"
+    content="{% block twitter_description %}Tietoa mielenosoituksista Suomessa.{% endblock %}" />
   <meta name="twitter:image" content="{% block twitter_image %}/static/images/og-default.jpg{% endblock %}" />
   <meta name="twitter:site" content="@Mielenosoitukset" />
   <meta name="twitter:creator" content="@Mielenosoitukset" />
@@ -48,15 +50,15 @@
 
   <!-- Article / Optional -->
   {% if article_tags %}
-    {% for tag in article_tags %}
-      <meta property="article:tag" content="{{ tag }}" />
-    {% endfor %}
+  {% for tag in article_tags %}
+  <meta property="article:tag" content="{{ tag }}" />
+  {% endfor %}
   {% endif %}
   {% if article_author %}
-    <meta property="article:author" content="{{ article_author }}" />
+  <meta property="article:author" content="{{ article_author }}" />
   {% endif %}
   {% if article_section %}
-    <meta property="article:section" content="{{ article_section }}" />
+  <meta property="article:section" content="{{ article_section }}" />
   {% endif %}
 
   {% block meta %}{% endblock %}
@@ -234,6 +236,12 @@
             <i class="fab fa-facebook"></i> Facebook
           </a>
         </li>
+        <li>
+          <a href="https://www.tiktok.com/@mielenosoitukset" target="_blank">
+            <i class="fab fa-tiktok"></i> TikTok
+          </a>
+        </li>
+
       </ul>
       <!-- Authentication Links -->
       <ul class="footer-links">

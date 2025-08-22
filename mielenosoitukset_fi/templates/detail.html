@@ -1146,20 +1146,21 @@ var demoData = {{ demo | tojson | safe }};
   // The modal is opened via Bootstrap's data-bs-toggle or JS elsewhere.
 </script>
 <!-- Bootstrap Bundle with Popper -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script>
   /**
-   * Initializes the "Past Demonstration" modal if the event is in the past.
+   * Initializes the "Past Demonstration" modal if the event has fully ended.
    */
   document.addEventListener("DOMContentLoaded", () => {
-    const demo_date = new Date("{{ demo['date'] }}T{{ demo['start_time'] if demo['start_time'] else '00:00:00' }}");
+    const demoStart = new Date("{{ demo['date'] }}T{{ demo['start_time'] if demo['start_time'] else '00:00:00' }}");
+    const demoEnd = new Date("{{ demo['date'] }}T{{ demo['end_time'] if demo['end_time'] else demo['start_time'] if demo['start_time'] else '00:00:00' }}");
     const now = new Date();
 
-    if (demo_date < now) {
+    // Only show modal if the demo has fully ended
+    if (demoEnd < now) {
       const past_demo_modal_el = document.getElementById("past-demo-modal");
       const past_demo_modal = new bootstrap.Modal(past_demo_modal_el);
 
-      // Wait until modal is fully hidden
       past_demo_modal_el.addEventListener("hidden.bs.modal", function () {
         // Cleanup Bootstrap’s leftovers
         document.body.classList.remove("modal-open");
@@ -1181,6 +1182,7 @@ var demoData = {{ demo | tojson | safe }};
     }
   });
 </script>
+
 
 <script>
   /**

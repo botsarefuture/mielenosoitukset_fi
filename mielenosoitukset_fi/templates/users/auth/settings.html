@@ -4,130 +4,402 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/settings.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
-
-
-
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    .spinner {
-        display: none;
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-radius: 50%;
-        border-top-color: #fff;
-        animation: spin 1s ease-in-out infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    .tooltip {
-        position: relative;
-        display: inline-block;
-        cursor: pointer;
-    }
-
-    .tooltip .tooltiptext {
-        visibility: hidden;
-        width: 150px;
-        background-color: #555;
-        color: #fff;
-        text-align: center;
-        border-radius: 5px;
-        padding: 5px;
-        position: absolute;
-        z-index: 1;
-        bottom: 125%;
-        left: 50%;
-        margin-left: -75px;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    /* Cute spinner animation */
-    .spinner:before {
-        content: '🐱';
-        display: block;
-        animation: spin 1s linear infinite;
-    }
-
-    /* Cat-themed tooltip */
-    .tooltip .tooltiptext:before {
-        content: '🐾 ';
-    }
+.spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container settings-container">
-    <h1 class="admin-section-title"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
+<div class="container py-4">
+    <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
 
-    <form id="settings-form" action="{{ url_for('users.auth.settings') }}" method="POST">
-        <div class="form-group">
-            <label for="mfa_enabled"><i class="fas fa-shield-alt"></i> {{ _('Ota käyttöön kaksivaiheinen todennus:') }}</label>
-            <div class="tooltip">
-                <input type="checkbox" id="mfa_enabled" name="mfa_enabled" {% if current_user.mfa_enabled %}checked{% endif %}>
-                <span class="tooltiptext">{{ _('Enable or disable two-factor authentication.') }}</span>
-            </div>
+    <form id="settings-form">
+        
+        <div class="mb-3">
+            <label for="display_name" class="form-label">{{ _('Näyttönimi') }}</label>
+            <input type="text" class="form-control" id="display_name" name="display_name">
         </div>
 
-        <div class="form-group">
-            <label for="email"><i class="fas fa-envelope"></i> {{ _('Sähköposti:') }}</label>
-            <input type="email" id="email" name="email" value="{{ current_user.email }}" required>
+        <div class="mb-3">
+            <label for="city" class="form-label">{{ _('Kaupunki') }}</label>
+<div class="form-group">
+  <label for="city" aria-label="{{ _('Paikkakunta selection') }}">{{ _('Paikkakunta') }}<span class="required-asterisk"
+      aria-hidden="true">*</span></label>
+  <br><br>
+  <div id="paikkakunta-drop" class="dropdown">
+    <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
+      aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
+    <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
+      <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
+        aria-label="{{ _('Search cities') }}" />
+      <!-- List of cities -->
+      {% for city in city_list %}
+      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if demo is
+        defined and demo.city==city %} class="selected" {% endif %}>
+        {{ city }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <input type="hidden" id="selected-city" name="city" value="{{ demo.city if demo is defined else '' }}" required />
+</div>
+
+<script>
+  // Paikkakunta dropdown functions
+  document.querySelector(".dropbtn").addEventListener("click", function (event) {
+    event.stopPropagation(); // Prevent click event from bubbling
+    var dropdownContent = document.getElementById("dropdown-content");
+    var expanded = this.getAttribute("aria-expanded") === "true" || false;
+    dropdownContent.style.display = expanded ? "none" : "block";
+    this.setAttribute("aria-expanded", !expanded);
+  });
+
+  window.onclick = function (event) {
+    if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
+      document.getElementById("dropdown-content").style.display = "none";
+      document.querySelector(".dropbtn").setAttribute("aria-expanded", "false");
+    }
+  };
+
+  function selectCity(city) {
+    var dropbtn = document.querySelector(".dropbtn");
+    dropbtn.textContent = city;
+    document.getElementById("selected-city").value = city;
+    document.getElementById("dropdown-content").style.display = "none";
+    dropbtn.setAttribute("aria-expanded", "false");
+  }
+
+  function filterFunction() {
+    let input = document.getElementById("searchInput");
+    let filter = input.value.toUpperCase();
+    let div = document.getElementById("dropdown-content");
+    let a = div.getElementsByTagName("a");
+
+    for (let i = 0; i < a.length; i++) {
+      let txtValue = a[i].textContent || a[i].innerText;
+      a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+  }
+</script>
+
+<style>
+  .dropdown {
+    display: inline-block;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .dropdown-content {
+    display: none;
+    background: var(--input_background);
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: var(--box_shadow);
+    z-index: 1;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .dropbtn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border_color);
+    background: var(--background);
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dropbtn::after {
+    content: '▼';
+    font-size: 12px;
+    margin-left: 10px;
+    color: var(--icon_color);
+  }
+
+  .dropdown-content input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1px solid var(--border_color);
+    background: var(--input_background);
+    outline: none;
+  }
+
+  .dropdown-content a {
+    color: var(--primary_text_color);
+    padding: 10px;
+    text-decoration: none;
+    display: block;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--border_color);
+  }
+
+  .dropdown-content a:hover {
+    background: var(--hover_bg_color);
+  }
+
+  /* Highlight selected city */
+  .dropdown-content a.selected {
+    background: var(--selected_bg_color);
+    /* Optional: define a color for the selected city */
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
         </div>
 
-        <div class="form-group">
-            <label for="displayname"><i class="fas fa-user"></i> {{ _('Näyttönimi:') }}</label>
-            <input type="text" id="displayname" name="displayname" value="{{ current_user.displayname }}">
+        <div class="mb-3">
+            <label for="language" class="form-label">{{ _('Kieli') }}</label>
+            <select class="form-select" id="language" name="language">
+                <option value="fi">{{ _('Suomi') }}</option>
+                <option value="en">{{ _('English') }}</option>
+                <!-- Add more languages as needed -->
+            </select>
         </div>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode">
+            <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
+        </div>
+
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter">
+            <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
+        </div>
+
         
         <button type="submit" class="btn btn-primary">
-            <span>{{ _('Tallenna muutokset') }}</span>
+            {{ _('Tallenna muutokset') }}
             <div class="spinner" id="spinner"></div>
         </button>
     </form>
-</div>
-{% if qr_code_url %}
-<!-- QR Code Modal -->
-<div class="modal" id="qrModal" style="z-index: 1000;">
-    <div class="modal-header" style="text-align: center; width: 100%;">
-        <h1 style="width: 100%;" class="modal-title" id="qrModalLabel"><i class="fas fa-qrcode"></i> {{ _('QR Code') }}</h1>
-    </div>
-    <div class="modal-body" style="text-align: center;">
-        <img style="border-radius: 1em;" src="{{ qr_code_url }}" alt="QR Code" class="img-fluid">
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-close-button>{{ _('Close') }}</button>
+
+<div class="mb-3">
+    <label for="mfa" class="form-label"><i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)') }}</label>
+    <div id="mfa-section" class="d-flex flex-column gap-2">
+        <div id="mfa-status-container">
+            <span id="mfa-status" class="text-success">{{ _('MFA ei käytössä') }}</span>
+        </div>
+        <button type="button" class="btn btn-warning" id="init-mfa-btn">{{ _('Ota käyttöön MFA') }}</button>
+        <button type="button" class="btn btn-secondary" id="add-mfa-device-btn" style="display:none;">{{ _('Lisää uusi laite') }}</button>
+        <ul id="mfa-devices-list" class="list-group mt-2"></ul>
     </div>
 </div>
-<div class="modal-overlay" id="overlay"></div>
-{% endif %}
+
+<!-- MFA QR Code Modal -->
+<div class="modal fade" id="mfaModal" tabindex="-1" aria-labelledby="mfaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA QR Code') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p>{{ _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.') }}</p>
+        <img id="mfa-qr-code" src="" alt="MFA QR Code" class="img-fluid rounded mb-3">
+        <input type="text" id="mfa-token-input" class="form-control" placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="confirm-mfa-btn">{{ _('Vahvista MFA') }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
 {% endblock %}
 
 {% block scripts %}
-<script>
-    document.getElementById('settings-form').addEventListener('submit', function() {
-        document.getElementById('spinner').style.display = 'inline-block';
-    });
-</script>
-<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // js that will display the modal when the page is loaded and the qr code is available
-    document.addEventListener("DOMContentLoaded", function() {
-        const qrModal = document.getElementById('qrModal');
+document.addEventListener("DOMContentLoaded", async () => {
+    const form = document.getElementById('settings-form');
+    const spinner = document.getElementById('spinner');
 
-        if (qrModal) {
-            openModal(qrModal);
+    const displayInput = document.getElementById('display_name');
+    const cityInput = document.getElementById('selected-city');
+    const languageSelect = document.getElementById('language');
+    const darkModeCheckbox = document.getElementById('dark_mode');
+    const newsletterCheckbox = document.getElementById('subscribe_newsletter');
+
+    // Fetch current settings
+    const res = await fetch("/users/auth/api/v2/settings");
+    const data = await res.json();
+    if (data.status === "success") {
+        const settings = data.settings || {};
+        displayInput.value = settings.display_name || '';
+        if (settings.city !== null) {
+            selectCity(settings.city);
+            //cityInput.value = settings.city || '';
+        }
+        languageSelect.value = settings.language || 'fi';
+        darkModeCheckbox.checked = settings.dark_mode || false;
+        newsletterCheckbox.checked = settings.subscribe_newsletter || false;
+    }
+
+    // Handle form submit
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        spinner.style.display = 'inline-block';
+
+        const payload = {
+            display_name: displayInput.value,
+            city: cityInput.value,
+            language: languageSelect.value,
+            dark_mode: darkModeCheckbox.checked,
+            subscribe_newsletter: newsletterCheckbox.checked
+        };
+
+        const response = await fetch("/users/auth/api/v2/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        spinner.style.display = 'none';
+
+        if(result.status === "success") {
+            alert(result.message);
+        } else {
+            alert("Virhe asetusten tallennuksessa.");
         }
     });
+});
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const mfaBtn = document.getElementById("init-mfa-btn");
+    const addDeviceBtn = document.getElementById("add-mfa-device-btn");
+    const mfaModal = new bootstrap.Modal(document.getElementById('mfaModal'));
+    const qrImg = document.getElementById("mfa-qr-code");
+    const tokenInput = document.getElementById("mfa-token-input");
+    const confirmBtn = document.getElementById("confirm-mfa-btn");
+    const mfaStatus = document.getElementById("mfa-status");
+    const devicesList = document.getElementById("mfa-devices-list");
+
+    let currentStep = null;
+    let pendingSecret = null;
+
+    // Load existing MFA status & devices
+    async function loadMFAStatus() {
+        try {
+            const res = await fetch("/users/auth/api/v2/mfa_status");
+            const data = await res.json();
+            if (data.status === "enabled") {
+                mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
+                mfaBtn.style.display = "none";
+                addDeviceBtn.style.display = "inline-block";
+                devicesList.innerHTML = "";
+                data.devices.forEach(d => {
+                    const li = document.createElement("li");
+                    li.className = "list-group-item d-flex justify-content-between align-items-center";
+                    li.textContent = `${d.name} (${d.created_at})`;
+                    // Optional: add revoke button
+                    const revokeBtn = document.createElement("button");
+                    revokeBtn.className = "btn btn-sm btn-danger";
+                    revokeBtn.textContent = "Poista";
+                    revokeBtn.onclick = async () => {
+                        if(confirm("Haluatko poistaa tämän laitteen?")) {
+                            await fetch("/users/auth/api/v2/mfa_device_revoke", {
+                                method: "POST",
+                                headers: {"Content-Type": "application/json"},
+                                body: JSON.stringify({device_id: d.id})
+                            });
+                            loadMFAStatus();
+                        }
+                    };
+                    li.appendChild(revokeBtn);
+                    devicesList.appendChild(li);
+                });
+            }
+        } catch(e) {
+            console.error("Failed to load MFA status", e);
+        }
+    }
+
+    loadMFAStatus();
+
+    // Initiate MFA (first setup or adding new device)
+    async function initiateMFA() {
+        try {
+            const res = await fetch("/users/auth/api/v2/mfa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ step: "request_activation" })
+            });
+            const data = await res.json();
+            if (data.status === "pending") {
+                pendingSecret = data.secret;
+                qrImg.src = data.qr_code;
+                tokenInput.value = "";
+                mfaModal.show();
+            } else {
+                alert("MFA-initiaatio epäonnistui: " + (data.message || ""));
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Virhe MFA:n aloittamisessa");
+        }
+    }
+
+    mfaBtn.addEventListener("click", initiateMFA);
+    addDeviceBtn.addEventListener("click", initiateMFA);
+
+    // Verify MFA code
+    confirmBtn.addEventListener("click", async () => {
+        const token = tokenInput.value.trim();
+        if (!token) return alert("Syötä koodi!");
+
+        try {
+            const res = await fetch("/users/auth/api/v2/mfa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ step: "verify_code", code: token, secret: pendingSecret })
+            });
+            const data = await res.json();
+            if (data.status === "success") {
+                mfaModal.hide();
+                loadMFAStatus();
+                alert(data.message);
+            } else {
+                alert("Virhe MFA:n vahvistamisessa: " + (data.message || ""));
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Virhe MFA:n vahvistamisessa");
+        }
+    });
+});
+
+</script>
 {% endblock %}

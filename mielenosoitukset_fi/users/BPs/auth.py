@@ -1,3 +1,4 @@
+import json
 from flask import (
     Blueprint,
     render_template,
@@ -9,7 +10,7 @@ from flask import (
 )
 from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
-from mielenosoitukset_fi.users.models import User, UserMFA
+from mielenosoitukset_fi.users.models import MFAToken, PendingMFA, User, UserMFA
 from mielenosoitukset_fi.utils.auth import (
     generate_confirmation_token,
     verify_confirmation_token,
@@ -385,6 +386,99 @@ def process_settings_change(user, changed_fields):
     """
     # This is a placeholder for any additional process that should be started.
     current_app.logger.info(f"User {user._id} settings changed: {changed_fields}")
+    from bson import ObjectId
+
+@auth_bp.route("/api/v2/settings", methods=["GET", "POST"])
+@login_required
+def settings_api_v2():
+    """
+    Get or update general user settings (city, display_name, language, dark_mode, subscribe_newsletter)
+    in a single collection 'user_settings'. MFA is handled separately in /api/v2/mfa.
+    """
+    user = current_user
+    allowed_fields = {
+        "city",
+        "display_name",
+        "language",
+        "dark_mode",
+        "subscribe_newsletter",
+    }
+
+    # Ensure user has a settings document
+    sett = mongo.user_settings.find_one({"user_id": ObjectId(user._id)})
+    if not sett:
+        sett = {field: None for field in allowed_fields}
+        sett["display_name"] = getattr(user, "display_name", user.username)
+        sett["user_id"] = ObjectId(user._id)
+        mongo.user_settings.insert_one(sett)
+
+    # ---------- GET ----------
+    if request.method == "GET":
+        current_user_data = {field: sett.get(field) for field in allowed_fields}
+        return jsonify({
+            "status": "success",
+            "settings": current_user_data
+        })
+
+    # ---------- POST ----------
+    if request.is_json:
+        user_data = request.get_json(force=True)
+    else:
+        user_data = request.form.to_dict()
+
+    changed_fields = {}
+    update_data = {}
+
+    for field in allowed_fields:
+        if field not in user_data:
+            continue
+        new_value = user_data[field]
+        current_value = sett.get(field)
+
+        # try parse JSON for structured fields
+        if isinstance(new_value, str):
+            try:
+                new_value = json.loads(new_value)
+            except Exception:
+                pass
+
+        if current_value != new_value:
+            changed_fields[field] = {"old": current_value, "new": new_value}
+            update_data[field] = new_value
+            setattr(user, field, new_value)  # update in-memory user object
+
+    if changed_fields:
+        mongo.user_settings.update_one(
+            {"user_id": ObjectId(user._id)},
+            {"$set": update_data}
+        )
+
+        # notify by email
+        try:
+            email_sender.queue_email(
+                template_name="auth/settings_changed.html",
+                subject="Käyttäjäasetusten muutokset",
+                recipients=[user.email],
+                context={
+                    "changed_fields": changed_fields,
+                    "user_name": getattr(user, "display_name", user.username),
+                },
+            )
+        except Exception as e:
+            flash_message(f"Virhe asetusten muutosviestin lähettämisessä: {e}", "error")
+
+        process_settings_change(user, changed_fields)
+
+        return jsonify({
+            "status": "success",
+            "message": "Asetukset päivitetty ja ilmoitus lähetetty.",
+            "changed_fields": changed_fields
+        })
+
+    return jsonify({
+        "status": "success",
+        "message": "Ei muutoksia asetuksissa."
+    })
 
 @auth_bp.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -392,66 +486,113 @@ def settings():
     """Let users activate MFA"""
     user = current_user
 
-    if request.method == "POST":
-        user_data = request.form.to_dict()
-
-        if "mfa_enabled" in user_data:
-            user_data["mfa_enabled"] = user_data["mfa_enabled"] == "on"
-            mongo.users.update_one(
-                {"_id": user._id}, {"$set": {"mfa_enabled": user_data["mfa_enabled"]}}
-            )
-            user.enable_mfa() if user_data["mfa_enabled"] else user.disable_mfa()
-
-            # Send the user email, including the info on how to start using mfa
-            if user_data["mfa_enabled"]:
-                try:
-                    email_sender.queue_email(
-                        template_name="auth/mfa_enabled.html",
-                        subject="Kaksivaiheisen todennuksen käyttöönotto",
-                        recipients=[user.email],
-                        context={"user_name": user.displayname or user.username},
-                    )
-                except Exception as e:
-                    flash_message(
-                        f"Virhe kaksivaiheisen todennuksen käyttöönoton viestin lähettämisessä: {e}",
-                        "error",
-                    )
-            else:
-                try:
-                    email_sender.queue_email(
-                        template_name="auth/mfa_disabled.html",
-                        subject="Kaksivaiheisen todennuksen poistaminen",
-                        recipients=[user.email],
-                        context={"user_name": user.displayname or user.username},
-                    )
-                except Exception as e:
-                    flash_message(
-                        f"Virhe kaksivaiheisen todennuksen poistamisen viestin lähettämisessä: {e}",
-                        "error",
-                    )
-
-        flash_message("Asetukset päivitetty.", "success")
-        return redirect(url_for("users.auth.settings"))
-
-    # return render_template("users/auth/settings.html", user=user)
-    if user.mfa_enabled:
-        user_mfa = UserMFA(user._id)
-        secret = user_mfa.generate_secret()
-        qr_code_url = user_mfa.get_qr_code_url()
-        qr_code = generate_qr(qr_code_url)
-        qr_code_base64 = f"data:image/png;base64,{qr_code}"
-
-        return render_template(
-            "users/auth/settings.html", user=user, qr_code_url=qr_code_base64
-        )
-    if user.mfa_enabled:
-        user_mfa = user.mfa
-        qr_code_url = user_mfa.get_qr_code_url()
-        return render_template(
-            "users/auth/settings.html", user=user, qr_code_url=qr_code_url
-        )
+    
 
     return render_template("users/auth/settings.html", user=user)
+
+# --- Update MFA API to handle multiple devices ---
+@auth_bp.route("/api/v2/mfa", methods=["POST"])
+@login_required
+def mfa_setup_api():
+    """
+    MFA Setup API supporting multiple devices.
+    Steps:
+    1) request_activation: generates secret + QR, stores in pending_mfa
+    2) verify_code: user submits current TOTP code, server verifies and activates
+    3) done: just returns success
+    """
+    user = current_user
+    data = request.get_json(force=True)
+    step = data.get("step")
+
+    if step == "request_activation":
+        # Step 1: generate secret for new device
+        secret = PendingMFA.create(user._id)
+        user_mfa = UserMFA(user._id)
+        qr_code_url = user_mfa.get_qr_code_url(secret)
+        qr_code_base64 = f"data:image/png;base64,{generate_qr(qr_code_url)}"
+        return jsonify({
+            "status": "pending",
+            "qr_code": qr_code_base64,
+            "secret": secret
+        })
+
+    elif step == "verify_code":
+        code = data.get("code")
+        secret = data.get("secret")  # which secret we are verifying
+        device_name = data.get("device_name", "New device")
+        if not code or not secret:
+            return jsonify({"status": "error", "message": "Code or secret missing"}), 400
+
+        mfa_token = MFAToken(secret)
+        if mfa_token.verify(code):
+            mongo.mfas.insert_one({
+                "user_id": user._id,
+                "secret": secret,
+                "device_name": device_name,
+                "created_at": datetime.datetime.utcnow()
+            })
+            PendingMFA.delete(user._id, secret)
+            user.mfa_enabled = True
+            user.save()
+            return jsonify({"status": "success", "message": "MFA aktivoitu!"})
+        else:
+            return jsonify({"status": "error", "message": "Väärä koodi"}), 400
+
+    elif step == "done":
+        return jsonify({"status": "success", "message": "MFA flow complete"})
+
+    else:
+        return jsonify({"status": "error", "message": "Invalid step"}), 400
+    
+# --- MFA Status Endpoint ---
+@auth_bp.route("/api/v2/mfa_status", methods=["GET"])
+@login_required
+def mfa_status():
+    """
+    Returns MFA status and list of active devices/secrets for the current user.
+    """
+    user = current_user
+    user_mfa_records = mongo.mfas.find({"user_id": user._id})
+    devices = []
+    for rec in user_mfa_records:
+        devices.append({
+            "id": str(rec["_id"]),
+            "name": rec.get("device_name", "Unknown device"),
+            "created_at": rec.get("created_at").strftime("%Y-%m-%d %H:%M")
+        })
+    
+    return jsonify({
+        "status": "enabled" if user.mfa_enabled else "disabled",
+        "devices": devices
+    })
+
+
+# --- MFA Device Revoke Endpoint ---
+@auth_bp.route("/api/v2/mfa_device_revoke", methods=["POST"])
+@login_required
+def mfa_device_revoke():
+    """
+    Removes a specific MFA device/secret for the user.
+    """
+    user = current_user
+    data = request.get_json(force=True)
+    device_id = data.get("device_id")
+    
+    if not device_id:
+        return jsonify({"status": "error", "message": "device_id is required"}), 400
+
+    result = mongo.mfas.delete_one({"_id": device_id, "user_id": user._id})
+    
+    if result.deleted_count == 1:
+        # Check if any devices remain, else disable MFA flag
+        remaining = mongo.mfas.count_documents({"user_id": user._id})
+        if remaining == 0:
+            user.mfa_enabled = False
+            user.save()
+        return jsonify({"status": "success", "message": "Device removed"})
+    else:
+        return jsonify({"status": "error", "message": "Device not found"}), 404
 
 
 @auth_bp.route("/logout")

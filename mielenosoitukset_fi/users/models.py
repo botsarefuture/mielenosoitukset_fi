@@ -324,143 +324,104 @@ class TwoFAToken:
         # Implementation for checking the token
         pass
 
+from typing import List, Dict
+import pyotp
+import datetime
+from bson import ObjectId
+
+class PendingMFA:
+    """Pending MFA setup before verification (can handle multiple secrets)."""
+    COLLECTION = "pending_mfa"
+
+    @staticmethod
+    def create(user_id: ObjectId) -> str:
+        """Create a new pending MFA secret."""
+        secret = pyotp.random_base32()
+        mongo[PendingMFA.COLLECTION].insert_one({
+            "user_id": user_id,
+            "secret": secret,
+            "created_at": datetime.datetime.utcnow()
+        })
+        return secret
+
+    @staticmethod
+    def get(user_id: ObjectId, secret: str = None) -> List[str]:
+        """Return pending secrets for a user or a specific secret."""
+        query = {"user_id": user_id}
+        if secret:
+            query["secret"] = secret
+        docs = mongo[PendingMFA.COLLECTION].find(query)
+        return [doc["secret"] for doc in docs]
+
+    @staticmethod
+    def delete(user_id: ObjectId, secret: str = None):
+        """Delete pending MFA secrets (all or specific)."""
+        query = {"user_id": user_id}
+        if secret:
+            query["secret"] = secret
+        mongo[PendingMFA.COLLECTION].delete_many(query)
+
 
 class MFAToken:
-    """Class for handling MFA tokens.
-
-    We have this kind of data structure for MFA tokens:
-
-    {
-        '_id': ObjectId('_id here'),
-        'user_id': ObjectId('userid here'),
-        'secret': 'secret here',
-        'created_at': datetime.datetime(2022, 1, 1, 0, 0),
-        'in_use': True
-    }
-
-    Parameters
-    ----------
-    user_id : str
-        The user ID associated with the MFA token.
-    secret : str
-        The secret key for the MFA token.
-
-    Returns
-    -------
-    MFAToken
-        An instance of the MFAToken class.
-    """
-
-    def __init__(self, user_id, secret):
-        self.user_id = user_id
+    """Active MFA token with verification."""
+    def __init__(self, secret: str):
         self.secret = secret
-        self.created_at = datetime.datetime.now()
-        self.in_use = True
         self.totp = pyotp.TOTP(secret)
 
-    def __repr__(self):
-        return f"<MFAToken(user_id={self.user_id})>"
-
-    def check_token(self, token):
-        """Check if the provided token is valid.
-
-        Parameters
-        ----------
-        token : str
-            The token to be checked.
-
-        Returns
-        -------
-        bool
-            True if the token is valid, False otherwise.
-        """
-        return self.totp.verify(token, valid_window=VALID_WINDOW)
+    def verify(self, token: str, window: int = 5) -> bool:
+        return self.totp.verify(token, valid_window=window)
 
 
 class UserMFA:
-    """Class for handling user MFA (Multi-Factor Authentication)."""
+    """Handles all active MFA secrets for a user."""
 
-    def __init__(self, user_id):
+    def __init__(self, user_id: ObjectId):
         self.user_id = user_id
-        self.secrets = self.get_secrets()
-        self.secrets_ = [MFAToken(user_id, secret) for secret in self.secrets]
 
-    def get_secrets(self):
-        """Retrieve the secrets associated with the user.
+    def list_devices(self) -> List[Dict]:
+        """Return metadata for all active MFA secrets/devices."""
+        docs = mongo.mfas.find({"user_id": self.user_id})
+        return [
+            {
+                "id": str(doc["_id"]),
+                "secret": doc["secret"],
+                "device_name": doc.get("device_name", "Unknown device"),
+                "created_at": doc.get("created_at")
+            }
+            for doc in docs
+        ]
 
-        Returns
-        -------
-        list
-            A list of secrets associated with the user.
-        """
-        mfas = mongo.mfas.find({"user_id": ObjectId(self.user_id)})
-        return [mfa["secret"] for mfa in mfas]
+    def active_tokens(self) -> List[MFAToken]:
+        """Return MFAToken objects for all active secrets."""
+        return [MFAToken(dev["secret"]) for dev in self.list_devices()]
 
-    def verify_token(self, token):
-        """Verify the provided token.
+    def verify_token(self, token: str) -> bool:
+        """Verify token against all active secrets."""
+        return any(tok.verify(token) for tok in self.active_tokens())
 
-        Parameters
-        ----------
-        token : str
-            The token to be verified.
-
-        Returns
-        -------
-        bool
-            True if the token is valid, False otherwise.
-        """
-        for secret in self.secrets_:
-            if secret.check_token(token):
-                return True
-        return False
-
-    def get_qr_code_url(self):
-        """Generate a QR code URL for the user.
-
-        Returns
-        -------
-        str
-            The URL for the QR code.
-        """
-        user = User.from_OID(self.user_id)
-        return pyotp.totp.TOTP(self.secrets[0]).provisioning_uri(
-            name=user.displayname or user.username, issuer_name="Mielenosoitukset.fi"
-        )
-
-    def add_secret(self, secret):
-        """Add a new secret for the user.
-
-        Parameters
-        ----------
-        secret : str
-            The secret to be added.
-        """
-        mongo.mfas.insert_one({"user_id": ObjectId(self.user_id), "secret": secret})
-        self.secrets.append(secret)
-        self.secrets_.append(MFAToken(self.user_id, secret))
-
-    def generate_secret(self):
-        """Generate a new secret for the user.
-
-        Returns
-        -------
-        str
-            The generated secret.
-        """
+    def add_device(self, device_name: str = "New device") -> str:
+        """Generate a new secret and store it as a device."""
         secret = pyotp.random_base32()
-        self.add_secret(secret)
+        mongo.mfas.insert_one({
+            "user_id": self.user_id,
+            "secret": secret,
+            "device_name": device_name,
+            "created_at": datetime.datetime.utcnow()
+        })
         return secret
 
-    def to_dict(self):
-        """Convert the UserMFA object to a dictionary.
+    def remove_device(self, device_id: str):
+        """Remove a specific device by Mongo _id."""
+        result = mongo.mfas.delete_one({"_id": ObjectId(device_id), "user_id": self.user_id})
+        return result.deleted_count > 0
 
-        Returns
-        -------
-        dict
-            A dictionary representation of the UserMFA object.
-        """
-        return {"user_id": ObjectId(self.user_id), "secrets": self.secrets}
-
+    def get_qr_code_url(self, secret: str) -> str:
+        """Generate QR for a given secret."""
+        user = User.from_OID(self.user_id)
+        return pyotp.totp.TOTP(secret).provisioning_uri(
+            name=user.displayname or user.username,
+            issuer_name="Mielenosoitukset.fi"
+        )
 
 class AnonymousUser(AnonymousUserMixin):
     """ """

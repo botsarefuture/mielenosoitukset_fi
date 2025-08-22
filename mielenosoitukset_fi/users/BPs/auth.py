@@ -337,6 +337,7 @@ def settings_api():
     for field, new_value in user_data.items():
         current_value = current_user_data.get(field)
         if current_value is None or str(current_value) != str(new_value):
+            print(field)
             changed_fields[field] = {"old": current_value, "new": new_value}
             setattr(user, field, new_value)
 
@@ -387,6 +388,13 @@ def process_settings_change(user, changed_fields):
     # This is a placeholder for any additional process that should be started.
     current_app.logger.info(f"User {user._id} settings changed: {changed_fields}")
     from bson import ObjectId
+    for changed_field, values in changed_fields.items():
+        current_app.logger.info(f" - {changed_field}: {values['old']} -> {values['new']}")
+    print(changed_fields)
+    if "display_name" in changed_fields:
+        user.displayname = changed_fields["display_name"]["new"]
+        print("Updated display name to the user object too")
+        user.save()
 
 @auth_bp.route("/api/v2/settings", methods=["GET", "POST"])
 @login_required
@@ -408,7 +416,7 @@ def settings_api_v2():
     sett = mongo.user_settings.find_one({"user_id": ObjectId(user._id)})
     if not sett:
         sett = {field: None for field in allowed_fields}
-        sett["display_name"] = getattr(user, "display_name", user.username)
+        sett["display_name"] = getattr(user, "displayname", user.username)
         sett["user_id"] = ObjectId(user._id)
         mongo.user_settings.insert_one(sett)
 
@@ -446,6 +454,7 @@ def settings_api_v2():
             changed_fields[field] = {"old": current_value, "new": new_value}
             update_data[field] = new_value
             setattr(user, field, new_value)  # update in-memory user object
+            print(f"Changed {field}: {current_value} -> {new_value}")
 
     if changed_fields:
         mongo.user_settings.update_one(
@@ -461,7 +470,7 @@ def settings_api_v2():
                 recipients=[user.email],
                 context={
                     "changed_fields": changed_fields,
-                    "user_name": getattr(user, "display_name", user.username),
+                    "user_name": getattr(user, "displayname", user.username),
                 },
             )
         except Exception as e:
@@ -606,17 +615,25 @@ def logout():
 
 @auth_bp.route("/password_reset_request", methods=["GET", "POST"])
 def password_reset_request():
-    """ """
+    """
+    Handles password reset requests without revealing whether an email exists.
+    """
     if request.method == "POST":
         email = request.form.get("email")
-        user = mongo.users.find_one({"email": email})
 
+        # Always show the same response, regardless of whether the user exists
+        flash_message(
+            "Jos sähköpostiosoite löytyy järjestelmästämme, "
+            "salasanan palautuslinkki on lähetetty siihen.", 
+            "info"
+        )
+
+        user = mongo.users.find_one({"email": email})
         if user:
             token = generate_reset_token(email)
             reset_url = url_for(
                 "users.auth.password_reset", token=token, _external=True
             )
-
             try:
                 email_sender.queue_email(
                     template_name="password_reset_email.html",
@@ -624,21 +641,14 @@ def password_reset_request():
                     recipients=[email],
                     context={"reset_url": reset_url, "user_name": user.get("username")},
                 )
-                flash_message(
-                    "Salasanan palautuslinkki on lähetetty sähköpostiisi.", "info"
-                )
             except Exception as e:
-                flash_message(
-                    f"Virhe salasanan palautusviestin lähettämisessä: {e}", "error"
-                )
+                # Fail silently — don’t reveal error details to the user
+                # (optional: log the error internally)
+                pass  
 
-            return redirect(url_for("users.auth.login"))
-
-        flash_message("Tilin sähköpostiosoitetta ei löytynyt.", "info")
-        return redirect(url_for("users.auth.password_reset_request"))
+        return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/password_reset_request.html")
-
 
 @auth_bp.route("/password_reset/<token>", methods=["GET", "POST"])
 def password_reset(token):
@@ -669,8 +679,12 @@ def password_reset(token):
             flash_message("Käyttäjää ei löytynyt.", "warning")
             return redirect(url_for("users.auth.password_reset_request"))
 
+        if password is None or len(password) < 8:
+            flash_message("Salasanan on oltava vähintään 8 merkkiä pitkä.", "warning")
+            return redirect(url_for("users.auth.password_reset", token=token))
+
         user = User.from_db(user_doc)
-        user.change_password(password)
+        user._change_password(password)
 
         # Notify user about their password being changed via email
         try:
@@ -688,12 +702,3 @@ def password_reset(token):
 
     return render_template("users/auth/password_reset.html", token=token)
 
-
-# TODO:
-# - Add MFAs
-# - Add user roles and permissions
-# - Add password reset
-# - Add settings page
-#   - Language
-#   - Notification settings
-#   - Profile settings

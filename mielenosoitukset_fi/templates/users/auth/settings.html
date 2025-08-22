@@ -5,54 +5,119 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/settings.css') }}">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
 <style>
-.spinner {
+  /* Spinner */
+  .spinner {
     display: none;
     width: 20px;
     height: 20px;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     border-top-color: #fff;
     animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Tabs styling */
+  #settings-tabs {
+    margin-top: 20px;
+  }
+
+  #settings-tabs .ui-tabs-nav {
+    background: var(--background, #f8f9fa);
+    border: none;
+    border-bottom: 2px solid #ddd;
+    padding-left: 0;
+  }
+
+  #settings-tabs .ui-tabs-nav li {
+    display: inline-block;
+    margin: 0 5px -2px 0;
+  }
+
+  #settings-tabs .ui-tabs-nav a {
+    padding: 10px 15px;
+    display: block;
+    text-decoration: none;
+    font-weight: 500;
+    color: var(--primary_text_color, #333);
+    border-radius: 5px 5px 0 0;
+  }
+
+  #settings-tabs .ui-tabs-nav .ui-tabs-active a {
+    background: var(--primary_color, #0d6efd);
+    color: #fff;
+  }
+
+  #settings-tabs .ui-tabs-panel {
+    padding: 20px;
+    background: var(--background, #fff);
+    border: 1px solid #ddd;
+    border-radius: 0 5px 5px 5px;
+    margin-top: -1px;
+  }
+
+  #settings-tabs .ui-tabs-nav a:hover {
+  background: var(--hover_bg_color, #e9ecef);
+  color: var(--primary_text_color, #333);
 }
-@keyframes spin { to { transform: rotate(360deg); } }
+
+#settings-tabs .ui-tabs-active a:hover {
+  background: var(--primary_color, #0b5ed7);
+  color: #fff;
+}
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
+  <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
 
-    <form id="settings-form">
-        
+  <div id="settings-tabs">
+    <ul>
+      <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
+      <li><a href="#tab-profile">{{ _('Profiili') }}</a></li>
+    </ul>
+
+    <!-- Yleinen Tab -->
+    <div id="tab-general">
+      <form id="settings-form">
         <div class="mb-3">
-            <label for="display_name" class="form-label">{{ _('Näyttönimi') }}</label>
-            <input type="text" class="form-control" id="display_name" name="display_name">
+          <label for="display_name" class="form-label">{{ _('Näyttönimi') }}</label>
+          <input type="text" class="form-control" id="display_name" name="display_name">
         </div>
 
+        <!-- Kaupunki dropdown (your custom widget) -->
         <div class="mb-3">
-            <label for="city" class="form-label">{{ _('Kaupunki') }}</label>
-<div class="form-group">
-  <label for="city" aria-label="{{ _('Paikkakunta selection') }}">{{ _('Paikkakunta') }}<span class="required-asterisk"
-      aria-hidden="true">*</span></label>
-  <br><br>
-  <div id="paikkakunta-drop" class="dropdown">
-    <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
-      aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
-    <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
-      <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
-        aria-label="{{ _('Search cities') }}" />
-      <!-- List of cities -->
-      {% for city in city_list %}
-      <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if demo is
-        defined and demo.city==city %} class="selected" {% endif %}>
-        {{ city }}
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-  <input type="hidden" id="selected-city" name="city" value="{{ demo.city if demo is defined else '' }}" required />
-</div>
+          <label for="city" class="form-label">{{ _('Kaupunki') }}</label>
+          <!-- existing dropdown code -->
+          <div id="paikkakunta-drop" class="dropdown">
+            <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
+              aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
+            <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
+              <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
+                aria-label="{{ _('Search cities') }}" />
+              <!-- List of cities -->
+              {% for city in city_list %}
+              <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if
+                demo is defined and demo.city==city %} class="selected" {% endif %}>
+                {{ city }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          <input type="hidden" id="selected-city" name="city" 
+            required />
+        </div>
+
 
 <script>
   // Paikkakunta dropdown functions
@@ -172,45 +237,67 @@
     }
   }
 </style>
-        </div>
 
-        <div class="mb-3">
-            <label for="language" class="form-label">{{ _('Kieli') }}</label>
-            <select class="form-select" id="language" name="language">
-                <option value="fi">{{ _('Suomi') }}</option>
-                <option value="en">{{ _('English') }}</option>
-                <!-- Add more languages as needed -->
-            </select>
-        </div>
 
-        <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode">
-            <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
-        </div>
+    <div class="mb-3">
+      <label for="language" class="form-label">{{ _('Kieli') }}</label>
+      <select class="form-select" id="language" name="language">
+        <option value="fi">{{ _('Suomi') }}</option>
+        <option value="en">{{ _('English') }}</option>
+      </select>
+    </div>
 
-        <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter">
-            <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
-        </div>
+    <div class="form-check mb-3">
+      <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode">
+      <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
+    </div>
 
-        
-        <button type="submit" class="btn btn-primary">
-            {{ _('Tallenna muutokset') }}
-            <div class="spinner" id="spinner"></div>
-        </button>
+    <div class="form-check mb-3">
+      <input type="checkbox" class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter">
+      <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+      {{ _('Tallenna muutokset') }}
+      <div class="spinner" id="spinner"></div>
+    </button>
     </form>
 
-<div class="mb-3">
-    <label for="mfa" class="form-label"><i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)') }}</label>
-    <div id="mfa-section" class="d-flex flex-column gap-2">
+    <!-- MFA Section -->
+    <div class="mb-3 mt-4">
+      <label for="mfa" class="form-label"><i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)')
+        }}</label>
+      <div id="mfa-section" class="d-flex flex-column gap-2">
         <div id="mfa-status-container">
-            <span id="mfa-status" class="text-success">{{ _('MFA ei käytössä') }}</span>
+          <span id="mfa-status" class="text-success">{{ _('MFA ei käytössä') }}</span>
         </div>
         <button type="button" class="btn btn-warning" id="init-mfa-btn">{{ _('Ota käyttöön MFA') }}</button>
-        <button type="button" class="btn btn-secondary" id="add-mfa-device-btn" style="display:none;">{{ _('Lisää uusi laite') }}</button>
+        <button type="button" class="btn btn-secondary" id="add-mfa-device-btn" style="display:none;">{{ _('Lisää uusi
+          laite') }}</button>
         <ul id="mfa-devices-list" class="list-group mt-2"></ul>
+      </div>
     </div>
+  </div>
+
+  <!-- Profiili Tab -->
+  <div id="tab-profile">
+    <p>{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
+    <form id="profile-form">
+      <div class="mb-3">
+        <label for="bio" class="form-label">{{ _('Esittelyteksti') }}</label>
+        <textarea class="form-control" id="bio" rows="3"></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="profile-pic" class="form-label">{{ _('Profiilikuva') }}</label>
+        <input type="file" class="form-control" id="profile-pic" accept="image/*">
+      </div>
+      <button type="submit" class="btn btn-primary">{{ _('Tallenna profiili') }}</button>
+    </form>
+  </div>
 </div>
+</div>
+
+<!-- MFA QR Modal (unchanged) -->
 
 <!-- MFA QR Code Modal -->
 <div class="modal fade" id="mfaModal" tabindex="-1" aria-labelledby="mfaModalLabel" aria-hidden="true">
@@ -232,12 +319,23 @@
     </div>
   </div>
 </div>
-
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+<script>
+  $(function () {
+  $("#settings-tabs").tabs({
+    show: { effect: "fadeIn", duration: 200 },
+    hide: { effect: "fadeOut", duration: 200 }
+  });
+});
+
+</script>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {

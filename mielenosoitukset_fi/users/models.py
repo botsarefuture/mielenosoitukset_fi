@@ -81,6 +81,19 @@ class User(UserMixin):
     Memberships live in the `memberships` collection – we derive org/role data on‑demand.
     """
 
+    def _change_password(self, new_password: str) -> None:
+        """
+        Change the user's password.
+
+        Parameters
+        ----------
+        new_password : str
+            The new password to set.
+        """
+        self.password_hash = generate_password_hash(new_password)
+        self.save()
+        #mongo.users.update_one({"_id": self._id}, {"$set": {"password_hash": self.password_hash}})
+
     # ---------- INIT / FACTORIES -------------------------------------------------
 
     def __init__(

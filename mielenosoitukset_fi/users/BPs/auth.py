@@ -702,3 +702,6 @@ def password_reset(token):
 
     return render_template("users/auth/password_reset.html", token=token)
 
+# NEXT STEPS:
+# - Move all the stuff from edit profile to user profile settings
+# - Create the emails/auth/settings_changed.html template to notify users about changes

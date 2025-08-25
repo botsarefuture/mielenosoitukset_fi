@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort
+from flask import Blueprint, current_app, render_template, request, redirect, url_for, abort
 from urllib.parse import urlparse
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
@@ -52,38 +52,7 @@ def profile(username=None):
 @login_required
 def edit_profile():
     """ """
-    if request.method == "POST":
-        displayname = request.form.get("displayname")
-        bio = request.form.get("bio")
-        profile_picture = request.files.get("profile_picture")
-
-        current_user.displayname = displayname
-        current_user.bio = bio
-
-        if profile_picture:
-            filename = secure_filename(profile_picture.filename)
-            bucket_name = "mielenosoitukset-fi1"
-            photo_url = upload_image_fileobj(bucket_name, profile_picture.stream, filename, "profile_pics")
-
-            if photo_url:
-                current_user.profile_picture = photo_url
-                mongo.users.update_one(
-                    {"_id": ObjectId(current_user.id)},
-                    {
-                        "$set": {
-                            "displayname": current_user.displayname,
-                            "profile_picture": current_user.profile_picture,
-                            "bio": current_user.bio,
-                        }
-                    },
-                )
-                flash_message("Profiilitietosi on päivitetty.", "success")
-            else:
-                flash_message("Virhekuvan lataamisessa S3:een.", "error")
-
-        return redirect(url_for("profile.profile", username=current_user.username))
-
-    return render_template("users/profile/edit_profile.html")
+    return redirect(url_for("users.auth.settings"))
 
 
 @profile_bp.route("/follow/<username>", methods=["POST"])

@@ -18,7 +18,7 @@ from mielenosoitukset_fi.utils.auth import (
     verify_reset_token,
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
-from mielenosoitukset_fi.utils.s3 import upload_image
+from mielenosoitukset_fi.utils.s3 import upload_image, upload_image_fileobj
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.classes import Organization
 from bson.objectid import ObjectId
@@ -649,6 +649,72 @@ def password_reset_request():
         return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/password_reset_request.html")
+@auth_bp.route("/api/v2/user_profile", methods=["GET", "POST"])
+def user_profile():
+    """
+    JSON-only endpoint for user bio + profile picture updates.
+    Accepts:
+    {
+        "bio": "new bio text",
+        "profile_picture": "<base64 string of image>"   # optional
+    }
+    """
+    user = current_user
+
+    if request.method == "POST":
+        data = request.get_json(force=True)
+
+        # Update bio
+        bio = data.get("bio")
+        if bio is not None:
+            user.bio = bio
+
+        # Handle profile picture (base64 string)
+        profile_picture_b64 = data.get("profile_picture")
+        if profile_picture_b64:
+            try:
+                # Decode base64 -> bytes
+
+                # Generate filename
+                filename = secure_filename(f"{user.id}.png")
+
+                # Upload to S3
+                bucket_name = current_app.config.get("S3_BUCKET")
+                import io
+
+                img_bytes = base64.b64decode(profile_picture_b64)
+                img_stream = io.BytesIO(img_bytes)
+             
+                photo_url = upload_image_fileobj(bucket_name, img_stream, filename, "profile_pics")
+
+                if photo_url:
+                    user.profile_picture = photo_url
+                else:
+                    return jsonify({"status": "error", "message": "Error uploading image to S3"}), 500
+            except Exception as e:
+                return jsonify({"status": "error", "message": f"Invalid image data: {str(e)}"}), 400
+
+        # Save changes in Mongo
+        mongo.users.update_one(
+            {"_id": ObjectId(user.id)},
+            {
+                "$set": {
+                    "bio": getattr(user, "bio", None),
+                    "profile_picture": getattr(user, "profile_picture", None),
+                }
+            },
+        )
+
+        return jsonify({"status": "success", "message": "Profile updated successfully"})
+
+    # GET request - return user profile data
+    return jsonify({
+        "status": "success",
+        "data": {
+            "bio": getattr(user, "bio", None),
+            "profile_picture": getattr(user, "profile_picture", None),
+        }
+    })
 
 @auth_bp.route("/password_reset/<token>", methods=["GET", "POST"])
 def password_reset(token):

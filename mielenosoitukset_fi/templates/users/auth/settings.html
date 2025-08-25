@@ -297,6 +297,82 @@
 </div>
 </div>
 
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const profileForm = document.getElementById("profile-form");
+    const bioInput = document.getElementById("bio");
+    const fileInput = document.getElementById("profile-pic");
+    const previewContainer = document.getElementById("profile-pic-preview");
+
+    // Load current profile info
+    fetch("/users/auth/api/v2/user_profile")
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                bioInput.value = data.data.bio || "";
+                if (data.data.profile_picture) {
+                    showPreview(data.data.profile_picture);
+                }
+            }
+        });
+
+    // Form submit handler
+    profileForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        let base64Image = null;
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            base64Image = await toBase64(file);
+        }
+
+        const payload = {
+            bio: bioInput.value,
+            profile_picture: base64Image // null if no file selected
+        };
+
+        const res = await fetch("/users/auth/api/v2/user_profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.status === "success") {
+            alert("Profiili päivitetty!");
+            if (base64Image) {
+                // Show new preview immediately
+                const dataUrl = "data:image/png;base64," + base64Image;
+                showPreview(dataUrl);
+            }
+        } else {
+            alert("Virhe: " + (data.message || "Tuntematon virhe"));
+        }
+    });
+
+    // Helper: convert file -> base64
+    function toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Helper: show image preview
+    function showPreview(url) {
+        previewContainer.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = url;
+        img.className = "img-thumbnail";
+        img.style.maxWidth = "150px";
+        previewContainer.appendChild(img);
+    }
+});
+</script>
+
+
 <!-- MFA QR Modal (unchanged) -->
 
 <!-- MFA QR Code Modal -->
@@ -500,4 +576,52 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const profileForm = document.getElementById("profile-form");
+    const bioInput = document.getElementById("bio");
+    const fileInput = document.getElementById("profile-pic");
+
+    profileForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        let base64Image = null;
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            base64Image = await toBase64(file); // helper fn below
+        }
+
+        const payload = {
+            bio: bioInput.value,
+            profile_picture: base64Image // null if no file chosen
+        };
+
+        const res = await fetch("/users/auth/api/v2/user_profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.status === "success") {
+            alert("Profiili päivitetty!");
+        } else {
+            alert("Virhe: " + (data.message || "Tuntematon virhe"));
+        }
+    });
+
+    // Convert file → base64 string
+    function toBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file); // returns like "data:image/png;base64,..."
+            reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
+            reader.onerror = (error) => reject(error);
+        });
+    }
+});
+</script>
+
 {% endblock %}

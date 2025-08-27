@@ -42,6 +42,8 @@ def profile(username=None):
     user_data = mongo.users.find_one({"username": username})
     if user_data:
         user_obj = User.from_db(user_data)
+        user_obj.followers_count = len(user_obj.followers)
+        user_obj.following_count = len(user_obj.following)
         return render_template("users/profile/profile.html", user=user_obj)
     else:
         flash_message("Käyttäjäprofiilia ei löytynyt.", "warning")

@@ -137,8 +137,15 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>
 
@@ -149,9 +156,9 @@
         <!-- Profile picture -->
         <div class="col-md-3 text-center mb-3 mb-md-0">
           <img src="{{ user.profile_picture or 'https://cdn.mielenosoitukset.fi/default-pfp.jpg' }}"
-               alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva"
-               class="profile-img img-fluid"
-               onerror="this.onerror=null; this.src='https://cdn.mielenosoitukset.fi/default-pfp.jpg';">
+            alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva"
+            class="profile-img img-fluid"
+            onerror="this.onerror=null; this.src='https://cdn.mielenosoitukset.fi/default-pfp.jpg';">
         </div>
 
         <!-- User info -->
@@ -195,8 +202,8 @@
 
           <!-- Action buttons container -->
           <div id="action-buttons-container"
-               class="mt-4 d-flex flex-wrap gap-2 justify-content-center justify-content-md-start"
-               data-username="{{ user.username }}">
+            class="mt-4 d-flex flex-wrap gap-2 justify-content-center justify-content-md-start"
+            data-username="{{ user.username }}">
             <!-- JS injects follow/friend/message buttons here -->
           </div>
         </div>
@@ -220,15 +227,16 @@
       {% endif %}
     </div>
   </div>
-  
-</div>
-<script>
+
+</div><script>
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("action-buttons-container");
   if (!container) return;
 
   const username = container.dataset.username;
   const isSelf = "{{ current_user.username }}" === username;
+  const logged_in = {{ current_user.is_authenticated | tojson }};
+  const currentUrl = window.location.href;
 
   if (isSelf) {
     container.innerHTML = `<a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-light btn-custom">{{ _('Muokkaa profiilia') }}</a>`;
@@ -237,104 +245,128 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function updateButtons() {
     try {
-      const res = await fetch(`/users/profile/api/friend_state/?username=${encodeURIComponent(username)}`);
-      const data = await res.json();
-
-      // Follow state
-      const followRes = await fetch(`/users/profile/api/is_following/?username=${encodeURIComponent(username)}`);
-      const followData = await followRes.json();
-
-      let html = '';
-
-      // Follow/unfollow button
-      if (followData.is_following) {
-        html += `<button id="follow-btn" class="btn btn-unfollow btn-custom me-2">Lopeta seuraaminen</button>`;
-      } else {
-        html += `<button id="follow-btn" class="btn btn-follow btn-custom me-2">Seuraa</button>`;
-      }
-
-      // Friend request buttons
-      switch(data.friend_state) {
-        case "friends":
-          html += `<button id="friend-btn" class="btn btn-light btn-custom me-2">Poista ystävä</button>`;
-          break;
-        case "incoming_request":
-          html += `<button id="accept-btn" class="btn btn-success btn-custom me-2">Hyväksy pyyntö</button>`;
-          html += `<button id="reject-btn" class="btn btn-danger btn-custom me-2">Hylkää pyyntö</button>`;
-          break;
-        case "outgoing_request":
-          html += `<button class="btn btn-light btn-custom me-2" disabled>Ystäväpyyntö lähetetty</button>`;
-          break;
-        case "none":
-          html += `<button id="send-request-btn" class="btn btn-light btn-custom me-2">Lisää ystäväksi</button>`;
-          break;
-      }
-
-      // Message button
-
+      // Initial placeholder buttons
+      let html = `
+        <button id="follow-btn" class="btn btn-follow btn-custom me-2">Seuraa</button>
+        <button id="send-request-btn" class="btn btn-light btn-custom me-2">Lisää ystäväksi</button>
+        <button id="friend-btn" class="btn btn-light btn-custom me-2">Ystävä</button>
+      `;
       container.innerHTML = html;
 
-      // Event listeners
       const followBtn = document.getElementById("follow-btn");
-      if(followBtn) followBtn.addEventListener("click", async () => {
-        const action = followData.is_following ? "unfollow" : "follow";
-        await fetch(`/users/profile/api/${action}/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username })
-        });
-        updateButtons();
-      });
-
       const sendBtn = document.getElementById("send-request-btn");
-      if(sendBtn) sendBtn.addEventListener("click", async () => {
-        await fetch("/users/profile/api/send_friend_request/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username })
-        });
-        updateButtons();
-      });
-
-      const acceptBtn = document.getElementById("accept-btn");
-      if(acceptBtn) acceptBtn.addEventListener("click", async () => {
-        await fetch("/users/profile/api/accept_friend_request/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username })
-        });
-        updateButtons();
-      });
-
-      const rejectBtn = document.getElementById("reject-btn");
-      if(rejectBtn) rejectBtn.addEventListener("click", async () => {
-        await fetch("/users/profile/api/reject_friend_request/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username })
-        });
-        updateButtons();
-      });
-
       const friendBtn = document.getElementById("friend-btn");
-      if(friendBtn) friendBtn.addEventListener("click", async () => {
-        await fetch("/users/profile/api/remove_friend/", {
+
+      if (!logged_in) {
+        [followBtn, sendBtn, friendBtn].forEach(btn => {
+          btn.setAttribute("title", "Sinun tulee kirjautua sisään käyttääksesi tätä");
+          btn.addEventListener("click", () => {
+            const width = 500;
+            const height = 600;
+            const left = (screen.width / 2) - (width / 2);
+            const top = (screen.height / 2) - (height / 2);
+
+            window.open(
+                "{{ url_for('users.auth.login') }}?next=" + encodeURIComponent(currentUrl) + "&popup=1",
+                "LoginPopup",
+                `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+            );
+        });
+
+        });
+        return; // done for logged-out users
+      }
+
+      // Logged-in: fetch friend & follow state
+      const [friendRes, followRes] = await Promise.all([
+        fetch(`/users/profile/api/friend_state/?username=${encodeURIComponent(username)}`),
+        fetch(`/users/profile/api/is_following/?username=${encodeURIComponent(username)}`)
+      ]);
+
+      const friendData = await friendRes.json();
+      const followData = await followRes.json();
+
+      // Update follow button
+      followBtn.textContent = followData.is_following ? "Lopeta seuraaminen" : "Seuraa";
+      followBtn.onclick = async () => {
+        await fetch(`/users/profile/api/${followData.is_following ? 'unfollow' : 'follow'}/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
         });
         updateButtons();
-      });
+      };
 
-      
+      // Update friend button & send request button based on friend_state
+      switch (friendData.friend_state) {
+        case "friends":
+          friendBtn.textContent = "Poista ystävä";
+          friendBtn.onclick = async () => {
+            await fetch("/users/profile/api/remove_friend/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username })
+            });
+            updateButtons();
+          };
+          sendBtn.style.display = "none";
+          break;
 
-    } catch(err) {
-      console.error("Error fetching state:", err);
+        case "incoming_request":
+          sendBtn.style.display = "none";
+          friendBtn.textContent = "Hyväksy pyyntö";
+          friendBtn.onclick = async () => {
+            await fetch("/users/profile/api/accept_friend_request/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username })
+            });
+            updateButtons();
+          };
+
+          // Add a reject button
+          const rejectBtn = document.createElement("button");
+          rejectBtn.className = "btn btn-danger btn-custom me-2";
+          rejectBtn.textContent = "Hylkää pyyntö";
+          rejectBtn.onclick = async () => {
+            await fetch("/users/profile/api/reject_friend_request/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username })
+            });
+            updateButtons();
+          };
+          container.appendChild(rejectBtn);
+          break;
+
+        case "outgoing_request":
+          friendBtn.textContent = "Ystäväpyyntö lähetetty";
+          friendBtn.disabled = true;
+          sendBtn.style.display = "none";
+          break;
+
+        case "none":
+        default:
+          sendBtn.textContent = "Lisää ystäväksi";
+          sendBtn.onclick = async () => {
+            await fetch("/users/profile/api/send_friend_request/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username })
+            });
+            updateButtons();
+          };
+          friendBtn.style.display = "none";
+          break;
+      }
+    } catch (err) {
+      console.error("Error updating buttons:", err);
     }
   }
 
   updateButtons();
 });
 </script>
+
 
 {% endblock %}

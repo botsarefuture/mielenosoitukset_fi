@@ -213,6 +213,12 @@
   {% include 'alarm.html' %}
   {% endif %}
 
+  {% if current_user.is_authenticated %}
+  <div class="message-cont">
+    {% include 'users/profile/messages.html' %}
+  </div>
+  {% endif %}
+
   <!-- Footer -->
   <footer class="footer">
     <div class="container-header-footer">

@@ -7,240 +7,336 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
 <style>
-:root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-text-secondary: light-dark(#444, #c7c7c7);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-  --primary_color: var(--color-primary);
-  --primary_dark_color: light-dark(#003d80, #0056b3);
-}
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-.profile-container {
-  background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-.profile-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
-  color: #fff;
-  border-radius: 1.2em;
-  padding: 1.5em 1em 1.2em 1em;
-  margin-bottom: 2em;
-  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
-  position: relative;
-  overflow: hidden;
-}
-.profile-details {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 2em;
-  width: 100%;
-}
-.profile-picture {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.profile-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 4px solid #fff;
-  box-shadow: 0 2px 12px rgba(0,86,179,0.13);
-  background: #fff;
-}
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  color: #fff;
-  min-width: 220px;
-}
-.user-name {
-  font-size: 2.2em;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
-  margin-bottom: 0.2em;
-  letter-spacing: 0.04em;
-  display: inline-block;
-}
-.badge-admin {
-  background: rgba(255,255,255,0.13);
-  color: #fff;
-  font-weight: 700;
-  border-radius: 2em;
-  padding: 0.3em 1.2em;
-  margin-left: 0.5em;
-  font-size: 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  display: inline-block;
-}
-.organizations-title {
-  font-size: 1.2em;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  background: rgba(255,255,255,0.13);
-  padding: 0.3em 1.2em;
-  border-radius: 2em;
-  margin-bottom: 0.7em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  display: inline-block;
-  color: #fff;
-}
-.organizations {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-  margin-bottom: 1em;
-}
-.org-container {
-  background: var(--color-title-accent);
-  border-radius: 0.7em;
-  padding: 0.7em 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  min-width: 160px;
-  text-align: center;
-}
-.org-link {
-  color: var(--color-primary);
-  text-decoration: underline;
-  font-weight: 600;
-}
-.org-link:hover {
-  color: var(--primary_dark_color);
-}
-.button-group {
-  margin-top: 1em;
-  display: flex;
-  gap: 1em;
-}
-.btn {
-  padding: 0.5em 1.2em;
-  border-radius: 2em;
-  border: none;
-  font-weight: 700;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-}
-.btn-edit {
-  background: var(--color-title-accent);
-  color: var(--color-primary);
-}
-.btn-edit:hover {
-  background: var(--color-primary);
-  color: #fff;
-}
-.btn-follow {
-  background: var(--color-primary);
-  color: #fff;
-}
-.btn-follow:hover {
-  background: var(--primary_dark_color);
-}
-.btn-unfollow {
-  background: #fff;
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-}
-.btn-unfollow:hover {
-  background: var(--color-primary);
-  color: #fff;
-}
-@media (max-width: 600px) {
-  .profile-container { padding: 1em 0.5em; }
-  .profile-header { padding: 1em 0.5em; }
-  .profile-details { flex-direction: column; gap: 1em; }
-  .user-name { font-size: 1.3em; }
-  .organizations-title { font-size: 1em; }
-}
+  :root {
+    --color-bg: light-dark(#f5f7fa, #0d1117);
+    --color-card-bg: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.05));
+    --color-text: light-dark(#222, #e6edf3);
+    --color-text-secondary: light-dark(#555, #a0aec0);
+    --color-primary: light-dark(#2563eb, #4ea1ff);
+    --color-primary-dark: light-dark(#1e40af, #0056b3);
+    --glass-blur: blur(18px);
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .profile-container {
+    background: var(--color-card-bg);
+    border-radius: 1.5em;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    padding: 2em 1.5em;
+    backdrop-filter: var(--glass-blur);
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .profile-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: #fff;
+    border-radius: 1.3em;
+    padding: 2.2em 1.2em;
+    margin-bottom: 2em;
+  }
+
+  .profile-img {
+    width: 130px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    background: #fff;
+    transition: transform 0.3s ease;
+  }
+
+  .profile-img:hover {
+    transform: scale(1.05) rotate(2deg);
+  }
+
+  .user-name {
+    font-size: 2.4em;
+    font-weight: 900;
+    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.25);
+    margin-bottom: 0.3em;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-admin {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 2em;
+    padding: 0.35em 1em;
+    font-size: 0.9em;
+    backdrop-filter: blur(6px);
+    display: inline-block;
+    margin-bottom: 0.6em;
+  }
+
+  .stat-number {
+    font-size: 1.4em;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .stat-label {
+    font-size: 0.9em;
+    color: #d1d5db;
+  }
+
+  .org-container {
+    background: var(--color-card-bg);
+    border-radius: 1em;
+    padding: 0.9em 1.2em;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: transform 0.25s ease;
+  }
+
+  .org-container:hover {
+    transform: translateY(-3px) scale(1.02);
+  }
+
+  .org-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .org-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+  }
+
+  .btn-custom {
+    border-radius: 2em;
+    font-weight: 700;
+    transition: all 0.25s ease;
+  }
+
+  .btn-follow {
+    background: var(--color-primary);
+    color: #fff;
+  }
+
+  .btn-follow:hover {
+    background: var(--color-primary-dark);
+  }
+
+  .btn-unfollow {
+    background: transparent;
+    color: #fff;
+    border: 2px solid #fff;
+  }
+
+  .btn-unfollow:hover {
+    background: #fff;
+    color: var(--color-primary-dark);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 
-<div class="container profile-container" style="text-align: center;">
-    <!-- Profiilin Otsikko -->
+<div class="container my-4">
+  <div class="profile-container">
     <div class="profile-header">
-        <!--<div class="cover-photo">
-            <img src="{{ user.cover_photo or 'https://mielenosoitukset-fi1.fsn1.your-objectstorage.com/demos/default.jpg' }}" 
-                 alt="Cover Photo" class="cover-img">
-        </div>-->
-
-        <div class="profile-details">
-            <div class="profile-picture">
-       <img src="{{ user.profile_picture or 'https://cdn.mielenosoitukset.fi/default-pfp.jpg' }}" 
-                     alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva" 
-                     class="profile-img" 
-         onerror="this.onerror=null; this.src='https://cdn.mielenosoitukset.fi/default-pfp.jpg';">
-            </div>
-
-            <div class="profile-info">
-                <h1 class="user-name">
-                    {{ user.displayname if user.displayname else user.username }}
-                </h1>
-
-                {% if user.global_admin %}
-                    <span class="badge badge-admin">{{ _('Järjestelmävalvoja') }}</span>
-                {% endif %}
-                
-                {% if user.organizations %}
-                    <h2 class="organizations-title">{{ _('Organisaatiot') }}</h2>
-                    <!-- Organizations: each in its own container -->
-                    <div class="organizations">
-                        {% for org in user.organizations %}
-                            <div class="org-container">
-                                <p><strong>{{ get_org_name(org.org_id) }}</strong></p>
-                                <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                <div class="button-group">
-                    {% if current_user.is_authenticated %}
-                        {% if current_user.username == user.username %}
-                            <a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-edit">{{ _('Muokkaa profiilia') }}</a>
-                        {% else %}
-                            <div class="follow-unfollow">
-                                {% if current_user.is_following(user) %}
-                                    <form action="{{ url_for('users.profile.unfollow', username=user.username) }}" method="POST">
-                                        <button type="submit" class="btn btn-unfollow">{{ _('Lopeta seuraaminen') }}</button>
-                                    </form>
-                                {% else %}
-                                    <form action="{{ url_for('users.profile.follow', username=user.username) }}" method="POST">
-                                        <button type="submit" class="btn btn-follow">{{ _('Seuraa') }}</button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                    {% endif %}
-                </div>
-            </div>
+      <div class="row align-items-center">
+        <!-- Profile picture -->
+        <div class="col-md-3 text-center mb-3 mb-md-0">
+          <img src="{{ user.profile_picture or 'https://cdn.mielenosoitukset.fi/default-pfp.jpg' }}"
+               alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva"
+               class="profile-img img-fluid"
+               onerror="this.onerror=null; this.src='https://cdn.mielenosoitukset.fi/default-pfp.jpg';">
         </div>
+
+        <!-- User info -->
+        <div class="col-md-9 text-center text-md-start">
+          <h1 class="user-name">{{ user.displayname if user.displayname else user.username }}</h1>
+
+          {% if user.global_admin %}
+          <span class="badge-admin">{{ _('Järjestelmävalvoja') }}</span>
+          {% endif %}
+
+          <!-- Stats -->
+          <div class="row justify-content-center my-3">
+            <div class="col-4 col-md-3 text-center">
+              <div class="stat-number">{{ user.posts_count or 0 }}</div>
+              <div class="stat-label">{{ _('Postaukset') }}</div>
+            </div>
+            <div class="col-4 col-md-3 text-center">
+              <div class="stat-number">{{ user.followers_count or 0 }}</div>
+              <div class="stat-label">{{ _('Seuraajat') }}</div>
+            </div>
+            <div class="col-4 col-md-3 text-center">
+              <div class="stat-number">{{ user.following_count or 0 }}</div>
+              <div class="stat-label">{{ _('Seuratut') }}</div>
+            </div>
+          </div>
+
+          <!-- Organizations -->
+          {% if user.organizations %}
+          <h2 class="h5 mt-3">{{ _('Organisaatiot') }}</h2>
+          <div class="row g-3">
+            {% for org in user.organizations %}
+            <div class="col-6 col-md-4">
+              <div class="org-container">
+                <p><strong>{{ get_org_name(org.org_id) }}</strong></p>
+                <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Action buttons container -->
+          <div id="action-buttons-container"
+               class="mt-4 d-flex flex-wrap gap-2 justify-content-center justify-content-md-start"
+               data-username="{{ user.username }}">
+            <!-- JS injects follow/friend/message buttons here -->
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- User Posts -->
+    <div class="mt-4">
+      <h2 class="h4">{{ _('Postaukset') }}</h2>
+      {% if user.posts %}
+      <div class="list-group">
+        {% for post in user.posts %}
+        <a href="{{ url_for('posts.view', post_id=post.id) }}" class="list-group-item list-group-item-action">
+          <strong>{{ post.title }}</strong>
+          <small class="text-muted d-block">{{ post.created_at.strftime('%d.%m.%Y') }}</small>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted">{{ _('Tällä käyttäjällä ei ole vielä postauksia.') }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="message-cont">
+    {% include 'users/profile/messages.html' %}
+  </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const container = document.getElementById("action-buttons-container");
+  if (!container) return;
+
+  const username = container.dataset.username;
+  const isSelf = "{{ current_user.username }}" === username;
+
+  if (isSelf) {
+    container.innerHTML = `<a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-light btn-custom">{{ _('Muokkaa profiilia') }}</a>`;
+    return;
+  }
+
+  async function updateButtons() {
+    try {
+      const res = await fetch(`/users/profile/api/friend_state/?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+
+      // Follow state
+      const followRes = await fetch(`/users/profile/api/is_following/?username=${encodeURIComponent(username)}`);
+      const followData = await followRes.json();
+
+      let html = '';
+
+      // Follow/unfollow button
+      if (followData.is_following) {
+        html += `<button id="follow-btn" class="btn btn-unfollow btn-custom me-2">Lopeta seuraaminen</button>`;
+      } else {
+        html += `<button id="follow-btn" class="btn btn-follow btn-custom me-2">Seuraa</button>`;
+      }
+
+      // Friend request buttons
+      switch(data.friend_state) {
+        case "friends":
+          html += `<button id="friend-btn" class="btn btn-light btn-custom me-2">Poista ystävä</button>`;
+          break;
+        case "incoming_request":
+          html += `<button id="accept-btn" class="btn btn-success btn-custom me-2">Hyväksy pyyntö</button>`;
+          html += `<button id="reject-btn" class="btn btn-danger btn-custom me-2">Hylkää pyyntö</button>`;
+          break;
+        case "outgoing_request":
+          html += `<button class="btn btn-light btn-custom me-2" disabled>Ystäväpyyntö lähetetty</button>`;
+          break;
+        case "none":
+          html += `<button id="send-request-btn" class="btn btn-light btn-custom me-2">Lisää ystäväksi</button>`;
+          break;
+      }
+
+      // Message button
+
+      container.innerHTML = html;
+
+      // Event listeners
+      const followBtn = document.getElementById("follow-btn");
+      if(followBtn) followBtn.addEventListener("click", async () => {
+        const action = followData.is_following ? "unfollow" : "follow";
+        await fetch(`/users/profile/api/${action}/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+        updateButtons();
+      });
+
+      const sendBtn = document.getElementById("send-request-btn");
+      if(sendBtn) sendBtn.addEventListener("click", async () => {
+        await fetch("/users/profile/api/send_friend_request/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+        updateButtons();
+      });
+
+      const acceptBtn = document.getElementById("accept-btn");
+      if(acceptBtn) acceptBtn.addEventListener("click", async () => {
+        await fetch("/users/profile/api/accept_friend_request/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+        updateButtons();
+      });
+
+      const rejectBtn = document.getElementById("reject-btn");
+      if(rejectBtn) rejectBtn.addEventListener("click", async () => {
+        await fetch("/users/profile/api/reject_friend_request/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+        updateButtons();
+      });
+
+      const friendBtn = document.getElementById("friend-btn");
+      if(friendBtn) friendBtn.addEventListener("click", async () => {
+        await fetch("/users/profile/api/remove_friend/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username })
+        });
+        updateButtons();
+      });
+
+      
+
+    } catch(err) {
+      console.error("Error fetching state:", err);
+    }
+  }
+
+  updateButtons();
+});
+</script>
+
 {% endblock %}

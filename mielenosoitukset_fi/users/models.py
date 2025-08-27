@@ -114,6 +114,8 @@ class User(UserMixin):
         role: str = DEFAULT_ROLE,
         banned: bool = False,
         mfa_enabled: bool = False,
+        friends: list = [],
+        friend_requests: list = []
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
@@ -132,6 +134,8 @@ class User(UserMixin):
         self.banned            = banned
         self.mfa_enabled       = mfa_enabled
         self.mfa               = UserMFA(self._id)  # see helper class below
+        self.friends           = friends
+        self.friend_requests    = friend_requests
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
@@ -156,6 +160,8 @@ class User(UserMixin):
             role            = doc.get("role", DEFAULT_ROLE),
             banned          = doc.get("banned", False),
             mfa_enabled     = doc.get("mfa_enabled", False),
+            friends         = doc.get("friends", []),
+            friend_requests = doc.get("friend_requests", [])
         )
 
     @classmethod
@@ -213,6 +219,56 @@ class User(UserMixin):
     def role_in(self, organization_id: Union[str, ObjectId]) -> Optional[str]:
         m = self.membership_for(organization_id)
         return m.role if m else None
+
+    # ---------- FRIENDS / SOCIAL -------------------------------------------------
+
+    def is_friends_with(self, other: "User | ObjectId") -> bool:
+        """Check if self is friends with another user"""
+        other_id = other._id if isinstance(other, User) else other
+        if isinstance(other_id, str):
+            other_id = ObjectId(other_id)
+        # friends is like: """"
+        """
+        "friends": [
+    {
+      "user_id": {
+        "$oid": "673702d8e2586a4b02dd3a63"
+      },
+      "last_updated": {
+        "$date": "2025-08-27T08:18:40.087Z"
+      }
+    }
+  ]"""
+        for friend in self.friends:
+            if isinstance(friend, dict) and "user_id" in friend:
+                fid = friend["user_id"]
+                if isinstance(fid, dict) and "$oid" in fid:
+                    fid = fid["$oid"]
+                if isinstance(fid, str):
+                    fid = ObjectId(fid)
+                if fid == other_id:
+                    return True
+            elif isinstance(friend, str):
+                try:
+                    fid = ObjectId(friend)
+                    if fid == other_id:
+                        return True
+                except Exception:
+                    continue
+            elif isinstance(friend, ObjectId):
+                if friend == other_id:
+                    return True
+        return False
+
+    def am_i_following(self, other: "User | ObjectId") -> bool:
+        """Check if self is following another user"""
+        other_id = other.id if isinstance(other, User) else other
+        return other_id in self.following
+
+    def is_followed_by(self, other: "User | ObjectId") -> bool:
+        """Check if self is followed by another user"""
+        other_id = other.id if isinstance(other, User) else other
+        return other_id in self.followers
 
     # ---------- PASSWORD / LOGIN -------------------------------------------------
 
@@ -295,6 +351,8 @@ class User(UserMixin):
             "role": self.role,
             "banned": self.banned,
             "mfa_enabled": self.mfa_enabled,
+            "friends": self.friends,
+            "friend_requests": self.friend_requests
         }
         return d
 

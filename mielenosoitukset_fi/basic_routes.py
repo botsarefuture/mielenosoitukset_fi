@@ -4,7 +4,7 @@ import re
 import json
 import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask_babel import _, refresh
 from flask import (
     render_template,
@@ -42,6 +42,7 @@ db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
 submitters_collection = mongo["submitters"]  # <-- Add this line
+malicious_reports_collection = mongo["malicious_reports"]
 
 
 
@@ -1062,32 +1063,58 @@ Disallow: /admin/
 
     @app.route("/subscribe_reminder/<demo_id>", methods=["POST"])
     def subscribe_reminder(demo_id):
-        """
-        Subscribe a user to demonstration reminders.
-
-        Parameters
-        ----------
-        demo_id : str
-            The demonstration ObjectId as a string.
-
-        Returns
-        -------
-        flask.Response
-            JSON response with status and message.
-        """
         user_email = request.form.get("user_email")
+        user_ip = request.remote_addr
+        user_agent = request.headers.get("User-Agent", "")
+
         if not user_email:
             return jsonify({"status": "ERROR", "message": "Sähköpostiosoite vaaditaan."})
+
+        if not is_valid_email(user_email):
+            report_malicious(
+                ip=user_ip,
+                reason="Invalid / potentially malicious email",
+                user_email=user_email,
+                demo_id=demo_id,
+                user_agent=user_agent
+            )
+            return jsonify({"status": "ERROR", "message": "Sähköpostiosoite ei ole kelvollinen."})
+
         reminders_collection = mongo["demo_reminders"]
+
         # Prevent duplicate subscriptions
-        existing = reminders_collection.find_one({"demonstration_id": ObjectId(demo_id), "user_email": user_email})
+        existing = reminders_collection.find_one({
+            "demonstration_id": ObjectId(demo_id),
+            "user_email": user_email
+        })
         if existing:
             return jsonify({"status": "OK", "message": "Olet jo tilannut muistutuksen tälle mielenosoitukselle."})
+
+        # Rate limit by IP (max 5 per hour)
+        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        recent_requests = reminders_collection.count_documents({
+            "user_ip": user_ip,
+            "created_at": {"$gte": one_hour_ago}
+        })
+        if recent_requests >= 10:
+            report_malicious(
+                ip=user_ip,
+                reason="Too many reminder requests in 1 hour",
+                user_email=user_email,
+                demo_id=demo_id,
+                user_agent=user_agent
+            )
+            return jsonify({"status": "ERROR", "message": "Liian monta pyyntöä tunnin sisällä, yritä myöhemmin."})
+
+        # Insert reminder
         reminders_collection.insert_one({
             "demonstration_id": ObjectId(demo_id),
             "user_email": user_email,
+            "user_ip": user_ip,
+            "user_agent": user_agent,
             "created_at": datetime.utcnow(),
         })
+
         return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
 
     @app.route("/manifest.json")
@@ -1291,3 +1318,51 @@ Disallow: /admin/
     @app.context_processor
     def inject_current_year():
         return dict(current_year=datetime.now().year)
+
+
+
+    from datetime import datetime
+
+    def report_malicious(ip, reason, user_email=None, demo_id=None, user_agent=None):
+        """
+        Logs a suspicious/malicious activity in the malicious_traffic collection.
+
+        Parameters
+        ----------
+        ip : str
+            IP address of the requester
+        reason : str
+            Why the traffic was flagged
+        user_email : str, optional
+            Email used in the request
+        demo_id : str or ObjectId, optional
+            Demonstration id related to the request
+        user_agent : str, optional
+            User-Agent string
+        """
+        doc = {
+            "ip": ip,
+            "reason": reason,
+            "user_email": user_email,
+            "demo_id": demo_id if isinstance(demo_id, str) else str(demo_id) if demo_id else None,
+            "user_agent": user_agent,
+            "reported_at": datetime.utcnow(),
+        }
+        malicious_reports_collection.insert_one(doc)
+
+    import re
+
+    EMAIL_REGEX = r"^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$"
+
+    def is_valid_email(email):
+        """
+        Checks if the email is valid and doesn’t contain suspicious characters.
+        """
+        if not re.match(EMAIL_REGEX, email):
+            return False
+        # Additional blacklist for characters that could be used in injection
+        suspicious_chars = ["$", "{", "}", ";", "--", "'", "\""]
+        if any(char in email for char in suspicious_chars):
+            return False
+        return True
+

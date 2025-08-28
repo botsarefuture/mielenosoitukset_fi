@@ -178,3 +178,4 @@ def iso_to_finnish(iso_date: str) -> str:
     """
     from datetime import datetime
     return datetime.strptime(iso_date, "%Y-%m-%d").strftime("%d.%m.%Y")
+

@@ -258,6 +258,21 @@ def login():
             session.pop("next_page")
             session.modified = True
 
+        # Check if this is a popup login request
+        if request.args.get("popup") == "1":
+            # Return HTML that closes the popup and reloads opener
+            return f"""
+            <script>
+                if (window.opener) {{
+                    window.opener.location.reload();
+                    window.close();
+                }} else {{
+                    window.location = "{safe_next_page}";
+                }}
+            </script>
+            """
+
+
         # Redirect to the safe next page
         return redirect(safe_next_page)
 
@@ -290,6 +305,19 @@ def verify_mfa():
         user = current_user
 
         if UserMFA(user._id).verify_mfa(token):
+            # Check if this is a popup login request
+            if request.args.get("popup") == "1":
+                # Return HTML that closes the popup and reloads opener
+                return f"""
+                <script>
+                    if (window.opener) {{
+                        window.opener.location.reload();
+                        window.close();
+                    }} else {{
+                        window.location = "{safe_next_page}";
+                    }}
+                </script>
+                """
             login_user(user)
             session["mfa_required"] = False
             session["modified"] = True

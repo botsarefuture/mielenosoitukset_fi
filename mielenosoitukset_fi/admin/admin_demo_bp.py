@@ -1,5 +1,5 @@
 import sys
-from flask import abort
+from flask import abort, current_app
 """
 Edit History and Diff Views
 """
@@ -897,7 +897,9 @@ def collect_demo_data(request):
     if file and file.filename:
         from werkzeug.utils import secure_filename
         filename = secure_filename(file.filename)
-        bucket_name = "mielenosoitukset-fi1"
+        
+        # get from config
+        bucket_name = current_app.config.get("S3_BUCKET")
         s3_url = upload_image_fileobj(bucket_name, file.stream, filename, "demo_preview")
         if s3_url:
             # Use the S3 URL as cover picture

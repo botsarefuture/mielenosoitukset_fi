@@ -61,33 +61,67 @@
                     <td>{{ org.email }}</td>
                     <td><a href="{{ org.website }}" target="_blank" class="link">{{ org.website }}</a></td>
                     <td class="actions-cell">
-                        {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}
-                        <a href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}"
-                            class="button edit-button"><i class="fas fa-edit"></i>{{ _('Muokkaa') }}</a>
-                        {% else %}
-                        <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{
-                            _('Muokkaa') }}</a>
-                        {% endif %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                id="actionsDropdown-{{ org._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ org._id }}">
+                                {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}">
+                                        <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
+                                        <i class="fas fa-ban me-2"></i>{{ _('Muokkaa') }}
+                                    </span>
+                                </li>
+                                {% endif %}
 
-                        {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}
-                        <a href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}"
-                            class="button delete-button"><i class="fas fa-trash"></i>{{ _('Poista') }}</a>
-                        {% else %}
-                        <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{
-                            _('Poista') }}</a>
-                        {% endif %}
+                                {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}
+                                <li>
+                                    <a class="dropdown-item text-danger"
+                                        href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}">
+                                        <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
+                                        <i class="fas fa-ban me-2"></i>{{ _('Poista') }}
+                                    </span>
+                                </li>
+                                {% endif %}
 
-                        {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}
-                        <a href="{{ url_for('admin_org.view_organization', org_id=org._id) }}"
-                            class="button view-button"><i class="fa-solid fa-eye"></i>{{ _('Yhteenveto') }}</a>
-                        {% else %}
-                        <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{
-                            _('Yhteenveto') }}</a>
-                        {% endif %}
+                                {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="{{ url_for('admin_org.view_organization', org_id=org._id) }}">
+                                        <i class="fa-solid fa-eye me-2"></i>{{ _('Yhteenveto') }}
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li>
+                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
+                                        <i class="fas fa-ban me-2"></i>{{ _('Yhteenveto') }}
+                                    </span>
+                                </li>
+                                {% endif %}
 
-                        <a href="{{ url_for('org', org_id=org._id) }}" class="button view-button"><i
-                                class="fa-solid fa-eye"></i>{{ _('Katsele') }}</a>
+                                <!-- Always visible link to public org page -->
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('org', org_id=org._id) }}">
+                                        <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </td>
+
                 </tr>
                 {% endfor %}
             </tbody>

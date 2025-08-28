@@ -79,20 +79,25 @@ def admin_required(f):
     return decorated_function
 
 def has_demo_permission(current_user, _id, permission_name):
+    # TODO: #388 Add demo permission check logic
     raise NotImplementedError("This function hasn't been implemented yet.")
 
-def permission_required(permission_name, _id=None, _type=None):
-    """Decorator to enforce specific permission requirements for route access.
+def permission_required(permission_name: str, _id: str | None = None, _type: str | None = None):
+    """
+    Decorator to enforce specific permission requirements for route access.
 
-    This decorator checks:
-    1. If the user is authenticated.
-    2. If the user has global admin privileges (bypasses specific permission check).
-    3. If the user has the specified permission.
+    This decorator checks multiple layers of permissions for the `current_user`:
+    1. Authentication status: user must be logged in.
+    2. Global admin: automatically bypasses permission checks.
+    3. Role-based permissions: user must have the specified permission in their role.
+    4. Global permissions: user must have the specified permission in global_permissions.
+    5. Demonstration-specific permissions (if `_type="DEMONSTRATION"`).
 
-    If access is denied, the user is redirected and a flash message is displayed.
+    If the user does not meet the required permissions, access is denied with a 403
+    Forbidden error, and a flash message is displayed.
 
-    Changelog:
-    ----------
+    Changelog
+    ---------
     v2.6.0:
         - Enhanced logging at each step to improve debugging capabilities.
         - Added logic for global admin bypass of specific permissions.
@@ -103,13 +108,24 @@ def permission_required(permission_name, _id=None, _type=None):
     Parameters
     ----------
     permission_name : str
-        The specific permission name required to access the route.
+        The name of the permission required to access the decorated route.
+    _id : str, optional
+        Optional resource-specific ID used in permission checks.
+    _type : str, optional
+        Optional type of permission check, e.g., "DEMONSTRATION".
 
     Returns
     -------
+    decorator : function
+        The decorator function that wraps the route handler.
 
-
+    Notes
+    -----
+    - Intended to be used with Flask route handlers.
+    - Uses `flash_message` to notify users of denied access.
+    - Uses `logger` to log permission checks and access denials.
     """
+
 
     def decorator(f):
         """

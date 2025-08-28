@@ -67,6 +67,14 @@
         {
             "name": "LIST_USERS",
             "description": "List all users."
+        },
+        {
+            "name": "CREATE_USER",
+            "description": "Create new users."
+        },
+        {
+            "name": "FORCE_PASSWORD_CHANGE",
+            "description": "Force a user to change their password."
         }
     ],
     "Organization Management": [

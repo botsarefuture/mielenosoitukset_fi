@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<style>
+    .password-reset-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    .password-reset-container h2 {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    .password-reset-container p.notice {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 20px;
+    }
+    .password-reset-container .form-group {
+        margin-bottom: 15px;
+        text-align: left;
+    }
+    .password-reset-container label {
+        font-size: 14px;
+        color: #555;
+    }
+    .password-reset-container input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+    .password-reset-container .btn-reset {
+        width: 100%;
+        padding: 10px;
+        background: #0033A0;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    .password-reset-container .btn-reset:hover {
+        background: #002a6d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="password-reset-container">
+    <h2>{{ _('Pakotettu salasanan vaihto') }}</h2>
+    <p class="notice">
+        {{ _('Ylläpito on pakottanut salasanan vaihdon.') }}<br>
+        {{ _('Anna uusi salasana ja vahvista se alla.') }}
+    </p>
+    <form method="POST">
+        <div class="form-group">
+            <label for="new_password">{{ _('Uusi salasana') }}</label>
+            <input type="password" name="new_password" id="new_password" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="confirm_password">{{ _('Vahvista salasana') }}</label>
+            <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn-reset">{{ _('Vaihda salasana') }}</button>
+    </form>
+</div>
+{% endblock %}

@@ -84,14 +84,14 @@ def edit_user(user_id):
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user_doc:
         flash_message("Käyttäjää ei löytynyt.", "error")
-        return redirect(url_for("admin_user.user_control"))
+        return redirect(request.referrer or url_for("admin_user.user_control"))
 
     user = User.from_db(user_doc)
 
     # ────────────────────────────── permission gate ─────────────────────────────
     if user != current_user and not compare_user_levels(current_user, user):
         flash_message("Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.", "error")
-        return redirect(url_for("admin_user.user_control"))
+        return redirect(request.referrer or url_for("admin_user.user_control"))
     # ────────────────────────────────────────────────────────────────────────────
 
     if request.method == "POST":
@@ -143,7 +143,7 @@ def edit_user(user_id):
         )
 
         flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
-        return redirect(url_for("admin_user.user_control"))
+        return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # ───── GET: render form ─────
     return render_template(
@@ -208,7 +208,7 @@ def save_user(user_id):
     user = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user:
         flash_message("Käyttäjää ei löydy.", "error")
-        return redirect(url_for("admin_user.user_control"))
+        return redirect(request.referrer or url_for("admin_user.user_control"))
 
     user = User.from_db(user)
 
@@ -284,7 +284,7 @@ def save_user(user_id):
     )
 
     flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
-    return redirect(url_for("admin_user.user_control"))
+    return redirect(request.referrer or url_for("admin_user.user_control"))
 
 import warnings
 
@@ -342,7 +342,7 @@ def delete_user():
         return (
             jsonify({"status": "ERROR", "message": error_message})
             if json_mode
-            else redirect(url_for("admin_user.user_control"))
+            else redirect(request.referrer or url_for("admin_user.user_control"))
         )
 
     # Fetch the user from the database
@@ -354,7 +354,7 @@ def delete_user():
             return jsonify({"status": "ERROR", "message": error_message})
         else:
             flash_message(error_message, "error")
-            return redirect(url_for("admin_user.user_control"))
+            return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # Check if the current user has the right to delete the target user
     target_user = User.from_db(user_data)
@@ -364,7 +364,7 @@ def delete_user():
             return jsonify({"status": "ERROR", "message": error_message})
         else:
             flash_message(error_message, "error")
-            return redirect(url_for("admin_user.user_control"))
+            return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # Perform deletion
     mongo.users.delete_one({"_id": ObjectId(user_id)})
@@ -374,4 +374,122 @@ def delete_user():
         return jsonify({"status": "OK", "message": success_message})
     else:
         flash_message(success_message, "approved")
-        return redirect(url_for("admin_user.user_control"))
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+
+import random
+import string
+from werkzeug.security import generate_password_hash
+
+@admin_user_bp.route("/create_user", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_USER")
+def create_user():
+    """
+    Create a new user with access credentials and send them an email notification.
+
+    Expects form or JSON data:
+        - email (required)
+        - username (optional; defaults to email prefix)
+        - displayname (optional; defaults to username)
+        - role (optional; defaults to "user")
+
+    Returns
+    -------
+    flask.Response
+        JSON response with status or redirect with flash messages if failure.
+    """
+    data = request.get_json() if request.is_json else request.form
+
+    email = data.get("email")
+    username = data.get("username") or email.split("@")[0]
+    displayname = data.get("displayname") or username
+    role = data.get("role") or "user"
+
+    # Basic validation
+    if not email:
+        flash_message("Sähköposti on pakollinen.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+    if not valid_email(email):
+        flash_message("Virheellinen sähköpostimuoto.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+    if role not in ["user", "admin", "global_admin"]:
+        flash_message("Rooli ei ole kelvollinen.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    # Check if email already exists
+    if mongo.users.find_one({"email": email}):
+        flash_message("Käyttäjä tällä sähköpostilla on jo olemassa.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    # Generate a random password
+    raw_password = "".join(random.choices(string.ascii_letters + string.digits, k=12))
+    password_hash = generate_password_hash(raw_password)
+
+    # Create user document
+    user_doc = {
+        "email": email,
+        "username": username,
+        "displayname": displayname,
+        "role": role,
+        "confirmed": True,
+        "password_hash": password_hash,
+        "global_permissions": [],
+    }
+
+    result = mongo.users.insert_one(user_doc)
+    if not result.inserted_id:
+        flash_message("Käyttäjän luominen epäonnistui.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    # Send credentials via email
+    email_sender.queue_email(
+        template_name="new_user_credentials.html",
+        subject="Tilisi on luotu",
+        recipients=[email],
+        context={
+            "user_name": displayname,
+            "username": username,
+            "email": email,
+            "role": role,
+            "password": raw_password,
+            "login_link": url_for("users.auth.login", _external=True),
+            "support_contact": "tuki@mielenosoitukset.fi",
+        },
+    )
+
+    flash_message(f"Käyttäjä {displayname} luotu ja tunnukset lähetetty sähköpostiin.", "approved")
+    return redirect(request.referrer or url_for("admin_user.user_control"))
+
+@admin_user_bp.route("/api/force_password_change/", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("FORCE_PASSWORD_CHANGE")
+def api_force_password_change():
+    """
+    API endpoint to force a password change for a user.
+
+    Expects JSON data:
+        - user_id (required)
+
+    Returns
+    -------
+    flask.Response
+        JSON response indicating success or failure.
+    """
+    data = request.get_json()
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"status": "ERROR", "message": "Käyttäjä ID puuttuu."}), 400
+
+    user = mongo.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
+
+    user_ = User.from_db(user)
+    
+    user_.forced_pwd_reset = True
+    user_.save()
+    
+    return jsonify({"status": "OK", "message": "Salasanan vaihto pakotettu onnistuneesti."})

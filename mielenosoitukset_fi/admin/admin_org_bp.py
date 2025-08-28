@@ -13,7 +13,7 @@ v2.4.0:
 """
 
 from bson.objectid import ObjectId
-from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify
+from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from mielenosoitukset_fi.users.models import User
@@ -23,6 +23,8 @@ from mielenosoitukset_fi.utils.wrappers import admin_required, permission_requir
 from .utils import log_admin_action, mongo, get_org_name as get_organization_name
 from mielenosoitukset_fi.utils.classes import Organization, MemberShip
 
+from typing import Optional, Tuple, Any, Dict
+from bson import ObjectId  # if using pymongo
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
@@ -45,184 +47,6 @@ from mielenosoitukset_fi.utils.logger import logger
 email_sender = EmailSender()
 
 
-@admin_org_bp.route("/api/new", methods=["POST"])
-@login_required
-@admin_required
-@permission_required("CREATE_ORGANIZATION")
-def create_organization_api():
-    """Create a new organization using an API endpoint.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-
-    """
-    org_name = request.json.get("name")
-    org_email = request.json.get("email", "no@email.example")
-    org_website = request.json.get("website")
-
-    print(org_email)
-
-    if not org_name and not org_email:
-        return {"message": "Nimi ja sähköpostiosoite ovat pakollisia."}
-
-    # if org_email is not None and not valid_email(org_email):
-    # return {"message": "Virheellinen sähköpostiosoite."}
-
-    org_description = request.json.get("description", "Kuvaus tulossa")
-
-    org_data = {
-        "name": org_name,
-        "email": org_email,
-        "website": org_website,
-        "description": org_description,
-    }
-
-    # insert
-
-    _, _id = insert_organization(org_data)
-
-    if not _id is None:
-        return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
-
-    return {"message": "Virhe organisaation luonnissa."}
-
-    if _ and _id:
-        return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
-
-    return {"message": "Virhe organisaation luonnissa."}
-
-@admin_org_bp.route("/api/force_accept_invite/", methods=["POST"])
-@login_required
-@admin_required
-def force_accept_invite():
-    """
-    Superuser can force-accept an invitation on behalf of a user (by email).
-    Expects JSON: {"email": ..., "organization_id": ...}
-    """
-    if not getattr(current_user, "global_admin", False):
-        return jsonify({"status": "error", "error": "Vain superkäyttäjä voi hyväksyä kutsun puolesta."}), 403
-    data = request.get_json()
-    email = data.get("email")
-    org_id = data.get("organization_id")
-    if not email or not org_id:
-        return jsonify({"status": "error", "error": "Missing required fields."}), 400
-    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-    if not org:
-        return jsonify({"status": "error", "error": "Organization not found."}), 404
-    # Remove invite from invitations
-    invitations = org.get("invitations", [])
-    new_invitations = [invite for invite in invitations if not ((isinstance(invite, dict) and invite.get("email") == email) or (isinstance(invite, str) and invite == email))]
-    # Add user as member (default role: member, or use invite role if present)
-    from mielenosoitukset_fi.users.models import User
-    user_doc = mongo.users.find_one({"email": email})
-    if not user_doc:
-        return jsonify({"status": "error", "error": "Käyttäjää ei löydy annetulla sähköpostilla."}), 404
-    user = User.from_db(user_doc)
-    # Find invite role if present
-    role = "member"
-    for invite in invitations:
-        if (isinstance(invite, dict) and invite.get("email") == email and invite.get("role")):
-            role = invite.get("role")
-            break
-    org_obj = Organization.from_dict(org)
-    if org_obj.is_member(email):
-        return jsonify({"status": "error", "error": "Käyttäjä on jo jäsen."}), 400
-    org_obj.add_member(user, role=role)
-    # If org role is admin/owner, update global role if needed
-    if role in ["admin", "owner"] and user.role not in ["admin", "owner", "global_admin", "superuser"]:
-        user.role = "admin"
-        user.save()
-    # Update invitations
-    mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": new_invitations}})
-    return jsonify({"status": "OK"}), 200
-
-
-@admin_org_bp.route("/api/cancel_invite/", methods=["POST"])
-@login_required
-@admin_required
-@permission_required("EDIT_ORGANIZATION")
-def cancel_invite():
-    """
-    Cancel (remove) a pending invitation for an organization.
-
-    Expects JSON: {"email": ..., "organization_id": ...}
-    """
-    data = request.get_json()
-    email = data.get("email")
-    org_id = data.get("organization_id")
-
-    if not email or not org_id:
-        return jsonify({"status": "error", "error": "Missing required fields."}), 400
-
-    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-    if not org:
-        return jsonify({"status": "error", "error": "Organization not found."}), 404
-
-    invitations = org.get("invitations", [])
-    new_invitations = []
-    removed = False
-    for invite in invitations:
-        if (isinstance(invite, dict) and invite.get("email") == email) or (isinstance(invite, str) and invite == email):
-            removed = True
-            continue
-        new_invitations.append(invite)
-
-    if not removed:
-        return jsonify({"status": "error", "error": "Invitation not found."}), 404
-
-    mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": new_invitations}})
-    return jsonify({"status": "OK"}), 200
-
-
-@admin_org_bp.route("/api/set_invite_role/", methods=["POST"])
-@login_required
-@admin_required
-@permission_required("EDIT_ORGANIZATION")
-def set_invite_role():
-    """
-    Set the role for a pending invitation (by email) for an organization.
-
-    Expects JSON: {"email": ..., "organization_id": ..., "role": ...}
-    """
-    data = request.get_json()
-    email = data.get("email")
-    org_id = data.get("organization_id")
-    role = data.get("role")
-
-    if not email or not org_id or not role:
-        return jsonify({"status": "error", "error": "Missing required fields."}), 400
-    if role not in ["owner", "admin", "member"]:
-        return jsonify({"status": "error", "error": "Invalid role."}), 400
-
-    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
-    if not org:
-        return jsonify({"status": "error", "error": "Organization not found."}), 404
-
-    # Invitations are stored as a list of dicts: [{"email": ..., "role": ...}, ...]
-    invitations = org.get("invitations", [])
-    updated = False
-    for invite in invitations:
-        if isinstance(invite, dict) and invite.get("email") == email:
-            invite["role"] = role
-            updated = True
-            break
-        # Legacy: if invite is just an email string
-        if isinstance(invite, str) and invite == email:
-            # Convert to dict with role
-            invitations[invitations.index(invite)] = {"email": email, "role": role}
-            updated = True
-            break
-
-    if not updated:
-        # If not found, add new invite
-        invitations.append({"email": email, "role": role})
-
-    mongo.organizations.update_one({"_id": ObjectId(org_id)}, {"$set": {"invitations": invitations}})
-    return jsonify({"status": "OK"}), 200
 
 
 # Organization control panel
@@ -492,16 +316,48 @@ def create_organization():
             flash_message(
                 "Organisaatio luotu onnistuneesti."
             )  # Removed gettext as it is not needed here.
-            return redirect(url_for("admin_org.organization_control"))
+            return redirect(request.referrer or url_for("admin_org.organization_control"))
 
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html")
 
+def insert_organization(org_data: Optional[dict] = None) -> Tuple[bool, Optional[ObjectId]]:
+    """
+    Insert a new organization into the database.
 
-def insert_organization(org_data=None):
-    """Insert a new organization into the database."""
+    Parameters
+    ----------
+    org_data : dict, optional
+        A dictionary containing organization data. Expected keys are:
+        - "name" : str
+            The name of the organization.
+        - "email" : str
+            Contact email of the organization.
+        - "description" : str, optional
+            Description of the organization.
+        - "website" : str, optional
+            Website URL of the organization.
+        If not provided, data will be extracted from the Flask `request.form`.
+
+    Returns
+    -------
+    tuple of (bool, ObjectId or None)
+        A tuple containing:
+        - success : bool
+            Whether the organization was successfully inserted.
+        - inserted_id : bson.ObjectId or None
+            The ID of the newly created organization if successful, otherwise ``None``.
+
+    Notes
+    -----
+    - If `org_data` is provided, social media links will be initialized as an
+      empty dictionary. Otherwise, they are retrieved using
+      `get_social_media_links()`.
+    - The function validates required fields (`name`, `email`) only when
+      `org_data` is not provided.
+    - On successful insertion, an admin action is logged with the current user.
+    """
     if org_data:
         data_source = org_data
-
     else:
         data_source = request.form
 
@@ -516,7 +372,6 @@ def insert_organization(org_data=None):
 
     if not org_data:
         social_media_links = get_social_media_links()
-
     else:
         social_media_links = {}
 
@@ -537,10 +392,10 @@ def insert_organization(org_data=None):
             "Create Organization",
             f"Created organization {result.inserted_id}",
         )
-
         return True, result.inserted_id
 
     return False, None
+
 
 
 # Delete organization
@@ -568,7 +423,7 @@ def delete_organization(org_id):
             current_user, "Delete Organization", f"Failed to find organization {org_id}"
         )
         flash_message("Organisatiota ei löytynyt.", "error")
-        return redirect(url_for("admin_org.organization_control"))
+        return redirect(request.referrer or url_for("admin_org.organization_control"))
 
     if "confirm_delete" in request.form:
         mongo.organizations.delete_one({"_id": ObjectId(org_id)})
@@ -580,7 +435,7 @@ def delete_organization(org_id):
     else:
         flash_message("Organisaation poistoa ei vahvistettu.", "warning")
 
-    return redirect(url_for("admin_org.organization_control"))
+    return redirect(request.referrer or url_for("admin_org.organization_control"))
 
 
 # Confirmation before deleting an organization
@@ -606,7 +461,7 @@ def confirm_delete_organization(org_id):
     if not organization:
         flash_message("Organisaatiota ei löytynyt.", "error")
 
-        return redirect(url_for("admin_org.organization_control"))
+        return redirect(request.referrer or url_for("admin_org.organization_control"))
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/confirm_delete.html", organization=organization
@@ -630,7 +485,7 @@ def invite():
     organization_id = request.form.get("organization_id")
     print(invitee_email, organization_id)
     invite_to_organization(invitee_email, ObjectId(organization_id))
-    return redirect(url_for("admin_org.organization_control"))
+    return redirect(request.referrer or url_for("admin_org.organization_control"))
 
 
 @admin_org_bp.route("/view/<org_id>")
@@ -683,57 +538,498 @@ def view_organization(org_id):
         invited_users=invited_users
     )
 
-@admin_org_bp.route("/api/change_access_level/", methods=["POST"])
-@admin_required
-def change_access_level():
-    data = request.json
 
-    user_id = data.get("user_id")
-    organization_id = data.get("organization_id")
-    role = data.get("role")
-    
-    if not role in ["member", "admin", "owner"]:
-        return jsonify({"error": "Invalid role. Role must be one of these: \n'member', 'admin', 'owner'"}), 400
-        
-    
-    
-    organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
-    organization = Organization.from_dict(organization)
-    
-    if organization.is_member(None, user_id):
-        organization.update_member(user_id, role)
-        # If user is now admin or owner in this org, set their global role to admin
-        if role in ["admin", "owner"]:
-            try:
-                from mielenosoitukset_fi.users.models import User
-                user = User.from_OID(user_id)
-                # Only set to admin if current role is "user" or "member" (not admin, owner, superuser, etc)
-                if user.role in ["user", "member"]:
-                    user.role = "admin"
-                    user.save()
-            except Exception as e:
-                # Log or ignore, but don't break the org update
-                pass
-    else:
-        flash_message("Ei käyttäjää.", "error")
-    return jsonify({"status": "OK"}), 200
+# API STUFF
 
 @admin_org_bp.route("/api/delete_membership/", methods=["POST"])
 @login_required
 @admin_required
 @permission_required("EDIT_ORGANIZATION")
-def delete_membership():
-    # TODO: #342 require admin or owner level access to the organization, or global level edit_organization access, or superuser status.
-    
-    data = request.get_json()
-    membership_id = data.get("membership_id")
+def delete_membership() -> Tuple[Response, int]:
+    """
+    Delete a user's membership from an organization.
+
+    API Endpoint
+    ------------
+    POST /api/delete_membership/
+
+    Request JSON
+    ------------
+    {
+        "membership_id": str,
+            The MongoDB ObjectId of the membership document as a string.
+    }
+
+    Returns
+    -------
+    (flask.Response, int)
+        JSON response with status code:
+        
+        - 200 OK:
+            {"message": "Käyttäjä poistettu organisaatiosta"}
+        - 400 Bad Request:
+            {"error": "Membership ID puuttuu"}
+        - 500 Internal Server Error:
+            {"error": "Poisto epäonnistui"}
+
+    Notes
+    -----
+    - TODO (#342): Require organization-level admin/owner access,
+      global `edit_organization` access, or superuser status before deletion.
+    """
+    # --- Parse input ---
+    data: Dict[str, Any] = request.get_json() or {}
+    membership_id: str | None = data.get("membership_id")
 
     if not membership_id:
         return jsonify({"error": "Membership ID puuttuu"}), 400
 
+    # --- Delete membership ---
     result = mongo.memberships.delete_one({"_id": ObjectId(membership_id)})
-    
+
     if result.deleted_count == 1:
         return jsonify({"message": "Käyttäjä poistettu organisaatiosta"}), 200
+
+    return jsonify({"error": "Poisto epäonnistui"}), 500
+
+
+
+@admin_org_bp.route("/api/new", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_ORGANIZATION")
+def create_organization_api():
+    """Create a new organization using an API endpoint.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+
+    """
+    org_name = request.json.get("name")
+    org_email = request.json.get("email", "no@email.example")
+    org_website = request.json.get("website")
+
+    print(org_email)
+
+    if not org_name and not org_email:
+        return {"message": "Nimi ja sähköpostiosoite ovat pakollisia."}
+
+    # if org_email is not None and not valid_email(org_email):
+    # return {"message": "Virheellinen sähköpostiosoite."}
+
+    org_description = request.json.get("description", "Kuvaus tulossa")
+
+    org_data = {
+        "name": org_name,
+        "email": org_email,
+        "website": org_website,
+        "description": org_description,
+    }
+
+    # insert
+
+    _, _id = insert_organization(org_data)
+
+    if not _id is None:
+        return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
+
+    return {"message": "Virhe organisaation luonnissa."}
+
+
+@admin_org_bp.route("/api/force_accept_invite/", methods=["POST"])
+@login_required
+@admin_required
+def force_accept_invite() -> Tuple[Response, int]:
+    """
+    Force-accept an organization invitation on behalf of a user (superuser only).
+
+    This endpoint allows a superuser (`global_admin`) to accept an invitation
+    for a user into an organization. The invitation is removed from the
+    organization's `invitations` list, and the user is added as a member with
+    the specified role (default: "member").
+
+    API Endpoint
+    ------------
+    POST /api/force_accept_invite/
+
+    Request JSON
+    ------------
+    {
+        "email": str,
+            Email address of the invited user.
+        "organization_id": str,
+            The MongoDB ObjectId of the organization as a string.
+    }
+
+    Returns
+    -------
+    (flask.Response, int)
+        JSON response with appropriate status code:
+        
+        - 200 OK:
+            {"status": "OK"}
+        - 400 Bad Request:
+            {"status": "error", "error": "..."}
+            If required fields are missing or user is already a member.
+        - 403 Forbidden:
+            {"status": "error", "error": "..."}
+            If the current user is not a superuser.
+        - 404 Not Found:
+            {"status": "error", "error": "..."}
+            If the organization or user is not found.
+
+    Notes
+    -----
+    - Only users with `global_admin = True` can perform this action.
+    - If the invite includes a `role`, that role is applied to the user.
+      Otherwise, the role defaults to `"member"`.
+    - If the role is `"admin"` or `"owner"` and the user does not already have
+      a global admin/owner role, the user's role is elevated to `"admin"`.
+    - Invitations can be stored either as dicts (with "email" and optional
+      "role") or as plain strings (email only).
+    - After acceptance, the user's invitation is removed from the organization's
+      `invitations` list and the user is added to `members`.
+    """
+
+    # --- Permission check ---
+    if not getattr(current_user, "global_admin", False):
+        return (
+            jsonify({
+                "status": "error",
+                "error": "Vain superkäyttäjä voi hyväksyä kutsun puolesta."
+            }),
+            403,
+        )
+
+    # --- Parse input ---
+    data: Dict[str, Any] = request.get_json() or {}
+    email: str | None = data.get("email")
+    org_id: str | None = data.get("organization_id")
+
+    if not email or not org_id:
+        return (
+            jsonify({"status": "error", "error": "Missing required fields."}),
+            400,
+        )
+
+    # --- Fetch organization ---
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return (
+            jsonify({"status": "error", "error": "Organization not found."}),
+            404,
+        )
+
+    # --- Prepare invitations ---
+    invitations = org.get("invitations", [])
+    new_invitations = [
+        invite
+        for invite in invitations
+        if not (
+            (isinstance(invite, dict) and invite.get("email") == email)
+            or (isinstance(invite, str) and invite == email)
+        )
+    ]
+
+    # --- Fetch user ---
+    from mielenosoitukset_fi.users.models import User
+
+    user_doc = mongo.users.find_one({"email": email})
+    if not user_doc:
+        return (
+            jsonify({"status": "error", "error": "Käyttäjää ei löydy annetulla sähköpostilla."}),
+            404,
+        ) # TODO: #387 Add user creation, so this automatically creates the user and accepts the invite for them
+
+    user = User.from_db(user_doc)
+
+    # --- Determine role ---
+    role = "member"
+    for invite in invitations:
+        if (
+            isinstance(invite, dict)
+            and invite.get("email") == email
+            and invite.get("role")
+        ):
+            role = invite.get("role")
+            break
+
+    # --- Membership check ---
+    org_obj = Organization.from_dict(org)
+    if org_obj.is_member(email):
+        return (
+            jsonify({"status": "error", "error": "Käyttäjä on jo jäsen."}),
+            400,
+        )
+
+    # --- Add member ---
+    org_obj.add_member(user, role=role)
+
+    # --- Elevate role if needed ---
+    if (
+        role in ["admin", "owner"]
+        and user.role not in ["admin", "owner", "global_admin", "superuser"]
+    ):
+        user.role = "admin"
+        user.save()
+
+    # --- Update organization ---
+    mongo.organizations.update_one(
+        {"_id": ObjectId(org_id)},
+        {"$set": {"invitations": new_invitations}},
+    )
+
+    return jsonify({"status": "OK"}), 200
+
+
+@admin_org_bp.route("/api/cancel_invite/", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_ORGANIZATION")
+def cancel_invite() -> Tuple[Response, int]:
+    """
+    Cancel (remove) a pending invitation for an organization.
+
+    API Endpoint
+    ------------
+    POST /api/cancel_invite/
+
+    Request JSON
+    ------------
+    {
+        "email": str,
+            Email address of the invited user.
+        "organization_id": str,
+            The MongoDB ObjectId of the organization as a string.
+    }
+
+    Returns
+    -------
+    (flask.Response, int)
+        JSON response with status code:
+        
+        - 200 OK:
+            {"status": "OK"}
+        - 400 Bad Request:
+            {"status": "error", "error": "Missing required fields."}
+        - 404 Not Found:
+            {"status": "error", "error": "Organization not found."}
+            or {"status": "error", "error": "Invitation not found."}
+    """
+    # --- Parse input ---
+    data: Dict[str, Any] = request.get_json() or {}
+    email: str | None = data.get("email")
+    org_id: str | None = data.get("organization_id")
+
+    if not email or not org_id:
+        return jsonify({"status": "error", "error": "Missing required fields."}), 400
+
+    # --- Fetch organization ---
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return jsonify({"status": "error", "error": "Organization not found."}), 404
+
+    # --- Process invitations ---
+    invitations = org.get("invitations", [])
+    new_invitations = []
+    removed = False
+
+    for invite in invitations:
+        if (
+            (isinstance(invite, dict) and invite.get("email") == email)
+            or (isinstance(invite, str) and invite == email)
+        ):
+            removed = True
+            continue
+        new_invitations.append(invite)
+
+    if not removed:
+        return jsonify({"status": "error", "error": "Invitation not found."}), 404
+
+    # --- Update organization ---
+    mongo.organizations.update_one(
+        {"_id": ObjectId(org_id)},
+        {"$set": {"invitations": new_invitations}},
+    )
+    return jsonify({"status": "OK"}), 200
+
+
+@admin_org_bp.route("/api/set_invite_role/", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_ORGANIZATION")
+def set_invite_role() -> Tuple[Response, int]:
+    """
+    Set or update the role for a pending invitation (by email) for an organization.
+
+    API Endpoint
+    ------------
+    POST /api/set_invite_role/
+
+    Request JSON
+    ------------
+    {
+        "email": str,
+            Email address of the invited user.
+        "organization_id": str,
+            The MongoDB ObjectId of the organization as a string.
+        "role": str,
+            Role assigned to the invited user. One of: "owner", "admin", "member".
+    }
+
+    Returns
+    -------
+    (flask.Response, int)
+        JSON response with status code:
+        
+        - 200 OK:
+            {"status": "OK"}
+        - 400 Bad Request:
+            {"status": "error", "error": "Missing required fields."}
+            or {"status": "error", "error": "Invalid role."}
+        - 404 Not Found:
+            {"status": "error", "error": "Organization not found."}
+
+    Notes
+    -----
+    - Invitations may be stored as:
+        - dict: {"email": ..., "role": ...}
+        - str: legacy format (email only)
+    - If an invite already exists, its role is updated.
+    - If no invite exists for the email, a new one is created.
+    """
+    # --- Parse input ---
+    data: Dict[str, Any] = request.get_json() or {}
+    email: str | None = data.get("email")
+    org_id: str | None = data.get("organization_id")
+    role: str | None = data.get("role")
+
+    if not email or not org_id or not role:
+        return jsonify({"status": "error", "error": "Missing required fields."}), 400
+
+    if role not in ["owner", "admin", "member"]:
+        return jsonify({"status": "error", "error": "Invalid role."}), 400
+
+    # --- Fetch organization ---
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    if not org:
+        return jsonify({"status": "error", "error": "Organization not found."}), 404
+
+    # --- Process invitations ---
+    invitations = org.get("invitations", [])
+    updated = False
+
+    for invite in invitations:
+        if isinstance(invite, dict) and invite.get("email") == email:
+            invite["role"] = role
+            updated = True
+            break
+
+        # Legacy format: invite stored as just email string
+        if isinstance(invite, str) and invite == email:
+            invitations[invitations.index(invite)] = {"email": email, "role": role}
+            updated = True
+            break
+
+    if not updated:
+        # No existing invite → add a new one
+        invitations.append({"email": email, "role": role})
+
+    # --- Update organization ---
+    mongo.organizations.update_one(
+        {"_id": ObjectId(org_id)},
+        {"$set": {"invitations": invitations}},
+    )
+    return jsonify({"status": "OK"}), 200
+
+
+@admin_org_bp.route("/api/change_access_level/", methods=["POST"])
+@admin_required
+def change_access_level() -> Tuple[Response, int]:
+    """
+    Change a user's access level (role) within an organization.
+
+    API Endpoint
+    ------------
+    POST /api/change_access_level/
+
+    Request JSON
+    ------------
+    {
+        "user_id": str,
+            The ID of the user whose role is being updated.
+        "organization_id": str,
+            The MongoDB ObjectId of the organization.
+        "role": str,
+            The new role to assign. Must be one of: "member", "admin", "owner".
+    }
+
+    Returns
+    -------
+    (flask.Response, int)
+        JSON response with status code:
+        
+        - 200 OK:
+            {"status": "OK"}
+        - 400 Bad Request:
+            {"error": "Invalid role. Role must be one of these: 'member', 'admin', 'owner'"}
+        - 404 / flash message:
+            Flash message displayed if the user is not found in the organization.
+
+    Notes
+    -----
+    - If the new role is "admin" or "owner" and the user's current global role
+      is "user" or "member", their global role is elevated to "admin".
+    - Silently ignores errors during user global role update, but organization
+      update always proceeds.
+    - Requires `@admin_required` decorator; only admins can change access levels.
+    """
+
+    # --- Parse input ---
+    data: Dict[str, Any] = request.json or {}
+    user_id: str | None = data.get("user_id")
+    organization_id: str | None = data.get("organization_id")
+    role: str | None = data.get("role")
+
+    # --- Validate role ---
+    if role not in ["member", "admin", "owner"]:
+        return (
+            jsonify({
+                "error": "Invalid role. Role must be one of these: 'member', 'admin', 'owner'"
+            }),
+            400,
+        )
+
+    # --- Fetch organization ---
+    org_doc = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+    if not org_doc:
+        flash_message("Organisaatiota ei löydy.", "error")
+        return jsonify({"status": "error"}), 404
+
+    organization = Organization.from_dict(org_doc)
+
+    # --- Update member in organization ---
+    if organization.is_member(None, user_id):
+        organization.update_member(user_id, role)
+
+        # --- Update global role if elevated ---
+        if role in ["admin", "owner"]:
+            try:
+                from mielenosoitukset_fi.users.models import User
+
+                user = User.from_OID(user_id)
+                if user.role in ["user", "member"]:
+                    user.role = "admin"
+                    user.save()
+                    
+            except Exception:
+                # Silently ignore errors; org update is more important
+                pass
     else:
-        return jsonify({"error": "Poisto epäonnistui"}), 500
+        flash_message("Ei käyttäjää.", "error")
+
+    return jsonify({"status": "OK"}), 200

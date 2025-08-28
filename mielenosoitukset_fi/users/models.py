@@ -115,7 +115,8 @@ class User(UserMixin):
         banned: bool = False,
         mfa_enabled: bool = False,
         friends: list = [],
-        friend_requests: list = []
+        friend_requests: list = [],
+        forced_pwd_reset: bool = False
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
@@ -136,6 +137,7 @@ class User(UserMixin):
         self.mfa               = UserMFA(self._id)  # see helper class below
         self.friends           = friends
         self.friend_requests    = friend_requests
+        self.forced_pwd_reset    = forced_pwd_reset
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
@@ -161,7 +163,8 @@ class User(UserMixin):
             banned          = doc.get("banned", False),
             mfa_enabled     = doc.get("mfa_enabled", False),
             friends         = doc.get("friends", []),
-            friend_requests = doc.get("friend_requests", [])
+            friend_requests = doc.get("friend_requests", []),
+            forced_pwd_reset = doc.get("forced_pwd_reset", False)
         )
 
     @classmethod
@@ -352,7 +355,8 @@ class User(UserMixin):
             "banned": self.banned,
             "mfa_enabled": self.mfa_enabled,
             "friends": self.friends,
-            "friend_requests": self.friend_requests
+            "friend_requests": self.friend_requests,
+            "forced_pwd_reset": self.forced_pwd_reset
         }
         return d
 

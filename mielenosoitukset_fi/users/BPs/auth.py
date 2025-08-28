@@ -253,6 +253,11 @@ def login():
         # Everything good, log the user in
         login_user(user)
 
+        if user.forced_pwd_reset:
+            # somehow lets keep the redirect page
+            session["next_page"] = safe_next_page
+            return redirect(url_for("users.auth.forced_pwd_reset"))
+
         # Clear the stored next_page so it won't persist forever
         if "next_page" in session:
             session.pop("next_page")
@@ -279,6 +284,32 @@ def login():
     # GET request just renders login page
     return render_template("users/auth/login.html", next=safe_next_page)
 
+@auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
+def forced_pwd_reset():
+    if request.method == "POST":
+        new_password = request.form.get("new_password")
+        confirm_password = request.form.get("confirm_password")
+
+        if not new_password or not confirm_password:
+            flash_message("Anna uusi salasana ja vahvista se.", "warning")
+            return redirect(url_for("users.auth.forced_pwd_reset"))
+
+        if new_password != confirm_password:
+            flash_message("Salasanat eivät täsmää.", "error")
+            return redirect(url_for("users.auth.forced_pwd_reset"))
+
+        current_user._change_password(new_password)
+        flash_message("Salasana on vaihdettu onnistuneesti.", "success")
+
+        # if safe next redirect exists, use it
+        if "next_page" in session:
+            next_page = session["next_page"]
+            session.pop("next_page")
+            return redirect(next_page)
+
+        return redirect(url_for("users.profile.profile"))
+
+    return render_template("users/auth/forced_pwd_reset.html")
 
 def meow(user):
     token = request.form.get("2fa_code")
@@ -305,6 +336,13 @@ def verify_mfa():
         user = current_user
 
         if UserMFA(user._id).verify_mfa(token):
+            
+            login_user(user)
+            
+            
+            session["mfa_required"] = False
+            session["modified"] = True
+            
             # Check if this is a popup login request
             if request.args.get("popup") == "1":
                 # Return HTML that closes the popup and reloads opener
@@ -318,9 +356,9 @@ def verify_mfa():
                     }}
                 </script>
                 """
-            login_user(user)
-            session["mfa_required"] = False
-            session["modified"] = True
+
+            if user.forced_pwd_reset:
+                return redirect(url_for("users.auth.forced_pwd_reset"))
 
             return redirect(next or url_for("index"))
 

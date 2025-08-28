@@ -92,7 +92,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
     """
     login_logs.insert_one({
         "username": username,
-        "user_id": str(user_id) if user_id else None,
+        "user_id": ObjectId(user_id) if user_id else None,
         "success": success,
         "ip": ip,
         "user_agent": user_agent,

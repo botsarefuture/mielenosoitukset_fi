@@ -73,6 +73,34 @@ mongo = db_manager.get_db()
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
+login_logs = mongo["login_logs"]
+
+from datetime import datetime
+
+def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_id=None):
+    """
+    Logs a login attempt to MongoDB.
+
+    Parameters
+    ----------
+    username : str
+    success : bool
+    ip : str
+    user_agent : str, optional
+    reason : str, optional
+    user_id : ObjectId, optional
+    """
+    login_logs.insert_one({
+        "username": username,
+        "user_id": str(user_id) if user_id else None,
+        "success": success,
+        "ip": ip,
+        "user_agent": user_agent,
+        "reason": reason,
+        "timestamp": datetime.utcnow(),
+    })
+
+
 def verify_emailer(email, username):
     """
 
@@ -231,27 +259,36 @@ def login():
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         user_doc = mongo.users.find_one({"username": username})
+        
+        user_ip = request.remote_addr
+        user_agent = request.headers.get("User-Agent", "")
 
         if not user_doc:
             flash_message(f"Käyttäjänimellä '{username}' ei löytynyt käyttäjiä.", "error")
+            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="User not found")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         user = User.from_db(user_doc)
         if not user.check_password(password):
             flash_message("Käyttäjänimi tai salasana on väärin.", "error")
+            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Invalid password", user_id=user.id)
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         if not user.confirmed:
             flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
             verify_emailer(user.email, username)
+            log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         # MFA check (assuming your meow function does this)
         if user.mfa_enabled and not meow(user):
+            log_login_attempt(username, success=False, ip=user_ip, user_agent=user_agent, reason="MFA failed", user_id=user._id)
             return redirect(url_for("users.auth.login", next=safe_next_page))
+
 
         # Everything good, log the user in
         login_user(user)
+        log_login_attempt(username, success=True, ip=user_ip, user_agent=user_agent, user_id=user._id)
 
         if user.forced_pwd_reset:
             # somehow lets keep the redirect page

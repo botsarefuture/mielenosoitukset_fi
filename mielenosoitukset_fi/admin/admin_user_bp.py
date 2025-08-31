@@ -436,11 +436,17 @@ def create_user():
         "password_hash": password_hash,
         "global_permissions": [],
     }
-
+    
     result = mongo.users.insert_one(user_doc)
     if not result.inserted_id:
         flash_message("Käyttäjän luominen epäonnistui.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
+    
+    inserted_user = mongo.users.find_one({"_id": result.inserted_id})
+    user = User.from_db(inserted_user)
+
+    user.forced_pwd_reset = True # We want to force password reset on first login
+    user.save()
 
     # Send credentials via email
     email_sender.queue_email(
@@ -456,6 +462,7 @@ def create_user():
             "login_link": url_for("users.auth.login", _external=True),
             "support_contact": "tuki@mielenosoitukset.fi",
         },
+        extra_headers={"reply-to": "tuki@mielenosoitukset.fi"}
     )
 
     flash_message(f"Käyttäjä {displayname} luotu ja tunnukset lähetetty sähköpostiin.", "approved")

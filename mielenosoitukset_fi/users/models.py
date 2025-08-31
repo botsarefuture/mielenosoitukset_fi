@@ -76,6 +76,28 @@ class User(UserMixin):
             "following": [],
         }
         return user_doc
+    
+    @classmethod
+    def create_user_v2(cls, user_data: dict):
+        """
+        New method of creating a user, that also validates the data"""
+        
+        required_fields = ["username", "password", "email"]
+        
+        valid_fields = ["username", "password", "email", "displayname", "role", "bio"]
+        
+        for field in required_fields:
+            if field not in user_data:
+                raise ValueError(f"Missing required field: {field}")
+
+        # drop all fields that are not in valid_fields
+        user_data = {k: v for k, v in user_data.items() if k in valid_fields}
+
+        # if all valid fields are present, create the user
+        if all(field in user_data for field in valid_fields):
+            return cls.create_user(**user_data)
+
+        return user_data
     """
     MongoDB‑backed application user.
     Memberships live in the `memberships` collection – we derive org/role data on‑demand.

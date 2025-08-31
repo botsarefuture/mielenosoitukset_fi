@@ -38,3 +38,24 @@ def OIDifySOID(soid):
     utils.database.stringify_object_ids: A function that converts all instances of ObjectId to their string representation
     """
     return ObjectId(soid)
+
+import re
+
+def is_strong_password(password: str, username: str = "", email: str = "") -> (bool, str):
+    if len(password) < 12:
+        return False, "Password must be at least 12 characters long."
+
+    # Require 3 of 4 categories
+    categories = 0
+    if re.search(r"[a-z]", password): categories += 1
+    if re.search(r"[A-Z]", password): categories += 1
+    if re.search(r"\d", password): categories += 1
+    if re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): categories += 1
+    if categories < 3:
+        return False, "Password must include at least 3 of the 4 categories: uppercase, lowercase, digit, special character."
+
+    # Prevent personal info
+    if username.lower() in password.lower() or email.lower().split("@")[0] in password.lower():
+        return False, "Password cannot contain your username or email."
+
+    return True, "Password is strong."

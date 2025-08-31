@@ -1,76 +1,164 @@
 {% extends "base.html" %}
 
 {% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <style>
-    .password-reset-container {
-        max-width: 400px;
-        margin: 0 auto;
-        padding: 20px;
-        background: #f9f9f9;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-    .password-reset-container h2 {
-        font-size: 24px;
-        margin-bottom: 10px;
-        color: #333;
-    }
-    .password-reset-container p.notice {
-        font-size: 14px;
-        color: #555;
-        margin-bottom: 20px;
-    }
-    .password-reset-container .form-group {
-        margin-bottom: 15px;
-        text-align: left;
-    }
-    .password-reset-container label {
-        font-size: 14px;
-        color: #555;
-    }
-    .password-reset-container input[type="password"] {
-        width: 100%;
-        padding: 10px;
-        font-size: 14px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-        box-sizing: border-box;
-    }
-    .password-reset-container .btn-reset {
-        width: 100%;
-        padding: 10px;
-        background: #0033A0;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    }
-    .password-reset-container .btn-reset:hover {
-        background: #002a6d;
-    }
+.password-reset-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+.password-reset-container h2 { font-size: 24px; margin-bottom: 10px; color: #333; }
+.password-reset-container p.notice { font-size: 14px; color: #555; margin-bottom: 15px; text-align: left; }
+.password-reset-container .form-group { margin-bottom: 15px; text-align: left; }
+.password-reset-container label { font-size: 14px; color: #555; }
+.password-reset-container input[type="password"] {
+    width: 100%; padding: 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box;
+}
+.btn-reset { width: 100%; padding: 10px; background: #0033A0; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background 0.3s ease; }
+.btn-reset:hover { background: #002a6d; }
+.generate-btn { margin-bottom: 12px; }
+
+/* Password extras */
+.strength-meter { height: 6px; width: 100%; background: #eee; margin-top: 6px; border-radius: 3px; overflow: hidden; }
+.strength-meter-fill { height: 100%; width: 0; transition: width 0.3s ease-in-out; }
+.strength-weak { background: #e74c3c; }
+.strength-medium { background: #f39c12; }
+.strength-strong { background: #27ae60; }
+
+.password-requirements-container { border: 1px solid #ccc; padding: 12px; margin-top: 12px; border-radius: 8px; background: #f9f9f9; font-size: 0.9em; }
+.password-requirements li.valid { color: #27ae60; }
+.password-requirements li.invalid { color: #e74c3c; }
+
+.password-match { font-size: 0.9em; margin-top: 3px; color: #e74c3c; }
+.password-match.valid { color: #27ae60; }
+
+.input-icon i { margin-left: -30px; cursor: pointer; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="password-reset-container">
     <h2>{{ _('Pakotettu salasanan vaihto') }}</h2>
-    <p class="notice">
-        {{ _('Ylläpito on pakottanut salasanan vaihdon.') }}<br>
-        {{ _('Anna uusi salasana ja vahvista se alla.') }}
-    </p>
-    <form method="POST">
-        <div class="form-group">
+    <p class="notice">{{ _('Ylläpito on pakottanut salasanan vaihdon. Anna uusi salasana ja vahvista se.') }}</p>
+    <form method="POST" id="password-reset-form">
+        <!-- Password -->
+        <div class="form-group input-icon">
             <label for="new_password">{{ _('Uusi salasana') }}</label>
-            <input type="password" name="new_password" id="new_password" class="form-control" required>
+            <input type="password" id="new_password" name="new_password" required minlength="12">
+            <i class="bi bi-eye-slash" id="togglePassword"></i>
+            <div class="strength-meter"><div id="strength-fill" class="strength-meter-fill"></div></div>
+            <p id="pwd-now-missing"></p>
         </div>
-        <div class="form-group">
+
+        <!-- Confirm password -->
+        <div class="form-group input-icon">
             <label for="confirm_password">{{ _('Vahvista salasana') }}</label>
-            <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+            <input type="password" name="confirm_password" id="confirm_password" required>
+            <i class="bi bi-eye-slash" id="togglePasswordConfirm"></i>
+            <div id="password-match-message" class="password-match">{{ _('Salasanat eivät täsmää') }}</div>
         </div>
+
+        <!-- Password requirements -->
+        <div class="password-requirements-container">
+            <ul class="password-requirements">
+                <li id="req-length">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
+                <li id="req-lower">{{ _('Sisältää vähintään yhden pienen kirjaimen (a-z)') }}</li>
+                <li id="req-upper">{{ _('Sisältää vähintään yhden suuren kirjaimen (A-Z)') }}</li>
+                <li id="req-special">{{ _('Sisältää vähintään yhden erikoismerkin:') }} !@#$%^&*()-_=+[]{};:,.<>?</li>
+            </ul>
+        </div>
+
+        <button type="button" class="btn btn-secondary generate-btn" id="generate-password">{{ _('Luo vahva salasana') }}</button>
         <button type="submit" class="btn-reset">{{ _('Vaihda salasana') }}</button>
     </form>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const passwordInput = document.getElementById("new_password");
+    const confirmInput = document.getElementById("confirm_password");
+    const strengthFill = document.getElementById("strength-fill");
+    const pwdNowMissing = document.getElementById("pwd-now-missing");
+    const matchMessage = document.getElementById("password-match-message");
+
+    const reqLength = document.getElementById("req-length");
+    const reqLower = document.getElementById("req-lower");
+    const reqUpper = document.getElementById("req-upper");
+    const reqSpecial = document.getElementById("req-special");
+    const generateBtn = document.getElementById("generate-password");
+    const allowedSpecials = "!@#$%^&*()-_=+[]{};:,.<>?";
+    const specialRegex = /[!@#$%^&*()\-\_=+\[\]{};:,.<>?]/;
+
+
+    function updateStrength() {
+        const pwd = passwordInput.value;
+        let score = 0;
+        if(pwd.length >= 12) score++;
+        if(/[a-z]/.test(pwd)) score++;
+        if(/[A-Z]/.test(pwd)) score++;
+        if(specialRegex.test(pwd)) score++;
+        console.log("Specials test:", specialRegex.test(pwd));
+        if(score<=2) strengthFill.className="strength-meter-fill strength-weak", strengthFill.style.width="33%";
+        else if(score<=3) strengthFill.className="strength-meter-fill strength-medium", strengthFill.style.width="66%";
+        else strengthFill.className="strength-meter-fill strength-strong", strengthFill.style.width="100%";
+    }
+
+    function updateRequirements() {
+        const pwd = passwordInput.value;
+        let missing = [];
+
+        if(pwd.length>=12) reqLength.className="valid"; else { reqLength.className="invalid"; missing.push("{{ _('Vähintään 12 merkkiä pitkä') }}"); }
+        if(/[a-z]/.test(pwd)) reqLower.className="valid"; else { reqLower.className="invalid"; missing.push("{{ _('Vähintään yksi pieni kirjain') }}"); }
+        if(/[A-Z]/.test(pwd)) reqUpper.className="valid"; else { reqUpper.className="invalid"; missing.push("{{ _('Vähintään yksi iso kirjain') }}"); }
+        if(specialRegex.test(pwd)) reqSpecial.className="valid"; else { reqSpecial.className="invalid"; missing.push("{{ _('Vähintään yksi erikoismerkki') }}"); }
+
+        if(missing.length===0) {
+            pwdNowMissing.textContent="{{ _('Kaikki vaatimukset täytetty!') }} ✅";
+            pwdNowMissing.classList.add("valid"); pwdNowMissing.classList.remove("invalid");
+            return true;
+        } else {
+            pwdNowMissing.innerHTML=missing.map(m=>"• "+m).join("<br>");
+            pwdNowMissing.classList.add("invalid"); pwdNowMissing.classList.remove("valid");
+            return false;
+        }
+    }
+
+    function checkMatch() {
+        if(confirmInput.value==="") { matchMessage.textContent="{{ _('Salasanat eivät täsmää') }}"; matchMessage.classList.remove("valid"); return false; }
+        if(passwordInput.value===confirmInput.value) { matchMessage.textContent="{{ _('Salasanat täsmäävät') }}"; matchMessage.classList.add("valid"); return true; }
+        else { matchMessage.textContent="{{ _('Salasanat eivät täsmää') }}"; matchMessage.classList.remove("valid"); return false; }
+    }
+
+    function setupToggle(toggleId, input) {
+        const toggle = document.getElementById(toggleId);
+        toggle.addEventListener("click", () => { input.type = input.type==="password" ? "text" : "password"; toggle.classList.toggle("bi-eye"); toggle.classList.toggle("bi-eye-slash"); });
+    }
+    setupToggle("togglePassword", passwordInput);
+    setupToggle("togglePasswordConfirm", confirmInput);
+
+    function generatePassword(length=16) {
+        const chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};:,.<>?";
+        let pwd=""; for(let i=0;i<length;i++) pwd+=chars.charAt(Math.floor(Math.random()*chars.length));
+        return pwd;
+    }
+    generateBtn.addEventListener("click", () => { const pwd = generatePassword(); passwordInput.value=pwd; confirmInput.value=pwd; updateStrength(); updateRequirements(); checkMatch(); });
+
+    passwordInput.addEventListener("input", () => { updateStrength(); updateRequirements(); checkMatch(); });
+    confirmInput.addEventListener("input", checkMatch);
+
+    document.getElementById("password-reset-form").addEventListener("submit", e => {
+        const requirementsMet = updateRequirements();
+        const passwordsMatch = checkMatch();
+        if(!requirementsMet || !passwordsMatch) {
+            e.preventDefault();
+            alert("{{ _('Salasanavaatimukset eivät täyty tai salasanat eivät täsmää!') }}");
+        }
+    });
+});
+</script>
 {% endblock %}

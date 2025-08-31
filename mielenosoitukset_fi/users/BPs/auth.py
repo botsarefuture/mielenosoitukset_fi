@@ -18,6 +18,7 @@ from mielenosoitukset_fi.utils.auth import (
     verify_reset_token,
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
+from mielenosoitukset_fi.utils.helpers import is_strong_password
 from mielenosoitukset_fi.utils.s3 import upload_image, upload_image_fileobj
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.classes import Organization
@@ -134,7 +135,7 @@ def register():
         password = request.form.get("password")
         email = request.form.get("email")
 
-        if not username or not password or len(username) < 3 or len(password) < 6:
+        if not username or not password or len(username) < 3 or not is_strong_password(password):
             flash_message(
                 "Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.",
                 "error",
@@ -167,6 +168,16 @@ def register():
         return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/register.html")
+
+
+@auth_bp.route("/api/username_free", methods=["GET"])
+def api_username_free():
+    username = request.args.get("username", "").strip()
+    if not username:
+        return jsonify({"available": False, "error": "Username is required."}), 400
+
+    is_taken = mongo.users.find_one({"username": username}) is not None
+    return jsonify({"available": not is_taken})
 
 
 @auth_bp.route("/confirm_email/<token>")
@@ -223,6 +234,25 @@ def mfa_check():
         return jsonify({"enabled": False, "valid": False})
 
 from urllib.parse import urlparse
+
+def _check(safe_next_page, request):
+    
+    # Check if this is a popup login request
+    if request.args.get("popup") == "1":
+        # Return HTML that closes the popup and reloads opener
+        return f"""
+        <script>
+            if (window.opener) {{
+                window.opener.location.reload();
+                window.close();
+            }} else {{
+                window.location = "{safe_next_page}";
+            }}
+        </script>
+        """, True
+    
+    else:
+        return None, False
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -300,53 +330,90 @@ def login():
             session.pop("next_page")
             session.modified = True
 
-        # Check if this is a popup login request
-        if request.args.get("popup") == "1":
-            # Return HTML that closes the popup and reloads opener
-            return f"""
-            <script>
-                if (window.opener) {{
-                    window.opener.location.reload();
-                    window.close();
-                }} else {{
-                    window.location = "{safe_next_page}";
-                }}
-            </script>
-            """
+        __, b = _check(safe_next_page, request)
+        if b:
+            return __, 200
 
+        if safe_next_page == url_for("users.profile.api_friends_list"):
+            safe_next_page = url_for("users.profile.profile")
 
         # Redirect to the safe next page
         return redirect(safe_next_page)
 
     # GET request just renders login page
     return render_template("users/auth/login.html", next=safe_next_page)
+from datetime import datetime
 
 @auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
+@login_required
 def forced_pwd_reset():
+    ip = request.remote_addr
+    user_agent = request.headers.get("User-Agent", "")
+
+    log_entry = {
+        "user_id": str(current_user.id),
+        "datetime": datetime.utcnow(),
+        "ip": ip,
+        "user_agent": user_agent,
+        "visit": True,
+        "changed": False,
+        "error": None,
+        "method": "forced_reset"
+    }
+
     if request.method == "POST":
         new_password = request.form.get("new_password")
         confirm_password = request.form.get("confirm_password")
 
         if not new_password or not confirm_password:
+            log_entry["error"] = "Password or confirmation missing"
+            mongo.password_changes.insert_one(log_entry)
             flash_message("Anna uusi salasana ja vahvista se.", "warning")
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
         if new_password != confirm_password:
+            log_entry["error"] = "Passwords do not match"
+            mongo.password_changes.insert_one(log_entry)
             flash_message("Salasanat eivät täsmää.", "error")
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
-        current_user._change_password(new_password)
-        flash_message("Salasana on vaihdettu onnistuneesti.", "success")
+        if not is_strong_password(new_password, username=current_user.username, email=current_user.email):
+            log_entry["error"] = "Password does not meet requirements"
+            mongo.password_changes.insert_one(log_entry)
+            flash_message("Salasana ei täytä vaatimuksia.", "warning")
+            return redirect(url_for("users.auth.forced_pwd_reset"))
 
-        # if safe next redirect exists, use it
-        if "next_page" in session:
-            next_page = session["next_page"]
-            session.pop("next_page")
-            return redirect(next_page)
+        try:
+            current_user._change_password(new_password)
+            log_entry["changed"] = True
+            current_user.forced_pwd_reset = False
+            current_user.save()
+            mongo.password_changes.insert_one(log_entry)
+            flash_message("Salasana on vaihdettu onnistuneesti.", "success")
+        except Exception as e:
+            log_entry["error"] = f"Password change failed: {e}"
+            mongo.password_changes.insert_one(log_entry)
+            flash_message(f"Salasanan vaihto epäonnistui: {e}", "error")
+            return redirect(url_for("users.auth.forced_pwd_reset"))
 
-        return redirect(url_for("users.profile.profile"))
+        # ✅ Get safe next page from session, fallback to profile
+        safe_next_page = session.pop("next_page", None) or url_for("users.profile.profile")
+        
+        # Optional: double-check _check()
+        __, b = _check(safe_next_page, request)
+        if b:
+            return __, 200
 
+        if safe_next_page == url_for("users.profile.api_friends_list"):
+            safe_next_page = url_for("users.profile.profile")
+
+        return redirect(safe_next_page)
+
+    # log GET visit
+    mongo.password_changes.insert_one(log_entry)
     return render_template("users/auth/forced_pwd_reset.html")
+
+
 
 def meow(user):
     token = request.form.get("2fa_code")
@@ -818,44 +885,90 @@ def user_profile():
             "profile_picture": getattr(user, "profile_picture", None),
         }
     })
+from datetime import datetime
 
 @auth_bp.route("/password_reset/<token>", methods=["GET", "POST"])
 def password_reset(token):
     """
-
-    Parameters
-    ----------
-    token :
-
-
-    Returns
-    -------
-
-
+    Handle password reset using a token, with full logging and single-use token enforcement.
     """
+    ip = request.remote_addr
+    user_agent = request.headers.get("User-Agent", "")
+    
+    # Check if token has already been used
+    if mongo.used_password_change_tokens.find_one({"token": token}):
+        flash_message(
+            "Tämä salasanan palautuslinkki on jo käytetty.", "warning"
+        )
+        return redirect(url_for("users.auth.password_reset_request"))
+
     email = verify_reset_token(token)
+
+    log_entry = {
+        "token": token,
+        "email": email or None,
+        "datetime": datetime.utcnow(),
+        "ip": ip,
+        "user_agent": user_agent,
+        "visit": True,
+        "changed": False,
+        "error": None,
+    }
+
     if not email:
+        log_entry["error"] = "Invalid or expired token"
+        mongo.password_changes.insert_one(log_entry)
         flash_message(
             "Salasanan palautuslinkki on virheellinen tai vanhentunut.", "warning"
         )
         return redirect(url_for("users.auth.password_reset_request"))
 
+    user_doc = mongo.users.find_one({"email": email})
+    if not user_doc:
+        log_entry["error"] = "User not found"
+        mongo.password_changes.insert_one(log_entry)
+        flash_message("Käyttäjää ei löytynyt.", "warning")
+        return redirect(url_for("users.auth.password_reset_request"))
+
+    user = User.from_db(user_doc)
+
     if request.method == "POST":
         password = request.form.get("password")
+        confirm_password = request.form.get("password_confirm")
 
-        user_doc = mongo.users.find_one({"email": email})
-        if not user_doc:
-            flash_message("Käyttäjää ei löytynyt.", "warning")
-            return redirect(url_for("users.auth.password_reset_request"))
-
-        if password is None or len(password) < 8:
-            flash_message("Salasanan on oltava vähintään 8 merkkiä pitkä.", "warning")
+        if password != confirm_password:
+            log_entry["error"] = "Passwords do not match"
+            mongo.password_changes.insert_one(log_entry)
+            flash_message("Salasanat eivät täsmää!", "warning")
             return redirect(url_for("users.auth.password_reset", token=token))
 
-        user = User.from_db(user_doc)
-        user._change_password(password)
+        if not is_strong_password(password, username=user.username, email=email):
+            log_entry["error"] = "Password does not meet requirements"
+            mongo.password_changes.insert_one(log_entry)
+            flash_message("Salasana ei täytä vaatimuksia.", "warning")
+            return redirect(url_for("users.auth.password_reset", token=token))
 
-        # Notify user about their password being changed via email
+        try:
+            user._change_password(password)
+            log_entry["changed"] = True
+            mongo.password_changes.insert_one(log_entry)
+
+            # Mark token as used
+            mongo.used_password_change_tokens.insert_one({
+                "token": token,
+                "email": email,
+                "used_at": datetime.utcnow(),
+                "ip": ip,
+                "user_agent": user_agent,
+                "password_change_success": True
+            })
+        except Exception as e:
+            log_entry["error"] = f"Password change failed: {e}"
+            mongo.password_changes.insert_one(log_entry)
+            flash_message(f"Salasanan vaihto epäonnistui: {e}", "error")
+            return redirect(url_for("users.auth.password_reset", token=token))
+
+        # Notify user via email
         try:
             email_sender.queue_email(
                 template_name="auth/password_changed.html",
@@ -869,6 +982,8 @@ def password_reset(token):
         flash_message("Salasanasi on päivitetty onnistuneesti.", "success")
         return redirect(url_for("users.auth.login"))
 
+    # Log GET visit
+    mongo.password_changes.insert_one(log_entry)
     return render_template("users/auth/password_reset.html", token=token)
 
 # NEXT STEPS:

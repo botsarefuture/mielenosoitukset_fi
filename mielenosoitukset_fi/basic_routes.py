@@ -476,52 +476,115 @@ Disallow: /admin/
         """
         return render_template("terms.html")
     
+    from werkzeug.utils import secure_filename
+    from datetime import datetime
+    from mielenosoitukset_fi.utils.validators import valid_email
+    from mielenosoitukset_fi.admin.admin_demo_bp import (
+        generate_demo_approve_link,
+        generate_demo_reject_link,
+        generate_demo_preview_link,
+    )
+    # upload_image_fileobj, Organizer, Demonstration, flash_message, mongo, email_sender, CITY_LIST
+    # should already be imported elsewhere in your app/module
+
     @app.route("/submit", methods=["GET", "POST"])
     def submit():
         """
         Handle submission of a new demonstration.
+
+        Integrates with the hardened magic-link system:
+        - Generates single-use, IP-bound approve/reject/preview links for admin use.
         """
         if request.method == "POST":
-            title = request.form.get("title")
-            date = request.form.get("date")
-            description = request.form.get("description", "")
-            start_time = request.form.get("start_time")
-            end_time = request.form.get("end_time", None)
-            facebook = request.form.get("facebook")
-            city = request.form.get("city")
-            address = request.form.get("address")
-            event_type = request.form.get("type")
+            # --- Basic fields ---
+            title = (request.form.get("title") or "").strip()
+            date = (request.form.get("date") or "").strip()
+            description = (request.form.get("description") or "").strip()
+            start_time = (request.form.get("start_time") or "").strip()
+            end_time = (request.form.get("end_time") or "").strip() or None
+            facebook = (request.form.get("facebook") or "").strip()
+            city = (request.form.get("city") or "").strip()
+            address = (request.form.get("address") or "").strip()
+            event_type = (request.form.get("type") or "").strip()
             route = request.form.get("route") if event_type == "marssi" else None
-            tags = request.form.get("tags", None)
-            tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
+
+            # --- Tags (comma separated) ---
+            tags_field = request.form.get("tags", "")
+            tags = [t.strip() for t in tags_field.split(",") if t.strip()] if tags_field else []
+
+            # --- File upload (S3) ---
             img = request.files.get("image")
             photo_url = ""
-            # --- Submitter info fields ---
-            submitter_role = request.form.get("submitter_role")
-            submitter_email = request.form.get("submitter_email")
-            submitter_name = request.form.get("submitter_name")
-            accept_terms = request.form.get("accept_terms")
-            # --- End submitter fields ---
-
-            if img:
+            if img and getattr(img, "filename", ""):
+                try:
                     filename = secure_filename(img.filename)
-                    bucket_name = "mielenosoitukset.fi"
-                    # upload directly from the file storage stream to S3 (no disk)
-                    photo_url = upload_image_fileobj(bucket_name, img.stream, filename, "demo_pics")
-            # --- Add submitter info to required fields check ---
-            if not title or not date or not start_time or not city or not address or not submitter_role or not submitter_email or not submitter_name or not accept_terms:
-                flash_message("Ole hyvä, ja anna kaikki pakolliset tiedot sekä hyväksy käyttöehdot ja tietosuojaseloste.", "error")
+                    bucket_name = current_app.config.get("S3_BUCKET", "mielenosoitukset.fi")
+                    s3_url = upload_image_fileobj(bucket_name, img.stream, filename, "demo_pics")
+                    if s3_url:
+                        photo_url = s3_url
+                    else:
+                        # upload failed but we don't block submitter; log and continue
+                        logger.error("S3 upload failed for submit image: %s", filename)
+                except Exception as e:
+                    logger.exception("Error uploading image for demo submit: %s", e)
+
+            # --- Submitter info fields ---
+            submitter_role = (request.form.get("submitter_role") or "").strip()
+            submitter_email = (request.form.get("submitter_email") or "").strip()
+            submitter_name = (request.form.get("submitter_name") or "").strip()
+            accept_terms = request.form.get("accept_terms")  # checkbox presence
+
+            # --- Required validation ---
+            missing = []
+            if not title:
+                missing.append("otsikko")
+            if not date:
+                missing.append("päivämäärä")
+            if not start_time:
+                missing.append("alkamisaika")
+            if not city:
+                missing.append("kaupunki")
+            if not address:
+                missing.append("osoite")
+            if not submitter_role:
+                missing.append("rooli")
+            if not submitter_email:
+                missing.append("sähköposti")
+            if not submitter_name:
+                missing.append("nimi")
+            if not accept_terms:
+                missing.append("ehdot")
+
+            if missing:
+                flash_message(
+                    "Ole hyvä, ja anna kaikki pakolliset tiedot sekä hyväksy käyttöehdot ja tietosuojaseloste. Puuttuvat kentät: "
+                    + ", ".join(missing),
+                    "error",
+                )
                 return redirect(url_for("submit"))
+
+            # Validate email format
+            if not valid_email(submitter_email):
+                flash_message("Virheellinen sähköpostiosoite.", "error")
+                return redirect(url_for("submit"))
+
+            # --- Collect organizers ---
             organizers = []
             i = 1
-            while f"organizer_name_{i}" in request.form:
-                organizer = Organizer(
-                    name=request.form.get(f"organizer_name_{i}"),
-                    email=request.form.get(f"organizer_email_{i}"),
-                    website=request.form.get(f"organizer_website_{i}"),
+            while True:
+                name_field = request.form.get(f"organizer_name_{i}")
+                if not name_field and f"organizer_name_{i}" not in request.form:
+                    break
+                organizers.append(
+                    Organizer(
+                        name=(name_field or "").strip(),
+                        email=(request.form.get(f"organizer_email_{i}") or "").strip(),
+                        website=(request.form.get(f"organizer_website_{i}") or "").strip(),
+                    )
                 )
-                organizers.append(organizer)
                 i += 1
+
+            # --- Assemble Demonstration object ---
             demonstration = Demonstration(
                 title=title,
                 date=date,
@@ -539,49 +602,62 @@ Disallow: /admin/
                 tags=tags,
             )
 
-            demo_dict = demonstration.to_dict()
-            result = mongo.demonstrations.insert_one(demo_dict)
-            demo_id = result.inserted_id
+            # Save demonstration
+            try:
+                demo_dict = demonstration.to_dict()
+                result = mongo.demonstrations.insert_one(demo_dict)
+                demo_id = result.inserted_id
+            except Exception as e:
+                logger.exception("Failed to insert demonstration: %s", e)
+                flash_message("Palvelinvirhe: mielenosoituksen tallentaminen epäonnistui.", "error")
+                return redirect(url_for("submit"))
 
             # --- Save submitter info in separate collection ---
-            submitter_doc = {
-                "demonstration_id": demo_id,
-                "submitter_role": submitter_role,
-                "submitter_email": submitter_email,
-                "submitter_name": submitter_name,
-                "accept_terms": bool(accept_terms),
-                "submitted_at": datetime.utcnow(),
-            }
-            submitters_collection.insert_one(submitter_doc)
-            # --- End submitter info ---
+            try:
+                submitter_doc = {
+                    "demonstration_id": demo_id,
+                    "submitter_role": submitter_role,
+                    "submitter_email": submitter_email,
+                    "submitter_name": submitter_name,
+                    "accept_terms": bool(accept_terms),
+                    "submitted_at": datetime.utcnow(),
+                }
+                mongo.submitters.insert_one(submitter_doc)
+            except Exception as e:
+                logger.exception("Failed to save submitter info: %s", e)
+                # do not abort the workflow — demo exists, but warn admins
+                flash_message("Varoitus: ilmoittajan tiedot eivät tallentuneet oikein.", "warning")
 
             # --- Send confirmation email to submitter ---
-            if submitter_email:
-                email_sender.queue_email(
-                    template_name="demo_submitter_confirmation.html",
-                    subject="Kiitos mielenosoituksen ilmoittamisesta",
-                    recipients=[submitter_email],
-                    context={
-                        "title": title,
-                        "date": date,
-                        "city": city,
-                        "address": address,
-                    },
-                )
+            try:
+                if submitter_email:
+                    email_sender.queue_email(
+                        template_name="demo_submitter_confirmation.html",
+                        subject="Kiitos mielenosoituksen ilmoittamisesta",
+                        recipients=[submitter_email],
+                        context={
+                            "title": title,
+                            "date": date,
+                            "city": city,
+                            "address": address,
+                        },
+                    )
+            except Exception as e:
+                logger.exception("Failed to queue submitter confirmation email: %s", e)
 
-            # --- Notify support team with magic approve link ---
-            from mielenosoitukset_fi.admin.admin_demo_bp import serializer, generate_demo_preview_link
-            approve_token = serializer.dumps(str(demo_id), salt="approve-demo")
-            approve_link = url_for("admin_demo.approve_demo_with_token", token=approve_token, _external=True)
-            preview_link = generate_demo_preview_link(str(demo_id))
-            # Generate a reject token and link (same as approve, but with a different salt and route)
-            reject_token = serializer.dumps(str(demo_id), salt="reject-demo")
-            reject_link = url_for("admin_demo.reject_demo_with_token", token=reject_token, _external=True)
-            email_sender.queue_email(
-                template_name="admin_demo_approve_notification.html",
-                subject="Uusi mielenosoitus odottaa hyväksyntää",
-                recipients=["tuki@mielenosoitukset.fi"],
-                context={
+            # --- Generate secure admin magic links (single-use, IP-bound) ---
+            try:
+                # generate_demo_* helpers will create registry records and return external URLs
+                approve_link = generate_demo_approve_link(str(demo_id))
+                preview_link = generate_demo_preview_link(str(demo_id))
+                reject_link = generate_demo_reject_link(str(demo_id))
+            except Exception as e:
+                logger.exception("Failed to generate admin magic links: %s", e)
+                approve_link = preview_link = reject_link = None
+
+            # --- Notify support team with secure links ---
+            try:
+                ctx = {
                     "title": title,
                     "date": date,
                     "city": city,
@@ -592,15 +668,25 @@ Disallow: /admin/
                     "approve_link": approve_link,
                     "preview_link": preview_link,
                     "reject_link": reject_link,
-                },
-            )
+                }
+                email_sender.queue_email(
+                    template_name="admin_demo_approve_notification.html",
+                    subject="Uusi mielenosoitus odottaa hyväksyntää",
+                    recipients=["tuki@mielenosoitukset.fi"],
+                    context=ctx,
+                )
+            except Exception as e:
+                logger.exception("Failed to queue admin notification email: %s", e)
 
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
             )
             return redirect(url_for("index"))
+
+        # GET — render submission form
         return render_template("submit.html", city_list=CITY_LIST)
+
 
     @app.route("/report", methods=["GET", "POST"])
     def report():

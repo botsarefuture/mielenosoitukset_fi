@@ -3,17 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <title>Mielenosoituksesi on hyväksytty</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f8f8;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        .details p {
+            margin: 5px 0;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        i {
+            display: block;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        small {
+            display: block;
+            margin-top: 30px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <h2>Hyvä uutinen!</h2>
-    <p>Mielenosoituksesi on nyt tarkistettu ja hyväksytty. Se näkyy nyt Mielenosoitukset.fi-palvelussa.</p>
-    <hr>
-    <p><strong>Otsikko:</strong> {{ title }}</p>
-    <p><strong>Päivämäärä:</strong> {{ date }}</p>
-    <p><strong>Kaupunki:</strong> {{ city }}</p>
-    <p><strong>Osoite:</strong> {{ address }}</p>
-    <hr>
-    <p>Voit jakaa tapahtuman linkkiä ja kutsua muita mukaan!</p>
-    <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi-tiimi</p>
+    <div class="container">
+        <h2>Hyviä uutisia!</h2>
+        <p>Mielenosoituksesi on nyt tarkistettu ja hyväksytty. Se näkyy nyt Mielenosoitukset.fi-palvelussa.</p>
+
+        <hr>
+
+        <div class="details">
+            <p><strong>Otsikko:</strong> {{ title }}</p>
+            <p><strong>Päivämäärä:</strong> {{ date }}</p>
+            <p><strong>Kaupunki:</strong> {{ city }}</p>
+            <p><strong>Osoite:</strong> {{ address }}</p>
+        </div>
+
+        <hr>
+
+        <p>Voit jakaa tapahtuman linkkiä ja kutsua muita mukaan!</p>
+        <i>Löydät mielenosoituksen täältä: 
+            <a href="{{ url }}">{{ url }}</a>
+        </i>
+
+        <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi-tiimi</p>
+
+        <hr>
+
+        <small>
+            Käyttöehdot – mielenosoitukset.fi<br>
+            Kaikkien sivustolla julkaistavien mielenosoitusten on oltava Suomen lakien ja asetusten mukaisia. Sivustomme pidättää oikeuden olla julkaisematta ilmoitusta ilman erillistä perustelua.
+        </small>
+    </div>
 </body>
 </html>

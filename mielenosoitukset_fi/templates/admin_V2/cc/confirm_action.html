@@ -1,0 +1,65 @@
+<!-- templates/confirm_action.html -->
+{% extends "admin_base.html" %}
+
+{% block main_content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-lg border-0">
+        
+        <!-- Header -->
+        <div class="card-header 
+             {% if action == 'approve' %}
+               bg-success text-white
+             {% else %}
+               bg-danger text-white
+             {% endif %}">
+          <h4 class="mb-0">
+            {% if action == 'approve' %}
+              ✅ Hyväksy mielenosoitus
+            {% else %}
+              ❌ Hylkää mielenosoitus
+            {% endif %}
+          </h4>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body text-center">
+          <p class="mb-3 text-muted">
+            Oletko varma että haluat 
+            {% if action == 'approve' %}
+              hyväksyä
+            {% else %}
+              hylätä
+            {% endif %}
+            seuraavan mielenosoituksen?
+          </p>
+
+          <div class="border rounded p-3 mb-4 bg-light">
+            <h5 class="mb-1">{{ demo.title }}</h5>
+            <small class="text-muted">{{ demo.city }} • {{ demo.date }}</small>
+          </div>
+
+          <!-- Form -->
+          <form method="post" class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('admin_demo.demo_control') }}" 
+               class="btn btn-outline-secondary">
+              Peruuta
+            </a>
+            <button type="submit" 
+              class="btn 
+                {% if action == 'approve' %}
+                  btn-success
+                {% else %}
+                  btn-danger
+                {% endif %}">
+              Vahvista
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

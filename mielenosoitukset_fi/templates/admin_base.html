@@ -18,6 +18,18 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_v2.css')}}">
     <!-- Page-specific styles -->
+    <style>
+      @media screen and (max-width: 768px) {
+        aside#sidebar {
+          display: none !important;
+          width: 0px !important;
+        }
+
+        main {
+          margin-left: 0 !important; /*reset the margin set in the sidebar_V2.css*/
+        }
+      }
+    </style>
     {% block styles %}{% endblock %}
 </head>
 

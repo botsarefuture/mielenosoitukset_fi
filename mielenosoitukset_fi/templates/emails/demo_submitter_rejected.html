@@ -3,16 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <title>Mielenosoituksesi on hylätty</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f8f8f8;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #d9534f;
+            margin-bottom: 20px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #ccc;
+            margin: 20px 0;
+        }
+        .details p {
+            margin: 5px 0;
+        }
+        .appeal {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        ol {
+            margin-top: 0;
+        }
+        small {
+            display: block;
+            margin-top: 30px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-    <h2>Valitettavasti mielenosoituksesi on hylätty</h2>
-    <p>Ilmoittamasi mielenosoitus ei täyttänyt hyväksymiskriteereitämme tai se on hylätty ylläpidon toimesta.</p>
-    <p><strong>Otsikko:</strong> {{ title }}</p>
-    <p><strong>Päivämäärä:</strong> {{ date }}</p>
-    <p><strong>Kaupunki:</strong> {{ city }}</p>
-    <p><strong>Osoite:</strong> {{ address }}</p>
-    <hr>
-    <p>Jos sinulla on kysyttävää, voit ottaa yhteyttä ylläpitoon.</p>
-    <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi</p>
+    <div class="container">
+        <h2>Valitettavasti mielenosoituksesi on hylätty</h2>
+        <p>Ilmoittamasi mielenosoitus ei täyttänyt hyväksymiskriteereitämme tai se on hylätty ylläpidon toimesta.</p>
+
+        <div class="details">
+            <p><strong>Otsikko:</strong> {{ title }}</p>
+            <p><strong>Päivämäärä:</strong> {{ date }}</p>
+            <p><strong>Kaupunki:</strong> {{ city }}</p>
+            <p><strong>Osoite:</strong> {{ address }}</p>
+        </div>
+
+        <hr>
+
+        <div class="appeal">
+            <h3>Valitusprosessi</h3>
+            <p>Jos mielenosoitustasi ei julkaista ja koet päätöksen olevan virheellinen, voit tehdä valituksen seuraavasti:</p>
+            <ol>
+                <li>Lähetä valituksesi sähköpostilla osoitteeseen <a href="mailto:hallinto@mielenosoitukset.fi">hallinto@mielenosoitukset.fi</a>.</li>
+                <li>Käsittelemme valituksesi 30 vuorokauden kuluessa sen vastaanottamisesta.</li>
+                <li>Saat kirjallisen lopullisen päätöksen sähköpostilla. Tähän päätökseen ei voi hakea muutosta.</li>
+            </ol>
+        </div>
+
+        <p>Jos sinulla on kysyttävää, voit myös ottaa yhteyttä ylläpitoon.</p>
+
+        <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi tiimi</p>
+
+        <hr>
+
+        <small>
+            Käyttöehdot – mielenosoitukset.fi<br>
+            Kaikkien sivustolla julkaistavien mielenosoitusten on oltava Suomen lakien ja asetusten mukaisia. Sivustomme pidättää oikeuden olla julkaisematta ilmoitusta ilman erillistä perustelua.
+        </small>
+    </div>
 </body>
 </html>

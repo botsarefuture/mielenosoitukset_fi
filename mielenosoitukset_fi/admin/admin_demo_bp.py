@@ -243,140 +243,236 @@ def view_demo_diff(demo_id, history_id):
         diffs=diffs,
         demo_id=demo_id
     )
+    
+# -----------------------------------------------------------------------------
+# PREVIEW, ACCEPT, REJECT WITH TOKEN (MAGIC LINKS)
+
+# --- SECURITY HARDENED MAGIC LINK SYSTEM --------------------------------------
+# Requirements / assumptions:
+# - `serializer`: itsdangerous.URLSafeTimedSerializer instance
+# - `mongo`: PyMongo db handle
+# - CSRF protection enabled (e.g., flask-wtf) for POST handlers rendering forms
+# - app config has PROXIES_COUNT if behind reverse proxy
+# - templates available: confirm_action.html, detail.html
+
+import hashlib
+from datetime import datetime, timedelta, timezone
+from flask import request, redirect, url_for, render_template, abort, jsonify
+from itsdangerous import BadSignature, SignatureExpired
+from bson.objectid import ObjectId
+
+MAGIC_TTL_SECONDS = 86400  # 24h, make configurable
+MAGIC_COLLECTION = "magic_links"  # central registry
+
+# Recommended: create TTL index (run once on startup/migration)
+# mongo[MAGIC_COLLECTION].create_index("expires_at", expireAfterSeconds=0)
+# Also add: mongo[MAGIC_COLLECTION].create_index([("token_hash", 1)], unique=True)
+
+def _now_utc():
+    return datetime.now(timezone.utc)
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+def _client_ip() -> str:
+    """
+    Get the best-effort client IP.
+    If behind a trusted proxy, prefer X-Forwarded-For first value.
+    """
+    # If you terminate TLS behind a proxy/load balancer, make sure you trust only known proxies
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        # XFF may be a list "client, proxy1, proxy2"
+        return xff.split(",")[0].strip()
+    return request.remote_addr or "0.0.0.0"
+
+def _user_agent() -> str:
+    return request.headers.get("User-Agent", "")[:512]
+
+def _require_valid_objectid(oid: str) -> ObjectId:
+    if not ObjectId.is_valid(oid):
+        abort(400, "Invalid id")
+    return ObjectId(oid)
+
+def _registry_upsert_initial(token_hash: str, action: str, demo_id: str):
+    """
+    Create registry doc if missing. Do not bind IP yet (bind on first GET).
+    """
+    now = _now_utc()
+    mongo[MAGIC_COLLECTION].update_one(
+        {"token_hash": token_hash},
+        {
+            "$setOnInsert": {
+                "action": action,                # "preview" | "approve" | "reject"
+                "demo_id": str(demo_id),
+                "created_at": now,
+                "expires_at": now + timedelta(seconds=MAGIC_TTL_SECONDS),
+                "bound_ip": None,
+                "first_seen_at": None,
+                "used_at": None,
+                "revoked": False,
+                "ua_first": None,
+                "ua_last": None,
+            }
+        },
+        upsert=True,
+    )
+
+def _check_and_bind(action: str, token: str) -> dict:
+    """
+    Validate token (signature + TTL), verify registry, bind IP on first use,
+    enforce single-use and IP lock. Returns registry document.
+    """
+    try:
+        payload = serializer.loads(token, salt=f"{action}-demo", max_age=MAGIC_TTL_SECONDS)
+    except SignatureExpired:
+        flash_message("Linkki on vanhentunut.", "error")
+        abort(410)  # Gone
+    except BadSignature:
+        flash_message("Linkki on virheellinen.", "error")
+        abort(400)
+
+    # payload is the demo_id (string). You could also sign a dict with jti if you want.
+    demo_id = str(payload)
+    token_hash = _hash_token(token)
+    doc = mongo[MAGIC_COLLECTION].find_one({"token_hash": token_hash})
+
+    if not doc:
+        # If missing (e.g., never inserted), reject: we require DB presence to prevent forged tokens.
+        flash_message("Linkkiä ei tunnistettu.", "error")
+        abort(400)
+
+    # Validate action & demo match
+    if doc.get("action") != action or doc.get("demo_id") != demo_id:
+        flash_message("Linkkiä ei tunnistettu.", "error")
+        abort(400)
+
+    # TTL / revoked / used checks
+    now = _now_utc()
+    if doc.get("revoked"):
+        flash_message("Linkki on mitätöity.", "error")
+        abort(403)
+    
+    if doc.get("expires_at"):
+        expires_at = doc["expires_at"].replace(tzinfo=timezone.utc)
+        if now > expires_at:
+            flash_message("Linkki on vanhentunut.", "error")
+            abort(410)
+
+    if doc.get("used_at") is not None:
+        flash_message("Linkki on jo käytetty.", "warning")
+        abort(409)
+
+    # IP bind on first open
+    ip = _client_ip()
+    ua = _user_agent()
+
+    updates = {"$set": {"ua_last": ua}}
+    if not doc.get("bound_ip"):
+        # First claimant → bind
+        updates["$set"].update({"bound_ip": ip, "first_seen_at": now, "ua_first": ua})
+    else:
+        if doc["bound_ip"] != ip:
+            flash_message("Tämä linkki on lukittu toiseen IP-osoitteeseen.", "error")
+            abort(403)
+
+    # Touch doc
+    mongo[MAGIC_COLLECTION].update_one({"_id": doc["_id"]}, updates)
+    # Refresh & return latest
+    return mongo[MAGIC_COLLECTION].find_one({"_id": doc["_id"]})
+
+def _mark_used(doc_id):
+    mongo[MAGIC_COLLECTION].update_one({"_id": doc_id}, {"$set": {"used_at": _now_utc()}})
+
+def _load_demo_or_bust(demo_id: str):
+    demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    if not demo:
+        flash_message("Mielenosoitusta ei löytynyt.", "error")
+        abort(404)
+    return demo
+
+# ------------------------------------------------------------------------------
+# GENERATION HELPERS (call these when creating links)
+# ------------------------------------------------------------------------------
+
+def generate_demo_preview_link(demo_id: str) -> str:
+    # Create signed token and registry doc
+    token = serializer.dumps(str(demo_id), salt="preview-demo")
+    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id))
+    return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
+
+def generate_demo_approve_link(demo_id: str) -> str:
+    token = serializer.dumps(str(demo_id), salt="approve-demo")
+    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id))
+    return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
+
+def generate_demo_reject_link(demo_id: str) -> str:
+    token = serializer.dumps(str(demo_id), salt="reject-demo")
+    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id))
+    return url_for("admin_demo.reject_demo_with_token", token=token, _external=True)
+
+# ------------------------------------------------------------------------------
+# PREVIEW (read-only) – allow via GET (single-use still enforced & IP-bound)
+# ------------------------------------------------------------------------------
+
 @admin_demo_bp.route("/preview_demo_with_token/<token>", methods=["GET"])
 def preview_demo_with_token(token):
     """
-    Secure preview of a demonstration using a token.
-
-    Parameters
-    ----------
-    token : str
-        The secure token for previewing the demonstration.
-
-    Returns
-    -------
-    flask.Response
-        Renders the demonstration preview page or redirects with an error.
+    Secure, single-use, IP-bound preview. GET is acceptable for read-only.
     """
-    try:
-        demo_id = serializer.loads(token, salt="preview-demo", max_age=86400)  # 24h expiry
-    except SignatureExpired:
-        flash_message("Esikatselulinkki on vanhentunut.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
-    except BadSignature:
-        flash_message("Esikatselulinkki on virheellinen.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
+    doc = _check_and_bind("preview", token)
+    demo = _load_demo_or_bust(doc["demo_id"])
 
-    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    if not demo_data:
-        flash_message("Mielenosoitusta ei löytynyt.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
+    # Single-use policy: mark used at first successful render.
+    # If you prefer multi-view by same IP until expiry, move this to a POST confirm or omit.
+    _mark_used(doc["_id"])
 
-    # Convert ObjectId to str for template compatibility
-    if isinstance(demo_data.get("_id"), ObjectId):
-        demo_data["_id"] = str(demo_data["_id"])
-    # Pass the raw dict to the template for JSON serialization compatibility
-    return render_template(
-        "detail.html",
-        demo=stringify_object_ids(demo_data),
-        preview_mode=True,
-    )
+    # Make ObjectId JSON-friendly
+    if isinstance(demo.get("_id"), ObjectId):
+        demo["_id"] = str(demo["_id"])
 
-@admin_demo_bp.route("/reject_demo_with_token/<token>", methods=["GET"])
-def reject_demo_with_token(token):
-    """
-    Reject a demonstration using a one-time token (magic link).
+    return render_template("detail.html", demo=stringify_object_ids(demo), preview_mode=True)
 
-    Parameters
-    ----------
-    token : str
-        The secure token for rejecting the demonstration.
+# ------------------------------------------------------------------------------
+# APPROVE / REJECT – require POST confirm to avoid link prefetch/GET abuse
+# ------------------------------------------------------------------------------
 
-    Returns
-    -------
-    flask.Response
-        Redirects to the admin dashboard with a flash message.
-    """
-    try:
-        demo_id = serializer.loads(token, salt="reject-demo", max_age=86400)  # 24h expiry
-    except SignatureExpired:
-        flash_message("Hylkäyslinkki on vanhentunut.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
-    except BadSignature:
-        flash_message("Hylkäyslinkki on virheellinen.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
-
-    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    if not demo_data:
-        flash_message("Mielenosoitusta ei löytynyt.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
-
-    if demo_data.get("approved") is False and demo_data.get("rejected") is True:
-        flash_message("Mielenosoitus on jo hylätty.", "info")
-        return redirect(url_for("admin_demo.demo_control"))
-
-    # Mark the demonstration as rejected
-    mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"approved": False, "rejected": True}})
-
-    # Optionally, notify the submitter (if you want to send a rejection email)
-    submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
-    if submitter and submitter.get("submitter_email"):
-        email_sender.queue_email(
-            template_name="demo_submitter_rejected.html",
-            subject="Mielenosoituksesi on hylätty",
-            recipients=[submitter["submitter_email"]],
-            context={
-                "title": demo_data.get("title", ""),
-                "date": demo_data.get("date", ""),
-                "city": demo_data.get("city", ""),
-                "address": demo_data.get("address", ""),
-            },
-        )
-
-    flash_message("Mielenosoitus hylättiin onnistuneesti!", "success")
-    return redirect(url_for("admin_demo.demo_control"))
-    
-@admin_demo_bp.route("/approve_demo_with_token/<token>", methods=["GET"])
+@admin_demo_bp.route("/approve_demo_with_token/<token>", methods=["GET", "POST"])
 def approve_demo_with_token(token):
     """
-    Approve a demonstration using a one-time token (magic link).
-
-    Parameters
-    ----------
-    token : str
-        The secure token for approving the demonstration.
-
-    Returns
-    -------
-    flask.Response
-        Redirects to the admin dashboard with a flash message.
+    Two-step:
+     - GET: validate/bind & show confirm page with a CSRF-protected POST.
+     - POST: perform the action, mark token used.
     """
-    try:
-        demo_id = serializer.loads(token, salt="approve-demo", max_age=86400)  # 24h expiry
-    except SignatureExpired:
-        flash_message("Hyväksymislinkki on vanhentunut.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
-    except BadSignature:
-        flash_message("Hyväksymislinkki on virheellinen.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
+    if request.method == "GET":
+        doc = _check_and_bind("approve", token)
+        demo = _load_demo_or_bust(doc["demo_id"])
+        return render_template("admin_V2/cc/confirm_action.html",
+                               action="approve",
+                               token=token,
+                               demo=demo)
 
-    demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-    if not demo_data:
-        flash_message("Mielenosoitusta ei löytynyt.", "error")
-        return redirect(url_for("admin_demo.demo_control"))
+    # POST
+    doc = _check_and_bind("approve", token)  # re-check before state change
+    demo_id = doc["demo_id"]
 
-    if demo_data.get("approved"):
+    demo = _load_demo_or_bust(demo_id)
+    if demo.get("approved"):
         flash_message("Mielenosoitus on jo hyväksytty.", "info")
+        _mark_used(doc["_id"])  # still burn token
         return redirect(url_for("admin_demo.demo_control"))
 
-    # Approve the demonstration
-    mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"approved": True}})
+    mongo.demonstrations.update_one(
+        {"_id": _require_valid_objectid(demo_id)},
+        {"$set": {"approved": True, "rejected": False}}
+    )
 
+    demo_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
 
-    # Notify submitter if possible
-    submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(demo_id)})
+    
+    # Notify submitter
+    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
     if submitter and submitter.get("submitter_email"):
-        demo = demo_data
         email_sender.queue_email(
             template_name="demo_submitter_approved.html",
             subject="Mielenosoituksesi on hyväksytty",
@@ -386,30 +482,64 @@ def approve_demo_with_token(token):
                 "date": demo.get("date", ""),
                 "city": demo.get("city", ""),
                 "address": demo.get("address", ""),
+                "url": demo_url
             },
         )
 
+    _mark_used(doc["_id"])
     flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
-    return redirect(url_for("admin_demo.demo_control"))
+    
+    return redirect(demo_url)
 
 
-def generate_demo_preview_link(demo_id):
+@admin_demo_bp.route("/reject_demo_with_token/<token>", methods=["GET", "POST"])
+def reject_demo_with_token(token):
     """
-    Generate a secure preview link for a demonstration using a token.
-
-    Parameters
-    ----------
-    demo_id : str
-        The ID of the demonstration.
-
-    Returns
-    -------
-    str
-        The preview link URL.
+    Two-step:
+     - GET: validate/bind & show confirm page with a CSRF-protected POST.
+     - POST: perform the action, mark token used.
     """
-    token = serializer.dumps(demo_id, salt="preview-demo")
-    preview_link = url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
-    return preview_link
+    if request.method == "GET":
+        doc = _check_and_bind("reject", token)
+        demo = _load_demo_or_bust(doc["demo_id"])
+        return render_template("admin_V2/cc/confirm_action.html",
+                               action="reject",
+                               token=token,
+                               demo=demo)
+
+    # POST
+    doc = _check_and_bind("reject", token)  # re-check before state change
+    demo_id = doc["demo_id"]
+
+    demo = _load_demo_or_bust(demo_id)
+    if demo.get("approved") is False and demo.get("rejected") is True:
+        flash_message("Mielenosoitus on jo hylätty.", "info")
+        _mark_used(doc["_id"])  # still burn token
+        return redirect(url_for("admin_demo.demo_control"))
+
+    mongo.demonstrations.update_one(
+        {"_id": _require_valid_objectid(demo_id)},
+        {"$set": {"approved": False, "rejected": True}}
+    )
+
+    # Notify submitter
+    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        email_sender.queue_email(
+            template_name="demo_submitter_rejected.html",
+            subject="Mielenosoituksesi on hylätty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+            },
+        )
+
+    _mark_used(doc["_id"])
+    flash_message("Mielenosoitus hylättiin onnistuneesti!", "success")
+    return redirect(url_for("index"))
 
 @admin_demo_bp.route("/")
 @login_required

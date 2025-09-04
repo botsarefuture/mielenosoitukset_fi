@@ -588,8 +588,9 @@ class Demonstration(BaseModel):
         if data.get("aliases") is None:
             raise ValueError("Aliases are missing.")
         
+        data.pop("repeat_schedule", None)  # Remove repeat_schedule if present
+        data.pop("parent_object", None)  # Remove parent_object if present
         
-
         # Check if the demonstration already exists in the database
         if DB["demonstrations"].find_one({"_id": self._id}):
             # Update existing entry

@@ -1,4 +1,6 @@
 import string
+
+from mielenosoitukset_fi.utils.logger import logger
 from .BaseModel import BaseModel
 from .Organizer import Organizer
 from mielenosoitukset_fi.utils.database import get_database_manager
@@ -19,67 +21,15 @@ class Demonstration(BaseModel):
     # Running number and slug fields for user-friendly URLs
     running_number: int = None
     slug: str = None
-    @classmethod
-    def from_dict(cls, data):
-        """
-        Create a Demonstration instance from a dictionary.
-
-        Parameters
-        ----------
-        data : dict
-            Dictionary containing demonstration data.
-
-        Returns
-        -------
-        Demonstration
-            An instance of Demonstration initialized from the dictionary.
-        """
-        # Helper to get value with fallback
-        def get(key, default=None):
-            return data.get(key, default)
-
-        return cls(
-            title=get("title"),
-            date=get("date"),
-            start_time=get("start_time"),
-            end_time=get("end_time"),
-            facebook=get("facebook"),
-            city=get("city"),
-            address=get("address"),
-            route=get("route"),
-            organizers=get("organizers"),
-            approved=get("approved", False),
-            linked_organizations=get("linked_organizations"),
-            img=get("img"),
-            _id=get("_id"),
-            description=get("description"),
-            tags=get("tags"),
-            parent=get("parent"),
-            created_datetime=get("created_datetime"),
-            recurring=get("recurring", False),
-            topic=get("topic"),
-            type=get("type"),
-            repeat_schedule=get("repeat_schedule"),
-            repeating=get("repeating", False),
-            latitude=get("latitude"),
-            longitude=get("longitude"),
-            event_type=get("event_type"),
-            save_flag=get("save_flag", False),
-            hide=get("hide", False),
-            aliases=get("aliases"),
-            in_past=get("in_past", False),
-            preview_image=get("preview_image"),
-            merged_into=get("merged_into"),
-            cover_picture=get("cover_picture"),
-            created_until=get("created_until")
-        )
+  
     """
     A class to represent a demonstration event.
 
-    This class encapsulates the details of a demonstration event, including its title, date, time, location, organizers, and other relevant information. It provides methods to initialize, validate, and manipulate demonstration events.
+    This class encapsulates the details of a demonstration event, including its title, date, time, location, organizers, media, and other relevant metadata. It provides methods to initialize, validate, manipulate, and save demonstration events.
 
     Parameters
     ----------
+    # --- MANDATORY INFO ---
     title : str
         The title of the event.
     date : str
@@ -88,68 +38,66 @@ class Demonstration(BaseModel):
         The start time of the event.
     end_time : str
         The end time of the event.
-    facebook : str
-        The Facebook link for the event.
+
+    # --- LOCATION INFO ---
     city : str
         The city where the event is held.
     address : str
         The address of the event.
-    route : str
+    route : str, optional
         The route of the event if it is a march.
+    latitude : str, optional
+        Latitude of the event location.
+    longitude : str, optional
+        Longitude of the event location.
+
+    # --- EXTERNAL LINKS & MEDIA ---
+    facebook : str, optional
+        Facebook link for the event.
+    img : optional
+        Image associated with the event.
+    preview_image : str, optional
+        URL of the preview image for the event.
+    cover_picture : str, optional
+        URL of the cover picture for the event.
+
+    # --- ORGANIZER & TAG INFO ---
     organizers : list, optional
-        A list of organizers. Defaults to None.
+        List of organizers.
+    tags : list, optional
+        Tags associated with the event.
+    aliases : list, optional
+        Aliases for the event.
+
+    # --- RECURRENCE & EVENT TYPE ---
+    recurs : bool, optional
+        Whether the event is recurring/repeating. Defaults to False.
+    event_type : optional
+        The type of the event.
+    parent : ObjectId, optional
+        Parent event ID for recurring events.
+
+    # --- META / SYSTEM INFO ---
     approved : bool, optional
         Whether the event is approved. Defaults to False.
-    linked_organizations : dict, optional
-        Linked organizations. Defaults to None.
-    img : optional
-        Image associated with the event. Defaults to None.
-    _id : optional
-        The unique identifier for the event. Defaults to None.
-    description : str, optional
-        Description of the event. Defaults to None.
-    tags : list, optional
-        Tags associated with the event. Defaults to None.
-    parent : ObjectId, optional
-        Parent event ID for recurring events. Defaults to None.
-    created_datetime : optional
-        The datetime when the event was created. Defaults to None.
-    recurring : bool, optional
-        Whether the event is recurring. Defaults to False.
-    topic : str, optional
-        The topic of the event. Deprecated. Defaults to None.
-    type : str, optional
-        The type of the event. Defaults to None.
-    repeat_schedule : RepeatSchedule, optional
-        The repeat schedule for recurring events. Defaults to None.
-    repeating : bool, optional
-        Whether the event is repeating. Defaults to False.
-    latitude : str, optional
-        Latitude of the event location. Defaults to None.
-    longitude : str, optional
-        Longitude of the event location. Defaults to None.
-    event_type : optional
-        The type of the event. Defaults to None.
-    save_flag : bool, optional
-        Flag to save the event. Defaults to False.
     hide : bool, optional
         Flag to hide the event. Defaults to False.
-    aliases : list, optional
-        Aliases for the event. Defaults to None.
     in_past : bool, optional
         Whether the event is in the past. Defaults to False.
-    preview_image : str, optional
-        URL of the preview image for the event. Defaults to None.
     merged_into : ObjectId, optional
-        ID of the demonstration this one is merged into. Defaults to None.
-    cover_picture : str, optional
-        URL of the cover picture for the event. Defaults to None.
-    formatted_date: str, optional
-        Formatted date for the event. Defaults to None.
-    Notes
-    -----
-    .. deprecated:: 1.6.0
-        `topic` will be removed in a future version.
+        ID of the demonstration this one is merged into.
+    running_number : int, optional
+        Running number for the demonstration.
+    slug : str, optional
+        URL-friendly slug for the demonstration.
+    formatted_date : str, optional
+        Pre-formatted date string.
+    created_datetime : optional
+        Datetime when the event was created.
+    _id : ObjectId, optional
+        Unique ID for the demonstration.
+    description : str, optional
+        Description of the event.
 
     Methods
     -------
@@ -169,42 +117,46 @@ class Demonstration(BaseModel):
 
     def __init__(
         self,
+        # --- MANDATORY INFO ---
         title: str,
         date: str,
         start_time: str,
         end_time: str,
-        facebook: str,
+
+        # --- LOCATION INFO ---
         city: str,
         address: str,
-        route: str,
-        organizers: list = None,
-        approved: bool = False,
-        linked_organizations: dict = None,
-        img=None,
-        _id=None,
-        description: str = None,
-        tags: list = None,
-        parent: ObjectId = None,
-        created_datetime=None,
-        recurring: bool = False,
-        topic: str = None,
-        type: str = None,
-        repeat_schedule: RepeatSchedule = None,
-        repeating: bool = False,
+        route: str = None,
         latitude: str = None,
         longitude: str = None,
-        event_type=None,
-        save_flag=False,
-        hide=False,
-        aliases=None,
-        in_past=False,
+
+        # --- EXTERNAL LINKS & MEDIA ---
+        facebook: str = None,
+        img=None,
         preview_image: str = None,
-        merged_into: ObjectId = None,  # Added parameter
-        cover_picture: str = None,  # Added field
-        created_until = None,
+        cover_picture: str = None,
+
+        # --- ORGANIZER & TAG INFO ---
+        organizers: list = None,
+        tags: list = None,
+        aliases: list = None,
+
+        # --- RECURRENCE & EVENT TYPE ---
+        recurs: bool = False,  # replaces repeating + recurring
+        event_type=None,
+        parent: ObjectId = None,
+
+        # --- META / SYSTEM INFO ---
+        approved: bool = False,
+        hide: bool = False,
+        in_past: bool = False,
+        merged_into: ObjectId = None,
         running_number: int = None,
         slug: str = None,
-        formatted_date: str = None
+        formatted_date: str = None,
+        created_datetime=None,
+        _id: ObjectId = None,
+        description: str = None,
     ):
         """
         Initialize a new demonstration event.
@@ -219,70 +171,65 @@ class Demonstration(BaseModel):
             The start time of the event.
         end_time : str
             The end time of the event.
-        facebook : str
-            The Facebook link for the event.
+
         city : str
             The city where the event is held.
         address : str
             The address of the event.
-        route : str
+        route : str, optional
             The route of the event if it is a march.
-        organizers : list, optional
-            A list of organizers. Defaults to None.
-        approved : bool, optional
-            Whether the event is approved. Defaults to False.
-        linked_organizations : dict, optional
-            Linked organizations. Defaults to None.
-        img : optional
-            Image associated with the event. Defaults to None.
-        _id : optional
-            The unique identifier for the event. Defaults to None.
-        description : str, optional
-            Description of the event. Defaults to None.
-        tags : list, optional
-            Tags associated with the event. Defaults to None.
-        parent : ObjectId, optional
-            Parent event ID for recurring events. Defaults to None.
-        created_datetime : optional
-            The datetime when the event was created. Defaults to None.
-        recurring : bool, optional
-            Whether the event is recurring. Defaults to False.
-        topic : str, optional
-            **[Depraced]**
-            The topic of the event. Deprecated. Defaults to None.
-        type : str, optional
-            The type of the event. Defaults to None.
-        repeat_schedule : RepeatSchedule, optional
-            The repeat schedule for recurring events. Defaults to None.
-        repeating : bool, optional
-            Whether the event is repeating. Defaults to False.
         latitude : str, optional
-            Latitude of the event location. Defaults to None.
+            Latitude of the event location.
         longitude : str, optional
-            Longitude of the event location. Defaults to None.
-        event_type : optional
-            The type of the event. Defaults to None.
-        save_flag : bool, optional
-            Flag to save the event. Defaults to False.
-        hide : bool, optional
-            Flag to hide the event. Defaults to False.
-        aliases : list, optional
-            Aliases for the event. Defaults to None.
-        in_past : bool, optional
-            Whether the event is in the past. Defaults to False.
+            Longitude of the event location.
+
+        facebook : str, optional
+            The Facebook link for the event.
+        img : optional
+            Image associated with the event.
         preview_image : str, optional
-            URL of the preview image for the event. Defaults to None.
-        merged_into : ObjectId, optional
-            ID of the demonstration this one is merged into. Defaults to None.
+            URL of the preview image for the event.
         cover_picture : str, optional
-            URL of the cover picture for the event. Defaults to None.
-        formatted_date: str, optional
-            Formatted date for the event. Defaults to None.
-        Notes
-        -----
-        .. deprecated:: 1.6.0
-            `topic` will be removed in a future version.
+            URL of the cover picture for the event.
+
+        organizers : list, optional
+            List of organizers.
+        tags : list, optional
+            Tags associated with the event.
+        aliases : list, optional
+            Aliases for the event.
+
+        recurs : bool, optional
+            Whether the event is recurring/repeating. Defaults to False.
+        event_type : optional
+            The type of the event.
+        parent : ObjectId, optional
+            Parent event ID for recurring events.
+
+        approved : bool, optional
+            Whether the event is approved.
+        hide : bool, optional
+            Flag to hide the event.
+        in_past : bool, optional
+            Whether the event is in the past.
+        merged_into : ObjectId, optional
+            ID of the demonstration this one is merged into.
+        running_number : int, optional
+            Running number for the demonstration.
+        slug : str, optional
+            URL-friendly slug for the demonstration.
+        formatted_date : str, optional
+            Pre-formatted date string.
+        created_datetime : optional
+            Datetime when the event was created.
+        _id : ObjectId, optional
+            Unique ID for the demonstration.
+        description : str, optional
+            Description of the event.
         """
+
+        self.save_flag = False
+
         # Convert date and time fields to ISO8601 format
         self.date = self._to_iso8601_date(date)
         
@@ -299,8 +246,6 @@ class Demonstration(BaseModel):
 
         self.formatted_date = self._format_date()
 
-        self.save_flag = save_flag
-
         self.hide = hide
 
         self.title = title
@@ -314,9 +259,12 @@ class Demonstration(BaseModel):
         self.latitude = latitude
         self.longitude = longitude
         
-        
+        if parent:
+            _parent = DB["recu_demos"].find_one({"_id": ObjectId(parent)})
+            self.parent_object = _parent
+            self.repeat_schedule = self.parent_object.get("repeat_schedule", None)
 
-        self.event_type = event_type_convertor(type or event_type or "STAY_STILL")
+        self.event_type = event_type_convertor(event_type or "STAY_STILL")
 
         if not valid_event_type(self.event_type):
             raise ValueError(f"Invalid event type: {self.event_type}")
@@ -336,9 +284,7 @@ class Demonstration(BaseModel):
         self.facebook = facebook
 
         self.approved = approved
-        self.linked_organizations = linked_organizations or {}  # What is this used for?
-        # TODO: #232 Remove linked_organizations if not used
-
+        
         self._id = _id or ObjectId()  # Unique ID for the demonstration
         self.running_number = running_number
         self.slug = slug
@@ -348,18 +294,13 @@ class Demonstration(BaseModel):
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
-        self.repeat_schedule = repeat_schedule
-        self.repeating, self.recurring = return_exists(repeating, recurring, False)
+        
+        self.recurs = recurs or False
+        
+        if self.parent:
+            self.recurs = True
+            self.save_flag = True
 
-        # DEPRECATED
-        self.topic = topic or None  # Deprecated
-
-        if len(self.tags) == 0 and isinstance(self.topic, str):
-            self.tags.append(topic.lower())  # Temporary fix for tags
-            self.topic = None  # Remove topic
-            self.save_flag = True  # Save the demonstration to update the tags
-            # TODO: #190 Remove this after all demonstrations have been updated
-            # with the correct tags
         
 
         # Initialize organizers
@@ -649,39 +590,16 @@ class Demonstration(BaseModel):
             print(
                 "Demonstration saved successfully."
             )  # TODO: #191 Use utils.logger instead of print
-
+    
     @classmethod
     def load_by_id(cls, demo_id: str) -> "Demonstration":
         """
         Load a demonstration by its unique identifier, running number, or slug.
-        """
-        # Try ObjectId
-        try:
-            data = DB["demonstrations"].find_one({"_id": ObjectId(demo_id)})
-            if data:
-                return cls.from_dict(data)
-        except Exception:
-            pass
-        # Try running_number (as int)
-        try:
-            num = int(demo_id)
-            data = DB["demonstrations"].find_one({"running_number": num})
-            if data:
-                return cls.from_dict(data)
-        except Exception:
-            pass
-        # Try slug
-        data = DB["demonstrations"].find_one({"slug": demo_id})
-        if data:
-            return cls.from_dict(data)
-        raise ValueError(f"Demonstration with id/slug/number {demo_id} not found.")
-        """
-        Load a demonstration by its unique identifier.
 
         Parameters
         ----------
         demo_id : str
-            The unique identifier of the demonstration.
+            The unique identifier (ObjectId as str), running number, or slug of the demonstration.
 
         Returns
         -------
@@ -691,12 +609,95 @@ class Demonstration(BaseModel):
         Raises
         ------
         ValueError
-            If the demonstration with the provided id is not found.
+            If the demonstration with the provided id/number/slug is not found.
         """
-        data = DB["demonstrations"].find_one({"_id": ObjectId(demo_id)})
-        if not data:
-            raise ValueError(f"Demonstration with id {demo_id} not found.")
-        return cls.from_dict(data)
+        # Try ObjectId lookup
+        try:
+            obj_id = ObjectId(demo_id)
+            data = DB["demonstrations"].find_one({"_id": obj_id})
+            if data:
+                return cls.from_dict(data)
+
+        except Exception as e:
+            logger.debug(f"ObjectId lookup failed for '{demo_id}': {e}")
+
+        # Try running_number lookup
+        try:
+            num = int(demo_id)
+            data = DB["demonstrations"].find_one({"running_number": num})
+            if data:
+                return cls.from_dict(data)
+        except ValueError:
+            logger.debug(f"Running number lookup failed for '{demo_id}'")
+
+        # Try slug lookup
+        data = DB["demonstrations"].find_one({"slug": demo_id})
+        if data:
+            return cls.from_dict(data)
+
+        # Nothing found
+        raise ValueError(f"Demonstration with id/slug/number '{demo_id}' not found.")
+
+    @classmethod
+    def from_dict(cls, data):
+        """
+        Create a Demonstration instance from a dictionary.
+
+        Parameters
+        ----------
+        data : dict
+            Dictionary containing demonstration data.
+
+        Returns
+        -------
+        Demonstration
+            An instance of Demonstration initialized from the dictionary.
+        """
+        # Helper to get value with fallback
+        def get(key, default=None):
+            return data.get(key, default)
+        
+
+        return cls(
+            # Basic Info
+            title=get("title"),
+            description=get("description"),
+            date=get("date"),
+            start_time=get("start_time"),
+            end_time=get("end_time"),
+
+            # Location
+            city=get("city"),
+            address=get("address"),
+            route=get("route"),
+            latitude=get("latitude"),
+            longitude=get("longitude"),
+
+            # External Links & Media
+            facebook=get("facebook"),
+            img=get("img"),
+            preview_image=get("preview_image"),
+            cover_picture=get("cover_picture"),
+
+            # Organizers & Tags
+            organizers=get("organizers"),
+            tags=get("tags") or [],
+            aliases=get("aliases") or [],
+
+            # Recurrence & Event Type
+            recurs=get("recurs", False),
+            event_type=get("event_type"),
+
+            # Meta & System Fields
+            approved=get("approved", False),
+            hide=get("hide", False),
+            in_past=get("in_past", False),
+            parent=get("parent"),
+            created_datetime=get("created_datetime"),
+            merged_into=get("merged_into"),
+            _id=get("_id"),
+        )
+
 
     def _to_iso8601_date(self, date_str: str) -> str:
         """

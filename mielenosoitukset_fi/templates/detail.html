@@ -839,9 +839,13 @@ main .display-all {
         </div>
       </div>
     </section>
+    <script>
 
+      
+      console.log("{{ demo | safe }}")
+    </script>
     <section id="subcontainer1" class="mb-4">
-      {% if demo['facebook'] or demo['recurring'] %}
+      {% if demo['facebook'] or demo['recurs'] %}
       <section id="infocontainer" class="mb-4" aria-label="Lisätiedot">
         <h2 class="subtitle">{{ _('Lisätiedot') }}</h2>
         <div id="demo-details">
@@ -851,10 +855,10 @@ main .display-all {
           </a>
           {% endif %}
         </div>
-        {% if demo["recurring"] and demo['repeat_schedule'] %}
+        {% if demo["recurs"] and demo['repeat_schedule'] %}
         <div class="repeating-alert mt-3">
           <strong>{{ _('Mielenosoitus toistuu säännöllisesti') }}</strong><br>
-          {{ generate_demo_sentence(demo) }}
+          {{ toistuvuus }}
           <br>
           <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="button display-all mt-2">
             <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}

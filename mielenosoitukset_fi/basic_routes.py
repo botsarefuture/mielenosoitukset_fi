@@ -34,6 +34,7 @@ from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from flask_caching import Cache  # New import for caching
+from mielenosoitukset_fi.utils.logger import logger
 
 email_sender = EmailSender()
 
@@ -534,7 +535,7 @@ Disallow: /admin/
             submitter_name = (request.form.get("submitter_name") or "").strip()
             accept_terms = request.form.get("accept_terms")  # checkbox presence
 
-            # --- Required validation ---
+            # --- Required validation --
             missing = []
             if not title:
                 missing.append("otsikko")
@@ -888,6 +889,7 @@ Disallow: /admin/
         """
         #result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
         demo = Demonstration.load_by_id(demo_id)
+        print(demo)
         if not demo:
             abort(404)
       
@@ -922,7 +924,12 @@ Disallow: /admin/
         log_demo_view(
             _demo._id, current_user._id if current_user.is_authenticated else None
         )
-        return render_template("detail.html", demo=demo)
+        
+        
+        if _demo.recurs:
+            toistuvuus = generate_demo_sentence(demo)
+
+        return render_template("detail.html", demo=demo, toistuvuus=toistuvuus)
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])
     @permission_required("VIEW_DEMO")

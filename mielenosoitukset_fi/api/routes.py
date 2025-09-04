@@ -56,7 +56,7 @@ def get_demonstrations():
                 and (city_query in demo["city"].lower() or city_query == "")
                 and (title_query in demo["title"].lower() or title_query == "")
                 and (tag_query in [tag.lower() for tag in demo["tags"]] or tag_query == "")
-                and (recurring_query == "" or recurring_query == str(demo["recurring"]))
+                and (recurring_query == "" or recurring_query == str(demo["recurs"]))
             ):
                 filtered_demonstrations.append(demo)
 
@@ -90,6 +90,7 @@ def get_demonstration_detail(demo_id):
         raise DemoNotFoundException()
 
     demo = Demonstration.from_dict(demo)
+    print(demo)
     return jsonify(stringify_object_ids(demo.to_dict(json=False)))
 
 

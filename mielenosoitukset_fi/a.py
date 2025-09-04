@@ -63,7 +63,7 @@ def generate_demo_sentence(demo):
     elif frequency == "yearly":
         sentence += "vuosittain."
 
-    if end_date:
+    if end_date and not "9999" in end_date:
         sentence = sentence.rstrip(".") + f", päättyen {end_date}."
 
     return sentence

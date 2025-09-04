@@ -8,7 +8,7 @@ def migrate():
 
     bulk_updates = []
 
-    for demo in DB["recu_demos"].find({}):
+    for demo in DB["demonstrations"].find({}):
         print(demo)
         update_fields = {}
         unset_fields = {}
@@ -22,6 +22,9 @@ def migrate():
 
         if "topic" in demo:
             unset_fields["topic"] = ""
+            
+        if "repeat_schedule" in demo:
+            unset_fields["repeat_schedule"] = ""
 
         # 2️⃣ repeating / recurring -> recurs
         recurs = demo.get("repeating") or demo.get("recurring") or False
@@ -44,7 +47,7 @@ def migrate():
             )
 
     if bulk_updates:
-        result = DB["recu_demos"].bulk_write(bulk_updates)
+        result = DB["demonstrations"].bulk_write(bulk_updates)
         print(f"Modified {result.modified_count} recurring demonstrations.")
     else:
         print("No demonstrations required migration.")

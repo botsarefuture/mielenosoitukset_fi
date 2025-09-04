@@ -169,9 +169,9 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     end_date = request.form.get("end_date")
 
     # Weekly
-    weekdays = []
+    weekday = None
     if freq == "weekly":
-        weekdays = request.form.getlist("weekday")
+        weekday = request.form.get("weekday")
 
     # Monthly
     monthly_option = None
@@ -193,7 +193,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     repeat_schedule = {
         "frequency": freq,
         "interval": interval,
-        "weekdays": weekdays,
+        "weekday": weekday,
         "monthly_option": monthly_option,
         "day_of_month": day_of_month,
         "nth_weekday": nth_weekday,

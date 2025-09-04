@@ -51,6 +51,8 @@ class RecurringDemonstration(Demonstration):
     ):
         kwargs["recurs"] = True  # force recurring=True
 
+        kwargs["_dont_override"] = True  # prevent auto-save in Demonstration
+
         # initialize attributes early so super().__init__ can access them safely
         self.repeat_schedule = (
             RepeatSchedule.from_dict(repeat_schedule)

@@ -157,6 +157,7 @@ class Demonstration(BaseModel):
         created_datetime=None,
         _id: ObjectId = None,
         description: str = None,
+        _dont_override: bool = False
     ):
         """
         Initialize a new demonstration event.
@@ -228,8 +229,11 @@ class Demonstration(BaseModel):
             Description of the event.
         """
 
+        #if issubclass(type(self), Demonstration) and type(self) is not Demonstration:
         self.save_flag = False
 
+        self._dont_override = _dont_override
+        
         # Convert date and time fields to ISO8601 format
         self.date = self._to_iso8601_date(date)
         
@@ -336,7 +340,7 @@ class Demonstration(BaseModel):
         self.merged_into = merged_into  # Assign new parameter
         self.cover_picture = cover_picture
 
-        if self.save_flag:  # Save the demonstration if the save_flag is set
+        if self.save_flag and not self._dont_override:  # Save the demonstration if the save_flag is set
             self.save()  # Save the demonstration
 
         self.validate_fields(
@@ -507,6 +511,8 @@ class Demonstration(BaseModel):
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         data["running_number"] = self.running_number
         data["slug"] = self.slug
+        data.pop("save_flag", None)  # Remove save_flag from the dictionary representation
+        data.pop("_dont_override", None)
         return data
 
     def validate_fields(self, title, date, start_time, city, address):
@@ -571,6 +577,8 @@ class Demonstration(BaseModel):
 
         if data.get("aliases") is None:
             raise ValueError("Aliases are missing.")
+        
+        
 
         # Check if the demonstration already exists in the database
         if DB["demonstrations"].find_one({"_id": self._id}):

@@ -483,7 +483,7 @@ def invite():
     """ """
     invitee_email = request.form.get("invitee_email")
     organization_id = request.form.get("organization_id")
-    print(invitee_email, organization_id)
+    logger.debug(f"Inviting {invitee_email} to organization {organization_id}")
     invite_to_organization(invitee_email, ObjectId(organization_id))
     return redirect(request.referrer or url_for("admin_org.organization_control"))
 
@@ -613,7 +613,6 @@ def create_organization_api():
     org_email = request.json.get("email", "no@email.example")
     org_website = request.json.get("website")
 
-    print(org_email)
 
     if not org_name and not org_email:
         return {"message": "Nimi ja sähköpostiosoite ovat pakollisia."}

@@ -65,7 +65,6 @@ class RecurringDemonstration(Demonstration):
 
         super().__init__(*args, **kwargs)
 
-        print(self.freezed_children)
 
 
     def calculate_next_dates(self) -> List[datetime]:
@@ -251,7 +250,6 @@ class RecurringDemonstration(Demonstration):
 
 
         if _should_pop_repeat(repeat_schedule, data):
-            print("Popping repeat_schedule from data")
             data.pop("repeat_schedule", None)
 
         _freezed_children = []

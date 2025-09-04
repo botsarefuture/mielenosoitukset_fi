@@ -225,7 +225,6 @@ def create_app() -> Flask:
         data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
         demo = Demonstration.from_dict(data)
         screenshot_path = create_screenshot(demo)
-        print(screenshot_path)
         if screenshot_path is None:
             return redirect(url_for("static", filename="img/e.png"))
         return redirect(url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/")))
@@ -237,8 +236,7 @@ def create_app() -> Flask:
         def get_admin_tasks():
             # check if any demonstrations are waiting for approval
             waiting = list(mongo.demonstrations.find({"approved": False, "hide": False}))
-            print(waiting)
-            
+            app.logger.debug(f"Found {len(waiting)} demonstrations waiting for approval.")
             return waiting
             
         def get_org_name(org_id):
@@ -289,11 +287,11 @@ def create_app() -> Flask:
                         if i.lower() in ["y", "n"]:
                             available_tasks[task_name](force=(i.lower() == "y"))
                         else:
-                            print("Invalid input, not running force update.")
+                            app.logger.warning("Invalid input, not running force update.")
                     elif task_name in available_tasks:
                         available_tasks[task_name]()
                     else:
-                        print(f"Unknown task: {task_name}")
+                        app.logger.warning(f"Unknown task: {task_name}")
 
         if len(sys.argv) > 2:
             # User specified tasks as comma-separated list

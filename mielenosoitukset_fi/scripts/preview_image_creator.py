@@ -1,27 +1,23 @@
 """
-Create preview images for demonstrations.
-
-This script is used for creating preview images for the demonstrations,
-regularly updated on the website.
+Create preview images for demonstrations with progress meter.
 """
 
 import os
 import io
-
 from flask import has_app_context
 from flask import current_app
 
 from DatabaseManager import DatabaseManager
-
 from mielenosoitukset_fi.utils.screenshot import create_screenshot, trigger_screenshot
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from config import Config
-
 from mielenosoitukset_fi.utils.logger import logger
+
+from tqdm import tqdm  # progress bar
 
 def run(force=False):
     """
-    Create preview images for demonstrations.
+    Create preview images for demonstrations with progress feedback.
     """
     
     if not has_app_context():
@@ -29,37 +25,36 @@ def run(force=False):
         return
 
     db_man = DatabaseManager().get_instance()
+    mongo = db_man.get_db()  # Get the MongoDB Database instance
 
-    mongo = db_man.get_db() # Get the MongoDB Database instance
-
-    # Get the collection of demonstrations
     demos = mongo["demonstrations"]
 
-    # If force is True, process all demonstrations (including past ones)
+    # Fetch demos
     if force:
         all_demos = list(demos.find({}))
     else:
-        all_demos = list(demos.find({"in_past": False}))  # Get all demonstrations that are not in the past
+        all_demos = list(demos.find({"in_past": False}))
 
-    for demo in all_demos:
-        # Work with the raw document from Mongo to avoid conversion errors
+    total = len(all_demos)
+    logger.info(f"Processing {total} demonstrations...")
+
+    for demo in tqdm(all_demos, desc="Creating previews", unit="demo"):
         demo_dict = demo
         demo_id = demo_dict.get("_id")
 
-        # If not forcing, skip demos that already have a preview image
+        # Skip if preview already exists and not forcing
         if not force and demo_dict.get("preview_image"):
             continue
 
-        # Render screenshot to bytes in-memory
         png_bytes = create_screenshot(demo_dict, return_bytes=True)
         if not png_bytes:
             logger.warning(f"Failed to render screenshot for demo {demo_id}")
             continue
 
         bucket_name = getattr(Config, "S3_BUCKET", "mielenosoitukset.fi")
-        # upload_image_fileobj expects a file-like object; wrap bytes in BytesIO
         fileobj = io.BytesIO(png_bytes)
         s3_url = upload_image_fileobj(bucket_name, fileobj, f"{str(demo_id)}.png", "demo_preview")
+
         if s3_url:
             try:
                 demos.update_one({"_id": demo_id}, {"$set": {"preview_image": s3_url}})
@@ -69,4 +64,4 @@ def run(force=False):
         else:
             logger.error(f"Failed to upload preview image for demo {demo_id} to S3")
         
-    logger.info("All screenshots created.") # Print a message when all screenshots have been created
+    logger.info("All screenshots created.")

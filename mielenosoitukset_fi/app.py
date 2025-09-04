@@ -291,7 +291,7 @@ def create_app() -> Flask:
                     elif task_name in available_tasks:
                         available_tasks[task_name]()
                     else:
-                        app.logger.warning(f"Unknown task: {task_name}")
+                        app.logger.warning(f"Unknown task: {task_name}. Available tasks: {list(available_tasks.keys())}")
 
         if len(sys.argv) > 2:
             # User specified tasks as comma-separated list

@@ -929,6 +929,9 @@ Disallow: /admin/
         if _demo.recurs:
             toistuvuus = generate_demo_sentence(demo)
 
+        else:
+            toistuvuus = ""
+        
         return render_template("detail.html", demo=demo, toistuvuus=toistuvuus)
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])

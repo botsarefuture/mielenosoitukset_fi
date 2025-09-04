@@ -264,9 +264,18 @@ class Demonstration(BaseModel):
         self.longitude = longitude
         
         if parent:
-            _parent = DB["recu_demos"].find_one({"_id": ObjectId(parent)})
-            self.parent_object = _parent
-            self.repeat_schedule = self.parent_object.get("repeat_schedule", None)
+            try:
+                _parent = DB["recu_demos"].find_one({"_id": ObjectId(parent)})
+            except Exception as e:
+                print(f"Error fetching parent demonstration: {e}")
+
+            if not _parent:
+                print(f"Parent demonstration not found")
+                self.repeat_schedule = RepeatSchedule()
+            else:
+                self.parent_object = _parent
+                self.repeat_schedule = self.parent_object.get("repeat_schedule", None)
+                
 
         self.event_type = event_type_convertor(event_type or "STAY_STILL")
 
@@ -513,6 +522,7 @@ class Demonstration(BaseModel):
         data["slug"] = self.slug
         data.pop("save_flag", None)  # Remove save_flag from the dictionary representation
         data.pop("_dont_override", None)
+        data["repeat_schedule"] = self.repeat_schedule.to_dict() if hasattr(self, "repeat_schedule") and self.repeat_schedule else None
         return data
 
     def validate_fields(self, title, date, start_time, city, address):

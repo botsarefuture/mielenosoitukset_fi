@@ -645,7 +645,12 @@ main .display-all {
     <section id="basicshit" class="mb-4">
       <h1 class="display-4 fw-bold mb-2">{{ demo['title'] }}</h1>
       <p id="date" class="lead text-primary mb-0">
-        {{ demo['date'] | date('%d.%m.%Y') }} {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
+      {{ demo['date'] | date('%d.%m.%Y') }} 
+      {% if demo['end_time'] %}
+          {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
+      {% else %}
+          {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}
+      {% endif %}
       </p>
     </section>
 

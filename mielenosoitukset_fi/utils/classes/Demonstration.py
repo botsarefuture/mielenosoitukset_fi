@@ -1,3 +1,4 @@
+import copy
 import string
 
 from mielenosoitukset_fi.utils.logger import logger
@@ -274,7 +275,8 @@ class Demonstration(BaseModel):
                 self.repeat_schedule = RepeatSchedule()
             else:
                 self.parent_object = _parent
-                self.repeat_schedule = self.parent_object.get("repeat_schedule", None)
+                self.repeat_schedule = RepeatSchedule.from_dict(self.parent_object.get("repeat_schedule", None))
+                
                 
 
         self.event_type = event_type_convertor(event_type or "STAY_STILL")
@@ -522,7 +524,12 @@ class Demonstration(BaseModel):
         data["slug"] = self.slug
         data.pop("save_flag", None)  # Remove save_flag from the dictionary representation
         data.pop("_dont_override", None)
-        data["repeat_schedule"] = self.repeat_schedule.to_dict() if hasattr(self, "repeat_schedule") and self.repeat_schedule else None
+        try:
+            data["repeat_schedule"] = self.repeat_schedule.to_dict() if hasattr(self, "repeat_schedule") and self.repeat_schedule else None
+        except Exception as e:
+            data["repeat_schedule"] = None
+            logger.error(f"Error converting repeat_schedule to dict: {e}")
+            
         return data
 
     def validate_fields(self, title, date, start_time, city, address):
@@ -584,6 +591,10 @@ class Demonstration(BaseModel):
 
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary
+
+        _data = copy.deepcopy(data)
+        
+        data = _data
 
         if data.get("aliases") is None:
             raise ValueError("Aliases are missing.")

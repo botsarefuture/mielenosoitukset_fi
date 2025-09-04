@@ -4,7 +4,12 @@ Send demonstration reminder emails to subscribed users.
 This script should be run daily (e.g., via cron).
 It sends reminders 1 week before, the day before at 9:00, and the day of at 9:00 or at least 2 hours before the demonstration.
 
-Fields use underscore naming. Docstrings are in numpydoc format.
+Changelog
+---------
+- v4.2.0: Original stable version.
+- v4.3.0: Full refactor with strict Numpydoc compliance and cleanup.
+- v4.3.1: Bugfix to prevent multiple duplicate reminders being sent.
+
 """
 import os
 import sched
@@ -41,7 +46,7 @@ def should_send_reminder(demo_date, demo_time, now, stage):
     now : datetime
         The current datetime.
     stage : str
-        The reminder stage (week_before, day_before, day_of).
+        The reminder stage (``week_before``, ``day_before``, ``day_of``).
 
     Returns
     -------
@@ -51,25 +56,24 @@ def should_send_reminder(demo_date, demo_time, now, stage):
     if stage == "week_before":
         target = datetime.combine(demo_date, demo_time) - timedelta(days=7)
         return target.date() == now.date() and now.time() >= dt_time(7, 0)
-    elif stage == "day_before":
+    if stage == "day_before":
         target = datetime.combine(demo_date, demo_time) - timedelta(days=1)
         send_time = REMINDER_HOURS["day_before"]
         return target.date() == now.date() and now.time() >= send_time
-    elif stage == "day_of":
+    if stage == "day_of":
         event_dt = datetime.combine(demo_date, demo_time)
         send_time = REMINDER_HOURS["day_of"]
-        # Send at 9:00 or at least 2 hours before event
         if now.date() == demo_date:
             if now.time() >= send_time and (event_dt - now) > timedelta(hours=2):
                 return True
-            elif (event_dt - now) <= timedelta(hours=2) and now < event_dt:
+            if (event_dt - now) <= timedelta(hours=2) and now < event_dt:
                 return True
         return False
     return False
 
 def parse_time_string(time_str):
     """
-    Parse a time string in 'HH:MM' or 'HH:MM:SS' format.
+    Parse a time string in ``HH:MM`` or ``HH:MM:SS`` format.
 
     Parameters
     ----------
@@ -86,7 +90,6 @@ def parse_time_string(time_str):
     ValueError
         If the time string is not in a recognized format.
     """
-    from datetime import datetime
     for fmt in ("%H:%M", "%H:%M:%S"):
         try:
             return datetime.strptime(time_str, fmt).time()
@@ -103,9 +106,9 @@ def generate_ical_event(title, start_date, start_time, city, address, descriptio
     title : str
         Event title.
     start_date : str
-        Event date in 'YYYY-MM-DD' format.
+        Event date in ``YYYY-MM-DD`` format.
     start_time : str
-        Event start time in 'HH:MM' or 'HH:MM:SS' format.
+        Event start time in ``HH:MM`` or ``HH:MM:SS`` format.
     city : str
         Event city.
     address : str
@@ -118,10 +121,9 @@ def generate_ical_event(title, start_date, start_time, city, address, descriptio
     str
         iCalendar event as a string.
     """
-    from datetime import datetime, timedelta
     dt_fmt = "%Y%m%dT%H%M%S"
     dt = datetime.strptime(f"{start_date} {start_time[:5]}", "%Y-%m-%d %H:%M")
-    dtend = dt + timedelta(hours=2)  # Default: 2h event
+    dtend = dt + timedelta(hours=2)
     dtstart_str = dt.strftime(dt_fmt)
     dtend_str = dtend.strftime(dt_fmt)
     ical = (
@@ -151,17 +153,16 @@ def send_email_later(send_time, template_name, subject, recipients, context, att
         Email template to use.
     subject : str
         Email subject.
-    recipients : list[str]
+    recipients : list of str
         List of recipient email addresses.
     context : dict
         Context for the email template.
-    attachments : list[dict]
-        List of attachments dicts with keys: filename, path, mime_type.
+    attachments : list of dict
+        List of attachments with keys: ``filename``, ``path``, ``mime_type``.
     """
     now = datetime.now()
     delay_seconds = (send_time - now).total_seconds()
     if delay_seconds > 0:
-        print(f"Waiting {delay_seconds:.1f}s to send email: {subject}")
         time.sleep(delay_seconds)
 
     fixed_attachments = []
@@ -175,21 +176,18 @@ def send_email_later(send_time, template_name, subject, recipients, context, att
                 "mime_type": att["mime_type"]
             })
         else:
-            # already has content or no path, just pass as is (except remove path)
             fixed_attachments.append({k: v for k, v in att.items() if k != "path"})
 
-    
     email_sender.queue_email(
         template_name=template_name,
         subject=subject,
         recipients=recipients,
         context=context,
-        attachments=fixed_attachments,  # Remove path for sending
+        attachments=fixed_attachments,
     )
     email_sender._die_when_no_jobs()
 
-    
-def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage):
+def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage, db):
     """
     Schedule sending of reminder email at the right time.
 
@@ -205,6 +203,8 @@ def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage):
         Start time of the demonstration.
     stage : str
         Reminder stage.
+    db : Database
+        Database instance for updating sent stages.
     """
     now = datetime.now()
     if stage == "week_before":
@@ -216,7 +216,7 @@ def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage):
         event_dt = datetime.combine(demo_date, demo_time)
         send_datetime = datetime.combine(demo_date, REMINDER_HOURS["day_of"])
         if (event_dt - now) <= timedelta(hours=2):
-            send_datetime = now  # ASAP if less than 2h left
+            send_datetime = now
     else:
         send_datetime = now
 
@@ -232,7 +232,6 @@ def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage):
     filepath = f"/tmp/{filename}"
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(ical_text)
-    
 
     attachments = [
         {
@@ -241,6 +240,12 @@ def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage):
             "mime_type": "text/calendar"
         }
     ]
+
+    # Mark as sent immediately to avoid duplicates
+    db["demo_reminders"].update_one(
+        {"_id": reminder["_id"]},
+        {"$push": {"sent_stages": stage}}
+    )
 
     scheduler.enterabs(
         send_datetime.timestamp(),
@@ -260,7 +265,18 @@ def schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage):
                   },
                   attachments)
     )
+
 def send_reminders_scheduled(override_email=None, force_all=False):
+    """
+    Fetch reminders from the database and schedule email sending.
+
+    Parameters
+    ----------
+    override_email : str, optional
+        If set, all reminders will be sent to this email address.
+    force_all : bool, optional
+        If True, force sending all reminders regardless of stage status.
+    """
     db_manager = DatabaseManager().get_instance()
     db = db_manager.get_db()
     reminders = db["demo_reminders"]
@@ -276,31 +292,22 @@ def send_reminders_scheduled(override_email=None, force_all=False):
         demo_time = parse_time_string(demo_obj.start_time)
         demo_datetime = datetime.combine(demo_date, demo_time)
 
-        # Skip demos that have already started/ended
         if demo_datetime < now:
-            print("Past")
             continue
 
         sent_stages = reminder.get("sent_stages", [])
 
         for stage, _ in REMINDER_STAGES:
             if stage in sent_stages and not override_email:
-                print("Sent")
                 continue
-            
-            if force_all or should_send_reminder(demo_date, demo_time, now, stage):
-                schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage)
-                if not override_email and not force_all:
-                    db["demo_reminders"].update_one(
-                        {"_id": reminder["_id"]},
-                        {"$push": {"sent_stages": stage}}
-                    )
 
-    print("Starting scheduled email sending...")
+            if force_all or should_send_reminder(demo_date, demo_time, now, stage):
+                schedule_reminder(reminder, demo_obj, demo_date, demo_time, stage, db)
+
     scheduler.run()
-    print("All scheduled emails sent.")
 
 def main():
+    """Main entry point for scheduling reminders."""
     send_reminders_scheduled()
 
 if __name__ == "__main__":

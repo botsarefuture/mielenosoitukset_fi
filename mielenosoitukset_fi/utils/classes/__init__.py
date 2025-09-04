@@ -9,6 +9,7 @@ from mielenosoitukset_fi.utils.classes.Organization import Organization
 from mielenosoitukset_fi.utils.classes.Organizer import Organizer
 from mielenosoitukset_fi.utils.classes.RecurringDemonstration import RecurringDemonstration
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
+from mielenosoitukset_fi.utils.classes.migrate import migrate
 
 __all__ = [
     "AdminActivity",
@@ -19,7 +20,8 @@ __all__ = [
     "Organization",
     "Organizer",
     "RecurringDemonstration",
-    "RepeatSchedule"
+    "RepeatSchedule",
+    "migrate"
 ]
 
 # Dynamically import all classes in the current directory

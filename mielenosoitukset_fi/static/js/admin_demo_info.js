@@ -62,7 +62,7 @@ function updateModalContent(demo_info) {
         <label>Start Time:</label> <p>${demo_info.start_time}</p>
         <label>Tags:</label> <p>${demo_info.tags.join(', ')}</p>
         <label>Title:</label> <p>${demo_info.title}</p>
-        <label>Recurring:</label> <p>${demo_info.recurring}</p>
+        <label>Recurring:</label> <p>${demo_info.recurs}</p>
         <label>Repeat Schedule:</label> <div>
         ${demo_info.repeat_schedule != null ? `
             <p>Frequency: ${demo_info.repeat_schedule.frequency}</p>

@@ -95,43 +95,98 @@
                 </div>
             </div>
         </div>
+<!-- Recurrence Settings -->
+<section class="form-section dashboard-panel mb-8">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Toistuvuusasetukset') }}</h2>
 
-        <!-- Recurrence Section -->
-        <h4>Toistuvuustiedot</h4>
-
-        <div class="form-group">
-            <label for="frequency_type">Toistuvuus</label>
-            <select name="frequency_type" id="frequency_type" class="form-control">
-                <option value="" disabled {% if not demo %}selected{% endif %}>Valitse toistuvuustyyppi</option>
-                <option value="daily" {% if demo and demo.repeat_schedule.frequency == 'daily' %}selected{% endif %}>Päivittäin</option>
-                <option value="weekly" {% if demo and demo.repeat_schedule.frequency == 'weekly' %}selected{% endif %}>Viikoittain</option>
-                <option value="monthly" {% if demo and demo.repeat_schedule.frequency == 'monthly' %}selected{% endif %}>Kuukausittain</option>
+    <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label for="frequency_type" class="block font-medium mb-1">{{ _('Toistuvuustyyppi') }}</label>
+            <select id="frequency_type" name="frequency_type" class="form-control w-full">
+                {% set freq = demo.repeat_schedule.frequency if demo and demo.repeat_schedule else 'none' %}
+                <option value="none" {% if freq=='none' %}selected{% endif %}>{{ _('Ei toistu') }}</option>
+                <option value="daily" {% if freq=='daily' %}selected{% endif %}>{{ _('Päivittäin') }}</option>
+                <option value="weekly" {% if freq=='weekly' %}selected{% endif %}>{{ _('Viikoittain') }}</option>
+                <option value="monthly" {% if freq=='monthly' %}selected{% endif %}>{{ _('Kuukausittain') }}</option>
+                <option value="yearly" {% if freq=='yearly' %}selected{% endif %}>{{ _('Vuosittain') }}</option>
             </select>
         </div>
+        <div>
+            <label for="frequency_interval" class="block font-medium mb-1">{{ _('Toistuvuusväli') }}</label>
+            <input type="number" id="frequency_interval" name="frequency_interval" min="1" class="form-control w-32"
+                value="{{ demo.repeat_schedule.interval if demo and demo.repeat_schedule else 1 }}">
+            <small class="text-muted">{{ _('Kuinka monta kertaa toisto tapahtuu (esim. joka 2. viikko)') }}</small>
+        </div>
+    </div>
 
-        <div class="form-group">
-            <label for="frequency_interval">Toistuvuusväli</label>
-            <input type="number" name="frequency_interval" id="frequency_interval" value="{{ demo.repeat_schedule.interval if demo else 1 }}" min="1" class="form-control">
+    <!-- Weekly options -->
+    <div id="weekly-options" class="form-group mt-4" style="display: {% if freq=='weekly' %}block{% else %}none{% endif %}">
+        <label class="block font-medium mb-1">{{ _('Valitse viikonpäivät') }}</label>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {% for day, label in [('mon', _('Ma')), ('tue', _('Ti')), ('wed', _('Ke')), ('thu', _('To')), ('fri', _('Pe')), ('sat', _('La')), ('sun', _('Su'))] %}
+            <label class="inline-flex items-center">
+                <input type="checkbox" name="weekday" value="{{ day }}"
+                    {% if demo and demo.repeat_schedule and day == demo.repeat_schedule.weekday %}checked{% endif %}
+                    class="form-checkbox">
+                <span class="ml-2">{{ label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Monthly options -->
+    <div id="monthly-options" class="form-group mt-4" style="display: {% if freq=='monthly' %}block{% else %}none{% endif %}">
+        <label class="block font-medium mb-1">{{ _('Kuukauden vaihtoehto') }}</label>
+        <select id="monthly_option" name="monthly_option" class="form-control w-full">
+            {% set monthly_opt = demo.repeat_schedule.monthly_option if demo and demo.repeat_schedule else 'day_of_month' %}
+            <option value="day_of_month" {% if monthly_opt=='day_of_month' %}selected{% endif %}>{{ _('Päivä kuukaudessa') }}</option>
+            <option value="nth_weekday" {% if monthly_opt=='nth_weekday' %}selected{% endif %}>{{ _('nth viikonpäivä') }}</option>
+        </select>
+
+        <div class="mt-2">
+            <input type="number" id="day_of_month" name="day_of_month" min="1" max="31" class="form-control w-32"
+                placeholder="{{ _('Päivä') }}"
+                value="{{ demo.repeat_schedule.day_of_month if demo and demo.repeat_schedule else '' }}">
         </div>
 
-        <div class="form-group">
-            <label for="weekday">Viikonpäivä</label>
-            <select name="weekday" id="weekday" class="form-control">
-                <option value="" disabled {% if not demo %}selected{% endif %}>Valitse viikonpäivä</option>
-                <option value="monday" {% if demo and demo.repeat_schedule.weekday == 'monday' %}selected{% endif %}>Maanantai</option>
-                <option value="tuesday" {% if demo and demo.repeat_schedule.weekday == 'tuesday' %}selected{% endif %}>Tiistai</option>
-                <option value="wednesday" {% if demo and demo.repeat_schedule.weekday == 'wednesday' %}selected{% endif %}>Keskiviikko</option>
-                <option value="thursday" {% if demo and demo.repeat_schedule.weekday == 'thursday' %}selected{% endif %}>Torstai</option>
-                <option value="friday" {% if demo and demo.repeat_schedule.weekday == 'friday' %}selected{% endif %}>Perjantai</option>
-                <option value="saturday" {% if demo and demo.repeat_schedule.weekday == 'saturday' %}selected{% endif %}>Lauantai</option>
-                <option value="sunday" {% if demo and demo.repeat_schedule.weekday == 'sunday' %}selected{% endif %}>Sunnuntai</option>
+        <div class="mt-2">
+            <select id="nth_weekday" name="nth_weekday" class="form-control w-32">
+                {% set nth = demo.repeat_schedule.nth_weekday if demo and demo.repeat_schedule else '' %}
+                <option value="">--</option>
+                <option value="first" {% if nth=='first' %}selected{% endif %}>{{ _('1.') }}</option>
+                <option value="second" {% if nth=='second' %}selected{% endif %}>{{ _('2.') }}</option>
+                <option value="third" {% if nth=='third' %}selected{% endif %}>{{ _('3.') }}</option>
+                <option value="fourth" {% if nth=='fourth' %}selected{% endif %}>{{ _('4.') }}</option>
+                <option value="last" {% if nth=='last' %}selected{% endif %}>{{ _('viimeinen') }}</option>
+            </select>
+
+            <select id="weekday_of_month" name="weekday_of_month" class="form-control w-32">
+                {% set wd_month = demo.repeat_schedule.weekday_of_month if demo and demo.repeat_schedule else '' %}
+                {% for day, label in [('mon', _('Ma')), ('tue', _('Ti')), ('wed', _('Ke')), ('thu', _('To')), ('fri', _('Pe')), ('sat', _('La')), ('sun', _('Su'))] %}
+                <option value="{{ day }}" {% if wd_month==day %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
             </select>
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="end_date">Loppupäivämäärä</label>
-            <input type="text" name="end_date" id="end_date" class="form-control" value="{{ demo.repeat_schedule.end_date if demo else '' }}">
-        </div>
+    <div class="form-group mt-4">
+        <label for="end_date" class="block font-medium mb-1">{{ _('Toistuvuuden loppupäivä') }}</label>
+        <input type="text" id="end_date" name="end_date" class="form-control w-full"
+            value="{{ demo.repeat_schedule.end_date if demo and demo.repeat_schedule else '' }}" autocomplete="off">
+    </div>
+
+    <script>
+        const freqSelect = document.getElementById('frequency_type');
+        const weeklyOptions = document.getElementById('weekly-options');
+        const monthlyOptions = document.getElementById('monthly-options');
+
+        freqSelect.addEventListener('change', () => {
+            weeklyOptions.style.display = freqSelect.value === 'weekly' ? 'block' : 'none';
+            monthlyOptions.style.display = freqSelect.value === 'monthly' ? 'block' : 'none';
+        });
+    </script>
+</section>
+
 
         <!-- Submit Button -->
         <div class="form-group">

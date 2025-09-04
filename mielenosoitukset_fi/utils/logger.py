@@ -17,6 +17,9 @@ def setup_logger():
 
     """
 
+
+    logger = Config.logger
+
     # Set the logging level based on the DEBUG flag in Config
     log_level = logging.DEBUG if Config.DEBUG else logging.INFO
 
@@ -26,7 +29,6 @@ def setup_logger():
     )
 
     # Create a logger instance
-    logger = logging.getLogger("Mielenosoitukset.fi")
     logger.setLevel(log_level)
 
     # Add a StreamHandler to output to the console

@@ -124,37 +124,21 @@ def edit_recu_demo(demo_id):
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
     return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
         city_list=CITY_LIST,
     )
-
-
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
-    """Handle form submission for creating or editing a recurring demonstration.
+    """Handle form submission for creating or editing a recurring demonstration."""
 
-    Parameters
-    ----------
-    request : flask.Request
-        The request object containing form data.
-    is_edit : bool, optional
-        Flag indicating if the form is for editing an existing demonstration (default is False).
-    demo_id : str, optional
-        The ID of the demonstration being edited (default is None).
-
-    Returns
-    -------
-    flask.Response
-        Redirect response to the appropriate page after form handling.
-    """
+    # Basic info
     title = request.form.get("title")
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
-
     facebook = request.form.get("facebook")
     city = request.form.get("city")
     address = request.form.get("address")
@@ -164,32 +148,60 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
 
     tags = collect_tags(request)
 
-    # Process organizers
+    # Process organizers dynamically
     organizers = []
-    for i in range(1, 10):  # Assuming a maximum of 9 organizers
-        name = request.form.get(f"organizer_name_{i}")
-        _id = request.form.get(f"organizer_id_{i}")
-
-        if not name and not _id:  # Stop if no more organizer names are found
+    index = 1
+    while True:
+        name = request.form.get(f"organizer_name_{index}")
+        _id = request.form.get(f"organizer_id_{index}")
+        if not name and not _id:
             break
-        website = request.form.get(f"organizer_website_{i}")
-        email = request.form.get(f"organizer_email_{i}")
+        website = request.form.get(f"organizer_website_{index}")
+        email = request.form.get(f"organizer_email_{index}")
         organizers.append(
-            Organizer(name=name, email=email, website=website, organization_id=_id)
+            Organizer(name=name, email=email, website=website, organization_id=_id).to_dict()
         )
+        index += 1
 
-    # Get the repeat schedule details
+    # Recurrence / repeat schedule
+    freq = request.form.get("frequency_type", "none")
+    interval = int(request.form.get("frequency_interval", 1))
+    end_date = request.form.get("end_date")
+
+    # Weekly
+    weekdays = []
+    if freq == "weekly":
+        weekdays = request.form.getlist("weekday")
+
+    # Monthly
+    monthly_option = None
+    day_of_month = None
+    nth_weekday = None
+    weekday_of_month = None
+    if freq == "monthly":
+        monthly_option = request.form.get("monthly_option", "day_of_month")
+        if monthly_option == "day_of_month":
+            day_of_month_raw = request.form.get("day_of_month")
+            if day_of_month_raw and day_of_month_raw.isdigit():
+                day_of_month = int(day_of_month_raw)
+            else:
+                day_of_month = None  # safe fallback
+        elif monthly_option == "nth_weekday":
+            nth_weekday = request.form.get("nth_weekday")
+            weekday_of_month = request.form.get("weekday_of_month")
+
     repeat_schedule = {
-        "frequency": request.form.get("frequency_type"),
-        "interval": int(request.form.get("frequency_interval", 1)),
-        "weekday": request.form.get("weekday"),
-        "monthly_option": request.form.get("monthly_option"),
-        "day_of_month": request.form.get("day_of_month"),
-        "nth_weekday": request.form.get("nth_weekday"),
-        "weekday_of_month": request.form.get("weekday_of_month"),
-        "end_date": request.form.get("end_date"),
+        "frequency": freq,
+        "interval": interval,
+        "weekdays": weekdays,
+        "monthly_option": monthly_option,
+        "day_of_month": day_of_month,
+        "nth_weekday": nth_weekday,
+        "weekday_of_month": weekday_of_month,
+        "end_date": end_date,
     }
 
+    # Assemble demonstration data
     demonstration_data = {
         "title": title,
         "date": date,
@@ -199,20 +211,21 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "facebook": facebook,
         "city": city,
         "address": address,
-        "type": event_type,
+        "event_type": event_type,
         "route": route,
         "approved": approved,
         "repeat_schedule": repeat_schedule,
-        "linked_organizations": request.form.getlist("linked_organizations"),
-        "created_until": request.form.get("created_until"),
-        "repeating": request.form.get("repeating") == "on",
-        # Please make sure that the id of the organization, is still an ObjectId
-        "organizers": [org.to_dict() for org in organizers],
+        "recurs": freq != "none",
+        "organizers": organizers,
     }
 
-    for organizer in demonstration_data["organizers"]:
-        if "organization_id" in organizer:
-            organizer["organization_id"] = ObjectId(organizer["organization_id"])
+    # Ensure organizer IDs are ObjectId if present
+    for org in demonstration_data["organizers"]:
+        if org.get("organization_id"):
+            try:
+                org["organization_id"] = ObjectId(org["organization_id"])
+            except Exception:
+                org["organization_id"] = None
 
     try:
         if is_edit:
@@ -226,16 +239,11 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         import logging
-
         logging.error(f"An error occurred: {str(e)}")
         flash_message(f"Virhe: {str(e)}")
         return redirect(
             url_for(
-                (
-                    "admin_recu_demo.create_recu_demo"
-                    if not is_edit
-                    else "admin_recu_demo.edit_recu_demo"
-                ),
+                "admin_recu_demo.edit_recu_demo" if is_edit else "admin_recu_demo.create_recu_demo",
                 demo_id=demo_id,
             )
         )

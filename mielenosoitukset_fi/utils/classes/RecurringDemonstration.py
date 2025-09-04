@@ -9,158 +9,76 @@ from .Demonstration import Demonstration
 from .RepeatSchedule import RepeatSchedule
 from .Organizer import Organizer
 
+from mielenosoitukset_fi.utils.logger import logger
 
 class RecurringDemonstration(Demonstration):
-    """ """
+    """
+    A demonstration event that repeats over time.
+
+    Extends the base `Demonstration` with recurrence metadata like
+    `repeat_schedule` and `created_until`.
+
+    Parameters
+    ----------
+    *args : Any
+        Positional arguments forwarded to `Demonstration`.
+    repeat_schedule : RepeatSchedule or dict, optional
+        The repeat schedule for this demonstration. Defaults to None.
+    created_until : datetime, optional
+        The date until which child demonstrations have been generated.
+        Defaults to the current datetime.
+    **kwargs : Any
+        Keyword arguments forwarded to `Demonstration`.
+
+    Attributes
+    ----------
+    repeat_schedule : RepeatSchedule or None
+        Schedule describing how the demonstration repeats.
+    created_until : datetime
+        Date until which demonstrations have been generated.
+    freezed_children : list
+        List of child demonstrations that have been frozen.
+        These demonstrations will not be automatically modified nor deleted.
+    """
 
     def __init__(
         self,
-        title: str,
-        date: str,
-        start_time: str,
-        end_time: str,
-        facebook: str,
-        city: str,
-        address: str,
-        route: str,
-        organizers: list = None,
-        approved: bool = False,
-        linked_organizations: dict = None,
-        img=None,
-        _id=None,
-        description: str = None,
-        tags: list = None,
-        parent: ObjectId = None,
-        created_datetime=None,
-        recurring: bool = False,
-        topic: str = None,
-        type: str = None,
-        repeat_schedule: RepeatSchedule = None,
-        repeating: bool = False,
-        latitude: str = None,
-        longitude: str = None,
-        event_type=None,
-        save_flag=False,
-        hide=False,
+        *args,
+        repeat_schedule: Optional[RepeatSchedule] = None,
         created_until: Optional[datetime] = None,
-        cover_picture: str = None,  # Added field
+        freezed_children: Optional[list] = None,
+        **kwargs,
     ):
-        """
-        Initialize a new recurring demonstration event.
+        kwargs["recurs"] = True  # force recurring=True
 
-        Parameters
-        ----------
-        title : str
-            The title of the demonstration.
-        date : str
-            The date of the demonstration in YYYY-MM-DD format.
-        start_time : str
-            The start time of the demonstration in HH:MM format.
-        end_time : str
-            The end time of the demonstration in HH:MM format.
-        facebook : str
-            The Facebook event URL.
-        city : str
-            The city where the demonstration will take place.
-        address : str
-            The address of the demonstration location.
-        route : str
-            The route of the demonstration.
-        organizers : list, optional
-            A list of organizers for the demonstration. Defaults to None.
-        approved : bool, optional
-            Whether the demonstration is approved. Defaults to False.
-        linked_organizations : dict, optional
-            A dictionary of linked organizations. Defaults to None.
-        img : optional
-            An image for the demonstration. Defaults to None.
-        _id : optional
-            The ID of the demonstration. Defaults to None.
-        description : str, optional
-            A description of the demonstration. Defaults to None.
-        tags : list, optional
-            A list of tags for the demonstration. Defaults to None.
-        parent : ObjectId, optional
-            The parent ID for the demonstration. Defaults to None.
-        created_datetime : optional
-            The creation date and time of the demonstration. Defaults to None.
-        recurring : bool, optional
-            Whether the demonstration is recurring. Defaults to False.
-        topic : str, optional
-            The topic of the demonstration. Defaults to None.
-        type : str, optional
-            The type of the demonstration. Defaults to None.
-        repeat_schedule : RepeatSchedule, optional
-            The repeat schedule for the demonstration. Defaults to None.
-        repeating : bool, optional
-            Whether the demonstration is repeating. Defaults to False.
-        latitude : str, optional
-            The latitude of the demonstration location. Defaults to None.
-        longitude : str, optional
-            The longitude of the demonstration location. Defaults to None.
-        event_type : optional
-            The event type. Defaults to None.
-        save_flag : bool, optional
-            Whether to save the demonstration. Defaults to False.
-        hide : bool, optional
-            Whether to hide the demonstration. Defaults to False.
-        created_until : Optional[datetime], optional
-            The date until which the demonstration is created. Defaults to None.
-        cover_picture : str, optional
-            URL of the cover picture for the event. Defaults to None.
-        """
-
-        super().__init__(
-            title,
-            date,
-            start_time,
-            end_time,
-            facebook,
-            city,
-            address,
-            route,
-            organizers,
-            approved,
-            linked_organizations,
-            img,
-            _id,
-            description,
-            tags,
-            parent,
-            created_datetime,
-            recurring=True,
-            topic=topic,
-            type=type,
-            repeat_schedule=repeat_schedule,
-            repeating=repeating,
-            latitude=latitude,
-            longitude=longitude,
-            event_type=event_type,
-            save_flag=save_flag,
-            hide=hide,
-            cover_picture=cover_picture,  # Pass to parent
+        # initialize attributes early so super().__init__ can access them safely
+        self.repeat_schedule = (
+            RepeatSchedule.from_dict(repeat_schedule)
+            if isinstance(repeat_schedule, dict)
+            else repeat_schedule
         )
-
-        # Set created_until to now if not provided
         self.created_until = created_until or datetime.now()
-        self.repeat_schedule = repeat_schedule
+        self.freezed_children = freezed_children or []
+
+        super().__init__(*args, **kwargs)
+
+        print(self.freezed_children)
+
 
     def calculate_next_dates(self) -> List[datetime]:
-        """Calculate the next demonstration dates based on the frequency and interval.
+        """
+        Calculate the next demonstration dates based on the frequency and interval.
 
-        This method calculates the upcoming demonstration dates starting from the initial
-        date (`self.date`) and continues until one year from the current date. The calculation
-        is based on the frequency and interval specified in `self.repeat_schedule`.
-
-        Parameters
-        ----------
+        This method calculates the upcoming demonstration dates starting from
+        the initial date (`self.date`) and continues until one year from now.
+        The calculation is based on the frequency and interval specified
+        in `self.repeat_schedule`.
 
         Returns
         -------
-
-
+        list of datetime
+            List of datetime objects representing the next demonstration dates.
         """
-
         next_dates = []
         demo_date = datetime.strptime(self.date, "%Y-%m-%d")
         end_date = datetime.now() + relativedelta(years=1)
@@ -192,140 +110,182 @@ class RecurringDemonstration(Demonstration):
         return next_dates
 
     def update_demo(self, **kwargs) -> None:
-        """Update demonstration details using keyword arguments.
+        """
+        Update demonstration details using keyword arguments.
 
-        This method allows updating the attributes of the demonstration instance
-        by passing keyword arguments. Only the attributes with non-None values
-        will be updated.
+        Only the attributes with non-None values will be updated.
 
         Parameters
         ----------
-        **kwargs :
-
+        **kwargs : Any
+            Key-value pairs of attributes to update.
 
         Returns
         -------
-
-
+        None
         """
-
         for attr, value in kwargs.items():
             if value is not None:
                 setattr(self, attr, value)
 
-    def to_dict(self, json=False) -> Dict[str, Any]:
-        """Convert the object to a dictionary for easy storage in a database.
+    def to_dict(self, json: bool = False) -> Dict[str, Any]:
+        """
+        Convert the RecurringDemonstration instance into a dictionary.
 
         Parameters
         ----------
-        json : bool
-            If True, the dictionary will be JSON serializable. (Default value = False)
+        json : bool, optional
+            If True, ensures JSON serializable output (e.g., ISO formatted datetimes).
+            Defaults to False.
 
         Returns
         -------
-
-
+        dict
+            Dictionary representation of the demonstration.
         """
-
-        data = super().to_dict(json=json)  # Call the parent to_dict
-
-        if isinstance(self.repeat_schedule, dict):
-            self.repeat_schedule = RepeatSchedule.from_dict(self.repeat_schedule)
+        data = super().to_dict(json=json)
 
         data["repeat_schedule"] = (
             self.repeat_schedule.to_dict() if self.repeat_schedule else None
         )
+        data["created_until"] = (
+            self.created_until.isoformat()
+            if getattr(self, "created_until", None)
+            else None
+        )
+        
+               
+        
+        if json:
+            _freezed_children = []
+            for freezed_children in self.freezed_children:
+                _freezed_children.append(str(freezed_children))
 
-        if self.created_until:
-            if isinstance(self.created_until, datetime):
-                data["created_until"] = self.created_until.isoformat()
-            else:
-                data["created_until"] = datetime.fromisoformat(data["created_until"]).isoformat() if self.created_until is not None else None
+            data["freezed_children"] = _freezed_children
+            
+        else:
+            data["freezed_children"] = self.freezed_children
+
         return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RecurringDemonstration":
-        """Create an instance of RecurringDemonstration from a dictionary.
+        """
+        Build an instance from a dictionary.
 
         Parameters
         ----------
-        data : Dict[str
-            A dictionary containing the data to create the instance.
-        data :
-            Dict[str:
-        Any :
-            returns: An instance of the RecurringDemonstration class.
-        data : Dict[str :
-
-        Any] :
-
-        data : Dict[str :
-
-        data : Dict[str :
-
-        data: Dict[str :
-
+        data : dict
+            Dictionary of demonstration data.
 
         Returns
         -------
-
-
+        RecurringDemonstration
+            Instance of RecurringDemonstration initialized with the data.
         """
-
         created_until = (
-            datetime.fromisoformat(data["created_until"]) if data.get("created_until") else datetime.now()
+            datetime.fromisoformat(data["created_until"])
+            if data.get("created_until")
+            else datetime.now()
+        )
+        
+        repeat_schedule = (
+            RepeatSchedule.from_dict(data["repeat_schedule"])
+            if data.get("repeat_schedule")
+            else RepeatSchedule(frequency="none", interval=0)
         )
 
+        data["organizers"] = [
+            Organizer.from_dict(org) if isinstance(org, dict) else org
+            for org in data.get("organizers", [])
+        ]
+
+        def _should_pop_repeat(repeat_schedule, data) -> bool:
+            """
+            Decide whether the repeat_schedule from the object matches the repeat_schedule in data,
+            ignoring 'as_string' and other non-essential fields, treating certain values as equivalent.
+            """
+            fields_to_compare = [
+                "frequency",
+                "interval",
+                "weekday",
+                "monthly_option",
+                "day_of_month",
+                "nth_weekday",
+                "weekday_of_month",
+                "end_date",
+            ]
+
+            repeat_dict = repeat_schedule.to_dict() if repeat_schedule else {}
+            data_dict = data.get("repeat_schedule")
+            
+            if data_dict is None:
+                return True  # Nothing in data → consider it match
+
+            # Pairs of values that should be considered equal
+            samsies = [(None, "none")]
+
+            for field in fields_to_compare:
+                val_obj = repeat_dict.get(field)
+                val_data = data_dict.get(field)
+
+                # Treat samsies pairs as equal
+                if (val_obj, val_data) in samsies or (val_data, val_obj) in samsies:
+                    continue
+
+                if val_obj != val_data:
+                    if val_obj is None:
+                        logger.warn(f"Field '{field}' is None in repeat_schedule object: {repeat_dict}")
+                    else:
+                        logger.warn(f"Field '{field}' mismatch: object={val_obj}, data={val_data}")
+                    return False
+
+            return True
+
+
+        if _should_pop_repeat(repeat_schedule, data):
+            print("Popping repeat_schedule from data")
+            data.pop("repeat_schedule", None)
+
+        _freezed_children = []
+        for freezed_children in data.get("freezed_children", []):
+            if isinstance(freezed_children, ObjectId):
+                _freezed_children.append(freezed_children)
+                
+            else:
+                try:
+                    _freezed_children.append(ObjectId(freezed_children))
+                except Exception:
+                    logger.warning(f"Skipping invalid ObjectId: {freezed_children}")
+                    
+        data.pop("freezed_children", None)
+        data.pop("created_until", None)
+
         return cls(
-            title=data["title"],
-            date=data["date"],
-            start_time=data["start_time"],
-            end_time=data["end_time"],
-            facebook=data["facebook"],
-            city=data["city"],
-            address=data["address"],
-            route=data["route"],
-            organizers=[
-                Organizer.from_dict(org) if isinstance(org, dict) else org
-                for org in data.get("organizers", [])
-            ],
-            approved=data.get("approved", False),
-            linked_organizations=data.get("linked_organizations", {}),
-            img=data.get("img"),
-            _id=data.get("_id"),
-            description=data.get("description"),
-            tags=data.get("tags", []),
-            parent=ObjectId(data["parent"]) if data.get("parent") else None,
-            created_datetime=data.get("created_datetime"),
-            recurring=True,
-            topic=data.get("topic"),
-            type=data.get("type"),
-            repeat_schedule=(
-                RepeatSchedule.from_dict(data["repeat_schedule"])
-                if data.get("repeat_schedule")
-                else None
-            ),
-            repeating=data.get("repeating", False),
-            latitude=data.get("latitude"),
-            longitude=data.get("longitude"),
-            event_type=data.get("event_type"),
-            save_flag=data.get("save_flag", False),
-            hide=data.get("hide", False),
+            **data,
+            repeat_schedule=repeat_schedule,
             created_until=created_until,
+            freezed_children=_freezed_children
         )
 
     def __repr__(self) -> str:
         """
         Return a string representation of the RecurringDemonstration instance.
 
-        Returns:
-            str: A string containing the title, start time, and end time of the demonstration.
+        Returns
+        -------
+        str
+            A string containing the title, start time, and end time of the demonstration.
         """
-        return f"<RecurringDemonstration(title={self.title}, start_time={self.start_time}, end_time={self.end_time})>"
+        return (
+            f"<RecurringDemonstration(title={self.title}, "
+            f"start_time={self.start_time}, end_time={self.end_time})>"
+        )
 
     @classmethod
     def from_id(cls, _id: str) -> "RecurringDemonstration":
-        """Create an instance of RecurringDemonstration from an ObjectId string.
+        """
+        Create an instance of RecurringDemonstration from an ObjectId string.
 
         Parameters
         ----------
@@ -339,7 +299,28 @@ class RecurringDemonstration(Demonstration):
         """
         db_man = DatabaseManager.get_instance()
         mongo = db_man.get_db()
-        
+
         data = mongo.recu_demos.find_one({"_id": ObjectId(_id)})
         return cls.from_dict(data)
-        return cls(_id=_id)
+
+    def save(self) -> None:
+        """
+        Save the RecurringDemonstration instance to the database.
+
+        If `_id` exists, updates the existing document.
+        Otherwise, inserts a new document and sets the `_id`.
+
+        Returns
+        -------
+        None
+        """
+        db_man = DatabaseManager.get_instance()
+        mongo = db_man.get_db()
+
+        data = self.to_dict()
+
+        if self._id:
+            mongo.recu_demos.update_one({"_id": ObjectId(self._id)}, {"$set": data})
+        else:
+            result = mongo.recu_demos.insert_one(data)
+            self._id = result.inserted_id

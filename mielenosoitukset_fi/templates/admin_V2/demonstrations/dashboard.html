@@ -205,7 +205,7 @@ tr.fade‑out {
           <td>{{ demo.title }}</td>
           <td>{{ demo.city }}</td>
           <td>{{ demo.date }}</td>
-          <td>{% if demo.repeating %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else %}<i
+          <td>{% if demo.recurs %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else %}<i
               class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
           <td data-col="approved">{% if demo.approved %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else
             %}<i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>

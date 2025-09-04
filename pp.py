@@ -49,15 +49,12 @@ def rollup_events():
     last_seen_id = get_last_seen_id()
     while True:
         try:
-            # Fetch all new events with _id > last_seen_id, sorted ascending
             new_events = list(
                 raw.find({"_id": {"$gt": last_seen_id}}, {"demo_id": 1, "timestamp": 1})
                    .sort("_id", 1)
             )
 
-            
             if new_events:
-                # Group increments by demo_id, date, hour, minute for bulk update
                 counters = {}  # { demo_id: { date: { hour: { minute: count } } } }
 
                 for ev in new_events:
@@ -79,7 +76,6 @@ def rollup_events():
 
                 ops = []
                 for demo_id, dates in counters.items():
-                    # Build $inc dict for nested fields like "analytics.2024-11-21.17.53": 2
                     inc_dict = {}
                     for d, hours in dates.items():
                         for h, minutes in hours.items():
@@ -96,17 +92,10 @@ def rollup_events():
                     aggr.bulk_write(ops, ordered=False)
                     last_seen_id = new_events[-1]["_id"]
                     set_last_seen_id(last_seen_id)
-                    print(f"✅ Rolled up {len(new_events)} view(s) — last id: {str(last_seen_id)}")
-                else:
-                    print("⚠️ No valid ops to rollup.")
-
-            else:
-                print("⏳ No new events to process.")
 
         except Exception as e:
-            print("❌ Error during rollup:", e)
+            pass  # silently ignore errors; optionally log them if needed
 
-        # Wait with progress bar until next minute interval
         sleep_time = POLL_INTERVAL - (time.time() % POLL_INTERVAL)
         with tqdm(total=int(sleep_time), desc="⏳ Waiting for next roll...", bar_format='{l_bar}{bar}| {remaining}s', ncols=70) as pbar:
             for _ in range(int(sleep_time)):

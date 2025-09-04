@@ -13,7 +13,7 @@ def run_rollup_in_thread():
         try:
             rollup_events()
         except Exception as e:
-            print(f"❌ Rollup thread crashed: {e}")
+            app.logger.error(f"Error in rollup_events thread: {e}")
 
     thread = threading.Thread(target=target, daemon=True)
     thread.start()

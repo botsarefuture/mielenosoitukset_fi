@@ -1,4 +1,5 @@
 from datetime import datetime
+import copy
 from typing import Any, Dict, List, Optional
 from bson import ObjectId
 from dateutil.relativedelta import relativedelta
@@ -64,7 +65,6 @@ class RecurringDemonstration(Demonstration):
 
         super().__init__(*args, **kwargs)
 
-        print(self.freezed_children)
 
 
     def calculate_next_dates(self) -> List[datetime]:
@@ -185,6 +185,10 @@ class RecurringDemonstration(Demonstration):
         RecurringDemonstration
             Instance of RecurringDemonstration initialized with the data.
         """
+
+        _data = copy.deepcopy(data)
+        data = _data # now we wont modify the original data
+
         created_until = (
             datetime.fromisoformat(data["created_until"])
             if data.get("created_until")
@@ -246,7 +250,6 @@ class RecurringDemonstration(Demonstration):
 
 
         if _should_pop_repeat(repeat_schedule, data):
-            print("Popping repeat_schedule from data")
             data.pop("repeat_schedule", None)
 
         _freezed_children = []

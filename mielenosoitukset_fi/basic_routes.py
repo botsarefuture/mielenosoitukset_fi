@@ -91,7 +91,7 @@ def format_demo_for_api(demo):
             except ValueError:
                 return datetime.strptime(t, "%H:%M").strftime("%H:%M")
         except Exception:
-            print(t)
+            logger.exception(f"Error formatting time: {t}")
             return t
 
     try:
@@ -889,7 +889,7 @@ Disallow: /admin/
         """
         #result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
         demo = Demonstration.load_by_id(demo_id)
-        print(demo)
+
         if not demo:
             abort(404)
       

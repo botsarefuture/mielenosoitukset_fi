@@ -224,7 +224,6 @@ def save_user(user_id):
     user = User.from_db(user)
 
     # Get form data
-    print(request.form)
     username = request.form.get("username")
     email = request.form.get("email")
     role = request.form.get("role")

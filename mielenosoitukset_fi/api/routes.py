@@ -90,7 +90,6 @@ def get_demonstration_detail(demo_id):
         raise DemoNotFoundException()
 
     demo = Demonstration.from_dict(demo)
-    print(demo)
     return jsonify(stringify_object_ids(demo.to_dict(json=False)))
 
 

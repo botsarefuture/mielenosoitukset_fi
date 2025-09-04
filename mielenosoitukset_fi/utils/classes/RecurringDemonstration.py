@@ -1,4 +1,5 @@
 from datetime import datetime
+import copy
 from typing import Any, Dict, List, Optional
 from bson import ObjectId
 from dateutil.relativedelta import relativedelta
@@ -185,6 +186,10 @@ class RecurringDemonstration(Demonstration):
         RecurringDemonstration
             Instance of RecurringDemonstration initialized with the data.
         """
+
+        _data = copy.deepcopy(data)
+        data = _data # now we wont modify the original data
+
         created_until = (
             datetime.fromisoformat(data["created_until"])
             if data.get("created_until")

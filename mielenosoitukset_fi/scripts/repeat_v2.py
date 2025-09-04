@@ -246,12 +246,14 @@ def process_demo(demo: dict):
     """
     try:
         _demo = RecurringDemonstration.from_dict(demo)
-        _demo_dict = _demo.to_dict()
 
+        _demo_dict = _demo.to_dict()
+     
         logger.debug(f"Processing RecurringDemonstration {demo['_id']}")
 
         demo_date = datetime.strptime(_demo.date, "%Y-%m-%d")
-        schedule: RepeatSchedule = _demo.repeat_schedule or RepeatSchedule(frequency="daily", interval=1)
+        schedule: RepeatSchedule = _demo.repeat_schedule or RepeatSchedule()
+        print(f"Demo date: {demo_date}, Schedule: {schedule}")
         created_until = _demo.created_until
         freezed_children = set(demo.get("freezed_children", []))
 

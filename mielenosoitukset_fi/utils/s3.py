@@ -283,7 +283,7 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
             # Use put_object to upload bytes
             _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
             # Return canonical CDN URL as requested
-            s3_file_path = f"https://cdn.mielenosoitukset.fi/{object_key}"
+            s3_file_path = f"https://cdn2.mielenosoitukset.fi/{object_key}"
             logger.info(f"Uploaded {image_path} to s3://{bucket_name}/{object_key}")
             return s3_file_path
     except Exception as e:
@@ -320,7 +320,7 @@ def upload_image_fileobj(bucket_name: str, fileobj, filename: str, image_type: s
             return None
         object_key = upload_path_gen(_id, image_type)
         _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
-        s3_file_path = f"https://cdn.mielenosoitukset.fi/{object_key}"
+        s3_file_path = f"https://cdn2.mielenosoitukset.fi/{object_key}"
         logger.info(f"Uploaded in-memory file {filename} to s3://{bucket_name}/{object_key}")
         return s3_file_path
     except Exception as e:

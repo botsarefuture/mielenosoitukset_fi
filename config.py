@@ -111,7 +111,7 @@ class Config:
     ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
     # Canonical bucket and CDN host
     S3_BUCKET = S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
-    CDN_HOST = S3_CONFIG.get("CDN_HOST", "https://cdn.mielenosoitukset.fi")
+    CDN_HOST = S3_CONFIG.get("CDN_HOST", "https://cdn2.mielenosoitukset.fi")
 
     # Allowed file extensions for uploads
     ALLOWED_EXTENSIONS = S3_CONFIG.get(

@@ -57,7 +57,7 @@
     "endDate": "{{ demo.get('date', '') }}T{{ demo.get('end_time', '23:59:00') }}",
     "location": {
       "@type": "Place",
-      "name": "{{ demo.get('topic', 'Tuntematon paikka') }}",
+      "name": "{{ demo.get('address', 'Tuntematon paikka') }}",
       "geo": {
         "@type": "GeoCoordinates",
         "latitude": "{{ demo.get('latitude', '') }}",

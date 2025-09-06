@@ -109,7 +109,7 @@ def format_demo_for_api(demo):
         "city": demo.get("city", ""),
         "address": demo.get("address", ""),
         "tags": demo.get("tags", []),
-        "topic": demo.get("topic", ""),
+        "description": demo.get("description", ""),
     }
 
 

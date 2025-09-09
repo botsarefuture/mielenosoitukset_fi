@@ -3,38 +3,49 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/users.css') }}">
 <style>
-/* Toasts */
-#toast-container {
+  /* Toasts */
+  #toast-container {
     position: fixed;
     top: 1rem;
     right: 1rem;
     z-index: 1055;
-}
-.toast { min-width: 250px; }
+  }
 
-/* Table enhancements */
-.table-hover tbody tr:hover {
+  .toast {
+    min-width: 250px;
+  }
+
+  /* Table enhancements */
+  .table-hover tbody tr:hover {
     background-color: #f1f3f5;
     cursor: pointer;
-}
-.badge-role {
-    text-transform: capitalize;
-}
+  }
 
-/* Sortable column indicators */
-th.sortable {
+  .badge-role {
+    text-transform: capitalize;
+  }
+
+  /* Sortable column indicators */
+  th.sortable {
     cursor: pointer;
     position: relative;
-}
-th.sortable::after {
+  }
+
+  th.sortable::after {
     content: '⬍';
     font-size: 0.7em;
     position: absolute;
     right: 8px;
     color: #888;
-}
-th.sortable.asc::after { content: '⬆'; }
-th.sortable.desc::after { content: '⬇'; }
+  }
+
+  th.sortable.asc::after {
+    content: '⬆';
+  }
+
+  th.sortable.desc::after {
+    content: '⬇';
+  }
 </style>
 {% endblock %}
 
@@ -42,9 +53,19 @@ th.sortable.desc::after { content: '⬇'; }
 <div class="container-fluid">
   <h2 class="mb-4">{{ _('Käyttäjät') }}</h2>
 
+  <!-- User Manual Link -->
+  <div class="mb-3">
+    <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="btn btn-info">
+      <i class="fa-solid fa-book me-1"></i> Käyttöohje
+    </a>
+  </div>
+
+
   <!-- Search + Create -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <input type="text" id="userSearch" class="form-control me-2" placeholder="{{ _('Hae käyttäjiä...') }}" value="{{ search_query }}">
+    <input type="text" id="userSearch" class="form-control me-2" placeholder="{{ _('Hae käyttäjiä...') }}"
+      value="{{ search_query }}">
+
     {% if current_user.has_permission("CREATE_USER") %}
     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
       <i class="fas fa-user-plus me-1"></i>{{ _('Luo uusi käyttäjä') }}
@@ -68,8 +89,8 @@ th.sortable.desc::after { content: '⬇'; }
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
 <script>
-// ======== Toast Helper ========
-function showToast(message, type='success') {
+  // ======== Toast Helper ========
+  function showToast(message, type = 'success') {
     const toastContainer = $('#toast-container');
     const toastEl = $(`
       <div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -82,24 +103,24 @@ function showToast(message, type='success') {
     const toast = new bootstrap.Toast(toastEl[0], { delay: 4000 });
     toast.show();
     toastEl.on('hidden.bs.toast', () => toastEl.remove());
-}
+  }
 
-// ======== Live Search ========
-let searchTimeout;
-$('#userSearch').on('input', function() {
+  // ======== Live Search ========
+  let searchTimeout;
+  $('#userSearch').on('input', function () {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        const query = encodeURIComponent($(this).val());
-        $.get(`{{ url_for('admin_user.user_control') }}?search=${query}`, function(html){
-            // Extract only the table part from the returned HTML
-            const newTable = $(html).find('#usersTableContainer').html();
-            $('#usersTableContainer').html(newTable);
-        });
+      const query = encodeURIComponent($(this).val());
+      $.get(`{{ url_for('admin_user.user_control') }}?search=${query}`, function (html) {
+        // Extract only the table part from the returned HTML
+        const newTable = $(html).find('#usersTableContainer').html();
+        $('#usersTableContainer').html(newTable);
+      });
     }, 300);
-});
+  });
 
-// ======== Sortable Table Columns ========
-$(document).on('click', 'th.sortable', function() {
+  // ======== Sortable Table Columns ========
+  $(document).on('click', 'th.sortable', function () {
     const table = $(this).closest('table');
     const tbody = table.find('tbody');
     const index = $(this).index();
@@ -111,16 +132,16 @@ $(document).on('click', 'th.sortable', function() {
 
     const rows = tbody.find('tr').get();
     rows.sort((a, b) => {
-        const A = $(a).children('td').eq(index).text().toUpperCase();
-        const B = $(b).children('td').eq(index).text().toUpperCase();
-        if($.isNumeric(A) && $.isNumeric(B)){
-            return asc ? A-B : B-A;
-        } else {
-            return asc ? A.localeCompare(B) : B.localeCompare(A);
-        }
+      const A = $(a).children('td').eq(index).text().toUpperCase();
+      const B = $(b).children('td').eq(index).text().toUpperCase();
+      if ($.isNumeric(A) && $.isNumeric(B)) {
+        return asc ? A - B : B - A;
+      } else {
+        return asc ? A.localeCompare(B) : B.localeCompare(A);
+      }
     });
     $.each(rows, (_, row) => tbody.append(row));
-});
+  });
 </script>
 
 

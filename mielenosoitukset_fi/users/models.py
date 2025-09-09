@@ -138,7 +138,9 @@ class User(UserMixin):
         mfa_enabled: bool = False,
         friends: list = [],
         friend_requests: list = [],
-        forced_pwd_reset: bool = False
+        forced_pwd_reset: bool = False,
+        active: bool = True,
+        last_login: datetime.datetime = None
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
@@ -160,6 +162,8 @@ class User(UserMixin):
         self.friends           = friends
         self.friend_requests    = friend_requests
         self.forced_pwd_reset    = forced_pwd_reset
+        self.active             = active
+        self.last_login         = last_login
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
@@ -186,7 +190,9 @@ class User(UserMixin):
             mfa_enabled     = doc.get("mfa_enabled", False),
             friends         = doc.get("friends", []),
             friend_requests = doc.get("friend_requests", []),
-            forced_pwd_reset = doc.get("forced_pwd_reset", False)
+            forced_pwd_reset = doc.get("forced_pwd_reset", False),
+            active          = doc.get("active", False),
+            last_login      = doc.get("last_login", None)
         )
 
     @classmethod
@@ -341,10 +347,12 @@ class User(UserMixin):
 
     def ban_user(self):
         self.banned = True
+        self.active = False
         self.save()
 
     def unban_user(self):
         self.banned = False
+        self.active = True
         self.save()
 
     # ---------- CRUD -------------------------------------------------------------
@@ -378,7 +386,9 @@ class User(UserMixin):
             "mfa_enabled": self.mfa_enabled,
             "friends": self.friends,
             "friend_requests": self.friend_requests,
-            "forced_pwd_reset": self.forced_pwd_reset
+            "forced_pwd_reset": self.forced_pwd_reset,
+            "active": self.active,
+            "last_login": self.last_login
         }
         return d
 

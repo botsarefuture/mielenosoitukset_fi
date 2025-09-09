@@ -310,7 +310,7 @@ def create_app() -> Flask:
         scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
         scheduler.add_job(prep, "interval", minutes=15)
         scheduler.add_job(run_preview, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(demo_sche, "interval", hours=1)
+        scheduler.add_job(demo_sche, "interval", hours=24)
 
         
     with app.app_context():

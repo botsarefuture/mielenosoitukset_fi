@@ -109,10 +109,6 @@
             "description": "View analytics"
         },
         {
-            "name": "MANAGE_MARQUEE",
-            "description": "Manage marquee"
-        },
-        {
             "name": "BETA_FEATURES",
             "description": "can access beta"
         }

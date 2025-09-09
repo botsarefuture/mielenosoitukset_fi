@@ -211,6 +211,13 @@ def stats():
         flash_message("An error occurred while loading statistics.", "danger")
         return redirect(url_for("admin.admin_dashboard"))
 
+@admin_bp.route("/manual/")
+def manual():
+    return render_template("manuals/index.html")
+
+@admin_bp.route("/manual/<path:page>")
+def manual_page(page):
+    return render_template(f"manuals/{page}.html")
 
 @admin_bp.route("/logs")
 @login_required

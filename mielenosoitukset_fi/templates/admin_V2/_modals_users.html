@@ -1,4 +1,3 @@
-
 <!-- Force Password Modal -->
 <div class="modal fade" id="forcePwdModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -33,7 +32,8 @@
         <p id="countdownText" style="display:none; margin-top:10px;"></p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelDeleteBtn" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <button type="button" class="btn btn-secondary" id="cancelDeleteBtn" data-bs-dismiss="modal">{{ _('Peruuta')
+          }}</button>
         <button type="button" class="btn btn-danger" id="finalDeleteBtn" disabled>{{ _('Poista käyttäjä') }}</button>
       </div>
     </div>
@@ -41,112 +41,112 @@
 </div>
 
 <script>
-let countdown3Sec;
-let countdownInterval;
+  let countdown3Sec;
+  let countdownInterval;
 
-function openDeleteModal(event, username, userId) {
-  event.preventDefault();
+  function openDeleteModal(event, username, userId) {
+    event.preventDefault();
 
-  const userTitle = document.getElementById('userTitle');
-  const confirmInput = document.getElementById('confirmInput');
-  const finalDeleteBtn = document.getElementById('finalDeleteBtn');
-  const countdownText = document.getElementById('countdownText');
-  const cancelBtn = document.getElementById('cancelDeleteBtn');
+    const userTitle = document.getElementById('userTitle');
+    const confirmInput = document.getElementById('confirmInput');
+    const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+    const countdownText = document.getElementById('countdownText');
+    const cancelBtn = document.getElementById('cancelDeleteBtn');
 
-  // Reset modal
-  userTitle.textContent = username;
-  confirmInput.value = "";
-  finalDeleteBtn.disabled = true;
-  countdownText.style.display = "none";
-  countdownText.textContent = "";
-  clearInterval(countdown3Sec);
-  clearInterval(countdownInterval);
-
-  // Cancel button stops everything
-  const stopAll = () => {
+    // Reset modal
+    userTitle.textContent = username;
+    confirmInput.value = "";
+    finalDeleteBtn.disabled = true;
+    countdownText.style.display = "none";
+    countdownText.textContent = "";
     clearInterval(countdown3Sec);
     clearInterval(countdownInterval);
-    finalDeleteBtn.disabled = true;
-    countdownText.style.display = "none";
-  };
 
-  cancelBtn.onclick = stopAll;
-  document.querySelector('#deleteModal .btn-close').onclick = stopAll;
+    // Cancel button stops everything
+    const stopAll = () => {
+      clearInterval(countdown3Sec);
+      clearInterval(countdownInterval);
+      finalDeleteBtn.disabled = true;
+      countdownText.style.display = "none";
+    };
 
-  // Input listener for VAHVISTA
-  confirmInput.oninput = () => {
-    clearInterval(countdown3Sec);
-    finalDeleteBtn.disabled = true;
-    countdownText.style.display = "none";
+    cancelBtn.onclick = stopAll;
+    document.querySelector('#deleteModal .btn-close').onclick = stopAll;
 
-    if(confirmInput.value.toUpperCase() === "VAHVISTA") {
-      let countdown = 3;
-      countdownText.style.display = "block";
-      countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
-
-      countdown3Sec = setInterval(() => {
-        countdown--;
-        if(countdown > 0) {
-          countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
-        } else {
-          clearInterval(countdown3Sec);
-          countdownText.style.display = "none";
-          finalDeleteBtn.disabled = false;
-        }
-      }, 1000);
-    } else {
-      // Wrong input cancels countdown immediately
+    // Input listener for VAHVISTA
+    confirmInput.oninput = () => {
       clearInterval(countdown3Sec);
       finalDeleteBtn.disabled = true;
       countdownText.style.display = "none";
-    }
-  };
 
-  // Delete button click → start 5-second countdown
-  finalDeleteBtn.onclick = () => {
-    let countdown = 5;
-    finalDeleteBtn.disabled = true;
-    countdownText.style.display = "block";
-    countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
+      if (confirmInput.value.toUpperCase() === "VAHVISTA") {
+        let countdown = 3;
+        countdownText.style.display = "block";
+        countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
 
-    countdownInterval = setInterval(() => {
-      countdown--;
-      if(countdown > 0) {
-        countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
+        countdown3Sec = setInterval(() => {
+          countdown--;
+          if (countdown > 0) {
+            countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
+          } else {
+            clearInterval(countdown3Sec);
+            countdownText.style.display = "none";
+            finalDeleteBtn.disabled = false;
+          }
+        }, 1000);
       } else {
-        clearInterval(countdownInterval);
-        sendDeleteRequest(userId);
+        // Wrong input cancels countdown immediately
+        clearInterval(countdown3Sec);
+        finalDeleteBtn.disabled = true;
+        countdownText.style.display = "none";
       }
-    }, 1000);
-  };
+    };
 
-  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-  modal.show();
+    // Delete button click → start 5-second countdown
+    finalDeleteBtn.onclick = () => {
+      let countdown = 5;
+      finalDeleteBtn.disabled = true;
+      countdownText.style.display = "block";
+      countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
 
-  // Stop all if modal is hidden via backdrop click or ESC
-  document.getElementById('deleteModal').addEventListener('hidden.bs.modal', stopAll, { once: true });
-}
+      countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
+        } else {
+          clearInterval(countdownInterval);
+          sendDeleteRequest(userId);
+        }
+      }, 1000);
+    };
 
-function sendDeleteRequest(userId) {
-  fetch("{{ url_for('admin_user.delete_user') }}", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if(data.status === "OK") {
-      const row = document.getElementById(`user-${userId}`);
-      if(row) row.remove();
-      showToast(data.message);
-    } else {
-      showToast("Virhe: " + data.message);
-    }
-    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-    deleteModal.hide();
-  })
-  .catch(err => showToast("Virhe pyynnössä: " + err));
-}
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+
+    // Stop all if modal is hidden via backdrop click or ESC
+    document.getElementById('deleteModal').addEventListener('hidden.bs.modal', stopAll, { once: true });
+  }
+
+  function sendDeleteRequest(userId) {
+    fetch("{{ url_for('admin_user.delete_user') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "OK") {
+          const row = document.getElementById(`user-${userId}`);
+          if (row) row.remove();
+          showToast(data.message);
+        } else {
+          showToast("Virhe: " + data.message);
+        }
+        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+        deleteModal.hide();
+      })
+      .catch(err => showToast("Virhe pyynnössä: " + err));
+  }
 </script>
 
 
@@ -160,6 +160,26 @@ function sendDeleteRequest(userId) {
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
+        <!-- Warning / Note -->
+        <div class="alert alert-warning align-items-start mb-3" role="alert">
+          <i class="fa-solid fa-triangle-exclamation me-2 mt-1"></i>
+          <div class="flex-grow-1">
+            Kaikilla <strong>superkäyttäjillä</strong> tulee olla hallituksen hyväksymä
+            <strong>turvaluokitus</strong> ennen käyttöoikeuksien myöntämistä.
+            <br>
+            <br> Mikäli myönnät <span class="badge bg-secondary">superuser</span> tason käyttöoikeuden henkilölle, jolla
+            ei ole turvaluokitusta, saatat joutua lakiteknisten toimenpiteiden kohteeksi.
+
+          </div>
+        </div>
+
+        <!-- User Manual Link -->
+        <div class="mb-3">
+          <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}" target="_blank" class="btn btn-info">
+            <i class="fa-solid fa-book me-1"></i> Roolin valintaohje
+          </a>
+        </div>
+
         <form id="createUserForm" method="POST" action="{{ url_for('admin_user.create_user') }}">
           <div class="mb-3">
             <label for="username" class="form-label">{{ _('Käyttäjänimi') }}</label>

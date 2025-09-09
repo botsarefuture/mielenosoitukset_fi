@@ -111,10 +111,14 @@ def demo_edit_history(demo_id):
         Renders the edit history page.
     """
     history = list(mongo.demo_edit_history.find({"demo_id": str(demo_id)}).sort("edited_at", -1))
+    demo = Demonstration.load_by_id(ObjectId(demo_id))
+    demo_name = demo.title
+    
     return render_template(
         "admin/demonstrations/edit_history.html",
         history=history,
-        demo_id=demo_id
+        demo_id=demo_id,
+        demo_name=demo_name
     )
 
 @admin_demo_bp.route("/view_demo_diff/<demo_id>/<history_id>", methods=["GET"])

@@ -1,16 +1,90 @@
 {% extends 'admin_base.html' %}
+
 {% block main_content %}
-<h2>Edit History for Demonstration</h2>
-<ul class="list-group mb-3">
-  {% for entry in history %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-      <span>
-        <b>{{ entry.edited_at.strftime('%Y-%m-%d %H:%M:%S') }}</b>
-        <span class="text-muted">by {{ entry.editor_id }}</span>
-      </span>
-      <a href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}" class="btn btn-sm btn-outline-primary">Näytä muutokset</a>
-    </li>
-  {% endfor %}
-</ul>
-<a href="{{ url_for('admin_demo.edit_demo', demo_id=demo_id) }}" class="btn btn-light">Takaisin muokkaukseen</a>
+<div class="container py-3">
+  <h2 class="mb-4">
+    {{ _('Muokkaushistoria mielenosoitukselle') }} <b>{{ demo_name }}</b>
+  </h2>
+
+  {% if history %}
+  <div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for entry in history %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-bold">
+            {{ entry.edited_at.strftime('%d.%m.%Y %H:%M:%S') }}
+            <small class="text-muted ms-2" data-timestamp="{{ entry.edited_at.isoformat() }}">
+              <!-- relative timestamp filled by JS -->
+            </small>
+          </div>
+          <small class="text-muted">
+            {{ _('muokannut') }}
+            <span class="badge bg-secondary">
+              {{ entry.editor_id or _('Tuntematon') }}
+            </span>
+          </small>
+        </div>
+        <a href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}"
+          class="btn btn-sm btn-outline-primary" aria-label="{{ _('Näytä muutokset tästä versiosta') }}">
+          {{ _('Näytä muutokset') }}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class="alert alert-info" role="alert">
+    {{ _('Muokkaushistoriaa ei löytynyt tälle mielenosoitukselle.') }}
+  </div>
+  {% endif %}
+
+  <div class="mt-3">
+    <a id="backBtn" href="{{ request.referrer or url_for('admin_demo.edit_demo', demo_id=demo_id) }}"
+      class="btn btn-secondary">
+      {{ _('Takaisin') }}
+    </a>
+  </div>
+</div>
+
+<!-- Relative timestamp with Day.js -->
+<script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/relativeTime.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs/locale/fi.js"></script>
+<script>
+  dayjs.extend(dayjs_plugin_relativeTime);
+  dayjs.locale("fi");
+
+  document.querySelectorAll("[data-timestamp]").forEach(el => {
+    const ts = el.getAttribute("data-timestamp");
+    if (ts) {
+      el.textContent = "(" + dayjs(ts).fromNow() + ")";
+    }
+  });
+</script>
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const backBtn = document.getElementById("backBtn");
+    if (!backBtn) return;
+
+    // If we have a stored original referrer, use it
+    const stored = sessionStorage.getItem("originalReferrer");
+    if (stored) {
+      backBtn.setAttribute("href", stored);
+    } else {
+      // Otherwise, save the current href as the original one
+      sessionStorage.setItem("originalReferrer", backBtn.getAttribute("href"));
+    }
+
+    // When clicked, clear the stored referrer so it won't get stuck
+    backBtn.addEventListener("click", () => {
+      sessionStorage.removeItem("originalReferrer");
+    });
+  });
+</script>
+
+
 {% endblock %}

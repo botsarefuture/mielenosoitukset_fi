@@ -164,17 +164,14 @@ def get_admin_activity(page=1, per_page=20):
 
 
 # Admin statistics page
+from math import ceil
+from flask import request, render_template
+
 @admin_bp.route("/stats")
 @login_required
 @admin_required
 def stats():
-    """Render statistics page with user and organization data.
-
-    Returns
-    -------
-    str
-        Rendered HTML template for the statistics page
-    """
+    """Render statistics page with user, organization, and demo analytics."""
     try:
         total_users = mongo.users.count_documents({})
         active_users = mongo.users.count_documents({"confirmed": True})
@@ -183,17 +180,31 @@ def stats():
         # Count users by role
         role_counts = get_user_role_counts()
 
+        # Demo analytics data
         data = get_demo_views()
-        data = count_per_demo(data)
+        data = count_per_demo(data)  # this returns a list of demo dicts
 
-        # Render statistics template
+        # --- Pagination ---
+        per_page = int(request.args.get("per_page", 20))
+        page = int(request.args.get("page", 1))
+        total_count = len(data)
+        total_pages = ceil(total_count / per_page)
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        data_page = data[start_idx:end_idx]
+
+        # Render template
         return render_template(
             f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
             total_users=total_users,
             total_organizations=total_organizations,
             role_counts=role_counts,
             active_users=active_users,
-            data=data,
+            data=data_page,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+            total_count=total_count
         )
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")

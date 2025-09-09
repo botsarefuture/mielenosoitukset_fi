@@ -1,61 +1,50 @@
 {% extends 'admin_base.html' %}
-{% block styles %}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/users.css') }}">
+<style>
+/* Toasts */
+#toast-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1055;
+}
+.toast { min-width: 250px; }
+
+/* Table enhancements */
+.table-hover tbody tr:hover {
+    background-color: #f1f3f5;
+    cursor: pointer;
+}
+.badge-role {
+    text-transform: capitalize;
+}
+
+/* Sortable column indicators */
+th.sortable {
+    cursor: pointer;
+    position: relative;
+}
+th.sortable::after {
+    content: '⬍';
+    font-size: 0.7em;
+    position: absolute;
+    right: 8px;
+    color: #888;
+}
+th.sortable.asc::after { content: '⬆'; }
+th.sortable.desc::after { content: '⬇'; }
+</style>
+{% endblock %}
 
 {% block main_content %}
-
-<script>
-  // Force Password Reset
-  function openForcePwdModal(username, userId) {
-    const modalTitle = document.getElementById('forcePwdModalTitle');
-    const modalBody = document.getElementById('forcePwdModalBody');
-    const confirmBtn = document.getElementById('confirmForcePwd');
-
-    modalTitle.textContent = `Pakota salasanan vaihto käyttäjälle: ${username}?`;
-    modalBody.textContent = "Tämä pakottaa käyttäjän vaihtamaan salasanansa seuraavan kirjautumisen yhteydessä.";
-
-    // Remove old event listeners to avoid multiple triggers
-    const newBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-
-    newBtn.addEventListener('click', function () {
-      fetch("{{ url_for('admin_user.api_force_password_change') }}", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_id: userId })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === "OK") {
-            alert(data.message);
-          } else {
-            alert("Virhe: " + data.message);
-          }
-          // Hide modal after action
-          const forcePwdModal = bootstrap.Modal.getInstance(document.getElementById('forcePwdModal'));
-          forcePwdModal.hide();
-        });
-    });
-
-    const modal = new bootstrap.Modal(document.getElementById('forcePwdModal'));
-    modal.show();
-  }
-</script>
-
 <div class="container-fluid">
   <h2 class="mb-4">{{ _('Käyttäjät') }}</h2>
 
-  <!-- Search + Create User Button -->
+  <!-- Search + Create -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <form method="GET" class="d-flex" action="{{ url_for('admin_user.user_control') }}">
-      <input type="text" id="search" name="search" class="form-control me-2" placeholder="{{ _('Hae käyttäjiä...') }}"
-        value="{{ search_query }}" aria-label="Search users">
-      <button type="submit" class="btn btn-primary">
-        <i class="fas fa-search me-1"></i>{{ _('Hae') }}
-      </button>
-    </form>
-
+    <input type="text" id="userSearch" class="form-control me-2" placeholder="{{ _('Hae käyttäjiä...') }}" value="{{ search_query }}">
     {% if current_user.has_permission("CREATE_USER") %}
     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
       <i class="fas fa-user-plus me-1"></i>{{ _('Luo uusi käyttäjä') }}
@@ -63,265 +52,77 @@
     {% endif %}
   </div>
 
-  {% if users %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>{{ _('Nimi') }}</th>
-          <th>{{ _('Sähköpostiosoite') }}</th>
-          <th>{{ _('Rooli') }}</th>
-          <th>{{ _('Toiminnot') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in users %}
-        <tr id="user-{{ user._id }}">
-          <td>{{ user.displayname or user.username }}</td>
-          <td>{{ user.email }}</td>
-          <td>{{ user.role }}</td>
-          <td>
-            {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") %}
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="userActions-{{ user._id }}">
-                {% if current_user.has_permission("EDIT_USER") %}
-                <li>
-                  <a class="dropdown-item" href="{{ url_for('admin_user.edit_user', user_id=user._id) }}">
-                    <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
-                  </a>
-                </li>
-                {% endif %}
-                
-                {% if current_user.has_permission("FORCE_PASSWORD_CHANGE") %}
-                <li>
-                  <button class="dropdown-item text-warning" type="button"
-                    onclick="openForcePwdModal('{{ user.displayname or user.username }}', '{{ user._id }}')">
-                    <i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}
-                  </button>
-                </li>
-                {% endif %}
-
-                {% if current_user.has_permission("DELETE_USER") %}
-                <li>
-                  <button class="dropdown-item text-danger" type="button"
-                    onclick="openDeleteModal(event, '{{ user.displayname or user.username }}', '{{ user._id }}', 'user')">
-                    <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
-                  </button>
-                </li>
-                {% endif %}
-                
-              </ul>
-            </div>
-            {% else %}
-            <span class="text-muted">{{ _('Ei riittäviä oikeuksia.') }}</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="alert alert-info mt-3">
-    {{ _('Käyttäjiä ei löytynyt.') }}
-  </div>
-  {% endif %}
-</div>
-
-<!-- Force Password Modal -->
-<div class="modal fade" id="forcePwdModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="forcePwdModalTitle">{{ _('Pakota salasanan vaihto') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
-      </div>
-      <div class="modal-body">
-        <p id="forcePwdModalBody">{{ _('Haluatko pakottaa käyttäjän vaihtamaan salasanansa?') }}</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-        <button type="button" class="btn btn-warning" id="confirmForcePwd">{{ _('Kyllä, pakota') }}</button>
-      </div>
-    </div>
-  </div>
-</div><!-- Delete User Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">{{ _('Poista käyttäjä') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
-      </div>
-      <div class="modal-body">
-        <p>{{ _('Haluatko poistaa käyttäjän:') }} <strong id="userTitle"></strong>?</p>
-        <div id="vahvistaContainer" style="margin-top:15px;">
-          <label for="confirmInput">{{ _('Kirjoita VAHVISTA vahvistaaksesi poiston') }}</label>
-          <input type="text" id="confirmInput" class="form-control">
-        </div>
-        <p id="countdownText" style="display:none; margin-top:10px;"></p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelDeleteBtn" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-        <button type="button" class="btn btn-danger" id="finalDeleteBtn" disabled>{{ _('Poista käyttäjä') }}</button>
-      </div>
-    </div>
+  <div id="usersTableContainer">
+    {% include 'admin_V2/_users_table.html' %}
   </div>
 </div>
+
+<!-- Toasts -->
+<div id="toast-container"></div>
+
+<!-- Include Modals -->
+{% include 'admin_V2/_modals_users.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
 <script>
-let countdown3Sec;
-let countdownInterval;
+// ======== Toast Helper ========
+function showToast(message, type='success') {
+    const toastContainer = $('#toast-container');
+    const toastEl = $(`
+      <div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>`);
+    toastContainer.append(toastEl);
+    const toast = new bootstrap.Toast(toastEl[0], { delay: 4000 });
+    toast.show();
+    toastEl.on('hidden.bs.toast', () => toastEl.remove());
+}
 
-function openDeleteModal(event, username, userId) {
-  event.preventDefault();
+// ======== Live Search ========
+let searchTimeout;
+$('#userSearch').on('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const query = encodeURIComponent($(this).val());
+        $.get(`{{ url_for('admin_user.user_control') }}?search=${query}`, function(html){
+            // Extract only the table part from the returned HTML
+            const newTable = $(html).find('#usersTableContainer').html();
+            $('#usersTableContainer').html(newTable);
+        });
+    }, 300);
+});
 
-  const userTitle = document.getElementById('userTitle');
-  const confirmInput = document.getElementById('confirmInput');
-  const finalDeleteBtn = document.getElementById('finalDeleteBtn');
-  const countdownText = document.getElementById('countdownText');
-  const cancelBtn = document.getElementById('cancelDeleteBtn');
+// ======== Sortable Table Columns ========
+$(document).on('click', 'th.sortable', function() {
+    const table = $(this).closest('table');
+    const tbody = table.find('tbody');
+    const index = $(this).index();
+    const asc = !$(this).hasClass('asc');
 
-  // Reset modal
-  userTitle.textContent = username;
-  confirmInput.value = "";
-  finalDeleteBtn.disabled = true;
-  countdownText.style.display = "none";
-  countdownText.textContent = "";
-  clearInterval(countdown3Sec);
-  clearInterval(countdownInterval);
+    // Reset classes
+    table.find('th.sortable').removeClass('asc desc');
+    $(this).addClass(asc ? 'asc' : 'desc');
 
-  // Cancel button stops everything
-  const stopAll = () => {
-    clearInterval(countdown3Sec);
-    clearInterval(countdownInterval);
-    finalDeleteBtn.disabled = true;
-    countdownText.style.display = "none";
-  };
-
-  cancelBtn.onclick = stopAll;
-  document.querySelector('#deleteModal .btn-close').onclick = stopAll;
-
-  // Input listener for VAHVISTA
-  confirmInput.oninput = () => {
-    clearInterval(countdown3Sec);
-    finalDeleteBtn.disabled = true;
-    countdownText.style.display = "none";
-
-    if(confirmInput.value.toUpperCase() === "VAHVISTA") {
-      let countdown = 3;
-      countdownText.style.display = "block";
-      countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
-
-      countdown3Sec = setInterval(() => {
-        countdown--;
-        if(countdown > 0) {
-          countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
+    const rows = tbody.find('tr').get();
+    rows.sort((a, b) => {
+        const A = $(a).children('td').eq(index).text().toUpperCase();
+        const B = $(b).children('td').eq(index).text().toUpperCase();
+        if($.isNumeric(A) && $.isNumeric(B)){
+            return asc ? A-B : B-A;
         } else {
-          clearInterval(countdown3Sec);
-          countdownText.style.display = "none";
-          finalDeleteBtn.disabled = false;
+            return asc ? A.localeCompare(B) : B.localeCompare(A);
         }
-      }, 1000);
-    } else {
-      // Wrong input cancels countdown immediately
-      clearInterval(countdown3Sec);
-      finalDeleteBtn.disabled = true;
-      countdownText.style.display = "none";
-    }
-  };
-
-  // Delete button click → start 5-second countdown
-  finalDeleteBtn.onclick = () => {
-    let countdown = 5;
-    finalDeleteBtn.disabled = true;
-    countdownText.style.display = "block";
-    countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
-
-    countdownInterval = setInterval(() => {
-      countdown--;
-      if(countdown > 0) {
-        countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
-      } else {
-        clearInterval(countdownInterval);
-        sendDeleteRequest(userId);
-      }
-    }, 1000);
-  };
-
-  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-  modal.show();
-
-  // Stop all if modal is hidden via backdrop click or ESC
-  document.getElementById('deleteModal').addEventListener('hidden.bs.modal', stopAll, { once: true });
-}
-
-function sendDeleteRequest(userId) {
-  fetch("{{ url_for('admin_user.delete_user') }}", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: userId })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if(data.status === "OK") {
-      const row = document.getElementById(`user-${userId}`);
-      if(row) row.remove();
-      alert(data.message);
-    } else {
-      alert("Virhe: " + data.message);
-    }
-    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
-    deleteModal.hide();
-  })
-  .catch(err => alert("Virhe pyynnössä: " + err));
-}
+    });
+    $.each(rows, (_, row) => tbody.append(row));
+});
 </script>
 
 
-
-<!-- Create User Modal -->
-<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">{{ _('Luo uusi käyttäjä') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
-      </div>
-      <div class="modal-body">
-        <form id="createUserForm" method="POST" action="{{ url_for('admin_user.create_user') }}">
-          <div class="mb-3">
-            <label for="username" class="form-label">{{ _('Käyttäjänimi') }}</label>
-            <input type="text" class="form-control" id="username" name="username" required>
-          </div>
-          <div class="mb-3">
-            <label for="displayname" class="form-label">{{ _('Näytönimi') }}</label>
-            <input type="text" class="form-control" id="displayname" name="displayname">
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">{{ _('Sähköposti') }}</label>
-            <input type="email" class="form-control" id="email" name="email" required>
-          </div>
-          <div class="mb-3">
-            <label for="role" class="form-label">{{ _('Rooli') }}</label>
-            <select class="form-select" id="role" name="role" required>
-              <option value="user">{{ _('Käyttäjä') }}</option>
-              <option value="admin">{{ _('Admin') }}</option>
-              <option value="global_admin">{{ _('Superkäyttäjä') }}</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-            <button type="submit" class="btn btn-success">{{ _('Luo käyttäjä') }}</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
+<script src="{{ url_for('static', filename='js/admin/users_modals.js') }}"></script>
 {% endblock %}

@@ -251,7 +251,45 @@ tr.fade‑out {
         {% endfor %}
       </tbody>
     </table>
-  </div>
+<nav aria-label="Stats pagination">
+  <ul class="pagination justify-content-center">
+
+    {# Previous button #}
+    {% if prev_page %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}" aria-label="Previous">
+          <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span>
+      </li>
+    {% endif %}
+
+    {# Current page / total pages #}
+    <li class="page-item disabled">
+      <span class="page-link">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</span>
+    </li>
+
+    {# Next button #}
+    {% if next_page %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}" aria-label="Next">
+          {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled">
+        <span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span>
+      </li>
+    {% endif %}
+
+  </ul>
+</nav>
+
+
+</div>
   {% else %}
   <div class="no-results">
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}

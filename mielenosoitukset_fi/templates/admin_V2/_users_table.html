@@ -1,0 +1,147 @@
+<table class="table table-hover align-middle">
+  <thead class="table-light">
+    <tr>
+      <th class="sortable" data-sort-key="username">{{ _('Nimi') }}</th>
+      <th class="sortable" data-sort-key="email">{{ _('Sähköpostiosoite') }}</th>
+      <th class="sortable" data-sort-key="role">{{ _('Rooli') }}</th>
+      <th>{{ _('Tila') }}</th>
+      <th>{{ _('Viimeksi kirjautunut') }}</th>
+      <th>{{ _('Toiminnot') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr id="user-{{ user._id }}">
+      <td>{{ user.displayname or user.username }}</td>
+      <td>{{ user.email }}</td>
+
+      <!-- Role badge -->
+      <td>
+        {% if user.role == 'admin' %}
+          <span class="badge bg-warning text-dark">{{ _('Admin') }}</span>
+        {% elif user.role == 'global_admin' %}
+          <span class="badge bg-danger">{{ _('Superkäyttäjä') }}</span>
+        {% else %}
+          <span class="badge bg-secondary">{{ _('Käyttäjä') }}</span>
+        {% endif %}
+      </td>
+
+     <td>
+  {% if user.active is true %}
+    <span class="badge bg-success">{{ _('Aktiivinen') }}</span>
+  {% elif user.active is false %}
+    <span class="badge bg-secondary">{{ _('Ei aktiivinen') }}</span>
+  {% elif user.active is none %}
+    <span class="badge bg-warning text-dark">{{ _('Odottaa migraatiota') }}</span>
+  {% else %}
+    <span class="badge bg-danger">{{ _('Virhe...') }}</span>
+  {% endif %}
+</td>
+
+
+      <!-- Last login -->
+    <td>
+    {% if user.last_login %}
+        {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
+    {% else %}
+        {{ _('Ei kirjautunut') }}
+    {% endif %}
+    </td>
+
+      <!-- Actions -->
+      <td>
+        {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") %}
+        <div class="dropdown">
+          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                  id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
+          </button>
+          <ul class="dropdown-menu" aria-labelledby="userActions-{{ user._id }}">
+            
+            {% if current_user.has_permission("EDIT_USER") %}
+            <li>
+              <a class="dropdown-item" href="{{ url_for('admin_user.edit_user', user_id=user._id) }}"
+                 data-bs-toggle="tooltip" title="{{ _('Muokkaa käyttäjää') }}">
+                <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
+              </a>
+            </li>
+            {% endif %}
+            
+            {% if current_user.has_permission("FORCE_PASSWORD_CHANGE") %}
+            <li>
+              <button class="dropdown-item text-warning" type="button"
+                      onclick="openForcePwdModal('{{ user.displayname or user.username }}', '{{ user._id }}')"
+                      data-bs-toggle="tooltip" title="{{ _('Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä') }}">
+                <i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}
+              </button>
+            </li>
+            {% endif %}
+
+            {% if current_user.has_permission("DELETE_USER") %}
+            <li>
+              <button class="dropdown-item text-danger" type="button"
+                      onclick="openDeleteModal(event, '{{ user.displayname or user.username }}', '{{ user._id }}', 'user')"
+                      data-bs-toggle="tooltip" title="{{ _('Poista käyttäjä') }}">
+                <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
+              </button>
+            </li>
+            {% endif %}
+
+          </ul>
+        </div>
+        {% else %}
+        <span class="text-muted">{{ _('Ei riittäviä oikeuksia.') }}</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Pagination -->
+<!-- AS OF NOW WE DO NOT SUPPORT NAVIGATION -->
+<!--
+<nav aria-label="User pagination">
+  <ul class="pagination justify-content-center mt-3">
+    {% if prev_page %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
+          <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span></li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</span></li>
+    {% if next_page %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
+          {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span></li>
+    {% endif %}
+  </ul>
+</nav>-->
+
+<script>
+// Initialize Bootstrap tooltips
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+  new bootstrap.Tooltip(el);
+});
+</script>
+
+<style>
+/* Hover effect + pointer */
+.table-hover tbody tr:hover {
+  background-color: #f1f3f5;
+  cursor: pointer;
+}
+
+/* Optional: role badges spacing */
+.badge-role {
+  font-size: 0.85rem;
+  padding: 0.35em 0.65em;
+}
+</style>

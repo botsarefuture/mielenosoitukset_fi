@@ -91,6 +91,23 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
     reason : str, optional
     user_id : ObjectId, optional
     """
+    # If login was successful, update the user's last login
+    if success:
+        try:
+            user_query = {"username": username}
+            if user_id:
+                user_query["_id"] = ObjectId(user_id)
+            user = mongo.users.find_one(user_query)
+            if user:
+                mongo.users.update_one(
+                    {"_id": ObjectId(user["_id"])},
+                    {"$set": {"last_login": datetime.utcnow()}}
+                )
+                
+        except Exception as e:
+            # Optional: log the exception somewhere
+            print(f"Failed to update last login: {e}")
+            
     login_logs.insert_one({
         "username": username,
         "user_id": ObjectId(user_id) if user_id else None,

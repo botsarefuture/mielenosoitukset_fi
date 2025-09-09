@@ -316,6 +316,11 @@ def create_app() -> Flask:
     with app.app_context():
         scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours
         scheduler.start()
+        
+    @app.template_filter('displayname_or_username')
+    def displayname_or_username(user):
+        return user.displayname or user.username
+
 
     return app
 

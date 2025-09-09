@@ -1,0 +1,192 @@
+
+<!-- Force Password Modal -->
+<div class="modal fade" id="forcePwdModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="forcePwdModalTitle">{{ _('Pakota salasanan vaihto') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="forcePwdModalBody">{{ _('Haluatko pakottaa käyttäjän vaihtamaan salasanansa?') }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <button type="button" class="btn btn-warning" id="confirmForcePwd">{{ _('Kyllä, pakota') }}</button>
+      </div>
+    </div>
+  </div>
+</div><!-- Delete User Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('Poista käyttäjä') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Haluatko poistaa käyttäjän:') }} <strong id="userTitle"></strong>?</p>
+        <div id="vahvistaContainer" style="margin-top:15px;">
+          <label for="confirmInput">{{ _('Kirjoita VAHVISTA vahvistaaksesi poiston') }}</label>
+          <input type="text" id="confirmInput" class="form-control">
+        </div>
+        <p id="countdownText" style="display:none; margin-top:10px;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelDeleteBtn" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <button type="button" class="btn btn-danger" id="finalDeleteBtn" disabled>{{ _('Poista käyttäjä') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let countdown3Sec;
+let countdownInterval;
+
+function openDeleteModal(event, username, userId) {
+  event.preventDefault();
+
+  const userTitle = document.getElementById('userTitle');
+  const confirmInput = document.getElementById('confirmInput');
+  const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+  const countdownText = document.getElementById('countdownText');
+  const cancelBtn = document.getElementById('cancelDeleteBtn');
+
+  // Reset modal
+  userTitle.textContent = username;
+  confirmInput.value = "";
+  finalDeleteBtn.disabled = true;
+  countdownText.style.display = "none";
+  countdownText.textContent = "";
+  clearInterval(countdown3Sec);
+  clearInterval(countdownInterval);
+
+  // Cancel button stops everything
+  const stopAll = () => {
+    clearInterval(countdown3Sec);
+    clearInterval(countdownInterval);
+    finalDeleteBtn.disabled = true;
+    countdownText.style.display = "none";
+  };
+
+  cancelBtn.onclick = stopAll;
+  document.querySelector('#deleteModal .btn-close').onclick = stopAll;
+
+  // Input listener for VAHVISTA
+  confirmInput.oninput = () => {
+    clearInterval(countdown3Sec);
+    finalDeleteBtn.disabled = true;
+    countdownText.style.display = "none";
+
+    if(confirmInput.value.toUpperCase() === "VAHVISTA") {
+      let countdown = 3;
+      countdownText.style.display = "block";
+      countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
+
+      countdown3Sec = setInterval(() => {
+        countdown--;
+        if(countdown > 0) {
+          countdownText.textContent = `Poisto käytettävissä ${countdown}...`;
+        } else {
+          clearInterval(countdown3Sec);
+          countdownText.style.display = "none";
+          finalDeleteBtn.disabled = false;
+        }
+      }, 1000);
+    } else {
+      // Wrong input cancels countdown immediately
+      clearInterval(countdown3Sec);
+      finalDeleteBtn.disabled = true;
+      countdownText.style.display = "none";
+    }
+  };
+
+  // Delete button click → start 5-second countdown
+  finalDeleteBtn.onclick = () => {
+    let countdown = 5;
+    finalDeleteBtn.disabled = true;
+    countdownText.style.display = "block";
+    countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
+
+    countdownInterval = setInterval(() => {
+      countdown--;
+      if(countdown > 0) {
+        countdownText.textContent = `Käyttäjä poistetaan ${countdown} sekunnin kuluttua...`;
+      } else {
+        clearInterval(countdownInterval);
+        sendDeleteRequest(userId);
+      }
+    }, 1000);
+  };
+
+  const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+  modal.show();
+
+  // Stop all if modal is hidden via backdrop click or ESC
+  document.getElementById('deleteModal').addEventListener('hidden.bs.modal', stopAll, { once: true });
+}
+
+function sendDeleteRequest(userId) {
+  fetch("{{ url_for('admin_user.delete_user') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.status === "OK") {
+      const row = document.getElementById(`user-${userId}`);
+      if(row) row.remove();
+      showToast(data.message);
+    } else {
+      showToast("Virhe: " + data.message);
+    }
+    const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    deleteModal.hide();
+  })
+  .catch(err => showToast("Virhe pyynnössä: " + err));
+}
+</script>
+
+
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('Luo uusi käyttäjä') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <form id="createUserForm" method="POST" action="{{ url_for('admin_user.create_user') }}">
+          <div class="mb-3">
+            <label for="username" class="form-label">{{ _('Käyttäjänimi') }}</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="displayname" class="form-label">{{ _('Näytönimi') }}</label>
+            <input type="text" class="form-control" id="displayname" name="displayname">
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">{{ _('Sähköposti') }}</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="role" class="form-label">{{ _('Rooli') }}</label>
+            <select class="form-select" id="role" name="role" required>
+              <option value="user">{{ _('Käyttäjä') }}</option>
+              <option value="admin">{{ _('Admin') }}</option>
+              <option value="global_admin">{{ _('Superkäyttäjä') }}</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+            <button type="submit" class="btn btn-success">{{ _('Luo käyttäjä') }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

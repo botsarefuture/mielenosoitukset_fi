@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('API Tokenit') }}{% endblock %}
+
+{% block styles %}
+<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css') }}">-->
+
+<style>
+  .token-card {
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 0.5rem;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+  }
+
+  .token-info {
+    flex-grow: 1;
+  }
+
+  .token-actions button {
+    margin-left: 5px;
+  }
+
+  .raw-token {
+    font-family: monospace;
+    background: #e9ecef;
+    padding: 5px 10px;
+    border-radius: 0.25rem;
+    word-break: break-all;
+    display: inline-block;
+    margin-top: 5px;
+  }
+
+  .modal-backdrop {
+    z-index: 1000001 !important;
+  }
+
+  .modal {
+    z-index: 1000002 !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-3"><i class="fas fa-key"></i> {{ _('API Tokenit') }}</h1>
+  <p>{{ _('Täällä voit hallita API-tokeneitasi.') }}</p>
+
+  <div class="mb-3">
+    <button class="btn btn-success" id="generate-token-btn">{{ _('Luo uusi token') }}</button>
+    <span id="generate-spinner" class="spinner-border spinner-border-sm ms-2" style="display:none;"></span>
+  </div>
+
+  <div id="tokens-list">
+    <p>{{ _('Ladataan tokeneita...') }}</p>
+  </div>
+</div>
+
+<!-- Token creation modal -->
+<div class="modal fade" id="tokenModal" tabindex="-1" aria-labelledby="tokenModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="create-token-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tokenModalLabel">{{ _('Luo lyhytkestoinen API Token') }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">{{ _('Scopes') }}</label>
+            <div id="scope-options">
+              <!-- READ -->
+              {% if current_user.has_permission("API_READ") %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="read" id="scope-read" checked>
+                <label class="form-check-label" for="scope-read">read</label>
+              </div>
+              {% else %}
+              <div class="form-check text-muted">
+                <input class="form-check-input" type="checkbox" value="read" id="scope-read" disabled>
+                <label class="form-check-label" for="scope-read">read (Sinulla ei ole lupaa käyttää tätä)</label>
+              </div>
+              {% endif %}
+
+              <!-- WRITE -->
+              {% if current_user.has_permission("API_WRITE") %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="write" id="scope-write">
+                <label class="form-check-label" for="scope-write">write</label>
+              </div>
+              {% else %}
+              <div class="form-check text-muted">
+                <input class="form-check-input" type="checkbox" value="write" id="scope-write" disabled>
+                <label class="form-check-label" for="scope-write">write (Sinulla ei ole lupaa käyttää tätä)</label>
+              </div>
+              {% endif %}
+
+              <!-- WRITE_DEMOS -->
+              {% if current_user.has_permission("API_WRITE_DEMOS") %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="write_demos" id="scope-write-demos">
+                <label class="form-check-label" for="scope-write-demos">write_demos</label>
+              </div>
+              {% else %}
+              <div class="form-check text-muted">
+                <input class="form-check-input" type="checkbox" value="write_demos" id="scope-write-demos" disabled>
+                <label class="form-check-label" for="scope-write-demos">write_demos (Sinulla ei ole lupaa käyttää
+                  tätä)</label>
+              </div>
+              {% endif %}
+
+              <!-- ADMIN -->
+              {% if current_user.has_permission("API_ADMIN") %}
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="admin" id="scope-admin">
+                <label class="form-check-label" for="scope-admin">admin</label>
+              </div>
+              {% else %}
+              <div class="form-check text-muted">
+                <input class="form-check-input" type="checkbox" value="admin" id="scope-admin" disabled>
+                <label class="form-check-label" for="scope-admin">admin (Sinulla ei ole lupaa käyttää tätä)</label>
+              </div>
+              {% endif %}
+            </div>
+
+
+            <div class="mb-3" id="generated-token-container" style="display:none;">
+              <p>{{ _('Kopioi token nyt, sillä se näkyy vain kerran!') }}</p>
+              <div class="raw-token" id="modal-token"></div>
+              <p class="mt-2"><strong>{{ _('Scopet:') }}</strong> <span id="modal-scopes"></span></p>
+              <p><strong>{{ _('Vanhenee:') }}</strong> <span id="modal-expires"></span></p>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">{{ _('Luo Token') }}</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="tokenModal" tabindex="-1" aria-labelledby="tokenModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tokenModalLabel">{{ _('Uusi API Token') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Kopioi token nyt, sillä se näkyy vain kerran!') }}</p>
+        <div class="raw-token" id="modal-token"></div>
+        <p class="mt-2"><strong>{{ _('Scopet:') }}</strong> <span id="modal-scopes"></span></p>
+        <p><strong>{{ _('Tyyppi:') }}</strong> <span id="modal-type"></span></p>
+        <p><strong>{{ _('Vanhenee:') }}</strong> <span id="modal-expires"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="copy-modal-token">{{ _('Kopioi') }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const listEl = document.getElementById("tokens-list");
+    const genBtn = document.getElementById("generate-token-btn");
+    const spinner = document.getElementById("generate-spinner");
+
+    // Modal elements
+    const tokenModal = new bootstrap.Modal(document.getElementById('tokenModal'));
+    const modalTokenEl = document.getElementById('modal-token');
+    const modalScopesEl = document.getElementById('modal-scopes');
+    const modalTypeEl = document.getElementById('modal-type');
+    const modalExpiresEl = document.getElementById('modal-expires');
+    const copyModalBtn = document.getElementById('copy-modal-token');
+    const form = document.getElementById("create-token-form");
+    const generatedContainer = document.getElementById("generated-token-container");
+
+    // Load token list
+    async function loadTokens() {
+      const res = await fetch("/users/auth/api_tokens/list");
+      const data = await res.json();
+      if (data.status !== "success") {
+        listEl.innerHTML = "<p>Virhe tokenien latauksessa.</p>";
+        return;
+      }
+
+      if (data.tokens.length === 0) {
+        listEl.innerHTML = "<p>{{ _('Ei aktiivisia tokeneita.') }}</p>";
+        return;
+      }
+
+      listEl.innerHTML = "";
+      data.tokens.forEach(tok => {
+        const card = document.createElement("div");
+        card.className = "token-card";
+
+        card.innerHTML = `
+              <div class="token-info">
+                <strong>${tok.type}</strong> | ${tok.scopes.join(", ")}<br>
+                ${tok.expires_at ? new Date(tok.expires_at).toLocaleString() : "Ei vanhentumisaikaa"}
+              </div>
+              <div class="token-actions">
+                <button class="btn btn-primary btn-sm view-btn">{{ _('Näytä') }}</button>
+                <button class="btn btn-danger btn-sm revoke-btn">{{ _('Peruuta') }}</button>
+              </div>
+            `;
+
+        const viewBtn = card.querySelector(".view-btn");
+        const revokeBtn = card.querySelector(".revoke-btn");
+
+        // Regenerate token when viewing
+        viewBtn.addEventListener("click", async () => {
+          spinner.style.display = "inline-block";
+          const resp = await fetch("/users/auth/api_token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: tok.type, scopes: tok.scopes })
+          });
+          const newData = await resp.json();
+          spinner.style.display = "none";
+
+          if (newData.token) {
+            modalTokenEl.textContent = newData.token;
+            modalScopesEl.textContent = newData.scopes.join(", ");
+            modalTypeEl.textContent = newData.type;
+            modalExpiresEl.textContent = newData.expires_at ? new Date(newData.expires_at).toLocaleString() : "Ei vanhentumisaikaa";
+            tokenModal.show();
+            loadTokens();
+          } else {
+            alert("Virhe tokenin luomisessa: " + (newData.error || ""));
+          }
+        });
+
+        revokeBtn.addEventListener("click", async () => {
+          if (!confirm("Haluatko varmasti peruuttaa tämän tokenin?")) return;
+          const resp = await fetch("/users/auth/api_tokens/revoke", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token_id: tok._id })
+          });
+          const result = await resp.json();
+          if (result.status === "success") loadTokens();
+          else alert("Virhe tokenin peruuttamisessa.");
+        });
+
+        listEl.appendChild(card);
+      });
+    }
+
+    // Show modal to create new short-lived token
+    genBtn.addEventListener("click", () => {
+      generatedContainer.style.display = "none";
+      tokenModal.show();
+    });
+
+    // Create short-lived token via modal form
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      spinner.style.display = "inline-block";
+
+      const scopes = Array.from(document.querySelectorAll("#scope-options input:checked")).map(el => el.value);
+
+      const resp = await fetch("/users/auth/api_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "short", scopes })
+      });
+      const data = await resp.json();
+      spinner.style.display = "none";
+
+      if (data.token) {
+        modalTokenEl.textContent = data.token;
+        modalScopesEl.textContent = data.scopes.join(", ");
+        modalTypeEl.textContent = data.type;
+        modalExpiresEl.textContent = data.expires_at ? new Date(data.expires_at).toLocaleString() : "Ei vanhentumisaikaa";
+        generatedContainer.style.display = "block";
+        tokenModal.show();
+        loadTokens();
+      } else {
+        alert("Virhe tokenin luomisessa: " + (data.error || ""));
+      }
+    });
+
+    // Copy token from modal
+    copyModalBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(modalTokenEl.textContent)
+        .then(() => alert("Token kopioitu leikepöydälle!"))
+        .catch(() => alert("Kopiointi epäonnistui."));
+    });
+
+    loadTokens();
+  });
+
+</script>
+{% endblock %}

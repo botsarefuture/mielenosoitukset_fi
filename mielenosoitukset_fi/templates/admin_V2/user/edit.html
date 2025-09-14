@@ -93,13 +93,50 @@
         boxes.forEach(box => box.checked = checked);
     }
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const roleSelect = document.getElementById('role');
+    const globalAdminOption = document.getElementById('role_global_admin');
+    const clearanceInfoEl = document.getElementById('clearanceInfo');
+
+    // API endpoint to check clearance
+    fetch('{{ url_for("board_compliance.get_clearance", user_id=user.id) }}')
+        .then(res => res.json())
+        .then(data => {
+            if (data.approved) {
+                globalAdminOption.disabled = false;
+
+                // Show info about who granted it and when
+                const grantedBy = data.granted_by || "N/A";
+                const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleString() : "N/A";
+                clearanceInfoEl.innerHTML = `
+                    <strong>{{ _('Hallituksen hyväksyntä myönnetty') }}:</strong> ${grantedBy} <br>
+                    <strong>{{ _('Päivämäärä') }}:</strong> ${timestamp}
+                `;
+                clearanceInfoEl.style.display = "block";
+            } else {
+                globalAdminOption.disabled = true;
+                clearanceInfoEl.style.display = "none";
+            }
+        })
+        .catch(err => {
+            console.error('Error checking board clearance:', err);
+            globalAdminOption.disabled = true;
+            clearanceInfoEl.style.display = "none";
+        });
+});
+</script>
+
+
 {% endblock %}
 
 {% block main_content %}
 <section class="container">
     <h2 class="form-title">{{ _('Muokkaa käyttäjää') }}</h2>
     <p class="muted">{{ _('Täällä voit muokata käyttäjän perustietoja ja hallita hänen oikeuksiaan.') }}</p>
-    <div class="muted" style="font-size:0.95rem; background:var(--muted-bg, #f8f9fa); padding:0.75rem; border-radius:8px;">
+    <div class="muted"
+        style="font-size:0.95rem; background:var(--muted-bg, #f8f9fa); padding:0.75rem; border-radius:8px;">
         {{ _('Vinkki: Muutokset tallennetaan painamalla "Tallenna muutokset". Käyttäjien oikeudet vaikuttavat heidän näkyviinsä toimintoihin.') }}
     </div>
 
@@ -126,18 +163,31 @@
         <div class="form-group">
             <label for="role">{{ _('Rooli') }}</label>
             <select id="role" name="role" class="form-control" required>
-                <option value="user" {% if user.role == 'user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
-                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}</option>
-                <option value="global_admin" {% if user.role == 'global_admin' %}selected{% endif %}>{{ _('Superkäyttäjä') }}</option>
+                <option value="user" {% if user.role=='user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
+                <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}
+                </option>
+                <option value="global_admin" id="role_global_admin" {% if user.role=='global_admin' %}selected{% endif
+                    %} disabled>
+                    {{ _('Superkäyttäjä (vain hallituksen hyväksynnän jälkeen)') }}
+                </option>
             </select>
+            <small class="muted" id="globalAdminNotice">
+                {{ _('Superkäyttäjärooli voidaan valita vain, jos hallitus on antanut hyväksynnän.') }}
+            </small>
+<div id="clearanceInfo" style="margin-top:0.5rem; display:none; padding:0.5rem; background-color:var(--input-bg); border-radius:8px;">
+    <!-- Filled dynamically by JS -->
+</div>
         </div>
+
+
 
         <div class="permissions-panel">
             <h3>{{ _('Globaalit oikeudet') }}</h3>
             <p class="muted">{{ _('Globaalit oikeudet ovat vain superkäyttäjille.') }}</p>
             <div class="permissions-group">
                 <div class="select-all">
-                    <input type="checkbox" id="select_all_global" onchange="selectAllPermissions('global', this.checked)">
+                    <input type="checkbox" id="select_all_global"
+                        onchange="selectAllPermissions('global', this.checked)">
                     <label for="select_all_global">{{ _('Valitse kaikki') }}</label>
                 </div>
                 {% for group_name, permissions in PERMISSIONS_GROUPS.items() %}
@@ -146,7 +196,8 @@
                     <div class="permission-list" id="permissions_global">
                         {% for perm in permissions %}
                         <div class="permission-item">
-                            <input type="checkbox" id="perm_global_{{ perm.name }}" name="permissions[global][]" value="{{ perm.name }}" {% if perm.name in global_permissions %}checked{% endif %}>
+                            <input type="checkbox" id="perm_global_{{ perm.name }}" name="permissions[global][]"
+                                value="{{ perm.name }}" {% if perm.name in global_permissions %}checked{% endif %}>
                             <label for="perm_global_{{ perm.name }}">{{ perm.description }}</label>
                         </div>
                         {% endfor %}
@@ -158,7 +209,8 @@
 
         <div class="form-group" style="text-align:center;">
             <button type="submit" class="btn-primary">{{ _('Tallenna muutokset') }}</button>
-            <a href="{{ url_for('admin_user.user_control') }}" class="btn" style="margin-left:0.75rem;">{{ _('Peruuta') }}</a>
+            <a href="{{ url_for('admin_user.user_control') }}" class="btn" style="margin-left:0.75rem;">{{ _('Peruuta')
+                }}</a>
         </div>
     </form>
 </section>

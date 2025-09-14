@@ -71,7 +71,10 @@ def compare_user_levels(user1, user2):  # Check if the user1 is higher than user
 
     """
     if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
-        raise ValueError("Invalid user role")
+        if user2.role not in USER_ACCESS_LEVELS:
+            user2.role = "user"
+        else:
+            raise ValueError("Invalid user role")
     
     if user1._id == ObjectId("66c25768dad432ad39ce38d5"):
         return True
@@ -297,6 +300,19 @@ def save_user(user_id):
     return redirect(request.referrer or url_for("admin_user.user_control"))
 
 import warnings
+
+
+
+
+@admin_user_bp.route("/api/check_clearance/<user_id>")
+def check_clearance(user_id):
+    """
+    Temporary endpoint to check if the board has approved the user for global_admin role.
+    Currently always returns False.
+    """
+    return jsonify({
+        "has_clearance": False
+    })
 
 
 def is_valid_email(email):

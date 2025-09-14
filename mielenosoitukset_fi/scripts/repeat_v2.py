@@ -55,9 +55,9 @@ from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
 # Dry-run flag (can be overridden from CLI)
 DRY_RUN = False
 # Force recheck flag: when True, verify existing child demos match schedule
-FORCE_RECHECK = True
+FORCE_RECHECK = False
 # If True and FORCE_RECHECK, attempt to fix mismatches (mutating DB unless DRY_RUN)
-RECHECK_FIX = True
+RECHECK_FIX = False
 
 # Helper: map weekday names to index and a weekly alignment helper
 WEEKDAY_MAP = {

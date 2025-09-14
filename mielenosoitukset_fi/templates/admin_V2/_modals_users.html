@@ -149,8 +149,6 @@
   }
 </script>
 
-
-
 <!-- Create User Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -160,16 +158,16 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
-        <!-- Warning / Note -->
-        <div class="alert alert-warning align-items-start mb-3" role="alert">
-          <i class="fa-solid fa-triangle-exclamation me-2 mt-1"></i>
-          <div class="flex-grow-1">
-            Kaikilla <strong>superkäyttäjillä</strong> tulee olla hallituksen hyväksymä
-            <strong>turvaluokitus</strong> ennen käyttöoikeuksien myöntämistä.
-            <br>
-            <br> Mikäli myönnät <span class="badge bg-secondary">superuser</span> tason käyttöoikeuden henkilölle, jolla
-            ei ole turvaluokitusta, saatat joutua lakiteknisten toimenpiteiden kohteeksi.
 
+        <!-- Notification / Info -->
+        <div class="alert alert-info align-items-start mb-3" role="alert">
+          <i class="fa-solid fa-circle-info me-2 mt-1"></i>
+          <div class="flex-grow-1">
+            Huomio: <strong>Superkäyttäjä / global_admin</strong> -roolia voidaan myöntää vain automaattisesti 
+            sen jälkeen, kun hallitus on antanut kirjallisen hyväksynnän ja turvaluokituksen. 
+            Roolia ei voi valita tai myöntää manuaalisesti tässä muodossa.
+            <br><br>
+            Mikä tahansa yritys myöntää roolin manuaalisesti ohittaa hyväksynnän, ei onnistu järjestelmässä.
           </div>
         </div>
 
@@ -198,7 +196,7 @@
             <select class="form-select" id="role" name="role" required>
               <option value="user">{{ _('Käyttäjä') }}</option>
               <option value="admin">{{ _('Admin') }}</option>
-              <option value="global_admin">{{ _('Superkäyttäjä') }}</option>
+              <option value="global_admin" disabled>{{ _('Superkäyttäjä (vain hallituksen hyväksynnän jälkeen)') }}</option>
             </select>
           </div>
           <div class="modal-footer">

@@ -114,6 +114,8 @@ def create_app() -> Flask:
         admin_org_bp,
         admin_recu_demo_bp,
         admin_media_bp,
+        board_bp,
+        audit_bp
     )
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
@@ -126,6 +128,8 @@ def create_app() -> Flask:
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    app.register_blueprint(board_bp)
+    app.register_blueprint(audit_bp)
 
     # Import and initialize routes
     import basic_routes

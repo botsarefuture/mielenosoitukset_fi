@@ -1,0 +1,120 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        background-color: var(--container-bg);
+        color: var(--text);
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    th, td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--input-border);
+    }
+
+    th {
+        background-color: var(--input-bg);
+    }
+
+    tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    input.search-box {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--input-border);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .muted {
+        font-size: 0.9rem;
+        color: var(--muted);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function fetchLogs() {
+        const res = await fetch("{{ url_for('board_audit.get_logs') }}");
+        const logs = await res.json();
+        return logs;
+    }
+
+    function renderLogs(logs) {
+        const tbody = document.querySelector("#audit-log-table tbody");
+        tbody.innerHTML = "";
+        logs.forEach(log => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${log.username || 'Unknown'}</td>
+                <td>${log.action}</td>
+                <td>${log.granted_by}</td>
+                <td>${new Date(log.timestamp).toLocaleString()}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function initLogs() {
+        const logs = await fetchLogs();
+        renderLogs(logs);
+
+        const searchInput = document.querySelector("#search-log");
+        searchInput.addEventListener("input", () => {
+            const filtered = logs.filter(log => 
+                log.username?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                log.action.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                log.granted_by.toLowerCase().includes(searchInput.value.toLowerCase())
+            );
+            renderLogs(filtered);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", initLogs);
+</script>
+{% endblock %}
+
+{% block main_content %}
+<section class="container">
+    <h2>Board Compliance Audit Log</h2>
+    <p class="muted">Tässä näet kaikki hallintopäätökset, roolimuutokset ja oikeuksien myöntämiset.</p>
+    <input type="text" class="search-box" id="search-log" placeholder="Hae käyttäjää, toimintoa tai myöntäjää...">
+    
+    <table id="audit-log-table">
+        <thead>
+            <tr>
+                <th>Käyttäjä</th>
+                <th>Toiminto</th>
+                <th>Myöntäjä</th>
+                <th>Aika</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- JS will fill this -->
+        </tbody>
+    </table>
+</section>
+{% endblock %}

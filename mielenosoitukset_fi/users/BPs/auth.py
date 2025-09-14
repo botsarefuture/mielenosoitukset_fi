@@ -35,6 +35,8 @@ import base64
 from io import BytesIO
 from flask import jsonify
 
+from mielenosoitukset_fi.utils.tokens import TOKEN_USAGE_LOGS, TOKENS_COLLECTION, create_token
+
 
 def generate_qr(url: str) -> str:
     """
@@ -187,6 +189,81 @@ def register():
     return render_template("users/auth/register.html")
 
 
+
+# ------------------------
+# Generate a new API token
+# ------------------------
+@auth_bp.route("/api_token", methods=["POST"])
+@login_required
+def generate_api_token():
+    data = request.get_json() or {}
+    token_type = data.get("type", "short")
+    scopes = data.get("scopes", ["read"])
+
+    # Admin scope check
+    if "admin" in scopes and not (current_user.global_admin or current_user.role in ["admin", "superuser"]):
+        scopes.remove("admin")
+        TOKEN_USAGE_LOGS.insert_one({
+            "user_id": current_user._id,
+            "username": current_user.username,
+            "action": "attempted admin scope request",
+            "requested_scopes": data.get("scopes", []),
+            "allowed_scopes": scopes,
+            "ip_address": request.remote_addr,
+            "timestamp": datetime.now()
+        })
+
+    try:
+        token, expires_at = create_token(user_id=current_user._id, token_type=token_type, scopes=scopes)
+        return jsonify({
+            "status": "success",
+            "token": token,          # raw token (showed only once)
+            "expires_at": expires_at.isoformat(),
+            "scopes": scopes,
+            "type": token_type
+        })
+    except ValueError as e:
+        return jsonify({"status": "error", "error": str(e)}), 400
+    
+
+# ------------------------
+# List all tokens for user
+# ------------------------
+@auth_bp.route("/api_tokens/list")
+@login_required
+def list_tokens():
+    tokens = list(TOKENS_COLLECTION.find({"user_id": current_user._id}))
+    # We never send hashed token back
+    token_list = []
+    for t in tokens:
+        token_list.append({
+            "_id": str(t["_id"]),
+            "type": t["type"],
+            "scopes": t.get("scopes", []),
+            "expires_at": t.get("expires_at").isoformat() if t.get("expires_at") else None,
+        })
+    return jsonify({"status": "success", "tokens": token_list})
+
+# ------------------------
+# Revoke a token
+# ------------------------
+@auth_bp.route("/api_tokens/revoke", methods=["POST"])
+@login_required
+def revoke_token():
+    data = request.get_json() or {}
+    token_id = data.get("token_id")
+    if not token_id:
+        return jsonify({"status": "error", "message": "token_id required"}), 400
+
+    result = TOKENS_COLLECTION.delete_one({"_id": ObjectId(token_id), "user_id": current_user._id})
+    if result.deleted_count == 1:
+        return jsonify({"status": "success"})
+    return jsonify({"status": "error", "message": "Token not found"}), 404
+
+@auth_bp.route("/ui/tokens")
+def tokens_ui():
+    return render_template("users/auth/token_ui.html")
+
 @auth_bp.route("/api/username_free", methods=["GET"])
 def api_username_free():
     username = request.args.get("username", "").strip()
@@ -195,7 +272,6 @@ def api_username_free():
 
     is_taken = mongo.users.find_one({"username": username}) is not None
     return jsonify({"available": not is_taken})
-
 
 @auth_bp.route("/confirm_email/<token>")
 def confirm_email(token):

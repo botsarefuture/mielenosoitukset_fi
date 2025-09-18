@@ -1301,3 +1301,79 @@ def get_submitter_info(demo_id):
         "submitted_at": str(submitter.get("submitted_at", "-")),
     }
     return jsonify({"status": "OK", "submitter": submitter_info})
+
+from flask import Blueprint, request, jsonify
+from bson import ObjectId
+
+admin_demo_api_bp = Blueprint("admin_demo_api", __name__)
+
+def _require_valid_objectid(id_str):
+    # Validate ObjectId
+    try:
+        return ObjectId(id_str)
+    except:
+        raise ValueError("Invalid ID")
+
+@admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
+def approve_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+
+    if demo.get("approved"):
+        return jsonify({"success": False, "message": "Mielenosoitus on jo hyväksytty"}), 200
+
+    mongo.demonstrations.update_one(
+        {"_id": _require_valid_objectid(demo_id)},
+        {"$set": {"approved": True, "rejected": False}}
+    )
+
+    # Notify submitter
+    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        demo_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
+        email_sender.queue_email(
+            template_name="demo_submitter_approved.html",
+            subject="Mielenosoituksesi on hyväksytty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+                "url": demo_url
+            },
+        )
+
+    return jsonify({"success": True, "message": "Mielenosoitus hyväksyttiin!"})
+
+@admin_demo_api_bp.route("/<demo_id>/deny", methods=["POST"])
+def reject_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+
+    if demo.get("approved") is False and demo.get("rejected") is True:
+        return jsonify({"success": False, "message": "Mielenosoitus on jo hylätty"}), 200
+
+    mongo.demonstrations.update_one(
+        {"_id": _require_valid_objectid(demo_id)},
+        {"$set": {"approved": False, "rejected": True}}
+    )
+
+    # Notify submitter
+    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        email_sender.queue_email(
+            template_name="demo_submitter_rejected.html",
+            subject="Mielenosoituksesi on hylätty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+            },
+        )
+
+    return jsonify({"success": True, "message": "Mielenosoitus hylättiin!"})

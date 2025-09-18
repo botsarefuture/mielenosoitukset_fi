@@ -111,6 +111,7 @@ def create_app() -> Flask:
         admin_bp,
         admin_user_bp,
         admin_demo_bp,
+        admin_demo_api_bp,
         admin_org_bp,
         admin_recu_demo_bp,
         admin_media_bp,
@@ -122,6 +123,8 @@ def create_app() -> Flask:
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
+    app.register_blueprint(admin_demo_api_bp, url_prefix="/api/admin/demo/")
+    
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
@@ -239,10 +242,20 @@ def create_app() -> Flask:
     def utility_processor():
         def get_admin_tasks():
             # check if any demonstrations are waiting for approval
-            waiting = list(mongo.demonstrations.find({"approved": False, "hide": False}))
+            # rejected doesnt exist or is False
+            waiting = list(
+                mongo.demonstrations.find({
+                    "approved": False,
+                    "hide": False,
+                    "$or": [
+                        {"rejected": False},
+                        {"rejected": {"$exists": False}}
+                    ]
+                }).sort("created_at", -1)
+            )
             app.logger.debug(f"Found {len(waiting)} demonstrations waiting for approval.")
             return waiting
-            
+
         def get_org_name(org_id):
             return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
 
@@ -252,12 +265,19 @@ def create_app() -> Flask:
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
+        tasks = get_admin_tasks()
+        tasks_amount_total = len(tasks)
+        tasks_amount_done = sum(1 for t in tasks if t.get("approved", False))
+
         return dict(
             get_org_name=get_org_name,
             get_supported_locales=get_supported_locales,
             get_lang_name=get_lang_name,
-            tasks=get_admin_tasks(),
+            tasks=tasks,
+            tasks_amount_total=tasks_amount_total,
+            tasks_amount_done=tasks_amount_done,
         )
+
 
     
     # if env var forcerun

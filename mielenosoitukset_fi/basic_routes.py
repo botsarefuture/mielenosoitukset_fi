@@ -924,8 +924,9 @@ Disallow: /admin/
         log_demo_view(
             _demo._id, current_user._id if current_user.is_authenticated else None
         )
-        
-        
+
+        #print("RECU: ", hasattr(_demo, 'recurs'), _demo.recurs)
+
         if _demo.recurs:
             toistuvuus = generate_demo_sentence(demo)
 

@@ -1,0 +1,31 @@
+.modal-content {
+  background: var(--color-card-bg);
+  color: var(--color-text);
+  border-radius: 1em;
+  box-shadow: var(--box_shadow);
+}
+
+.modal-header, .modal-footer {
+  background: var(--color-title-accent);
+  color: var(--primary_color);
+  border-top-left-radius: 1em;
+  border-top-right-radius: 1em;
+}
+
+.modal-title { color: var(--primary_text_color); }
+
+.form-control {
+  background: var(--background);
+  color: var(--primary_text_color);
+  border: 1px solid var(--primary_color);
+}
+
+.form-control:focus {
+  border-color: var(--primary_dark_color);
+  box-shadow: 0 0 0 2px var(--primary_color);
+}
+
+.form-control::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}

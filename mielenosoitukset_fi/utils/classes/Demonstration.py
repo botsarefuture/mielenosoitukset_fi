@@ -158,7 +158,8 @@ class Demonstration(BaseModel):
         created_datetime=None,
         _id: ObjectId = None,
         description: str = None,
-        _dont_override: bool = False
+        _dont_override: bool = False,
+        _rejected: bool = False,
     ):
         """
         Initialize a new demonstration event.
@@ -314,6 +315,11 @@ class Demonstration(BaseModel):
         
         if self.parent:
             self.recurs = True
+            self.save_flag = True
+            
+        if _rejected == True:
+            self.accepted = False
+            self.hide = True
             self.save_flag = True
 
         
@@ -726,6 +732,8 @@ class Demonstration(BaseModel):
             created_datetime=get("created_datetime"),
             merged_into=get("merged_into"),
             _id=get("_id"),
+            _rejected=get("rejected", False),
+            running_number=get("running_number"),
         )
 
 

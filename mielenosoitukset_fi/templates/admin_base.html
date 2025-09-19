@@ -29,6 +29,39 @@
           margin-left: 0 !important; /*reset the margin set in the sidebar_V2.css*/
         }
       }
+
+  /* Sidebar nav links hover */
+  #sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1); /* subtle light overlay */
+    border-radius: 0.375rem; /* same as btn rounded */
+  }
+
+  /* Sidebar card hover for task items */
+  #sidebar .list-group-item:hover {
+    background-color: rgba(0, 123, 255, 0.1); /* light blue overlay */
+    cursor: pointer;
+  }
+
+  /* Buttons hover (logout etc.) */
+  #sidebar .btn:hover {
+    opacity: 0.9;
+  }
+
+  #sidebar .card-body::-webkit-scrollbar {
+  width: 6px;
+}
+#sidebar .card-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.3);
+  border-radius: 3px;
+}
+
+.modal-backdrop { z-index: 1000001 !important; }
+.modal { z-index: 1000002 !important; }
+/*.modal * { z-index: 1000002 !important; }*/
+/* all modal texts with light theme supporting text */
+.modal-content, .modal-header, .modal-body, .modal-footer {
+  color: #000;
+}
     </style>
     {% block styles %}{% endblock %}
 </head>
@@ -39,94 +72,167 @@
     <div class="d-flex flex-grow-1">
 
         {# ---------- Sidebar (desktop) ---------- #}
-        <aside id="sidebar" class="container-sidebar bg-dark text-light pc-only d-flex flex-column flex-shrink-0"
-            style="z-index:100000000000;">
-            <a class="sidebar-toggle text-light fs-2" id="maintoggle"
-                aria-label="{{ _('Avaa sivupalkki') }}">&#9776;</a>
+<aside id="sidebar" class="d-flex flex-column flex-shrink-0 bg-dark text-light p-3"
+       style="width: 280px; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
+  <!-- Toggle button (mobile) -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="h5 mb-0 text-center flex-grow-1">
+      <i class="fas fa-toolbox me-2"></i>      {{ _('Työkalupakki') }}
+    </h2>
+    <button class="btn btn-outline-light d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+      &#9776;
+    </button>
+  </div>
+<!-- Tasks widget -->
+<div class="card bg-dark-subtle text-dark mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="d-flex align-items-center">
+      <i class="fas fa-tasks me-2"></i>{{ _('Tehtävät') }}
+      {% if tasks %}
+      <button class="btn btn-sm btn-outline-primary ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#allTasksList">
+        {{ _('Näytä kaikki') }} ({{ tasks|length }})
+      </button>
+      {% endif %}
+    </span>
+  </div>
 
-            <h2 class="sidebar-title text-center px-3 py-2">
-                {% if current_user.global_admin %}
-                {{ _('Pääkäyttäjän') }}
-                {% else %}
-                {{ _('Superkäyttäjän') }}
-                {% endif %}
-                {{ _('työkalupakki') }}
-            </h2>
+  {% if tasks %}
+  <div class="card-body p-2">
 
-            {# --- Task widget --- #}
-            <div class="tasks p-3">
-                <h3 class="h6 text-uppercase">{{ _('Tehtävät') }}</h3>
-                {% if tasks %}
-                <p class="small mb-1">{{ _('Seuraavaksi:') }} {{ tasks[0].title }}</p>
-                <progress value="{{ tasks_amount_done }}" max="{{ tasks_amount_total }}" id="progress"
-                    class="w-100 mb-2"></progress>
+    <!-- Next task (Bootstrap card inside card) -->
+    {% set next_task = tasks[0] %}
+    <div class="card mb-2 border rounded bg-body-tertiary">
+      <div class="card-body p-2 d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('admin_demo.edit_demo', demo_id=next_task._id) }}" class="text-decoration-none fw-bold flex-grow-1 me-2 text-truncate">
+          {{ next_task.title }}
+        </a>
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-success" onclick="confirmAction('approve', '{{ next_task._id }}')">
+            <i class="fas fa-check"></i>
+          </button>
+          <button type="button" class="btn btn-danger" onclick="confirmAction('deny', '{{ next_task._id }}')">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
-                <ul class="list-unstyled small">
-                    {% for task in tasks %}
-                    <li>
-                        <a href="{{ url_for('admin_demo.edit_demo', demo_id=task._id) }}"
-                            class="link-light text-decoration-none">
-                            {{ task.title }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="small">{{ _('Ei tehtäviä.') }}</p>
-                {% endif %}
-            </div>
+    <!-- Collapsible full task list -->
+    <div class="collapse" id="allTasksList">
+      <ul class="list-group list-group-flush small">
+        {% for task in tasks %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('admin_demo.edit_demo', demo_id=task._id) }}" class="text-decoration-none text-truncate" style="max-width: 70%;">
+            {{ task.title }}
+          </a>
+          <span class="badge bg-secondary rounded-pill">{{ loop.index }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
 
-            {# --- Navigation links --- #}
-            <nav class="sidebar-nav flex-grow-1 overflow-auto">
-                <ul class="list-unstyled px-3">
-                    {% if current_user.global_admin %}
-                    <li><a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link link-light">
-                            <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}</a></li>
-                    {% endif %}
+  </div>
+  {% else %}
+  <div class="card-body text-center py-3">
+    <i class="fas fa-check-circle text-success fs-3 mb-1"></i>
+    <p class="small mb-0">{{ _('Ei tehtäviä – hyvä sinä!') }}</p>
+  </div>
+  {% endif %}
+</div>
 
-                    {% if current_user.has_permission("LIST_USERS") %}
-                    <li><a href="{{ url_for('admin_user.user_control') }}" class="nav-link link-light">
-                            <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}</a></li>
-                    {% endif %}
 
-                    {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
-                    <li><a href="{{ url_for('admin_org.organization_control') }}" class="nav-link link-light">
-                            <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}</a></li>
-                    {% endif %}
 
-                    {% if current_user.has_permission("LIST_DEMOS") %}
-                    <li><a href="{{ url_for('admin_demo.demo_control') }}" class="nav-link link-light">
-                            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}</a></li>
-                    {% endif %}
+<script>
+function confirmAction(action, taskId) {
+  const modalEl = document.getElementById('taskConfirmModal');
+  const modal = new bootstrap.Modal(modalEl);
+  const messageEl = document.getElementById('taskConfirmMessage');
+  const confirmBtn = document.getElementById('taskConfirmBtn');
 
-                    {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
-                    <li><a href="{{ url_for('admin_recu_demo.recu_demo_control') }}" class="nav-link link-light">
-                            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}</a></li>
-                    {% endif %}
+  messageEl.textContent = action === 'approve' 
+    ? '{{ _("Haluatko varmasti hyväksyä tämän mielenosoituksen?") }}' 
+    : '{{ _("Haluatko varmasti hylätä tämän mielenosoituksen?") }}';
 
-                    {% if current_user.has_permission("VIEW_ANALYTICS") %}
-                    <li><a href="{{ url_for('admin.stats') }}" class="nav-link link-light">
-                            <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
-                        </a></li>
+  confirmBtn.onclick = () => {
+    fetch(`/api/admin/demo/${taskId}/${action}`, { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        if(data.success) location.reload(); // reload to show next task
+      })
+      .catch(err => console.error(err));
+    modal.hide();
+  };
 
-                    {% endif %}
+  modal.show();
+}
+</script>
 
-               
 
-                    <li>
-                        <a href="#" id="logoutLink" class="nav-link link-light" role="button" aria-haspopup="true"
-                            aria-expanded="false">
-                            <i class="fas fa-sign-out-alt me-2"></i>{{ _('Kirjaudu ulos') }}
-                        </a>
-                    </li>
+  <!-- Navigation -->
+  <nav id="sidebarMenu" class="flex-grow-1 collapse d-md-block">
+    <ul class="nav nav-pills flex-column mb-3">
+      {% if current_user.global_admin %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin.admin_dashboard') }}">
+            <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}
+          </a>
+        </li>
+      {% endif %}
 
-                </ul>
-            </nav>
+      {% if current_user.has_permission("LIST_USERS") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_user.user_control') }}">
+            <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}
+          </a>
+        </li>
+      {% endif %}
 
-            <div class="sidebar-info bg-warning text-center py-2 small">
-                <i class="fas fa-exclamation-triangle me-1"></i>{{ _('Olet superkäyttäjätilassa.') }}
-            </div>
-        </aside>
+      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_org.organization_control') }}">
+            <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_DEMOS") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_demo.demo_control') }}">
+            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_ANALYTICS") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin.stats') }}">
+            <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
+          </a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <!-- Logout -->
+  <div class="mt-auto">
+    <button class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+      <i class="fas fa-sign-out-alt me-2"></i>{{ _('Kirjaudu ulos') }}
+    </button>
+  </div>
+
+  <!-- Super admin info -->
+  <div class="alert alert-warning text-center mt-3 mb-0 py-1 small">
+    <i class="fas fa-exclamation-triangle me-1"></i>{{ _('Olet superkäyttäjätilassa.') }}
+  </div>
+</aside>
 
         {# ---------- Main content area ---------- #}
         <main class="flex-grow-1 px-3 py-4">
@@ -242,7 +348,24 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 
-
+<!-- Confirmation modal -->
+<div class="modal fade" id="taskConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ _('Vahvista tehtävä') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="taskConfirmMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <button type="button" class="btn btn-primary" id="taskConfirmBtn">{{ _('Kyllä') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 
 </html>

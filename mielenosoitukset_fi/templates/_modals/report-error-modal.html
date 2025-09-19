@@ -1,0 +1,99 @@
+{% macro render_report_error_modal(demo) %}
+<!-- Report Error Modal -->
+<div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="reportModalLabel">{{ _('Ilmoita virheestä') }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, ilmoita siitä alla olevalla lomakkeella.') }}</p>
+        <form id="report-error-form" action="/report" method="POST" autocomplete="off">
+          <div class="mb-3">
+            <label for="error" class="form-label">{{ _('Virheen kuvaus') }}</label>
+            <textarea name="error" id="error" class="form-control" rows="4" placeholder="{{ _('Kuvaile virhe mahdollisimman tarkasti...') }}" required></textarea>
+          </div>
+          <input type="hidden" name="type" value="demonstration">
+          <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
+          <div class="d-flex align-items-center mb-2 processing-indicator" style="display:none;">
+            <div class="spinner-border text-warning me-2" role="status" style="width:1.2rem; height:1.2rem;">
+              <span class="visually-hidden">{{ _('Käsitellään...') }}</span>
+            </div>
+            <span class="text-warning fw-semibold">{{ _('Käsitellään...') }}</span>
+          </div>
+          <div id="report-error-result" class="mt-2"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" form="report-error-form" class="btn btn-danger">{{ _('Lähetä') }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+$(function() {
+  const $form = $("#report-error-form");
+  const $indicator = $form.find(".processing-indicator");
+  const $result = $("#report-error-result");
+
+  // Hide the indicator initially
+  $indicator.hide(); // force hide on start
+  // find all children of indicator and hide them
+  $indicator.children().hide();
+
+  $form.on("submit", function(e) {
+    e.preventDefault();
+    $form.addClass("processing");
+    $form.find('button[type="submit"]').prop("disabled", true);
+    $indicator.show();
+    $result.empty();
+
+    $.ajax({
+      url: $form.attr("action"),
+      method: $form.attr("method"),
+      data: $form.serialize(),
+      success: function(response) {
+        let seconds = 3;
+        $result.html(`
+          <div class="alert alert-success d-flex align-items-center justify-content-between">
+            <i class="fas fa-check-circle me-2"></i>
+            <span>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
+            <span id="report-close-countdown" class="fw-bold">${seconds}</span>
+          </div>
+        `);
+
+        $form[0].reset();
+
+        const interval = setInterval(() => {
+          seconds -= 1;
+          $("#report-close-countdown").text(seconds);
+          if(seconds <= 0){
+            clearInterval(interval);
+            const modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
+            if(modal) modal.hide();
+            // clear the result after hiding
+            setTimeout(() => $result.empty(), 500);
+          }
+        }, 1000);
+      },
+      error: function(xhr) {
+        $result.html(`<div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ _("Virhe lähetyksessä. Yritä uudelleen.") }}
+             </div>`);
+      },
+      complete: function() {
+        $form.removeClass("processing");
+        $form.find('button[type="submit"]').prop("disabled", false);
+        $indicator.hide();
+      }
+    });
+  });
+
+  $indicator.hide();
+});
+</script>
+{% endmacro %}

@@ -4,6 +4,8 @@ from datetime import datetime
 from flask_cors import CORS
 from functools import wraps
 
+from flask_login import current_user
+
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
@@ -178,20 +180,60 @@ def get_demo_stats(demo_id):
 # -------------------------
 # LIKES
 # -------------------------
+# require token or valid user session, create a silly constructor
+
+
+def _token_or_session_required(required_perms=None, required_scopes=None):
+    """
+    Decorator to require either a valid token or a logged-in user session.
+
+    Parameters
+    ----------
+    required_scopes : list[str], optional
+        Scopes required if using token authentication.
+
+    Usage
+    -----
+    @_token_or_session_required(required_scopes=["write"])
+    def my_endpoint():
+        ...
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            auth_header = request.headers.get("Authorization")
+
+            if auth_header:
+                # Token present: validate using your token_required decorator
+                return token_required(required_scopes=required_scopes)(f)(*args, **kwargs)
+
+            # No token: fall back to session check
+            if current_user.is_authenticated:
+                if required_perms:
+                    for perm in required_perms:
+                        if not current_user.has_permission(perm):
+                            raise ApiException(Message("Insufficient permissions", "insufficient_permissions"), 403)
+                return f(*args, **kwargs)
+
+            # Neither token nor session: reject
+            raise ApiException(Message("Authentication required", "auth_required"), 401)
+
+        return decorated
+    return decorator
+
 @api_bp.route("/demonstrations/<demo_id>/like", methods=["POST"])
-@token_required(required_scopes=["write"])
+@_token_or_session_required(required_scopes=["write"])
 def like_demo(demo_id):
     likes = _update_likes(demo_id, delta=1)
     return jsonify({"likes": likes}), 200
 
 @api_bp.route("/demonstrations/<demo_id>/unlike", methods=["POST"])
-@token_required(required_scopes=["write"])
+@_token_or_session_required(required_scopes=["write"])
 def unlike_demo(demo_id):
     likes = _update_likes(demo_id, delta=-1)
     return jsonify({"likes": likes}), 200
 
 @api_bp.route("/demonstrations/<demo_id>/likes", methods=["GET"])
-@token_required(required_scopes=["read"])
 def get_likes(demo_id):
     likes_doc = mongo.demo_likes.find_one({"demo_id": ObjectId(demo_id)})
     return jsonify({"likes": likes_doc.get("likes", 0) if likes_doc else 0}), 200
@@ -209,7 +251,7 @@ def get_unapproved_demonstrations():
 # ADMIN DEMO INFO
 # -------------------------
 @api_bp.route("/admin/demonstrations/<demo_id>", methods=["GET"])
-@token_required(required_scopes=["admin"])
+@_token_or_session_required(required_scopes=["admin"], required_perms=["VIEW_DEMO"])
 def admin_get_demo_info(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo:

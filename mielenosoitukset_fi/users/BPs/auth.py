@@ -1082,3 +1082,43 @@ def password_reset(token):
 # NEXT STEPS:
 # - Move all the stuff from edit profile to user profile settings
 # - Create the emails/auth/settings_changed.html template to notify users about changes
+
+# API ENDPOINT FOR GETTING:
+    # - email
+    # - username
+    # - display name
+    # - city
+    # - dark mode
+    
+    # - language
+    
+    
+@auth_bp.route("/api/v1/user_info", methods=["GET"])
+@login_required
+def user_info_api():
+    """
+    Returns basic user info + settings for the current user.
+    Fields returned: email, display_name, city, dark_mode, language
+    """
+    user = current_user
+
+    # Fetch the user's settings document
+    sett = mongo.user_settings.find_one({"user_id": ObjectId(user._id)})
+    if not sett:
+        # If no settings doc exists, create one with defaults
+        allowed_fields = {"display_name", "city", "dark_mode", "language"}
+        sett = {field: None for field in allowed_fields}
+        sett["display_name"] = getattr(user, "displayname", user.username)
+        sett["user_id"] = ObjectId(user._id)
+        mongo.user_settings.insert_one(sett)
+
+    # Prepare the response using settings + email from the user object
+    user_info = {
+        "email": getattr(user, "email", None),
+        "display_name": sett.get("display_name"),
+        "city": sett.get("city"),
+        "dark_mode": sett.get("dark_mode"),
+        "language": sett.get("language"),
+    }
+
+    return jsonify({"status": "success", "user_info": user_info})

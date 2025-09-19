@@ -135,7 +135,7 @@ def create_app() -> Flask:
     app.register_blueprint(api_bp, url_prefix="/api/")
     app.register_blueprint(board_bp)
     
-    socketio = SocketIO(app, cors_allowed_origins="*")
+    socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
     app.register_blueprint(chat_ws.chat_ws)
     chat_ws.init_socketio(socketio)
     app.register_blueprint(audit_bp)

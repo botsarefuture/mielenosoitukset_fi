@@ -24,6 +24,7 @@ def create_user_blueprint():
     user_bp.register_blueprint(auth_bp)
     user_bp.register_blueprint(user_orgs_bp)
     user_bp.register_blueprint(profile_bp)
+
     return user_bp
 
 

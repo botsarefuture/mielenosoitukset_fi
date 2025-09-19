@@ -336,6 +336,33 @@
     }
   </script>
 
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+  async function fetchAndStoreUserInfo() {
+    // Only fetch if not already in localStorage
+    if (!localStorage.getItem("current_user")) {
+      try {
+        const res = await fetch("/users/auth/api/v1/user_info", {
+          credentials: "include", // sends session cookie
+        });
+        if (!res.ok) throw new Error("Failed to fetch user info");
+        const data = await res.json();
+        if (data.status === "success" && data.user_info) {
+          localStorage.setItem("current_user", JSON.stringify(data.user_info));
+          console.log("User info loaded into localStorage ✅");
+        }
+      } catch (err) {
+        console.warn("Could not load user info:", err);
+      }
+    } else {
+      console.log("User info already in localStorage, skipping fetch.");
+    }
+  }
+
+  fetchAndStoreUserInfo();
+});
+</script>
+
   <script>
     // Activators
     document.addEventListener("DOMContentLoaded", function () {
@@ -346,7 +373,11 @@
     });
   </script>
 
+  
+
   {% block scripts %} {% endblock %}
+
+
 </body>
 
 </html>

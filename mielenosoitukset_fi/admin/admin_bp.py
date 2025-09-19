@@ -291,21 +291,6 @@ def demo_analytics():
 
 
 
-def validate_mfa_token(token):
-    """Validate the MFA token.
-
-    Parameters
-    ----------
-    token :
-
-
-    Returns
-    -------
-
-
-    """
-    # Implement your MFA token validation logic here
-    return True  # Placeholder for actual validation logic
 from datetime import timedelta
 @admin_bp.route("/per_demo_analytics/<demo_id>")
 def demo_analytics(demo_id):

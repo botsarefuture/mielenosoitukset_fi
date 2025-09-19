@@ -119,6 +119,8 @@ def create_app() -> Flask:
         audit_bp
     )
     from users import _BLUEPRINT_ as user_bp
+    from users import chat_ws
+    from flask_socketio import SocketIO, emit, join_room
     from api import api_bp
 
     app.register_blueprint(admin_bp)
@@ -132,6 +134,10 @@ def create_app() -> Flask:
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
     app.register_blueprint(board_bp)
+    
+    socketio = SocketIO(app, cors_allowed_origins="*")
+    app.register_blueprint(chat_ws.chat_ws)
+    chat_ws.init_socketio(socketio)
     app.register_blueprint(audit_bp)
 
     # Import and initialize routes

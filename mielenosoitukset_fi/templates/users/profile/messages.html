@@ -10,36 +10,17 @@
   border-radius:50%; 
   width:50px; 
   height:50px; 
-  display:none;
-  cursor:pointer;
-">💬</button>
-<!-- Mini open button -->
-<button id="chat-open-btn" style="
-  position: fixed; 
-  bottom: 20px; 
-  right: 20px; 
-  z-index:10001; 
-  background:#2563eb; 
-  color:white; 
-  border:none; 
-  border-radius:50%; 
-  width:50px; 
-  height:50px; 
-  display:none;
   cursor:pointer;
 ">💬</button>
 
 <!-- Chat widget -->
-<div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 500px; background: white; border-radius: 1em; box-shadow: 0 8px 24px rgba(0,0,0,0.2); overflow: hidden; z-index: 10000;">
+<div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 500px; background: white; border-radius: 1em; box-shadow: 0 8px 24px rgba(0,0,0,0.2); overflow: hidden; z-index: 10000; display:none;">
   <div id="chat-header" style="background: #2563eb; color: #fff; padding: 0.5em 1em; cursor: move;">
     <span>Viestit</span>
     <button id="chat-close" style="float:right; background:none; border:none; color:white;">✕</button>
   </div>
   <div style="display:flex; height:400px;">
-    <!-- Friends list -->
     <div id="friends-list" style="width:120px; border-right:1px solid #ccc; overflow-y:auto;"></div>
-
-    <!-- Chat area -->
     <div style="flex:1; display:flex; flex-direction:column;">
       <div id="chat-messages" style="flex:1; overflow-y:auto; padding:0.5em;"></div>
       <div style="padding:0.5em;">
@@ -50,184 +31,143 @@
   </div>
 </div>
 
+<!-- Socket.IO client -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<!-- Chat widget JS improvements -->
 <script>
 const chatWidget = document.getElementById("chat-widget");
-const chatHeader = document.getElementById("chat-header");
-const chatClose = document.getElementById("chat-close");
 const chatOpenBtn = document.getElementById("chat-open-btn");
+const chatCloseBtn = document.getElementById("chat-close");
 const friendsListEl = document.getElementById("friends-list");
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const chatSend = document.getElementById("chat-send");
 
+let cachedFriends = [];
+let cachedMessages = {};
 let currentFriend = null;
 let friend_id_to_name = {};
 let friend_pfp_cache = {};
-let hasUnread = false;
-let flashInterval = null;
 
-// --- OPEN / CLOSE ---
-chatClose.onclick = () => {
-  chatWidget.style.display = "none";
-  chatOpenBtn.style.display = "block";
-};
-chatOpenBtn.onclick = () => {
-  chatWidget.style.display = "block";
-  chatOpenBtn.style.display = "none";
-  stopFlashing();
-};
+// --- Socket.IO setup ---
+const socket = io({ withCredentials: true });
 
-// --- DRAGGABLE ---
-let offsetX, offsetY, isDragging = false;
-chatHeader.addEventListener("mousedown", e => {
-  isDragging = true;
-  offsetX = e.clientX - chatWidget.offsetLeft;
-  offsetY = e.clientY - chatWidget.offsetTop;
-});
-document.addEventListener("mouseup", () => isDragging = false);
-document.addEventListener("mousemove", e => {
-  if (isDragging) {
-    chatWidget.style.left = (e.clientX - offsetX) + "px";
-    chatWidget.style.top = (e.clientY - offsetY) + "px";
-  }
+socket.on("connect", () => {
+    console.log("Socket.IO connected");
+    socket.emit("get_friends");
 });
 
-// --- LOAD FRIENDS ---
-async function loadFriends() {
-  const res = await fetch("/users/profile/api/friends_list/");
-  const data = await res.json();
-  friend_id_to_name = {};
-  friendsListEl.innerHTML = "";
-  data.friends.forEach(f => {
-    friend_id_to_name[f._id] = f.displayname;
-    if (!friend_pfp_cache[f.username]) friend_pfp_cache[f.username] = f.profile_picture || '/static/default-avatar.png';
-    
-    const btn = document.createElement("button");
-    btn.innerHTML = `
-      <img src="${friend_pfp_cache[f.username]}" 
-           style="width:24px;height:24px;border-radius:50%;margin-right:0.25em;vertical-align:middle;">
-      ${f.displayname}
-    `;
-    btn.className = "btn btn-light btn-sm mb-1 w-100 text-start";
-    btn.onclick = () => selectFriend(f.username);
-    friendsListEl.appendChild(btn);
-  });
+socket.on("friends_list", (data) => updateFriendsList(data.friends));
+socket.on("new_message", (data) => handleIncomingMessage(data.message));
+socket.on("message_read", (data) => handleMessageRead(data.message_id));
+socket.on("chat_history", (data) => {
+    if(currentFriend){
+        cachedMessages[currentFriend] = data.messages;
+        renderMessages();
+    }
+});
+
+// --- FRIENDS LIST ---
+function updateFriendsList(friends){
+    friendsListEl.innerHTML = "";
+    cachedFriends = friends;
+    friends.forEach(f => {
+        friend_id_to_name[f._id] = f.displayname;
+        if(!friend_pfp_cache[f.username]) friend_pfp_cache[f.username] = f.profile_picture || '/static/default-avatar.png';
+
+        let btn = document.createElement("button");
+        btn.dataset.username = f.username;
+        btn.className = "btn btn-light btn-sm mb-1 w-100 text-start";
+        btn.style.backgroundColor = "light-dark(#000, #333)"; //
+        btn.style.color = "light-dark(#fff, #000)"; //
+        btn.onclick = () => selectFriend(f.username);
+
+        const unread = cachedMessages[f.username]?.filter(m => !m.read).length || 0;
+        btn.innerHTML = `<img src="${friend_pfp_cache[f.username]}" style="width:24px;height:24px;border-radius:50%;margin-right:0.25em;vertical-align:middle;"> ${f.displayname} ${unread>0? `<span class="unread-count" style="color:red">(${unread})</span>` : ""}`;
+        friendsListEl.appendChild(btn);
+    });
 }
-// --- SELECT FRIEND & LOAD CHAT ---
-async function selectFriend(username) {
-  currentFriend = username;
-  chatMessages.innerHTML = "";
-  const res = await fetch(`/users/profile/api/messages/${username}/`);
-  const msgs = await res.json();
-  hasUnread = false;
 
-  for (let msg of msgs) {
-    const isMine = msg.sender_id === "{{ current_user._id }}";
+// --- SELECT FRIEND ---
+function selectFriend(username){
+    currentFriend = username;
+    renderMessages();
 
-    // If message is from friend and unread, mark it as read
-    if (!isMine && !msg.read) {
-      hasUnread = true;
-      await markMessageAsRead(msg._id);
-      msg.read = true; // update locally
-    }
+    // mark unread as read
+    (cachedMessages[username] || []).filter(m => !m.read).forEach(m => markMessageAsRead(m._id));
 
-    const senderName = isMine ? "Minä" : friend_id_to_name[msg.sender_id] || username;
+    // clear unread badge
+    const btnSpan = document.querySelector(`#friends-list button[data-username="${username}"] .unread-count`);
+    if(btnSpan) btnSpan.textContent = "";
 
-    // Show read status for everyone
-    let statusIcon = '';
-    if (isMine) {
-      // Your sent messages: check if the recipient has read it
-      statusIcon = msg.read ? '<span style="color:green">✓</span>' : '<span style="color:gray">✓</span>';
-    } else {
-      // Messages you received: mark with grey dot if unread, green if read
-      statusIcon = msg.read ? '<span style="color:green">✓</span>' : '<span style="color:gray">✓</span>';
-    }
+    socket.emit("load_messages", {friend_username: username});
+}
 
+// --- RENDER MESSAGES ---
+function renderMessages(){
+    chatMessages.innerHTML = "";
+    (cachedMessages[currentFriend] || []).forEach(msg => appendMessage(msg));
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// --- APPEND SINGLE MESSAGE ---
+function appendMessage(msg){
     const div = document.createElement("div");
     div.style.marginBottom = "0.5em";
-    div.innerHTML = `<strong>${senderName}</strong>: ${msg.content} ${statusIcon}`;
+    div.style.wordBreak = "break-word";
+    div.style.color = "light-dark(#eee, #111)";
+
+    const sender = msg.sender_id === "{{ current_user._id }}" ? "Minä" : friend_id_to_name[msg.sender_id] || currentFriend;
+    div.innerHTML = `<strong>${sender}</strong>: ${msg.content}`;
     chatMessages.appendChild(div);
-  }
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  if (hasUnread && chatWidget.style.display === "none") startFlashing();
-  else stopFlashing();
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// --- INCOMING MESSAGE ---
+function handleIncomingMessage(msg){
+    if(!cachedMessages[msg.sender_username]) cachedMessages[msg.sender_username] = [];
+    cachedMessages[msg.sender_username].push(msg);
 
-// --- MARK MESSAGE AS READ ---
-async function markMessageAsRead(message_id) {
-  await fetch("/users/profile/api/messages/read/", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({message_id})
-  });
+    if(msg.sender_username !== currentFriend){
+        const friendBtn = document.querySelector(`#friends-list button[data-username="${msg.sender_username}"]`);
+        if(friendBtn){
+            let unreadSpan = friendBtn.querySelector(".unread-count");
+            if(!unreadSpan){
+                unreadSpan = document.createElement("span");
+                unreadSpan.className = "unread-count";
+                unreadSpan.style.color = "red";
+                friendBtn.appendChild(unreadSpan);
+            }
+            unreadSpan.textContent = `(${cachedMessages[msg.sender_username].filter(m => !m.read).length})`;
+        }
+    } else {
+        appendMessage(msg);
+        markMessageAsRead(msg._id);
+    }
+}
+
+// --- MARK READ ---
+function markMessageAsRead(message_id){
+    socket.emit("mark_read", {message_id});
+}
+function handleMessageRead(msg_id){
+    Object.values(cachedMessages).forEach(arr => {
+        const m = arr.find(x => x._id === msg_id);
+        if(m) m.read = true;
+    });
 }
 
 // --- SEND MESSAGE ---
-chatSend.onclick = async () => {
-  if (!currentFriend) return alert("Valitse ystävä ensin.");
-  const content = chatInput.value.trim();
-  if (!content) return;
-  const res = await fetch("/users/profile/api/messages/send/", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({recipient: currentFriend, content})
-  });
-  if (res.ok) {
+chatSend.onclick = () => {
+    if(!currentFriend) return alert("Valitse ystävä ensin.");
+    const content = chatInput.value.trim();
+    if(!content) return;
+    socket.emit("send_message", {recipient: currentFriend, content});
     chatInput.value = "";
-    selectFriend(currentFriend);
-  } else {
-    alert("Viestin lähetys epäonnistui");
-  }
 };
 
-// --- FLASHING ---
-function startFlashing() {
-  if (flashInterval) return;
-  let red = true;
-  flashInterval = setInterval(() => {
-    chatOpenBtn.style.background = red ? "red" : "#2563eb";
-    red = !red;
-  }, 5000);
-}
-function stopFlashing() {
-  if (flashInterval) clearInterval(flashInterval);
-  flashInterval = null;
-  chatOpenBtn.style.background = "#2563eb";
-}
-
-// --- POLLING ---
-async function updateFriendsList() {
-  const res = await fetch("/users/profile/api/friends_list/");
-  const data = await res.json();
-  const unreadRes = await fetch("/users/profile/api/messages/unread_count/");
-  const unreadData = await unreadRes.json();
-
-  friendsListEl.innerHTML = "";
-  data.friends.forEach(f => {
-    const unread = unreadData[f.username] || 0;
-    // use cached pfp
-    if (!friend_pfp_cache[f.username]) friend_pfp_cache[f.username] = f.profile_picture || '/static/default-avatar.png';
-    const btn = document.createElement("button");
-    btn.innerHTML = `
-      <img src="${friend_pfp_cache[f.username]}" 
-           style="width:24px;height:24px;border-radius:50%;margin-right:0.25em;vertical-align:middle;">
-      ${f.displayname} ${unread>0? `<span style="color:red">(${unread})</span>` : ""}
-    `;
-    btn.className = "btn btn-light btn-sm mb-1 w-100 text-start";
-    btn.onclick = () => selectFriend(f.username);
-    friendsListEl.appendChild(btn);
-  });
-}
-
-async function pollMessages() {
-  if (currentFriend) await selectFriend(currentFriend);  
-  await updateFriendsList();
-}
-
-loadFriends();
-pollMessages();
-setInterval(pollMessages, 3000); 
+// --- OPEN/CLOSE ---
+chatOpenBtn.onclick = () => { chatWidget.style.display="block"; chatOpenBtn.style.display="none"; };
+chatCloseBtn.onclick = () => { chatWidget.style.display="none"; chatOpenBtn.style.display="block"; };
 </script>
+

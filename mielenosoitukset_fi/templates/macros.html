@@ -33,7 +33,7 @@
                 <li><a href="{{ url_for('tag_detail', tag_name=tag) }}"><span class="demo-card-tag">#{{ tag }}</span></a></li>
                 {% endfor %}
             {% else %}
-                <li><span class="demo-card-tag">#{{ demo['topic'] }}</span></li>
+                <li><span class="demo-card-tag">#{{ _('EiAiheita') }}</span></li>
             {% endif %}
             </ul>
         </div>

@@ -17,392 +17,24 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-<style>
-:root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-text-secondary: light-dark(#444, #c7c7c7);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
-  --color-grid-item: light-dark(#888, #aaa);
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-  --blue_dark: var(--color-primary);
-  --white: light-dark(#fff, #23272a);
-  --input_background: light-dark(#f9f9f9, #23272a);
-  --primary_color: var(--color-primary);
-  --primary_dark_color: light-dark(#003d80, #0056b3);
-}
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-.container-main-content {
-  background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
-}
-h1 {
-  color: var(--color-primary);
-  font-size: 2.1em;
-  font-weight: 800;
-  margin-bottom: 1.2em;
-  letter-spacing: 0.01em;
-  text-align: center;
-}
-.filter {
-  padding: 0.7em 1.2em;
-  background: var(--blue_dark);
-  border-radius: 2em;
-  color: var(--white);
-  font-size: 1em;
-  display: flex;
-  align-items: center;
-  gap: 0.7em;
-}
-.filters {
-  display: flex;
-  gap: 1em;
-  flex-wrap: wrap;
-  margin-bottom: 0.5em;
-}
-.suggestions {
-  background: var(--input_background);
-  width: 100%;
-  border: 1px solid var(--blue_dark);
-  border-radius: 0.5em;
-  z-index: 10;
-  display: none;
-  margin-top: -10px;
-  position: absolute;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.suggestions.show {
-  display: block;
-}
-.suggestion-item {
-  padding: 0.7em 1em;
-  cursor: pointer;
-  border-radius: 0.4em;
-  transition: background 0.2s, color 0.2s;
-}
-.suggestion-item:hover {
-  background: var(--blue_dark);
-  color: var(--white);
-}
-.search-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-  margin-bottom: 2em;
-  position: relative;
-}
-.search-form input[type="text"] {
-  padding: 0.6em 1em;
-  border: 1px solid var(--blue_dark);
-  border-radius: 0.5em;
-  background: var(--input_background);
-  font-size: 1em;
-  color: var(--color-text);
-  transition: border 0.2s;
-}
-.button {
-  background-color: var(--primary_color);
-  color: #fff;
-  padding: 0.7em 1.5em;
-  border: none;
-  border-radius: 2em;
-  cursor: pointer;
-  text-decoration: none;
-  font-size: 1.05em;
-  font-weight: 600;
-  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.button:hover {
-  background-color: var(--primary_dark_color);
-  color: #fff;
-  box-shadow: var(--color-shadow-hover);
-  filter: brightness(1.08);
-}
-.invalid-date {
-  border-color: red !important;
-}
-.date-error {
-  color: red;
-  font-size: 0.98em;
-  display: none;
-  margin-top: -0.5em;
-  margin-bottom: 0.5em;
-}
-.date-range {
-  display: flex;
-  gap: 1em;
-  align-items: center;
-}
-.view-toggle-group {
-  display: flex;
-  gap: 0.5em;
-  justify-content: flex-end;
-  margin-bottom: 1em;
-}
-.view-toggle-btn {
-  background: var(--color-title-accent, #e3f0ff);
-  color: var(--color-primary, #0056b3);
-  border: none;
-  border-radius: 0.5em;
-  padding: 0.4em 1.2em;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  outline: none;
-  display: flex;
-  align-items: center;
-  gap: 0.3em;
-}
-.view-toggle-btn.active,
-.view-toggle-btn:hover {
-  background: var(--color-primary, #0056b3);
-  color: #fff;
-}
-@media (max-width: 600px) {
-  .view-toggle-group {
-    justify-content: center;
-  }
-  .container-main-content {
-    padding: 1em 0.5em;
-  }
-  h1 {
-    font-size: 1.3em;
-  }
-}
-.demo-table-container {
-  width: 100%;
-  overflow-x: auto;
-  margin-bottom: 2em;
-}
-.demo-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5em;
-  margin-top: 0.5em;
-}
-.demo-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--color-card-bg, #fff);
-  color: var(--color-text, #222);
-  border-radius: 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  font-size: 1em;
-}
-.demo-table th, .demo-table td {
-  padding: 1em 0.7em;
-  text-align: left;
-  border-bottom: 1px solid var(--color-title-accent, #e3f0ff);
-  vertical-align: middle;
-}
-.demo-table th {
-  background: var(--color-title-accent, #e3f0ff);
-  color: var(--color-primary, #0056b3);
-  font-size: 1.08em;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-.demo-table tr:last-child td {
-  border-bottom: none;
-}
-.demo-table .demo-table-title {
-  font-weight: 700;
-  color: var(--color-primary, #0056b3);
-  font-size: 1.08em;
-}
-.demo-table .demo-table-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3em;
-}
-.demo-table-tag {
-  background: var(--color-title-accent, #e3f0ff);
-  color: var(--color-primary, #0056b3);
-  border-radius: 0.4em;
-  padding: 0.1em 0.6em;
-  font-size: 0.98em;
-  font-weight: 500;
-  margin-right: 0.2em;
-  text-decoration: none;
-  transition: background 0.2s, color 0.2s;
-}
-.demo-table-tag:hover {
-  background: var(--color-primary, #0056b3);
-  color: #fff;
-}
-.demo-table .demo-table-link {
-  color: var(--color-primary, #0056b3);
-  text-decoration: underline;
-  cursor: pointer;
-}
-@media (max-width: 900px) {
-  .demo-table th, .demo-table td { padding: 0.7em 0.3em; font-size: 0.98em; }
-}
-@media (max-width: 600px) {
-  .demo-table th, .demo-table td { padding: 0.5em 0.2em; font-size: 0.95em; }
-  .demo-table { font-size: 0.95em; }
-}
-.container-grid {
-  transition: display 0.2s;
-}
-.hide-cards {
-  display: none !important;
-}
-/* Modern demo card improvements */
-.demo-card {
-  background: var(--color-card-bg);
-  border-radius: 1.1em;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 1.5px 4px rgba(0,86,179,0.04);
-  padding: 1.5em 1.3em 1.2em 1.3em;
-  margin-bottom: 1.5em;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7em;
-  transition: box-shadow 0.18s, transform 0.18s, border 0.18s;
-  border: 1.5px solid var(--color-title-accent, #e3f0ff);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.demo-card:hover, .demo-card:focus {
-  box-shadow: 0 6px 24px rgba(0,86,179,0.13), 0 2px 8px rgba(0,0,0,0.08);
-  border-color: var(--color-primary);
-  transform: translateY(-2px) scale(1.012);
-  z-index: 2;
-}
-.demo-card-title {
-  font-size: 1.25em;
-  font-weight: 800;
-  color: var(--color-primary);
-  margin-bottom: 0.2em;
-  line-height: 1.2;
-  word-break: break-word;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-.demo-card-date-time {
-  font-size: 1.05em;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 1.2em;
-  margin-bottom: 0.1em;
-}
-.demo-card-date-time i {
-  color: var(--color-primary);
-  margin-right: 0.3em;
-}
-.demo-card-location-row {
-  font-size: 1.05em;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 1.2em;
-}
-.demo-card-location-row i {
-  color: var(--color-primary);
-  margin-right: 0.3em;
-}
-.demo-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4em;
-  margin-top: 0.2em;
-}
-.demo-table-tag, .demo-card-tag {
-  background: var(--color-title-accent, #e3f0ff);
-  color: var(--color-primary, #0056b3);
-  border-radius: 0.5em;
-  padding: 0.13em 0.8em;
-  font-size: 1em;
-  font-weight: 600;
-  margin-right: 0.1em;
-  text-decoration: none;
-  transition: background 0.18s, color 0.18s;
-  cursor: pointer;
-  border: none;
-  outline: none;
-}
-.demo-table-tag:hover, .demo-card-tag:hover {
-  background: var(--color-primary, #0056b3);
-  color: #fff;
-}
-.demo-card .demo-card-actions {
-  margin-top: 0.7em;
-  display: flex;
-  gap: 0.7em;
-  align-items: center;
-}
-.demo-card-action-btn {
-  background: var(--color-title-accent, #e3f0ff);
-  color: var(--color-primary, #0056b3);
-  border: none;
-  border-radius: 0.5em;
-  padding: 0.3em 1em;
-  font-size: 1em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.18s, color 0.18s;
-  display: flex;
-  align-items: center;
-  gap: 0.4em;
-}
-.demo-card-action-btn:hover, .demo-card-action-btn:focus {
-  background: var(--color-primary, #0056b3);
-  color: #fff;
-}
-.demo-card .demo-card-badge {
-  position: absolute;
-  top: 1.1em;
-  right: 1.1em;
-  background: var(--color-primary, #0056b3);
-  color: #fff;
-  font-size: 0.95em;
-  font-weight: 700;
-  border-radius: 1em;
-  padding: 0.2em 1em;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  letter-spacing: 0.02em;
-}
-@media (max-width: 600px) {
-  .demo-card { padding: 1em 0.7em; }
-  .demo-card-title { font-size: 1.08em; }
-  .demo-card-date-time, .demo-card-location-row { font-size: 0.98em; }
-}
 
-.demo-card-image {
-  width: 100%;
-  aspect-ratio: 16/9; /* keeps it proportional */
-  overflow: hidden;
-  border-radius: 12px;
-}
+<!-- moved styles from here to static/css/list_v2.css-->
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+ <style>
 
-.demo-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 
-</style>
+ </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-main-content">
-  <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
+<section class="hero">
+  <!-- lets add hero here-->
+  <div class="hero-content">
+    <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
+    <p>{{ _('Löydä ja osallistu mielenosoituksiin ympäri Suomen. Selaa tulevia tapahtumia, hae sijainnin tai aiheen mukaan, ja liity mukaan yhteiskunnalliseen vaikuttamiseen.') }}</p>
+  </div>
+</section>
+<section class="main-content">
   <div class="view-toggle-group" id="view-toggle-group">
     <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
       <i class="fa-solid fa-table-cells-large"></i>
@@ -432,6 +64,7 @@ h1 {
     <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
   <div class="container-grid" id="demo-container-grid"></div>
+
   <div class="demo-table-container" id="demo-table-container" style="display: none;">
     <table class="demo-table">
       <thead>
@@ -452,7 +85,7 @@ h1 {
     <i class="fas fa-spinner fa-spin fa-2x"></i>
   </div>
   <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -481,11 +114,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderDemoCard(demo) {
   const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
-  const todayBadge = isTodayDate(demo.date_display)
-    ? `<span class="demo-card-badge">{{ _("Tänään") }}</span>` 
-    : "";
 
-  const imageUrl = demo.img || demo.cover_image || demo.preview_image || `/download_material/${demo._id}`; // fallback
+  // Build badges dynamically
+  const badges = [];
+  if (isTodayDate(demo.date_display)) {
+    badges.push(`<span class="demo-card-badge demo-card-badge-today">{{ _("Tänään") }}</span>`);
+  }
+  if (demo.is_trending) { // example field for “Nousussa”
+    badges.push(`<span class="demo-card-badge demo-card-badge-trending">{{ _("Nousussa") }}</span>`);
+  }
+  if (demo.is_recommended) { // example field for “Suositeltu”
+    badges.push(`<span class="demo-card-badge demo-card-badge-recommended">{{ _("Suositeltu") }}</span>`);
+  }
+  // Join badges into a single string
+  const badgeHtml = badges.join(" ");
+
+  const imageUrl = demo.img || demo.cover_image || demo.preview_image || `/download_material/${demo._id}`;
 
   return `
     <div class="grid-item demo-card" 
@@ -494,10 +138,10 @@ document.addEventListener("DOMContentLoaded", function () {
          onclick="window.location='${demoUrl}'" 
          onkeypress="if(event.key==='Enter'){window.location='${demoUrl}'}">
 
-      ${todayBadge}
+      ${badgeHtml}
 
       <div class="demo-card-image">
-        <img src="${imageUrl}" alt="${demo.title}" loading="lazy">
+        <img src="${imageUrl}" alt="${demo.title} - ${demo.city || ''} - ${demo.date_display}" loading="lazy">
       </div>
 
       <div class="demo-card-title">
@@ -531,6 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
     </div>
   `;
 }
+
 
 
   function renderDemoTableRow(demo) {

@@ -7,11 +7,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
 <style>
 :root {
   --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
   --color-card-bg: light-dark(#fff, #23272a);
   --color-text: light-dark(#222, #f3f3f3);
   --color-text-secondary: light-dark(#444, #c7c7c7);
@@ -21,36 +23,142 @@
   --color-grid-item: light-dark(#888, #aaa);
   --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
 }
-body { background: var(--color-bg); color: var(--color-text); }
-.hero {
-  background: linear-gradient(90deg, var(--color-bg-hero) 0%, var(--color-bg) 100%);
-  padding: 2.5em 1em 2em 1em; border-radius: 1.5em; margin-bottom: 2em;
-  box-shadow: var(--color-shadow); text-align: center; color: var(--color-text);
+
+/* Body and Fonts */
+body { 
+  background: var(--color-bg); 
+  color: var(--color-text); 
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+  margin: 0;
 }
-.hero h2 { font-size: 2.2em; margin-bottom: 0.5em; }
-.hero p { font-size: 1.15em; color: var(--color-text-secondary); margin-bottom: 1.5em; }
-.buttons-div { display: flex; gap: 1em; justify-content: center; margin-bottom: 1.5em; flex-wrap: wrap; }
+
+/* Buttons */
+.buttons-div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  justify-content: center;
+  margin-bottom: 2em;
+}
 .button.button-primary {
-  display: flex; align-items: center; gap: 0.5em; font-size: 1.05em;
-  padding: 0.7em 1.5em; border-radius: 2em; transition: background 0.2s, box-shadow 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04); background: var(--color-primary); color: #fff; border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1em;
+  padding: 0.7em 1.5em;
+  border-radius: 2em;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  transition: all 0.2s ease-in-out;
 }
-.button.button-primary:hover { background: var(--color-primary); color: #fff; box-shadow: var(--color-shadow-hover); filter: brightness(1.15); }
-.section-card { background: var(--color-card-bg); border-radius: 1em; box-shadow: 0 1px 8px rgba(0,0,0,0.04); padding: 2em 1em 1.5em 1em; margin-bottom: 2em; color: var(--color-text); }
+.button.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,86,179,0.15);
+  filter: brightness(1.1);
+}
+
+/* Section Cards */
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: 1em;
+  padding: 2em 1em;
+  margin-bottom: 2em;
+  box-shadow: var(--color-shadow);
+}
+
+/* Section Titles */
 .section-title {
-  font-size: 2.2em; font-weight: 800; margin-bottom: 1.2em; color: var(--color-primary);
-  letter-spacing: 0.01em; padding: 0.3em 0.8em; border-left: none;
-  background: var(--color-title-accent); border-radius: 0.6em; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: block; text-align: center; margin-left: auto; margin-right: auto; width: fit-content;
-  transition: background 0.2s, color 0.2s;
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--color-primary);
+  padding: 0.5em 1em;
+  border-radius: 1em;
+  background: var(--color-title-accent);
+  display: block;
+  width: fit-content;
+  margin: 1.2em auto;
 }
-.section-title:after {
-  content: ''; display: block; margin: 0.4em auto 0 auto; width: 2.5em; height: 4px; border-radius: 2px;
-  background: var(--color-primary); opacity: 0.25;
+
+/* Grid Container */
+.grid-container.featured-card {
+  display: grid;
+  gap: 1.5em;
 }
-.grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.5em; }
-.grid-item { text-align: center; color: var(--color-grid-item); font-size: 1.1em; padding: 2em 0; }
-@media (max-width: 600px) { .hero { padding: 1.2em 0.5em; } .section-card { padding: 1em 0.5em; } .section-title { font-size: 1.3em; } }
+
+/* Responsive Grid Columns */
+@media (min-width: 992px) {
+  .grid-container { grid-template-columns: repeat(3, 1fr) !important; }
+}
+@media (min-width: 600px) and (max-width: 991px) {
+  .grid-container { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 599px) {
+  .grid-container { grid-template-columns: 1fr !important; }
+}
+
+/* Grid Items */
+.grid-container.featured-card .grid-item {
+  min-height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: var(--color-card-bg);
+  border-radius: 0.8em;
+  padding: 1em;
+  box-shadow: var(--color-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.grid-container.featured-card .grid-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,86,179,0.12);
+}
+
+/* Grid Item Images */
+.grid-container.featured-card .grid-item img {
+  max-height: 180px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 0.6em;
+  margin-bottom: 1em;
+}
+
+/* Empty State */
+.grid-container.featured-card .grid-item.no-demos {
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: var(--color-text-secondary);
+  font-size: 1.1em;
+}
+
+/* Section Notes */
+.section-note {
+  font-size: 0.95em;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-top: 1em;
+}
+
+/* Individual Grid Items */
+.grid-item {
+  text-align: center;
+  color: var(--color-grid-item);
+  font-size: 1.05em;
+  padding: 1em 0;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 600px) {
+  .hero { padding: 1em; }
+  .section-card { padding: 1em; }
+  .section-title { font-size: 1.3em; }
+  .button.button-primary { font-size: 0.95em; padding: 0.6em 1.2em; }
+}
 </style>
 {% endblock %}
 
@@ -59,73 +167,69 @@ body { background: var(--color-bg); color: var(--color-text); }
 {% endblock %}
 
 {% block content %}
-<div class="container-main-content">
-  
 
-  <!-- Hero Section -->
-  <section class="hero">
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
     <h2>{{ _('Tervetuloa Mielenosoitukset.fi:hin') }}</h2>
     <p>
       {{ _('Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.') }}<br>
-      {{ _('Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.') }}
+      {{ _('Teemme osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.') }}
     </p>
     <div class="buttons-div">
       <a class="button button-primary" href="{{ url_for('info') }}">
-        <span aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span> {{ _('Lue lisää') }}
+        <i class="fa-solid fa-circle-info"></i> {{ _('Lue lisää') }}
       </a>
       <a class="button button-primary" href="{{ url_for('submit') }}">
-        <span aria-hidden="true"><i class="fa-solid fa-plus"></i></span> {{ _('Ilmoita mielenosoituksesta') }}
+        <i class="fa-solid fa-plus"></i> {{ _('Ilmoita mielenosoituksesta') }}
       </a>
       <a class="button button-primary" href="{{ url_for('calendar_year_view', year=current_year) }}">
-        <span aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span> {{ _('Kalenterinäkymä') }}
+        <i class="fa-solid fa-calendar-days"></i> {{ _('Kalenterinäkymä') }}
       </a>
     </div>
-  </section>
+  </div>
+</section>
+<!-- Pinned Demonstrations Section -->
+{% if recommended_demos %}
+<section class="section-card ">
+  <h2 class="section-title ">
+    <span aria-hidden="true" class="icon"><i class="fa-solid fa-star"></i></span>{{ _('Suosittelemme') }}
+  </h2>
+  <div class="grid-container">
+    {% for demo in recommended_demos %}
+      {{ macros.demo_card(demo) }}
+    {% endfor %}
+  </div>
+  <div class="section-note">
+    {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
+  </div>
+</section>
+{% endif %}
 
-  <!-- Pinned Demonstrations Section -->
-  {% if recommended_demos %}
-  <section class="section-card" style="border: 2.5px solid var(--color-primary); box-shadow: 0 4px 24px rgba(0,86,179,0.10);">
-    <h2 class="section-title" style="background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-title-accent) 100%); color: #fff; letter-spacing: 0.03em;">
-      <span style="margin-right:0.5em;" aria-hidden="true"><i class="fa-solid fa-star"></i></span>{{ _('Suosittelemme') }}
-    </h2>
-    <div class="grid-container">
-      {% for demo in recommended_demos %}
+<!-- Featured Demonstrations Section -->
+{% if not recommended_demos %}
+<section class="section-card  featured-card">
+  <h2 class="section-title ">
+    <span aria-hidden="true" class="icon"><i class="fa-solid fa-bolt"></i></span>{{ _('Esitellyt mielenosoitukset') }}
+  </h2>
+  <div class="grid-container">
+    {% if demonstrations %}
+      {% for demo in demonstrations[:6] %}
         {{ macros.demo_card(demo) }}
       {% endfor %}
-    </div>
-    <div style="text-align:center; margin-top:1.2em;">
-      <span style="color:var(--color-primary); font-weight:600; font-size:1.1em; background:var(--color-title-accent); padding:0.4em 1.2em; border-radius:1em; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-        {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
-      </span>
-    </div>
-  </section>
-  {% endif %}
+    {% else %}
+      <div class="grid-item no-demos">
+        <span aria-hidden="true"><i class="fa-regular fa-face-frown fa-2x"></i></span><br>
+        {{ _('Ei mielenosoituksia näytettäväksi.') }}
+      </div>
+    {% endif %}
+  </div>
+  <div class="section-note">
+    {{ _('Poimintoja ajankohtaisista mielenosoituksista.') }}
+  </div>
+</section>
+{% endif %}
 
-  <!-- Featured Demonstrations Section -->
-  {% if not recommended_demos %}
-  <section class="section-card" style="align-items: center; border: 2px dashed var(--color-primary); background: linear-gradient(90deg, var(--color-title-accent) 0%, var(--color-card-bg) 100%);">
-    <h2 class="section-title" style="margin-top: 0; width: fit-content; color: var(--color-primary);">
-      <span style="margin-right:0.5em;" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>{{ _('Esitellyt mielenosoitukset') }}
-    </h2>
-    <div class="container-grid" style="width: 100%">
-      {% if demonstrations %}
-        {% for demo in demonstrations[:6] %}
-          {{ macros.demo_card(demo) }}
-        {% endfor %}
-      {% else %}
-        <div class="grid-item">
-          <span aria-hidden="true" style="font-size:2em;"><i class="fa-regular fa-face-frown"></i></span><br>
-          {{ _('Ei mielenosoituksia näytettäväksi.') }}
-        </div>
-      {% endif %}
-    </div>
-    <div style="text-align:center; margin-top:1.2em;">
-      <span style="color:var(--color-primary); font-weight:500; font-size:1em; background:var(--color-title-accent); padding:0.3em 1em; border-radius:1em; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
-        {{ _('Poimintoja ajankohtaisista mielenosoituksista.') }}
-      </span>
-    </div>
-  </section>
-  {% endif %}
 
   <!-- Button to View All Demonstrations -->
   <div class="buttons-div">
@@ -133,5 +237,5 @@ body { background: var(--color-bg); color: var(--color-text); }
       <span aria-hidden="true"><i class="fa-solid fa-list"></i></span> {{ _('Näytä kaikki mielenosoitukset') }}
     </a>
   </div>
-</div>
-{% endblock %}
+
+  {% endblock %}

@@ -1,156 +1,148 @@
 {% macro demo_card(demo, recommended=False) %}
-<article class="grid-item demo-card{% if recommended %} demo-card-recommended{% endif %}" data-href="{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}"
-    aria-label="Demonstration card">
-    {%- if recommended %}
+<article class="grid-item demo-card{% if recommended %} demo-card-recommended{% endif %}" 
+         data-href="{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}"
+         aria-label="Demonstration card">
+
+    {% if recommended %}
     <span class="demo-card-recommended-badge"><i class="fa-solid fa-star"></i> {{ _('Suosikki') }}</span>
-    {%- endif %}
+    {% endif %}
+
+    {# --- Card Image --- #}
+    {% set image_url = demo.get('img') or demo.get('cover_image') or demo.get('preview_image') %}
+    {% if image_url %}
+    <div class="demo-card-image">
+        <img src="{{ image_url }}" alt="{{ demo['title'] }}">
+    </div>
+    {% endif %}
+
+    {# --- Card Title --- #}
     <header class="demo-card-title">{{ demo['title'] }}</header>
+
+    {# --- Date and Time --- #}
     <div class="demo-card-details">
         <div class="demo-card-date-time">
-            <span class="demo-card-date">
-                <i class="fa-regular fa-calendar"></i>
-                {{ demo['date'] | date('%d.%m.%Y') }}
-            </span>
-            <span class="demo-card-time">
-                <i class="fa-regular fa-clock"></i>
-                {{ demo['start_time'] | date('%H:%M') }} - {{ demo['end_time'] | date('%H:%M') }}
-            </span>
+            <span><i class="fa-regular fa-calendar"></i> {{ demo['date'] | date('%d.%m.%Y') }}</span>
+            <span><i class="fa-regular fa-clock"></i> {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}</span>
         </div>
+
+        {# --- Tags / Topics --- #}
         <div class="demo-card-topics">
             <ul>
-                {% if demo['tags'] and demo['tags']|length > 0 %}
+            {% if demo['tags'] %}
                 {% for tag in demo['tags'] %}
-                <li>
-                    <a href="{{ url_for('tag_detail', tag_name=tag) }}">
-                        <span class="demo-card-tag">#{{ tag }}</span>
-                    </a>
-                </li>
+                <li><a href="{{ url_for('tag_detail', tag_name=tag) }}"><span class="demo-card-tag">#{{ tag }}</span></a></li>
                 {% endfor %}
-                {% else %}
-                <li>
-                    <span class="demo-card-tag">#{{ demo['topic'] }}</span>
-                </li>
-                {% endif %}
+            {% else %}
+                <li><span class="demo-card-tag">#{{ demo['topic'] }}</span></li>
+            {% endif %}
             </ul>
         </div>
+
+        {# --- Location --- #}
         <div class="demo-card-location-row">
-            <span class="demo-card-city">
-                <i class="fa-solid fa-city"></i> {{ demo['city'] }}
-            </span>
-            <span class="demo-card-location">
-                <i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}
-            </span>
+            <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
+            <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
         </div>
     </div>
 </article>
+
 <style>
 .demo-card {
   background: var(--color-card-bg);
   border-radius: 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  padding: 1.3em 1em 1.1em 1em;
-  margin-bottom: 1em;
+  box-shadow: var(--color-shadow);
   color: var(--color-text);
-  transition: box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+  padding: 1em;
   cursor: pointer;
-  border: 1px solid transparent;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 .demo-card:hover {
+  transform: translateY(-4px);
   box-shadow: var(--color-shadow-hover);
-  border: 1px solid var(--color-primary);
-  transform: translateY(-2px) scale(1.01);
 }
+
+
 .demo-card-title {
   font-size: 1.3em;
   font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 0.7em;
   text-align: center;
-  letter-spacing: 0.01em;
+  color: var(--color-primary);
   background: var(--color-title-accent);
-  border-radius: 0.4em;
-  padding: 0.2em 0.5em;
+  border-radius: 0.5em;
+  padding: 0.3em 0.6em;
   display: inline-block;
   margin-left: auto;
   margin-right: auto;
 }
+
 .demo-card-details {
   display: flex;
   flex-direction: column;
-  gap: 0.7em;
+  gap: 0.5em;
   align-items: center;
 }
+
 .demo-card-date-time {
   display: flex;
   gap: 1em;
-  align-items: center;
-  font-size: 1em;
   color: var(--color-text-secondary);
+  font-size: 1em;
 }
-.demo-card-date i,
-.demo-card-time i {
-  margin-right: 0.3em;
-  color: var(--color-primary);
-}
+.demo-card-date-time i { color: var(--color-primary); }
+
 .demo-card-topics ul {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5em;
-  list-style: none;
   padding: 0;
-  margin: 0.2em 0 0.2em 0;
+  margin: 0.2em 0;
+  list-style: none;
   justify-content: center;
 }
 .demo-card-tag {
+  font-size: 0.95em;
+  font-weight: 500;
+  padding: 0.2em 0.5em;
+  border-radius: 0.4em;
   background: var(--color-title-accent);
   color: var(--color-primary);
-  border-radius: 0.4em;
-  padding: 0.1em 0.6em;
-  font-size: 0.98em;
-  font-weight: 500;
-  transition: background 0.2s, color 0.2s;
+  transition: 0.2s;
 }
 .demo-card-tag:hover {
   background: var(--color-primary);
   color: #fff;
 }
+
 .demo-card-location-row {
   display: flex;
   gap: 1.2em;
   justify-content: center;
   align-items: center;
-  margin-top: 0.5em;
   font-size: 1em;
 }
-.demo-card-city i,
-.demo-card-location i {
-  margin-right: 0.3em;
-  color: var(--color-primary);
-}
-.demo-card-recommended {
-  border: 1px solid var(--color-warning);
-  background: rgba(var(--color-warning-rgb), 0.1);
-}
+.demo-card-location-row i { color: var(--color-primary); }
+
 .demo-card-recommended-badge {
   position: absolute;
   top: 1em;
   right: 1em;
-  background: var(--color-warning);
+  background: var(--color-primary);
   color: #fff;
   padding: 0.3em 0.6em;
   border-radius: 0.4em;
-  font-size: 0.9em;
-  font-weight: 600;
+  font-size: 0.85em;
   display: flex;
   align-items: center;
   gap: 0.3em;
 }
+
 @media (max-width: 600px) {
-  .demo-card { padding: 0.7em 0.5em 0.7em 0.5em; }
   .demo-card-title { font-size: 1.05em; }
-  .demo-card-details { gap: 0.4em; }
-  .demo-card-date-time { font-size: 0.98em; }
-  .demo-card-location-row { font-size: 0.98em; }
+  .demo-card-date-time { font-size: 0.95em; }
+  .demo-card-location-row { font-size: 0.95em; }
 }
 </style>
 {% endmacro %}

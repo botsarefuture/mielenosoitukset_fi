@@ -34,7 +34,10 @@ from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
 
 from flask_caching import Cache  # Added for caching
 
+from datetime import datetime, date, time
+
 # Initialize Babel
+
 babel = Babel()
 
 
@@ -47,9 +50,11 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
+    
     try:
         security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
         security.init_app(app)
+        
     except Exception as e:
         Limiter(
             get_remote_address,
@@ -64,7 +69,6 @@ def create_app() -> Flask:
 
     # Initialize Flask-Caching
     cache = Cache(app)
-        
 
     # Locale selector function
     def get_locale():
@@ -94,6 +98,7 @@ def create_app() -> Flask:
     login_manager.login_view = (
         "users.auth.login"  # Redirect to login view if not authenticated
     )
+    
     login_manager.anonymous_user = AnonymousUser
 
     # User Loader function
@@ -173,8 +178,8 @@ def create_app() -> Flask:
         except Exception:
             return value
 
-    from datetime import datetime, date, time
-    from datetime import datetime, date, time
+    
+    
 
     @app.template_filter("time")
     def time_filter(value, format_='%H:%M'):

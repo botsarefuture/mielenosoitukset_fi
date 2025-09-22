@@ -28,6 +28,8 @@ from mielenosoitukset_fi.utils import VERSION
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from mielenosoitukset_fi.kampanja import campaign_bp
+
 import os
 
 from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
@@ -138,6 +140,8 @@ def create_app() -> Flask:
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    
+    app.register_blueprint(campaign_bp)
     app.register_blueprint(board_bp)
     
     socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")

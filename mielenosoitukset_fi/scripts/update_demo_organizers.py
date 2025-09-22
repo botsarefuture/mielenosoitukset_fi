@@ -72,16 +72,19 @@ def find_organization_by_name(org_name: str) -> Optional[Dict]:
     return organizations_collection.find_one({"name": org_name})
 
 
-def update_demo_organizers(demo: Dict) -> None:
+def update_demo_organizers(demo: Dict, force=False) -> None:
     """
     Update the organizers of a demonstration with their organization IDs.
 
     Args:
         demo (dict): The demonstration document.
     """
-    if demo.get("recurring") or demo.get("parent"):
+    if (demo.get("recurs") or demo.get("parent")) and not force:
         logger.debug(f"Skipping recurring demonstration with ID {demo['_id']}")
         return
+    
+    else:
+        logger.info(f"Processing demonstration with ID {demo['_id']}")
 
     demonstration = Demonstration.from_dict(demo)
     organizers = demonstration.organizers
@@ -95,6 +98,17 @@ def update_demo_organizers(demo: Dict) -> None:
                 logger.error(
                     f"Organization with ID {organizer.organization_id} not found, skipping..."
                 )
+                # we should try to match by name if possible
+                organization = find_organization_by_name(organizer.name)
+                if organization:
+                    logger.info(f"Matched organization by name: {organization['name']}")
+                    organizer.organization_id = ObjectId(organization["_id"])
+                else:
+                    logger.warning(
+                        f"Could not match organizer {organizer.name} with any organization."
+                    )
+                    continue
+                
                 continue
         else:
             # Try to match organizer's name with organization name
@@ -116,14 +130,19 @@ def update_demo_organizers(demo: Dict) -> None:
     )
 
 
-def main() -> None:
+def main(force=False) -> None:
     """
     Main function to update organizers' organization IDs in all demonstrations.
     """
     demonstrations = list(demonstrations_collection.find(DEMO_FILTER))
 
+    if arguments := len(sys.argv) > 1:
+        if "force" in sys.argv[1:]:
+            force = True
+            logger.info("Force update enabled: Recurring demonstrations will be processed.")
+    
     for demo in demonstrations:
-        update_demo_organizers(demo)
+        update_demo_organizers(demo, force=force)
 
 
 if __name__ == "__main__":

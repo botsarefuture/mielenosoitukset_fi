@@ -1,148 +1,209 @@
 {% macro demo_card(demo, recommended=False) %}
-<article class="grid-item demo-card{% if recommended %} demo-card-recommended{% endif %}" 
-         data-href="{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}"
-         aria-label="Demonstration card">
+<article class="grid-item demo-card{% if recommended %} demo-card-recommended{% endif %}"
+  data-href="{{ url_for('demonstration_detail', demo_id=demo.slug or demo.running_number or demo._id) }}"
+  aria-label="Demonstration card">
 
-    {% if recommended %}
-    <span class="demo-card-recommended-badge"><i class="fa-solid fa-star"></i> {{ _('Suosikki') }}</span>
-    {% endif %}
+  {% if recommended %}
+  <span class="demo-card-recommended-badge"><i class="fa-solid fa-star"></i> {{ _('Suosikki') }}</span>
+  {% endif %}
 
-    {# --- Card Image --- #}
-    {% set image_url = demo.get('img') or demo.get('cover_image') or demo.get('preview_image') %}
-    {% if image_url %}
-    <div class="demo-card-image">
-        <img src="{{ image_url }}" alt="{{ demo['title'] }}">
+  {# --- Card Image --- #}
+  {% set image_url = demo.get('img') or demo.get('cover_image') or demo.get('preview_image') %}
+  {% if image_url %}
+  <div class="demo-card-image">
+    <img src="{{ image_url }}" alt="{{ demo['title'] }}">
+  </div>
+  {% endif %}
+
+  {# --- Card Title --- #}
+  <header class="demo-card-title">{{ demo['title'] }}</header>
+
+  {# --- Date and Time --- #}
+  <div class="demo-card-details">
+    <div class="demo-card-date-time">
+      <span><i class="fa-regular fa-calendar"></i> {{ demo['date'] | date('%d.%m.%Y') }}</span>
+      <span><i class="fa-regular fa-clock"></i> {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] |
+        time('%H:%M') }}</span>
     </div>
-    {% endif %}
 
-    {# --- Card Title --- #}
-    <header class="demo-card-title">{{ demo['title'] }}</header>
-
-    {# --- Date and Time --- #}
-    <div class="demo-card-details">
-        <div class="demo-card-date-time">
-            <span><i class="fa-regular fa-calendar"></i> {{ demo['date'] | date('%d.%m.%Y') }}</span>
-            <span><i class="fa-regular fa-clock"></i> {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}</span>
-        </div>
-
-        {# --- Tags / Topics --- #}
-        <div class="demo-card-topics">
-            <ul>
-            {% if demo['tags'] %}
-                {% for tag in demo['tags'] %}
-                <li><a href="{{ url_for('tag_detail', tag_name=tag) }}"><span class="demo-card-tag">#{{ tag }}</span></a></li>
-                {% endfor %}
-            {% else %}
-                <li><span class="demo-card-tag">#{{ _('EiAiheita') }}</span></li>
-            {% endif %}
-            </ul>
-        </div>
-
-        {# --- Location --- #}
-        <div class="demo-card-location-row">
-            <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
-            <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
-        </div>
+    {# --- Tags / Topics --- #}
+    <div class="demo-card-topics">
+      <ul>
+        {% if demo['tags'] %}
+        {% for tag in demo['tags'] %}
+        <li><a href="{{ url_for('tag_detail', tag_name=tag) }}"><span class="demo-card-tag">#{{ tag }}</span></a></li>
+        {% endfor %}
+        {% else %}
+        <li><span class="demo-card-tag">#{{ _('EiAiheita') }}</span></li>
+        {% endif %}
+      </ul>
     </div>
+
+    {# --- Location --- #}
+    <div class="demo-card-location-row">
+      <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
+      <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
+    </div>
+  </div>
 </article>
 
 <style>
-.demo-card {
-  background: var(--color-card-bg);
-  border-radius: 1em;
-  box-shadow: var(--color-shadow);
-  color: var(--color-text);
-  display: flex;
-  flex-direction: column;
-  gap: 0.7em;
-  padding: 1em;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.demo-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--color-shadow-hover);
-}
+  .demo-card {
+    background: var(--color-card-bg);
+    border-radius: 1em;
+    box-shadow: var(--color-shadow);
+    color: var(--color-text);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7em;
+    padding: 1em;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .demo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--color-shadow-hover);
+  }
 
 
-.demo-card-title {
-  font-size: 1.3em;
-  font-weight: 700;
-  text-align: center;
-  color: var(--color-primary);
-  background: var(--color-title-accent);
-  border-radius: 0.5em;
-  padding: 0.3em 0.6em;
-  display: inline-block;
-  margin-left: auto;
-  margin-right: auto;
-}
+  .demo-card-title {
+    font-size: 1.3em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--color-primary);
+    background: var(--color-title-accent);
+    border-radius: 0.5em;
+    padding: 0.3em 0.6em;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: auto;
+  }
 
-.demo-card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  align-items: center;
-}
+  .demo-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    align-items: center;
+  }
 
-.demo-card-date-time {
-  display: flex;
-  gap: 1em;
-  color: var(--color-text-secondary);
-  font-size: 1em;
-}
-.demo-card-date-time i { color: var(--color-primary); }
+  .demo-card-date-time {
+    display: flex;
+    gap: 1em;
+    color: var(--color-text-secondary);
+    font-size: 1em;
+  }
 
-.demo-card-topics ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5em;
-  padding: 0;
-  margin: 0.2em 0;
-  list-style: none;
-  justify-content: center;
-}
-.demo-card-tag {
-  font-size: 0.95em;
-  font-weight: 500;
-  padding: 0.2em 0.5em;
-  border-radius: 0.4em;
-  background: var(--color-title-accent);
-  color: var(--color-primary);
-  transition: 0.2s;
-}
-.demo-card-tag:hover {
-  background: var(--color-primary);
-  color: #fff;
-}
+  .demo-card-date-time i {
+    color: var(--color-primary);
+  }
 
-.demo-card-location-row {
-  display: flex;
-  gap: 1.2em;
-  justify-content: center;
-  align-items: center;
-  font-size: 1em;
-}
-.demo-card-location-row i { color: var(--color-primary); }
+  .demo-card-topics ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    padding: 0;
+    margin: 0.2em 0;
+    list-style: none;
+    justify-content: center;
+  }
 
-.demo-card-recommended-badge {
-  position: absolute;
-  top: 1em;
-  right: 1em;
-  background: var(--color-primary);
-  color: #fff;
-  padding: 0.3em 0.6em;
-  border-radius: 0.4em;
-  font-size: 0.85em;
-  display: flex;
-  align-items: center;
-  gap: 0.3em;
-}
+  .demo-card-tag {
+    font-size: 0.95em;
+    font-weight: 500;
+    padding: 0.2em 0.5em;
+    border-radius: 0.4em;
+    background: var(--color-title-accent);
+    color: var(--color-primary);
+    transition: 0.2s;
+  }
 
-@media (max-width: 600px) {
-  .demo-card-title { font-size: 1.05em; }
-  .demo-card-date-time { font-size: 0.95em; }
-  .demo-card-location-row { font-size: 0.95em; }
-}
+  .demo-card-tag:hover {
+    background: var(--color-primary);
+    color: #fff;
+  }
+
+  .demo-card-location-row {
+    display: flex;
+    gap: 1.2em;
+    justify-content: center;
+    align-items: center;
+    font-size: 1em;
+  }
+
+  .demo-card-location-row i {
+    color: var(--color-primary);
+  }
+
+  .demo-card-recommended-badge {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    background: var(--color-primary);
+    color: #fff;
+    padding: 0.3em 0.6em;
+    border-radius: 0.4em;
+    font-size: 0.85em;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+  }
+
+  @media (max-width: 600px) {
+    .demo-card-title {
+      font-size: 1.05em;
+    }
+
+    .demo-card-date-time {
+      font-size: 0.95em;
+    }
+
+    .demo-card-location-row {
+      font-size: 0.95em;
+    }
+  }
 </style>
+{% endmacro %}
+
+{% macro pagination(page, total_pages) %}
+<nav class="pagination" style="text-align:center; margin-top:2em;">
+  <div style="margin: auto;">
+    {% set delta = 2 %} {# pages around current page #}
+    {% set range_start = [1, page - delta]|max %}
+    {% set range_end = [total_pages, page + delta]|min %}
+
+
+    {# Previous button #}
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}" class="btn">&laquo; {{ _('Edellinen') }}</a>
+    {% endif %}
+
+    {# First page #}
+    {% if range_start > 1 %}
+    <a href="?page=1" class="btn">1</a>
+    {% if range_start > 2 %}
+    <span class="btn">…</span>
+    {% endif %}
+    {% endif %}
+
+    {# Pages around current #}
+    {% for p in range(range_start, range_end + 1) %}
+    {% if p == page %}
+    <span class="btn current">{{ p }}</span>
+    {% else %}
+    <a href="?page={{ p }}" class="btn">{{ p }}</a>
+    {% endif %}
+    {% endfor %}
+
+    {# Last page #}
+    {% if range_end < total_pages %} {% if range_end < total_pages - 1 %} <span class="btn">…</span>
+      {% endif %}
+      <a href="?page={{ total_pages }}" class="btn">{{ total_pages }}</a>
+      {% endif %}
+
+      {# Next button #}
+      {% if page < total_pages %} <a href="?page={{ page + 1 }}" class="btn">{{ _('Seuraava') }} &raquo;</a>
+        {% endif %}
+  </div>
+</nav>
 {% endmacro %}

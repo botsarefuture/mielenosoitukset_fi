@@ -680,7 +680,7 @@ demo.get('city', 'Tuntematon') ~
 
                 {% if org.organization_id and org.organization_id != "None" %}
 
-                <a href="{{ org.url if org.url else '/org/' ~ org.organization_id }}"
+                <a href="{{ org.url if org.url else '/organization/' ~ org._id }}"
                   class="btn btn-sm btn-outline-primary d-flex align-items-center" target="_blank"
                   rel="noopener noreferrer">
                   <i class="fas fa-id-badge me-1"></i> {{ _('Mielenosoitukset.fi -profiili') }}

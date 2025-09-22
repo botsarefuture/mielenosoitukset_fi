@@ -9,6 +9,8 @@
 {% block styles %}
 <!--<link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}" />-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+
 <style>
 :root {
   --color-bg: light-dark(#f9f9f9, #181a1b);
@@ -178,6 +180,33 @@ body {
   .section-title { font-size: 1.3em; }
   .admin-section-title { font-size: 1.1em; }
 }
+
+.pagination .btn {
+  display: inline-block;
+  margin: 0 0.2em;
+  padding: 0.4em 0.8em;
+  background: var(--color-title-accent);
+  color: var(--color-text);
+  border-radius: 0.5em;
+  text-decoration: none;
+  font-weight: 600;
+}
+.pagination .btn:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+.pagination .btn.current {
+  background: var(--color-primary);
+  color: #fff;
+  pointer-events: none;
+}
+
+.pagination .btn {
+  pointer-events: auto; /* allow clicks on numbers only */
+}
+.pagination .btn.current { pointer-events: none; }
+.pagination .btn span { background: none; cursor: default; }
+
 </style>
 {% endblock %}
 {% block content %}
@@ -240,6 +269,11 @@ body {
       {% endfor %}
     </div>
   </section>
+  {% if total_pages > 1 %}
+  {{ macros.pagination(page, total_pages) }}
+{% endif %}
+
+
   {% endif %}
 </div>
 {% endblock %}

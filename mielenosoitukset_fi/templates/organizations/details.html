@@ -5,241 +5,694 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script>
+// Add scroll animations
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-fade-in-up');
+    }
+  });
+}, observerOptions);
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.section-card, .org-hero, .demo-card').forEach(el => {
+    observer.observe(el);
+  });
+});
+</script>
 {% endblock %}
 {% block styles %}
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/organization/details.css') }}" />-->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-text-secondary: light-dark(#444, #c7c7c7);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-  --primary_color: var(--color-primary);
-  --primary_dark_color: light-dark(#003d80, #0056b3);
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-primary: light-dark(#0052cc, #3b82f6);
+  --color-primary-hover: light-dark(#003d99, #2563eb);
+  --color-secondary: light-dark(#ff6b00, #f97316);
+  --color-secondary-hover: light-dark(#e55a00, #ea580c);
+  --color-accent: light-dark(#06b6d4, #0891b2);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.dark:root {
+  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  margin: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
+
+/* Container */
 .container-main-content {
-  background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
 }
-.org-banner {
-  display: flex;
-  flex-direction: column;
+
+/* Organization Hero Section */
+.org-hero {
+  background: var(--color-gradient-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 4rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+  margin-bottom: 3rem;
+}
+
+.org-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.org-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.org-label {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
-  color: #fff;
-  border-radius: 1.2em;
-  padding: 1.5em 1em 1.2em 1em;
-  margin-bottom: 2em;
-  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.02em;
+}
+
+.org-name {
+  color: white;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.org-desc {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Section Cards */
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
   position: relative;
   overflow: hidden;
 }
-.org-banner .org-label {
-  font-size: 1.2em;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  background: rgba(255,255,255,0.13);
-  padding: 0.3em 1.2em;
-  border-radius: 2em;
-  margin-bottom: 0.7em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  display: inline-block;
-}
-.org-banner .org-name {
-  font-size: 2.2em;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
-  margin-bottom: 0.2em;
-  letter-spacing: 0.04em;
-  display: inline-block;
-}
-.org-banner .org-desc {
-  font-size: 1.15em;
-  font-weight: 400;
-  color: #e3f0ff;
-  margin-top: 0.2em;
-  text-align: center;
-  max-width: 600px;
-}
-.section-title {
-  font-size: 2.2em;
-  font-weight: 800;
-  margin-bottom: 1.2em;
-  color: var(--color-primary);
-  letter-spacing: 0.01em;
-  padding: 0.3em 0.8em;
-  border-left: none;
-  background: var(--color-title-accent);
-  border-radius: 0.6em;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: block;
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-  width: fit-content;
-  transition: background 0.2s, color 0.2s;
-}
-.section-title:after {
+
+.section-card::before {
   content: '';
-  display: block;
-  margin: 0.4em auto 0 auto;
-  width: 2.5em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 4px;
-  border-radius: 2px;
-  background: var(--color-primary);
-  opacity: 0.25;
+  background: var(--color-gradient-primary);
+  opacity: 0;
+  transition: var(--transition);
 }
-.org-header h1 {
+
+.section-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.section-card:hover::before {
+  opacity: 1;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
   color: var(--color-primary);
-  font-size: 2.1em;
-  font-weight: 800;
-  margin-bottom: 0.5em;
-  letter-spacing: 0.01em;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   text-align: center;
 }
-.org-description {
-  font-size: 1.15em;
-  color: var(--color-text-secondary);
-  margin-bottom: 1.5em;
-  text-align: center;
+
+.section-title i {
+  font-size: 1.5rem;
 }
-.contact-info {
-  margin: 2em auto 2em auto;
-  background: var(--color-title-accent);
-  border-radius: 0.7em;
-  padding: 1.2em 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  max-width: 600px;
+
+/* Contact Information */
+.contact-methods {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
-.contact-methods p {
-  margin: 0.5em 0;
-  font-size: 1.08em;
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  text-decoration: none;
+  color: inherit;
+}
+
+.contact-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+  border-color: var(--color-primary);
+}
+
+.contact-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--color-gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.contact-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--color-text);
 }
+
+.contact-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
 .contact-link {
   color: var(--color-primary);
-  text-decoration: underline;
+  text-decoration: none;
   font-weight: 600;
+  transition: var(--transition);
 }
+
 .contact-link:hover {
-  color: var(--primary_dark_color);
+  color: var(--color-secondary);
 }
+
+/* Social Media */
 .socials {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.social-item {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-  margin-top: 0.7em;
-  margin-bottom: 0.7em;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  text-decoration: none;
+  color: inherit;
+}
+
+.social-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+  border-color: var(--color-primary);
+}
+
+.social-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-gradient-secondary);
+  display: flex;
+  align-items: center;
   justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+  flex-shrink: 0;
 }
-.some-icon {
-  margin-right: 0.5em;
-  color: var(--color-primary);
+
+.social-info {
+  flex: 1;
 }
-.admin-section-title {
-  font-size: 1.5em;
+
+.social-info .platform {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+.social-info .username {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Demonstrations Section */
+.demos-section {
+  margin-top: 4rem;
+}
+
+.demos-title {
+  font-size: 2.5rem;
+  font-weight: 700;
   color: var(--color-primary);
-  font-weight: 800;
-  margin-bottom: 1em;
   text-align: center;
-  background: var(--color-title-accent);
-  border-radius: 0.6em;
-  padding: 0.3em 0.8em;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
-.container-grid {
-  width: 100%;
+
+.demos-grid {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
-@media (max-width: 600px) {
-  .container-main-content { padding: 1em 0.5em; }
-  .org-banner .org-name { font-size: 1.3em; }
-  .org-banner { padding: 1em 0.5em; }
-  .section-title { font-size: 1.3em; }
-  .admin-section-title { font-size: 1.1em; }
+
+@media (min-width: 1200px) {
+  .demos-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .demos-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 767px) {
+  .demos-grid { grid-template-columns: 1fr; }
+}
+
+/* Demo Cards Enhancement */
+.demo-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-secondary);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.demo-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.demo-card:hover::before {
+  opacity: 1;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 3rem 0;
+  flex-wrap: wrap;
+}
+
+.pagination .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 1rem;
+  background: var(--color-card-bg);
+  color: var(--color-text);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.pagination .btn:hover:not(.current) {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+}
+
+.pagination .btn.current {
+  background: var(--color-gradient-primary);
+  color: white;
+  pointer-events: none;
+  box-shadow: var(--color-shadow);
+}
+
+/* Back to Top Button */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 50px;
+  background: var(--color-gradient-primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: var(--color-shadow-lg);
+  transition: var(--transition);
+  opacity: 0;
+  visibility: hidden;
+  z-index: 1000;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container-main-content {
+    padding: 0 1rem;
+    margin: 1rem auto;
+  }
+
+  .org-hero {
+    padding: 3rem 1.5rem;
+  }
+
+  .org-name {
+    font-size: 2.5rem;
+  }
+
+  .section-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+  }
+
+  .demos-title {
+    font-size: 2rem;
+  }
+
+  .contact-methods {
+    grid-template-columns: 1fr;
+  }
+
+  .socials {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus States for Accessibility */
+.contact-item:focus,
+.social-item:focus,
+.pagination .btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Empty State */
+.no-demos {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-text-secondary);
+}
+
+.no-demos i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-demos h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.no-demos p {
+  font-size: 1.1rem;
+  max-width: 400px;
+  margin: 0 auto;
 }
 </style>
 {% endblock %}
 {% block content %}
 
 <div class="container-main-content">
-  <div class="org-banner">
-    <div class="org-label">
-      <i class="fa-solid fa-building"></i>
-      {{ _('Järjestäjä') }}
+  <!-- Organization Hero -->
+  <section class="org-hero">
+    <div class="org-hero-content">
+      <div class="org-label">
+        <i class="fa-solid fa-building"></i>
+        {{ _('Järjestäjä') }}
+      </div>
+      <h1 class="org-name">{{ org.name }}</h1>
+      {% if org.description %}
+      <p class="org-desc">{{ org.description }}</p>
+      {% endif %}
     </div>
-    <div class="org-name">{{ org.name }}</div>
-    <div class="org-desc">{{ org.description }}</div>
-  </div>
+  </section>
 
-  <div class="contact-info">
-    <h2 class="section-title">{{ _('Yhteystiedot') }}</h2>
+  <!-- Contact Information -->
+  <section class="section-card">
+    <h2 class="section-title">
+      <i class="fa-solid fa-address-card"></i>
+      {{ _('Yhteystiedot') }}
+    </h2>
+    
     <div class="contact-methods">
       {% if org.email %}
-      <p>
-        <i class="fa-solid fa-envelope some-icon"></i>
-        <a href="mailto:{{ org.email }}" class="link contact-link">{{ org.email }}</a>
-      </p>
+      <a href="mailto:{{ org.email }}" class="contact-item">
+        <div class="contact-icon">
+          <i class="fa-solid fa-envelope"></i>
+        </div>
+        <div class="contact-info">
+          <h3>{{ _('Sähköposti') }}</h3>
+          <p>{{ org.email }}</p>
+        </div>
+      </a>
       {% endif %}
+      
       {% if org.website %}
-      <p>
-        <i class="fa-solid fa-external-link some-icon"></i>
-        <a href="{{ org.website }}" target="_blank" class="link contact-link">{{ org.website }}</a>
-      </p>
+      <a href="{{ org.website }}" target="_blank" rel="noopener noreferrer" class="contact-item">
+        <div class="contact-icon">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+        <div class="contact-info">
+          <h3>{{ _('Verkkosivut') }}</h3>
+          <p>{{ org.website }}</p>
+        </div>
+      </a>
       {% endif %}
     </div>
+
+    <!-- Social Media -->
     {% if org.social_media_links %}
-    <h3 class="section-title">{{ _('Sosiaalinen media') }}</h3>
+    <h3 class="section-title">
+      <i class="fa-solid fa-share-nodes"></i>
+      {{ _('Sosiaalinen media') }}
+    </h3>
     <div class="socials">
       {% for social in org.social_media_links %}
-      <a
-        href="{{ org.social_media_links[social] }}"
-        target="_blank"
-        class="some-icon link"
-      >
-      {% set social_link = org.social_media_links[social].split("/") %}
-      {% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else social_link[-2] if social_link | length > 1 else "" %}
-      <i class="fa-brands fa-{{ social }} some-icon"></i>
-      {{ '@' + username if username and username[0] != '@' else username }}
+      <a href="{{ org.social_media_links[social] }}" target="_blank" rel="noopener noreferrer" class="social-item">
+        <div class="social-icon">
+          <i class="fa-brands fa-{{ social }}"></i>
+        </div>
+        <div class="social-info">
+          <div class="platform">
+            {% if social == 'facebook' %}Facebook
+            {% elif social == 'twitter' %}Twitter
+            {% elif social == 'instagram' %}Instagram
+            {% elif social == 'linkedin' %}LinkedIn
+            {% elif social == 'youtube' %}YouTube
+            {% elif social == 'tiktok' %}TikTok
+            {% else %}{{ social|title }}
+            {% endif %}
+          </div>
+          <div class="username">
+            {% set social_link = org.social_media_links[social].split("/") %}
+            {% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else social_link[-2] if social_link | length > 1 else "" %}
+            {{ '@' + username if username and username[0] != '@' else username }}
+          </div>
+        </div>
       </a>
       {% endfor %}
-      <br>
     </div>
-    <br>
     {% endif %}
-  </div>
-  <br>
+  </section>
+
+  <!-- Demonstrations Section -->
   {% if upcoming_demos %}
-  <section style="display: flex; flex-direction: column; align-content: center; width: 100%; align-items: center;">
-    <h2 class="admin-section-title" style="margin-top: 2em; width: fit-content">
-      {{ _('Esitellyt mielenosoitukset') }}
+  <section class="demos-section">
+    <h2 class="demos-title">
+      <i class="fa-solid fa-calendar-check"></i>
+      {{ _('Mielenosoitukset') }}
     </h2>
-    <div class="container-grid" style="width: 100%">
+    <div class="demos-grid">
       {% for demo in upcoming_demos %}
         {{ macros.demo_card(demo) }}
       {% endfor %}
     </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+      {% if page > 1 %}
+      <a href="?page={{ page - 1 }}" class="btn">
+        <i class="fa-solid fa-chevron-left"></i>
+      </a>
+      {% endif %}
+      
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+        <span class="btn current">{{ p }}</span>
+        {% elif p <= 2 or p >= total_pages - 1 or (p >= page - 2 and p <= page + 2) %}
+        <a href="?page={{ p }}" class="btn">{{ p }}</a>
+        {% elif p == 3 or p == total_pages - 2 %}
+        <span class="btn">...</span>
+        {% endif %}
+      {% endfor %}
+      
+      {% if page < total_pages %}
+      <a href="?page={{ page + 1 }}" class="btn">
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+  {% else %}
+  <section class="section-card">
+    <div class="no-demos">
+      <i class="fa-regular fa-calendar-xmark"></i>
+      <h3>{{ _('Ei tulevia mielenosoituksia') }}</h3>
+      <p>{{ _('Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia.') }}</p>
+    </div>
   </section>
   {% endif %}
+
+  <!-- Back to Top Button -->
+  <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
 </div>
+
+<script>
+// Back to top functionality
+window.addEventListener('scroll', function() {
+  const backToTop = document.getElementById('backToTop');
+  if (window.pageYOffset > 300) {
+    backToTop.classList.add('visible');
+  } else {
+    backToTop.classList.remove('visible');
+  }
+});
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+</script>
+
 {% endblock %}

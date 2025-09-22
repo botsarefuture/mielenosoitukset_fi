@@ -22,7 +22,17 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from mielenosoitukset_fi.database_manager import DatabaseManager
 
-DEMO_FILTER = {"approved": True, "$or": [{"hide": {"$exists": False}}, {"hide": False}]}
+DEMO_FILTER = {
+    "approved": True,
+    "$or": [
+        {"hide": {"$exists": False}},
+        {"hide": False}
+    ],
+    "$or": [
+        {"rejected": {"$exists": False}},
+        {"rejected": False}
+    ]
+}
 
 
 def stringify_object_ids(data):

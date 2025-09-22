@@ -543,7 +543,7 @@ body {
     <div class="org-hero-content">
       <div class="org-label">
         <i class="fa-solid fa-building"></i>
-        {{ _('Järjestäjä') }}
+        {{ _('Organisaatio') }}
       </div>
       <h1 class="org-name">{{ org.name }}</h1>
       {% if org.description %}
@@ -622,7 +622,7 @@ body {
 
   <!-- Demonstrations Section -->
   {% if upcoming_demos %}
-  <section class="demos-section">
+  <section class="demos-section" id="demos">
     <h2 class="demos-title">
       <i class="fa-solid fa-calendar-check"></i>
       {{ _('Mielenosoitukset') }}
@@ -637,7 +637,7 @@ body {
     {% if total_pages > 1 %}
     <div class="pagination">
       {% if page > 1 %}
-      <a href="?page={{ page - 1 }}" class="btn">
+      <a href="?page={{ page - 1 }}#demos" class="btn">
         <i class="fa-solid fa-chevron-left"></i>
       </a>
       {% endif %}
@@ -646,14 +646,14 @@ body {
         {% if p == page %}
         <span class="btn current">{{ p }}</span>
         {% elif p <= 2 or p >= total_pages - 1 or (p >= page - 2 and p <= page + 2) %}
-        <a href="?page={{ p }}" class="btn">{{ p }}</a>
+        <a href="?page={{ p }}#demos" class="btn">{{ p }}</a>
         {% elif p == 3 or p == total_pages - 2 %}
         <span class="btn">...</span>
         {% endif %}
       {% endfor %}
       
       {% if page < total_pages %}
-      <a href="?page={{ page + 1 }}" class="btn">
+      <a href="?page={{ page + 1 }}#demos" class="btn">
         <i class="fa-solid fa-chevron-right"></i>
       </a>
       {% endif %}

@@ -307,22 +307,34 @@ def create_app() -> Flask:
             "run_preview": run_preview,
         }
 
-        def run_selected_tasks(selected):
+        def run_selected_tasks(selected, till_param=None):
             """Run selected maintenance tasks.
 
             Parameters
             ----------
             selected : list of str
-            List of task names to run.
+                List of task names to run.
+            till_param : int | None
+                Optional number of days to limit run_preview task.
             """
             with app.app_context():
                 for task_name in selected:
                     if task_name == "run_preview":
-                        i = input("Run force update? (y/n): ")
-                        if i.lower() in ["y", "n"]:
-                            available_tasks[task_name](force=(i.lower() == "y"))
+                        # Ask for force
+                        i = input("Run force update? (y/n): ").lower()
+                        force_flag = i == "y"
+
+                        # Ask for till (optional)
+                        if till_param is None:
+                            j = input("Limit previews to how many days? (0 = all): ").strip()
+                            try:
+                                till = int(j)
+                            except ValueError:
+                                till = 0
                         else:
-                            app.logger.warning("Invalid input, not running force update.")
+                            till = till_param
+
+                        available_tasks[task_name](force=force_flag, till=till)
                     elif task_name in available_tasks:
                         available_tasks[task_name]()
                     else:

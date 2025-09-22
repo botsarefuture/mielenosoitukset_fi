@@ -594,6 +594,13 @@ document.querySelectorAll('.button').forEach(button => {
     <i class="fa-solid fa-info-circle"></i>
     {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
   </div>
+  <!-- Call to Action -->
+<div class="buttons-div" style="margin-bottom: 0px !important;">
+  <a class="button button-secondary" href="{{ url_for('demonstrations') }}">
+    <i class="fa-solid fa-list"></i> {{ _('Näytä kaikki mielenosoitukset') }}
+  </a>
+</div>
+</section>
 </section>
 {% endif %}
 
@@ -621,6 +628,13 @@ document.querySelectorAll('.button').forEach(button => {
     <i class="fa-solid fa-info-circle"></i>
     {{ _('Poimintoja ajankohtaisista mielenosoituksista.') }}
   </div>
+
+<!-- Call to Action -->
+<div class="buttons-div" style="margin-bottom: 0px !important;">
+  <a class="button button-secondary" href="{{ url_for('demonstrations') }}">
+    <i class="fa-solid fa-list"></i> {{ _('Näytä kaikki mielenosoitukset') }}
+  </a>
+</div>
 </section>
 {% endif %}
 
@@ -644,11 +658,5 @@ document.querySelectorAll('.button').forEach(button => {
   </div>
 </section>
 
-<!-- Call to Action -->
-<div class="buttons-div">
-  <a class="button button-secondary" href="{{ url_for('demonstrations') }}">
-    <i class="fa-solid fa-list"></i> {{ _('Näytä kaikki mielenosoitukset') }}
-  </a>
-</div>
 
 {% endblock %}

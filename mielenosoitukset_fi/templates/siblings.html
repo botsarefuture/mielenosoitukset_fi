@@ -1,112 +1,628 @@
 {% extends 'base.html' %}
-
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-{% endblock %}
+<script>
+// Add scroll animations
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
 
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-fade-in-up');
+    }
+  });
+}, observerOptions);
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => {
+    observer.observe(el);
+  });
+
+  // Back to top functionality
+  window.addEventListener('scroll', function() {
+    const backToTop = document.getElementById('backToTop');
+    if (window.pageYOffset > 300) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
+  });
+});
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+</script>
+{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-  --white: light-dark(#fff, #23272a);
-  --input_background: light-dark(#f9f9f9, #23272a);
-  --primary_color: var(--color-primary);
-  --primary_dark_color: light-dark(#003d80, #0056b3);
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-primary: light-dark(#0052cc, #3b82f6);
+  --color-primary-hover: light-dark(#003d99, #2563eb);
+  --color-secondary: light-dark(#ff6b00, #f97316);
+  --color-secondary-hover: light-dark(#e55a00, #ea580c);
+  --color-accent: light-dark(#06b6d4, #0891b2);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+  --color-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.dark:root {
+  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --color-gradient-secondary:  linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  --color-gradient-accent: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--color-bg);
-  color: var(--color-text, #222);
+  color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  margin: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
+
+/* Container */
 .container-main-content {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+/* Hero Section */
+.hero-section {
+  background: var(--color-gradient-accent);
+  border-radius: var(--border-radius-lg);
+  padding: 4rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+  margin-bottom: 3rem;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.recurring-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.02em;
+  animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.recurring-title {
+  color: white;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.recurring-desc {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Info Box */
+.info-box {
   background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin-bottom: 3rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow);
 }
-@media (max-width: 600px) {
-  .container-main-content {
-    padding: 1em 0.5em;
-  }
-  h1 {
-    font-size: 1.3em;
-  }
+
+.info-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-accent);
 }
-.siblings-banner {
+
+.info-box-content {
+  position: relative;
+  z-index: 2;
+}
+
+.info-box h2 {
+  color: var(--color-accent);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, var(--color-primary) 0%, #4ea1ff 100%);
-  color: #fff;
-  border-radius: 1.2em;
-  padding: 1.5em 1em 1.2em 1em;
-  margin-bottom: 2em;
-  box-shadow: 0 4px 24px rgba(0,86,179,0.10), 0 2px 8px rgba(0,0,0,0.04);
+  gap: 0.5rem;
+}
+
+.info-box p {
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Stats Section */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.stat-card {
+  background: var(--color-card-bg);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
   position: relative;
   overflow: hidden;
 }
-.siblings-banner .siblings-label {
-  font-size: 1.2em;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  background: rgba(255,255,255,0.13);
-  padding: 0.3em 1.2em;
-  border-radius: 2em;
-  margin-bottom: 0.7em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  display: inline-block;
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-accent);
+  opacity: 0;
+  transition: var(--transition);
 }
-.siblings-banner .siblings-title {
-  font-size: 2.2em;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0,86,179,0.18);
-  margin-bottom: 0.2em;
-  letter-spacing: 0.04em;
-  display: inline-block;
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
 }
-.siblings-banner .siblings-desc {
-  font-size: 1.15em;
-  font-weight: 400;
-  color: #e3f0ff;
-  margin-top: 0.2em;
-  text-align: center;
-  max-width: 600px;
+
+.stat-card:hover::before {
+  opacity: 1;
 }
-@media (max-width: 600px) {
-  .siblings-banner .siblings-title { font-size: 1.3em; }
-  .siblings-banner { padding: 1em 0.5em; }
-}
-.info-box {
-  background: var(--color-title-accent, #e3f0ff);
-  color: var(--color-primary, #0056b3);
-  padding: 1em;
-  border-radius: 0.5em;
-  text-align: center;
-  margin-bottom: 2em;
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-accent);
   display: block;
-  font-size: 1.08em;
+  margin-bottom: 0.5rem;
 }
-.container-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5em;
-  margin-top: 1em;
-  justify-content: center;
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
-.grid-item.no-results {
-  width: 100%;
+
+/* Section Card */
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-accent);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.section-card:hover::before {
+  opacity: 1;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 3rem;
   text-align: center;
-  color: var(--color-primary, #0056b3);
-  font-size: 1.1em;
-  margin-top: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.section-title i {
+  font-size: 2rem;
+}
+
+/* Demonstrations Grid */
+.demos-grid {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 1200px) {
+  .demos-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .demos-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 767px) {
+  .demos-grid { grid-template-columns: 1fr; }
+}
+
+/* Demo Card Enhancement */
+.demo-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-accent);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.demo-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.demo-card:hover::before {
+  opacity: 1;
+}
+
+/* Empty State */
+.no-results {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-text-secondary);
+}
+
+.no-results i {
+  font-size: 4rem;
+  margin-bottom: 2rem;
+  opacity: 0.5;
+  color: var(--color-accent);
+}
+
+.no-results h3 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.no-results p {
+  font-size: 1.1rem;
+  max-width: 500px;
+  margin: 0 auto 2rem auto;
+  line-height: 1.6;
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition);
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button-primary {
+  background: var(--color-gradient-primary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.button-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.button-secondary {
+  background: var(--color-gradient-accent);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.button-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 3rem 0;
+  flex-wrap: wrap;
+}
+
+.pagination .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 1rem;
+  background: var(--color-card-bg);
+  color: var(--color-text);
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.pagination .btn:hover:not(.current) {
+  background: var(--color-accent);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+}
+
+.pagination .btn.current {
+  background: var(--color-gradient-accent);
+  color: white;
+  pointer-events: none;
+  box-shadow: var(--color-shadow);
+}
+
+.pagination .btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Back to Top Button */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 50px;
+  background: var(--color-gradient-accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: var(--color-shadow-lg);
+  transition: var(--transition);
+  opacity: 0;
+  visibility: hidden;
+  z-index: 1000;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: var(--color-shadow-lg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container-main-content {
+    padding: 0 1rem;
+    margin: 1rem auto;
+  }
+
+  .hero-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .recurring-title {
+    font-size: 2rem;
+  }
+
+  .section-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .info-box {
+    padding: 1.5rem;
+  }
+
+  .stats-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    gap: 0.25rem;
+  }
+
+  .pagination .btn {
+    min-width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus States for Accessibility */
+.button:focus,
+.pagination .btn:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Loading Animation */
+@keyframes loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: loading 1s linear infinite;
+  margin-left: 8px;
 }
 </style>
 {% endblock %}
@@ -115,27 +631,144 @@ body {
 {% import 'macros.html' as macros %}
 
 <div class="container-main-content">
-  <div class="siblings-banner">
-    <div class="siblings-label">
-      <i class="fa-solid fa-repeat"></i>
-      {{ _('Toistuva mielenosoitus') }}
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <div class="recurring-label">
+        <i class="fa-solid fa-repeat"></i>
+        {{ _('Toistuva mielenosoitus') }}
+      </div>
+      <h1 class="recurring-title">{{ parent_demo.title }}</h1>
+      <p class="recurring-desc">
+        {{ _('Tässä on lista kaikista mielenosoituksista, jotka ovat osa tätä toistuvaa tapahtumaa. Näet sekä menneet että tulevat mielenosoitukset.') }}
+      </p>
     </div>
-    <div class="siblings-title">{{ parent_demo.title }}</div>
-    <div class="siblings-desc">
-      {{ _('Tässä on lista muista mielenosoituksista, jotka ovat osa samaa toistumoa.') }}
+  </section>
+
+  <!-- Info Box -->
+  <div class="info-box">
+    <div class="info-box-content">
+      <h2>
+        <i class="fa-solid fa-info-circle"></i>
+        {{ _('Toistuva tapahtuma') }}
+      </h2>
+      <p>{{ _('Tämä mielenosoitus järjestetään säännöllisesti. Alla näet kaikki aiemmat ja tulevat tapahtuman ajankohdat.') }}</p>
     </div>
   </div>
-  <h1 style="margin-top:0;">
-    {{ _('Toistumon mielenosoitukset') }}
-  </h1>
-  <div class="container-grid">
+
+  <!-- Stats Section -->
+  {% if siblings and siblings|length > 0 %}
+  <div class="stats-section">
+    <div class="stat-card">
+      <span class="stat-number">{{ total_count }}</span>
+      <span class="stat-label">{{ _('Mielenosoitusta yhteensä') }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">{{ future_count }}</span>
+      <span class="stat-label">{{ _('Tulevaa tapahtumaa') }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">{{ past_count }}</span>
+      <span class="stat-label">{{ _('Mennyttä tapahtumaa') }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Demonstrations Section -->
+  <section class="section-card">
+    <h2 class="section-title">
+      <i class="fa-solid fa-calendar-days"></i>
+      {{ _('Kaikki tapahtuman ajankohdat') }}
+    </h2>
+    
     {% if siblings and siblings|length > 0 %}
+    <div class="demos-grid">
       {% for demo in siblings %}
         {{ macros.demo_card(demo) }}
       {% endfor %}
-    {% else %}
-      <div class="grid-item no-results">{{ _('Ei löytynyt toistumomielenosoituksia.') }}</div>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+      {% if page > 1 %}
+      <a href="?page=1" class="btn" title="{{ _('Ensimmäinen sivu') }}">
+        <i class="fa-solid fa-angles-left"></i>
+      </a>
+      <a href="?page={{ page - 1 }}" class="btn" title="{{ _('Edellinen sivu') }}">
+        <i class="fa-solid fa-chevron-left"></i>
+      </a>
+      {% else %}
+      <span class="btn disabled">
+        <i class="fa-solid fa-angles-left"></i>
+      </span>
+      <span class="btn disabled">
+        <i class="fa-solid fa-chevron-left"></i>
+      </span>
+      {% endif %}
+      
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+        <span class="btn current">{{ p }}</span>
+        {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 2 and p <= page + 2) %}
+        <a href="?page={{ p }}" class="btn">{{ p }}</a>
+        {% elif p == 4 or p == total_pages - 3 %}
+        <span class="btn">…</span>
+        {% endif %}
+      {% endfor %}
+      
+      {% if page < total_pages %}
+      <a href="?page={{ page + 1 }}" class="btn" title="{{ _('Seuraava sivu') }}">
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+      <a href="?page={{ total_pages }}" class="btn" title="{{ _('Viimeinen sivu') }}">
+        <i class="fa-solid fa-angles-right"></i>
+      </a>
+      {% else %}
+      <span class="btn disabled">
+        <i class="fa-solid fa-chevron-right"></i>
+      </span>
+      <span class="btn disabled">
+        <i class="fa-solid fa-angles-right"></i>
+      </span>
+      {% endif %}
+    </div>
     {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="no-results">
+      <i class="fa-regular fa-calendar-xmark"></i>
+      <h3>{{ _('Ei löytynyt toistumomielenosoituksia') }}</h3>
+      <p>{{ _('Tällä hetkellä ei ole muita mielenosoituksia tässä toistumassa. Tarkista myöhemmin uudelleen mahdollisten uusien tapahtumien varalta.') }}</p>
+      <div style="margin-top: 2rem;">
+        <a href="{{ url_for('demonstrations') }}" class="button button-primary">
+          <i class="fa-solid fa-list"></i>
+          {{ _('Selaa kaikkia mielenosoituksia') }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Call to Action -->
+  <div style="text-align: center; margin: 3rem 0;">
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('demonstrations') }}" class="button button-primary">
+        <i class="fa-solid fa-arrow-left"></i>
+        {{ _('Takaisin mielenosoituksiin') }}
+      </a>
+      <a href="{{ url_for('submit') }}" class="button button-secondary">
+        <i class="fa-solid fa-plus"></i>
+        {{ _('Ilmoita uusi mielenosoitus') }}
+      </a>
+    </div>
   </div>
+
+  <!-- Back to Top Button -->
+  <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
 </div>
+
 {% endblock %}

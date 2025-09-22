@@ -1,0 +1,98 @@
+{% extends 'manual_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <section class="manual-section">
+        <h2>Lisää uusi käyttäjä</h2>
+
+        <div class="manual-warning">
+            ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään jatkuvasti. Kuvakaappaukset ovat esimerkinomaisia.
+        </div>
+
+        <p>Tällä sivulla opastamme sinut käyttäjän lisäämisen läpi vaihe vaiheelta hallintapaneelissa.</p>
+
+        <!-- Step 1 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa-solid fa-1 me-2"></i>Vaihe 1: Avaa Lisää käyttäjä -lomake</h5>
+                <p>Aloita hallintapaneelissa siirtymällä <strong>Käyttäjät</strong> -osioon ja napsauta <strong>"Luo
+                        uusi käyttäjä"</strong> -painiketta.</p>
+                <img src="{{ url_for('static', filename='manual/users_add_step1.png') }}"
+                    class="img-fluid rounded shadow-sm" alt="Vaihe 1 - Luo uusi käyttäjä">
+            </div>
+        </div>
+        <!-- Step 2 --><!-- Step 2 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa-solid fa-2 me-2"></i>Vaihe 2: Syötä käyttäjän tiedot</h5>
+                <p>
+                    Täytä kenttiin <strong>käyttäjänimi</strong> ja <strong>sähköpostiosoite</strong>.
+                    Mikäli käyttäjänimeä ei erikseen määritellä, järjestelmä luo sen automaattisesti sähköpostiosoitteen
+                    alkuosasta
+                    ennen <span class="badge bg-secondary">@</span>-merkkiä.
+                    Valitse lopuksi käyttäjälle sopiva <strong>rooli</strong> järjestelmässä.
+                </p>
+
+                <div class="alert alert-warning d-flex align-items-start mt-3" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2 mt-1"></i>
+                    <div>
+                        <strong>Huomio:</strong> Kaikilla <strong>superkäyttäjillä</strong> tulee olla
+                        <strong>hallitus hyväksymä turvaluokitus</strong> ennen käyttöoikeuksien myöntämistä.
+                        <br>
+                        <span class="badge bg-danger mt-1">Superuser-oikeuksien myöntäminen ilman hyväksyttyä
+                            turvaluokitusta voi johtaa oikeudellisiin seuraamuksiin.</span>
+                    </div>
+                </div>
+
+
+                <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}"
+                    class="btn btn-outline-primary mt-2">
+                    <i class="fa-solid fa-circle-info me-1"></i> Lue lisää rooleista
+                </a>
+
+                <img src="{{ url_for('static', filename='manual/users_add_step2.png') }}"
+                    class="img-fluid rounded shadow-sm mt-3" alt="Vaihe 2 - Syötä tiedot">
+            </div>
+        </div>
+
+
+
+
+        <!-- Step 3 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa-solid fa-3 me-2"></i>Vaihe 3: Tarkista ja vahvista</h5>
+                <p>Tarkista syötetyt tiedot huolellisesti. Järjestelmä varmistaa automaattisesti, että käyttäjälle
+                    annetaan oikeat oikeudet roolin ja organisaation mukaan.</p>
+                <img src="{{ url_for('static', filename='manual/users_add_step3.png') }}"
+                    class="img-fluid rounded shadow-sm" alt="Vaihe 3 - Tarkista tiedot">
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa-solid fa-4 me-2"></i>Vaihe 4: Lähetä kutsu käyttäjälle</h5>
+                <p>Napsauta <strong>"Luo käyttäjä"</strong>. Käyttäjälle lähetetään automaattisesti sähköposti, joka
+                    sisältää kirjautumistiedot ja ohjeet salasanan vaihtoon.</p>
+                <img src="{{ url_for('static', filename='manual/users_add_step4.png') }}"
+                    class="img-fluid rounded shadow-sm" alt="Vaihe 4 - Lähetä kutsu">
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="card shadow-sm mb-4 bg-light">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fa-solid fa-lightbulb me-2"></i>Vinkkejä</h5>
+                <ul>
+                    <li>Varmista, että sähköpostiosoite on oikein – kutsu lähetetään tähän osoitteeseen.</li>
+                    <li>Rooli määrittää automaattisesti käyttäjän oikeudet, joten manuaalisia muutoksia ei yleensä
+                        tarvita.</li>
+                    <li>Jos käyttäjä ei saa sähköpostia, tarkista roskapostikansio ja järjestelmän asetukset.</li>
+                </ul>
+            </div>
+        </div>
+
+    </section>
+</div>
+{% endblock %}

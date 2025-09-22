@@ -111,24 +111,26 @@ def demo_edit_history(demo_id):
         Renders the edit history page.
     """
     history = list(mongo.demo_edit_history.find({"demo_id": str(demo_id)}).sort("edited_at", -1))
+    demo = Demonstration.load_by_id(ObjectId(demo_id))
+    demo_name = demo.title
+    
     return render_template(
         "admin/demonstrations/edit_history.html",
         history=history,
-        demo_id=demo_id
+        demo_id=demo_id,
+        demo_name=demo_name
     )
-
-@admin_demo_bp.route("/view_demo_diff/<demo_id>/<history_id>", methods=["GET"])
+    
+@admin_demo_bp.route("/view_demo_diff/<history_id>", methods=["GET"])
 @login_required
 @admin_required
 @permission_required("EDIT_DEMO")
-def view_demo_diff(demo_id, history_id):
+def view_demo_diff(history_id):
     """
-    View the diff between a historical and current demonstration version.
+    View the diff for a specific historical demonstration edit.
 
     Parameters
     ----------
-    demo_id : str
-        The ID of the demonstration.
     history_id : str
         The ID of the history entry.
 
@@ -138,43 +140,46 @@ def view_demo_diff(demo_id, history_id):
         Renders the diff page.
     """
     from bson.objectid import ObjectId as BsonObjectId
-    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
-    if not hist:
-        abort(404)
-    old = hist.get("demo_data", {})
-    new = mongo.demonstrations.find_one({"_id": BsonObjectId(demo_id)})
-    if not new:
-        abort(404)
     import difflib
     from markupsafe import Markup
 
+    # Fetch the history entry
+    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
+    if not hist:
+        abort(404)
+
+    old = hist.get("old_demo", {})
+    new = hist.get("new_demo", {})
+
+    # Utility: character-level diff
+    def diff_chars(a, b):
+        if a == b:
+            return f'<span class="diff-unchanged">{Markup.escape(a)}</span>'
+        result = []
+        sm = difflib.SequenceMatcher(None, str(a), str(b))
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag == "equal":
+                result.append(f'<span class="diff-unchanged">{Markup.escape(str(a)[i1:i2])}</span>')
+            elif tag == "replace":
+                result.append(f'<span class="diff-remove">{Markup.escape(str(a)[i1:i2])}</span>')
+                result.append(f'<span class="diff-add">{Markup.escape(str(b)[j1:j2])}</span>')
+            elif tag == "delete":
+                result.append(f'<span class="diff-remove">{Markup.escape(str(a)[i1:i2])}</span>')
+            elif tag == "insert":
+                result.append(f'<span class="diff-add">{Markup.escape(str(b)[j1:j2])}</span>')
+        return "".join(result)
+
+    # Utility: line-level + character-level diff
     def html_diff(a, b):
-        """Generate an HTML diff for two values, line by line and character by character.
-
-        Parameters
-        ----------
-        a : Any
-            Old value.
-        b : Any
-            New value.
-
-        Returns
-        -------
-        str
-            HTML-formatted diff.
-        """
-        a_str = str(a) if a is not None else ""
-        b_str = str(b) if b is not None else ""
-        a_lines = a_str.splitlines() or [""]
-        b_lines = b_str.splitlines() or [""]
+        a_lines = str(a).splitlines() or [""]
+        b_lines = str(b).splitlines() or [""]
         html = []
         sm = difflib.SequenceMatcher(None, a_lines, b_lines)
         for tag, i1, i2, j1, j2 in sm.get_opcodes():
             if tag == "equal":
                 for line in a_lines[i1:i2]:
-                    html.append('<span class="diff-unchanged">{}</span>'.format(line))
+                    html.append(f'<span class="diff-unchanged">{line}</span>')
             elif tag == "replace":
-                # If the number of lines is the same, show char diff on the same row
                 if (i2 - i1) == (j2 - j1):
                     for idx in range(i2 - i1):
                         html.append('<span class="diff-line">')
@@ -182,51 +187,18 @@ def view_demo_diff(demo_id, history_id):
                         html.append('</span>')
                 else:
                     for line in a_lines[i1:i2]:
-                        html.append('<span class="diff-remove">{}</span>'.format(line))
+                        html.append(f'<span class="diff-remove">{line}</span>')
                     for line in b_lines[j1:j2]:
-                        html.append('<span class="diff-add">{}</span>'.format(line))
+                        html.append(f'<span class="diff-add">{line}</span>')
             elif tag == "delete":
                 for line in a_lines[i1:i2]:
-                    html.append('<span class="diff-remove">{}</span>'.format(line))
+                    html.append(f'<span class="diff-remove">{line}</span>')
             elif tag == "insert":
                 for line in b_lines[j1:j2]:
-                    html.append('<span class="diff-add">{}</span>'.format(line))
+                    html.append(f'<span class="diff-add">{line}</span>')
         return Markup("".join(html))
 
-    def diff_chars(a, b):
-        """Highlight character-level differences between two strings.
-
-        If there is no change, use the diff-unchanged class.
-
-        Parameters
-        ----------
-        a : str
-            Old string.
-        b : str
-            New string.
-
-        Returns
-        -------
-        str
-            HTML-formatted diff.
-        """
-        if a == b:
-            return f'<span class="diff-unchanged">{Markup.escape(a)}</span>'
-        result = []
-        sm = difflib.SequenceMatcher(None, a, b)
-        for tag, i1, i2, j1, j2 in sm.get_opcodes():
-            if tag == "equal":
-                result.append(f'<span class="diff-unchanged">{Markup.escape(a[i1:i2])}</span>')
-            elif tag == "replace":
-                result.append('<span class="diff-remove">{}</span>'.format(Markup.escape(a[i1:i2])))
-                result.append('<span class="diff-add">{}</span>'.format(Markup.escape(b[j1:j2])))
-            elif tag == "delete":
-                result.append('<span class="diff-remove">{}</span>'.format(Markup.escape(a[i1:i2])))
-            elif tag == "insert":
-                result.append('<span class="diff-add">{}</span>'.format(Markup.escape(b[j1:j2])))
-        return "".join(result)
-
-
+    # Compute diffs for each field
     diffs = {}
     all_fields = set(old.keys()) | set(new.keys())
     for field in all_fields:
@@ -238,11 +210,15 @@ def view_demo_diff(demo_id, history_id):
                 "new": new_val,
                 "diff_html": html_diff(old_val, new_val)
             }
+
     return render_template(
         "admin/demonstrations/demo_diff.html",
         diffs=diffs,
-        demo_id=demo_id
+        edited_by=hist.get("edited_by"),
+        edited_at=hist.get("edited_at"),
+        demo_id=hist.get("demo_id")
     )
+
     
 # -----------------------------------------------------------------------------
 # PREVIEW, ACCEPT, REJECT WITH TOKEN (MAGIC LINKS)
@@ -540,82 +516,83 @@ def reject_demo_with_token(token):
     _mark_used(doc["_id"])
     flash_message("Mielenosoitus hylättiin onnistuneesti!", "success")
     return redirect(url_for("index"))
+from flask import request, render_template
+from flask_login import login_required, current_user
+from datetime import datetime, date
+from bson.objectid import ObjectId as BsonObjectId
+
+from flask import request, render_template
+from flask_login import login_required, current_user
+from bson.objectid import ObjectId as BsonObjectId
+from datetime import datetime, date
+
+from flask import request, render_template, session
+from flask_login import login_required, current_user
+from bson.objectid import ObjectId as BsonObjectId
+
+from flask import request, render_template, session
+from flask_login import login_required, current_user
+from bson.objectid import ObjectId as BsonObjectId
+from datetime import date
+
+from flask import request, render_template
+from flask_login import login_required, current_user
+from bson.objectid import ObjectId as BsonObjectId
 
 @admin_demo_bp.route("/")
 @login_required
 @admin_required
 @permission_required("LIST_DEMOS")
 def demo_control():
-    """Render the demonstration control panel with a list of demonstrations.
-
-    Filters demonstrations by search query, approval status, and whether past events should be shown.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-
-    """
-    # Limit demonstrations by organization if the user is not a global admin
-    if not current_user.global_admin:
-        user_org_ids = current_user.org_ids()
-    else:
-        user_org_ids = None
-
+    # --- Query parameters ---
     search_query = request.args.get("search", "").lower()
     approved_only = request.args.get("approved", "false").lower() == "true"
-    show_past = request.args.get("show_past", "false").lower() == "true"
     show_hidden = request.args.get("show_hidden", "false").lower() == "true"
-    
-    today = date.today()
+    show_past = request.args.get("show_past", "false").lower() == "true"
+    per_page = int(request.args.get("per_page", 20))
+    page = int(request.args.get("page", 1))  # page numbers start at 1
 
-    # Construct the base query to fetch demonstrations
-    # Remove the "approved" filter to allow for dynamic filtering based on user input
-    filter = DEMO_FILTER.copy()  # Copy the base filter to avoid modifying the original
-    
-    del filter["approved"]
-    query = filter
+    # --- Build filter ---
+    filter_query = DEMO_FILTER.copy()
+    filter_query.pop("approved", None)
 
-    if show_hidden:
-        del query['$or']  # Remove the hide condition if showing hidden demos
-    
     if approved_only:
-        query["approved"] = True
-        
+        filter_query["approved"] = True
     if not show_hidden:
-        # Only include documents where hide is False or not set
-        query["$or"] = [{"hide": False}, {"hide": {"$exists": False}}]
-        
+        filter_query["$or"] = [{"hide": False}, {"hide": {"$exists": False}}]
     
-
+    # Permissions
     if not current_user.global_admin:
-        # If the user does not have the global right to view all demos,
-        # restrict to demos the user can edit: either via their organization or by specific edit right.
         _where = current_user._perm_in("EDIT_DEMO")
-                
-        query["$or"] = [
-            {"organizers": {"$elemMatch": {"organization_id": {"$in": [ObjectId(org_id) for org_id in _where]}}}},
+        filter_query["$or"] = [
+            {"organizers": {"$elemMatch": {"organization_id": {"$in": [BsonObjectId(org) for org in _where]}}}},
             {"editors": current_user.id}
         ]
-#        else:
- #           query["organizers"] = {"$elemMatch": {"organization_id": {"$in": user_org_ids}}}
 
-    # Filter demonstrations based on search query, approval status, and date
-    filtered_demos = filter_demonstrations(query, search_query, show_past, today)
+    # --- Count total documents ---
+    total_count = mongo.demonstrations.count_documents(filter_query)
+    total_pages = (total_count + per_page - 1) // per_page  # ceil division
 
-    # Sort filtered demonstrations by date using ISO date format
-    filtered_demos.sort(
-        key=lambda demo: datetime.strptime(demo["date"], "%Y-%m-%d").date()
-    )
+    # --- Fetch current page ---
+    skip_count = (page - 1) * per_page
+    demos_cursor = mongo.demonstrations.find(filter_query).sort([("date", 1), ("_id", 1)]).skip(skip_count).limit(per_page)
+    demos = list(demos_cursor)
+
+    # --- Determine next/previous pages ---
+    prev_page = page - 1 if page > 1 else None
+    next_page = page + 1 if page < total_pages else None
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
-        demonstrations=filtered_demos,
+        demonstrations=demos,
         search_query=search_query,
         approved_status=approved_only,
-        show_past=show_past,
+        show_hidden=show_hidden,
+        per_page=per_page,
+        current_page=page,
+        total_pages=total_pages,
+        prev_page=prev_page,
+        next_page=next_page
     )
 
 @admin_demo_bp.route("/duplicate/<demo_id>", methods=["POST"])
@@ -907,6 +884,16 @@ def edit_demo_with_token(token):
         edit_demo_with_token=True,
     )
 
+def save_demo_history(demo_id, old_data, new_data):
+    mongo.demo_edit_history.insert_one({
+        "demo_id": demo_id,
+        "edited_by": str(getattr(current_user, "id", "unknown")),
+        "edited_at": datetime.utcnow(),
+        "old_demo": old_data,
+        "new_demo": new_data,
+        "diff": None  # can be populated later by batch job
+    })
+
 
 def handle_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a demonstration.
@@ -940,12 +927,7 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             # --- Save previous version to history ---
             prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if prev_demo:
-                mongo.demo_edit_history.insert_one({
-                    "demo_id": str(demo_id),
-                    "editor_id": str(getattr(current_user, "id", "unknown")),
-                    "edited_at": datetime.utcnow(),
-                    "demo_data": prev_demo
-                })
+                save_demo_history(demo_id, prev_demo, demonstration_data)
             demo = Demonstration.from_dict(demonstration_data)
             demo.save()
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
@@ -1319,3 +1301,79 @@ def get_submitter_info(demo_id):
         "submitted_at": str(submitter.get("submitted_at", "-")),
     }
     return jsonify({"status": "OK", "submitter": submitter_info})
+
+from flask import Blueprint, request, jsonify
+from bson import ObjectId
+
+admin_demo_api_bp = Blueprint("admin_demo_api", __name__)
+
+def _require_valid_objectid(id_str):
+    # Validate ObjectId
+    try:
+        return ObjectId(id_str)
+    except:
+        raise ValueError("Invalid ID")
+
+@admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
+def approve_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+
+    if demo.get("approved"):
+        return jsonify({"success": False, "message": "Mielenosoitus on jo hyväksytty"}), 200
+
+    mongo.demonstrations.update_one(
+        {"_id": _require_valid_objectid(demo_id)},
+        {"$set": {"approved": True, "rejected": False}}
+    )
+
+    # Notify submitter
+    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        demo_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
+        email_sender.queue_email(
+            template_name="demo_submitter_approved.html",
+            subject="Mielenosoituksesi on hyväksytty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+                "url": demo_url
+            },
+        )
+
+    return jsonify({"success": True, "message": "Mielenosoitus hyväksyttiin!"})
+
+@admin_demo_api_bp.route("/<demo_id>/deny", methods=["POST"])
+def reject_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+
+    if demo.get("approved") is False and demo.get("rejected") is True:
+        return jsonify({"success": False, "message": "Mielenosoitus on jo hylätty"}), 200
+
+    mongo.demonstrations.update_one(
+        {"_id": _require_valid_objectid(demo_id)},
+        {"$set": {"approved": False, "rejected": True}}
+    )
+
+    # Notify submitter
+    submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
+    if submitter and submitter.get("submitter_email"):
+        email_sender.queue_email(
+            template_name="demo_submitter_rejected.html",
+            subject="Mielenosoituksesi on hylätty",
+            recipients=[submitter["submitter_email"]],
+            context={
+                "title": demo.get("title", ""),
+                "date": demo.get("date", ""),
+                "city": demo.get("city", ""),
+                "address": demo.get("address", ""),
+            },
+        )
+
+    return jsonify({"success": True, "message": "Mielenosoitus hylättiin!"})

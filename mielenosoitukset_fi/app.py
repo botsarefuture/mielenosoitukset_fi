@@ -36,7 +36,10 @@ from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
 
 from flask_caching import Cache  # Added for caching
 
+from datetime import datetime, date, time
+
 # Initialize Babel
+
 babel = Babel()
 
 
@@ -49,9 +52,11 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
+    
     try:
         security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
         security.init_app(app)
+        
     except Exception as e:
         Limiter(
             get_remote_address,
@@ -66,7 +71,6 @@ def create_app() -> Flask:
 
     # Initialize Flask-Caching
     cache = Cache(app)
-        
 
     # Locale selector function
     def get_locale():
@@ -96,6 +100,7 @@ def create_app() -> Flask:
     login_manager.login_view = (
         "users.auth.login"  # Redirect to login view if not authenticated
     )
+    
     login_manager.anonymous_user = AnonymousUser
 
     # User Loader function
@@ -113,15 +118,22 @@ def create_app() -> Flask:
         admin_bp,
         admin_user_bp,
         admin_demo_bp,
+        admin_demo_api_bp,
         admin_org_bp,
         admin_recu_demo_bp,
         admin_media_bp,
+        board_bp,
+        audit_bp
     )
     from users import _BLUEPRINT_ as user_bp
+    from users import chat_ws
+    from flask_socketio import SocketIO, emit, join_room
     from api import api_bp
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
+    app.register_blueprint(admin_demo_api_bp, url_prefix="/api/admin/demo/")
+    
     app.register_blueprint(admin_recu_demo_bp)
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
@@ -130,6 +142,12 @@ def create_app() -> Flask:
     app.register_blueprint(api_bp, url_prefix="/api/")
     
     app.register_blueprint(campaign_bp)
+    app.register_blueprint(board_bp)
+    
+    socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
+    app.register_blueprint(chat_ws.chat_ws)
+    chat_ws.init_socketio(socketio)
+    app.register_blueprint(audit_bp)
 
     # Import and initialize routes
     import basic_routes
@@ -164,8 +182,8 @@ def create_app() -> Flask:
         except Exception:
             return value
 
-    from datetime import datetime, date, time
-    from datetime import datetime, date, time
+    
+    
 
     @app.template_filter("time")
     def time_filter(value, format_='%H:%M'):
@@ -239,10 +257,20 @@ def create_app() -> Flask:
     def utility_processor():
         def get_admin_tasks():
             # check if any demonstrations are waiting for approval
-            waiting = list(mongo.demonstrations.find({"approved": False, "hide": False}))
+            # rejected doesnt exist or is False
+            waiting = list(
+                mongo.demonstrations.find({
+                    "approved": False,
+                    "hide": False,
+                    "$or": [
+                        {"rejected": False},
+                        {"rejected": {"$exists": False}}
+                    ]
+                }).sort("created_at", -1)
+            )
             app.logger.debug(f"Found {len(waiting)} demonstrations waiting for approval.")
             return waiting
-            
+
         def get_org_name(org_id):
             return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
 
@@ -252,12 +280,19 @@ def create_app() -> Flask:
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
+        tasks = get_admin_tasks()
+        tasks_amount_total = len(tasks)
+        tasks_amount_done = sum(1 for t in tasks if t.get("approved", False))
+
         return dict(
             get_org_name=get_org_name,
             get_supported_locales=get_supported_locales,
             get_lang_name=get_lang_name,
-            tasks=get_admin_tasks(),
+            tasks=tasks,
+            tasks_amount_total=tasks_amount_total,
+            tasks_amount_done=tasks_amount_done,
         )
+
 
     
     # if env var forcerun
@@ -276,22 +311,34 @@ def create_app() -> Flask:
             "run_preview": run_preview,
         }
 
-        def run_selected_tasks(selected):
+        def run_selected_tasks(selected, till_param=None):
             """Run selected maintenance tasks.
 
             Parameters
             ----------
             selected : list of str
-            List of task names to run.
+                List of task names to run.
+            till_param : int | None
+                Optional number of days to limit run_preview task.
             """
             with app.app_context():
                 for task_name in selected:
                     if task_name == "run_preview":
-                        i = input("Run force update? (y/n): ")
-                        if i.lower() in ["y", "n"]:
-                            available_tasks[task_name](force=(i.lower() == "y"))
+                        # Ask for force
+                        i = input("Run force update? (y/n): ").lower()
+                        force_flag = i == "y"
+
+                        # Ask for till (optional)
+                        if till_param is None:
+                            j = input("Limit previews to how many days? (0 = all): ").strip()
+                            try:
+                                till = int(j)
+                            except ValueError:
+                                till = 0
                         else:
-                            app.logger.warning("Invalid input, not running force update.")
+                            till = till_param
+
+                        available_tasks[task_name](force=force_flag, till=till)
                     elif task_name in available_tasks:
                         available_tasks[task_name]()
                     else:
@@ -314,12 +361,17 @@ def create_app() -> Flask:
         scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
         scheduler.add_job(prep, "interval", minutes=15)
         scheduler.add_job(run_preview, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(demo_sche, "interval", hours=1)
+        scheduler.add_job(demo_sche, "interval", hours=24)
 
         
     with app.app_context():
         scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours
         scheduler.start()
+        
+    @app.template_filter('displayname_or_username')
+    def displayname_or_username(user):
+        return user.displayname or user.username
+
 
     return app
 

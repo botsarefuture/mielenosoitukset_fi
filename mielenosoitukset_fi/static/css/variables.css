@@ -867,3 +867,72 @@
   /* display: inline-flex; */
   margin-right: 1em;
 }
+
+/* Hero Section with #002280 base */
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #002280, #0033cc); /* deep blue gradient */
+  border-radius: 1em;
+  padding: 4em 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 2em;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+}
+
+.hero-content h1 {
+  font-size: 2.5em;
+  font-weight: 900;
+  margin-bottom: 0.8em;
+  letter-spacing: 0.02em;
+  text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.4);
+  color: #ffffff; /* subtle gold accent */
+}
+
+.hero-content p {
+  font-size: 1.2em;
+  line-height: 1.6;
+  max-width: 700px;
+  margin: 0 auto;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+
+.hero:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 900px) {
+  .hero {
+    padding: 3em 1.5em;
+  }
+  .hero-content h1 {
+    font-size: 2em;
+  }
+  .hero-content p {
+    font-size: 1.1em;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: 2em 1em;
+  }
+  .hero-content h1 {
+    font-size: 1.8em;
+  }
+  .hero-content p {
+    font-size: 1em;
+  }
+}

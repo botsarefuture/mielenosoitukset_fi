@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h1 class="mb-4">Board Clearance Management</h1>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Granted By</th>
+          <th>Timestamp</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td>{{ user.username }}</td>
+          <td>{{ user.role | capitalize }}</td>
+          <td>
+            {% if user.approved %}
+              <span class="badge bg-success">Approved</span>
+            {% else %}
+              <span class="badge bg-danger">Not Approved</span>
+            {% endif %}
+          </td>
+          <td>{{ user.granted_by or "-" }}</td>
+          <td>{{ user.timestamp or "-" }}</td>
+          <td>
+            {% if not user.approved %}
+              <button class="btn btn-sm btn-success" onclick="updateClearance('{{ user.id }}', true)">
+                Grant
+              </button>
+            {% else %}
+              <button class="btn btn-sm btn-warning" onclick="updateClearance('{{ user.id }}', false)">
+                Revoke
+              </button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function updateClearance(userId, approve) {
+    const response = await fetch(`/board/api/clearance/${userId}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({approved: approve})
+    });
+    const result = await response.json();
+    if (result.status === "OK") {
+        alert(result.message);
+        location.reload();
+    } else {
+        alert("Error: " + result.message);
+    }
+}
+</script>
+{% endblock %}

@@ -1,38 +1,117 @@
 {% extends 'admin_base.html' %}
 {% block main_content %}
-<h2>Demonstration Change Diff</h2>
+<div class="container py-3">
+    <h2 class="mb-4">{{ _('Muutosvertailu mielenosoitukselle') }}</h2>
+
+    <div class="mb-3">
+        <button class="btn btn-sm btn-outline-secondary" id="toggleUnchanged"
+            data-show-text="{{ _('Näytä piilotetut muuttumattomat kentät') }}"
+            data-hide-text="{{ _('Piilota muuttumattomat kentät') }}">
+            {{ _('Näytä piilotetut muuttumattomat kentät') }}
+        </button>
+
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle diff-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 20%;">{{ _('Kenttä') }}</th>
+                        <th>{{ _('Muutokset') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for field, diff in diffs.items() %}
+                    <tr class="{% if not diff.diff_html %}unchanged-row d-none{% endif %}">
+                        <td class="fw-bold text-bg-secondary text-white">{{ field }}</td>
+                        <td>
+                            {% if diff.diff_html %}
+                            <div class="diff-block">
+                                {{ diff.diff_html | safe }}
+                            </div>
+                            {% else %}
+                            <span class="badge bg-info">{{ _('Ei muutoksia') }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+  <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo_id) }}" 
+     class="btn btn-secondary" id="backToHistory">
+    {{ _('Takaisin muokkaushistoriaan') }}
+  </a>
+</div>
+</div>
+
 <style>
-.diff-table { width: 100%; border-collapse: collapse; }
-.diff-table th, .diff-table td { padding: 6px 10px; border: 1px solid #ccc; font-family: monospace; }
-.diff-add { background: #1a7f37; color: #fff white-space: pre-wrap; }
-.diff-remove { background: #b22222; color: #fff white-space: pre-wrap; text-decoration: line-through; }
-.diff-unchanged { background: #e6f0fa; color: #222 white-space: pre-wrap; }   /* Lighter bg, darker text for readability */
-.diff-field { font-weight: bold; background: #333; color: #fff; }
-.diff-block { margin: 0; padding: 0; border: none; background: none; }
+    .diff-block {
+        font-family: monospace;
+        white-space: pre-wrap;
+    }
+
+    .diff-add {
+        background-color: #1a7f37;
+        color: #fff;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+
+    .diff-remove {
+        background-color: #b22222;
+        color: #fff;
+        padding: 2px 4px;
+        border-radius: 3px;
+        text-decoration: line-through;
+    }
+
+    .diff-unchanged {
+        background-color: #e6f0fa;
+        color: #222;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
 </style>
-<table class="diff-table">
-    <thead>
-        <tr>
-            <th>Field</th>
-            <th>Diff</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for field, diff in diffs.items() %}
-        <tr>
-            <td class="diff-field">{{ field }}</td>
-            <td>
-                {% if diff.diff_html %}
-                    <div class="diff-block">
-                        {{ diff.diff_html }}
-                    </div>
-                {% else %}
-                    <div class="diff-unchanged">No changes</div>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-<a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo_id) }}">Back to Edit History</a>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggleBtn = document.getElementById("toggleUnchanged");
+        if (!toggleBtn) return;
+
+        const rows = document.querySelectorAll(".unchanged-row");
+        if (!rows.length) {
+            toggleBtn.style.display = "none"; // hide button if no unchanged rows
+            return;
+        }
+
+        toggleBtn.addEventListener("click", function () {
+            rows.forEach(r => r.classList.toggle("d-none"));
+
+            // Update button text based on first row visibility
+            if (rows[0].classList.contains("d-none")) {
+                this.textContent = this.dataset.showText;
+            } else {
+                this.textContent = this.dataset.hideText;
+            }
+        });
+    });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const backHistory = document.getElementById("backToHistory");
+  if (!backHistory) return;
+
+  // Always preserve the original referrer when coming back from diffs
+  const stored = sessionStorage.getItem("originalReferrer");
+  if (stored) {
+    // ensure we don’t overwrite
+    // nothing to do here, just don't touch sessionStorage
+  }
+});
+</script>
 {% endblock %}

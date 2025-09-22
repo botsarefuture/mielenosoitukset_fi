@@ -50,6 +50,7 @@ def profile(username=None):
         return redirect(url_for("index"))
 
 
+
 @profile_bp.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():

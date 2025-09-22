@@ -1,0 +1,68 @@
+{% extends 'manual_base.html' %}
+
+{% block content %}
+<section class="manual-section">
+  <h2>Hallintapaneeli (Dashboard)</h2>
+
+  <div class="manual-warning">
+    ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään jatkuvasti, mutta alla olevat kuvaukset antavat yleiskuvan toiminnallisuuksista.
+  </div>
+
+  <p>Hallintapaneeli tarjoaa nopean yleiskatsauksen järjestelmän tärkeimmistä toiminnoista. Täältä voit seurata käyttäjämääriä, tarkastella tilastoja, hallita ilmoituksia ja nähdä järjestelmän aktiviteetit yhdellä silmäyksellä.</p>
+
+  <div class="row g-4 mt-3">
+
+    <!-- Käyttäjämäärä card -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-users me-2"></i>Käyttäjämäärä</h5>
+          <p class="card-text">
+            Näyttää järjestelmässä rekisteröityjen käyttäjien kokonaismäärän. Voit nopeasti nähdä aktiiviset ja passiiviset käyttäjät.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aktiviteetit card -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-chart-line me-2"></i>Aktiviteetit</h5>
+          <p class="card-text">
+            Näyttää viimeisimmät kirjautumiset ja käyttäjien toiminnot. Tämä auttaa seuraamaan aktiivisuutta ja mahdollisia ongelmia.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ilmoitukset card -->
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title"><i class="fa-solid fa-bell me-2"></i>Ilmoitukset</h5>
+          <p class="card-text">
+            Tärkeät järjestelmäilmoitukset ja viestit näkyvät täällä. Voit seurata, onko käyttäjille lähetetty varoituksia tai tiedotteita.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="my-4">
+
+  <h3>Yleisiä toimintoja</h3>
+  <ul>
+    <li><strong>Käyttäjien hallinta:</strong> Nopean linkin avulla pääset hallitsemaan käyttäjien tietoja.</li>
+    <li><strong>Tilastot:</strong> Tarkastele tilastoja, kuten kirjautumisia, aktiivisia käyttäjiä ja raportteja.</li>
+    <li><strong>Ilmoitukset:</strong> Luo ja hallitse järjestelmäilmoituksia ja viestejä.</li>
+    <li><strong>Tietoturva:</strong> Seuraa superkäyttäjän oikeuksia ja turvallisuusvaroituksia.</li>
+  </ul>
+
+  <p class="mt-3">
+    🔗 <strong>Vinkki:</strong> Tarkista myös <a href="{{ url_for('admin.manual_page', page='users') }}">Käyttäjien hallinta</a> ja <a href="{{ url_for('admin.manual_page', page='stats') }}">Tilastot</a> saadaksesi tarkemman käsityksen hallintapaneelin ominaisuuksista.
+  </p>
+
+</section>
+{% endblock %}

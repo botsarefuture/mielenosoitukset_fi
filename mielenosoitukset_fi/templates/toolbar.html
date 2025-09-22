@@ -3,194 +3,187 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 {% endif %}
-
-<style>
-
-/* Inline #16 | http://127.0.0.1:5002/demonstrations?search=&city=Helsinki&location=&display_date_start=17.02.2025&display_date_end=04.09.2032&date_start=2025-02-17&date_end=2032-09-04 */
-
-.sidebar-nav li:hover {
-  background: var(--primary_button_hover_color) !important;
-  padding: 1em;
-}
-
-/* sidebar.css | http://127.0.0.1:5002/static/css/sidebar.css */
-
-.sidebar-nav a {
-  /* background: var(--secondary_button_color); */
-  background-color: unset;
-}
-
-.sidebar-nav a:hover {
-  background: unset !important;
-  color: unset !important;
-  /* color: var(--secondary_button_hover_text_color); */
-}
-
-.sidebar-nav li {
-  background: var(--secondary_button_color);
-  transition: all 0.5s;
-}
-.tasks {
-	color: light-dark(black, white);
-	text-align: center;
-	background: light-dark(white, black);
-	padding: 5px;
-}
-
-
-</style>
-
 {% import 'admin_V2/organizations/macros.html' as org_macros %}
 
-<div id="demo-toolbox" class="toolbox">
-    <div class="toolbox-header">
-        <h3>{{ _('Työkalupakki') }}</h3>
-    </div>
 
-    <div id="toolbox-buttons" class="toolbox-buttons">
-        <demo-toolbar-buttons>
+<style>
+#toolbox-sidebar {
+    transition: width 0.3s;
+    width: 280px; /* full size */
+}
+
+#toolbox-sidebar.collapsed {
+    width: 50px; /* only enough for the button */
+}
+
+#toolbox-sidebar .card-body,
+#toolbox-sidebar .card-header h6 {
+    transition: opacity 0.3s;
+}
+
+#toolbox-sidebar.collapsed .card-body,
+#toolbox-sidebar.collapsed .card-header h6 {
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none; /* prevent clicking hidden buttons */
+}
+
+#toolbox-sidebar .collapse-toggle {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>
+
+
+<div id="toolbox-sidebar" class="position-fixed top-0 end-0 m-3">
+    <div class="card text-light bg-dark shadow">
+        <div class="card-header d-flex justify-content-between align-items-center bg-primary">
+            <h6 class="mb-0"><i class="fa-solid fa-toolbox me-2"></i>{{ _('Työkalupakki') }}</h6>
+            <button class="btn btn-sm btn-light collapse-toggle" onclick="toggleToolbox()">
+                <i class="fa-solid fa-angle-left"></i>
+            </button>
+        </div>
+
+        <div class="card-body p-2">
             {% if demo %}
-            <!-- Approve Button -->
-            {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
-            <button class="button accept-button" onclick="acceptDemo('{{ demo['_id'] }}')">
-                <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
-            </button>
+            <div class="d-grid gap-2 mb-2">
+                {% if not demo.approved and current_user.has_permission("ACCEPT_DEMO") %}
+                <button class="btn btn-success btn-sm"
+                    onclick="confirmAction(() => acceptDemo('{{ demo['_id'] }}'), '{{ _('Hyväksytkö tämän mielenosoituksen?') }}')">
+                    <i class="fa-solid fa-check me-1"></i>{{ _('Hyväksy') }}
+                </button>
+                <button class="btn btn-danger btn-sm"
+                    onclick="confirmAction(() => rejectDemo('{{ demo['_id'] }}'), '{{ _('Hylkää tämä mielenosoitus?') }}')">
+                    <i class="fa-solid fa-times me-1"></i>{{ _('Hylkää') }}
+                </button>
+                {% endif %}
 
-            <!-- Reject Button -->
-            <button class="button reject-button" onclick="rejectDemo('{{ demo['_id'] }}')">
-                <i class="fa-solid fa-times"></i> {{ _('Hylkää') }}
-            </button>
-            {% endif %}
+                {% if current_user.has_permission("EDIT_DEMO") %}
+                <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit me-1"></i>{{ _('Muokkaa') }}
+                </a>
+                {% endif %}
 
-            <!-- Edit Button -->
-            {% if current_user.has_permission("EDIT_DEMO") %}
-            <a href="{{ url_for('admin_demo.edit_demo', demo_id=demo['_id']) }}" class="button edit-button">
-                <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
-            </a>
-            {% endif %}
+                {% if current_user.has_permission("VIEW_DEMO") %}
+                <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="btn btn-info btn-sm">
+                    <i class="fa-solid fa-eye me-1"></i>{{ _('Katsele') }}
+                </a>
+                <button class="btn btn-secondary btn-sm" onclick="fetchDemoInfo('{{ demo['_id'] }}')">
+                    <i class="fa-solid fa-info me-1"></i>{{ _('Lisätietoja') }}
+                </button>
+                {% endif %}
 
-            <!-- View Button -->
-            {% if current_user.has_permission("VIEW_DEMO") %}
-            <a href="{{ url_for('demonstration_detail', demo_id=demo['_id']) }}" class="button view-button">
-                <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
-            </a>
-            <!-- extra info button -->
-            <button class="button view-button" onclick="fetchDemoInfo('{{ demo['_id'] }}')">
-                <i class="fa-solid fa-info"></i> {{ _('Lisätietoja') }}
-            </button>
-            {% endif %}
-            
-            <!-- Delete Button -->
-            {% if current_user.has_permission("DELETE_DEMO") %}
-            <button class="button delete-button" onclick="openModal(event, '{{ demo.title }}', '{{ demo['_id'] }}')">
-                <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
-            </button>
-            {% endif %}
+                {% if current_user.has_permission("DELETE_DEMO") %}
+                <button class="btn btn-danger btn-sm"
+                    onclick="confirmAction(() => openModal(event, '{{ demo.title }}', '{{ demo['_id'] }}'), '{{ _('Haluatko varmasti poistaa tämän mielenosoituksen? Tämä ei ole palautettavissa!') }}')">
+                    <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
+                </button>
+                {% endif %}
 
-            <!-- Stats Button -->
-            {% if current_user.has_permission("VIEW_ANALYTICS") %}
-            <a href="{{ url_for('admin.stats') }}" class="button stats-button">
-                <i class="fas fa-chart-line"></i> {{ _('Tilastot') }}
-            </a>
-
-            <div id="stats-content">
-                <!-- Stats will be injected here by JavaScript -->
+                {% if current_user.has_permission("VIEW_ANALYTICS") %}
+                <a href="{{ url_for('admin.demo_analytics', demo_id=demo['_id']) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-chart-line me-1"></i>{{ _('Tilastot') }}
+                </a>
+                <div id="stats-content" class="mt-1 small"></div>
+                {% endif %}
             </div>
             {% endif %}
 
-            {% endif %}
-
-        </demo-toolbar-buttons>
-        <org-toolbar-buttons>
             {% if org %}
-            <!-- Edit Button -->
-            {% if current_user.has_permission("EDIT_ORGANIZATION") %}
-            <a href="{{ url_for('admin_org.edit_organization', org_id=org['_id']) }}" class="button edit-button">
-                <i class="fas fa-edit"></i> {{ _('Muokkaa') }}
-            </a>
+            <div class="d-grid gap-2 mb-2">
+                {% if current_user.has_permission("EDIT_ORGANIZATION") %}
+                <a href="{{ url_for('admin_org.edit_organization', org_id=org['_id']) }}"
+                    class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit me-1"></i>{{ _('Muokkaa') }}
+                </a>
+                {% endif %}
+
+                {% if current_user.has_permission("VIEW_ORGANIZATION") %}
+                <a href="{{ url_for('org', org_id=org['_id']) }}" class="btn btn-info btn-sm">
+                    <i class="fa-solid fa-eye me-1"></i>{{ _('Katsele') }}
+                </a>
+                {% endif %}
+
+                {% if current_user.has_permission("DELETE_ORGANIZATION") %}
+                <button class="btn btn-danger btn-sm"
+                    onclick="confirmAction(() => openModal(event, '{{ org.name }}', '{{ org['_id'] }}'), '{{ _('Haluatko varmasti poistaa tämän organisaation? Tämä ei ole palautettavissa!') }}')">
+                    <i class="fas fa-trash-alt me-1"></i>{{ _('Poista') }}
+                </button>
+                {% endif %}
+
+                {% if current_user.has_permission("INVITE_TO_ORGANIZATION") %}
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#inviteModal">
+                    <i class="fas fa-user-plus me-1"></i>{{ _('Kutsu käyttäjiä') }}
+                </button>
+                <!-- script to add the invite modal right before backdrop -->
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        html_content = `
+                            {{ org_macros.invite_modal(org) }}
+                        `;
+                        document.body.insertAdjacentHTML("beforeend", html_content);
+                        // we want it before the backdrop
+                    });
+                </script>
+
+                {% endif %}
+
+                {% if current_user.has_permission("VIEW_ORGANIZATION") %}
+                <button class="btn btn-secondary btn-sm"
+                    onclick="confirmAction(() => leaveOrganization('{{ org['_id'] }}'), '{{ _('Haluatko varmasti poistua organisaatiosta?') }}')">
+                    <i class="fas fa-sign-out-alt me-1"></i>{{ _('Poistu organisaatiosta') }}
+                </button>
+                {% endif %}
+            </div>
             {% endif %}
+        </div>
 
-            <!-- View Button -->
-            {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-            <a href="{{ url_for('org', org_id=org['_id']) }}" class="button view-button">
-                <i class="fa-solid fa-eye"></i> {{ _('Katsele') }}
-            </a>
-            {% endif %}
-
-            <!-- Delete Button -->
-            {% if current_user.has_permission("DELETE_ORGANIZATION") %}
-            <button class="button delete-button" onclick="openModal(event, '{{ org.name }}', '{{ org['_id'] }}')">
-                <i class="fas fa-trash-alt"></i> {{ _('Poista') }}
-            </button>
-            {% endif %}
-
-            <!-- invite users -->
-            {% if current_user.has_permission("INVITE_TO_ORGANIZATION") %}
-            <button class="button invite-button" data-modal-target="#inviteModal">
-                <i class="fas fa-user-plus"></i> {{ _('Kutsu käyttäjiä') }}
-            </button>
-
-            {{ org_macros.invite_modal(org) }}
-
-            {% endif %}
-
-
-            <!-- if current user is member of -->
-            {% if current_user.has_permission("VIEW_ORGANIZATION") %}
-            <button class="button leave-button" onclick="leaveOrganization('{{ org['_id'] }}')">
-                <i class="fas fa-sign-out-alt"></i> {{ _('Poistu<br>organisaatiosta') }}
-            </button>
-            {% endif %}
-
-            {% endif %}
-        </org-toolbar-buttons>
     </div>
 
-
-
-    <!-- DO NOT REMOVE BELOW -->
-    <div class="toolbox-footer">
-        <button id="toolbar-toggle" class="button toggle-toolbox" onclick="toggleToolbox()">
-            <i class="fa-solid fa-toolbox"></i>
-        </button>
-    </div>
-    <!-- DO NOT REMOVE ABOVE -->
 </div>
 
-{% if demo %}
-<script>
 
-    function get_demo_stats(demoId) {
-        fetch(`/api/demo/${demoId}/stats`)
-            .then((response) => response.json())
-            .then((data) => {
-                const statsContent = document.getElementById("stats-content");
-                statsContent.innerHTML = `
-                    <p><strong><i class="fa-solid fa-eye"></i> {{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
-                    <p><strong>{{ _('Osallistujat:') }}</strong> ${data.participants}</p>
-                `;
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
+
+<script>
+    function toggleToolbox() {
+    const sidebar = document.getElementById('toolbox-sidebar');
+    sidebar.classList.toggle('collapsed');
+
+    const icon = sidebar.querySelector('.collapse-toggle i');
+    if(sidebar.classList.contains('collapsed')){
+        icon.classList.remove('fa-angle-left');
+        icon.classList.add('fa-angle-right');
+    } else {
+        icon.classList.remove('fa-angle-right');
+        icon.classList.add('fa-angle-left');
+    }
+}
+
+    // Confirm action for destructive stuff
+    function confirmAction(callback, message) {
+        if (confirm(message)) {
+            callback();
+        }
     }
 
+    {% if demo %}
     document.addEventListener("DOMContentLoaded", () => {
-        document.getElementsByTagName("demo-toolbar-buttons")[0].classList.add("display");
-        get_demo_stats("{{ demo['_id'] }}");
+        fetch(`/api/demo/{{ demo['_id'] }}/stats`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("stats-content").innerHTML = `
+                <p><strong><i class="fa-solid fa-eye"></i> {{ _('Näyttökerrat:') }}</strong> ${data.views}</p>
+                <p><strong>{{ _('Osallistujat:') }}</strong> ${data.participants}</p>
+            `;
+            })
+            .catch(console.error);
+    });
+    {% endif %}
+</script>
 
-    });
-</script>
-{% elif org %}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        document.getElementsByTagName("org-toolbar-buttons")[0].classList.add("display");
-    });
-</script>
-{% else %}
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("demo-toolbox").style.display = "none";
-    });
-</script>
-{% endif %}

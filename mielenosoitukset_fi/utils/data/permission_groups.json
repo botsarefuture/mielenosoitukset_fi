@@ -109,12 +109,15 @@
             "description": "View analytics"
         },
         {
-            "name": "MANAGE_MARQUEE",
-            "description": "Manage marquee"
-        },
-        {
             "name": "BETA_FEATURES",
             "description": "can access beta"
         }
-    ]
+    ],
+    "API": [
+  { "name": "API_READ", "description": "Read API data." },
+  { "name": "API_WRITE", "description": "Write via API." },
+  { "name": "API_WRITE_DEMOS", "description": "Write demos via API." },
+  { "name": "API_ADMIN", "description": "Admin-level API access." }
+]
+
 }

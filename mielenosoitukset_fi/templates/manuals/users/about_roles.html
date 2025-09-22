@@ -1,0 +1,520 @@
+{% extends 'manual_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <section class="manual-section">
+        <h2><i class="fa-solid fa-id-badge me-2"></i>Käyttäjäroolit</h2>
+        <p>
+            Käyttäjäroolit määrittelevät, mitä oikeuksia käyttäjällä on järjestelmässä.
+            Alla on kuvattu eri roolit ja niiden pääasialliset käyttöoikeudet.
+        </p>
+
+        <!-- Roles Overview -->
+        <div class="row g-3 mt-3">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fa-solid fa-user me-2"></i>Peruskäyttäjä
+                        </h5>
+
+                        <p class="mb-1">
+                            <i class="fa-solid fa-circle-info text-muted ms-2" style="margin-left: 0px !important;"
+                                data-bs-toggle="tooltip" data-bs-placement="right"
+                                title="Slugi tarkoittaa käyttäjätunnuksen lyhyttä teknistä nimeä, jota käytetään järjestelmän sisäisesti."></i>
+                            <strong>Slugi</strong>: <span class="badge bg-secondary">user</span>
+                        </p>
+
+                        <p class="card-text mt-2">
+                            Voi kirjautua järjestelmään ja käyttää sille määriteltyjä palveluita.
+                            Ei hallinnollisia oikeuksia.
+                        </p>
+                    </div>
+                </div>
+
+
+
+
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fa-solid fa-user-gear me-2"></i>Ylläpitäjä</h5>
+                        <p class="mb-1">
+                            <i class="fa-solid fa-circle-info text-muted ms-2" style="margin-left: 0px !important;"
+                                data-bs-toggle="tooltip" data-bs-placement="right"
+                                title="Slugi tarkoittaa käyttäjätunnuksen lyhyttä teknistä nimeä, jota käytetään järjestelmän sisäisesti."></i>
+                            <strong>Slugi</strong>: <span class="badge bg-secondary">admin</span>
+                        </p>
+                        <p class="card-text">
+                            Hallitsee käyttäjiä, voi muokata asetuksia ja tarkastella järjestelmän tilaa.
+                            Ei kuitenkaan yhtä laajoja oikeuksia kuin superkäyttäjällä.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fa-solid fa-crown me-2"></i>Superkäyttäjä</h5>
+                        <p class="mb-1">
+                            <i class="fa-solid fa-circle-info text-muted ms-2" style="margin-left: 0px !important;"
+                                data-bs-toggle="tooltip" data-bs-placement="right"
+                                title="Slugi tarkoittaa käyttäjätunnuksen lyhyttä teknistä nimeä, jota käytetään järjestelmän sisäisesti."></i>
+                            <strong>Slugi</strong>: <span class="badge bg-secondary">superuser</span>
+                        </p>
+                        <p class="card-text">
+                            Kaikki oikeudet järjestelmässä. Käyttö on tarkoitettu vain erityistilanteisiin.
+                            Toimenpiteet kirjataan tarkasti lokiin.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Roles Comparison Table -->
+        <div class="manual-section mt-5">
+            <h3><i class="fa-solid fa-table me-2"></i>Roolien vertailutaulukko</h3>
+            <p>
+                Alla olevasta taulukosta näet, mitä oikeuksia eri rooleihin kuuluu.
+                Tämä auttaa sinua valitsemaan sopivimman roolin käyttäjälle.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle shadow-sm bg-white">
+                    <thead class="table-primary text-center">
+                        <tr>
+                            <th>Toiminto</th>
+                            <th>Peruskäyttäjä</th>
+                            <th>Ylläpitäjä</th>
+                            <th>Superkäyttäjä</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- General rights -->
+                        <tr>
+                            <td>Pystyy kirjautumaan sisään</td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Käyttää peruspalveluita</td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Pakotettu kaksivaiheinen tunnistautuminen</td>
+                            <td class="text-danger" colspan="2">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei pakotettu</span>
+                                <br>
+                                <small class="text-muted">
+                                    Riippuen missä organisaatioissa olet jäsenenä, sinulta saatetaan vaatia
+                                    kaksivaiheista tunnistautumista.
+                                </small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Pakotettu</span>
+                            </td>
+                        </tr>
+
+
+                        <!-- User Management -->
+                        <tr class="table-light">
+                            <td colspan="4"><strong><i class="fa-solid fa-users me-2"></i>Käyttäjien hallinta</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Listaa käyttäjät (LIST_USERS)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain manuaalisesti lisättynä</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Luo käyttäjä (CREATE_USER)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain manuaalisesti lisättynä</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Muokkaa käyttäjiä (EDIT_USER)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain manuaalisesti lisättynä</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Pakoita salasanan vaihto (FORCE_PASSWORD_CHANGE)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                                <br>
+                                <small class="text-muted">Vain superkäyttäjällä</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Poista käyttäjiä (DELETE_USER)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                                <br>
+                                <small class="text-muted">Poisto-oikeus vain superkäyttäjällä</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <!-- Demonstration Management -->
+                        <tr class="table-light">
+                            <td colspan="4"><strong><i class="fa-solid fa-flag me-2"></i>Mielenosoitusten
+                                    hallinta</strong></td>
+                        </tr>
+
+                        <tr>
+                            <td>Luo mielenosoitus (CREATE_DEMO)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                                <br>
+                                <small class="text-muted">
+                                    Käyttäjä voi silti <a href="{{ url_for('submit') }}"
+                                        class="btn btn-sm btn-outline-primary ms-1">
+                                        <i class="fa-solid fa-bullhorn me-1"></i>Ilmoittaa mielenosoituksen
+                                    </a>
+                                </small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Muokkaa mielenosoitusta (EDIT_DEMO)</td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain jos käyttäjällä on muokkauslinkki</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                                <br>
+                                <small class="text-muted">Vain organisaatioihin, joihin sinulla on
+                                    muokkausoikeus</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Poista mielenosoitus (DELETE_DEMO)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain organisaatioihin, joihin sinulla on
+                                    muokkausoikeus</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Näe mielenosoituksen tiedot (VIEW_DEMO)</td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                                <br>
+                                <small class="text-muted">Vain mielenosoituksiin, joihin käyttäjällä on pääsy</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                                <br>
+                                <small class="text-muted">Vain organisaatioihin, joihin sinulla on katseluoikeus</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Listaa kaikki mielenosoitukset (LIST_DEMOS)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                                <br>
+                                <small class="text-muted">Vain organisaatioihin, joihin sinulla on katseluoikeus</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Hyväksy mielenosoitus (ACCEPT_DEMO)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain organisaatioihin, joihin sinulla on
+                                    hyväksymisoikeus</small>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>Luo muokkauslinkki (GENERATE_EDIT_LINK)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                            <td class="text-success">
+                                <i class="fa-solid fa-check me-2"></i>
+                                <span class="fw-bold">Oikeus</span>
+                            </td>
+                        </tr>
+
+
+                        <!-- Recurring Demonstrations -->
+                        <tr class="table-light">
+                            <td colspan="4"><strong><i class="fa-solid fa-repeat me-2"></i>Toistuvat
+                                    mielenosoitukset</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Luo toistuva mielenosoitus (CREATE_RECURRING_DEMO)</td>
+                            <td class="text-danger"><i class="fa-solid fa-xmark"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Muokkaa toistuvaa mielenosoitusta (EDIT_RECURRING_DEMO)</td>
+                            <td class="text-danger"><i class="fa-solid fa-xmark"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Poista toistuva mielenosoitus (DELETE_RECURRING_DEMO)</td>
+                            <td class="text-danger"><i class="fa-solid fa-xmark"></i></td>
+                            <td class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+
+                        <!-- Organization Management -->
+                        <tr class="table-light">
+                            <td colspan="4"><strong><i class="fa-solid fa-building me-2"></i>Organisaatioiden
+                                    hallinta</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Luo organisaatio (CREATE_ORGANIZATION)</td>
+                            <td class="text-danger"><i class="fa-solid fa-xmark"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Kutsu organisaatioon (INVITE_TO_ORGANIZATION)</td>
+                            <td class="text-danger"><i class="fa-solid fa-xmark"></i></td>
+                            <td class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+
+                        <!-- Misc -->
+                        <tr class="table-light">
+                            <td colspan="4"><strong><i class="fa-solid fa-ellipsis me-2"></i>Muut oikeudet</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Näe analytiikka (VIEW_ANALYTICS)</td>
+                            <td class="text-danger"><i class="fa-solid fa-xmark"></i></td>
+                            <td class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i></td>
+                            <td class="text-success"><i class="fa-solid fa-check"></i></td>
+                        </tr>
+
+                        <tr>
+                            <td>Käyttää beta-ominaisuuksia (BETA_FEATURES)</td>
+                            <td class="text-danger">
+                                <i class="fa-solid fa-xmark me-2"></i>
+                                <span class="fw-bold">Ei oikeutta</span>
+                                <br>
+                                <small class="text-muted">Vain manuaalisesti lisättynä</small>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain manuaalisesti lisättynä</small>
+                            </td>
+                            <td class="text-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                <span class="fw-bold">Rajattu</span>
+                                <br>
+                                <small class="text-muted">Vain manuaalisesti lisättynä</small>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+
+        <!-- Role Suggestion Form -->
+        <div class="card shadow-sm mt-5">
+            <div class="card-body">
+                <h4 class="card-title"><i class="fa-solid fa-question-circle me-2"></i>Mikä rooli sopii käyttäjälle?
+                </h4>
+                <p>
+                    Vastaa muutamaan kysymykseen, niin saat ehdotuksen sopivasta roolista.
+                </p>
+                <form id="role-checker-form">
+                    <div class="mb-3">
+                        <label for="responsibility" class="form-label">Mitä vastuuta käyttäjällä on?</label>
+                        <select class="form-select" id="responsibility" required>
+                            <option value="">Valitse...</option>
+                            <option value="basic">Käyttää vain peruspalveluita</option>
+                            <option value="admin">Hallinnoi asetuksia ja käyttäjiä</option>
+                            <option value="super">Täydet oikeudet koko järjestelmään</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sensitivity" class="form-label">Käsitteleekö käyttäjä arkaluontoisia
+                            tietoja?</label>
+                        <select class="form-select" id="sensitivity" required>
+                            <option value="">Valitse...</option>
+                            <option value="no">Ei</option>
+                            <option value="yes">Kyllä</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i> Tarkista rooli
+                    </button>
+                </form>
+
+                <div id="role-suggestion" class="alert alert-info mt-3 d-none"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById("role-checker-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const responsibility = document.getElementById("responsibility").value;
+        const sensitivity = document.getElementById("sensitivity").value;
+        const suggestionBox = document.getElementById("role-suggestion");
+
+        let suggestion = "";
+
+        if (responsibility === "basic") {
+            suggestion = "Sopiva rooli: <strong>Peruskäyttäjä</strong>";
+        } else if (responsibility === "admin" && sensitivity === "no") {
+            suggestion = "Sopiva rooli: <strong>Ylläpitäjä</strong>";
+        } else if (responsibility === "super" || sensitivity === "yes") {
+            suggestion = "Sopiva rooli: <strong>Superkäyttäjä</strong>";
+        } else {
+            suggestion = "Sopiva rooli: <strong>Peruskäyttäjä</strong>";
+        }
+
+        suggestionBox.innerHTML = suggestion;
+        suggestionBox.classList.remove("d-none");
+    });
+</script>
+
+<script>
+    // Enable tooltips everywhere
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
+{% endblock %}

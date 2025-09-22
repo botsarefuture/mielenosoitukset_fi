@@ -2,967 +2,829 @@
 <html lang="fi">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mielenosoitukset.fi – Kampanja 2026</title>
-    <meta name="description"
-        content="Mielenosoitukset.fi:n valtakunnallinen kampanja alkaa 1.3.2026. Tule mukaan: jaa tietoa, tilaa julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi." />
-    <meta property="og:title" content="Mielenosoitukset.fi – Kampanja 2026" />
-    <meta property="og:description"
-        content="Kampanja alkaa 1.3.2026. Liity mukaan – jaetaan tieto mielenosoituksista kaikkialle Suomeen." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://mielenosoitukset.fi/kampanja" />
-    <meta property="og:image" content="https://mielenosoitukset.fi/static/kampanja/og-banner.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-
-    <link rel="icon" href="/favicon.ico" />
-    <style>
-        :root {
-            --bg: #0b0d10;
-            --bg-soft: #12161b;
-            --card: #161b22;
-            --text: #e6edf3;
-            --muted: #9aa7b2;
-            --primary: #48c78e;
-            /* raikas vihreä-teal aksentti */
-            --primary-700: #2aa56f;
-            --ring: rgba(72, 199, 142, 0.4);
-            --danger: #ff6b6b;
-            --warning: #ffd166;
-            --shadow: 0 10px 30px rgba(0, 0, 0, .35);
-            --radius: 16px;
-            /*-chip: light-dark(var(--muted));*/
-            color-scheme: dark light;
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg: #ffffff;
-                --bg-soft: #f6f8fa;
-                --card: #ffffff;
-                --text: #0a0c10;
-                --muted: #4b5563;
-                --shadow: 0 6px 24px rgba(0, 0, 0, .08);
-                color-scheme: light dark;
-
-            }
-        }
-
-        html,
-        body {
-            height: 100%;
-        }
-
-        body {
-            margin: 0;
-            font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-            background: var(--bg);
-            color: var(--text);
-        }
-
-        .container {
-            width: min(1100px, 92%);
-            margin-inline: auto;
-        }
-
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            backdrop-filter: saturate(180%) blur(10px);
-            background: color-mix(in oklab, var(--bg) 85%, transparent);
-            border-bottom: 1px solid color-mix(in oklab, var(--card), #000 30%);
-        }
-
-        .nav {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 12px 0;
-        }
-
-        .nav a.brand {
-            font-weight: 800;
-            letter-spacing: .2px;
-            text-decoration: none;
-            color: var(--text);
-        }
-
-        .nav .spacer {
-            flex: 1;
-        }
-
-        .nav a.button {
-            padding: 10px 14px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #0a0c10;
-            background: var(--primary);
-            font-weight: 700;
-        }
-
-        .hero {
-            display: grid;
-            grid-template-columns: 1.3fr 1fr;
-            gap: 28px;
-            padding: 48px 0 28px;
-        }
-
-        .hero .card {
-            background: var(--card);
-            border: 1px solid #20262d;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 28px;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 700;
-            color: light-dark(var(--text), #000);
-            background: linear-gradient(90deg, var(--primary), #7ee0b7);
-            padding: 6px 12px;
-            border-radius: 999px;
-        }
-
-        h1 {
-            font-size: clamp(28px, 3vw, 42px);
-            line-height: 1.1;
-            margin: 14px 0 12px;
-        }
-
-        .lead {
-            color: var(--muted);
-            font-size: 1.05rem;
-        }
-
-        .meta {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 16px 0 0;
-        }
-
-        .meta .chip {
-            background: light-dark(#F0ECE7, #0f1318);
-            /* light: off-white, dark: near-black */
-            border: 1px solid light-dark(#dfd9d2, #20262d);
-            /* light: soft gray, dark: dark gray */
-            padding: 8px 10px;
-            border-radius: 12px;
-            color: light-dark(#1a1a1a, #e6edf3);
-            /* light: dark text, dark: light text for contrast */
-        }
-
-        /* KPIs */
-        .kpis {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin: 18px 0 0;
-        }
-
-        .kpi {
-            background: var(--bg-soft);
-            border: 1px solid #20262d;
-            border-radius: 14px;
-            padding: 18px;
-            text-align: center;
-        }
-
-        .kpi .num {
-            font-size: clamp(22px, 3vw, 30px);
-            font-weight: 800;
-        }
-
-        .kpi .label {
-            color: var(--muted);
-            font-size: .9rem;
-        }
-
-        /* Sections */
-        section {
-            padding: 28px 0;
-        }
-
-        .grid {
-            display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .card {
-            background: var(--card);
-            border: 1px solid #20262d;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 20px;
-        }
-
-        .card h3 {
-            margin: 0 0 6px;
-            font-size: 1.15rem;
-        }
-
-        .muted {
-            color: var(--muted);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 700;
-            border: 1px solid #24313a;
-        }
-
-        .btn.primary {
-            background: var(--primary);
-            color: #061015;
-            border-color: transparent;
-        }
-
-        .btn.ghost {
-            background: transparent;
-            color: var(--text);
-        }
-
-        .btn.block {
-            width: 100%;
-            margin: 5px;
-        }
-
-        .row {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .row .grow {
-            flex: 1;
-            min-width: 260px;
-        }
-
-        /* Timeline */
-        .timeline {
-            position: relative;
-            margin: 8px 0;
-            padding-left: 18px;
-        }
-
-        .timeline:before {
-            content: "";
-            position: absolute;
-            left: 6px;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #22313a;
-        }
-
-        .timeline .t {
-            position: relative;
-            padding: 10px 12px 10px 20px;
-            margin: 6px 0;
-            background: var(--bg-soft);
-            border: 1px solid #20262d;
-            border-radius: 12px;
-        }
-
-        .timeline .t .when {
-            font-weight: 700;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        /* Forms */
-        form {
-            display: grid;
-            gap: 10px;
-        }
-
-        label {
-            font-weight: 600;
-            font-size: .95rem;
-        }
-
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid light-dark(#dbcfc5, #24313a);
-            background: light-dark(#f0ece7, #0f1318);
-            color: var(--text);
-            outline: none;
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            box-shadow: 0 0 0 4px var(--ring);
-            border-color: var(--primary);
-        }
-
-        .disclaimer {
-            font-size: .9rem;
-            color: var(--muted);
-        }
-
-        /* CTA banner */
-        .cta {
-            background: linear-gradient(135deg,
-                    light-dark(#f0ece7, #0f1318),
-                    light-dark(#eee9e1, #11161e) 35%,
-                    light-dark(#f4f2ef, #0b0d10));
-            border: 1px solid light-dark(#dfd9d2, #20262d);
-            border-radius: 18px;
-            padding: 22px;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-
-        footer {
-            margin: 40px 0 60px;
-            color: var(--muted);
-            font-size: .95rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .hero {
-                grid-template-columns: 1fr;
-            }
-
-            .kpis {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        details {
-            border: 1px solid light-dark(#c1d9d0, #2a5a4b);
-            /* subtle border */
-            border-radius: 12px;
-            padding: 12px 16px;
-            background: light-dark(#f5fdf9, #0b1b16);
-            /* default background */
-            color: light-dark(#0a0c10, #e6edf3);
-            /* default text */
-            transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            margin: 5px;
-        }
-
-        details summary {
-            font-weight: 700;
-            list-style: none;
-        }
-
-        details summary::-webkit-details-marker {
-            display: none;
-            /* hide default arrow */
-        }
-
-        details:open {
-            background: light-dark(#48c78e, #2aa56f);
-            /* primary color highlight */
-            color: light-dark(#ffffff, #0f1318);
-            /* high contrast text */
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Partners / Logos Grid */
-        .partners-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 20px;
-            align-items: center;
-            justify-items: center;
-            margin-top: 16px;
-        }
-
-        .partners-grid a {
-            display: inline-block;
-            background: var(--card);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid light-dark(#dfd9d2, #20262d);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .partners-grid a:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-        }
-
-        .partners-grid img {
-            max-width: 100px;
-            max-height: 50px;
-            object-fit: contain;
-        }
-
-        /* Donation CTA */
-        .lahjoitus {
-            background: linear-gradient(135deg, light-dark(#f0ece7, #0f1318), light-dark(#eee9e1, #11161e));
-            border: 1px solid light-dark(#dfd9d2, #20262d);
-            border-radius: 18px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 12px;
-            margin-top: 32px;
-        }
-
-        .lahjoitus h3 {
-            margin: 0;
-        }
-
-        .lahjoitus p {
-            color: var(--muted);
-        }
-
-        .lahjoitus a.btn {
-            font-size: 1.05rem;
-        }
-
-        /* EPIC FOOTER */
-        footer {
-            color: var(--text);
-            /* readable text on dark/primary background */
-            background: linear-gradient(135deg, var(--primary-700), var(--primary));
-            width: 100vw;
-            margin: 0;
-            padding: 4em 2em;
-            min-height: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
-            border-top-left-radius: 32px;
-            border-top-right-radius: 32px;
-            position: relative;
-            overflow: hidden;
-            z-index: 10;
-        }
-
-        footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%) rotate(45deg);
-            width: 200%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-            animation: shimmer 6s infinite linear;
-        }
-
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%) rotate(45deg);
-            }
-
-            100% {
-                transform: translateX(100%) rotate(45deg);
-            }
-        }
-
-        /* Inner container */
-        footer>div {
-            width: min(1100px, 92%);
-            margin-inline: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5em;
-            align-items: center;
-        }
-
-        /* Footer links */
-        footer a {
-            color: var(--text);
-            font-weight: 600;
-            margin: 0 8px;
-            text-decoration: underline;
-            transition: color 0.3s, transform 0.3s;
-        }
-
-        footer a:hover {
-            color: var(--bg-soft);
-            transform: scale(1.05);
-        }
-
-        /* Social links row */
-        footer>div>div:last-child {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mielenosoitukset.fi – Kampanja 2026</title>
+  <meta name="description"
+    content="Mielenosoitukset.fi:n valtakunnallinen kampanja alkaa 1.3.2026. Tule mukaan: jaa tietoa, tilaa julisteita ja tarroja, ilmoita tapahtuma ja liity vapaaehtoiseksi." />
+  <meta property="og:title" content="Mielenosoitukset.fi – Kampanja 2026" />
+  <meta property="og:description"
+    content="Kampanja alkaa 1.3.2026. Liity mukaan – jaetaan tieto mielenosoituksista kaikkialle Suomeen." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://mielenosoitukset.fi/kampanja" />
+  <meta property="og:image" content="https://mielenosoitukset.fi/static/kampanja/og-banner.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-blue: #0052CC;
+      --secondary-orange: #FF6B00;
+      --dark-blue: #003399;
+      --light-orange: #FF8533;
+      --text-primary: #1A1A1A;
+      --text-secondary: #666666;
+      --text-light: #999999;
+      --bg-primary: #FFFFFF;
+      --bg-secondary: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E8F0;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 8px 25px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+      --gradient-hero: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+      --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      border-bottom: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .navbar.scrolled {
+      box-shadow: var(--shadow-md);
+    }
+
+    .navbar-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-blue);
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .logo:hover {
+      color: var(--secondary-orange);
+      transform: scale(1.05);
+    }
+
+    .nav-btn {
+      background: var(--secondary-orange);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-btn:hover {
+      background: var(--light-orange);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      color: white;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--gradient-hero);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:white;stop-opacity:0.1"/><stop offset="100%" style="stop-color:white;stop-opacity:0"/></radialGradient></defs><circle cx="200" cy="200" r="300" fill="url(%23a)"/><circle cx="800" cy="600" r="200" fill="url(%23a)"/><circle cx="400" cy="800" r="250" fill="url(%23a)"/></svg>') no-repeat center;
+      background-size: cover;
+      opacity: 0.3;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      color: white;
+      max-width: 700px;
+    }
+
+    .campaign-badge {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 107, 0, 0.2);
+      border: 1px solid rgba(255, 107, 0, 0.3);
+      color: var(--secondary-orange);
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero h1 .highlight {
+      color: var(--secondary-orange);
+      position: relative;
+    }
+
+    .hero .lead {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--secondary-orange);
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:hover {
+      background: var(--light-orange);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      color: white;
+    }
+
+    /* Main Content */
+    main {
+      padding-top: 0;
+    }
+
+    .section {
+      padding: 5rem 0;
+      position: relative;
+    }
+
+    .section:nth-child(even) {
+      background: var(--bg-primary);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .card h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary-blue);
+      margin-bottom: 1rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .grid-2 {
+      grid-template-columns: 2fr 1fr;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: var(--bg-primary);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Material Cards */
+    .material-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .material-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .material-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .material-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      color: var(--primary-blue);
+    }
+
+    .material-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    /* Pricing List */
+    .pricing-list {
+      list-style: none;
+      margin: 1.5rem 0;
+    }
+
+    .pricing-list li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pricing-list li:last-child {
+      border-bottom: none;
+    }
+
+    /* FAQ */
+    .faq {
+      margin-top: 1rem;
+    }
+
+    .faq details {
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .faq summary {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      background: var(--bg-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .faq summary:hover {
+      background: var(--primary-blue);
+      color: white;
+    }
+
+    .faq details[open] summary {
+      background: var(--primary-blue);
+      color: white;
+    }
+
+    .faq details p {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      margin: 0;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--gradient-hero);
+      color: white;
+      text-align: center;
+      padding: 3rem 0;
+      margin-top: 5rem;
+    }
+
+    footer a {
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    footer a:hover {
+      color: var(--secondary-orange);
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 1rem;
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-slide-up {
+      animation: slideInUp 0.8s ease-out;
+    }
+
+    /* Success message */
+    .success-message {
+      background: #10B981;
+      color: white;
+      padding: 1rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 15px;
+      }
+
+      .section {
+        padding: 3rem 0;
+      }
+
+      .card {
+        padding: 1.5rem;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .material-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <header>
-        <div class="container nav">
-            <a class="brand" href="/">Mielenosoitukset.fi</a>
-            <span class="spacer"></span>
-            <a class="button" href="#lahjoita">Lahjoita kampanjaan</a>
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <div class="navbar-content">
+        <a class="logo" href="/">Mielenosoitukset.fi</a>
+        <a class="nav-btn" href="#lahjoita">Rahoita kampanjaa →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content animate-slide-up">
+        <div class="campaign-badge">
+          ✨ Kampanja alkaa 1.3.2026
         </div>
-    </header>
-
-    <main class="container">
-        <!-- HERO -->
-        <section class="hero">
-            <div class="card">
-                <span class="badge">Kampanja alkaa 1.3.2026</span>
-                <h1>Levitetään tieto <span style="color: var(--primary-700);">mielenosoitukset.fi:stä</span> kaikkialle
-                    Suomeen</h1>
-                <p class="lead">Kutsumme järjestöt, aktivistit ja yhteisöt mukaan kampanjaan, joka tekee
-                    osallistumisesta mielenosoituksiin helpompaa kuin koskaan. Tilaa julisteita ja tarroja, jaa
-                    kampanjasisältöjä ja ilmoita omat tapahtumasi.</p>
-                <div class="meta">
-                    <span class="chip">Aikataulu: kevät 2026</span>
-                    <span class="chip">Materiaaleja: julisteet & tarrat</span>
-                    <span class="chip">Tavoite: näkyvyys & osallistuminen</span>
-                </div>
-                <div class="kpis">
-                    <div class="kpi">
-                        <div class="num" id="kpi-posters">0</div>
-                        <div class="label">Julisteita jaossa</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="num" id="kpi-stickers">0</div>
-                        <div class="label">Tarroja jaossa</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="num" id="kpi-partners">0</div>
-                        <div class="label">Kumppania mukana</div>
-                    </div>
-                    <div class="kpi">
-                        <div class="num" id="kpi-cities">0</div>
-                        <div class="label">Kaupunkia</div>
-                    </div>
-                </div>
-                <div class="row" style="margin-top:16px">
-                    <a class="btn primary" href="#tilaa">Tilaa materiaalit</a>
-                    <a class="btn ghost" href="#materiaalipankki">Lataa aineistot (PDF, PNG)</a>
-                </div>
-            </div>
-            <div class="card">
-                <h3>Näin osallistut</h3>
-                <ol>
-                    <li><strong>Tilaa</strong> julisteet ja tarrat tai lataa aineistot itse tulostettavaksi.</li>
-                    <li><strong>Levitä</strong> materiaaleja oppilaitoksiin, kirjastoihin ja yhteisöihin.</li>
-                    <li><strong>Ilmoita</strong> mielenosoitus sivustolle – näkyvyys kasvaa kalenterissa ja kartalla.
-                    </li>
-                    <li><strong>Jaa</strong> kampanjasisältöjä somessa aihetunnisteella
-                        <code>#mielenosoituksetfi</code>.
-                    </li>
-                </ol>
-                <div class="timeline">
-                    <div class="t">
-                        <div class="when">Marras–Joulu 2025</div>
-                        <div>Tarjouskilpailu painotaloille, aineistojen viimeistely.</div>
-                    </div>
-                    <div class="t">
-                        <div class="when">Tammi–Helmi 2026</div>
-                        <div>Tuotanto ja jakelun valmistelu.</div>
-                    </div>
-                    <div class="t">
-                        <div class="when">1.3.2026</div>
-                        <div>Kampanjan lanseeraus: jakelu & some.</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- MATERIAL ORDER -->
-        <section id="tilaa">
-            <div class="row" style="align-items:flex-start">
-                <div class="grow card">
-                    <h2 style="margin-top:4px">Tilaa materiaalit</h2>
-                    <p class="muted">Täytä lomake tilataksesi kampanjajulisteita ja -tarroja. Saat tilausvahvistuksen
-                        sähköpostiisi. Maksu laskulla (30 pv netto) tai sopimuksen mukaan.</p>
-                    <form id="order-form" novalidate>
-                        <div class="row">
-                            <div class="grow">
-                                <label for="org">Organisaatio / ryhmä</label>
-                                <input id="org" name="organization" required placeholder="Esim. FFF Helsinki" />
-                            </div>
-                            <div class="grow">
-                                <label for="contact">Yhteyshenkilö</label>
-                                <input id="contact" name="contact" required placeholder="Etunimi Sukunimi" />
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="grow">
-                                <label for="email">Sähköposti</label>
-                                <input id="email" name="email" type="email" required placeholder="nimi@esimerkki.fi" />
-                            </div>
-                            <div class="grow">
-                                <label for="phone">Puhelin</label>
-                                <input id="phone" name="phone" type="tel" placeholder="040 123 4567" />
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="grow">
-                                <label for="address">Toimitusosoite</label>
-                                <input id="address" name="address" required
-                                    placeholder="Katuosoite, postinumero ja -toimipaikka" />
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="grow">
-                                <label for="posters">A3-juliste (CMYK)</label>
-                                <select id="posters" name="posters">
-                                    <option value="0">Ei</option>
-                                    <option>500 kpl</option>
-                                    <option>1000 kpl</option>
-                                    <option>1500 kpl</option>
-                                    <option>2000 kpl</option>
-                                    <option>2500 kpl</option>
-                                    <option>3000 kpl</option>
-                                    <option>5000 kpl</option>
-                                    <option>10000 kpl</option>
-                                </select>
-                            </div>
-                            <div class="grow">
-                                <label for="stickers-a7">Tarra A7 (valk. tarrakalvo)</label>
-                                <select id="stickers-a7" name="stickers_a7">
-                                    <option value="0">Ei</option>
-                                    <option>500 kpl</option>
-                                    <option>1000 kpl</option>
-                                    <option>1500 kpl</option>
-                                    <option>2000 kpl</option>
-                                    <option>2500 kpl</option>
-                                    <option>3000 kpl</option>
-                                    <option>5000 kpl</option>
-                                    <option>10000 kpl</option>
-                                </select>
-                            </div>
-                            <div class="grow">
-                                <label for="stickers-round">Pyöreä tarra 10×10 cm</label>
-                                <select id="stickers-round" name="stickers_round">
-                                    <option value="0">Ei</option>
-                                    <option>500 kpl</option>
-                                    <option>1000 kpl</option>
-                                    <option>1500 kpl</option>
-                                    <option>2000 kpl</option>
-                                    <option>2500 kpl</option>
-                                    <option>3000 kpl</option>
-                                    <option>5000 kpl</option>
-                                    <option>10000 kpl</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <label for="notes">Lisätiedot (toimitusohjeet, aikataulu tms.)</label>
-                        <textarea id="notes" name="notes" rows="4"
-                            placeholder="Esim. vastaanotto arkipäivisin klo 9–15, nosto-ovi 3."></textarea>
-
-                        <div class="row">
-                            <button class="btn primary" type="submit">Lähetä tilauspyyntö</button>
-                            <a class="btn ghost" href="#materiaalipankki">Lataa aineistot itse</a>
-                        </div>
-                        <p id="form-msg" class="disclaimer" role="status" aria-live="polite"></p>
-                    </form>
-                </div>
-                <aside class="card" style="max-width:420px">
-                    <h3>Hinnoittelutasot</h3>
-                    <p class="muted">Saat tarjouksen eriteltynä jokaiseen kappalemäärään. Painotalo kilpailutetaan
-                        syksyllä 2025.</p>
-                    <ul>
-                        <li>A3 juliste: 500 — 10 000 kpl</li>
-                        <li>A7 tarra: 500 — 10 000 kpl</li>
-                        <li>Pyöreä tarra 10×10 cm: 500 — 10 000 kpl</li>
-                    </ul>
-                    <div class="cta">
-                        <div>
-                            <strong>Haluatko kumppaniksi?</strong>
-                            <div class="muted">Tarjoamme näkyvyyttä ja yhteiskunnallista vaikuttavuutta.</div>
-                        </div>
-                        <a class="btn primary" href="#kumppanit">Ota yhteyttä</a>
-                    </div>
-                </aside>
-            </div>
-        </section>
-
-        <!-- VOLUNTEER SIGNUP -->
-        <section id="vapaaehtoiseksi">
-            <div class="row" style="align-items:flex-start">
-                <div class="grow card">
-                    <h2 style="margin-top:4px">Tule vapaaehtoiseksi</h2>
-                    <p class="muted">Täytä lomake, jos haluat tulla mukaan kampanjaan vapaaehtoiseksi. Työtä löytyy mm. julisteiden ja tarrojen levittämisessä, some-viestinnässä ja
-                        tapahtumissa. Otamme sinuun yhteyttä sähköpostitse.</p>
-                    <form id="volunteer-form" novalidate>
-                        <div class="row">
-                            <div class="grow">
-                                <label for="vol-name">Nimi</label>
-                                <input id="vol-name" name="name" required placeholder="Etunimi Sukunimi" />
-                            </div>
-                            <div class="grow">
-                                <label for="vol-email">Sähköposti</label>
-                                <input id="vol-email" name="email" type="email" required
-                                    placeholder="nimi@esimerkki.fi" />
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="grow">
-                                <label for="vol-phone">Puhelin</label>
-                                <input id="vol-phone" name="phone" type="tel" placeholder="040 123 4567" />
-                            </div>
-                            <div class="grow">
-                                <label for="vol-city">Kaupunki</label>
-                                <input id="vol-city" name="city" placeholder="Helsinki" />
-                            </div>
-                        </div>
-                        <label for="vol-notes">Saatavuus / kommentit</label>
-                        <textarea id="vol-notes" name="notes" rows="4"
-                            placeholder="Esim. viikonloput, ilta-aikaan, tms."></textarea>
-                        <div class="row">
-                            <button class="btn primary" type="submit">Lähetä ilmoittautuminen</button>
-                        </div>
-                        <p id="vol-msg" class="disclaimer" role="status" aria-live="polite"></p>
-                    </form>
-                </div>
-                <aside class="card" style="max-width:420px">
-                    <h3>Miksi vapaaehtoiseksi?</h3>
-                    <p class="muted">Vapaaehtoisena autat levittämään tietoa, tuet järjestöjä ja saat kokemusta
-                        tapahtumien järjestämisestä. Kaikki panokset ovat arvokkaita!</p>
-                </aside>
-            </div>
-        </section>
-
-        <script>
-            // Vapaaehtoisilmoittautuminen
-            const volForm = document.getElementById('volunteer-form');
-            const volMsg = document.getElementById('vol-msg');
-            volForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                volMsg.textContent = 'Lähetetään…';
-                const data = Object.fromEntries(new FormData(volForm).entries());
-                try {
-                    const res = await fetch('/api/kampanja/vapaaehtoiseksi', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...data, source: 'kampanjasivu_v1' })
-                    });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    volMsg.textContent = 'Kiitos! Otamme sinuun yhteyttä pian.';
-                    volForm.reset();
-                } catch (err) {
-                    console.error(err);
-                    volMsg.textContent = 'Hups! Lähetys epäonnistui. Voit myös mailata: emilia@mielenosoitukset.fi';
-                    volMsg.style.color = 'var(--danger)';
-                }
-            });
-        </script>
-
-
-        <!-- ASSET BANK -->
-        <section id="materiaalipankki">
-            <div class="card">
-                <h2 style="margin-top:4px">Materiaalipankki</h2>
-                <p class="muted">Kaikki aineistot ovat Creative Commons BY 4.0 -lisenssillä, ellei toisin mainita.
-                    CMYK-PDF painoon ja RGB-PNG someen.</p>
-                <div class="grid">
-                    <div class="card">
-                        <h3>A3-juliste</h3>
-                        <p class="muted">CMYK, 3 mm leikkuuvarat, tekstit poltettu / mukana fontit.</p>
-                        <a class="btn primary block" href="/static/kampanja/A3_juliste_CMYK.pdf" download>Lataa PDF</a>
-                        <a class="btn ghost block" href="/static/kampanja/A3_juliste_RGB.png" download>Lataa PNG</a>
-                    </div>
-                    <div class="card">
-                        <h3>Tarra A7</h3>
-                        <p class="muted">Valkoinen itseliimautuva tarrakalvo, CMYK.</p>
-                        <a class="btn primary block" href="/static/kampanja/Tarra_A7_CMYK.pdf" download>Lataa PDF</a>
-                        <a class="btn ghost block" href="/static/kampanja/Tarra_A7_RGB.png" download>Lataa PNG</a>
-                    </div>
-                    <div class="card">
-                        <h3>Pyöreä tarra 10×10 cm</h3>
-                        <p class="muted">Muotoonleikkaus, turvamarginaali 3 mm.</p>
-                        <a class="btn primary block" href="/static/kampanja/Tarra_10x10_CMYK.pdf" download>Lataa PDF</a>
-                        <a class="btn ghost block" href="/static/kampanja/Tarra_10x10_RGB.png" download>Lataa PNG</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-
-
-        <!-- PARTNERS / CONTACT -->
-        <section id="kumppanit">
-            <div class="row">
-                <div class="grow card">
-                    <h2 style="margin-top:4px">Kumppaneille ja medialle</h2>
-                    <p class="muted">Etsimme kumppaneita materiaaleihin, jakeluun ja näkyvyyteen. Lehdistöpaketti
-                        sisältää logot, värimääritykset ja taustatiedot.</p>
-                    <div class="row">
-                        <a class="btn primary" href="/static/kampanja/mediapankki.zip" download>Lataa mediapankki
-                            (.zip)</a>
-                        <a class="btn ghost" href="mailto:emilia@mielenosoitukset.fi?subject=Kampanjayhteisty%C3%B6">Ota
-                            yhteyttä</a>
-                    </div>
-                </div>
-                <aside class="card" style="max-width:420px">
-                    <h3>Usein kysyttyä</h3>
-                    <details>
-                        <summary>Milloin materiaalit jaetaan?</summary>
-                        <p>Tuotanto valmistuu helmi - maaliskuussa 2026. Ensimmäinen jako tapahtuu heti lanseerauksen
-                            yhteydessä 1.3.2026 alkaen.</p>
-                    </details>
-                    <details>
-                        <summary>Voinko tulostaa itse?</summary>
-                        <p>Kyllä. Lataa materiaalipankista CMYK-PDF painoon tai RGB-PNG pikakäyttöön.</p>
-                    </details>
-                    <details>
-                        <summary>Miten ilmoitan oman mielenosoituksen?</summary>
-                        <p>Käytä <a href="/submit">ilmoituslomaketta</a>. Tapahtuma näkyy listassa ja kalenterissa
-                            hyväksynnän jälkeen.</p>
-                    </details>
-                </aside>
-            </div>
-        </section>
-
-        <!-- Yhteistyökumppanit -->
-        <section id="yhteistyokumppanit">
-            <div class="card">
-                <h2 style="margin-top:4px">Yhteistyökumppanit</h2>
-                <p class="muted">Kiitos kaikille kumppaneillemme kampanjan tukemisesta! Klikkaa logoa nähdäksesi lisää.
-                </p>
-                <div class="partners-grid">
-                    <a href="https://setusuomi.fi" target="_blank" rel="noopener">
-                        <img src="/static/kampanja/setu.png" alt="Setu ry logo">
-                        <p>Setu ry</p>
-                    </a>
-                    <a href="https://www.example2.com" target="_blank" rel="noopener">
-                        <img src="/static/kampanja/partner2.png" alt="Partner 2 logo">
-                    </a>
-                    <a href="https://www.example3.com" target="_blank" rel="noopener">
-                        <img src="/static/kampanja/partner3.png" alt="Partner 3 logo">
-                    </a>
-                    <!-- Lisää kumppaneita lisäämällä <a> tagit -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Lahjoitus CTA -->
-        <section id="lahjoita">
-            <div class="lahjoitus">
-                <h3>Tue kampanjaa lahjoituksella</h3>
-                <p>Jokainen euro auttaa levittämään tietoa mielenosoituksista ja tukee järjestöjä ympäri Suomen.</p>
-                <a class="btn primary" href="https://www.example.com/lahjoita" target="_blank">Lahjoita nyt</a>
-            </div>
-        </section>
-
-
-        <!-- FINAL CTA -->
-        <section>
-            <div class="cta">
-                <div>
-                    <h3 style="margin:0 0 6px">Valmiina jakamaan? </h3>
-                    <div class="muted">Tilaa materiaalit tai lataa aineistot ja levitä sanaa omassa kaupungissasi.</div>
-                </div>
-                <div class="row">
-                    <a class="btn primary" href="#tilaa">Tilaa materiaalit</a>
-                    <a class="btn ghost" href="#materiaalipankki">Lataa aineistot</a>
-                </div>
-            </div>
-        </section>
-
-
-    </main>
-
-    <footer>
-        <div class="row" style="justify-content:space-between; color: light-dark(#000, #fff);">
-            <div>
-                © 2026 Mielenosoitukset.fi · <a href="/tietoa">Tietoa</a> · <a href="/tietosuoja">Tietosuoja</a>
-            </div>
-            <div>
-                <a href="https://instagram.com" aria-label="Instagram">Instagram</a>
-                · <a href="https://facebook.com" aria-label="Facebook">Facebook</a>
-                · <a href="https://tiktok.com" aria-label="TikTok">TikTok</a>
-            </div>
+        <h1>Levitetään tieto <span class="highlight">mielenosoitukset.fi:stä</span> kaikkialle Suomeen</h1>
+        <p class="lead">Kutsumme järjestöt, aktivistit ja yhteisöt mukaan levittämään yhdessä tietoa mielenosoitukset.fi:stä. Tilaa julisteita ja tarroja, jaa kampanjasisältöjä ja ilmoita omat tapahtumasi.</p>
+        <div class="hero-buttons">
+          <a class="btn btn-primary" href="#tilaa">📋 Tilaa materiaalit</a>
+          <a class="btn btn-secondary" href="#materiaalipankki">📁 Lataa aineistot</a>
         </div>
-    </footer>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <!-- MATERIAL ORDER -->
+    <section id="tilaa" class="section">
+      <div class="container">
+        <div class="grid grid-2">
+          <div class="card">
+            <h2>Tilaa materiaalit</h2>
+            <p>Täytä lomake tilataksesi kampanjajulisteita ja -tarroja. Tuotanto valmistuu helmi-maaliskuussa 2026.</p>
+            <a class="btn btn-primary" href="#kumppanit">Ota yhteyttä tilauksesta</a>
+          </div>
+          <div class="card">
+            <h3>📊 Hinnoittelutasot</h3>
+            <ul class="pricing-list">
+              <li>
+                <span>A3 juliste</span>
+                <span>500 — 10 000 kpl</span>
+              </li>
+              <li>
+                <span>A7 tarra</span>
+                <span>500 — 10 000 kpl</span>
+              </li>
+              <li>
+                <span>Pyöreä tarra 10×10 cm</span>
+                <span>500 — 10 000 kpl</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VOLUNTEER SIGNUP -->
+    <section id="vapaaehtoiseksi" class="section">
+      <div class="container">
+        <div class="grid grid-2">
+          <div class="card">
+            <h2>🙋‍♀️ Tule vapaaehtoiseksi</h2>
+            <form id="volunteer-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="vol-name" class="form-label">Nimi *</label>
+                  <input id="vol-name" name="name" class="form-control" placeholder="Etunimi Sukunimi" required>
+                </div>
+                <div class="form-group">
+                  <label for="vol-email" class="form-label">Sähköposti *</label>
+                  <input id="vol-email" name="email" type="email" class="form-control" placeholder="nimi@esimerkki.fi" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="vol-phone" class="form-label">Puhelin</label>
+                  <input id="vol-phone" name="phone" type="tel" class="form-control" placeholder="040 123 4567">
+                </div>
+                <div class="form-group">
+                  <label for="vol-city" class="form-label">Kaupunki</label>
+                  <input id="vol-city" name="city" class="form-control" placeholder="Helsinki">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="vol-notes" class="form-label">Saatavuus / kommentit</label>
+                <textarea id="vol-notes" name="notes" class="form-control" rows="4" placeholder="Esim. viikonloput, ilta-aikaan, erityisosaaminen..."></textarea>
+              </div>
+              <button class="btn btn-primary" type="submit">Lähetä ilmoittautuminen</button>
+              <div id="vol-msg" class="success-message">Kiitos ilmoittautumisestasi! Olemme yhteydessä pian.</div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>💪 Miksi vapaaehtoiseksi?</h3>
+            <p>Vapaaehtoisena autat levittämään tietoa, tuet järjestöjä ja saat kokemusta tapahtumien järjestämisestä. Yhdessä teemme Suomesta paikan, jossa kaikilla on tieto mielenosoitusoikeudestaan.</p>
+            <div class="mt-2">
+              <strong>Mitä vapaaehtoistyö sisältää:</strong>
+              <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                <li>Viestintä ja tiedottaminen</li>
+                <li>Julisteiden ja tarrojen levittäminen</li>
+                <li>Tapahtumien tukeminen</li>
+                <li>Sosiaalisen median jakaminen</li>
+                <li>Paikallinen koordinointi</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <script>
-        // Pieni laskuri-demo – voit korvata API-datalle.
-        const targets = { posters: 10000, stickers: 25000, partners: 24, cities: 35 };
-        const el = (id) => document.getElementById(id);
-        const animate = (id, to, ms = 900) => {
-            const start = performance.now();
-            const step = (t) => {
-                const p = Math.min(1, (t - start) / ms);
-                el('kpi-' + id).textContent = Math.round(to * (0.2 + 0.8 * p)).toLocaleString('fi-FI');
-                if (p < 1) requestAnimationFrame(step);
-            };
-            requestAnimationFrame(step);
-        };
-        animate('posters', targets.posters);
-        animate('stickers', targets.stickers);
-        animate('partners', targets.partners);
-        animate('cities', targets.cities);
+const volunteerForm = document.getElementById('volunteer-form');
+const volunteerMsg = document.getElementById('vol-msg');
 
-        // Tilauslomake – lähettää JSONin. Vaihda endpoint omaan backendisi reitille.
-        const form = document.getElementById('order-form');
-        const msg = document.getElementById('form-msg');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            msg.textContent = 'Lähetetään…';
-            const data = Object.fromEntries(new FormData(form).entries());
+volunteerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-            try {
-                const res = await fetch('/api/kampanja/tilaus', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...data, source: 'kampanjasivu_v1' })
-                });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                msg.textContent = 'Kiitos! Otamme sinuun yhteyttä pian.';
-                form.reset();
-            } catch (err) {
-                console.error(err);
-                msg.textContent = 'Hups! Lähetys epäonnistui. Voit myös mailata: emilia@mielenosoitukset.fi';
-                msg.style.color = 'var(--danger)';
-            }
-        });
-    </script>
+  // Collect form values
+  const formData = {
+    name: document.getElementById('vol-name').value.trim(),
+    email: document.getElementById('vol-email').value.trim(),
+    phone: document.getElementById('vol-phone').value.trim(),
+    city: document.getElementById('vol-city').value.trim(),
+    notes: document.getElementById('vol-notes').value.trim(),
+  };
 
-    <!-- JSON-LD: kampanjan metadata hakukoneille -->
-    <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Event",
-    "name": "Mielenosoitukset.fi – Kampanja 2026",
-    "startDate": "2026-03-01",
-    "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
-    "eventStatus": "https://schema.org/EventScheduled",
-    "location": {"@type":"Place","name":"Suomi","address":"Finland"},
-    "image": ["https://mielenosoitukset.fi/static/kampanja/og-banner.png"],
-    "description": "Valtakunnallinen kampanja, joka helpottaa osallistumista mielenosoituksiin ja levittää tietoa tapahtumista.",
-    "organizer": {"@type":"Organization","name":"Mielenosoitukset.fi","url":"https://mielenosoitukset.fi"}
+  // Basic validation
+  if (!formData.name || !formData.email) {
+    alert('Täytä vähintään nimi ja sähköposti.');
+    return;
   }
+
+  try {
+    const response = await fetch('/kampanja/api/volunteers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      // Show success message
+      volunteerMsg.textContent = 'Kiitos ilmoittautumisestasi! Tarkista sähköpostisi vahvistaaksesi ilmoittautumisen.';
+      volunteerMsg.classList.add('show');
+      volunteerForm.reset();
+
+      setTimeout(() => {
+        volunteerMsg.classList.remove('show');
+      }, 8000);
+    } else {
+      alert(result.error || 'Ilmoittautuminen epäonnistui. Yritä uudelleen.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Tapahtui virhe. Yritä myöhemmin uudelleen.');
+  }
+});
+</script>
+
+
+    <!-- ASSET BANK -->
+    <section id="materiaalipankki" class="section">
+      <div class="container">
+        <div class="card">
+          <h2>📚 Materiaalipankki</h2>
+          <p>Lataa kampanjamateriaalit suoraan täältä. CMYK-tiedostot ammattipainoon, RGB-tiedostot pikakäyttöön.</p>
+          
+          <div class="material-grid">
+            <div class="material-card">
+              <h3>🖼️ A3-juliste</h3>
+              <div class="material-buttons">
+                <a class="btn btn-primary" href="/static/kampanja/A3_juliste_CMYK.pdf" download>📄 Lataa PDF (CMYK)</a>
+                <a class="btn btn-secondary" href="/static/kampanja/A3_juliste_RGB.png" download>🖼️ Lataa PNG (RGB)</a>
+              </div>
+            </div>
+            
+            <div class="material-card">
+              <h3>🏷️ Tarra A7</h3>
+              <div class="material-buttons">
+                <a class="btn btn-primary" href="/static/kampanja/Tarra_A7_CMYK.pdf" download>📄 Lataa PDF (CMYK)</a>
+                <a class="btn btn-secondary" href="/static/kampanja/Tarra_A7_RGB.png" download>🖼️ Lataa PNG (RGB)</a>
+              </div>
+            </div>
+            
+            <div class="material-card">
+              <h3>⭕ Pyöreä tarra 10×10 cm</h3>
+              <div class="material-buttons">
+                <a class="btn btn-primary" href="/static/kampanja/Tarra_10x10_CMYK.pdf" download>📄 Lataa PDF (CMYK)</a>
+                <a class="btn btn-secondary" href="/static/kampanja/Tarra_10x10_RGB.png" download>🖼️ Lataa PNG (RGB)</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTNERS / CONTACT -->
+    <section id="kumppanit" class="section">
+      <div class="container">
+        <div class="grid grid-2">
+          <div class="card">
+            <h2>🤝 Kumppaneille ja medialle</h2>
+            <p>Tarvitsetko lisätietoja kampanjasta, haastatteluja tai korkealaatuisia kuvia? Lataa mediapankki tai ota suoraan yhteyttä.</p>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+              <a class="btn btn-primary" href="/static/kampanja/mediapankki.zip" download>📦 Lataa mediapankki</a>
+              <a class="btn btn-secondary" href="mailto:emilia@mielenosoitukset.fi?subject=Kampanjayhteisty%C3%B6">✉️ Ota yhteyttä</a>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3>❓ Usein kysyttyä</h3>
+            <div class="faq">
+              <details>
+                <summary>Milloin materiaalit jaetaan?</summary>
+                <p>Tuotanto valmistuu helmi-maaliskuussa 2026. Ilmoitamme tarkan aikataulun tammikuussa.</p>
+              </details>
+              <details>
+                <summary>Voinko tulostaa itse?</summary>
+                <p>Kyllä! Lataa materiaalipankista CMYK-PDF ammattipainoon tai RGB-PNG pikakäyttöön ja kotitulostukseen.</p>
+              </details>
+              <details>
+                <summary>Kuinka paljon materiaalit maksavat?</summary>
+                <p>Hinnoittelu riippuu tilausmäärästä ja toimitustavasta. Ota yhteyttä, niin lähetämme tarkan hinnaston.</p>
+              </details>
+              <details>
+                <summary>Voinko muokata materiaaleja?</summary>
+                <p>Perusmateriaalit tulee käyttää sellaisenaan. Erityistarpeisiin voimme toimittaa muokattavia versioita.</p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>© 2026 Mielenosoitukset.fi</p>
+      <div class="social-links">
+        <a href="/tietoa">Tietoa</a>
+        <a href="/tietosuoja">Tietosuoja</a>
+        <a href="https://instagram.com">Instagram</a>
+        <a href="https://facebook.com">Facebook</a>
+        <a href="https://tiktok.com">TikTok</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 100) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Form submission
+    const volunteerForm = document.getElementById('volunteer-form');
+    const volunteerMsg = document.getElementById('vol-msg');
+
+    volunteerForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Simple validation
+      const name = document.getElementById('vol-name').value.trim();
+      const email = document.getElementById('vol-email').value.trim();
+      
+      if (!name || !email) {
+        alert('Täytä vähintään nimi ja sähköposti.');
+        return;
+      }
+      
+      // Show success message
+      volunteerMsg.classList.add('show');
+      volunteerForm.reset();
+      
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        volunteerMsg.classList.remove('show');
+      }, 5000);
+    });
+
+    // Add scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationDelay = '0.2s';
+          entry.target.classList.add('animate-slide-up');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all cards
+    document.querySelectorAll('.card').forEach(card => {
+      observer.observe(card);
+    });
   </script>
 </body>
 

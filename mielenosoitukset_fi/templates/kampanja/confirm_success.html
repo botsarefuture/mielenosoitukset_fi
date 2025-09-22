@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ilmoittautuminen vahvistettu – Mielenosoitukset.fi</title>
+  <link rel="stylesheet" href="/static/kampanja/styles.css" />
+  <style>
+    :root {
+      --primary-blue: #0052CC;
+      --dark-blue: #003399;
+      --secondary-orange: #FF6B00;
+      --light-orange: #FF8533;
+      --text-white: #FFFFFF;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+      color: var(--text-white);
+      overflow: hidden;
+    }
+
+    .background-circles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:white;stop-opacity:0.1"/><stop offset="100%" style="stop-color:white;stop-opacity:0"/></radialGradient></defs><circle cx="200" cy="200" r="300" fill="url(%23a)"/><circle cx="800" cy="600" r="200" fill="url(%23a)"/><circle cx="400" cy="800" r="250" fill="url(%23a)"/></svg>') no-repeat center;
+      background-size: cover;
+      opacity: 0.3;
+      animation: float 10s infinite linear;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 3rem 2rem;
+      border-radius: 20px;
+      max-width: 500px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      animation: slideInUp 1s ease-out;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      color: var(--secondary-orange);
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .btn-home {
+      display: inline-block;
+      padding: 14px 32px;
+      font-weight: 600;
+      border-radius: 50px;
+      background: var(--secondary-orange);
+      color: var(--text-white);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .btn-home:hover {
+      background: var(--light-orange);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+
+    .emoji {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 2rem 1rem;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="background-circles"></div>
+  <div class="container">
+    <span class="emoji">🎉</span>
+    <h1>Ilmoittautuminen vahvistettu!</h1>
+    <p>Kiitos, {{ name }}! Sähköpostisi on vahvistettu ja olet nyt virallisesti mukana kampanjassa. 💪</p>
+    <a href="/" class="btn-home">🏠 Palaa etusivulle</a>
+  </div>
+</body>
+
+</html>

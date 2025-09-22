@@ -371,7 +371,18 @@ def create_app() -> Flask:
     @app.template_filter('displayname_or_username')
     def displayname_or_username(user):
         return user.displayname or user.username
-
+    
+    def attr_or_get(obj, *attrs):
+        for a in attrs:
+            # try attribute first
+            if hasattr(obj, a) and getattr(obj, a):
+                return getattr(obj, a)
+            # fallback for dicts
+            if isinstance(obj, dict) and a in obj and obj[a]:
+                return obj[a]
+        return None
+    
+    app.jinja_env.globals.update(attr_or_get=attr_or_get)
 
     return app
 

@@ -114,6 +114,8 @@ demonstrations_collection = db["demonstrations"]
 runtime_log_collection = db["runtime_log"]
 runtimes_collection = db["runtimes"]
 runtime_actions = []
+stats_collection = db["recu_stats"]
+
 
 
 def _get_runtime_id():
@@ -233,6 +235,34 @@ def calculate_next_dates(start_date: Union[datetime, date], schedule: RepeatSche
     logger.debug(f"Next dates: {[d.strftime('%Y-%m-%d') for d in next_dates]}")
     return next_dates
 
+def update_parent_stats(parent_id):
+    """
+    Compute total, future, and past demonstration counts for a recurring parent.
+    Saves results into `recu_stats`.
+    """
+    now = datetime.now().date()
+    # Only include visible demos
+    siblings = list(demonstrations_collection.find({"parent": parent_id, "hide": False}))
+    
+    total_count = len(siblings)
+    future_count = sum(1 for d in siblings if datetime.strptime(d["date"], "%Y-%m-%d").date() > now)
+    past_count = sum(1 for d in siblings if datetime.strptime(d["date"], "%Y-%m-%d").date() < now)
+
+    stats_doc = {
+        "parent": parent_id,
+        "total_count": total_count,
+        "future_count": future_count,
+        "past_count": past_count,
+        "last_updated": datetime.now()
+    }
+
+    if DRY_RUN:
+        logger.info(f"DRY RUN: would upsert stats for parent {parent_id}: {stats_doc}")
+    else:
+        stats_collection.update_one({"parent": parent_id}, {"$set": stats_doc}, upsert=True)
+        logger.info(f"Updated stats for parent {parent_id}")
+
+
 def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[date], _created_until: Union[datetime, date]):
     """
     Remove child demos that are not valid, ignoring frozen and already created ones.
@@ -300,7 +330,7 @@ def get(obj: dict, key: str, default=None):
 
 
 
-def process_demo(demo: dict):
+def process_demo(demo: dict, only_calculate: bool = False):
     """
     Process one recurring demonstration: create, update, remove child demos.
     """
@@ -313,6 +343,13 @@ def process_demo(demo: dict):
         demo_date = datetime.strptime(_demo.date, "%Y-%m-%d").date()
         created_until_date = created_until.date() if isinstance(created_until, datetime) else created_until
         next_dates = calculate_next_dates(demo_date, schedule, created_until_date)
+        
+        # Only calculate stats if requested
+        if only_calculate:
+            remove_invalid_child_demonstrations(demo, next_dates, created_until_date)
+            update_parent_stats(demo["_id"])
+            return
+        
         # If FORCE_RECHECK, inspect existing child demos and ensure they match schedule
         if FORCE_RECHECK:
             child_demos = list(demonstrations_collection.find({"parent": demo["_id"]}))
@@ -431,14 +468,19 @@ def process_demo(demo: dict):
     except Exception as e:
         logger.error(f"Error processing demo {demo.get('_id')}: {e}")
         logger.error(format_exc())
+    
+    finally:
+        if not only_calculate:
+            update_parent_stats(demo["_id"])
 
 
-def handle_repeating_demonstrations():
+def handle_repeating_demonstrations(only_calculate: bool = False):
     demos = recu_demos_collection.find()
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(process_demo, demo) for demo in demos]
+        futures = [executor.submit(process_demo, demo, only_calculate) for demo in demos]
         for future in as_completed(futures):
             future.result()
+
 
 def find_duplicates() -> list[dict]:
     demos = list(demonstrations_collection.find({"hide":False,"in_past":False,"recurring":True}))
@@ -500,23 +542,32 @@ def main():
     global DRY_RUN
     parser = argparse.ArgumentParser(description="Process recurring demonstrations")
     parser.add_argument("--dry-run", action="store_true", help="Do not write changes to the database; only simulate")
+    parser.add_argument("--only-calculate", action="store_true", help="Only calculate next occurrences without creating or deleting demos")
     # Ignore the first two arguments passed to the process (drop argv[0] and argv[1])
     import sys
     args_to_parse = sys.argv[3:]
     args = parser.parse_args(args_to_parse)
+    
     print(f"DRY RUN: {args.dry_run}, want to continue? (y/n)")
     answer = input().strip().lower()
     if answer != 'y':
         logger.info("Aborting demonstration processing.")
         return
+    
     DRY_RUN = bool(args.dry_run)
+    only_calculate = bool(args.only_calculate)
 
-    logger.info(f"Starting demonstration processing. DRY_RUN={DRY_RUN}")
-    handle_repeating_demonstrations()
-    total_merged = merge_duplicates()
-    logger.info(f"Total duplicates merged: {total_merged}")
-    process_runtime_actions()
+    logger.info(f"Starting demonstration processing. DRY_RUN={DRY_RUN}, ONLY_CALCULATE={only_calculate}")
+    handle_repeating_demonstrations(only_calculate=only_calculate)
+
+    if not only_calculate:
+        total_merged = merge_duplicates()
+        logger.info(f"Total duplicates merged: {total_merged}")
+        process_runtime_actions()
+    else:
+        logger.info("ONLY_CALCULATE flag set: skipped creation, deletion, and merge.")
 
 
 if __name__ == "__main__":
     main()
+

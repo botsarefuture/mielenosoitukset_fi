@@ -1,4 +1,5 @@
 import copy
+import math
 import os
 import re
 import json
@@ -1002,25 +1003,47 @@ Disallow: /admin/
             demo_id, current_user._id if current_user.is_authenticated else None
         )
         return render_template("preview.html", demo=demo)
+        
+    from math import ceil
+    from datetime import datetime
+    from bson import ObjectId
 
     @app.route("/demonstration/<parent>/children", methods=["GET"])
     def siblings_meeting(parent):
-        result = demonstrations_collection.find(
-            {"parent": ObjectId(parent), "hide": False}
-        )
-        
-        # also get the parent from repeated demonstrations
         parent_demo = RecurringDemonstration.from_id(parent)
 
-        """
-        List all sibling demonstrations of a recurring demonstration.
-        """
-        siblings = []
-        for demo in result:
-            siblings.append(Demonstration.from_dict(demo))
-        siblings.sort(key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date())
-        return render_template("siblings.html", siblings=siblings, parent_demo=parent_demo)
+        # Only fetch the child demos for the current page
+        per_page = 6
+        page = int(request.args.get("page", 1))
+        start = (page - 1) * per_page
 
+        siblings_cursor = demonstrations_collection.find(
+            {"parent": ObjectId(parent), "hide": False}
+        ).sort("date", 1).skip(start).limit(per_page)
+
+        siblings_page = [Demonstration.from_dict(d) for d in siblings_cursor]
+        total_pages = math.ceil(demonstrations_collection.count_documents(
+            {"parent": ObjectId(parent), "hide": False}
+        ) / per_page)
+
+        # Fetch precomputed stats
+        stats = mongo.recu_stats.find_one({"parent": ObjectId(parent)}) or {}
+        total_count = stats.get("total_count", 0)
+        future_count = stats.get("future_count", 0)
+        past_count = stats.get("past_count", 0)
+
+        return render_template(
+            "siblings.html",
+            siblings=siblings_page,
+            parent_demo=parent_demo,
+            page=page,
+            total_pages=total_pages,
+            total_count=total_count,
+            future_count=future_count,
+            past_count=past_count
+        )
+
+                
     @app.route("/info")
     def info():
         return render_template("info.html")

@@ -401,6 +401,7 @@ document.getElementById('top-banner-close').addEventListener('click', function()
 
     <script>
 document.addEventListener("DOMContentLoaded", () => {
+  {% if current_user.is_authenticated %}
   async function fetchAndStoreUserInfo() {
     // Only fetch if not already in localStorage
     if (!localStorage.getItem("current_user")) {
@@ -423,6 +424,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   fetchAndStoreUserInfo();
+  {% else %}
+  // Clear user info on logout
+  localStorage.removeItem("current_user");
+  console.log("User logged out, cleared localStorage.");
+  localStorage.removeItem("user_role");
+  {% endif %}
+
 });
 </script>
 

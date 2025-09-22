@@ -1392,7 +1392,7 @@ Disallow: /admin/
     @app.route("/calendar/<int:year>/")
     def calendar_year_view(year):
         # Haetaan kaikki demonstraatiot
-        demonstrations = list(demonstrations_collection.find())
+        demonstrations = list(demonstrations_collection.find(DEMO_FILTER))
 
         # Valmistellaan tietorakenne: month -> {weeks, days}
         year_demos = {}

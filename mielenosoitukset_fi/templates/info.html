@@ -7,136 +7,677 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-text-secondary: light-dark(#444, #c7c7c7);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-primary: light-dark(#0052cc, #3b82f6);
+  --color-primary-hover: light-dark(#003d99, #2563eb);
+  --color-secondary: light-dark(#ff6b00, #f97316);
+  --color-secondary-hover: light-dark(#e55a00, #ea580c);
+  --color-accent: light-dark(#06b6d4, #0891b2);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.dark:root {
+   --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  margin: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
-.container-main-content {
-  background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
-}
-.section-title {
-  font-size: 2.2em;
-  font-weight: 800;
-  margin-bottom: 1.2em;
-  color: var(--color-primary);
-  letter-spacing: 0.01em;
-  padding: 0.3em 0.8em;
-  background: var(--color-title-accent);
-  border-radius: 0.6em;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: block;
+
+/* Hero Section */
+.hero-section {
+  background: var(--color-gradient-primary);
+  border-radius: var(--border-radius-lg);
+  margin: 2rem 0;
+  padding: 4rem 2rem;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-section h1 {
+  color: white;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.hero-section .lead {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  width: fit-content;
-  transition: background 0.2s, color 0.2s;
 }
-.section-title:after {
+
+/* Campaign CTA Section */
+.campaign-cta {
+  background: var(--color-gradient-secondary);
+  border-radius: var(--border-radius);
+  padding: 2.5rem 2rem;
+  margin: 3rem 0;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--color-shadow-lg), 0 0 0 0 rgba(255, 107, 0, 0.4); }
+  50% { box-shadow: var(--color-shadow-lg), 0 0 0 10px rgba(255, 107, 0, 0.1); }
+}
+
+.campaign-cta::before {
   content: '';
-  display: block;
-  margin: 0.4em auto 0 auto;
-  width: 2.5em;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--color-primary);
-  opacity: 0.25;
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 3s infinite;
 }
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.campaign-cta-content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.campaign-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.campaign-cta h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.campaign-cta p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+/* Container */
+.container-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Section Cards */
 .section-card {
   background: var(--color-card-bg);
-  border-radius: 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  padding: 2em 1em 1.5em 1em;
-  margin-bottom: 2em;
-  color: var(--color-text);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
+
+.section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-primary);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.section-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.section-card:hover::before {
+  opacity: 1;
+}
+
 .section-card h2 {
-  font-size: 1.3em;
+  font-size: 1.75rem;
   color: var(--color-primary);
   font-weight: 700;
-  margin-bottom: 0.7em;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
+
+.section-card h2 i {
+  font-size: 1.5rem;
+}
+
 .section-card p {
   color: var(--color-text-secondary);
-  font-size: 1.08em;
-  margin-bottom: 0.5em;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  line-height: 1.7;
 }
+
 .section-card a {
   color: var(--color-primary);
-  text-decoration: underline;
-  transition: color 0.2s;
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+  position: relative;
+  padding-bottom: 2px;
 }
+
+.section-card a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: var(--transition);
+}
+
 .section-card a:hover {
-  color: #ff6600;
+  color: var(--color-secondary);
 }
-@media (max-width: 600px) {
-  .container-main-content { padding: 1em 0.5em; }
-  .section-title { font-size: 1.3em; }
-  .section-card { padding: 1em 0.5em; }
+
+.section-card a:hover::after {
+  background: var(--color-secondary);
+  transform: scaleX(1);
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition);
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button-primary {
+  background: var(--color-gradient-primary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.button-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.button-secondary {
+  background: var(--color-gradient-secondary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.button-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.button-outline {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.button-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+/* Grid Layout for Cards */
+.cards-grid {
+  display: grid;
+  gap: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+@media (min-width: 992px) {
+  .cards-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.cards-grid.two-column {
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .cards-grid.two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Contact Cards */
+.contact-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem !important;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  text-decoration: none;
+  color: inherit;
+}
+
+.contact-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+  border-color: var(--color-primary);
+}
+
+.contact-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--color-gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.contact-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.contact-info p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Stats Section */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.stat-card {
+  background: var(--color-card-bg);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container-main-content {
+    padding: 0 1rem;
+  }
+
+  .hero-section {
+    padding: 3rem 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+
+  .section-card {
+    padding: 2rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-card h2 {
+    font-size: 1.5rem;
+  }
+
+  .campaign-cta {
+    padding: 2rem 1.5rem;
+  }
+
+  .campaign-cta h2 {
+    font-size: 1.5rem;
+  }
+
+  .button {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus States */
+.button:focus,
+.contact-card:focus,
+.section-card a:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 </style>
 {% endblock %} 
 
-{% block content %}
-<div class="container-main-content">
-  <h1 class="section-title">{{ _('Tietoa Mielenosoitukset.fi -sivustosta') }}</h1>
-  <section class="section-card">
-    <p>
-      {{ _('Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.') }}
-    </p>
-  </section>
-  <section class="section-card">
-    <h2>{{ _('Mikä on Mielenosoitukset.fi?') }}</h2>
-    <p>
-      {{ _('Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.') }}
-    </p>
-  </section>
-  <section class="section-card">
-    <h2>{{ _('Kuinka ilmoitan mielenosoituksesta?') }}</h2>
-    <p>
-      {{ _('Voit ilmoittaa oman mielenosoituksesi täyttämällä') }} 
-      <a class="link" href="{{ url_for('submit') }}">{{ _('ilmoituslomakkeen') }}</a>.
-      {{ _('Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi.') }}
-    </p>
-  </section>
-  <section class="section-card">
-    <h2>{{ _('Kuka ylläpitää sivustoa?') }}</h2>
-    <p>
-      {{ _('Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.') }}
-    </p>
-  </section>
-  <section class="section-card">
-    <h2>{{ _('Yhteystiedot') }}</h2>
-    <p>
-      {{ _('Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit lähettää sähköpostia osoitteeseen') }} 
-      <a class="link" href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>
-      {{ _('tai täyttää') }} 
-      <a class="link" href="{{ url_for('contact') }}">{{ _('yhteydenottolomakkeen') }}</a>.
-    </p>
-  </section>
-  <section class="section-card">
-    <h2>{{ _('Yksityisyys ja evästeet') }}</h2>
-    <p>
-      {{ _('Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät') }} 
-      <a class="link" href="{{ url_for('privacy') }}">{{ _('yksityisyydensuojakäytännöstämme') }}</a>.
-    </p>
-  </section>
-</div>
+{% block scripts %}
+<script>
+// Add scroll animations
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-fade-in-up');
+    }
+  });
+}, observerOptions);
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.section-card, .campaign-cta, .stat-card').forEach(el => {
+    observer.observe(el);
+  });
+});
+</script>
 {% endblock %}
 
+{% block content %}
+<div class="container-main-content">
+  
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>{{ _('Tietoa Mielenosoitukset.fi -sivustosta') }}</h1>
+      <p class="lead">
+        {{ _('Riippumaton alusta, joka yhdistää kaikki Suomen mielenosoitukset yhteen paikkaan. Edistämme vapaata mielipiteenilmaisua ja helpotamme osallistumista yhteiskunnallisiin tapahtumiin.') }}
+      </p>
+    </div>
+  </section>
+
+  <!-- Campaign CTA -->
+  <section class="campaign-cta">
+    <div class="campaign-cta-content">
+      <div class="campaign-badge">
+        <i class="fa-solid fa-bullhorn"></i>
+        {{ _('Kampanja 2026') }}
+      </div>
+      <h2>{{ _('Tule mukaan valtakunnalliseen kampanjaan!') }}</h2>
+      <p>{{ _('Tule mukaan levittämään tietoa mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.') }}</p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a class="button button-outline" href="/kampanja">
+          <i class="fa-solid fa-rocket"></i> {{ _('Tutustu kampanjaan') }}
+        </a>
+        <a class="button button-outline" href="/kampanja#vapaaehtoiseksi">
+          <i class="fa-solid fa-heart"></i> {{ _('Tule vapaaehtoiseksi') }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">2024</span>
+      <span class="stat-label">{{ _('Perustettu') }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">100%</span>
+      <span class="stat-label">{{ _('Riippumaton') }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">∞</span>
+      <span class="stat-label">{{ _('Mielenosoituksia') }}</span>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="cards-grid">
+    
+    <!-- Main About Section -->
+    <div>
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-info-circle"></i>
+          {{ _('Mikä on Mielenosoitukset.fi?') }}
+        </h2>
+        <p>
+          {{ _('Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.') }}
+        </p>
+        <p>
+          {{ _('Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.') }}
+        </p>
+      </section>
+
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-plus-circle"></i>
+          {{ _('Kuinka ilmoitan mielenosoituksesta?') }}
+        </h2>
+        <p>
+          {{ _('Voit ilmoittaa oman mielenosoituksesi täyttämällä') }} 
+          <a href="{{ url_for('submit') }}">{{ _('ilmoituslomakkeen') }}</a>.
+          {{ _('Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi.') }}
+        </p>
+        <p>
+          {{ _('Lomake on nopea täyttää ja tapahtumasi näkyy sivustolla heti hyväksynnän jälkeen. Kannustamme kaikkia järjestäjiä ilmoittamaan tapahtumistaan mahdollisimman aikaisin.') }}
+        </p>
+      </section>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-users"></i>
+          {{ _('Kuka ylläpitää sivustoa?') }}
+        </h2>
+        <p>
+          {{ _('Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.') }}
+        </p>
+      </section>
+
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-shield-alt"></i>
+          {{ _('Yksityisyys ja evästeet') }}
+        </h2>
+        <p>
+          {{ _('Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät') }} 
+          <a href="{{ url_for('privacy') }}">{{ _('yksityisyydensuojakäytännöstämme') }}</a>.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <!-- Contact Section -->
+  <section class="section-card">
+    <h2>
+      <i class="fa-solid fa-envelope"></i>
+      {{ _('Yhteystiedot') }}
+    </h2>
+    <p>
+      {{ _('Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit käyttää alla olevia yhteystapoja:') }}
+    </p>
+    
+    <div class="cards-grid two-column" style="margin-top: 2rem;">
+      <a href="mailto:tuki@mielenosoitukset.fi" class="contact-card">
+        <div class="contact-icon">
+          <i class="fa-solid fa-envelope"></i>
+        </div>
+        <div class="contact-info">
+          <h3>{{ _('Sähköposti') }}</h3>
+          <p>tuki@mielenosoitukset.fi</p>
+        </div>
+      </a>
+      
+      <a href="{{ url_for('contact') }}" class="contact-card">
+        <div class="contact-icon">
+          <i class="fa-solid fa-comment"></i>
+        </div>
+        <div class="contact-info">
+          <h3>{{ _('Yhteydenottolomake') }}</h3>
+          <p>{{ _('Lähetä viesti suoraan') }}</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <div style="text-align: center; margin: 3rem 0;">
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a class="button button-primary" href="{{ url_for('demonstrations') }}">
+        <i class="fa-solid fa-list"></i> {{ _('Selaa mielenosoituksia') }}
+      </a>
+      <a class="button button-secondary" href="{{ url_for('submit') }}">
+        <i class="fa-solid fa-plus"></i> {{ _('Ilmoita tapahtuma') }}
+      </a>
+      <a class="button button-primary" href="/kampanja">
+        <i class="fa-solid fa-bullhorn"></i> {{ _('Lue lisää kampanjasta') }}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -82,6 +82,69 @@
 
 
 <body>
+  <!-- Top Announcement Banner -->
+   <!--
+<div id="top-banner" style="
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.8em 1em;
+  text-align: center;
+  font-size: 1em;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+">
+  <span>
+    Markkinointikampanjamme alkaa 1.3.2026 – <a href="{{ url_for('campaign.index') }}" style="color:#fff; text-decoration: underline; font-weight:700;">Tutustu kampanjaan täällä</a>
+  </span>
+  <button id="top-banner-close" style="
+    margin-left: 1em;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2em;
+    cursor: pointer;
+  ">&times;</button>
+</div>
+-->
+
+<script>
+  // Sulje top banner
+document.getElementById('top-banner-close').addEventListener('click', function() {
+  document.getElementById('top-banner').style.display = 'none';
+  document.body.style.paddingTop = "0px";  // <- poistaa ylimääräisen paddingin
+});
+
+
+  // Puske yläbanneri alas, kun flash messages näkyy
+  window.addEventListener('load', function() {
+    const banner = document.getElementById('top-banner');
+    const flash = document.getElementById('flash-messages');
+    if(flash && flash.style.display !== 'none') {
+      banner.style.top = flash.offsetHeight + 'px';
+    }
+  });
+</script>
+
+<style>
+  /* Siirrä main content alas bannerin alle */
+  body {
+    padding-top: 50px; /* Muokkaa tarvittaessa bannerin korkeuden mukaan */
+  }
+
+  @media (max-width: 600px) {
+    #top-banner { font-size: 0.9em; padding: 0.6em 0.8em; }
+    body { padding-top: 60px; }
+  }
+</style>
+
   <!-- Scrolling Marquee Message Section -->
   <div class="marquee" style="display: none"></div>
 

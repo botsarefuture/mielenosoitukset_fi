@@ -28,13 +28,18 @@ from mielenosoitukset_fi.utils import VERSION
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from mielenosoitukset_fi.kampanja import campaign_bp
+
 import os
 
 from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
 
 from flask_caching import Cache  # Added for caching
 
+from datetime import datetime, date, time
+
 # Initialize Babel
+
 babel = Babel()
 
 
@@ -47,9 +52,11 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
+    
     try:
         security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
         security.init_app(app)
+        
     except Exception as e:
         Limiter(
             get_remote_address,
@@ -64,7 +71,6 @@ def create_app() -> Flask:
 
     # Initialize Flask-Caching
     cache = Cache(app)
-        
 
     # Locale selector function
     def get_locale():
@@ -94,6 +100,7 @@ def create_app() -> Flask:
     login_manager.login_view = (
         "users.auth.login"  # Redirect to login view if not authenticated
     )
+    
     login_manager.anonymous_user = AnonymousUser
 
     # User Loader function
@@ -133,6 +140,8 @@ def create_app() -> Flask:
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    
+    app.register_blueprint(campaign_bp)
     app.register_blueprint(board_bp)
     
     socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
@@ -173,8 +182,8 @@ def create_app() -> Flask:
         except Exception:
             return value
 
-    from datetime import datetime, date, time
-    from datetime import datetime, date, time
+    
+    
 
     @app.template_filter("time")
     def time_filter(value, format_='%H:%M'):
@@ -302,22 +311,34 @@ def create_app() -> Flask:
             "run_preview": run_preview,
         }
 
-        def run_selected_tasks(selected):
+        def run_selected_tasks(selected, till_param=None):
             """Run selected maintenance tasks.
 
             Parameters
             ----------
             selected : list of str
-            List of task names to run.
+                List of task names to run.
+            till_param : int | None
+                Optional number of days to limit run_preview task.
             """
             with app.app_context():
                 for task_name in selected:
                     if task_name == "run_preview":
-                        i = input("Run force update? (y/n): ")
-                        if i.lower() in ["y", "n"]:
-                            available_tasks[task_name](force=(i.lower() == "y"))
+                        # Ask for force
+                        i = input("Run force update? (y/n): ").lower()
+                        force_flag = i == "y"
+
+                        # Ask for till (optional)
+                        if till_param is None:
+                            j = input("Limit previews to how many days? (0 = all): ").strip()
+                            try:
+                                till = int(j)
+                            except ValueError:
+                                till = 0
                         else:
-                            app.logger.warning("Invalid input, not running force update.")
+                            till = till_param
+
+                        available_tasks[task_name](force=force_flag, till=till)
                     elif task_name in available_tasks:
                         available_tasks[task_name]()
                     else:

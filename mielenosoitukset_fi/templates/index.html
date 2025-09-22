@@ -7,131 +7,658 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-text-secondary: light-dark(#444, #c7c7c7);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
-  --color-grid-item: light-dark(#888, #aaa);
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-primary: light-dark(#0052cc, #3b82f6);
+  --color-primary-hover: light-dark(#003d99, #2563eb);
+  --color-secondary: light-dark(#ff6b00, #f97316);
+  --color-secondary-hover: light-dark(#e55a00, #ea580c);
+  --color-accent: light-dark(#06b6d4, #0891b2);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+  --color-success: light-dark(#10b981, #059669);
+  --color-warning: light-dark(#f59e0b, #d97706);
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-body { background: var(--color-bg); color: var(--color-text); }
+
+.dark:root {
+  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  margin: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+/* Hero Section */
 .hero {
-  background: linear-gradient(90deg, var(--color-bg-hero) 0%, var(--color-bg) 100%);
-  padding: 2.5em 1em 2em 1em; border-radius: 1.5em; margin-bottom: 2em;
-  box-shadow: var(--color-shadow); text-align: center; color: var(--color-text);
+  background: var(--color-gradient-primary);
+  border-radius: var(--border-radius-lg);
+  margin: 2rem 0;
+  padding: 4rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
 }
-.hero h2 { font-size: 2.2em; margin-bottom: 0.5em; }
-.hero p { font-size: 1.15em; color: var(--color-text-secondary); margin-bottom: 1.5em; }
-.buttons-div { display: flex; gap: 1em; justify-content: center; margin-bottom: 1.5em; flex-wrap: wrap; }
-.button.button-primary {
-  display: flex; align-items: center; gap: 0.5em; font-size: 1.05em;
-  padding: 0.7em 1.5em; border-radius: 2em; transition: background 0.2s, box-shadow 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04); background: var(--color-primary); color: #fff; border: none;
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
-.button.button-primary:hover { background: var(--color-primary); color: #fff; box-shadow: var(--color-shadow-hover); filter: brightness(1.15); }
-.section-card { background: var(--color-card-bg); border-radius: 1em; box-shadow: 0 1px 8px rgba(0,0,0,0.04); padding: 2em 1em 1.5em 1em; margin-bottom: 2em; color: var(--color-text); }
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero h2 {
+  color: white;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.hero p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  margin-bottom: 3rem;
+  line-height: 1.6;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Campaign Banner */
+.campaign-banner {
+  background: var(--color-gradient-secondary);
+  border-radius: var(--border-radius);
+  padding: 1.5rem 2rem;
+  margin: 2rem 0;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow);
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: var(--color-shadow), 0 0 0 0 rgba(255, 107, 0, 0.4); }
+  50% { box-shadow: var(--color-shadow), 0 0 0 8px rgba(255, 107, 0, 0.1); }
+}
+
+.campaign-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.campaign-banner-content {
+  position: relative;
+  z-index: 2;
+}
+
+.campaign-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(10px);
+}
+
+.campaign-banner h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.campaign-banner p {
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.95;
+}
+
+/* Buttons */
+.buttons-div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition);
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button-primary {
+  background: var(--color-gradient-primary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.button-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.button-secondary {
+  background: var(--color-gradient-secondary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.button-secondary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.button-outline {
+  background: transparent;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.button-outline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+/* Section Cards */
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2rem;
+  margin-bottom: 3rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+/* Section Titles */
 .section-title {
-  font-size: 2.2em; font-weight: 800; margin-bottom: 1.2em; color: var(--color-primary);
-  letter-spacing: 0.01em; padding: 0.3em 0.8em; border-left: none;
-  background: var(--color-title-accent); border-radius: 0.6em; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: block; text-align: center; margin-left: auto; margin-right: auto; width: fit-content;
-  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 2.5rem;
+  text-align: center;
 }
-.section-title:after {
-  content: ''; display: block; margin: 0.4em auto 0 auto; width: 2.5em; height: 4px; border-radius: 2px;
-  background: var(--color-primary); opacity: 0.25;
+
+.section-title .icon {
+  font-size: 1.5rem;
 }
-.grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.5em; }
-.grid-item { text-align: center; color: var(--color-grid-item); font-size: 1.1em; padding: 2em 0; }
-@media (max-width: 600px) { .hero { padding: 1.2em 0.5em; } .section-card { padding: 1em 0.5em; } .section-title { font-size: 1.3em; } }
+
+/* Grid Container */
+.grid-container {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* Responsive Grid */
+@media (min-width: 1200px) {
+  .grid-container { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .grid-container { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 767px) {
+  .grid-container { grid-template-columns: 1fr; }
+}
+
+/* Grid Items */
+.grid-item {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.grid-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-primary);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.grid-item:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.grid-item:hover::before {
+  opacity: 1;
+}
+
+.grid-item img {
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
+}
+
+/* No Demos State */
+.no-demos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.no-demos i {
+  color: var(--color-text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Section Notes */
+.section-note {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  padding: 1rem 2rem;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+/* Stats Section */
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.stat-card {
+  background: var(--color-card-bg);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .hero {
+    padding: 3rem 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .hero h2 {
+    font-size: 2.5rem;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+  }
+
+  .section-card {
+    padding: 2rem 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .button {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .buttons-div {
+    gap: 0.75rem;
+  }
+
+  .campaign-banner {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .grid-item {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .buttons-div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .button {
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus States for Accessibility */
+.button:focus,
+.grid-item:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Loading Animation */
+@keyframes loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: loading 1s linear infinite;
+  margin-left: 8px;
+}
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script>
+// Add scroll animations
+const observerOptions = {
+  threshold: 0.1,
+  rootMargin: '0px 0px -50px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-fade-in-up');
+    }
+  });
+}, observerOptions);
+
+// Observe elements when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.section-card, .grid-item').forEach(el => {
+    observer.observe(el);
+    // what this does: adds the element to be observed by the IntersectionObserver
+
+  });
+});
+
+// Add click analytics (optional)
+document.querySelectorAll('.button').forEach(button => {
+  button.addEventListener('click', () => {
+    // Add analytics tracking here if needed
+    console.log('Button clicked:', button.textContent);
+  });
+});
+</script>
 {% endblock %}
 
 {% block content %}
-<div class="container-main-content">
-  
 
-  <!-- Hero Section -->
-  <section class="hero">
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
     <h2>{{ _('Tervetuloa Mielenosoitukset.fi:hin') }}</h2>
     <p>
       {{ _('Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.') }}<br>
-      {{ _('Pyrimme tekemään osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.') }}
+      {{ _('Tavoitteenamme on tehdä osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.') }}
     </p>
     <div class="buttons-div">
-      <a class="button button-primary" href="{{ url_for('info') }}">
-        <span aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span> {{ _('Lue lisää') }}
+      <a class="button button-outline" href="{{ url_for('info') }}">
+        <i class="fa-solid fa-circle-info"></i> {{ _('Lue lisää') }}
       </a>
-      <a class="button button-primary" href="{{ url_for('submit') }}">
-        <span aria-hidden="true"><i class="fa-solid fa-plus"></i></span> {{ _('Ilmoita mielenosoituksesta') }}
+      <a class="button button-outline" href="{{ url_for('submit') }}">
+        <i class="fa-solid fa-plus"></i> {{ _('Ilmoita mielenosoituksesta') }}
       </a>
-      <a class="button button-primary" href="{{ url_for('calendar_year_view', year=current_year) }}">
-        <span aria-hidden="true"><i class="fa-solid fa-calendar-days"></i></span> {{ _('Kalenterinäkymä') }}
+      <a class="button button-outline" href="{{ url_for('calendar_year_view', year=current_year) }}">
+        <i class="fa-solid fa-calendar-days"></i> {{ _('Kalenterinäkymä') }}
       </a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Pinned Demonstrations Section -->
-  {% if recommended_demos %}
-  <section class="section-card" style="border: 2.5px solid var(--color-primary); box-shadow: 0 4px 24px rgba(0,86,179,0.10);">
-    <h2 class="section-title" style="background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-title-accent) 100%); color: #fff; letter-spacing: 0.03em;">
-      <span style="margin-right:0.5em;" aria-hidden="true"><i class="fa-solid fa-star"></i></span>{{ _('Suosittelemme') }}
-    </h2>
-    <div class="grid-container">
-      {% for demo in recommended_demos %}
-        {{ macros.demo_card(demo) }}
-      {% endfor %}
-    </div>
-    <div style="text-align:center; margin-top:1.2em;">
-      <span style="color:var(--color-primary); font-weight:600; font-size:1.1em; background:var(--color-title-accent); padding:0.4em 1.2em; border-radius:1em; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
-        {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
-      </span>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- Featured Demonstrations Section -->
-  {% if not recommended_demos %}
-  <section class="section-card" style="align-items: center; border: 2px dashed var(--color-primary); background: linear-gradient(90deg, var(--color-title-accent) 0%, var(--color-card-bg) 100%);">
-    <h2 class="section-title" style="margin-top: 0; width: fit-content; color: var(--color-primary);">
-      <span style="margin-right:0.5em;" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>{{ _('Esitellyt mielenosoitukset') }}
-    </h2>
-    <div class="container-grid" style="width: 100%">
-      {% if demonstrations %}
-        {% for demo in demonstrations[:6] %}
-          {{ macros.demo_card(demo) }}
-        {% endfor %}
-      {% else %}
-        <div class="grid-item">
-          <span aria-hidden="true" style="font-size:2em;"><i class="fa-regular fa-face-frown"></i></span><br>
-          {{ _('Ei mielenosoituksia näytettäväksi.') }}
-        </div>
-      {% endif %}
-    </div>
-    <div style="text-align:center; margin-top:1.2em;">
-      <span style="color:var(--color-primary); font-weight:500; font-size:1em; background:var(--color-title-accent); padding:0.3em 1em; border-radius:1em; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
-        {{ _('Poimintoja ajankohtaisista mielenosoituksista.') }}
-      </span>
-    </div>
-  </section>
-  {% endif %}
-
-  <!-- Button to View All Demonstrations -->
-  <div class="buttons-div">
-    <a class="button button-primary" href="{{ url_for('demonstrations') }}">
-      <span aria-hidden="true"><i class="fa-solid fa-list"></i></span> {{ _('Näytä kaikki mielenosoitukset') }}
-    </a>
+{# HIDE THIS 
+<!-- Stats Section (Optional) -->
+<div class="stats-section">
+  <div class="stat-card">
+    <span class="stat-number">{{ demonstrations|length if demonstrations else '0' }}</span>
+    <span class="stat-label">{{ _('Aktiivista mielenosoitusta') }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-number">2026</span>
+    <span class="stat-label">{{ _('Kampanjavuosi') }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-number">∞</span>
+    <span class="stat-label">{{ _('Mahdollisuuksia vaikuttaa') }}</span>
   </div>
 </div>
+
+#}
+
+<!-- Pinned/Recommended Demonstrations Section -->
+{% if recommended_demos %}
+<section class="section-card">
+  <h2 class="section-title">
+    <span class="icon"><i class="fa-solid fa-star"></i></span>
+    {{ _('Suosittelemme') }}
+  </h2>
+  <div class="grid-container">
+    {% for demo in recommended_demos %}
+      {{ macros.demo_card(demo) }}
+    {% endfor %}
+  </div>
+  <div class="section-note">
+    <i class="fa-solid fa-info-circle"></i>
+    {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
+  </div>
+  <!-- Call to Action -->
+<div class="buttons-div" style="margin-bottom: 0px !important;">
+  <a class="button button-secondary" href="{{ url_for('demonstrations') }}">
+    <i class="fa-solid fa-list"></i> {{ _('Näytä kaikki mielenosoitukset') }}
+  </a>
+</div>
+</section>
+</section>
+{% endif %}
+
+<!-- Featured Demonstrations Section -->
+{% if not recommended_demos %}
+<section class="section-card">
+  <h2 class="section-title">
+    <span class="icon"><i class="fa-solid fa-bolt"></i></span>
+    {{ _('Esitellyt mielenosoitukset') }}
+  </h2>
+  <div class="grid-container">
+    {% if demonstrations %}
+      {% for demo in demonstrations[:6] %}
+        {{ macros.demo_card(demo) }}
+      {% endfor %}
+    {% else %}
+      <div class="grid-item no-demos">
+        <i class="fa-regular fa-face-frown fa-3x"></i>
+        <h3>{{ _('Ei mielenosoituksia näytettäväksi') }}</h3>
+        <p>{{ _('Uusia mielenosoituksia lisätään jatkuvasti. Tarkista myöhemmin uudelleen!') }}</p>
+      </div>
+    {% endif %}
+  </div>
+  <div class="section-note">
+    <i class="fa-solid fa-info-circle"></i>
+    {{ _('Poimintoja ajankohtaisista mielenosoituksista.') }}
+  </div>
+
+<!-- Call to Action -->
+<div class="buttons-div" style="margin-bottom: 0px !important;">
+  <a class="button button-secondary" href="{{ url_for('demonstrations') }}">
+    <i class="fa-solid fa-list"></i> {{ _('Näytä kaikki mielenosoitukset') }}
+  </a>
+</div>
+</section>
+{% endif %}
+
+<!-- Campaign Banner -->
+ <!--
+<section class="campaign-banner">
+  <div class="campaign-banner-content">
+    <div class="campaign-badge">
+      <i class="fa-solid fa-sparkles"></i>
+      {{ _('Kampanja 2026') }}
+    </div>
+    <h3>{{ _('Tule mukaan valtakunnalliseen kampanjaan!') }}</h3>
+    <p>{{ _('Levitetään tieto mielenosoitukset.fi:stä kaikkialle Suomeen. Kampanja alkaa 1.3.2026 - tilaa materiaalit, tule vapaaehtoiseksi tai jaa tietoa.') }}</p>
+    <div class="buttons-div">
+      <a class="button button-outline" href="/kampanja">
+        <i class="fa-solid fa-bullhorn"></i> {{ _('Tutustu kampanjaan') }}
+      </a>
+      <a class="button button-outline" href="/kampanja#vapaaehtoiseksi">
+        <i class="fa-solid fa-hand-heart"></i> {{ _('Tule vapaaehtoiseksi') }}
+      </a>
+    </div>
+  </div>
+</section>
+-->
+
+
 {% endblock %}

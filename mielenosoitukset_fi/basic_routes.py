@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
 from flask_babel import _, refresh
 from flask import (
+    app,
     render_template,
     redirect,
     send_file,
@@ -93,6 +94,19 @@ def format_demo_for_api(demo):
         except Exception:
             logger.exception(f"Error formatting time: {t}")
             return t
+    def _get_demo_img(demo):
+        """
+        Get the demonstration image URL.
+
+        Parameters
+        ----------
+        demo : dict
+
+        Returns
+        -------
+        str
+        """
+        return demo.get("img") or demo.get("preview_image") or demo.get("cover_image") or "#"
 
     try:
         date_obj = datetime.strptime(demo.get("date", ""), "%Y-%m-%d")
@@ -110,8 +124,8 @@ def format_demo_for_api(demo):
         "address": demo.get("address", ""),
         "tags": demo.get("tags", []),
         "description": demo.get("description", ""),
+        "cover_image": _get_demo_img(demo),
     }
-
 
 def filter_demonstrations_api(
     demonstrations, today, search_query, city_query, location_query, date_start, date_end, tag_query=None

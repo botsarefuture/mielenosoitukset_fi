@@ -11,52 +11,177 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/ck.css') }}" />
 <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 :root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-  --red: #e53935;
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-primary: light-dark(#0052cc, #3b82f6);
+  --color-primary-hover: light-dark(#003d99, #2563eb);
+  --color-secondary: light-dark(#ff6b00, #f97316);
+  --color-secondary-hover: light-dark(#e55a00, #ea580c);
+  --color-accent: light-dark(#06b6d4, #0891b2);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+  --color-error: light-dark(#dc2626, #ef4444);
+  --color-success: light-dark(#16a34a, #22c55e);
+  --color-warning: light-dark(#d97706, #f59e0b);
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.dark:root {
+  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  color: var(--color-text);
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  margin: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
+
+/* Container */
 .container-main-content {
-  background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 2rem;
 }
-h1 {
-  color: var(--color-primary);
-  font-size: 2.1em;
-  font-weight: 800;
-  margin-bottom: 1.2em;
-  letter-spacing: 0.01em;
+
+/* Hero Section */
+.hero-section {
+  background: var(--color-gradient-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 4rem 2rem;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+  margin-bottom: 3rem;
 }
-.container-form {
-  background: none;
-  border-radius: 1em;
-  box-shadow: none;
-  padding: 0;
-  margin: 0 auto;
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
   max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.2em;
+  margin: 0 auto;
 }
-label {
-  font-weight: 600;
+
+.hero-section h1 {
+  color: white;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.hero-section .lead {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Form Container */
+.container-form {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2.5rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.container-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-primary);
+  opacity: 1;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-section {
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--color-border);
+}
+
+.form-section h2 {
   color: var(--color-primary);
-  margin-bottom: 0.3em;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+
+/* Labels */
+label {
+  display: block;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.required-asterisk {
+  color: var(--color-error);
+  margin-left: 0.25rem;
+  font-weight: 700;
+}
+
+/* Form Controls */
 input[type="text"],
 input[type="url"],
 input[type="email"],
@@ -65,15 +190,17 @@ input[type="file"],
 select,
 textarea {
   width: 100%;
-  padding: 0.7em 1em;
-  border: 1px solid var(--color-title-accent);
-  border-radius: 0.5em;
-  background: var(--color-bg);
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-card-bg);
   color: var(--color-text);
-  font-size: 1em;
-  margin-bottom: 0.5em;
-  transition: border 0.2s;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: var(--transition);
+  resize: vertical;
 }
+
 input[type="text"]:focus,
 input[type="url"]:focus,
 input[type="email"]:focus,
@@ -82,47 +209,402 @@ select:focus,
 textarea:focus {
   border-color: var(--color-primary);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
-.required-asterisk {
-  color: var(--red);
-  margin-left: 5px;
+
+input[type="file"] {
+  padding: 0.75rem;
+  border-style: dashed;
+  background: var(--color-bg);
 }
-.add-organizer-button,
-.submit-button {
-  background-color: var(--color-primary);
-  color: #fff;
-  padding: 0.7em 1.5em;
-  border: none;
-  border-radius: 2em;
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+select {
   cursor: pointer;
-  font-size: 1.05em;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
   font-weight: 600;
-  transition: background 0.2s, box-shadow 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  margin-top: 0.5em;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  font-family: inherit;
 }
-.add-organizer-button:hover,
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: var(--color-gradient-primary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--color-gradient-secondary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-border);
+}
+
+.btn-outline:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Submit Button */
+.submit-button {
+  width: 100%;
+  background: var(--color-gradient-primary);
+  color: white;
+  padding: 1.25rem 2rem;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: var(--transition);
+  box-shadow: var(--color-shadow);
+  margin-top: 2rem;
+  font-family: inherit;
+}
+
 .submit-button:hover {
-  background-color: #003d80;
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(0,86,179,0.08);
-  filter: brightness(1.08);
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
 }
+
+/* Add Organizer Button */
+.add-organizer-button {
+  background: var(--color-gradient-secondary);
+  color: white;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: var(--color-shadow);
+  margin-top: 1rem;
+  font-family: inherit;
+}
+
+.add-organizer-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+/* Organizer Cards */
 .organizer {
-  background: var(--color-title-accent);
-  border-radius: 0.7em;
-  padding: 1em;
-  margin-bottom: 0.7em;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-border);
+  position: relative;
+  transition: var(--transition);
 }
-@media (max-width: 600px) {
-  .container-main-content { padding: 1em 0.5em; }
-  h1 { font-size: 1.3em; }
-  .container-form { padding: 0; }
+
+.organizer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-gradient-secondary);
+}
+
+.organizer:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+}
+
+.organizer-entry hr {
+  border: none;
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 0 1.5rem 0;
+}
+
+.organizer-entry p {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+/* Optional Sections */
+.optional-section {
+  display: none;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+    transform: translateY(0);
+  }
+}
+
+/* Checkbox Styling */
+input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  transform: scale(1.2);
+  accent-color: var(--color-primary);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+}
+
+.checkbox-group label {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.checkbox-group a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.checkbox-group a:hover {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+/* Editor Container */
+.editor-container {
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: var(--transition);
+  background: var(--color-card-bg);
+}
+
+.editor-container:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Progress Indicator */
+.form-progress {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.progress-step::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.progress-step.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.progress-step.active::after {
+  background: var(--color-gradient-primary);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container-main-content {
+    padding: 0 1rem;
+    margin: 1rem auto;
+  }
+
+  .hero-section {
+    padding: 3rem 1.5rem;
+  }
+
+  .hero-section h1 {
+    font-size: 2rem;
+  }
+
+  .container-form {
+    padding: 2rem 1.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-section {
+    padding: 1.5rem;
+  }
+
+  .checkbox-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .submit-button {
+    padding: 1.125rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* Loading States */
+.btn.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn.loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Success Messages */
+.success-message {
+  background: var(--color-success);
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  margin: 1rem 0;
+  display: none;
+}
+
+.success-message.show {
+  display: block;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus States for Accessibility */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  :root {
+    --color-border: light-dark(#000000, #ffffff);
+    --color-text: light-dark(#000000, #ffffff);
+    --color-primary: light-dark(#0000ff, #66aaff);
+  }
 }
 </style>
 {% endblock %}
-{% block scripts %}
 
+{% block scripts %}
 <script type="module">
   import ClassicEditor from "ckeditor5-build-classic";
   
@@ -130,49 +612,54 @@ textarea:focus {
 
   ClassicEditor.create(document.querySelector("#editor"))
     .then((newEditor) => {
-      editor = newEditor; // Make editor accessible
+      editor = newEditor;
     })
     .catch((error) => {
       console.error(error);
     });
 
   document.querySelector("#submit").addEventListener("click", async (event) => {
-    event.preventDefault(); // Prevent form submission until we set the description
+    event.preventDefault();
+    
+    // Add loading state
+    const submitBtn = event.target;
+    submitBtn.classList.add('loading');
+    submitBtn.disabled = true;
 
     const editorData = editor.getData();
-    document.getElementById("description").value = editorData; // Set value instead of innerHTML
+    document.getElementById("description").value = editorData;
 
     const form = document.querySelector("form");
     const formData = new FormData(form);
 
     try {
-      // Send the form data using fetch and wait for the response
       const response = await fetch(form.action, {
         method: form.method,
         body: formData,
-        redirect: "manual", // Prevent automatic redirects
+        redirect: "manual",
       });
 
-      // Check if the response status is a 3xx (indicating a redirect)
       if (response.status >= 300 && response.status < 400) {
         const locationHeader = response.headers.get("location");
         if (locationHeader) {
-          // Redirect the user to the URL in the 'Location' header
           window.location.href = locationHeader;
         } else {
           alert("ERROR!");
         }
       }
     } catch (e) {
-      // Handle network errors
       console.error("Network error:", e);
       alert("There was an issue submitting the form. Please try again.");
+    } finally {
+      // Remove loading state
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
     }
   });
 </script>
+
 <!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 
 <script>
@@ -187,19 +674,34 @@ textarea:focus {
     organizerDiv.innerHTML = `
       <div class="organizer-entry"> 
         <hr>
-        <p>{{ _('Järjestäjätahon...') }}</p>
-        <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
-        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
+        <p><i class="fa-solid fa-building"></i> {{ _('Järjestäjätahon tiedot') }}</p>
+        <div class="form-group">
+          <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
+          <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
+        </div>
 
-        <label for="organizer_website_${organizerCount}">{{ _('Verkkosivut') }}</label>
-        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+        <div class="form-group">
+          <label for="organizer_website_${organizerCount}">{{ _('Verkkosivut') }}</label>
+          <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+        </div>
 
-        <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
-        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
+        <div class="form-group">
+          <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
+          <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
+        </div>
       </div>
     `;
 
     container.appendChild(organizerDiv);
+    
+    // Add animation
+    organizerDiv.style.opacity = '0';
+    organizerDiv.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      organizerDiv.style.transition = 'all 0.3s ease-out';
+      organizerDiv.style.opacity = '1';
+      organizerDiv.style.transform = 'translateY(0)';
+    }, 10);
   }
 
   document.getElementById("type").addEventListener("change", function () {
@@ -211,7 +713,7 @@ textarea:focus {
     }
   });
 
-  // Prevent form submission if terms are not accepted
+  // Form validation
   document.querySelector("form").addEventListener("submit", function(e) {
     var terms = document.getElementById("accept_terms");
     if (!terms.checked) {
@@ -221,191 +723,207 @@ textarea:focus {
       return false;
     }
   });
-</script>
 
+  // Add scroll animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationDelay = '0.1s';
+        entry.target.classList.add('animate-fade-in-up');
+      }
+    });
+  }, observerOptions);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.form-section, .organizer').forEach(el => {
+      observer.observe(el);
+    });
+  });
+</script>
 {% endblock %}
+
 {% block content %}
 <div class="container-main-content">
-  <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
+  
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
+      <p class="lead">
+        {{ _('Jaa tietoa mielenosoituksestasi ja auta muita löytämään tärkeät tapahtumat. Kaikki kentät joissa on punainen tähti (*) ovat pakollisia.') }}
+      </p>
+    </div>
+  </section>
 
-  <form
-    method="POST"
-    action="{{ url_for('submit') }}"
-    class="container-form"
-    enctype="multipart/form-data"
-  >
-    <!-- Name -->
-    <label for="name" class="required"
-      >{{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span></label
-    >
-    <input
-      type="text"
-      id="name"
-      name="title"
-      placeholder="{{ _('Mielenosoituksen nimi') }}"
-      required
-    />
+  <form method="POST" action="{{ url_for('submit') }}" class="container-form" enctype="multipart/form-data">
     
-    <!-- Tags -->
-    <label for="tags" class="required">{{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span></label>
-    <input
-      type="text"
-      id="tags"
-      name="tags"
-      placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet')}}" required
-    />
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h2>
+        <i class="fa-solid fa-info-circle"></i>
+        {{ _('Perustiedot') }}
+      </h2>
+      
+      <div class="form-group">
+        <label for="name" class="required">
+          {{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span>
+        </label>
+        <input type="text" id="name" name="title" placeholder="{{ _('Mielenosoituksen nimi') }}" required />
+      </div>
+      
+      <div class="form-group">
+        <label for="tags" class="required">
+          {{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span>
+        </label>
+        <input type="text" id="tags" name="tags" placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet')}}" required />
+      </div>
 
-
-    <label for="description">{{ _('Kuvausteksti') }}</label>
-    <div>
-      <div>
-        <div class="main-container">
-          <div
-            class="editor-container editor-container_classic-editor editor-container_include-block-toolbar"
-            id="editor-container"
-          >
-            <div class="editor-container__editor">
-              <div id="editor"></div>
+      <div class="form-group">
+        <label for="description">{{ _('Kuvausteksti') }}</label>
+        <div>
+          <div class="main-container">
+            <div class="editor-container editor-container_classic-editor editor-container_include-block-toolbar" id="editor-container">
+              <div class="editor-container__editor">
+                <div id="editor"></div>
+              </div>
             </div>
           </div>
+          <script type="importmap">
+            {
+              "imports": {
+                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
+                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+              }
+            }
+          </script>
+          <script type="module" src="{{ url_for('static', filename='js/ck.js') }}"></script>
+        </div>
+        <input type="hidden" id="description" name="description" />
+      </div>
+
+      <div class="form-group">
+        <label for="image">{{ _('Kuva (valinnainen)') }}</label>
+        <input type="file" id="image" name="image" accept="image/*" />
+      </div>
+      
+      <div class="form-group">
+        <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
+        <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event" />
+      </div>
+    </div>
+
+    <!-- Date & Time Section -->
+    <div class="form-section">
+      <h2>
+        <i class="fa-solid fa-calendar-days"></i>
+        {{ _('Aika ja paikka') }}
+      </h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="date" class="required">
+            {{ _('Päivämäärä (pp.kk.vvvv)') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" required />
+        </div>
+        
+        <div class="form-group">
+          <label for="start_time" class="required">
+            {{ _('Alkamisaika') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="time" id="start_time" name="start_time" required />
         </div>
       </div>
-      <script type="importmap">
-        {
-          "imports": {
-            "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
-            "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
-          }
-        }
-      </script>
-      <script
-        type="module"
-        src="{{ url_for('static', filename='js/ck.js') }}"
-      ></script>
-    </div>
-    <input type="hidden" id="description" name="description" />
+      
+      <div class="form-group">
+        <label for="end_time">{{ _('Päättymisaika') }}</label>
+        <input type="time" id="end_time" name="end_time" />
+      </div>
 
-    <!-- Date --> 
-    <!-- #122: Update Date Formatting to ISO 8601 Standard-->
+      <div class="form-group">
+        <label for="type" class="required">
+          {{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span>
+        </label>
+        <select id="type" name="type" required>
+          <option value="" disabled selected>{{ _('Valitse mielenosoituksen tyyppi') }}</option>
+          <option value="paikallaan">{{ _('Paikallaan') }}</option>
+          <option value="marssi">{{ _('Marssi') }}</option>
+          <option value="muut">{{ _('Muut') }}</option>
+        </select>
+      </div>
 
-    <label for="date" class="required"
-      >{{ _('Päivämäärä (pp.kk.vvvv)') }}<span class="required-asterisk">*</span></label>
-    <input
-      type="text"
-      id="date"
-      name="date"
-      placeholder="{{ _('pp.kk.vvvv') }}"
-      required
-    />
+      <div id="march-route-container" class="optional-section">
+        <div class="form-group">
+          <label for="route">{{ _('Reitti (vain marssille, valinnainen)') }}</label>
+          <textarea id="route" name="route" placeholder="{{ _('Kuvaile marssin reitti...') }}"></textarea>
+        </div>
+      </div>
 
-    <!-- Start and End Time -->
-    <label for="start_time" class="required"
-      >{{ _('Alkamisaika') }}<span class="required-asterisk">*</span></label
-    >
-    <input type="time" id="start_time" name="start_time" required />
-    <label for="end_time">{{ _('Päättymisaika') }}</label>
-    <input type="time" id="end_time" name="end_time" />
+      <!-- Include Paikkakunta Dropdown -->
+      {% include "paikkakunta-dropdown.html" %}
 
-    <!-- Image Upload -->
-    <label for="image">{{ _('Kuva (valinnainen)') }}</label>
-    <input type="file" id="image" name="image" accept="image/*" />
-
-    <!-- Additional Information -->
-    <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
-    <input
-      type="url"
-      id="facebook"
-      name="facebook"
-      placeholder="https://facebook.com/event"
-    />
-
-    <!-- Organizers -->
-    <label for="organizers" class="required"
-      >{{ _('Järjestäjä(t)') }}<span class="required-asterisk">*</span></label
-    >
-    <div id="organizers-container"></div>
-    <button type="button" class="add-organizer-button" onclick="addOrganizer()">
-      {{ _('Lisää järjestäjä') }}
-    </button>
-
-    <!-- Location Type -->
-    <label for="type" class="required"
-      >{{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span></label
-    >
-    <select id="type" name="type" required>
-      <option value="" disabled selected>
-        {{ _('Valitse mielenosoituksen tyyppi') }}
-      </option>
-      <option value="paikallaan">{{ _('Paikallaan') }}</option>
-      <option value="marssi">{{ _('Marssi') }}</option>
-      <option value="muut">{{ _('Muut') }}</option>
-    </select>
-
-    <div id="march-route-container" class="optional-section">
-      <label for="route">{{ _('Reitti (vain marssille, valinnainen)') }}</label>
-      <textarea id="route" name="route" placeholder="{{ _('Reitti...') }}"></textarea>
+      <div class="form-group">
+        <label for="address" class="required">
+          {{ _('Katuosoite') }}<span class="required-asterisk">*</span>
+        </label>
+        <input type="text" id="address" name="address" placeholder="{{ _('Katuosoite') }}" required />
+      </div>
     </div>
 
-    <!-- Include Paikkakunta Dropdown -->
-    {% include "paikkakunta-dropdown.html" %}
-
-    <label for="address" class="required"
-      >{{ _('Katuosoite') }}<span class="required-asterisk">*</span></label
-    >
-    <input
-      type="text"
-      id="address"
-      name="address"
-      placeholder="{{ _('Katuosoite') }}"
-      required
-    />
+    <!-- Organizers Section -->
+    <div class="form-section">
+      <h2>
+        <i class="fa-solid fa-users"></i>
+        {{ _('Järjestäjä(t)') }}
+      </h2>
+      
+      <div id="organizers-container"></div>
+      <button type="button" class="add-organizer-button" onclick="addOrganizer()">
+        <i class="fa-solid fa-plus"></i>
+        {{ _('Lisää järjestäjä') }}
+      </button>
+    </div>
 
     <!-- Submitter Information Section -->
-    <hr>
-    <h2 style="color: var(--color-primary); font-size: 1.15em; margin-bottom: 0.5em;">{{ _('Ilmoittajan tiedot') }}</h2>
-    <label for="submitter_role" class="required">
-      {{ _('Roolisi (esim. mielenosoituksen järjestäjä, osallistuja, tms.)') }}<span class="required-asterisk">*</span>
-    </label>
-    <input
-      type="text"
-      id="submitter_role"
-      name="submitter_role"
-      placeholder="{{ _('Roolisi') }}"
-      required
-    />
+    <div class="form-section">
+      <h2>
+        <i class="fa-solid fa-user"></i>
+        {{ _('Ilmoittajan tiedot') }}
+      </h2>
+      
+      <div class="form-group">
+        <label for="submitter_role" class="required">
+          {{ _('Roolisi (esim. mielenosoituksen järjestäjä, osallistuja, tms.)') }}<span class="required-asterisk">*</span>
+        </label>
+        <input type="text" id="submitter_role" name="submitter_role" placeholder="{{ _('Roolisi') }}" required />
+      </div>
 
-    <label for="submitter_email" class="required">
-      {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
-    </label>
-    <input
-      type="email"
-      id="submitter_email"
-      name="submitter_email"
-      placeholder="esim. nimi@email.com"
-      required
-    />
+      <div class="form-row">
+        <div class="form-group">
+          <label for="submitter_email" class="required">
+            {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="email" id="submitter_email" name="submitter_email" placeholder="esim. nimi@email.com" required />
+        </div>
 
-    <label for="submitter_name" class="required">
-      {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
-    </label>
-    <input
-      type="text"
-      id="submitter_name"
-      name="submitter_name"
-      placeholder="{{ _('Nimi tai nimimerkki') }}"
-      required
-    />
+        <div class="form-group">
+          <label for="submitter_name" class="required">
+            {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="text" id="submitter_name" name="submitter_name" placeholder="{{ _('Nimi tai nimimerkki') }}" required />
+        </div>
+      </div>
+    </div>
 
     <!-- Terms and Privacy Agreement -->
-    <div style="margin: 1.2em 0 0.5em 0; display: flex; align-items: flex-start;">
-      <input
-        type="checkbox"
-        id="accept_terms"
-        name="accept_terms"
-        required
-        style="margin-right: 0.7em; margin-top: 0.2em;"
-      />
-      <label for="accept_terms" style="font-weight: 400; color: var(--color-text-secondary);">
+    <div class="checkbox-group">
+      <input type="checkbox" id="accept_terms" name="accept_terms" required />
+      <label for="accept_terms">
         {{ _('Hyväksyn') }}
         <a href="{{ url_for('terms') }}" target="_blank">{{ _('käyttöehdot') }}</a>
         {{ _('ja olen lukenut') }}
@@ -414,7 +932,39 @@ textarea:focus {
       </label>
     </div>
 
-    <button id="submit" type="submit" class="submit-button">{{ _('Lähetä') }}</button>
+    <!-- Submit Button -->
+    <button id="submit" type="submit" class="submit-button">
+      <i class="fa-solid fa-paper-plane"></i>
+      {{ _('Lähetä ilmoitus') }}
+    </button>
+    
+    <!-- Success Message -->
+    <div class="success-message" id="success-message">
+      <i class="fa-solid fa-check-circle"></i>
+      {{ _('Mielenosoitusilmoitus lähetetty onnistuneesti!') }}
+    </div>
   </form>
+
+  <!-- Help Section -->
+  <div class="form-section" style="margin-top: 2rem;">
+    <h2>
+      <i class="fa-solid fa-question-circle"></i>
+      {{ _('Tarvitsetko apua?') }}
+    </h2>
+    <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem;">
+      {{ _('Jos kohtaat ongelmia lomakkeen täyttämisessä tai sinulla on kysyttävää, älä epäröi ottaa yhteyttä.') }}
+    </p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <a href="{{ url_for('contact') }}" class="btn btn-outline">
+        <i class="fa-solid fa-envelope"></i>
+        {{ _('Ota yhteyttä') }}
+      </a>
+      <a href="{{ url_for('info') }}" class="btn btn-outline">
+        <i class="fa-solid fa-info"></i>
+        {{ _('Lisätietoja') }}
+      </a>
+    </div>
+  </div>
 </div>
+
 {% endblock %}

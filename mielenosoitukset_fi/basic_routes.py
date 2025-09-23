@@ -621,8 +621,9 @@ Disallow: /admin/
             # Save demonstration
             try:
                 demo_dict = demonstration.to_dict()
-                result = mongo.demonstrations.insert_one(demo_dict)
-                demo_id = result.inserted_id
+                demonstration.save()
+                #result = mongo.demonstrations.insert_one(demo_dict)
+                demo_id = demonstration._id
             except Exception as e:
                 logger.exception("Failed to insert demonstration: %s", e)
                 flash_message("Palvelinvirhe: mielenosoituksen tallentaminen epäonnistui.", "error")

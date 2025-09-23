@@ -101,7 +101,6 @@ def run(force: bool = False, till: int = 0) -> None:
         if not png_bytes:
             logger.warning(f"Failed to render screenshot for demo {demo_id}")
             continue
-
         # Upload preview to S3
         bucket_name = getattr(Config, "S3_BUCKET", "mielenosoitukset.fi")
         fileobj = io.BytesIO(png_bytes)

@@ -123,7 +123,8 @@ def create_app() -> Flask:
         admin_recu_demo_bp,
         admin_media_bp,
         board_bp,
-        audit_bp
+        audit_bp,
+        admin_kampanja_bp
     )
     from users import _BLUEPRINT_ as user_bp
     from users import chat_ws
@@ -138,8 +139,11 @@ def create_app() -> Flask:
     app.register_blueprint(admin_user_bp)
     app.register_blueprint(admin_org_bp)
     app.register_blueprint(admin_media_bp)
+    app.register_blueprint(admin_kampanja_bp)
+    
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    
     
     app.register_blueprint(campaign_bp)
     app.register_blueprint(board_bp)

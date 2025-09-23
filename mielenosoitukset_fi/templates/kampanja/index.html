@@ -500,6 +500,19 @@
         grid-template-columns: 1fr;
       }
     }
+
+    .success-message {
+    display: none;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    
+}
+
+.success-message.show {
+    display: block;
+    color: white;
+}
+
   </style>
 </head>
 
@@ -509,7 +522,7 @@
     <div class="container">
       <div class="navbar-content">
         <a class="logo" href="/">Mielenosoitukset.fi</a>
-        <a class="nav-btn" href="#lahjoita">Rahoita kampanjaa →</a>
+        <a class="nav-btn hidden-wip" href="#lahjoita">Rahoita kampanjaa →</a>
       </div>
     </div>
   </nav>
@@ -524,16 +537,29 @@
         <h1>Levitetään tieto <span class="highlight">mielenosoitukset.fi:stä</span> kaikkialle Suomeen</h1>
         <p class="lead">Kutsumme järjestöt, aktivistit ja yhteisöt mukaan levittämään yhdessä tietoa mielenosoitukset.fi:stä. Tilaa julisteita ja tarroja, jaa kampanjasisältöjä ja ilmoita omat tapahtumasi.</p>
         <div class="hero-buttons">
-          <a class="btn btn-primary" href="#tilaa">📋 Tilaa materiaaleja</a>
-          <a class="btn btn-secondary" href="#materiaalipankki">📁 Lataa aineistot</a>
+          <a class="btn btn-primary" href="#vapaaehtoiseksi">Tule vapaaehtoiseksi</a>
+          <a class="btn btn-primary hidden-wip" href="#tilaa">📋 Tilaa materiaaleja</a>
+          <a class="btn btn-secondary hidden-wip" href="#materiaalipankki">📁 Lataa aineistot</a>
+          <a class="btn btn-secondary" href="#newsletter">Tilaa uutiskirje</a>
         </div>
       </div>
     </div>
   </section>
 
   <main>
+    <div style="background: #FF6B00; color: white; text-align: center; padding: 1rem; font-weight: 700;">
+  🚧 Tämä kampanjasivu on työn alla! Tällä hetkellä voit liittyä vapaaehtoiseksi tai tilata uutiskirjeen.
+</div>
+
+<style>
+.hidden-wip {
+  display: none;
+}
+</style>
+
     <!-- MATERIAL ORDER -->
-    <section id="tilaa" class="section">
+
+    <section id="tilaa" class="section hidden-wip">
       <div class="container">
         <div class="grid grid-2">
           <div class="card">
@@ -668,10 +694,69 @@ volunteerForm.addEventListener('submit', async (e) => {
 });
 </script>
 
+<section id="newsletter" class="section">
+  <div class="container">
+    <div class="grid grid-2">
+      <div class="card">
+        <h2>📬 Liity uutiskirjeeseen</h2>
+        <p>Haluatko saada päivityksiä kampanjasta suoraan sähköpostiisi? Tilaa uutiskirjeemme!</p>
+        <form id="newsletter-form" onsubmit="subscribe(event)">
+          <div class="form-group">
+            <label for="email" class="form-label">Sähköposti *</label>
+            <input type="email" id="email" name="email" class="form-control" placeholder="nimi@esimerkki.fi" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Tilaa uutiskirje</button>
+          <div id="newsletter-msg" class="success-message">Kiitos! Olet tilannut uutiskirjeen.</div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>💌 Miksi tilata?</h3>
+        <p>Saat ensimmäisten joukossa tiedon kampanjapäivityksistä, materiaaleista ja tapahtumista. Pysy mukana ja auta levittämään tieto mielenosoitukset.fi:stä!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>function subscribe(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value;
+    const list_id = "68d26ca27f8e9dee7c846a22";  // Replace with actual list_id
+    const msgEl = document.getElementById("newsletter-msg");
+
+    fetch(`https://mailist.luova.club/signup`, {
+        method: "POST",
+        headers: { 'Content-Type': "application/json" },
+        body: JSON.stringify({ email: email, list_id: list_id })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.error && data.message) {
+            msgEl.textContent = "Tilauksesi onnistui! ✨";
+            msgEl.classList.add("show");   // for CSS animation if you have one
+            document.getElementById("newsletter-form").reset();
+            setTimeout(() => { msgEl.classList.remove("show"); }, 8000);
+        } else {
+            msgEl.textContent = `Tilauksen epäonnistui: ${data.message}`;
+            msgEl.classList.add("show");
+            setTimeout(() => { msgEl.classList.remove("show"); }, 8000);
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        msgEl.textContent = "Tapahtui virhe. Yritä myöhemmin uudelleen.";
+        msgEl.classList.add("show");
+        setTimeout(() => { msgEl.classList.remove("show"); }, 8000);
+    });
+}
+
+</script>
+
+
 
     <!-- ASSET BANK -->
-    <section id="materiaalipankki" class="section">
-      <div class="container">
+    <section id="materiaalipankki" class="section hidden-wip">
+        <div class="container">
         <div class="card">
           <h2>📚 Materiaalipankki</h2>
           <p>Lataa kampanjamateriaalit suoraan täältä. CMYK-tiedostot ammattipainoon, RGB-tiedostot pikakäyttöön.</p>
@@ -706,7 +791,7 @@ volunteerForm.addEventListener('submit', async (e) => {
     </section>
 
     <!-- PARTNERS / CONTACT -->
-    <section id="kumppanit" class="section">
+    <section id="kumppanit" class="section hidden-wip">
       <div class="container">
         <div class="grid grid-2">
           <div class="card">

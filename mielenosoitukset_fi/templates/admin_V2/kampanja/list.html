@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kampanjan hallinta - Vapaaehtoiset</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+    <style>
+        :root {
+            --color-bg: #f8fafc;
+            --color-card-bg: #ffffff;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-primary: #0052cc;
+            --color-primary-hover: #003d99;
+            --color-secondary: #ff6b00;
+            --color-secondary-hover: #e55a00;
+            --color-accent: #06b6d4;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --color-border: #e2e8f0;
+            --color-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --color-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+            --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+            --border-radius: 16px;
+            --border-radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            font-feature-settings: 'liga' 1, 'kern' 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: var(--color-gradient-primary);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: var(--border-radius-lg);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--color-card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--color-shadow);
+            border: 1px solid var(--color-border);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--color-shadow-lg);
+        }
+
+        .stat-card.primary::before {
+            background: var(--color-gradient-primary);
+        }
+
+        .stat-card.secondary::before {
+            background: var(--color-gradient-secondary);
+        }
+
+        .stat-card.success::before {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .stat-card.warning::before {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card.primary .stat-icon {
+            background: var(--color-gradient-primary);
+        }
+
+        .stat-card.secondary .stat-icon {
+            background: var(--color-gradient-secondary);
+        }
+
+        .stat-card.success .stat-icon {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .stat-card.warning .stat-icon {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary);
+            font-weight: 500;
+        }
+
+        /* Actions Bar */
+        .actions-bar {
+            background: var(--color-card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--color-shadow);
+            border: 1px solid var(--color-border);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: var(--transition);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: var(--color-gradient-primary);
+            color: white;
+            box-shadow: var(--color-shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--color-shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--color-gradient-secondary);
+            color: white;
+            box-shadow: var(--color-shadow);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--color-shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--color-primary);
+            border: 2px solid var(--color-border);
+        }
+
+        .btn-outline:hover {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        /* Table */
+        .table-container {
+            background: var(--color-card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--color-shadow);
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr {
+            transition: var(--transition);
+        }
+
+        tr:hover {
+            background: rgba(0, 82, 204, 0.02);
+        }
+
+        .volunteer-name {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .volunteer-email {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        .volunteer-email:hover {
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .status-confirmed {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--color-warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .btn-icon.edit {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--color-accent);
+        }
+
+        .btn-icon.edit:hover {
+            background: var(--color-accent);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .btn-icon.confirm {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+        }
+
+        .btn-icon.confirm:hover {
+            background: var(--color-success);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .btn-icon.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-error);
+        }
+
+        .btn-icon.delete:hover {
+            background: var(--color-error);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 2rem;
+        }
+
+        .pagination .btn {
+            min-width: 40px;
+            height: 40px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .pagination .btn.active {
+            background: var(--color-gradient-primary);
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--color-card-bg);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--color-shadow-lg);
+            transform: scale(0.9);
+            transition: var(--transition);
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            background: var(--color-border);
+            color: var(--color-text);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1.25rem;
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        /* Export section */
+        .export-section {
+            background: var(--color-card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--color-shadow);
+            border: 1px solid var(--color-border);
+            margin-bottom: 2rem;
+        }
+
+        .export-section h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header {
+                padding: 2rem 1rem;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-bar {
+                max-width: none;
+            }
+
+            .table-wrapper {
+                font-size: 0.9rem;
+            }
+
+            th,
+            td {
+                padding: 1rem 0.75rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .hidden {
+            display: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header animate-fade-in-up">
+            <div class="header-content">
+                <div>
+                    <h1>Kampanjan hallinta</h1>
+                    <p>Vapaaehtoisrekisteri - Kampanja 2026</p>
+                </div>
+                <div class="timeline-tags">
+                    <span
+                        style="background: #fbbf24; color: #000; padding: 0.5rem 1rem; border-radius: 50px; font-weight: 600; margin-right: 0.5rem;">
+                        <i class="fa-solid fa-clock"></i> Valmistelut 15.9.2025 → 29.2.2026
+                    </span>
+                    <span
+                        style="background: #34d399; color: #000; padding: 0.5rem 1rem; border-radius: 50px; font-weight: 600;">
+                        <i class="fa-solid fa-calendar"></i> Kampanja 1.3.2026 → 1.6.2026
+                    </span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Stats -->
+        <div class="stats-grid animate-fade-in-up">
+            <div class="stat-card primary">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="stat-number" id="total-volunteers">{{ volunteers|length }}</div>
+                <div class="stat-label">Vapaaehtoista yhteensä</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-check-circle"></i>
+                </div>
+                <div class="stat-number" id="confirmed-volunteers">
+                    {{ volunteers|selectattr('confirmed')|list|length }}
+                </div>
+                <div class="stat-label">Vahvistettua</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="stat-number" id="pending-volunteers">
+                    {{ volunteers|rejectattr('confirmed')|list|length }}
+                </div>
+                <div class="stat-label">Odottaa vahvistusta</div>
+            </div>
+            <div class="stat-card secondary">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-map-marker-alt"></i>
+                </div>
+                <div class="stat-number">{{ volunteers|map(attribute='city')|unique|list|length }}</div>
+                <div class="stat-label">Kaupunkia</div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section animate-fade-in-up">
+            <h3>
+                <i class="fa-solid fa-download"></i>
+                Vie tiedot
+            </h3>
+            <div class="export-buttons">
+                <button class="btn btn-outline" onclick="exportToCSV()">
+                    <i class="fa-solid fa-file-csv"></i>
+                    Vie CSV
+                </button>
+                <button class="btn btn-outline" onclick="exportToExcel()">
+                    <i class="fa-solid fa-file-excel"></i>
+                    Vie Excel
+                </button>
+                <button class="btn btn-outline" onclick="sendBulkEmail()">
+                    <i class="fa-solid fa-envelope"></i>
+                    Lähetä joukkosähköposti
+                </button>
+            </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar animate-fade-in-up">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Hae vapaaehtoisia..." id="search-input">
+                <button class="btn btn-outline" onclick="clearSearch()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <select class="form-input" style="width: auto;" id="status-filter">
+                    <option value="">Kaikki tilat</option>
+                    <option value="confirmed">Vahvistetut</option>
+                    <option value="pending">Odottavat</option>
+                </select>
+                <select class="form-input" style="width: auto;" id="city-filter">
+                    <option value="">Kaikki kaupungit</option>
+                    {% for city in volunteers|map(attribute='city')|unique|list %}
+                    <option value="{{ city }}">{{ city }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary" onclick="confirmAllPending()">
+                    <i class="fa-solid fa-check-double"></i>
+                    Vahvista kaikki
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container animate-fade-in-up">
+            <div class="table-header">
+                <h2 class="table-title">
+                    <i class="fa-solid fa-table"></i>
+                    Vapaaehtoiset
+                </h2>
+                <span class="btn btn-outline">
+                    <span id="showing-count">{{ volunteers|length }}</span> vapaaehtoista
+                </span>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nimi</th>
+                            <th>Sähköposti</th>
+                            <th>Puhelin</th>
+                            <th>Kaupunki</th>
+                            <th>Huomiot</th>
+                            <th>Tila</th>
+                            <th>Toiminnot</th>
+                        </tr>
+                    </thead>
+                    <tbody id="volunteers-table">
+                        {% for volunteer in volunteers %}
+                        <tr data-id="{{ volunteer._id }}"
+                            data-confirmed="{{ 'true' if volunteer.confirmed else 'false' }}"
+                            data-city="{{ volunteer.city }}">
+                            <td>{{ loop.index }}</td>
+                            <td class="volunteer-name">{{ volunteer.name }}</td>
+                            <td>
+                                <a href="mailto:{{ volunteer.email }}" class="volunteer-email">{{ volunteer.email }}</a>
+                            </td>
+                            <td>{{ volunteer.phone or '-' }}</td>
+                            <td>{{ volunteer.city or '-' }}</td>
+                            <td>{{ volunteer.notes[:50] + '...' if volunteer.notes and volunteer.notes|length > 50 else
+                                (volunteer.notes or '-') }}</td>
+                            <td>
+                                <span
+                                    class="status-badge {{ 'status-confirmed' if volunteer.confirmed else 'status-pending' }}">
+                                    {{ 'Vahvistettu' if volunteer.confirmed else 'Odottaa' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-icon edit" onclick="editVolunteer('{{ volunteer._id }}')"
+                                        title="Muokkaa">
+                                        <i class="fa-solid fa-edit"></i>
+                                    </button>
+                                    {% if not volunteer.confirmed %}
+                                    <button class="btn-icon confirm" onclick="confirmVolunteer('{{ volunteer._id }}')"
+                                        title="Vahvista">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn-icon delete" onclick="deleteVolunteer('{{ volunteer._id }}')"
+                                        title="Poista">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <button class="btn btn-outline">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="btn active">1</button>
+                <button class="btn btn-outline">2</button>
+                <button class="btn btn-outline">3</button>
+                <button class="btn btn-outline">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Muokkaa vapaaehtoista</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <form id="edit-form">
+                <div class="form-group">
+                    <label class="form-label">Nimi</label>
+                    <input type="text" class="form-input" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sähköposti</label>
+                    <input type="email" class="form-input" id="edit-email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Puhelin</label>
+                    <input type="tel" class="form-input" id="edit-phone">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kaupunki</label>
+                    <input type="text" class="form-input" id="edit-city">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Huomiot</label>
+                    <textarea class="form-input form-textarea" id="edit-notes"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="edit-confirmed" style="margin-right: 0.5rem;">
+                        Vahvistettu
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <div id="saveProgress" class="hidden text-sm text-gray-500 mt-2">
+                        Tallennetaan...
+                    </div>
+
+                    <button type="button" class="btn btn-outline" onclick="closeModal()">Peruuta</button>
+                    <button type="submit" class="btn btn-primary">Tallenna</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* ====== Config ====== */
+        const ROWS_PER_PAGE = 10; // change if you want fewer/more rows per page
+        const API_BASE = '/admin/kampanja/api/volunteers'; // adapt to your backend endpoints
+
+        /* ====== State ====== */
+        let currentPage = 1;
+        let rowsPerPage = ROWS_PER_PAGE;
+        let rowsCache = []; // live array of <tr> nodes for pagination/filtering
+        let currentVolunteerId = null;
+
+        /* Add this in your JS init */
+        const saveProgress = document.getElementById('saveProgress'); // a <div> or spinner in modal
+
+
+        /* ====== Utils ====== */
+        function qs(sel, ctx = document) { return ctx.querySelector(sel); }
+        function qsa(sel, ctx = document) { return Array.from(ctx.querySelectorAll(sel)); }
+        function sanitizeText(s) { return (s || '').toString().trim(); }
+
+        /* ====== Modal handling ====== */
+        const editModal = qs('#edit-modal');
+        const editForm = qs('#edit-form');
+        const editName = qs('#edit-name');
+        const editEmail = qs('#edit-email');
+        const editPhone = qs('#edit-phone');
+        const editCity = qs('#edit-city');
+        const editNotes = qs('#edit-notes');
+        const editConfirmed = qs('#edit-confirmed');
+
+        function openModal() {
+            editModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            editModal.classList.remove('show');
+            document.body.style.overflow = '';
+            currentVolunteerId = null;
+        }
+
+        /* Close modal on outside click or ESC */
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        /* ====== Row / Table helpers ====== */
+        function refreshRowsCache() {
+            rowsCache = qsa('#volunteers-table tr');
+        }
+
+        function findRowById(id) {
+            return rowsCache.find(r => r.dataset.id === id) || null;
+        }
+
+        /* ====== Stats update ====== */
+        function updateStats() {
+            refreshRowsCache();
+            const total = rowsCache.length;
+            const confirmed = rowsCache.filter(r => r.dataset.confirmed === 'true').length;
+            const pending = total - confirmed;
+            const cities = new Set(rowsCache.map(r => (r.dataset.city || '').trim()).filter(Boolean));
+
+            qs('#total-volunteers').textContent = total;
+            qs('#confirmed-volunteers').textContent = confirmed;
+            qs('#pending-volunteers').textContent = pending;
+            // city count card is the 4th stat-card: update it if element exists
+            const cards = qsa('.stat-card');
+            if (cards[3]) {
+                const el = cards[3].querySelector('.stat-number');
+                if (el) el.textContent = cities.size;
+            }
+            const showing = qsa('#volunteers-table tr').filter(r => r.style.display !== 'none').length;
+            qs('#showing-count').textContent = showing + ' / ' + total;
+        }
+
+        /* ====== Filtering & Search ====== */
+        function clearSearch() {
+            qs('#search-input').value = '';
+            qs('#status-filter').value = '';
+            qs('#city-filter').value = '';
+            filterVolunteers();
+        }
+
+        function filterVolunteers() {
+            const searchTerm = sanitizeText(qs('#search-input').value).toLowerCase();
+            const statusFilter = qs('#status-filter').value; // '', 'confirmed', 'pending'
+            const cityFilter = qs('#city-filter').value;
+
+            refreshRowsCache();
+
+            rowsCache.forEach(row => {
+                const name = (row.cells[1]?.textContent || '').toLowerCase();
+                const email = (row.cells[2]?.textContent || '').toLowerCase();
+                const city = (row.dataset.city || '').toLowerCase();
+                const confirmed = row.dataset.confirmed === 'true';
+
+                let visible = true;
+
+                // Search filter (name or email)
+                if (searchTerm) {
+                    if (!name.includes(searchTerm) && !email.includes(searchTerm)) visible = false;
+                }
+
+                // Status filter
+                if (statusFilter === 'confirmed' && !confirmed) visible = false;
+                if (statusFilter === 'pending' && confirmed) visible = false;
+
+                // City filter
+                if (cityFilter && cityFilter.toLowerCase() !== city) visible = false;
+
+                row.style.display = visible ? '' : 'none';
+            });
+
+            // Reset to first page of results and regenerate pagination
+            currentPage = 1;
+            generatePagination();
+            updateStats();
+        }
+
+        /* ====== Pagination (client-side) ====== */
+        function generatePagination() {
+            refreshRowsCache();
+            const visibleRows = rowsCache.filter(r => r.style.display !== 'none');
+            const totalVisible = visibleRows.length;
+            const pageCount = Math.max(1, Math.ceil(totalVisible / rowsPerPage));
+
+            // clamp current page
+            if (currentPage > pageCount) currentPage = pageCount;
+            if (currentPage < 1) currentPage = 1;
+
+            // hide all rows then only show current page slice
+            visibleRows.forEach(r => r.style.display = 'none');
+            const start = (currentPage - 1) * rowsPerPage;
+            const pageRows = visibleRows.slice(start, start + rowsPerPage);
+            pageRows.forEach(r => r.style.display = '');
+
+            // build pagination controls
+            const container = qs('.pagination');
+            container.innerHTML = '';
+
+            const btn = (content, classes = '', onClick = null) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'btn ' + classes;
+                b.innerHTML = content;
+                if (onClick) b.addEventListener('click', onClick);
+                return b;
+            };
+
+            // Prev
+            container.appendChild(btn('<i class="fa-solid fa-chevron-left"></i>', 'btn-outline', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    generatePagination();
+                }
+            }));
+
+            // Page numbers (show at most 7; show edges + around current)
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = startPage + maxButtons - 1;
+            if (endPage > pageCount) {
+                endPage = pageCount;
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+            for (let p = startPage; p <= endPage; p++) {
+                const isActive = p === currentPage;
+                container.appendChild(btn(p, isActive ? 'active' : 'btn-outline', () => {
+                    currentPage = p;
+                    generatePagination();
+                }));
+            }
+
+            // Next
+            container.appendChild(btn('<i class="fa-solid fa-chevron-right"></i>', 'btn-outline', () => {
+                if (currentPage < pageCount) {
+                    currentPage++;
+                    generatePagination();
+                }
+            }));
+
+            updateStats();
+        }
+
+        /* ====== Editing ====== */
+        function editVolunteer(id) {
+            console.log(`id: ${id}`);
+            const row = findRowById(id);
+            if (!row) { alert('Vapaaehtoista ei löytynyt'); return; }
+            currentVolunteerId = id;
+
+
+            // populate modal fields from row
+            editName.value = sanitizeText(row.querySelector('.volunteer-name')?.textContent);
+            editEmail.value = sanitizeText(row.querySelector('.volunteer-email')?.textContent);
+            editPhone.value = sanitizeText(row.cells[3]?.textContent === '-' ? '' : row.cells[3]?.textContent);
+            editCity.value = sanitizeText(row.cells[4]?.textContent === '-' ? '' : row.cells[4]?.textContent);
+            const notesCell = row.cells[5]?.textContent || '';
+            // if your template truncates notes with '...', you may want to fetch full data from server here
+            editNotes.value = notesCell.endsWith('...') ? '' : notesCell;
+            editConfirmed.checked = row.dataset.confirmed === 'true';
+
+            openModal();
+        }
+        /* Submit form (save) */
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentVolunteerId) {
+                alert('Ei muokattavaa vapaaehtoista valittuna');
+                return;
+            }
+
+            // Build payload
+            const payload = {
+                name: editName.value.trim(),
+                email: editEmail.value.trim(),
+                phone: editPhone.value.trim(),
+                city: editCity.value.trim(),
+                notes: editNotes.value.trim(),
+                confirmed: editConfirmed.checked
+            };
+
+            // Optimistic UI: update the row immediately
+            const row = findRowById(currentVolunteerId);
+            if (row) {
+                row.querySelector('.volunteer-name').textContent = payload.name;
+                row.querySelector('.volunteer-email').textContent = payload.email;
+                row.querySelector('.volunteer-email').href = 'mailto:' + payload.email;
+                row.cells[3].textContent = payload.phone || '-';
+                row.cells[4].textContent = payload.city || '-';
+                row.cells[5].textContent = payload.notes
+                    ? (payload.notes.length > 50 ? payload.notes.slice(0, 50) + '...' : payload.notes)
+                    : '-';
+                row.dataset.confirmed = payload.confirmed ? 'true' : 'false';
+                const badge = row.querySelector('.status-badge');
+                if (badge) {
+                    badge.className = 'status-badge ' + (payload.confirmed ? 'status-confirmed' : 'status-pending');
+                    badge.textContent = payload.confirmed ? 'Vahvistettu' : 'Odottaa';
+                }
+            }
+            updateStats();
+
+            // Show progress
+            saveProgress.classList.remove('hidden');
+            saveProgress.textContent = 'Tallennetaan...';
+
+            // Send to backend
+            try {
+                const res = await fetch(`${API_BASE}/${currentVolunteerId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    console.error('Save error', txt);
+                    alert('Tallennus epäonnistui palvelimeen: ' + res.status);
+                } else {
+                    saveProgress.textContent = 'Tallennettu ✅';
+                    setTimeout(() => closeModal(), 600); // short delay so user sees success
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Virhe tallentaessa muutoksia.');
+            } finally {
+                saveProgress.classList.add('hidden');
+            }
+        });
+
+        /* ====== Confirm / Delete ====== */
+        async function confirmVolunteer(id) {
+            const row = findRowById(id);
+            if (!row) return;
+            // Optimistic UI update
+            row.dataset.confirmed = 'true';
+            const badge = row.querySelector('.status-badge');
+            if (badge) {
+                badge.className = 'status-badge status-confirmed';
+                badge.textContent = 'Vahvistettu';
+            }
+            updateStats();
+
+            try {
+                const res = await fetch(`${API_BASE}/${id}/confirm`, { method: 'POST' });
+                if (!res.ok) {
+                    // revert
+                    row.dataset.confirmed = 'false';
+                    if (badge) {
+                        badge.className = 'status-badge status-pending';
+                        badge.textContent = 'Odottaa';
+                    }
+                    updateStats();
+                    alert('Vahvistus epäonnistui palvelimella.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Verkkovirhe vahvistuksessa.');
+            }
+        }
+
+        async function deleteVolunteer(id) {
+            if (!confirm('Haluatko varmasti poistaa vapaaehtoisen? Tämä ei ole peruutettavissa.')) return;
+            const row = findRowById(id);
+            if (!row) return;
+
+            // Optimistic remove from UI
+            row.remove();
+            updateStats();
+            generatePagination();
+
+            try {
+                const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    alert('Poisto epäonnistui palvelimella.');
+                    // Optionally re-fetch list from server to recover UI
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Verkkovirhe poiston aikana.');
+            }
+        }
+
+        /* Confirm all pending */
+        function confirmAllPending() {
+            if (!confirm('Haluatko vahvistaa kaikki odottavat vapaaehtoiset?')) return;
+            refreshRowsCache();
+            const pendingRows = rowsCache.filter(r => r.dataset.confirmed !== 'true');
+            pendingRows.forEach(r => {
+                const id = r.dataset.id;
+                if (id) confirmVolunteer(id);
+            });
+        }
+
+        /* ====== Export functions ====== */
+        function downloadBlob(filename, blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportToCSV() {
+            refreshRowsCache();
+            const visibleRows = rowsCache.filter(r => r.style.display !== 'none');
+
+            const headers = ['#', 'Nimi', 'Sähköposti', 'Puhelin', 'Kaupunki', 'Huomiot', 'Tila'];
+            const lines = [headers.join(',')];
+
+            visibleRows.forEach((row, idx) => {
+                const cells = [
+                    row.cells[0]?.textContent || (idx + 1),
+                    '"' + (row.querySelector('.volunteer-name')?.textContent || '') + '"',
+                    '"' + (row.querySelector('.volunteer-email')?.textContent || '') + '"',
+                    '"' + (row.cells[3]?.textContent || '') + '"',
+                    '"' + (row.cells[4]?.textContent || '') + '"',
+                    '"' + ((row.cells[5]?.textContent || '').replace(/"/g, '""')) + '"',
+                    '"' + (row.dataset.confirmed === 'true' ? 'Vahvistettu' : 'Odottaa') + '"'
+                ];
+                lines.push(cells.join(','));
+            });
+
+            const csv = lines.join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            downloadBlob('vapaaehtoiset.csv', blob);
+        }
+
+        function exportToExcel() {
+            // Create a simple HTML table and let Excel open it
+            refreshRowsCache();
+            const visibleRows = rowsCache.filter(r => r.style.display !== 'none');
+
+            let tableHtml = '<table><thead><tr><th>#</th><th>Nimi</th><th>Sähköposti</th><th>Puhelin</th><th>Kaupunki</th><th>Huomiot</th><th>Tila</th></tr></thead><tbody>';
+            visibleRows.forEach((row, idx) => {
+                tableHtml += '<tr>';
+                tableHtml += `<td>${row.cells[0]?.textContent || (idx + 1)}</td>`;
+                tableHtml += `<td>${escapeHtml(row.querySelector('.volunteer-name')?.textContent || '')}</td>`;
+                tableHtml += `<td>${escapeHtml(row.querySelector('.volunteer-email')?.textContent || '')}</td>`;
+                tableHtml += `<td>${escapeHtml(row.cells[3]?.textContent || '')}</td>`;
+                tableHtml += `<td>${escapeHtml(row.cells[4]?.textContent || '')}</td>`;
+                tableHtml += `<td>${escapeHtml(row.cells[5]?.textContent || '')}</td>`;
+                tableHtml += `<td>${row.dataset.confirmed === 'true' ? 'Vahvistettu' : 'Odottaa'}</td>`;
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table>';
+
+            const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel' });
+            downloadBlob('vapaaehtoiset.xls', blob);
+        }
+
+        function escapeHtml(str) {
+            return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        /* ====== Bulk email ====== */
+        async function sendBulkEmail() {
+            refreshRowsCache();
+            const visibleRows = rowsCache.filter(r => r.style.display !== 'none');
+            const emails = visibleRows.map(r => r.querySelector('.volunteer-email')?.textContent).filter(Boolean);
+
+            if (!emails.length) {
+                alert('Ei sähköposteja lähetettäväksi.');
+                return;
+            }
+
+            const subject = prompt('Kirjoita sähköpostin otsikko:');
+            if (subject === null) return; // cancelled
+            const body = prompt('Kirjoita sähköpostin viesti (plain text):');
+            if (body === null) return;
+
+            // Confirm
+            if (!confirm(`Lähetetään ${emails.length} vastaanottajalle. Haluatko jatkaa?`)) return;
+
+            // Simple POST to an email-sending endpoint
+            try {
+                const res = await fetch('/api/send-bulk-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipients: emails, subject, body })
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    console.error('Email error', txt);
+                    alert('Joukkosähköpostin lähetys epäonnistui.');
+                } else {
+                    alert('Sähköpostit lähetetty (tai tilattu palvelimelle).');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Verkkovirhe sähköpostia lähetettäessä.');
+            }
+        }
+
+        /* ====== Init & event wiring ====== */
+        function wireButtons() {
+            qs('#search-input')?.addEventListener('input', () => {
+                // tiny debounce
+                if (window.__searchTimeout) clearTimeout(window.__searchTimeout);
+                window.__searchTimeout = setTimeout(filterVolunteers, 150);
+            });
+            qs('#status-filter')?.addEventListener('change', filterVolunteers);
+            qs('#city-filter')?.addEventListener('change', filterVolunteers);
+
+            // wire export & bulk buttons (in case they exist)
+            const csvBtn = qsa('.export-buttons .btn')[0];
+            if (csvBtn) csvBtn.addEventListener('click', exportToCSV);
+            const excelBtn = qsa('.export-buttons .btn')[1];
+            if (excelBtn) excelBtn.addEventListener('click', exportToExcel);
+            const bulkBtn = qsa('.export-buttons .btn')[2];
+            if (bulkBtn) bulkBtn.addEventListener('click', sendBulkEmail);
+
+            // delegate action-buttons within the table (edit/confirm/delete)
+            const table = qs('#volunteers-table');
+            if (table) {
+                table.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.btn-icon');
+                    if (!btn) return;
+                    const row = e.target.closest('tr');
+                    if (!row) return;
+                    const id = row.dataset.id;
+                    if (btn.classList.contains('edit')) {
+                        editVolunteer(id);
+                    } else if (btn.classList.contains('confirm')) {
+                        confirmVolunteer(id);
+                    } else if (btn.classList.contains('delete')) {
+                        deleteVolunteer(id);
+                    }
+                });
+            }
+        }
+
+        /* ====== Boot ====== */
+        function boot() {
+            refreshRowsCache();
+            wireButtons();
+            filterVolunteers(); // initial filter + stats + pagination
+            generatePagination();
+        }
+
+        // Run after DOM loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+    </script>
+
+</body>
+
+</html>

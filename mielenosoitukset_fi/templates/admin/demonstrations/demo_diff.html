@@ -1,18 +1,36 @@
 {% extends 'admin_base.html' %}
 {% block main_content %}
 <div class="container py-3">
-    <h2 class="mb-4">{{ _('Muutosvertailu mielenosoitukselle') }}</h2>
+    <h2 class="mb-4">{{ _('Muutosvertailu mielenosoitukselle') }}: <b>{{ demo_name }}</b></h2>
 
-    <div class="mb-3">
+    <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+        <!-- Toggle unchanged fields -->
         <button class="btn btn-sm btn-outline-secondary" id="toggleUnchanged"
             data-show-text="{{ _('Näytä piilotetut muuttumattomat kentät') }}"
             data-hide-text="{{ _('Piilota muuttumattomat kentät') }}">
             {{ _('Näytä piilotetut muuttumattomat kentät') }}
         </button>
 
+        <!-- Back button -->
+        <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo_id) }}" class="btn btn-secondary">
+            {{ _('Takaisin muokkaushistoriaan') }}
+        </a>
+
+        <!-- Rollback button -->
+        <form method="POST" action="{{ url_for('admin_demo.rollback_demo', history_id=history_id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-danger">
+                {{ _('Palauta tähän versioon') }}
+            </button>
+        </form>
+
+        {% if rollbacked %}
+        <span class="badge bg-warning text-dark">
+            {{ _('Tämä versio on palautettu nykyiseksi!') }}
+        </span>
+        {% endif %}
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-3">
         <div class="table-responsive">
             <table class="table table-bordered align-middle diff-table">
                 <thead class="table-dark">
@@ -27,9 +45,7 @@
                         <td class="fw-bold text-bg-secondary text-white">{{ field }}</td>
                         <td>
                             {% if diff.diff_html %}
-                            <div class="diff-block">
-                                {{ diff.diff_html | safe }}
-                            </div>
+                            <div class="diff-block">{{ diff.diff_html | safe }}</div>
                             {% else %}
                             <span class="badge bg-info">{{ _('Ei muutoksia') }}</span>
                             {% endif %}
@@ -41,77 +57,52 @@
         </div>
     </div>
 
-    <div class="mt-3">
-  <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo_id) }}" 
-     class="btn btn-secondary" id="backToHistory">
-    {{ _('Takaisin muokkaushistoriaan') }}
-  </a>
-</div>
+    <!-- Preview modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1" aria-labelledby="previewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="previewModalLabel">{{ _('Esikatsele palautettavaa versiota') }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {% for field, diff in diffs.items() %}
+              <p><strong>{{ field }}:</strong></p>
+              <div class="diff-block">{{ diff.diff_html | safe }}</div>
+              <hr>
+            {% endfor %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-outline-info mt-3" data-bs-toggle="modal" data-bs-target="#previewModal">
+        {{ _('Esikatsele tämä versio') }}
+    </button>
+
 </div>
 
 <style>
-    .diff-block {
-        font-family: monospace;
-        white-space: pre-wrap;
-    }
-
-    .diff-add {
-        background-color: #1a7f37;
-        color: #fff;
-        padding: 2px 4px;
-        border-radius: 3px;
-    }
-
-    .diff-remove {
-        background-color: #b22222;
-        color: #fff;
-        padding: 2px 4px;
-        border-radius: 3px;
-        text-decoration: line-through;
-    }
-
-    .diff-unchanged {
-        background-color: #e6f0fa;
-        color: #222;
-        padding: 2px 4px;
-        border-radius: 3px;
-    }
+.diff-block { font-family: monospace; white-space: pre-wrap; }
+.diff-add { background-color: #1a7f37; color: #fff; padding:2px 4px; border-radius:3px; }
+.diff-remove { background-color: #b22222; color: #fff; padding:2px 4px; border-radius:3px; text-decoration:line-through; }
+.diff-unchanged { background-color: #e6f0fa; color:#222; padding:2px 4px; border-radius:3px; }
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const toggleBtn = document.getElementById("toggleUnchanged");
-        if (!toggleBtn) return;
+document.addEventListener("DOMContentLoaded", function() {
+    // Toggle unchanged rows
+    const toggleBtn = document.getElementById("toggleUnchanged");
+    const rows = document.querySelectorAll(".unchanged-row");
+    if (!rows.length) toggleBtn.style.display = "none";
 
-        const rows = document.querySelectorAll(".unchanged-row");
-        if (!rows.length) {
-            toggleBtn.style.display = "none"; // hide button if no unchanged rows
-            return;
-        }
-
-        toggleBtn.addEventListener("click", function () {
-            rows.forEach(r => r.classList.toggle("d-none"));
-
-            // Update button text based on first row visibility
-            if (rows[0].classList.contains("d-none")) {
-                this.textContent = this.dataset.showText;
-            } else {
-                this.textContent = this.dataset.hideText;
-            }
-        });
+    toggleBtn.addEventListener("click", function() {
+        rows.forEach(r => r.classList.toggle("d-none"));
+        this.textContent = rows[0].classList.contains("d-none") ? this.dataset.showText : this.dataset.hideText;
     });
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const backHistory = document.getElementById("backToHistory");
-  if (!backHistory) return;
-
-  // Always preserve the original referrer when coming back from diffs
-  const stored = sessionStorage.getItem("originalReferrer");
-  if (stored) {
-    // ensure we don’t overwrite
-    // nothing to do here, just don't touch sessionStorage
-  }
 });
 </script>
 {% endblock %}

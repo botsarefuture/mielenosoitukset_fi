@@ -10,27 +10,112 @@
   <div class="card shadow-sm">
     <ul class="list-group list-group-flush">
       {% for entry in history %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-          <div class="fw-bold">
-            {{ entry.edited_at.strftime('%d.%m.%Y %H:%M:%S') }}
-            <small class="text-muted ms-2" data-timestamp="{{ entry.edited_at.isoformat() }}">
-              <!-- relative timestamp filled by JS -->
-            </small>
-          </div>
-          <small class="text-muted">
-            {{ _('muokannut') }}
-            <span class="badge bg-secondary">
-              {{ entry.editor_id or _('Tuntematon') }}
-            </span>
-          </small>
-        </div>
-        <a href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}"
-          class="btn btn-sm btn-outline-primary" aria-label="{{ _('Näytä muutokset tästä versiosta') }}">
-          {{ _('Näytä muutokset') }}
-        </a>
-      </li>
-      {% endfor %}
+<li class="list-group-item d-flex justify-content-between align-items-center">
+  <div>
+    <div class="fw-bold">
+  {{ entry.edited_at.strftime('%d.%m.%Y %H:%M:%S') }}
+  <small class="text-muted ms-2" data-timestamp="{{ entry.edited_at.isoformat() }}"></small>
+</div>
+<small class="text-muted d-flex align-items-center gap-2">
+  {{ _('muokannut') }}
+
+  {% set user = _get_user_by_id(entry.edited_by) %}
+  {% if user %}
+    <div class="user-info-wrapper">
+      <img src="{{ user.profile_picture or url_for('static', filename='default-avatar.png') }}"
+           alt="{{ user.username }}"
+           class="rounded-circle user-avatar"
+           data-bs-toggle="popover"
+           data-bs-html="true"
+           data-bs-content="
+            <div class='popover-user-card'>
+            <div class='d-flex align-items-center gap-2 mb-1'>
+              <img src='{{ user.profile_picture or url_for('static', filename='default-avatar.png') }}' 
+                  class='rounded-circle' style='width:40px;height:40px;object-fit:cover;'>
+              <div>
+                <b>{{ user.display_name or user.username }}</b><br>
+                <small class='text-muted'>@{{ user.username }}</small><br>
+                <small class='text-muted'>ID: {{ entry.edited_by }}</small>
+              </div>
+            </div>
+            <div>
+              <small>{{ _('Viimeisin kirjautuminen:') }} {{ user.last_login or _('Tuntematon') }}</small>
+            </div>
+          </div>">
+      <span>{{ user.username }}{% if user.display_name %} ({{ user.display_name }}){% endif %}</span>
+    </div>
+  {% else %}
+    <span class="badge bg-secondary">{{ entry.edited_by or _('Tuntematon') }}</span>
+  {% endif %}
+
+  {% if entry.new_demo == current_demo_data %}
+    <span class="badge bg-success ms-2">{{ _('Nykyinen versio') }}</span>
+  {% endif %}
+</small>
+
+<style>
+.user-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid #1a7f37;
+    transition: transform 0.2s;
+}
+.user-avatar:hover {
+    transform: scale(1.2);
+}
+
+.popover-user-card {
+    min-width: 200px;
+}
+
+.popover-header {
+    font-weight: bold;
+}
+
+.popover-user-card .rounded-circle {
+  max-width: 70px;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Initialize Bootstrap popovers
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    popoverTriggerList.map(function(el) {
+        return new bootstrap.Popover(el, {
+            trigger: 'hover',
+            placement: 'top',
+            html: true,
+            boundary: 'window'
+        })
+    });
+
+    // Relative timestamp
+    dayjs.extend(dayjs_plugin_relativeTime);
+    dayjs.locale("fi");
+    document.querySelectorAll("[data-timestamp]").forEach(el => {
+      const ts = el.getAttribute("data-timestamp");
+      if (ts) el.textContent = "(" + dayjs(ts).fromNow() + ")";
+    });
+});
+</script>
+
+  </div>
+  <a href="{{ url_for('admin_demo.view_demo_diff', demo_id=demo_id, history_id=entry._id) }}"
+     class="btn btn-sm btn-outline-primary">
+    {{ _('Näytä muutokset') }}
+  </a>
+</li>
+{% endfor %}
+
     </ul>
   </div>
   {% else %}

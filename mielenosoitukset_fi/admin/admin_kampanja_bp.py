@@ -31,6 +31,7 @@ def log_request_info():
 
 @admin_kampanja_bp.route("/")
 @login_required
+@permission_required("KAMPANJA")
 def index():
     # hae kaikki vapaaehtoiset listana
     volunteers = list(mongo.volunteers.find({}))
@@ -49,6 +50,7 @@ from flask import jsonify
 @admin_kampanja_bp.route("/api/volunteers/<vol_id>", methods=["PUT"])
 @login_required
 @admin_required
+@permission_required("KAMPANJA")
 def update_volunteer(vol_id):
     """Update volunteer details (edit modal)."""
     data = request.get_json() or {}
@@ -69,6 +71,7 @@ def update_volunteer(vol_id):
 @admin_kampanja_bp.route("/api/volunteers/<vol_id>", methods=["DELETE"])
 @login_required
 @admin_required
+@permission_required("KAMPANJA")
 def delete_volunteer(vol_id):
     """Delete volunteer."""
     mongo.volunteers.delete_one({"_id": ObjectId(vol_id)})
@@ -90,6 +93,7 @@ def confirm_volunteer(vol_id):
 @admin_kampanja_bp.route("/api/volunteers/confirm_all", methods=["POST"])
 @login_required
 @admin_required
+@permission_required("KAMPANJA")
 def confirm_all_volunteers():
     """Confirm all volunteers that are still pending."""
     mongo.volunteers.update_many(
@@ -108,6 +112,7 @@ from flask import Response
 @admin_kampanja_bp.route("/api/volunteers/export/csv")
 @login_required
 @admin_required
+@permission_required("KAMPANJA")
 def export_volunteers_csv():
     """Export all volunteers to CSV."""
     volunteers = list(mongo.volunteers.find({}))

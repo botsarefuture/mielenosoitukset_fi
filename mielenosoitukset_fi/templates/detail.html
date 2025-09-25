@@ -78,1072 +78,998 @@ demo.get('city', 'Tuntematon') ~
   </script>
 {% endblock %}
 
-
-
-
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='/css/toolbox.css' )}}" />
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='/css/details.css' )}}" />-->
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
-<!--<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">-->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/modal.css') }}" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-  :root {
-    --color-bg: light-dark(#f9f9f9, #181a1b);
-    --color-bg-hero: light-dark(#e3f0ff, #23272a);
-    --color-card-bg: light-dark(#fff, #23272a);
-    --color-text: light-dark(#222, #f3f3f3);
-    --color-text-secondary: light-dark(#444, #c7c7c7);
-    --color-primary: light-dark(#0056b3, #4ea1ff);
-    --color-shadow: light-dark(0 2px 12px rgba(0, 0, 0, 0.06), 0 2px 12px rgba(0, 0, 0, 0.3));
-    --color-shadow-hover: light-dark(0 4px 16px rgba(0, 86, 179, 0.08), 0 4px 16px rgba(78, 161, 255, 0.12));
-    --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-    --primary_color: var(--color-primary);
-    --primary_dark_color: light-dark(#003d80, #0056b3);
-    --background: var(--color-card-bg);
-    --primary_text_color: var(--color-text);
-    --primary_strong_text_color: var(--color-primary);
-    --box_shadow: var(--color-shadow);
-    --yellow: #ffe066;
-    --black: light-dark(#222, #f3f3f3);
+:root {
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-primary: light-dark(#0052cc, #3b82f6);
+  --color-primary-hover: light-dark(#003d99, #2563eb);
+  --color-secondary: light-dark(#ff6b00, #f97316);
+  --color-secondary-hover: light-dark(#e55a00, #ea580c);
+  --color-accent: light-dark(#06b6d4, #0891b2);
+  --color-success: light-dark(#16a34a, #22c55e);
+  --color-warning: light-dark(#d97706, #f59e0b);
+  --color-error: light-dark(#dc2626, #ef4444);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+  --color-gradient-accent: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark:root {
+  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  --color-gradient-accent: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  margin: 0;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+/* Container */
+.container-main-content {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 2rem;
+}
+
+/* Hero Section */
+.demo-hero {
+  background: var(--color-gradient-primary);
+  border-radius: var(--border-radius-lg);
+  padding: 4rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+  margin-bottom: 3rem;
+}
+
+.demo-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.demo-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.demo-title {
+  color: white;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.demo-datetime {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.demo-location {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+/* Cover Image */
+.demo-cover {
+  margin-bottom: 3rem;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--color-shadow-lg);
+}
+
+.demo-cover img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 3rem 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border-radius: 50px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: var(--transition);
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: var(--color-gradient-primary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--color-gradient-secondary);
+  color: white;
+  box-shadow: var(--color-shadow);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-border);
+}
+
+.btn-outline:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.btn-social {
+  background: var(--color-card-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn-social:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow);
+}
+
+.btn-social.facebook {
+  background: #1877f2;
+  color: white;
+}
+
+.btn-social.twitter {
+  background: #000000;
+  color: white;
+}
+
+.btn-social.linkedin {
+  background: #0077b5;
+  color: white;
+}
+
+/* Participation Section */
+.participation-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  margin: 3rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.participation-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-accent);
+}
+
+.like-button {
+  background: var(--color-gradient-accent);
+  color: white;
+  padding: 1.25rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-radius: var(--border-radius);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--color-shadow);
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.like-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.like-button.liked {
+  background: var(--color-gradient-secondary);
+}
+
+.like-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Content Sections */
+.content-section {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.content-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-primary);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.content-section:hover::before {
+  opacity: 1;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title i {
+  font-size: 1.5rem;
+}
+
+/* Tags */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.tag {
+  background: var(--color-gradient-secondary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: var(--color-shadow);
+}
+
+.tag:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--color-shadow-lg);
+  color: white;
+}
+
+/* Countdown */
+.countdown-card {
+  background: var(--color-gradient-accent);
+  color: white;
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  margin: 3rem 0;
+  box-shadow: var(--color-shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.countdown-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.countdown-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.countdown-timer {
+  font-size: 2rem;
+  font-weight: 800;
+  position: relative;
+  z-index: 2;
+}
+
+/* Map */
+.map-container {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  /*padding: 2.5rem;*/
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  margin: 3rem 0;
+}
+
+.map-wrapper {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  height: 400px;
+  box-shadow: var(--color-shadow);
+}
+
+/* Organizers */
+.organizers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.organizer-card {
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.organizer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-gradient-secondary);
+}
+
+.organizer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.organizer-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.organizer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.contact-item a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.contact-item a:hover {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
+/* Info Alerts */
+.info-alert {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  color: var(--color-accent);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin: 2rem 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.info-alert.warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: var(--color-warning);
+}
+
+.info-alert.success {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: var(--color-success);
+}
+
+/* Navigation */
+.nav-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 3rem 0;
+}
+
+/* Report Button */
+#report-selection-btn {
+  position: absolute;
+  z-index: 2000;
+  display: none;
+  padding: 0.5rem 1rem;
+  background: var(--color-warning);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--color-shadow);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#report-selection-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container-main-content {
+    padding: 0 1rem;
+    margin: 1rem auto;
   }
 
-  .button,
-  .btn,
-  .btn-primary,
-  .btn-warning,
-  .btn-secondary {
-    background: var(--primary_color) !important;
-    color: #fff !important;
-    border: 2px solid var(--primary_dark_color) !important;
-    border-radius: 2em !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    font-weight: 600;
-    transition: background 0.2s, box-shadow 0.2s, color 0.2s;
+  .demo-hero {
+    padding: 3rem 1.5rem;
   }
 
-  .button:hover,
-  .btn:hover,
-  .btn-primary:hover,
-  .btn-warning:hover,
-  .btn-secondary:hover {
-    background: var(--primary_dark_color) !important;
-    color: #fff !important;
-    border-color: var(--primary_color) !important;
+  .demo-title {
+    font-size: 2rem;
   }
 
-  /* Modal z-index fix */
-  .modal-backdrop {
-    z-index: 1000001 !important;
-  }
-
-  .modal {
-    z-index: 1000002 !important;
-  }
-
-  main body {
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
-
-  main .container-main-content {
-    background: var(--color-card-bg);
-    border-radius: 1.2em;
-    box-shadow: var(--box_shadow);
-    padding: 2em 1em 2em 1em;
-    margin-bottom: 2em;
-    margin-top: 1.5em;
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
-    border: none;
-  }
-
-
-  /* Element | https://mielenosoitukset.fi/demonstration/68affd4c3896ae7c4985e030 */
-
-
-
-  main h1,
-  main .subtitle {
-    color: var(--primary_color);
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    text-align: center;
-  }
-
-  main h1 {
-    font-size: 2.1em;
-    margin-bottom: 0.5em;
-  }
-
-  main .subtitle {
-    font-size: 1.5em;
-    margin-bottom: 0.7em;
-  }
-
-  main .button-container {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-  }
-
-  main .button {
-    background-color: var(--primary_color);
-    color: #fff;
-    padding: 0.7em 1.5em;
-    border: 2px solid var(--primary_dark_color);
-    border-radius: 2em;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 1.05em;
-    font-weight: 600;
-    transition: background 0.2s, box-shadow 0.2s, color 0.2s;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  }
-
-  main .button:hover {
-    background-color: var(--primary_dark_color);
-    color: #fff;
-    box-shadow: var(--color-shadow-hover);
-    filter: brightness(1.08);
-    border-color: var(--primary_color);
-  }
-
-  main .like-count {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 1em;
-    color: var(--primary_strong_text_color);
-  }
-
-  main .like-count i {
-    color: var(--primary_color);
-  }
-
-  main .topics ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  main .topics .tag {
-    background-color: var(--primary_color);
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    text-decoration: none;
-    transition: transform 0.2s, background-color 0.2s;
-  }
-
-  main .topics .tag:hover {
-    background-color: var(--primary_dark_color);
-    transform: translateY(-2px);
-  }
-
-  main #basicshit {
-    display: flex;
+  .demo-datetime {
+    font-size: 1.25rem;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-bottom: 20px;
+    gap: 0.5rem;
   }
 
-  main #basicshit h1 {
-    margin: 10px 0;
-    padding: 0;
-    font-size: 2.5em;
-    color: var(--primary_strong_text_color);
+  .content-section {
+    padding: 2rem 1.5rem;
   }
 
-  .dark .repeating-alert.mt-3 {
-    color: black;
+  .section-title {
+    font-size: 1.5rem;
   }
 
-  main #basicshit img {
-    max-width: 100%;
-    max-height: 400px;
-    margin: 10px 0;
-    border-radius: 10px;
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  main #date {
-    font-size: 1.2em;
-    margin: 0;
-    padding: 0;
-    color: var(--primary_strong_text_color);
+  .organizers-grid {
+    grid-template-columns: 1fr;
   }
 
-  main .container {
-    margin-top: 20px;
-    padding: 20px;
-    background: var(--background);
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    text-align: center;
-    border: none;
-    margin-bottom: 24px;
+  .countdown-timer {
+    font-size: 1.5rem;
   }
 
-  main .container:last-child {
-    margin-bottom: 0;
+  .map-wrapper {
+    height: 300px;
   }
+}
 
-  main #orginfo,
-  main #infocontainer {
-    border: none;
-    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
-    background: var(--color-title-accent);
-    border-radius: 0.7em;
-    margin-bottom: 24px;
+/* Animation Classes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
-
-  main .repeating-alert {
-    border: none;
-    box-shadow: none;
-    background-color: var(--yellow);
-    color: var(--black);
-    padding: 1em;
-    border-radius: 0.5em;
-    text-align: center;
-    margin-top: 1em;
-  }
-
-  main .repeating-alert strong {
-    font-size: 1.2em;
-    display: block;
-  }
-
-  main .display-all {
-    display: block;
-    margin-top: 0.5em;
-  }
-
-  #report-selection-btn {
-    position: absolute;
-    z-index: 2000;
-    display: none;
-    padding: 6px 14px;
-    background: #ffc107;
-    color: #222;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    transition: background 0.2s;
-    pointer-events: auto;
-  }
-
-  #report-selection-btn:hover {
-    background: #ffdb5c;
-  }
-
-  #reminder-modal .modal-content {
-    background: var(--color-card-bg);
-    color: var(--color-text);
-    border-radius: 1em;
-    box-shadow: var(--box_shadow);
-  }
-
-  #reminder-modal .modal-header,
-  #reminder-modal .modal-footer {
-    background: var(--color-title-accent);
-    color: var(--primary_color);
-    border-top-left-radius: 1em;
-    border-top-right-radius: 1em;
-  }
-
-  #reminder-modal .modal-title {
-    color: var(--primary_color);
-  }
-
-  #reminder-modal .form-control {
-    background: var(--background);
-    color: var(--primary_text_color);
-    border: 1px solid var(--primary_color);
-  }
-
-  #reminder-modal .form-control:focus {
-    border-color: var(--primary_dark_color);
-    box-shadow: 0 0 0 2px var(--primary_color);
-  }
-
-  #reminder-modal input.form-control::placeholder {
-    color: var(--color-text-secondary);
+  to {
     opacity: 1;
+    transform: translateY(0);
   }
+}
 
-  .modal input.form-control:focus {
-    border-color: var(--primary_dark_color);
-    box-shadow: 0 0 0 2px var(--primary_color);
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus States for Accessibility */
+.btn:focus,
+.like-button:focus,
+.tag:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Loading States */
+.btn.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn.loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#info-grid {
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  gap: 2rem;}
+
+@media screen and (max-width: 600px) {
+  #info-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-
-  .modal input.form-control::placeholder,
-  textarea.form-control::placeholder {
-    color: var(--color-text-secondary);
-    opacity: 1;
-  }
-
-  #reminder-modal .button {
-    background: var(--primary_color);
-    color: #fff;
-  }
-
-  #reminder-modal .button:hover {
-    background: var(--primary_dark_color);
-  }
-
-  /* Popup/modal base styles */
-
-  .button,
-  .btn-primary,
-  .btn-warning,
-  .btn-secondary {
-    background: var(--primary_color) !important;
-    color: #fff !important;
-    border: none;
-  }
-
-  .button:hover,
-  .btn-primary:hover,
-  .btn-warning:hover,
-  .btn-secondary:hover {
-    background: var(--primary_dark_color) !important;
-  }
-
-  .alert-success,
-  .alert-danger {
-    color: var(--primary_text_color);
-    background: var(--color-title-accent);
-    border: 1px solid var(--primary_color);
-  }
-
-  .button-container.reminder-top {
-    justify-content: flex-start;
-    position: relative;
-  }
-
-  .organizer-info p {
-    color: #444;
-  }
-
-
-  .demo-cover-picture img {
-    /* object-fit: cover; */
-    object-fit: scale-down !important;
-    aspect-ratio: 16 / 9 !important;
-  }
-
-  #main * {
-    box-sizing: border-box;
-  }
-
-  /* Ensure all modals are above the header */
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-main-content">
-
-  <!-- Make sure to include Font Awesome in your <head> -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-
-  <main id="main">
-    <div class="button-container" style="margin-bottom: 1.2em;">
-      <button class="button btn btn-warning" data-bs-toggle="modal" data-bs-target="#report-modal">
-        <i class="fa fa-question-circle"></i> {{ _('Ilmoita virheestä') }}
-      </button>
-    </div>
-
-    <!-- IMAGE -->
-    {% if demo['img'] and not demo['img'] == 'None' %}
-    <img src="{{ demo['img'] }}" alt="{{ demo['title'] }}" />
-    {% endif %}
-
-    {% if demo.cover_picture and not demo.cover_picture == 'None' %}
-    <div class="demo-cover-picture">
-      <img src="{{ demo.cover_picture }}" alt="Cover Photo" style="width:100%;max-height:350px;object-fit:cover;">
-    </div>
-    {% endif %}
-
-    <section id="basicshit" class="mb-4">
-      <h1 class="display-4 fw-bold mb-2">{{ demo['title'] }}</h1>
-      <p id="date" class="lead text-primary mb-0">
-        {{ demo['date'] | date('%d.%m.%Y') }}
+  
+  <!-- Demo Hero -->
+  <section class="demo-hero animate-fade-in-up">
+    <div class="demo-hero-content">
+      <h1 class="demo-title">{{ demo['title'] }}</h1>
+      <div class="demo-datetime">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>{{ demo['date'] | date('%d.%m.%Y') }}</span>
+        <i class="fa-solid fa-clock"></i>
         {% if demo['end_time'] %}
-        {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}
+        <span>{{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] | time('%H:%M') }}</span>
         {% else %}
-        {{ _('klo') }} {{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}
+        <span>{{ demo['start_time'] | time('%H:%M') }} {{ _('alkaen') }}</span>
         {% endif %}
-      </p>
-    </section>
-
-    <nav class="button-container flex-wrap mb-3" aria-label="Pikatoiminnot">
-      <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
-        target="_blank" class="button btn btn-primary d-flex align-items-center gap-2"
-        aria-label="{{ _('Jaa Facebookissa') }}">
-        <i class="fab fa-facebook-f"></i> {{ _('Jaa Facebookissa') }}
-      </a>
-      <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-        target="_blank" class="button btn btn-primary d-flex align-items-center gap-2" aria-label="{{ _('Jaa Xssä') }}">
-        <i class="fab fa-x-twitter"></i> {{ _('Jaa Xssä') }}
-      </a>
-      <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
-        target="_blank" class="button btn btn-primary d-flex align-items-center gap-2"
-        aria-label="{{ _('Jaa LinkedInissä') }}">
-        <i class="fab fa-linkedin-in"></i> {{ _('Jaa LinkedInissä') }}
-      </a>
-      <!--
-      <a href="{{ url_for('download_material', demo_id=demo['_id']) }}" class="button btn btn-primary d-flex align-items-center gap-2" aria-label="{{ _('Lataa graafinen materiaali') }}">
-        <i class="fas fa-download"></i> {{ _('Lataa graafinen materiaali') }}
-      </a>-->
-
-      <button type="button" class="button btn btn-primary d-flex align-items-center gap-2" id="open-reminder-btn"
-        data-bs-toggle="modal" data-bs-target="#reminder-modal" aria-label="{{ _('Tilaa muistutus sähköpostiisi') }}">
-        <i class="fas fa-bell"></i> {{ _('Tilaa muistutus sähköpostiisi') }}
-      </button>
-    </nav>
-    <section
-      class="d-flex flex-column align-items-center justify-content-center py-3 px-2 border rounded bg-light-dark() text-light-dark() w-auto mx-auto"
-      style="max-width: 250px;" aria-label="{{ _('Osallistuminen') }}">
-
-      <button id="like-button"
-        class="btn btn-primary like-button d-flex align-items-center gap-2 mb-2 position-relative"
-        onclick="handleLikeClick('{{ demo['_id'] }}')" aria-pressed="false">
-        <i class="fas fa-thumbs-up"></i>
-        <span id="like-btn-text">{{ _('Osallistun') }}</span>
-
-        {% if not current_user.is_authenticated %}
-        <!-- login prompt tooltip -->
-        <span
-          class="login-prompt position-absolute top-100 start-50 translate-middle mt-1 px-2 py-1 rounded shadow text-white bg-dark"
-          style="display:none; white-space: nowrap; z-index:1000;">
-          {{ _('Kirjaudu sisään osallistuaksesi') }}
-        </span>
-        {% endif %}
-      </button>
-
-      <div class="like-count d-flex align-items-center gap-1">
-        <i class="fas fa-users text-secondary"></i>
-        <span id="like-count" class="fw-bold" style="transition: transform 0.3s ease;">{{ demo['likes'] }}</span>
       </div>
-    </section>
+      <div class="demo-location">
+        <i class="fa-solid fa-location-dot"></i>
+        {{ demo['address'] }}, {{ demo['city'] }}
+      </div>
+    </div>
+  </section>
 
-    <script>
-      // handle ?action=like in URL
-      document.addEventListener("DOMContentLoaded", () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('action') === 'like') {
-          handleLikeClick('{{ demo["_id"] }}');
-        }
-        if (urlParams.has('action')) {
-          urlParams.delete('action');
-          const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-          window.history.replaceState({}, document.title, newUrl);
-        }
-      });
+  <!-- Cover Image -->
+  {% if demo.cover_picture and not demo.cover_picture == 'None' %}
+  <section class="demo-cover animate-fade-in-up">
+    <img src="{{ demo.cover_picture }}" alt="Cover Photo">
+  </section>
+  {% endif %}
 
-      function handleLikeClick(demoId) {
-        {% if not current_user.is_authenticated %}
-        window.location.href = "{{ url_for('users.auth.login') }}?next={{ request.path }}?action=like";
-        return;
-        {% else %}
-        toggleLike(demoId, true); // pass 'true' to trigger animation
-        {% endif %}
-      }
+  {% if demo['img'] and not demo['img'] == 'None' %}
+  <section class="demo-cover animate-fade-in-up">
+    <img src="{{ demo['img'] }}" alt="{{ demo['title'] }}">
+  </section>
+  {% endif %}
 
+  <!-- Action Buttons -->
+  <div class="action-buttons animate-fade-in-up">
+    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#report-modal">
+      <i class="fa-solid fa-flag"></i>
+      {{ _('Ilmoita virheestä') }}
+    </button>
+    <button type="button" class="btn btn-primary" id="open-reminder-btn" data-bs-toggle="modal" data-bs-target="#reminder-modal">
+      <i class="fa-solid fa-bell"></i>
+      {{ _('Tilaa muistutus') }}
+    </button>
+  </div>
+
+  <!-- Social Share -->
+  <div class="action-buttons animate-fade-in-up">
+    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
+       target="_blank" class="btn btn-social facebook">
+      <i class="fa-brands fa-facebook-f"></i>
+      {{ _('Jaa Facebookissa') }}
+    </a>
+    <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
+       target="_blank" class="btn btn-social twitter">
+      <i class="fa-brands fa-x-twitter"></i>
+      {{ _('Jaa X:ssä') }}
+    </a>
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
+       target="_blank" class="btn btn-social linkedin">
+      <i class="fa-brands fa-linkedin-in"></i>
+      {{ _('Jaa LinkedInissä') }}
+    </a>
+  </div>
+
+  <!-- Participation Card -->
+  <section class="participation-card animate-fade-in-up">
+    <button id="like-button" class="like-button" onclick="handleLikeClick('{{ demo['_id'] }}')" aria-pressed="false">
+      <i class="fa-solid fa-thumbs-up"></i>
+      <span id="like-btn-text">{{ _('Osallistun') }}</span>
       {% if not current_user.is_authenticated %}
-      const likeButton = document.getElementById("like-button");
-      const loginPrompt = likeButton.querySelector(".login-prompt");
-
-      likeButton.addEventListener("mouseenter", () => loginPrompt.style.display = "block");
-      likeButton.addEventListener("mouseleave", () => loginPrompt.style.display = "none");
+      <span class="login-prompt position-absolute top-100 start-50 translate-middle mt-1 px-2 py-1 rounded shadow text-white bg-dark"
+            style="display:none; white-space: nowrap; z-index:1000;">
+        {{ _('Kirjaudu sisään osallistuaksesi') }}
+      </span>
       {% endif %}
+    </button>
+    
+    <div class="like-count">
+      <i class="fa-solid fa-users"></i>
+      <span id="like-count">{{ demo['likes'] }}</span>
+      <span>{{ _('osallistujaa') }}</span>
+    </div>
+  </section>
 
-      // bounce animation on count
-      function animateLikeCount() {
-        const count = document.getElementById("like-count");
-        count.style.transform = "scale(1.4)";
-        setTimeout(() => count.style.transform = "scale(1)", 300);
-      }
-    </script>
+  <!-- Tags -->
+  {% if demo["tags"] and demo["tags"]|length > 0 %}
+  <div class="tags-container animate-fade-in-up">
+    {% for tag in demo["tags"] %}
+    <a href="{{ url_for('tag_detail', tag_name=tag) }}" class="tag">
+      #{{ tag }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
 
+  <!-- Description -->
+  {% if demo['description'] %}
+  <section class="content-section animate-fade-in-up">
+    <h2 class="section-title">
+      <i class="fa-solid fa-align-left"></i>
+      {{ _('Kuvaus') }}
+    </h2>
+    <div style="font-size: 1.1rem; line-height: 1.8;">
+      {{ demo['description']|safe }}
+    </div>
+  </section>
+  {% endif %}
 
+  <!-- Countdown -->
+  <section class="countdown-card animate-fade-in-up">
+    <h2 class="countdown-title">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
+    <div id="timer" class="countdown-timer"></div>
+  </section>
 
-    <hr style="margin: 20px 0;">
+  <!-- Location & Route -->
+  <section class="content-section animate-fade-in-up">
+    <h2 class="section-title">
+      <i class="fa-solid fa-map-location-dot"></i>
+      {{ _('Sijainti ja reitti') }}
+    </h2>
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin-bottom: 0.5rem;">
+        {{ demo['address'] }}, {{ demo['city'] }}
+      </div>
+    </div>
 
-    {% if demo["tags"] and demo["tags"]|length > 0 %}
-    <nav class="topics mb-3" aria-label="Tunnisteet">
-      <ul>
-        {% for tag in demo["tags"] %}
-        <li>
-          <a href="{{ url_for('tag_detail', tag_name=tag) }}" class="tag" aria-label="#{{ tag }}">
-            #{{ tag }}
-          </a>
-        </li>
-        {% endfor %}
-      </ul>
-    </nav>
-    {% endif %}
-
-    {% if demo['description'] %}
-    <section class="container mb-4" aria-label="Kuvaus">
-      <h2 class="subtitle">{{ _('Mielenosoituksen esittelyteksti') }}</h2>
-      <div class="fs-5">{{ demo['description']|safe }}</div>
-    </section>
-    {% endif %}
-
-    <section class="countdown mb-4" aria-label="Ajanlaskuri">
-      <h2 class="subtitle">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
-      <div id="timer" class="fs-4 text-center text-primary"></div>
-    </section>
-
-    <section class="container mt-4 mb-4" aria-label="Sijainti ja reitti">
-      <h2 class="subtitle text-center">{{ _('Sijainti') }}</h2>
-      <p class="text-center mb-2">{{ demo['address'] }}, {{ demo['city'] }}</p>
-      {% if demo['route'] and demo['route'] != 'None' %}
-      <div class="route mt-3 mb-3">
-        <p><strong>{{ _('Marssin reitti:') }}</strong></p>
+    {% if demo['route'] and demo['route'] != 'None' %}
+    <div class="info-alert">
+      <i class="fa-solid fa-route"></i>
+      <div>
+        <strong>{{ _('Marssin reitti:') }}</strong>
         {% if demo['route'] is string %}
-        <p>{{ demo['route'] }}</p>
+        <p style="margin: 0.5rem 0 0 0;">{{ demo['route'] }}</p>
         {% elif demo['route'] is iterable %}
-        <ol class="list-group list-group-numbered">
+        <ol style="margin: 0.5rem 0 0 1.5rem; padding-left: 1rem;">
           {% for step in demo['route'] %}
-          <li class="list-group-item">{{ step }}</li>
+          <li style="margin-bottom: 0.25rem;">{{ step }}</li>
           {% endfor %}
         </ol>
         {% endif %}
       </div>
-      {% endif %}
-      <div class="map mt-4 d-flex justify-content-center">
-        <div id="map-container" style="position:relative; width: 100%; max-width: 700px; margin: 0 auto;">
-          <div id="map" class="rounded shadow" style="height: 350px; width: 100%; min-width: 250px;"></div>
+    </div>
+    {% endif %}
+
+    <div class="map-container">
+      <div class="map-wrapper">
+        <div id="map" style="width: 100%; height: 100%;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Additional Info -->
+  {% if demo['facebook'] or demo['recurs'] %}
+  <section class="content-section animate-fade-in-up">
+    <h2 class="section-title">
+      <i class="fa-solid fa-info-circle"></i>
+      {{ _('Lisätiedot') }}
+    </h2>
+    
+    <div id="info-grid">
+      {% if demo['facebook'] %}
+      <div class="info-alert">
+        <i class="fa-brands fa-facebook"></i>
+        <div>
+          <strong>{{ _('Facebook-tapahtuma') }}</strong>
+          <p style="margin: 0.5rem 0 1rem 0;">{{ _('Lisätietoja ja keskustelua Facebook-sivulla') }}</p>
+          <a href="{{ demo['facebook'] }}" target="_blank" class="btn btn-primary">
+            <i class="fa-brands fa-facebook"></i>
+            {{ _('Avaa Facebook') }}
+          </a>
         </div>
       </div>
-    </section>
+      {% endif %}
 
-    <section id="subcontainer1" class="mb-4 container">
+      {% if demo["recurs"] and demo['repeat_schedule'] %}
+      <div class="info-alert warning">
+        <i class="fa-solid fa-repeat"></i>
+        <div>
+          <strong>{{ _('Toistuva tapahtuma') }}</strong>
+          <p style="margin: 0.5rem 0 1rem 0;">{{ _('Tämä mielenosoitus järjestetään säännöllisesti.') }} {{ toistuvuus }}</p>
+          <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}" class="btn btn-primary">
+            <i class="fa-solid fa-calendar"></i>
+            {{ _('Näytä kaikki ajankohdat') }}
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
 
-      {% if demo['facebook'] or demo['recurs'] %}
-      <section id="infocontainer" class="mb-4" aria-label="Lisätiedot">
-        <h2 class="subtitle mb-3">{{ _('Lisätiedot') }}</h2>
-        <div class="row g-3">
+  <!-- Organizers -->
+  <section class="content-section animate-fade-in-up">
+    <h2 class="section-title">
+      <i class="fa-solid fa-users"></i>
+      {{ _('Järjestäjät') }}
+    </h2>
 
-          {% if demo['facebook'] %}
-          <div class="col-12 col-md-6">
-            <a class="btn btn-facebook w-100 d-flex align-items-center justify-content-center animate-btn"
-              href="{{ demo['facebook'] }}" target="_blank">
-              <i class="fab fa-facebook me-2"></i> {{ _('Facebook-tapahtuma') }}
+    {% if demo['organizers'] and demo['organizers']|length > 0 %}
+    <div class="organizers-grid">
+      {% for org in demo['organizers'] %}
+      <div class="organizer-card">
+        <h3 class="organizer-name">
+          <i class="fa-solid fa-building"></i>
+          {{ org.name }}
+        </h3>
+        
+        <div class="organizer-contact">
+          {% if org.website %}
+          <div class="contact-item">
+            <i class="fa-solid fa-globe"></i>
+            <a href="{{ org.website }}" target="_blank" rel="noopener noreferrer">{{ org.website }}</a>
+          </div>
+          {% endif %}
+          
+          {% if org.email %}
+          <div class="contact-item">
+            <i class="fa-solid fa-envelope"></i>
+            <a href="mailto:{{ org.email }}">{{ org.email }}</a>
+          </div>
+          {% endif %}
+          
+          {% if org.organization_id and org.organization_id != "None" %}
+          <div class="contact-item">
+            <i class="fa-solid fa-id-badge"></i>
+            <a href="{{ org.url if org.url else '/organization/' ~ org._id }}" target="_blank">
+              {{ _('Organisaation profiili') }}
             </a>
           </div>
           {% endif %}
-
-          {% if demo["recurs"] and demo['repeat_schedule'] %}
-          <div class="col-12 col-md-6">
-            <div class="alert alert-info p-3 d-flex flex-column justify-content-between h-100 animate-badge">
-              <div>
-                <strong>{{ _('Mielenosoitus toistuu säännöllisesti') }}</strong>
-                <div class="mt-1">{{ toistuvuus }}</div>
-
-
-              </div>
-              <a href="{{ url_for('siblings_meeting', parent=demo['parent']) }}"
-                class="btn btn-outline-primary mt-3 w-100 animate-btn">
-                <i class="fas fa-arrow-right"></i> {{ _('Näytä seuraavat') }}
-              </a>
-            </div>
-          </div>
-          {% endif %}
-
         </div>
-      </section>
-      {% endif %}
 
-      <section id="orginfo" class="mb-4" aria-label="Järjestäjät">
-        <h2 class="subtitle mb-3">{{ _('Järjestäjät') }}</h2>
-        <div class="row g-4" id="organizers-list">
-
-          {% if demo['organizers'] and demo['organizers']|length > 0 %}
-          {% for org in demo['organizers'] %}
-          <div class="col-12 col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 bg-card text-card animate-card">
-              <div class="card-body">
-                <h5 class="card-title mb-2"><i class="fas fa-user me-2"></i>{{ org.name }}</h5>
-
-                {% if org.organization_id and org.organization_id != "None" %}
-
-                <a href="{{ org.url if org.url else '/organization/' ~ org._id }}"
-                  class="btn btn-sm btn-outline-primary d-flex align-items-center" target="_blank"
-                  rel="noopener noreferrer">
-                  <i class="fas fa-id-badge me-1"></i> {{ _('Mielenosoitukset.fi -profiili') }}
-                </a>
-                {% endif %}
-
-
-                {% if org.website %}
-                <p class="mb-2">
-                  <i class="fas fa-globe me-1 text-secondary"></i>
-                  <a href="{{ org.website }}" target="_blank" class="text-link">{{ org.website }}</a>
-                </p>
-                {% endif %}
-
-                {% if org.email %}
-                <p class="mb-2">
-                  <i class="fas fa-envelope me-1 text-secondary"></i>
-                  <a href="mailto:{{ org.email }}" class="text-link">{{ org.email }}</a>
-                </p>
-                {% endif %}
-
-              </div>
-
-              {% if org.tags %}
-              <div class="card-footer bg-card-footer">
-                {% for tag in org.tags %}
-                <span class="badge bg-secondary me-1 animate-badge">{{ tag }}</span>
-                {% endfor %}
-              </div>
-              {% endif %}
-            </div>
-          </div>
+        {% if org.tags %}
+        <div style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          {% for tag in org.tags %}
+          <span style="background: rgba(0, 82, 204, 0.1); color: var(--color-primary); padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.8rem; font-weight: 500;">{{ tag }}</span>
           {% endfor %}
-          {% else %}
-          <div class="col-12">
-            <div class="alert alert-secondary">{{ _('Ei järjestäjätietoja saatavilla.') }}</div>
-          </div>
-          {% endif %}
-
         </div>
-      </section>
-    </section>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="info-alert">
+      <i class="fa-solid fa-exclamation-triangle"></i>
+      <div>{{ _('Järjestäjätietoja ei ole saatavilla.') }}</div>
+    </div>
+    {% endif %}
+  </section>
 
-    <style>
-      /* Cards and text using light-dark() for automatic theme switch */
-      .bg-card {
-        background-color: light-dark(#fff, #1c1c1c);
-        color: light-dark(#212529, #e9ecef);
-        border-radius: 0.75rem;
-      }
+  <!-- Navigation -->
+  <div class="nav-buttons animate-fade-in-up">
+    {% if request.referrer is defined %}
+    <a href="{{ request.referrer }}" class="btn btn-outline">
+      <i class="fa-solid fa-arrow-left"></i>
+      {{ _('Takaisin edelliselle sivulle') }}
+    </a>
+    {% endif %}
+    <a href="{{ url_for('demonstrations') }}" class="btn btn-primary">
+      <i class="fa-solid fa-list"></i>
+      {{ _('Kaikki mielenosoitukset') }}
+    </a>
+    <a href="{{ url_for('submit') }}" class="btn btn-secondary">
+      <i class="fa-solid fa-plus"></i>
+      {{ _('Ilmoita mielenosoituksesta') }}
+    </a>
+  </div>
 
-      .text-card {
-        color: inherit;
-      }
+  <!-- Report Selection Button -->
+  <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
 
-      .bg-card-footer {
-        background-color: light-dark(#f8f9fa, #2c2c2c);
-      }
+  <!-- MODALS -->
+  {% import '_modals/reminder-modal.html' as reminder_modal %}
+  {{ reminder_modal.render_reminder_modal(demo) }}
 
-      /* Alerts, badges, buttons */
-      .alert-info {
-        background-color: light-dark(#e7f1ff, #2a2a3a);
-        color: light-dark(#0d6efd, #a0c4ff);
-      }
+  {% import '_modals/report-error-modal.html' as report_modal %}
+  {{ report_modal.render_report_error_modal(demo) }}
 
-      .badge {
-        background-color: light-dark(#6c757d, #495057);
-        color: #fff;
-      }
+  {% import '_modals/past-demo-modal.html' as past_demo_modal %}
+  {{ past_demo_modal.render_past_demo_modal(demo) }}
 
-      .btn-outline-primary {
-        color: light-dark(#0d6efd, #74b9ff);
-        border-color: light-dark(#0d6efd, #74b9ff);
-      }
-
-      .btn-outline-primary:hover {
-        background-color: light-dark(#0d6efd, #74b9ff);
-        color: #fff;
-      }
-
-      /* Facebook button */
-      .btn-facebook {
-        background-color: #1877f2;
-        color: #fff;
-      }
-
-      .btn-facebook:hover {
-        background-color: #145dbf;
-      }
-
-      /* Animations and hover effects */
-      .animate-badge {
-        animation: pop-in 0.4s ease forwards;
-      }
-
-      .animate-btn {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-
-      .animate-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      }
-
-      .animate-card {
-        animation: fade-in 0.5s ease forwards;
-      }
-
-      .animate-card:hover {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-      }
-
-      /* Keyframes */
-      @keyframes pop-in {
-        0% {
-          transform: scale(0.5);
-          opacity: 0;
-        }
-
-        100% {
-          transform: scale(1);
-          opacity: 1;
-        }
-      }
-
-      @keyframes fade-in {
-        0% {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      /* Links */
-      .text-link {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .text-link:hover {
-        text-decoration: underline;
-      }
-    </style>
-
-
-    <nav class="d-flex justify-content-center flex-wrap gap-2 mb-3" aria-label="Linkit takaisin">
-      {% if request.referrer is defined %}
-      <a href="{{ request.referrer }}" class="btn btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-1"></i>{{ _('Takaisin edelliselle sivulle') }}
-      </a>
-      {% endif %}
-
-      <a href="{{ url_for('demonstrations') }}" class="btn btn-primary">
-        <i class="fa-solid fa-list me-1"></i>{{ _('Takaisin kaikkiin mielenosoituksiin') }}
-      </a>
-    </nav>
-
-
-    </section>
-    <button id="report-selection-btn" type="button">{{ _('Ilmoita virheestä tästä kohdasta') }}</button>
-
-    <!-- MODALS -->
-    {% import '_modals/reminder-modal.html' as reminder_modal %}
-    {{ reminder_modal.render_reminder_modal(demo) }}
-
-    {% import '_modals/report-error-modal.html' as report_modal %}
-    {{ report_modal.render_report_error_modal(demo) }}
-
-    {% import '_modals/past-demo-modal.html' as past_demo_modal %}
-    {{ past_demo_modal.render_past_demo_modal(demo) }}
-
-  </main>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  /**
-   * Checks if the demonstration date is in the past and shows a warning popup.
-   * THIS IS THE FIXED VERSION.
-   * Changelog:
-   * - Changed demoDate to demoEnds for clarity
-   * - Added handling for missing end_time
-   * - Improved comments and code readability
-   * Parameters
-   * ----------
-   * None.
-   * 
-   * Returns
-   * -------
-   * None.
-   */
-  document.addEventListener("DOMContentLoaded", () => {
-    demo_endtime = "{{ demo['end_time'] if demo['end_time'] else '23:59:59' }}";
-    if (demo_endtime === "None") {
-      demo_endtime = "23:59:59"; // Default to end of day if end_time is "None"
-    }
-    // if demo['end_time'] is None, assume it ends at 23:59:59, it might also be formatted as a string "None"
-    const demoEnds = new Date("{{ demo['date'] }}T" + demo_endtime);
-    console.log("{{ demo['end_time'] }}");
-    const now = new Date();
-
-    // Show the modal if the demo has already ended
-
-    if (demoEnds < now) {
-      const pastDemoModal = new bootstrap.Modal(document.getElementById("past-demo-modal"));
-      pastDemoModal.show();
-    }
-  });
-</script>
-
-<script>
-  // Data initialization: use a single demo object for clarity
+  // Demo data initialization
   var demoData = {{ demo | tojson | safe }};
-
-  // could we put it in window.demoData = ... ?
-
+  window.demoId = "{{ demo['_id'] }}";
+  
+  // Check if demo has coordinates
   function _has_coords(demo) {
     return demo.latitude && demo.longitude;
   }
 
+  // Handle like click
+  function handleLikeClick(demoId) {
+    {% if not current_user.is_authenticated %}
+    window.location.href = "{{ url_for('users.auth.login') }}?next={{ request.path }}?action=like";
+    return;
+    {% else %}
+    toggleLike(demoId, true);
+    {% endif %}
+  }
 
-  // Map Initialization if location data is available
-  document.addEventListener("DOMContentLoaded", function () {
-    if (_has_coords(demoData)) {
-      // Initialize the map
+  {% if not current_user.is_authenticated %}
+  const likeButton = document.getElementById("like-button");
+  const loginPrompt = likeButton.querySelector(".login-prompt");
+  if (loginPrompt) {
+    likeButton.addEventListener("mouseenter", () => loginPrompt.style.display = "block");
+    likeButton.addEventListener("mouseleave", () => loginPrompt.style.display = "none");
+  }
+  {% endif %}
 
-      const map = L.map("map", {
-        center: [demoData.latitude, demoData.longitude],
-        zoom: 13,
-        scrollWheelZoom: false,
-        zoomControl: true,
-        attributionControl: true,
-      });
-      map.invalidateSize();
-      setTimeout(() => { map.invalidateSize(); }, 300);
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(map);
-      L.marker([demoData.latitude, demoData.longitude])
-        .addTo(map)
-        .bindPopup(demoData.address)
-        .openPopup();
-    } else {
-      // Remove the map container if no coordinates are available
-      const mapElement = document.getElementById("map");
-      if (mapElement) {
-        mapElement.remove();
-      }
-      console.warn("No coordinates available for the demonstration.");
-      const mapContainer = document.getElementById("map-container");
-      if (mapContainer) {
-        const noLocationMsg = document.createElement("p");
-        noLocationMsg.textContent = "{{ _('Sijaintitietoja ei ole saatavilla.') }}";
-        noLocationMsg.style.textAlign = "center";
-        mapContainer.appendChild(noLocationMsg);
-      }
-    }
-  });
+  // Like functionality
+  let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
+  let likeRequestInProgress = false;
 
-</script>
-<script>
-  /**
-   * Updates the countdown to the event using ISO-8601 date.
-   *
-   * Parameters
-   * ----------
-   * None.
-   *
-   * Returns
-   * -------
-   * None.
-   */
-  document.addEventListener("DOMContentLoaded", function () {
-    function updateCountdown() {
-      const demoDate = demoData.date; // ISO-8601 format (yyyy-mm-dd)
-      const demoTime = demoData.start_time;
-      const demoEnds = demoData.end_time || null;
-      // TODO: If the end time is missing, assume it ends 23.59:59
-      if (!demoEnds || demoEnds === "None") {
-        // we cant just set const demoEnds again, so we use let instead
-        let demoEnds = "23:59:59";
-      }
-      // Directly combine ISO-8601 date and time
-      const eventDateStr = `${demoDate}T${demoTime}`;
-      const eventDate = new Date(eventDateStr);
-      const now = new Date();
-      const timeRemaining = eventDate - now;
-      const time_until_end = new Date(`${demoDate}T${demoEnds}`) - now;
-      const timerElement = document.getElementById("timer");
-
-      if (!timerElement) return;
-
-      if (timeRemaining <= 0 && time_until_end >= 0) { // Event is ongoing
-        timerElement.innerText = "{{ _('Mielenosoitus on käynnissä!') }}";
-        return;
-      }
-
-      if (time_until_end <= 0) {
-        timerElement.innerText = "{{ _('Mielenosoitus on päättynyt.') }}";
-        return;
-      }
-
-      const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
-
-      timerElement.innerText = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
-    }
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
-  });
-
-</script>
-
-
-<!-- Leaflet JS and Map Integration -->
-<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
-<script>
-  window.demoId = "{{ demo['_id'] }}";
-</script>
-<script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
-<!--<link rel="stylesheet" href="{{ url_for('static', filename='css/modal.css' )}}">-->
-
-
-<script>
-  /**
-   * Shows a floating "report error" button when user selects text.
-   *
-   * Parameters
-   * ----------
-   * None.
-   *
-   * Returns
-   * -------
-   * None.
-   */
-  document.addEventListener("DOMContentLoaded", function () {
-    const reportBtn = document.getElementById("report-selection-btn");
-    let selectedText = "";
-
-    function showReportBtnAtSelection() {
-      const selection = window.getSelection();
-      selectedText = selection && selection.toString().trim();
-      if (selectedText && selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        // Only show if selection is in main content
-        const main = document.getElementById("main");
-        // Check if anchorNode is inside main
-        let node = selection.anchorNode;
-        let insideMain = false;
-        while (node) {
-          if (node === main) {
-            insideMain = true;
-            break;
-          }
-          node = node.parentNode;
-        }
-        if (insideMain) {
-          reportBtn.style.display = "block";
-          reportBtn.style.position = "absolute";
-          // Position button above selection, or below if near top
-          const scrollY = window.scrollY || window.pageYOffset;
-          const scrollX = window.scrollX || window.pageXOffset;
-          let top = rect.top + scrollY - reportBtn.offsetHeight - 8;
-          if (top < 0) {
-            top = rect.bottom + scrollY + 8;
-          }
-          reportBtn.style.top = top + "px";
-          reportBtn.style.left = (rect.left + scrollX) + "px";
-        } else {
-          reportBtn.style.display = "none";
-        }
-      } else {
-        reportBtn.style.display = "none";
-      }
-    }
-
-    document.addEventListener("mouseup", function (e) {
-      setTimeout(showReportBtnAtSelection, 10);
-    });
-
-    // Hide button on scroll or click elsewhere
-    document.addEventListener("scroll", function () {
-      reportBtn.style.display = "none";
-    });
-    document.addEventListener("mousedown", function (e) {
-      if (!reportBtn.contains(e.target)) {
-        reportBtn.style.display = "none";
-      }
-    });
-
-    // When user clicks the floating report button, open modal and prefill error field
-    reportBtn.addEventListener("click", function () {
-      var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("report-modal"));
-      modal.show();
-      var textarea = document.getElementById("error");
-      if (textarea && selectedText) {
-        textarea.value = "{{ _('Virheellinen kohta:') }}\n" + selectedText + "\n\n";
-        textarea.focus();
-      }
-      reportBtn.style.display = "none";
-      window.getSelection().removeAllRanges();
-    });
-  });
-</script>
-
-<script>
-  /**
-   * Gets a cookie value by name.
-   */
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
   }
 
-  let liked = getCookie(`liked_{{ demo._id }}`) === 'true';
-  let likeRequestInProgress = false;
-
-  /**
-   * Shows a loading overlay on the button.
-   */
-  function showButtonLoading(button) {
-
-    button.disabled = true;
-    button.classList.add("processing");
-    const textEl = button.querySelector(".like-btn-text");
-    if (textEl) textEl.textContent = "{{ _('Käsitellään...') }}";
-    else {
-      button.textContent = "{{ _('Käsitellään...') }}";
-    }
+  function animateLikeCount() {
+    const count = document.getElementById("like-count");
+    count.style.transform = "scale(1.2)";
+    setTimeout(() => count.style.transform = "scale(1)", 300);
   }
 
-  /**
-   * Hides the loading overlay on the button.
-   */
-  function hideButtonLoading(button) {
-    button.disabled = false;
-    button.classList.remove("processing");
-    const textEl = button.querySelector(".like-btn-text");
-    if (textEl) textEl.textContent = "{{ _('Osallistun') }}";
-    else {
-      button.textContent = "{{ _('Osallistun') }}";
-    }
-  }
-
-  /**
-   * Toggles the like state for the demonstration.
-   */
   async function toggleLike(demoId) {
     if (likeRequestInProgress) return;
     likeRequestInProgress = true;
 
     const likeButton = document.getElementById("like-button");
     const likeCountEl = document.getElementById("like-count");
-    showButtonLoading(likeButton);
+    
+    // Add loading state
+    likeButton.classList.add('loading');
+    likeButton.disabled = true;
 
     try {
       const url = liked
@@ -1163,21 +1089,23 @@ demo.get('city', 'Tuntematon') ~
       liked = !liked;
       document.cookie = `liked_${demoId}=${liked}; path=/`;
       likeButton.setAttribute("aria-pressed", liked ? "true" : "false");
-      liked
-        ? likeButton.classList.add("liked")
-        : likeButton.classList.remove("liked");
+      
+      if (liked) {
+        likeButton.classList.add("liked");
+        animateLikeCount();
+      } else {
+        likeButton.classList.remove("liked");
+      }
 
     } catch (err) {
       console.error("Like request failed:", err);
     } finally {
-      hideButtonLoading(likeButton);
+      likeButton.classList.remove('loading');
+      likeButton.disabled = false;
       likeRequestInProgress = false;
     }
   }
 
-  /**
-   * Fetches the current like count and updates the UI.
-   */
   async function getLikes(demoId) {
     const likeCountEl = document.getElementById("like-count");
     const likeButton = document.getElementById("like-button");
@@ -1196,15 +1124,194 @@ demo.get('city', 'Tuntematon') ~
 
     } catch (err) {
       console.error("Fetching likes failed:", err);
-    } finally {
-      hideElementLoading("like-button-container");
     }
   }
 
+  // Past demo modal check
   document.addEventListener("DOMContentLoaded", () => {
-    // Load likes after DOM ready
+    // Handle URL action parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'like') {
+      handleLikeClick('{{ demo["_id"] }}');
+    }
+    if (urlParams.has('action')) {
+      urlParams.delete('action');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, document.title, newUrl);
+    }
+
+    // Check if demo is past and show modal
+    let demo_endtime = "{{ demo['end_time'] if demo['end_time'] else '23:59:59' }}";
+    if (demo_endtime === "None") {
+      demo_endtime = "23:59:59";
+    }
+    const demoEnds = new Date("{{ demo['date'] }}T" + demo_endtime);
+    const now = new Date();
+
+    if (demoEnds < now) {
+      const pastDemoModal = new bootstrap.Modal(document.getElementById("past-demo-modal"));
+      pastDemoModal.show();
+    }
+
+    // Load likes
     getLikes("{{ demo['_id'] }}");
+
+    // Initialize map if coordinates available
+    if (_has_coords(demoData)) {
+      const map = L.map("map", {
+        center: [demoData.latitude, demoData.longitude],
+        zoom: 13,
+        scrollWheelZoom: false,
+        zoomControl: true,
+        attributionControl: true,
+      });
+      
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+      
+      L.marker([demoData.latitude, demoData.longitude])
+        .addTo(map)
+        .bindPopup(demoData.address)
+        .openPopup();
+
+      setTimeout(() => { map.invalidateSize(); }, 300);
+    } else {
+      const mapElement = document.getElementById("map");
+      if (mapElement) {
+        mapElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--color-text-secondary);"><i class="fa-solid fa-map-location-dot" style="font-size: 3rem; margin-bottom: 1rem;"></i><p>{{ _("Sijaintitietoja ei ole saatavilla.") }}</p></div>';
+      }
+    }
+
+    // Initialize countdown
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    // Add scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fade-in-up');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.content-section, .participation-card, .countdown-card').forEach(el => {
+      observer.observe(el);
+    });
+  });
+
+  // Countdown timer
+  function updateCountdown() {
+    const demoDate = demoData.date;
+    const demoTime = demoData.start_time;
+    let demoEnds = demoData.end_time || "23:59:59";
+    
+    if (!demoEnds || demoEnds === "None") {
+      demoEnds = "23:59:59";
+    }
+    
+    const eventDateStr = `${demoDate}T${demoTime}`;
+    const eventDate = new Date(eventDateStr);
+    const now = new Date();
+    const timeRemaining = eventDate - now;
+    const time_until_end = new Date(`${demoDate}T${demoEnds}`) - now;
+    const timerElement = document.getElementById("timer");
+
+    if (!timerElement) return;
+
+    if (timeRemaining <= 0 && time_until_end >= 0) {
+      timerElement.innerHTML = '<i class="fa-solid fa-play"></i> {{ _("Mielenosoitus on käynnissä!") }}';
+      return;
+    }
+
+    if (time_until_end <= 0) {
+      timerElement.innerHTML = '<i class="fa-solid fa-flag-checkered"></i> {{ _("Mielenosoitus on päättynyt.") }}';
+      return;
+    }
+
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+    timerElement.innerHTML = `${days} {{ _('päivää') }} ${hours} {{ _('tuntia') }} ${minutes} {{ _('minuuttia') }} ${seconds} {{ _('sekuntia') }}`;
+  }
+
+  // Report selection functionality
+  const reportBtn = document.getElementById("report-selection-btn");
+  let selectedText = "";
+
+  function showReportBtnAtSelection() {
+    const selection = window.getSelection();
+    selectedText = selection && selection.toString().trim();
+    if (selectedText && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      
+      // Check if selection is in main content
+      let node = selection.anchorNode;
+      let insideMain = false;
+      const main = document.querySelector('.container-main-content');
+      while (node) {
+        if (node === main) {
+          insideMain = true;
+          break;
+        }
+        node = node.parentNode;
+      }
+      
+      if (insideMain) {
+        reportBtn.style.display = "block";
+        const scrollY = window.scrollY || window.pageYOffset;
+        const scrollX = window.scrollX || window.pageXOffset;
+        let top = rect.top + scrollY - reportBtn.offsetHeight - 8;
+        if (top < 0) {
+          top = rect.bottom + scrollY + 8;
+        }
+        reportBtn.style.top = top + "px";
+        reportBtn.style.left = (rect.left + scrollX) + "px";
+      } else {
+        reportBtn.style.display = "none";
+      }
+    } else {
+      reportBtn.style.display = "none";
+    }
+  }
+
+  document.addEventListener("mouseup", function (e) {
+    setTimeout(showReportBtnAtSelection, 10);
+  });
+
+  document.addEventListener("scroll", function () {
+    reportBtn.style.display = "none";
+  });
+
+  document.addEventListener("mousedown", function (e) {
+    if (!reportBtn.contains(e.target)) {
+      reportBtn.style.display = "none";
+    }
+  });
+
+  reportBtn.addEventListener("click", function () {
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("report-modal"));
+    modal.show();
+    const textarea = document.getElementById("error");
+    if (textarea && selectedText) {
+      textarea.value = "{{ _('Virheellinen kohta:') }}\n" + selectedText + "\n\n";
+      textarea.focus();
+    }
+    reportBtn.style.display = "none";
+    window.getSelection().removeAllRanges();
   });
 </script>
 
+<!-- Leaflet JS -->
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>
 {% endblock %}

@@ -277,6 +277,50 @@ def create_app() -> Flask:
 
         def get_org_name(org_id):
             return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
+        
+
+        def _get_user_by_id(user_id, fields=None, include_none=False):
+            """
+            Fetch user data by user_id from MongoDB.
+
+            Parameters
+            ----------
+            user_id : str or ObjectId
+                The ID of the user to fetch.
+            fields : list[str], optional
+                List of fields to return. Defaults to ["username", "display_name", "profile_picture", "last_login"].
+            include_none : bool, optional
+                If True, include fields even if their value is None. Defaults to False.
+
+            Returns
+            -------
+            dict or None
+                Dictionary of requested user fields, or None if user not found or invalid ID.
+            """
+            if fields is None:
+                fields = ["username", "display_name", "profile_picture", "last_login"]
+
+            # Ensure user_id is an ObjectId
+            try:
+                oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+            except Exception:
+                return None  # invalid user_id
+
+            # Fetch user
+            user = mongo.users.find_one({"_id": oid})
+            if not user:
+                return None
+
+            # Build result dict
+            user_data = {}
+            for field in fields:
+                if field in user:
+                    if user[field] is not None or include_none:
+                        user_data[field] = user[field]
+
+            return user_data
+
+
 
         def get_supported_locales():
             return app.config["BABEL_SUPPORTED_LOCALES"]
@@ -295,6 +339,7 @@ def create_app() -> Flask:
             tasks=tasks,
             tasks_amount_total=tasks_amount_total,
             tasks_amount_done=tasks_amount_done,
+            _get_user_by_id=_get_user_by_id
         )
 
 

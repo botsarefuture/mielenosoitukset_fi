@@ -113,12 +113,15 @@ def demo_edit_history(demo_id):
     history = list(mongo.demo_edit_history.find({"demo_id": str(demo_id)}).sort("edited_at", -1))
     demo = Demonstration.load_by_id(ObjectId(demo_id))
     demo_name = demo.title
+    current_demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     
     return render_template(
         "admin/demonstrations/edit_history.html",
         history=history,
         demo_id=demo_id,
-        demo_name=demo_name
+        demo_name=demo_name,
+    current_demo_data=current_demo_data  # <-- pass current demo JSON   
+        
     )
     
 @admin_demo_bp.route("/view_demo_diff/<history_id>", methods=["GET"])
@@ -216,10 +219,56 @@ def view_demo_diff(history_id):
         diffs=diffs,
         edited_by=hist.get("edited_by"),
         edited_at=hist.get("edited_at"),
-        demo_id=hist.get("demo_id")
+        demo_id=hist.get("demo_id"),
+        history_id=history_id
     )
+@admin_demo_bp.route("/rollback_demo/<history_id>", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def rollback_demo(history_id):
+    """
+    Roll back a demonstration to a previous state from edit history.
+    Tracks the rollback for easy future undo.
+    """
+   
 
-    
+    hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
+    if not hist:
+        abort(404)
+
+    demo_id = hist.get("demo_id")
+    old_data = hist.get("old_demo")
+    if not demo_id or not old_data:
+        flash_message("Rollback epäonnistui: historia ei sisällä tietoja.", "error")
+        return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
+
+    # Fetch current demo
+    current_demo = mongo.demonstrations.find_one({"_id": BsonObjectId(demo_id)})
+    if not current_demo:
+        abort(404)
+
+    # Merge old data into current to avoid losing fields
+#    restored_data = _deep_merge(current_demo, old_data)
+
+
+    # Save rollback in history with rollback origin
+    mongo.demo_edit_history.insert_one({
+        "demo_id": demo_id,
+        "edited_by": str(getattr(current_user, "_id", "unknown")),
+        "edited_at": datetime.utcnow(),
+        "old_demo": current_demo,
+        "new_demo": old_data,
+        "diff": None,  # can compute later
+        "rollbacked_from": BsonObjectId(history_id),  # track origin
+    })
+
+    # Replace current demo
+    mongo.demonstrations.replace_one({"_id": BsonObjectId(demo_id)}, old_data)
+
+    flash_message("Mielenosoitus palautettu valittuun versioon.", "success")
+    return redirect(url_for("admin_demo.demo_edit_history", demo_id=demo_id))
+
 # -----------------------------------------------------------------------------
 # PREVIEW, ACCEPT, REJECT WITH TOKEN (MAGIC LINKS)
 
@@ -884,6 +933,22 @@ def edit_demo_with_token(token):
         edit_demo_with_token=True,
     )
 
+def _deep_merge(old: dict, new: dict) -> dict:
+    """
+    Safely merge new data into old data without losing keys.
+    - Only overwrite if new value is meaningful (not None, "", "None").
+    - If both values are dicts, merge recursively.
+    """
+    merged = old.copy()
+    for key, value in new.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged.get(key, {}), value)
+        elif value not in (None, "", "None"):
+            merged[key] = value
+        # else: keep the old value
+    return merged
+
+
 def save_demo_history(demo_id, old_data, new_data):
     mongo.demo_edit_history.insert_one({
         "demo_id": demo_id,
@@ -891,7 +956,8 @@ def save_demo_history(demo_id, old_data, new_data):
         "edited_at": datetime.utcnow(),
         "old_demo": old_data,
         "new_demo": new_data,
-        "diff": None  # can be populated later by batch job
+        "diff": None,  # can be populated later by batch job,
+        "rollbacked_from": None
     })
 
 
@@ -927,9 +993,10 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             # --- Save previous version to history ---
             prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if prev_demo:
-                save_demo_history(demo_id, prev_demo, demonstration_data)
-            demo = Demonstration.from_dict(demonstration_data)
-            demo.save()
+                merged_data = _deep_merge(prev_demo, demonstration_data)
+                save_demo_history(demo_id, prev_demo, merged_data)
+                demo = Demonstration.from_dict(merged_data)
+                demo.save()
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
             # Insert a new demonstration

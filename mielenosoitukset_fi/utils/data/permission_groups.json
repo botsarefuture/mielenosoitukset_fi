@@ -118,6 +118,9 @@
   { "name": "API_WRITE", "description": "Write via API." },
   { "name": "API_WRITE_DEMOS", "description": "Write demos via API." },
   { "name": "API_ADMIN", "description": "Admin-level API access." }
+],
+"KAMPANJA": [
+    {"name": "KAMPANJA", "description": "KAMPANJA"}
 ]
 
 }

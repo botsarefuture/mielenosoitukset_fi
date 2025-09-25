@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block og_description %}
-{{ demo.get('description', demo.get('title', 'Mielenosoitus')) ~
+{{ demo.get('title', 'Mielenosoitus') ~
 ' - mielenosoitus kaupungissa ' ~
 demo.get('city', 'Tuntematon') ~
 ('. ' ~ formatted_date if formatted_date else '') }}

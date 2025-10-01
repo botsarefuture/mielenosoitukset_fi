@@ -413,7 +413,7 @@ span i {
 
 .button:hover {
   background: var(--primary_button_hover_color);
-}
+}enosoitukset_fi/mielenosoitukset_fi/database_manager.py", line 90, in _init_client
 
 .full-width {
   width: 100%;
@@ -647,12 +647,12 @@ span i {
 @media screen and (min-width: 769px) {
   .mb-only {
     visibility: hidden !important;
-    display: none;
+    display: none !important;
   }
 
   .mb-only * {
     visibility: hidden !important;
-    display: none;
+    display: none !important;
   }
 }
 

@@ -1,21 +1,27 @@
 <!-- Force Password Modal -->
-<div class="modal fade" id="forcePwdModal" tabindex="-1" aria-hidden="true">
+<!-- Force Password Modal -->
+<div class="modal fade" id="forcePwdModal" tabindex="-1" aria-labelledby="forcePwdModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="forcePwdModalTitle">{{ _('Pakota salasanan vaihto') }}</h5>
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="forcePwdModalLabel">
+          <i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
-        <p id="forcePwdModalBody">{{ _('Haluatko pakottaa käyttäjän vaihtamaan salasanansa?') }}</p>
+        <p id="forcePwdMessage"></p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-        <button type="button" class="btn btn-warning" id="confirmForcePwd">{{ _('Kyllä, pakota') }}</button>
+        <button type="button" id="confirmForcePwdBtn" class="btn btn-warning">
+          <i class="fas fa-key me-1"></i>{{ _('Pakota vaihto') }}
+        </button>
       </div>
     </div>
   </div>
-</div><!-- Delete User Modal -->
+</div>
+<!-- Delete User Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -208,3 +214,39 @@
     </div>
   </div>
 </div>
+
+<script>
+function openForcePwdModal(username, userId) {
+  // Update modal text
+  $('#forcePwdMessage').text(
+    `Haluatko varmasti pakottaa käyttäjän "${username}" vaihtamaan salasanansa seuraavan kirjautumisen yhteydessä?`
+  );
+
+  // Attach event to confirm button
+  $('#confirmForcePwdBtn')
+    .off('click')
+    .on('click', function () {
+      $.ajax({
+        url: '/admin/user/api/force_password_change',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ user_id: userId }),
+        success: function (resp) {
+          $('#forcePwdModal').modal('hide');
+          showToast(resp.message || 'Salasanan vaihto pakotettu onnistuneesti.', 'success');
+        },
+        error: function (xhr) {
+          $('#forcePwdModal').modal('hide');
+          showToast(
+            xhr.responseJSON?.message || 'Virhe: salasananvaihtoa ei voitu pakottaa.',
+            'danger'
+          );
+        }
+      });
+    });
+
+  // Show modal
+  $('#forcePwdModal').modal('show');
+}
+
+</script>

@@ -4,445 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-
-<style>
-:root {
-  --color-bg: light-dark(#f8fafc, #0f1419);
-  --color-card-bg: light-dark(#ffffff, #1a1d23);
-  --color-text: light-dark(#1e293b, #e2e8f0);
-  --color-text-secondary: light-dark(#64748b, #94a3b8);
-  --color-primary: light-dark(#0052cc, #3b82f6);
-  --color-primary-hover: light-dark(#003d99, #2563eb);
-  --color-secondary: light-dark(#ff6b00, #f97316);
-  --color-secondary-hover: light-dark(#e55a00, #ea580c);
-  --color-accent: light-dark(#06b6d4, #0891b2);
-  --color-success: light-dark(#16a34a, #22c55e);
-  --color-error: light-dark(#dc2626, #ef4444);
-  --color-border: light-dark(#e2e8f0, #374151);
-  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
-  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
-  --border-radius: 16px;
-  --border-radius-lg: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark:root {
---color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
---color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-/** {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}*/
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  /*font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.7;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  font-feature-settings: 'liga' 1, 'kern' 1;/*/
-}
-
-/* Auth Container */
-.auth-wrapper {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.auth-container {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2.5rem;
-  box-shadow: var(--color-shadow-lg);
-  border: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-  animation: fadeInUp 0.6s ease-out;
-}
-
-.auth-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-primary);
-}
-
-/* Header */
-.auth-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-.auth-icon {
-  width: 64px;
-  height: 64px;
-  background: var(--color-gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem auto;
-  color: white;
-  font-size: 1.75rem;
-  box-shadow: var(--color-shadow);
-}
-
-.auth-container h1 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--color-text);
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-}
-
-.auth-subtitle {
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-}
-
-/* Form */
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-}
-
-.form-input-wrapper {
-  position: relative;
-}
-
-.form-input {
-  width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  transition: var(--transition);
-  background: var(--color-card-bg);
-  color: var(--color-text);
-  font-family: inherit;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-input.error {
-  border-color: var(--color-error);
-}
-
-.form-input-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-secondary);
-  pointer-events: none;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0.5rem;
-  transition: var(--transition);
-}
-
-.password-toggle:hover {
-  color: var(--color-primary);
-}
-
-/* Buttons */
-.btn {
-  width: 100%;
-  padding: 1rem 2rem;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: inherit;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: var(--transition);
-}
-
-.btn:hover::before {
-  left: 100%;
-}
-
-.btn-primary {
-  background: var(--color-gradient-primary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--color-primary);
-  border: 2px solid var(--color-border);
-}
-
-.btn-secondary:hover {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-/* Links */
-.auth-links {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 1.5rem 0;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.auth-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: var(--transition);
-  font-size: 0.95rem;
-}
-
-.auth-link:hover {
-  color: var(--color-secondary);
-  text-decoration: underline;
-}
-
-/* Divider */
-.auth-divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 2rem 0;
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.auth-divider span {
-  padding: 0 1rem;
-}
-
-/* Register Prompt */
-.register-prompt {
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.register-prompt p {
-  color: var(--color-text-secondary);
-  margin-bottom: 1rem;
-}
-
-/* Alert Messages */
-.alert {
-  padding: 1rem 1.25rem;
-  border-radius: var(--border-radius);
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  animation: slideInDown 0.4s ease-out;
-}
-
-.alert-error {
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-  color: var(--color-error);
-}
-
-.alert-success {
-  background: rgba(22, 163, 74, 0.1);
-  border: 1px solid rgba(22, 163, 74, 0.2);
-  color: var(--color-success);
-}
-
-.alert-info {
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.2);
-  color: var(--color-accent);
-}
-
-/* 2FA Code Input */
-.code-input-group {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  margin: 2rem 0;
-}
-
-.code-digit {
-  width: 3rem;
-  height: 3.5rem;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 700;
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  background: var(--color-card-bg);
-  color: var(--color-text);
-  transition: var(--transition);
-}
-
-.code-digit:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Loading State */
-.btn.loading {
-  pointer-events: none;
-}
-
-.btn.loading::after {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-left: 8px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Hide/Show */
-.hidden {
-  display: none !important;
-}
-
-/* Mobile Responsive */
-@media (max-width: 640px) {
-  body {
-    padding: 1rem;
-  }
-
-  .auth-container {
-    padding: 2rem 1.5rem;
-  }
-
-  .auth-container h1 {
-    font-size: 1.75rem;
-  }
-
-  .auth-links {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .code-digit {
-    width: 2.5rem;
-    height: 3rem;
-    font-size: 1.25rem;
-  }
-}
-
-/* Focus States for Accessibility */
-.btn:focus,
-.form-input:focus,
-.auth-link:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-  :root {
-    --color-border: light-dark(#000000, #ffffff);
-    --color-text: light-dark(#000000, #ffffff);
-  }
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -451,7 +13,7 @@ body {
   <div class="auth-container" id="login-cont">
     <div class="auth-header">
       <div class="auth-icon">
-        <i class="fa-solid fa-user"></i>
+        <i class="fa-solid fa-right-to-bracket"></i>
       </div>
       <h1>{{ _('Tervetuloa takaisin') }}</h1>
       <p class="auth-subtitle">{{ _('Kirjaudu sisään jatkaaksesi') }}</p>
@@ -461,7 +23,10 @@ body {
 
     <form method="POST" id="login-form">
       <div class="form-group">
-        <label class="form-label" for="username">{{ _('Käyttäjänimi') }}</label>
+        <label class="form-label" for="username">
+          <i class="fa-solid fa-user"></i>
+          {{ _('Käyttäjänimi') }}
+        </label>
         <div class="form-input-wrapper">
           <i class="fa-solid fa-user form-input-icon"></i>
           <input type="text" 
@@ -475,7 +40,10 @@ body {
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="password">{{ _('Salasana') }}</label>
+        <label class="form-label" for="password">
+          <i class="fa-solid fa-lock"></i>
+          {{ _('Salasana') }}
+        </label>
         <div class="form-input-wrapper">
           <i class="fa-solid fa-lock form-input-icon"></i>
           <input type="password" 
@@ -495,9 +63,9 @@ body {
       </div>
 
       <div class="auth-links">
-        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-          <input type="checkbox" name="remember" style="accent-color: var(--color-primary);">
-          <span style="color: var(--color-text-secondary); font-size: 0.95rem;">{{ _('Muista minut') }}</span>
+        <label class="remember-me">
+          <input type="checkbox" name="remember">
+          <span>{{ _('Muista minut') }}</span>
         </label>
         <a href="{{ url_for('users.auth.password_reset_request') }}" class="auth-link">
           {{ _('Unohtuiko salasana?') }}
@@ -509,6 +77,10 @@ body {
         {{ _('Kirjaudu sisään') }}
       </button>
     </form>
+
+    <div class="auth-divider">
+      <span>{{ _('tai') }}</span>
+    </div>
 
     <div class="register-prompt">
       <p>{{ _('Eikö sinulla ole vielä tiliä?') }}</p>
@@ -533,7 +105,10 @@ body {
 
     <form method="POST" id="2fa-form">
       <div class="form-group">
-        <label class="form-label" for="2fa_code">{{ _('Vahvistuskoodi') }}</label>
+        <label class="form-label" for="2fa_code">
+          <i class="fa-solid fa-key"></i>
+          {{ _('Vahvistuskoodi') }}
+        </label>
         <div class="form-input-wrapper">
           <i class="fa-solid fa-key form-input-icon"></i>
           <input type="text" 
@@ -546,14 +121,18 @@ body {
                  autocomplete="one-time-code"
                  required>
         </div>
+        <p class="form-hint">
+          <i class="fa-solid fa-circle-info"></i>
+          {{ _('Avaa todennussovelluksesi ja syötä näkyvä koodi') }}
+        </p>
       </div>
 
       <input id="mfauser" type="hidden" name="username">
       <input id="mfapass" type="hidden" name="password">
 
       <button type="submit" class="btn btn-primary" id="2fa-btn">
-        <i class="fa-solid fa-check"></i>
-        {{ _('Vahvista') }}
+        <i class="fa-solid fa-check-circle"></i>
+        {{ _('Vahvista ja kirjaudu') }}
       </button>
 
       <button type="button" class="btn btn-secondary" onclick="backToLogin()" style="margin-top: 1rem;">
@@ -561,24 +140,55 @@ body {
         {{ _('Takaisin kirjautumiseen') }}
       </button>
     </form>
+
+    <div class="auth-footer">
+      <p class="help-text">
+        <i class="fa-solid fa-circle-question"></i>
+        {{ _('Etkö saa koodia? Tarkista, että sovelluksesi kello on synkronoitu.') }}
+      </p>
+    </div>
   </div>
 </div>
 
 <script>
+// Toggle password visibility
+function togglePassword(fieldId) {
+  const input = document.getElementById(fieldId);
+  const icon = document.getElementById(fieldId + '-toggle-icon');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
 
 // Show error message
 function showError(containerId, message) {
   const errorDiv = document.getElementById(containerId);
   errorDiv.className = 'alert alert-error';
-  errorDiv.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i><span>${message}</span>`;
+  errorDiv.innerHTML = `
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>${message}</span>
+  `;
   errorDiv.classList.remove('hidden');
+  
+  // Scroll to error
+  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // Show success message
 function showSuccess(containerId, message) {
   const errorDiv = document.getElementById(containerId);
   errorDiv.className = 'alert alert-success';
-  errorDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${message}</span>`;
+  errorDiv.innerHTML = `
+    <i class="fa-solid fa-circle-check"></i>
+    <span>${message}</span>
+  `;
   errorDiv.classList.remove('hidden');
 }
 
@@ -588,13 +198,22 @@ function hideMessage(containerId) {
   errorDiv.classList.add('hidden');
 }
 
-// Back to login
+// Back to login with smooth transition
 function backToLogin() {
-  document.getElementById('2fa').classList.add('hidden');
-  document.getElementById('login-cont').classList.remove('hidden');
-  document.getElementById('login-form').reset();
-  hideMessage('error-message');
-  hideMessage('2fa-error-message');
+  const twoFaForm = document.getElementById('2fa');
+  const loginForm = document.getElementById('login-cont');
+  
+  twoFaForm.style.animation = 'fadeOut 0.3s ease-out';
+  
+  setTimeout(() => {
+    twoFaForm.classList.add('hidden');
+    twoFaForm.style.animation = '';
+    loginForm.classList.remove('hidden');
+    document.getElementById('login-form').reset();
+    document.getElementById('username').focus();
+    hideMessage('error-message');
+    hideMessage('2fa-error-message');
+  }, 300);
 }
 
 // Login form submission
@@ -617,23 +236,38 @@ document.getElementById('login-form').addEventListener('submit', function(event)
   .then(response => response.json())
   .then(data => {
     if (data.enabled) {
-      // Show 2FA form
-      document.getElementById('login-cont').classList.add('hidden');
-      document.getElementById('2fa').classList.remove('hidden');
-      document.getElementById('mfauser').value = formData.get('username');
-      document.getElementById('mfapass').value = formData.get('password');
-      document.getElementById('2fa_code').focus();
+      // Smooth transition to 2FA form
+      const loginCont = document.getElementById('login-cont');
+      loginCont.style.animation = 'fadeOut 0.3s ease-out';
+      
+      setTimeout(() => {
+        loginCont.classList.add('hidden');
+        loginCont.style.animation = '';
+        document.getElementById('2fa').classList.remove('hidden');
+        document.getElementById('mfauser').value = formData.get('username');
+        document.getElementById('mfapass').value = formData.get('password');
+        document.getElementById('2fa_code').focus();
+        
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+      }, 300);
     } else if (data.valid) {
       // Submit the form normally
       showSuccess('error-message', '{{ _("Kirjautuminen onnistui! Ohjataan...") }}');
       setTimeout(() => {
         form.submit();
-      }, 500);
+      }, 800);
     } else {
       // Show error
       showError('error-message', '{{ _("Virheellinen käyttäjänimi tai salasana") }}');
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
+      
+      // Shake animation
+      form.style.animation = 'shake 0.5s';
+      setTimeout(() => {
+        form.style.animation = '';
+      }, 500);
     }
   })
   .catch(error => {
@@ -659,13 +293,47 @@ document.getElementById('2fa_code').addEventListener('input', function(e) {
   
   // Auto-submit when 6 digits entered
   if (this.value.length === 6) {
-    document.getElementById('2fa-form').requestSubmit();
+    setTimeout(() => {
+      document.getElementById('2fa-form').requestSubmit();
+    }, 300);
   }
+});
+
+// Add pulse effect to 2FA input
+document.getElementById('2fa_code').addEventListener('focus', function() {
+  this.parentElement.style.animation = 'pulse 2s infinite';
+});
+
+document.getElementById('2fa_code').addEventListener('blur', function() {
+  this.parentElement.style.animation = '';
 });
 
 // Focus on first input on page load
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('username').focus();
 });
+
+// Shake animation for errors
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+  }
+  
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.98);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+  }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}

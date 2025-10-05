@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ _('Tulevat mielenosoitukset') }} {% endblock %}
+
+{% block meta %}
+<!-- General Meta Tags -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="{{ _('Lista tulevista mielenosoituksista') }}" />
+<meta name="keywords" content="mielenosoitus, tapahtuma, Helsinki" />
+<meta name="author" content="Mielenosoitukset.fi" />
+<meta name="robots" content="index, follow" />
+{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+<!-- moved styles from here to static/css/list_v2.css-->
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+ <style>
+
+
+ </style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <!-- lets add hero here-->
+  <div class="hero-content">
+    <h1>{{ _('Tulevat mielenosoitukset') }}</h1>
+    <p>{{ _('Löydä ja osallistu mielenosoituksiin ympäri Suomen. Selaa tulevia tapahtumia, etsi sijainnin tai aiheen mukaan ja vaikuta yhdessä muiden kanssa.') }}</p>
+  </div>
+</section>
+<section class="main-content">
+  <div class="view-toggle-group" id="view-toggle-group">
+    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
+      <i class="fa-solid fa-table-cells-large"></i>
+    </button>
+    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
+      <i class="fa-solid fa-list"></i>
+    </button>
+  </div>
+  <form method="GET" action="#" class="search-form" id="search-form">
+    <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}"
+      aria-label="{{ _('Hae mielenosoituksia') }}" />
+    <input type="text" placeholder="{{ _('Kaupunki') }}" aria-label="{{ _('Kaupunki') }}" id="city_input" />
+    <input type="hidden" name="city" id="city" />
+    <div class="suggestions" id="city_suggestions"></div>
+    <input type="text" name="location" placeholder="{{ _('Sijainti') }}" aria-label="{{ _('Sijainti') }}" />
+    <div class="date-range">
+      <input type="text" name="display_date_start" id="date_start" placeholder="{{ _('Alkupäivä (pp.mm.vvvv)') }}"
+        aria-label="{{ _('Alkupäivä (pp.mm.vvvv)') }}" />
+      <span>-</span>
+      <input type="text" name="display_date_end" id="date_end" placeholder="{{ _('Loppupäivä (pp.mm.vvvv)') }}"
+        aria-label="{{ _('Loppupäivä (pp.mm.vvvv)') }}" />
+    </div>
+    <div class="date-error" id="date-error">{{ _('Valitse kelvollinen päivämääräväli tulevaisuudesta') }}</div>
+    <input type="hidden" name="date_start" id="iso_date_start">
+    <input type="hidden" name="date_end" id="iso_date_end">
+    <div class="filters" id="filters"></div>
+    <button type="submit" class="button">{{ _('Hae') }}</button>
+  </form>
+  <div class="container-grid" id="demo-container-grid"></div>
+
+  <div class="demo-table-container" id="demo-table-container" style="display: none;">
+    <table class="demo-table">
+      <thead>
+        <tr>
+          <th>{{ _('Päivä') }}</th>
+          <th>{{ _('Aika') }}</th>
+          <th>{{ _('Otsikko') }}</th>
+          <th>{{ _('Kaupunki') }}</th>
+          <th>{{ _('Sijainti') }}</th>
+          <th>{{ _('Aiheet / tagit') }}</th>
+        </tr>
+      </thead>
+      <tbody id="demo-table-body"></tbody>
+    </table>
+  </div>
+  <div id="scroll_sentinel"></div>
+  <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
+    <i class="fas fa-spinner fa-spin fa-2x"></i>
+  </div>
+  <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="{{ url_for('static', filename='js/date.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script>
+const cityList = {{ city_list | tojson }};
+</script>
+<script>
+/**
+ * Fetches demonstration data from the API and renders cards or table rows.
+ * Handles infinite scroll, search, and view toggling.
+ */
+document.addEventListener("DOMContentLoaded", function () {
+  function isTodayDate(dateStr) {
+    if (!dateStr) return false;
+    const today = new Date();
+    const [d, m, y] = dateStr.split(".");
+    return (
+      today.getDate() === parseInt(d, 10) &&
+      today.getMonth() + 1 === parseInt(m, 10) &&
+      today.getFullYear() === parseInt(y, 10)
+    );
+  }
+
+  function renderDemoCard(demo) {
+  const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
+
+  // Build badges dynamically
+  const badges = [];
+  if (isTodayDate(demo.date_display)) {
+    badges.push(`<span class="demo-card-badge demo-card-badge-today">{{ _("Tänään") }}</span>`);
+  }
+  if (demo.is_trending) { // example field for “Nousussa”
+    badges.push(`<span class="demo-card-badge demo-card-badge-trending">{{ _("Nousussa") }}</span>`);
+  }
+  if (demo.is_recommended) { // example field for “Suositeltu”
+    badges.push(`<span class="demo-card-badge demo-card-badge-recommended">{{ _("Suositeltu") }}</span>`);
+  }
+  // Join badges into a single string
+  const badgeHtml = badges.join(" ");
+
+  const imageUrl = demo.img || demo.cover_image || demo.preview_image || `/download_material/${demo._id}`;
+
+  return `
+    <div class="grid-item demo-card" 
+         data-demo-id="${demo._id}" 
+         tabindex="0"
+         onclick="window.location='${demoUrl}'" 
+         onkeypress="if(event.key==='Enter'){window.location='${demoUrl}'}">
+
+      ${badgeHtml}
+
+      <div class="demo-card-image">
+        <img src="${imageUrl}" alt="${demo.title} - ${demo.city || ''} - ${demo.date_display}" loading="lazy">
+      </div>
+
+      <div class="demo-card-title">
+        <span>${demo.title}</span>
+      </div>
+
+      <div class="demo-card-date-time">
+        <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
+        <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</span>
+      </div>
+
+      <div class="demo-card-location-row">
+        <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city || ""}</span>
+        <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</span>
+      </div>
+
+      <div class="demo-card-tags">
+        ${(demo.tags && demo.tags.length > 0)
+          ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(" ")
+          : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ""}</span>`}
+      </div>
+
+      <div class="demo-card-actions">
+        <button class="demo-card-action-btn" onclick="event.stopPropagation(); window.location='${demoUrl}'">
+          <i class="fa-solid fa-arrow-right"></i> {{ _("Avaa") }}
+        </button>
+        <button class="demo-card-action-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '${demoUrl}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _("Kopioitu!") }}'; setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _("Kopioi linkki") }}'},1200)">
+          <i class="fa-solid fa-link"></i> {{ _("Kopioi linkki") }}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+
+
+  function renderDemoTableRow(demo) {
+    const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
+    return `
+      <tr onclick="window.location='${demoUrl}'" style="cursor:pointer;">
+        <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
+        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</td>
+        <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>
+        <td><i class="fa-solid fa-city"></i> ${demo.city || ""}</td>
+        <td><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</td>
+        <td>
+          <span class="demo-table-tags">
+            ${(demo.tags && demo.tags.length > 0)
+              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(" ")
+              : `<span class="demo-table-tag">#${demo.topic || ""}</span>`}
+          </span>
+        </td>
+      </tr>
+    `;
+  }
+
+  let page = 1;
+  let per_page = 20;
+  let total_pages = 1;
+  let is_loading = false;
+  let last_query = {};
+  let view = localStorage.getItem("demoView") || "grid";
+
+  const gridContainer = document.getElementById("demo-container-grid");
+  const tableContainer = document.getElementById("demo-table-container");
+  const tableBody = document.getElementById("demo-table-body");
+  const spinner = document.getElementById("loading-spinner");
+  const endMsg = document.getElementById("end-of-content-message");
+  const scrollSentinel = document.getElementById("scroll_sentinel");
+
+  function getQuery() {
+    const form = document.getElementById("search-form");
+    const data = new FormData(form);
+    let query = {};
+    for (const [k, v] of data.entries()) {
+      if (v) query[k] = v;
+    }
+    ["display_date_start", "display_date_end"].forEach(field => {
+      if (query[field]) {
+        const parts = query[field].split(".");
+        if (parts.length === 3) {
+          const key = field === "display_date_start" ? "date_start" : "date_end";
+          query[key] = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+        }
+      }
+    });
+    return query;
+  }
+
+  function buildApiUrl(query, page) {
+    const params = new URLSearchParams(query);
+    params.set("page", page);
+    params.set("per_page", per_page);
+    return `/api/v1/demonstrations?${params.toString()}`;
+  }
+
+  function clearContent() {
+    gridContainer.innerHTML = "";
+    tableBody.innerHTML = "";
+    endMsg.style.display = "none";
+    spinner.style.display = "block";
+  }
+
+  function showEndMessage() {
+    spinner.style.display = "none";
+    endMsg.style.display = "";
+    endMsg.textContent = _("Olet saavuttanut lopun");
+  }
+
+  function renderDemos(demos, append = false) {
+    if (view === "grid") {
+      if (!append) gridContainer.innerHTML = "";
+      gridContainer.innerHTML += demos.map(renderDemoCard).join("");
+    } else {
+      if (!append) tableBody.innerHTML = "";
+      tableBody.innerHTML += demos.map(renderDemoTableRow).join("");
+    }
+  }
+
+  function fetchAndRenderDemos({reset = false, append = false} = {}) {
+    if (is_loading) return;
+    is_loading = true;
+    spinner.style.display = "block";
+    let query = reset ? getQuery() : last_query;
+    if (reset) {
+      page = 1;
+      last_query = query;
+      clearContent();
+    }
+    fetch(buildApiUrl(query, page))
+      .then(r => r.json())
+      .then(data => {
+        total_pages = data.total_pages || 1;
+        const noResults = data.demonstrations.length === 0 && page === 1;
+        if (noResults) {
+          if (view === "grid") {
+            gridContainer.innerHTML = `<div class="grid-item no-results">${_("Ei löytynyt mielenosoituksia.")}</div>`;
+          } else {
+            tableBody.innerHTML = `<tr><td colspan="6">${_("Ei löytynyt mielenosoituksia.")}</td></tr>`;
+          }
+        } else {
+          renderDemos(data.demonstrations, append);
+        }
+        if (page >= total_pages) showEndMessage();
+        is_loading = false;
+      })
+      .catch(() => {
+        spinner.style.display = "none";
+        is_loading = false;
+      });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !is_loading && page < total_pages) {
+        page++;
+        fetchAndRenderDemos({append: true});
+      }
+    });
+  }, { rootMargin: "1000px" });
+  observer.observe(scrollSentinel);
+
+  function setView(newView) {
+    view = newView;
+    localStorage.setItem("demoView", view);
+    const mainContent = document.querySelector(".container-main-content");
+    if (view === "list") {
+      mainContent.classList.add("list-view");
+      document.getElementById("list-view-btn").classList.add("active");
+      document.getElementById("grid-view-btn").classList.remove("active");
+      gridContainer.classList.add("hide-cards");
+      tableContainer.style.display = "";
+    } else {
+      mainContent.classList.remove("list-view");
+      document.getElementById("grid-view-btn").classList.add("active");
+      document.getElementById("list-view-btn").classList.remove("active");
+      gridContainer.classList.remove("hide-cards");
+      tableContainer.style.display = "none";
+    }
+    fetchAndRenderDemos({reset: true});
+  }
+  document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
+  document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
+
+  document.getElementById("search-form").addEventListener("submit", e => {
+    e.preventDefault();
+    setView(view);
+  });
+
+  // City autocomplete
+  const cityInput = $("#city_input");
+  const selectedCitiesInput = $("#city");
+  const filters = $("#filters");
+  const citySuggestions = $("#city_suggestions");
+
+  cityInput.on("input", function () {
+    const query = cityInput.val();
+    if (query.length > 2) {
+      const matchingCities = cityList.filter(city =>
+        city.toLowerCase().includes(query.toLowerCase())
+      );
+      citySuggestions.empty();
+      matchingCities.forEach(city => {
+        $("<div>").addClass("suggestion-item").text(city)
+          .appendTo(citySuggestions)
+          .on("click", function (event) {
+            event.stopPropagation();
+            const selectedCity = city;
+            citySuggestions.empty().removeClass("show");
+            cityInput.val("");
+            const currentCities = selectedCitiesInput.val()
+              ? selectedCitiesInput.val().split(",")
+              : [];
+            if (!currentCities.includes(selectedCity)) {
+              currentCities.push(selectedCity);
+              selectedCitiesInput.val(currentCities.join(","));
+              const filterDiv = $(`<div class="filter"><span>${_("Kaupunki")}: ${selectedCity}</span><a href="#" data-city="${selectedCity}"><i class="fas fa-times"></i></a></div>`);
+              filters.append(filterDiv);
+              filterDiv.find("a").on("click", function (event) {
+                event.preventDefault();
+                const cityToRemove = $(this).data("city");
+                selectedCitiesInput.val(currentCities.filter(c => c !== cityToRemove).join(","));
+                filterDiv.remove();
+              });
+            }
+          });
+      });
+      citySuggestions.addClass("show");
+    } else {
+      citySuggestions.empty().removeClass("show");
+    }
+  });
+
+  $(document).on("click", function (event) {
+    if (!citySuggestions.is(event.target) && citySuggestions.has(event.target).length === 0) {
+      citySuggestions.empty().removeClass("show");
+    }
+  });
+
+  const dateConfig = {
+    dateFormat: "d.m.Y",
+    minDate: "today",
+    allowInput: true,
+    locale: {
+      firstDayOfWeek: 1,
+      weekdays: {
+        shorthand: ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"],
+        longhand: ["Sunnuntai", "Maanantai", "Tiistai", "Keskiviikko", "Torstai", "Perjantai", "Lauantai"]
+      },
+      months: {
+        shorthand: ["Tam", "Hel", "Maa", "Huh", "Tou", "Kes", "Hei", "Elo", "Syy", "Lok", "Mar", "Jou"],
+        longhand: ["Tammikuu", "Helmikuu", "Maaliskuu", "Huhtikuu", "Toukokuu", "Kesäkuu", "Heinäkuu", "Elokuu", "Syyskuu", "Lokakuu", "Marraskuu", "Joulukuu"]
+      }
+    }
+  };
+
+  const startPicker = flatpickr("#date_start", {
+    ...dateConfig,
+    onChange: selectedDates => {
+      if (selectedDates[0]) {
+        endPicker.set("minDate", selectedDates[0]);
+      }
+    }
+  });
+
+  const endPicker = flatpickr("#date_end", {
+    ...dateConfig,
+    onChange: selectedDates => {
+      if (selectedDates[0]) {
+        startPicker.set("maxDate", selectedDates[0]);
+      }
+    }
+  });
+
+  setView(view);
+});
+</script>
+
+{% endblock %}

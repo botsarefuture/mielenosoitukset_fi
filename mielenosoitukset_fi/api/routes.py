@@ -118,8 +118,10 @@ def _update_likes(demo_id, delta=1):
 # -------------------------
 # DEMONSTRATIONS
 # -------------------------
+from urllib.parse import urlencode
+
 @api_bp.route("/demonstrations", methods=["GET"])
-@token_required(required_scopes=["read"])
+#@token_required(required_scopes=["read"])
 def list_demonstrations():
     search = request.args.get("search", "").lower()
     city = request.args.get("city", "").lower()
@@ -127,11 +129,32 @@ def list_demonstrations():
     tag = request.args.get("tag", "").lower()
     recurring = request.args.get("recurring", "").lower()
     in_past = request.args.get("in_past", "").lower()
+    parent_id = request.args.get("parent_id", "")
     
+    try:
+        _parent_id = ObjectId(parent_id)
+        
+    except Exception:
+        parent_id = None
+        _parent_id = None
+
+    # Pagination params
+    try:
+        page = int(request.args.get("page", 1))
+        per_page = int(request.args.get("per_page", 20))
+        if page < 1: page = 1
+        if per_page < 1: per_page = 20
+    except ValueError:
+        page, per_page = 1, 20
+
     today = datetime.now()
-    demos_cursor = mongo.demonstrations.find({"approved": True, "hide": False})
-    
-    result = []
+    query = {"approved": True, "hide": False}
+    if _parent_id:
+        query["parent"] = _parent_id
+        
+    demos_cursor = mongo.demonstrations.find(query)
+
+    filtered = []
     for demo in demos_cursor:
         demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
         if demo_date >= today or in_past == "true":
@@ -143,11 +166,40 @@ def list_demonstrations():
                 (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag) and
                 (not recurring or str(demo_obj.get("recurs")) == recurring)
             ):
-                result.append(demo_obj)
-    
-    result.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
-    return jsonify(result), 200
+                filtered.append(demo_obj)
 
+    filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
+
+    # Pagination slicing
+    total = len(filtered)
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated = filtered[start:end]
+
+    total_pages = (total + per_page - 1) // per_page
+
+    # Build base query for URLs
+    query_params = request.args.to_dict(flat=True)
+    query_params.pop("page", None)
+    query_params.pop("per_page", None)
+    base_qs = urlencode(query_params)
+
+    def build_url(p):
+        params = f"page={p}&per_page={per_page}"
+        return f"{request.base_url}?{base_qs}&{params}" if base_qs else f"{request.base_url}?{params}"
+
+    next_url = build_url(page + 1) if page < total_pages else None
+    prev_url = build_url(page - 1) if page > 1 else None
+
+    return jsonify({
+        "page": page,
+        "per_page": per_page,
+        "total": total,
+        "total_pages": total_pages,
+        "next_url": next_url,
+        "prev_url": prev_url,
+        "results": paginated,
+    }), 200
 
 @api_bp.route("/demonstrations/<demo_id>", methods=["GET"])
 @token_required(required_scopes=["read"])

@@ -1,110 +1,3 @@
-{% extends 'base.html' %}
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
-<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
-
-{% include "_modals/_demo-card-template.html" %}
-
-<script>
-// Add scroll animations
-const observerOptions = {
-  threshold: 0.1,
-  rootMargin: '0px 0px -50px 0px'
-};
-
-
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('animate-fade-in-up');
-    }
-  });
-}, observerOptions);
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => {
-    observer.observe(el);
-  });
-
-  // Back to top functionality
-  window.addEventListener('scroll', function() {
-    const backToTop = document.getElementById('backToTop');
-    if (window.pageYOffset > 300) {
-      backToTop.classList.add('visible');
-    } else {
-      backToTop.classList.remove('visible');
-    }
-  });
-});
-
-function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
-</script>
-<script>
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => observer.observe(el));
-
-  // Back to top button
-  const backToTop = document.getElementById('backToTop');
-  window.addEventListener('scroll', () => {
-    backToTop.classList.toggle('visible', window.pageYOffset > 300);
-  });
-
-  // Pagination state
-  let currentPage = 1;
-  let totalPages = 1;
-  const perPage = 12;
-
-  const grid = document.getElementById('demo-grid');
-  const loadMoreBtn = document.getElementById('load-more-btn');
-async function loadDemos(page = 1, append = false) {
-    // Show loading state
-    if (!append) {
-      grid.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>';
-    } else {
-      loadMoreBtn.classList.add('loading');
-      loadMoreBtn.disabled = true;
-    }
-
-    const res = await fetch(`/api/demonstrations?parent_id={{ parent_id }}&page=${page}&per_page=${perPage}`);
-    const data = await res.json();
-
-    if (!append) grid.innerHTML = "";
-
-    data.results.forEach(demo => grid.appendChild(renderDemoCard(demo)));
-
-    currentPage = data.page;
-    totalPages = data.total_pages;
-
-    loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
-    loadMoreBtn.classList.remove('loading');
-    loadMoreBtn.disabled = false;
-  }
-  // initial load
-  loadDemos();
-
-  loadMoreBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) loadDemos(currentPage + 1, true);
-  });
-});
-</script>
-{% endblock %}
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
-<style>
 :root {
   --color-bg: light-dark(#f8fafc, #0f1419);
   --color-card-bg: light-dark(#ffffff, #1a1d23);
@@ -593,6 +486,64 @@ body {
   box-shadow: var(--color-shadow-lg);
 }
 
+/* Loading Animation */
+@keyframes loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  min-height: 300px;
+  grid-column: 1 / -1;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid var(--color-border);
+  border-top: 4px solid var(--color-accent);
+  border-radius: 50%;
+  animation: loading 1s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+.loading-container p {
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.button.loading {
+  pointer-events: none;
+  position: relative;
+  padding-right: 3rem;
+}
+
+.button.loading::after {
+  content: '';
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: loading 0.8s linear infinite;
+}
+
+.button.loading:hover {
+  transform: none;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .container-main-content {
@@ -663,108 +614,3 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
-
-/* Loading Animation */
-@keyframes loading {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading::after {
-  content: '';
-  width: 20px;
-  height: 20px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: loading 1s linear infinite;
-  margin-left: 8px;
-}
-</style>
-{% endblock %}
-
-{% block content %}
-{% import 'macros.html' as macros %}
-
-<div class="container-main-content">
-  <!-- Hero Section -->
-  <section class="hero-section">
-    <div class="hero-content">
-      <div class="recurring-label">
-        <i class="fa-solid fa-repeat"></i>
-        {{ _('Toistuva mielenosoitus') }}
-      </div>
-      <h1 class="recurring-title">{{ parent_demo.title }}</h1>
-      <p class="recurring-desc">
-        {{ _('Tässä on lista kaikista mielenosoituksista, jotka ovat osa tätä toistuvaa tapahtumaa. Näet sekä menneet että tulevat mielenosoitukset.') }}
-      </p>
-    </div>
-  </section>
-
-  <!-- Info Box -->
-  <div class="info-box">
-    <div class="info-box-content">
-      <h2>
-        <i class="fa-solid fa-info-circle"></i>
-        {{ _('Toistuva tapahtuma') }}
-      </h2>
-      <p>{{ _('Tämä mielenosoitus järjestetään säännöllisesti. Alla näet kaikki aiemmat ja tulevat tapahtuman ajankohdat.') }}</p>
-    </div>
-  </div>
-
-  <!-- Stats Section -->
-  
-  <div class="stats-section">
-    <div class="stat-card">
-      <span class="stat-number">{{ total_count }}</span>
-      <span class="stat-label">{{ _('Mielenosoitusta yhteensä') }}</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-number">{{ future_count }}</span>
-      <span class="stat-label">{{ _('Tulevaa tapahtumaa') }}</span>
-    </div>
-    <div class="stat-card">
-      <span class="stat-number">{{ past_count }}</span>
-      <span class="stat-label">{{ _('Mennyttä tapahtumaa') }}</span>
-    </div>
-  </div>
-
-  <!-- Demonstrations Section -->
-  <section class="section-card">
-    <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki tapahtuman ajankohdat') }}</h2>
-    
-    <div id="demo-grid" class="demos-grid"></div>
-    <button id="load-more-btn" class="button button-secondary" styload-more-btnle="display:none;">{{ _('Näytä lisää') }}</button>
-
-    <!-- Empty State -->
-    <div id="no-results" class="no-results" style="display:none;">
-      <i class="fa-regular fa-calendar-xmark"></i>
-      <h3>{{ _('Ei löytynyt toistumomielenosoituksia') }}</h3>
-      <p>{{ _('Tällä hetkellä ei ole muita mielenosoituksia tässä toistumassa. Tarkista myöhemmin uudelleen mahdollisten uusien tapahtumien varalta.') }}</p>
-      <div style="margin-top: 2rem;">
-        <a href="{{ url_for('demonstrations') }}" class="button button-primary"><i class="fa-solid fa-list"></i>{{ _('Selaa kaikkia mielenosoituksia') }}</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Call to Action -->
-  <div style="text-align: center; margin: 3rem 0;">
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-      <a href="{{ url_for('demonstrations') }}" class="button button-primary">
-        <i class="fa-solid fa-arrow-left"></i>
-        {{ _('Takaisin mielenosoituksiin') }}
-      </a>
-      <a href="{{ url_for('submit') }}" class="button button-secondary">
-        <i class="fa-solid fa-plus"></i>
-        {{ _('Ilmoita uusi mielenosoitus') }}
-      </a>
-    </div>
-  </div>
-
-  <!-- Back to Top Button -->
-  <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
-    <i class="fa-solid fa-arrow-up"></i>
-  </button>
-</div>
-
-{% endblock %}

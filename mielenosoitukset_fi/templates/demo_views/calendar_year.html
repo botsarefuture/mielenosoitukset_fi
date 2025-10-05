@@ -4,6 +4,15 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.css">
 
 <style>
+:root {
+    --pink-primary: #ff3366;
+    --pink-light: #ff99c8;
+    --pink-lighter: #ffd6e8;
+    --pink-bg: #fff0f6;
+    --pink-pale: #fffafc;
+    --pink-dark: #ff4d91;
+}
+
 .year-calendar {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -15,7 +24,7 @@
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    background: #fffafc;
+    background: var(--pink-pale);
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     border-radius: 10px;
     overflow: hidden;
@@ -27,7 +36,7 @@
     text-align: center;
     vertical-align: top;
     padding: 3px;
-    border: 1px solid #ffd6e8;
+    border: 1px solid var(--pink-lighter);
 }
 
 .month-grid th {
@@ -38,14 +47,14 @@
 }
 
 .month-grid td {
-    background: #fff0f6;
+    background: var(--pink-bg);
     position: relative;
 }
 
 .month-grid td strong {
     display: block;
     margin-bottom: 3px;
-    color: #ff3366;
+    color: var(--pink-primary);
     font-size: 12px;
 }
 
@@ -64,13 +73,13 @@
 }
 
 .demo-cell:hover {
-    background: #ff4d91;
+    background: var(--pink-dark);
 }
 
 #demo-preview {
     position: absolute;
     display: none;
-    background: #fffafc;
+    background: var(--pink-pale);
     border: 1px solid #ffb3d1;
     border-radius: 10px;
     padding: 10px;
@@ -96,7 +105,7 @@
 }
 
 .calendar-year-nav a {
-    background: #ff99c8;
+    background: var(--pink-light);
     color: #fff;
     padding: 6px 12px;
     border-radius: 8px;
@@ -110,65 +119,9 @@
     background: #ff66a3;
 }
 
-@media(max-width: 768px){
-    .year-calendar {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .month-grid th, .month-grid td { font-size: 10px; padding: 2px; }
-    .demo-cell { font-size: 9px; }
-}
 .onboarding-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    z-index: 10000;
-    display: none;
-}
-
-.onboarding-step {
-    position: absolute;
-    text-align: center;
-}
-
-.onboarding-tooltip {
-    background: #fff;
-    color: #333;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    max-width: 250px;
-    margin: auto;
-}
-
-.onboarding-tooltip strong {
-    display: block;
-    font-size: 16px;
-    margin-bottom: 6px;
-}
-
-.onboarding-tooltip p {
-    font-size: 14px;
-    margin-bottom: 10px;
-}
-
-.onboarding-tooltip button {
-    background: #0056b3;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-
-.onboarding-tooltip button:hover {
-    background: #004080;
-}
-.onboarding-overlay {
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
     background: rgba(0,0,0,0.6);
     z-index: 1000002;
     display: none;
@@ -226,15 +179,154 @@
     background:#004080;
 }
 
+/* Mobile List View */
+.mobile-year-list {
+    display: none;
+}
+
+.mobile-month-section {
+    margin-bottom: 30px;
+}
+
+.mobile-month-header {
+    background: var(--pink-light);
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.mobile-month-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.mobile-month-link {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.mobile-month-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.mobile-events-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.mobile-event-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-left: 4px solid var(--pink-primary);
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+}
+
+.mobile-event-card:hover, .mobile-event-card:active {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.mobile-event-date {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.mobile-event-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pink-primary);
+    margin-bottom: 5px;
+}
+
+.mobile-event-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.mobile-event-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+.mobile-empty-month {
+    background: var(--pink-bg);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
+.mobile-stats {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.mobile-stat-item {
+    flex: 1;
+}
+
+.mobile-stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--pink-primary);
+    display: block;
+}
+
+.mobile-stat-label {
+    font-size: 12px;
+    color: #666;
+}
+
 @media(max-width: 768px){
     .year-calendar {
-        grid-template-columns: 1fr;
-        gap: 10px;
+        display: none;
     }
-    .month-grid th, .month-grid td { font-size: 10px; padding: 2px; }
-    .demo-cell { font-size: 9px; }
+    
+    .mobile-year-list {
+        display: block;
+    }
+
+    .calendar-year-nav {
+        display: flex;
+        align-items: center;
+    }
+    
+    .calendar-year-nav a {
+        padding: 8px 16px;
+        font-size: 14px;
+    }
+    
+    .year-header {
+        font-size: 28px;
+    }
+    
     #demo-preview {
-        position: fixed !important; /* ensure preview doesn't get cut off on small screens */
+        position: fixed !important;
         max-width: 90%;
         left: 5% !important;
         top: 50% !important;
@@ -242,7 +334,10 @@
     }
 }
 
-
+@media(min-width: 769px){
+    .month-grid th, .month-grid td { font-size: 10px; padding: 2px; }
+    .demo-cell { font-size: 9px; }
+}
 </style>
 
 <!-- Onboarding Overlay -->
@@ -254,8 +349,6 @@
     </div>
 </div>
 
-
-
 <h1 class="year-header">{{ year }}</h1>
 
 <div class="calendar-year-nav">
@@ -264,7 +357,7 @@
     <a href="{{ url_for('calendar_year_view', year=year+1) }}">Seuraava vuosi →</a>
 </div>
 
-
+<!-- Desktop: Year Calendar Grid -->
 <div class="year-calendar">
     {% for month in range(1, 13) %}
     <div>
@@ -310,69 +403,86 @@
     {% endfor %}
 </div>
 
+<!-- Mobile: Month List View -->
+<div class="mobile-year-list">
+    {% set total_events = 0 %}
+    {% for month in range(1, 13) %}
+        {% set month_event_count = year_demos[month]['days'].values()|map('length')|sum|default(0) %}
+        {% set total_events = total_events + month_event_count %}
+    {% endfor %}
+    
+    <!-- Stats -->
+    <div class="mobile-stats">
+        <div class="mobile-stat-item">
+            <span class="mobile-stat-number">{{ year }}</span>
+            <span class="mobile-stat-label">Vuosi</span>
+        </div>
+        <div class="mobile-stat-item">
+            <span class="mobile-stat-number">{{ total_events }}</span>
+            <span class="mobile-stat-label">Tapahtumaa</span>
+        </div>
+        <div class="mobile-stat-item">
+            <span class="mobile-stat-number">12</span>
+            <span class="mobile-stat-label">Kuukautta</span>
+        </div>
+    </div>
+    
+    {% for month in range(1, 13) %}
+    <div class="mobile-month-section">
+        <div class="mobile-month-header">
+            <div class="mobile-month-title">{{ month_names[month] }}</div>
+            <a href="{{ url_for('calendar_month_view', year=year, month=month) }}" class="mobile-month-link">
+                Näytä kuukausinäkymä →
+            </a>
+        </div>
+        
+        {% set month_demos_list = [] %}
+        {% for day, demos in year_demos[month]['days'].items() %}
+            {% for demo in demos %}
+                {% set _ = month_demos_list.append((day, demo)) %}
+            {% endfor %}
+        {% endfor %}
+        
+        {% if month_demos_list %}
+            <div class="mobile-events-grid">
+                {% for day, demo in month_demos_list %}
+                    <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="mobile-event-card">
+                        <div class="mobile-event-date">{{ day }}. {{ month_names[month] }} {{ year }}</div>
+                        <div class="mobile-event-title">{{ demo.title|e or 'Ei otsikkoa' }}</div>
+                        {% if demo.description %}
+                            <div class="mobile-event-desc">{{ demo.description[:80]|e|safe}}{% if demo.description|length > 80 %}...{% endif %}</div>
+                        {% endif %}
+                        {% if demo.preview_image or demo.img %}
+                            <img src="{{ demo.preview_image|e or demo.img|e }}" alt="{{ demo.title|e }}" class="mobile-event-image">
+                        {% endif %}
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="mobile-empty-month">
+                📅 Ei tapahtumia tässä kuussa
+            </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<!-- Mobile Warning Modal -->
-<div id="mobile-warning" style="
-    display:none;
-    position:fixed;
-    top:0; left:0; width:100%; height:100%;
-    backdrop-filter: blur(8px);
-    background: rgba(0,0,0,0.5);
-    z-index:10000000;
-    text-align:center;
-">
-    <div style="
-        position:absolute;
-        top:50%; left:50%;
-        transform:translate(-50%,-50%);
-        background:#fff;
-        padding:30px 20px;
-        border-radius:12px;
-        max-width:300px;
-        font-family: 'Poppins', sans-serif;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    ">
-        <h2 style="color:#ff3366; margin-bottom:15px;">Mobiililaite ei tuettu 😢</h2>
-        <p style="color: light-dark(white, black); margin-bottom:20px;">Kalenterinäkymä toimii vain tietokoneella. Siirrytään lista-näkymään?</p>
-        <button id="mobile-redirect" style="
-            background:#ff3366;
-            color:#fff;
-            border:none;
-            padding:10px 20px;
-            border-radius:8px;
-            font-weight:600;
-            cursor:pointer;
-            font-size:14px;
-        ">Siirry lista-näkymään</button>
-    </div>
-</div>
-
 
 <script>
 $(function() {
-    // Mobile detection
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if(isMobile){
-        $('#mobile-warning').fadeIn(200);
-
-        $('#mobile-redirect').on('click', function(){
-            window.location.href = "{{ url_for('demonstrations') }}";
-        });
-
-        return; // stop rest of calendar JS
+    // Check if mobile view
+    const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+    
+    if (isMobileView) {
+        // Skip desktop features on mobile
+        return;
     }
 
-    // …rest of your onboarding + demo hover + prefetch code here…
-});
-</script>
-
-
-<script>
-$(function() {
     // ---------------------------
-    // Onboarding
+    // Onboarding (Desktop only)
     // ---------------------------
     if (!localStorage.getItem('calendarOnboardingDone')) {
         const $overlay = $('#calendar-onboarding');
@@ -426,12 +536,6 @@ $(function() {
             if (left < 10) left = 10;
             if (left + tooltipWidth > $(window).width() - 10) left = $(window).width() - tooltipWidth - 10;
 
-            // On mobile, force fixed center
-            if ($(window).width() <= 768) {
-                top = $(window).scrollTop() + 100;
-                left = ($(window).width() - tooltipWidth) / 2;
-            }
-
             $tooltip.css({ top: top + 'px', left: left + 'px', 'z-index': 1000003 });
         }
 
@@ -452,7 +556,7 @@ $(function() {
     }
 
     // ---------------------------
-    // Demo preview hover & touch
+    // Demo preview hover
     // ---------------------------
     const preview = $('#demo-preview');
     let hoverTimeout;
@@ -469,36 +573,26 @@ $(function() {
         preview.html(html).fadeIn(200);
     }
 
-    $('.demo-cell').on('mouseenter touchstart', function(e) {
-        e.stopPropagation();
+    $('.demo-cell').on('mouseenter', function(e) {
         hoverTimeout = setTimeout(() => showPreview($(this)), 150);
     });
 
-    $('.demo-cell').on('mouseleave touchend', function() {
+    $('.demo-cell').on('mouseleave', function() {
         clearTimeout(hoverTimeout);
         preview.fadeOut(200);
     });
 
     $('.demo-cell').on('mousemove', function(e) {
-        if(window.innerWidth > 768){ // desktop only
-            const offset = 15;
-            const windowWidth = $(window).width();
-            const windowHeight = $(window).height();
-            const previewWidth = preview.outerWidth();
-            const previewHeight = preview.outerHeight();
-            let left = e.pageX + offset;
-            let top = e.pageY + offset;
-            if(left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
-            if(top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
-            preview.css({ top: top + 'px', left: left + 'px' });
-        }
-    });
-
-    // Hide preview when clicking/touching outside on mobile
-    $(document).on('touchstart', function(e){
-        if(!$(e.target).closest('.demo-cell').length){
-            preview.fadeOut(200);
-        }
+        const offset = 15;
+        const windowWidth = $(window).width();
+        const windowHeight = $(window).height();
+        const previewWidth = preview.outerWidth();
+        const previewHeight = preview.outerHeight();
+        let left = e.pageX + offset;
+        let top = e.pageY + offset;
+        if(left + previewWidth > windowWidth) left = e.pageX - previewWidth - offset;
+        if(top + previewHeight > windowHeight) top = e.pageY - previewHeight - offset;
+        preview.css({ top: top + 'px', left: left + 'px' });
     });
 
     // ---------------------------

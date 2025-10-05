@@ -1013,20 +1013,7 @@ Disallow: /admin/
     def siblings_meeting(parent):
         parent_demo = RecurringDemonstration.from_id(parent)
 
-        # Only fetch the child demos for the current page
-        per_page = 6
-        page = int(request.args.get("page", 1))
-        start = (page - 1) * per_page
-
-        siblings_cursor = demonstrations_collection.find(
-            {"parent": ObjectId(parent), "hide": False}
-        ).sort("date", 1).skip(start).limit(per_page)
-
-        siblings_page = [Demonstration.from_dict(d) for d in siblings_cursor]
-        total_pages = math.ceil(demonstrations_collection.count_documents(
-            {"parent": ObjectId(parent), "hide": False}
-        ) / per_page)
-
+        
         # Fetch precomputed stats
         stats = mongo.recu_stats.find_one({"parent": ObjectId(parent)}) or {}
         total_count = stats.get("total_count", 0)
@@ -1035,13 +1022,11 @@ Disallow: /admin/
 
         return render_template(
             "siblings.html",
-            siblings=siblings_page,
             parent_demo=parent_demo,
-            page=page,
-            total_pages=total_pages,
             total_count=total_count,
             future_count=future_count,
-            past_count=past_count
+            past_count=past_count,
+            parent_id=parent
         )
 
                 
@@ -1384,11 +1369,17 @@ Disallow: /admin/
     @app.route("/calendar/<int:year>/<int:month>/")
     def calendar_month_view(year=None, month=None):
         today = date.today()
+        
+        if month == 0 and year == 0:
+            month = today.month
+            year = today.year
+            return redirect(url_for("calendar_month_view", year=year, month=month))
+        
         if year is None or month is None:
             year, month = today.year, today.month
 
         # Haetaan kaikki demonstraatiot
-        demonstrations = list(demonstrations_collection.find())
+        demonstrations = list(demonstrations_collection.find(DEMO_FILTER))
 
         # Filteröidään vain kyseisen kuukauden demoja
         month_demos = defaultdict(list)

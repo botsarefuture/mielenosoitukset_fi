@@ -552,7 +552,7 @@ document.querySelectorAll('.button').forEach(button => {
       <a class="button button-outline" href="{{ url_for('submit') }}">
         <i class="fa-solid fa-plus"></i> {{ _('Ilmoita mielenosoituksesta') }}
       </a>
-      <a class="button button-outline" href="{{ url_for('calendar_year_view', year=current_year) }}">
+      <a class="button button-outline" href="{{ url_for('calendar_month_view', year=0, month=0) }}">
         <i class="fa-solid fa-calendar-days"></i> {{ _('Kalenterinäkymä') }}
       </a>
     </div>

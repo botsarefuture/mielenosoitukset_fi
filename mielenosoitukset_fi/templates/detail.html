@@ -1010,6 +1010,353 @@ body {
 
   {% import '_modals/past-demo-modal.html' as past_demo_modal %}
   {{ past_demo_modal.render_past_demo_modal(demo) }}
+<dialog id="invite-friends-dialog" class="p-0 border-0">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Kutsu kavereita osallistumaan</h5>
+        <button type="button" class="btn-close" id="close-dialog-btn" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:</p>
+        <div id="friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancel-invite-btn">Peruuta</button>
+        <button type="button" class="btn btn-primary" id="send-invite-btn">Lähetä kutsut</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  /* Dialog/Modal Styles */
+#invite-friends-dialog {
+  background: transparent;
+  border: none;
+  padding: 0;
+  max-width: 90vw;
+  width: 500px;
+  border-radius: var(--border-radius-lg, 24px);
+  box-shadow: var(--color-shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.6));
+  animation: fadeIn 0.3s ease-out;
+}
+
+#invite-friends-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-dialog {
+  width: 100%;
+}
+
+.modal-content {
+  background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
+  color: var(--color-text, light-dark(#1e293b, #e2e8f0));
+  border-radius: var(--border-radius-lg, 24px);
+  border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+  overflow: hidden;
+  position: relative;
+}
+
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
+}
+
+/* Modal Header */
+.modal-header {
+  padding: 2rem 2rem 1.5rem 2rem;
+  border-bottom: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text, light-dark(#1e293b, #e2e8f0));
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modal-title::before {
+  content: '👥';
+  font-size: 1.75rem;
+}
+
+.btn-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  padding: 0;
+}
+
+.btn-close::before {
+  content: '×';
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.btn-close:hover {
+  background: var(--color-error, light-dark(#dc2626, #ef4444));
+  color: white;
+  transform: rotate(90deg);
+}
+
+/* Modal Body */
+.modal-body {
+  padding: 2rem;
+}
+
+.modal-body > p {
+  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+/* Friends List */
+#friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  margin: -0.5rem;
+}
+
+#friends-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#friends-list::-webkit-scrollbar-track {
+  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+  border-radius: 4px;
+}
+
+#friends-list::-webkit-scrollbar-thumb {
+  background: var(--color-border, light-dark(#e2e8f0, #374151));
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+#friends-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary, light-dark(#0052cc, #3b82f6));
+}
+
+.friend-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+  border: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+  border-radius: var(--border-radius, 16px);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.friend-item:hover {
+  background: var(--color-card-bg, light-dark(#ffffff, #1a1d23));
+  border-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
+  transform: translateX(4px);
+}
+
+.friend-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
+}
+
+.friend-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.friend-info {
+  flex: 1;
+}
+
+.friend-name {
+  font-weight: 600;
+  color: var(--color-text, light-dark(#1e293b, #e2e8f0));
+  margin-bottom: 0.25rem;
+}
+
+.friend-status {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+}
+
+/* Modal Footer */
+.modal-footer {
+  padding: 1.5rem 2rem 2rem 2rem;
+  border-top: 1px solid var(--color-border, light-dark(#e2e8f0, #374151));
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 0.875rem 1.75rem;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: all 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: var(--color-gradient-primary, linear-gradient(135deg, #3b82f6 0%, #1e40af 100%));
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+  border: 2px solid var(--color-border, light-dark(#e2e8f0, #374151));
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg, light-dark(#f8fafc, #0f1419));
+  border-color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Empty State */
+.friends-list-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+}
+
+.friends-list-empty i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Loading State */
+.friends-list-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--color-border, light-dark(#e2e8f0, #374151));
+  border-top-color: var(--color-primary, light-dark(#0052cc, #3b82f6));
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.75rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  #invite-friends-dialog {
+    width: 95vw;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #friends-list {
+    max-height: 250px;
+  }
+}
+</style>
+
 
 </div>
 {% endblock %}
@@ -1131,9 +1478,16 @@ body {
   document.addEventListener("DOMContentLoaded", () => {
     // Handle URL action parameter
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'like') {
+    let action = urlParams.get("action");
+    if (action === 'like') {
       handleLikeClick('{{ demo["_id"] }}');
     }
+    
+  if (action === "inviteFriends") {
+    const demoId = '{{ demo["_id"] }}'; // or dynamically from card if needed
+    openInviteDialog(demoId);
+  }
+
     if (urlParams.has('action')) {
       urlParams.delete('action');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
@@ -1310,7 +1664,63 @@ body {
     window.getSelection().removeAllRanges();
   });
 </script>
+<script>
+function openInviteDialog(demoId) {
+  const dialog = document.getElementById("invite-friends-dialog");
+  const friendsList = document.getElementById("friends-list");
 
+  // Open dialog
+  if (typeof dialog.showModal === "function") {
+    dialog.showModal();
+  } else {
+    alert("Your browser doesn't support <dialog> 😢");
+    return;
+  }
+
+  // Close buttons
+  document.getElementById("cancel-invite-btn").onclick = () => dialog.close();
+  document.getElementById("close-dialog-btn").onclick = () => dialog.close();
+
+  // Fetch friends
+  fetch("/api/user/friends/")
+    .then(res => res.json())
+    .then(friends => {
+      friendsList.innerHTML = "";
+      friends.friends.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "form-check d-flex align-items-center gap-2";
+
+        div.innerHTML = `
+          <input class="form-check-input" type="checkbox" id="friend-${f._id}" value="${f._id}">
+          <label class="form-check-label d-flex align-items-center gap-2" for="friend-${f._id}">
+            <img src="${f.profile_picture}" alt="${f.displayname}" class="rounded-circle" width="30" height="30">
+            ${f.displayname}
+          </label>
+          
+        `;
+        friendsList.appendChild(div);
+      });
+    });
+
+  // Send invites
+  document.getElementById("send-invite-btn").onclick = () => {
+    const selected = Array.from(friendsList.querySelectorAll("input[type=checkbox]:checked"))
+      .map(input => input.value);
+
+    fetch(`/api/demonstrations/${demoId}/invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ friends: selected })
+    })
+    .then(res => res.json())
+    .then(() => {
+      alert("Kutsut lähetetty! 💌");
+      dialog.close();
+    });
+  };
+}
+
+</script>
 <!-- Leaflet JS -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>

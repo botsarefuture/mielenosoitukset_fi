@@ -210,7 +210,7 @@ def send_friend_request():
 
     # Already friends?
     if any(f["user_id"] == other._id for f in current_user.friends):
-        return {"error": "Already friends"}, 400
+        return {"error": "Already "}, 400
 
     # Request already sent?
     if any(req["sent_by"] == current_user._id for req in other.friend_requests):
@@ -338,6 +338,12 @@ def friend_state():
 
     return {"friend_state": state}, 200
 
+
+@profile_bp.route("/api/friends/")
+@login_required
+def p():
+    return api_friends_list()
+    
 
 @profile_bp.route("/api/friends_list/", methods=["GET"])
 @login_required

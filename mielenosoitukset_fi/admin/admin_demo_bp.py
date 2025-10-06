@@ -124,6 +124,19 @@ def demo_edit_history(demo_id):
         
     )
     
+@admin_demo_bp.route("/trigger_screenshot/<demo_id>")
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def trigger_ss(demo_id):
+    from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
+    success, msg = trigger_screenshot(demo_id)
+
+    if success:
+        return jsonify({"status": "ok", "message": msg}), 200
+    else:
+        return jsonify({"status": "error", "message": msg}), 500
+
 @admin_demo_bp.route("/view_demo_diff/<history_id>", methods=["GET"])
 @login_required
 @admin_required

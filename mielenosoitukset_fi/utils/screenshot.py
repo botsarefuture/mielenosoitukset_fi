@@ -129,6 +129,8 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
         logger.error(f"Failed to create screenshot: {e}")
         return None
 
+import threading
+
 def trigger_screenshot(demo_id, wait=False):
     """
     Trigger the creation of a screenshot for a given demonstration ID.
@@ -137,45 +139,57 @@ def trigger_screenshot(demo_id, wait=False):
     ----------
     demo_id : str
         The ID of the demonstration.
+    wait : bool
+        If True, block until the screenshot is done.
 
     Returns
     -------
-    bool
-        True if the thread starts successfully, False otherwise.
+    bool, str
+        True/False for success, message.
     """
     def create_screenshot_thread(demo_id):
+        from DatabaseManager import DatabaseManager
+        from bson import ObjectId
+
         _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
         if os.path.exists(_path):
-            return f"/static/demo_preview/{demo_id}.png"
+            logger.info(f"Screenshot already exists: {demo_id}")
+            return  # Already exists
+
+        try:
+            db_man = DatabaseManager.get_instance()
+            mongo = db_man.get_db()
+            data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+            if not data:
+                logger.error(f"No demonstration found with ID {demo_id}")
+                return
+
+            from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
         
-        from DatabaseManager import DatabaseManager
-        db_man = DatabaseManager.get_instance()
-        mongo = db_man.get_db()
-        from bson import ObjectId
-        
-        data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
-        demo = Demonstration.from_dict(data)
-        with current_app.app_context():
-            screenshot_path = create_screenshot(demo)
-        if screenshot_path is None:
+            demo = Demonstration.from_dict(data)
+
             with current_app.app_context():
-                return None
-            
-        with current_app.app_context():
-            return '/static/demo_preview/' + str(demo_id) + '.png'
+                path = create_screenshot(demo)
+                if path:
+                    logger.info(f"Screenshot created: {path}")
+                else:
+                    logger.error(f"Failed to create screenshot for demo {demo_id}")
+        except Exception as e:
+            logger.error(f"Exception in screenshot thread: {e}")
 
     try:
-        with current_app.app_context():
-            create_screenshot_thread(demo_id)
-            return True
-        
-        return True
-    
+        thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
+        thread.daemon = True  # Won't block app shutdown
+        thread.start()
+
+        if wait:
+            thread.join()
+
+        return True, "Screenshot thread started successfully"
     except Exception as e:
-        logger.error(f"Failed to trigger screenshot creation: {e}")
-        return False
-    
-    return True
+        logger.error(f"Failed to trigger screenshot thread: {e}")
+        return False, f"Failed to trigger screenshot thread: {e}"
+
 
 def main():
     parser = argparse.ArgumentParser(description="Create a screenshot for a demonstration.")
@@ -183,7 +197,7 @@ def main():
     parser.add_argument("--wait", action="store_true", help="Wait for the screenshot to be created.")
     args = parser.parse_args()
 
-    success = trigger_screenshot(args.demo_id, args.wait)
+    success, _ = trigger_screenshot(args.demo_id, args.wait)
     if success:
         print("Screenshot creation triggered successfully.")
     else:

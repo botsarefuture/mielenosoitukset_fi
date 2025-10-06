@@ -46,9 +46,8 @@ function scrollToTop() {
 }
 </script>
 <script>
-
-
 document.addEventListener('DOMContentLoaded', () => {
+  // Observe animations (assuming observer is defined elsewhere)
   document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => observer.observe(el));
 
   // Back to top button
@@ -62,39 +61,49 @@ document.addEventListener('DOMContentLoaded', () => {
   let totalPages = 1;
   const perPage = 12;
 
-  const grid = document.getElementById('demo-grid');
+  const grid = document.getElementById('demos-grid');
   const loadMoreBtn = document.getElementById('load-more-btn');
-async function loadDemos(page = 1, append = false) {
-    // Show loading state
+
+  // Extra params for page (e.g., parent_id)
+  const extraParams = {
+    parent_id: '{{ parent_id }}'
+  };
+
+  // Wrapper to handle loading UI + call the main loadDemos
+  async function loadDemosWrapper(page = 1, append = false) {
+    // Show loading
     if (!append) {
-      grid.innerHTML = '<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>';
+      grid.innerHTML = `
+        <div class="loading-container">
+          <div class="spinner"></div>
+          <p>Ladataan mielenosoituksia...</p>
+        </div>`;
     } else {
       loadMoreBtn.classList.add('loading');
       loadMoreBtn.disabled = true;
     }
 
-    const res = await fetch(`/api/demonstrations?parent_id={{ parent_id }}&page=${page}&per_page=${perPage}`);
-    const data = await res.json();
+    // Call the reusable loadDemos function
+    await loadDemos(page, append, extraParams);
 
-    if (!append) grid.innerHTML = "";
-
-    data.results.forEach(demo => grid.appendChild(renderDemoCard(demo)));
-
-    currentPage = data.page;
-    totalPages = data.total_pages;
-
-    loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
+    // After load, remove loading states
     loadMoreBtn.classList.remove('loading');
     loadMoreBtn.disabled = false;
-  }
-  // initial load
-  loadDemos();
 
+    // Update Load More button display (handled inside loadDemos already, but keep safety)
+    loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
+  }
+
+  // Initial load
+  loadDemosWrapper();
+
+  // Load more click
   loadMoreBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) loadDemos(currentPage + 1, true);
+    if (currentPage < totalPages) loadDemosWrapper(currentPage + 1, true);
   });
 });
 </script>
+
 {% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
@@ -404,7 +413,8 @@ body {
 }
 
 /* Demo Card Enhancement */
-.demo-card {
+
+/*.demo-card {
   background: var(--color-card-bg);
   border-radius: var(--border-radius);
   padding: 2rem;
@@ -426,7 +436,7 @@ body {
   opacity: 0;
   transition: var(--transition);
 }
-
+*/
 .demo-card:hover {
   transform: translateY(-8px);
   box-shadow: var(--color-shadow-lg);
@@ -733,7 +743,7 @@ body {
   <section class="section-card">
     <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki tapahtuman ajankohdat') }}</h2>
     
-    <div id="demo-grid" class="demos-grid"></div>
+    <div id="demos-grid" class="demos-grid"></div>
     <button id="load-more-btn" class="button button-secondary" styload-more-btnle="display:none;">{{ _('Näytä lisää') }}</button>
 
     <!-- Empty State -->

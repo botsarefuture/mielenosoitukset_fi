@@ -67,7 +67,35 @@
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
+<!-- Toast container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+  <div id="toast-container"></div>
+</div>
+<script>
 
+  function showToast(message, type = 'info', delay = 3000) {
+  const container = document.getElementById('toast-container');
+  
+  const toastEl = document.createElement('div');
+  toastEl.className = `toast align-items-center text-bg-${type} border-0`;
+  toastEl.role = 'alert';
+  toastEl.ariaLive = 'assertive';
+  toastEl.ariaAtomic = 'true';
+  toastEl.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${message}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  `;
+
+  container.appendChild(toastEl);
+
+  const bsToast = new bootstrap.Toast(toastEl, { delay: delay });
+  bsToast.show();
+
+  toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+</script>
     {# ==== SIDEBAR + CONTENT WRAPPER ==== #}
     <div class="d-flex flex-grow-1">
 

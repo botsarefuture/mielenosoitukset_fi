@@ -1,10 +1,10 @@
-from flask import jsonify, request, Blueprint
+from flask import jsonify, redirect, request, Blueprint, url_for
 from bson.objectid import ObjectId
 from datetime import datetime
 from flask_cors import CORS
 from functools import wraps
 
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.classes import Demonstration
@@ -24,6 +24,9 @@ mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
 CORS(api_bp, resources={r"/*": {"origins": "*"}})
 
+
+demo_attending_collection = mongo["demo_attending"]
+demo_invites_collection = mongo["demo_invites"]
 # -------------------------
 # ERROR HANDLER
 # -------------------------
@@ -148,9 +151,12 @@ def list_demonstrations():
         page, per_page = 1, 20
 
     today = datetime.now()
-    query = {"approved": True, "hide": False}
+    from mielenosoitukset_fi.utils.database import DEMO_FILTER
+    query = DEMO_FILTER
     if _parent_id:
         query["parent"] = _parent_id
+        
+
         
     demos_cursor = mongo.demonstrations.find(query)
 
@@ -163,8 +169,8 @@ def list_demonstrations():
                 (search in demo_obj["title"].lower() or not search) and
                 (city in demo_obj["city"].lower() or not city) and
                 (title in demo_obj["title"].lower() or not title) and
-                (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag) and
-                (not recurring or str(demo_obj.get("recurs")) == recurring)
+                (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag)# and
+                #(not recurring or str(demo_obj.get("recurs")) == recurring)
             ):
                 filtered.append(demo_obj)
 
@@ -277,12 +283,49 @@ def _token_or_session_required(required_perms=None, required_scopes=None):
 @_token_or_session_required(required_scopes=["write"])
 def like_demo(demo_id):
     likes = _update_likes(demo_id, delta=1)
+    demo_attending(demo_id) # A temporary solution
     return jsonify({"likes": likes}), 200
+
+
+@api_bp.route("/demonstrations/<demo_id>/attending", methods=["GET", "POST"])
+@login_required
+def demo_attending(demo_id):
+    """
+    GET: returns whether current user is attending
+    POST: toggles attending status and returns new status
+    """
+    user_id = ObjectId(current_user.id)  # make sure user_id is stored as string
+    demo_id = ObjectId(demo_id)          # store demo_id as string for consistency
+
+    if request.method == "GET":
+        doc = demo_attending_collection.find_one({"user_id": user_id, "demo_id": demo_id})
+        return jsonify({"demo_id": str(demo_id), "attending": bool(doc)})
+
+    if request.method == "POST":
+        doc = demo_attending_collection.find_one({"user_id": user_id, "demo_id": demo_id})
+        if doc:
+            # Toggle attending
+            new_status = not doc.get("attending", True)
+            demo_attending_collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"attending": new_status}}
+            )
+            return jsonify({"demo_id": str(demo_id), "attending": new_status})
+        else:
+            # First time attending
+            demo_attending_collection.insert_one({
+                "user_id": user_id,
+                "demo_id": demo_id,
+                "attending": True
+            })
+            return jsonify({"demo_id": str(demo_id), "attending": True})
 
 @api_bp.route("/demonstrations/<demo_id>/unlike", methods=["POST"])
 @_token_or_session_required(required_scopes=["write"])
 def unlike_demo(demo_id):
     likes = _update_likes(demo_id, delta=-1)
+    demo_attending(demo_id) # A temporary solution
+        
     return jsonify({"likes": likes}), 200
 
 @api_bp.route("/demonstrations/<demo_id>/likes", methods=["GET"])
@@ -366,3 +409,136 @@ def create_long_lived_token():
         "expires_at": expires_at,
         "message": "Long-lived token created successfully"
     }), 201
+
+
+
+# Dummy example: replace this with your DB or actual logic
+FRIENDS_DATA = {
+    1: [{"name": "Pekka Testinen", "avatar": "/avatars/pekka.jpg"}],
+    2: [],
+    3: [{"name": "Liisa Virtanen", "avatar": "/avatars/liisa.jpg"},
+        {"name": "Mikko Meikäläinen", "avatar": "/avatars/mikko.jpg"}],
+}
+
+def _get_user_friends():
+    return [friend.get("user_id") for friend in current_user.friends]
+    
+        
+    
+from bson import ObjectId
+def _get_attending_per_demo(demoId, user_friends):
+    """
+    Returns a list of friends attending a given demo, with their name and avatar.
+    """
+    demoId = ObjectId(demoId) if not isinstance(demoId, ObjectId) else demoId
+
+    # 1️⃣ Get attending docs for this demo & friends
+    attending_docs = list(demo_attending_collection.find({
+        "demo_id": demoId,
+        "user_id": {"$in": user_friends},
+        "attending": True
+    }))
+
+    if not attending_docs:
+        return []
+
+    # 2️⃣ Extract the user_ids
+    attend_uid = [doc["user_id"] for doc in attending_docs]
+
+    # 3️⃣ Query users collection for display info
+    user_docs = mongo["users"].find({"_id": {"$in": attend_uid}})
+
+    # 4️⃣ Build a dict for fast lookup
+    user_info_map = {str(user["_id"]): user for user in user_docs}
+
+    # 5️⃣ Combine attendance + user info
+    combined = []
+    for doc in attending_docs:
+        uid = str(doc["user_id"])
+        user = user_info_map.get(uid, {})
+        combined.append({
+            "user_id": uid,
+            "name": user.get("displayname", "Unknown"),
+            "avatar": user.get("profile_picture")
+        })
+
+    return combined
+
+
+@api_bp.route("/friends-attending", methods=["POST"])
+def friends_attending():
+    """
+    Expects JSON: { "demo_ids": [1, 2, 3] }
+    Returns: { "1": [...friends...], "2": [...], ... }
+    """
+    data = request.get_json()
+    if not data or "demo_ids" not in data:
+        return jsonify({"error": "Missing demo_ids"}), 400
+
+    
+
+    demo_ids = data["demo_ids"]
+    result = {}
+    
+    print(demo_ids)
+    friends = _get_user_friends()
+    
+    print("Filtering by", friends)
+
+    for demo_id in demo_ids:
+        
+        # Convert to ObjectId if coming as string
+        demo_id = ObjectId(demo_id)
+        print(demo_id)
+        friends_attending = _get_attending_per_demo(demoId=demo_id, user_friends=friends)
+        print(friends_attending)
+        result[str(demo_id)] = friends_attending
+
+    return jsonify(result)
+
+@api_bp.route("/user/friends/")
+def friends():
+    return redirect(url_for("users.profile.api_friends_list"))
+
+@api_bp.route("/demonstrations/<demo_id>/invite", methods=["POST"])
+@login_required
+def invite_friends(demo_id):
+    """
+    Invite friends to a demo.
+    Expects JSON body: { "friend_ids": ["id1", "id2", ...] }
+    """
+    try:
+        user_id = g.user_id  # current logged-in user
+        data = request.get_json()
+        friend_ids = data.get("friend_ids", [])
+        if not friend_ids:
+            return jsonify({"error": "No friends provided"}), 400
+
+        demo_obj_id = ObjectId(demo_id)
+
+        # Insert invites (if not already invited)
+        inserted = []
+        for fid in friend_ids:
+            existing = demo_invites_collection.find_one({
+                "demo_id": demo_obj_id,
+                "inviter_id": user_id,
+                "friend_id": fid
+            })
+            if not existing:
+                doc = {
+                    "demo_id": demo_obj_id,
+                    "inviter_id": user_id,
+                    "friend_id": fid,
+                    "created_at": datetime.utcnow()
+                }
+                demo_invites_collection.insert_one(doc)
+                inserted.append(fid)
+
+        return jsonify({
+            "demo_id": demo_id,
+            "invited_friends": inserted,
+            "message": f"Invited {len(inserted)} friends."
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

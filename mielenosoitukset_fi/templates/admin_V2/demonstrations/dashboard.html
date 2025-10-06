@@ -94,30 +94,28 @@ tr.fade‑out {
     })
       .then((response) => response.json())
       .then((data) => {
-        const flashMessagesDiv = document.getElementById("flash-messages");
-        const flashMessageList = flashMessagesDiv.querySelector("ul");
-        const newMessage = document.createElement("li");
-
-        // Clear previous messages
-        flashMessageList.innerHTML = ""; // Clear previous messages
-
+        
         if (data.status === "OK") {
-          newMessage.classList.add("flash-info");
-          newMessage.textContent = "{{ _('Mielenosoitus hyväksytty onnistuneesti!') }}";
-          flashMessageList.appendChild(newMessage);
+          showToast("{{ _('Mielenosoitus hyväksytty onnistuneesti!') }}", 'success');
           acceptSty(demoId);
         } else {
           // Handle error (e.g., show a flash message)
           console.error("Error fetching submitter info:", data.message);
+          showToast("{{ _('Virhe hyväksyttäessä mielenosoitusta.') }}", 'danger');
         }
       })
       .catch((error) => {
         console.error("Error:", error);
+        showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
       });
   }
+
+
 </script>
 
 {% endblock %} {% block main_content %}
+
+
 
 <section class="dashboard-container">
   <!-- Intro card -->
@@ -224,6 +222,8 @@ tr.fade‑out {
                   {% endif %}
                 {% endif %}
 
+                
+
                 {% if current_user.global_admin %}
                   <li><button class="dropdown-item" type="button" onclick="recommendDemo('{{ demo._id }}', this)"><i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}</button></li>
                 {% endif %}
@@ -236,6 +236,15 @@ tr.fade‑out {
                   <li><a class="dropdown-item" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"><i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}</a></li>
                   <li><button class="dropdown-item" type="button" onclick="showSubmitterInfoModal('{{ demo._id }}')"><i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}</button></li>
                 {% endif %}
+
+                {% if current_user.has_permission("CREATE_DEMO") %}
+<li>
+  <button class="dropdown-item" type="button" onclick="triggerScreenshot('{{ demo._id }}', this)">
+    <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
+  </button>
+</li>
+{% endif %}
+
 
                 <li><a class="dropdown-item" href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}"><i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}</a></li>
 
@@ -539,16 +548,39 @@ function animateAndRemoveRow(rowEl) {
             const icon = btn.querySelector('i')?.outerHTML || '';
             btn.innerHTML = icon + ' ' + "{{ _('Suositeltu!') }}";
             btn.classList.add('btn-success');
+            showToast("{{ _('Mielenosoitus suositeltu onnistuneesti!') }}", 'success');
           } else {
-            alert(data.message || "{{ _('Virhe suositellessa.') }}");
-            btn.disabled = false;
+            showToast("{{ _('Virhe suositellessa.') }}", 'danger');            btn.disabled = false;
           }
         })
         .catch(() => {
-          alert("{{ _('Yhteysvirhe, yritä uudelleen.') }}");
-          btn.disabled = false;
+      showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
+                btn.disabled = false;
         });
     }
+  </script>
+
+  <script>
+    function triggerScreenshot(demoId, btn) {
+  btn.disabled = true;
+
+  fetch(`/admin/demo/trigger_screenshot/${demoId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        showToast("{{ _('Esikatselukuva luotu!') }}", 'success');
+      } else {
+        showToast(data.message || "{{ _('Virhe luotaessa esikatselukuvaa.') }}", 'danger');
+      }
+      btn.disabled = false;
+    })
+    .catch(err => {
+      console.error(err);
+      showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
+      btn.disabled = false;
+    });
+}
+
   </script>
 
   {% endblock %}

@@ -5,91 +5,131 @@ function format_time(time) {
 }
 
 
-function renderDemoCard(demo) {
-  const tpl = document.getElementById("demo-card-template");
-  const clone = tpl.content.cloneNode(true);
-  const card = clone.querySelector(".demo-card");
+// 1️⃣ Render all demo cards
+function renderDemoCards(demoData) {
+  const container = document.getElementById('demos-grid');
+  const template = document.getElementById('demo-card-template');
 
-  // id + navigation
-  card.dataset.demoId = demo._id;
-  card.onclick = () => window.location.href = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
-  card.onkeypress = (e) => { if (e.key === "Enter") card.onclick(); };
+  demoData.forEach(demo => {
+    const clone = template.content.cloneNode(true);
+    const card = clone.querySelector('.demo-card');
 
-  // badges
-  const badges = clone.querySelector(".demo-card-badges");
-  if (demo.is_today) badges.innerHTML += `<span class="demo-card-badge demo-card-badge-today">Tänään</span>`;
-  if (demo.is_trending) badges.innerHTML += `<span class="demo-card-badge demo-card-badge-trending">Nousussa</span>`;
-  if (demo.is_recommended) badges.innerHTML += `<span class="demo-card-badge demo-card-badge-recommended">Suositeltu</span>`;
+    card.dataset.demoId = demo._id;
+    card.querySelector('.demo-card-title span').textContent = demo.title;
+    card.querySelector('.demo-card-image img').src = demo.preview_image;
+    card.querySelector('.demo-card-date').append(demo.formatted_date);
 
-  // image
-  const img = clone.querySelector(".demo-card-image img");
-  img.src = demo.img || demo.cover_image || demo.preview_image || `/download_material/${demo._id}`;
-  img.alt = `${demo.title} – ${demo.city || ""} – ${demo.date_display}`;
+// Compute start & end display
+const demoStartTime = format_time(demo.start_time);
+const demoEndTime = demo.end_time ? format_time(demo.end_time) : null;
 
-  // title
-  clone.querySelector(".demo-card-title span").textContent = demo.title;
+// Combine for display
+const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : demoStartTime;
 
-  // date + time
+// Set in card
+card.querySelector('.demo-card-time').textContent = timeText;
 
-  _formatted_start_time = format_time(demo.start_time);
-  _formatted_end_time = format_time(demo.end_time)
-  clone.querySelector(".demo-card-date").innerHTML = `<i class="fa-regular fa-calendar"></i> ${demo.formatted_date}`;
-  clone.querySelector(".demo-card-time").innerHTML = _formatted_start_time 
-      ? `<i class="fa-regular fa-clock"></i> ${_formatted_start_time}${_formatted_end_time ? " – " + _formatted_end_time : ""}` 
-      : "";
+    card.querySelector('.demo-card-city').append(demo.city);
+    card.querySelector('.demo-card-address').append(demo.address);
 
-  // city + address
-  if (demo.city) clone.querySelector(".demo-card-city").innerHTML = `<i class="fa-solid fa-city"></i> ${demo.city}`;
-  if (demo.address) clone.querySelector(".demo-card-address").innerHTML = `<i class="fa-solid fa-location-dot"></i> ${demo.address}`;
+    // Optional: tags
+    const tagsContainer = card.querySelector('.demo-card-tags');
+    if (demo.tags && demo.tags.length > 0) {
+      demo.tags.forEach(tag => {
+        const a = document.createElement('a');
+        a.href = `/tag/${tag}`;
+        a.textContent = `#${tag}`;
+        a.className = 'demo-card-tag';
+        tagsContainer.appendChild(a);
+      });
+    }
 
-  // tags
-  const tagsEl = clone.querySelector(".demo-card-tags");
-  (demo.tags?.length ? demo.tags : [demo.topic]).forEach(tag => {
-    const a = document.createElement("a");
-    a.href = `/tag/${tag}`;
-    a.className = "demo-card-tag";
-    a.textContent = `#${tag}`;
-    tagsEl.appendChild(a);
+    container.appendChild(clone);
+    
   });
 
-  // actions
-  clone.querySelector(".open-btn").onclick = () => window.location.href = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
-  clone.querySelector(".copy-btn").onclick = async (e) => {
-    e.stopPropagation();
-    await navigator.clipboard.writeText(`${window.location.origin}/demonstration/${demo.slug || demo.running_number || demo._id}`);
-    e.target.textContent = "Kopioitu!";
-    setTimeout(() => e.target.innerHTML = `<i class="fa-solid fa-link"></i> Kopioi linkki`, 1500);
-  };
-
-  return clone;
+  // Return all card elements
+  return Array.from(container.querySelectorAll('.demo-card'));
 }
+
+// Attach click events (both existing and new cards)
+function setup_grid_navigation(cards) {
+    cards.forEach(item => {
+        const demoId = item.dataset.demoId;
+
+        // Main card click
+        item.addEventListener('click', e => {
+            if (e.target.closest('a') || e.target.closest('.demo-card-invite-btn') || e.target.closest('.demo-card-no-friends')) return;
+            if (demoId) window.location.href = `/demonstration/${demoId}`;
+        });
+
+        // Invite button
+        const inviteBtn = item.querySelector('.demo-card-invite-btn');
+        if (inviteBtn) {
+            inviteBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
+            });
+        }
+
+        // "No friends" section click
+        const noFriendsDiv = item.querySelector('.demo-card-no-friends');
+        if (noFriendsDiv) {
+            noFriendsDiv.addEventListener('click', e => {
+                e.stopPropagation();
+                if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
+            });
+        }
+    });
+}
+
 
 // pagination state
 let currentPage = 1;
 let totalPages = 1;
-const perPage = 12; // can match your backend default
+const perPage = 12; // default per-page
 
-async function loadDemos(page = 1, append = false) {
-  const res = await fetch(`/api/demonstrations?page=${page}&per_page=${perPage}`);
-  const data = await res.json();
+async function loadDemos(page = 1, append = false, extraParams = {}) {
+  try {
+    // Build query params
+    const params = new URLSearchParams({
+      page,
+      per_page: perPage,
+      ...extraParams // merge in any page-specific params
+    });
 
-  const grid = document.getElementById("demo-grid");
-  if (!append) grid.innerHTML = ""; // clear on first load
+    const res = await fetch(`/api/demonstrations?${params.toString()}`);
+    const data = await res.json();
 
-  data.results.forEach(demo => grid.appendChild(renderDemoCard(demo)));
+    const grid = document.getElementById("demos-grid"); 
+    if (!append) grid.innerHTML = ""; // clear on first load
 
-  // update state
-  currentPage = data.page;
-  totalPages = data.total_pages;
+    // Render demo cards
+    const newCards = renderDemoCards(data.results);
 
-  // handle "Load more" button
-  const loadMoreBtn = document.getElementById("load-more-btn");
-  if (currentPage < totalPages) {
-    loadMoreBtn.style.display = "block";
-  } else {
-    loadMoreBtn.style.display = "none";
+    // Fetch friends attending in one batch
+    getFriendsAttending(newCards);
+
+    setup_grid_navigation(newCards);
+
+    // update pagination state
+    currentPage = data.page;
+    totalPages = data.total_pages;
+
+    // handle "Load more" button
+    const loadMoreBtn = document.getElementById("load-more-btn");
+    if (currentPage < totalPages) {
+      loadMoreBtn.style.display = "block";
+      loadMoreBtn.onclick = () => loadDemos(currentPage + 1, true, extraParams);
+    } else {
+      loadMoreBtn.style.display = "none";
+    }
+
+  } catch (err) {
+    console.error("Failed to load demos:", err);
   }
 }
+
 
 // load first page on startup
 //document.addEventListener("DOMContentLoaded", () => {
@@ -101,3 +141,54 @@ async function loadDemos(page = 1, append = false) {
 //    }
 //  });
 //});
+
+
+// 2️⃣ Update attending section per card
+function updateDemoCardAttending(cardElement, friends) {
+  const loadingDiv = cardElement.querySelector('.attending-loading');
+  const friendsDiv = cardElement.querySelector('.demo-card-friends');
+  const noFriendsDiv = cardElement.querySelector('.demo-card-no-friends');
+
+  loadingDiv.style.display = 'none';
+
+  if (friends && friends.length > 0) {
+    friendsDiv.style.display = 'flex';
+    friendsDiv.innerHTML = friends.slice(0, 3).map(f => `
+      <img class="friend-avatar animate-fade-in-up" src="${f.avatar}" alt="${f.name}" title="${f.name}">
+    `).join('') + `<span class="friends-text">${friends[0].name} osallistuu</span>`;
+    noFriendsDiv.style.display = 'none';
+  } else {
+    friendsDiv.style.display = 'none';
+    noFriendsDiv.style.display = 'flex';
+  }
+}
+
+// Example usage:
+// Suppose `card` is your rendered demo-card element
+// fetch('/api/demo-attending?id=123')
+//   .then(res => res.json())
+//   .then(data => updateDemoCardAttending(card, data.friends));
+// 3️⃣ Fetch friends attending in one batch
+function getFriendsAttending(demoCards) {
+  const demoIds = demoCards.map(card => card.dataset.demoId);
+  if (demoIds.length === 0) return; // Don't query API if empty :3
+
+
+
+  fetch('/api/friends-attending', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ demo_ids: demoIds }),
+    
+  })
+  .then(res => res.json())
+  .then(data => {
+    demoCards.forEach(card => {
+      const id = card.dataset.demoId;
+      const friends = data[id] || [];
+      updateDemoCardAttending(card, friends);
+    });
+  })
+  .catch(err => console.error('Failed to fetch friends attending:', err));
+}
+

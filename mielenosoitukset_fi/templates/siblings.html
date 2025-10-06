@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMoreBtn.classList.add('loading');
       loadMoreBtn.disabled = true;
     }
-
+    
     // Call the reusable loadDemos function
     await loadDemos(page, append, extraParams);
 
@@ -91,16 +91,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMoreBtn.disabled = false;
 
     // Update Load More button display (handled inside loadDemos already, but keep safety)
-    loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
+    //loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
   }
 
   // Initial load
   loadDemosWrapper();
 
   // Load more click
-  loadMoreBtn.addEventListener('click', () => {
+  /*loadMoreBtn.addEventListener('click', () => {
     if (currentPage < totalPages) loadDemosWrapper(currentPage + 1, true);
-  });
+  });*/
 });
 </script>
 
@@ -744,12 +744,12 @@ body {
     <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki tapahtuman ajankohdat') }}</h2>
     
     <div id="demos-grid" class="demos-grid"></div>
-    <button id="load-more-btn" class="button button-secondary" styload-more-btnle="display:none;">{{ _('Näytä lisää') }}</button>
+    <button id="load-more-btn" class="button button-secondary" style="display:none;">{{ _('Näytä lisää') }}</button>
 
     <!-- Empty State -->
     <div id="no-results" class="no-results" style="display:none;">
       <i class="fa-regular fa-calendar-xmark"></i>
-      <h3>{{ _('Ei löytynyt toistumomielenosoituksia') }}</h3>
+      <h3>{{ _('Ei löytynyt toistuvia mielenosoituksia') }}</h3>
       <p>{{ _('Tällä hetkellä ei ole muita mielenosoituksia tässä toistumassa. Tarkista myöhemmin uudelleen mahdollisten uusien tapahtumien varalta.') }}</p>
       <div style="margin-top: 2rem;">
         <a href="{{ url_for('demonstrations') }}" class="button button-primary"><i class="fa-solid fa-list"></i>{{ _('Selaa kaikkia mielenosoituksia') }}</a>

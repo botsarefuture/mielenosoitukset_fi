@@ -1019,7 +1019,7 @@ body {
       </div>
       <div class="modal-body">
         <p>Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:</p>
-        <div id="friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
+        <div id="_friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="cancel-invite-btn">Peruuta</button>
@@ -1135,7 +1135,7 @@ body {
 }
 
 /* Friends List */
-#friends-list {
+#_friends-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -1145,22 +1145,22 @@ body {
   margin: -0.5rem;
 }
 
-#friends-list::-webkit-scrollbar {
+#_friends-list::-webkit-scrollbar {
   width: 8px;
 }
 
-#friends-list::-webkit-scrollbar-track {
+#_friends-list::-webkit-scrollbar-track {
   background: var(--color-bg, light-dark(#f8fafc, #0f1419));
   border-radius: 4px;
 }
 
-#friends-list::-webkit-scrollbar-thumb {
+#_friends-list::-webkit-scrollbar-thumb {
   background: var(--color-border, light-dark(#e2e8f0, #374151));
   border-radius: 4px;
   transition: all 0.3s;
 }
 
-#friends-list::-webkit-scrollbar-thumb:hover {
+#_friends-list::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary, light-dark(#0052cc, #3b82f6));
 }
 
@@ -1351,7 +1351,7 @@ body {
     justify-content: center;
   }
 
-  #friends-list {
+  #_friends-list {
     max-height: 250px;
   }
 }
@@ -1667,7 +1667,7 @@ body {
 <script>
 function openInviteDialog(demoId) {
   const dialog = document.getElementById("invite-friends-dialog");
-  const friendsList = document.getElementById("friends-list");
+  const friendsList = document.getElementById("_friends-list");
 
   // Open dialog
   if (typeof dialog.showModal === "function") {

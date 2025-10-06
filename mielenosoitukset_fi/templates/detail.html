@@ -791,6 +791,11 @@ body {
       <i class="fa-brands fa-linkedin-in"></i>
       {{ _('Jaa LinkedInissä') }}
     </a>
+     <!-- Invite Friends Button -->
+  <button type="button" class="btn btn-social" id="invite-friends-btn">
+    <i class="fa-solid fa-user-plus"></i>
+    {{ _('Kutsu kavereita') }}
+  </button>
   </div>
 
   <!-- Participation Card -->
@@ -1682,8 +1687,22 @@ body {
   });
 </script>
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const dialog = document.getElementById("invite-friends-dialog");
+    const inviteBtn = document.getElementById("invite-friends-btn");
+
+    if(dialog && inviteBtn){
+        inviteBtn.onclick = () => {
+          openInviteDialog(window.demoId);
+
+        };
+    }
+});
+
 function openInviteDialog(demoId) {
   const dialog = document.getElementById("invite-friends-dialog");
+
+
   const friendsList = document.getElementById("_friends-list");
 
   // Open dialog

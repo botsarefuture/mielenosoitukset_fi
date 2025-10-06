@@ -1017,17 +1017,34 @@ body {
         <h5 class="modal-title">Kutsu kavereita osallistumaan</h5>
         <button type="button" class="btn-close" id="close-dialog-btn" aria-label="Close"></button>
       </div>
+
       <div class="modal-body">
-        <p>Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:</p>
-        <div id="_friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
+        {% if current_user.is_authenticated %}
+          <p>Valitse kaverit, jotka haluat kutsua tähän mielenosoitukseen:</p>
+          <div id="_friends-list" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;"></div>
+        {% else %}
+          <div class="alert alert-warning d-flex align-items-center gap-2">
+            <i class="fa-solid fa-user-lock"></i>
+            <span>Kirjaudu sisään käyttääksesi kaverikutsuja</span>
+          </div>
+          <a href="{{ url_for('users.auth.login', next=request.path) }}?action=inviteFriends" class="btn btn-primary">
+            <i class="fa-solid fa-right-to-bracket"></i> Kirjaudu sisään
+          </a>
+        {% endif %}
       </div>
+
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancel-invite-btn">Peruuta</button>
-        <button type="button" class="btn btn-primary" id="send-invite-btn">Lähetä kutsut</button>
+        {% if current_user.is_authenticated %}
+          <button type="button" class="btn btn-secondary" id="cancel-invite-btn">Peruuta</button>
+          <button type="button" class="btn btn-primary" id="send-invite-btn">Lähetä kutsut</button>
+        {% else %}
+          <button type="button" class="btn btn-secondary" id="close-dialog-btn-unauth">Sulje</button>
+        {% endif %}
       </div>
     </div>
   </div>
 </dialog>
+
 
 <style>
   /* Dialog/Modal Styles */
@@ -1677,9 +1694,15 @@ function openInviteDialog(demoId) {
     return;
   }
 
-  // Close buttons
-  document.getElementById("cancel-invite-btn").onclick = () => dialog.close();
-  document.getElementById("close-dialog-btn").onclick = () => dialog.close();
+    // Close with buttons
+  const cancelBtn = document.getElementById("cancel-invite-btn");
+  if (cancelBtn) cancelBtn.onclick = () => dialog.close();
+
+  const closeBtn = document.getElementById("close-dialog-btn");
+  if (closeBtn) closeBtn.onclick = () => dialog.close();
+
+  const closeUnauthBtn = document.getElementById("close-dialog-btn-unauth");
+  if (closeUnauthBtn) closeUnauthBtn.onclick = () => dialog.close();
 
   // Fetch friends
   fetch("/api/user/friends/")

@@ -131,6 +131,12 @@ document.getElementById('top-banner-close').addEventListener('click', function()
       banner.style.top = flash.offsetHeight + 'px';
     }
   });
+
+  document.logged_in = Boolean("{{ current_user.is_authenticated }}");
+
+</script>
+<script>
+    document.logged_in = {{ "true" if current_user.is_authenticated else "false" }};
 </script>
 
 <style>

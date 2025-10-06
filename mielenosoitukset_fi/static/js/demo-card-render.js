@@ -173,7 +173,22 @@ function getFriendsAttending(demoCards) {
   const demoIds = demoCards.map(card => card.dataset.demoId);
   if (demoIds.length === 0) return; // Don't query API if empty :3
 
+  // 🛑 If user isn’t logged in, show login prompt in each card
+  if (document.logged_in !== true) {
+    demoCards.forEach(card => {
+      const loadingDiv = card.querySelector('.attending-loading');
+      const friendsDiv = card.querySelector('.demo-card-friends');
+      const noFriendsDiv = card.querySelector('.demo-card-no-friends');
 
+      if (loadingDiv) loadingDiv.style.display = 'none';
+      if (friendsDiv) friendsDiv.style.display = 'none';
+      if (noFriendsDiv) {
+        noFriendsDiv.style.display = 'flex';
+        noFriendsDiv.innerHTML = `<span class="login-prompt">Kirjaudu sisään käyttääksesi sosiaalisia toimintoja</span>`;
+      }
+    });
+    return;
+  }
 
   fetch('/api/friends-attending', {
     method: 'POST',

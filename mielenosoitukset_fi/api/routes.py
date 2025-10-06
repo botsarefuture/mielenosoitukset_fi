@@ -305,8 +305,9 @@ def demo_attending(demo_id):
 
         # Check if attending was provided in JSON
         new_status = None
-        if request.json and "attending" in request.json:
-            new_status = bool(request.json["attending"])
+        _json = request.get_json(silent=True) 
+        if _json and "attending" in _json:
+            new_status = bool(_json["attending"])
 
         if doc:
             # Toggle if no status provided

@@ -110,7 +110,6 @@ function renderMessages(){
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// --- APPEND SINGLE MESSAGE ---
 function appendMessage(msg){
     const div = document.createElement("div");
     div.style.marginBottom = "0.5em";
@@ -118,10 +117,56 @@ function appendMessage(msg){
     div.style.color = "light-dark(#eee, #111)";
 
     const sender = msg.sender_id === "{{ current_user._id }}" ? "Minä" : friend_id_to_name[msg.sender_id] || currentFriend;
-    div.innerHTML = `<strong>${sender}</strong>: ${msg.content}`;
+
+    if(msg.type === "chat"){
+        div.innerHTML = `<strong>${sender}</strong>: ${msg.content}`;
+    }
+    else if(msg.type === "invitation"){
+        const inv = msg.extra.invitation_type;
+        div.innerHTML = `
+            <strong>${sender}</strong> kutsui sinut mielenosoitukseen "${msg.extra.demo_title}"<br>
+            <button class="accept-invite btn btn-success btn-sm" data-demo-id="${msg.extra.demo_id}">
+                Hyväksy kutsu
+            </button>
+        `;
+        div.style.background = "#f0f9ff";
+        div.style.padding = "0.25em";
+        div.style.borderRadius = "0.5em";
+
+        // Handle click
+        div.querySelector(".accept-invite").onclick = async (e) => {
+            const btn = e.target;
+            btn.disabled = true;
+            btn.textContent = "Joining...";
+            const demoId = btn.dataset.demoId;
+
+            try {
+                const resp = await fetch(`/api/demonstrations/${demoId}/attending`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ attending: true })
+                });
+
+                const data = await resp.json();
+                if(data.attending){
+                    btn.textContent = "Hyväksytty ✅";
+                } else {
+                    btn.textContent = "Jokin meni pieleen ❌";
+                }
+            } catch(err){
+                console.error(err);
+                btn.textContent = "Virhe ❌";
+            }
+        };
+    }
+    else if(msg.type === "media"){
+        div.innerHTML = `<strong>${sender}</strong>:<br><img src="${msg.extra.media_url}" style="max-width:200px; border-radius:0.5em;">`;
+    }
+
     chatMessages.appendChild(div);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 // --- INCOMING MESSAGE ---
 function handleIncomingMessage(msg){

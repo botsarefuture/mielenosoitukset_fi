@@ -1733,7 +1733,7 @@ function openInviteDialog(demoId) {
     fetch(`/api/demonstrations/${demoId}/invite`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ friends: selected })
+      body: JSON.stringify({ friend_ids: selected })
     })
     .then(res => res.json())
     .then(() => {

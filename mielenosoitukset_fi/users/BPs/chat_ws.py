@@ -13,17 +13,40 @@ mongo = DatabaseManager().get_instance().get_db()
 # blueprint
 chat_ws = Blueprint("chat_ws", __name__)
 
+username_cache = {}
+
+def _get_username(uid: ObjectId):
+    uid = ObjectId(uid)
+    if str(uid) in username_cache:
+        return username_cache[str(uid)]
+    
+    result = mongo["users"].find_one({"_id": uid})
+    if result:
+        username = result.get("username")
+        username_cache[str(uid)] = username
+        
+        return username
+    
+    else:
+        return None
+    
+    
+    
+
 # --- Helper ---
 def serialize_message(msg):
     return {
         "_id": str(msg["_id"]),
         "sender_id": str(msg["sender_id"]),
         "recipient_id": str(msg["recipient_id"]),
-        "content": msg["content"],
+        "type": msg.get("type", "chat"),
+        "content": msg.get("content"),
+        "extra": msg.get("extra", {}),
         "created_at": msg["created_at"].isoformat(),
         "read": msg.get("read", False),
-        "sender_username": mongo.users.find_one({"_id": msg["sender_id"]})["username"]
+        "sender_username": _get_username(msg["sender_id"])
     }
+
 
 # --- Socket.IO events ---
 def init_socketio(socketio: SocketIO):
@@ -53,13 +76,16 @@ def init_socketio(socketio: SocketIO):
                     "_id": str(f_user._id)
                 })
         emit("friends_list", {"friends": friends_list})
-
+        
     @socketio.on("send_message")
     def handle_send_message(data):
         recipient_username = data.get("recipient")
+        msg_type = data.get("type", "chat")  # default chat
         content = data.get("content", "").strip()
-        if not recipient_username or not content:
-            return emit("error", {"error": "Recipient and content required"})
+        extra = data.get("extra", {})
+
+        if not recipient_username:
+            return emit("error", {"error": "Recipient required"})
 
         recipient_data = mongo.users.find_one({"username": recipient_username})
         if not recipient_data:
@@ -69,10 +95,20 @@ def init_socketio(socketio: SocketIO):
         if not current_user.is_friends_with(recipient):
             return emit("error", {"error": "Can only message friends"})
 
+        # Validation depending on type
+        if msg_type == "chat" and not content:
+            return emit("error", {"error": "Chat message requires content"})
+        if msg_type == "invitation" and not extra.get("invitation_type"):
+            return emit("error", {"error": "Invitation requires invitation_type"})
+        if msg_type == "media" and not extra.get("media_url"):
+            return emit("error", {"error": "Media requires media_url"})
+
         msg = {
             "sender_id": current_user._id,
             "recipient_id": recipient._id,
-            "content": content,
+            "type": msg_type,
+            "content": content if msg_type == "chat" else None,
+            "extra": extra,
             "created_at": datetime.utcnow(),
             "read": False
         }
@@ -81,9 +117,9 @@ def init_socketio(socketio: SocketIO):
 
         serialized = serialize_message(msg)
 
-        # Emit to both rooms
         emit("new_message", {"message": serialized}, room=str(current_user._id))
         emit("new_message", {"message": serialized}, room=str(recipient._id))
+
 
     @socketio.on("mark_read")
     def handle_mark_read(data):

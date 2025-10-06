@@ -1,4 +1,4 @@
-from flask import jsonify, redirect, request, Blueprint, url_for
+from flask import current_app, jsonify, redirect, request, Blueprint, url_for
 from bson.objectid import ObjectId
 from datetime import datetime
 from flask_cors import CORS
@@ -286,39 +286,48 @@ def like_demo(demo_id):
     demo_attending(demo_id) # A temporary solution
     return jsonify({"likes": likes}), 200
 
-
 @api_bp.route("/demonstrations/<demo_id>/attending", methods=["GET", "POST"])
 @login_required
 def demo_attending(demo_id):
     """
     GET: returns whether current user is attending
-    POST: toggles attending status and returns new status
+    POST: toggles attending status or sets it explicitly
     """
-    user_id = ObjectId(current_user.id)  # make sure user_id is stored as string
-    demo_id = ObjectId(demo_id)          # store demo_id as string for consistency
+    user_id = ObjectId(current_user.id)
+    demo_id = ObjectId(demo_id)
 
     if request.method == "GET":
         doc = demo_attending_collection.find_one({"user_id": user_id, "demo_id": demo_id})
-        return jsonify({"demo_id": str(demo_id), "attending": bool(doc)})
+        return jsonify({"demo_id": str(demo_id), "attending": bool(doc and doc.get("attending", True))})
 
     if request.method == "POST":
         doc = demo_attending_collection.find_one({"user_id": user_id, "demo_id": demo_id})
+
+        # Check if attending was provided in JSON
+        new_status = None
+        if request.json and "attending" in request.json:
+            new_status = bool(request.json["attending"])
+
         if doc:
-            # Toggle attending
-            new_status = not doc.get("attending", True)
+            # Toggle if no status provided
+            if new_status is None:
+                new_status = not doc.get("attending", True)
             demo_attending_collection.update_one(
                 {"_id": doc["_id"]},
                 {"$set": {"attending": new_status}}
             )
-            return jsonify({"demo_id": str(demo_id), "attending": new_status})
         else:
-            # First time attending
+            # First-time attending
+            if new_status is None:
+                new_status = True
             demo_attending_collection.insert_one({
                 "user_id": user_id,
                 "demo_id": demo_id,
-                "attending": True
+                "attending": new_status
             })
-            return jsonify({"demo_id": str(demo_id), "attending": True})
+
+        return jsonify({"demo_id": str(demo_id), "attending": new_status})
+
 
 @api_bp.route("/demonstrations/<demo_id>/unlike", methods=["POST"])
 @_token_or_session_required(required_scopes=["write"])
@@ -499,7 +508,6 @@ def friends_attending():
 @api_bp.route("/user/friends/")
 def friends():
     return redirect(url_for("users.profile.api_friends_list"))
-
 @api_bp.route("/demonstrations/<demo_id>/invite", methods=["POST"])
 @login_required
 def invite_friends(demo_id):
@@ -508,36 +516,66 @@ def invite_friends(demo_id):
     Expects JSON body: { "friend_ids": ["id1", "id2", ...] }
     """
     try:
-        user_id = g.user_id  # current logged-in user
+        user_id = current_user._id  # current logged-in user
         data = request.get_json()
         friend_ids = data.get("friend_ids", [])
         if not friend_ids:
             return jsonify({"error": "No friends provided"}), 400
 
         demo_obj_id = ObjectId(demo_id)
+        demo_doc = mongo.demonstrations.find_one({"_id": demo_obj_id})
+        demo_title = demo_doc.get("title", "Demo") if demo_doc else "Demo"
 
-        # Insert invites (if not already invited)
         inserted = []
         for fid in friend_ids:
+            # 1. Insert invite if not already there
             existing = demo_invites_collection.find_one({
                 "demo_id": demo_obj_id,
                 "inviter_id": user_id,
                 "friend_id": fid
             })
-            if not existing:
-                doc = {
-                    "demo_id": demo_obj_id,
-                    "inviter_id": user_id,
-                    "friend_id": fid,
-                    "created_at": datetime.utcnow()
-                }
-                demo_invites_collection.insert_one(doc)
-                inserted.append(fid)
+            if existing:
+                continue
+
+            doc = {
+                "demo_id": demo_obj_id,
+                "inviter_id": user_id,
+                "friend_id": fid,
+                "created_at": datetime.utcnow()
+            }
+            demo_invites_collection.insert_one(doc)
+            inserted.append(fid)
+
+            # 2. Also create a chat message of type "invitation"
+            inviter_user = mongo.users.find_one({"_id": ObjectId(user_id)})
+            msg = {
+                "sender_id": ObjectId(user_id),
+                "recipient_id": ObjectId(fid),
+                "type": "invitation",
+                "content": None,
+                "extra": {
+                    "invitation_type": "demonstration",
+                    "demo_id": str(demo_obj_id),
+                    "demo_title": demo_title,
+                    "inviter_name": inviter_user.get("displayname") or inviter_user.get("username"),
+                },
+                "created_at": datetime.utcnow(),
+                "read": False
+            }
+            msg_id = mongo.messages.insert_one(msg).inserted_id
+            msg["_id"] = msg_id
+
+            # 3. Emit to both inviter & invitee via Socket.IO
+            from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
+            serialized = serialize_message(msg)
+            socketio = current_app.extensions['socketio']
+            socketio.emit("new_message", {"message": serialized}, room=str(user_id))
+            socketio.emit("new_message", {"message": serialized}, room=str(fid))
 
         return jsonify({
             "demo_id": demo_id,
             "invited_friends": inserted,
-            "message": f"Invited {len(inserted)} friends."
+            "message": f"Invited {len(inserted)} friends and sent invitations as messages."
         })
 
     except Exception as e:

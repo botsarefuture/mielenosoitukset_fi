@@ -185,6 +185,31 @@
             </div>
           </div>
 
+          <!-- Invite stuff -->
+{% if current_user.username == user.username %}
+<div class="mt-5 p-4" style="background: var(--color-card-bg); border-radius: 1.2em; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+  <h2 class="h5 mb-3">{{ _('Jaa profiilisi muille') }}</h2>
+  <p>{{ _('Haluatko, että kaverit ja seuraajat löytävät sinut helpommin? Lähetä heille linkkisi ja valmiiksi kirjoitettu viesti:') }}</p>
+  
+  <div class="mb-3">
+    <label class="form-label"><strong>{{ _('Profiililinkki') }}</strong></label>
+    <input type="text" class="form-control" readonly value="{{ url_for("users.profile.profile", username=current_user.username, _external=True) }}">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label"><strong>{{ _('Valmis viesti') }}</strong></label>
+    <textarea class="form-control" rows="3" readonly>
+Hei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä: {{ request.url }}
+Voimme myös lisätä toisemme ystäviksi!
+    </textarea>
+  </div>
+
+  <button class="btn btn-primary btn-custom" onclick="navigator.clipboard.writeText('{{ request.url }}\n\nHei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä. Voimme myös lisätä toisemme ystäviksi!').then(()=>alert('Linkki ja viesti kopioitu leikepöydälle!'))">
+    {{ _('Kopioi linkki ja viesti') }}
+  </button>
+</div>
+{% endif %}
+
           <!-- Organizations -->
           {% if user.organizations %}
           <h2 class="h5 mt-3">{{ _('Organisaatiot') }}</h2>

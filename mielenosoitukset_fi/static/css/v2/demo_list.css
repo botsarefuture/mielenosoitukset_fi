@@ -898,3 +898,82 @@ body {
   display: inline-block;
   animation: loading 0.8s linear infinite;
 }
+
+/* Badge container inside each demo card */
+.demo-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Generic badge styling */
+.demo-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 12px;
+  color: #fff;
+  background-color: #888; /* fallback neutral */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Today badge (bright attention color) */
+.today-badge {
+  background-color: #ff595e; /* soft red */
+}
+
+/* Pride badge (rainbow gradient) */
+.pride-badge {
+  background: linear-gradient(45deg, #e40303, #ff8c00, #ffed00, #008026, #24408e, #732982);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Optional: smooth fade-in for badges */
+.demo-badge {
+  opacity: 0;
+  transform: translateY(-4px);
+  animation: badge-fade-in 0.3s forwards;
+}
+
+@keyframes badge-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Load More button loading state */
+#load-more-btn.loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* spinner dots */
+#load-more-btn.loading::after {
+  content: '';
+  position: absolute;
+  right: 16px; /* adjust spacing from text */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: #fff; /* spinner color, match button text */
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Optional: slightly dim the button text while loading */
+#load-more-btn.loading span {
+  opacity: 0.7;
+}

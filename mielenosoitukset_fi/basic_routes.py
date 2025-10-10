@@ -432,9 +432,8 @@ Disallow: /admin/
         Inject the city list into the template context.
         """
         return dict(city_list=CITY_LIST)
-    
-    
 
+    
     @app.route("/")
     def index():
         """
@@ -758,27 +757,34 @@ Disallow: /admin/
         response : flask.Response
             Renders the full list template or the demo cards partial if AJAX.
         """
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 20) or 20)
-        search_query = request.args.get("search", "").lower()
-        city_query = request.args.get("city", "").lower()
-        if "," in city_query:
-            city_query = city_query.split(",")
-        location_query = request.args.get("location", "").lower()
-        date_query = request.args.get("date", "")
-        today = date.today()
-        demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
-        filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
-        total_demos = len(filtered_demonstrations)
-        total_pages = (total_demos + per_page - 1) // per_page
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_demonstrations = filtered_demonstrations[start:end]
-        # Return demo cards partial if AJAX request detected
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return render_template("demo_cards.html", demonstrations=paginated_demonstrations)
-        return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_list=CITY_LIST)
+        mode = False
+        
+        # OLD FALLBACK
+        #
+        #        
+        #page = int(request.args.get("page", 1))
+        #per_page = int(request.args.get("per_page", 20) or 20)
+        #search_query = request.args.get("search", "").lower()
+        #city_query = request.args.get("city", "").lower()
+        #if "," in city_query:
+        #    city_query = city_query.split(",")
+        #location_query = request.args.get("location", "").lower()
+        #date_query = request.args.get("date", "")
+        #today = date.today()
+        #demonstrations = demonstrations_collection.find(DEMO_FILTER)
+        #filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
+        #filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
+        #total_demos = len(filtered_demonstrations)
+        #total_pages = (total_demos + per_page - 1) // per_page
+        #start = (page - 1) * per_page
+        #end = start + per_page
+        #paginated_demonstrations = filtered_demonstrations[start:end]
+        ## Return demo cards partial if AJAX request detected
+        #if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        #    return render_template("demo_cards.html", demonstrations=paginated_demonstrations)
+        #return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_list=CITY_LIST)
+
+        return render_template("list copy.html")
 
     @app.route("/city/<city>")
     def city_demos(city):
@@ -1065,7 +1071,7 @@ Disallow: /admin/
             flash_message("Yhteydenottopyyntö välitetty onnistuneesti!", "success")
             return redirect(url_for("contact"))
         return render_template("contact.html")
-    from flask import request
+
 
     DEMOS_PER_PAGE = 6  # adjust how many demos per page
 

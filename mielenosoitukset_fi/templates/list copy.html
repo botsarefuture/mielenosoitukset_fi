@@ -20,6 +20,8 @@
 
 <!-- moved styles from here to static/css/list_v2.css-->
  <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
+
  <style>
 
 
@@ -27,6 +29,11 @@
 {% endblock %}
 
 {% block content %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+
+{% include "_modals/_demo-card-template.html" %}
+
 <section class="hero">
   <!-- lets add hero here-->
   <div class="hero-content">
@@ -35,6 +42,8 @@
   </div>
 </section>
 <section class="main-content">
+  {# THIS DOES NOT DO ANYTHING AS OF NOW #}
+  {#
   <div class="view-toggle-group" id="view-toggle-group">
     <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
       <i class="fa-solid fa-table-cells-large"></i>
@@ -43,6 +52,7 @@
       <i class="fa-solid fa-list"></i>
     </button>
   </div>
+#}
   <form method="GET" action="#" class="search-form" id="search-form">
     <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}"
       aria-label="{{ _('Hae mielenosoituksia') }}" />
@@ -63,8 +73,56 @@
     <div class="filters" id="filters"></div>
     <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
-  <div class="container-grid" id="demo-container-grid"></div>
+<section class="section-card">
+  <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki mielenosoitukset') }}</h2>
 
+  <div id="demos-grid" class="demos-grid"></div>
+  <button id="load-more-btn" class="button button-secondary" style="display:none;">
+    {{ _('Näytä lisää') }}
+  </button>
+
+  <!-- Empty State -->
+  <div id="no-results" class="no-results" style="display:none;">
+    <i class="fa-regular fa-calendar-xmark"></i>
+    <h3>{{ _('Ei löytynyt mielenosoituksia') }}</h3>
+    <p>{{ _('Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.') }}</p>
+    <div style="margin-top: 2rem;">
+      <a href="{{ url_for('submit') }}" class="button button-primary">
+        <i class="fa-solid fa-plus"></i>{{ _('Ilmoita uusi mielenosoitus') }}
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const grid = document.getElementById('demos-grid');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+
+  const extraParams = {}; // any filtering params you want, e.g., category
+
+  async function loadDemosWrapper(page = 1, append = false) {
+    if (!append) {
+      grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>`;
+    } else {
+      loadMoreBtn.classList.add('loading');
+      loadMoreBtn.disabled = true;
+    }
+
+    await loadDemos(page, append, extraParams);
+
+    loadMoreBtn.classList.remove('loading');
+    loadMoreBtn.disabled = false;
+  }
+
+  loadDemosWrapper();
+
+});
+</script>
+
+
+{# this does not work currently #}
+{#
   <div class="demo-table-container" id="demo-table-container" style="display: none;">
     <table class="demo-table">
       <thead>
@@ -85,6 +143,7 @@
     <i class="fas fa-spinner fa-spin fa-2x"></i>
   </div>
   <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
+  #}
 </section>
 {% endblock %}
 

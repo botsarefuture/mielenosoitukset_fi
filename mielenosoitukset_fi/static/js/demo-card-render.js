@@ -120,6 +120,7 @@ const perPage = 12; // default per-page
 
 async function loadDemos(page = 1, append = false, extraParams = {}) {
   const loadMoreBtn = document.getElementById("load-more-btn");
+  const demosGrid = document.getElementById("demos-grid");
   try {
      // Show loading state
     if (loadMoreBtn) {
@@ -139,6 +140,19 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
 
     const grid = document.getElementById("demos-grid");
     if (!append) grid.innerHTML = ""; // clear on first load
+
+    if (data.results.length === 0) {
+      const noResultsDiv = document.getElementById("no-results");
+      noResultsDiv.style.display = ""; // ✅ just set the property
+      demosGrid.style.display = "none";
+
+    } else {
+      // hide if there are results
+      const noResultsDiv = document.getElementById("no-results");
+      noResultsDiv.style.display = "none";
+      demosGrid.style.display = "";
+    }
+
 
     // Render demo cards
     const newCards = renderDemoCards(data.results);

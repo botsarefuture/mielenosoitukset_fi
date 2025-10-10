@@ -1,69 +1,138 @@
-/* CSS for Flash Messages */
+/* Flash Messages Container */
 #flash-messages {
-    list-style-type: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 420px;
+    width: calc(100% - 40px);
+    pointer-events: none;
+    margin: 0; /* override any list-style margin */
     padding: 0;
-    margin: 1rem auto;
-    max-width: 600px; /* Limits the width for better layout control */
+    list-style: none;
 }
 
-#flash-messages ul {
-    padding: 0;
-    margin: 0;
-}
-
+/* Each Flash Message */
 #flash-messages li {
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: var(--border_radius);
-    color: var(--white);
-    font-weight: bold;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1);
+    border: 1px solid var(--color-border, #e2e8f0);
+    pointer-events: auto;
+    overflow: hidden;
+    background: var(--color-card-bg, #ffffff);
+    animation: slideInRight 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Accent bar on the left for color coding */
+#flash-messages li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--flash-accent, #999);
+}
+
+/* Icons */
+#flash-messages .flash-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
-    word-wrap: break-word; /* Prevents long words from overflowing */
-    box-shadow: var(--box_shadow);
-    transition: background 0.3s ease, transform 0.3s ease; /* Smooth transition for color and hover effects */
-    animation: slide-in 0.3s ease-out forwards; /* Animation to slide in the flash messages */
+    justify-content: center;
+    font-size: 1.25rem;
+    border-radius: 50%;
+    background: var(--color-card-bg, #ffffff);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: var(--flash-accent, #999);
 }
 
-/* Default background color (for fallback purposes) */
-#flash-messages .message {
-    background: var(--focus_color);
+/* Text Content */
+#flash-messages .flash-text {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--flash-text, #000);
 }
 
-/* Success message styling */
+/* Progress bar */
+#flash-messages .flash-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: var(--flash-accent, #999);
+    transform-origin: left;
+    animation: shrink 5s linear forwards;
+}
+
+/* Category Colors */
 #flash-messages .flash_success {
-    background: var(--green);
+    --flash-accent: #22c55e;
+    --flash-text: #15803d;
+    background: rgba(34,197,94,0.15);
 }
 
-/* Error message styling */
-#flash-messages .flash_error {
-    background: var(--red);
+#flash-messages .flash_error,
+#flash-messages .flash_danger {
+    --flash-accent: #ef4444;
+    --flash-text: #991b1b;
+    background: rgba(239,68,68,0.15);
 }
 
-/* Informational message styling */
-#flash-messages .flash_info {
-    background: var(--blue);
-}
-
-/* Warning message styling */
 #flash-messages .flash_warning {
-    background: var(--yellow);
-    color: var(--secondary_text_color);
+    --flash-accent: #f59e0b;
+    --flash-text: #92400e;
+    background: rgba(251,146,60,0.15);
 }
 
-/* Optional hover effect for better interactivity */
+#flash-messages .flash_info {
+    --flash-accent: #06b6d4;
+    --flash-text: #0e7490;
+    background: rgba(34,211,238,0.15);
+}
+
+/* Hover effect */
 #flash-messages li:hover {
-    transform: scale(1.02); /* Slightly enlarge the message on hover */
-    cursor: pointer; /* Changes cursor to pointer on hover */
+    transform: scale(1.02);
+    cursor: pointer;
 }
 
-@keyframes slide-in {
+/* Animations */
+@keyframes slideInRight {
     from {
+        transform: translateX(400px);
         opacity: 0;
-        transform: translateY(-10px); /* Slide in from above */
     }
     to {
+        transform: translateX(0);
         opacity: 1;
-        transform: translateY(0); /* Settle in the normal position */
     }
+}
+
+@keyframes shrink {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+/* Removing animation */
+#flash-messages li.removing {
+    animation: slideOutRight 0.4s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
 }

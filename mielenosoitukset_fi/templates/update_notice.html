@@ -1,0 +1,120 @@
+<section class="site-update-notice" role="status" aria-live="polite">
+  <div class="notice-inner">
+    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+    <div class="notice-text">
+      <h2>Sivustoa päivitetään parhaillaan</h2>
+      <p>
+        Kehitämme parhaillaan uusia ominaisuuksia ja parannuksia
+        ajalla <strong>1.10.2025 – 1.3.2026</strong>.  
+        Jos jokin ei toimi odotetusti, voit antaa meille palautetta.
+      </p>
+      <a href="{{ url_for('contact') }}" class="button-feedback">
+        <i class="fa-regular fa-message"></i>
+        Lähetä palautetta
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+:root {
+  /* shared color tokens */
+  --notice-bg-light: #f9fafb;
+  --notice-border-light: #e5e7eb;
+  --notice-text-light: #111827;
+  --notice-accent-light: #2563eb;
+  --notice-icon-accent-light: #3b82f6;
+
+  --notice-bg-dark: rgba(30, 41, 59, 0.6);
+  --notice-border-dark: rgba(255, 255, 255, 0.1);
+  --notice-text-dark: #f9fafb;
+  --notice-accent-dark: #60a5fa;
+  --notice-icon-accent-dark: #93c5fd;
+}
+
+/* Container */
+.site-update-notice {
+  margin: 2rem auto;
+  max-width: 780px;
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  border: 1px solid var(--notice-border-light);
+  background: var(--notice-bg-light);
+  color: var(--notice-text-light);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .site-update-notice {
+    background: var(--notice-bg-dark);
+    color: var(--notice-text-dark);
+    border-color: var(--notice-border-dark);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* Layout */
+.notice-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+}
+
+.notice-inner i {
+  font-size: 1.8rem;
+  color: var(--notice-icon-accent-light);
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .notice-inner i {
+    color: var(--notice-icon-accent-dark);
+  }
+}
+
+.notice-text h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.notice-text p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 1.2rem;
+  max-width: 600px;
+}
+
+.button-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--notice-accent-light);
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.button-feedback i {
+    font-size: 1rem;
+}
+
+.button-feedback:hover {
+  background: #1e4fd6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .button-feedback {
+    background: var(--notice-accent-dark);
+  }
+  .button-feedback:hover {
+    background: #3b82f6;
+  }
+}
+</style>

@@ -133,6 +133,7 @@ def list_demonstrations():
     recurring = request.args.get("recurring", "").lower()
     in_past = request.args.get("in_past", "").lower()
     parent_id = request.args.get("parent_id", "")
+    organization_id = request.args.get("organization_id", "")
     
     try:
         _parent_id = ObjectId(parent_id)
@@ -141,6 +142,13 @@ def list_demonstrations():
         parent_id = None
         _parent_id = None
 
+    try:
+        _org_id = ObjectId(organization_id)
+        
+    except Exception:
+        organization_id = None
+        _org_id = None
+    
     # Pagination params
     try:
         page = int(request.args.get("page", 1))
@@ -151,19 +159,23 @@ def list_demonstrations():
         page, per_page = 1, 20
 
     today = datetime.now()
+    today_date = today.date()
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
     query = DEMO_FILTER
     if _parent_id:
         query["parent"] = _parent_id
         
+    
+    if _org_id:
+        query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}    
 
         
     demos_cursor = mongo.demonstrations.find(query)
 
     filtered = []
     for demo in demos_cursor:
-        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d")
-        if demo_date >= today or in_past == "true":
+        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
+        if demo_date >= today_date or in_past == "true":
             demo_obj = stringify_object_ids(demo)
             if (
                 (search in demo_obj["title"].lower() or not search) and
@@ -490,18 +502,18 @@ def friends_attending():
     demo_ids = data["demo_ids"]
     result = {}
     
-    print(demo_ids)
+    
     friends = _get_user_friends()
     
-    print("Filtering by", friends)
+    #print("Filtering by", friends)
 
     for demo_id in demo_ids:
         
         # Convert to ObjectId if coming as string
         demo_id = ObjectId(demo_id)
-        print(demo_id)
+        #print(demo_id)
         friends_attending = _get_attending_per_demo(demoId=demo_id, user_friends=friends)
-        print(friends_attending)
+        #print(friends_attending)
         result[str(demo_id)] = friends_attending
 
     return jsonify(result)

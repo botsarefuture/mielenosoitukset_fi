@@ -1,7 +1,7 @@
 function format_time(time) {
-    if (!time) return ""; // handle empty or undefined
-    const [hh, mm] = time.split(":"); // split "hh:mm:ss"
-    return `${hh}:${mm}`;
+  if (!time) return ""; // handle empty or undefined
+  const [hh, mm] = time.split(":"); // split "hh:mm:ss"
+  return `${hh}:${mm}`;
 }
 
 
@@ -9,6 +9,9 @@ function format_time(time) {
 function renderDemoCards(demoData) {
   const container = document.getElementById('demos-grid');
   const template = document.getElementById('demo-card-template');
+
+  const todayDate = new Date();
+  todayDate.setHours(0,0,0,0); // strip time
 
   demoData.forEach(demo => {
     const clone = template.content.cloneNode(true);
@@ -19,19 +22,45 @@ function renderDemoCards(demoData) {
     card.querySelector('.demo-card-image img').src = demo.preview_image;
     card.querySelector('.demo-card-date').append(demo.formatted_date);
 
-// Compute start & end display
-const demoStartTime = format_time(demo.start_time);
-const demoEndTime = demo.end_time ? format_time(demo.end_time) : null;
+    // Compute start & end display
+    const demoStartTime = format_time(demo.start_time);
+    const demoEndTime = demo.end_time ? format_time(demo.end_time) : null;
 
-// Combine for display
-const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : demoStartTime;
+    // Combine for display
+    const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : demoStartTime;
 
-// Set in card
-card.querySelector('.demo-card-time').textContent = timeText;
+    // Set in card
+    card.querySelector('.demo-card-time').textContent = timeText;
 
     card.querySelector('.demo-card-city').append(demo.city);
     card.querySelector('.demo-card-address').append(demo.address);
+  // Add badges container
+    const badgeContainer = card.querySelector('.demo-card-badges');
+    badgeContainer.innerHTML = ''; // clear existing
 
+    // 🌟 "Tänään" badge if demo is today
+    const demoDateObj = new Date(demo.date);
+    demoDateObj.setHours(0,0,0,0); // strip time
+    if (demoDateObj.getTime() === todayDate.getTime()) {
+      const todayBadge = document.createElement('span');
+      todayBadge.className = 'demo-badge today-badge';
+      todayBadge.textContent = 'Tänään';
+      badgeContainer.appendChild(todayBadge);
+    }
+
+    // 🌈 Tags-based badges (e.g., Pride)
+    if (demo.tags && demo.tags.length > 0) {
+      demo.tags.forEach(tag => {
+        if (tag.toLowerCase() === 'pride') {
+          const prideBadge = document.createElement('span');
+          prideBadge.className = 'demo-badge pride-badge';
+          prideBadge.textContent = 'Pride';
+          badgeContainer.appendChild(prideBadge);
+        }
+        // Add more tag-to-badge rules here
+        // e.g., if (tag.toLowerCase() === 'climate') ...
+      });
+    }
     // Optional: tags
     const tagsContainer = card.querySelector('.demo-card-tags');
     if (demo.tags && demo.tags.length > 0) {
@@ -45,7 +74,7 @@ card.querySelector('.demo-card-time').textContent = timeText;
     }
 
     container.appendChild(clone);
-    
+
   });
 
   // Return all card elements
@@ -54,33 +83,33 @@ card.querySelector('.demo-card-time').textContent = timeText;
 
 // Attach click events (both existing and new cards)
 function setup_grid_navigation(cards) {
-    cards.forEach(item => {
-        const demoId = item.dataset.demoId;
+  cards.forEach(item => {
+    const demoId = item.dataset.demoId;
 
-        // Main card click
-        item.addEventListener('click', e => {
-            if (e.target.closest('a') || e.target.closest('.demo-card-invite-btn') || e.target.closest('.demo-card-no-friends')) return;
-            if (demoId) window.location.href = `/demonstration/${demoId}`;
-        });
-
-        // Invite button
-        const inviteBtn = item.querySelector('.demo-card-invite-btn');
-        if (inviteBtn) {
-            inviteBtn.addEventListener('click', e => {
-                e.stopPropagation();
-                if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
-            });
-        }
-
-        // "No friends" section click
-        const noFriendsDiv = item.querySelector('.demo-card-no-friends');
-        if (noFriendsDiv) {
-            noFriendsDiv.addEventListener('click', e => {
-                e.stopPropagation();
-                if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
-            });
-        }
+    // Main card click
+    item.addEventListener('click', e => {
+      if (e.target.closest('a') || e.target.closest('.demo-card-invite-btn') || e.target.closest('.demo-card-no-friends')) return;
+      if (demoId) window.location.href = `/demonstration/${demoId}`;
     });
+
+    // Invite button
+    const inviteBtn = item.querySelector('.demo-card-invite-btn');
+    if (inviteBtn) {
+      inviteBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
+      });
+    }
+
+    // "No friends" section click
+    const noFriendsDiv = item.querySelector('.demo-card-no-friends');
+    if (noFriendsDiv) {
+      noFriendsDiv.addEventListener('click', e => {
+        e.stopPropagation();
+        if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
+      });
+    }
+  });
 }
 
 
@@ -90,7 +119,15 @@ let totalPages = 1;
 const perPage = 12; // default per-page
 
 async function loadDemos(page = 1, append = false, extraParams = {}) {
+  const loadMoreBtn = document.getElementById("load-more-btn");
+  const demosGrid = document.getElementById("demos-grid");
   try {
+     // Show loading state
+    if (loadMoreBtn) {
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.textContent = 'Ladataan…'; // temporary text
+      loadMoreBtn.classList.add('loading');   // optional CSS spinner class
+    }
     // Build query params
     const params = new URLSearchParams({
       page,
@@ -101,8 +138,21 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     const res = await fetch(`/api/demonstrations?${params.toString()}`);
     const data = await res.json();
 
-    const grid = document.getElementById("demos-grid"); 
+    const grid = document.getElementById("demos-grid");
     if (!append) grid.innerHTML = ""; // clear on first load
+
+    if (data.results.length === 0) {
+      const noResultsDiv = document.getElementById("no-results");
+      noResultsDiv.style.display = ""; // ✅ just set the property
+      demosGrid.style.display = "none";
+
+    } else {
+      // hide if there are results
+      const noResultsDiv = document.getElementById("no-results");
+      noResultsDiv.style.display = "none";
+      demosGrid.style.display = "";
+    }
+
 
     // Render demo cards
     const newCards = renderDemoCards(data.results);
@@ -117,16 +167,27 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     totalPages = data.total_pages;
 
     // handle "Load more" button
-    const loadMoreBtn = document.getElementById("load-more-btn");
     if (currentPage < totalPages) {
-      loadMoreBtn.style.display = "block";
-      loadMoreBtn.onclick = () => loadDemos(currentPage + 1, true, extraParams);
+      if (loadMoreBtn) {
+        loadMoreBtn.style.display = "block";
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Lataa lisää';
+        loadMoreBtn.onclick = () => loadDemos(currentPage + 1, true, extraParams);
+      }
     } else {
-      loadMoreBtn.style.display = "none";
+      if (loadMoreBtn) loadMoreBtn.style.display = "none";
     }
 
   } catch (err) {
     console.error("Failed to load demos:", err);
+    if (loadMoreBtn) {
+      loadMoreBtn.disabled = false;
+      loadMoreBtn.textContent = 'Lataa lisää';
+    }
+  }
+
+  finally {
+    loadMoreBtn.classList.remove("loading");
   }
 }
 
@@ -194,16 +255,16 @@ function getFriendsAttending(demoCards) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ demo_ids: demoIds }),
-    
+
   })
-  .then(res => res.json())
-  .then(data => {
-    demoCards.forEach(card => {
-      const id = card.dataset.demoId;
-      const friends = data[id] || [];
-      updateDemoCardAttending(card, friends);
-    });
-  })
-  .catch(err => console.error('Failed to fetch friends attending:', err));
+    .then(res => res.json())
+    .then(data => {
+      demoCards.forEach(card => {
+        const id = card.dataset.demoId;
+        const friends = data[id] || [];
+        updateDemoCardAttending(card, friends);
+      });
+    })
+    .catch(err => console.error('Failed to fetch friends attending:', err));
 }
 

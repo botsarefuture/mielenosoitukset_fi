@@ -1,33 +1,41 @@
 from flask import flash
 from flask_babel import _
 
-
 def flash_message(message, category="message"):
     """
-    Flash a message with a specific category.
+    Flash a message with a specific category, compatible with the new flash styles.
 
     Parameters
     ----------
     message : str
         The message to be flashed.
     category : str, optional
-        The category of the message (default is "message").
+        The category of the message. Defaults to "message".
 
     Notes
     -----
-    By default, the message is translated.
+    The message is translated by default.
 
-    Changelog
-    ---------
-    v2.5.0:
-        - By default translate the message
-
+    Supported categories:
+        - success
+        - error / danger
+        - warning
+        - info
+        - message (default / neutral)
     """
-    categories = {
+    # Map incoming category to the template categories
+    categories_map = {
         "info": "info",
         "approved": "success",
         "success": "success",
         "warning": "warning",
-        "error": "danger",
+        "error": "error",   # or "danger", either works
+        "danger": "danger",
+        "message": "default"  # neutral / fallback
     }
-    flash(_(message), categories.get(category, "info"))
+
+    # Get the mapped category or fallback to "default"
+    mapped_category = categories_map.get(category.lower(), "default")
+
+    # Flash the translated message
+    flash(_(message), mapped_category)

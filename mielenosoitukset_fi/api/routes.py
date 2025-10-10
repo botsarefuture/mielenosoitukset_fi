@@ -133,6 +133,7 @@ def list_demonstrations():
     recurring = request.args.get("recurring", "").lower()
     in_past = request.args.get("in_past", "").lower()
     parent_id = request.args.get("parent_id", "")
+    organization_id = request.args.get("organization_id", "")
     
     try:
         _parent_id = ObjectId(parent_id)
@@ -141,6 +142,13 @@ def list_demonstrations():
         parent_id = None
         _parent_id = None
 
+    try:
+        _org_id = ObjectId(organization_id)
+        
+    except Exception:
+        organization_id = None
+        _org_id = None
+    
     # Pagination params
     try:
         page = int(request.args.get("page", 1))
@@ -156,6 +164,9 @@ def list_demonstrations():
     if _parent_id:
         query["parent"] = _parent_id
         
+    
+    if _org_id:
+        query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}    
 
         
     demos_cursor = mongo.demonstrations.find(query)

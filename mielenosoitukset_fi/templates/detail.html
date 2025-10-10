@@ -277,15 +277,24 @@ demo.get('city', 'Tuntematon') ~
 
   .btn-outline {
     background: transparent;
-    color: var(--color-primary);
-    border: 2px solid var(--color-border);
+    color: var(--color-primary, light-dark(#2563eb, #60a5fa));
+    /* blue-600/blue-400 */
+    border: 2px solid var(--color-border, light-dark(#94a3b8, #475569)) !important;
+    /* slate-400/slate-600 */
+    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
   }
 
   .btn-outline:hover {
-    background: var(--color-primary);
-    color: white;
-    border-color: var(--color-primary);
+    background: var(--color-primary, light-dark(#2563eb, #60a5fa));
+    color: var(--color-on-primary, white);
+    border-color: var(--color-primary, light-dark(#2563eb, #60a5fa));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 40%, transparent);
+    /* soft focus glow */
   }
+
 
   .btn-social {
     background: var(--color-card-bg);
@@ -772,7 +781,8 @@ demo.get('city', 'Tuntematon') ~
 
   <!-- Action Buttons -->
   <div class="action-buttons animate-fade-in-up">
-    <button type="button" class="btn btn-secondary bg-warning text-black" data-bs-toggle="modal" data-bs-target="#report-modal">
+    <button type="button" class="btn btn-secondary bg-warning text-black" data-bs-toggle="modal"
+      data-bs-target="#report-modal">
       <i class="fa-solid fa-flag"></i>
       {{ _('Ilmoita virheestä') }}
     </button>
@@ -1304,14 +1314,21 @@ demo.get('city', 'Tuntematon') ~
 
     .btn-secondary {
       background: transparent;
-      color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
-      border: 2px solid var(--color-border, light-dark(#e2e8f0, #374151));
+      color: var(--color-text-secondary, light-dark(#475569, #cbd5e1));
+      /* slightly darker/lighter */
+      border: 2px solid var(--color-border, light-dark(#cbd5e1, #475569));
+      /* higher contrast border */
+      transition: all 0.2s ease;
     }
 
     .btn-secondary:hover {
-      background: var(--color-bg, light-dark(#f8fafc, #0f1419));
-      border-color: var(--color-text-secondary, light-dark(#64748b, #94a3b8));
+      background: var(--color-bg-hover, light-dark(#f1f5f9, #1e293b));
+      /* subtle but clear hover contrast */
+      color: var(--color-text-hover, light-dark(#0f172a, #f8fafc));
+      /* ensure text pops on hover */
+      border-color: var(--color-text-secondary, light-dark(#475569, #cbd5e1));
     }
+
 
     /* Animations */
     @keyframes fadeIn {

@@ -1077,37 +1077,11 @@ Disallow: /admin/
             return redirect(url_for("index"))
         
         _org = Organization.from_dict(_org)
-        today = date.today()
-
-        # Get all upcoming demos
-        upcoming_demos_cursor = mongo.demonstrations.find(
-            {
-                "organizers": {"$elemMatch": {"organization_id": ObjectId(org_id)}},
-                **DEMO_FILTER
-            }
-        )
-
-        upcoming_demos = []
-        for demo in upcoming_demos_cursor:
-            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
-            if demo_date >= today:
-                upcoming_demos.append(demo)
-
-        upcoming_demos.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
-
-        # --- Pagination ---
-        page = request.args.get("page", 1, type=int)
-        total_pages = (len(upcoming_demos) + DEMOS_PER_PAGE - 1) // DEMOS_PER_PAGE
-        start = (page - 1) * DEMOS_PER_PAGE
-        end = start + DEMOS_PER_PAGE
-        upcoming_demos_paginated = upcoming_demos[start:end]
-
+       
         return render_template(
             "organizations/details.html",
             org=_org,
-            upcoming_demos=upcoming_demos_paginated,
-            page=page,
-            total_pages=total_pages
+            org_id=str(org_id)
         )
 
 

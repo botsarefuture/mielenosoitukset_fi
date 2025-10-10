@@ -5,12 +5,18 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+
+{% include "_modals/_demo-card-template.html" %}
+
 <script>
 // Add scroll animations
 const observerOptions = {
   threshold: 0.1,
   rootMargin: '0px 0px -50px 0px'
 };
+
+
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
@@ -21,18 +27,98 @@ const observer = new IntersectionObserver((entries) => {
 }, observerOptions);
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.section-card, .org-hero, .demo-card').forEach(el => {
+  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => {
     observer.observe(el);
   });
+
+  // Back to top functionality
+  window.addEventListener('scroll', function() {
+    const backToTop = document.getElementById('backToTop');
+    if (window.pageYOffset > 300) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
+  });
+});
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Observe animations (assuming observer is defined elsewhere)
+  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => observer.observe(el));
+
+  // Back to top button
+  const backToTop = document.getElementById('backToTop');
+  window.addEventListener('scroll', () => {
+    backToTop.classList.toggle('visible', window.pageYOffset > 300);
+  });
+
+  // Pagination state
+  let currentPage = 1;
+  let totalPages = 1;
+  const perPage = 12;
+
+  const grid = document.getElementById('demos-grid');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+
+  // Extra params for page (e.g., parent_id)
+  const extraParams = {
+    organization_id: '{{ org_id }}'
+  };
+
+  // Wrapper to handle loading UI + call the main loadDemos
+  async function loadDemosWrapper(page = 1, append = false) {
+    // Show loading
+    if (!append) {
+      grid.innerHTML = `
+        <div class="loading-container">
+          <div class="spinner"></div>
+          <p>Ladataan mielenosoituksia...</p>
+        </div>`;
+    } else {
+      loadMoreBtn.classList.add('loading');
+      loadMoreBtn.disabled = true;
+    }
+    
+    // Call the reusable loadDemos function
+    await loadDemos(page, append, extraParams);
+
+    // After load, remove loading states
+    loadMoreBtn.classList.remove('loading');
+    loadMoreBtn.disabled = false;
+
+    // Update Load More button display (handled inside loadDemos already, but keep safety)
+    //loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
+  }
+
+  // Initial load
+  loadDemosWrapper();
+
+  // Load more click
+  /*loadMoreBtn.addEventListener('click', () => {
+    if (currentPage < totalPages) loadDemosWrapper(currentPage + 1, true);
+  });*/
 });
 </script>
 {% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Stylesheets -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
 
 <style>
 :root {
@@ -146,29 +232,6 @@ body {
 }
 
 /* Section Cards */
-.section-card {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2.5rem;
-  margin-bottom: 2.5rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.section-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-primary);
-  opacity: 0;
-  transition: var(--transition);
-}
 
 .section-card:hover {
   transform: translateY(-5px);
@@ -348,29 +411,6 @@ body {
   .demos-grid { grid-template-columns: 1fr; }
 }
 
-/* Demo Cards Enhancement */
-.demo-card {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.demo-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-secondary);
-  opacity: 0;
-  transition: var(--transition);
-}
 
 .demo-card:hover {
   transform: translateY(-8px);
@@ -533,11 +573,50 @@ body {
   max-width: 400px;
   margin: 0 auto;
 }
+.section-title {
+  font-weight: 700;
+  text-align: center;
+  font-size: clamp(1.75rem, 2.5vw, 2rem);
+  color: var(--color-primary);
+  margin-bottom: 1.75rem;
+}
+
+.section-card {
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--color-shadow);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  padding: 2.5rem;
+  transition: var(--transition);
+}
+
+.section-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.org-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--color-gradient-secondary);
+  opacity: 0.6;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+
 </style>
 {% endblock %}
 {% block content %}
 
-<div class="container-main-content">
+<!--<div class="container-main-content">-->
   <!-- Organization Hero -->
   <section class="org-hero">
     <div class="org-hero-content">
@@ -621,60 +700,37 @@ body {
   </section>
 
   <!-- Demonstrations Section -->
-  {% if upcoming_demos %}
-  <section class="demos-section" id="demos">
+  
+  <section class="section-card" id="demos">
     <h2 class="demos-title">
       <i class="fa-solid fa-calendar-check"></i>
       {{ _('Mielenosoitukset') }}
     </h2>
-    <div class="demos-grid">
-      {% for demo in upcoming_demos %}
-        {{ macros.demo_card(demo) }}
-      {% endfor %}
+    <p class="text-center text-secondary" style="margin-bottom:1rem;">
+  {{ _('Tämän järjestäjän mielenosoitukset') }}
+</p>
+
+
+    <div id="demos-grid" class="demos-grid">
+  
     </div>
 
-    <!-- Pagination -->
-    {% if total_pages > 1 %}
-    <div class="pagination">
-      {% if page > 1 %}
-      <a href="?page={{ page - 1 }}#demos" class="btn">
-        <i class="fa-solid fa-chevron-left"></i>
-      </a>
-      {% endif %}
-      
-      {% for p in range(1, total_pages + 1) %}
-        {% if p == page %}
-        <span class="btn current">{{ p }}</span>
-        {% elif p <= 2 or p >= total_pages - 1 or (p >= page - 2 and p <= page + 2) %}
-        <a href="?page={{ p }}#demos" class="btn">{{ p }}</a>
-        {% elif p == 3 or p == total_pages - 2 %}
-        <span class="btn">...</span>
-        {% endif %}
-      {% endfor %}
-      
-      {% if page < total_pages %}
-      <a href="?page={{ page + 1 }}#demos" class="btn">
-        <i class="fa-solid fa-chevron-right"></i>
-      </a>
-      {% endif %}
-    </div>
-    {% endif %}
+        <button id="load-more-btn" class="button button-secondary" style="display:none;">{{ _('Näytä lisää') }}</button>
+
+
   </section>
-  {% else %}
-  <section class="section-card">
-    <div class="no-demos">
+
+  <div id="no-results" class="no-results" style="display: none;">
       <i class="fa-regular fa-calendar-xmark"></i>
       <h3>{{ _('Ei tulevia mielenosoituksia') }}</h3>
       <p>{{ _('Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia.') }}</p>
     </div>
-  </section>
-  {% endif %}
 
   <!-- Back to Top Button -->
   <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
     <i class="fa-solid fa-arrow-up"></i>
   </button>
-</div>
+<!--</div>-->
 
 <script>
 // Back to top functionality

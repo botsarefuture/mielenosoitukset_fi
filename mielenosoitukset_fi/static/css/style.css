@@ -758,7 +758,7 @@ span i {
     display: block;
 }
 
-.no-results {
+/*.no-results {
   background: var(--highlight_bg);
   color: var(--highlight_text);
   padding: 10px;
@@ -766,9 +766,9 @@ span i {
   text-align: center;
   border: 2px dashed var(--highlight_border);
   animation: border-animation 1s infinite, flash 1s infinite;
-  /* make unclickable */
+  /* make unclickable 
   pointer-events: none;
-}
+}*/
 
 @keyframes border-animation {
   0% {

@@ -8,110 +8,20 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-<style>
-:root {
-  --color-bg: light-dark(#f9f9f9, #181a1b);
-  --color-bg-hero: light-dark(#e3f0ff, #23272a);
-  --color-card-bg: light-dark(#fff, #23272a);
-  --color-text: light-dark(#222, #f3f3f3);
-  --color-text-secondary: light-dark(#444, #c7c7c7);
-  --color-primary: light-dark(#0056b3, #4ea1ff);
-  --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
-  --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
-  --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
-}
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-.container-main-content {
-  background: var(--color-card-bg);
-  border-radius: 1.2em;
-  box-shadow: var(--color-shadow);
-  padding: 2em 1em 2em 1em;
-  margin-bottom: 2em;
-  margin-top: 1.5em;
-}
-.section-title {
-  font-size: 2.2em;
-  font-weight: 800;
-  margin-bottom: 1.2em;
-  color: var(--color-primary);
-  letter-spacing: 0.01em;
-  padding: 0.3em 0.8em;
-  background: var(--color-title-accent);
-  border-radius: 0.6em;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
-  display: block;
-  text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-  width: fit-content;
-  transition: background 0.2s, color 0.2s;
-}
-.section-title:after {
-  content: '';
-  display: block;
-  margin: 0.4em auto 0 auto;
-  width: 2.5em;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--color-primary);
-  opacity: 0.25;
-}
-.section-card {
-  background: var(--color-card-bg);
-  border-radius: 1em;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
-  padding: 2em 1em 1.5em 1em;
-  margin-bottom: 2em;
-  color: var(--color-text);
-}
-.section-card h2 {
-  font-size: 1.3em;
-  color: var(--color-primary);
-  font-weight: 700;
-  margin-bottom: 0.7em;
-  border-bottom: 2px solid var(--color-title-accent);
-  padding-bottom: 0.3em;
-}
-.section-card ul {
-  list-style-type: disc;
-  margin-left: 1.5em;
-  margin-bottom: 1em;
-}
-.section-card li {
-  margin-bottom: 0.5em;
-}
-.section-card p, .section-card ul, .section-card li {
-  color: var(--color-text-secondary);
-  font-size: 1.08em;
-}
-.section-card a {
-  color: var(--color-primary);
-  text-decoration: underline;
-  transition: color 0.2s;
-}
-.section-card a:hover {
-  color: #ff6600;
-}
-strong {
-  color: var(--color-primary);
-}
-@media (max-width: 600px) {
-  .container-main-content { padding: 1em 0.5em; }
-  .section-title { font-size: 1.3em; }
-  .section-card { padding: 1em 0.5em; }
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
 {% endblock %}
 
 {% block content %}
 <div class="container-main-content">
-  <h1 class="section-title">{{ _('Yksityisyydensuoja ja GDPR') }}</h1>
-  <section class="section-card">
-    <p>{{ _('Mielenosoitukset.fi sitoutuu suojelemaan käyttäjiensä yksityisyyttä ja noudattamaan EU:n yleistä tietosuoja-asetusta (GDPR). Tämä osio kertoo, kuinka keräämme, käytämme ja suojelemme henkilötietojasi.') }}</p>
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>{{ _('Yksityisyydensuoja ja GDPR') }}</h1>
+      <p class="lead">
+{{ _('Mielenosoitukset.fi sitoutuu suojelemaan käyttäjiensä yksityisyyttä ja noudattamaan EU:n yleistä tietosuoja-asetusta (GDPR). Tämä osio kertoo, kuinka keräämme, käytämme ja suojelemme henkilötietojasi.') }}
+      </p>
+    </div>
   </section>
+
   <section class="section-card">
     <h2>{{ _('Mitä tietoja keräämme?') }}</h2>
     <ul>

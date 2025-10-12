@@ -20,6 +20,8 @@
 
 <!-- moved styles from here to static/css/list_v2.css-->
  <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
+
  <style>
 
 
@@ -27,6 +29,11 @@
 {% endblock %}
 
 {% block content %}
+<script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
+
+{% include "_modals/_demo-card-template.html" %}
+
 <section class="hero">
   <!-- lets add hero here-->
   <div class="hero-content">
@@ -35,14 +42,7 @@
   </div>
 </section>
 <section class="main-content">
-  <div class="view-toggle-group" id="view-toggle-group">
-    <button class="view-toggle-btn active" id="grid-view-btn" type="button" aria-label="Grid view">
-      <i class="fa-solid fa-table-cells-large"></i>
-    </button>
-    <button class="view-toggle-btn" id="list-view-btn" type="button" aria-label="List view">
-      <i class="fa-solid fa-list"></i>
-    </button>
-  </div>
+
   <form method="GET" action="#" class="search-form" id="search-form">
     <input type="text" name="search" placeholder="{{ _('Hae mielenosoituksia...') }}"
       aria-label="{{ _('Hae mielenosoituksia') }}" />
@@ -63,28 +63,82 @@
     <div class="filters" id="filters"></div>
     <button type="submit" class="button">{{ _('Hae') }}</button>
   </form>
-  <div class="container-grid" id="demo-container-grid"></div>
+<section class="section-card">
+  <h2 class="section-title"><i class="fa-solid fa-calendar-days"></i>{{ _('Kaikki mielenosoitukset') }}</h2>
 
-  <div class="demo-table-container" id="demo-table-container" style="display: none;">
-    <table class="demo-table">
-      <thead>
-        <tr>
-          <th>{{ _('Päivä') }}</th>
-          <th>{{ _('Aika') }}</th>
-          <th>{{ _('Otsikko') }}</th>
-          <th>{{ _('Kaupunki') }}</th>
-          <th>{{ _('Sijainti') }}</th>
-          <th>{{ _('Aiheet / tagit') }}</th>
-        </tr>
-      </thead>
-      <tbody id="demo-table-body"></tbody>
-    </table>
+  <div id="demos-grid" class="demos-grid"></div>
+  <button id="load-more-btn" class="button button-secondary" style="display:none;">
+    {{ _('Näytä lisää') }}
+  </button>
+
+ <!-- Empty State -->
+<div id="no-results" class="no-results-card" style="display:none;">
+  <div class="no-results-icon">
+    <i class="fa-regular fa-calendar-xmark"></i>
   </div>
-  <div id="scroll_sentinel"></div>
-  <div id="loading-spinner" style="display: block; text-align: center; padding: 20px;">
-    <i class="fas fa-spinner fa-spin fa-2x"></i>
+  <h3 class="no-results-title">{{ _('Ei löytynyt mielenosoituksia') }}</h3>
+  <p class="no-results-text">{{ _('Tällä hetkellä ei ole mielenosoituksia. Tarkista myöhemmin.') }}</p>
+  <div class="no-results-action">
+    <a href="{{ url_for('submit') }}" class="button button-primary">
+      <i class="fa-solid fa-plus"></i>{{ _('Ilmoita uusi mielenosoitus') }}
+    </a>
   </div>
-  <div id="end-of-content-message" style="display:none;text-align:center;padding:1em;"></div>
+</div>
+
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const grid = document.getElementById('demos-grid');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  const searchForm = document.getElementById('search-form');
+
+  let extraParams = {}; // holds search/filter params
+
+  async function loadDemosWrapper(page = 1, append = false) {
+    if (!append) {
+      grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>`;
+    } else {
+      loadMoreBtn.classList.add('loading');
+      loadMoreBtn.disabled = true;
+    }
+
+    await loadDemos(page, append, extraParams);
+
+    loadMoreBtn.classList.remove('loading');
+    loadMoreBtn.disabled = false;
+  }
+
+  // Initial load
+  loadDemosWrapper();
+
+  // Search form submit
+  searchForm.addEventListener('submit', e => {
+    e.preventDefault();
+
+    // Collect search/filter values
+    const searchValue = searchForm.querySelector('input[name="search"]').value.trim();
+    const cityValue = searchForm.querySelector('input[name="city"]').value.trim();
+    const locationValue = searchForm.querySelector('input[name="location"]').value.trim();
+    const dateStart = searchForm.querySelector('input[name="date_start"]').value;
+    const dateEnd = searchForm.querySelector('input[name="date_end"]').value;
+
+    // Build extraParams for API
+    extraParams = {};
+    if (searchValue) extraParams.search = searchValue;
+    if (cityValue) extraParams.city = cityValue;
+    if (locationValue) extraParams.location = locationValue;
+    if (dateStart) extraParams.date_start = dateStart;
+    if (dateEnd) extraParams.date_end = dateEnd;
+
+    // Reset to first page
+    loadDemosWrapper(1, false);
+  });
+
+
+});
+</script>
+
 </section>
 {% endblock %}
 
@@ -112,221 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  function renderDemoCard(demo) {
-  const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
-
-  // Build badges dynamically
-  const badges = [];
-  if (isTodayDate(demo.date_display)) {
-    badges.push(`<span class="demo-card-badge demo-card-badge-today">{{ _("Tänään") }}</span>`);
-  }
-  if (demo.is_trending) { // example field for “Nousussa”
-    badges.push(`<span class="demo-card-badge demo-card-badge-trending">{{ _("Nousussa") }}</span>`);
-  }
-  if (demo.is_recommended) { // example field for “Suositeltu”
-    badges.push(`<span class="demo-card-badge demo-card-badge-recommended">{{ _("Suositeltu") }}</span>`);
-  }
-  // Join badges into a single string
-  const badgeHtml = badges.join(" ");
-
-  const imageUrl = demo.img || demo.cover_image || demo.preview_image || `/download_material/${demo._id}`;
-
-  return `
-    <div class="grid-item demo-card" 
-         data-demo-id="${demo._id}" 
-         tabindex="0"
-         onclick="window.location='${demoUrl}'" 
-         onkeypress="if(event.key==='Enter'){window.location='${demoUrl}'}">
-
-      ${badgeHtml}
-
-      <div class="demo-card-image">
-        <img src="${imageUrl}" alt="${demo.title} - ${demo.city || ''} - ${demo.date_display}" loading="lazy">
-      </div>
-
-      <div class="demo-card-title">
-        <span>${demo.title}</span>
-      </div>
-
-      <div class="demo-card-date-time">
-        <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
-        <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</span>
-      </div>
-
-      <div class="demo-card-location-row">
-        <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city || ""}</span>
-        <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</span>
-      </div>
-
-      <div class="demo-card-tags">
-        ${(demo.tags && demo.tags.length > 0)
-          ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(" ")
-          : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ""}</span>`}
-      </div>
-
-      <div class="demo-card-actions">
-        <button class="demo-card-action-btn" onclick="event.stopPropagation(); window.location='${demoUrl}'">
-          <i class="fa-solid fa-arrow-right"></i> {{ _("Avaa") }}
-        </button>
-        <button class="demo-card-action-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '${demoUrl}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _("Kopioitu!") }}'; setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _("Kopioi linkki") }}'},1200)">
-          <i class="fa-solid fa-link"></i> {{ _("Kopioi linkki") }}
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-
-
-  function renderDemoTableRow(demo) {
-    const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
-    return `
-      <tr onclick="window.location='${demoUrl}'" style="cursor:pointer;">
-        <td><i class="fa-regular fa-calendar"></i> ${demo.date_display}</td>
-        <td><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</td>
-        <td class="demo-table-title"><span class="demo-table-link">${demo.title}</span></td>
-        <td><i class="fa-solid fa-city"></i> ${demo.city || ""}</td>
-        <td><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</td>
-        <td>
-          <span class="demo-table-tags">
-            ${(demo.tags && demo.tags.length > 0)
-              ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag">#${tag}</a>`).join(" ")
-              : `<span class="demo-table-tag">#${demo.topic || ""}</span>`}
-          </span>
-        </td>
-      </tr>
-    `;
-  }
-
-  let page = 1;
-  let per_page = 20;
-  let total_pages = 1;
-  let is_loading = false;
-  let last_query = {};
-  let view = localStorage.getItem("demoView") || "grid";
-
-  const gridContainer = document.getElementById("demo-container-grid");
-  const tableContainer = document.getElementById("demo-table-container");
-  const tableBody = document.getElementById("demo-table-body");
-  const spinner = document.getElementById("loading-spinner");
-  const endMsg = document.getElementById("end-of-content-message");
-  const scrollSentinel = document.getElementById("scroll_sentinel");
-
-  function getQuery() {
-    const form = document.getElementById("search-form");
-    const data = new FormData(form);
-    let query = {};
-    for (const [k, v] of data.entries()) {
-      if (v) query[k] = v;
-    }
-    ["display_date_start", "display_date_end"].forEach(field => {
-      if (query[field]) {
-        const parts = query[field].split(".");
-        if (parts.length === 3) {
-          const key = field === "display_date_start" ? "date_start" : "date_end";
-          query[key] = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-        }
-      }
-    });
-    return query;
-  }
-
-  function buildApiUrl(query, page) {
-    const params = new URLSearchParams(query);
-    params.set("page", page);
-    params.set("per_page", per_page);
-    return `/api/v1/demonstrations?${params.toString()}`;
-  }
-
-  function clearContent() {
-    gridContainer.innerHTML = "";
-    tableBody.innerHTML = "";
-    endMsg.style.display = "none";
-    spinner.style.display = "block";
-  }
-
-  function showEndMessage() {
-    spinner.style.display = "none";
-    endMsg.style.display = "";
-    endMsg.textContent = _("Olet saavuttanut lopun");
-  }
-
-  function renderDemos(demos, append = false) {
-    if (view === "grid") {
-      if (!append) gridContainer.innerHTML = "";
-      gridContainer.innerHTML += demos.map(renderDemoCard).join("");
-    } else {
-      if (!append) tableBody.innerHTML = "";
-      tableBody.innerHTML += demos.map(renderDemoTableRow).join("");
-    }
-  }
-
-  function fetchAndRenderDemos({reset = false, append = false} = {}) {
-    if (is_loading) return;
-    is_loading = true;
-    spinner.style.display = "block";
-    let query = reset ? getQuery() : last_query;
-    if (reset) {
-      page = 1;
-      last_query = query;
-      clearContent();
-    }
-    fetch(buildApiUrl(query, page))
-      .then(r => r.json())
-      .then(data => {
-        total_pages = data.total_pages || 1;
-        const noResults = data.demonstrations.length === 0 && page === 1;
-        if (noResults) {
-          if (view === "grid") {
-            gridContainer.innerHTML = `<div class="grid-item no-results">${_("Ei löytynyt mielenosoituksia.")}</div>`;
-          } else {
-            tableBody.innerHTML = `<tr><td colspan="6">${_("Ei löytynyt mielenosoituksia.")}</td></tr>`;
-          }
-        } else {
-          renderDemos(data.demonstrations, append);
-        }
-        if (page >= total_pages) showEndMessage();
-        is_loading = false;
-      })
-      .catch(() => {
-        spinner.style.display = "none";
-        is_loading = false;
-      });
-  }
-
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting && !is_loading && page < total_pages) {
-        page++;
-        fetchAndRenderDemos({append: true});
-      }
-    });
-  }, { rootMargin: "1000px" });
-  observer.observe(scrollSentinel);
-
-  function setView(newView) {
-    view = newView;
-    localStorage.setItem("demoView", view);
-    const mainContent = document.querySelector(".container-main-content");
-    if (view === "list") {
-      mainContent.classList.add("list-view");
-      document.getElementById("list-view-btn").classList.add("active");
-      document.getElementById("grid-view-btn").classList.remove("active");
-      gridContainer.classList.add("hide-cards");
-      tableContainer.style.display = "";
-    } else {
-      mainContent.classList.remove("list-view");
-      document.getElementById("grid-view-btn").classList.add("active");
-      document.getElementById("list-view-btn").classList.remove("active");
-      gridContainer.classList.remove("hide-cards");
-      tableContainer.style.display = "none";
-    }
-    fetchAndRenderDemos({reset: true});
-  }
-  document.getElementById("grid-view-btn").addEventListener("click", () => setView("grid"));
-  document.getElementById("list-view-btn").addEventListener("click", () => setView("list"));
-
-  document.getElementById("search-form").addEventListener("submit", e => {
+    document.getElementById("search-form").addEventListener("submit", e => {
     e.preventDefault();
     setView(view);
   });

@@ -1491,3 +1491,6 @@ Disallow: /admin/
             return False
         return True
 
+    @app.route("/pride-nakyvaksi")
+    def pride_nakyvaksi():
+        return render_template("pride-nakyvaksi/index.html")

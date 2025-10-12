@@ -1,0 +1,790 @@
+{% extends "base.html" %}
+
+{% block title %}Pride näkyväksi - mielenosoitukset.fi{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo-list.css') }}" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<style>
+:root {
+  --color-bg: light-dark(#f8fafc, #0f1419);
+  --color-card-bg: light-dark(#ffffff, #1a1d23);
+  --color-text: light-dark(#1e293b, #e2e8f0);
+  --color-text-secondary: light-dark(#64748b, #94a3b8);
+  --color-border: light-dark(#e2e8f0, #374151);
+  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+  --border-radius: 16px;
+  --border-radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Pride Colors */
+  --pride-red: #E40303;
+  --pride-orange: #FF8C00;
+  --pride-yellow: #FFED00;
+  --pride-green: #008026;
+  --pride-blue: #24408E;
+  --pride-purple: #732982;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.7;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  box-sizing: border-box;
+  
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  background: linear-gradient(135deg, 
+    var(--pride-red) 0%, 
+    var(--pride-orange) 16.66%, 
+    var(--pride-yellow) 33.33%, 
+    var(--pride-green) 50%, 
+    var(--pride-blue) 66.66%, 
+    var(--pride-purple) 100%);
+  padding: 6rem 2rem;
+  text-align: center;
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  animation: shimmer 8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: slide 3s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pride-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--pride-purple);
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.hero-content h1 {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 900;
+  color: white;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-content .lead {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeInUp 1s ease-out 0.2s both;
+}
+
+/* Rainbow Decorative Elements */
+.rainbow-decoration {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.rainbow-decoration:nth-child(1) {
+  top: -100px;
+  left: -100px;
+  background: var(--pride-red);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.rainbow-decoration:nth-child(2) {
+  bottom: -100px;
+  right: -100px;
+  background: var(--pride-blue);
+  animation: pulse 4s ease-in-out infinite 1s;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.2); opacity: 0.25; }
+}
+
+/* Buttons */
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeInUp 1s ease-out 0.4s both;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 2.5rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: var(--transition);
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button-primary {
+  background: white;
+  color: var(--pride-purple);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.button-primary:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  color: var(--pride-purple);
+}
+
+.button-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-3px);
+  color: white;
+}
+
+/* Section Cards */
+.section-card {
+  background: var(--color-card-bg);
+  border-radius: var(--border-radius-lg);
+  padding: 3rem 2.5rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.section-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--pride-red) 0%, 
+    var(--pride-orange) 16.66%, 
+    var(--pride-yellow) 33.33%, 
+    var(--pride-green) 50%, 
+    var(--pride-blue) 66.66%, 
+    var(--pride-purple) 100%);
+}
+
+.section-card h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, 
+    var(--pride-red) 0%, 
+    var(--pride-orange) 16.66%, 
+    var(--pride-yellow) 33.33%, 
+    var(--pride-green) 50%, 
+    var(--pride-blue) 66.66%, 
+    var(--pride-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.section-card p {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  color: var(--color-text-secondary);
+}
+
+/* Info Section Special Styling */
+.info-section {
+  background: var(--color-card-bg);
+  position: relative;
+}
+
+.info-section::after {
+  content: '🏳️‍🌈';
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  font-size: 4rem;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* Demos Section */
+.demos-card {
+  padding: 3rem 2.5rem;
+}
+
+.demos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1.5rem;
+  /* lets make it take full width */
+
+    width: 100%;   
+    /* full width of the grid its in */
+    text-align: center;
+    
+}
+
+.demos-grid.loading {
+    display: block;
+    margin: 0;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--pride-purple);
+  border-right-color: var(--pride-blue);
+  border-bottom-color: var(--pride-green);
+  border-left-color: var(--pride-red);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  /* lets position in center */
+  margin: 0 auto;
+
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* No Results */
+.no-results-card {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--color-bg);
+  border-radius: var(--border-radius);
+  border: 2px dashed var(--color-border);
+}
+
+.no-results-icon {
+  font-size: 4rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.no-results-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.no-results-text {
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+}
+
+.no-results-action {
+  margin-top: 2rem;
+}
+
+/* Stats Section */
+.pride-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.stat-card {
+  background: var(--color-card-bg);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: var(--color-shadow);
+  border: 1px solid var(--color-border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.stat-card:nth-child(1)::before { background: var(--pride-red); }
+.stat-card:nth-child(2)::before { background: var(--pride-orange); }
+.stat-card:nth-child(3)::before { background: var(--pride-green); }
+.stat-card:nth-child(4)::before { background: var(--pride-blue); }
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--color-shadow-lg);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, 
+    var(--pride-red) 0%, 
+    var(--pride-purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* Pride Hearts Animation */
+.pride-hearts {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.pride-heart {
+  position: absolute;
+  bottom: -50px;
+  font-size: 2rem;
+  animation: floatHeart 6s ease-in-out infinite;
+  opacity: 0;
+}
+
+@keyframes floatHeart {
+  0% {
+    bottom: -50px;
+    opacity: 0;
+    transform: translateX(0) rotate(0deg);
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    bottom: 100vh;
+    opacity: 0;
+    transform: translateX(100px) rotate(360deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .hero-section {
+    padding: 4rem 1.5rem;
+  }
+
+  .hero-content h1 {
+    font-size: 3rem;
+  }
+
+  .hero-content .lead {
+    font-size: 1.25rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .section-card h2 {
+    font-size: 2rem;
+    text-shadow: 1px 1px 2px var(--box_shadow_color);
+  }
+
+  .demos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pride-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .pride-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .hero-section {
+    border: 3px solid white;
+  }
+  
+  .section-card::before {
+    height: 6px;
+  }
+}
+
+.container-main-content {
+    background: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Pride Hearts Background Animation -->
+<div class="pride-hearts" id="pride-hearts"></div>
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="rainbow-decoration"></div>
+  <div class="rainbow-decoration"></div>
+  <div class="hero-content">
+    <div class="pride-badge">
+      <i class="fa-solid fa-heart"></i>
+      <span>Pride 2026</span>
+    </div>
+    <h1>Pride näkyväksi</h1>
+    <p class="lead">
+      Tuodaan kaikki Suomen Pride-aiheiset mielenosoitukset kaikkien tietoon! Yhdessä olemme vahvempia.
+    </p>
+    <div class="hero-buttons">
+      <a href="{{ url_for('submit') }}" class="button button-primary">
+        <i class="fa-solid fa-plus"></i>
+        Ilmoita mielenosoitus
+      </a>
+      <a href="#demos" class="button button-secondary">
+        <i class="fa-solid fa-arrow-down"></i>
+        Katso mielenosoitukset
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="container" style="background: none;">
+  <!-- Stats Section -->
+  <div class="pride-stats">
+    <div class="stat-card">
+      <span class="stat-number" id="total-events">-</span>
+      <span class="stat-label">Pride-mielenosoitusta</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" id="total-cities">-</span>
+      <span class="stat-label">Kaupunkia</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">2026</span>
+      <span class="stat-label">Vuosi</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">∞</span>
+      <span class="stat-label">Rakkautta</span>
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <section class="section-card info-section">
+    <h2>Miksi Pride näkyväksi?</h2>
+    <p>
+      Suomessa järjestetään vuosittain useita Pride-aiheisia mielenosoituksia eri kaupungeissa. Näiden mielenosoitusten näkyvyys on kuitenkin usein rajallista, mikä vaikeuttaa osallistumista ja tietoisuuden lisäämistä. Tämän kampanjan tavoitteena on kerätä kaikki Pride-aiheiset mielenosoitukset yhteen paikkaan, jotta ne olisivat helposti löydettävissä ja osallistuttavissa.
+    </p>
+    <p style="margin-top: 1.5rem;">
+      Pride ei ole vain mielenosoitus – se on liike, joka taistelee tasa-arvon, oikeudenmukaisuuden ja rakkauden puolesta. Jokainen osallistuja, jokainen ääni ja jokainen teko tekee eron. Tule mukaan tekemään Suomesta yhdenvertaisempi paikka kaikille!
+    </p>
+  </section>
+
+  <!-- Demos Section -->
+  <section class="section-card demos-card" id="demos">
+    <h2>Pride-mielenosoitukset Suomessa 2026</h2>
+    <p>
+      Keräämme kaikki Pride-aiheiset mielenosoitukset yhteen paikkaan, jotta ne olisivat helposti löydettävissä ja osallistuttavissa.
+    </p>
+    <div id="demos-grid" class="demos-grid"></div>
+    
+    <button id="load-more-btn" class="button button-secondary" style="display:none; margin: 2rem auto; display: none;">
+      <i class="fa-solid fa-arrow-down"></i>
+      Näytä lisää
+    </button>
+
+    <!-- Empty State -->
+    <div id="no-results" class="no-results-card" style="display:none;">
+      <div class="no-results-icon">
+        <i class="fa-solid fa-calendar-xmark"></i>
+      </div>
+      <h3 class="no-results-title">Ei löytynyt mielenosoituksia</h3>
+      <p class="no-results-text">
+        Meille ei vielä ole ilmoitettu Pride-aiheisia mielenosoituksia. Voit auttaa ilmoittamalla Pride-aiheisesta mielenosoituksesta alla olevasta napista.
+      </p>
+      <div class="no-results-action">
+        <a href="{{ url_for('submit') }}" class="button button-primary">
+          <i class="fa-solid fa-plus"></i>
+          Ilmoita uusi mielenosoitus
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="section-card" style="text-align: center; padding: 4rem 2rem;">
+    <h2 style="margin-bottom: 1rem;">Tule mukaan Pride-liikkeeseen!</h2>
+    <p style="font-size: 1.25rem; margin-bottom: 2rem; color: var(--color-text-secondary);">
+      Jokaisella on oikeus olla oma itsensä. Tule mukaan juhlimaan monimuotoisuutta ja rakkautta!
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('submit') }}" class="button button-primary">
+        <i class="fa-solid fa-heart"></i>
+        Ilmoita mielenosoitus
+      </a>
+      <a href="{{ url_for('demonstrations') }}" class="button button-secondary">
+        <i class="fa-solid fa-list"></i>
+        Kaikki mielenosoitukset
+      </a>
+    </div>
+  </section>
+</div>
+
+{% include '_modals/_demo-card-template.html' %}
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}"></script>
+
+<script>
+// Pride hearts animation
+function createPrideHeart() {
+  const heartsContainer = document.getElementById('pride-hearts');
+  if (!heartsContainer) return;
+  
+  const heart = document.createElement('div');
+  heart.className = 'pride-heart';
+  heart.textContent = '🏳️‍🌈';
+  heart.style.left = Math.random() * 100 + '%';
+  heart.style.animationDuration = (Math.random() * 3 + 4) + 's';
+  heart.style.animationDelay = Math.random() * 2 + 's';
+  
+  heartsContainer.appendChild(heart);
+  
+  setTimeout(() => {
+    heart.remove();
+  }, 8000);
+}
+
+// Create hearts periodically
+setInterval(createPrideHeart, 2000);
+
+// Initial hearts
+for (let i = 0; i < 5; i++) {
+  setTimeout(createPrideHeart, i * 400);
+}
+
+// Load demos
+document.addEventListener('DOMContentLoaded', () => {
+  const grid = document.getElementById('demos-grid');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+  const noResults = document.getElementById('no-results');
+
+  let extraParams = {"tag": "pride"};
+
+  async function loadDemosWrapper(page = 1, append = false) {
+    if (!append) {
+        grid.classList.add("loading");
+      grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>`;
+      noResults.style.display = 'none';
+    } else {
+      loadMoreBtn.classList.add('loading');
+      loadMoreBtn.disabled = true;
+    }
+
+
+    await loadDemos(page, append, extraParams);
+
+    // Update stats
+    const demoCards = document.querySelectorAll('.demo-card');
+    document.getElementById('total-events').textContent = demoCards.length;
+    
+    // Count unique cities
+    const cities = new Set();
+    demoCards.forEach(card => {
+      const city = card.querySelector('.demo-city')?.textContent;
+      if (city) cities.add(city);
+    });
+    document.getElementById('total-cities').textContent = cities.size;
+
+    // Show no results if empty
+    if (demoCards.length === 0) {
+      noResults.style.display = 'block';
+    }
+
+    loadMoreBtn.classList.remove('loading');
+    loadMoreBtn.disabled = false;
+  }
+
+  // Initial load
+  loadDemosWrapper();
+  
+  // Load more button
+  loadMoreBtn.addEventListener('click', () => {
+    const currentPage = Math.ceil(document.querySelectorAll('.demo-card').length / 20) + 1;
+    loadDemosWrapper(currentPage, true);
+  });
+});
+</script>
+{% endblock %}

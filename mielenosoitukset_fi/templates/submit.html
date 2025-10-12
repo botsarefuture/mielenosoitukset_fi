@@ -753,9 +753,9 @@ button:focus {
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-content">
-      <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
+      <h1>{{ _('Ilmoita mielenosoitus') }}</h1>
       <p class="lead">
-        {{ _('Jaa tietoa mielenosoituksestasi ja auta muita löytämään tärkeät tapahtumat. Kaikki kentät joissa on punainen tähti (*) ovat pakollisia.') }}
+        {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Kaikki kentät joissa on punainen tähti (*) ovat pakollisia.') }}
       </p>
     </div>
   </section>
@@ -826,10 +826,10 @@ button:focus {
       
       <div class="form-row">
         <div class="form-group">
-          <label for="date" class="required">
+          <label id="date-label" for="date" class="required">
             {{ _('Päivämäärä (pp.kk.vvvv)') }}<span class="required-asterisk">*</span>
           </label>
-          <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" required />
+          <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" aria-labelledby="date-label" />
         </div>
         
         <div class="form-group">

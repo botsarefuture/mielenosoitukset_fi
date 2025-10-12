@@ -449,6 +449,11 @@ body {
   .buttons-div {
     flex-direction: column;
     align-items: stretch;
+
+    max-width: fit-content;
+    margin: auto;
+  }
+
   }
 
   .button {
@@ -496,6 +501,8 @@ body {
   animation: loading 1s linear infinite;
   margin-left: 8px;
 }
+
+
 </style>
 {% endblock %}
 
@@ -540,7 +547,7 @@ document.querySelectorAll('.button').forEach(button => {
 <!-- Hero Section -->
 <section class="hero">
   <div class="hero-content">
-    <h2>{{ _('Tervetuloa Mielenosoitukset.fi:hin') }}</h2>
+    <h1>{{ _('Tervetuloa Mielenosoitukset.fi') }} -alustalle!</h1>
     <p>
       {{ _('Mielenosoitukset.fi tarjoaa ajankohtaiset tiedot mielenosoituksista ympäri Suomen.') }}<br>
       {{ _('Tavoitteenamme on tehdä osallistumisesta mielenosoituksiin mahdollisimman vaivatonta ja sujuvaa.') }}

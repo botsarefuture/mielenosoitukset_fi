@@ -607,7 +607,7 @@ body {
     </div>
     <h1>Pride näkyväksi</h1>
     <p class="lead">
-      Tuodaan kaikki Suomen Pride-aiheiset mielenosoitukset kaikkien tietoon! Yhdessä olemme vahvempia.
+      Tuodaan kaikki Suomen Pride-aiheiset mielenosoitukset kaikkien tietoon.<br>Yhdessä olemme vahvempia!
     </p>
     <div class="hero-buttons">
       <a href="{{ url_for('submit') }}" class="button button-primary">
@@ -652,6 +652,28 @@ body {
     <p style="margin-top: 1.5rem;">
       Pride ei ole vain mielenosoitus – se on liike, joka taistelee tasa-arvon, oikeudenmukaisuuden ja rakkauden puolesta. Jokainen osallistuja, jokainen ääni ja jokainen teko tekee eron. Tule mukaan tekemään Suomesta yhdenvertaisempi paikka kaikille!
     </p>
+  </section>
+  <!-- guideline to submitting demo -->
+  <section class="section-card demo-guidelines">
+    <h2>Ilmoita mielenosoitus helposti</h2>
+    <ol>
+        <li>
+            <strong>Siirry ilmoitussivulle:</strong> Klikkaa yläreunan "Ilmoita mielenosoitus" -nappia tai <a href="{{ url_for('submit') }}">tästä</a>.
+        </li>
+        <li>
+            <strong>Täytä lomake:</strong> Anna mielenosoituksen nimi, päivämäärä, sijainti ja lyhyt kuvaus. Voit myös lisätä linkin tapahtumasivulle tai sosiaalisen median tapahtumaan.
+        </li>
+        <li>
+            <strong>Lähetä ilmoitus:</strong> Tarkista tiedot ja klikka "lähetä" -nappia. Ilmoituksesi tarkistetaan ennen julkaisua.
+        </li>
+        <li><strong>Tiimimme tarkistaa ilmoituksen:</strong> Varmistamme, että mielenosoitus noudattaa alustan <a href="{{ url_for('terms') }}">käyttöehtoja</a> ja ettei se sisällä syrjintää eikä vihapuhetta.</li>
+        <li><strong>Saat ilmoituksen:</strong> jossa kerrotaan hyväksyimmekö vai hylkäsimmekö ilmoituksen, mikäli se hylättiin, sisällytämme viestiin muutoksenhaku / valitusohjeet.s</li>
+    </ol>  
+
+    <p style="margin-top: 1.5rem;">
+      Kaikki ilmoitetut mielenosoitukset tarkistetaan ennen julkaisua varmistaaksemme, että ne ovat alustan käyttöehtojen mukaisia, eivätkä sisällä vihapuhetta eivätkä syrjintää.
+    </p>
+
   </section>
 
   <!-- Demos Section -->

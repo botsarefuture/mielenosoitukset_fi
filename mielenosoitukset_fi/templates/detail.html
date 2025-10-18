@@ -51,9 +51,6 @@ demo.get('city', 'Tuntematon') ~
 <meta name="twitter:description" content="{{ demo.get('description', 'Mielenosoituksen tiedot.') }}" />
 <meta name="twitter:image" content="{{ demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True) }}" />
 
-<meta property="og:title" content="{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}" />
-<meta property="og:description" content="{{ demo.get('description', 'Mielenosoituksen tiedot.') }}" />
-<meta property="og:image" content="{{ demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True) }}" />
 
 {# Mastodon friendly: provide rel="me" and og:see_also when a Mastodon profile is configured.
    Template accepts either demo['mastodon'] or a global mastodon_profile variable. #}

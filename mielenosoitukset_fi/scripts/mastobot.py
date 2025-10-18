@@ -266,8 +266,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--log-level", default="INFO", help="Logging level")
     args = parser.parse_args(argv)
 
-    print("token:", args.access_token)
-    exit( 0)
 
     setup_logging(args.log_level)
     

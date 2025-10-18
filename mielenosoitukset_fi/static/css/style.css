@@ -212,6 +212,9 @@ header .logo {
 
 }
 
+footer {
+  color: var(--footer_link_color, var(--white)) !important;
+}
 .footer-links li,
 .social-media-links li {
   display: inline;

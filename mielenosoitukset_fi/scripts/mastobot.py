@@ -13,6 +13,10 @@ Features added:
 - Robust date parsing (uses dateutil if available)
 - CLI options: interval, once, dry-run, max-days, data-file, log-level
 - Logging instead of prints
+
+TODO:
+- Implement automated running in a thread, that runs via the app.py.
+- Add error handling and logging for the thread.
 """
 
 from __future__ import annotations

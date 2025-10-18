@@ -213,10 +213,17 @@ header .logo {
   background: var(--orange);
 }
 
+
 .footer-links a, .social-media-links a {
   text-decoration: none;
-  color: var(--white);
+  color: var(--footer_link_color, var(--white));
+  transition: color 0.15s ease;
 }
+
+.footer-links a:hover, .social-media-links a:hover {
+  color: var(--footer_link_hover_color, var(--orange));
+}
+
 
 .social-media-links a i {
   margin-right: 8px;

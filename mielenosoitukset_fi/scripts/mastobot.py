@@ -244,7 +244,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Automated Mastodon poster for mielenosoitukset.fi")
     parser.add_argument("--api-url", default=DEFAULT_API_URL, help="Events API URL")
     parser.add_argument("--mastodon-base", default=DEFAULT_MASTODON_BASE, help="Mastodon instance base URL")
-    parser.add_argument("--access-token", default=os.getenv("MASTODON_ACCESS_TOKEN", "yRNX19QN2WZwsCMjh35FtwhtJ8KcuzfE08gDdbHJi8k"), help="Mastodon access token (or set MASTODON_ACCESS_TOKEN env)")
+    # Try to load .env for local development; no-op if python-dotenv is not installed
+    try:
+        from dotenv import load_dotenv  # type: ignore
+    except Exception:
+        load_dotenv = None
+    if load_dotenv:
+        load_dotenv()
+
+    parser.add_argument(
+        "--access-token",
+        default=os.getenv("MASTODON_ACCESS_TOKEN"),
+        help="Mastodon access token (or set MASTODON_ACCESS_TOKEN in .env or environment)",
+    )
+
     parser.add_argument("--data-file", default=DEFAULT_DATA_FILE, help="File to record posted event links")
     parser.add_argument("--max-days", type=int, default=DEFAULT_MAX_DAYS, help="How many days ahead to post events for")
     parser.add_argument("--interval", type=int, default=DEFAULT_CHECK_INTERVAL, help="Seconds between checks when running continuously")
@@ -252,6 +265,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="Do not actually post to Mastodon")
     parser.add_argument("--log-level", default="INFO", help="Logging level")
     args = parser.parse_args(argv)
+
 
     setup_logging(args.log_level)
     

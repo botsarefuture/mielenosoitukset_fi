@@ -126,6 +126,40 @@ from urllib.parse import urlencode
 @api_bp.route("/demonstrations", methods=["GET"])
 #@token_required(required_scopes=["read"])
 def list_demonstrations():
+    """
+    List demonstrations with filtering and pagination.
+
+    Parameters
+    ----------
+    search : str, optional
+        Free text search against title (case-insensitive).
+    city : str, optional
+        City name filter (case-insensitive).
+    title : str, optional
+        Title substring filter (case-insensitive).
+    tag : str, optional
+        Tag filter (case-insensitive).
+    recurring : str, optional
+        Recurring filter (not currently applied).
+    in_past : str, optional
+        If "true", include past demonstrations as well.
+    parent_id : str, optional
+        Filter by parent demonstration id.
+    organization_id : str, optional
+        Filter by organizer organization id.
+    max_days_till : int, optional
+        If provided, only include demonstrations occurring within this
+        many days from today (inclusive).
+    page : int, optional
+        Pagination page number (default 1).
+    per_page : int, optional
+        Items per page (default 20).
+
+    Returns
+    -------
+    Response
+        JSON response containing paginated demonstrations and metadata.
+    """
     search = request.args.get("search", "").lower()
     city = request.args.get("city", "").lower()
     title = request.args.get("title", "").lower()
@@ -134,21 +168,30 @@ def list_demonstrations():
     in_past = request.args.get("in_past", "").lower()
     parent_id = request.args.get("parent_id", "")
     organization_id = request.args.get("organization_id", "")
-    
+    max_days_till = request.args.get("max_days_till", "").strip()
+
     try:
         _parent_id = ObjectId(parent_id)
-        
     except Exception:
         parent_id = None
         _parent_id = None
 
     try:
         _org_id = ObjectId(organization_id)
-        
     except Exception:
         organization_id = None
         _org_id = None
-    
+
+    # Parse max_days_till if provided
+    max_days = None
+    if max_days_till:
+        try:
+            max_days = int(max_days_till)
+            if max_days < 0:
+                max_days = None
+        except ValueError:
+            max_days = None
+
     # Pagination params
     try:
         page = int(request.args.get("page", 1))
@@ -158,31 +201,45 @@ def list_demonstrations():
     except ValueError:
         page, per_page = 1, 20
 
+    from datetime import timedelta
     today = datetime.now()
     today_date = today.date()
+    max_date = None
+    if max_days is not None:
+        max_date = today_date + timedelta(days=max_days)
+
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
     query = DEMO_FILTER
     if _parent_id:
         query["parent"] = _parent_id
-        
-    
-    if _org_id:
-        query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}    
 
-        
+    if _org_id:
+        query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}
+
     demos_cursor = mongo.demonstrations.find(query)
 
     filtered = []
     for demo in demos_cursor:
-        demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
-        if demo_date >= today_date or in_past == "true":
+        # Expecting demo["date"] in "YYYY-MM-DD" format
+        try:
+            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
+        except Exception:
+            # Skip demos with invalid date format
+            continue
+
+        # Only include future demos (or include past if requested)
+        in_future_or_allowed = demo_date >= today_date or in_past == "true"
+        within_max_days = True
+        if max_date is not None:
+            within_max_days = demo_date <= max_date
+
+        if in_future_or_allowed and within_max_days:
             demo_obj = stringify_object_ids(demo)
             if (
                 (search in demo_obj["title"].lower() or not search) and
                 (city in demo_obj["city"].lower() or not city) and
                 (title in demo_obj["title"].lower() or not title) and
-                (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag)# and
-                #(not recurring or str(demo_obj.get("recurs")) == recurring)
+                (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag)
             ):
                 filtered.append(demo_obj)
 

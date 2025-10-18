@@ -17,9 +17,7 @@ demo.get('city', 'Tuntematon') ~
 ('. ' ~ formatted_date if formatted_date else '') }}
 {% endblock %}
 
-{% block og_image %}
-{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}
-{% endblock %}
+{% block og_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}{% endblock %}
 
 {% block twitter_title %}
 {{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
@@ -29,9 +27,7 @@ demo.get('city', 'Tuntematon') ~
 {{ demo.get('description', 'Mielenosoituksen tiedot.') }}
 {% endblock %}
 
-{% block twitter_image %}
-{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}
-{% endblock %}
+{% block twitter_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}{% endblock %}
 
 {% block meta %}
 <!-- Event Meta -->
@@ -48,6 +44,21 @@ demo.get('city', 'Tuntematon') ~
 {% for tag in tags %}
 <meta property="article:tag" content="{{ tag }}" />
 {% endfor %}
+
+<!-- Social / Card Meta (Twitter + Mastodon-friendly Open Graph) -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}" />
+<meta name="twitter:description" content="{{ demo.get('description', 'Mielenosoituksen tiedot.') }}" />
+<meta name="twitter:image" content="{{ demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True) }}" />
+
+
+{# Mastodon friendly: provide rel="me" and og:see_also when a Mastodon profile is configured.
+   Template accepts either demo['mastodon'] or a global mastodon_profile variable. #}
+{% set _mastodon_profile = demo.get('mastodon') or "https://mastodon.social/@mielenosoitukset" %}
+{% if _mastodon_profile %}
+<link rel="me" href="{{ _mastodon_profile }}" />
+<meta property="og:see_also" content="{{ _mastodon_profile }}" />
+{% endif %}
 
 <!-- JSON-LD Structured Data -->
 <script type="application/ld+json">

@@ -37,7 +37,7 @@ except Exception:
 
 # -- Defaults / environment -----------------------------------------------
 DEFAULT_API_URL = os.getenv(
-    "MO_API_URL", "https://mielenosoitukset.fi/api/demonstrations?max_days_till=60"
+    "MO_API_URL", "https://mielenosoitukset.fi/api/demonstrations"
 )
 DEFAULT_MASTODON_BASE = os.getenv("MASTODON_API_BASE", "https://mastodon.social")
 DEFAULT_DATA_FILE = os.getenv("MO_POSTED_FILE", "posted_events.txt")
@@ -254,6 +254,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     setup_logging(args.log_level)
+    
+    # lets add the max_days to the api url if not already present
+    if "max_days_till=" not in args.api_url:
+        separator = "&" if "?" in args.api_url else "?"
+        args.api_url = f"{args.api_url}{separator}max_days_till={args.max_days}"
 
     logging.info("Starting mastobot: api=%s max_days=%s dry_run=%s", args.api_url, args.max_days, args.dry_run)
 

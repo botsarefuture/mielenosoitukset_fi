@@ -6,3 +6,7 @@ config.yaml
 */uploads/*
 temps/*
 venv/
+.env
+# all .env files
+*.env
+mielenosoitukset_fi/scripts/.env

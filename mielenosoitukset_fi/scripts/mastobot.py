@@ -37,7 +37,7 @@ except Exception:
 
 # -- Defaults / environment -----------------------------------------------
 DEFAULT_API_URL = os.getenv(
-    "MO_API_URL", "http://127.0.0.1:5002/api/demonstrations?max_days_till=60"
+    "MO_API_URL", "https://mielenosoitukset.fi/api/demonstrations?max_days_till=60"
 )
 DEFAULT_MASTODON_BASE = os.getenv("MASTODON_API_BASE", "https://mastodon.social")
 DEFAULT_DATA_FILE = os.getenv("MO_POSTED_FILE", "posted_events.txt")

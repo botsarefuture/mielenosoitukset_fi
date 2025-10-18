@@ -40,8 +40,22 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
         If return_bytes is True: returns PNG bytes or None on failure.
     """
     try:
+        # Ensure we have a Flask application context. If none exists (e.g. running
+        # from a script), try to create one from the application's factory.
+        app_ctx = None
+        created_app = None
         if not has_app_context():
-            raise ValueError("No Flask application context found.")
+            try:
+                # Import here to avoid circular imports at module import time
+                from mielenosoitukset_fi.app import create_app
+
+                created_app = create_app()
+                app_ctx = created_app.app_context()
+                app_ctx.push()
+                logger.info("Pushed a new Flask app context for screenshot rendering.")
+            except Exception as e:
+                logger.error(f"Failed to create Flask app context: {e}")
+                raise ValueError("No Flask application context found and auto-creation failed.")
 
         if not isinstance(demo_data, dict):
             if hasattr(demo_data, "to_dict"):
@@ -89,6 +103,16 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
         except Exception as e:
             logger.error(f"Failed to render HTML content: {e}")
             return None
+        finally:
+            # Pop the context if we pushed one earlier. Don't pop if the current
+            # running app supplied the context.
+            if app_ctx is not None:
+                try:
+                    app_ctx.pop()
+                    logger.info("Popped the Flask app context used for screenshot rendering.")
+                except Exception:
+                    # Non-fatal: just log and continue
+                    logger.exception("Error while popping the Flask app context")
 
         filename = f"{demo_data['_id']}.png"
 
@@ -133,7 +157,7 @@ import threading
 
 def trigger_screenshot(demo_id, wait=False):
     """
-    Trigger the creation of a screenshot for a given demonstration ID.
+    Trigger the creation of a screenshot for a given demonstration ID and upload to S3.
 
     Parameters
     ----------
@@ -150,35 +174,96 @@ def trigger_screenshot(demo_id, wait=False):
     def create_screenshot_thread(demo_id):
         from DatabaseManager import DatabaseManager
         from bson import ObjectId
-
-        _path = os.path.join(_CUR_DIR, "static/demo_preview", f"{demo_id}.png")
-        if os.path.exists(_path):
-            logger.info(f"Screenshot already exists: {demo_id}")
-            return  # Already exists
+        from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
+        from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+        from config import Config
 
         try:
-            db_man = DatabaseManager.get_instance()
+            db_man = DatabaseManager().get_instance()
             mongo = db_man.get_db()
             data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if not data:
                 logger.error(f"No demonstration found with ID {demo_id}")
                 return
 
-            from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
-        
             demo = Demonstration.from_dict(data)
 
-            with current_app.app_context():
-                path = create_screenshot(demo)
-                if path:
-                    logger.info(f"Screenshot created: {path}")
-                else:
-                    logger.error(f"Failed to create screenshot for demo {demo_id}")
+            # Render screenshot bytes inside app context
+            try:
+                with current_app.app_context():
+                    png_bytes = create_screenshot(demo, return_bytes=True)
+            except Exception as e:
+                logger.error(f"Failed to render screenshot for {demo_id}: {e}")
+                return
+
+            if not png_bytes:
+                logger.error(f"No screenshot bytes produced for demo {demo_id}")
+                return
+
+            # Upload to S3
+            try:
+                bucket_name = getattr(Config, "S3_BUCKET", "mielenosoitukset.fi")
+                fileobj = io.BytesIO(png_bytes)
+                fileobj.seek(0)
+                s3_url = upload_image_fileobj(
+                    bucket_name,
+                    fileobj,
+                    f"{str(demo_id)}.png",
+                    "demo_preview"
+                )
+                if not s3_url:
+                    logger.error(f"Failed to upload preview image for demo {demo_id} to S3")
+                    return
+                logger.info(f"Uploaded preview for demo {demo_id} -> {s3_url}")
+            except Exception as e:
+                logger.error(f"Exception during S3 upload for {demo_id}: {e}")
+                return
+
+            # Update DB record
+            try:
+                mongo.demonstrations.update_one({"_id": ObjectId(demo_id)}, {"$set": {"preview_image": s3_url}})
+                logger.info(f"Database updated with preview URL for demo {demo_id}")
+            except Exception as e:
+                logger.error(f"Uploaded preview but failed to update DB for demo {demo_id}: {e}")
+                return
+
         except Exception as e:
             logger.error(f"Exception in screenshot thread: {e}")
 
+    # Capture the Flask application object so the worker thread can push
+    # an application context. Prefer the current app if running inside an
+    # app context; otherwise try to create one (best-effort fallback).
+    app = None
+    created_app = None
+    if has_app_context():
+        # Prefer the real Flask app when running inside a context. Use
+        # getattr to avoid static-analysis errors about LocalProxy internals.
+        try:
+            app = getattr(current_app, "_get_current_object")()
+        except Exception:
+            app = current_app
+    else:
+        try:
+            # Import here to avoid circular imports at module import time
+            from mielenosoitukset_fi.app import create_app
+
+            created_app = create_app()
+            app = created_app
+            logger.info("Created a temporary Flask app for screenshot threading.")
+        except Exception as e:
+            logger.error(f"No Flask application context available and auto-create failed: {e}")
+            return False, "No Flask application context available."
+
     try:
-        thread = threading.Thread(target=create_screenshot_thread, args=(demo_id,))
+        def runner(demo_id):
+            try:
+                # Ensure the worker has a proper application context
+                with app.app_context():
+                    create_screenshot_thread(demo_id)
+            except Exception as e:
+                logger.error(f"Exception in screenshot runner thread: {e}")
+
+        thread = threading.Thread(target=runner, args=(demo_id,))
         thread.daemon = True  # Won't block app shutdown
         thread.start()
 

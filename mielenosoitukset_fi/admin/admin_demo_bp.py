@@ -130,7 +130,8 @@ def demo_edit_history(demo_id):
 @permission_required("EDIT_DEMO")
 def trigger_ss(demo_id):
     from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
-    success, msg = trigger_screenshot(demo_id)
+    with current_app.app_context():
+        success, msg = trigger_screenshot(demo_id)
 
     if success:
         return jsonify({"status": "ok", "message": msg}), 200

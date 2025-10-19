@@ -1030,6 +1030,82 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             else url_for("admin_demo.create_demo")
         )
 
+from flask import jsonify
+
+# freeze a demo
+@admin_demo_bp.route("/demo/<demo_id>/freeze", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_DEMO")
+def freeze_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo:
+        return jsonify({"status": "ERROR", "message": "Mielenosoitusta ei löytynyt."}), 404
+
+    parent = demo.get("parent")
+    if not parent:
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan jäädyttää."}), 400
+
+    parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
+    if not parent_demo:
+        return jsonify({"status": "ERROR", "message": "Emokokousta ei löytynyt; jäädytys epäonnistui."}), 404
+
+    mongo.recu_demos.update_one(
+        {"_id": ObjectId(parent)},
+        {"$addToSet": {"freezed_children": demo_id}}
+    )
+
+    return jsonify({"status": "OK", "message": "Mielenosoitus on nyt jäädytetty."})
+
+
+# check frozen status
+@admin_demo_bp.route("/demo/<demo_id>/is_frozen", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO")
+def is_demo_frozen(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo:
+        return jsonify({"status": "ERROR", "message": "Mielenosoitusta ei löytynyt."}), 404
+
+    parent = demo.get("parent")
+    if not parent:
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan tarkistaa."}), 400
+
+    parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
+    if not parent_demo:
+        return jsonify({"status": "ERROR", "message": "Emokokousta ei löytynyt."}), 404
+
+    is_frozen = demo_id in parent_demo.get("freezed_children", [])
+    return jsonify({"status": "OK", "is_frozen": is_frozen})
+
+
+# unfreeze a demo
+@admin_demo_bp.route("/demo/<demo_id>/unfreeze", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("CREATE_DEMO")
+def unfreeze_demo(demo_id):
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo:
+        return jsonify({"status": "ERROR", "message": "Mielenosoitusta ei löytynyt."}), 404
+
+    parent = demo.get("parent")
+    if not parent:
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan jäädyttää tai vapauttaa."}), 400
+
+    parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
+    if not parent_demo:
+        return jsonify({"status": "ERROR", "message": "Emokokousta ei löytynyt; vapautus epäonnistui."}), 404
+
+    mongo.recu_demos.update_one(
+        {"_id": ObjectId(parent)},
+        {"$pull": {"freezed_children": demo_id}}
+    )
+
+    return jsonify({"status": "OK", "message": "Mielenosoitus on nyt vapautettu jäädytyksestä."})
+
+
 
 def collect_demo_data(request):
     """

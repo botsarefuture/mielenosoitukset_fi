@@ -273,7 +273,7 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
     freezed_children = set(parent_demo.get("freezed_children", []))
 
     for demo in child_demos:
-        if demo["_id"] in freezed_children:
+        if str(demo["_id"]) in freezed_children:
             runtime_actions.append({
                 "action": "frozen_skip",
                 "document": demo,
@@ -354,7 +354,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
         if FORCE_RECHECK:
             child_demos = list(demonstrations_collection.find({"parent": demo["_id"]}))
             for child in child_demos:
-                if child["_id"] in set(demo.get("freezed_children", [])):
+                if str(child["_id"]) in set(demo.get("freezed_children", [])):
                     continue
                 try:
                     child_date = datetime.strptime(child["date"], "%Y-%m-%d").date()

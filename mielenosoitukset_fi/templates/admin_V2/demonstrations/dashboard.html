@@ -243,6 +243,14 @@ tr.fade‑out {
     <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
   </button>
 </li>
+
+<li>
+  <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#freezeModal" onclick="openFreezeModal('{{ demo._id }}')">
+    <i class="fas fa-snowflake me-2"></i>Jäätystoiminnot
+  </button>
+</li>
+
+
 {% endif %}
 
 
@@ -583,4 +591,69 @@ function animateAndRemoveRow(rowEl) {
 
   </script>
 
+
+<!-- Modal -->
+<div class="modal fade" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="freezeModalLabel">Jäätystoiminnot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
+      </div>
+      <div class="modal-body">
+        <p id="freezeStatusText">Ladataan tila…</p>
+        <button id="freezeToggleBtn" class="btn btn-primary"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentDemoId = null;
+let isFrozen = false;
+
+function openFreezeModal(demoId) {
+  currentDemoId = demoId;
+  document.getElementById('freezeStatusText').innerText = "Ladataan tila…";
+  document.getElementById('freezeToggleBtn').disabled = true;
+
+  // Fetch current freeze status
+  fetch(`/admin/demo/demo/${demoId}/is_frozen`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "OK") {
+        isFrozen = data.is_frozen;
+        updateFreezeModal();
+      } else {
+        document.getElementById('freezeStatusText').innerText = "Virhe tilan hakemisessa: " + data.message;
+      }
+    });
+}
+
+function updateFreezeModal() {
+  const statusText = isFrozen ? "Mielenosoitus on jäädytetty." : "Mielenosoitus ei ole jäädytetty.";
+  document.getElementById('freezeStatusText').innerText = statusText;
+
+  const btn = document.getElementById('freezeToggleBtn');
+  btn.disabled = false;
+  btn.innerText = isFrozen ? "Poista jäädytys" : "Jäädytä";
+  btn.className = isFrozen ? "btn btn-warning" : "btn btn-primary";
+  btn.onclick = () => toggleFreeze(currentDemoId);
+}
+
+function toggleFreeze(demoId) {
+  const url = isFrozen ? `/admin/demo/demo/${demoId}/unfreeze` : `/admin/demo/demo/${demoId}/freeze`;
+  
+  fetch(url, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "OK") {
+        isFrozen = !isFrozen;
+        updateFreezeModal();
+      } else {
+        alert("Virhe: " + data.message);
+      }
+    });
+}
+</script>
   {% endblock %}

@@ -206,42 +206,46 @@ def process_events(
             continue
 
         title = event.get("title") or event.get("name") or "Ilman otsikkoa"
+        
+        city = event.get("city")
+        city_str = f"📍 {city.strip().capitalize()}" if city else ""
 
-        # parse date
-        raw_date = event.get("date") or event.get("start_date") or event.get("start_time")
-        event_dt = parse_event_date(raw_date) if raw_date else None
+        # parse date and times
+        date_str = event.get("formatted_date") or event.get("date")
+        start_time = event.get("start_time")
+        end_time = event.get("end_time")
+        if start_time and end_time:
+            time_str = f"{start_time} – {end_time}"
+        elif start_time:
+            time_str = f"alkaen {start_time}"
+        else:
+            time_str = ""
+
+        # skip if not within max_days
+        event_dt = parse_event_date(event.get("date")) if event.get("date") else None
         if not within_days(event_dt, max_days):
-            logging.debug("Skipping outside window: %s (date=%s)", title, raw_date)
+            logging.debug("Skipping outside window: %s (date=%s)", title, date_str)
             continue
 
-        formatted = event.get("formatted_date")
-        if formatted:
-            title_with_date = f"{formatted} — {title}"
-        elif event_dt:
-            title_with_date = f"{format_finnish_date(event_dt)} — {title}"
-        else:
-            title_with_date = title
-
+        # format tags
         tags = event.get("tags", [])
         tags = _check_tags(tags)
-        if not "mielenosoitus" in tags:
+        if "mielenosoitus" not in tags:
             tags.append("mielenosoitus")
-            
-        if tags:
-            tag_str = " ".join(f"#{tag}" for tag in tags)
-            status = f"📣 Uusi mielenosoitus: {title_with_date}\n🔗 {link}\n{tag_str}"
-        else:
-            status = f"📣 Uusi mielenosoitus: {title_with_date}\n🔗 {link}\n#aktivismi #mielenosoitus"
-            
+        tag_str = " ".join(f"#{tag}" for tag in tags)
+
+        # final status
+        status = f"{title}\n{date_str} {time_str}\n{city_str}\n{link}\n{tag_str}"
+
         success = post_to_mastodon(client, status, dry_run=dry_run)
         if success:
             append_posted(data_file, link)
             posted.add(link)
             posted_count += 1
-        # be polite
         time.sleep(1)
     logging.info("Posted %d new events", posted_count)
     return posted_count
+
 
 
 def main(argv: Optional[List[str]] = None) -> int:

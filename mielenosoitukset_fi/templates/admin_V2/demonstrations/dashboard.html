@@ -61,14 +61,13 @@
   }
 
   /* smooth fade/slide when a row is removed */
-tr.fade‑out {
-  opacity: 0;
-  height: 0;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  transition: opacity 2s ease, height 2s ease, padding 2s ease;
-}
-
+  tr.fade‑out {
+    opacity: 0;
+    height: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    transition: opacity 2s ease, height 2s ease, padding 2s ease;
+  }
 </style>
 {% endblock %} {% block scripts %}
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
@@ -94,7 +93,7 @@ tr.fade‑out {
     })
       .then((response) => response.json())
       .then((data) => {
-        
+
         if (data.status === "OK") {
           showToast("{{ _('Mielenosoitus hyväksytty onnistuneesti!') }}", 'success');
           acceptSty(demoId);
@@ -210,56 +209,67 @@ tr.fade‑out {
 
           <td class="actions-cell">
             <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
               </button>
               <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
                 {% if not demo.approved %}
-                  {% if current_user.has_permission("ACCEPT_DEMO") %}
-                    <li><button class="dropdown-item" type="button" onclick="acceptDemo('{{ demo._id }}')"><i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</button></li>
-                  {% else %}
-                    <li><span class="dropdown-item disabled"><i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</span></li>
-                  {% endif %}
+                {% if current_user.has_permission("ACCEPT_DEMO") %}
+                <li><button class="dropdown-item" type="button" onclick="acceptDemo('{{ demo._id }}')"><i
+                      class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</button></li>
+                {% else %}
+                <li><span class="dropdown-item disabled"><i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</span>
+                </li>
+                {% endif %}
                 {% endif %}
 
-                
+
 
                 {% if current_user.global_admin %}
-                  <li><button class="dropdown-item" type="button" onclick="recommendDemo('{{ demo._id }}', this)"><i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}</button></li>
+                <li><button class="dropdown-item" type="button" onclick="recommendDemo('{{ demo._id }}', this)"><i
+                      class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}</button></li>
                 {% endif %}
 
                 {% if current_user.has_permission("EDIT_DEMO") %}
-                  <li><a class="dropdown-item" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"><i
+                      class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>
                 {% endif %}
 
                 {% if current_user.has_permission("VIEW_DEMO") %}
-                  <li><a class="dropdown-item" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"><i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}</a></li>
-                  <li><button class="dropdown-item" type="button" onclick="showSubmitterInfoModal('{{ demo._id }}')"><i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}</button></li>
+                <li><a class="dropdown-item" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"><i
+                      class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}</a></li>
+                <li><button class="dropdown-item" type="button" onclick="showSubmitterInfoModal('{{ demo._id }}')"><i
+                      class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}</button></li>
                 {% endif %}
 
                 {% if current_user.has_permission("CREATE_DEMO") %}
-<li>
-  <button class="dropdown-item" type="button" onclick="triggerScreenshot('{{ demo._id }}', this)">
-    <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
-  </button>
-</li>
+                <li>
+                  <button class="dropdown-item" type="button" onclick="triggerScreenshot('{{ demo._id }}', this)">
+                    <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
+                  </button>
+                </li>
 
-<li>
-  <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#freezeModal" onclick="openFreezeModal('{{ demo._id }}')">
-    <i class="fas fa-snowflake me-2"></i>Jäätystoiminnot
-  </button>
-</li>
-
-
-{% endif %}
+                <li>
+                  <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#freezeModal"
+                    onclick="openFreezeModal('{{ demo._id }}')">
+                    <i class="fas fa-snowflake me-2"></i>Jäädytys <span class="text-muted">(vain toistuville)</span>
+                  </button>
+                </li>
 
 
-                <li><a class="dropdown-item" href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}"><i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}</a></li>
+                {% endif %}
+
+
+                <li><a class="dropdown-item" href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}"><i
+                      class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}</a></li>
 
                 {% if current_user.has_permission("DELETE_DEMO") %}
-                  <li><button class="dropdown-item text-danger" type="button" onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"><i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</button></li>
+                <li><button class="dropdown-item text-danger" type="button"
+                    onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"><i
+                      class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</button></li>
                 {% else %}
-                  <li><span class="dropdown-item disabled"><i class="fas fa-ban me-2"></i>{{ _('Poista') }}</span></li>
+                <li><span class="dropdown-item disabled"><i class="fas fa-ban me-2"></i>{{ _('Poista') }}</span></li>
                 {% endif %}
               </ul>
             </div>
@@ -268,45 +278,47 @@ tr.fade‑out {
         {% endfor %}
       </tbody>
     </table>
-<nav aria-label="Stats pagination">
-  <ul class="pagination justify-content-center">
+    <nav aria-label="Stats pagination">
+      <ul class="pagination justify-content-center">
 
-    {# Previous button #}
-    {% if prev_page %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}" aria-label="Previous">
-          <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span>
-      </li>
-    {% endif %}
+        {# Previous button #}
+        {% if prev_page %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}"
+            aria-label="Previous">
+            <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span>
+        </li>
+        {% endif %}
 
-    {# Current page / total pages #}
-    <li class="page-item disabled">
-      <span class="page-link">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</span>
-    </li>
+        {# Current page / total pages #}
+        <li class="page-item disabled">
+          <span class="page-link">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</span>
+        </li>
 
-    {# Next button #}
-    {% if next_page %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}" aria-label="Next">
-          {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span>
-      </li>
-    {% endif %}
+        {# Next button #}
+        {% if next_page %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}"
+            aria-label="Next">
+            {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
+          </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span>
+        </li>
+        {% endif %}
 
-  </ul>
-</nav>
+      </ul>
+    </nav>
 
 
-</div>
+  </div>
   {% else %}
   <div class="no-results">
     <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei mielenosoituksia löytynyt.') }}
@@ -333,26 +345,33 @@ tr.fade‑out {
       </div>
     </div>
   </div>
-
   <!-- Submitter Info Modal -->
   <div class="modal fade" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content" id="submitterInfoModalContent">
-        <div class="modal-header">
+      <div class="modal-content border-0 shadow-lg rounded-4" id="submitterInfoModalContent">
+        <div class="modal-header bg-info text-white rounded-top-4">
           <h5 class="modal-title" id="submitterInfoLabel">
             <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
           </h5>
-          <button type="button" class="btn-close" aria-label="{{ _('Sulje') }}" id="submitterInfoCloseBtn"></button>
+          <button type="button" class="btn-close btn-close-white" aria-label="{{ _('Sulje') }}"
+            id="submitterInfoCloseBtn"></button>
         </div>
-        <div class="modal-body" id="submitter-info-content">
-          <!-- Filled dynamically -->
+        <div class="modal-body p-4 text-center" id="submitter-info-content" style="color: white;">
+          <!-- Dynamically filled content -->
+          <div id="noSubmitterInfo" class="alert alert-warning d-none">
+            <i class="fa-solid fa-circle-exclamation me-2"></i>
+            {{ _('Ilmoittajan tietoja ei löytynyt.') }}
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" id="closeSubmitterInfo">{{ _('Sulje') }}</button>
+        <div class="modal-footer justify-content-center">
+          <button type="button" class="btn btn-outline-info btn-lg px-4" id="closeSubmitterInfo">
+            {{ _('Sulje') }}
+          </button>
         </div>
       </div>
     </div>
   </div>
+
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -373,166 +392,186 @@ tr.fade‑out {
   </script>
 
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const deleteModalEl = document.getElementById('deleteModal');
-  const deleteModal = new bootstrap.Modal(deleteModalEl);
-  const submitterModalEl = document.getElementById('submitterInfoModal');
-  const submitterModal = new bootstrap.Modal(submitterModalEl);
-
-  // Dark mode toggle for modals (adjust if your dark mode class is on <html> or <body>)
-  const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
-  if (isDark) {
-    deleteModalEl.querySelector('.modal-content').classList.add('modal-dark');
-    submitterModalEl.querySelector('.modal-content').classList.add('modal-dark');
-  }
-
-  // Fast delete mode flag
-  let fastDeleteMode = false;
-
-  function updateDeleteButtonTexts() {
-  document.querySelectorAll('.delete-button').forEach(btn => {
-    const icon = btn.querySelector('i');
-    if (icon) {
-      btn.innerHTML = icon.outerHTML + (fastDeleteMode ? ' Pikapoisto' : ' {{ _("Poista") }}');
-    } else {
-      // fallback if no icon found
-      btn.textContent = fastDeleteMode ? 'Pikapoisto' : '{{ _("Poista") }}';
-    }
-  });
-}
-
-
-  // Listen Shift key down/up globally
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Shift') {
-      fastDeleteMode = true;
-      updateDeleteButtonTexts();
-      console.log('Fast delete mode enabled.');
-    }
-    if (e.key === 'Escape') {
-      deleteModal.hide();
-      console.log('Modal closed via Escape.');
-    }
-  });
-
-  document.addEventListener('keyup', e => {
-    if (e.key === 'Shift') {
-      fastDeleteMode = false;
-      updateDeleteButtonTexts();
-      console.log('Fast delete mode disabled.');
-    }
-  });
-// Helper: Animate then remove the row
-function animateAndRemoveRow(rowEl) {
-      if (!rowEl) return;
-      rowEl.classList.add('fade-out');
-      rowEl.addEventListener('transitionend', () => rowEl.remove(), { once: true });
-    }
-  // Open delete modal or fast-delete immediately if shift pressed
-  window.openModal = (event, title, id) => {
-    event.preventDefault();
-
-   
-
-    // Inside your main script:
-    if (fastDeleteMode) {
-      // Fast delete directly without modal
-      fetch("/admin/demo/delete_demo", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ demo_id: id }),
-        redirect: 'manual'
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === 'OK') {
-            const row = document.getElementById(`demo-${id}`);
-            animateAndRemoveRow(row);
-            console.log(`Demo ${id} deleted instantly (pikapoisto).`);
-          } else {
-            alert(data.message || '{{ _("Virhe poistettaessa.") }}');
-          }
-        })
-        .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
-
-      return;
-    }
-
-
-    // Normal modal open flow
-    document.getElementById('demoTitle').textContent = title;
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    confirmDeleteBtn.dataset.id = id;
-    deleteModal.show();
-  };
-
-  // Close delete modal handlers
-  document.getElementById('deleteModalCloseBtn').onclick = () => deleteModal.hide();
-  document.getElementById('cancelDelete').onclick = () => deleteModal.hide();
-
-  // Confirm delete button (normal modal delete)
-  document.getElementById('confirmDelete').addEventListener('click', () => {
-    const id = document.getElementById('confirmDelete').dataset.id;
-    if (!id) return;
-
-    fetch("/admin/demo/delete_demo", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ demo_id: id }),
-      redirect: 'manual'
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === 'OK') {
-          // Remove the row
-          const row = document.getElementById(`demo-${ id }`);
-          if (row) row.remove();
-          deleteModal.hide();
-        } else {
-          alert(data.message || '{{ _("Virhe poistettaessa.") }}');
-        }
-      })
-      .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
-  });
-
-  // Show submitter info modal and fetch data
-  window.showSubmitterInfoModal = (demoId) => {
-    fetch(`/admin/demo/get_submitter_info/${ demoId }`)
-      .then(res => res.json())
-      .then(data => {
-        const content = document.getElementById('submitter-info-content');
-        if (data.status === 'OK') {
-          const s = data.submitter;
-          // Support both older and newer response shapes: sample uses submitter_name / submitter_email / submitter_role
-          content.innerHTML = `
-            <p><strong>{{ _('Nimi') }}:</strong> ${s.submitter_name || s.name || ''}</p>
-            <p><strong>{{ _('Sähköposti') }}:</strong> ${s.submitter_email || s.email || ''}</p>
-            <p><strong>{{ _('Rooli') }}:</strong> ${s.submitter_role || s.role || '{{ _("Ei saatavilla") }}'}</p>
-            <p><strong>{{ _('Hyväksynyt ehdot') }}:</strong> ${(s.accept_terms === true || s.accept_terms === 'true') ? '{{ _("Kyllä") }}' : '{{ _("Ei") }}'}</p>
-            <p><strong>{{ _('Ilmoitettu') }}:</strong> ${s.submitted_at || '{{ _("Ei saatavilla") }}'}</p>
-          `;
-        } else {
-          content.innerHTML = `<p class="text-danger">${data.message || '{{ _("Tietoja ei löytynyt.") }}'}</p>`;
-        }
-        submitterModal.show();
-      })
-      .catch(() => {
-        const content = document.getElementById('submitter-info-content');
-        content.innerHTML = `<p class="text-danger">{{ _("Virhe haettaessa tietoja.") }}</p>`;
-        submitterModal.show();
+    document.addEventListener('DOMContentLoaded', () => {
+      const deleteModalEl = document.getElementById('deleteModal');
+      const deleteModal = new bootstrap.Modal(deleteModalEl);
+      // Initialize Bootstrap modal once
+      const submitterModalEl = document.getElementById('submitterInfoModal');
+      const submitterModal = new bootstrap.Modal(submitterModalEl, {
+        backdrop: 'static',  // Optional: prevents closing on outside click
+        keyboard: false      // Optional: prevents closing with ESC
       });
-  };
 
-  // Close submitter info modal
-  document.getElementById('submitterInfoCloseBtn').onclick = () => submitterModal.hide();
-  document.getElementById('closeSubmitterInfo').onclick = () => submitterModal.hide();
+      // Dark mode toggle for modals (adjust if your dark mode class is on <html> or <body>)
+      const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
+      if (isDark) {
+        deleteModalEl.querySelector('.modal-content').classList.add('modal-dark');
+        submitterModalEl.querySelector('.modal-content').classList.add('modal-dark');
+      }
 
-  // Initial button text update
-  updateDeleteButtonTexts();
-});
+      // Fast delete mode flag
+      let fastDeleteMode = false;
+
+      function updateDeleteButtonTexts() {
+        document.querySelectorAll('.delete-button').forEach(btn => {
+          const icon = btn.querySelector('i');
+          if (icon) {
+            btn.innerHTML = icon.outerHTML + (fastDeleteMode ? ' Pikapoisto' : ' {{ _("Poista") }}');
+          } else {
+            // fallback if no icon found
+            btn.textContent = fastDeleteMode ? 'Pikapoisto' : '{{ _("Poista") }}';
+          }
+        });
+      }
 
 
-// animateAndRemoveRow is implemented earlier (kept single canonical implementation)
+      // Listen Shift key down/up globally
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Shift') {
+          fastDeleteMode = true;
+          updateDeleteButtonTexts();
+          console.log('Fast delete mode enabled.');
+        }
+        if (e.key === 'Escape') {
+          deleteModal.hide();
+          console.log('Modal closed via Escape.');
+        }
+      });
+
+      document.addEventListener('keyup', e => {
+        if (e.key === 'Shift') {
+          fastDeleteMode = false;
+          updateDeleteButtonTexts();
+          console.log('Fast delete mode disabled.');
+        }
+      });
+      // Helper: Animate then remove the row
+      function animateAndRemoveRow(rowEl) {
+        if (!rowEl) return;
+        rowEl.classList.add('fade-out');
+        rowEl.addEventListener('transitionend', () => rowEl.remove(), { once: true });
+      }
+      // Open delete modal or fast-delete immediately if shift pressed
+      window.openModal = (event, title, id) => {
+        event.preventDefault();
+
+
+
+        // Inside your main script:
+        if (fastDeleteMode) {
+          // Fast delete directly without modal
+          fetch("/admin/demo/delete_demo", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ demo_id: id }),
+            redirect: 'manual'
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === 'OK') {
+                const row = document.getElementById(`demo-${id}`);
+                animateAndRemoveRow(row);
+                console.log(`Demo ${id} deleted instantly (pikapoisto).`);
+              } else {
+                alert(data.message || '{{ _("Virhe poistettaessa.") }}');
+              }
+            })
+            .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
+
+          return;
+        }
+
+
+        // Normal modal open flow
+        document.getElementById('demoTitle').textContent = title;
+        const confirmDeleteBtn = document.getElementById('confirmDelete');
+        confirmDeleteBtn.dataset.id = id;
+        deleteModal.show();
+      };
+
+      // Close delete modal handlers
+      document.getElementById('deleteModalCloseBtn').onclick = () => deleteModal.hide();
+      document.getElementById('cancelDelete').onclick = () => deleteModal.hide();
+
+      // Confirm delete button (normal modal delete)
+      document.getElementById('confirmDelete').addEventListener('click', () => {
+        const id = document.getElementById('confirmDelete').dataset.id;
+        if (!id) return;
+
+        fetch("/admin/demo/delete_demo", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ demo_id: id }),
+          redirect: 'manual'
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'OK') {
+              // Remove the row
+              const row = document.getElementById(`demo-${id}`);
+              if (row) row.remove();
+              deleteModal.hide();
+            } else {
+              alert(data.message || '{{ _("Virhe poistettaessa.") }}');
+            }
+          })
+          .catch(() => alert('{{ _("Yhteysvirhe, yritä uudelleen.") }}'));
+      });
+
+
+      // Show submitter info modal and fetch data
+      window.showSubmitterInfoModal = async (demoId) => {
+        const content = document.getElementById('submitter-info-content');
+        const noInfoAlert = document.getElementById('noSubmitterInfo');
+
+        // Clear previous content
+        content.querySelectorAll("p:not(#noSubmitterInfo)").forEach(p => p.remove());
+        noInfoAlert.classList.add("d-none");
+
+        try {
+          const res = await fetch(`/admin/demo/get_submitter_info/${demoId}`);
+          const data = await res.json();
+
+          if (data.status === 'OK' && data.submitter) {
+            const s = data.submitter;
+
+            // Dynamically fill the modal
+            const name = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
+            const email = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
+            const role = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
+            const accepted = (s.accept_terms === true || s.accept_terms === 'true') ? '{{ _("Kyllä") }}' : '{{ _("Ei") }}';
+            const submittedAt = s.submitted_at || '{{ _("Ei saatavilla") }}';
+
+            content.innerHTML = `
+                <p><strong>{{ _('Nimi') }}:</strong> ${name}</p>
+                <p><strong>{{ _('Sähköposti') }}:</strong> ${email}</p>
+                <p><strong>{{ _('Rooli') }}:</strong> ${role}</p>
+                <p><strong>{{ _('Hyväksynyt ehdot') }}:</strong> ${accepted}</p>
+                <p><strong>{{ _('Ilmoitettu') }}:</strong> ${submittedAt}</p>
+            `;
+          } else {
+            // Show the "no info" alert
+            noInfoAlert.classList.remove("d-none");
+          }
+        } catch (err) {
+          console.error("Error fetching submitter info:", err);
+          noInfoAlert.textContent = '{{ _("Virhe haettaessa tietoja.") }}';
+          noInfoAlert.classList.remove("d-none");
+        } finally {
+          submitterModal.show();
+        }
+      };
+
+      // Close modal buttons
+      document.getElementById('submitterInfoCloseBtn').onclick = () => submitterModal.hide();
+      document.getElementById('closeSubmitterInfo').onclick = () => submitterModal.hide();
+
+      // Initial button text update
+      updateDeleteButtonTexts();
+    });
+
+
+    // animateAndRemoveRow is implemented earlier (kept single canonical implementation)
 
 
   </script>
@@ -558,102 +597,137 @@ function animateAndRemoveRow(rowEl) {
             btn.classList.add('btn-success');
             showToast("{{ _('Mielenosoitus suositeltu onnistuneesti!') }}", 'success');
           } else {
-            showToast("{{ _('Virhe suositellessa.') }}", 'danger');            btn.disabled = false;
+            showToast("{{ _('Virhe suositellessa.') }}", 'danger'); btn.disabled = false;
           }
         })
         .catch(() => {
-      showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
-                btn.disabled = false;
+          showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
+          btn.disabled = false;
         });
     }
   </script>
 
   <script>
     function triggerScreenshot(demoId, btn) {
-  btn.disabled = true;
+      btn.disabled = true;
 
-  fetch(`/admin/demo/trigger_screenshot/${demoId}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'ok') {
-        showToast("{{ _('Esikatselukuva luotu!') }}", 'success');
-      } else {
-        showToast(data.message || "{{ _('Virhe luotaessa esikatselukuvaa.') }}", 'danger');
-      }
-      btn.disabled = false;
-    })
-    .catch(err => {
-      console.error(err);
-      showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
-      btn.disabled = false;
-    });
-}
+      fetch(`/admin/demo/trigger_screenshot/${demoId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            showToast("{{ _('Esikatselukuva luotu!') }}", 'success');
+          } else {
+            showToast(data.message || "{{ _('Virhe luotaessa esikatselukuvaa.') }}", 'danger');
+          }
+          btn.disabled = false;
+        })
+        .catch(err => {
+          console.error(err);
+          showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
+          btn.disabled = false;
+        });
+    }
 
   </script>
 
-
-<!-- Modal -->
-<div class="modal fade" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="freezeModalLabel">Jäätystoiminnot</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
-      </div>
-      <div class="modal-body">
-        <p id="freezeStatusText">Ladataan tila…</p>
-        <button id="freezeToggleBtn" class="btn btn-primary"></button>
+  <!-- Freeze Modal -->
+  <div class="modal fade" id="freezeModal" tabindex="-1" aria-labelledby="freezeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-primary text-white rounded-top-4">
+          <h5 class="modal-title" id="freezeModalLabel">
+            <i class="fa-solid fa-snowflake me-2"></i> Jäädytyksen hallinta
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Sulje"></button>
+        </div>
+        <div class="modal-body text-center p-4">
+          <p id="freezeStatusText" class="mb-4 fs-6 text-muted">Ladataan tila…</p>
+          <button id="freezeToggleBtn" class="btn btn-outline-primary btn-lg px-4">
+            <!-- JS will fill text -->
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-let currentDemoId = null;
-let isFrozen = false;
+  <!-- Non-Recurring Modal -->
+  <div class="modal fade" id="nonRecurringModal" tabindex="-1" aria-labelledby="nonRecurringModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header bg-warning text-dark rounded-top-4">
+          <h5 class="modal-title" id="nonRecurringModalLabel">
+            <i class="fa-solid fa-circle-exclamation me-2"></i> Ei toistuva mielenosoitus
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sulje"></button>
+        </div>
+        <div class="modal-body text-center p-4">
+          <p id="nonRecurringStatusText" class="fs-6 text-muted">
+            Tämä mielenosoitus ei ole toistuva.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-function openFreezeModal(demoId) {
-  currentDemoId = demoId;
-  document.getElementById('freezeStatusText').innerText = "Ladataan tila…";
-  document.getElementById('freezeToggleBtn').disabled = true;
+  <script>
+    let currentDemoId = null;
+    let isFrozen = false;
 
-  // Fetch current freeze status
-  fetch(`/admin/demo/demo/${demoId}/is_frozen`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "OK") {
-        isFrozen = data.is_frozen;
-        updateFreezeModal();
-      } else {
-        document.getElementById('freezeStatusText').innerText = "Virhe tilan hakemisessa: " + data.message;
-      }
-    });
-}
+    function openFreezeModal(demoId) {
+      currentDemoId = demoId;
+      document.getElementById('freezeStatusText').innerText = "Ladataan tila…";
+      document.getElementById('freezeToggleBtn').disabled = true;
 
-function updateFreezeModal() {
-  const statusText = isFrozen ? "Mielenosoitus on jäädytetty." : "Mielenosoitus ei ole jäädytetty.";
-  document.getElementById('freezeStatusText').innerText = statusText;
+      // Fetch current freeze status
+      fetch(`/admin/demo/demo/${demoId}/is_frozen`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "OK") {
+            isFrozen = data.is_frozen;
+            updateFreezeModal();
+          } else {
+            if (data.MR_ERROR && data.MR_ERROR == "NO_RECUR") {
+              // lets show non-recurring modal
+              non_recurringmodal = new bootstrap.Modal(document.getElementById('nonRecurringModal'));
+              non_recurringmodal.show();
 
-  const btn = document.getElementById('freezeToggleBtn');
-  btn.disabled = false;
-  btn.innerText = isFrozen ? "Poista jäädytys" : "Jäädytä";
-  btn.className = isFrozen ? "btn btn-warning" : "btn btn-primary";
-  btn.onclick = () => toggleFreeze(currentDemoId);
-}
+              // lets hide the other modal
+              freezemodal = bootstrap.Modal.getInstance(document.getElementById('freezeModal'));
+              freezemodal.hide();
 
-function toggleFreeze(demoId) {
-  const url = isFrozen ? `/admin/demo/demo/${demoId}/unfreeze` : `/admin/demo/demo/${demoId}/freeze`;
-  
-  fetch(url, { method: "POST" })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === "OK") {
-        isFrozen = !isFrozen;
-        updateFreezeModal();
-      } else {
-        alert("Virhe: " + data.message);
-      }
-    });
-}
-</script>
+
+            } else {
+              document.getElementById('freezeStatusText').innerText = "Virhe tilan hakemisessa: " + data.message;
+            }
+          }
+        });
+    }
+
+    function updateFreezeModal() {
+      const statusText = isFrozen ? "Mielenosoitus on jäädytetty." : "Mielenosoitus ei ole jäädytetty.";
+      document.getElementById('freezeStatusText').innerText = statusText;
+
+      const btn = document.getElementById('freezeToggleBtn');
+      btn.disabled = false;
+      btn.innerText = isFrozen ? "Poista jäädytys" : "Jäädytä";
+      btn.className = isFrozen ? "btn btn-warning" : "btn btn-primary";
+      btn.onclick = () => toggleFreeze(currentDemoId);
+    }
+
+    function toggleFreeze(demoId) {
+      const url = isFrozen ? `/admin/demo/demo/${demoId}/unfreeze` : `/admin/demo/demo/${demoId}/freeze`;
+
+      fetch(url, { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "OK") {
+            isFrozen = !isFrozen;
+            updateFreezeModal();
+          } else {
+            alert("Virhe: " + data.message);
+          }
+        });
+    }
+  </script>
   {% endblock %}

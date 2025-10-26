@@ -1,161 +1,200 @@
 # Changelog
 
-## v3.1.0 – **The Reminder Revolution Edition** 🌟
- 
-### 🌟 New Features
-- **Email Reminder System**: Added an email reminder system for demonstrations, including .ics calendar attachment compatible with Gmail and Google Calendar.
-- **Popup/Modal UI for Reminders**: Introduced a new UI for reminder subscription, with full light/dark mode and accessibility support.
+**Note:** This changelog is **not fully up-to-date**. Some recent features, fixes, or changes may not be reflected here.
 
-### 🛠️ Fixes
-- **Critical Crash Fixes**: Resolved issues causing app crashes during profile picture uploads and improved data synchronization.
-- **.ics Encoding and Attachment Fixes**: Fixed .ics encoding and attachment issues for calendar compatibility.
+---
 
-### ✨ Updates
-- **Performance Optimization**: Migrated legacy features and optimized module interactions.
-- **Deprecation Guidelines Update**: Revised deprecation guidelines to align with the latest project standards.
-- **Email Sending Refactor**: Refactored email sending to support robust .ics attachments and production-ready error handling.
+## v3.1.0 – *The Reminder Revolution Edition* 🌟
 
-## v3.0.0 – **Evolution Edition** 🚀
- 
-### 🌟 New Features
-- **Redesigned UI**: Implemented a new responsive layout with an improved grid system and refined color themes.
-- **Enhanced Field Naming**: Updated all field names to use underscore formatting for consistency.
- 
-### 🛠️ Fixes
-- **Critical Crash Fixes**: Resolved issues causing app crashes during profile picture uploads and improved data synchronization.
- 
-### ✨ Updates
-- **Performance Optimization**: Migrated legacy features and optimized module interactions.
-- **Deprecation Guidelines Update**: Revised deprecation guidelines to align with the latest project standards.
+### New Features
 
-## v2.9.2 – **The Bug Squashing Edition** 🌟
+* **Email Reminder System**: Implemented a robust system for demonstration reminders, including `.ics` calendar attachments compatible with Gmail and Google Calendar.
+* **Popup/Modal UI for Reminders**: Introduced a fully accessible and responsive modal interface for subscribing to reminders, supporting both light and dark modes.
 
-### 🛠️ Fixes
-- **Critical Bug Fix**: Resolved an issue causing app crashes during profile picture uploads.
-- **Minor Bug Fixes**: Addressed various small bugs affecting app behavior.
+### Fixes
 
+* **Critical Crash Resolutions**: Fixed crashes occurring during profile picture uploads; improved data synchronization reliability.
+* **.ics Attachment and Encoding**: Resolved issues with `.ics` encoding to ensure full calendar compatibility.
 
-## v2.8.6 – **The Organization Enhancement Edition** 🌟
+### Updates
 
-### 🌟 New Features
-- **API Endpoint for Organizations**: Added a new API endpoint to create new organizations.
+* **Performance Optimization**: Migrated legacy features and optimized module interactions.
+* **Deprecation Guidelines**: Revised to align with updated project standards.
+* **Email Sending Refactor**: Improved email sending infrastructure with robust `.ics` attachment handling and error management.
 
-### ✨ Updates
-- **Organization Insertion Logic**: Enhanced the logic for inserting organizations to ensure data integrity.
-- **Admin Interface**: Updated the admin interface to support the new organization creation feature.
+---
 
-## v2.8.5 – **The Organizer Fix Edition** 🌟
+## v3.0.0 – *Evolution Edition* 🚀
 
-### 🛠️ Fixes
-- **Organization ID Assignment**: Fixed the `fix_organizers` function to handle `None` values properly.
+### New Features
 
+* **Redesigned UI**: Introduced a responsive layout with refined grid system and updated color themes.
+* **Enhanced Field Naming**: Standardized all field names using underscore formatting.
 
-## v2.8.4 – **The Modernization Edition** 🌟
+### Fixes
 
-### ✨ Updates
-- **Flask Versioning**: Updated Flask to the latest version for improved security and performance.
-- **Dependency Management**: Upgraded all dependencies to their latest versions.
-- **Documentation Overhaul**: Removed outdated documentation and added comprehensive guides for new features.
-- **Codebase Cleanup**: Refactored code to remove deprecated methods and improve readability.
+* **Critical Crash Resolutions**: Addressed issues causing application crashes during profile picture uploads.
 
----  
+### Updates
 
-## v2.8.3 – **The Structural Overhaul Edition** 🌟
+* **Performance Optimization**: Optimized legacy modules and internal interactions.
+* **Deprecation Guidelines**: Updated to reflect current project standards.
 
-### ✨ Updates
-- **Project Structure**: Refactored project structure by removing unused files, adding new modules, and updating versioning.
-- **Email Templates**: Enhanced email templates for better user engagement.
-- **JavaScript Functionality**: Improved JavaScript functionality for a smoother user experience.
+---
 
----  
+## v2.9.2 – *Bug Squashing Edition* 🌟
 
-## v2.8.2 – **The Polished Performance Edition** 🌟  
+### Fixes
 
-### 🚫 Deprecations  
-- **Leaflet Attribution Control**: Deprecated method for hiding Leaflet attribution control.  
+* **Critical Bug Fix**: Resolved a crash issue during profile picture uploads.
+* **Minor Bug Fixes**: Various small bug fixes improving overall app stability.
 
-### ✨ Updates  
-- **Logging Level**: Updated logging level for recurring demonstrations.  
-- **Type Checking**: Improved type checking in the Demonstration class.  
-- **Documentation**: Enhanced script documentation and copyright notice.  
+---
 
----  
+## v2.8.6 – *Organization Enhancement Edition* 🌟
 
-## v2.8.1 – **The Sparkly Bug Fix Edition** 🌟  
+### New Features
 
-### 🛠️ Fixes  
-- **Critical Bug Fix**: Resolved an issue causing app crashes during profile picture uploads.  
-- **Minor Bug Fixes**: Addressed various small bugs affecting app behavior.  
+* **API Endpoint for Organizations**: Added support for creating new organizations via API.
 
-### ✨ Updates  
-- **Dependency Updates**: Upgraded to the latest versions to enhance performance and security.  
+### Updates
 
-### 🚫 Deprecations  
-- **Feature Removals**: Discontinued outdated functionalities no longer in use.  
+* **Organization Insertion Logic**: Improved data integrity checks for organization creation.
+* **Admin Interface**: Enhanced UI for organization management.
 
----  
+---
 
-## v2.8.0 – **The Ultimate Glow-Up Edition** 🌟  
+## v2.8.5 – *Organizer Fix Edition* 🌟
 
-### 🌟 New Features  
-- **Enhanced User Profiles**: Introduced custom avatars, profile themes, and animations.  
-- **Advanced Role Management**: Create and assign unique roles with a personalized flair.  
-- **Smart Notifications**: Added emojis, sound effects, and custom notification settings.  
-- **AI-Driven Personalization**: Seamless customization based on user preferences.  
-- **One-Click Settings Sync**: Sync settings across devices effortlessly.  
-- **Enhanced Privacy**: Improved data security measures for top-notch confidentiality.  
-- **Guardian Mode**: Detect and neutralize threats automatically.  
+### Fixes
 
-### 🛠️ Fixes  
-- **Improved Sync Performance**: Eliminated delays in data synchronization.  
-- **Crash-Free Startup**: Enhanced app stability for a smoother experience.  
+* **Organization ID Assignment**: Corrected handling of `None` values in `fix_organizers` function.
 
-### ✨ Updates  
-- **Dependency Optimization**: Leveraged next-gen versions for improved functionality.  
-- **Performance Boost**: Streamlined app operations for faster, more efficient use.  
+---
 
----  
+## v2.8.4 – *Modernization Edition* 🌟
 
-## v2.7.0 – **The Navigator’s Dream** 🌟  
+### Updates
 
-### 🌟 New Features  
-- **Language Navigation 2.0**: Now includes immersive and comprehensive translation capabilities.  
+* **Flask Upgrade**: Updated to latest Flask version for improved security and performance.
+* **Dependency Management**: Upgraded all dependencies to their latest versions.
+* **Documentation Overhaul**: Removed outdated docs and added comprehensive guides.
+* **Codebase Cleanup**: Refactored and removed deprecated methods to improve maintainability.
 
----  
+---
 
-## v2.6.0 – **The Foundation for Greatness** 🌟  
+## v2.8.3 – *Structural Overhaul Edition* 🌟
 
-### 🌟 New Features  
-- **Advanced Authentication**: Added new user login features, including face recognition.  
-- **Fortress-Level Encryption**: Reinforced data security with cutting-edge encryption.  
-- **UI Enhancements**: Subtle design updates for a cleaner and more vibrant interface.  
-- **Universal Language Support**: Expanded support for multiple languages and emojis.  
+### Updates
 
-### 🛠️ Fixes  
-- **Faster Data Syncing**: Optimized for quicker and more reliable synchronization.  
-- **Crash Resistance**: Improved stability under high-load scenarios.  
+* **Project Structure**: Refactored codebase structure, removed unused files, and added new modules.
+* **Email Templates**: Improved templates for higher user engagement.
+* **JavaScript Enhancements**: Improved JS functionality for a smoother user experience.
 
-### ✨ Updates  
-- **Dependency Improvements**: Upgraded backend components for scalability.  
-- **Code Refinement**: Enhanced codebase efficiency for improved performance.  
+---
 
----  
+## v2.8.2 – *Polished Performance Edition* 🌟
+
+### Deprecations
+
+* **Leaflet Attribution Control**: Deprecated method for hiding Leaflet attribution control.
+
+### Updates
+
+* **Logging**: Adjusted logging level for recurring demonstrations.
+* **Type Checking**: Enhanced type validation in the Demonstration class.
+* **Documentation**: Improved script documentation and copyright notices.
+
+---
+
+## v2.8.1 – *Sparkly Bug Fix Edition* 🌟
+
+### Fixes
+
+* **Critical Bug Fix**: Resolved profile picture upload crash issue.
+* **Minor Bug Fixes**: Multiple minor bug fixes to improve stability.
+
+### Updates
+
+* **Dependency Upgrades**: Updated packages for better performance and security.
+
+### Deprecations
+
+* **Feature Removals**: Removed outdated or unused functionality.
+
+---
+
+## v2.8.0 – *Ultimate Glow-Up Edition* 🌟
+
+### New Features
+
+* Enhanced user profiles with custom avatars, themes, and animations.
+* Advanced role management with personalized permissions.
+* Smart notifications with emojis, sound effects, and customizable settings.
+* AI-driven personalization for user experience.
+* One-click settings synchronization across devices.
+* Improved privacy and security measures.
+* Guardian Mode for automated threat detection.
+
+### Fixes
+
+* Optimized data synchronization.
+* Improved startup stability and crash resistance.
+
+### Updates
+
+* Dependency and performance optimization for faster and more efficient operations.
+
+---
+
+## v2.7.0 – *Navigator’s Dream Edition* 🌟
+
+### New Features
+
+* **Language Navigation 2.0**: Introduced advanced translation and localization support.
+
+---
+
+## v2.6.0 – *Foundation for Greatness Edition* 🌟
+
+### New Features
+
+* Advanced authentication, including face recognition.
+* Fortress-level encryption for sensitive data.
+* UI enhancements and cleaner design updates.
+* Expanded language support and emoji integration.
+
+### Fixes
+
+* Optimized data syncing and improved crash resistance under high load.
+
+### Updates
+
+* Backend component upgrades for scalability and performance.
+* Refined codebase for better efficiency.
+
+---
 
 ## [Unreleased]
+
 ### Added
-- Email notification to tuki@mielenosoitukset.fi when a new demonstration is submitted (uses underscore field names, numpydoc docstrings).
-- User can subscribe to demonstration reminders (muistutus) via email; reminders are sent 1 week before, the day before at 9:00, and the day of at 9:00 or at least 2 hours before the event.
-- Reminder subscription form as a popup/modal, styled for light/dark mode and always visible above the header.
-- All popups and modals use z-index above the header (1000001 for backdrop, 1000002 for modal) codebase-wide.
-- All main CSS and button styles use color variables and light-dark() for full theme support.
+
+* Automatic email notifications to `tuki@mielenosoitukset.fi` when a new demonstration is submitted.
+* Reminder subscription system for demonstrations via email (1 week prior, day before at 9:00, day of at 9:00 or at least 2 hours before).
+* Reminder subscription popup/modal UI with light/dark mode support.
+* Popups and modals now appear above the header (`z-index: 1000001` for backdrop, `1000002` for modal).
+* Main CSS and button styles now use color variables and `light-dark()` for full theme support.
 
 ### Changed
-- UI containers and popups have improved contrast, spacing, and a cleaner look in both light and dark modes.
-- All buttons have visible background and border in all color modes.
-- Reminder subscribe button is grouped with social/share buttons.
+
+* UI containers and popups improved for contrast, spacing, and clarity.
+* Reminder subscribe button grouped with social/share buttons.
 
 ### Fixed
-- Modals/popups are never hidden behind the header.
-- Removed visible borders from stacked containers for a cleaner UI.
 
-Enjoy a more secure, efficient, and polished experience! 🚀
+* Modals and popups never hidden behind the header.
+* Removed unnecessary borders from stacked containers for cleaner UI.
+
+---
+
+✅ **Overall:** Improved security, performance, accessibility, and polished UI for a more professional and reliable experience.

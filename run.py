@@ -3,7 +3,7 @@ import sys
 from mielenosoitukset_fi.app import create_app
 from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders_scheduled as send_reminders
 
-from pp import rollup_events
+from mielenosoitukset_fi.utils.aggregate_analytics import rollup_events
 
 import threading
 

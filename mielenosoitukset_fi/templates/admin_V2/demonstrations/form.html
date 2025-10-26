@@ -1,6 +1,7 @@
-    {% if demo and demo._id %}
-    <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}" class="btn btn-secondary" style="float:right; margin-left: 10px;">Näytä muokkaushistoria</a>
-    {% endif %}
+{% if demo and demo._id %}
+<a href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}" class="btn btn-secondary"
+    style="float:right; margin-left: 10px;">Näytä muokkaushistoria</a>
+{% endif %}
 {% extends 'admin_base.html' %}
 
 {% block styles %}
@@ -379,48 +380,106 @@
                     value="{{ demo.address if demo else '' }}" required>
             </div>
 
-            <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="latitude" class="block font-medium mb-1">{{ _('Leveysaste') }}</label>
+            <div class="row g-3 p-2 border rounded shadow-sm" style="max-width: 100%; margin: 5px;">
+                <!-- Latitude -->
+                <div class="col-12 col-md-6">
+                    <label for="latitude" class="form-label fw-semibold">{{ _('Leveysaste') }}</label>
                     <input type="text" id="latitude" name="latitude"
-                        class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
-                        value="{{ demo.latitude if demo else '' }}" {% if not current_user.is_authenticated %}readonly{%
-                        endif %}>
+                        class="form-control {% if not current_user.is_authenticated %}bg-light text-muted{% endif %}"
+                        placeholder="Esim. 60.192059" value="{{ demo.latitude if demo else '' }}" {% if not
+                        current_user.is_authenticated %} readonly {% endif %}>
                 </div>
-                <div>
-                    <label for="longitude" class="block font-medium mb-1">{{ _('Pituusaste') }}</label>
+
+                <!-- Longitude -->
+                <div class="col-12 col-md-6">
+                    <label for="longitude" class="form-label fw-semibold">{{ _('Pituusaste') }}</label>
                     <input type="text" id="longitude" name="longitude"
-                        class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
-                        value="{{ demo.longitude if demo else '' }}" {% if not current_user.is_authenticated
-                        %}readonly{% endif %}>
+                        class="form-control {% if not current_user.is_authenticated %}bg-light text-muted{% endif %}"
+                        placeholder="Esim. 24.945831" value="{{ demo.longitude if demo else '' }}" {% if not
+                        current_user.is_authenticated %} readonly {% endif %}>
+                </div>
+
+                <!-- Recalculate button -->
+                {% if current_user.is_authenticated %}
+                <div class="col-12 text-end mt-2">
+                    <button type="button" id="recalculate-coords-btn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> {{ _('Laske koordinaatit uudelleen') }}
+                    </button>
+                </div>
+                {% endif %}
+
+                <script>
+                    async function getCoordinates(address, city) {
+                        try {
+                            const response = await fetch("/api/admin/demo/geocode", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({ address, city })
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error || "Unknown error");
+                            }
+
+                            const data = await response.json();
+                            console.log("Coordinates:", data.latitude, data.longitude);
+                            return data; // { latitude: "...", longitude: "..." }
+
+                        } catch (err) {
+                            console.error("Failed to fetch coordinates:", err.message);
+                            return null;
+                        }
+                    }
+
+                    document.getElementById("recalculate-coords-btn").addEventListener("click", async () => {
+                        const address = document.getElementById("address").value;
+                        const city = document.getElementById("selected-city").value;
+
+                        if (!address) {
+                            alert("{{ _('Syötä ensin osoite.') }}");
+                            return;
+                        }
+
+                        const coords = await getCoordinates(address, city);
+                        if (coords) {
+                            document.getElementById("latitude").value = coords.latitude;
+                            document.getElementById("longitude").value = coords.longitude;
+                        } else {
+                            alert("{{ _('Koordinaattien hakeminen epäonnistui. Tarkista osoite ja yritä uudelleen.') }}");
+                        }
+                    });
+                </script>
+            </div>
+
+            <div id="march-route-container" class="form-group"
+                style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
+                <label>{{ _('Reitti (marssin)') }}</label>
+                <div id="route-tags-wrapper" class="tags-wrapper"
+                    style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
+
+                    <!-- Existing route points rendered as pills -->
+                    {% if demo and demo.route %}
+                    {% for point in demo.route %}
+                    {% set point_trimmed = point.strip() %}
+                    {% if point_trimmed %}
+                    <span class="tag-pill">
+                        {{ point_trimmed }}
+                        <button type="button" class="remove-route-btn" aria-label="Remove route point">&times;</button>
+                        <input type="hidden" name="route[]" value="{{ point_trimmed }}">
+                    </span>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+
+                    <!-- Input for new route points -->
+                    <input type="text" id="route-input"
+                        placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
+                        style="border:none; outline:none; flex-grow:1; min-width:150px;" />
                 </div>
             </div>
-<div id="march-route-container" class="form-group"
-    style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
-    <label>{{ _('Reitti (marssin)') }}</label>
-    <div id="route-tags-wrapper" class="tags-wrapper"
-        style="display:flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.375rem; min-height: 3rem; cursor: text;">
-        
-        <!-- Existing route points rendered as pills -->
-        {% if demo and demo.route %}
-            {% for point in demo.route %}
-                {% set point_trimmed = point.strip() %}
-                {% if point_trimmed %}
-                <span class="tag-pill">
-                    {{ point_trimmed }}
-                    <button type="button" class="remove-route-btn" aria-label="Remove route point">&times;</button>
-                    <input type="hidden" name="route[]" value="{{ point_trimmed }}">
-                </span>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-        
-        <!-- Input for new route points -->
-        <input type="text" id="route-input"
-            placeholder="{{ _('Kirjoita reittipiste ja paina enter lisätäksesi') }}"
-            style="border:none; outline:none; flex-grow:1; min-width:150px;" />
-    </div>
-</div>
 
             <script>
                 (() => {
@@ -699,26 +758,26 @@
 
         // Duplicate demonstration functionality
         {% if demo and demo._id %}
-        document.getElementById('duplicate-demo-btn').addEventListener('click', function() {
-            if (confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta?') }}')) {
+        document.getElementById('duplicate-demo-btn').addEventListener('click', function () {
+            if (confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta ? ') }}')) {
                 fetch(`/admin/demo/duplicate/{{ demo._id }}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'OK' && data.new_demo_id) {
-                        // Open the edit page for the new demo in a popup window
-                        const url = `/admin/demo/edit_demo/${data.new_demo_id}`;
-                        window.open(url, '_blank', 'width=1000,height=800,noopener');
-                    } else {
-                        alert(data.message || 'Virhe kopioinnissa.');
-                    }
-                })
-                .catch(error => {
-                    alert('Virhe kopioinnissa.');
-                    console.error(error);
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'OK' && data.new_demo_id) {
+                            // Open the edit page for the new demo in a popup window
+                            const url = `/admin/demo/edit_demo/${data.new_demo_id}`;
+                            window.open(url, '_blank', 'width=1000,height=800,noopener');
+                        } else {
+                            alert(data.message || 'Virhe kopioinnissa.');
+                        }
+                    })
+                    .catch(error => {
+                        alert('Virhe kopioinnissa.');
+                        console.error(error);
+                    });
             }
         });
         {% endif %}

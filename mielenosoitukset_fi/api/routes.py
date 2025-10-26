@@ -1,6 +1,8 @@
+from copy import deepcopy
 from flask import current_app, jsonify, redirect, request, Blueprint, url_for
 from bson.objectid import ObjectId
 from datetime import datetime
+from flask_caching import Cache
 from flask_cors import CORS
 from functools import wraps
 
@@ -19,6 +21,7 @@ from mielenosoitukset_fi.utils.tokens import (
     check_token
 )
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
+from mielenosoitukset_fi.utils.cache import cache
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
@@ -123,150 +126,195 @@ def _update_likes(demo_id, delta=1):
 # -------------------------
 from urllib.parse import urlencode
 
+import hashlib
+import json
+from flask import request
+
+def make_cache_key():
+    params = request.args.to_dict(flat=True)
+    # sort keys to make order irrelevant
+    params_str = json.dumps(params, sort_keys=True)
+    return "demonstrations:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+
+
 @api_bp.route("/demonstrations", methods=["GET"])
-#@token_required(required_scopes=["read"])
+# @token_required(required_scopes=["read"])
 def list_demonstrations():
     """
-    List demonstrations with filtering and pagination.
+    Retrieve a paginated and filterable list of demonstrations.
 
-    Parameters
-    ----------
-    search : str, optional
-        Free text search against title (case-insensitive).
-    city : str, optional
-        City name filter (case-insensitive).
-    title : str, optional
-        Title substring filter (case-insensitive).
-    tag : str, optional
-        Tag filter (case-insensitive).
-    recurring : str, optional
-        Recurring filter (not currently applied).
-    in_past : str, optional
-        If "true", include past demonstrations as well.
-    parent_id : str, optional
-        Filter by parent demonstration id.
-    organization_id : str, optional
-        Filter by organizer organization id.
-    max_days_till : int, optional
-        If provided, only include demonstrations occurring within this
-        many days from today (inclusive).
-    page : int, optional
-        Pagination page number (default 1).
-    per_page : int, optional
-        Items per page (default 20).
+    ---
+    ### 🔍 Query Parameters
 
-    Returns
-    -------
-    Response
-        JSON response containing paginated demonstrations and metadata.
+    - **search** (`str`, optional):  
+      Free text search within the title (case-insensitive).
+
+    - **city** (`str`, optional):  
+      Filter by city name (case-insensitive).
+
+    - **title** (`str`, optional):  
+      Title substring filter (case-insensitive).
+
+    - **tag** (`str`, optional):  
+      Filter by tag (case-insensitive match against the `tags` array).
+
+    - **recurring** (`str`, optional):  
+      Not currently applied; reserved for future use.
+
+    - **in_past** (`bool`, optional, default=`false`):  
+      Include past demonstrations if set to `"true"`.
+
+    - **parent_id** (`str`, optional):  
+      Filter by parent demonstration ID.
+
+    - **organization_id** (`str`, optional):  
+      Filter by organizer organization ID.
+
+    - **max_days_till** (`int`, optional):  
+      Include only demonstrations within *N* days from today (inclusive).
+
+    - **page** (`int`, optional, default=`1`):  
+      Pagination page number.
+
+    - **per_page** (`int`, optional, default=`20`):  
+      Number of items per page.
+
+    ---
+    ### 🧾 Returns
+    JSON response:
+    ```json
+    {
+        "page": 1,
+        "per_page": 20,
+        "total": 133,
+        "total_pages": 7,
+        "next_url": "...",
+        "prev_url": null,
+        "results": [ ... list of demonstration objects ... ]
+    }
+    ```
     """
-    search = request.args.get("search", "").lower()
-    city = request.args.get("city", "").lower()
-    title = request.args.get("title", "").lower()
-    tag = request.args.get("tag", "").lower()
-    recurring = request.args.get("recurring", "").lower()
-    in_past = request.args.get("in_past", "").lower()
-    parent_id = request.args.get("parent_id", "")
-    organization_id = request.args.get("organization_id", "")
+
+    # --- Extract & normalize query parameters ---
+    def get_param(name: str, default: str = ""):
+        return request.args.get(name, default).strip().casefold()
+    cache_key = make_cache_key()
+
+    cached_response = cache.get(cache_key) if cache else None
+
+    if cached_response:
+        from copy import deepcopy
+        response_to_return = deepcopy(cached_response)
+        return jsonify(response_to_return), 200
+
+        
+    
+    
+
+    search = get_param("search")
+    city = get_param("city")
+    title = get_param("title")
+    tag = get_param("tag")
+    recurring = get_param("recurring")
+    in_past = get_param("in_past")
+    parent_id = request.args.get("parent_id", "").strip()
+    organization_id = request.args.get("organization_id", "").strip()
     max_days_till = request.args.get("max_days_till", "").strip()
 
-    try:
-        _parent_id = ObjectId(parent_id)
-    except Exception:
-        parent_id = None
-        _parent_id = None
+    # --- Parse IDs safely ---
+    def safe_objectid(value: str):
+        try:
+            return ObjectId(value)
+        except Exception:
+            return None
 
-    try:
-        _org_id = ObjectId(organization_id)
-    except Exception:
-        organization_id = None
-        _org_id = None
+    _parent_id = safe_objectid(parent_id)
+    _org_id = safe_objectid(organization_id)
 
-    # Parse max_days_till if provided
+    # --- Parse numeric filters ---
     max_days = None
     if max_days_till:
         try:
-            max_days = int(max_days_till)
-            if max_days < 0:
-                max_days = None
+            max_days = max(int(max_days_till), 0)
         except ValueError:
-            max_days = None
+            pass
 
-    # Pagination params
+    # --- Pagination ---
     try:
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 20))
-        if page < 1: page = 1
-        if per_page < 1: per_page = 20
+        page = max(int(request.args.get("page", 1)), 1)
+        per_page = max(int(request.args.get("per_page", 20)), 1)
     except ValueError:
         page, per_page = 1, 20
 
+    # --- Prepare date ranges ---
     from datetime import timedelta
-    today = datetime.now()
-    today_date = today.date()
-    max_date = None
-    if max_days is not None:
-        max_date = today_date + timedelta(days=max_days)
+    today = datetime.now().date()
+    max_date = today + timedelta(days=max_days) if max_days else None
 
+    # --- Base query ---
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
-    query = DEMO_FILTER
+    query = dict(DEMO_FILTER)  # clone to avoid side effects
+
     if _parent_id:
         query["parent"] = _parent_id
-
     if _org_id:
         query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}
 
+    # --- Fetch from DB ---
     demos_cursor = mongo.demonstrations.find(query)
-
     filtered = []
+
     for demo in demos_cursor:
-        # Expecting demo["date"] in "YYYY-MM-DD" format
         try:
             demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
         except Exception:
-            # Skip demos with invalid date format
+            continue  # skip invalid date formats
+
+        # Skip past demos unless explicitly requested
+        if demo_date < today and in_past != "true":
             continue
 
-        # Only include future demos (or include past if requested)
-        in_future_or_allowed = demo_date >= today_date or in_past == "true"
-        within_max_days = True
-        if max_date is not None:
-            within_max_days = demo_date <= max_date
+        # Skip demos beyond max_days limit
+        if max_date and demo_date > max_date:
+            continue
 
-        if in_future_or_allowed and within_max_days:
-            demo_obj = stringify_object_ids(demo)
-            if (
-                (search in demo_obj["title"].lower() or not search) and
-                (city in demo_obj["city"].lower() or not city) and
-                (title in demo_obj["title"].lower() or not title) and
-                (tag in [t.lower() for t in demo_obj.get("tags", [])] or not tag)
-            ):
-                filtered.append(demo_obj)
+        demo_obj = stringify_object_ids(demo)
+        title_text = demo_obj.get("title", "").casefold()
+        city_text = demo_obj.get("city", "").casefold()
+        tags_text = [t.casefold() for t in demo_obj.get("tags", [])]
 
+        if (
+            (not search or search in title_text)
+            and (not city or city in city_text)
+            and (not title or title in title_text)
+            and (not tag or tag in tags_text)
+        ):
+            filtered.append(demo_obj)
+
+    # --- Sort chronologically ---
     filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
 
-    # Pagination slicing
+    # --- Pagination slicing ---
     total = len(filtered)
-    start = (page - 1) * per_page
-    end = start + per_page
+    total_pages = max((total + per_page - 1) // per_page, 1)
+    start, end = (page - 1) * per_page, page * per_page
     paginated = filtered[start:end]
 
-    total_pages = (total + per_page - 1) // per_page
-
-    # Build base query for URLs
-    query_params = request.args.to_dict(flat=True)
-    query_params.pop("page", None)
-    query_params.pop("per_page", None)
-    base_qs = urlencode(query_params)
-
+    # --- Navigation URLs ---
+    from urllib.parse import urlencode
+    base_params = {k: v for k, v in request.args.items() if k not in ["page", "per_page"]}
+    qs = urlencode(base_params)
     def build_url(p):
         params = f"page={p}&per_page={per_page}"
-        return f"{request.base_url}?{base_qs}&{params}" if base_qs else f"{request.base_url}?{params}"
+        return f"{request.base_url}?{qs}&{params}" if qs else f"{request.base_url}?{params}"
 
     next_url = build_url(page + 1) if page < total_pages else None
     prev_url = build_url(page - 1) if page > 1 else None
 
-    return jsonify({
+    from copy import deepcopy
+
+    # --- Response object to cache ---
+    response_data = {
         "page": page,
         "per_page": per_page,
         "total": total,
@@ -274,7 +322,20 @@ def list_demonstrations():
         "next_url": next_url,
         "prev_url": prev_url,
         "results": paginated,
-    }), 200
+        "rendered_at": datetime.utcnow().isoformat() + "Z",
+        "cached": True  # mark as cached
+    }
+
+    # --- Cache the response ---
+    cache.set(cache_key, response_data)
+
+    # --- Before returning, make a copy and set cached=False ---
+    response_to_return = deepcopy(response_data)
+    response_to_return["cached"] = False
+
+    return jsonify(response_to_return), 200
+
+
 
 @api_bp.route("/demonstrations/<demo_id>", methods=["GET"])
 @token_required(required_scopes=["read"])

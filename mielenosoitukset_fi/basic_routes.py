@@ -35,7 +35,8 @@ from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_e
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
-from flask_caching import Cache  # New import for caching
+
+from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.logger import logger
 
 email_sender = EmailSender()
@@ -330,10 +331,10 @@ def add_api_routes(app):
 
 
 def init_routes(app):
-    # Retrieve the cache instance from app extensions
-    cache = app.extensions.get("cache")
-
-    _cache = Cache(app, config={"CACHE_TYPE": "simple"})  # in-memory, fine for small scale
+    from mielenosoitukset_fi.utils.cache import cache
+    
+    
+    
     # register genereate_demo_sentence function
     @app.context_processor
     def inject_demo_sentence():
@@ -440,49 +441,64 @@ Disallow: /admin/
         Render the index page with recommended and featured demonstrations.
         Uses caching for recommended demos for performance.
         """
-        search_query = request.args.get("search", "")
         today = date.today()
+
         # --- Recommended demos (cached) ---
         cache_key = "recommended_demos_v1"
         recommended_demos = None
+
         if hasattr(cache, "get") and callable(cache.get):
             recommended_demos = cache.get(cache_key)
+
         if recommended_demos is None:
             # Get recommended demo_ids from the recommended_demos collection
             recs = list(mongo.recommended_demos.find({}))
             demo_ids = [ObjectId(rec["demo_id"]) for rec in recs if "demo_id" in rec]
-            # Fetch demos, filter for approved and not hidden, and not in the past
-            demos = list(mongo.demonstrations.find({"_id": {"$in": demo_ids}, "approved": True, "hide": {"$ne": True}}))
-            # Sort by recommend_till (date of demo)
+
+            # Fetch demos, filter for approved and not hidden
+            demos = list(
+                mongo.demonstrations.find({
+                    "_id": {"$in": demo_ids},
+                    "approved": True,
+                    "hide": {"$ne": True},
+                })
+            )
+
+            # Sort by recommend_till (or fallback to date)
             def get_recommend_till(d):
                 rec = next((r for r in recs if str(r["demo_id"]) == str(d["_id"])), None)
                 return rec["recommend_till"] if rec else d.get("date", "9999-12-31")
+
             demos.sort(key=get_recommend_till)
+
             # Remove past demos
-            demos = [d for d in demos if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today]
+            demos = [
+                d for d in demos
+                if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today
+            ]
+
             recommended_demos = demos
+
             if hasattr(cache, "set") and callable(cache.set):
-                cache.set(cache_key, recommended_demos, timeout=60*10)  # Cache for 10 min
-        # --- Featured/other demos ---
+                cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
+
+        # --- Featured / other demos ---
         demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = []
-        for demo in demonstrations:
-            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
-            if demo_date >= today:
-                if (
-                    search_query.lower() in demo["title"].lower()
-                    or search_query.lower() in demo["city"].lower()
-                    or search_query.lower() in demo["address"].lower()
-                ):
-                    filtered_demonstrations.append(demo)
+        filtered_demonstrations = [
+            demo
+            for demo in demonstrations
+            if datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today
+        ]
         filtered_demonstrations.sort(
             key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
+
         return render_template(
             "index.html",
             demonstrations=filtered_demonstrations,
             recommended_demos=recommended_demos,
         )
+
 
     @app.route("/terms")
     def terms():
@@ -707,10 +723,11 @@ Disallow: /admin/
     @app.route("/report", methods=["GET", "POST"])
     def report():
         """
-        Handle submission of a new demonstration.
+        Handle submission of a new error report.
         """
-        error = request.form.get("error")
-        _type = request.form.get("type")
+        error = request.form.get("error") # Description of the error being reported
+        _type = request.form.get("type") # Type of the report (e.g., demonstration)
+        
         if _type:
             if _type == "demonstration":
                 mongo.reports.insert_one(
@@ -740,53 +757,31 @@ Disallow: /admin/
         flash_message(
             "Virhe ilmoitettu onnistuneesti! Kiitos ilmoituksestasi.", "success"
         )
-        return redirect(request.referrer)
+        return redirect(request.referrer) # TODO: validate referrer?
 
     @app.route("/demonstrations")
     def demonstrations():
         """
-        List all upcoming approved demonstrations, optionally filtered by search query.
+        Render the demonstrations listing page.
 
-        
-        Parameters
-        ----------
-        None
-        
+        This route serves the main demonstrations listing interface, which loads 
+        the `list copy.html` template. The page itself handles all search, filter, 
+        and pagination logic on the client side via JavaScript — fetching data 
+        dynamically from the API and rendering demonstration cards.
+
+        The backend does not perform any filtering or data processing here; it only 
+        delivers the static page shell that initializes the client-side functionality.
+
         Returns
         -------
-        response : flask.Response
-            Renders the full list template or the demo cards partial if AJAX.
+        flask.Response
+            Rendered HTML page (`list copy.html`), which serves as the frontend 
+            container for dynamic demonstration listings.
         """
-        mode = False
-        
-        # OLD FALLBACK
-        #
-        #        
-        #page = int(request.args.get("page", 1))
-        #per_page = int(request.args.get("per_page", 20) or 20)
-        #search_query = request.args.get("search", "").lower()
-        #city_query = request.args.get("city", "").lower()
-        #if "," in city_query:
-        #    city_query = city_query.split(",")
-        #location_query = request.args.get("location", "").lower()
-        #date_query = request.args.get("date", "")
-        #today = date.today()
-        #demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        #filtered_demonstrations = filter_demonstrations(demonstrations, today, search_query, city_query, location_query, date_query)
-        #filtered_demonstrations.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
-        #total_demos = len(filtered_demonstrations)
-        #total_pages = (total_demos + per_page - 1) // per_page
-        #start = (page - 1) * per_page
-        #end = start + per_page
-        #paginated_demonstrations = filtered_demonstrations[start:end]
-        ## Return demo cards partial if AJAX request detected
-        #if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        #    return render_template("demo_cards.html", demonstrations=paginated_demonstrations)
-        #return render_template("list.html", demonstrations=paginated_demonstrations, page=page, total_pages=total_pages, city_list=CITY_LIST)
-
         return render_template("list copy.html")
 
-    @app.route("/city/<city>")
+
+    @app.route("/city/<city>") # TODO: lets make this use the api too
     def city_demos(city):
         """
         List all upcoming approved demonstrations, optionally filtered by search query.
@@ -817,6 +812,8 @@ Disallow: /admin/
             total_pages=total_pages,
             city_name=city.capitalize(),
         )
+        
+        
 
     def filter_demonstrations(
         demonstrations, today, search_query, city_query, location_query, date_query
@@ -946,8 +943,6 @@ Disallow: /admin/
         log_demo_view(
             _demo._id, current_user._id if current_user.is_authenticated else None
         )
-
-        #print("RECU: ", hasattr(_demo, 'recurs'), _demo.recurs)
 
         if _demo.recurs:
             toistuvuus = generate_demo_sentence(demo)
@@ -1112,20 +1107,28 @@ Disallow: /admin/
             tag_name=tag_name,
         )
 
+    from flask import jsonify, get_flashed_messages, current_app
+    import warnings
+
     @app.route("/get_flash_messages", methods=["GET"])
     def get_flash_message_messages():
+        warnings.warn(
+            "The /get_flash_messages endpoint is deprecated and will be removed in the next major release. "
+            "Use embedded flash messages in API responses instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         messages = get_flashed_messages(with_categories=True)
         if not messages:
             return jsonify(messages=[])
+
         flash_message_data = [
             {"category": category, "message": message} for category, message in messages
         ]
         return jsonify(messages=flash_message_data)
 
-    @app.route("/500")
-    def _500():
-        return abort(500)
-
+    
     @app.route("/set_language/<lang>")
     def set_language(lang):
         supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
@@ -1302,7 +1305,7 @@ Disallow: /admin/
     import hashlib
 
     @app.route("/demonstrations.rss")
-    @_cache.cached(timeout=300)  # cache for 5 minutes
+    @cache.cached(timeout=300)  # cache for 5 minutes
     def demonstrations_rss():
         """
         Serve the RSS feed for demonstrations.

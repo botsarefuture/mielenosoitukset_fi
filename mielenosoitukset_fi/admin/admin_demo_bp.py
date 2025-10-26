@@ -1,15 +1,6 @@
 import sys
 from flask import abort, current_app
-"""
-Edit History and Diff Views
-"""
-# ...existing code...
-
-# --- Edit History and Diff Views ---
-# These must be placed after all imports and after admin_demo_bp is defined
-
-
-# Approve demo with token (magic link for admins)
+import requests
 
 from datetime import date, datetime
 from bson.objectid import ObjectId
@@ -35,6 +26,9 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
 # Secret key for generating tokens
 SECRET_KEY = "your_secret_key"
+
+GEOCODE_API_KEY = "66df12ce96495339674278ivnc82595"  # your API key
+
 serializer = URLSafeTimedSerializer(SECRET_KEY)
 admin_demo_bp = Blueprint("admin_demo", __name__, url_prefix="/admin/demo")
 
@@ -1070,7 +1064,7 @@ def is_demo_frozen(demo_id):
 
     parent = demo.get("parent")
     if not parent:
-        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan tarkistaa."}), 400
+        return jsonify({"status": "ERROR", "message": "Vain alikokoukset voidaan tarkistaa.", "MR_ERROR": "NO_RECUR"}), 400
 
     parent_demo = mongo.recu_demos.find_one({"_id": ObjectId(parent)})
     if not parent_demo:
@@ -1104,6 +1098,7 @@ def unfreeze_demo(demo_id):
     )
 
     return jsonify({"status": "OK", "message": "Mielenosoitus on nyt vapautettu jäädytyksestä."})
+
 
 
 
@@ -1462,7 +1457,7 @@ def get_submitter_info(demo_id):
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
 
-admin_demo_api_bp = Blueprint("admin_demo_api", __name__)
+admin_demo_api_bp = Blueprint("admin_demo_api", __name__) #URL: /api/admin/demo/
 
 def _require_valid_objectid(id_str):
     # Validate ObjectId
@@ -1470,6 +1465,48 @@ def _require_valid_objectid(id_str):
         return ObjectId(id_str)
     except:
         raise ValueError("Invalid ID")
+
+
+@admin_demo_api_bp.route("/geocode", methods=["POST"])
+def geocode_address():
+    """
+    Accepts JSON: { "address": "...", "city": "..." }
+    Returns JSON: { "latitude": "...", "longitude": "..." } or error
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Missing JSON payload"}), 400
+
+    address = data.get("address")
+    city = data.get("city")
+
+    if not address or not city:
+        return jsonify({"error": "Missing 'address' or 'city'"}), 400
+
+    full_query = f"{address}, {city}, Finland"
+    api_url = f"https://geocode.maps.co/search?q={full_query}&api_key={GEOCODE_API_KEY}"
+
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        geocode_data = response.json()
+
+        if not geocode_data:
+            return jsonify({"error": "No coordinates found"}), 404
+
+        latitude = geocode_data[0].get("lat")
+        longitude = geocode_data[0].get("lon")
+
+        if not latitude or not longitude:
+            return jsonify({"error": "Coordinates missing in API response"}), 500
+
+        return jsonify({
+            "latitude": latitude,
+            "longitude": longitude
+        })
+
+    except requests.RequestException as e:
+        return jsonify({"error": str(e)}), 500
 
 @admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
 def approve_demo(demo_id):

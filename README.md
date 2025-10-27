@@ -4,8 +4,6 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 
 ---
 
-## Table of Contents
-
 - [Features](#features)
 - [Technologies](#technologies)
 - [Getting Started](#getting-started)
@@ -165,9 +163,9 @@ This project is licensed under the Apache License, Version 2.0. See the [LICENSE
 
 If you have any questions, suggestions, or feedback, feel free to reach out to us:
 
-- Email: support@mielenosoitukset.fi
+- Email: tuki@mielenosoitukset.fi
 - Email: emilia@mielenosoitukset.fi (for contributor enquiries)
-- Twitter: [@mielenosoitukset](https://twitter.com/mielenosoitukset)
+
 - GitHub Issues: [https://github.com/botsarefuture/mielenosoitukset_fi/issues](https://github.com/botsarefuture/mielenosoitukset_fi/issues)
 
 We appreciate your input and support!

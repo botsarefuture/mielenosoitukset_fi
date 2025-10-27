@@ -4,6 +4,30 @@
 
 ---
 
+## v4.0.0-beta – *Campaign & Admin Revolution Edition* 🌟
+
+### Security & Access
+- Adds safe redirect and temporary superuser access for Emilia to prevent system hijacking.
+- Plans v4.1.0: Introduce proper access levels; Emilia will be assigned highest access via the system.
+
+### Features
+- Admin UI major update for improved usability and layout.
+- API support for cancelling and force-accepting organization invitations.
+- Demonstration enhancements: recommendations, badges, edit history, and diff views.
+- Campaign volunteer signup API with email confirmation and expiry.
+- Caching added to improve performance.
+
+### Fixes
+- Resolves DOM re-interpretation and duplicate data issues.
+- Fixes login redirect flow and forced password reset.
+- Redis issues resolved.
+- Minor UI and form fixes.
+
+### Dependency Updates
+- `pymongo` upgraded 4.6.1 → 4.6.3
+- `apscheduler` upgraded 3.10.4 → 3.11.0
+
+
 ## v3.1.0 – *The Reminder Revolution Edition* 🌟
 
 ### New Features

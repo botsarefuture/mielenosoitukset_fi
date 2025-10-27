@@ -4,6 +4,28 @@
 
 ---
 
+Got it! Here's the updated entry with the correct version:
+
+---
+
+## v4.0.0-beta.1 – *Robots Control Edition* 🌟
+
+### Added
+
+* `/robots.txt` route implemented to control web crawlers.
+* Disallows access to sensitive paths:
+  `/admin/`, `/users/auth/login/`, `/users/auth/register/`, `/users/auth/forgot/`.
+
+### Purpose
+
+* Prevents automated bots from indexing or interacting with admin and authentication routes.
+* Ensures normal users can access the site without restrictions.
+
+### Notes
+
+* Returns proper `text/plain` content for compatibility with all crawlers.
+
+
 ## v4.0.0-beta – *Campaign & Admin Revolution Edition* 🌟
 
 ### Security & Access

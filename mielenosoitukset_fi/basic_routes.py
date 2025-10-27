@@ -340,11 +340,18 @@ def init_routes(app):
     def inject_demo_sentence():
         return dict(generate_demo_sentence=generate_demo_sentence)
 
+    from flask import Response
+
     @app.route("/robots.txt")
-    def robottext():
-        return '''User-agent: *\n
-Disallow: /admin/
-'''
+    def robots_txt():
+        txt = """User-agent: *
+    Disallow: /admin/
+    Disallow: /users/auth/login/
+    Disallow: /users/auth/register/
+    Disallow: /users/auth/forgot/
+    """
+        return Response(txt, mimetype="text/plain")
+
         
     from flask import Response, url_for
     import xml.etree.ElementTree as ET

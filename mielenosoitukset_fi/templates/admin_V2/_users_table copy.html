@@ -1,9 +1,10 @@
 <table class="table table-hover align-middle">
   <thead class="table-light">
     <tr>
-      <th class="sortable" data-sort-key="username">{{ _('Nimi') }}</th>
-      <th class="sortable" data-sort-key="username">{{ _('Käyttäjänimi') }}</th>
+      <th class="sortable" data-sort-key="name">{{ _('Nimi') }}</th>
+      <th class="sortable" data-sort-key="username">{{ _('Käyttäjätunnus') }}</th>
       <th class="sortable" data-sort-key="email">{{ _('Sähköpostiosoite') }}</th>
+      
       <th class="sortable" data-sort-key="role">{{ _('Rooli') }}</th>
       <th>{{ _('Viimeksi kirjautunut') }}</th>
       <th>{{ _('Toiminnot') }}</th>
@@ -12,7 +13,9 @@
   <tbody>
     {% for user in users %}
     <tr id="user-{{ user._id }}">
-      <td>{{ user.displayname or user.username }}</td>
+      {% set name = user.displayname or user.username %}
+      <td>{{ name }}</td>
+       <!-- Show username instead of status -->
       <td>{{ user.username }}</td>
       <td>{{ user.email }}</td>
 
@@ -27,16 +30,16 @@
         {% endif %}
       </td>
 
-
+     
 
       <!-- Last login -->
-    <td>
-    {% if user.last_login %}
-        {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
-    {% else %}
-        {{ _('Ei kirjautunut') }}
-    {% endif %}
-    </td>
+      <td>
+        {% if user.last_login %}
+            {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
+        {% else %}
+            {{ _('Ei kirjautunut') }}
+        {% endif %}
+      </td>
 
       <!-- Actions -->
       <td>
@@ -76,7 +79,6 @@
               </button>
             </li>
             {% endif %}
-
           </ul>
         </div>
         {% else %}
@@ -87,7 +89,6 @@
     {% endfor %}
   </tbody>
 </table>
-
 <!-- Pagination -->
 <!-- AS OF NOW WE DO NOT SUPPORT NAVIGATION -->
 <!--

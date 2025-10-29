@@ -50,16 +50,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Password match ---
+  
   function checkMatch() {
-    if (passwordInput.value && passwordInput.value === confirmInput.value) {
-      matchMessage.textContent = "Salasanat täsmäävät ✅";
-      matchMessage.classList.add("valid");
-      matchMessage.classList.remove("invalid");
-    } else {
-      matchMessage.textContent = "Salasanat eivät täsmää ❌";
-      matchMessage.classList.add("invalid");
+    const matchIcon = matchMessage.querySelector('i');
+    const matchText = matchMessage.querySelector('span');
+    
+    if (confirmInput.value === "") {
+      matchIcon.className = "fa-solid fa-xmark";
+      matchText.textContent = "{{ _('Salasanat eivät täsmää') }}";
       matchMessage.classList.remove("valid");
+      return false;
+    }
+    
+    if (passwordInput.value === confirmInput.value) {
+      matchIcon.className = "fa-solid fa-check";
+      matchText.textContent = "{{ _('Salasanat täsmäävät') }}";
+      matchMessage.classList.add("valid");
+      return true;
+    } else {
+      matchIcon.className = "fa-solid fa-xmark";
+      matchText.textContent = "{{ _('Salasanat eivät täsmää') }}";
+      matchMessage.classList.remove("valid");
+      return false;
     }
   }
 

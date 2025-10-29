@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Rekisteröidy{% endblock %}
+{% block title %}{{ _('Rekisteröidy') }}{% endblock %}
 
 {% block styles %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,199 +14,330 @@
 <div class="auth-wrapper">
     <div class="auth-container">
         <div class="auth-header">
-            <div class="auth-icon">
-                <i class="fa-solid fa-user-plus"></i>
-            </div>
-            <h1>{{ _('Rekisteröidy') }}</h1>
-            <p class="auth-subtitle">{{ _('Luo uusi tili jatkaaksesi') }}</p>
+            <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
+            <h1>{{ _('Luo uusi tili') }}</h1>
+            <p class="auth-subtitle">{{ _('Rekisteröidy aloittaaksesi') }}</p>
         </div>
 
+        <div id="error-message" class="hidden"></div>
+
         <form id="register-form" action="{{ url_for('users.auth.register') }}" method="POST">
+
             <!-- Username -->
             <div class="form-group">
                 <label class="form-label" for="username">
-                    <i class="fa-solid fa-user"></i>
-                    {{ _('Käyttäjätunnus') }}
+                    <i class="fa-solid fa-user"></i>{{ _('Käyttäjätunnus') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-user form-input-icon"></i>
-                    <input type="text" 
-                           id="username" 
-                           name="username" 
-                           required 
-                           minlength="3" 
-                           class="form-input"
-                           placeholder="{{ _('Syötä käyttäjätunnus') }}"
-                           autocomplete="username">
+                    <input type="text" id="username" name="username" required minlength="3" class="form-input"
+                           placeholder="{{ _('Valitse käyttäjätunnus') }}" autocomplete="username">
                 </div>
                 <div id="username-status" class="password-match"></div>
+                <p class="form-hint" id="sillyhint"><i class="fa-solid fa-circle-info"></i>{{ _('Vähintään 3 merkkiä pitkä') }}</p>
             </div>
 
             <!-- Email -->
             <div class="form-group">
                 <label class="form-label" for="email">
-                    <i class="fa-solid fa-envelope"></i>
-                    {{ _('Sähköposti') }}
+                    <i class="fa-solid fa-envelope"></i>{{ _('Sähköposti') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-envelope form-input-icon"></i>
-                    <input type="email" 
-                           id="email" 
-                           name="email" 
-                           required 
-                           class="form-input"
-                           placeholder="{{ _('Syötä sähköpostisi') }}"
-                           autocomplete="email">
+                    <input type="email" id="email" name="email" required class="form-input"
+                           placeholder="{{ _('nimi@esimerkki.fi') }}" autocomplete="email">
                 </div>
+                <p class="form-hint"><i class="fa-solid fa-circle-info"></i>{{ _('Käytämme sähköpostia tiliisi liittyvään viestintään') }}</p>
             </div>
 
             <!-- Password -->
             <div class="form-group">
                 <label class="form-label" for="password">
-                    <i class="fa-solid fa-lock"></i>
-                    {{ _('Salasana') }}
+                    <i class="fa-solid fa-lock"></i>{{ _('Salasana') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-lock form-input-icon"></i>
-                    <input type="password" 
-                           id="password" 
-                           name="password" 
-                           required 
-                           minlength="12" 
-                           class="form-input"
-                           placeholder="{{ _('Syötä salasana') }}"
-                           autocomplete="new-password">
-                    <button type="button" 
-                            class="password-toggle" 
-                            onclick="togglePasswordField('password')"
-                            aria-label="{{ _('Näytä/piilota salasana') }}">
+                    <input type="password" id="password" name="password" required minlength="12" class="form-input"
+                           placeholder="{{ _('Luo vahva salasana') }}" autocomplete="new-password">
+                    <button type="button" class="password-toggle" aria-label="{{ _('Näytä/piilota salasana') }}">
                         <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
                     </button>
                 </div>
-                <div class="strength-meter">
-                    <div id="strength-fill" class="strength-meter-fill"></div>
-                </div>
-                <div id="pwd-now-missing" class="password-match"></div>
+                <div class="strength-meter"><div id="strength-fill" class="strength-meter-fill"></div></div>
+                <div id="pwd-now-missing"></div>
             </div>
 
             <!-- Confirm Password -->
             <div class="form-group">
                 <label class="form-label" for="password_confirm">
-                    <i class="fa-solid fa-lock"></i>
-                    {{ _('Vahvista salasana') }}
+                    <i class="fa-solid fa-lock"></i>{{ _('Vahvista salasana') }}
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-lock form-input-icon"></i>
-                    <input type="password" 
-                           id="password_confirm" 
-                           name="password_confirm" 
-                           required 
-                           class="form-input"
-                           placeholder="{{ _('Vahvista salasana') }}"
-                           autocomplete="new-password">
-                    <button type="button" 
-                            class="password-toggle" 
-                            onclick="togglePasswordField('password_confirm')"
-                            aria-label="{{ _('Näytä/piilota salasana') }}">
+                    <input type="password" id="password_confirm" name="password_confirm" required class="form-input"
+                           placeholder="{{ _('Syötä salasana uudelleen') }}" autocomplete="new-password">
+                    <button type="button" class="password-toggle" aria-label="{{ _('Näytä/piilota salasana') }}">
                         <i class="fa-solid fa-eye" id="password_confirm-toggle-icon"></i>
                     </button>
                 </div>
                 <div id="password-match-message" class="password-match">
-                    {{ _('Salasanat eivät täsmää') }}
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>{{ _('Salasanat eivät täsmää') }}</span>
                 </div>
             </div>
 
-            <!-- Password requirements -->
+            <!-- Password Requirements -->
             <div class="password-requirements-container">
-                <p class="password-requirements">{{ _('Salasanan on täytettävä seuraavat vaatimukset:') }}</p>
                 <ul class="password-requirements">
-                    <li id="req-length">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
-                    <li id="req-complex">{{ _('Sisältää vähintään 3 seuraavista: pieni kirjain, iso kirjain, numero, erikoismerkki') }}</li>
-                    <li id="req-no-username">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
+                    <li id="req-length" class="invalid">{{ _('Vähintään 12 merkkiä pitkä') }}</li>
+                    <li id="req-lower" class="invalid">{{ _('Vähintään yksi pieni kirjain') }}</li>
+                    <li id="req-upper" class="invalid">{{ _('Vähintään yksi iso kirjain') }}</li>
+                    <li id="req-special" class="invalid">{{ _('Vähintään yksi erikoismerkki') }}</li>
+                    <li id="req-no-username" class="invalid">{{ _('Ei saa sisältää käyttäjätunnusta tai sähköpostia') }}</li>
                 </ul>
             </div>
 
-            <button type="button" id="generate-password" class="btn btn-secondary mb-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                {{ _('Luo salasana') }}
+            <button type="button" id="generate-password" class="btn btn-secondary" style="width:100%; margin-bottom:1rem;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>{{ _('Luo vahva salasana') }}
             </button>
-            
-            <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-user-plus"></i>
-                {{ _('Rekisteröidy') }}
+
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+                <i class="fa-solid fa-user-plus"></i>{{ _('Luo tili') }}
             </button>
         </form>
 
-        <div class="auth-divider">
-            <span>{{ _('tai') }}</span>
-        </div>
-
+        <div class="auth-divider"><span>{{ _('tai') }}</span></div>
         <div class="register-prompt">
             <p>{{ _('Onko sinulla jo tili?') }}</p>
             <a href="{{ url_for('users.auth.login') }}" class="btn btn-secondary">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                {{ _('Kirjaudu sisään') }}
+                <i class="fa-solid fa-right-to-bracket"></i>{{ _('Kirjaudu sisään') }}
             </a>
+        </div>
+        <div class="auth-footer">
+            <p class="help-text"><i class="fa-solid fa-shield-halved"></i>{{ _('Luomalla tilin hyväksyt palvelumme käyttöehdot') }}</p>
         </div>
     </div>
 </div>
 
-<script>
-// Toggle individual password field visibility
-function togglePasswordField(fieldId) {
-    const input = document.getElementById(fieldId);
-    const icon = document.getElementById(fieldId + '-toggle-icon');
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+<style>
+    #sillyhint {
+        transition: opacity 0.3s ease;
+        opacity: 1;
     }
-}
+    #sillyhint.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+</style>
 
-// Toggle all password fields (legacy function for compatibility)
-function togglePassword() {
-    ['password', 'password_confirm'].forEach(id => {
-        togglePasswordField(id);
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const usernameInput = document.getElementById("username");
+    const emailInput = document.getElementById("email");
+    const usernameStatus = document.getElementById("username-status");
+    const passwordInput = document.getElementById("password");
+    const confirmInput = document.getElementById("password_confirm");
+    const strengthFill = document.getElementById("strength-fill");
+    const pwdNowMissing = document.getElementById("pwd-now-missing");
+    const matchMessage = document.getElementById("password-match-message");
+    const generateBtn = document.getElementById("generate-password");
+    const submitBtn = document.getElementById("submit-btn");
+    const errorDiv = document.getElementById("error-message");
+
+    const reqLength = document.getElementById("req-length");
+    const reqLower = document.getElementById("req-lower");
+    const reqUpper = document.getElementById("req-upper");
+    const reqSpecial = document.getElementById("req-special");
+    const reqNoUsername = document.getElementById("req-no-username");
+    const specialRegex = /[!@#$%^&*()\-\_=+\[\]{};:,.<>?]/;
+
+    // --- Password toggle ---
+    function setupToggle(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input || !icon) return;
+        icon.addEventListener("click", () => {
+            input.type = input.type === "password" ? "text" : "password";
+            icon.classList.toggle("fa-eye");
+            icon.classList.toggle("fa-eye-slash");
+        });
+    }
+    setupToggle("password", "password-toggle-icon");
+    setupToggle("password_confirm", "password_confirm-toggle-icon");
+
+    // --- Password strength ---
+    function updateStrength() {
+        const pwd = passwordInput.value;
+        let score = 0;
+        if (pwd.length >= 12) score++;
+        if (/[a-z]/.test(pwd)) score++;
+        if (/[A-Z]/.test(pwd)) score++;
+        if (specialRegex.test(pwd)) score++;
+
+        if (score <= 2) {
+            strengthFill.className = "strength-meter-fill strength-weak";
+            strengthFill.style.width = "33%";
+        } else if (score === 3) {
+            strengthFill.className = "strength-meter-fill strength-medium";
+            strengthFill.style.width = "66%";
+        } else {
+            strengthFill.className = "strength-meter-fill strength-strong";
+            strengthFill.style.width = "100%";
+        }
+    }
+
+    // --- Password requirements ---
+    function updateRequirements() {
+        const pwd = passwordInput.value;
+        const uname = usernameInput.value.trim().toLowerCase();
+        const email = emailInput.value.trim().toLowerCase();
+        let allValid = true;
+
+        // Length
+        if (pwd.length >= 12) reqLength.className = "valid"; else { reqLength.className = "invalid"; allValid=false; }
+        // Lower
+        if (/[a-z]/.test(pwd)) reqLower.className = "valid"; else { reqLower.className = "invalid"; allValid=false; }
+        // Upper
+        if (/[A-Z]/.test(pwd)) reqUpper.className = "valid"; else { reqUpper.className = "invalid"; allValid=false; }
+        // Special
+        if (specialRegex.test(pwd)) reqSpecial.className = "valid"; else { reqSpecial.className = "invalid"; allValid=false; }
+        // No username/email
+        const lowerPwd = pwd.toLowerCase();
+        if (uname && (lowerPwd.includes(uname) || lowerPwd.includes(email))) { reqNoUsername.className="invalid"; allValid=false; } 
+        else reqNoUsername.className="valid";
+
+        // Show missing
+        const missing = [];
+        if (reqLength.className==="invalid") missing.push("Vähintään 12 merkkiä");
+        if (reqLower.className==="invalid") missing.push("Vähintään yksi pieni kirjain");
+        if (reqUpper.className==="invalid") missing.push("Vähintään yksi iso kirjain");
+        if (reqSpecial.className==="invalid") missing.push("Vähintään yksi erikoismerkki");
+        if (reqNoUsername.className==="invalid") missing.push("Ei saa sisältää käyttäjätunnusta tai sähköpostia");
+
+        if(missing.length===0){
+            pwdNowMissing.innerHTML='<i class="fa-solid fa-circle-check"></i> Kaikki vaatimukset täytetty!';
+            pwdNowMissing.classList.add("valid"); pwdNowMissing.classList.remove("invalid");
+        } else {
+            pwdNowMissing.innerHTML='<i class="fa-solid fa-circle-info"></i> '+missing.join(", ");
+            pwdNowMissing.classList.add("invalid"); pwdNowMissing.classList.remove("valid");
+        }
+        return allValid;
+    }
+
+    // --- Password match ---
+    function checkMatch() {
+        const matchIcon = matchMessage.querySelector("i");
+        const matchText = matchMessage.querySelector("span");
+
+        if(!confirmInput.value || passwordInput.value!==confirmInput.value){
+            matchIcon.className="fa-solid fa-xmark";
+            matchText.textContent="Salasanat eivät täsmää";
+            matchMessage.classList.remove("valid");
+            return false;
+        } else {
+            matchIcon.className="fa-solid fa-check";
+            matchText.textContent="Salasanat täsmäävät";
+            matchMessage.classList.add("valid");
+            return true;
+        }
+    }
+
+    // --- Generate password ---
+    function generatePassword(length=16){
+        const chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};:,.<>?";
+        let pwd="";
+        for(let i=0;i<length;i++) pwd+=chars.charAt(Math.floor(Math.random()*chars.length));
+        return pwd;
+    }
+
+    generateBtn.addEventListener("click", ()=>{
+        const pwd = generatePassword();
+        passwordInput.value = confirmInput.value = pwd;
+        updateStrength(); updateRequirements(); checkMatch();
+        const orig=generateBtn.innerHTML;
+        generateBtn.innerHTML='<i class="fa-solid fa-check"></i> Salasana luotu!';
+        generateBtn.classList.add("loading");
+        setTimeout(()=>{ generateBtn.innerHTML=orig; generateBtn.classList.remove("loading"); },2000);
+    });// --- Username availability (debounced) ---
+let unameTimeout;
+const sillyhint = document.getElementById("sillyhint");
+
+usernameInput.addEventListener("input", () => {
+    clearTimeout(unameTimeout);
+    const uname = usernameInput.value.trim();
+
+    // Show/hide hint with fade
+    if (uname.length < 3) {
+        sillyhint.classList.remove("hidden"); // show hint
+        usernameStatus.innerHTML = '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus liian lyhyt';
+        usernameStatus.style.color = "#e74c3c";
+        usernameStatus.style.fontStyle = "normal";
+        return; // don’t check availability yet
+    } else {
+        sillyhint.classList.add("hidden"); // fade out hint
+        usernameStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tarkistetaan saatavuutta…';
+        usernameStatus.style.color = "#333";
+        usernameStatus.style.fontStyle = "italic";
+    }
+
+    // Debounced availability check
+    unameTimeout = setTimeout(async () => {
+        try {
+            const resp = await fetch(`/users/auth/api/username_free?username=${encodeURIComponent(uname)}`);
+            const data = await resp.json();
+            if (data.available) {
+                usernameStatus.innerHTML = '<i class="fa-solid fa-check-circle"></i> Käyttäjätunnus on vapaa';
+                usernameStatus.style.color = "#2c7a2c";
+            } else {
+                usernameStatus.innerHTML = '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus on varattu';
+                usernameStatus.style.color = "#a12a2a";
+            }
+            usernameStatus.style.fontStyle = "normal";
+        } catch {
+            usernameStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Tarkistuksessa tapahtui virhe';
+            usernameStatus.style.color = "#666";
+            usernameStatus.style.fontStyle = "italic";
+        }
+    }, 500);
+
+    updateRequirements();
+});
+
+
+    // --- Input events ---
+    passwordInput.addEventListener("input", ()=>{ updateStrength(); updateRequirements(); checkMatch(); });
+    confirmInput.addEventListener("input", checkMatch);
+    emailInput.addEventListener("input", updateRequirements);
+
+    // --- Form submission ---
+    document.getElementById("register-form").addEventListener("submit", e=>{
+        const requirementsMet = updateRequirements();
+        const passwordsMatch = checkMatch();
+        const unameTaken = usernameStatus.textContent.includes("❌");
+
+        if(!requirementsMet || !passwordsMatch || unameTaken){
+            e.preventDefault();
+            let message="Korjaa virheet ennen kuin jatkat:\n";
+            if(!requirementsMet) message+="- Salasanavaatimukset eivät täyty\n";
+            if(!passwordsMatch) message+="- Salasanat eivät täsmää\n";
+            if(unameTaken) message+="- Käyttäjätunnus on varattu\n";
+            alert(message);
+            return false;
+        }
+
+        submitBtn.classList.add("loading"); submitBtn.disabled=true;
     });
-}
 
-// Add smooth animations on form submission
-document.getElementById('register-form').addEventListener('submit', function(e) {
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
+    usernameInput.focus();
 });
 
-// Focus on first input on page load
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('username').focus();
-});
-
-// Add shake animation on invalid input
-document.querySelectorAll('.form-input').forEach(input => {
-    input.addEventListener('invalid', function() {
-        this.classList.add('error');
-        this.parentElement.style.animation = 'shake 0.5s';
-        setTimeout(() => {
-            this.classList.remove('error');
-            this.parentElement.style.animation = '';
-        }, 500);
-    });
-});
-
-// Remove error class on input
-document.querySelectorAll('.form-input').forEach(input => {
-    input.addEventListener('input', function() {
-        this.classList.remove('error');
-    });
-});
+// --- Shake animation ---
+const style = document.createElement("style");
+style.textContent=`
+    .shake { animation: shake 0.3s; }
+    @keyframes shake { 0%{ transform:translateX(0) } 25%{ transform:translateX(-5px) } 50%{ transform:translateX(5px) } 75%{ transform:translateX(-5px) } 100%{ transform:translateX(0) } }
+`;
+document.head.appendChild(style);
 </script>
-
-<!-- Keep your existing JS for strength, matching, username check, generate password -->
-<script src="{{ url_for('static', filename='js/register.js') }}"></script>
 {% endblock %}

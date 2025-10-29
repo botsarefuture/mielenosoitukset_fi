@@ -71,6 +71,16 @@
     {{ _('Näytä lisää') }}
   </button>
 
+  <!-- navigation -->
+  <nav class="pagination">
+    <button id="prev-page" class="button button-secondary" style="display:none;">
+      {{ _('Edellinen') }}
+    </button>
+    <button id="next-page" class="button button-secondary" style="display:none;">
+      {{ _('Seuraava') }}
+    </button>
+  </nav>
+
  <!-- Empty State -->
 <div id="no-results" class="no-results-card" style="display:none;">
   <div class="no-results-icon">
@@ -91,11 +101,30 @@
 document.addEventListener('DOMContentLoaded', () => {
   const grid = document.getElementById('demos-grid');
   const loadMoreBtn = document.getElementById('load-more-btn');
+  const prevBtn = document.getElementById('prev-page');
+  const nextBtn = document.getElementById('next-page');
   const searchForm = document.getElementById('search-form');
+  const noResultsCard = document.getElementById('no-results');
 
   let extraParams = {}; // holds search/filter params
+  let current_page = 1;
+  let total_pages = Infinity;
 
+  /**
+   * Wrapper around loadDemos to maintain pagination state and UI.
+   *
+   * Expects loadDemos(page, append, params) to return a Promise that resolves to
+   * an object with optional pagination meta, e.g.:
+   * {
+   *   items: [...],
+   *   meta: { current_page: 1, total_pages: 5, per_page: 20, total: 95 }
+   * }
+   *
+   * If loadDemos does not return meta, the wrapper will still call it and try
+   * to update controls conservatively.
+   */
   async function loadDemosWrapper(page = 1, append = false) {
+    // UI: loading state
     if (!append) {
       grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>`;
     } else {
@@ -103,14 +132,61 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMoreBtn.disabled = true;
     }
 
-    await loadDemos(page, append, extraParams);
+    try {
+      const result = await loadDemos(page, append, extraParams) || {};
 
-    loadMoreBtn.classList.remove('loading');
-    loadMoreBtn.disabled = false;
+      // Normalize meta
+      const meta = result.meta || result.pagination || {};
+      const items = Array.isArray(result.items) ? result.items : (result || {}).rows || [];
+
+      // Update pagination state if available
+      if (meta.current_page) current_page = meta.current_page;
+      else current_page = page;
+
+      if (meta.total_pages) total_pages = meta.total_pages;
+      else if (meta.total && meta.per_page) total_pages = Math.ceil(meta.total / meta.per_page);
+
+      // Fallback: if we received fewer items than expected and this was append,
+      // assume we've reached the end.
+      if (append && items.length === 0) {
+        // no more items
+        total_pages = current_page; // prevent further "next"
+      }
+
+      // If grid is empty after non-append load, show empty state
+      const gridHasItems = grid.querySelector('.demo-card, .demo-row') !== null;
+      if (!append && (!items || items.length === 0) && !gridHasItems) {
+        noResultsCard.style.display = '';
+      } else {
+        noResultsCard.style.display = 'none';
+      }
+
+      // Update pagination controls
+      prevBtn.style.display = current_page > 1 ? '' : 'none';
+      nextBtn.style.display = current_page < total_pages ? '' : 'none';
+
+      // Show/load-more button only when there are more pages ahead
+      if (current_page < total_pages) {
+        loadMoreBtn.style.display = '';
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+    } catch (err) {
+      // On error, hide controls and show a minimal message
+      console.error('Error loading demos:', err);
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      loadMoreBtn.style.display = 'none';
+      noResultsCard.style.display = '';
+      grid.innerHTML = `<div class="error">Virhe ladattaessa mielenosoituksia</div>`;
+    } finally {
+      loadMoreBtn.classList.remove('loading');
+      loadMoreBtn.disabled = false;
+    }
   }
 
   // Initial load
-  loadDemosWrapper();
+  loadDemosWrapper(1, false);
 
   // Search form submit
   searchForm.addEventListener('submit', e => {
@@ -123,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateStart = searchForm.querySelector('input[name="date_start"]').value;
     const dateEnd = searchForm.querySelector('input[name="date_end"]').value;
 
-    // Build extraParams for API
+    // Build extraParams for API (use underscores for field names)
     extraParams = {};
     if (searchValue) extraParams.search = searchValue;
     if (cityValue) extraParams.city = cityValue;
@@ -131,10 +207,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dateStart) extraParams.date_start = dateStart;
     if (dateEnd) extraParams.date_end = dateEnd;
 
-    // Reset to first page
+    // Reset to first page and reload (replace content)
+    current_page = 1;
     loadDemosWrapper(1, false);
   });
 
+  // Load more (append)
+  loadMoreBtn.addEventListener('click', e => {
+    e.preventDefault();
+    if (current_page < total_pages) {
+      loadDemosWrapper(current_page + 1, true);
+    }
+  });
+
+  // Next page (replace content)
+  nextBtn.addEventListener('click', e => {
+    e.preventDefault();
+    if (current_page < total_pages) {
+      loadDemosWrapper(current_page + 1, false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  // Previous page (replace content)
+  prevBtn.addEventListener('click', e => {
+    e.preventDefault();
+    if (current_page > 1) {
+      loadDemosWrapper(current_page - 1, false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
 
 });
 </script>

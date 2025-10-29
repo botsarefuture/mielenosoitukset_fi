@@ -216,6 +216,35 @@ class User(UserMixin):
     def org_ids(self) -> List[ObjectId]:
         return [m.organization_id for m in self.memberships]
     
+    def has_invite(self, organization_id: Union[str, ObjectId]) -> bool:
+        """
+        Check if the user has a pending invite for a specific organization.
+
+        Parameters
+        ----------
+        organization_id : str | ObjectId
+            The organization to check for a pending invite.
+
+        Returns
+        -------
+        bool
+            True if the user has a pending invite for this organization, else False.
+        """
+        oid = ObjectId(organization_id) if isinstance(organization_id, str) else organization_id
+
+        org = mongo.organizations.find_one({"_id": oid})
+        if not org or "invitations" not in org:
+            return False
+
+        for inv in org["invitations"]:
+            if isinstance(inv, str) and inv == self.email:
+                return True
+            elif isinstance(inv, dict) and inv.get("email") == self.email:
+                return True
+
+        return False
+
+
     def _permission_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
         Return a list of scopes (organization IDs or the literal string "global")

@@ -10,102 +10,102 @@
 {% include "_modals/_demo-card-template.html" %}
 
 <script>
-// Add scroll animations
-const observerOptions = {
-  threshold: 0.1,
-  rootMargin: '0px 0px -50px 0px'
-};
-
-
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('animate-fade-in-up');
-    }
-  });
-}, observerOptions);
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => {
-    observer.observe(el);
-  });
-
-  // Back to top functionality
-  window.addEventListener('scroll', function() {
-    const backToTop = document.getElementById('backToTop');
-    if (window.pageYOffset > 300) {
-      backToTop.classList.add('visible');
-    } else {
-      backToTop.classList.remove('visible');
-    }
-  });
-});
-
-function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
-}
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // Observe animations (assuming observer is defined elsewhere)
-  document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => observer.observe(el));
-
-  // Back to top button
-  const backToTop = document.getElementById('backToTop');
-  window.addEventListener('scroll', () => {
-    backToTop.classList.toggle('visible', window.pageYOffset > 300);
-  });
-
-  // Pagination state
-  let currentPage = 1;
-  let totalPages = 1;
-  const perPage = 12;
-
-  const grid = document.getElementById('demos-grid');
-  const loadMoreBtn = document.getElementById('load-more-btn');
-
-  // Extra params for page (e.g., parent_id)
-  const extraParams = {
-    organization_id: '{{ org_id }}'
+  // Add scroll animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
   };
 
-  // Wrapper to handle loading UI + call the main loadDemos
-  async function loadDemosWrapper(page = 1, append = false) {
-    // Show loading
-    if (!append) {
-      grid.innerHTML = `
+
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate-fade-in-up');
+      }
+    });
+  }, observerOptions);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Back to top functionality
+    window.addEventListener('scroll', function () {
+      const backToTop = document.getElementById('backToTop');
+      if (window.pageYOffset > 300) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    });
+  });
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Observe animations (assuming observer is defined elsewhere)
+    document.querySelectorAll('.section-card, .hero-section, .demo-card').forEach(el => observer.observe(el));
+
+    // Back to top button
+    const backToTop = document.getElementById('backToTop');
+    window.addEventListener('scroll', () => {
+      backToTop.classList.toggle('visible', window.pageYOffset > 300);
+    });
+
+    // Pagination state
+    let currentPage = 1;
+    let totalPages = 1;
+    const perPage = 12;
+
+    const grid = document.getElementById('demos-grid');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+
+    // Extra params for page (e.g., parent_id)
+    const extraParams = {
+      organization_id: '{{ org_id }}'
+    };
+
+    // Wrapper to handle loading UI + call the main loadDemos
+    async function loadDemosWrapper(page = 1, append = false) {
+      // Show loading
+      if (!append) {
+        grid.innerHTML = `
         <div class="loading-container">
           <div class="spinner"></div>
           <p>Ladataan mielenosoituksia...</p>
         </div>`;
-    } else {
-      loadMoreBtn.classList.add('loading');
-      loadMoreBtn.disabled = true;
+      } else {
+        loadMoreBtn.classList.add('loading');
+        loadMoreBtn.disabled = true;
+      }
+
+      // Call the reusable loadDemos function
+      await loadDemos(page, append, extraParams);
+
+      // After load, remove loading states
+      loadMoreBtn.classList.remove('loading');
+      loadMoreBtn.disabled = false;
+
+      // Update Load More button display (handled inside loadDemos already, but keep safety)
+      //loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
     }
-    
-    // Call the reusable loadDemos function
-    await loadDemos(page, append, extraParams);
 
-    // After load, remove loading states
-    loadMoreBtn.classList.remove('loading');
-    loadMoreBtn.disabled = false;
+    // Initial load
+    loadDemosWrapper();
 
-    // Update Load More button display (handled inside loadDemos already, but keep safety)
-    //loadMoreBtn.style.display = currentPage < totalPages ? 'block' : 'none';
-  }
-
-  // Initial load
-  loadDemosWrapper();
-
-  // Load more click
-  /*loadMoreBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) loadDemosWrapper(currentPage + 1, true);
-  });*/
-});
+    // Load more click
+    /*loadMoreBtn.addEventListener('click', () => {
+      if (currentPage < totalPages) loadDemosWrapper(currentPage + 1, true);
+    });*/
+  });
 </script>
 {% endblock %}
 {% block styles %}
@@ -121,634 +121,814 @@ document.addEventListener('DOMContentLoaded', () => {
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
 
 <style>
-:root {
-  --color-bg: light-dark(#f8fafc, #0f1419);
-  --color-card-bg: light-dark(#ffffff, #1a1d23);
-  --color-text: light-dark(#1e293b, #e2e8f0);
-  --color-text-secondary: light-dark(#64748b, #94a3b8);
-  --color-primary: light-dark(#0052cc, #3b82f6);
-  --color-primary-hover: light-dark(#003d99, #2563eb);
-  --color-secondary: light-dark(#ff6b00, #f97316);
-  --color-secondary-hover: light-dark(#e55a00, #ea580c);
-  --color-accent: light-dark(#06b6d4, #0891b2);
-  --color-border: light-dark(#e2e8f0, #374151);
-  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
-  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
-  --border-radius: 16px;
-  --border-radius-lg: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark:root {
-  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.7;
-  margin: 0;
-  font-feature-settings: 'liga' 1, 'kern' 1;
-}
-
-/* Container */
-.container-main-content {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 2rem;
-}
-
-/* Organization Hero Section */
-.org-hero {
-  background: var(--color-gradient-primary);
-  border-radius: var(--border-radius-lg);
-  padding: 4rem 2rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--color-shadow-lg);
-  margin-bottom: 3rem;
-}
-
-.org-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.org-hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.org-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  font-size: 1rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  letter-spacing: 0.02em;
-}
-
-.org-name {
-  color: white;
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-}
-
-.org-desc {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.25rem;
-  line-height: 1.6;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* Section Cards */
-
-.section-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-.section-card:hover::before {
-  opacity: 1;
-}
-
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  text-align: center;
-}
-
-.section-title i {
-  font-size: 1.5rem;
-}
-
-/* Contact Information */
-.contact-methods {
-  display: grid;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  text-decoration: none;
-  color: inherit;
-}
-
-.contact-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow);
-  border-color: var(--color-primary);
-}
-
-.contact-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: var(--color-gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.contact-info h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.contact-info p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.95rem;
-}
-
-.contact-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-  transition: var(--transition);
-}
-
-.contact-link:hover {
-  color: var(--color-secondary);
-}
-
-/* Social Media */
-.socials {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.social-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  text-decoration: none;
-  color: inherit;
-}
-
-.social-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow);
-  border-color: var(--color-primary);
-}
-
-.social-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--color-gradient-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-
-.social-info {
-  flex: 1;
-}
-
-.social-info .platform {
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.25rem;
-}
-
-.social-info .username {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-}
-
-/* Demonstrations Section */
-.demos-section {
-  margin-top: 4rem;
-}
-
-.demos-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  text-align: center;
-  margin-bottom: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.demos-grid {
-  display: grid;
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-@media (min-width: 1200px) {
-  .demos-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (min-width: 768px) and (max-width: 1199px) {
-  .demos-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 767px) {
-  .demos-grid { grid-template-columns: 1fr; }
-}
-
-
-.demo-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-.demo-card:hover::before {
-  opacity: 1;
-}
-
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin: 3rem 0;
-  flex-wrap: wrap;
-}
-
-.pagination .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 1rem;
-  background: var(--color-card-bg);
-  color: var(--color-text);
-  border-radius: var(--border-radius);
-  text-decoration: none;
-  font-weight: 600;
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-}
-
-.pagination .btn:hover:not(.current) {
-  background: var(--color-primary);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow);
-}
-
-.pagination .btn.current {
-  background: var(--color-gradient-primary);
-  color: white;
-  pointer-events: none;
-  box-shadow: var(--color-shadow);
-}
-
-/* Back to Top Button */
-.back-to-top {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 50px;
-  height: 50px;
-  background: var(--color-gradient-primary);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: var(--color-shadow-lg);
-  transition: var(--transition);
-  opacity: 0;
-  visibility: hidden;
-  z-index: 1000;
-}
-
-.back-to-top.visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-.back-to-top:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .container-main-content {
-    padding: 0 1rem;
-    margin: 1rem auto;
+  :root {
+    --color-bg: light-dark(#f8fafc, #0f1419);
+    --color-card-bg: light-dark(#ffffff, #1a1d23);
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0052cc, #3b82f6);
+    --color-primary-hover: light-dark(#003d99, #2563eb);
+    --color-secondary: light-dark(#ff6b00, #f97316);
+    --color-secondary-hover: light-dark(#e55a00, #ea580c);
+    --color-accent: light-dark(#06b6d4, #0891b2);
+    --color-border: light-dark(#e2e8f0, #374151);
+    --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+    --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+    --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+    --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+    --border-radius: 16px;
+    --border-radius-lg: 24px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .dark:root {
+    --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.7;
+    margin: 0;
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
+
+  /* Container */
+  .container-main-content {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+
+  /* Organization Hero Section */
   .org-hero {
-    padding: 3rem 1.5rem;
+    background: var(--color-gradient-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 4rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--color-shadow-lg);
+    margin-bottom: 3rem;
+  }
+
+  .org-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .org-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .org-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    letter-spacing: 0.02em;
   }
 
   .org-name {
-    font-size: 2.5rem;
+    color: white;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
   }
 
-  .section-card {
-    padding: 2rem 1.5rem;
+  .org-desc {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.25rem;
+    line-height: 1.6;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Section Cards */
+
+  .section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .section-card:hover::before {
+    opacity: 1;
   }
 
   .section-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .section-title i {
+    font-size: 1.5rem;
+  }
+
+  /* Contact Information */
+  .contact-methods {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--color-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+    transition: var(--transition);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .contact-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow);
+    border-color: var(--color-primary);
+  }
+
+  .contact-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--color-gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .contact-info h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .contact-info p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .contact-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+  }
+
+  .contact-link:hover {
+    color: var(--color-secondary);
+  }
+
+  /* Social Media */
+  .socials {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .social-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: var(--color-bg);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
+    transition: var(--transition);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .social-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow);
+    border-color: var(--color-primary);
+  }
+
+  .social-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--color-gradient-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .social-info {
+    flex: 1;
+  }
+
+  .social-info .platform {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+  }
+
+  .social-info .username {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+  }
+
+  /* Demonstrations Section */
+  .demos-section {
+    margin-top: 4rem;
   }
 
   .demos-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-align: center;
+    margin-bottom: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
   }
 
-  .contact-methods {
-    grid-template-columns: 1fr;
+  .demos-grid {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 3rem;
   }
 
-  .socials {
-    grid-template-columns: 1fr;
+  @media (min-width: 1200px) {
+    .demos-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
-}
 
-/* Animation Classes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+  @media (min-width: 768px) and (max-width: 1199px) {
+    .demos-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
-  to {
+
+  @media (max-width: 767px) {
+    .demos-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+
+  .demo-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .demo-card:hover::before {
     opacity: 1;
-    transform: translateY(0);
   }
-}
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 3rem 0;
+    flex-wrap: wrap;
+  }
 
-/* Focus States for Accessibility */
-.contact-item:focus,
-.social-item:focus,
-.pagination .btn:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
+  .pagination .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 1rem;
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    transition: var(--transition);
+  }
 
-/* Empty State */
-.no-demos {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: var(--color-text-secondary);
-}
+  .pagination .btn:hover:not(.current) {
+    background: var(--color-primary);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow);
+  }
 
-.no-demos i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
+  .pagination .btn.current {
+    background: var(--color-gradient-primary);
+    color: white;
+    pointer-events: none;
+    box-shadow: var(--color-shadow);
+  }
 
-.no-demos h3 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: var(--color-text);
-}
+  /* Back to Top Button */
+  .back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 50px;
+    height: 50px;
+    background: var(--color-gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--color-shadow-lg);
+    transition: var(--transition);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1000;
+  }
 
-.no-demos p {
-  font-size: 1.1rem;
-  max-width: 400px;
-  margin: 0 auto;
-}
-.section-title {
-  font-weight: 700;
-  text-align: center;
-  font-size: clamp(1.75rem, 2.5vw, 2rem);
-  color: var(--color-primary);
-  margin-bottom: 1.75rem;
-}
+  .back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+  }
 
-.section-card {
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--color-shadow);
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  padding: 2.5rem;
-  transition: var(--transition);
-}
+  .back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--color-shadow-lg);
+  }
 
-.section-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--color-shadow-lg);
-}
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .container-main-content {
+      padding: 0 1rem;
+      margin: 1rem auto;
+    }
 
-.org-hero::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: var(--color-gradient-secondary);
-  opacity: 0.6;
-}
+    .org-hero {
+      padding: 3rem 1.5rem;
+    }
 
-.text-secondary {
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-}
+    .org-name {
+      font-size: 2.5rem;
+    }
 
+    .section-card {
+      padding: 2rem 1.5rem;
+    }
 
+    .section-title {
+      font-size: 1.75rem;
+    }
+
+    .demos-title {
+      font-size: 2rem;
+    }
+
+    .contact-methods {
+      grid-template-columns: 1fr;
+    }
+
+    .socials {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Animation Classes */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  /* Focus States for Accessibility */
+  .contact-item:focus,
+  .social-item:focus,
+  .pagination .btn:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Empty State */
+  .no-demos {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--color-text-secondary);
+  }
+
+  .no-demos i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .no-demos h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-text);
+  }
+
+  .no-demos p {
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .section-title {
+    font-weight: 700;
+    text-align: center;
+    font-size: clamp(1.75rem, 2.5vw, 2rem);
+    color: var(--color-primary);
+    margin-bottom: 1.75rem;
+  }
+
+  .section-card {
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--color-shadow);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    padding: 2.5rem;
+    transition: var(--transition);
+  }
+
+  .section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .org-hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: var(--color-gradient-secondary);
+    opacity: 0.6;
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+  }
 </style>
 {% endblock %}
 {% block content %}
 
 <!--<div class="container-main-content">-->
-  <!-- Organization Hero -->
-  <section class="org-hero">
-    <div class="org-hero-content">
-      <div class="org-label">
-        <i class="fa-solid fa-building"></i>
-        {{ _('Organisaatio') }}
-      </div>
-      <h1 class="org-name">{{ org.name }}</h1>
-      {% if org.description %}
-      <p class="org-desc">{{ org.description }}</p>
-      {% endif %}
+<!-- Organization Hero -->
+<section class="org-hero">
+  <div class="org-hero-content">
+    <div class="org-label">
+      <i class="fa-solid fa-building"></i>
+      {{ _('Organisaatio') }}
     </div>
-  </section>
-
-  <!-- Contact Information -->
-  <section class="section-card">
-    <h2 class="section-title">
-      <i class="fa-solid fa-address-card"></i>
-      {{ _('Yhteystiedot') }}
-    </h2>
-    
-    <div class="contact-methods">
-      {% if org.email %}
-      <a href="mailto:{{ org.email }}" class="contact-item">
-        <div class="contact-icon">
-          <i class="fa-solid fa-envelope"></i>
-        </div>
-        <div class="contact-info">
-          <h3>{{ _('Sähköposti') }}</h3>
-          <p>{{ org.email }}</p>
-        </div>
-      </a>
-      {% endif %}
-      
-      {% if org.website %}
-      <a href="{{ org.website }}" target="_blank" rel="noopener noreferrer" class="contact-item">
-        <div class="contact-icon">
-          <i class="fa-solid fa-globe"></i>
-        </div>
-        <div class="contact-info">
-          <h3>{{ _('Verkkosivut') }}</h3>
-          <p>{{ org.website }}</p>
-        </div>
-      </a>
-      {% endif %}
-    </div>
-
-    <!-- Social Media -->
-    {% if org.social_media_links %}
-    <h3 class="section-title">
-      <i class="fa-solid fa-share-nodes"></i>
-      {{ _('Sosiaalinen media') }}
-    </h3>
-    <div class="socials">
-      {% for social in org.social_media_links %}
-      <a href="{{ org.social_media_links[social] }}" target="_blank" rel="noopener noreferrer" class="social-item">
-        <div class="social-icon">
-          <i class="fa-brands fa-{{ social }}"></i>
-        </div>
-        <div class="social-info">
-          <div class="platform">
-            {% if social == 'facebook' %}Facebook
-            {% elif social == 'twitter' %}Twitter
-            {% elif social == 'instagram' %}Instagram
-            {% elif social == 'linkedin' %}LinkedIn
-            {% elif social == 'youtube' %}YouTube
-            {% elif social == 'tiktok' %}TikTok
-            {% else %}{{ social|title }}
-            {% endif %}
-          </div>
-          <div class="username">
-            {% set social_link = org.social_media_links[social].split("/") %}
-            {% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else social_link[-2] if social_link | length > 1 else "" %}
-            {{ '@' + username if username and username[0] != '@' else username }}
-          </div>
-        </div>
-      </a>
-      {% endfor %}
-    </div>
+    <h1 class="org-name">{{ org.name }}</h1>
+    {% if org.description %}
+    <p class="org-desc">{{ org.description }}</p>
     {% endif %}
-  </section>
 
-  <!-- Demonstrations Section -->
   
-  <section class="section-card" id="demos">
-    <h2 class="demos-title">
-      <i class="fa-solid fa-calendar-check"></i>
-      {{ _('Mielenosoitukset') }}
-    </h2>
-    <p class="text-center text-secondary" style="margin-bottom:1rem;">
-  {{ _('Tämän järjestäjän mielenosoitukset') }}
-</p>
 
+  </div>
+</section>
 
-    <div id="demos-grid" class="demos-grid">
-  
+  {% if current_user.is_authenticated and current_user.has_invite(org._id) %}
+<div class="invite-banner">
+  <div class="invite-content">
+    <i class="fa-solid fa-envelope-open-text invite-icon"></i>
+    <div>
+      <p><strong>{{ _('Sinut on kutsuttu liittymään organisaatioon') }} {{ org.name }}!</strong></p>
+      <p>{{ _('Voit hyväksyä kutsun liittyäksesi tai hylätä sen.') }}</p>
     </div>
+  </div>
+  <div class="invite-actions">
+    <form method="POST" action="{{ url_for('users.user_orgs.accept_invite_post', organization_id=org._id) }}">
+      <button type="submit" class="button button-success">
+        <i class="fa-solid fa-check"></i> {{ _('Hyväksy') }}
+      </button>
+    </form>
+    <form method="POST" action="{{ url_for('users.user_orgs.decline_invite_post', organization_id=org._id) }}">
+      <button type="submit" class="button button-danger">
+        <i class="fa-solid fa-xmark"></i> {{ _('Hylkää') }}
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+<style>
+  .invite-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--color-card-bg);
+    border: 2px solid var(--color-primary);
+    padding: 2rem 2.5rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--color-shadow-lg);
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+  }
 
-        <button id="load-more-btn" class="button button-secondary" style="display:none;">{{ _('Näytä lisää') }}</button>
+  .invite-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--color-gradient-primary);
+  }
+
+  .invite-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .invite-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+  }
+
+  .invite-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--color-gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .invite-content > div {
+    flex: 1;
+  }
+
+  .invite-content p {
+    margin: 0;
+    color: var(--color-text);
+    line-height: 1.6;
+  }
+
+  .invite-content p:first-child {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .invite-content p:last-child {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .invite-actions {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .invite-actions form {
+    display: inline-block;
+    margin: 0;
+  }
+
+  .invite-actions button {
+    margin: 0;
+    padding: 0.875rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .button-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+  }
+
+  .button-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  }
+
+  .button-danger {
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .button-danger:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    .invite-banner {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 2rem 1.5rem;
+      gap: 1.5rem;
+    }
+
+    .invite-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .invite-actions {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .invite-actions button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+
+<!-- Contact Information -->
+<section class="section-card">
+  <h2 class="section-title">
+    <i class="fa-solid fa-address-card"></i>
+    {{ _('Yhteystiedot') }}
+  </h2>
+
+  <div class="contact-methods">
+    {% if org.email %}
+    <a href="mailto:{{ org.email }}" class="contact-item">
+      <div class="contact-icon">
+        <i class="fa-solid fa-envelope"></i>
+      </div>
+      <div class="contact-info">
+        <h3>{{ _('Sähköposti') }}</h3>
+        <p>{{ org.email }}</p>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if org.website %}
+    <a href="{{ org.website }}" target="_blank" rel="noopener noreferrer" class="contact-item">
+      <div class="contact-icon">
+        <i class="fa-solid fa-globe"></i>
+      </div>
+      <div class="contact-info">
+        <h3>{{ _('Verkkosivut') }}</h3>
+        <p>{{ org.website }}</p>
+      </div>
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Social Media -->
+  {% if org.social_media_links %}
+  <h3 class="section-title">
+    <i class="fa-solid fa-share-nodes"></i>
+    {{ _('Sosiaalinen media') }}
+  </h3>
+  <div class="socials">
+    {% for social in org.social_media_links %}
+    <a href="{{ org.social_media_links[social] }}" target="_blank" rel="noopener noreferrer" class="social-item">
+      <div class="social-icon">
+        <i class="fa-brands fa-{{ social }}"></i>
+      </div>
+      <div class="social-info">
+        <div class="platform">
+          {% if social == 'facebook' %}Facebook
+          {% elif social == 'twitter' %}Twitter
+          {% elif social == 'instagram' %}Instagram
+          {% elif social == 'linkedin' %}LinkedIn
+          {% elif social == 'youtube' %}YouTube
+          {% elif social == 'tiktok' %}TikTok
+          {% else %}{{ social|title }}
+          {% endif %}
+        </div>
+        <div class="username">
+          {% set social_link = org.social_media_links[social].split("/") %}
+          {% set username = social_link[-1] if social in org.social_media_links and social_link[-1] != "" else
+          social_link[-2] if social_link | length > 1 else "" %}
+          {{ '@' + username if username and username[0] != '@' else username }}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+
+<!-- Demonstrations Section -->
+
+<section class="section-card" id="demos">
+  <h2 class="demos-title">
+    <i class="fa-solid fa-calendar-check"></i>
+    {{ _('Mielenosoitukset') }}
+  </h2>
+  <p class="text-center text-secondary" style="margin-bottom:1rem;">
+    {{ _('Tämän järjestäjän mielenosoitukset') }}
+  </p>
 
 
-  </section>
+  <div id="demos-grid" class="demos-grid">
+
+  </div>
+
+  <button id="load-more-btn" class="button button-secondary" style="display:none;">{{ _('Näytä lisää') }}</button>
 
   <div id="no-results" class="no-results" style="display: none;">
-      <i class="fa-regular fa-calendar-xmark"></i>
-      <h3>{{ _('Ei tulevia mielenosoituksia') }}</h3>
-      <p>{{ _('Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia.') }}</p>
-    </div>
+    <i class="fa-regular fa-calendar-xmark"></i>
+    <h3>{{ _('Ei tulevia mielenosoituksia') }}</h3>
+    <p>{{ _('Tämä järjestäjä ei ole vielä ilmoittanut tulevia mielenosoituksia.') }}</p>
+  </div>
+</section>
 
-  <!-- Back to Top Button -->
-  <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
-    <i class="fa-solid fa-arrow-up"></i>
-  </button>
+
+
+<!-- Back to Top Button -->
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
 <!--</div>-->
 
 <script>
-// Back to top functionality
-window.addEventListener('scroll', function() {
-  const backToTop = document.getElementById('backToTop');
-  if (window.pageYOffset > 300) {
-    backToTop.classList.add('visible');
-  } else {
-    backToTop.classList.remove('visible');
-  }
-});
-
-function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
+  // Back to top functionality
+  window.addEventListener('scroll', function () {
+    const backToTop = document.getElementById('backToTop');
+    if (window.pageYOffset > 300) {
+      backToTop.classList.add('visible');
+    } else {
+      backToTop.classList.remove('visible');
+    }
   });
-}
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
 </script>
 
 {% endblock %}

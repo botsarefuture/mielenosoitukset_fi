@@ -208,7 +208,8 @@ def process_events(
         title = event.get("title") or event.get("name") or "Ilman otsikkoa"
         
         city = event.get("city")
-        city_str = f"📍 {city.strip().capitalize()}" if city else ""
+        _city_str = city.strip().capitalize()
+        city_str = f"📍 {_city_str}" if city else ""
 
         # parse date and times
         date_str = event.get("formatted_date") or event.get("date")
@@ -232,8 +233,28 @@ def process_events(
         tags = _check_tags(tags)
         if "mielenosoitus" not in tags:
             tags.append("mielenosoitus")
+            
+        def _is_city_in_tags(tags, city):
+            
+            tags = [tag.lower() for tag in tags]
+            
+                   
+            if city.lower() in tags:
+                return True
+
+            else:
+                return False
+            
+            
+        if not _is_city_in_tags(tags, _city_str):
+            tags.append(_city_str)
+            tags.append(f"miekkarit_{city.lower()}")
+        
+        
+            
         tag_str = " ".join(f"#{tag}" for tag in tags)
 
+        
         # final status
         status = f"{title}\n{date_str} {time_str}\n{city_str}\n{link}\n{tag_str}"
 

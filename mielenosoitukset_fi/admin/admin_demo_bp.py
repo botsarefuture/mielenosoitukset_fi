@@ -618,6 +618,12 @@ def demo_control():
     if not show_hidden:
         filter_query["$or"] = [{"hide": False}, {"hide": {"$exists": False}}]
     
+    
+    # Search by title if provided
+    if search_query:
+        filter_query["title"] = {"$regex": search_query, "$options": "i"}  # case-insensitive search
+
+    
     # Permissions
     if not current_user.global_admin:
         _where = current_user._perm_in("EDIT_DEMO")
@@ -681,6 +687,11 @@ def duplicate_demo(demo_id):
     demo_data["title"] = f"{demo_data['title']} (Kopio)"
     # Set created_datetime to current time for the new demo
     demo_data["created_datetime"] = datetime.utcnow()
+
+        
+    # If it was a recurring demo, turn it into a non-recurring one
+    if demo_data.get("recurs", False):
+        demo_data["recurs"] = False
 
     # Optionally, clear other fields (like editors, submitters, etc.) if needed
 

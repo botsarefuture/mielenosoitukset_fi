@@ -102,7 +102,7 @@
     .calendar-year-nav {
         margin-bottom: 15px;
         text-align: center;
-        
+
     }
 
     .calendar-nav a,
@@ -217,7 +217,7 @@
 
         .calendar-nav {
             display: flex;
-        gap: 5px;
+            gap: 5px;
         }
 
         .calendar-nav a,
@@ -243,6 +243,35 @@
             font-size: 10px;
         }
     }
+
+    @media (max-width: 768px) {
+
+        h1,
+        .calendar-nav {
+            display: none !important;
+        }
+    }
+
+    .loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 1.1rem;
+  color: #aaa;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.loading.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 </style>
 
 <h1>{{ month_name|e }} {{ year }}</h1>
@@ -254,6 +283,7 @@
     <a id="year-view-btn" href="{{ url_for('calendar_year_view', year=year) }}">📅 Vuosi {{ year }}</a>
     <a id="next-month-link" href="{{ url_for('calendar_month_view', year=next_year, month=next_month) }}">Seuraava →</a>
 </div>
+
 
 <!-- Desktop: Month Calendar Grid -->
 <table class="calendar-grid">
@@ -292,8 +322,348 @@
     {% endfor %}
 </table>
 
+
+{# <table class="calendar-grid">
+    <thead>
+        <tr>
+            <th>Ma</th>
+            <th>Ti</th>
+            <th>Ke</th>
+            <th>To</th>
+            <th>Pe</th>
+            <th>La</th>
+            <th>Su</th>
+        </tr>
+    </thead>
+    <tbody id="calendar-body"></tbody>
+</table>
+
+#}
+
+<template id="day-card">
+    <div class="mobile-day-card">
+        <div class="mobile-day-header">
+            <div>
+                <div class="mobile-day-number"></div> <!-- the date (e.g. 12.10.2025) here-->
+                <div class="mobile-day-name"></div> <!-- the weekday name here (e.g. PE)-->
+            </div>
+            <div class="event-count" style="color: var(--pink-primary); font-weight: 600;">
+                {# {{ month_demos.get(day)|length }} tapahtuma{{ 'a' if month_demos.get(day)|length > 1 else '' }} #}
+                <!-- the count of the events here + tapahtuma(a) the extra a if multiple events -->
+            </div>
+        </div>
+
+        <div class="demos">
+
+        </div>
+
+
+    </div>
+</template>
+
+
+<template id="single-day-demo">
+    <a data-href="{{ url_for('demonstration_detail', demo_id="") }}" class="mobile-demo-item">
+        <div class="mobile-demo-title">Ei otsikkoa</div> <!-- demo title here-->
+
+        <div class="mobile-demo-desc" style="display: none;"> <!-- display only if there is a description -->
+            <!-- if lenght over 100 chars, limit to 100, and include ... in hte end-->
+        </div>
+        <img src="" alt="" class="mobile-demo-image">
+    </a>
+</template>
+<style>
+.to-old {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 1rem auto;
+  max-width: 500px;
+  position: relative;
+  overflow: hidden;
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.to-old::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: floatBg 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes floatBg {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-30px, -30px);
+  }
+}
+
+.to-old-content {
+  position: relative;
+  z-index: 1;
+}
+
+.banner-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  margin-bottom: 0.75rem;
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+  }
+}
+
+.to-old i.fa-flask {
+  color: #ffffff;
+  font-size: 1.5rem;
+}
+
+.banner-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.banner-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.95;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.to-old button:not(.dismiss-btn) {
+  background: rgba(255, 255, 255, 0.95);
+  color: #667eea;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.to-old button:not(.dismiss-btn)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.to-old button:not(.dismiss-btn):hover::before {
+  left: 100%;
+}
+
+.to-old button:not(.dismiss-btn):hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.to-old button:not(.dismiss-btn):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.to-old button:not(.dismiss-btn) i {
+  transition: transform 0.3s ease;
+}
+
+.to-old button:not(.dismiss-btn):hover i {
+  transform: rotate(-180deg);
+}
+
+.dismiss-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+  font-size: 0.9rem;
+}
+
+.dismiss-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.to-old.dismissed {
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes slideUp {
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+    max-height: 0;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.mb-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mb-only {
+    display: block;
+  }
+  
+  .to-old {
+    margin: 1rem;
+    padding: 1.25rem;
+  }
+  
+  .banner-title {
+    font-size: 1rem;
+  }
+  
+  .banner-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .to-old button:not(.dismiss-btn) {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+</style>
+
+<div class="to-old mb-only" id="to-old-banner">
+  <button class="dismiss-btn" id="dismiss-btn" aria-label="Dismiss">
+    <i class="fa-solid fa-times"></i>
+  </button>
+  
+  <div class="to-old-content">
+    <div class="banner-icon">
+      <i class="fa-solid fa-flask"></i>
+    </div>
+    
+    <div class="banner-title">
+      Kokeilemme uutta mobiilinäkymää
+    </div>
+    
+    <div class="banner-subtitle">
+      Jos haluat palata vanhaan näkymään, voit vaihtaa sen alla 👇
+    </div>
+    
+    <button id="return-old-btn">
+      <i class="fa-solid fa-rotate-left"></i>
+      Palaa vanhaan näkymään
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  const banner = document.getElementById("to-old-banner");
+  const returnBtn = document.getElementById("return-old-btn");
+  const dismissBtn = document.getElementById("dismiss-btn");
+  
+  if (!banner || !returnBtn || !dismissBtn) return;
+  
+  // Return to old view
+  returnBtn.addEventListener("click", () => {
+    const d = new Date();
+    d.setTime(d.getTime() + (30*24*60*60*1000));
+    document.cookie = `old-calendar-view=true; expires=${d.toUTCString()}; path=/`;
+    location.reload();
+  });
+  
+  // Dismiss banner
+  dismissBtn.addEventListener("click", () => {
+    banner.classList.add("dismissed");
+    setTimeout(() => {
+      banner.style.display = "none";
+      
+      // Optional: Set a cookie to remember dismissal
+      const d = new Date();
+      d.setTime(d.getTime() + (7*24*60*60*1000)); // 7 days
+      document.cookie = `banner-dismissed=true; expires=${d.toUTCString()}; path=/`;
+    }, 300);
+  });
+  
+  // Check if banner was previously dismissed
+  if (document.cookie.includes("banner-dismissed=true")) {
+    banner.style.display = "none";
+  }
+})();
+</script>
+
+
+<div class="mobile-list-view" id="mb-list-view"></div>
+
+<div id="loading" class="loading">
+  <i class="fa-solid fa-spinner fa-spin"></i>
+  <span>{{ _('Ladataan...') }}</span>
+</div>
+
+
+{#
+
 <!-- Mobile: List View -->
 <div class="mobile-list-view">
+    <h3>Autorender</h3>
     {% set day_names = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'] %}
     {% for week in month_days %}
     {% for day_idx in range(week|length) %}
@@ -338,10 +708,272 @@
     </div>
     {% endif %}
 </div>
+#}
 
 <div id="demo-preview" aria-hidden="true"></div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script type="module">
+
+    var mb_list_view = document.querySelector("#mb-list-view");
+    let maxLen = 100;
+    let currentPage = 1;
+    let loading = false;
+    let reachedEnd = false;
+
+    let loading_div = document.getElementById("loading");
+
+    // lets initialize it as hidden
+    loading_div.classList.add("hidden");
+    const perPage = 20;
+
+    async function loadMoreDemos() {
+        if (loading || reachedEnd) return;
+        loading = true;
+
+        loading_div.classList.remove("hidden");
+
+        
+
+        try {
+            const data = await fetchDemos({ page: currentPage, perPage });
+
+            if (!data || !data.results || data.results.length === 0) {
+                reachedEnd = true;
+                return;
+            }
+
+            const grouped = groupByDate(data.results);
+            Object.keys(grouped).forEach(date => renderDay(grouped[date], date));
+
+            currentPage++;
+
+                    setupInfiniteScrollObserver();
+        } catch (err) {
+            console.error("Error fetching demos:", err);
+            reachedEnd = true; // stop trying if API fails
+        } finally {
+            loading = false;
+            loading_div.classList.add("hidden");
+        }
+    }
+
+    function setupInfiniteScroll() {
+        let scrollTimeout;
+
+        window.addEventListener("scroll", () => {
+            console.log("scroll");
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+
+            scrollTimeout = setTimeout(() => {
+                const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+                if (nearBottom) {
+                    console.log("near");
+                    loadMoreDemos();
+                }
+            }, 100); // throttle scroll so it doesn’t spam requests
+        });
+    }
+
+
+    function renderCalendar(grouped) {
+        /* not used as of now */
+        const table = document.querySelector(".calendar-grid");
+        const tbody = document.createElement("tbody");
+        table.appendChild(tbody);
+
+        // build 7-day rows
+        const start = new Date(Object.keys(grouped)[0]);
+        const current = new Date(start);
+
+        let row = document.createElement("tr");
+        for (let i = 0; i < 31; i++) {
+            const cell = document.createElement("td");
+            const day = current.getDate();
+            const dateStr = current.toISOString().split("T")[0];
+
+            const strong = document.createElement("strong");
+            strong.textContent = day;
+            cell.appendChild(strong);
+
+            if (grouped[dateStr]) {
+                const ul = document.createElement("ul");
+                grouped[dateStr].forEach(demo => {
+                    const li = document.createElement("li");
+                    const a = document.createElement("a");
+                    a.href = `/demonstrations/${demo._id}`;
+                    a.textContent = demo.title || "Ei otsikkoa";
+                    a.className = "demo-cell";
+                    ul.appendChild(a);
+                });
+                cell.appendChild(ul);
+            }
+
+            row.appendChild(cell);
+            // when sunday reached → new row
+            if (current.getDay() === 0) {
+                tbody.appendChild(row);
+                row = document.createElement("tr");
+            }
+            current.setDate(current.getDate() + 1);
+        }
+    }
+
+
+    function ISO8001toFinnish(date) {
+        const a = new Date(date);
+        const finnish_format = a.toLocaleDateString("FI-fi");
+
+        const num = a.getDay();
+
+        const dayNames = ["Su", "Ma", "Ti", "Ke", "To", "Pe", "La"];
+
+
+
+
+        return { date: finnish_format, dayName: dayNames[num] };
+
+    }
+    async function fetchDemos({ page = 1, perPage = 10, ...extraParams } = {}) {
+        const query = new URLSearchParams({
+            page,
+            per_page: perPage,
+            ...extraParams
+        });
+
+        const res = await fetch(`/api/demonstrations?${query.toString()}`);
+        if (!res.ok) throw new Error(`Failed to fetch demos: ${res.status}`);
+
+        const data = await res.json();
+        return data;
+    }
+
+
+
+    function groupByDate(demos) {
+        const dates = {};
+        demos.forEach(demo => {
+            if (dates[demo.date]) {
+                dates[demo.date].push(demo);
+            } else {
+                dates[demo.date] = [demo];
+            }
+        });
+
+        console.log(dates);
+        return dates;
+    }
+
+
+
+    async function init() {
+        await loadMoreDemos(); // load first page
+        setupInfiniteScrollObserver(); // ✅ initial attach
+    }
+
+
+    function renderDay(demos, date) {
+
+
+        const { date: _date, dayName: _date_name } = ISO8001toFinnish(date);
+
+        const _date_template = document.getElementById("day-card");
+
+        const template = _date_template.content.cloneNode(true);
+
+
+        const date_num = template.querySelector(".mobile-day-number");
+
+        const date_name = template.querySelector(".mobile-day-name");
+
+        const event_count = template.querySelector(".event-count");
+
+        const demo_area = template.querySelector(".demos");
+
+
+        date_num.textContent = _date;
+
+        date_name.textContent = _date_name;
+
+        const event_count_text = `${demos.length} ${demos.length > 1 ? "tapahtumaa" : "tapahtuma"}`;
+
+
+        event_count.textContent = event_count_text;
+
+
+
+
+        const _template_demos = document.getElementById("single-day-demo");
+
+        demos.forEach(demo => {
+            const __ = _template_demos.content.cloneNode(true);
+
+            const link = __.querySelector("a.mobile-demo-item");
+            const baseHref = link.dataset.href;
+            link.href = `${baseHref}${demo._id}`;
+
+            const title = link.querySelector(".mobile-demo-title");
+
+            title.textContent = demo.title;
+
+
+            if (demo.description) {
+                const desc = link.querySelector(".mobile-demo-desc");
+                desc.style.display = "";
+                let tex = demo.description.substring(0, maxLen);
+                if (demo.description.length > maxLen) {
+                    tex += "...";
+                }
+                desc.innerHTML = tex; // ✅ render HTML
+            }
+
+            const ima = link.querySelector("img.mobile-demo-image");
+            ima.src = demo.preview_image;
+            ima.alt = demo.title;
+
+            demo_area.appendChild(__);
+
+        });
+        mb_list_view.appendChild(template);
+
+    }
+
+    init();
+
+    let sentinel;
+let observer;
+
+function setupInfiniteScrollObserver() {
+    // cleanup previous observer if exists
+    if (observer && sentinel) {
+        observer.unobserve(sentinel);
+        sentinel.remove();
+    }
+
+    // create a new sentinel
+    sentinel = document.createElement("div");
+    sentinel.style.height = "1px";
+    sentinel.style.visibility = "hidden";
+    mb_list_view.appendChild(sentinel);
+
+    // create new observer
+    observer = new IntersectionObserver(async (entries) => {
+        if (entries[0].isIntersecting) {
+            if (!loading && !reachedEnd) {
+                await loadMoreDemos();
+            }
+        }
+    }, {
+        rootMargin: "400px",
+    });
+
+    observer.observe(sentinel);
+}
+
+
+
+</script>
+
 <script>
     $(function () {
         // Check if mobile view is being used

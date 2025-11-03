@@ -1358,7 +1358,9 @@ def init_routes(app):
     @app.route("/calendar/")
     @app.route("/calendar/<int:year>/<int:month>/")
     def calendar_month_view(year=None, month=None):
+        
         today = date.today()
+        
         
         if month == 0 and year == 0:
             month = today.month
@@ -1396,9 +1398,14 @@ def init_routes(app):
             5: "Toukokuu", 6: "Kesäkuu", 7: "Heinäkuu", 8: "Elokuu",
             9: "Syyskuu", 10: "Lokakuu", 11: "Marraskuu", 12: "Joulukuu",
         }
+        
+        old_view = request.cookies.get("old-calendar-view") == "true"
+
+        
+        template_name = "demo_views/calendar_grid_old.html" if old_view else "demo_views/calendar_grid.html"
 
         return render_template(
-            "demo_views/calendar_grid.html",
+            template_name,
             year=year,
             month=month,
             month_name=month_names[month],

@@ -378,6 +378,13 @@ body {
   transform: rotate(180deg);
 }
 
+@media (max-width: 768px) {
+  .theme-toggle:hover {
+    transform: unset;
+    transition: all 0.5s;
+  }
+}
+
 .theme-toggle:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;

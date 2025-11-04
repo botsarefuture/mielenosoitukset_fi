@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="content-section animate-fade-in-up">
+  <h2 class="section-title">
+    <i class="fa-solid fa-pen-to-square"></i>
+    {{ _('Täydennä järjestön tietoja') }}
+  </h2>
+
+  <form id="org-edit-form" action="{{ url_for('save_suggestion', org_id=organization._id) }}" method="POST" class="edit-form">
+
+    <!-- Nimi -->
+    <div class="form-group">
+      <label for="name"><i class="fa-solid fa-building"></i> {{ _('Järjestön nimi') }}</label>
+      <input type="text" id="name" name="name" value="{{ organization.name }}" required>
+    </div>
+
+    <!-- Kuvaus -->
+    <div class="form-group">
+      <label for="description"><i class="fa-solid fa-align-left"></i> {{ _('Kuvaus') }}</label>
+      <textarea id="description" name="description" rows="5" placeholder="{{ _('Kuvaile järjestön toimintaa, tavoitteita ja arvoja...') }}">{{ organization.description }}</textarea>
+    </div>
+
+    <!-- Nettisivu -->
+    <div class="form-group">
+      <label for="website"><i class="fa-solid fa-globe"></i> {{ _('Verkkosivusto') }}</label>
+      <input type="url" id="website" name="website" placeholder="https://esimerkki.fi" value="{{ organization.website }}">
+    </div>
+
+    <!-- Sähköposti -->
+    <div class="form-group">
+      <label for="email"><i class="fa-solid fa-envelope"></i> {{ _('Sähköposti') }}</label>
+      <input type="email" id="email" name="email" placeholder="info@esimerkki.fi" value="{{ organization.email }}">
+    </div>
+
+    <!-- Sosiaaliset mediat -->
+    <h3 style="margin-top: 2rem;">
+      <i class="fa-brands fa-hashtag"></i> {{ _('Sosiaaliset mediat') }}
+    </h3>
+    <div id="social-media-list" class="social-inputs"></div>
+
+    <button type="button" id="add-social-media" class="btn-secondary" style="margin-top: 1rem;">
+      <i class="fa-solid fa-plus"></i> {{ _('Lisää alusta') }}
+    </button>
+
+    <!-- Tallennus -->
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">
+        <i class="fa-solid fa-floppy-disk"></i> {{ _('Tallenna ehdotus') }}
+      </button>
+      <a href="{{ url_for('org', org_id=organization._id) }}" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> {{ _('Peruuta') }}
+      </a>
+    </div>
+  </form>
+</section>
+
+<style>
+.edit-form {
+  max-width: 750px;
+  margin: 2rem auto;
+  background: var(--color-card-bg);
+  padding: 2rem;
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+}
+
+input, textarea {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+}
+
+.social-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.social-media-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.social-media-row select, .social-media-row input {
+  flex: 1;
+}
+
+.remove-btn {
+  color: var(--color-danger, #f44);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+</style>
+
+<script>
+const platforms = {
+  twitter: { icon: "fa-x-twitter", name: "Twitter / X" },
+  instagram: { icon: "fa-instagram", name: "Instagram" },
+  facebook: { icon: "fa-facebook", name: "Facebook" },
+  mastodon: { icon: "fa-mastodon", name: "Mastodon" },
+  bluesky: { icon: "fa-cloud", name: "Bluesky" },
+  tiktok: { icon: "fa-tiktok", name: "TikTok" },
+  youtube: { icon: "fa-youtube", name: "YouTube" },
+  linkedin: { icon: "fa-linkedin", name: "LinkedIn" },
+  snapchat: { icon: "fa-snapchat", name: "Snapchat" },
+};
+
+function createSocialRow(platform = "", url = "") {
+  const list = document.getElementById("social-media-list");
+  const div = document.createElement("div");
+  div.className = "social-media-row";
+
+  const select = document.createElement("select");
+  select.name = "social_platform[]";
+  select.className = "form-control";
+  select.innerHTML = `<option value="">${"Valitse alusta"}</option>` + 
+    Object.entries(platforms)
+      .map(([k, v]) => `<option value="${k}" ${k === platform ? "selected" : ""}>${v.name}</option>`)
+      .join("");
+
+  const input = document.createElement("input");
+  input.type = "url";
+  input.name = "social_url[]";
+  input.placeholder = "https://...";
+  input.value = url;
+  input.className = "form-control";
+
+  const remove = document.createElement("span");
+  remove.className = "remove-btn";
+  remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+  remove.onclick = () => div.remove();
+
+  div.append(select, input, remove);
+  list.appendChild(div);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("add-social-media").addEventListener("click", () => createSocialRow());
+
+  {% if organization.social %}
+    {% for key, val in organization.social.items() %}
+      createSocialRow("{{ key }}", "{{ val }}");
+    {% endfor %}
+  {% endif %}
+});
+</script>
+{% endblock %}

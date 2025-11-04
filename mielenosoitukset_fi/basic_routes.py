@@ -1085,13 +1085,80 @@ def init_routes(app):
             return redirect(url_for("index"))
         
         _org = Organization.from_dict(_org)
+        
+        if not _org.verified:
+            _org.fill_url = url_for("fill", org_id=org_id)
        
         return render_template(
             "organizations/details.html",
             org=_org,
             org_id=str(org_id)
         )
+        
+    from flask import request, redirect, url_for, flash
+    from bson import ObjectId
+    from datetime import datetime
+    from flask import request, redirect, url_for
+    from bson import ObjectId
+    from datetime import datetime
 
+    @app.route("/organization/<org_id>/save_suggestion", methods=["POST"])
+    def save_suggestion(org_id):
+        _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+        if _org is None:
+            flash_message("Organisaatiota ei löytynyt.", "error")
+            return redirect(url_for("index"))
+
+        # Base structure
+        suggestion = {
+            "organization_id": str(org_id),
+            "timestamp": datetime.utcnow(),
+            "fields": {},
+            "meta": {
+                "ip": request.remote_addr,
+                "user_agent": request.headers.get("User-Agent"),
+            }
+        }
+
+        # Normal fields
+        for field in ["name", "description", "website", "email"]:
+            val = request.form.get(field)
+            if val and val.strip():
+                suggestion["fields"][field] = val.strip()
+
+        # Socials (parallel lists)
+        platforms = request.form.getlist("social_platform[]")
+        urls = request.form.getlist("social_url[]")
+
+        socials = {}
+        for platform, url in zip(platforms, urls):
+            if platform.strip() and url.strip():
+                socials[platform.strip()] = url.strip()
+
+        if socials:
+            suggestion["fields"]["social"] = socials
+
+        # Save
+        mongo.org_edit_suggestions.insert_one(suggestion)
+
+        flash_message("Kiitos! Ehdotuksesi on tallennettu ja se tarkistetaan pian 💖", "success")
+        return redirect(url_for("org", org_id=org_id))
+        
+    @app.route("/organization/<org_id>/fill")
+    def fill(org_id):
+        _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+        if _org is None:
+            flash_message("Organisaatiota ei löytynyt.", "error")
+            return redirect(url_for("index"))
+        
+        _org = Organization.from_dict(_org)
+       
+        return render_template(
+            "organizations/fill_info.html",
+            organization=_org,
+            org_id=str(org_id)
+        )
+        
 
     @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):

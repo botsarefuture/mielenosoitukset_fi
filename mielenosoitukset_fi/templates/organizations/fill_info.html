@@ -167,8 +167,8 @@ function createSocialRow(platform = "", url = "") {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("add-social-media").addEventListener("click", () => createSocialRow());
 
-  {% if organization.social %}
-    {% for key, val in organization.social.items() %}
+  {% if organization.social_media_links %}
+    {% for key, val in organization.social_media_links.items() %}
       createSocialRow("{{ key }}", "{{ val }}");
     {% endfor %}
   {% endif %}

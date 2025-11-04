@@ -1,0 +1,462 @@
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+<style>
+  :root {
+    --color-bg: light-dark(#f8fafc, #0f1419);
+    --color-card-bg: light-dark(#ffffff, #1a1d23);
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0052cc, #3b82f6);
+    --color-primary-hover: light-dark(#003d99, #2563eb);
+    --color-success: light-dark(#10b981, #059669);
+    --color-danger: light-dark(#ef4444, #dc2626);
+    --color-warning: light-dark(#f59e0b, #d97706);
+    --color-border: light-dark(#e2e8f0, #374151);
+    --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+    --border-radius: 12px;
+    --border-radius-lg: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .suggestion-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+
+  .suggestion-header {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+  }
+
+  .suggestion-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .suggestion-title h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  .suggestion-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+  }
+
+  .suggestion-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .suggestion-meta i {
+    font-size: 1rem;
+  }
+
+  .changes-table-container {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    overflow-x: auto;
+  }
+
+  .changes-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+  }
+
+  .changes-table thead {
+    background: var(--color-bg);
+  }
+
+  .changes-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text);
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .changes-table th:last-child {
+    text-align: center;
+  }
+
+  .changes-table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    transition: var(--transition);
+  }
+
+  .changes-table tbody tr:hover {
+    background: var(--color-bg);
+  }
+
+  .changes-table td {
+    padding: 1.25rem 1rem;
+    vertical-align: top;
+  }
+
+  .field-name {
+    font-weight: 600;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .field-name i {
+    color: var(--color-primary);
+    font-size: 0.875rem;
+  }
+
+  .field-value {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
+  .field-value.empty {
+    font-style: italic;
+    opacity: 0.6;
+  }
+
+  .field-value.new {
+    color: var(--color-success);
+    font-weight: 500;
+  }
+
+  .value-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .value-badge.empty {
+    background: rgba(107, 114, 128, 0.1);
+    color: var(--color-text-secondary);
+  }
+
+  .value-badge.has-value {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-primary);
+  }
+
+  .value-badge.new-value {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
+  }
+
+  .checkbox-cell {
+    text-align: center;
+    width: 80px;
+  }
+
+  .custom-checkbox {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    appearance: none;
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-card-bg);
+    transition: var(--transition);
+  }
+
+  .custom-checkbox:hover {
+    border-color: var(--color-primary);
+  }
+
+  .custom-checkbox:checked {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    border-color: #ec4899;
+  }
+
+  .custom-checkbox:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 0.75rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+  }
+
+  .btn-secondary {
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-select-all {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-select-all:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  }
+
+  .selection-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: var(--border-radius);
+    color: var(--color-primary);
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+
+  .selection-info i {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 768px) {
+    .suggestion-container {
+      padding: 0 1rem;
+      margin: 1rem auto;
+    }
+
+    .suggestion-header {
+      padding: 1.5rem;
+    }
+
+    .suggestion-title {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .changes-table-container {
+      padding: 1rem;
+    }
+
+    .changes-table th,
+    .changes-table td {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="suggestion-container">
+  <div class="suggestion-header">
+    <div class="suggestion-title">
+      <div class="suggestion-icon">
+        <i class="fa-solid fa-pen-to-square"></i>
+      </div>
+      <div>
+        <h2>{{ _('Muokkauspyyntö') }}: {{ org.name }}</h2>
+        <div class="suggestion-meta">
+          <i class="fa-regular fa-clock"></i>
+          <span>{{ _('Lähetetty') }} {{ suggestion.timestamp.strftime("%d.%m.%Y %H:%M") }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('admin_org.apply_suggestion', org_id=org._id, suggestion_id=suggestion._id) }}" id="suggestion-form">
+    <div class="changes-table-container">
+      <div class="selection-info">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="selection-count">{{ _('Valitse kentät, jotka haluat päivittää') }}</span>
+      </div>
+
+      <table class="changes-table">
+        <thead>
+          <tr>
+            <th style="width: 20%;">{{ _('Kenttä') }}</th>
+            <th style="width: 35%;">{{ _('Nykyinen arvo') }}</th>
+            <th style="width: 35%;">{{ _('Ehdotettu arvo') }}</th>
+            <th style="width: 10%;">{{ _('Valitse') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, new_value in suggestion.fields.items() %}
+          <tr>
+            <td>
+              <div class="field-name">
+                <i class="fa-solid fa-tag"></i>
+                {{ key }}
+              </div>
+            </td>
+            <td>
+              <div class="field-value {% if not org.to_dict().get(key) %}empty{% endif %}">
+                {% if org.to_dict().get(key) %}
+                  <span class="value-badge has-value">{{ org.to_dict().get(key) }}</span>
+                {% else %}
+                  <span class="value-badge empty">{{ _('Ei asetettu') }}</span>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <div class="field-value new">
+                <span class="value-badge new-value">{{ new_value }}</span>
+              </div>
+            </td>
+            <td class="checkbox-cell">
+              <input type="checkbox" name="apply_fields" value="{{ key }}" class="custom-checkbox field-checkbox">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="action-buttons">
+        <button type="button" class="btn btn-select-all" id="select-all-btn">
+          <i class="fa-solid fa-check-double"></i>
+          {{ _('Valitse kaikki') }}
+        </button>
+        <button type="submit" class="btn btn-primary" id="apply-btn">
+          <i class="fa-solid fa-check-circle"></i>
+          {{ _('Päivitä valitut kentät') }}
+        </button>
+        <a href="{{ request.referrer or url_for('index') }}" class="btn btn-secondary">
+          <i class="fa-solid fa-xmark"></i>
+          {{ _('Peruuta') }}
+        </a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const checkboxes = document.querySelectorAll('.field-checkbox');
+  const selectAllBtn = document.getElementById('select-all-btn');
+  const selectionCount = document.getElementById('selection-count');
+  const applyBtn = document.getElementById('apply-btn');
+
+  function updateSelectionCount() {
+    const selected = document.querySelectorAll('.field-checkbox:checked').length;
+    const total = checkboxes.length;
+    
+    if (selected === 0) {
+      selectionCount.textContent = '{{ _("Valitse kentät, jotka haluat päivittää") }}';
+      applyBtn.disabled = true;
+      applyBtn.style.opacity = '0.5';
+      applyBtn.style.cursor = 'not-allowed';
+    } else {
+      selectionCount.innerHTML = `<strong>${selected}</strong> / ${total} {{ _("kenttää valittu") }}`;
+      applyBtn.disabled = false;
+      applyBtn.style.opacity = '1';
+      applyBtn.style.cursor = 'pointer';
+    }
+
+    // Update select all button text
+    if (selected === total) {
+      selectAllBtn.innerHTML = '<i class="fa-solid fa-square-minus"></i> {{ _("Poista valinnat") }}';
+    } else {
+      selectAllBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> {{ _("Valitse kaikki") }}';
+    }
+  }
+
+  selectAllBtn.addEventListener('click', () => {
+    const allChecked = document.querySelectorAll('.field-checkbox:checked').length === checkboxes.length;
+    checkboxes.forEach(cb => cb.checked = !allChecked);
+    updateSelectionCount();
+  });
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', updateSelectionCount);
+  });
+
+  // Initial state
+  updateSelectionCount();
+
+  // Form submission animation
+  document.getElementById('suggestion-form').addEventListener('submit', (e) => {
+    applyBtn.classList.add('loading');
+    applyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> {{ _("Päivitetään...") }}';
+  });
+});
+</script>
+{% endblock %}

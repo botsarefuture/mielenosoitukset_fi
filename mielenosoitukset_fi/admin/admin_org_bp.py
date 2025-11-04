@@ -12,6 +12,7 @@ v2.4.0:
 - Admin action logging has been in use since V2.4.0, and it helps us keep track who did what.
 """
 
+from datetime import datetime
 from bson.objectid import ObjectId
 from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response
 from flask_babel import gettext as _
@@ -592,6 +593,164 @@ def delete_membership() -> Tuple[Response, int]:
 
     return jsonify({"error": "Poisto epäonnistui"}), 500
 
+@admin_org_bp.route("/<org_id>/suggestion/<suggestion_id>")
+@login_required
+@admin_required
+def review_suggestion(org_id, suggestion_id):
+    suggestion = get_suggestion_with_expiry_check(suggestion_id)
+    
+    if suggestion and str(suggestion.get("organization_id")) != org_id:
+        flash_message("Ehdotus kuuluu toiselle organisaatiolle. Uudelleenohjataan oikeaan paikkaan.", "warning")
+        return redirect(url_for(
+            "admin_org.review_suggestion",
+            org_id=str(suggestion.get("organization_id")),
+            suggestion_id=suggestion_id
+        ))
+
+    org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+    
+
+    if not org or not suggestion:
+        flash_message("Ehdotusta tai organisaatiota ei löytynyt.", "error")
+        return redirect(url_for("index"))
+
+    org = Organization.from_dict(org)
+
+    # --- 🪄 Mark as viewed ---
+    update_ops = {
+        "$set": {
+            "status.updated_at": datetime.utcnow(),
+        },
+        "$push": {
+            "audit_log": {
+                "action": "viewed",
+                "timestamp": datetime.utcnow(),
+                "user": getattr(current_user, "username", None),  # if you have Flask-Login
+            }
+        }
+    }
+
+    # If still pending, mark as "in_review" when opened
+    if suggestion.get("status", {}).get("state") == "pending":
+        update_ops["$set"]["status.state"] = "in_review"
+        update_ops["$set"]["status.updated_by"] = getattr(current_user, "username", None)
+
+    mongo.org_edit_suggestions.update_one(
+        {"_id": ObjectId(suggestion_id)},
+        update_ops
+    )
+
+    # Reload suggestion so we render fresh data
+    suggestion = mongo.org_edit_suggestions.find_one({"_id": ObjectId(suggestion_id)})
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}organizations/review_suggestion.html",
+        org=org,
+        suggestion=suggestion,
+    )
+
+from datetime import datetime
+from bson import ObjectId
+from flask import request, redirect, url_for
+from flask_login import current_user
+
+@admin_org_bp.route("/<org_id>/suggestion/<suggestion_id>/apply", methods=["POST"])
+@login_required
+@admin_required
+def apply_suggestion(org_id, suggestion_id):
+    suggestion = mongo.org_edit_suggestions.find_one({"_id": ObjectId(suggestion_id)})
+    if not suggestion:
+        flash_message("Ehdotusta ei löytynyt.", "error")
+        return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
+
+    selected_fields = request.form.getlist("apply_fields")
+    if not selected_fields:
+        flash_message("Et valinnut yhtään kenttää päivitettäväksi.", "info")
+        return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
+
+    update_data = {}
+    for f in selected_fields:
+        if f in suggestion.get("fields", {}):
+            update_data[f] = suggestion["fields"][f]
+
+    # Handle nested socials
+    if "social_media_links" in selected_fields and isinstance(suggestion["fields"].get("social_media_links"), dict):
+        update_data["social_media_links"] = suggestion["fields"]["social_media_links"]
+
+    applied_successfully = False
+
+    if update_data:
+        mongo.organizations.update_one(
+            {"_id": ObjectId(org_id)},
+            {"$set": update_data}
+        )
+        applied_successfully = True
+        flash_message("Organisaation tiedot päivitettiin valittujen kenttien osalta 💖", "success")
+    else:
+        flash_message("Ei mitään päivitettävää.", "info")
+
+    # --- 🪄 Update suggestion status + audit log ---
+    new_state = "applied" if applied_successfully else "in_review"
+    if applied_successfully and len(selected_fields) < len(suggestion.get("fields", {})):
+        new_state = "partially_applied"
+
+    update_ops = {
+        "$set": {
+            "status.state": new_state,
+            "status.updated_at": datetime.utcnow(),
+            "status.updated_by": getattr(current_user, "username", None),
+        },
+        "$push": {
+            "audit_log": {
+                "action": "apply_fields",
+                "fields": selected_fields,
+                "timestamp": datetime.utcnow(),
+                "user": getattr(current_user, "username", None),
+            }
+        }
+    }
+
+    mongo.org_edit_suggestions.update_one(
+        {"_id": ObjectId(suggestion_id)},
+        update_ops
+    )
+
+    # Optional: auto-hide from todo list if fully applied
+    if new_state == "applied":
+        mongo.org_edit_suggestions.update_one(
+            {"_id": ObjectId(suggestion_id)},
+            {"$set": {"status.completed_at": datetime.utcnow()}}
+        )
+
+    return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
+
+
+
+from datetime import datetime, timedelta
+
+def get_suggestion_with_expiry_check(suggestion_id):
+    suggestion = mongo.org_edit_suggestions.find_one({"_id": ObjectId(suggestion_id)})
+    if not suggestion:
+        return None
+
+    # auto-expire review state after 30 minutes
+    status = suggestion.get("status", {})
+    if status.get("state") == "in_review":
+        updated_at = status.get("updated_at")
+        if updated_at and datetime.utcnow() - updated_at > timedelta(minutes=30):
+            mongo.org_edit_suggestions.update_one(
+                {"_id": ObjectId(suggestion_id)},
+                {"$set": {"status.state": "pending"}}
+            )
+            suggestion["status"]["state"] = "pending"  # keep local copy consistent
+
+    return suggestion
+
+def get_pending_suggestions(org_id):
+    return list(mongo.org_edit_suggestions.find({
+        "organization_id": ObjectId(org_id),
+        "status.state": {"$in": ["pending", "in_review", "partially_applied"]}
+    }))
 
 
 @admin_org_bp.route("/api/new", methods=["POST"])

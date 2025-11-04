@@ -23,12 +23,17 @@ class Organization(BaseEntity):
         verified: bool = False,
         _id: ObjectId = None,
         invitations: List[dict] = None,
+        fill_url: str = None,          # ✨ added param
     ):
         super().__init__(name, email, website, _id)
         self.description        = description
         self.social_media_links = social_media_links or {}
         self.verified           = verified
         self.invitations        = invitations or []
+
+        # if org is not verified → autogenerate /organization/<id>/fill
+        self.fill_url = fill_url or (f"/organization/{self._id}/fill" if not verified and self._id else None)
+
 
         self.members: List["User"] = []        # populated below
         self.init_members()
@@ -119,4 +124,9 @@ class Organization(BaseEntity):
     def from_dict(cls, data: dict):
         data.pop("social_medias", None)  # prune legacy keys
         data.pop("members", None)
-        return cls(**data)
+
+        # Ensure fill_url auto-assigns if org isn't verified
+        org = cls(**data)
+        if not org.verified and org._id:
+            org.fill_url = f"/organization/{org._id}/fill"
+        return org

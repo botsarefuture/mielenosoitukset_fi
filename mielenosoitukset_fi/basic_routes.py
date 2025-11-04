@@ -1095,13 +1095,6 @@ def init_routes(app):
             org_id=str(org_id)
         )
         
-    from flask import request, redirect, url_for, flash
-    from bson import ObjectId
-    from datetime import datetime
-    from flask import request, redirect, url_for
-    from bson import ObjectId
-    from datetime import datetime
-
     @app.route("/organization/<org_id>/save_suggestion", methods=["POST"])
     def save_suggestion(org_id):
         _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
@@ -1109,16 +1102,31 @@ def init_routes(app):
             flash_message("Organisaatiota ei löytynyt.", "error")
             return redirect(url_for("index"))
 
-        # Base structure
         suggestion = {
-            "organization_id": str(org_id),
+            "organization_id": ObjectId(org_id),
             "timestamp": datetime.utcnow(),
+            "created_at": datetime.utcnow(),
             "fields": {},
             "meta": {
                 "ip": request.remote_addr,
                 "user_agent": request.headers.get("User-Agent"),
-            }
+                "submitter_email": request.form.get("email")
+            },
+            "status": {
+                "state": "pending",
+                "updated_at": datetime.utcnow(),
+                "updated_by": None,
+                "notes": None
+            },
+            "audit_log": [
+                {
+                    "action": "created",
+                    "timestamp": datetime.utcnow(),
+                    "user": None
+                }
+            ]
         }
+
 
         # Normal fields
         for field in ["name", "description", "website", "email"]:
@@ -1126,23 +1134,50 @@ def init_routes(app):
             if val and val.strip():
                 suggestion["fields"][field] = val.strip()
 
-        # Socials (parallel lists)
+        # Socials
         platforms = request.form.getlist("social_platform[]")
         urls = request.form.getlist("social_url[]")
-
         socials = {}
         for platform, url in zip(platforms, urls):
             if platform.strip() and url.strip():
                 socials[platform.strip()] = url.strip()
-
         if socials:
-            suggestion["fields"]["social"] = socials
+            suggestion["fields"]["social_media_links"] = socials
 
-        # Save
-        mongo.org_edit_suggestions.insert_one(suggestion)
+        # Save to DB
+        result = mongo.org_edit_suggestions.insert_one(suggestion)
+        suggestion_id = str(result.inserted_id)
+
+        # --- 💌 Email notifications ---
+        review_link = url_for(
+            "admin_org.review_suggestion",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            _external=True
+        )
+
+        ctx_admin = {
+            "org_name": _org.get("name"),
+            "org_id": str(org_id),
+            "fields": suggestion["fields"],
+            "review_link": review_link,
+            "submitted_at": suggestion["timestamp"].strftime("%Y-%m-%d %H:%M UTC"),
+            "ip": suggestion["meta"]["ip"],
+            "user_agent": suggestion["meta"]["user_agent"],
+        }
+
+        email_sender.queue_email(
+            template_name="admin_org_suggestion_notification.html",
+            subject=f"Uusi organisaatiotietojen muokkauspyyntö: {_org.get('name')}",
+            recipients=["tuki@mielenosoitukset.fi"],
+            context=ctx_admin,
+        )
+
+      
 
         flash_message("Kiitos! Ehdotuksesi on tallennettu ja se tarkistetaan pian 💖", "success")
         return redirect(url_for("org", org_id=org_id))
+
         
     @app.route("/organization/<org_id>/fill")
     def fill(org_id):

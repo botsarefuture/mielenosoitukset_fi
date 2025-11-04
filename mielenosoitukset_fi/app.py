@@ -257,14 +257,16 @@ def create_app() -> Flask:
             return redirect(url_for("static", filename="img/e.png"))
         return redirect(url_for("static", filename=screenshot_path.replace("static/", "").replace("//", "/")))
     
-    
+    from datetime import datetime, timedelta
+    from bson import ObjectId
 
     @app.context_processor
     def utility_processor():
         def get_admin_tasks():
-            # check if any demonstrations are waiting for approval
-            # rejected doesnt exist or is False
-            waiting = list(
+            tasks = []
+
+            # --- DEMONSTRATION approval tasks ---
+            waiting_demos = list(
                 mongo.demonstrations.find({
                     "approved": False,
                     "hide": False,
@@ -274,46 +276,57 @@ def create_app() -> Flask:
                     ]
                 }).sort("created_at", -1)
             )
-            app.logger.debug(f"Found {len(waiting)} demonstrations waiting for approval.")
-            return waiting
+            for demo in waiting_demos:
+                tasks.append({
+                    "type": "demo",
+                    "id": str(demo["_id"]),
+                    "title": demo.get("title", "Nimetön mielenosoitus"),
+                    "created_at": demo.get("created_datetime", datetime.now()) or datetime.now(),
+                    "status": "waiting_approval",
+                    "link": url_for("admin_demo.edit_demo", demo_id=demo["_id"]),
+                })
+
+            # --- ORG SUGGESTIONS tasks ---
+            org_suggestions = list(
+                mongo.org_edit_suggestions.find({
+        "status.state": {"$nin": ["partially_applied", "applied", "rejected", "cancelled"]}
+        }).sort("created_at", -1)
+            )
+            for s in org_suggestions:
+                org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
+                org_name = org["name"] if org else "Tuntematon organisaatio"
+                tasks.append({
+                    "type": "org_suggestion",
+                    "id": str(s["_id"]),
+                    "title": f"Organisaation päivitysehdotus: {org_name}",
+                    "created_at": s.get("created_at", datetime.now()),
+                    "status": (s.get("status") or {}).get("state"),
+                    "link": url_for("admin_org.review_suggestion", org_id=s["organization_id"], suggestion_id=s["_id"]),
+                })
+
+            # sort by creation time descending
+            tasks.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+
+            return tasks
+
 
         def get_org_name(org_id):
-            return mongo.organizations.find_one({"_id": ObjectId(org_id)}).get("name")
-        
+            org = mongo.organizations.find_one({"_id": ObjectId(org_id)}, {"name": 1})
+            return org.get("name") if org else "Tuntematon"
 
         def _get_user_by_id(user_id, fields=None, include_none=False):
-            """
-            Fetch user data by user_id from MongoDB.
-
-            Parameters
-            ----------
-            user_id : str or ObjectId
-                The ID of the user to fetch.
-            fields : list[str], optional
-                List of fields to return. Defaults to ["username", "display_name", "profile_picture", "last_login"].
-            include_none : bool, optional
-                If True, include fields even if their value is None. Defaults to False.
-
-            Returns
-            -------
-            dict or None
-                Dictionary of requested user fields, or None if user not found or invalid ID.
-            """
             if fields is None:
                 fields = ["username", "display_name", "profile_picture", "last_login"]
 
-            # Ensure user_id is an ObjectId
             try:
                 oid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
             except Exception:
-                return None  # invalid user_id
+                return None
 
-            # Fetch user
             user = mongo.users.find_one({"_id": oid})
             if not user:
                 return None
 
-            # Build result dict
             user_data = {}
             for field in fields:
                 if field in user:
@@ -322,17 +335,18 @@ def create_app() -> Flask:
 
             return user_data
 
-
-
         def get_supported_locales():
             return app.config["BABEL_SUPPORTED_LOCALES"]
 
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
+        # Get all tasks
         tasks = get_admin_tasks()
         tasks_amount_total = len(tasks)
-        tasks_amount_done = sum(1 for t in tasks if t.get("approved", False))
+
+        # Demonstrations done
+        tasks_amount_done = sum(1 for t in tasks if t.get("approved", False) or t.get("state") == "applied")
 
         return dict(
             get_org_name=get_org_name,
@@ -343,6 +357,7 @@ def create_app() -> Flask:
             tasks_amount_done=tasks_amount_done,
             _get_user_by_id=_get_user_by_id
         )
+
 
 
     

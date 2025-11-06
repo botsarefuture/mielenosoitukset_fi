@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Käännöshanke') }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('animate-fade-in-up');
+    });
+  }, observerOptions);
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.section-card, .campaign-cta, .stat-card').forEach(el => observer.observe(el));
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-main-content">
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>{{ _('Käännöshanke') }}</h1>
+      <p class="lead">
+        {{ _('Mielenosoitukset.fi -sivustoa ollaan parhaillaan kääntämässä englanniksi ja ruotsiksi! Tavoitteena on, että koko sivusto ja sen perustoiminnot toimivat useilla kielillä, jotta mielenosoitukset olisivat saavutettavampia kaikille Suomessa.') }}
+      </p>
+    </div>
+  </section>
+
+  <!-- Campaign CTA -->
+  <section class="campaign-cta">
+    <div class="campaign-cta-content">
+      <div class="campaign-badge">
+        <i class="fa-solid fa-language"></i>
+        {{ _('Käännöshanke 2025–2026') }}
+      </div>
+      <h2>{{ _('Auta meitä tekemään sivustosta monikielinen!') }}</h2>
+      <p>
+        {{ _('Ensimmäisessä vaiheessa käännämme sivuston käyttöliittymän, ohjetekstit ja muut staattiset sisällöt. Tämän jälkeen toteutetaan järjestelmä, jonka avulla myös käyttäjien ilmoittamat mielenosoitukset ja tapahtumat voidaan kääntää useille kielille.') }}
+      </p>
+      <p>
+        {{ _('Tämä työ tehdään yhdessä vapaaehtoisten kanssa – ja juuri siksi tarvitsemme sinua mukaan!') }}
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <button class="button button-outline" data-bs-toggle="modal" data-bs-target="#joinModal">
+          <i class="fa-solid fa-handshake"></i> {{ _('Tule mukaan') }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">2</span>
+      <span class="stat-label">{{ _('Kieliversiota tekeillä') }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">100+</span>
+      <span class="stat-label">{{ _('Käännettyä tekstielementtiä') }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">∞</span>
+      <span class="stat-label">{{ _('Tulevia käännöksiä') }}</span>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="cards-grid">
+
+    <div>
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-info-circle"></i>
+          {{ _('Mistä käännöshankkeessa on kyse?') }}
+        </h2>
+        <p>
+          {{ _('Käännöshankkeen tavoitteena on tuoda Mielenosoitukset.fi täysin monikieliseksi sivustoksi. Tällä hetkellä keskitymme kääntämään käyttöliittymän, napit, ohjeet ja muun yleisen sisällön.') }}
+        </p>
+        <p>
+          {{ _('Kun tämä vaihe on valmis, seuraava askel on rakentaa käännösjärjestelmä mielenosoitusten ja tapahtumien tiedoille. Näin myös ulkomaalaiset ja monikieliset yhteisöt voivat ilmoittaa ja löytää mielenosoituksia omalla kielellään.') }}
+        </p>
+      </section>
+
+      <section class="section-card special-h3">
+        <h2>
+          <i class="fa-solid fa-people-group"></i>
+          {{ _('Käännöshanketyöryhmä') }}
+        </h2>
+        <p>
+          {{ _('Käännöstyötä koordinoi vapaaehtoisista koostuva käännöshanketyöryhmä, joka kokoontuu säännöllisesti suunnittelemaan ja edistämään hanketta. Työryhmään voi liittyä kuka tahansa, joka haluaa osallistua monikielisen yhteiskunnan rakentamiseen.') }}
+        </p>
+        <p>
+          {{ _('Jos haluat mukaan, lähetä sähköpostia osoitteeseen') }}
+          <a href="mailto:kaannoshanke@mielenosoitukset.fi">kaannoshanke@mielenosoitukset.fi</a>.
+        </p>
+      </section>
+
+      <style>
+        .special-h3 h3 {
+          font-family: 'Inter', sans-serif;
+          font-weight: 600;
+          font-size: 1.25rem;
+          color: #ff3366;
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          border-left: 4px solid #ff99c8;
+          padding-left: 0.75rem;
+          transition: color 0.3s ease;
+        }
+        .special-h3 h3:hover {
+          color: #ff6699;
+          cursor: default;
+        }
+      </style>
+    </div>
+
+    <div>
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-code"></i>
+          {{ _('Tekninen toteutus') }}
+        </h2>
+        <p>
+          {{ _('Sivuston käännösjärjestelmä on jo rakennettu. Kaikki tekstit voidaan näyttää automaattisesti eri kielillä, kun käännökset on lisätty. Seuraavaksi kehitämme tavan, jolla myös käyttäjien ilmoittamat mielenosoitusten tiedot voidaan kääntää turvallisesti ja luotettavasti.') }}
+        </p>
+      </section>
+
+      <section class="section-card">
+        <h2>
+          <i class="fa-solid fa-lightbulb"></i>
+          {{ _('Miten voin auttaa?') }}
+        </h2>
+        <p>
+          {{ _('Voit auttaa osallistumalla käännöstyöhön, tarjoamalla oikolukua, tai auttamalla testauksessa. Myös kehittäjät, kieliaktivistit ja opiskelijat ovat lämpimästi tervetulleita mukaan!') }}
+        </p>
+        <a href="mailto:kaannoshanke@mielenosoitukset.fi" class="button button-outline" style="margin-top: 1rem;">
+          <i class="fa-solid fa-envelope"></i> {{ _('Ota yhteyttä') }}
+        </a>
+      </section>
+    </div>
+  </div>
+
+  <!-- Call to Action -->
+  <div style="text-align: center; margin: 3rem 0;">
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a class="button button-primary" href="{{ url_for('index') }}">
+        <i class="fa-solid fa-house"></i> {{ _('Palaa etusivulle') }}
+      </a>
+      <button class="button button-secondary" data-bs-toggle="modal" data-bs-target="#joinModal">
+        <i class="fa-solid fa-people-group"></i> {{ _('Liity työryhmään') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 1rem;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="joinModalLabel">
+          <i class="fa-solid fa-language"></i> {{ _('Liity käännöshankkeeseen') }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Haluaisitko auttaa tekemään Mielenosoitukset.fi:stä monikielisen? Käännöshanketyöryhmä etsii uusia vapaaehtoisia eri kielitaustoista!') }}</p>
+        <p>{{ _('Voit ilmoittautua mukaan lähettämällä sähköpostia osoitteeseen:') }}</p>
+        <p style="font-weight:600; text-align:center;">
+          <a href="mailto:kaannoshanke@mielenosoitukset.fi">kaannoshanke@mielenosoitukset.fi</a>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+        <a href="mailto:kaannoshanke@mielenosoitukset.fi" class="btn btn-primary">
+          <i class="fa-solid fa-envelope"></i> {{ _('Lähetä sähköpostia') }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

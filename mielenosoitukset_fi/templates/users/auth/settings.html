@@ -3,77 +3,13 @@
 {% block title %}{{ _('Asetukset') }}{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/user/settings.css') }}">
+<link href="{{ url_for('static', filename='css/user/settings.css') }}" rel="stylesheet">
 
+<head>
 
-<style>
-  /* Spinner */
-  .spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s linear infinite;
-  }
+  <link href="{{ url_for('static', filename='css/v2/settings.css')}}" rel="stylesheet">
+</head>
 
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Tabs styling */
-  #settings-tabs {
-    margin-top: 20px;
-  }
-
-  #settings-tabs .ui-tabs-nav {
-    background: var(--background, #f8f9fa);
-    border: none;
-    border-bottom: 2px solid #ddd;
-    padding-left: 0;
-  }
-
-  #settings-tabs .ui-tabs-nav li {
-    display: inline-block;
-    margin: 0 5px -2px 0;
-  }
-
-  #settings-tabs .ui-tabs-nav a {
-    padding: 10px 15px;
-    display: block;
-    text-decoration: none;
-    font-weight: 500;
-    color: var(--primary_text_color, #333);
-    border-radius: 5px 5px 0 0;
-  }
-
-  #settings-tabs .ui-tabs-nav .ui-tabs-active a {
-    background: var(--primary_color, #0d6efd);
-    color: #fff;
-  }
-
-  #settings-tabs .ui-tabs-panel {
-    padding: 20px;
-    background: var(--background, #fff);
-    border: 1px solid #ddd;
-    border-radius: 0 5px 5px 5px;
-    margin-top: -1px;
-  }
-
-  #settings-tabs .ui-tabs-nav a:hover {
-  background: var(--hover_bg_color, #e9ecef);
-  color: var(--primary_text_color, #333);
-}
-
-#settings-tabs .ui-tabs-active a:hover {
-  background: var(--primary_color, #0b5ed7);
-  color: #fff;
-}
-
-</style>
 {% endblock %}
 
 {% block content %}
@@ -89,34 +25,477 @@
     <!-- Yleinen Tab -->
     <div id="tab-general">
       <form id="settings-form">
+        <!-- Näyttönimi input -->
         <div class="mb-3">
-          <label for="display_name" class="form-label">{{ _('Näyttönimi') }}</label>
-          <input type="text" class="form-control" id="display_name" name="display_name">
+          <label class="form-label" for="display_name">
+            <i class="fa-solid fa-id-card me-2"></i>{{ _('Näyttönimi') }}
+          </label>
+
+          <input class="form-control mbBlackHoleInput1866" id="display_name" name="display_name" type="text"
+            placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
+
+          <div class="form-text mt-1 mbCoronaDiv2172">
+            <i class="fa-solid fa-circle-info me-1"></i>
+            {{ _('Näyttönimi näkyy muille käyttäjille profiilissasi ja
+            kommenteissa. Voit käyttää omaa nimeäsi tai
+            lempinimeä.') }}
+          </div>
         </div>
 
-        <!-- Kaupunki dropdown (your custom widget) -->
+        <!-- Kaupunki dropdown -->
         <div class="mb-3">
-          <label for="city" class="form-label">{{ _('Kaupunki') }}</label>
-          <!-- existing dropdown code -->
-          <div id="paikkakunta-drop" class="dropdown">
-            <button type="button" class="dropbtn" aria-haspopup="listbox" aria-expanded="false"
-              aria-label="{{ _('Open Paikkakunta dropdown') }}">{{ _('Paikkakunta') }}</button>
-            <div id="dropdown-content" class="dropdown-content" role="listbox" aria-labelledby="city">
-              <input type="text" placeholder="{{ _('Hae paikkakunta...') }}" id="searchInput" onkeyup="filterFunction()"
-                aria-label="{{ _('Search cities') }}" />
-              <!-- List of cities -->
+          <label class="form-label" for="city">
+            <i class="fa-solid fa-city me-2"></i>{{ _('Kaupunki') }}
+          </label>
+
+          <br>
+
+          <div class="dropdown mbCometDiv4109" id="paikkakunta-drop">
+            <button class="dropbtn form-control d-flex justify-content-between align-items-center mbSupernovaButton2432"
+              type="button" aria-expanded="false" aria-haspopup="listbox"
+              aria-label="{{ _('Avaa paikkakuntavalikko') }}">
+              <span id="selected-city-text">{{ _('Valitse paikkakunta')
+                }}</span>
+              <i class="fa-solid fa-chevron-down ms-2"></i>
+            </button>
+
+            <div class="dropdown-content shadow mbUranusDiv8836" id="dropdown-content" role="listbox"
+              aria-labelledby="city">
+
+              <div class="mbDracoDiv3949">
+                <i class="fa-solid fa-magnifying-glass me-2"></i>
+                <input class="form-control form-control-sm mbSolarInput9963" id="searchInput" type="text"
+                  aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
+                  placeholder="{{ _('Hae paikkakunta...') }}">
+              </div>
+
               {% for city in city_list %}
-              <a href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;" {% if
-                demo is defined and demo.city==city %} class="selected" {% endif %}>
-                {{ city }}
+              <a class="dropdown-item py-2 {% if demo is defined and demo.city==city %}active{% endif %} mbApolloA7791"
+                href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">
+                <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city
+                }}
               </a>
               {% endfor %}
             </div>
           </div>
-          <input type="hidden" id="selected-city" name="city" 
-            required />
+
+          <input id="selected-city" name="city" type="hidden" required>
         </div>
 
+        <div class="mb-3">
+          <label class="form-label" for="language">
+            <i class="fa-solid fa-language me-2"></i>{{ _('Kieli') }}
+          </label>
+          <select class="form-select" id="language" name="language">
+            <option value="fi">{{ _('Suomi') }}</option>
+            <!--<option value="en">{{ _('English') }}</option>-->
+          </select>
+
+          <br>
+
+          <div class="alert alert-warning d-flex align-items-start mbPerseusDiv6913">
+            <i class="fa-solid fa-triangle-exclamation fa-xl mbAriesI9259"></i>
+            <div>
+              <h5 class="mb-1">{{ _('Käännökset ovat vielä kesken') }}</h5>
+              <p class="mb-2">
+                {{ _('Sivusto on tällä hetkellä käytettävissä vain suomeksi,
+                mutta englannin ja ruotsin käännökset ovat
+                parhaillaan työn alla.') }}
+                {{
+                _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:')
+                }}
+              </p>
+              <a class="btn btn-outline-dark btn-sm" href="https://mielenosoitukset.fi/upcoming/translations/"
+                target="_blank">
+                <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke')
+                }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" id="dark_mode" name="dark_mode" type="checkbox">
+          <label class="form-check-label" for="dark_mode">{{ _('Tumma tila')
+            }}</label>
+        </div>
+
+        <div class="form-check mb-3 hidden" aria-hidden="true">
+          <input class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter" type="checkbox">
+          <label class="form-check-label" for="subscribe_newsletter">{{
+            _('Tilaa uutiskirje') }}</label>
+        </div>
+
+        <button class="btn btn-primary" type="submit">
+          {{ _('Tallenna muutokset') }}
+          <div class="spinner" id="spinner"></div>
+        </button>
+      </form>
+
+      <!-- MFA Section -->
+      <div class="mb-3 mt-4">
+        <label class="form-label" for="mfa"><i class="fas fa-shield-alt"></i> {{
+          _('Kaksivaiheinen tunnistus (MFA)')
+          }}</label>
+        <div class="d-flex flex-column gap-2" id="mfa-section">
+          <div id="mfa-status-container">
+            <span class="text-success" id="mfa-status">{{ _('MFA ei käytössä')
+              }}</span>
+          </div>
+          <button class="btn btn-warning" id="init-mfa-btn" type="button">{{
+            _('Ota käyttöön MFA') }}</button>
+          <button class="btn btn-secondary mbCometButton1455" id="add-mfa-device-btn" type="button">{{ _('Lisää uusi
+            laite') }}</button>
+          <ul class="list-group mt-2" id="mfa-devices-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profiili Tab -->
+    <div id="tab-profile">
+      <p>{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
+      <form id="profile-form">
+        <div class="mb-3">
+          <label class="form-label" for="bio">{{ _('Esittelyteksti') }}</label>
+          <textarea class="form-control" id="bio" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="profile-pic">{{ _('Profiilikuva')
+            }}</label>
+          <input class="form-control" id="profile-pic" type="file" accept="image/*">
+        </div>
+        <button class="btn btn-primary" type="submit">{{ _('Tallenna profiili')
+          }}</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const profileForm = document.getElementById("profile-form");
+    const bioInput = document.getElementById("bio");
+    const fileInput = document.getElementById("profile-pic");
+    const previewContainer = document.getElementById("profile-pic-preview");
+
+    // Load current profile info
+    fetch("/users/auth/api/v2/user_profile")
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          bioInput.value = data.data.bio || "";
+          if (data.data.profile_picture) {
+            showPreview(data.data.profile_picture);
+          }
+        }
+      });
+
+    // Form submit handler
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      let base64Image = null;
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        base64Image = await toBase64(file);
+      }
+
+      const payload = {
+        bio: bioInput.value,
+        profile_picture: base64Image // null if no file selected
+      };
+
+      const res = await fetch("/users/auth/api/v2/user_profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.status === "success") {
+        alert("Profiili päivitetty!");
+        if (base64Image) {
+          // Show new preview immediately
+          const dataUrl = "data:image/png;base64," + base64Image;
+          showPreview(dataUrl);
+        }
+      } else {
+        alert("Virhe: " + (data.message || "Tuntematon virhe"));
+      }
+    });
+
+    // Helper: convert file -> base64
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    // Helper: show image preview
+    function showPreview(url) {
+      previewContainer.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = url;
+      img.className = "img-thumbnail";
+      img.style.maxWidth = "150px";
+      previewContainer.appendChild(img);
+    }
+  });
+</script>
+
+<!-- MFA QR Modal (unchanged) -->
+
+<!-- MFA QR Code Modal -->
+<div class="modal fade" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA QR Code') }}</h5>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p>{{
+          _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.')
+          }}</p>
+        <img class="img-fluid rounded mb-3" id="mfa-qr-code" src alt="MFA QR Code">
+        <input class="form-control" id="mfa-token-input" type="text"
+          placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="confirm-mfa-btn" type="button">{{
+          _('Vahvista MFA') }}</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+  $(function () {
+    $("#settings-tabs").tabs({
+      show: { effect: "fadeIn", duration: 200 },
+      hide: { effect: "fadeOut", duration: 200 }
+    });
+  });
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const form = document.getElementById('settings-form');
+    const spinner = document.getElementById('spinner');
+
+    const displayInput = document.getElementById('display_name');
+    const cityInput = document.getElementById('selected-city');
+    const languageSelect = document.getElementById('language');
+    const darkModeCheckbox = document.getElementById('dark_mode');
+    const newsletterCheckbox = document.getElementById('subscribe_newsletter');
+
+    // Fetch current settings
+    const res = await fetch("/users/auth/api/v2/settings");
+    const data = await res.json();
+    if (data.status === "success") {
+      const settings = data.settings || {};
+      displayInput.value = settings.display_name || '';
+      if (settings.city !== null) {
+        selectCity(settings.city);
+        //cityInput.value = settings.city || '';
+      }
+      languageSelect.value = settings.language || 'fi';
+      darkModeCheckbox.checked = settings.dark_mode || false;
+      newsletterCheckbox.checked = settings.subscribe_newsletter || false;
+    }
+
+    // Handle form submit
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      spinner.style.display = 'inline-block';
+
+      const payload = {
+        display_name: displayInput.value,
+        city: cityInput.value,
+        language: languageSelect.value,
+        dark_mode: darkModeCheckbox.checked,
+        subscribe_newsletter: newsletterCheckbox.checked
+      };
+
+      const response = await fetch("/users/auth/api/v2/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      spinner.style.display = 'none';
+
+      if (result.status === "success") {
+        alert(result.message);
+      } else {
+        alert("Virhe asetusten tallennuksessa.");
+      }
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const mfaBtn = document.getElementById("init-mfa-btn");
+    const addDeviceBtn = document.getElementById("add-mfa-device-btn");
+    const mfaModal = new bootstrap.Modal(document.getElementById('mfaModal'));
+    const qrImg = document.getElementById("mfa-qr-code");
+    const tokenInput = document.getElementById("mfa-token-input");
+    const confirmBtn = document.getElementById("confirm-mfa-btn");
+    const mfaStatus = document.getElementById("mfa-status");
+    const devicesList = document.getElementById("mfa-devices-list");
+
+    let currentStep = null;
+    let pendingSecret = null;
+
+    // Load existing MFA status & devices
+    async function loadMFAStatus() {
+      try {
+        const res = await fetch("/users/auth/api/v2/mfa_status");
+        const data = await res.json();
+        if (data.status === "enabled") {
+          mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
+          mfaBtn.style.display = "none";
+          addDeviceBtn.style.display = "inline-block";
+          devicesList.innerHTML = "";
+          data.devices.forEach(d => {
+            const li = document.createElement("li");
+            li.className = "list-group-item d-flex justify-content-between align-items-center";
+            li.textContent = `${d.name} (${d.created_at})`;
+            // Optional: add revoke button
+            const revokeBtn = document.createElement("button");
+            revokeBtn.className = "btn btn-sm btn-danger";
+            revokeBtn.textContent = "Poista";
+            revokeBtn.onclick = async () => {
+              if (confirm("Haluatko poistaa tämän laitteen?")) {
+                await fetch("/users/auth/api/v2/mfa_device_revoke", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ device_id: d.id })
+                });
+                loadMFAStatus();
+              }
+            };
+            li.appendChild(revokeBtn);
+            devicesList.appendChild(li);
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load MFA status", e);
+      }
+    }
+
+    loadMFAStatus();
+
+    // Initiate MFA (first setup or adding new device)
+    async function initiateMFA() {
+      try {
+        const res = await fetch("/users/auth/api/v2/mfa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step: "request_activation" })
+        });
+        const data = await res.json();
+        if (data.status === "pending") {
+          pendingSecret = data.secret;
+          qrImg.src = data.qr_code;
+          tokenInput.value = "";
+          mfaModal.show();
+        } else {
+          alert("MFA-initiaatio epäonnistui: " + (data.message || ""));
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Virhe MFA:n aloittamisessa");
+      }
+    }
+
+    mfaBtn.addEventListener("click", initiateMFA);
+    addDeviceBtn.addEventListener("click", initiateMFA);
+
+    // Verify MFA code
+    confirmBtn.addEventListener("click", async () => {
+      const token = tokenInput.value.trim();
+      if (!token) return alert("Syötä koodi!");
+
+      try {
+        const res = await fetch("/users/auth/api/v2/mfa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ step: "verify_code", code: token, secret: pendingSecret })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          mfaModal.hide();
+          loadMFAStatus();
+          alert(data.message);
+        } else {
+          alert("Virhe MFA:n vahvistamisessa: " + (data.message || ""));
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Virhe MFA:n vahvistamisessa");
+      }
+    });
+  });
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const profileForm = document.getElementById("profile-form");
+    const bioInput = document.getElementById("bio");
+    const fileInput = document.getElementById("profile-pic");
+
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      let base64Image = null;
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        base64Image = await toBase64(file); // helper fn below
+      }
+
+      const payload = {
+        bio: bioInput.value,
+        profile_picture: base64Image // null if no file chosen
+      };
+
+      const res = await fetch("/users/auth/api/v2/user_profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.status === "success") {
+        alert("Profiili päivitetty!");
+      } else {
+        alert("Virhe: " + (data.message || "Tuntematon virhe"));
+      }
+    });
+
+    // Convert file → base64 string
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file); // returns like "data:image/png;base64,..."
+        reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
+        reader.onerror = (error) => reject(error);
+      });
+    }
+  });
+</script>
 
 <script>
   // Paikkakunta dropdown functions
@@ -154,470 +533,6 @@
       a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
     }
   }
-</script>
-
-<style>
-  .dropdown {
-    display: inline-block;
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .dropdown-content {
-    display: none;
-    background: var(--input_background);
-    width: 100%;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: var(--box_shadow);
-    z-index: 1;
-    border-radius: 5px;
-    animation: fadeIn 0.3s ease-in-out;
-  }
-
-  .dropbtn {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border_color);
-    background: var(--background);
-    cursor: pointer;
-    border-radius: 5px;
-    text-align: left;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .dropbtn::after {
-    content: '▼';
-    font-size: 12px;
-    margin-left: 10px;
-    color: var(--icon_color);
-  }
-
-  .dropdown-content input {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-    border: none;
-    border-bottom: 1px solid var(--border_color);
-    background: var(--input_background);
-    outline: none;
-  }
-
-  .dropdown-content a {
-    color: var(--primary_text_color);
-    padding: 10px;
-    text-decoration: none;
-    display: block;
-    transition: background 0.2s ease;
-    border-bottom: 1px solid var(--border_color);
-  }
-
-  .dropdown-content a:hover {
-    background: var(--hover_bg_color);
-  }
-
-  /* Highlight selected city */
-  .dropdown-content a.selected {
-    background: var(--selected_bg_color);
-    /* Optional: define a color for the selected city */
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-</style>
-
-
-    <div class="mb-3">
-      <label for="language" class="form-label">{{ _('Kieli') }}</label>
-      <select class="form-select" id="language" name="language">
-        <option value="fi">{{ _('Suomi') }}</option>
-        <option value="en">{{ _('English') }}</option>
-      </select>
-    </div>
-
-    <div class="form-check mb-3">
-      <input type="checkbox" class="form-check-input" id="dark_mode" name="dark_mode">
-      <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
-    </div>
-
-    <div class="form-check mb-3">
-      <input type="checkbox" class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter">
-      <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
-    </div>
-
-    <button type="submit" class="btn btn-primary">
-      {{ _('Tallenna muutokset') }}
-      <div class="spinner" id="spinner"></div>
-    </button>
-    </form>
-
-    <!-- MFA Section -->
-    <div class="mb-3 mt-4">
-      <label for="mfa" class="form-label"><i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)')
-        }}</label>
-      <div id="mfa-section" class="d-flex flex-column gap-2">
-        <div id="mfa-status-container">
-          <span id="mfa-status" class="text-success">{{ _('MFA ei käytössä') }}</span>
-        </div>
-        <button type="button" class="btn btn-warning" id="init-mfa-btn">{{ _('Ota käyttöön MFA') }}</button>
-        <button type="button" class="btn btn-secondary" id="add-mfa-device-btn" style="display:none;">{{ _('Lisää uusi
-          laite') }}</button>
-        <ul id="mfa-devices-list" class="list-group mt-2"></ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profiili Tab -->
-  <div id="tab-profile">
-    <p>{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
-    <form id="profile-form">
-      <div class="mb-3">
-        <label for="bio" class="form-label">{{ _('Esittelyteksti') }}</label>
-        <textarea class="form-control" id="bio" rows="3"></textarea>
-      </div>
-      <div class="mb-3">
-        <label for="profile-pic" class="form-label">{{ _('Profiilikuva') }}</label>
-        <input type="file" class="form-control" id="profile-pic" accept="image/*">
-      </div>
-      <button type="submit" class="btn btn-primary">{{ _('Tallenna profiili') }}</button>
-    </form>
-  </div>
-</div>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const profileForm = document.getElementById("profile-form");
-    const bioInput = document.getElementById("bio");
-    const fileInput = document.getElementById("profile-pic");
-    const previewContainer = document.getElementById("profile-pic-preview");
-
-    // Load current profile info
-    fetch("/users/auth/api/v2/user_profile")
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "success") {
-                bioInput.value = data.data.bio || "";
-                if (data.data.profile_picture) {
-                    showPreview(data.data.profile_picture);
-                }
-            }
-        });
-
-    // Form submit handler
-    profileForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        let base64Image = null;
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            base64Image = await toBase64(file);
-        }
-
-        const payload = {
-            bio: bioInput.value,
-            profile_picture: base64Image // null if no file selected
-        };
-
-        const res = await fetch("/users/auth/api/v2/user_profile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (data.status === "success") {
-            alert("Profiili päivitetty!");
-            if (base64Image) {
-                // Show new preview immediately
-                const dataUrl = "data:image/png;base64," + base64Image;
-                showPreview(dataUrl);
-            }
-        } else {
-            alert("Virhe: " + (data.message || "Tuntematon virhe"));
-        }
-    });
-
-    // Helper: convert file -> base64
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    // Helper: show image preview
-    function showPreview(url) {
-        previewContainer.innerHTML = "";
-        const img = document.createElement("img");
-        img.src = url;
-        img.className = "img-thumbnail";
-        img.style.maxWidth = "150px";
-        previewContainer.appendChild(img);
-    }
-});
-</script>
-
-
-<!-- MFA QR Modal (unchanged) -->
-
-<!-- MFA QR Code Modal -->
-<div class="modal fade" id="mfaModal" tabindex="-1" aria-labelledby="mfaModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA QR Code') }}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-      </div>
-      <div class="modal-body text-center">
-        <p>{{ _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.') }}</p>
-        <img id="mfa-qr-code" src="" alt="MFA QR Code" class="img-fluid rounded mb-3">
-        <input type="text" id="mfa-token-input" class="form-control" placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="confirm-mfa-btn">{{ _('Vahvista MFA') }}</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-
-<script>
-  $(function () {
-  $("#settings-tabs").tabs({
-    show: { effect: "fadeIn", duration: 200 },
-    hide: { effect: "fadeOut", duration: 200 }
-  });
-});
-
-</script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-    const form = document.getElementById('settings-form');
-    const spinner = document.getElementById('spinner');
-
-    const displayInput = document.getElementById('display_name');
-    const cityInput = document.getElementById('selected-city');
-    const languageSelect = document.getElementById('language');
-    const darkModeCheckbox = document.getElementById('dark_mode');
-    const newsletterCheckbox = document.getElementById('subscribe_newsletter');
-
-    // Fetch current settings
-    const res = await fetch("/users/auth/api/v2/settings");
-    const data = await res.json();
-    if (data.status === "success") {
-        const settings = data.settings || {};
-        displayInput.value = settings.display_name || '';
-        if (settings.city !== null) {
-            selectCity(settings.city);
-            //cityInput.value = settings.city || '';
-        }
-        languageSelect.value = settings.language || 'fi';
-        darkModeCheckbox.checked = settings.dark_mode || false;
-        newsletterCheckbox.checked = settings.subscribe_newsletter || false;
-    }
-
-    // Handle form submit
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        spinner.style.display = 'inline-block';
-
-        const payload = {
-            display_name: displayInput.value,
-            city: cityInput.value,
-            language: languageSelect.value,
-            dark_mode: darkModeCheckbox.checked,
-            subscribe_newsletter: newsletterCheckbox.checked
-        };
-
-        const response = await fetch("/users/auth/api/v2/settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-        spinner.style.display = 'none';
-
-        if(result.status === "success") {
-            alert(result.message);
-        } else {
-            alert("Virhe asetusten tallennuksessa.");
-        }
-    });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const mfaBtn = document.getElementById("init-mfa-btn");
-    const addDeviceBtn = document.getElementById("add-mfa-device-btn");
-    const mfaModal = new bootstrap.Modal(document.getElementById('mfaModal'));
-    const qrImg = document.getElementById("mfa-qr-code");
-    const tokenInput = document.getElementById("mfa-token-input");
-    const confirmBtn = document.getElementById("confirm-mfa-btn");
-    const mfaStatus = document.getElementById("mfa-status");
-    const devicesList = document.getElementById("mfa-devices-list");
-
-    let currentStep = null;
-    let pendingSecret = null;
-
-    // Load existing MFA status & devices
-    async function loadMFAStatus() {
-        try {
-            const res = await fetch("/users/auth/api/v2/mfa_status");
-            const data = await res.json();
-            if (data.status === "enabled") {
-                mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
-                mfaBtn.style.display = "none";
-                addDeviceBtn.style.display = "inline-block";
-                devicesList.innerHTML = "";
-                data.devices.forEach(d => {
-                    const li = document.createElement("li");
-                    li.className = "list-group-item d-flex justify-content-between align-items-center";
-                    li.textContent = `${d.name} (${d.created_at})`;
-                    // Optional: add revoke button
-                    const revokeBtn = document.createElement("button");
-                    revokeBtn.className = "btn btn-sm btn-danger";
-                    revokeBtn.textContent = "Poista";
-                    revokeBtn.onclick = async () => {
-                        if(confirm("Haluatko poistaa tämän laitteen?")) {
-                            await fetch("/users/auth/api/v2/mfa_device_revoke", {
-                                method: "POST",
-                                headers: {"Content-Type": "application/json"},
-                                body: JSON.stringify({device_id: d.id})
-                            });
-                            loadMFAStatus();
-                        }
-                    };
-                    li.appendChild(revokeBtn);
-                    devicesList.appendChild(li);
-                });
-            }
-        } catch(e) {
-            console.error("Failed to load MFA status", e);
-        }
-    }
-
-    loadMFAStatus();
-
-    // Initiate MFA (first setup or adding new device)
-    async function initiateMFA() {
-        try {
-            const res = await fetch("/users/auth/api/v2/mfa", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ step: "request_activation" })
-            });
-            const data = await res.json();
-            if (data.status === "pending") {
-                pendingSecret = data.secret;
-                qrImg.src = data.qr_code;
-                tokenInput.value = "";
-                mfaModal.show();
-            } else {
-                alert("MFA-initiaatio epäonnistui: " + (data.message || ""));
-            }
-        } catch(e) {
-            console.error(e);
-            alert("Virhe MFA:n aloittamisessa");
-        }
-    }
-
-    mfaBtn.addEventListener("click", initiateMFA);
-    addDeviceBtn.addEventListener("click", initiateMFA);
-
-    // Verify MFA code
-    confirmBtn.addEventListener("click", async () => {
-        const token = tokenInput.value.trim();
-        if (!token) return alert("Syötä koodi!");
-
-        try {
-            const res = await fetch("/users/auth/api/v2/mfa", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ step: "verify_code", code: token, secret: pendingSecret })
-            });
-            const data = await res.json();
-            if (data.status === "success") {
-                mfaModal.hide();
-                loadMFAStatus();
-                alert(data.message);
-            } else {
-                alert("Virhe MFA:n vahvistamisessa: " + (data.message || ""));
-            }
-        } catch(e) {
-            console.error(e);
-            alert("Virhe MFA:n vahvistamisessa");
-        }
-    });
-});
-
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const profileForm = document.getElementById("profile-form");
-    const bioInput = document.getElementById("bio");
-    const fileInput = document.getElementById("profile-pic");
-
-    profileForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        let base64Image = null;
-
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            base64Image = await toBase64(file); // helper fn below
-        }
-
-        const payload = {
-            bio: bioInput.value,
-            profile_picture: base64Image // null if no file chosen
-        };
-
-        const res = await fetch("/users/auth/api/v2/user_profile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (data.status === "success") {
-            alert("Profiili päivitetty!");
-        } else {
-            alert("Virhe: " + (data.message || "Tuntematon virhe"));
-        }
-    });
-
-    // Convert file → base64 string
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file); // returns like "data:image/png;base64,..."
-            reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
-            reader.onerror = (error) => reject(error);
-        });
-    }
-});
 </script>
 
 {% endblock %}

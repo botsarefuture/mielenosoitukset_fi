@@ -1463,12 +1463,19 @@ def init_routes(app):
         
         today = date.today()
         
+        noindex_nofollow = False
+
         
         if month == 0 and year == 0:
             month = today.month
             year = today.year
             return redirect(url_for("calendar_month_view", year=year, month=month))
         
+        if year < 2000 or year > 2100:
+            noindex_nofollow = True
+            
+            
+            
         if year is None or month is None:
             year, month = today.year, today.month
 
@@ -1505,7 +1512,7 @@ def init_routes(app):
 
         
         template_name = "demo_views/calendar_grid_old.html" if old_view else "demo_views/calendar_grid.html"
-
+        
         return render_template(
             template_name,
             year=year,
@@ -1516,7 +1523,8 @@ def init_routes(app):
             prev_year=prev_year,
             prev_month=prev_month,
             next_year=next_year,
-            next_month=next_month
+            next_month=next_month,
+            noindex_nofollow=noindex_nofollow
         )
 
     # ============================
@@ -1527,6 +1535,11 @@ def init_routes(app):
         # Haetaan kaikki demonstraatiot
         demonstrations = list(demonstrations_collection.find(DEMO_FILTER))
 
+
+        noindex_nofollow = False
+        if year < 2000 or year > 2100:
+            noindex_nofollow = True
+            
         # Valmistellaan tietorakenne: month -> {weeks, days}
         year_demos = {}
         cal = calendar.Calendar(firstweekday=0)  # Monday
@@ -1556,7 +1569,8 @@ def init_routes(app):
             "demo_views/calendar_year.html",
             year=year,
             month_names=month_names,
-            year_demos=year_demos
+            year_demos=year_demos,
+            noindex_nofollow=noindex_nofollow
         )
 
     @app.context_processor
@@ -1613,3 +1627,8 @@ def init_routes(app):
     @app.route("/pride-nakyvaksi")
     def pride_nakyvaksi():
         return render_template("pride-nakyvaksi/index.html")
+
+    
+    @app.route("/upcoming/translations/")
+    def upcoming_translations():
+        return render_template("upcoming/translations.html")

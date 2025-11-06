@@ -120,6 +120,7 @@ def create_app() -> Flask:
         admin_bp,
         admin_user_bp,
         admin_demo_bp,
+        admin_case_bp,
         admin_demo_api_bp,
         admin_org_bp,
         admin_recu_demo_bp,
@@ -142,6 +143,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_org_bp)
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(admin_kampanja_bp)
+    #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")

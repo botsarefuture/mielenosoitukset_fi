@@ -1,5 +1,5 @@
-{% extends "base.html" %} 
-{% block title %}{{ _('Tietoa sivustosta - Mielenosoitukset.fi') }}{% endblock %} 
+{% extends "base.html" %}
+{% block title %}{{ _('Tietoa sivustosta - Mielenosoitukset.fi') }}{% endblock %}
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
@@ -13,41 +13,43 @@
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
 
-{% endblock %} 
+{% endblock %}
 
 {% block scripts %}
 <script>
-// Add scroll animations
-const observerOptions = {
-  threshold: 0.1,
-  rootMargin: '0px 0px -50px 0px'
-};
+  // Add scroll animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
 
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('animate-fade-in-up');
-    }
-  });
-}, observerOptions);
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate-fade-in-up');
+      }
+    });
+  }, observerOptions);
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.section-card, .campaign-cta, .stat-card').forEach(el => {
-    observer.observe(el);
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.section-card, .campaign-cta, .stat-card').forEach(el => {
+      observer.observe(el);
+    });
   });
-});
 </script>
 {% endblock %}
 
 {% block content %}
 <div class="container-main-content">
-  
+
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-content">
       <h1>{{ _('Tietoa Mielenosoitukset.fi -sivustosta') }}</h1>
       <p class="lead">
-        {{ _('Riippumaton alusta, joka yhdistää kaikki Suomen mielenosoitukset yhteen paikkaan. Edistämme vapaata mielipiteenilmaisua ja helpotamme osallistumista yhteiskunnallisiin tapahtumiin.') }}
+        {{ _('Olemme riippumaton, voittoa tavoittelematon alusta, joka yhdistää kaikki Suomen mielenosoitukset yhteen
+        paikkaan. Edistämme vapaata mielipiteenilmaisua ja helpotamme osallistumista yhteiskunnallisiin tapahtumiin.')
+        }}
       </p>
     </div>
   </section>
@@ -60,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         {{ _('Kampanja 2026') }}
       </div>
       <h2>{{ _('Tule mukaan valtakunnalliseen kampanjaan!') }}</h2>
-      <p>{{ _('Tule mukaan levittämään tietoa mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.') }}</p>
+      <p>{{ _('Tule mukaan levittämään tietoa mielenosoitukset.fi:stä kaikkialle Suomeen. Rahoita kampanjaa, levitä
+        markkinointimateriaaleja, tule vapaaehtoiseksi tai jaa tietoa sosiaalisessa mediassa.') }}</p>
       <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
         <a class="button button-outline" href="/kampanja">
           <i class="fa-solid fa-rocket"></i> {{ _('Tutustu kampanjaan') }}
@@ -90,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   <!-- Main Content Grid -->
   <div class="cards-grid">
-    
+
     <!-- Main About Section -->
     <div>
       <section class="section-card">
@@ -99,100 +102,165 @@ document.addEventListener('DOMContentLoaded', () => {
           {{ _('Mikä on Mielenosoitukset.fi?') }}
         </h2>
         <p>
-          {{ _('Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.') }}
+          {{ _('Mielenosoitukset.fi on sivusto, joka kokoaa yhteen kaikki Suomessa järjestettävät mielenosoitukset ja
+          yhteiskunnalliset tapahtumat. Tavoitteenamme on tarjota kattava ja ajankohtainen tietolähde, jossa voit
+          seurata tulevia tapahtumia ja ilmoittaa omasta mielenosoituksestasi helposti ja nopeasti.') }}
         </p>
         <p>
-          {{ _('Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa kansalaisia löytämään tietoa, osallistumaan aktiivisesti yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.') }}
+          {{ _('Sivustomme toimii riippumattomana alustana, joka tarjoaa avoimen ja neutraalin paikan kaikille
+          mielenosoituksille ja protesteille. Meidän tavoitteemme on auttaa löytämään tietoa, osallistumaan aktiivisesti
+          yhteiskunnallisiin tapahtumiin ja edistämään vapaata mielipiteenilmaisua.') }}
         </p>
       </section>
 
-      <section class="section-card">
+      <section class="section-card special-h3">
         <h2>
           <i class="fa-solid fa-plus-circle"></i>
           {{ _('Kuinka ilmoitan mielenosoituksesta?') }}
         </h2>
+
         <p>
-          {{ _('Voit ilmoittaa oman mielenosoituksesi täyttämällä') }} 
-          <a href="{{ url_for('submit') }}">{{ _('ilmoituslomakkeen') }}</a>.
-          {{ _('Varmista, että kaikki tiedot ovat ajankohtaisia ja oikein, jotta muut osallistujat saavat oikeaa ja täydellistä tietoa tapahtumastasi.') }}
+          {{ _('Huomasitko, ettei jokin mielenosoitus vielä ole sivustolla? Voit ilmoittaa siitä itse! Se on
+          helppoa! Täytä vain') }}
+          <a href="{{ url_for('submit') }}">{{ _('ilmoituslomake') }}</a>.
+          {{ _('Varmista, että kaikki tiedot ovat oikein ja ajankohtaisia, jotta osallistujat saavat täydellistä
+          tietoa.') }}
         </p>
+
         <p>
-          {{ _('Lomake on nopea täyttää ja tapahtumasi näkyy sivustolla heti hyväksynnän jälkeen. Kannustamme kaikkia järjestäjiä ilmoittamaan tapahtumistaan mahdollisimman aikaisin.') }}
+          {{ _('Lomakkeen täyttäminen vie vain hetken, ja mielenosoitus näkyy sivustolla heti hyväksynnän jälkeen. Mitä
+          aikaisemmin ilmoitat, sitä helpommin muut löytävät tapahtuman!') }}
         </p>
+
+        <h3>{{ _('Voinko ilmoittaa jonkun muun kuin itseni järjestämän mielenosoituksen?') }}</h3>
+        <p>
+          {{ _('Totta kai! Kannustamme kaikkia ilmoittamaan mielenosoituksista, jotta sivusto pysyy mahdollisimman
+          kattavana ja ajantasaisena.') }}
+        </p>
+
+        <h3>{{ _('Kauanko hyväksyntä kestää?') }}</h3>
+        <div class="approval-time">
+          <p>{{ _('Hyväksyntä kestää yleensä noin yhdestä tunnista 48 tuntiin. Ethän huolestu, jos hyväksynnässä menee kauemmin. Mikäli ilmoitus tarvitsee käsitellä nopeasti, voit ottaa yhteyttä!') }}</p>
+        </div>
       </section>
+
+      <style>
+        /* H3-otsikot */
+        .special-h3 h3 {
+          font-family: 'Inter', sans-serif;
+          font-weight: 600;
+          font-size: 1.25rem;
+          color: #ff3366;
+          /* pinkki pääväri */
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          border-left: 4px solid #ff99c8;
+          /* söpö korostus vasemmalla */
+          padding-left: 0.75rem;
+          transition: color 0.3s ease;
+        }
+
+        .special-h3 h3:hover {
+          color: #ff6699;
+          cursor: default;
+        }
+
+     
+
+      </style>
+
+      </div>
+      <!-- Sidebar -->
+      <div>
+        <section class="section-card">
+          <h2>
+            <i class="fa-solid fa-users"></i>
+            {{ _('Kuka ylläpitää sivustoa?') }}
+          </h2>
+          <p>
+            {{ _('Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole
+            sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan,
+            joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.') }}
+          </p>
+        </section>
+
+        <section class="section-card">
+          <h2>
+            <i class="fa-solid fa-shield-alt"></i>
+            {{ _('Yksityisyys ja evästeet') }}
+          </h2>
+          <p>
+            {{ _('Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun.
+            Lisätietoa evästeiden käytöstä ja tietosuojasta löydät') }}
+            <a href="{{ url_for('privacy') }}">{{ _('yksityisyydensuojakäytännöstämme') }}</a>.
+          </p>
+        </section>
+      </div>
     </div>
 
-    <!-- Sidebar -->
-    <div>
-      <section class="section-card">
-        <h2>
-          <i class="fa-solid fa-users"></i>
-          {{ _('Kuka ylläpitää sivustoa?') }}
-        </h2>
-        <p>
-          {{ _('Mielenosoitukset.fi ylläpidetään riippumattomana projektina vapaaehtoisten toimesta. Emme ole sidoksissa mihinkään poliittiseen puolueeseen tai organisaatioon. Pyrimme tarjoamaan neutraalin alustan, joka tukee monimuotoista ja vapaata mielipiteenilmaisua kaikille.') }}
-        </p>
-      </section>
+    <section class="section-card">
+      <h2>
+        <i class="fa-solid fa-hand-holding-dollar"></i>
+        {{ _('Miten alusta rahoitetaan?') }}
+      </h2>
+      <p>
+        {{ _('Mielenosoitukset.fi pyörii voittoa tavoittelemattomana ja riippumattomana projektina. Alustan infrakulut,
+        kuten palvelinvuokrat ja verkkotunnus, rahoitetaan yksityishenkilöiden tuella – ihmisten, jotka haluavat tukea
+        avointa ja vapaata mielipiteenilmaisua.') }}
+      </p>
+      <p>
+        {{ _('Lisätietoja aiheesta voi pyytää') }} <a href="">{{ _('ottamalla yhteyttä') }}</a></p>
+      </p>
+    </section>
 
-      <section class="section-card">
-        <h2>
-          <i class="fa-solid fa-shield-alt"></i>
-          {{ _('Yksityisyys ja evästeet') }}
-        </h2>
-        <p>
-          {{ _('Käytämme evästeitä parantaaksemme käyttäjäkokemusta ja tarjotaksemme sinulle paremman palvelun. Lisätietoa evästeiden käytöstä ja tietosuojasta löydät') }} 
-          <a href="{{ url_for('privacy') }}">{{ _('yksityisyydensuojakäytännöstämme') }}</a>.
-        </p>
-      </section>
+
+    <!-- Contact Section -->
+    <section class="section-card">
+      <h2>
+        <i class="fa-solid fa-envelope"></i>
+        {{ _('Yhteystiedot') }}
+      </h2>
+      <p>
+        {{ _('Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit käyttää alla olevia
+        yhteystapoja:') }}
+      </p>
+
+      <div class="cards-grid two-column" style="margin-top: 2rem;">
+        <a href="mailto:tuki@mielenosoitukset.fi" class="contact-card">
+          <div class="contact-icon">
+            <i class="fa-solid fa-envelope"></i>
+          </div>
+          <div class="contact-info">
+            <h3>{{ _('Sähköposti') }}</h3>
+            <p>tuki@mielenosoitukset.fi</p>
+          </div>
+        </a>
+
+        <a href="{{ url_for('contact') }}" class="contact-card">
+          <div class="contact-icon">
+            <i class="fa-solid fa-comment"></i>
+          </div>
+          <div class="contact-info">
+            <h3>{{ _('Yhteydenottolomake') }}</h3>
+            <p>{{ _('Lähetä viesti suoraan') }}</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <div style="text-align: center; margin: 3rem 0;">
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a class="button button-primary" href="{{ url_for('demonstrations') }}">
+          <i class="fa-solid fa-list"></i> {{ _('Selaa mielenosoituksia') }}
+        </a>
+        <a class="button button-secondary" href="{{ url_for('submit') }}">
+          <i class="fa-solid fa-plus"></i> {{ _('Ilmoita tapahtuma') }}
+        </a>
+        <a class="button button-primary" href="/kampanja">
+          <i class="fa-solid fa-bullhorn"></i> {{ _('Lue lisää kampanjasta') }}
+        </a>
+      </div>
     </div>
   </div>
-
-  <!-- Contact Section -->
-  <section class="section-card">
-    <h2>
-      <i class="fa-solid fa-envelope"></i>
-      {{ _('Yhteystiedot') }}
-    </h2>
-    <p>
-      {{ _('Jos sinulla on kysyttävää, ehdotuksia tai haluat ottaa yhteyttä ylläpitäjiin, voit käyttää alla olevia yhteystapoja:') }}
-    </p>
-    
-    <div class="cards-grid two-column" style="margin-top: 2rem;">
-      <a href="mailto:tuki@mielenosoitukset.fi" class="contact-card">
-        <div class="contact-icon">
-          <i class="fa-solid fa-envelope"></i>
-        </div>
-        <div class="contact-info">
-          <h3>{{ _('Sähköposti') }}</h3>
-          <p>tuki@mielenosoitukset.fi</p>
-        </div>
-      </a>
-      
-      <a href="{{ url_for('contact') }}" class="contact-card">
-        <div class="contact-icon">
-          <i class="fa-solid fa-comment"></i>
-        </div>
-        <div class="contact-info">
-          <h3>{{ _('Yhteydenottolomake') }}</h3>
-          <p>{{ _('Lähetä viesti suoraan') }}</p>
-        </div>
-      </a>
-    </div>
-  </section>
-
-  <!-- Call to Action -->
-  <div style="text-align: center; margin: 3rem 0;">
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-      <a class="button button-primary" href="{{ url_for('demonstrations') }}">
-        <i class="fa-solid fa-list"></i> {{ _('Selaa mielenosoituksia') }}
-      </a>
-      <a class="button button-secondary" href="{{ url_for('submit') }}">
-        <i class="fa-solid fa-plus"></i> {{ _('Ilmoita tapahtuma') }}
-      </a>
-      <a class="button button-primary" href="/kampanja">
-        <i class="fa-solid fa-bullhorn"></i> {{ _('Lue lisää kampanjasta') }}
-      </a>
-    </div>
-  </div>
-</div>
-{% endblock %}
+  {% endblock %}

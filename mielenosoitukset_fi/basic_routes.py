@@ -1085,13 +1085,115 @@ def init_routes(app):
             return redirect(url_for("index"))
         
         _org = Organization.from_dict(_org)
+        
+        if not _org.verified:
+            _org.fill_url = url_for("fill", org_id=org_id)
        
         return render_template(
             "organizations/details.html",
             org=_org,
             org_id=str(org_id)
         )
+        
+    @app.route("/organization/<org_id>/save_suggestion", methods=["POST"])
+    def save_suggestion(org_id):
+        _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+        if _org is None:
+            flash_message("Organisaatiota ei löytynyt.", "error")
+            return redirect(url_for("index"))
 
+        suggestion = {
+            "organization_id": ObjectId(org_id),
+            "timestamp": datetime.utcnow(),
+            "created_at": datetime.utcnow(),
+            "fields": {},
+            "meta": {
+                "ip": request.remote_addr,
+                "user_agent": request.headers.get("User-Agent"),
+                "submitter_email": request.form.get("email")
+            },
+            "status": {
+                "state": "pending",
+                "updated_at": datetime.utcnow(),
+                "updated_by": None,
+                "notes": None
+            },
+            "audit_log": [
+                {
+                    "action": "created",
+                    "timestamp": datetime.utcnow(),
+                    "user": None
+                }
+            ]
+        }
+
+
+        # Normal fields
+        for field in ["name", "description", "website", "email"]:
+            val = request.form.get(field)
+            if val and val.strip():
+                suggestion["fields"][field] = val.strip()
+
+        # Socials
+        platforms = request.form.getlist("social_platform[]")
+        urls = request.form.getlist("social_url[]")
+        socials = {}
+        for platform, url in zip(platforms, urls):
+            if platform.strip() and url.strip():
+                socials[platform.strip()] = url.strip()
+        if socials:
+            suggestion["fields"]["social_media_links"] = socials
+
+        # Save to DB
+        result = mongo.org_edit_suggestions.insert_one(suggestion)
+        suggestion_id = str(result.inserted_id)
+
+        # --- 💌 Email notifications ---
+        review_link = url_for(
+            "admin_org.review_suggestion",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            _external=True
+        )
+
+        ctx_admin = {
+            "org_name": _org.get("name"),
+            "org_id": str(org_id),
+            "fields": suggestion["fields"],
+            "review_link": review_link,
+            "submitted_at": suggestion["timestamp"].strftime("%Y-%m-%d %H:%M UTC"),
+            "ip": suggestion["meta"]["ip"],
+            "user_agent": suggestion["meta"]["user_agent"],
+        }
+
+        email_sender.queue_email(
+            template_name="admin_org_suggestion_notification.html",
+            subject=f"Uusi organisaatiotietojen muokkauspyyntö: {_org.get('name')}",
+            recipients=["tuki@mielenosoitukset.fi"],
+            context=ctx_admin,
+        )
+
+      
+
+        flash_message("Kiitos! Ehdotuksesi on tallennettu ja se tarkistetaan pian 💖", "success")
+        return redirect(url_for("org", org_id=org_id))
+
+        
+    @app.route("/organization/<org_id>/fill")
+    def fill(org_id):
+        _org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
+        if _org is None:
+            flash_message("Organisaatiota ei löytynyt.", "error")
+            return redirect(url_for("index"))
+        
+        _org = Organization.from_dict(_org)
+       
+        return render_template(
+            "organizations/fill_info.html",
+            organization=_org,
+            org_id=str(org_id)
+        )
+        
 
     @app.route("/tag/<tag_name>")
     def tag_detail(tag_name):
@@ -1361,12 +1463,19 @@ def init_routes(app):
         
         today = date.today()
         
+        noindex_nofollow = False
+
         
         if month == 0 and year == 0:
             month = today.month
             year = today.year
             return redirect(url_for("calendar_month_view", year=year, month=month))
         
+        if year < 2000 or year > 2100:
+            noindex_nofollow = True
+            
+            
+            
         if year is None or month is None:
             year, month = today.year, today.month
 
@@ -1403,7 +1512,7 @@ def init_routes(app):
 
         
         template_name = "demo_views/calendar_grid_old.html" if old_view else "demo_views/calendar_grid.html"
-
+        
         return render_template(
             template_name,
             year=year,
@@ -1414,7 +1523,8 @@ def init_routes(app):
             prev_year=prev_year,
             prev_month=prev_month,
             next_year=next_year,
-            next_month=next_month
+            next_month=next_month,
+            noindex_nofollow=noindex_nofollow
         )
 
     # ============================
@@ -1425,6 +1535,11 @@ def init_routes(app):
         # Haetaan kaikki demonstraatiot
         demonstrations = list(demonstrations_collection.find(DEMO_FILTER))
 
+
+        noindex_nofollow = False
+        if year < 2000 or year > 2100:
+            noindex_nofollow = True
+            
         # Valmistellaan tietorakenne: month -> {weeks, days}
         year_demos = {}
         cal = calendar.Calendar(firstweekday=0)  # Monday
@@ -1454,7 +1569,8 @@ def init_routes(app):
             "demo_views/calendar_year.html",
             year=year,
             month_names=month_names,
-            year_demos=year_demos
+            year_demos=year_demos,
+            noindex_nofollow=noindex_nofollow
         )
 
     @app.context_processor
@@ -1511,3 +1627,8 @@ def init_routes(app):
     @app.route("/pride-nakyvaksi")
     def pride_nakyvaksi():
         return render_template("pride-nakyvaksi/index.html")
+
+    
+    @app.route("/upcoming/translations/")
+    def upcoming_translations():
+        return render_template("upcoming/translations.html")

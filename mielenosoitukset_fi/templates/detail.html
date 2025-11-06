@@ -17,7 +17,8 @@ demo.get('city', 'Tuntematon') ~
 ('. ' ~ formatted_date if formatted_date else '') }}
 {% endblock %}
 
-{% block og_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}{% endblock %}
+{% block og_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png',
+_external=True) }}{% endblock %}
 
 {% block twitter_title %}
 {{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}
@@ -27,7 +28,8 @@ demo.get('city', 'Tuntematon') ~
 {{ demo.get('description', 'Mielenosoituksen tiedot.') }}
 {% endblock %}
 
-{% block twitter_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~ '.png', _external=True) }}{% endblock %}
+{% block twitter_image %}{{ demo.get('preview_image') or url_for('static', filename='demo_preview/' ~ demo['_id'] ~
+'.png', _external=True) }}{% endblock %}
 
 {% block meta %}
 <!-- Event Meta -->
@@ -47,13 +49,15 @@ demo.get('city', 'Tuntematon') ~
 
 <!-- Social / Card Meta (Twitter + Mastodon-friendly Open Graph) -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}" />
+<meta name="twitter:title"
+  content="{{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}" />
 <meta name="twitter:description" content="{{ demo.get('description', 'Mielenosoituksen tiedot.') }}" />
-<meta name="twitter:image" content="{{ demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True) }}" />
+<meta name="twitter:image"
+  content="{{ demo.get('preview_image') or url_for('screenshot', demo_id=demo['_id'], _external=True) }}" />
 
 
 {# Mastodon friendly: provide rel="me" and og:see_also when a Mastodon profile is configured.
-   Template accepts either demo['mastodon'] or a global mastodon_profile variable. #}
+Template accepts either demo['mastodon'] or a global mastodon_profile variable. #}
 {% set _mastodon_profile = demo.get('mastodon') or "https://mastodon.social/@mielenosoitukset" %}
 {% if _mastodon_profile %}
 <link rel="me" href="{{ _mastodon_profile }}" />
@@ -751,6 +755,225 @@ demo.get('city', 'Tuntematon') ~
     }
   }
 </style>
+
+
+<style>
+  .help-us-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    background: var(--color-card-bg);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem 2.5rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+  }
+
+
+
+  .help-us-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: var(--color-gradient-secondary);
+  }
+
+  .help-us-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+    border-color: var(--color-secondary);
+  }
+
+  .help-us-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+  }
+
+  .help-us-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-secondary);
+    font-size: 1.75rem;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .help-us-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--color-secondary);
+    opacity: 0.2;
+  }
+
+  .help-us-text {
+    flex: 1;
+  }
+
+  .help-us-text h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .help-us-text p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .help-us-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 2rem;
+    background: var(--color-gradient-secondary);
+    color: white;
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: var(--transition);
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+
+  .help-us-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+  }
+
+  .help-us-button:active {
+    transform: translateY(-1px);
+  }
+
+  .help-us-button i {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    .help-us-banner {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 2rem 1.5rem;
+      gap: 1.5rem;
+    }
+
+    .help-us-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .help-us-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 1.5rem;
+    }
+
+    .help-us-button {
+      width: 100%;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .help-us-text h3 {
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Dark mode enhancements */
+  @media (prefers-color-scheme: dark) {
+    .help-us-banner {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(234, 88, 12, 0.05) 100%);
+    }
+
+    .help-us-icon {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%);
+    }
+  }
+
+
+  /* Inline | http://127.0.0.1:5002/demonstration/6908f16a6b220963bcbc28d8 */
+
+  .help-us-title {
+    display: flex;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
+    margin-bottom: 5px;
+  }
+
+  /* Inline | http://127.0.0.1:5002/demonstration/6908f16a6b220963bcbc28d8 */
+
+  .help-us-icon {
+    /* width: 60px; */
+    /* height: 60px; */
+    width: 30px;
+    height: 30px;
+    margin-right: 20px;
+    margin-bottom: 20px;
+    margin: 10px 15px 10px 0;
+  }
+
+  .help-us-text h3 {
+    /* margin: 0 0 0.5rem 0; */
+    margin: auto;
+  }
+
+
+  .help-us-banner a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .help-us-banner a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: var(--transition);
+  }
+
+  .help-us-banner a:hover {
+    color: var(--color-secondary);
+  }
+
+  .help-us-banner a:hover::after {
+    background: var(--color-secondary);
+    transform: scaleX(1);
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -975,6 +1198,33 @@ demo.get('city', 'Tuntematon') ~
         </h3>
 
         <div class="organizer-contact">
+          {% if (not org.website or not org.email or not org.url) and org.fill_url %}
+          <div class="help-us-banner">
+            <div class="help-us-content">
+
+              <div class="help-us-text">
+                <div class="help-us-title">
+                  <div class="help-us-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                  </div>
+                  <h3>{{ _('Puuttuvia tietoja') }}</h3>
+                </div>
+                <p>{{ _('Voit auttaa meitä') }} <a class="" href="{{ org.fill_url }}">{{ _('täydentämällä') }}</a> {{
+                  _('puuttuvia tietoja.') }}</p>
+              </div>
+            </div>
+          </div>
+
+          {% endif %}
+          {#
+          {% if (not org.website or not org.email or not org.url) and not org.fill_url %}
+          <div class="info-alert">
+            <i class="fa-solid fa-circle-info"></i>
+            Emme voi näyttää kaikkia tietoja, koska osa niistä puuttuu. Jos sinulla on lisää tietoja tästä organisaatiosta, voit ottaa yhteyttä
+          </div>
+          {% endif %}
+          #}
+
           {% if org.website %}
           <div class="contact-item">
             <i class="fa-solid fa-globe"></i>

@@ -127,33 +127,34 @@
   {% if tasks %}
   <div class="card-body p-2">
 
-    <!-- Next task (Bootstrap card inside card) -->
     {% set next_task = tasks[0] %}
     <div class="card mb-2 border rounded bg-body-tertiary">
       <div class="card-body p-2 d-flex justify-content-between align-items-center">
-        <a href="{{ url_for('admin_demo.edit_demo', demo_id=next_task._id) }}" class="text-decoration-none fw-bold flex-grow-1 me-2 text-truncate">
+        <a href="{{ next_task.link }}" class="text-decoration-none fw-bold flex-grow-1 me-2 text-truncate">          {% if next_task.type == 'demo' %}
+            <i class="fas fa-bullhorn text-primary me-1"></i>
+          {% elif next_task.type == 'org_suggestion' %}
+            <i class="fas fa-building text-warning me-1"></i>
+          {% endif %}
           {{ next_task.title }}
         </a>
-        <div class="btn-group btn-group-sm" role="group">
-          <button type="button" class="btn btn-success" onclick="confirmAction('approve', '{{ next_task._id }}')">
-            <i class="fas fa-check"></i>
-          </button>
-          <button type="button" class="btn btn-danger" onclick="confirmAction('deny', '{{ next_task._id }}')">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
+        <span class="badge bg-secondary text-uppercase">{{ next_task.status }}</span>
       </div>
     </div>
 
-    <!-- Collapsible full task list -->
+    <!-- Collapsible list -->
     <div class="collapse" id="allTasksList">
       <ul class="list-group list-group-flush small">
         {% for task in tasks %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="{{ url_for('admin_demo.edit_demo', demo_id=task._id) }}" class="text-decoration-none text-truncate" style="max-width: 70%;">
+          <a href="{{ task.link }}" class="text-decoration-none text-truncate" style="max-width: 75%;">
+            {% if task.type == 'demo' %}
+              <i class="fas fa-bullhorn text-primary me-1"></i>
+            {% elif task.type == 'org_suggestion' %}
+              <i class="fas fa-building text-warning me-1"></i>
+            {% endif %}
             {{ task.title }}
           </a>
-          <span class="badge bg-secondary rounded-pill">{{ loop.index }}</span>
+          <span class="badge bg-secondary">{{ task.status }}</span>
         </li>
         {% endfor %}
       </ul>
@@ -167,6 +168,7 @@
   </div>
   {% endif %}
 </div>
+
 
 
 
@@ -377,6 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
 
 <!-- Confirmation modal -->
+
 <div class="modal fade" id="taskConfirmModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">

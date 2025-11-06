@@ -1,362 +1,246 @@
 {% extends "base.html" %}
-
 {% block title %}
-{{ user.displayname if user.displayname else user.username }}'n Profiili
+{{ user.displayname or user.username }}'n Profiili
 {% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/user/profile.css') }}">
+
 <style>
-  :root {
-    --color-bg: light-dark(#f5f7fa, #0d1117);
-    --color-card-bg: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.05));
-    --color-text: light-dark(#222, #e6edf3);
-    --color-text-secondary: light-dark(#555, #a0aec0);
-    --color-primary: light-dark(#2563eb, #4ea1ff);
-    --color-primary-dark: light-dark(#1e40af, #0056b3);
-    --glass-blur: blur(18px);
-  }
+:root {
+  --color-bg: light-dark(#f5f7fa, #0d1117);
+  --color-card-bg: light-dark(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.05));
+  --color-text: light-dark(#222, #e6edf3);
+  --color-text-secondary: light-dark(#555, #a0aec0);
+  --color-primary: light-dark(#2563eb, #4ea1ff);
+  --color-primary-dark: light-dark(#1e40af, #0056b3);
+  --glass-blur: blur(18px);
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.profile-container {
+  background: var(--color-card-bg);
+  border-radius: 1.5em;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 2em 1.5em;
+  backdrop-filter: var(--glass-blur);
+  animation: fadeIn 0.6s ease-out;
+}
+.profile-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: #fff;
+  border-radius: 1.3em;
+  padding: 2.2em 1.2em;
+  margin-bottom: 2em;
+}
+.profile-img {
+  width: 130px; height: 130px; object-fit: cover; border-radius: 50%;
+  border: 4px solid #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  background: #fff; transition: transform 0.3s ease;
+}
+.profile-img:hover { transform: scale(1.05) rotate(2deg); }
+.user-name { font-size: 2.4em; font-weight: 900; text-shadow: 0 3px 14px rgba(0,0,0,0.25); margin-bottom: 0.3em; }
+.badge-admin { background: rgba(255,255,255,0.15); color: #fff; font-weight: 700; border-radius: 2em; padding: 0.35em 1em; font-size: 0.9em; backdrop-filter: blur(6px); display: inline-block; margin-bottom: 0.6em; }
+.stat-number { font-size: 1.4em; font-weight: 800; color: #fff; }
+.stat-label { font-size: 0.9em; color: #d1d5db; }
+.org-container {
+  background: var(--color-card-bg); border-radius: 1em; padding: 0.9em 1.2em;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.08); text-align: center;
+  transition: transform 0.25s ease;
+}
+.org-container:hover { transform: translateY(-3px) scale(1.02); }
+.org-link { color: var(--color-primary); text-decoration: none; font-weight: 600; }
+.org-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+.btn-custom { border-radius: 2em; font-weight: 700; transition: all 0.25s ease; }
+.btn-follow { background: var(--color-primary); color: #fff; }
+.btn-follow:hover { background: var(--color-primary-dark); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-  body {
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-
-  .profile-container {
-    background: var(--color-card-bg);
-    border-radius: 1.5em;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    padding: 2em 1.5em;
-    backdrop-filter: var(--glass-blur);
-    animation: fadeIn 0.6s ease-out;
-  }
-
-  .profile-header {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: #fff;
-    border-radius: 1.3em;
-    padding: 2.2em 1.2em;
-    margin-bottom: 2em;
-  }
-
-  .profile-img {
-    width: 130px;
-    height: 130px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid #fff;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-    background: #fff;
-    transition: transform 0.3s ease;
-  }
-
-  .profile-img:hover {
-    transform: scale(1.05) rotate(2deg);
-  }
-
-  .user-name {
-    font-size: 2.4em;
-    font-weight: 900;
-    text-shadow: 0 3px 14px rgba(0, 0, 0, 0.25);
-    margin-bottom: 0.3em;
-    letter-spacing: 0.02em;
-  }
-
-  .badge-admin {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    font-weight: 700;
-    border-radius: 2em;
-    padding: 0.35em 1em;
-    font-size: 0.9em;
-    backdrop-filter: blur(6px);
-    display: inline-block;
-    margin-bottom: 0.6em;
-  }
-
-  .stat-number {
-    font-size: 1.4em;
-    font-weight: 800;
-    color: #fff;
-  }
-
-  .stat-label {
-    font-size: 0.9em;
-    color: #d1d5db;
-  }
-
-  .org-container {
-    background: var(--color-card-bg);
-    border-radius: 1em;
-    padding: 0.9em 1.2em;
-    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
-    text-align: center;
-    transition: transform 0.25s ease;
-  }
-
-  .org-container:hover {
-    transform: translateY(-3px) scale(1.02);
-  }
-
-  .org-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  .org-link:hover {
-    color: var(--color-primary-dark);
-    text-decoration: underline;
-  }
-
-  .btn-custom {
-    border-radius: 2em;
-    font-weight: 700;
-    transition: all 0.25s ease;
-  }
-
-  .btn-follow {
-    background: var(--color-primary);
-    color: #fff;
-  }
-
-  .btn-follow:hover {
-    background: var(--color-primary-dark);
-  }
-
-  .btn-unfollow {
-    background: transparent;
-    color: #fff;
-    border: 2px solid #fff;
-  }
-
-  .btn-unfollow:hover {
-    background: #fff;
-    color: var(--color-primary-dark);
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(15px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+/* Modal dark/light handling */
+.share-modal { border-radius: 1.2em; transition: background-color 0.3s, color 0.3s; }
+html:not(.dark) .share-modal { background: #fff; color: #222; }
+html.dark .share-modal { background: #1c1c1f; color: #f0f0f0; }
+html.dark .share-modal .form-control, html.dark .share-modal textarea {
+  background: #2a2a2e; color: #f0f0f0; border-color: #444;
+}
+html.dark .share-modal .btn-close { filter: invert(1) brightness(200%); }
 </style>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareProfileModal" tabindex="-1" aria-labelledby="shareProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content share-modal">
+      <div class="modal-header">
+        <h5 class="modal-title" id="shareProfileModalLabel">{{ _('Jaa profiilisi muille') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ _('Haluatko, että kaverit ja seuraajat löytävät sinut helpommin? Lähetä heille linkkisi ja valmiiksi kirjoitettu viesti:') }}</p>
+        <div class="mb-3">
+          <label class="form-label"><strong>{{ _('Profiililinkki') }}</strong></label>
+          <input type="text" class="form-control" readonly 
+            value="{{ url_for('users.profile.profile', username=current_user.username, _external=True) }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label"><strong>{{ _('Valmis viesti') }}</strong></label>
+          <textarea class="form-control" rows="3" readonly>
+Hei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä: https://mielenosoitukset.fi/users/profile/{{ current_user.username }}
+Voimme myös lisätä toisemme ystäviksi!
+          </textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+        <button class="btn btn-primary" id="copyShareTextBtn">
+          <i class="fa-solid fa-copy"></i> {{ _('Kopioi linkki ja viesti') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="container my-4">
   <div class="profile-container">
     <div class="profile-header">
       <div class="row align-items-center">
-        <!-- Profile picture -->
         <div class="col-md-3 text-center mb-3 mb-md-0">
           <img src="{{ user.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
-            alt="{{ user.displayname if user.displayname else user.username }}n profiilikuva"
-            class="profile-img img-fluid"
-            onerror="this.onerror=null; this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg';">
+               class="profile-img" alt="{{ user.displayname or user.username }}n profiilikuva"
+               onerror="this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
         </div>
-
-        <!-- User info -->
         <div class="col-md-9 text-center text-md-start">
-          <h1 class="user-name">{{ user.displayname if user.displayname else user.username }}</h1>
-
+          <h1 class="user-name">{{ user.displayname or user.username }}</h1>
           {% if user.global_admin %}
-          <span class="badge-admin">{{ _('Järjestelmävalvoja') }}</span>
+            <span class="badge-admin">{{ _('Järjestelmävalvoja') }}</span>
           {% endif %}
 
-          <!-- Stats -->
           <div class="row justify-content-center my-3">
-            <div class="col-4 col-md-3 text-center">
-              <div class="stat-number">{{ user.posts_count or 0 }}</div>
-              <div class="stat-label">{{ _('Postaukset') }}</div>
-            </div>
-            <div class="col-4 col-md-3 text-center">
-              <div class="stat-number">{{ user.followers_count or 0 }}</div>
-              <div class="stat-label">{{ _('Seuraajat') }}</div>
-            </div>
-            <div class="col-4 col-md-3 text-center">
-              <div class="stat-number">{{ user.following_count or 0 }}</div>
-              <div class="stat-label">{{ _('Seuratut') }}</div>
-            </div>
+            <div class="col-4 col-md-3 text-center"><div class="stat-number">{{ user.posts_count or 0 }}</div><div class="stat-label">{{ _('Postaukset') }}</div></div>
+            <div class="col-4 col-md-3 text-center"><div class="stat-number">{{ user.followers_count or 0 }}</div><div class="stat-label">{{ _('Seuraajat') }}</div></div>
+            <div class="col-4 col-md-3 text-center"><div class="stat-number">{{ user.following_count or 0 }}</div><div class="stat-label">{{ _('Seuratut') }}</div></div>
           </div>
 
-          <!-- Invite stuff -->
-{% if current_user.username == user.username %}
-<div class="mt-5 p-4" style="background: var(--color-card-bg); border-radius: 1.2em; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-  <h2 class="h5 mb-3">{{ _('Jaa profiilisi muille') }}</h2>
-  <p>{{ _('Haluatko, että kaverit ja seuraajat löytävät sinut helpommin? Lähetä heille linkkisi ja valmiiksi kirjoitettu viesti:') }}</p>
-  
-  <div class="mb-3">
-    <label class="form-label"><strong>{{ _('Profiililinkki') }}</strong></label>
-    <input type="text" class="form-control" readonly value="{{ url_for("users.profile.profile", username=current_user.username, _external=True) }}">
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label"><strong>{{ _('Valmis viesti') }}</strong></label>
-    <textarea class="form-control" rows="3" readonly>
-Hei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä: {{ request.url }}
-Voimme myös lisätä toisemme ystäviksi!
-    </textarea>
-  </div>
-
-  <button class="btn btn-primary btn-custom" onclick="navigator.clipboard.writeText('{{ request.url }}\n\nHei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä. Voimme myös lisätä toisemme ystäviksi!').then(()=>alert('Linkki ja viesti kopioitu leikepöydälle!'))">
-    {{ _('Kopioi linkki ja viesti') }}
-  </button>
-</div>
-{% endif %}
-
-          <!-- Organizations -->
-          {% if user.organizations %}
-          <h2 class="h5 mt-3">{{ _('Organisaatiot') }}</h2>
-          <div class="row g-3">
-            {% for org in user.organizations %}
-            <div class="col-6 col-md-4">
-              <div class="org-container">
-                <p><strong>{{ get_org_name(org.org_id) }}</strong></p>
-                <a href="{{ url_for('org', org_id=org.org_id) }}" class="org-link">{{ _('Tutustu organisaatioon') }}</a>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-
-          <!-- Action buttons container -->
-          <div id="action-buttons-container"
-            class="mt-4 d-flex flex-wrap gap-2 justify-content-center justify-content-md-start"
-            data-username="{{ user.username }}">
-            <!-- JS injects follow/friend/message buttons here -->
-          </div>
+          <div id="action-buttons-container" class="mt-4 d-flex flex-wrap gap-2 justify-content-center justify-content-md-start"
+               data-username="{{ user.username }}"></div>
         </div>
       </div>
     </div>
 
-    <!-- User Posts -->
     <div class="mt-4">
       <h2 class="h4">{{ _('Postaukset') }}</h2>
       {% if user.posts %}
-      <div class="list-group">
-        {% for post in user.posts %}
-        <a href="{{ url_for('posts.view', post_id=post.id) }}" class="list-group-item list-group-item-action">
-          <strong>{{ post.title }}</strong>
-          <small class="text-muted d-block">{{ post.created_at.strftime('%d.%m.%Y') }}</small>
-        </a>
-        {% endfor %}
-      </div>
+        <div class="list-group">
+          {% for post in user.posts %}
+            <a href="{{ url_for('posts.view', post_id=post.id) }}" class="list-group-item list-group-item-action">
+              <strong>{{ post.title }}</strong>
+              <small class="text-muted d-block">{{ post.created_at.strftime('%d.%m.%Y') }}</small>
+            </a>
+          {% endfor %}
+        </div>
       {% else %}
-      <p class="text-muted">{{ _('Tällä käyttäjällä ei ole vielä postauksia.') }}</p>
+        <p class="text-muted">{{ _('Tällä käyttäjällä ei ole vielä postauksia.') }}</p>
       {% endif %}
     </div>
   </div>
+</div>
 
-</div><script>
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("action-buttons-container");
   if (!container) return;
 
   const username = container.dataset.username;
   const isSelf = "{{ current_user.username }}" === username;
-  const logged_in = {{ current_user.is_authenticated | tojson }};
-  const currentUrl = window.location.href;
+  const loggedIn = {{ current_user.is_authenticated | tojson }};
 
   if (isSelf) {
-    container.innerHTML = `<a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-light btn-custom">{{ _('Muokkaa profiilia') }}</a>`;
+    container.innerHTML = `
+      <a href="{{ url_for('users.profile.edit_profile') }}" class="btn btn-light btn-custom">
+        {{ _('Muokkaa profiilia') }}
+      </a>
+      <button class="btn btn-primary btn-custom" data-bs-toggle="modal" data-bs-target="#shareProfileModal">
+        <i class="fa-solid fa-share-nodes"></i> {{ _('Jaa profiilisi') }}
+      </button>
+    `;
     return;
   }
 
   async function updateButtons() {
     try {
-      // Initial placeholder buttons
-      let html = `
+      container.innerHTML = `
         <button id="follow-btn" class="btn btn-follow btn-custom me-2">Seuraa</button>
         <button id="send-request-btn" class="btn btn-light btn-custom me-2">Lisää ystäväksi</button>
         <button id="friend-btn" class="btn btn-light btn-custom me-2">Ystävä</button>
       `;
-      container.innerHTML = html;
-
       const followBtn = document.getElementById("follow-btn");
       const sendBtn = document.getElementById("send-request-btn");
       const friendBtn = document.getElementById("friend-btn");
 
-      if (!logged_in) {
+      if (!loggedIn) {
         [followBtn, sendBtn, friendBtn].forEach(btn => {
-          btn.setAttribute("title", "Sinun tulee kirjautua sisään käyttääksesi tätä");
+          btn.title = "Sinun tulee kirjautua sisään käyttääksesi tätä";
           btn.addEventListener("click", () => {
-            const width = 500;
-            const height = 600;
-            const left = (screen.width / 2) - (width / 2);
-            const top = (screen.height / 2) - (height / 2);
-
+            const w = 500, h = 600;
+            const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
             window.open(
-                "{{ url_for('users.auth.login') }}?next=" + encodeURIComponent(currentUrl) + "&popup=1",
-                "LoginPopup",
-                `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`
+              "{{ url_for('users.auth.login') }}?next=" + encodeURIComponent(location.href) + "&popup=1",
+              "LoginPopup",
+              `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
             );
+          });
         });
-
-        });
-        return; // done for logged-out users
+        return;
       }
 
-      // Logged-in: fetch friend & follow state
       const [friendRes, followRes] = await Promise.all([
         fetch(`/users/profile/api/friend_state/?username=${encodeURIComponent(username)}`),
         fetch(`/users/profile/api/is_following/?username=${encodeURIComponent(username)}`)
       ]);
+      const friendData = await friendRes.json(), followData = await followRes.json();
 
-      const friendData = await friendRes.json();
-      const followData = await followRes.json();
-
-      // Update follow button
+      // Follow
       followBtn.textContent = followData.is_following ? "Lopeta seuraaminen" : "Seuraa";
       followBtn.onclick = async () => {
         await fetch(`/users/profile/api/${followData.is_following ? 'unfollow' : 'follow'}/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
         });
         updateButtons();
       };
 
-      // Update friend button & send request button based on friend_state
+      // Friend logic
       switch (friendData.friend_state) {
         case "friends":
           friendBtn.textContent = "Poista ystävä";
           friendBtn.onclick = async () => {
             await fetch("/users/profile/api/remove_friend/", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ username })
             });
             updateButtons();
           };
-          sendBtn.style.display = "none";
+          sendBtn.remove();
           break;
 
         case "incoming_request":
-          sendBtn.style.display = "none";
+          sendBtn.remove();
           friendBtn.textContent = "Hyväksy pyyntö";
           friendBtn.onclick = async () => {
             await fetch("/users/profile/api/accept_friend_request/", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ username })
             });
             updateButtons();
           };
-
-          // Add a reject button
           const rejectBtn = document.createElement("button");
           rejectBtn.className = "btn btn-danger btn-custom me-2";
           rejectBtn.textContent = "Hylkää pyyntö";
           rejectBtn.onclick = async () => {
             await fetch("/users/profile/api/reject_friend_request/", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ username })
             });
             updateButtons();
@@ -367,22 +251,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         case "outgoing_request":
           friendBtn.textContent = "Ystäväpyyntö lähetetty";
           friendBtn.disabled = true;
-          sendBtn.style.display = "none";
+          sendBtn.remove();
           break;
 
-        case "none":
         default:
+          friendBtn.remove();
           sendBtn.textContent = "Lisää ystäväksi";
           sendBtn.onclick = async () => {
             await fetch("/users/profile/api/send_friend_request/", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
+              method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ username })
             });
             updateButtons();
           };
-          friendBtn.style.display = "none";
-          break;
       }
     } catch (err) {
       console.error("Error updating buttons:", err);
@@ -391,7 +272,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   updateButtons();
 });
+
+document.addEventListener("click", (e) => {
+  if (e.target.id === "copyShareTextBtn") {
+    const text = `Hei! Tule seuraamaan profiiliani Mielenosoitukset.fi:ssä: https://mielenosoitukset.fi/users/profile/{{ current_user.username }}\nVoimme myös lisätä toisemme ystäviksi!`;
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.createElement("div");
+      toast.className = "position-fixed bottom-0 end-0 p-3";
+      toast.innerHTML = `
+        <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+          <div class="d-flex">
+            <div class="toast-body">{{ _('Linkki ja viesti kopioitu leikepöydälle!') }}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    });
+  }
+});
 </script>
-
-
 {% endblock %}

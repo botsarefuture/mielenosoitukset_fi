@@ -893,3 +893,7 @@ header .container {
   margin: 0 auto;
   padding: 0 15px;
 }
+/*
+.modal-backdrop { z-index: 1000001 !important; }
+.modal { z-index: 1000002 !important; }
+*/

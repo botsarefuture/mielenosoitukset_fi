@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <title>Uusi organisaatiotietojen muokkauspyyntö</title>
+  <style>
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #fff7fb;
+      color: #333;
+      line-height: 1.6;
+      margin: 0;
+      padding: 2rem;
+    }
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 1.5rem 2rem;
+      max-width: 640px;
+      margin: auto;
+    }
+    h1 {
+      color: #e83e8c;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    a.button {
+      display: inline-block;
+      background: #e83e8c;
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    ul {
+      background: #fff0f5;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      list-style-type: none;
+    }
+    li {
+      margin: 0.2rem 0;
+    }
+    .meta {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Uusi organisaatiotietojen muokkauspyyntö 💌</h1>
+
+    <p>Uusi muokkauspyyntö on lähetetty organisaatiolle <strong>{{ org_name }}</strong>.</p>
+
+    <h3>Ehdotetut muutokset:</h3>
+    <ul>
+      {% for field, value in fields.items() %}
+      <li><strong>{{ field }}:</strong> {{ value }}</li>
+      {% endfor %}
+    </ul>
+
+    <p>
+      Voit tarkastella ja hyväksyä muutoksen seuraavasta linkistä:
+    </p>
+
+    <p style="text-align:center;">
+      <a href="{{ review_link }}" class="button">Avaa ehdotuksen tarkastelu</a>
+    </p>
+
+    <div class="meta">
+      <p><strong>IP:</strong> {{ ip }}</p>
+      <p><strong>User-Agent:</strong> {{ user_agent }}</p>
+      <p><strong>Lähetetty:</strong> {{ submitted_at }}</p>
+    </div>
+  </div>
+</body>
+</html>

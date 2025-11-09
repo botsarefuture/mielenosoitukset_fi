@@ -1001,17 +1001,13 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   </section>
 
   <!-- Cover Image -->
-  {% if demo.cover_picture and not demo.cover_picture == 'None' %}
+  {% if demo.cover_picture and demo.cover_picture != 'None' and demo.cover_source != 'auto' %}
+ 
   <section class="demo-cover animate-fade-in-up">
-    <img src="{{ demo.cover_picture }}" alt="Cover Photo">
+    <img src="{{ demo.cover_picture }}" alt="{{ demo.title }}">
   </section>
   {% endif %}
 
-  {% if demo['img'] and not demo['img'] == 'None' %}
-  <section class="demo-cover animate-fade-in-up">
-    <img src="{{ demo['img'] }}" alt="{{ demo['title'] }}">
-  </section>
-  {% endif %}
 
   <!-- Action Buttons -->
   <div class="action-buttons animate-fade-in-up">
@@ -1220,7 +1216,8 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
           {% if (not org.website or not org.email or not org.url) and not org.fill_url %}
           <div class="info-alert">
             <i class="fa-solid fa-circle-info"></i>
-            Emme voi näyttää kaikkia tietoja, koska osa niistä puuttuu. Jos sinulla on lisää tietoja tästä organisaatiosta, voit ottaa yhteyttä
+            Emme voi näyttää kaikkia tietoja, koska osa niistä puuttuu. Jos sinulla on lisää tietoja tästä
+            organisaatiosta, voit ottaa yhteyttä
           </div>
           {% endif %}
           #}

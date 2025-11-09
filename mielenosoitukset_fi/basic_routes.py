@@ -96,6 +96,7 @@ def format_demo_for_api(demo):
         except Exception:
             logger.exception(f"Error formatting time: {t}")
             return t
+        
     def _get_demo_img(demo):
         """
         Get the demonstration image URL.
@@ -1534,7 +1535,6 @@ def init_routes(app):
     def calendar_year_view(year):
         # Haetaan kaikki demonstraatiot
         demonstrations = list(demonstrations_collection.find(DEMO_FILTER))
-
 
         noindex_nofollow = False
         if year < 2000 or year > 2100:

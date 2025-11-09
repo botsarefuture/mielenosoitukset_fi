@@ -1033,3 +1033,47 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(0,0,0,0.15);
 }
+
+.demo-card-location-row {
+  display: flex;
+  max-width: 100%;
+  width: 100%;
+  justify-content: center; /* optional, keeps spacing nice */
+}
+
+
+.demo-card-date-time {
+  display: flex;
+  max-width: 100%;
+  width: 100%;
+  justify-content: center; /* optional, keeps spacing nice */
+}
+
+.demo-card-date-time span {
+  flex: 1 1 50%; /* grow, shrink, base width */
+  max-width: 60%; /* allows one to stretch up to 55% */
+  min-width: 40%; /* allows the other to shrink to 45% */
+  text-align: center;
+}
+
+.demo-card-location-row span {
+  flex: 1 1 50%; /* grow, shrink, base width */
+  max-width: 60%; /* allows one to stretch up to 55% */
+  min-width: 40%; /* allows the other to shrink to 45% */
+  text-align: center;
+}
+
+.demo-card-date-time span {
+  width: 50%;
+  max-width: 50%;
+  text-align: center;
+}
+
+.demo-card-tags {
+text-align: center;
+justify-content: center;
+}
+
+.demo-card-tag {
+  text-align: center;
+}

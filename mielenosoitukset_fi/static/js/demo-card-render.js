@@ -11,7 +11,7 @@ function renderDemoCards(demoData) {
   const template = document.getElementById('demo-card-template');
 
   const todayDate = new Date();
-  todayDate.setHours(0,0,0,0); // strip time
+  todayDate.setHours(0, 0, 0, 0); // strip time
 
   demoData.forEach(demo => {
     const clone = template.content.cloneNode(true);
@@ -19,7 +19,7 @@ function renderDemoCards(demoData) {
 
     card.dataset.demoId = demo._id;
     card.querySelector('.demo-card-title span').textContent = demo.title;
-    card.querySelector('.demo-card-image img').src = demo.preview_image;
+    card.querySelector('.demo-card-image img').src = demo.cover_picture;
     card.querySelector('.demo-card-date').append(demo.formatted_date);
 
     // Compute start & end display
@@ -27,20 +27,21 @@ function renderDemoCards(demoData) {
     const demoEndTime = demo.end_time ? format_time(demo.end_time) : null;
 
     // Combine for display
-    const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : demoStartTime;
+    const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : `${demoStartTime} alkaen`;
 
     // Set in card
-    card.querySelector('.demo-card-time').textContent = timeText;
+    card.querySelector('.demo-card-time').append(timeText);
 
     card.querySelector('.demo-card-city').append(demo.city);
     card.querySelector('.demo-card-address').append(demo.address);
-  // Add badges container
+    
+    // Add badges container
     const badgeContainer = card.querySelector('.demo-card-badges');
     badgeContainer.innerHTML = ''; // clear existing
 
     // 🌟 "Tänään" badge if demo is today
     const demoDateObj = new Date(demo.date);
-    demoDateObj.setHours(0,0,0,0); // strip time
+    demoDateObj.setHours(0, 0, 0, 0); // strip time
     if (demoDateObj.getTime() === todayDate.getTime()) {
       const todayBadge = document.createElement('span');
       todayBadge.className = 'demo-badge today-badge';
@@ -122,7 +123,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
   const loadMoreBtn = document.getElementById("load-more-btn");
   const demosGrid = document.getElementById("demos-grid");
   try {
-     // Show loading state
+    // Show loading state
     if (loadMoreBtn) {
       loadMoreBtn.disabled = true;
       loadMoreBtn.textContent = 'Ladataan…'; // temporary text

@@ -160,6 +160,7 @@ class Demonstration(BaseModel):
         description: str = None,
         _dont_override: bool = False,
         _rejected: bool = False,
+        cover_source: str = None,
     ):
         """
         Initialize a new demonstration event.
@@ -294,7 +295,6 @@ class Demonstration(BaseModel):
                 pass
         
 
-        self.img = img
 
         # EXTERNAL LINKS
         self.facebook = facebook
@@ -304,6 +304,7 @@ class Demonstration(BaseModel):
         self._id = _id or ObjectId()  # Unique ID for the demonstration
         self.running_number = running_number
         self.slug = slug
+        
         self.tags = tags or []  # Tags for the demonstration
 
         self.created_datetime = created_datetime or None
@@ -331,20 +332,37 @@ class Demonstration(BaseModel):
         ]
 
         self.in_past = in_past  # Whether or not in past
-        
-        # FIXED: 19.2.2025
-        # Old logic was to hide all the demonstrations that are in the past
-        # This is no longer the case, as we want to keep past demonstrations visible
-        # If issues arise, this might be reverted        
-        #if self.in_past == True:
-            #self.hide = True
-            #self.save_flag = True
 
         self.aliases = aliases or []
         self.alias_fix()
 
+        # IMAGES
         self.preview_image = preview_image
+        self.img = img
+        self.cover_picture = cover_picture
+        self.cover_source = cover_source
         
+        if not self.cover_picture:
+
+            if self.img:
+                # user-chosen image takes priority
+                self.cover_picture = self.img
+                self.cover_source = "user"
+                
+            elif self.preview_image:
+                # fallback to auto-generated preview
+                self.cover_picture = self.preview_image
+                self.cover_source = "automatic"
+
+            else:
+                self.cover_picture = None
+                self.cover_source = None
+                
+        else:
+            self.cover_picture = cover_picture
+            self.cover_source = cover_source
+            
+
         def build_url(self):
             return '/static/demo_preview/' + str(self._id) + '.png'
     
@@ -355,7 +373,6 @@ class Demonstration(BaseModel):
             self.save_flag = True # Save the demonstration to update the preview image
         
         self.merged_into = merged_into  # Assign new parameter
-        self.cover_picture = cover_picture
 
         if self.save_flag and not self._dont_override:  # Save the demonstration if the save_flag is set
             self.save()  # Save the demonstration
@@ -647,11 +664,12 @@ class Demonstration(BaseModel):
         ValueError
             If the demonstration with the provided id/number/slug is not found.
         """
-        # Try ObjectId lookup
+        # Try ObjectId lookup68b9748683ca07b64b6cd87e
         try:
             obj_id = ObjectId(demo_id)
             data = DB["demonstrations"].find_one({"_id": obj_id})
             if data:
+                logger.info("Found")
                 return cls.from_dict(data)
 
         except Exception as e:
@@ -714,6 +732,7 @@ class Demonstration(BaseModel):
             img=get("img"),
             preview_image=get("preview_image"),
             cover_picture=get("cover_picture"),
+            cover_source=get("cover_source"),
 
             # Organizers & Tags
             organizers=get("organizers"),
@@ -723,17 +742,22 @@ class Demonstration(BaseModel):
             # Recurrence & Event Type
             recurs=get("recurs", False),
             event_type=get("event_type"),
+            parent=get("parent"),
+
 
             # Meta & System Fields
             approved=get("approved", False),
+            _rejected=get("rejected", False),
+            
             hide=get("hide", False),
             in_past=get("in_past", False),
-            parent=get("parent"),
+            
             created_datetime=get("created_datetime"),
             merged_into=get("merged_into"),
-            _id=get("_id"),
-            _rejected=get("rejected", False),
+            
+            _id=get("_id"),            
             running_number=get("running_number"),
+            slug=get("slug"),
         )
 
 

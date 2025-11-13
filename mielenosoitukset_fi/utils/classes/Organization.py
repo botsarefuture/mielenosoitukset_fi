@@ -23,7 +23,7 @@ class Organization(BaseEntity):
         verified: bool = False,
         _id: ObjectId = None,
         invitations: List[dict] = None,
-        fill_url: str = None,          # ✨ added param
+        fill_url: str = None,
     ):
         super().__init__(name, email, website, _id)
         self.description        = description
@@ -129,4 +129,5 @@ class Organization(BaseEntity):
         org = cls(**data)
         if not org.verified and org._id:
             org.fill_url = f"/organization/{org._id}/fill"
+            
         return org

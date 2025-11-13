@@ -764,7 +764,30 @@ def init_routes(app):
                         ),
                         "ip": request.remote_addr,
                     }
+                    )
+                
+            # new case from report
+            try:
+                Case.create_new(
+                    case_type="demo_error_report",
+                    demo_id=ObjectId(request.form.get("demo_id")) if _type == "demonstration" else None,
+                    submitter_id=current_user._id if current_user.is_authenticated else None,
+                    meta={"urgency": "low", "report_type": _type, "error": error},
+                    error_report={
+                        "error": error,
+                        "demo_id": ObjectId(request.form.get("demo_id")),
+                        "date": datetime.now(),
+                        "user": (
+                            ObjectId(current_user._id)
+                            if current_user.is_authenticated
+                            else None
+                        ),
+                        "ip": request.remote_addr,
+                    }
                 )
+                
+            except Exception as e:
+                logger.exception("Failed to create case from error report: %s", e)
 
         else:
             mongo.reports.insert_one(
@@ -922,57 +945,120 @@ def init_routes(app):
             matches_date = False
 
         return matches_search and matches_city and matches_location and matches_date
+    from flask import make_response
+
+    def _force_reload():
+        # if theres fore_reload in the url, force cache bypass
+        if "force_reload" in request.args:
+            return True
+        return False
 
     @app.route("/demonstration/<demo_id>")
     def demonstration_detail(demo_id):
         """
-        Display details of a specific demonstration and save map coordinates if available.
-        """
-        #result = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
-        demo = Demonstration.load_by_id(demo_id)
+        Display demonstration detail with a cached HTML response and a reliable X-Cache header.
 
-        if not demo:
+        The view uses the app cache manually so we can detect cache hits and set the
+        X-Cache response header accordingly. Caching is bypassed when:
+        - there is a query string
+        - the current_user has VIEW_DEMO permission (admins)
+        """
+        # Load demonstration and permission checks first (so we don't serve cached 401/404)
+        demo_obj = Demonstration.load_by_id(demo_id)
+        if not demo_obj:
             abort(404)
-      
-        if not demo:
-            flash_message(
-                _("Mielenosoitusta ei löytynyt tai sitä ei ole vielä hyväksytty."),
-                "error",
-            )
-            return redirect(url_for("demonstrations"))
-        
-        if not demo.approved and not current_user.has_permission("VIEW_DEMO") or demo.hide and not current_user.has_permission("VIEW_DEMO"):
+
+        if (not demo_obj.approved and not current_user.has_permission("VIEW_DEMO")) or \
+            (demo_obj.hide and not current_user.has_permission("VIEW_DEMO")):
             abort(401)
-            
-        if not demo.longitude:
-            address_query = f"{demo.address}, {demo.city}"
-            api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
-            try:
-                response = requests.get(api_url)
-                response.raise_for_status()
-                geocode_data = response.json()
-                if geocode_data:
-                    latitude = geocode_data[0].get("lat", "None")
-                    longitude = geocode_data[0].get("lon", "None")
-                    if latitude and longitude:
-                        demo.latitude = latitude
-                        demo.longitude = longitude
-                        demo.save()
-            except (requests.exceptions.RequestException, IndexError):
-                ...
-        _demo = copy.copy(demo)
-        demo = Demonstration.to_dict(demo, True)
-        log_demo_view(
-            _demo._id, current_user._id if current_user.is_authenticated else None
+
+        # Determine whether to bypass cache
+        bypass_cache = bool(request.query_string) or (
+            current_user.is_authenticated and current_user.has_permission("VIEW_DEMO")
         )
 
+        # Build a cache key that is stable for public users; include locale so localized pages differ
+        locale = session.get("locale", "")
+        cache_key = f"demonstration_detail:v1:{demo_id}:locale={locale}"
+
+        # Try to serve from cache if allowed
+        if not bypass_cache and hasattr(cache, "get"):
+            cached = cache.get(cache_key)
+            if cached:
+                # still log the view for analytics even when serving cached HTML
+                try:
+                    log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
+                except Exception:
+                    logger.exception("Failed to log demo view for cached response")
+
+
+                resp = Response(cached["data"], status=cached.get("status", 200), mimetype=cached.get("mimetype"))
+                # restore headers (skip over Content-Length to allow Flask to recalc)
+                for k, v in cached.get("headers", []):
+                    if k.lower() == "content-length":
+                        continue
+                    resp.headers[k] = v
+                resp.headers["X-Cache"] = "HIT (cached)"
+                return resp
+
+        # Not cached (or bypassed) — ensure we have coordinates if needed
+        if not demo_obj.longitude:
+            try:
+                fetch_geocode_data(demo_obj)
+            except Exception:
+                logger.exception("Error fetching geocode for demo %s", demo_id)
+
+        # Prepare response
+        _demo = copy.copy(demo_obj)
+        demo = Demonstration.to_dict(demo_obj, True)
+        try:
+            log_demo_view(_demo._id, current_user._id if current_user.is_authenticated else None)
+        except Exception:
+            logger.exception("Failed to log demo view")
+
+        toistuvuus = ""
         if _demo.recurs:
             toistuvuus = generate_demo_sentence(demo)
 
-        else:
-            toistuvuus = ""
-        
-        return render_template("detail.html", demo=demo, toistuvuus=toistuvuus)
+        response = make_response(render_template("detail.html", demo=demo, toistuvuus=toistuvuus))
+        response.headers["X-Cache"] = "MISS"
+
+        # Store response in cache for future requests (if available)
+        if not bypass_cache and hasattr(cache, "set"):
+            try:
+                # Capture headers as list of tuples
+                headers_snapshot = list(response.headers.items())
+                cache.set(
+                    cache_key,
+                    {
+                        "data": response.get_data(),
+                        "mimetype": response.mimetype,
+                        "status": response.status_code,
+                        "headers": headers_snapshot,
+                    },
+                    timeout=60 * 5,
+                )
+            except Exception:
+                logger.exception("Failed to cache demonstration_detail for %s", demo_id)
+
+        return response
+
+    def fetch_geocode_data(demo):
+        address_query = f"{demo.address}, {demo.city}"
+        api_url = f"https://geocode.maps.co/search?q={address_query}&api_key=66df12ce96495339674278ivnc82595"
+        try:
+            response = requests.get(api_url)
+            response.raise_for_status()
+            geocode_data = response.json()
+            if geocode_data:
+                latitude = geocode_data[0].get("lat", "None")
+                longitude = geocode_data[0].get("lon", "None")
+                if latitude and longitude:
+                    demo.latitude = latitude
+                    demo.longitude = longitude
+                    demo.save()
+        except (requests.exceptions.RequestException, IndexError):
+            ...
 
     @app.route("/demonstration/<demo_id>/some", methods=["GET"])
     @permission_required("VIEW_DEMO")
@@ -1631,6 +1717,7 @@ def init_routes(app):
         malicious_reports_collection.insert_one(doc)
 
     import re
+    from flask import Response
 
     EMAIL_REGEX = r"^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$"
 

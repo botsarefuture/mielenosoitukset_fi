@@ -2,11 +2,18 @@
 
 **Note:** This changelog is **not fully up-to-date**. Some recent features, fixes, or changes may not be reflected here.
 
----
+## UNRELEASED
 
-Got it! Here's the updated entry with the correct version:
+### Added
+* `/robots.txt` route to control web crawler access.
 
----
+### Changed
+* Moved all migrations to a dedicated `utils/migrations/` folder.
+* Improved analytics rollup function to support single execution via `run_once` parameter.
+* Now running analytics rollups via a external systemd service for better reliability.
+* Introduced a new `Case` class for managing admin support cases with action logs and running numbers.
+* New admin template for displaying all cases with improved UI/UX.
+* Added `merge_fields` method in `Demonstration` class for future enhancements.
 
 ## v4.0.0-beta.1 – *Robots Control Edition* 🌟
 

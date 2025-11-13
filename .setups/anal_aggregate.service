@@ -16,8 +16,7 @@ Restart=on-failure
 RestartSec=5
 KillMode=mixed
 TimeoutStopSec=30
-StandardOutput=syslog
-StandardError=syslog
+# StandardOutput and StandardError removed — journald is used by default
 SyslogIdentifier=run_aggregate
 
 [Install]

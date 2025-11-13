@@ -1,0 +1,24 @@
+[Unit]
+Description=Aggregate rollup service for mielenosoitukset.fi
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/mielenosoitukset.fi
+# Optional: override interval with environment or systemd drop-in
+Environment=ROLLUP_INTERVAL_S=300
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -u /var/www/mielenosoitukset.fi/run_aggregate.py
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=run_aggregate
+
+[Install]
+WantedBy=multi-user.target

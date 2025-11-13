@@ -45,8 +45,19 @@ def set_last_seen_id(obj_id: ObjectId):
         upsert=True
     )
 
-def rollup_events():
+def rollup_events(run_once: bool = False):
+    """
+    Process incoming analytics events.
+
+    Parameters
+    ----------
+    run_once : bool
+        If True, process currently available events once and return.
+        If False (default), run as a continuous poller (existing behaviour).
+    """
     last_seen_id = get_last_seen_id()
+
+    # Single iteration or continuous loop depending on run_once
     while True:
         try:
             new_events = list(
@@ -93,9 +104,17 @@ def rollup_events():
                     last_seen_id = new_events[-1]["_id"]
                     set_last_seen_id(last_seen_id)
 
-        except Exception as e:
-            pass  # silently ignore errors; optionally log them if needed
+        except Exception:
+            # silently ignore errors; optionally log them if needed
+            pass
 
+        # If caller requested only a single run, exit now
+        if run_once:
+            # print with yellow color: run once set 
+            print("Run once set, breaking.")
+            break
+
+        # Wait until next poll interval (existing behaviour)
         sleep_time = POLL_INTERVAL - (time.time() % POLL_INTERVAL)
         with tqdm(total=int(sleep_time), desc="⏳ Waiting for next roll...", bar_format='{l_bar}{bar}| {remaining}s', ncols=70) as pbar:
             for _ in range(int(sleep_time)):

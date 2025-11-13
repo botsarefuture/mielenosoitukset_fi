@@ -509,6 +509,11 @@ class Demonstration(BaseModel):
             raise ValueError(
                 "The provided demonstration is not a RecurringDemonstration instance."
             )
+            
+        # TODO: Let's check the version history and keep the never info if it's newer than the recurring demo's info
+        # For now we just keep overriding title, description, tags, and organizers which is not ideal
+        # Maybe we should implement a function to compare and merge these fields intelligently
+        
 
         self.title = recurring_demo.title
         self.description = recurring_demo.description
@@ -516,6 +521,24 @@ class Demonstration(BaseModel):
         self.organizers = recurring_demo.organizers
 
         self.save()
+
+    def _merge_fields(self, recurring_demo: "RecurringDemonstration"):
+        """Merge fields from a recurring demonstration into the current demonstration.
+
+        This method intelligently merges fields from a recurring demonstration into the
+        current demonstration, keeping the most recent information.
+
+        Parameters
+        ----------
+        recurring_demo : RecurringDemonstration
+            The recurring demonstration instance.
+
+        Returns
+        -------
+        None
+        """
+        # TODO: Implement intelligent merging of fields
+        pass
 
     def to_dict(self, json=False):
         """
@@ -683,6 +706,8 @@ class Demonstration(BaseModel):
                 return cls.from_dict(data)
         except ValueError:
             logger.debug(f"Running number lookup failed for '{demo_id}'")
+        except Exception as e:
+            pass
 
         # Try slug lookup
         data = DB["demonstrations"].find_one({"slug": demo_id})

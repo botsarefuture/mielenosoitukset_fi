@@ -2,17 +2,34 @@
 {% import 'macros.html' as macros %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<!-- Non-critical local CSS preloaded to avoid blocking initial render -->
+<link rel="preload" href="{{ url_for('static', filename='css/toolbox.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/toolbox.css') }}"></noscript>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="preload" href="{{ url_for('static', filename='css/index.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"></noscript>
+
+<link rel="preload" href="{{ url_for('static', filename='css/buttons.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}"></noscript>
+
+<link rel="preload" href="{{ url_for('static', filename='css/demo.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}"></noscript>
+
+<link rel="preload" href="{{ url_for('static', filename='css/list.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/list.css') }}"></noscript>
+
+<link rel="preload" href="{{ url_for('static', filename='css/v2/list.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}"></noscript>
+
+<!-- Avoid duplicate font-awesome; use preloaded local copy (base already preloads site-wide fontawesome). External CDN fallback if needed -->
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"></noscript>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Load Google Fonts stylesheet non-blocking -->
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"></noscript>
 
 <style>
 :root {

@@ -764,7 +764,30 @@ def init_routes(app):
                         ),
                         "ip": request.remote_addr,
                     }
+                    )
+                
+            # new case from report
+            try:
+                Case.create_new(
+                    case_type="demo_error_report",
+                    demo_id=ObjectId(request.form.get("demo_id")) if _type == "demonstration" else None,
+                    submitter_id=current_user._id if current_user.is_authenticated else None,
+                    meta={"urgency": "low", "report_type": _type, "error": error},
+                    error_report={
+                        "error": error,
+                        "demo_id": ObjectId(request.form.get("demo_id")),
+                        "date": datetime.now(),
+                        "user": (
+                            ObjectId(current_user._id)
+                            if current_user.is_authenticated
+                            else None
+                        ),
+                        "ip": request.remote_addr,
+                    }
                 )
+                
+            except Exception as e:
+                logger.exception("Failed to create case from error report: %s", e)
 
         else:
             mongo.reports.insert_one(

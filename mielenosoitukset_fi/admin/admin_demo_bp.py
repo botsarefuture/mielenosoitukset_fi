@@ -1,4 +1,5 @@
 import sys
+import bson
 from flask import abort, current_app
 import requests
 
@@ -1161,9 +1162,11 @@ def collect_demo_data(request):
 
     # Validate latitude and longitude if provided
     if latitude and not is_valid_latitude(latitude):
-        raise ValueError(_("Virheellinen leveysaste."))
+        latitude = None
+        flash_message(_("Virheellinen leveysaste. Asetetaan leveysasteeksi: None."))
     if longitude and not is_valid_longitude(longitude):
-        raise ValueError(_("Virheellinen pituusaste."))
+        longitude = None
+        flash_message(_("Virheellinen pituusaste.  Asetetaan pituusasteeksi: None."))
 
     # Handle cover picture (file upload or URL)
     cover_picture = request.form.get("cover_picture")
@@ -1273,14 +1276,24 @@ def collect_organizers(request):
 
         # Create an Organizer object and append to the list
         if organizer_id:
-            organizers.append(
-                Organizer(
-                    name=name.strip() if name else "",
-                    email=email.strip() if email else "",
-                    website=website.strip() if website else "",
-                    organization_id=ObjectId(organizer_id),
+            try:
+                organizers.append(
+                    Organizer(
+                        name=name.strip() if name else "",
+                        email=email.strip() if email else "",
+                        website=website.strip() if website else "",
+                        organization_id=ObjectId(organizer_id)
+                    )
                 )
-            )
+            except bson.errors.InvalidId as e:
+                organizers.append(
+                    Organizer(
+                        name=name.strip() if name else "",
+                        email=email.strip() if email else "",
+                        website=website.strip() if website else "",
+                    )
+                )
+                
         else:
             organizers.append(
                 Organizer(

@@ -852,6 +852,11 @@ body {
   transition: transform 0.2s, color 0.2s;
 }
 
+.demo-card-no-friends .login-prompt {
+    text-align: center;
+
+}
+
 .demo-card-no-friends .plus-avatar {
   width: 32px;
   height: 32px;
@@ -1077,3 +1082,4 @@ justify-content: center;
 .demo-card-tag {
   text-align: center;
 }
+

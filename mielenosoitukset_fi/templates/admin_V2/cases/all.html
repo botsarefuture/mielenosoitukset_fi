@@ -1,0 +1,117 @@
+{% extends "admin_base.html" %}
+{% block title %}{{ _('Kaikki tapaukset') }}{% endblock %}
+
+{% block styles %}
+<style>
+  .case-card {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  }
+  .case-card:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  .badge-urgency-low { background-color: #6c757d; }
+  .badge-urgency-medium { background-color: #ffc107; color: #212529; }
+  .badge-urgency-high { background-color: #dc3545; }
+  .case-actions a {
+    margin-right: 0.5rem;
+  }
+  .case-type-icon { width: 1.2rem; }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<h1 class="mb-4">{{ _('Kaikki tapaukset') }}</h1>
+
+{% if all_cases %}
+<div class="row row-cols-1 row-cols-md-2 g-3">
+  {% for case in all_cases %}
+  <div class="col">
+    <div class="card case-card shadow-sm">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="card-title text-truncate">
+            {% if case.case_type == "new_demo" %}
+              <i class="fas fa-bullhorn text-primary me-1 case-type-icon"></i>
+            {% elif case.case_type == "demo_error_report" %}
+              <i class="fas fa-exclamation-triangle text-warning me-1 case-type-icon"></i>
+            {% elif case.case_type == "organization_edit_suggestion" %}
+              <i class="fas fa-building text-success me-1 case-type-icon"></i>
+            {% endif %}
+            {{ case.case_type|replace("_"," ")|capitalize }}
+          </h5>
+          {% if case.meta and case.meta.urgency %}
+          <span class="badge 
+            {% if case.meta.urgency == 'low' %}badge-urgency-low{% endif %}
+            {% if case.meta.urgency == 'medium' %}badge-urgency-medium{% endif %}
+            {% if case.meta.urgency == 'high' %}badge-urgency-high{% endif %}
+          ">{{ _(case.meta.urgency|capitalize) }}</span>
+          {% endif %}
+        </div>
+        <p class="card-text text-truncate">{{ case.description or _('Ei kuvausta') }}</p>
+        <div class="case-actions mt-auto">
+  {% if case.case_type == "new_demo" %}
+    <span class="me-2">
+      {% if case.meta and case.meta.superior_needed %}
+        <i class="fas fa-exclamation-triangle text-warning"></i>
+        {{ _('Eskalointi tarvitaan') }}
+      {% else %}
+        {% if case.demo.accepted %}
+          <i class="fas fa-check text-success"></i> {{ _('Hyväksytty') }}
+        {% elif case.demo.rejected %}
+          <i class="fas fa-times text-danger"></i> {{ _('Hylätty') }}
+        {% else %}
+          <i class="fas fa-clock text-secondary"></i> {{ _('Odottaa') }}
+        {% endif %}
+      {% endif %}
+    </span>
+    <a href="#" onclick="confirmAction('approve', '{{ case._id }}')" class="btn btn-sm btn-success" {% if case.meta and case.meta.superior_needed %}disabled{% endif %}>
+      {{ _('Hyväksy') }}
+    </a>
+    <a href="#" onclick="confirmAction('deny', '{{ case._id }}')" class="btn btn-sm btn-danger" {% if case.meta and case.meta.superior_needed %}disabled{% endif %}>
+      {{ _('Hylkää') }}
+    </a>
+  {% endif %}
+</div>
+
+      </div>
+      <div class="card-footer text-muted small d-flex justify-content-between">
+        <span>{{ case.created_at|default('')|datetimeformat }}</span>
+        <span>{{ case.submitter_name|default('') }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info text-center">
+  {{ _('Ei tapauksia tällä hetkellä.') }}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmAction(action, caseId) {
+    const modalEl = document.getElementById('taskConfirmModal');
+    const modal = new bootstrap.Modal(modalEl);
+    const messageEl = document.getElementById('taskConfirmMessage');
+    const confirmBtn = document.getElementById('taskConfirmBtn');
+
+    messageEl.textContent = action === 'approve'
+        ? '{{ _("Haluatko varmasti hyväksyä tämän mielenosoituksen?") }}'
+        : '{{ _("Haluatko varmasti hylätä tämän mielenosoituksen?") }}';
+
+    confirmBtn.onclick = () => {
+        fetch(`/api/admin/demo/${caseId}/${action}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) location.reload();
+            })
+            .catch(err => console.error(err));
+        modal.hide();
+    };
+    modal.show();
+}
+</script>
+{% endblock %}

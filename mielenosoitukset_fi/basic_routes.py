@@ -38,6 +38,7 @@ from mielenosoitukset_fi.a import generate_demo_sentence
 
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.classes import Case
 
 email_sender = EmailSender()
 
@@ -534,6 +535,7 @@ def init_routes(app):
         Integrates with the hardened magic-link system:
         - Generates single-use, IP-bound approve/reject/preview links for admin use.
         """
+        
         if request.method == "POST":
             # --- Basic fields ---
             title = (request.form.get("title") or "").strip()
@@ -668,6 +670,18 @@ def init_routes(app):
                 # do not abort the workflow — demo exists, but warn admins
                 flash_message("Varoitus: ilmoittajan tiedot eivät tallentuneet oikein.", "warning")
 
+             # --- Create Admin Case ---
+            try:
+                Case.create_new(
+                    case_type="new_demo",
+                    demo_id=demo_id,
+                    submitter=submitter_doc,
+                    submitter_id=current_user._id if current_user else None, # or ObjectId of submitter doc if you want
+                    meta={"urgency": "high"}  # optional, can be extended
+                )
+            except Exception as e:
+                logger.exception("Failed to create admin case: %s", e)
+            
             # --- Send confirmation email to submitter ---
             try:
                 if submitter_email:
@@ -1148,6 +1162,14 @@ def init_routes(app):
         # Save to DB
         result = mongo.org_edit_suggestions.insert_one(suggestion)
         suggestion_id = str(result.inserted_id)
+        
+        
+        Case.create_new(
+            case_type="organization_edit_suggestion",
+            suggestion=suggestion,
+            submitter_id=current_user._id if current_user else None, # or ObjectId of submitter doc if you want
+            meta={"urgency": "high"}  # optional, can be extended
+        )
 
         # --- 💌 Email notifications ---
         review_link = url_for(

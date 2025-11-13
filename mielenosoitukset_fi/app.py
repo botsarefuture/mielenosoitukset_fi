@@ -143,6 +143,7 @@ def create_app() -> Flask:
     app.register_blueprint(admin_org_bp)
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(admin_kampanja_bp)
+    app.register_blueprint(admin_case_bp)
     #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")

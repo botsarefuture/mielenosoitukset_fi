@@ -111,7 +111,7 @@ def rollup_events(run_once: bool = False):
         # If caller requested only a single run, exit now
         if run_once:
             # print with yellow color: run once set 
-            print("Run once set, breaking.")
+            
             break
 
         # Wait until next poll interval (existing behaviour)

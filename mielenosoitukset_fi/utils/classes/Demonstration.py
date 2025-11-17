@@ -156,6 +156,7 @@ class Demonstration(BaseModel):
         slug: str = None,
         formatted_date: str = None,
         created_datetime=None,
+        last_modified=None,
         _id: ObjectId = None,
         description: str = None,
         _dont_override: bool = False,
@@ -308,6 +309,9 @@ class Demonstration(BaseModel):
         self.tags = tags or []  # Tags for the demonstration
 
         self.created_datetime = created_datetime or None
+        # last_modified stores the last time this object was changed and saved
+        # If provided, use it; otherwise set to current UTC time
+        self.last_modified = last_modified or datetime.utcnow()
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
@@ -568,6 +572,21 @@ class Demonstration(BaseModel):
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         data["running_number"] = self.running_number
         data["slug"] = self.slug
+        # Include last_modified in the dictionary. If JSON output is requested,
+        # convert datetimes to ISO strings.
+        try:
+            if hasattr(self, "last_modified") and self.last_modified is not None:
+                if json:
+                    data["last_modified"] = (
+                        self.last_modified.isoformat()
+                    )
+                else:
+                    data["last_modified"] = self.last_modified
+            else:
+                data["last_modified"] = None
+        except Exception as e:
+            data["last_modified"] = None
+            logger.error(f"Error converting last_modified to dict: {e}")
         data.pop("save_flag", None)  # Remove save_flag from the dictionary representation
         data.pop("_dont_override", None)
         try:
@@ -634,6 +653,9 @@ class Demonstration(BaseModel):
 
 
         """
+
+        # Update last_modified to now and prepare data for saving
+        self.last_modified = datetime.utcnow()
 
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary
@@ -778,6 +800,7 @@ class Demonstration(BaseModel):
             in_past=get("in_past", False),
             
             created_datetime=get("created_datetime"),
+            last_modified=get("last_modified"),
             merged_into=get("merged_into"),
             
             _id=get("_id"),            

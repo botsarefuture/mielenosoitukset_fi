@@ -360,65 +360,215 @@ def init_routes(app):
     from flask import Flask, Response, url_for
     import xml.etree.ElementTree as ET
 
-
     @app.route("/sitemap.xml", methods=["GET"])
     def sitemap():
+        """
+        Generate sitemap XML including hreflang alternate links.
+
+        Notes
+        -----
+        Default language is Finnish. If only Finnish is enabled in
+        BABEL_SUPPORTED_LOCALES, no alternate hreflang links are emitted.
+
+        Returns
+        -------
+        flask.Response
+            XML sitemap response (application/xml) or 500 on error.
+        """
         try:
-            # Define the sitemap root element with both the sitemap and XHTML namespaces
-            urlset = ET.Element("urlset", {
-                "xmlns": "http://www.google.com/schemas/sitemap/0.84",
-                "xmlns:xhtml": "http://www.w3.org/1999/xhtml"
-            })
-            
-            # List of static routes
-            routes = [
+            # Supported locales (fallback to Finnish)
+            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]
+            locales = [l for l in locales if l]  # normalize
+
+            # If only Finnish is available, do not include alternate links
+            include_alternates = not (
+                len(locales) == 1 and locales[0].lower().startswith("fi")
+            )
+
+            # Use the official sitemap namespace and the xhtml namespace for alternate links
+            ns_attribs = {
+                "xmlns": "http://www.sitemaps.org/schemas/sitemap/0.9",
+                "xmlns:xhtml": "http://www.w3.org/1999/xhtml",
+            }
+            urlset = ET.Element("urlset", ns_attribs)
+
+            # Static endpoints to include
+            static_routes = [
                 {"loc": "index"},
                 {"loc": "submit"},
                 {"loc": "demonstrations"},
                 {"loc": "info"},
                 {"loc": "privacy"},
                 {"loc": "contact"},
+                {"loc": "campaign.index"},
             ]
-            
-            # Add static URLs to the sitemap
-            for route in routes:
-                url = ET.SubElement(urlset, "url")
-                loc = ET.SubElement(url, "loc")
-                loc.text = url_for(route["loc"], _external=True)
-                
-                # Add alternate language versions
-                for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
-                    ET.SubElement(
-                        url,
-                        "{http://www.w3.org/1999/xhtml}link",
-                        rel="alternate",
-                        hreflang=alt_lang_code,
-                        href=url_for(route["loc"], lang_code=alt_lang_code, _external=True)
-                    )
-            
-            # Add demonstration URLs to the sitemap
-            for demo in demonstrations_collection.find(DEMO_FILTER):
-                demo_url = ET.SubElement(urlset, "url")
-                demo_id = demo.get("slug") or demo.get("running_number") or str(demo["_id"])
-                loc = ET.SubElement(demo_url, "loc")
-                loc.text = url_for("demonstration_detail", demo_id=demo_id, _external=True)
-                # Add alternate language versions for each demonstration
-                for alt_lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
-                    ET.SubElement(
-                        demo_url,
-                        "{http://www.w3.org/1999/xhtml}link",
-                        rel="alternate",
-                        hreflang=alt_lang_code,
-                        href=url_for("demonstration_detail", demo_id=demo_id, lang_code=alt_lang_code, _external=True)
-                    )
-            
-            # Convert the tree to a string and send as response
-            xml_str = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
-            return Response(xml_str, mimetype="text/xml", content_type='text/xml')
-        
-        except Exception as e:
-            app.logger.error(f"Error generating sitemap: {e}")
+
+            # Helper to add url + optional alternate links
+            def _add_url_with_alternates(parent, endpoint, **values):
+                url_el = ET.SubElement(parent, "url")
+                loc_el = ET.SubElement(url_el, "loc")
+                loc_el.text = url_for(endpoint, _external=True, **values)
+                if include_alternates:
+                    for lang in locales:
+                        ET.SubElement(
+                            url_el,
+                            "{http://www.w3.org/1999/xhtml}link",
+                            {
+                                "rel": "alternate",
+                                "hreflang": lang,
+                                "href": url_for(
+                                    endpoint, lang_code=lang, _external=True, **values
+                                ),
+                            },
+                        )
+
+            # Add static routes
+            for r in static_routes:
+                _add_url_with_alternates(urlset, r["loc"])
+
+            # Demonstration URLs: limit to demos in reasonable date window
+            query_filter = DEMO_FILTER.copy()
+            start_date = (date.today() - timedelta(days=365)).strftime("%Y-%m-%d")
+            end_date = (date.today() + timedelta(days=365 * 2)).strftime("%Y-%m-%d")
+            query_filter["date"] = {"$gte": start_date, "$lte": end_date}
+
+            def _format_lastmod_for_demo(demo):
+                """
+                Determine a suitable lastmod value for a demo.
+
+                The function prefers explicit timestamp fields (updated_at, modified_at, ...)
+                and falls back to the demo.date field. When an explicit timestamp is found
+                it is normalized to a date string in "YYYY-MM-DD" form. If only a date
+                string is available, it is returned as-is. Returns None if no sensible
+                value is found.
+
+                Parameters
+                ----------
+                demo : dict
+                    Demonstration document.
+
+                Returns
+                -------
+                str or None
+                    ISO date string "YYYY-MM-DD" or original date-like string, or None.
+                """
+                candidates = (
+                    "updated_at",
+                    "modified_at",
+                    "last_modified",
+                    "lastmod",
+                    "updated",
+                    "modified",
+                )
+
+                def _to_date_str(v):
+                    """Try to produce a YYYY-MM-DD string from v, or return None."""
+                    if v is None:
+                        return None
+                    # datetime instance -> date string
+                    try:
+                        if isinstance(v, datetime):
+                            return v.date().isoformat()
+                    except Exception:
+                        pass
+                    # date instance -> isoformat
+                    try:
+                        if isinstance(v, date):
+                            return v.isoformat()
+                    except Exception:
+                        pass
+                    # string -> try parsing ISO/datetime/date formats
+                    if isinstance(v, str):
+                        s = v.strip()
+                        if not s:
+                            return None
+                        # Handle common trailing Z timezone
+                        try:
+                            iso_s = s.replace("Z", "+00:00") if s.endswith("Z") else s
+                            dt = datetime.fromisoformat(iso_s)
+                            return dt.date().isoformat()
+                        except Exception:
+                            pass
+                        # Try date-only format
+                        try:
+                            dt = datetime.strptime(s, "%Y-%m-%d")
+                            return dt.date().isoformat()
+                        except Exception:
+                            pass
+                        # Try datetime without timezone but with T
+                        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+                            try:
+                                dt = datetime.strptime(s, fmt)
+                                return dt.date().isoformat()
+                            except Exception:
+                                continue
+                        # As a last resort return the original string (fallback consumer may handle)
+                        return s
+                    return None
+
+                # Prefer explicit timestamp-like fields and always normalize to YYYY-MM-DD when possible
+                for key in candidates:
+                    v = demo.get(key)
+                    if not v:
+                        continue
+                    date_str = _to_date_str(v)
+                    if date_str:
+                        return date_str
+
+                # Fallback to demo['date']
+                v = demo.get("date")
+                if v:
+                    date_str = _to_date_str(v)
+                    if date_str:
+                        return date_str
+                    # if it's something else, return as-is
+                    if isinstance(v, str) and v.strip():
+                        return v
+                return None
+
+            for demo in demonstrations_collection.find(query_filter):
+                demo_identifier = (
+                    demo.get("slug")
+                    or demo.get("running_number")
+                    or str(demo.get("_id"))
+                )
+                url_el = ET.SubElement(urlset, "url")
+                loc_el = ET.SubElement(url_el, "loc")
+                loc_el.text = url_for(
+                    "demonstration_detail", demo_id=demo_identifier, _external=True
+                )
+
+                # lastmod for the demonstration if available
+                lastmod_val = _format_lastmod_for_demo(demo)
+                if lastmod_val:
+                    ET.SubElement(url_el, "lastmod").text = lastmod_val
+
+                if include_alternates:
+                    for lang in locales:
+                        ET.SubElement(
+                            url_el,
+                            "{http://www.w3.org/1999/xhtml}link",
+                            {
+                                "rel": "alternate",
+                                "hreflang": lang,
+                                "href": url_for(
+                                    "demonstration_detail",
+                                    demo_id=demo_identifier,
+                                    lang_code=lang,
+                                    _external=True,
+                                ),
+                            },
+                        )
+
+            xml_bytes = ET.tostring(urlset, encoding="utf-8", xml_declaration=True)
+            resp = Response(xml_bytes, mimetype="application/xml")
+            resp.headers["Content-Type"] = "application/xml; charset=utf-8"
+            return resp
+
+        except Exception:
+            app.logger.exception("Error generating sitemap")
             return Response(status=500)
+
 
 
 

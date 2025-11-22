@@ -14,614 +14,878 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- import jquery -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-:root {
-  --color-bg: light-dark(#f8fafc, #0f1419);
-  --color-card-bg: light-dark(#ffffff, #1a1d23);
-  --color-text: light-dark(#1e293b, #e2e8f0);
-  --color-text-secondary: light-dark(#64748b, #94a3b8);
-  --color-primary: light-dark(#0052cc, #3b82f6);
-  --color-primary-hover: light-dark(#003d99, #2563eb);
-  --color-secondary: light-dark(#ff6b00, #f97316);
-  --color-secondary-hover: light-dark(#e55a00, #ea580c);
-  --color-accent: light-dark(#06b6d4, #0891b2);
-  --color-border: light-dark(#e2e8f0, #374151);
-  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-  --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
-  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
-  --color-error: light-dark(#dc2626, #ef4444);
-  --color-success: light-dark(#16a34a, #22c55e);
-  --color-warning: light-dark(#d97706, #f59e0b);
-  --border-radius: 16px;
-  --border-radius-lg: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark:root {
-  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.form-control:focus {
-  color: var(--color-text);
-}
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.7;
-  margin: 0;
-  font-feature-settings: 'liga' 1, 'kern' 1;
-}
-
-/* Container */
-.container-main-content {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 2rem;
-}
-
-/* Hero Section */
-.hero-section {
-  background: var(--color-gradient-primary);
-  border-radius: var(--border-radius-lg);
-  padding: 4rem 2rem;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--color-shadow-lg);
-  margin-bottom: 3rem;
-}
-
-.hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.hero-section h1 {
-  color: white;
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
-.hero-section .lead {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.2rem;
-  margin: 0;
-  line-height: 1.6;
-}
-
-/* Form Container */
-.container-form {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius-lg);
-  padding: 3rem 2.5rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  position: relative;
-  overflow: hidden;
-}
-
-.container-form::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-primary);
-  opacity: 1;
-}
-
-/* Form Groups */
-.form-group {
-  margin-bottom: 2rem;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.form-section {
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  margin-bottom: 2rem;
-  border: 1px solid var(--color-border);
-}
-
-.form-section h2 {
-  color: var(--color-primary);
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Labels */
-label {
-  display: block;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
-}
-
-.required-asterisk {
-  color: var(--color-error);
-  margin-left: 0.25rem;
-  font-weight: 700;
-}
-
-/* Form Controls */
-input[type="text"],
-input[type="url"],
-input[type="email"],
-input[type="time"],
-input[type="file"],
-select,
-textarea {
-  width: 100%;
-  padding: 1rem 1.25rem;
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  background: var(--color-card-bg);
-  color: var(--color-text);
-  font-size: 1rem;
-  font-family: inherit;
-  transition: var(--transition);
-  resize: vertical;
-}
-
-input[type="text"]:focus,
-input[type="url"]:focus,
-input[type="email"]:focus,
-input[type="time"]:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--color-primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-input[type="file"] {
-  padding: 0.75rem;
-  border-style: dashed;
-  background: var(--color-bg);
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-select {
-  cursor: pointer;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-  font-family: inherit;
-}
-
-.btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: var(--transition);
-}
-
-.btn:hover::before {
-  left: 100%;
-}
-
-.btn-primary {
-  background: var(--color-gradient-primary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-.btn-secondary {
-  background: var(--color-gradient-secondary);
-  color: white;
-  box-shadow: var(--color-shadow);
-}
-
-.btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-  color: white;
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--color-primary);
-  border: 2px solid var(--color-border);
-}
-
-.btn-outline:hover {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Submit Button */
-.submit-button {
-  width: 100%;
-  background: var(--color-gradient-primary);
-  color: white;
-  padding: 1.25rem 2rem;
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 700;
-  transition: var(--transition);
-  box-shadow: var(--color-shadow);
-  margin-top: 2rem;
-  font-family: inherit;
-}
-
-.submit-button:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-/* Add Organizer Button */
-.add-organizer-button {
-  background: var(--color-gradient-secondary);
-  color: white;
-  padding: 0.875rem 1.5rem;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  transition: var(--transition);
-  box-shadow: var(--color-shadow);
-  margin-top: 1rem;
-  font-family: inherit;
-}
-
-.add-organizer-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-/* Organizer Cards */
-.organizer {
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid var(--color-border);
-  position: relative;
-  transition: var(--transition);
-}
-
-.organizer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--color-gradient-secondary);
-}
-
-.organizer:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--color-shadow);
-}
-
-.organizer-entry hr {
-  border: none;
-  height: 1px;
-  background: var(--color-border);
-  margin: 0 0 1.5rem 0;
-}
-
-.organizer-entry p {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-}
-
-/* Optional Sections */
-.optional-section {
-  display: none;
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-10px);
+  :root {
+    --color-bg: light-dark(#f8fafc, #0f1419);
+    --color-card-bg: light-dark(#ffffff, #1a1d23);
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0052cc, #3b82f6);
+    --color-primary-hover: light-dark(#003d99, #2563eb);
+    --color-secondary: light-dark(#ff6b00, #f97316);
+    --color-secondary-hover: light-dark(#e55a00, #ea580c);
+    --color-accent: light-dark(#06b6d4, #0891b2);
+    --color-success: light-dark(#10b981, #34d399);
+    --color-border: light-dark(#e2e8f0, #374151);
+    --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+    --color-shadow-lg: light-dark(0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.4));
+    --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+    --color-gradient-secondary: linear-gradient(135deg, #ff6b00 0%, #e55a00 100%);
+    --color-gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --border-radius: 16px;
+    --border-radius-lg: 24px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  to {
-    opacity: 1;
-    max-height: 200px;
-    transform: translateY(0);
+
+  * {
+    box-sizing: border-box;
   }
-}
 
-/* Checkbox Styling */
-input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-  transform: scale(1.2);
-  accent-color: var(--color-primary);
-}
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.7;
+    margin: 0;
+    font-feature-settings: 'liga' 1, 'kern' 1;
+  }
 
-.checkbox-group {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  margin: 2rem 0;
-  padding: 1.5rem;
-  background: var(--color-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--color-border);
-}
-
-.checkbox-group label {
-  font-weight: 400;
-  color: var(--color-text-secondary);
-  margin: 0;
-  line-height: 1.6;
-}
-
-.checkbox-group a {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 600;
-  transition: var(--transition);
-}
-
-.checkbox-group a:hover {
-  color: var(--color-secondary);
-  text-decoration: underline;
-}
-
-/* Editor Container */
-.editor-container {
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  transition: var(--transition);
-  background: var(--color-card-bg);
-}
-
-.editor-container:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Progress Indicator */
-.form-progress {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  padding: 1rem 0;
-}
-
-.progress-step {
-  flex: 1;
-  text-align: center;
-  position: relative;
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.progress-step::after {
-  content: '';
-  position: absolute;
-  bottom: -0.5rem;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--color-border);
-}
-
-.progress-step.active {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.progress-step.active::after {
-  background: var(--color-gradient-primary);
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
   .container-main-content {
-    padding: 0 1rem;
-    margin: 1rem auto;
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 2rem;
   }
 
+  /* Hero Section - Compact */
   .hero-section {
-    padding: 3rem 1.5rem;
+    background: var(--color-gradient-primary);
+    border-radius: var(--border-radius-lg);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--color-shadow-lg);
+    margin-bottom: 2rem;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: 0 auto;
   }
 
   .hero-section h1 {
-    font-size: 2rem;
+    color: white;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
   }
 
-  .container-form {
-    padding: 2rem 1.5rem;
+  .hero-section .lead {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.6;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+  /* Progress Bar */
+  .progress-container {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
   }
 
-  .form-section {
-    padding: 1.5rem;
+  @media screen and (max-width: 768px) {
+    .progress-container {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0px 0px;
+    padding: 2rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    display: fixed;
+    margin-bottom: 1rem;
+    position: absolute;
+    bottom: 0;
+    display: block;
+    z-index: 200;
+    width: 100vw;
+    left: 0;
+    height: min-content;
+  }
   }
 
-  .checkbox-group {
+  .progress-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .progress-line {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-border);
+    z-index: 1;
+  }
+
+  .progress-line-fill {
+    height: 100%;
+    background: var(--color-gradient-primary);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 2px;
+  }
+
+  .progress-step {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+  }
+
+  .step-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-card-bg);
+    border: 3px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    transition: var(--transition);
+    position: relative;
+  }
+
+  .progress-step.completed .step-circle {
+    background: var(--color-gradient-success);
+    border-color: var(--color-success);
+    color: white;
+  }
+
+  .progress-step.active .step-circle {
+    background: var(--color-gradient-primary);
+    border-color: var(--color-primary);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+  }
+
+  .step-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-align: center;
+    transition: var(--transition);
+  }
+
+  .progress-step.active .step-label {
+    color: var(--color-primary);
+  }
+
+  .progress-step.completed .step-label {
+    color: var(--color-success);
+  }
+
+  .step-icon {
+    font-size: 1.1rem;
+    margin: auto;
+  }
+
+  .step-icon .fa-solid {
+    margin: auto;
+  }
+
+  /* Form Container */
+  .form-container {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 3rem 2.5rem;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    position: relative;
+    overflow: hidden;
+    
+  }
+
+  form.form-container {
+    min-height: 500px;
+  }
+
+  .form-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-gradient-primary);
+  }
+
+  /* Page Content */
+  .form-page {
+    display: none;
+    animation: fadeInSlide 0.4s ease-out;
+  }
+
+  .form-page.active {
+    display: block;
+  }
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .page-header h2 {
+    color: var(--color-primary);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
     gap: 0.75rem;
   }
 
-  .btn {
-    padding: 0.875rem 1.5rem;
+  .page-header p {
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* Form Groups */
+  .form-group {
+    margin-bottom: 1.75rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.75rem;
     font-size: 0.95rem;
   }
 
-  .submit-button {
-    padding: 1.125rem 2rem;
+  .required-asterisk {
+    color: var(--color-secondary);
+    margin-left: 0.25rem;
+  }
+
+  .helper-text {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .helper-text i {
+    color: var(--color-accent);
+  }
+
+  /* Form Controls */
+  input[type="text"],
+  input[type="url"],
+  input[type="email"],
+  input[type="time"],
+  input[type="file"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius);
+    background: var(--color-card-bg);
+    color: var(--color-text);
     font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
   }
-}
 
-/* Loading States */
-.btn.loading {
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-.btn.loading::after {
-  content: '';
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-left: 8px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Success Messages */
-.success-message {
-  background: var(--color-success);
-  color: white;
-  padding: 1rem 1.5rem;
-  border-radius: var(--border-radius);
-  margin: 1rem 0;
-  display: none;
-}
-
-.success-message.show {
-  display: block;
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--color-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  textarea {
+    min-height: 120px;
+    resize: vertical;
   }
+
+  input[type="file"] {
+    border-style: dashed;
+    background: var(--color-bg);
+    cursor: pointer;
+  }
+
+  /* Navigation Buttons */
+  .form-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--color-border);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--color-gradient-primary);
+    color: white;
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 2px solid var(--color-border);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .btn-success {
+    background: var(--color-gradient-success);
+    color: white;
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-success:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-nav-spacer {
+    flex: 1;
+  }
+
+  /* Organizers Section */
+  .organizer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .organizer-card {
+    background: var(--color-bg);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    border: 2px solid var(--color-border);
+    position: relative;
+    transition: var(--transition);
+  }
+
+  .organizer-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--color-shadow);
+  }
+
+  .organizer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .organizer-header h3 {
+    color: var(--color-secondary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid var(--color-border);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 1.05rem;
+    transition: var(--transition);
+    box-shadow: var(--color-shadow);
+  }
+
+  .btn-remove:hover {
+    background: linear-gradient(135deg, #ff4d4f 0%, #ff1f2d 100%);
+    border-color: #ff1f2d;
+    color: #fff;
+    transform: translateY(-6px) scale(1.06) rotate(-1deg);
+    box-shadow: 0 12px 24px rgba(255,31,45,0.18), 0 4px 10px rgba(255,77,79,0.12);
+    transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1), box-shadow 0.35s ease, background 0.35s ease, border-color 0.35s ease, color 0.2s ease;
+  }
+
+  .btn-remove:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  }
+
+  .add-organizer-button {
+    background: var(--color-gradient-secondary);
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--color-shadow);
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .add-organizer-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  /* Checkbox */
+  .checkbox-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--color-bg);
+    border-radius: var(--border-radius);
+    border: 2px solid var(--color-border);
+  }
+
+  input[type="checkbox"] {
+    width: auto;
+    margin-top: 0.25rem;
+    transform: scale(1.3);
+    accent-color: var(--color-primary);
+    cursor: pointer;
+  }
+
+  .checkbox-group label {
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin: 0;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+
+  .checkbox-group a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+  }
+
+  .checkbox-group a:hover {
+    color: var(--color-secondary);
+    text-decoration: underline;
+  }
+
+  /* Success Page */
+  .success-page {
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--color-gradient-success);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .success-icon i {
+    font-size: 2.5rem;
+    color: white;
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .success-page h2 {
+    color: var(--color-success);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .success-page p {
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+
+  /* Editor */
+  .editor-container {
+    border: 2px solid var(--color-border);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: var(--transition);
+    background: var(--color-card-bg);
+  }
+
+  .editor-container:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Optional Section */
+  .optional-section {
+    display: none;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      max-height: 0;
+    }
+
+    to {
+      opacity: 1;
+      max-height: 500px;
+    }
+  }
+
+  .cache-notice {
+    background: rgba(255, 170, 200, 0.25);
+    border: 1px solid #ffa3c6;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 15px;
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* Focus States for Accessibility */
-input:focus,
-select:focus,
-textarea:focus,
-button:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+.cache-notice button {
+    background: #ff8dbf;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    font-weight: 600;
 }
 
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-  :root {
-    --color-border: light-dark(#000000, #ffffff);
-    --color-text: light-dark(#000000, #ffffff);
-    --color-primary: light-dark(#0000ff, #66aaff);
-  }
+.hidden {
+    display: none;
 }
+
+
+  /* Validation Messages */
+  .validation-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .validation-message.show {
+    display: flex;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .container-main-content {
+      padding: 0 1rem;
+      margin: 1rem auto;
+    }
+
+    .hero-section {
+      padding: 2rem 1.5rem;
+    }
+
+    .form-container {
+      padding: 2rem 1.5rem;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .progress-steps {
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+    }
+
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      font-size: 0.875rem;
+    }
+
+    .form-navigation {
+      flex-direction: column;
+    }
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block scripts %}
-<script type="module">
-  import ClassicEditor from "ckeditor5-build-classic";
-  
-  let editor;
+<script>
 
-  ClassicEditor.create(document.querySelector("#editor"))
-    .then((newEditor) => {
-      editor = newEditor;
-    })
-    .catch((error) => {
-      console.error(error);
+  let currentPage = 1;
+  const totalPages = 5;
+  // Page Navigation
+  function showPage(pageNumber) {
+    document.querySelectorAll('.form-page').forEach(page => {
+      page.classList.remove('active');
     });
 
-  document.querySelector("#submit").addEventListener("click", async (event) => {
+    const page = document.getElementById(`page-${pageNumber}`);
+    if (page) {
+      page.classList.add('active');
+      currentPage = pageNumber;
+      localStorage.setItem("form_step", currentPage);
+
+      updateProgressBar();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function updateProgressBar() {
+    const progressFill = document.querySelector('.progress-line-fill');
+    const percentage = ((currentPage - 1) / (totalPages - 1)) * 100;
+    progressFill.style.width = `${percentage}%`;
+
+
+
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+      step.classList.remove('active', 'completed');
+      if (index + 1 < currentPage) {
+        step.classList.add('completed');
+      } else if (index + 1 === currentPage) {
+        step.classList.add('active');
+      }
+    });
+  }
+
+  function nextPage() {
+    if (validateCurrentPage() && currentPage < totalPages) {
+      showPage(currentPage + 1);
+    }
+  }
+
+  function previousPage() {
+    if (currentPage > 1) {
+      showPage(currentPage - 1);
+    }
+  }
+
+  function validateCurrentPage() {
+    const currentPageElement = document.getElementById(`page-${currentPage}`);
+    const requiredInputs = currentPageElement.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredInputs.forEach(input => {
+      if (!input.value.trim()) {
+        input.style.borderColor = '#ef4444';
+        isValid = false;
+      } else {
+        input.style.borderColor = '';
+      }
+    });
+
+    if (!isValid) {
+      alert('{{ _("Täytä kaikki pakolliset kentät ennen jatkamista.") }}');
+    }
+
+    return isValid;
+  }
+
+  // Organizer Management
+  let organizerCount = 0;
+
+  window.addOrganizer = function () {
+    organizerCount++;
+    const container = document.getElementById("organizers-container");
+    const organizerDiv = document.createElement("div");
+    organizerDiv.className = "organizer-card";
+    organizerDiv.id = `organizer-${organizerCount}`;
+
+    organizerDiv.innerHTML = `
+      <div class="organizer-header">
+        <h3><i class="fa-solid fa-building"></i> {{ _('Järjestäjä') }} ${organizerCount}</h3>
+        <button type="button" class="btn-remove" onclick="removeOrganizer(${organizerCount})">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      <div class="form-group">
+        <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
+        <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
+      </div>
+      <div class="form-group">
+        <label for="organizer_website_${organizerCount}">{{ _('Verkkosivut') }}</label>
+        <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
+      </div>
+      <div class="form-group">
+        <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
+        <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="email@example.com">
+      </div>
+    `;
+
+    container.appendChild(organizerDiv);
+    organizerDiv.style.opacity = '0';
+    organizerDiv.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      organizerDiv.style.transition = 'all 0.3s ease-out';
+      organizerDiv.style.opacity = '1';
+      organizerDiv.style.transform = 'translateY(0)';
+    }, 10);
+  };
+
+  window.removeOrganizer = function (id) {
+    const organizer = document.getElementById(`organizer-${id}`);
+    if (organizer) {
+      organizer.style.opacity = '0';
+      organizer.style.transform = 'translateY(-20px)';
+      setTimeout(() => organizer.remove(), 300);
+    }
+  };
+
+  // Type change handler
+  document.getElementById("type").addEventListener("change", function () {
+    const marchRouteContainer = document.getElementById("march-route-container");
+    if (this.value === "marssi") {
+      marchRouteContainer.style.display = "block";
+    } else {
+      marchRouteContainer.style.display = "none";
+    }
+  });
+
+  // Form submission
+  document.getElementById("submit-form").addEventListener("click", async (event) => {
     event.preventDefault();
-    
-    // Add loading state
+
+    // render the editor content to hidden input on form submit
+    // wait till quill is defined
+
+
+    if (!document.getElementById("accept_terms").checked) {
+      alert("{{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') }}");
+      return;
+    }
+
     const submitBtn = event.target;
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
@@ -640,331 +904,594 @@ button:focus {
       });
 
       if (response.status >= 300 && response.status < 400) {
-        const locationHeader = response.headers.get("location");
-        if (locationHeader) {
-          window.location.href = locationHeader;
-        } else {
-          alert("ERROR!");
-        }
+        showPage(5); // Show success page
+        Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("form_")) localStorage.removeItem(key);
+    });
+      } else {
+        alert("ERROR!");
       }
     } catch (e) {
       console.error("Network error:", e);
-      alert("There was an issue submitting the form. Please try again.");
+      alert("{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}");
     } finally {
-      // Remove loading state
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
     }
   });
+
+  // Expose functions globally
+  window.nextPage = nextPage;
+  window.previousPage = previousPage;
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    showPage(1);
+  });
 </script>
 
-<!-- Include Flatpickr JS -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 
-<script>
-  let organizerCount = 0;
-
-  function addOrganizer() {
-    organizerCount++;
-    const container = document.getElementById("organizers-container");
-    const organizerDiv = document.createElement("div");
-    organizerDiv.className = "organizer";
-
-    organizerDiv.innerHTML = `
-      <div class="organizer-entry"> 
-        <hr>
-        <p><i class="fa-solid fa-building"></i> {{ _('Järjestäjätahon tiedot') }}</p>
-        <div class="form-group">
-          <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
-          <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
-        </div>
-
-        <div class="form-group">
-          <label for="organizer_website_${organizerCount}">{{ _('Verkkosivut') }}</label>
-          <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" placeholder="https://example.com">
-        </div>
-
-        <div class="form-group">
-          <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
-          <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="sähköposti@example.com">
-        </div>
-      </div>
-    `;
-
-    container.appendChild(organizerDiv);
-    
-    // Add animation
-    organizerDiv.style.opacity = '0';
-    organizerDiv.style.transform = 'translateY(20px)';
-    setTimeout(() => {
-      organizerDiv.style.transition = 'all 0.3s ease-out';
-      organizerDiv.style.opacity = '1';
-      organizerDiv.style.transform = 'translateY(0)';
-    }, 10);
-  }
-
-  document.getElementById("type").addEventListener("change", function () {
-    var marchRouteContainer = document.getElementById("march-route-container");
-    if (this.value === "marssi") {
-      marchRouteContainer.style.display = "block";
-    } else {
-      marchRouteContainer.style.display = "none";
-    }
-  });
-
-  // Form validation
-  document.querySelector("form").addEventListener("submit", function(e) {
-    var terms = document.getElementById("accept_terms");
-    if (!terms.checked) {
-      e.preventDefault();
-      terms.focus();
-      alert("{{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') }}");
-      return false;
-    }
-  });
-
-  // Add scroll animations
-  const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-  };
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.animationDelay = '0.1s';
-        entry.target.classList.add('animate-fade-in-up');
-      }
-    });
-  }, observerOptions);
-
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.form-section, .organizer').forEach(el => {
-      observer.observe(el);
-    });
-  });
-</script>
 {% endblock %}
 
 {% block content %}
 <div class="container-main-content">
-  
+
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-content">
-      <h1>{{ _('Ilmoita mielenosoitus') }}</h1>
+      <h1>{{ _('Ilmoita mielenosoituksesta') }}</h1>
       <p class="lead">
-        {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Kaikki kentät joissa on punainen tähti (*) ovat pakollisia.') }}
+        {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja
+        kattavammin alustalla on mielenosoituksista tietoa, sitä useammille siitä on hyötyä.') }}
       </p>
     </div>
   </section>
 
-  <form method="POST" action="{{ url_for('submit') }}" class="container-form" enctype="multipart/form-data">
-    
-    <!-- Basic Information Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-info-circle"></i>
-        {{ _('Perustiedot') }}
-      </h2>
-      
-      <div class="form-group">
-        <label for="name" class="required">
-          {{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="name" name="title" placeholder="{{ _('Mielenosoituksen nimi') }}" required />
-      </div>
-      
-      <div class="form-group">
-        <label for="tags" class="required">
-          {{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="tags" name="tags" placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet')}}" required />
+<div id="cacheNotice" class="cache-notice hidden">
+    Lomake ladattiin automaattisesti tallennetuista tiedoista 💾  
+    <button id="resetCacheBtn" type="button">Tyhjennä ja aloita alusta</button>
+</div>
+
+
+  <!-- Progress Bar -->
+  <div class="progress-container">
+    <div class="progress-steps">
+      <div class="progress-line">
+        <div class="progress-line-fill"></div>
       </div>
 
-      <div class="form-group">
-        <label for="description">{{ _('Kuvausteksti') }}</label>
-        <div>
-          <div class="main-container">
-            <div class="editor-container editor-container_classic-editor editor-container_include-block-toolbar" id="editor-container">
-              <div class="editor-container__editor">
-                <div id="editor"></div>
-              </div>
+      <div class="progress-step" data-page="1">
+        <div class="step-circle">
+          <span class="step-icon">1</span>
+        </div>
+        <div class="step-label">{{ _('Perustiedot') }}</div>
+      </div>
+
+      <div class="progress-step" data-page="2">
+        <div class="step-circle">
+          <span class="step-icon">2</span>
+        </div>
+        <div class="step-label">{{ _('Aika & Paikka') }}</div>
+      </div>
+
+      <div class="progress-step" data-page="3">
+        <div class="step-circle">
+          <span class="step-icon">3</span>
+        </div>
+        <div class="step-label">{{ _('Järjestäjät') }}</div>
+      </div>
+
+      <div class="progress-step" data-page="4">
+        <div class="step-circle">
+          <span class="step-icon">4</span>
+        </div>
+        <div class="step-label">{{ _('Yhteystiedot') }}</div>
+      </div>
+
+      <div class="progress-step" data-page="5">
+        <div class="step-circle">
+          <span class="step-icon"><i class="fa-solid fa-check"></i></span>
+        </div>
+        <div class="step-label">{{ _('Valmis') }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Container -->
+  <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm">
+    <div class="form-container">
+
+      <!-- Page 1: Basic Information -->
+      <div class="form-page active" id="page-1">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-info-circle"></i>
+            {{ _('Perustiedot') }}
+          </h2>
+          <p>{{ _('Kerro meille mielenosoituksesi tärkeimmät tiedot. Tämä auttaa ihmisiä löytämään tapahtumasi!') }}</p>
+        </div>
+
+        <div class="form-group">
+          <label for="name">
+            {{ _('Mielenosoituksen nimi') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="text" id="name" name="title" placeholder="{{ _('esim. Ilmastonmuutoksen vastainen marssi') }}"
+            required />
+          <div class="helper-text">
+            <i class="fa-solid fa-lightbulb"></i>
+            {{ _('Valitse lyhyt ja kuvaava nimi') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tags">
+            {{ _('Tagit (pilkuilla erotettuna)') }}<span class="required-asterisk">*</span>
+          </label>
+          <input type="text" id="tags" name="tags" placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet') }}"
+            required />
+          <div class="helper-text">
+            <i class="fa-solid fa-tags"></i>
+            {{ _('Tagit auttavat ihmisiä löytämään tapahtumasi') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">{{ _('Kuvausteksti') }}</label>
+          <div class="editor-container">
+            <div id="editor"></div>
+          </div>
+          <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+          <!-- rest of the quil css-->
+          <link href="https://cdn.quilljs.com/1.3.6/quill.bubble.css" rel="stylesheet">
+          <link href="https://cdn.quilljs.com/1.3.6/quill.core.css" rel="stylesheet">
+
+          <!-- include quill library -->
+          <style>
+            #editor {
+              min-height: 130px;
+            }
+          </style>
+          <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+          <script>
+            const quill = new Quill('#editor', {
+              modules: {
+                toolbar: [
+                  ['bold', 'italic'],
+                  ['link', 'blockquote'],
+                  [{ list: 'ordered' }, { list: 'bullet' }],
+                ],
+              },
+              theme: 'snow',
+            });
+
+            document.querySelector('form').onsubmit = function () {
+              document.querySelector('#description').value = quill.root.innerHTML;
+            };
+          </script>
+          <!-- import Quill -->
+          <input type="hidden" id="description" name="description" />
+          <div class="helper-text">
+            <i class="fa-solid fa-info-circle"></i>
+            {{ _('Kuvaile mielenosoituksen tarkoitus ja tavoitteet') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="image">{{ _('Kuva (valinnainen)') }}</label>
+          <input type="file" id="image" name="image" accept="image/*" />
+          <div class="helper-text">
+            <i class="fa-solid fa-image"></i>
+            {{ _('Lisää houkutteleva kuva tapahtumallesi') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
+          <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/events/..." />
+          <div class="helper-text">
+            <i class="fa-brands fa-facebook"></i>
+            {{ _('Linkitä Facebook-tapahtuma jos sellainen on') }}
+          </div>
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-secondary" disabled>
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 2: Date & Location -->
+      <div class="form-page" id="page-2">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-calendar"></i>
+            {{ _('Aika ja paikka') }}
+          </h2>
+          <p>{{ _('Milloin ja missä mielenosoitus järjestetään? Tarkat tiedot auttavat osallistujia löytämään perille!')
+            }}</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="date-label" for="date">
+              {{ _('Päivämäärä') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" required
+              aria-labelledby="date-label" />
+          </div>
+
+          <div class="form-group">
+            <label for="start_time">
+              {{ _('Alkamisaika') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="time" id="start_time" name="start_time" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="end_time">{{ _('Päättymisaika (valinnainen)') }}</label>
+          <input type="time" id="end_time" name="end_time" />
+          <div class="helper-text">
+            <i class="fa-solid fa-clock"></i>
+            {{ _('Anna arvio tapahtuman kestosta') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="type">
+            {{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span>
+          </label>
+          <select id="type" name="type" required>
+            <option value="" disabled selected>{{ _('Mielenosoituksen tyyppi') }}</option>
+            <option value="paikallaan">{{ _('Paikallaan') }}</option>
+            <option value="marssi">{{ _('Marssi / kulkue') }}</option>
+            <option value="muut">{{ _('Muu') }}</option>
+          </select>
+        </div>
+        <div id="march-route-container" class="optional-section">
+          <div class="form-group">
+            <label for="route">{{ _('Marssin reitti') }}</label>
+            <textarea id="route" name="route"
+              placeholder="{{ _('Kuvaile marssin reitti pilkuilla eroteltuna, esim. Rautatientori, Mannerheimintie, Eduskuntatalo') }}"></textarea>
+            <div class="helper-text">
+              <i class="fa-solid fa-route"></i>
+              {{ _('Anna osallistujille käsitys marssin kulusta. Erota kadunnimet pilkulla (,) — näin voimme renderöidä ne demo-sivulla.') }}
             </div>
           </div>
-          <script type="importmap">
-            {
-              "imports": {
-                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.js",
-                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.2.0/"
+
+          <div class="form-group">
+            <label>{{ _('Reitin esikatselu') }}</label>
+            <div id="route-preview" class="editor-container" style="min-height:60px; padding:0.75rem;">
+              <em id="route-preview-empty" style="color:var(--color-text-secondary)">{{ _('Ei reittiä annettu') }}</em>
+              <ul id="route-preview-list" style="margin:0; padding-left:1.25rem; display:none;"></ul>
+            </div>
+            <div class="helper-text">
+              <i class="fa-solid fa-eye"></i>
+              {{ _('Tarkista että listaus näkyy tässä oikein, näin ne renderöityvät demo-sivulla.') }}
+            </div>
+          </div>
+
+          <script>
+            (function () {
+              const textarea = document.getElementById('route');
+              const list = document.getElementById('route-preview-list');
+              const empty = document.getElementById('route-preview-empty');
+
+              function escapeHtml(str) {
+          return str.replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;');
               }
-            }
+
+              function renderPreview() {
+          const raw = textarea.value || '';
+          // somehow lets also include fullwidth commas and newlines as separators
+          const items = raw.split(/[,]+/).map(s => s.trim()).filter(Boolean);
+          if (items.length === 0) {
+            list.style.display = 'none';
+            empty.style.display = 'block';
+          } else {
+            list.innerHTML = items.map(i => `<li>${escapeHtml(i)}</li>`).join('');
+            list.style.display = 'block';
+            empty.style.display = 'none';
+          }
+              }
+
+              textarea.addEventListener('input', renderPreview);
+              document.addEventListener('DOMContentLoaded', renderPreview);
+            })();
           </script>
-          <script type="module" src="{{ url_for('static', filename='js/ck.js') }}"></script>
         </div>
-        <input type="hidden" id="description" name="description" />
-      </div>
 
-      <div class="form-group">
-        <label for="image">{{ _('Kuva (valinnainen)') }}</label>
-        <input type="file" id="image" name="image" accept="image/*" />
-      </div>
-      
-      <div class="form-group">
-        <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
-        <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/event" />
-      </div>
-    </div>
+        {% include "paikkakunta-dropdown.html" %}
 
-    <!-- Date & Time Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-calendar-days"></i>
-        {{ _('Aika ja paikka') }}
-      </h2>
-      
-      <div class="form-row">
         <div class="form-group">
-          <label id="date-label" for="date" class="required">
-            {{ _('Päivämäärä (pp.kk.vvvv)') }}<span class="required-asterisk">*</span>
+          <label for="address">
+            {{ _('Katuosoite / paikannimi') }}<span class="required-asterisk">*</span>
           </label>
-          <input type="text" id="date" name="date" placeholder="{{ _('pp.kk.vvvv') }}" aria-labelledby="date-label" />
+          <input
+            type="text"
+            id="address"
+            name="address"
+            placeholder="{{ _('esim. Mannerheimintie 1, 00100 tai Eduskuntatalo') }}"
+            required
+            pattern="^.+(?:,\s*\d{3,5})?$"
+            title="{{ _('Muoto: esim. Mannerheimintie 1, 00100 tai paikka kuten Eduskuntatalo. Älä lisää paikkakuntaa.') }}"
+          />
+          <div class="helper-text">
+            <i class="fa-solid fa-map-marker-alt"></i>
+            {{ _('Anna katuosoite tai pelkkä paikannimi (esim. "Eduskuntatalo"). Voit lisätä postinumeron pilkun jälkeen, esim. "Mannerheimintie 1, 00100". Älä lisää paikkakuntaa, se lisätään automaattisesti paikkakuntavalinnan perusteella.') }}
+          </div>
         </div>
-        
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 3: Organizers -->
+      <div class="form-page" id="page-3">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-users-gear"></i>
+            {{ _('Järjestäjät') }}
+          </h2>
+          <p>{{ _('Kuka tai ketkä järjestävät tämän mielenosoituksen? Voit lisätä yhden tai useamman järjestäjän.') }}
+          </p>
+        </div>
+
+        <div id="organizers-container" class="organizer-list">
+          <!-- Organizers will be added here -->
+        </div>
+
+        <button type="button" class="add-organizer-button" onclick="addOrganizer()">
+          <i class="fa-solid fa-plus-circle"></i>
+          {{ _('Lisää järjestäjä') }}
+        </button>
+
+        <div class="helper-text" style="margin-top: 1.5rem;">
+          <i class="fa-solid fa-heart"></i>
+          {{ _('Järjestäjätiedot auttavat osallistujia saamaan lisätietoja ja olemaan yhteydessä') }}
+        </div>
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- by default at least one organizer -->
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          addOrganizer();
+        });
+      </script>
+
+      <!-- Page 4: Submitter Info & Terms -->
+      <div class="form-page" id="page-4">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-user-check"></i>
+            {{ _('Yhteystietosi') }}
+          </h2>
+          <p>{{ _('Viimeinen askel! Kerro meille vielä omat yhteystietosi. Tietojasi käsitellään luottamuksellisesti.')
+            }}</p>
+        </div>
+
         <div class="form-group">
-          <label for="start_time" class="required">
-            {{ _('Alkamisaika') }}<span class="required-asterisk">*</span>
+          <label for="submitter_role">
+            {{ _('Roolisi') }}<span class="required-asterisk">*</span>
           </label>
-          <input type="time" id="start_time" name="start_time" required />
+          <input type="text" id="submitter_role" name="submitter_role"
+            placeholder="{{ _('esim. järjestäjä, osallistuja, vapaaehtoinen') }}" required />
+          <div class="helper-text">
+            <i class="fa-solid fa-id-badge"></i>
+            {{ _('Mikä on suhteesi tapahtumaan?') }}
+          </div>
         </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="end_time">{{ _('Päättymisaika') }}</label>
-        <input type="time" id="end_time" name="end_time" />
-      </div>
 
-      <div class="form-group">
-        <label for="type" class="required">
-          {{ _('Mielenosoituksen tyyppi') }}<span class="required-asterisk">*</span>
-        </label>
-        <select id="type" name="type" required>
-          <option value="" disabled selected>{{ _('Valitse mielenosoituksen tyyppi') }}</option>
-          <option value="paikallaan">{{ _('Paikallaan') }}</option>
-          <option value="marssi">{{ _('Marssi') }}</option>
-          <option value="muut">{{ _('Muut') }}</option>
-        </select>
-      </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="submitter_name">
+              {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="submitter_name" name="submitter_name" placeholder="{{ _('Nimi') }}" required />
+          </div>
 
-      <div id="march-route-container" class="optional-section">
-        <div class="form-group">
-          <label for="route">{{ _('Reitti (vain marssille, valinnainen)') }}</label>
-          <textarea id="route" name="route" placeholder="{{ _('Kuvaile marssin reitti...') }}"></textarea>
+          <div class="form-group">
+            <label for="submitter_email">
+              {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
+            </label>
+            <input type="email" id="submitter_email" name="submitter_email" placeholder="email@example.com" required />
+          </div>
         </div>
-      </div>
 
-      <!-- Include Paikkakunta Dropdown -->
-      {% include "paikkakunta-dropdown.html" %}
+        <div class="helper-text" style="margin-bottom: 2rem;">
+          <i class="fa-solid fa-shield-halved"></i>
+          {{ _('Yhteystietojasi käytetään vain tarvittaessa yhteydenottoon liittyen ilmoitukseesi') }}
+        </div>
 
-      <div class="form-group">
-        <label for="address" class="required">
-          {{ _('Katuosoite') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="address" name="address" placeholder="{{ _('Katuosoite') }}" required />
-      </div>
-    </div>
-
-    <!-- Organizers Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-users"></i>
-        {{ _('Järjestäjä(t)') }}
-      </h2>
-      
-      <div id="organizers-container"></div>
-      <button type="button" class="add-organizer-button" onclick="addOrganizer()">
-        <i class="fa-solid fa-plus"></i>
-        {{ _('Lisää järjestäjä') }}
-      </button>
-    </div>
-
-    <!-- Submitter Information Section -->
-    <div class="form-section">
-      <h2>
-        <i class="fa-solid fa-user"></i>
-        {{ _('Ilmoittajan tiedot') }}
-      </h2>
-      
-      <div class="form-group">
-        <label for="submitter_role" class="required">
-          {{ _('Roolisi (esim. mielenosoituksen järjestäjä, osallistuja, tms.)') }}<span class="required-asterisk">*</span>
-        </label>
-        <input type="text" id="submitter_role" name="submitter_role" placeholder="{{ _('Roolisi') }}" required />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="submitter_email" class="required">
-            {{ _('Sähköpostiosoitteesi') }}<span class="required-asterisk">*</span>
+        <div class="checkbox-group">
+          <input type="checkbox" id="accept_terms" name="accept_terms" required />
+          <label for="accept_terms">
+            {{ _('Hyväksyn') }}
+            <a href="{{ url_for('terms') }}" target="_blank">{{ _('käyttöehdot') }}</a>
+            {{ _('ja olen lukenut') }}
+            <a href="{{ url_for('privacy') }}" target="_blank">{{ _('tietosuojaselosteen') }}</a>.
+            <span class="required-asterisk">*</span>
           </label>
-          <input type="email" id="submitter_email" name="submitter_email" placeholder="esim. nimi@email.com" required />
         </div>
 
-        <div class="form-group">
-          <label for="submitter_name" class="required">
-            {{ _('Nimesi tai nimimerkkisi') }}<span class="required-asterisk">*</span>
-          </label>
-          <input type="text" id="submitter_name" name="submitter_name" placeholder="{{ _('Nimi tai nimimerkki') }}" required />
+        <div class="form-navigation">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+          <button type="button" id="submit-form" class="btn btn-success">
+            <i class="fa-solid fa-paper-plane"></i>
+            {{ _('Lähetä ilmoitus') }}
+          </button>
+
+          <!-- submit btn -->
+          <button type="submit" id="submit-form" class="btn btn-success">
+            <i class="fa-solid fa-paper-plane"></i>
+            {{ _('Lähetä ilmoitus') }}
+          </buttoAAAn>
         </div>
       </div>
-    </div>
 
-    <!-- Terms and Privacy Agreement -->
-    <div class="checkbox-group">
-      <input type="checkbox" id="accept_terms" name="accept_terms" required />
-      <label for="accept_terms">
-        {{ _('Hyväksyn') }}
-        <a href="{{ url_for('terms') }}" target="_blank">{{ _('käyttöehdot') }}</a>
-        {{ _('ja olen lukenut') }}
-        <a href="{{ url_for('privacy') }}" target="_blank">{{ _('tietosuojaselosteen') }}</a>.
-        <span class="required-asterisk">*</span>
-      </label>
-    </div>
+      <!-- Page 5: Success -->
+      <div class="form-page" id="page-5">
+        <div class="success-page">
+          <div class="success-icon">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <h2>🎉 {{ _('Kiitos ilmoituksestasi!') }}</h2>
+          <p>
+            {{ _('Mielenosoitusilmoituksesi on vastaanotettu ja se käsitellään pian. Saat vahvistusviestin
+            sähköpostiisi.') }}
+          </p>
+          <p>
+            {{ _('Yhdessä teemme muutosta! Kiitos, että jaat tärkeää tietoa yhteisön kanssa.') }}
+          </p>
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+              <i class="fa-solid fa-home"></i>
+              {{ _('Palaa etusivulle') }}
+            </a>
+            <a href="{{ url_for('submit') }}" class="btn btn-secondary">
+              <i class="fa-solid fa-plus"></i>
+              {{ _('Ilmoita uusi tapahtuma') }}
+            </a>
+          </div>
+        </div>
+      </div>
 
-    <!-- Submit Button -->
-    <button id="submit" type="submit" class="submit-button">
-      <i class="fa-solid fa-paper-plane"></i>
-      {{ _('Lähetä ilmoitus') }}
-    </button>
-    
-    <!-- Success Message -->
-    <div class="success-message" id="success-message">
-      <i class="fa-solid fa-check-circle"></i>
-      {{ _('Mielenosoitusilmoitus lähetetty onnistuneesti!') }}
     </div>
   </form>
 
   <!-- Help Section -->
-  <div class="form-section" style="margin-top: 2rem;">
-    <h2>
-      <i class="fa-solid fa-question-circle"></i>
-      {{ _('Tarvitsetko apua?') }}
-    </h2>
-    <p style="color: var(--color-text-secondary); margin-bottom: 1.5rem;">
-      {{ _('Jos kohtaat ongelmia lomakkeen täyttämisessä tai sinulla on kysyttävää, älä epäröi ottaa yhteyttä.') }}
-    </p>
+  <div class="form-container" style="margin-top: 2rem;">
+    <div class="page-header">
+      <h2>
+        <i class="fa-solid fa-life-ring"></i>
+        {{ _('Tarvitsetko apua?') }}
+      </h2>
+      <p>{{ _('Olemme täällä auttamassa sinua! Jos sinulla on kysyttävää tai tarvitset tukea lomakkeen täyttämisessä.')
+        }}</p>
+    </div>
     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-      <a href="{{ url_for('contact') }}" class="btn btn-outline">
+      <a href="{{ url_for('contact') }}" class="btn btn-secondary">
         <i class="fa-solid fa-envelope"></i>
         {{ _('Ota yhteyttä') }}
       </a>
-      <a href="{{ url_for('info') }}" class="btn btn-outline">
-        <i class="fa-solid fa-info"></i>
+      <a href="{{ url_for('info') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-circle-info"></i>
         {{ _('Lisätietoja') }}
       </a>
     </div>
   </div>
 </div>
 
+
+<script>
+  document.querySelectorAll("input, select, textarea").forEach(el => {
+    el.addEventListener("input", () => {
+        localStorage.setItem(`form_${el.name}`, el.value);
+    });
+});
+
+document.querySelectorAll("input, select, textarea").forEach(el => {
+    const saved = localStorage.getItem(`form_${el.name}`);
+    if (saved !== null) {
+        el.value = saved;
+    } else {
+      if (el.type === "checkbox" || el.type === "radio") {
+          el.checked = false; // ensure unchecked if nothing saved
+      } else {
+        el.value = ""; // ensure empty if nothing saved, so that it does not pull from browser autofill
+        // this helps with checkboxes/radio buttons too
+      }
+    }
+});
+
+// Check if there is ANY form data stored
+function formCacheExists() {
+    return Object.keys(localStorage).some(key => key.startsWith("form_") && key !== "form_step"); // form step is not form data
+}
+
+// Show notice if cached
+window.addEventListener("DOMContentLoaded", () => {
+    const notice = document.getElementById("cacheNotice");
+
+    if (formCacheExists()) {
+        notice.classList.remove("hidden");
+    } else {
+        notice.classList.add("hidden");
+
+        // Clear any step info if no form data
+        localStorage.removeItem("form_step");
+        // clear all form data // set value to "" in form
+        formData = document.querySelectorAll("input, select, textarea");
+        formData.forEach(el => {
+            localStorage.removeItem(`form_${el.name}`);
+            el.value = "";
+        });
+    }
+
+    const savedStep = localStorage.getItem("form_step");
+if (savedStep) {
+    showPage(parseInt(savedStep));
+}
+
+});
+
+// Reset function
+document.getElementById("resetCacheBtn")?.addEventListener("click", () => {
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("form_")) localStorage.removeItem(key);
+    });
+
+    localStorage.removeItem("form_step");
+
+    // reload page clean
+    location.reload();
+});
+
+
+
+document.getElementById("myForm").addEventListener("submit", () => {
+    
+});
+
+
+</script>
 {% endblock %}

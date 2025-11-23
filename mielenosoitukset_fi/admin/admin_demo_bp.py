@@ -1029,6 +1029,18 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
                 from mielenosoitukset_fi.utils.classes import Case
                 case = Case.from_dict(mongo.cases.find_one({"_id": ObjectId(case_id)}))
                 case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
+                
+                case._add_history_entry({
+                    "timestamp": datetime.utcnow(),
+                    "action": "Muokattu mielenosoitusta",
+                    "user": current_user.username,
+                    "mech_action": "edit_demo",
+                    "metadata": {
+                        "demo_id": demo_id,
+                        "history_id": str(hist_id),
+                        "reason": "Muokattu mielenosoitusta hallintapaneelista, lisätietoa: <a href='{}'>historia</a>".format(url_for('admin_demo.view_demo_diff', history_id=hist_id, _external=True))
+                    },
+                })
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")

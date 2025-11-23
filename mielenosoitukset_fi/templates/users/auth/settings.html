@@ -4,172 +4,645 @@
 
 {% block styles %}
 <link href="{{ url_for('static', filename='css/user/settings.css') }}" rel="stylesheet">
-
-<head>
-
-  <link href="{{ url_for('static', filename='css/v2/settings.css')}}" rel="stylesheet">
-</head>
-
+<link href="{{ url_for('static', filename='css/v2/settings.css')}}" rel="stylesheet">
+<style>
+  .settings-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .settings-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+  }
+  
+  .settings-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #212529;
+  }
+  
+  #settings-tabs {
+    border: none;
+  }
+  
+  #settings-tabs .ui-tabs-nav {
+    border: none;
+    background: none;
+    padding: 0;
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  #settings-tabs .ui-tabs-nav li {
+    border: none;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 0;
+  }
+  
+  #settings-tabs .ui-tabs-nav li a {
+    padding: 0.75rem 1.5rem;
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  #settings-tabs .ui-tabs-nav li.ui-tabs-active {
+    background: #0d6efd;
+  }
+  
+  #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
+    color: white;
+  }
+  
+  .settings-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 0.625rem 0.875rem;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+  }
+  
+  .dropdown.mbCometDiv4109 {
+    position: relative;
+  }
+  
+  .dropbtn {
+    width: 100%;
+    text-align: left;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .dropbtn:hover {
+    border-color: #0d6efd;
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    border-radius: 8px;
+    margin-top: 0.25rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .dropdown-content .mbDracoDiv3949 {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+  }
+  
+  .dropdown-content .mbSolarInput9963 {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+  }
+  
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: #212529;
+    text-decoration: none;
+  }
+  
+  .dropdown-item:hover {
+    background-color: #f8f9fa;
+  }
+  
+  .dropdown-item.active {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+  }
+  
+  .alert {
+    border-radius: 8px;
+    border: none;
+  }
+  
+  .alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  
+  .btn {
+    border-radius: 8px;
+    padding: 0.625rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .btn-primary {
+    background-color: #0d6efd;
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13,110,253,0.3);
+  }
+  
+  .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: 0.5rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .mfa-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .list-group-item {
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #dee2e6;
+  }
+  
+  .profile-preview {
+    margin-top: 1rem;
+  }
+  
+  .form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+  
+  .form-check {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  
+  /* Dark Mode Styles */
+  html.dark .settings-header h1 {
+    color: #e9ecef;
+  }
+  
+  html.dark .settings-header {
+    border-bottom-color: #495057;
+  }
+  
+  html.dark #settings-tabs .ui-tabs-nav li {
+    background: #343a40;
+  }
+  
+  html.dark #settings-tabs .ui-tabs-nav li a {
+    color: #adb5bd;
+  }
+  
+  html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active {
+    background: #0d6efd;
+  }
+  
+  html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
+    color: white;
+  }
+  
+  html.dark .settings-section {
+    background: #212529;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  
+  html.dark .form-label {
+    color: #e9ecef;
+  }
+  
+  html.dark .form-control,
+  html.dark .form-select,
+  html.dark .dropbtn {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+  
+  html.dark .form-control:focus,
+  html.dark .form-select:focus,
+  html.dark .dropbtn:hover {
+    background-color: #343a40;
+    border-color: #0d6efd;
+    color: #e9ecef;
+  }
+  
+  html.dark .form-control::placeholder {
+    color: #6c757d;
+  }
+  
+  html.dark .dropdown-content {
+    background-color: #343a40;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  
+  html.dark .dropdown-content .mbDracoDiv3949 {
+    background: #343a40;
+    border-bottom-color: #495057;
+  }
+  
+  html.dark .dropdown-content .mbSolarInput9963 {
+    background-color: #212529;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+  
+  html.dark .dropdown-item {
+    color: #e9ecef;
+  }
+  
+  html.dark .dropdown-item:hover {
+    background-color: #495057;
+  }
+  
+  html.dark .dropdown-item.active {
+    background-color: #1e4d8b;
+    color: #ffffff;
+  }
+  
+  html.dark .alert-warning {
+    background-color: #664d03;
+    color: #ffecb5;
+  }
+  
+  html.dark .form-text {
+    color: #adb5bd;
+  }
+  
+  html.dark .form-check {
+    background: #343a40;
+  }
+  
+  html.dark .mfa-section {
+    background: #343a40;
+  }
+  
+  html.dark .list-group-item {
+    background-color: #212529;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+  
+  html.dark .modal-content {
+    background-color: #212529;
+    color: #e9ecef;
+  }
+  
+  html.dark .modal-header {
+    border-bottom-color: #495057;
+  }
+  
+  html.dark .modal-footer {
+    border-top-color: #495057;
+  }
+  
+  html.dark .btn-close {
+    filter: invert(1);
+  }
+  
+  html.dark .text-muted {
+    color: #6c757d !important;
+  }
+  
+  html.dark h5, html.dark h6 {
+    color: #e9ecef;
+  }
+  
+  html.dark p {
+    color: #adb5bd;
+  }
+  
+  html.dark .badge.bg-secondary {
+    background-color: #495057 !important;
+  }
+  
+  html.dark .badge.bg-success {
+    background-color: #198754 !important;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-  <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
+  <div class="settings-container">
+    <div class="settings-header">
+      <h1><i class="fas fa-cogs me-2"></i>{{ _('Asetukset') }}</h1>
+    </div>
 
-  <div id="settings-tabs">
-    <ul>
-      <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
-      <li><a href="#tab-profile">{{ _('Profiili') }}</a></li>
-    </ul>
+    <div id="settings-tabs">
+      <ul>
+        <li><a href="#tab-general"><i class="fas fa-sliders-h me-2"></i>{{ _('Yleinen') }}</a></li>
+        <li><a href="#tab-profile"><i class="fas fa-user me-2"></i>{{ _('Profiili') }}</a></li>
+      </ul>
 
-    <!-- Yleinen Tab -->
-    <div id="tab-general">
-      <form id="settings-form">
-        <!-- Näyttönimi input -->
-        <div class="mb-3">
-          <label class="form-label" for="display_name">
-            <i class="fa-solid fa-id-card me-2"></i>{{ _('Näyttönimi') }}
-          </label>
-
-          <input class="form-control mbBlackHoleInput1866" id="display_name" name="display_name" type="text"
-            placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
-
-          <div class="form-text mt-1 mbCoronaDiv2172">
-            <i class="fa-solid fa-circle-info me-1"></i>
-            {{ _('Näyttönimi näkyy muille käyttäjille profiilissasi ja
-            kommenteissa. Voit käyttää omaa nimeäsi tai
-            lempinimeä.') }}
-          </div>
-        </div>
-
-        <!-- Kaupunki dropdown -->
-        <div class="mb-3">
-          <label class="form-label" for="city">
-            <i class="fa-solid fa-city me-2"></i>{{ _('Kaupunki') }}
-          </label>
-
-          <br>
-
-          <div class="dropdown mbCometDiv4109" id="paikkakunta-drop">
-            <button class="dropbtn form-control d-flex justify-content-between align-items-center mbSupernovaButton2432"
-              type="button" aria-expanded="false" aria-haspopup="listbox"
-              aria-label="{{ _('Avaa paikkakuntavalikko') }}">
-              <span id="selected-city-text">{{ _('Valitse paikkakunta')
-                }}</span>
-              <i class="fa-solid fa-chevron-down ms-2"></i>
-            </button>
-
-            <div class="dropdown-content shadow mbUranusDiv8836" id="dropdown-content" role="listbox"
-              aria-labelledby="city">
-
-              <div class="mbDracoDiv3949">
-                <i class="fa-solid fa-magnifying-glass me-2"></i>
-                <input class="form-control form-control-sm mbSolarInput9963" id="searchInput" type="text"
-                  aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
-                  placeholder="{{ _('Hae paikkakunta...') }}">
+      <!-- Yleinen Tab -->
+      <div id="tab-general">
+        <div class="settings-section">
+          <form id="settings-form">
+            <!-- Näyttönimi -->
+            <div class="mb-4">
+              <label class="form-label" for="display_name">
+                <i class="fa-solid fa-id-card me-2"></i>{{ _('Näyttönimi') }}
+              </label>
+              <input class="form-control" id="display_name" name="display_name" type="text"
+                placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
+              <div class="form-text mt-2">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                {{ _('Näyttönimi näkyy muille käyttäjille profiilissasi ja kommenteissa. Voit käyttää omaa nimeäsi tai lempinimeä.') }}
               </div>
-
-              {% for city in city_list %}
-              <a class="dropdown-item py-2 {% if demo is defined and demo.city==city %}active{% endif %} mbApolloA7791"
-                href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">
-                <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city
-                }}
-              </a>
-              {% endfor %}
             </div>
-          </div>
 
-          <input id="selected-city" name="city" type="hidden" required>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="language">
-            <i class="fa-solid fa-language me-2"></i>{{ _('Kieli') }}
-          </label>
-          <select class="form-select" id="language" name="language">
-            <option value="fi">{{ _('Suomi') }}</option>
-            <!--<option value="en">{{ _('English') }}</option>-->
-          </select>
-
-          <br>
-
-          <div class="alert alert-warning d-flex align-items-start mbPerseusDiv6913">
-            <i class="fa-solid fa-triangle-exclamation fa-xl mbAriesI9259"></i>
-            <div>
-              <h5 class="mb-1">{{ _('Käännökset ovat vielä kesken') }}</h5>
-              <p class="mb-2">
-                {{ _('Sivusto on tällä hetkellä käytettävissä vain suomeksi,
-                mutta englannin ja ruotsin käännökset ovat
-                parhaillaan työn alla.') }}
-                {{
-                _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:')
-                }}
-              </p>
-              <a class="btn btn-outline-dark btn-sm" href="https://mielenosoitukset.fi/upcoming/translations/"
-                target="_blank">
-                <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke')
-                }}
-              </a>
+            <!-- Kaupunki -->
+            <div class="mb-4">
+              <label class="form-label" for="city">
+                <i class="fa-solid fa-city me-2"></i>{{ _('Kaupunki') }}
+              </label>
+              <div class="dropdown mbCometDiv4109" id="paikkakunta-drop">
+                <button class="dropbtn" type="button" aria-expanded="false" aria-haspopup="listbox"
+                  aria-label="{{ _('Avaa paikkakuntavalikko') }}">
+                  <span id="selected-city-text">{{ _('Valitse paikkakunta') }}</span>
+                  <i class="fa-solid fa-chevron-down float-end"></i>
+                </button>
+                <div class="dropdown-content" id="dropdown-content" role="listbox">
+                  <div class="mbDracoDiv3949">
+                    <i class="fa-solid fa-magnifying-glass me-2"></i>
+                    <input class="mbSolarInput9963" id="searchInput" type="text"
+                      aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
+                      placeholder="{{ _('Hae paikkakunta...') }}">
+                  </div>
+                  {% for city in city_list %}
+                  <a class="dropdown-item {% if demo is defined and demo.city==city %}active{% endif %}"
+                    href="#" role="option" onclick="selectCity('{{ city }}'); return false;">
+                    <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city }}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+              <input id="selected-city" name="city" type="hidden" required>
             </div>
+
+            <!-- Kieli -->
+            <div class="mb-4">
+              <label class="form-label" for="language">
+                <i class="fa-solid fa-language me-2"></i>{{ _('Kieli') }}
+              </label>
+              <select class="form-select" id="language" name="language">
+                <option value="fi">{{ _('Suomi') }}</option>
+              </select>
+              <div class="alert alert-warning d-flex align-items-start mt-3">
+                <i class="fa-solid fa-triangle-exclamation fa-lg me-3 mt-1"></i>
+                <div>
+                  <h6 class="mb-1 fw-bold">{{ _('Käännökset ovat vielä kesken') }}</h6>
+                  <p class="mb-2 small">
+                    {{ _('Sivusto on tällä hetkellä käytettävissä vain suomeksi, mutta englannin ja ruotsin käännökset ovat parhaillaan työn alla.') }}
+                    {{ _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:') }}
+                  </p>
+                  <a class="btn btn-outline-dark btn-sm" href="https://mielenosoitukset.fi/upcoming/translations/"
+                    target="_blank">
+                    <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke') }}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tumma tila -->
+            <div class="form-check">
+              <input class="form-check-input" id="dark_mode" name="dark_mode" type="checkbox">
+              <label class="form-check-label" for="dark_mode">
+                <i class="fas fa-moon me-2"></i>{{ _('Tumma tila') }}
+              </label>
+            </div>
+
+            <!-- Hidden newsletter -->
+            <div class="form-check d-none">
+              <input class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter" type="checkbox">
+              <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
+            </div>
+
+            <button class="btn btn-primary d-inline-flex align-items-center" type="submit">
+              <i class="fas fa-save me-2"></i>
+              {{ _('Tallenna muutokset') }}
+              <div class="spinner" id="spinner"></div>
+            </button>
+          </form>
+        </div>
+
+        <!-- MFA Section -->
+        <div class="settings-section mfa-section">
+          <h5 class="mb-3"><i class="fas fa-shield-alt me-2"></i>{{ _('Kaksivaiheinen tunnistus (MFA)') }}</h5>
+          <div id="mfa-status-container" class="mb-3">
+            <span id="mfa-status" class="badge bg-secondary">{{ _('MFA ei käytössä') }}</span>
           </div>
-        </div>
-
-        <div class="form-check mb-3">
-          <input class="form-check-input" id="dark_mode" name="dark_mode" type="checkbox">
-          <label class="form-check-label" for="dark_mode">{{ _('Tumma tila')
-            }}</label>
-        </div>
-
-        <div class="form-check mb-3 hidden" aria-hidden="true">
-          <input class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter" type="checkbox">
-          <label class="form-check-label" for="subscribe_newsletter">{{
-            _('Tilaa uutiskirje') }}</label>
-        </div>
-
-        <button class="btn btn-primary" type="submit">
-          {{ _('Tallenna muutokset') }}
-          <div class="spinner" id="spinner"></div>
-        </button>
-      </form>
-
-      <!-- MFA Section -->
-      <div class="mb-3 mt-4">
-        <label class="form-label" for="mfa"><i class="fas fa-shield-alt"></i> {{
-          _('Kaksivaiheinen tunnistus (MFA)')
-          }}</label>
-        <div class="d-flex flex-column gap-2" id="mfa-section">
-          <div id="mfa-status-container">
-            <span class="text-success" id="mfa-status">{{ _('MFA ei käytössä')
-              }}</span>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-warning" id="init-mfa-btn" type="button">
+              <i class="fas fa-lock me-2"></i>{{ _('Ota käyttöön MFA') }}
+            </button>
+            <button class="btn btn-secondary" id="add-mfa-device-btn" type="button" style="display: none;">
+              <i class="fas fa-plus me-2"></i>{{ _('Lisää uusi laite') }}
+            </button>
           </div>
-          <button class="btn btn-warning" id="init-mfa-btn" type="button">{{
-            _('Ota käyttöön MFA') }}</button>
-          <button class="btn btn-secondary mbCometButton1455" id="add-mfa-device-btn" type="button">{{ _('Lisää uusi
-            laite') }}</button>
-          <ul class="list-group mt-2" id="mfa-devices-list"></ul>
+          <ul class="list-group" id="mfa-devices-list"></ul>
+        </div>
+      </div>
+
+      <!-- Profiili Tab -->
+      <div id="tab-profile">
+        <div class="settings-section">
+          <h5 class="mb-3">{{ _('Profiilitiedot') }}</h5>
+          <p class="text-muted mb-4">{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
+          
+          <form id="profile-form">
+            <div class="mb-4">
+              <label class="form-label" for="bio">
+                <i class="fas fa-align-left me-2"></i>{{ _('Esittelyteksti') }}
+              </label>
+              <textarea class="form-control" id="bio" rows="4" 
+                placeholder="{{ _('Kerro itsestäsi...') }}"></textarea>
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label" for="profile-pic">
+                <i class="fas fa-image me-2"></i>{{ _('Profiilikuva') }}
+              </label>
+              <input class="form-control" id="profile-pic" type="file" accept="image/*">
+              <div class="profile-preview" id="profile-pic-preview"></div>
+            </div>
+            
+            <button class="btn btn-primary d-inline-flex align-items-center" type="submit">
+              <i class="fas fa-save me-2"></i>{{ _('Tallenna profiili') }}
+            </button>
+          </form>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- Profiili Tab -->
-    <div id="tab-profile">
-      <p>{{ _('Tässä voit muokata profiilitietojasi.') }}</p>
-      <form id="profile-form">
-        <div class="mb-3">
-          <label class="form-label" for="bio">{{ _('Esittelyteksti') }}</label>
-          <textarea class="form-control" id="bio" rows="3"></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="profile-pic">{{ _('Profiilikuva')
-            }}</label>
-          <input class="form-control" id="profile-pic" type="file" accept="image/*">
-        </div>
-        <button class="btn btn-primary" type="submit">{{ _('Tallenna profiili')
-          }}</button>
-      </form>
+<!-- MFA QR Code Modal -->
+<div class="modal fade" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="mfaModalLabel">
+          <i class="fas fa-qrcode me-2"></i>{{ _('MFA QR Code') }}
+        </h5>
+        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="mb-3">{{ _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.') }}</p>
+        <img class="img-fluid rounded mb-3" id="mfa-qr-code" src="" alt="MFA QR Code" style="max-width: 250px;">
+        <input class="form-control" id="mfa-token-input" type="text"
+          placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="confirm-mfa-btn" type="button">
+          <i class="fas fa-check me-2"></i>{{ _('Vahvista MFA') }}
+        </button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+      </div>
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(function () {
+    $("#settings-tabs").tabs({
+      show: { effect: "fadeIn", duration: 200 },
+      hide: { effect: "fadeOut", duration: 200 }
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const form = document.getElementById('settings-form');
+    const spinner = document.getElementById('spinner');
+    const displayInput = document.getElementById('display_name');
+    const cityInput = document.getElementById('selected-city');
+    const languageSelect = document.getElementById('language');
+    const darkModeCheckbox = document.getElementById('dark_mode');
+    const newsletterCheckbox = document.getElementById('subscribe_newsletter');
+
+    // Fetch current settings
+    try {
+      const res = await fetch("/users/auth/api/v2/settings");
+      const data = await res.json();
+      if (data.status === "success") {
+        const settings = data.settings || {};
+        displayInput.value = settings.display_name || '';
+        if (settings.city) {
+          selectCity(settings.city);
+        }
+        languageSelect.value = settings.language || 'fi';
+        darkModeCheckbox.checked = settings.dark_mode || false;
+        newsletterCheckbox.checked = settings.subscribe_newsletter || false;
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
+
+    // Toggle dark mode immediately when checkbox changes
+    darkModeCheckbox.addEventListener('change', () => {
+      if (darkModeCheckbox.checked) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    });
+
+    // Handle form submit
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      spinner.style.display = 'inline-block';
+
+      const payload = {
+        display_name: displayInput.value,
+        city: cityInput.value,
+        language: languageSelect.value,
+        dark_mode: darkModeCheckbox.checked,
+        subscribe_newsletter: newsletterCheckbox.checked
+      };
+
+      try {
+        const response = await fetch("/users/auth/api/v2/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        spinner.style.display = 'none';
+
+        if (result.status === "success") {
+          alert(result.message || "Asetukset tallennettu!");
+        } else {
+          alert("Virhe asetusten tallennuksessa.");
+        }
+      } catch (error) {
+        spinner.style.display = 'none';
+        console.error('Failed to save settings:', error);
+        alert("Virhe asetusten tallennuksessa.");
+      }
+    });
+  });
+</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -188,7 +661,8 @@
             showPreview(data.data.profile_picture);
           }
         }
-      });
+      })
+      .catch(error => console.error('Failed to load profile:', error));
 
     // Form submit handler
     profileForm.addEventListener("submit", async (e) => {
@@ -202,144 +676,50 @@
 
       const payload = {
         bio: bioInput.value,
-        profile_picture: base64Image // null if no file selected
+        profile_picture: base64Image
       };
 
-      const res = await fetch("/users/auth/api/v2/user_profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch("/users/auth/api/v2/user_profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
-      const data = await res.json();
-      if (data.status === "success") {
-        alert("Profiili päivitetty!");
-        if (base64Image) {
-          // Show new preview immediately
-          const dataUrl = "data:image/png;base64," + base64Image;
-          showPreview(dataUrl);
+        const data = await res.json();
+        if (data.status === "success") {
+          alert("Profiili päivitetty!");
+          if (base64Image) {
+            const dataUrl = "data:image/png;base64," + base64Image;
+            showPreview(dataUrl);
+          }
+        } else {
+          alert("Virhe: " + (data.message || "Tuntematon virhe"));
         }
-      } else {
-        alert("Virhe: " + (data.message || "Tuntematon virhe"));
+      } catch (error) {
+        console.error('Failed to update profile:', error);
+        alert("Virhe profiilin päivittämisessä");
       }
     });
 
-    // Helper: convert file -> base64
     function toBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
+        reader.onload = () => resolve(reader.result.split(",")[1]);
         reader.onerror = error => reject(error);
       });
     }
 
-    // Helper: show image preview
     function showPreview(url) {
       previewContainer.innerHTML = "";
       const img = document.createElement("img");
       img.src = url;
       img.className = "img-thumbnail";
       img.style.maxWidth = "150px";
+      img.style.borderRadius = "8px";
       previewContainer.appendChild(img);
     }
-  });
-</script>
-
-<!-- MFA QR Modal (unchanged) -->
-
-<!-- MFA QR Code Modal -->
-<div class="modal fade" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="mfaModalLabel">{{ _('MFA QR Code') }}</h5>
-        <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
-      </div>
-      <div class="modal-body text-center">
-        <p>{{
-          _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.')
-          }}</p>
-        <img class="img-fluid rounded mb-3" id="mfa-qr-code" src alt="MFA QR Code">
-        <input class="form-control" id="mfa-token-input" type="text"
-          placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-primary" id="confirm-mfa-btn" type="button">{{
-          _('Vahvista MFA') }}</button>
-        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-
-<script>
-  $(function () {
-    $("#settings-tabs").tabs({
-      show: { effect: "fadeIn", duration: 200 },
-      hide: { effect: "fadeOut", duration: 200 }
-    });
-  });
-
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", async () => {
-    const form = document.getElementById('settings-form');
-    const spinner = document.getElementById('spinner');
-
-    const displayInput = document.getElementById('display_name');
-    const cityInput = document.getElementById('selected-city');
-    const languageSelect = document.getElementById('language');
-    const darkModeCheckbox = document.getElementById('dark_mode');
-    const newsletterCheckbox = document.getElementById('subscribe_newsletter');
-
-    // Fetch current settings
-    const res = await fetch("/users/auth/api/v2/settings");
-    const data = await res.json();
-    if (data.status === "success") {
-      const settings = data.settings || {};
-      displayInput.value = settings.display_name || '';
-      if (settings.city !== null) {
-        selectCity(settings.city);
-        //cityInput.value = settings.city || '';
-      }
-      languageSelect.value = settings.language || 'fi';
-      darkModeCheckbox.checked = settings.dark_mode || false;
-      newsletterCheckbox.checked = settings.subscribe_newsletter || false;
-    }
-
-    // Handle form submit
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      spinner.style.display = 'inline-block';
-
-      const payload = {
-        display_name: displayInput.value,
-        city: cityInput.value,
-        language: languageSelect.value,
-        dark_mode: darkModeCheckbox.checked,
-        subscribe_newsletter: newsletterCheckbox.checked
-      };
-
-      const response = await fetch("/users/auth/api/v2/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      spinner.style.display = 'none';
-
-      if (result.status === "success") {
-        alert(result.message);
-      } else {
-        alert("Virhe asetusten tallennuksessa.");
-      }
-    });
   });
 </script>
 
@@ -354,27 +734,30 @@
     const mfaStatus = document.getElementById("mfa-status");
     const devicesList = document.getElementById("mfa-devices-list");
 
-    let currentStep = null;
     let pendingSecret = null;
 
-    // Load existing MFA status & devices
     async function loadMFAStatus() {
       try {
         const res = await fetch("/users/auth/api/v2/mfa_status");
         const data = await res.json();
         if (data.status === "enabled") {
           mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
+          mfaStatus.className = "badge bg-success";
           mfaBtn.style.display = "none";
           addDeviceBtn.style.display = "inline-block";
           devicesList.innerHTML = "";
           data.devices.forEach(d => {
             const li = document.createElement("li");
             li.className = "list-group-item d-flex justify-content-between align-items-center";
-            li.textContent = `${d.name} (${d.created_at})`;
-            // Optional: add revoke button
+            li.innerHTML = `
+              <div>
+                <i class="fas fa-mobile-alt me-2"></i>
+                ${d.name} <small class="text-muted">(${d.created_at})</small>
+              </div>
+            `;
             const revokeBtn = document.createElement("button");
             revokeBtn.className = "btn btn-sm btn-danger";
-            revokeBtn.textContent = "Poista";
+            revokeBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Poista';
             revokeBtn.onclick = async () => {
               if (confirm("Haluatko poistaa tämän laitteen?")) {
                 await fetch("/users/auth/api/v2/mfa_device_revoke", {
@@ -396,7 +779,6 @@
 
     loadMFAStatus();
 
-    // Initiate MFA (first setup or adding new device)
     async function initiateMFA() {
       try {
         const res = await fetch("/users/auth/api/v2/mfa", {
@@ -422,7 +804,6 @@
     mfaBtn.addEventListener("click", initiateMFA);
     addDeviceBtn.addEventListener("click", initiateMFA);
 
-    // Verify MFA code
     confirmBtn.addEventListener("click", async () => {
       const token = tokenInput.value.trim();
       if (!token) return alert("Syötä koodi!");
@@ -437,7 +818,7 @@
         if (data.status === "success") {
           mfaModal.hide();
           loadMFAStatus();
-          alert(data.message);
+          alert(data.message || "MFA aktivoitu onnistuneesti!");
         } else {
           alert("Virhe MFA:n vahvistamisessa: " + (data.message || ""));
         }
@@ -447,62 +828,14 @@
       }
     });
   });
-
-</script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const profileForm = document.getElementById("profile-form");
-    const bioInput = document.getElementById("bio");
-    const fileInput = document.getElementById("profile-pic");
-
-    profileForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      let base64Image = null;
-
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        base64Image = await toBase64(file); // helper fn below
-      }
-
-      const payload = {
-        bio: bioInput.value,
-        profile_picture: base64Image // null if no file chosen
-      };
-
-      const res = await fetch("/users/auth/api/v2/user_profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-      if (data.status === "success") {
-        alert("Profiili päivitetty!");
-      } else {
-        alert("Virhe: " + (data.message || "Tuntematon virhe"));
-      }
-    });
-
-    // Convert file → base64 string
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file); // returns like "data:image/png;base64,..."
-        reader.onload = () => resolve(reader.result.split(",")[1]); // only base64 part
-        reader.onerror = (error) => reject(error);
-      });
-    }
-  });
 </script>
 
 <script>
   // Paikkakunta dropdown functions
   document.querySelector(".dropbtn").addEventListener("click", function (event) {
-    event.stopPropagation(); // Prevent click event from bubbling
-    var dropdownContent = document.getElementById("dropdown-content");
-    var expanded = this.getAttribute("aria-expanded") === "true" || false;
+    event.stopPropagation();
+    const dropdownContent = document.getElementById("dropdown-content");
+    const expanded = this.getAttribute("aria-expanded") === "true";
     dropdownContent.style.display = expanded ? "none" : "block";
     this.setAttribute("aria-expanded", !expanded);
   });
@@ -515,24 +848,23 @@
   };
 
   function selectCity(city) {
-    var dropbtn = document.querySelector(".dropbtn");
-    dropbtn.textContent = city;
+    const selectedText = document.getElementById("selected-city-text");
+    selectedText.textContent = city;
     document.getElementById("selected-city").value = city;
     document.getElementById("dropdown-content").style.display = "none";
-    dropbtn.setAttribute("aria-expanded", "false");
+    document.querySelector(".dropbtn").setAttribute("aria-expanded", "false");
   }
 
   function filterFunction() {
-    let input = document.getElementById("searchInput");
-    let filter = input.value.toUpperCase();
-    let div = document.getElementById("dropdown-content");
-    let a = div.getElementsByTagName("a");
+    const input = document.getElementById("searchInput");
+    const filter = input.value.toUpperCase();
+    const div = document.getElementById("dropdown-content");
+    const items = div.getElementsByTagName("a");
 
-    for (let i = 0; i < a.length; i++) {
-      let txtValue = a[i].textContent || a[i].innerText;
-      a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    for (let i = 0; i < items.length; i++) {
+      const txtValue = items[i].textContent || items[i].innerText;
+      items[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
     }
   }
 </script>
-
 {% endblock %}

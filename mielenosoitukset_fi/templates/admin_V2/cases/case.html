@@ -77,13 +77,16 @@
                         </h3>
                         <div class="info-item">
                             <strong>{{ _('Ongelma:') }}</strong><br>
-                            {{ case_data.error_description }}
+                            {{ case_data.error_report.error }}
                         </div>
                         <div class="info-item">
-                            <strong>{{ _('Raportoija:') }}</strong> {{ case_data.reported_by }}
+                            <strong>{{ _('Raportoija:') }}</strong> {{ case_data.error_report.user if
+                            case_data.error_report.user else "Anonyymi" }} ({{ case_data.error_report.ip }})
                         </div>
                         <div class="info-item">
-                            <strong>{{ _('Aikaleima:') }}</strong> {{ case_data.timestamp }}
+                            <!-- human readable -->
+                            <strong>{{ _('Aikaleima:') }}</strong>
+                            {{ case_data.error_report.date.strftime("%d.%m.%Y %H:%M") }}
                         </div>
                     </div>
 
@@ -492,10 +495,10 @@
                 </div>
 
                 {% if case.meta.superior_needed %}
-        <div class="alert alert-warning mt-2 mb-2">
-            <i class="fas fa-exclamation-triangle"></i> {{ _('Eskaloitu esihenkilölle') }}
-        </div>
-        {% endif %}
+                <div class="alert alert-warning mt-2 mb-2">
+                    <i class="fas fa-exclamation-triangle"></i> {{ _('Eskaloitu esihenkilölle') }}
+                </div>
+                {% endif %}
 
                 <button class="btn btn-success btn-block">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -729,51 +732,51 @@
     });
 
     function deescalateCase() {
-    Swal.fire({
-        title: "Poistetaanko eskalointi?",
-        text: "Tämä palauttaa tapauksen normaaliksi käsiteltäväksi.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Kyllä, poista eskalointi",
-        cancelButtonText: "Peruuta"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/case/${caseId}/deescalate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: "Eskalointi poistettu",
-                            text: "Tapaus on palautettu normaaliin tilaan.",
-                            icon: "success",
-                            confirmButtonColor: "#3085d6"
-                        }).then(() => location.reload());
-                    } else {
+        Swal.fire({
+            title: "Poistetaanko eskalointi?",
+            text: "Tämä palauttaa tapauksen normaaliksi käsiteltäväksi.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Kyllä, poista eskalointi",
+            cancelButtonText: "Peruuta"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/case/${caseId}/deescalate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: "Eskalointi poistettu",
+                                text: "Tapaus on palautettu normaaliin tilaan.",
+                                icon: "success",
+                                confirmButtonColor: "#3085d6"
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                title: "Virhe",
+                                text: data.error || "Tapahtui virhe poistettaessa eskalointia.",
+                                icon: "error",
+                                confirmButtonColor: "#d33"
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
                         Swal.fire({
                             title: "Virhe",
-                            text: data.error || "Tapahtui virhe poistettaessa eskalointia.",
+                            text: "Tapahtui virhe, kokeile uudelleen myöhemmin.",
                             icon: "error",
                             confirmButtonColor: "#d33"
                         });
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    Swal.fire({
-                        title: "Virhe",
-                        text: "Tapahtui virhe, kokeile uudelleen myöhemmin.",
-                        icon: "error",
-                        confirmButtonColor: "#d33"
                     });
-                });
-        }
-    });
-}
+            }
+        });
+    }
 
 </script>
 

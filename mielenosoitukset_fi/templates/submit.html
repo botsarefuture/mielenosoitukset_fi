@@ -1062,7 +1062,11 @@
 
           <!-- include quill library -->
           <style>
-            #editor {
+            
+
+            .ql-editor {
+              /* use all the available height */
+              height: 100%;
               min-height: 130px;
             }
           </style>
@@ -1083,6 +1087,9 @@
             document.querySelector('form').onsubmit = function () {
               document.querySelector('#description').value = quill.root.innerHTML;
             };
+
+
+            // no matter where on the quill element we click, the same event should be as if we click the 
           </script>
           <!-- import Quill -->
           <input type="hidden" id="description" name="description" />
@@ -1102,6 +1109,10 @@
           <div class="image-preview-container">
             <img id="image-preview" style="max-width: 100%; display: none;" />
           </div>
+          <!-- image remove button -->
+          <button class="btn btn-danger" id="removeImage" style="margin-top: 1rem;">
+            <i class="fa-solid fa-trash"></i> Poista kuva
+          </button>
           <script>
             // when loading from cache, show the preview if image is present
             document.addEventListener('DOMContentLoaded', function() {

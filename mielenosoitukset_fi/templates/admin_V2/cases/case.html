@@ -4,6 +4,87 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/case.css' )}}">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+        <style>
+            .action-log {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .log-entry {
+                background: var(--color-card-bg, #1e1e1e);
+                border: 1px solid var(--color-border, #333);
+                padding: 14px 16px;
+                border-radius: 10px;
+                box-shadow: 0 2px 4px rgb(0 0 0 / 15%);
+                animation: fadeIn .2s ease;
+            }
+
+            .log-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .log-meta {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .log-icon {
+                font-size: 18px;
+                margin-right: 10px;
+                color: var(--color-accent, #5cc7ff);
+            }
+
+            .log-user {
+                font-size: 15px;
+            }
+
+            .log-action {
+                font-size: 13px;
+                opacity: 0.9;
+            }
+
+            .log-timestamp {
+                font-size: 13px;
+                opacity: 0.75;
+            }
+
+            .log-body {
+                margin-top: 10px;
+                padding-left: 3px;
+                font-size: 14px;
+                display: flex;
+                gap: 6px;
+                color: var(--color-text-muted, #cfcfcf);
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 30px 10px;
+                opacity: 0.8;
+            }
+
+            .empty-icon {
+                font-size: 40px;
+                margin-bottom: 10px;
+                color: var(--color-text-muted, #6f6f6f);
+            }
+
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(4px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -89,59 +170,83 @@
                             {{ case_data.error_report.date.strftime("%d.%m.%Y %H:%M") }}
                         </div>
                     </div>
-
                     <div class="info-box">
                         <h3>
-                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {{ _('Demon tiedot') }}
+                            <i class="fa-solid fa-bullhorn"></i>
+                            {{ _('Mielenosoituksen tiedot') }}
                         </h3>
+
+                        <a class="btn btn-info"
+                            href="{{ url_for('demonstration_detail', demo_id=case_data.demo._id) }}">
+                            <i class="fa-solid fa-eye"></i> {{ _('Katsele mielenosoitusta') }}
+                        </a>
+
                         <div class="info-item">
-                            <strong>{{ _('Nimi:') }}</strong> {{ case_data.demo.name }}
+                            <strong>{{ _('Nimi:') }}</strong> {{ case_data.demo.title }}
                         </div>
+
                         <div class="info-item">
                             <strong>{{ _('Päivämäärä:') }}</strong> {{ case_data.demo.date }}
                         </div>
+
                         <div class="info-item">
                             <strong>{{ _('Kuvaus:') }}</strong> {{ case_data.demo.description }}
                         </div>
-                    </div>
-                </div>
 
-                <div class="info-box" style="margin-top: 20px;">
-                    <h3>
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        {{ _('Muokkaa tietoja') }}
-                    </h3>
-                    <form id="demo-edit-form">
-                        <div class="form-group">
-                            <label class="form-label">{{ _('Nimi') }}</label>
-                            <input type="text" name="name" value="{{ case_data.demo.name }}" class="form-input">
+                        <button class="btn btn-warning toggle-more">
+                            <i class="fa-solid fa-chevron-down"></i> {{ _('Näytä lisää') }}
+                        </button>
+
+                        <div class="demo-more" style="display: none;">
+
+                            <div class="info-item">
+                                <strong>{{ _('Alkaa:') }}</strong> {{ case_data.demo.start_time }}
+                            </div>
+
+                            <div class="info-item">
+                                <strong>{{ _('Päättyy:') }}</strong> {{ case_data.demo.end_time }}
+                            </div>
+
+                            {# --- Auto-loop remaining fields except known ones --- #}
+                            {% set skip = ['_id', 'title', 'date', 'description', 'start_time', 'end_time'] %}
+
+                            {% for key, value in case_data.demo.items() %}
+                            {% if key not in skip %}
+                            <div class="info-item">
+                                <strong>{{ key|replace('_',' ')|capitalize }}:</strong>
+                                {{ value }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">{{ _('Päivämäärä') }}</label>
-                            <input type="text" name="date" value="{{ case_data.demo.date }}" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">{{ _('Kuvaus') }}</label>
-                            <textarea name="description"
-                                class="form-textarea">{{ case_data.demo.description }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
+                    </div>
+
+                    <script>
+                        document.querySelector('.toggle-more').addEventListener('click', () => {
+                            document.querySelector('.demo-more').style.display =
+                                document.querySelector('.demo-more').style.display === 'none'
+                                    ? 'block'
+                                    : 'none';
+                        });
+
+                    </script>
+
+
+                    <div class="info-box" style="margin-top: 20px;">
+                        <h3>
                             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            {{ _('Tallenna muutokset') }}
-                        </button>
-                    </form>
+                            {{ _('Muokkaa tietoja') }}
+                        </h3>
+                        <a href="{{ url_for('admin_demo.edit_demo', demo_id=case_data.demo._id, case_id=case._id) }}">
+                            <button class="btn btn-primary">
+                                <i class="fa-solid fa-pencil"></i> {{ _('Muokkaa') }}
+                            </button>
+                        </a>
+                    </div>
                 </div>
-
                 {% elif case_type == "organization_edit_suggestion" %}
                 <div class="info-box" style="margin-top: 20px;">
                     <h3>
@@ -158,9 +263,9 @@
                         <strong>{{ _('Ehdotetut muutokset:') }}</strong>
                     </div>
                     <ul class="changes-list">
-                        {% for change in case_data.changes %}
+                        {% for change in case_data.changes %} Pyyntötyy
                         <li>
-                            <strong>{{ change.field }}</strong>
+                            <strong>{{ change.field }}</strong> PyyntötyyPyyntötyy Pyyntötyy
                             <span class="change-arrow">→</span>
                             <span style="text-decoration: line-through; opacity: 0.6;">{{ change.old }}</span>
                             <span class="change-arrow">→</span>
@@ -278,7 +383,8 @@
                                 {% if org.email %}
                                 <p class="text-sm text-neutral-400 flex items-center gap-2">
                                     <i class="fa-solid fa-envelope"></i>
-                                    <a href="mailto:{{ org.email }}" class="text-pink-400 underline">{{ org.email }}</a>
+                                    <a href="mailto:{{ org.email }}" class="text-pink-400 underline">{{ org.email
+                                        }}</a>
                                 </p>
                                 {% endif %}
 
@@ -462,24 +568,54 @@
                         {{ _('Aiemmat merkinnät') }}
                     </h3>
                     <div id="action-log" class="action-log">
+
+                        {% if case.action_logs %}
                         {% for log in case.action_logs %}
                         <div class="log-entry">
-                            <strong>{{ log.user }}</strong>: {{ log.reason }}
-                            <span class="log-timestamp">{{ log.timestamp }}</span>
-                        </div>
-                        {% else %}
-                        <div class="empty-state">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
-                            <p>{{ _('Ei vielä merkintöjä.') }}</p>
+
+                            <div class="log-header">
+                                <i class="fa-solid fa-clock-rotate-left log-icon"></i>
+
+                                <div class="log-meta">
+                                    <strong class="log-user">
+                                        <i class="fa-solid fa-user"></i>
+                                        {{ log.user or log.admin }}
+                                    </strong>
+
+                                    {% if log.action_type %}
+                                    <span class="log-action">
+                                        <i class="fa-solid fa-tag"></i>
+                                        {{ log.action_type }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                <span class="log-timestamp">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                    {{ log.timestamp }}
+                                </span>
+                            </div>
+
+                            <div class="log-body">
+                                <i class="fa-solid fa-comment"></i>
+                                {{ log.reason or log.note }}
+                            </div>
+
                         </div>
                         {% endfor %}
+                        {% else %}
+                        <div class="empty-state">
+                            <i class="fa-solid fa-inbox empty-icon"></i>
+                            <p>{{ _('Ei vielä merkintöjä.') }}</p>
+                        </div>
+                        {% endif %}
+
                     </div>
+
                 </div>
             </div>
         </div>
+
 
         <!-- Sidebar -->
         <aside class="sidebar">

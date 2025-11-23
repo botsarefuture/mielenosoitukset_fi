@@ -121,11 +121,14 @@
     .progress-container {
     background: var(--color-card-bg);
     border-radius: var(--border-radius-lg) var(--border-radius-lg) 0px 0px;
-    padding: 2rem;
+    padding: 2rem 1rem;
+    padding-bottom: 1rem;
+    margin: 0px;
+    
     box-shadow: var(--color-shadow);
     border: 1px solid var(--color-border);
     display: fixed;
-    margin-bottom: 1rem;
+    margin-bottom: 0px;
     position: absolute;
     bottom: 0;
     display: block;
@@ -133,6 +136,9 @@
     width: 100vw;
     left: 0;
     height: min-content;
+    /* ignore touch and click events */
+    pointer-events: none;
+
   }
   }
 
@@ -168,6 +174,13 @@
     position: relative;
     z-index: 2;
     flex: 1;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .progress-step {
+      font-size: 0.75rem;
+      gap: 0.5rem;
+    }
   }
 
   .step-circle {

@@ -4,87 +4,87 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/case.css' )}}">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <style>
-            .action-log {
-                display: flex;
-                flex-direction: column;
-                gap: 14px;
-            }
+<style>
+    .action-log {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
 
-            .log-entry {
-                background: var(--color-card-bg, #1e1e1e);
-                border: 1px solid var(--color-border, #333);
-                padding: 14px 16px;
-                border-radius: 10px;
-                box-shadow: 0 2px 4px rgb(0 0 0 / 15%);
-                animation: fadeIn .2s ease;
-            }
+    .log-entry {
+        background: var(--color-card-bg, #1e1e1e);
+        border: 1px solid var(--color-border, #333);
+        padding: 14px 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgb(0 0 0 / 15%);
+        animation: fadeIn .2s ease;
+    }
 
-            .log-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
+    .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-            .log-meta {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
+    .log-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
 
-            .log-icon {
-                font-size: 18px;
-                margin-right: 10px;
-                color: var(--color-accent, #5cc7ff);
-            }
+    .log-icon {
+        font-size: 18px;
+        margin-right: 10px;
+        color: var(--color-accent, #5cc7ff);
+    }
 
-            .log-user {
-                font-size: 15px;
-            }
+    .log-user {
+        font-size: 15px;
+    }
 
-            .log-action {
-                font-size: 13px;
-                opacity: 0.9;
-            }
+    .log-action {
+        font-size: 13px;
+        opacity: 0.9;
+    }
 
-            .log-timestamp {
-                font-size: 13px;
-                opacity: 0.75;
-            }
+    .log-timestamp {
+        font-size: 13px;
+        opacity: 0.75;
+    }
 
-            .log-body {
-                margin-top: 10px;
-                padding-left: 3px;
-                font-size: 14px;
-                display: flex;
-                gap: 6px;
-                color: var(--color-text-muted, #cfcfcf);
-            }
+    .log-body {
+        margin-top: 10px;
+        padding-left: 3px;
+        font-size: 14px;
+        display: flex;
+        gap: 6px;
+        color: var(--color-text-muted, #cfcfcf);
+    }
 
-            .empty-state {
-                text-align: center;
-                padding: 30px 10px;
-                opacity: 0.8;
-            }
+    .empty-state {
+        text-align: center;
+        padding: 30px 10px;
+        opacity: 0.8;
+    }
 
-            .empty-icon {
-                font-size: 40px;
-                margin-bottom: 10px;
-                color: var(--color-text-muted, #6f6f6f);
-            }
+    .empty-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+        color: var(--color-text-muted, #6f6f6f);
+    }
 
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(4px);
-                }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
 
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        </style>
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -139,7 +139,7 @@
                 <div class="card-header">
                     <h2 class="card-title">
                         <i class="fa-solid fa-file-lines icon"></i>
-                        {{ _('Pyyntötyyppi') }}
+                        {{ _('Tapauksen tyyppi') }}
                         <span class="case-type-badge">{{ case.case_type|capitalize|replace('_', ' ') }}</span>
                     </h2>
                 </div>
@@ -526,15 +526,248 @@
                 {% endif %}
 
             </div>
+            <style>
+                /* Action Log Enhanced Styles */
+                .action-log {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    margin-top: 32px;
+                }
+
+                .log-section-header {
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: #f48fb1;
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding-bottom: 12px;
+                    border-bottom: 2px solid rgba(244, 143, 177, 0.2);
+                    margin-top: 20px;
+                }
+
+                .log-entry {
+                    background: linear-gradient(135deg, rgba(30, 30, 46, 0.9) 0%, rgba(42, 42, 62, 0.9) 100%);
+                    border: 1px solid rgba(244, 143, 177, 0.15);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                    transition: all 0.3s ease;
+                    position: relative;
+                    overflow: clip;
+                }
+
+                .log-entry::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 4px;
+                    height: 100%;
+                    background: linear-gradient(180deg, #f48fb1 0%, #ec4899 100%);
+                    opacity: 0.6;
+                }
+
+                .log-entry:hover {
+                    border-color: rgba(244, 143, 177, 0.3);
+                    transform: translateX(4px);
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+                }
+
+                .log-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                }
+
+                .log-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex: 1;
+                }
+
+                .log-icon {
+                    font-size: 20px;
+                    color: #f48fb1;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(244, 143, 177, 0.1);
+                    border-radius: 8px;
+                    flex-shrink: 0;
+                }
+
+                .log-meta {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+
+                .log-user {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #e4e4e4;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .log-user i {
+                    color: #f48fb1;
+                    font-size: 14px;
+                }
+
+                .log-action {
+                    font-size: 13px;
+                    color: #b4b4c4;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 10px;
+                    background: rgba(244, 143, 177, 0.1);
+                    border-radius: 6px;
+                    width: fit-content;
+                }
+
+                .log-action i {
+                    font-size: 11px;
+                }
+
+                .log-timestamp {
+                    font-size: 13px;
+                    color: #8a8a9a;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    white-space: nowrap;
+                }
+
+                .log-timestamp i {
+                    font-size: 12px;
+                }
+
+                .log-body {
+                    padding: 12px 16px;
+                    background: rgba(244, 143, 177, 0.05);
+                    border-radius: 8px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: #d4d4d4;
+                    display: flex;
+                    gap: 10px;
+                    border-left: 3px solid rgba(244, 143, 177, 0.3);
+                }
+
+                .log-body i {
+                    color: #f48fb1;
+                    font-size: 16px;
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                }
+
+                .empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    background: rgba(30, 30, 46, 0.5);
+                    border-radius: 12px;
+                    border: 2px dashed rgba(244, 143, 177, 0.2);
+                }
+
+                .empty-icon {
+                    font-size: 56px;
+                    color: rgba(244, 143, 177, 0.3);
+                    margin-bottom: 16px;
+                }
+
+                .empty-state p {
+                    font-size: 16px;
+                    color: #8a8a9a;
+                    font-weight: 500;
+                }
+
+                /* Form Enhancements */
+                .form-group {
+                    margin-bottom: 20px;
+                }
+
+                .form-label {
+                    display: block;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #c4c4c4;
+                    margin-bottom: 8px;
+                    letter-spacing: 0.3px;
+                }
+
+                .form-select,
+                .form-textarea {
+                    width: 100%;
+                    background: rgba(30, 30, 46, 0.8);
+                    border: 2px solid #3a3a4e;
+                    border-radius: 10px;
+                    padding: 12px 16px;
+                    color: #e4e4e4;
+                    font-size: 15px;
+                    transition: all 0.3s ease;
+                }
+
+                .form-select:focus,
+                .form-textarea:focus {
+                    outline: none;
+                    border-color: #f48fb1;
+                    background: rgba(30, 30, 46, 1);
+                    box-shadow: 0 0 0 3px rgba(244, 143, 177, 0.1);
+                }
+
+                .form-textarea {
+                    min-height: 100px;
+                    resize: vertical;
+                    font-family: inherit;
+                }
+
+                /* Animations */
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .log-entry {
+                    animation: fadeIn 0.4s ease;
+                }
+
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .log-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+
+                    .log-timestamp {
+                        margin-left: 48px;
+                    }
+                }
+            </style>
 
             <!-- Action Log Card -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
+                        <i class="fa-solid fa-clipboard-list icon"></i>
                         {{ _('Sisäiset toimet ja muistiinpanot') }}
                     </h2>
                 </div>
@@ -562,26 +795,26 @@
                         {{ _('Lisää merkintä') }}
                     </button>
                 </form>
+                <br><br>
+                <div class="log-section-header">
+                    <i class="fa-solid fa-history"></i>
+                    {{ _('Aiemmat merkinnät') }}
+                </div>
 
-                <div style="margin-top: 30px;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: #f48fb1;">
-                        {{ _('Aiemmat merkinnät') }}
-                    </h3>
-                    <div id="action-log" class="action-log">
-
-                        {% if case.action_logs %}
-                        {% for log in case.action_logs %}
-                        <div class="log-entry">
-
-                            <div class="log-header">
-                                <i class="fa-solid fa-clock-rotate-left log-icon"></i>
-
+                <div id="action-log" class="action-log">
+                    {% if case.action_logs %}
+                    {% for log in case.action_logs %}
+                    <div class="log-entry">
+                        <div class="log-header">
+                            <div class="log-left">
+                                <div class="log-icon">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
                                 <div class="log-meta">
                                     <strong class="log-user">
                                         <i class="fa-solid fa-user"></i>
                                         {{ log.user or log.admin }}
                                     </strong>
-
                                     {% if log.action_type %}
                                     <span class="log-action">
                                         <i class="fa-solid fa-tag"></i>
@@ -589,33 +822,107 @@
                                     </span>
                                     {% endif %}
                                 </div>
-
-                                <span class="log-timestamp">
-                                    <i class="fa-solid fa-calendar-day"></i>
-                                    {{ log.timestamp }}
-                                </span>
                             </div>
-
-                            <div class="log-body">
-                                <i class="fa-solid fa-comment"></i>
-                                {{ log.reason or log.note }}
-                            </div>
-
+                            <span class="log-timestamp">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                {{ log.timestamp }}
+                            </span>
                         </div>
-                        {% endfor %}
-                        {% else %}
-                        <div class="empty-state">
-                            <i class="fa-solid fa-inbox empty-icon"></i>
-                            <p>{{ _('Ei vielä merkintöjä.') }}</p>
+                        <div class="log-body">
+                            <i class="fa-solid fa-comment"></i>
+                            <span>{{ log.reason or log.note | safe }}</span>
                         </div>
-                        {% endif %}
-
                     </div>
-
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fa-solid fa-inbox"></i>
+                        </div>
+                        <p>{{ _('Ei vielä merkintöjä.') }}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
 
+            <script>
+                // Action log form handler
+                document.getElementById('action-log-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    const actionType = formData.get('action_type');
+                    const reason = formData.get('reason');
+
+                    if (!reason.trim()) {
+                        showMessage('error', 'Syötä kuvaus tai syy toimenpiteelle.');
+                        return;
+                    }
+
+                    // Add to action log
+                    const logContainer = document.getElementById('action-log');
+                    const emptyState = logContainer.querySelector('.empty-state');
+                    if (emptyState) {
+                        emptyState.remove();
+                    }
+
+                    const now = new Date();
+                    const timestamp = now.toLocaleString('fi-FI');
+
+                    const actionLabels = {
+                        'accept': '{{ _("Hyväksytty") }}',
+                        'reject': '{{ _("Hylätty") }}',
+                        'note': '{{ _("Muistiinpano") }}'
+                    };
+
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.innerHTML = `
+            <div class="log-header">
+                <div class="log-left">
+                    <div class="log-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="log-meta">
+                        <strong class="log-user">
+                            <i class="fa-solid fa-user"></i>
+                            {{ _("Sinä") }}
+                        </strong>
+                        <span class="log-action">
+                            <i class="fa-solid fa-tag"></i>
+                            ${actionLabels[actionType]}
+                        </span>
+                    </div>
+                </div>
+                <span class="log-timestamp">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    ${timestamp}
+                </span>
+            </div>
+            <div class="log-body">
+                <i class="fa-solid fa-comment"></i>
+                <span>${reason}</span>
+            </div>
+        `;
+
+                    logContainer.insertBefore(logEntry, logContainer.firstChild);
+
+                    // Clear form
+                    this.reset();
+
+                    showMessage('success', 'Merkintä lisätty onnistuneesti!');
+                });
+
+                // auto-scroll the action log smoothly to the bottom on page load
+                window.addEventListener('load', () => {
+                    const logContainer = document.getElementById('action-log');
+                    logContainer.scrollTo({
+                        top: logContainer.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                });
+
+            </script>
+        </div>
 
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -668,6 +975,79 @@
                     {{ _('Poista eskalointi') }}
                 </button>
                 {% endif %}
+                <div class="divider my-4"></div>
+                <!-- subtitle -->
+                <h4 class="card-subtitle mb-3 text-white font-semibold">
+                    <i class="fa-solid fa-folder icon"></i>
+                    {{ _('Tapausstatus') }}
+                </h4>
+
+                <button class="btn btn-secondary btn-block" onclick="promptCaseAction('close')">
+                    <i class="fa-solid fa-folder-closed icon"></i>
+                    {{ _('Sulje tapaus') }}
+                </button>
+
+                <button class="btn btn-secondary btn-block" onclick="promptCaseAction('reopen')">
+                    <i class="fa-solid fa-folder-plus icon"></i>
+                    {{ _('Avaa uudelleen') }}
+                </button>
+
+                <!-- Buttons -->
+                <!-- SweetAlert2 CDN -->
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+                <script>
+                    function promptCaseAction(action) {
+                        let actionText = action === 'close' ? 'sulkemiseen' :
+                            action === 'reopen' ? 'uudelleenavaamiseen' : '';
+
+                        Swal.fire({
+                            title: `<h5 style="color: #ffffff;">Syötä syy tapauksen ${actionText}</h5>`,
+                            input: 'textarea',
+                            inputPlaceholder: 'Kirjoita syy tähän...',
+                            showCancelButton: true,
+                            confirmButtonText: 'Vahvista',
+                            cancelButtonText: 'Peruuta',
+                            background: '#1e1e2e',
+                            textColor: '#ffffff',
+                            icon: 'question',
+                            // input color
+                            inputAttributes: {
+                                style: 'background: #2e2e2e; color: #ffffff;'
+                            },
+                            // show success icon on confirm
+
+                            preConfirm: (reason) => {
+                                if (!reason) {
+                                    Swal.showValidationMessage('Syytä ei voi jättää tyhjäksi!');
+                                }
+                                return reason;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                fetch(`/admin/case/{{ case._id }}/${action}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ reason: result.value })
+                                })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            // Tapauksen #<id> ${action} onnistui
+                                            // still the backgrounds and text colors
+                                            Swal.fire('Onnistui!', `Tapauksen #{{ case.running_num }} ${action == 'close' ? 'sulkeminen' : 'uudelleenavaaminen'} onnistui.`, 'success', {
+                                                background: '#1e1e2e',
+                                                color: '#ffffff'
+                                            })
+                                                .then(() => location.reload());
+                                        } else {
+                                            Swal.fire('Virhe', data.error || 'Tapausta ei voitu päivittää.', 'error');
+                                        }
+                                    });
+                            }
+                        });
+                    }
+                </script>
 
             </div>
 
@@ -675,31 +1055,74 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+
+                        <i class="fa-solid fa-history"></i>
                         {{ _('Tapahtumahistoria') }}
                     </h3>
+
                 </div>
 
-                <div class="timeline">
-                    {% for event in case.case_history %}
-                    <div class="timeline-item">
-                        <div class="timeline-time">{{ event.timestamp }}</div>
-                        <div class="timeline-action">{{ event.action }}</div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in case.case_history %}
+                        <div class="timeline-item" data-event='{{ event|tojson }}'>
+                            <div class="timeline-time">{{ event.timestamp }}</div>
+                            <div class="timeline-action">{{ event.action }}</div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fa-solid fa-history"></i>
+                            </div>
+                            <p>{{ _('Ei tapahtumia.') }}</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p>{{ _('Ei tapahtumia.') }}</p>
-                    </div>
-                    {% endfor %}
                 </div>
-            </div>
+
+                <script>
+                    // only show five latest events, hide the rest with a scrollbar, and sort them by timestamp descending
+                    const timeline = document.querySelector('.timeline');
+                    const items = timeline.querySelectorAll('.timeline-item');
+                    // lets reverse the order of items
+                    const itemsArray = Array.from(items);
+                    itemsArray.sort((a, b) => {
+                        const dateA = new Date(JSON.parse(a.dataset.event).timestamp);
+                        const dateB = new Date(JSON.parse(b.dataset.event).timestamp);
+                        return dateB - dateA;
+                    });
+                    timeline.innerHTML = '';
+                    itemsArray.forEach(item => {
+                        timeline.appendChild(item);
+                    });
+                    if (items.length > 5) {
+                        timeline.style.maxHeight = '300px';
+                        timeline.style.overflowY = 'auto';
+
+                    } else {
+                        timeline.style.maxHeight = 'none';
+                    }
+                    // when hovering over timeline item, change background color, and if i click, show popup with details
+                    document.querySelectorAll('.timeline-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            const action = item.querySelector('.timeline-action').innerText;
+                            const timestamp = item.querySelector('.timeline-time').innerText;
+
+                            Swal.fire({
+                                title: 'Tapahtuman tiedot',
+                                html: `
+                                    <p><strong>Aika:</strong> ${timestamp}</p>
+                                    <p><strong>Toimenpide:</strong> ${action}</p>
+                                    <p><strong>Syy:</strong> ${JSON.parse(item.dataset.event).metadata.reason || 'Ei lisätietoja.'}</p>
+                                `,
+                                icon: 'info',
+                                confirmButtonText: 'Sulje',
+                                background: '#1e1e2e',
+                                color: '#ffffff'
+                            });
+                        });
+                    });
+                </script>
         </aside>
     </section>
 </div>
@@ -708,9 +1131,7 @@
 <div id="escalation-modal" class="modal hidden">
     <div class="modal-content">
         <h3 class="modal-header">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
+            <i class="fa-solid fa-exclamation-triangle"></i>
             {{ _('Eskaloi hallituksen käsittelyyn') }}
         </h3>
 

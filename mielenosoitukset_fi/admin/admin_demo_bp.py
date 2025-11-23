@@ -1028,7 +1028,7 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
                 hist_id = save_demo_history(demo_id, prev_demo, merged_data, case_id=case_id)
                 from mielenosoitukset_fi.utils.classes import Case
                 case = Case.from_dict(mongo.cases.find_one({"_id": ObjectId(case_id)}))
-                case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: {url_for('admin_demo.view_demo_diff', history_id=hist_id)} ")
+                case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")

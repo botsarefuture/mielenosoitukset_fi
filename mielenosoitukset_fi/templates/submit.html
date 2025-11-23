@@ -17,7 +17,7 @@
 <!-- import jquery -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+<script src="https://cdn2.mielenosoitukset.fi/cropperjs/cropper.min.js"></script>
 <style>
   :root {
     --color-bg: light-dark(#f8fafc, #0f1419);
@@ -1086,8 +1086,269 @@
             <i class="fa-solid fa-image"></i>
             {{ _('Lisää houkutteleva kuva tapahtumallesi') }}
           </div>
+          <div class="image-preview-container">
+            <img id="image-preview" style="max-width: 100%; display: none;" />
+          </div>
+          <script>
+            // when loading from cache, show the preview if image is present
+            document.addEventListener('DOMContentLoaded', function() {
+              const imageInput = document.getElementById('image');
+              const preview = document.getElementById('image-preview');
+              if (imageInput.files.length > 0) {
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                  preview.src = e.target.result;
+                  preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+              }
+            });
+          </script>
         </div>
 
+        {% include 'cropper-modal.html' %}
+
+      <!-- cropperjs -->
+ 
+      <!-- after image preview is shown -->
+     <!--<script>
+        let cropper;
+        document.addEventListener('DOMContentLoaded', function () {
+          const imagePreview = document.getElementById('image-preview');
+          imagePreview.addEventListener('load', function () {
+          if (imagePreview) {
+            cropper = Cropper(imagePreview, {
+              aspectRatio: 16 / 9,
+              viewMode: 1,
+            });
+          }
+        });
+        });
+      </script>-->
+  <!--
+<script type="module">
+import Cropper from 'https://cdn2.mielenosoitukset.fi/cropperjs/cropper.esm.min.js';
+
+let cropper;
+
+const fileInput = document.getElementById('image');
+
+fileInput.addEventListener('change', (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    let preview = document.getElementById('image-preview');
+
+    // Create preview element if missing
+    if (!preview) {
+      preview = document.createElement('img');
+      preview.id = 'image-preview';
+      preview.style.display = 'block';
+      preview.style.maxWidth = '100%';
+      preview.style.marginTop = '1rem';
+      event.target.parentNode.appendChild(preview);
+    }
+
+    preview.src = e.target.result;
+
+    preview.onload = () => {
+      if (cropper) cropper.destroy();
+
+      cropper = new Cropper(preview, {
+        template: `
+          <cropper-canvas style="width: max-content; height: auto; min-height:200px; margin: auto;">
+            <cropper-image style="width: 100%; height: auto;"  scalable  translatable ></cropper-image>
+            <cropper-shade hidden></cropper-shade>
+            <cropper-handle action="select" plain></cropper-handle>
+            <cropper-selection id="selection" initial-coverage="0.5" aspect-ratio="1.777777778" movable resizable @change="onCropperSelectionChange">
+              <cropper-grid role="grid" bordered covered></cropper-grid>
+              <cropper-crosshair centered></cropper-crosshair>
+              <cropper-handle action="move" theme-color="rgba(255,255,255,0.35)"></cropper-handle>
+              <cropper-handle action="n-resize"></cropper-handle>
+              <cropper-handle action="e-resize"></cropper-handle>
+              <cropper-handle action="s-resize"></cropper-handle>
+              <cropper-handle action="w-resize"></cropper-handle>
+              <cropper-handle action="ne-resize"></cropper-handle>
+              <cropper-handle action="nw-resize"></cropper-handle>
+              <cropper-handle action="se-resize"></cropper-handle>
+              <cropper-handle action="sw-resize"></cropper-handle>
+            </cropper-selection>
+          </cropper-canvas>
+        `
+      });
+
+      console.log(cropper);
+   
+      // make cropper global for testing
+      window.cropper = cropper;
+  //cropper.getCropperImage().$transform = (event) => this.onCropperImageTransform(event);
+
+  // Handle selection changes
+  cropper.getCropperImage().$ready(() => {
+    const selection = cropper.getCropperSelection();
+    if (selection) {
+      selection.addEventListener('change', onCropperSelectionChange);
+      //document.querySelector('#selection').addEventListener('change', function (event) {
+  //console.log(event);
+//});
+
+      //selection.$change = (event) => onCropperSelectionChange(event);
+    }
+  });
+
+  function clampSelection(selection, maxSelection) {
+  // Clamp X
+  if (selection.x < maxSelection.x) selection.x = maxSelection.x;
+  if (selection.x + selection.width > maxSelection.x + maxSelection.width) {
+    selection.x = maxSelection.x + maxSelection.width - selection.width;
+  }
+
+  // Clamp Y
+  if (selection.y < maxSelection.y) selection.y = maxSelection.y;
+  if (selection.y + selection.height > maxSelection.y + maxSelection.height) {
+    selection.y = maxSelection.y + maxSelection.height - selection.height;
+  }
+
+  // Optionally clamp width/height if bigger than max
+  if (selection.width > maxSelection.width) selection.width = maxSelection.width;
+  if (selection.height > maxSelection.height) selection.height = maxSelection.height;
+
+  return selection;
+}
+
+function onCropperSelectionChange(event) {
+  const cropperCanvas = cropper.getCropperCanvas();
+  const cropperImage = cropper.getCropperImage();
+  console.log(event);
+  const selection = event.detail; // <-- safe access
+  //const selection = cropper.e()?.getData();
+  console.log('Selection changed:', selection);
+
+  if (!selection) return; // nothing to do
+
+  const cropperImageRect = cropperImage.getBoundingClientRect();
+  const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+  const maxSelection = {
+    x: cropperImageRect.left - cropperCanvasRect.left,
+    y: cropperImageRect.top - cropperCanvasRect.top,
+    width: cropperImageRect.width,
+    height: cropperImageRect.height,
+  };
+
+
+  /* TODO: make this actually work, before it works, lets js use the original selection
+  
+  
+  se = clampSelection(selection, maxSelection);
+
+  // set the selection to clamped values
+  selection.x = se.x;
+  selection.y = se.y;
+  selection.width = se.width;
+  selection.height = se.height;*/
+  
+  if (inSelection(selection, maxSelection)) {
+    return; // all good
+  } else {
+    console.log('Selection out of bounds, preventing change');
+    event.preventDefault();
+  }
+}
+
+
+
+// Helper function to check if selection is within max bounds
+function inSelection(selection, maxSelection) {
+  return (
+    selection.x >= maxSelection.x &&
+    selection.y >= maxSelection.y &&
+    selection.x + selection.width <= maxSelection.x + maxSelection.width &&
+    selection.y + selection.height <= maxSelection.y + maxSelection.height
+  );
+}
+
+
+  const onCropperImageTransform = (event) => {
+    // javascript code
+      const cropperCanvas = this.$regs.cropperCanvas;
+
+      if (!cropperCanvas || this.imageFit === 'none') {
+        return;
+      }
+
+      const cropperImage = this.$refs.cropperImage;
+      const cropperCanvasRect = cropperCanvas.getBoundingClientRect();
+
+      // 1. Clone the cropper image.
+      const cropperImageClone = cropperImage.cloneNode();
+
+      // 2. Apply the new matrix to the cropper image clone.
+      cropperImageClone.style.transform = `matrix(${event.detail.matrix.join(', ')})`;
+
+      // 3. Make the cropper image clone invisible.
+      cropperImageClone.style.opacity = '0';
+
+      // 4. Append the cropper image clone to the cropper canvas.
+      cropperCanvas.appendChild(cropperImageClone);
+
+      // 5. Compute the boundaries of the cropper image clone.
+      const cropperImageRect = cropperImageClone.getBoundingClientRect();
+
+      // 6. Remove the cropper image clone.
+      cropperCanvas.removeChild(cropperImageClone);
+
+      if (
+        (this.imageFit === 'contain' && (
+          (
+            cropperImageRect.top > cropperCanvasRect.top
+            && cropperImageRect.right < cropperCanvasRect.right
+          )
+          || (
+            cropperImageRect.right < cropperCanvasRect.right
+            && cropperImageRect.bottom < cropperCanvasRect.bottom
+          )
+          || (
+            cropperImageRect.bottom < cropperCanvasRect.bottom
+            && cropperImageRect.left > cropperCanvasRect.left
+          )
+          || (
+            cropperImageRect.left > cropperCanvasRect.left
+            && cropperImageRect.top > cropperCanvasRect.top
+          )
+        ))
+        || (this.imageFit === 'cover' && (
+          cropperImageRect.top > cropperCanvasRect.top
+          || cropperImageRect.right < cropperCanvasRect.right
+          || cropperImageRect.bottom < cropperCanvasRect.bottom
+          || cropperImageRect.left > cropperCanvasRect.left
+        ))
+      ) {
+        event.preventDefault();
+      }
+  }; };
+  };
+
+
+  reader.readAsDataURL(file);
+});
+</script>
+
+<style scoped>
+.cropper-container {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+}
+
+
+</style>
+-->
         <div class="form-group">
           <label for="facebook">{{ _('Facebook-tapahtumalinkki (valinnainen)') }}</label>
           <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/events/..." />

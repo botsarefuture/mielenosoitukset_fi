@@ -51,7 +51,7 @@ def create_app() -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
-    logger.info("Loading configuration from config.Config...")
+    app.logger.info("Loading configuration from config.Config...")
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     
     # if FLASK_ENV is development, set DEBUG to True

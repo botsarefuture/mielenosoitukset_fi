@@ -93,6 +93,22 @@ To run this project locally you'll typically need:
 
 6. Open your browser and navigate to [http://127.0.0.1:5000/](http://127.0.0.1:5000/) to start using the platform.
 
+### Run with Docker (development-only)
+
+A lightweight Docker Compose setup is included for local development. It starts MongoDB, seeds development data, and runs the Flask app in debug mode.
+
+1. Build and start the stack:
+
+   ```bash
+   docker-compose -f docker-compose.dev.yml up --build
+   ```
+
+   This will also run a one-time seeding job that creates an admin user (`admin` / `admin`) and a handful of sample demonstrations.
+
+2. Visit the app at [http://localhost:5000](http://localhost:5000).
+
+The Compose file mounts `docker/config.dev.yaml` as `config.yaml` inside the container so you can tweak connection strings or ports without touching your local configuration.
+
 ---
 
 ## Usage

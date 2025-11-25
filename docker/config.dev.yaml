@@ -1,0 +1,31 @@
+# Development configuration for running the app in Docker
+SECRET_KEY: "dev-secret-key"
+MONGO_URI: "mongodb://mongo:27017/mielenosoitukset_dev"
+MONGO_DBNAME: "mielenosoitukset_dev"
+PORT: 5000
+DEBUG: true
+
+MAIL:
+  SERVER: "maildev"
+  PORT: 1025
+  USE_TLS: false
+  USERNAME: ""
+  PASSWORD: ""
+  DEFAULT_SENDER: "noreply@mielenosoitukset.local"
+
+BABEL:
+  DEFAULT_LOCALE: "fi"
+  SUPPORTED_LOCALES:
+    - "fi"
+    - "en"
+  LANGUAGES:
+    fi: "Suomi"
+    en: "English"
+
+# Development S3 settings are left empty on purpose.
+S3:
+  ACCESS_KEY: ""
+  SECRET_KEY: ""
+  ENDPOINT_URI: ""
+  BUCKET: "mielenosoitukset-dev"
+  CDN_HOST: ""

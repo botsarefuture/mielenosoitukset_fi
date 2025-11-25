@@ -11,7 +11,8 @@ app = create_app()
 def run_rollup_in_thread():
     def target():
         try:
-            rollup_events()
+            with app.app_context():
+                rollup_events()
         except Exception as e:
             app.logger.error(f"Error in rollup_events thread: {e}")
 
@@ -45,6 +46,7 @@ def main():
 
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
+    host = os.getenv("HOST", app.config.get("HOST", "0.0.0.0"))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in (
         "true",
         "1",
@@ -62,7 +64,7 @@ def main():
     
     run_rollup_in_thread()
 
-    app.run(debug=debug, port=port)
+    app.run(debug=debug, host=host, port=port)
 
 
 if __name__ == "__main__":

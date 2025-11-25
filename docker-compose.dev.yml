@@ -75,7 +75,7 @@ services:
       mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
       mc mb -p local/mielenosoitukset-dev || true &&
       mc anonymous set public local/mielenosoitukset-dev &&
-      mc ilm rule add --id expire-old --prefix '' --expire-days 0 --noncurrent-expire-days 1 local/mielenosoitukset-dev || true
+      mc ilm rule add --prefix '' --expire-days 0 --noncurrent-expire-days 1 local/mielenosoitukset-dev || true
       "
     restart: on-failure
 

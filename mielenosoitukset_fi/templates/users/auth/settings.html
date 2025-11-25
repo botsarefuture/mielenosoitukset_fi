@@ -5,6 +5,374 @@
 {% block styles %}
 <link href="{{ url_for('static', filename='css/user/settings.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/v2/settings.css')}}" rel="stylesheet">
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<style>
+  .settings-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .settings-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+  }
+
+  .settings-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #212529;
+  }
+
+  #settings-tabs {
+    border: none;
+  }
+
+  #settings-tabs .ui-tabs-nav {
+    border: none;
+    background: none;
+    padding: 0;
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  #settings-tabs .ui-tabs-nav li {
+    border: none;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 0;
+  }
+
+  #settings-tabs .ui-tabs-nav li a {
+    padding: 0.75rem 1.5rem;
+    color: #6c757d;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  #settings-tabs .ui-tabs-nav li.ui-tabs-active {
+    background: #0d6efd;
+  }
+
+  #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
+    color: white;
+  }
+
+  .settings-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 0.625rem 0.875rem;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+  }
+
+  .dropdown.mbCometDiv4109 {
+    position: relative;
+  }
+
+  .dropbtn {
+    width: 100%;
+    text-align: left;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dropbtn:hover {
+    border-color: #0d6efd;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    border-radius: 8px;
+    margin-top: 0.25rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .dropdown-content .mbDracoDiv3949 {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+  }
+
+  .dropdown-content .mbSolarInput9963 {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    width: 100%;
+  }
+
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: #212529;
+    text-decoration: none;
+  }
+
+  .dropdown-item:hover {
+    background-color: #f8f9fa;
+  }
+
+  .dropdown-item.active {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+  }
+
+  .alert {
+    border-radius: 8px;
+    border: none;
+  }
+
+  .alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  .btn {
+    border-radius: 8px;
+    padding: 0.625rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background-color: #0d6efd;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(13,110,253,0.3);
+  }
+
+  .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-left: 0.5rem;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .mfa-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .list-group-item {
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #dee2e6;
+  }
+
+  .profile-preview {
+    margin-top: 1rem;
+  }
+
+  .form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .form-check {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  /* Dark Mode Styles */
+  html.dark .settings-header h1 {
+    color: #e9ecef;
+  }
+
+  html.dark .settings-header {
+    border-bottom-color: #495057;
+  }
+
+  html.dark #settings-tabs .ui-tabs-nav li {
+    background: #343a40;
+  }
+
+  html.dark #settings-tabs .ui-tabs-nav li a {
+    color: #adb5bd;
+  }
+
+  html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active {
+    background: #0d6efd;
+  }
+
+  html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
+    color: white;
+  }
+
+  html.dark .settings-section {
+    background: #212529;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  html.dark .form-label {
+    color: #e9ecef;
+  }
+
+  html.dark .form-control,
+  html.dark .form-select,
+  html.dark .dropbtn {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  html.dark .form-control:focus,
+  html.dark .form-select:focus,
+  html.dark .dropbtn:hover {
+    background-color: #343a40;
+    border-color: #0d6efd;
+    color: #e9ecef;
+  }
+
+  html.dark .form-control::placeholder {
+    color: #6c757d;
+  }
+
+  html.dark .dropdown-content {
+    background-color: #343a40;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  html.dark .dropdown-content .mbDracoDiv3949 {
+    background: #343a40;
+    border-bottom-color: #495057;
+  }
+
+  html.dark .dropdown-content .mbSolarInput9963 {
+    background-color: #212529;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  html.dark .dropdown-item {
+    color: #e9ecef;
+  }
+
+  html.dark .dropdown-item:hover {
+    background-color: #495057;
+  }
+
+  html.dark .dropdown-item.active {
+    background-color: #1e4d8b;
+    color: #ffffff;
+  }
+
+  html.dark .alert-warning {
+    background-color: #664d03;
+    color: #ffecb5;
+  }
+
+  html.dark .form-text {
+    color: #adb5bd;
+  }
+
+  html.dark .form-check {
+    background: #343a40;
+  }
+
+  html.dark .mfa-section {
+    background: #343a40;
+  }
+
+  html.dark .list-group-item {
+    background-color: #212529;
+    border-color: #495057;
+    color: #e9ecef;
+  }
+
+  html.dark .modal-content {
+    background-color: #212529;
+    color: #e9ecef;
+  }
+
+  html.dark .modal-header {
+    border-bottom-color: #495057;
+  }
+
+  html.dark .modal-footer {
+    border-top-color: #495057;
+  }
+
+  html.dark .btn-close {
+    filter: invert(1);
+  }
+
+  html.dark .text-muted {
+    color: #6c757d !important;
+  }
+
+  html.dark h5, html.dark h6 {
+    color: #e9ecef;
+  }
+
+  html.dark p {
+    color: #adb5bd;
+  }
+
+  html.dark .badge.bg-secondary {
+    background-color: #495057 !important;
+  }
+
+  html.dark .badge.bg-success {
+    background-color: #198754 !important;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -308,6 +676,8 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 
 <script>
   $(function () {

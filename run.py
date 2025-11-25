@@ -7,8 +7,18 @@ from mielenosoitukset_fi.utils.aggregate_analytics import rollup_events
 
 import threading
 
-app = create_app()
+try:
+    app = create_app()
+except web-1          | INFO:config:Loading configuration from config.yaml...Exception as e:
+    print(f"Error creating app: {e}")
+    sys.exit(1)
 def run_rollup_in_thread():
+    
+    # if dev environment variable is set, do not run rollup in thread
+    if os.getenv("FLASK_ENV") == "development":
+        app.logger.info("Skipping rollup_events in development environment")
+        return None
+
     def target():
         try:
             rollup_events()
@@ -67,4 +77,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    from mielenosoitukset_fi.utils.logger import logger
+    logger.info("Starting application...")
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Application died with exception: {e}")
+    finally:
+        # DIE WITH A ERROR CODE
+        sys.exit(1)
+
+    logger.info("Application died.")

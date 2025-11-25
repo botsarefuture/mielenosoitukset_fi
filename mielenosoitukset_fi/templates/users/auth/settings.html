@@ -384,6 +384,7 @@
   <div id="settings-tabs">
     <ul>
       <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
+      <li><a href="#tab-security">{{ _('Turvallisuus') }}</a></li>
       <li><a href="#tab-profile">{{ _('Profiili') }}</a></li>
     </ul>
 
@@ -496,9 +497,12 @@
           <div class="spinner" id="spinner"></div>
         </button>
       </form>
+    </div>
 
-      <!-- MFA Section -->
-      <div class="mb-3 mt-4">
+    <!-- Turvallisuus Tab -->
+    <div id="tab-security">
+      <p>{{ _('Hallinnoi kaksivaiheista tunnistautumista ja MFA-laitteita.') }}</p>
+      <div class="settings-section">
         <label class="form-label" for="mfa"><i class="fas fa-shield-alt"></i> {{
           _('Kaksivaiheinen tunnistus (MFA)')
           }}</label>

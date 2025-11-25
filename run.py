@@ -7,11 +7,7 @@ from mielenosoitukset_fi.utils.aggregate_analytics import rollup_events
 
 import threading
 
-try:
-    app = create_app()
-except web-1          | INFO:config:Loading configuration from config.yaml...Exception as e:
-    print(f"Error creating app: {e}")
-    sys.exit(1)
+app = create_app()
 def run_rollup_in_thread():
     
     # if dev environment variable is set, do not run rollup in thread
@@ -21,8 +17,7 @@ def run_rollup_in_thread():
 
     def target():
         try:
-            with app.app_context():
-                rollup_events()
+            rollup_events()
         except Exception as e:
             app.logger.error(f"Error in rollup_events thread: {e}")
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import socket
 import time
 from datetime import datetime, timedelta
 from typing import Tuple
@@ -18,6 +19,7 @@ from typing import Tuple
 import yaml
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.uri_parser import parse_uri
 from werkzeug.security import generate_password_hash
 
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +60,38 @@ def wait_for_mongo(uri: str, retries: int = 20, delay: int = 5) -> MongoClient:
             )
             time.sleep(delay)
     raise RuntimeError(f"Could not connect to MongoDB at {uri}")
+
+
+def ensure_hosts_resolve(uri: str) -> None:
+    """Validate that the MongoDB hosts in the URI resolve to IPs.
+
+    This provides earlier, clearer feedback if the hostname in the connection
+    string is incorrect (e.g., a missing docker-compose service name).
+    """
+
+    try:
+        parsed = parse_uri(uri)
+    except Exception as exc:  # pragma: no cover - defensive logging only
+        LOGGER.warning("Could not parse Mongo URI %s for host validation: %s", uri, exc)
+        return
+
+    hosts = parsed.get("nodelist") or []
+    unresolved = []
+
+    for host, port in hosts:
+        try:
+            socket.getaddrinfo(host, port, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM)
+        except socket.gaierror as exc:
+            unresolved.append((host, port, exc))
+
+    if unresolved:
+        details = ", ".join(f"{host}:{port} ({err})" for host, port, err in unresolved)
+        raise RuntimeError(
+            f"Could not resolve Mongo host(s): {details}. "
+            "Check your docker-compose service names or MONGO_URI."
+        )
+
+    LOGGER.info("Mongo hosts resolved: %s", ", ".join(f"{h}:{p}" for h, p in hosts))
 
 
 def seed_admin_user(db) -> None:
@@ -167,6 +201,7 @@ def seed_demonstrations(db) -> None:
 
 def main() -> None:
     uri, dbname = load_config()
+    ensure_hosts_resolve(uri)
     client = wait_for_mongo(uri)
     db = client[dbname]
 

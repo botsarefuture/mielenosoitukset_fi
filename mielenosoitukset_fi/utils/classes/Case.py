@@ -27,7 +27,7 @@ class Case:
         self.suggestion = suggestion or {}
         self.meta = meta or {}
         self.action_logs = action_logs or []  # list of admin actions/notes
-        self.case_hisory = case_history or []
+        self.case_history = case_history or []
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
         self.running_num = running_num or self._get_next_running_num()
@@ -71,7 +71,7 @@ class Case:
             "suggestion": self.suggestion,
             "meta": self.meta,
             "action_logs": self.action_logs,
-            "case_history": self.case_hisory,
+            "case_history": self.case_history,
             "running_num": self.running_num,
             "created_at": self.created_at,
             "updated_at": self.updated_at
@@ -125,3 +125,8 @@ class Case:
         )
         case.save()
         return case
+    
+    def _add_history_entry(self, entry):
+        self.case_history.append(entry)
+        self.updated_at = datetime.utcnow()
+        self.save()

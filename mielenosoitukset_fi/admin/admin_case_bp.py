@@ -123,6 +123,84 @@ def add_action(case_id):
     return redirect(url_for("admin_case.single_case", case_id=case_id))
 
 
+from flask import jsonify, request, abort
+from flask_login import login_required, current_user
+from bson import ObjectId
+from datetime import datetime
+
+@admin_case_bp.route("/<case_id>/close/", methods=["POST"])
+@login_required
+@admin_required
+def close_case(case_id):
+    case = Case.get(case_id)
+    if not case:
+        return jsonify({"success": False, "error": "Tapausta ei löydy."}), 404
+
+    reason = (request.json.get("reason") or "").strip()
+    if case.meta.get("closed", False):
+        return jsonify({"success": False, "error": "Tapaus on jo suljettu."}), 400
+    if not reason:
+        return jsonify({"success": False, "error": "Syytä ei annettu."}), 400
+
+    case._add_history_entry({
+        "timestamp": datetime.utcnow(),
+        "action": "Tapaus suljettu",
+        "user": current_user.username,
+        "mech_action": "close_case",
+        "metadata": {
+            "reason": reason,
+            "permitted_by": current_user.username
+        },
+        "meta_schema": {"reason": "string", "permitted_by": "string"}
+    })
+
+    mongo.cases.update_one(
+        {"_id": ObjectId(case_id)},
+        {"$set": {"meta.closed": True, "updated_at": datetime.utcnow()}}
+    )
+
+    flash_message(_("Tapaus suljettu."), "success")
+
+    return jsonify({"success": True, "message": "Tapaus suljettu onnistuneesti."})
+
+
+@admin_case_bp.route("/<case_id>/reopen/", methods=["POST"])
+@login_required
+@admin_required
+def reopen_case(case_id):
+    case = Case.get(case_id)
+    if not case:
+        return jsonify({"success": False, "error": "Tapausta ei löydy."}), 404
+
+    reason = (request.json.get("reason") or "").strip()
+    if not case.meta.get("closed", False):
+        return jsonify({"success": False, "error": "Tapaus ei ole suljettu."}), 400
+    if not reason:
+        return jsonify({"success": False, "error": "Syytä ei annettu."}), 400
+
+    case._add_history_entry({
+        "timestamp": datetime.utcnow(),
+        "action": "Tapaus avattu uudelleen",
+        "user": current_user.username,
+        "mech_action": "reopen_case",
+        "metadata": {
+            "reason": reason,
+            "permitted_by": current_user.username
+        },
+        "meta_schema": {"reason": "string", "permitted_by": "string"}
+    })
+
+    mongo.cases.update_one(
+        {"_id": ObjectId(case_id)},
+        {"$set": {"meta.closed": False, "updated_at": datetime.utcnow()}}
+    )
+
+    flash_message(_("Tapaus avattu uudelleen."), "success")
+
+    return jsonify({"success": True, "message": "Tapaus avattu uudelleen onnistuneesti."})
+
+
+
 # --- Update demo info ---
 @admin_case_bp.route("/<case_id>/update_demo/", methods=["POST"])
 @login_required

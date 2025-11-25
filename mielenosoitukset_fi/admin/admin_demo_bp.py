@@ -813,21 +813,26 @@ def edit_demo(demo_id):
         flash_message("Mielenosoitusta ei löytynyt.", "error")
         return redirect(url_for("admin_demo.demo_control"))
 
+    case_id = request.args.get("case_id") or None
+   
     if request.method == "POST":
         # Handle form submission for editing the demonstration
-        return handle_demo_form(request, is_edit=True, demo_id=demo_id)
+        return handle_demo_form(request, is_edit=True, demo_id=demo_id, case_id=case_id)
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
+    
+        
     # Render the edit form with pre-filled demonstration details
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
         demo=demonstration,
-        form_action=url_for("admin_demo.edit_demo", demo_id=demo_id),
+        form_action=url_for("admin_demo.edit_demo", demo_id=demo_id, case_id=case_id),
         title=_("Muokkaa mielenosoitusta"),
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
         all_organizations=mongo.organizations.find(),
+        case_id=case_id
     )
 
 @admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])
@@ -969,19 +974,23 @@ def _deep_merge(old: dict, new: dict) -> dict:
     return merged
 
 
-def save_demo_history(demo_id, old_data, new_data):
-    mongo.demo_edit_history.insert_one({
+def save_demo_history(demo_id, old_data, new_data, case_id=None):
+    _i = mongo.demo_edit_history.insert_one({
         "demo_id": demo_id,
         "edited_by": str(getattr(current_user, "id", "unknown")),
         "edited_at": datetime.utcnow(),
         "old_demo": old_data,
         "new_demo": new_data,
         "diff": None,  # can be populated later by batch job,
-        "rollbacked_from": None
+        "rollbacked_from": None,
+        "case_id": case_id or None
     })
+    
+    # lets return history id
+    return _i.inserted_id or None
 
 
-def handle_demo_form(request, is_edit=False, demo_id=None):
+def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
     """Handle form submission for creating or editing a demonstration.
 
     Parameters
@@ -1000,6 +1009,8 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
     """
     # Collect demonstration data from the form
     demonstration_data = collect_demo_data(request)
+    case_id = request.args.get("case_id") or None
+  
 
     from mielenosoitukset_fi.utils.admin.demonstration import fix_organizers
 
@@ -1014,7 +1025,22 @@ def handle_demo_form(request, is_edit=False, demo_id=None):
             prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if prev_demo:
                 merged_data = _deep_merge(prev_demo, demonstration_data)
-                save_demo_history(demo_id, prev_demo, merged_data)
+                hist_id = save_demo_history(demo_id, prev_demo, merged_data, case_id=case_id)
+                from mielenosoitukset_fi.utils.classes import Case
+                case = Case.from_dict(mongo.cases.find_one({"_id": ObjectId(case_id)}))
+                case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
+                
+                case._add_history_entry({
+                    "timestamp": datetime.utcnow(),
+                    "action": "Muokattu mielenosoitusta",
+                    "user": current_user.username,
+                    "mech_action": "edit_demo",
+                    "metadata": {
+                        "demo_id": demo_id,
+                        "history_id": str(hist_id),
+                        "reason": "Muokattu mielenosoitusta hallintapaneelista, lisätietoa: <a href='{}'>historia</a>".format(url_for('admin_demo.view_demo_diff', history_id=hist_id, _external=True))
+                    },
+                })
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")

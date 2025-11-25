@@ -112,6 +112,15 @@ class Config:
     # Canonical bucket and CDN host
     S3_BUCKET = S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
     CDN_HOST = S3_CONFIG.get("CDN_HOST", "https://cdn2.mielenosoitukset.fi")
+    # Allow disabling S3 explicitly or by leaving credentials empty
+    S3_DISABLED = S3_CONFIG.get("DISABLED", False)
+    S3_ENABLED = (
+        not S3_DISABLED
+        and bool(ACCESS_KEY)
+        and bool(SECRET_KEY)
+        and bool(ENDPOINT_URL)
+        and bool(S3_BUCKET)
+    )
 
     # Allowed file extensions for uploads
     ALLOWED_EXTENSIONS = S3_CONFIG.get(

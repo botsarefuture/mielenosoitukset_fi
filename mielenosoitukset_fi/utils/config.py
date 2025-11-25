@@ -65,6 +65,16 @@ class Config:
     ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
     SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
     ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
+    S3_BUCKET = S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
+    CDN_HOST = S3_CONFIG.get("CDN_HOST", "https://cdn2.mielenosoitukset.fi")
+    S3_DISABLED = S3_CONFIG.get("DISABLED", False)
+    S3_ENABLED = (
+        not S3_DISABLED
+        and bool(ACCESS_KEY)
+        and bool(SECRET_KEY)
+        and bool(ENDPOINT_URL)
+        and bool(S3_BUCKET)
+    )
 
     @classmethod
     def init_config(cls) -> None:

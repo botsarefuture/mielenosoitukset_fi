@@ -22,10 +22,10 @@ BABEL:
     fi: "Suomi"
     en: "English"
 
-# Development S3 settings are left empty on purpose.
+# Development S3 settings point to the bundled MinIO instance.
 S3:
-  ACCESS_KEY: ""
-  SECRET_KEY: ""
-  ENDPOINT_URI: ""
+  ACCESS_KEY: "minioadmin"
+  SECRET_KEY: "minioadmin"
+  ENDPOINT_URI: "http://minio:9000"
   BUCKET: "mielenosoitukset-dev"
-  CDN_HOST: ""
+  CDN_HOST: "http://localhost:9000/mielenosoitukset-dev"

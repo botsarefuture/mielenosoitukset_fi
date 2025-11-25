@@ -1,6 +1,7 @@
 import os
 import io
 import boto3
+from botocore.config import Config as BotoConfig
 from botocore.exceptions import NoCredentialsError, ClientError
 from PIL import Image
 from config import Config  # Import your Config class
@@ -54,12 +55,17 @@ def create_s3_client():
     boto3.client or None
         The initialized S3 client or None if credentials are not found.
     """
+    if not Config.S3_ENABLED:
+        logger.info("S3 client not configured or explicitly disabled; uploads will be skipped.")
+        return None
+
     try:
         return boto3.client(
             "s3",
             aws_access_key_id=Config.ACCESS_KEY,
             aws_secret_access_key=Config.SECRET_KEY,
             endpoint_url=Config.ENDPOINT_URL,
+            config=BotoConfig(s3={"addressing_style": "path"}),
         )
     except NoCredentialsError:
         logger.error("AWS credentials not found.")
@@ -249,6 +255,16 @@ def gen_ha(image_type):
     return image_type[:3].upper()
 
 
+def _s3_public_url(object_key: str) -> str:
+    """Build a public URL for an uploaded object respecting CDN overrides."""
+
+    if Config.CDN_HOST:
+        return f"{Config.CDN_HOST.rstrip('/')}/{object_key}"
+    if Config.ENDPOINT_URL:
+        return f"{Config.ENDPOINT_URL.rstrip('/')}/{Config.S3_BUCKET}/{object_key}"
+    return object_key
+
+
 @retry_with_graze()
 def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     """
@@ -268,6 +284,9 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
     str or None
         URL of the uploaded image or None if upload fails.
     """
+    if _s3_client is None:
+        logger.warning("S3 client is not configured; skipping upload for %s", image_path)
+        return None
     # Backwards-compatible wrapper that reads the local file into memory
     try:
         with open(image_path, "rb") as f:
@@ -283,7 +302,7 @@ def upload_image(bucket_name: str, image_path: str, image_type: str) -> str:
             # Use put_object to upload bytes
             _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
             # Return canonical CDN URL as requested
-            s3_file_path = f"https://cdn2.mielenosoitukset.fi/{object_key}"
+            s3_file_path = _s3_public_url(object_key)
             logger.info(f"Uploaded {image_path} to s3://{bucket_name}/{object_key}")
             return s3_file_path
     except Exception as e:
@@ -309,6 +328,9 @@ def upload_image_fileobj(bucket_name: str, fileobj, filename: str, image_type: s
     str or None
         Public URL of uploaded image or None on failure.
     """
+    if _s3_client is None:
+        logger.warning("S3 client is not configured; skipping upload for %s", filename)
+        return None
     try:
         jpeg_bytes = convert_image_fileobj_to_jpeg_bytes(fileobj)
         if jpeg_bytes is None:
@@ -320,7 +342,7 @@ def upload_image_fileobj(bucket_name: str, fileobj, filename: str, image_type: s
             return None
         object_key = upload_path_gen(_id, image_type)
         _s3_client.put_object(Bucket=bucket_name, Key=object_key, Body=jpeg_bytes, ContentType="image/jpeg")
-        s3_file_path = f"https://cdn2.mielenosoitukset.fi/{object_key}"
+        s3_file_path = _s3_public_url(object_key)
         logger.info(f"Uploaded in-memory file {filename} to s3://{bucket_name}/{object_key}")
         return s3_file_path
     except Exception as e:

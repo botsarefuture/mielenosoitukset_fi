@@ -107,6 +107,8 @@ A lightweight Docker Compose setup is included for local development. It starts 
 
 2. Visit the app at [http://localhost:5000](http://localhost:5000).
 
+   The stack also boots a local MinIO instance for S3-compatible storage. Dev credentials are `minioadmin` / `minioadmin`, and you can browse objects via the console at [http://localhost:9001](http://localhost:9001). If you prefer to disable S3 entirely, set `S3.DISABLED: true` in `docker/config.dev.yaml`.
+
 The Compose file mounts `docker/config.dev.yaml` as `config.yaml` inside the container so you can tweak connection strings or ports without touching your local configuration.
 
 ---

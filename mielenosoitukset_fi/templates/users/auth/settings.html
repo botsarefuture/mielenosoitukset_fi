@@ -635,11 +635,12 @@
         profile_picture: base64Image // null if no file selected
       };
 
-      const res = await fetch("/users/auth/api/v2/user_profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch("/users/auth/api/v2/user_profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
 
         const data = await res.json();
         if (data.status === "success") {
@@ -652,7 +653,11 @@
         } else {
           showSettingsMessage("{{ _('Virhe: ') }}" + (data.message || "Tuntematon virhe"));
         }
-      });
+      } catch (error) {
+        console.error('Failed to update profile:', error);
+        showSettingsMessage("{{ _('Virhe profiilin päivittämisessä') }}");
+      }
+    });
 
     // Helper: convert file -> base64
     function toBase64(file) {
@@ -788,84 +793,6 @@
   });
 </script>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const profileForm = document.getElementById("profile-form");
-    const bioInput = document.getElementById("bio");
-    const fileInput = document.getElementById("profile-pic");
-    const previewContainer = document.getElementById("profile-pic-preview");
-
-    // Load current profile info
-    fetch("/users/auth/api/v2/user_profile")
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          bioInput.value = data.data.bio || "";
-          if (data.data.profile_picture) {
-            showPreview(data.data.profile_picture);
-          }
-        }
-      })
-      .catch(error => console.error('Failed to load profile:', error));
-
-    // Form submit handler
-    profileForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      let base64Image = null;
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        base64Image = await toBase64(file);
-      }
-
-      const payload = {
-        bio: bioInput.value,
-        profile_picture: base64Image
-      };
-
-      try {
-        const res = await fetch("/users/auth/api/v2/user_profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (data.status === "success") {
-          alert("Profiili päivitetty!");
-          if (base64Image) {
-            const dataUrl = "data:image/png;base64," + base64Image;
-            showPreview(dataUrl);
-          }
-        } else {
-          alert("Virhe: " + (data.message || "Tuntematon virhe"));
-        }
-      } catch (error) {
-        console.error('Failed to update profile:', error);
-        alert("Virhe profiilin päivittämisessä");
-      }
-    });
-
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result.split(",")[1]);
-        reader.onerror = error => reject(error);
-      });
-    }
-
-    function showPreview(url) {
-      previewContainer.innerHTML = "";
-      const img = document.createElement("img");
-      img.src = url;
-      img.className = "img-thumbnail";
-      img.style.maxWidth = "150px";
-      img.style.borderRadius = "8px";
-      previewContainer.appendChild(img);
-    }
-  });
-</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {

@@ -172,7 +172,7 @@ def trigger_screenshot(demo_id, wait=False):
         True/False for success, message.
     """
     def create_screenshot_thread(demo_id):
-        from DatabaseManager import DatabaseManager
+        from mielenosoitukset_fi.database_manager import DatabaseManager
         from bson import ObjectId
         from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
         from mielenosoitukset_fi.utils.s3 import upload_image_fileobj

@@ -4,6 +4,87 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/case.css' )}}">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<style>
+    .action-log {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .log-entry {
+        background: var(--color-card-bg, #1e1e1e);
+        border: 1px solid var(--color-border, #333);
+        padding: 14px 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgb(0 0 0 / 15%);
+        animation: fadeIn .2s ease;
+    }
+
+    .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .log-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .log-icon {
+        font-size: 18px;
+        margin-right: 10px;
+        color: var(--color-accent, #5cc7ff);
+    }
+
+    .log-user {
+        font-size: 15px;
+    }
+
+    .log-action {
+        font-size: 13px;
+        opacity: 0.9;
+    }
+
+    .log-timestamp {
+        font-size: 13px;
+        opacity: 0.75;
+    }
+
+    .log-body {
+        margin-top: 10px;
+        padding-left: 3px;
+        font-size: 14px;
+        display: flex;
+        gap: 6px;
+        color: var(--color-text-muted, #cfcfcf);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 30px 10px;
+        opacity: 0.8;
+    }
+
+    .empty-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+        color: var(--color-text-muted, #6f6f6f);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 <!-- Reject Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -58,7 +139,7 @@
                 <div class="card-header">
                     <h2 class="card-title">
                         <i class="fa-solid fa-file-lines icon"></i>
-                        {{ _('Pyyntötyyppi') }}
+                        {{ _('Tapauksen tyyppi') }}
                         <span class="case-type-badge">{{ case.case_type|capitalize|replace('_', ' ') }}</span>
                     </h2>
                 </div>
@@ -77,68 +158,95 @@
                         </h3>
                         <div class="info-item">
                             <strong>{{ _('Ongelma:') }}</strong><br>
-                            {{ case_data.error_description }}
+                            {{ case_data.error_report.error }}
                         </div>
                         <div class="info-item">
-                            <strong>{{ _('Raportoija:') }}</strong> {{ case_data.reported_by }}
+                            <strong>{{ _('Raportoija:') }}</strong> {{ case_data.error_report.user if
+                            case_data.error_report.user else "Anonyymi" }} ({{ case_data.error_report.ip }})
                         </div>
                         <div class="info-item">
-                            <strong>{{ _('Aikaleima:') }}</strong> {{ case_data.timestamp }}
+                            <!-- human readable -->
+                            <strong>{{ _('Aikaleima:') }}</strong>
+                            {{ case_data.error_report.date.strftime("%d.%m.%Y %H:%M") }}
                         </div>
                     </div>
-
                     <div class="info-box">
                         <h3>
-                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {{ _('Demon tiedot') }}
+                            <i class="fa-solid fa-bullhorn"></i>
+                            {{ _('Mielenosoituksen tiedot') }}
                         </h3>
+
+                        <a class="btn btn-info"
+                            href="{{ url_for('demonstration_detail', demo_id=case_data.demo._id) }}">
+                            <i class="fa-solid fa-eye"></i> {{ _('Katsele mielenosoitusta') }}
+                        </a>
+
                         <div class="info-item">
-                            <strong>{{ _('Nimi:') }}</strong> {{ case_data.demo.name }}
+                            <strong>{{ _('Nimi:') }}</strong> {{ case_data.demo.title }}
                         </div>
+
                         <div class="info-item">
                             <strong>{{ _('Päivämäärä:') }}</strong> {{ case_data.demo.date }}
                         </div>
+
                         <div class="info-item">
                             <strong>{{ _('Kuvaus:') }}</strong> {{ case_data.demo.description }}
                         </div>
-                    </div>
-                </div>
 
-                <div class="info-box" style="margin-top: 20px;">
-                    <h3>
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        {{ _('Muokkaa tietoja') }}
-                    </h3>
-                    <form id="demo-edit-form">
-                        <div class="form-group">
-                            <label class="form-label">{{ _('Nimi') }}</label>
-                            <input type="text" name="name" value="{{ case_data.demo.name }}" class="form-input">
+                        <button class="btn btn-warning toggle-more">
+                            <i class="fa-solid fa-chevron-down"></i> {{ _('Näytä lisää') }}
+                        </button>
+
+                        <div class="demo-more" style="display: none;">
+
+                            <div class="info-item">
+                                <strong>{{ _('Alkaa:') }}</strong> {{ case_data.demo.start_time }}
+                            </div>
+
+                            <div class="info-item">
+                                <strong>{{ _('Päättyy:') }}</strong> {{ case_data.demo.end_time }}
+                            </div>
+
+                            {# --- Auto-loop remaining fields except known ones --- #}
+                            {% set skip = ['_id', 'title', 'date', 'description', 'start_time', 'end_time'] %}
+
+                            {% for key, value in case_data.demo.items() %}
+                            {% if key not in skip %}
+                            <div class="info-item">
+                                <strong>{{ key|replace('_',' ')|capitalize }}:</strong>
+                                {{ value }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">{{ _('Päivämäärä') }}</label>
-                            <input type="text" name="date" value="{{ case_data.demo.date }}" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">{{ _('Kuvaus') }}</label>
-                            <textarea name="description"
-                                class="form-textarea">{{ case_data.demo.description }}</textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
+                    </div>
+
+                    <script>
+                        document.querySelector('.toggle-more').addEventListener('click', () => {
+                            document.querySelector('.demo-more').style.display =
+                                document.querySelector('.demo-more').style.display === 'none'
+                                    ? 'block'
+                                    : 'none';
+                        });
+
+                    </script>
+
+
+                    <div class="info-box" style="margin-top: 20px;">
+                        <h3>
                             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            {{ _('Tallenna muutokset') }}
-                        </button>
-                    </form>
+                            {{ _('Muokkaa tietoja') }}
+                        </h3>
+                        <a href="{{ url_for('admin_demo.edit_demo', demo_id=case_data.demo._id, case_id=case._id) }}">
+                            <button class="btn btn-primary">
+                                <i class="fa-solid fa-pencil"></i> {{ _('Muokkaa') }}
+                            </button>
+                        </a>
+                    </div>
                 </div>
-
                 {% elif case_type == "organization_edit_suggestion" %}
                 <div class="info-box" style="margin-top: 20px;">
                     <h3>
@@ -155,9 +263,9 @@
                         <strong>{{ _('Ehdotetut muutokset:') }}</strong>
                     </div>
                     <ul class="changes-list">
-                        {% for change in case_data.changes %}
+                        {% for change in case_data.changes %} Pyyntötyy
                         <li>
-                            <strong>{{ change.field }}</strong>
+                            <strong>{{ change.field }}</strong> PyyntötyyPyyntötyy Pyyntötyy
                             <span class="change-arrow">→</span>
                             <span style="text-decoration: line-through; opacity: 0.6;">{{ change.old }}</span>
                             <span class="change-arrow">→</span>
@@ -275,7 +383,8 @@
                                 {% if org.email %}
                                 <p class="text-sm text-neutral-400 flex items-center gap-2">
                                     <i class="fa-solid fa-envelope"></i>
-                                    <a href="mailto:{{ org.email }}" class="text-pink-400 underline">{{ org.email }}</a>
+                                    <a href="mailto:{{ org.email }}" class="text-pink-400 underline">{{ org.email
+                                        }}</a>
                                 </p>
                                 {% endif %}
 
@@ -417,15 +526,248 @@
                 {% endif %}
 
             </div>
+            <style>
+                /* Action Log Enhanced Styles */
+                .action-log {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    margin-top: 32px;
+                }
+
+                .log-section-header {
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: #f48fb1;
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding-bottom: 12px;
+                    border-bottom: 2px solid rgba(244, 143, 177, 0.2);
+                    margin-top: 20px;
+                }
+
+                .log-entry {
+                    background: linear-gradient(135deg, rgba(30, 30, 46, 0.9) 0%, rgba(42, 42, 62, 0.9) 100%);
+                    border: 1px solid rgba(244, 143, 177, 0.15);
+                    padding: 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                    transition: all 0.3s ease;
+                    position: relative;
+                    overflow: clip;
+                }
+
+                .log-entry::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 4px;
+                    height: 100%;
+                    background: linear-gradient(180deg, #f48fb1 0%, #ec4899 100%);
+                    opacity: 0.6;
+                }
+
+                .log-entry:hover {
+                    border-color: rgba(244, 143, 177, 0.3);
+                    transform: translateX(4px);
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+                }
+
+                .log-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                }
+
+                .log-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex: 1;
+                }
+
+                .log-icon {
+                    font-size: 20px;
+                    color: #f48fb1;
+                    width: 36px;
+                    height: 36px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(244, 143, 177, 0.1);
+                    border-radius: 8px;
+                    flex-shrink: 0;
+                }
+
+                .log-meta {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 6px;
+                }
+
+                .log-user {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #e4e4e4;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .log-user i {
+                    color: #f48fb1;
+                    font-size: 14px;
+                }
+
+                .log-action {
+                    font-size: 13px;
+                    color: #b4b4c4;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 10px;
+                    background: rgba(244, 143, 177, 0.1);
+                    border-radius: 6px;
+                    width: fit-content;
+                }
+
+                .log-action i {
+                    font-size: 11px;
+                }
+
+                .log-timestamp {
+                    font-size: 13px;
+                    color: #8a8a9a;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    white-space: nowrap;
+                }
+
+                .log-timestamp i {
+                    font-size: 12px;
+                }
+
+                .log-body {
+                    padding: 12px 16px;
+                    background: rgba(244, 143, 177, 0.05);
+                    border-radius: 8px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: #d4d4d4;
+                    display: flex;
+                    gap: 10px;
+                    border-left: 3px solid rgba(244, 143, 177, 0.3);
+                }
+
+                .log-body i {
+                    color: #f48fb1;
+                    font-size: 16px;
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                }
+
+                .empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    background: rgba(30, 30, 46, 0.5);
+                    border-radius: 12px;
+                    border: 2px dashed rgba(244, 143, 177, 0.2);
+                }
+
+                .empty-icon {
+                    font-size: 56px;
+                    color: rgba(244, 143, 177, 0.3);
+                    margin-bottom: 16px;
+                }
+
+                .empty-state p {
+                    font-size: 16px;
+                    color: #8a8a9a;
+                    font-weight: 500;
+                }
+
+                /* Form Enhancements */
+                .form-group {
+                    margin-bottom: 20px;
+                }
+
+                .form-label {
+                    display: block;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #c4c4c4;
+                    margin-bottom: 8px;
+                    letter-spacing: 0.3px;
+                }
+
+                .form-select,
+                .form-textarea {
+                    width: 100%;
+                    background: rgba(30, 30, 46, 0.8);
+                    border: 2px solid #3a3a4e;
+                    border-radius: 10px;
+                    padding: 12px 16px;
+                    color: #e4e4e4;
+                    font-size: 15px;
+                    transition: all 0.3s ease;
+                }
+
+                .form-select:focus,
+                .form-textarea:focus {
+                    outline: none;
+                    border-color: #f48fb1;
+                    background: rgba(30, 30, 46, 1);
+                    box-shadow: 0 0 0 3px rgba(244, 143, 177, 0.1);
+                }
+
+                .form-textarea {
+                    min-height: 100px;
+                    resize: vertical;
+                    font-family: inherit;
+                }
+
+                /* Animations */
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .log-entry {
+                    animation: fadeIn 0.4s ease;
+                }
+
+                /* Responsive */
+                @media (max-width: 768px) {
+                    .log-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                    }
+
+                    .log-timestamp {
+                        margin-left: 48px;
+                    }
+                }
+            </style>
 
             <!-- Action Log Card -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
+                        <i class="fa-solid fa-clipboard-list icon"></i>
                         {{ _('Sisäiset toimet ja muistiinpanot') }}
                     </h2>
                 </div>
@@ -453,29 +795,133 @@
                         {{ _('Lisää merkintä') }}
                     </button>
                 </form>
+                <br><br>
+                <div class="log-section-header">
+                    <i class="fa-solid fa-history"></i>
+                    {{ _('Aiemmat merkinnät') }}
+                </div>
 
-                <div style="margin-top: 30px;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 15px; color: #f48fb1;">
-                        {{ _('Aiemmat merkinnät') }}
-                    </h3>
-                    <div id="action-log" class="action-log">
-                        {% for log in case.action_logs %}
-                        <div class="log-entry">
-                            <strong>{{ log.user }}</strong>: {{ log.reason }}
-                            <span class="log-timestamp">{{ log.timestamp }}</span>
+                <div id="action-log" class="action-log">
+                    {% if case.action_logs %}
+                    {% for log in case.action_logs %}
+                    <div class="log-entry">
+                        <div class="log-header">
+                            <div class="log-left">
+                                <div class="log-icon">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
+                                <div class="log-meta">
+                                    <strong class="log-user">
+                                        <i class="fa-solid fa-user"></i>
+                                        {{ log.user or log.admin }}
+                                    </strong>
+                                    {% if log.action_type %}
+                                    <span class="log-action">
+                                        <i class="fa-solid fa-tag"></i>
+                                        {{ log.action_type }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="log-timestamp">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                {{ log.timestamp }}
+                            </span>
                         </div>
-                        {% else %}
-                        <div class="empty-state">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
-                            <p>{{ _('Ei vielä merkintöjä.') }}</p>
+                        <div class="log-body">
+                            <i class="fa-solid fa-comment"></i>
+                            <span>{{ log.reason or log.note | safe }}</span>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fa-solid fa-inbox"></i>
+                        </div>
+                        <p>{{ _('Ei vielä merkintöjä.') }}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
+
+            <script>
+                // Action log form handler
+                document.getElementById('action-log-form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    const actionType = formData.get('action_type');
+                    const reason = formData.get('reason');
+
+                    if (!reason.trim()) {
+                        showMessage('error', 'Syötä kuvaus tai syy toimenpiteelle.');
+                        return;
+                    }
+
+                    // Add to action log
+                    const logContainer = document.getElementById('action-log');
+                    const emptyState = logContainer.querySelector('.empty-state');
+                    if (emptyState) {
+                        emptyState.remove();
+                    }
+
+                    const now = new Date();
+                    const timestamp = now.toLocaleString('fi-FI');
+
+                    const actionLabels = {
+                        'accept': '{{ _("Hyväksytty") }}',
+                        'reject': '{{ _("Hylätty") }}',
+                        'note': '{{ _("Muistiinpano") }}'
+                    };
+
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.innerHTML = `
+            <div class="log-header">
+                <div class="log-left">
+                    <div class="log-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="log-meta">
+                        <strong class="log-user">
+                            <i class="fa-solid fa-user"></i>
+                            {{ _("Sinä") }}
+                        </strong>
+                        <span class="log-action">
+                            <i class="fa-solid fa-tag"></i>
+                            ${actionLabels[actionType]}
+                        </span>
+                    </div>
+                </div>
+                <span class="log-timestamp">
+                    <i class="fa-solid fa-calendar-day"></i>
+                    ${timestamp}
+                </span>
+            </div>
+            <div class="log-body">
+                <i class="fa-solid fa-comment"></i>
+                <span>${reason}</span>
+            </div>
+        `;
+
+                    logContainer.insertBefore(logEntry, logContainer.firstChild);
+
+                    // Clear form
+                    this.reset();
+
+                    showMessage('success', 'Merkintä lisätty onnistuneesti!');
+                });
+
+                // auto-scroll the action log smoothly to the bottom on page load
+                window.addEventListener('load', () => {
+                    const logContainer = document.getElementById('action-log');
+                    logContainer.scrollTo({
+                        top: logContainer.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                });
+
+            </script>
         </div>
 
         <!-- Sidebar -->
@@ -492,10 +938,10 @@
                 </div>
 
                 {% if case.meta.superior_needed %}
-        <div class="alert alert-warning mt-2 mb-2">
-            <i class="fas fa-exclamation-triangle"></i> {{ _('Eskaloitu esihenkilölle') }}
-        </div>
-        {% endif %}
+                <div class="alert alert-warning mt-2 mb-2">
+                    <i class="fas fa-exclamation-triangle"></i> {{ _('Eskaloitu esihenkilölle') }}
+                </div>
+                {% endif %}
 
                 <button class="btn btn-success btn-block">
                     <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -529,6 +975,79 @@
                     {{ _('Poista eskalointi') }}
                 </button>
                 {% endif %}
+                <div class="divider my-4"></div>
+                <!-- subtitle -->
+                <h4 class="card-subtitle mb-3 text-white font-semibold">
+                    <i class="fa-solid fa-folder icon"></i>
+                    {{ _('Tapausstatus') }}
+                </h4>
+
+                <button class="btn btn-secondary btn-block" onclick="promptCaseAction('close')">
+                    <i class="fa-solid fa-folder-closed icon"></i>
+                    {{ _('Sulje tapaus') }}
+                </button>
+
+                <button class="btn btn-secondary btn-block" onclick="promptCaseAction('reopen')">
+                    <i class="fa-solid fa-folder-plus icon"></i>
+                    {{ _('Avaa uudelleen') }}
+                </button>
+
+                <!-- Buttons -->
+                <!-- SweetAlert2 CDN -->
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+                <script>
+                    function promptCaseAction(action) {
+                        let actionText = action === 'close' ? 'sulkemiseen' :
+                            action === 'reopen' ? 'uudelleenavaamiseen' : '';
+
+                        Swal.fire({
+                            title: `<h5 style="color: #ffffff;">Syötä syy tapauksen ${actionText}</h5>`,
+                            input: 'textarea',
+                            inputPlaceholder: 'Kirjoita syy tähän...',
+                            showCancelButton: true,
+                            confirmButtonText: 'Vahvista',
+                            cancelButtonText: 'Peruuta',
+                            background: '#1e1e2e',
+                            textColor: '#ffffff',
+                            icon: 'question',
+                            // input color
+                            inputAttributes: {
+                                style: 'background: #2e2e2e; color: #ffffff;'
+                            },
+                            // show success icon on confirm
+
+                            preConfirm: (reason) => {
+                                if (!reason) {
+                                    Swal.showValidationMessage('Syytä ei voi jättää tyhjäksi!');
+                                }
+                                return reason;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                fetch(`/admin/case/{{ case._id }}/${action}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ reason: result.value })
+                                })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            // Tapauksen #<id> ${action} onnistui
+                                            // still the backgrounds and text colors
+                                            Swal.fire('Onnistui!', `Tapauksen #{{ case.running_num }} ${action == 'close' ? 'sulkeminen' : 'uudelleenavaaminen'} onnistui.`, 'success', {
+                                                background: '#1e1e2e',
+                                                color: '#ffffff'
+                                            })
+                                                .then(() => location.reload());
+                                        } else {
+                                            Swal.fire('Virhe', data.error || 'Tapausta ei voitu päivittää.', 'error');
+                                        }
+                                    });
+                            }
+                        });
+                    }
+                </script>
 
             </div>
 
@@ -536,31 +1055,74 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+
+                        <i class="fa-solid fa-history"></i>
                         {{ _('Tapahtumahistoria') }}
                     </h3>
+
                 </div>
 
-                <div class="timeline">
-                    {% for event in case.case_history %}
-                    <div class="timeline-item">
-                        <div class="timeline-time">{{ event.timestamp }}</div>
-                        <div class="timeline-action">{{ event.action }}</div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in case.case_history %}
+                        <div class="timeline-item" data-event='{{ event|tojson }}'>
+                            <div class="timeline-time">{{ event.timestamp }}</div>
+                            <div class="timeline-action">{{ event.action }}</div>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fa-solid fa-history"></i>
+                            </div>
+                            <p>{{ _('Ei tapahtumia.') }}</p>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p>{{ _('Ei tapahtumia.') }}</p>
-                    </div>
-                    {% endfor %}
                 </div>
-            </div>
+
+                <script>
+                    // only show five latest events, hide the rest with a scrollbar, and sort them by timestamp descending
+                    const timeline = document.querySelector('.timeline');
+                    const items = timeline.querySelectorAll('.timeline-item');
+                    // lets reverse the order of items
+                    const itemsArray = Array.from(items);
+                    itemsArray.sort((a, b) => {
+                        const dateA = new Date(JSON.parse(a.dataset.event).timestamp);
+                        const dateB = new Date(JSON.parse(b.dataset.event).timestamp);
+                        return dateB - dateA;
+                    });
+                    timeline.innerHTML = '';
+                    itemsArray.forEach(item => {
+                        timeline.appendChild(item);
+                    });
+                    if (items.length > 5) {
+                        timeline.style.maxHeight = '300px';
+                        timeline.style.overflowY = 'auto';
+
+                    } else {
+                        timeline.style.maxHeight = 'none';
+                    }
+                    // when hovering over timeline item, change background color, and if i click, show popup with details
+                    document.querySelectorAll('.timeline-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            const action = item.querySelector('.timeline-action').innerText;
+                            const timestamp = item.querySelector('.timeline-time').innerText;
+
+                            Swal.fire({
+                                title: 'Tapahtuman tiedot',
+                                html: `
+                                    <p><strong>Aika:</strong> ${timestamp}</p>
+                                    <p><strong>Toimenpide:</strong> ${action}</p>
+                                    <p><strong>Syy:</strong> ${JSON.parse(item.dataset.event).metadata.reason || 'Ei lisätietoja.'}</p>
+                                `,
+                                icon: 'info',
+                                confirmButtonText: 'Sulje',
+                                background: '#1e1e2e',
+                                color: '#ffffff'
+                            });
+                        });
+                    });
+                </script>
         </aside>
     </section>
 </div>
@@ -569,9 +1131,7 @@
 <div id="escalation-modal" class="modal hidden">
     <div class="modal-content">
         <h3 class="modal-header">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
+            <i class="fa-solid fa-exclamation-triangle"></i>
             {{ _('Eskaloi hallituksen käsittelyyn') }}
         </h3>
 
@@ -729,51 +1289,51 @@
     });
 
     function deescalateCase() {
-    Swal.fire({
-        title: "Poistetaanko eskalointi?",
-        text: "Tämä palauttaa tapauksen normaaliksi käsiteltäväksi.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#3085d6",
-        cancelButtonColor: "#d33",
-        confirmButtonText: "Kyllä, poista eskalointi",
-        cancelButtonText: "Peruuta"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            fetch(`/admin/case/${caseId}/deescalate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: "Eskalointi poistettu",
-                            text: "Tapaus on palautettu normaaliin tilaan.",
-                            icon: "success",
-                            confirmButtonColor: "#3085d6"
-                        }).then(() => location.reload());
-                    } else {
+        Swal.fire({
+            title: "Poistetaanko eskalointi?",
+            text: "Tämä palauttaa tapauksen normaaliksi käsiteltäväksi.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Kyllä, poista eskalointi",
+            cancelButtonText: "Peruuta"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/admin/case/${caseId}/deescalate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: "Eskalointi poistettu",
+                                text: "Tapaus on palautettu normaaliin tilaan.",
+                                icon: "success",
+                                confirmButtonColor: "#3085d6"
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                title: "Virhe",
+                                text: data.error || "Tapahtui virhe poistettaessa eskalointia.",
+                                icon: "error",
+                                confirmButtonColor: "#d33"
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
                         Swal.fire({
                             title: "Virhe",
-                            text: data.error || "Tapahtui virhe poistettaessa eskalointia.",
+                            text: "Tapahtui virhe, kokeile uudelleen myöhemmin.",
                             icon: "error",
                             confirmButtonColor: "#d33"
                         });
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    Swal.fire({
-                        title: "Virhe",
-                        text: "Tapahtui virhe, kokeile uudelleen myöhemmin.",
-                        icon: "error",
-                        confirmButtonColor: "#d33"
                     });
-                });
-        }
-    });
-}
+            }
+        });
+    }
 
 </script>
 

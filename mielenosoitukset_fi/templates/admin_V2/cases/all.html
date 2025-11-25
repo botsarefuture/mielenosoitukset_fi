@@ -50,11 +50,14 @@
         </div>
         <p class="card-text text-truncate">{{ case.description or _('Ei kuvausta') }}</p>
         <div class="case-actions mt-auto">
+          <a href="{{ url_for('admin_case.single_case', case_id=case._id) }}" class="btn btn-sm btn-primary">
+      <i class="fa-solid fa-circle-info"></i> Katsele tapausta
+    </a>
   {% if case.case_type == "new_demo" %}
     <span class="me-2">
       {% if case.meta and case.meta.superior_needed %}
         <i class="fas fa-exclamation-triangle text-warning"></i>
-        {{ _('Eskalointi tarvitaan') }}
+        {{ _('Eskaloitu') }}
       {% else %}
         {% if case.demo.accepted %}
           <i class="fas fa-check text-success"></i> {{ _('Hyväksytty') }}
@@ -71,6 +74,7 @@
     <a href="#" onclick="confirmAction('deny', '{{ case._id }}')" class="btn btn-sm btn-danger" {% if case.meta and case.meta.superior_needed %}disabled{% endif %}>
       {{ _('Hylkää') }}
     </a>
+    
   {% endif %}
 </div>
 

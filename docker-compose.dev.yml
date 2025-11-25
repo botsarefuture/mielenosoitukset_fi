@@ -83,7 +83,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+    command: ["python3", "run.py"]
+    #, "--host=0.0.0.0", "--port=5000"]
     volumes:
       - .:/app
       - ./docker/config.dev.yaml:/app/config.yaml:ro
@@ -96,14 +97,14 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      redis:
-        condition: service_started
-      mongo:
-        condition: service_healthy
+#      redis:
+#        condition: service_started
+#      mongo:
+#        condition: service_healthy
       dev-seed:
         condition: service_completed_successfully
-      minio-setup:
-        condition: service_completed_successfully
+#      minio-setup:
+#        condition: service_completed_successfully
 
 volumes:
   mongo-data:

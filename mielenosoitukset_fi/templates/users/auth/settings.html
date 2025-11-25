@@ -501,8 +501,16 @@
 
     <!-- Turvallisuus Tab -->
     <div id="tab-security">
-      <p>{{ _('Hallinnoi kaksivaiheista tunnistautumista ja MFA-laitteita.') }}</p>
+      <!-- icon and title -->
+       <div class="section-header mb-4">
+        <h4><i class="fas fa-shield-alt"></i> {{ _('Turvallisuusasetukset') }}</h4>
+        <p class="text-muted">{{ _('Hallinnoi tilisi turvallisuusasetuksia, kuten kaksivaiheista tunnistautumista (MFA).')
+          }}</p>
+      </div>
+      
       <div class="settings-section">
+        <p>{{ _('Hallinnoi kaksivaiheista tunnistautumista ja MFA-laitteita.') }}</p>
+
         <label class="form-label" for="mfa"><i class="fas fa-shield-alt"></i> {{
           _('Kaksivaiheinen tunnistus (MFA)')
           }}</label>
@@ -516,6 +524,27 @@
           <button class="btn btn-secondary mbCometButton1455" id="add-mfa-device-btn" type="button">{{ _('Lisää uusi
             laite') }}</button>
           <ul class="list-group mt-2" id="mfa-devices-list"></ul>
+        </div>
+      </div>
+      <!-- login logs etc -->
+      <div class="settings-section">
+        <h5><i class="fas fa-history"></i> {{ _('Kirjautumishistoria') }}</h5>
+        <p>{{ _('Tarkastele viimeisimpiä kirjautumisia tilillesi.') }}</p>
+        <!-- Placeholder for login history table -->
+        <div class="alert alert-info">
+          <i class="fa-solid fa-info-circle me-2"></i>
+          {{ _('Kirjautumishistoria-ominaisuus on tulossa pian!') }}
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h5><i class="fas fa-key"></i> {{ _('Vaihda salasana') }}</h5>
+        <p>{{ _('Vaihda tilisi salasana säännöllisesti turvallisuuden parantamiseksi.')
+          }}</p>
+        <!-- Placeholder for change password form -->
+        <div class="alert alert-info">
+          <i class="fa-solid fa-info-circle me-2"></i>
+          {{ _('Salasanan vaihtaminen on tulossa pian!') }}
         </div>
       </div>
     </div>

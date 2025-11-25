@@ -301,6 +301,7 @@ usernameInput.addEventListener("input", () => {
 
     // Show/hide hint with fade
     if (uname.length < 3) {
+        lastCheckValue = ""; // prevent stale availability responses from overwriting INVALID state
         sillyhint.classList.remove("hidden"); // show hint
         setUsernameStatus(
             USERNAME_STATE.INVALID,
@@ -323,7 +324,8 @@ usernameInput.addEventListener("input", () => {
         try {
             const resp = await fetch(`/users/auth/api/username_free?username=${encodeURIComponent(uname)}`);
             const data = await resp.json();
-            if (uname !== lastCheckValue) return; // ignore stale response
+            const currentUname = usernameInput.value.trim();
+            if (uname !== lastCheckValue || currentUname.length < 3 || currentUname !== uname) return; // ignore stale response or cleared input
 
             if (data.available) {
                 setUsernameStatus(

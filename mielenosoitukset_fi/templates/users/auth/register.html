@@ -263,6 +263,24 @@ document.addEventListener("DOMContentLoaded", () => {
 let unameTimeout;
 const sillyhint = document.getElementById("sillyhint");
 
+const USERNAME_STATE = {
+    INVALID: "invalid",
+    CHECKING: "checking",
+    AVAILABLE: "available",
+    TAKEN: "taken",
+    ERROR: "error"
+};
+
+let usernameState = USERNAME_STATE.INVALID;
+let lastCheckValue = "";
+
+function setUsernameStatus(state, message, { color = "#333", italic = false } = {}) {
+    usernameState = state;
+    usernameStatus.innerHTML = message;
+    usernameStatus.style.color = color;
+    usernameStatus.style.fontStyle = italic ? "italic" : "normal";
+}
+
 usernameInput.addEventListener("input", () => {
     clearTimeout(unameTimeout);
     const uname = usernameInput.value.trim();
@@ -270,34 +288,48 @@ usernameInput.addEventListener("input", () => {
     // Show/hide hint with fade
     if (uname.length < 3) {
         sillyhint.classList.remove("hidden"); // show hint
-        usernameStatus.innerHTML = '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus liian lyhyt';
-        usernameStatus.style.color = "#e74c3c";
-        usernameStatus.style.fontStyle = "normal";
+        setUsernameStatus(
+            USERNAME_STATE.INVALID,
+            '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus liian lyhyt',
+            { color: "#e74c3c" }
+        );
         return; // don’t check availability yet
     } else {
         sillyhint.classList.add("hidden"); // fade out hint
-        usernameStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tarkistetaan saatavuutta…';
-        usernameStatus.style.color = "#333";
-        usernameStatus.style.fontStyle = "italic";
+        setUsernameStatus(
+            USERNAME_STATE.CHECKING,
+            '<i class="fa-solid fa-spinner fa-spin"></i> Tarkistetaan saatavuutta…',
+            { italic: true }
+        );
     }
 
     // Debounced availability check
     unameTimeout = setTimeout(async () => {
+        lastCheckValue = uname;
         try {
             const resp = await fetch(`/users/auth/api/username_free?username=${encodeURIComponent(uname)}`);
             const data = await resp.json();
+            if (uname !== lastCheckValue) return; // ignore stale response
+
             if (data.available) {
-                usernameStatus.innerHTML = '<i class="fa-solid fa-check-circle"></i> Käyttäjätunnus on vapaa';
-                usernameStatus.style.color = "#2c7a2c";
+                setUsernameStatus(
+                    USERNAME_STATE.AVAILABLE,
+                    '<i class="fa-solid fa-check-circle"></i> Käyttäjätunnus on vapaa',
+                    { color: "#2c7a2c" }
+                );
             } else {
-                usernameStatus.innerHTML = '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus on varattu';
-                usernameStatus.style.color = "#a12a2a";
+                setUsernameStatus(
+                    USERNAME_STATE.TAKEN,
+                    '<i class="fa-solid fa-xmark-circle"></i> Käyttäjätunnus on varattu',
+                    { color: "#a12a2a" }
+                );
             }
-            usernameStatus.style.fontStyle = "normal";
         } catch {
-            usernameStatus.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Tarkistuksessa tapahtui virhe';
-            usernameStatus.style.color = "#666";
-            usernameStatus.style.fontStyle = "italic";
+            setUsernameStatus(
+                USERNAME_STATE.ERROR,
+                '<i class="fa-solid fa-triangle-exclamation"></i> Tarkistuksessa tapahtui virhe',
+                { color: "#666", italic: true }
+            );
         }
     }, 500);
 
@@ -314,14 +346,20 @@ usernameInput.addEventListener("input", () => {
     document.getElementById("register-form").addEventListener("submit", e=>{
         const requirementsMet = updateRequirements();
         const passwordsMatch = checkMatch();
-        const unameTaken = usernameStatus.textContent.includes("❌");
+        const unameInvalid = usernameState === USERNAME_STATE.INVALID;
+        const unameTaken = usernameState === USERNAME_STATE.TAKEN;
+        const unameChecking = usernameState === USERNAME_STATE.CHECKING;
+        const unameError = usernameState === USERNAME_STATE.ERROR;
 
-        if(!requirementsMet || !passwordsMatch || unameTaken){
+        if(!requirementsMet || !passwordsMatch || unameTaken || unameInvalid || unameChecking || unameError){
             e.preventDefault();
             let message="Korjaa virheet ennen kuin jatkat:\n";
             if(!requirementsMet) message+="- Salasanavaatimukset eivät täyty\n";
             if(!passwordsMatch) message+="- Salasanat eivät täsmää\n";
+            if(unameInvalid) message+="- Käyttäjätunnuksen täytyy olla vähintään 3 merkkiä\n";
+            if(unameChecking) message+="- Käyttäjätunnuksen saatavuutta tarkistetaan\n";
             if(unameTaken) message+="- Käyttäjätunnus on varattu\n";
+            if(unameError) message+="- Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen\n";
             alert(message);
             return false;
         }

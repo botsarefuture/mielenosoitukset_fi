@@ -1,6 +1,7 @@
 x-minio-env: &minio-env
-  MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+  # Hard-code defaults so local runs never see empty credentials when env vars are missing.
+  MINIO_ROOT_USER: minioadmin
+  MINIO_ROOT_PASSWORD: minioadmin
 
 services:
   mongo:

@@ -38,7 +38,7 @@ def load_config() -> Tuple[str, str]:
     return DEFAULT_URI, DEFAULT_DB
 
 
-def wait_for_mongo(uri: str, retries: int = 10, delay: int = 3) -> MongoClient:
+def wait_for_mongo(uri: str, retries: int = 20, delay: int = 5) -> MongoClient:
     """Wait until MongoDB responds to a ping, then return a client."""
     attempt = 0
     while attempt < retries:
@@ -47,9 +47,15 @@ def wait_for_mongo(uri: str, retries: int = 10, delay: int = 3) -> MongoClient:
             client.admin.command("ping")
             LOGGER.info("Connected to MongoDB at %s", uri)
             return client
-        except ServerSelectionTimeoutError:
+        except ServerSelectionTimeoutError as exc:
             attempt += 1
-            LOGGER.info("MongoDB not ready yet (attempt %s/%s). Sleeping %ss", attempt, retries, delay)
+            LOGGER.info(
+                "MongoDB not ready yet (attempt %s/%s): %s. Sleeping %ss",
+                attempt,
+                retries,
+                exc,
+                delay,
+            )
             time.sleep(delay)
     raise RuntimeError(f"Could not connect to MongoDB at {uri}")
 

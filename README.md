@@ -95,7 +95,7 @@ To run this project locally you'll typically need:
 
 ### Run with Docker (development-only)
 
-A lightweight Docker Compose setup is included for local development. It starts MongoDB, seeds development data, and runs the Flask app in debug mode.
+A lightweight Docker Compose setup is included for local development. It starts MongoDB, Redis, seeds development data, and runs the Flask app in debug mode.
 
 1. Build and start the stack:
 
@@ -108,6 +108,8 @@ A lightweight Docker Compose setup is included for local development. It starts 
 2. Visit the app at [http://localhost:5000](http://localhost:5000).
 
    The stack also boots a local MinIO instance for S3-compatible storage. Dev credentials are `minioadmin` / `minioadmin`, and you can browse objects via the console at [http://localhost:9001](http://localhost:9001). If you prefer to disable S3 entirely, set `S3.DISABLED: true` in `docker/config.dev.yaml`.
+
+   Redis is included for Socket.IO and caching; it is exposed on `localhost:6379` if you want to inspect it locally.
 
 The Compose file mounts `docker/config.dev.yaml` as `config.yaml` inside the container so you can tweak connection strings or ports without touching your local configuration.
 

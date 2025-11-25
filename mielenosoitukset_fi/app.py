@@ -153,7 +153,12 @@ def create_app() -> Flask:
     app.register_blueprint(campaign_bp)
     app.register_blueprint(board_bp)
     
-    socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
+    redis_url = app.config.get("REDIS_URL") or os.getenv("REDIS_URL")
+    socketio_kwargs = {"cors_allowed_origins": "*"}
+    if redis_url:
+        socketio_kwargs["message_queue"] = redis_url
+
+    socketio = SocketIO(app, **socketio_kwargs)
     app.register_blueprint(chat_ws.chat_ws)
     chat_ws.init_socketio(socketio)
     app.register_blueprint(audit_bp)

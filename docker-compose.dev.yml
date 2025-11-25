@@ -4,6 +4,12 @@ x-minio-env: &minio-env
   MINIO_ROOT_PASSWORD: minioadmin
 
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
   mongo:
     image: mongo:7.0
     restart: unless-stopped
@@ -84,9 +90,14 @@ services:
     environment:
       FLASK_APP: run.py
       FLASK_ENV: development
+      REDIS_URL: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "5000:5000"
     depends_on:
+      redis:
+        condition: service_started
       mongo:
         condition: service_healthy
       dev-seed:

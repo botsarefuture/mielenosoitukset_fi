@@ -1,3 +1,4 @@
+import os
 import yaml
 from typing import Any, Dict
 import logging
@@ -84,8 +85,8 @@ class Config:
     config = load_yaml("config.yaml")
 
     # MongoDB Configuration
-    MONGO_URI = config.get("MONGO_URI", "")
-    MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
+    MONGO_URI = os.getenv("MONGO_URI", config.get("MONGO_URI", ""))
+    MONGO_DBNAME = os.getenv("MONGO_DBNAME", config.get("MONGO_DBNAME", "default_db"))
 
     # Mail Configuration
     MAIL_CONFIG = config.get("MAIL", {})

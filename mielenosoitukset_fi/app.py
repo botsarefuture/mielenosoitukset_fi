@@ -51,25 +51,35 @@ def create_app() -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
+    app.logger.info("Loading configuration from config.Config...")
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     
-    try:
-        security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
-        security.init_app(app)
+    # if FLASK_ENV is development, set DEBUG to True
+    if os.getenv("FLASK_ENV") == "development":
+        app.config["DEBUG"] = True
+        logger.info("FLASK_ENV is development, setting DEBUG to True")
+
+    logger.info("Setting up rate limiting...")
+
+    if not app.config.get("DEBUG", False):
+        try:
+            security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
+            security.init_app(app)
+            
+        except Exception as e:
+            Limiter(
+                get_remote_address,
+                app=app,
+                default_limits=["86400 per day", "3600 per hour", "10 per second"],
+                storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
+            )
+            logger.error(f"Error initializing FlaskAutoSec: {e}")
+            logger.info("Using Flask-Limiter instead.")
         
-    except Exception as e:
-        Limiter(
-            get_remote_address,
-            app=app,
-            default_limits=["86400 per day", "3600 per hour", "10 per second"],
-            storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
-        )
-        logger.error(f"Error initializing FlaskAutoSec: {e}")
-        logger.info("Using Flask-Limiter instead.")
-    
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching
-        
+    
+    logger.info("Initializing Flask-Caching...")
     from mielenosoitukset_fi.utils.cache import cache
     cache.init_app(app)
     
@@ -153,7 +163,12 @@ def create_app() -> Flask:
     app.register_blueprint(campaign_bp)
     app.register_blueprint(board_bp)
     
-    socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
+    redis_url = app.config.get("REDIS_URL") or os.getenv("REDIS_URL")
+    socketio_kwargs = {"cors_allowed_origins": "*"}
+    if redis_url:
+        socketio_kwargs["message_queue"] = redis_url
+
+    socketio = SocketIO(app, **socketio_kwargs)
     app.register_blueprint(chat_ws.chat_ws)
     chat_ws.init_socketio(socketio)
     app.register_blueprint(audit_bp)

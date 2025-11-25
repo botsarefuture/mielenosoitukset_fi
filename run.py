@@ -9,6 +9,12 @@ import threading
 
 app = create_app()
 def run_rollup_in_thread():
+    
+    # if dev environment variable is set, do not run rollup in thread
+    if os.getenv("FLASK_ENV") == "development":
+        app.logger.info("Skipping rollup_events in development environment")
+        return None
+
     def target():
         try:
             rollup_events()
@@ -45,6 +51,7 @@ def main():
 
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
+    host = os.getenv("HOST", app.config.get("HOST", "0.0.0.0"))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in (
         "true",
         "1",
@@ -62,8 +69,19 @@ def main():
     
     run_rollup_in_thread()
 
-    app.run(debug=debug, port=port)
+    app.run(debug=debug, host=host, port=port)
 
 
 if __name__ == "__main__":
-    main()
+
+    from mielenosoitukset_fi.utils.logger import logger
+    logger.info("Starting application...")
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Application died with exception: {e}")
+    finally:
+        # DIE WITH A ERROR CODE
+        sys.exit(1)
+
+    logger.info("Application died.")

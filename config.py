@@ -1,3 +1,4 @@
+import os
 import yaml
 from typing import Any, Dict
 import logging
@@ -51,8 +52,11 @@ class Config:
 
     # Configure logging for configuration loading
     logging.basicConfig(level=logging.INFO)
+    
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
+
+    logger.info("Loading configuration from config.yaml...")
 
     @staticmethod
     def load_yaml(file_path: str) -> Dict[str, Any]:
@@ -81,8 +85,8 @@ class Config:
     config = load_yaml("config.yaml")
 
     # MongoDB Configuration
-    MONGO_URI = config.get("MONGO_URI", "")
-    MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
+    MONGO_URI = os.getenv("MONGO_URI", config.get("MONGO_URI", ""))
+    MONGO_DBNAME = os.getenv("MONGO_DBNAME", config.get("MONGO_DBNAME", "default_db"))
 
     # Mail Configuration
     MAIL_CONFIG = config.get("MAIL", {})
@@ -112,6 +116,15 @@ class Config:
     # Canonical bucket and CDN host
     S3_BUCKET = S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
     CDN_HOST = S3_CONFIG.get("CDN_HOST", "https://cdn2.mielenosoitukset.fi")
+    # Allow disabling S3 explicitly or by leaving credentials empty
+    S3_DISABLED = S3_CONFIG.get("DISABLED", False)
+    S3_ENABLED = (
+        not S3_DISABLED
+        and bool(ACCESS_KEY)
+        and bool(SECRET_KEY)
+        and bool(ENDPOINT_URL)
+        and bool(S3_BUCKET)
+    )
 
     # Allowed file extensions for uploads
     ALLOWED_EXTENSIONS = S3_CONFIG.get(

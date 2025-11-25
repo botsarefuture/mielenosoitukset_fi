@@ -21,7 +21,8 @@ def run_rollup_in_thread():
 
     def target():
         try:
-            rollup_events()
+            with app.app_context():
+                rollup_events()
         except Exception as e:
             app.logger.error(f"Error in rollup_events thread: {e}")
 

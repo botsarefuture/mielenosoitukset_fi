@@ -16,6 +16,8 @@
 <div class="container py-4">
   <h1 class="mb-4"><i class="fas fa-cogs"></i> {{ _('Asetukset') }}</h1>
 
+  <div id="settings-message" class="hidden"></div>
+
   <div id="settings-tabs">
     <ul>
       <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
@@ -172,6 +174,27 @@
 </div>
 
 <script>
+  function showSettingsMessage(message, type = 'error') {
+    const container = document.getElementById('settings-message');
+    if (!container) return;
+
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+    container.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
+    container.innerHTML = `
+      <i class="fa-solid ${icon}"></i>
+      <span>${message}</span>
+    `;
+    container.classList.remove('hidden');
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideSettingsMessage() {
+    const container = document.getElementById('settings-message');
+    if (container) container.classList.add('hidden');
+  }
+</script>
+
+<script>
   document.addEventListener("DOMContentLoaded", () => {
     const profileForm = document.getElementById("profile-form");
     const bioInput = document.getElementById("bio");
@@ -193,6 +216,7 @@
     // Form submit handler
     profileForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      hideSettingsMessage();
 
       let base64Image = null;
       if (fileInput.files.length > 0) {
@@ -211,18 +235,18 @@
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-      if (data.status === "success") {
-        alert("Profiili päivitetty!");
-        if (base64Image) {
-          // Show new preview immediately
-          const dataUrl = "data:image/png;base64," + base64Image;
-          showPreview(dataUrl);
+        const data = await res.json();
+        if (data.status === "success") {
+          showSettingsMessage("{{ _('Profiili päivitetty!') }}", 'success');
+          if (base64Image) {
+            // Show new preview immediately
+            const dataUrl = "data:image/png;base64," + base64Image;
+            showPreview(dataUrl);
+          }
+        } else {
+          showSettingsMessage("{{ _('Virhe: ') }}" + (data.message || "Tuntematon virhe"));
         }
-      } else {
-        alert("Virhe: " + (data.message || "Tuntematon virhe"));
-      }
-    });
+      });
 
     // Helper: convert file -> base64
     function toBase64(file) {
@@ -315,6 +339,7 @@
     // Handle form submit
     form.addEventListener('submit', async e => {
       e.preventDefault();
+      hideSettingsMessage();
       spinner.style.display = 'inline-block';
 
       const payload = {
@@ -335,9 +360,9 @@
       spinner.style.display = 'none';
 
       if (result.status === "success") {
-        alert(result.message);
+        showSettingsMessage(result.message, 'success');
       } else {
-        alert("Virhe asetusten tallennuksessa.");
+        showSettingsMessage("{{ _('Virhe asetusten tallennuksessa.') }}");
       }
     });
   });
@@ -398,6 +423,7 @@
 
     // Initiate MFA (first setup or adding new device)
     async function initiateMFA() {
+      hideSettingsMessage();
       try {
         const res = await fetch("/users/auth/api/v2/mfa", {
           method: "POST",
@@ -411,11 +437,11 @@
           tokenInput.value = "";
           mfaModal.show();
         } else {
-          alert("MFA-initiaatio epäonnistui: " + (data.message || ""));
+          showSettingsMessage("{{ _('MFA-initiaatio epäonnistui: ') }}" + (data.message || ""));
         }
       } catch (e) {
         console.error(e);
-        alert("Virhe MFA:n aloittamisessa");
+          showSettingsMessage('{{ _("Virhe MFA:n aloittamisessa") }}');
       }
     }
 
@@ -425,7 +451,7 @@
     // Verify MFA code
     confirmBtn.addEventListener("click", async () => {
       const token = tokenInput.value.trim();
-      if (!token) return alert("Syötä koodi!");
+      if (!token) return showSettingsMessage("{{ _('Syötä koodi!') }}");
 
       try {
         const res = await fetch("/users/auth/api/v2/mfa", {
@@ -437,13 +463,13 @@
         if (data.status === "success") {
           mfaModal.hide();
           loadMFAStatus();
-          alert(data.message);
+          showSettingsMessage(data.message, 'success');
         } else {
-          alert("Virhe MFA:n vahvistamisessa: " + (data.message || ""));
+          showSettingsMessage('{{ _('Virhe MFA:n vahvistamisessa: ') }}' + (data.message || ""));
         }
       } catch (e) {
         console.error(e);
-        alert("Virhe MFA:n vahvistamisessa");
+        showSettingsMessage('{{ _('Virhe MFA:n vahvistamisessa') }}');
       }
     });
   });
@@ -479,9 +505,9 @@
 
       const data = await res.json();
       if (data.status === "success") {
-        alert("Profiili päivitetty!");
+        showSettingsMessage("{{ _('Profiili päivitetty!') }}", 'success');
       } else {
-        alert("Virhe: " + (data.message || "Tuntematon virhe"));
+        showSettingsMessage("{{ _('Virhe: ') }}" + (data.message || "Tuntematon virhe"));
       }
     });
 

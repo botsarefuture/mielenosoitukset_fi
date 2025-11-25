@@ -152,6 +152,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const reqNoUsername = document.getElementById("req-no-username");
     const specialRegex = /[!@#$%^&*()\-\_=+\[\]{};:,.<>?]/;
 
+    function showError(message) {
+        errorDiv.className = "alert alert-error";
+        errorDiv.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>${message}</span>
+        `;
+        errorDiv.classList.remove("hidden");
+        errorDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function hideError() {
+        errorDiv.classList.add("hidden");
+    }
+
     // --- Password toggle ---
     function setupToggle(inputId, iconId) {
         const input = document.getElementById(inputId);
@@ -344,6 +358,8 @@ usernameInput.addEventListener("input", () => {
 
     // --- Form submission ---
     document.getElementById("register-form").addEventListener("submit", e=>{
+        hideError();
+
         const requirementsMet = updateRequirements();
         const passwordsMatch = checkMatch();
         const unameInvalid = usernameState === USERNAME_STATE.INVALID;
@@ -353,14 +369,16 @@ usernameInput.addEventListener("input", () => {
 
         if(!requirementsMet || !passwordsMatch || unameTaken || unameInvalid || unameChecking || unameError){
             e.preventDefault();
-            let message="Korjaa virheet ennen kuin jatkat:\n";
-            if(!requirementsMet) message+="- Salasanavaatimukset eivät täyty\n";
-            if(!passwordsMatch) message+="- Salasanat eivät täsmää\n";
-            if(unameInvalid) message+="- Käyttäjätunnuksen täytyy olla vähintään 3 merkkiä\n";
-            if(unameChecking) message+="- Käyttäjätunnuksen saatavuutta tarkistetaan\n";
-            if(unameTaken) message+="- Käyttäjätunnus on varattu\n";
-            if(unameError) message+="- Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen\n";
-            alert(message);
+            const issues=[];
+            if(!requirementsMet) issues.push("{{ _('Salasanavaatimukset eivät täyty') }}");
+            if(!passwordsMatch) issues.push("{{ _('Salasanat eivät täsmää') }}");
+            if(unameInvalid) issues.push("{{ _('Käyttäjätunnuksen täytyy olla vähintään 3 merkkiä') }}");
+            if(unameChecking) issues.push("{{ _('Käyttäjätunnuksen saatavuutta tarkistetaan') }}");
+            if(unameTaken) issues.push("{{ _('Käyttäjätunnus on varattu') }}");
+            if(unameError) issues.push("{{ _('Käyttäjätunnuksen tarkistuksessa tapahtui virhe, yritä uudelleen') }}");
+
+            const list = issues.map(item => `<li>${item}</li>`).join("");
+            showError(`<strong>{{ _('Korjaa virheet ennen kuin jatkat') }}:</strong><ul>${list}</ul>`);
             return false;
         }
 

@@ -50,6 +50,8 @@
   <h1 class="mb-3"><i class="fas fa-key"></i> {{ _('API Tokenit') }}</h1>
   <p>{{ _('Täällä voit hallita API-tokeneitasi.') }}</p>
 
+  <div id="token-message" class="hidden"></div>
+
   <div class="mb-3">
     <button class="btn btn-success" id="generate-token-btn">{{ _('Luo uusi token') }}</button>
     <span id="generate-spinner" class="spinner-border spinner-border-sm ms-2" style="display:none;"></span>
@@ -172,6 +174,25 @@
 
 {% block scripts %}
 <script>
+  function showTokenMessage(message, type = 'error') {
+    const container = document.getElementById('token-message');
+    if (!container) return;
+
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+    container.className = `alert alert-${type === 'success' ? 'success' : 'error'}`;
+    container.innerHTML = `
+      <i class="fa-solid ${icon}"></i>
+      <span>${message}</span>
+    `;
+    container.classList.remove('hidden');
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideTokenMessage() {
+    const container = document.getElementById('token-message');
+    if (container) container.classList.add('hidden');
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     const listEl = document.getElementById("tokens-list");
     const genBtn = document.getElementById("generate-token-btn");
@@ -222,6 +243,7 @@
 
         // Regenerate token when viewing
         viewBtn.addEventListener("click", async () => {
+          hideTokenMessage();
           spinner.style.display = "inline-block";
           const resp = await fetch("/users/auth/api_token", {
             method: "POST",
@@ -239,11 +261,12 @@
             tokenModal.show();
             loadTokens();
           } else {
-            alert("Virhe tokenin luomisessa: " + (newData.error || ""));
+            showTokenMessage("{{ _('Virhe tokenin luomisessa: ') }}" + (newData.error || ""));
           }
         });
 
         revokeBtn.addEventListener("click", async () => {
+          hideTokenMessage();
           if (!confirm("Haluatko varmasti peruuttaa tämän tokenin?")) return;
           const resp = await fetch("/users/auth/api_tokens/revoke", {
             method: "POST",
@@ -251,8 +274,11 @@
             body: JSON.stringify({ token_id: tok._id })
           });
           const result = await resp.json();
-          if (result.status === "success") loadTokens();
-          else alert("Virhe tokenin peruuttamisessa.");
+          if (result.status === "success") {
+            loadTokens();
+            showTokenMessage("{{ _('Token peruttu.') }}", 'success');
+          }
+          else showTokenMessage("{{ _('Virhe tokenin peruuttamisessa.') }}");
         });
 
         listEl.appendChild(card);
@@ -268,6 +294,7 @@
     // Create short-lived token via modal form
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      hideTokenMessage();
       spinner.style.display = "inline-block";
 
       const scopes = Array.from(document.querySelectorAll("#scope-options input:checked")).map(el => el.value);
@@ -289,15 +316,16 @@
         tokenModal.show();
         loadTokens();
       } else {
-        alert("Virhe tokenin luomisessa: " + (data.error || ""));
+        showTokenMessage("{{ _('Virhe tokenin luomisessa: ') }}" + (data.error || ""));
       }
     });
 
     // Copy token from modal
     copyModalBtn.addEventListener("click", () => {
+      hideTokenMessage();
       navigator.clipboard.writeText(modalTokenEl.textContent)
-        .then(() => alert("Token kopioitu leikepöydälle!"))
-        .catch(() => alert("Kopiointi epäonnistui."));
+        .then(() => showTokenMessage("{{ _('Token kopioitu leikepöydälle!') }}", 'success'))
+        .catch(() => showTokenMessage("{{ _('Kopiointi epäonnistui.') }}"));
     });
 
     loadTokens();

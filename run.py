@@ -45,6 +45,7 @@ def main():
 
     # Retrieve configurations with fallback defaults
     port = int(os.getenv("PORT", app.config.get("PORT", 5000)))
+    host = os.getenv("HOST", app.config.get("HOST", "0.0.0.0"))
     debug = os.getenv("DEBUG", str(app.config.get("DEBUG", False))).lower() in (
         "true",
         "1",
@@ -62,7 +63,7 @@ def main():
     
     run_rollup_in_thread()
 
-    app.run(debug=debug, port=port)
+    app.run(debug=debug, host=host, port=port)
 
 
 if __name__ == "__main__":

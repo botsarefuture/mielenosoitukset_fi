@@ -33,6 +33,10 @@ from typing import Iterable, List, Optional, Set
 import requests
 from mastodon import Mastodon, MastodonError
 
+from mielenosoitukset_fi.database_manager import DatabaseManager
+
+mongo = DatabaseManager().get_instance().get_db()
+
 try:
     from dateutil import parser as dateutil_parser  # type: ignore
 except Exception:
@@ -49,6 +53,18 @@ DEFAULT_MAX_DAYS = int(os.getenv("MO_POST_MAX_DAYS", "60"))
 DEFAULT_CHECK_INTERVAL = int(os.getenv("MO_CHECK_INTERVAL", "3600"))
 
 
+def _already_posted(link: str, posted: Set[str]) -> bool:
+    return link in posted
+
+def _get_posted() -> Set[str]:
+    # lets get them from db instead of file
+    posted_links = set()
+    for doc in mongo.posted_events.find({}, {"link": 1}):
+        posted_links.add(doc["link"])
+    return posted_links 
+
+POSTED = _get_posted()
+
 def setup_logging(level: str) -> None:
     logging.basicConfig(
         level=getattr(logging, level.upper(), logging.INFO),
@@ -57,16 +73,11 @@ def setup_logging(level: str) -> None:
     )
 
 
-def load_posted(data_file: str) -> Set[str]:
-    if not os.path.exists(data_file):
-        return set()
-    with open(data_file, "r", encoding="utf8") as f:
-        return {line.strip() for line in f if line.strip()}
 
 
-def append_posted(data_file: str, link: str) -> None:
-    with open(data_file, "a", encoding="utf8") as f:
-        f.write(link + "\n")
+def append_posted(link: str) -> None:
+    # add link to db
+    mongo.posted_events.insert_one({"link": link})
 
 
 def parse_event_date(date_str: Optional[str]) -> Optional[datetime.datetime]:
@@ -189,14 +200,14 @@ def process_events(
     events: Iterable[dict],
     posted: Set[str],
     client: Optional[Mastodon],
-    data_file: str,
     dry_run: bool,
     max_days: int,
 ) -> int:
     posted_count = 0
     session_now = datetime.datetime.now()
     for event in events:
-        slug_or_id = event.get("slug") or event.get("_id") or event.get("id")
+        # lets use only the id
+        slug_or_id = event.get("_id") or event.get("id")
         if not slug_or_id:
             logging.debug("Skipping event without id/slug: %s", event)
             continue
@@ -205,8 +216,13 @@ def process_events(
             logging.debug("Already posted: %s", link)
             continue
 
-        title = event.get("title") or event.get("name") or "Ilman otsikkoa"
+        title = event.get("title") or event.get("name") 
         
+        # if no title, skip
+        if not title:
+            logging.debug("Skipping event without title: %s", event)
+            continue
+
         city = event.get("city")
         _city_str = city.strip().capitalize()
         city_str = f"📍 {_city_str}" if city else ""
@@ -260,7 +276,7 @@ def process_events(
 
         success = post_to_mastodon(client, status, dry_run=dry_run)
         if success:
-            append_posted(data_file, link)
+            append_posted(link)
             posted.add(link)
             posted_count += 1
         time.sleep(1)
@@ -287,7 +303,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Mastodon access token (or set MASTODON_ACCESS_TOKEN in .env or environment)",
     )
 
-    parser.add_argument("--data-file", default=DEFAULT_DATA_FILE, help="File to record posted event links")
     parser.add_argument("--max-days", type=int, default=DEFAULT_MAX_DAYS, help="How many days ahead to post events for")
     parser.add_argument("--interval", type=int, default=DEFAULT_CHECK_INTERVAL, help="Seconds between checks when running continuously")
     parser.add_argument("--once", action="store_true", help="Run once and exit")
@@ -305,7 +320,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     logging.info("Starting mastobot: api=%s max_days=%s dry_run=%s", args.api_url, args.max_days, args.dry_run)
 
-    posted = load_posted(args.data_file)
+    posted = _get_posted()
     client = build_mastodon_client(args.access_token, args.mastodon_base)
 
     session = requests.Session()
@@ -314,7 +329,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         while True:
             try:
                 events = fetch_all_events(args.api_url, session)
-                process_events(events, posted, client, args.data_file, args.dry_run or client is None, args.max_days)
+                process_events(events, posted, client, args.dry_run or client is None, args.max_days)
             except Exception as e:
                 logging.exception("Error while fetching or processing events: %s", e)
             if args.once:

@@ -618,8 +618,10 @@ def demo_control():
         filter_query["approved"] = True
     if not show_hidden:
         filter_query["$or"] = [{"hide": False}, {"hide": {"$exists": False}}]
-    
-    
+
+    if not show_past: # we have in_past
+        filter_query["$or"] = [{"in_past": False}, {"in_past": {"$exists": False}}]
+
     # Search by title if provided
     if search_query:
         filter_query["title"] = {"$regex": search_query, "$options": "i"}  # case-insensitive search
@@ -1026,21 +1028,25 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
             if prev_demo:
                 merged_data = _deep_merge(prev_demo, demonstration_data)
                 hist_id = save_demo_history(demo_id, prev_demo, merged_data, case_id=case_id)
-                from mielenosoitukset_fi.utils.classes import Case
-                case = Case.from_dict(mongo.cases.find_one({"_id": ObjectId(case_id)}))
-                case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
+                if not hist_id:
+                    raise ValueError("Failed to save demonstration edit history.")
                 
-                case._add_history_entry({
-                    "timestamp": datetime.utcnow(),
-                    "action": "Muokattu mielenosoitusta",
-                    "user": current_user.username,
-                    "mech_action": "edit_demo",
-                    "metadata": {
-                        "demo_id": demo_id,
-                        "history_id": str(hist_id),
-                        "reason": "Muokattu mielenosoitusta hallintapaneelista, lisätietoa: <a href='{}'>historia</a>".format(url_for('admin_demo.view_demo_diff', history_id=hist_id, _external=True))
-                    },
-                })
+                if case_id:
+                    from mielenosoitukset_fi.utils.classes import Case
+                    case = Case.from_dict(mongo.cases.find_one({"_id": ObjectId(case_id)}))
+                    case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
+                    
+                    case._add_history_entry({
+                        "timestamp": datetime.utcnow(),
+                        "action": "Muokattu mielenosoitusta",
+                        "user": current_user.username,
+                        "mech_action": "edit_demo",
+                        "metadata": {
+                            "demo_id": demo_id,
+                            "history_id": str(hist_id),
+                            "reason": "Muokattu mielenosoitusta hallintapaneelista, lisätietoa: <a href='{}'>historia</a>".format(url_for('admin_demo.view_demo_diff', history_id=hist_id, _external=True))
+                        },
+                    })
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")

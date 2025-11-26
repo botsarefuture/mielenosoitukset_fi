@@ -173,6 +173,7 @@
 
         <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
         <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
+          <option value="all" {% if show_past == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
           <option value="false" {% if not show_past %}selected{% endif %}>{{ _('Ei') }}</option>
           <option value="true" {% if show_past %}selected{% endif %}>{{ _('Kyllä') }}</option>
         </select>

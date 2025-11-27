@@ -135,13 +135,58 @@ def load_user(user_id):
 
 
 # Admin dashboard
+
+# Route to view dashboard
 @admin_bp.route("/dashboard")
 @login_required
 @admin_required
 def admin_dashboard():
     """Render the admin dashboard."""
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html")
+    # Load current panic mode
+    panic = mongo.panic.find_one({"name": "global"})
+    panic_mode = panic.get("panic", False) if panic else False
+    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html", panic_mode=panic_mode)
 
+
+# Route to activate panic mode
+@admin_bp.route("/dashboard/panic/activate", methods=["POST"])
+@login_required
+@admin_required
+def activate_panic():
+    """Activate global panic mode."""
+    mongo.panic.update_one(
+        {"name": "global"},
+        {"$set": {"panic": True}},
+        upsert=True
+    )
+    flash_message("Panic mode activated!", "success")
+    return redirect(url_for("admin.admin_dashboard"))
+
+
+# Route to deactivate panic mode
+@admin_bp.route("/dashboard/panic/deactivate", methods=["POST"])
+@login_required
+@admin_required
+def deactivate_panic():
+    """Deactivate global panic mode."""
+    mongo.panic.update_one(
+        {"name": "global"},
+        {"$set": {"panic": False}},
+        upsert=True
+    )
+    flash_message("Panic mode deactivated!", "success")
+    return redirect(url_for("admin.admin_dashboard"))
+
+
+# Optional: route to get current status as JSON (useful for AJAX)
+@admin_bp.route("/dashboard/panic/status", methods=["GET"])
+@login_required
+@admin_required
+def panic_status():
+    """Return current panic mode status as JSON."""
+    panic = mongo.panic.find_one({"name": "global"})
+    panic_mode = panic.get("panic", False) if panic else False
+    return jsonify({"panic_mode": panic_mode})
 
 def get_admin_activity(page=1, per_page=20):
     """Get the admin activity log with pagination.

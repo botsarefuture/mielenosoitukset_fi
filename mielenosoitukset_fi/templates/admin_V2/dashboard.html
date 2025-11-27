@@ -150,6 +150,30 @@
         </a>
       </div>
     </div>
+<!-- Panic Mode -->
+<div class="info-card">
+  <i class="fa-solid fa-bolt info-icon"></i>
+  <div class="flex-grow-1">
+    <h3>{{ _('Panic Mode') }}</h3>
+    <p>{{ _('Toggle global panic mode for the system.') }}</p>
+
+    {% if panic_mode %}
+      <p><strong style="color:red">{{ _('Panic mode is ACTIVE!') }}</strong></p>
+      <form method="POST" action="{{ url_for('admin.deactivate_panic') }}">
+        <button type="submit" class="btn btn-warning btn-dashboard">
+          <i class="fa-solid fa-toggle-off me-1"></i> {{ _('Deactivate') }}
+        </button>
+      </form>
+    {% else %}
+      <p><strong style="color:green">{{ _('Panic mode is inactive.') }}</strong></p>
+      <form method="POST" action="{{ url_for('admin.activate_panic') }}">
+        <button type="submit" class="btn btn-danger btn-dashboard">
+          <i class="fa-solid fa-toggle-on me-1"></i> {{ _('Activate') }}
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</div>
 
   </div>
 </div>

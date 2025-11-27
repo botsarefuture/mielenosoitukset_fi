@@ -3,6 +3,8 @@ import math
 import os
 import re
 import json
+import threading
+import time
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
@@ -49,7 +51,24 @@ demonstrations_collection = mongo["demonstrations"]
 submitters_collection = mongo["submitters"]  # <-- Add this line
 malicious_reports_collection = mongo["malicious_reports"]
 
+PANIC_MODE = False
 
+
+def _load_panic():
+    a = mongo.panic.find_one({"name": "global"})
+    return a.get("panic", False) if a else False
+
+PANIC_MODE = _load_panic()
+
+def refresh_panic(interval=180):  # 180 seconds = 3 minutes
+    global PANIC_MODE
+    while True:
+        PANIC_MODE = _load_panic()
+        time.sleep(interval)
+
+# Start background thread
+threading.Thread(target=refresh_panic, daemon=True).start()
+    
 
 def generate_alternate_urls(app, endpoint, **values):
     """
@@ -1891,3 +1910,10 @@ def init_routes(app):
     @app.route("/upcoming/translations/")
     def upcoming_translations():
         return render_template("upcoming/translations.html")
+    
+    @app.before_request
+    def _check_panic_mode():
+        if not request.path.startswith("/admin"):
+            
+            if PANIC_MODE:
+                return render_template("heavy.html")

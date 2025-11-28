@@ -150,6 +150,7 @@
         </a>
       </div>
     </div>
+  {% if current_user.role == "global_admin" %}
 <!-- Panic Mode -->
 <div class="info-card">
   <i class="fa-solid fa-bolt info-icon"></i>
@@ -174,6 +175,7 @@
     {% endif %}
   </div>
 </div>
+{% endif %}
 
   </div>
 </div>

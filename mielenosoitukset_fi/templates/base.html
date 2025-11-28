@@ -86,86 +86,313 @@
 
 
 <body>
-  <!-- Top Announcement Banner -->
-  <!--
-<div id="top-banner" style="
+ <div id="top-banner" class="top-banner">
+  <div class="banner-content">
+    <i class="fas fa-bullhorn banner-icon"></i>
+    <span class="banner-text">
+      Meillä on käynnissä mesenaattikampanja, rahoita tulevaa markkinointikampanjaamme jo tänään!
+    </span>
+    <div class="banner-buttons">
+      <a href="https://mesenaatti.me/4046/" class="banner-link banner-link-primary" target="_blank" rel="noopener noreferrer">
+        <i class="fas fa-heart"></i>
+        Rahoita kampanjaa
+        <i class="fas fa-external-link-alt"></i>
+      </a>
+      <a href="/kampanja/" class="banner-link banner-link-secondary">
+        <i class="fas fa-info-circle"></i>
+        Lisätietoja kampanjasta
+      </a>
+    </div>
+  </div>
+  <button id="top-banner-close" class="banner-close" aria-label="Sulje ilmoitus">
+    <i class="fas fa-times"></i>
+  </button>
+</div>
+
+<style>
+.top-banner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: var(--color-primary);
-  color: #fff;
-  font-weight: 600;
-  padding: 0.8em 1em;
-  text-align: center;
-  font-size: 1em;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  color: #ffffff;
+  padding: 1rem 1.5rem;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 2000;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-">
-  <span>
-    Markkinointikampanjamme alkaa 1.3.2026 – <a href="{{ url_for('campaign.index') }}" style="color:#fff; text-decoration: underline; font-weight:700;">Tutustu kampanjaan täällä</a>
-  </span>
-  <button id="top-banner-close" style="
-    margin-left: 1em;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 1.2em;
-    cursor: pointer;
-  ">&times;</button>
-</div>
--->
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.4s ease-out;
+}
 
-  <script>
-    /*
-      // Sulje top banner
-    document.getElementById('top-banner-close').addEventListener('click', function() {
-      document.getElementById('top-banner').style.display = 'none';
-      document.body.style.paddingTop = "0px";  // <- poistaa ylimääräisen paddingin
-    });
-    
-    
-      // Puske yläbanneri alas, kun flash messages näkyy
-      window.addEventListener('load', function() {
-        const banner = document.getElementById('top-banner');
-        const flash = document.getElementById('flash-messages');
-        if(flash && flash.style.display !== 'none') {
-          banner.style.top = flash.offsetHeight + 'px';
-        }
-      });
-      */
-
-    document.logged_in = {{ (current_user.is_authenticated or False) | tojson }};
-    console.log(document.logged_in);
-  </script>
-
-  <style>
-    /* Siirrä main content alas bannerin alle */
-    /*body {
-    padding-top: 50px; /* Muokkaa tarvittaessa bannerin korkeuden mukaan */
-    /*}
-
-  @media (max-width: 600px) {
-    #top-banner { font-size: 0.9em; padding: 0.6em 0.8em; }
-    body { padding-top: 60px; }
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
   }
-    */
-    .footer-links a:hover,
-    .social-media-links a:hover {
-      background: var(--primary_button_hover_color);
-      padding: 0.5em;
-      border-radius: 0.5em;
-    }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
-    .top-header .container {
-      width: -moz-available;
-      width: -webkit-fill-available;
-    }
-  </style>
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
+.banner-icon {
+  font-size: 1.25rem;
+  color: #ffffff;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+.banner-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.banner-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.banner-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.banner-link-primary {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.banner-link-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.banner-link-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.banner-link-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.banner-link:active {
+  transform: translateY(0);
+}
+
+.banner-link i:first-child {
+  font-size: 0.9rem;
+}
+
+.banner-link i:last-child {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+}
+
+.banner-link-primary:hover i:last-child {
+  transform: translate(2px, -2px);
+}
+
+.banner-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.banner-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.banner-close:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+.banner-close i {
+  font-size: 1.1rem;
+}
+
+/* Body padding adjustment */
+body {
+  padding-top: 70px !important;
+  transition: padding-top 0.3s ease;
+}
+
+body.banner-closed {
+  padding-top: 0 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .top-banner {
+    padding: 0.875rem 1rem;
+  }
+
+  .top-banner .banner-icon {
+    margin: auto;
+  }
+  
+  .banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .banner-text {
+    font-size: 0.875rem;
+  }
+  
+  .banner-buttons {
+    width: 100%;
+  }
+  
+  .banner-link {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.875rem;
+  }
+  
+  .banner-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 28px;
+    height: 28px;
+  }
+  
+  body {
+    padding-top: 110px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-icon {
+    display: none;
+  }
+  
+  .banner-text {
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  
+  .banner-buttons {
+    flex-direction: column;
+  }
+  
+  .banner-link {
+    width: 100%;
+  }
+  
+  body {
+    padding-top: 140px !important;
+  }
+}
+
+/* Adjustment for flash messages */
+.top-banner.has-flash {
+  position: relative;
+  top: auto;
+}
+</style>
+
+<script>
+(function() {
+  const banner = document.getElementById('top-banner');
+  const closeBtn = document.getElementById('top-banner-close');
+  
+  // Check if banner was previously closed
+  const bannerClosed = sessionStorage.getItem('topBannerClosed');
+  if (bannerClosed === 'true') {
+    banner.style.display = 'none';
+    document.body.classList.add('banner-closed');
+  }
+  
+  // Close banner handler
+  closeBtn.addEventListener('click', function() {
+    banner.style.animation = 'slideUp 0.3s ease-out';
+    
+    setTimeout(() => {
+      banner.style.display = 'none';
+      document.body.classList.add('banner-closed');
+      sessionStorage.setItem('topBannerClosed', 'true');
+    }, 300);
+  });
+  
+  // Adjust for flash messages
+  window.addEventListener('load', function() {
+    const flash = document.getElementById('flash-messages');
+    if (flash && flash.offsetHeight > 0) {
+      banner.classList.add('has-flash');
+      banner.style.top = flash.offsetHeight + 'px';
+    }
+  });
+  
+  // Set logged in status (if needed)
+  document.logged_in = {{ (current_user.is_authenticated or False) | tojson }};
+})();
+</script>
+
+<style>
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+</style>
   <!-- Navigation Bar -->
   {% include "header.html" %}
 

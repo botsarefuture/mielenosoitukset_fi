@@ -60,7 +60,7 @@ def _load_panic():
 
 PANIC_MODE = _load_panic()
 
-def refresh_panic(interval=180):  # 180 seconds = 3 minutes
+def refresh_panic(interval=15):  # 180 seconds = 3 minutes
     global PANIC_MODE
     while True:
         PANIC_MODE = _load_panic()
@@ -1913,7 +1913,7 @@ def init_routes(app):
     
     @app.before_request
     def _check_panic_mode():
-        if not request.path.startswith("/admin"):
+        if not request.path.startswith("/admin") and not request.path.startswith("/user/auth"):
             
             if PANIC_MODE:
                 return render_template("heavy.html")

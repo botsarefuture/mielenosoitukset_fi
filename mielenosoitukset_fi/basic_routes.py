@@ -1913,7 +1913,6 @@ def init_routes(app):
     
     @app.before_request
     def _check_panic_mode():
-        if not request.path.startswith("/admin") and not request.path.startswith("/user/auth"):
-            
+        if not request.path.startswith("/admin") and not request.path.startswith("/users/auth") and not request.path.startswith("/static"):
             if PANIC_MODE:
                 return render_template("heavy.html")

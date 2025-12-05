@@ -212,7 +212,8 @@ def list_demonstrations():
     
 
     search = get_param("search")
-    city = get_param("city")
+    raw_city = request.args.get("city", "").strip()
+    city_list = [c.strip().casefold() for c in raw_city.split(",") if c.strip()]
     title = get_param("title")
     tag = get_param("tag")
     recurring = get_param("recurring")
@@ -285,7 +286,7 @@ def list_demonstrations():
 
         if (
             (not search or search in title_text)
-            and (not city or city in city_text)
+            and (not city_list or city_text in city_list)
             and (not title or title in title_text)
             and (not tag or tag in tags_text)
         ):

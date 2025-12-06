@@ -68,6 +68,162 @@
     padding-bottom: 0 !important;
     transition: opacity 2s ease, height 2s ease, padding 2s ease;
   }
+
+  /* --------------------------------------------------
+   Section headers that fit the current dashboard style
+-------------------------------------------------- */
+
+.section-header td {
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 6px;
+
+    /* Accent strip on left */
+    border-left: 4px solid var(--bs-info);
+
+    /* Light/Dark adaptive background */
+    background-color: light-dark(#f2f4f7, #2a2d33);
+    color: light-dark(#222, #e5e5e5);
+
+    /* Slight top separation */
+    border-top: 1px solid light-dark(#d0d0d0, #3a3a3a);
+    margin-top: 6px;
+}
+
+/* Approved header gets a neutral accent */
+.section-header.approved td {
+    border-left-color: var(--bs-success);
+}
+
+
+/* --------------------------------------------------
+   Needs-attention row (pending approvals)
+-------------------------------------------------- */
+
+.needs-attention {
+    background-color: light-dark(
+        rgba(255, 220, 220, 0.45),
+        rgba(120, 50, 50, 0.25)
+    );
+}
+
+.needs-attention:hover {
+    background-color: light-dark(
+        rgba(255, 220, 220, 0.55),
+        rgba(130, 60, 60, 0.32)
+    );
+}
+
+
+/* --------------------------------------------------
+   Table row hover improvements (subtle)
+-------------------------------------------------- */
+
+.table-container table tbody tr {
+    transition: background-color 0.18s ease;
+}
+
+.table-container table tbody tr:hover {
+    background-color: light-dark(
+        rgba(0, 0, 0, 0.04),
+        rgba(255, 255, 255, 0.04)
+    );
+}
+
+
+/* --------------------------------------------------
+   Dropdown + buttons (subtle rounding only)
+-------------------------------------------------- */
+
+.dropdown-menu {
+    border-radius: 8px;
+}
+
+.dropdown-item {
+    border-radius: 4px;
+}
+
+.dropdown-item:hover {
+    background-color: light-dark(
+        rgba(0, 0, 0, 0.08),
+        rgba(255, 255, 255, 0.08)
+    );
+}
+
+
+/* --------------------------------------------------
+   Status icons (professional but readable)
+-------------------------------------------------- */
+
+.fa-check-circle {
+    color: var(--bs-success);
+}
+
+.fa-times-circle {
+    color: var(--bs-danger);
+}
+
+
+/* --------------------------------------------------
+   Dropdown Menu Styling
+-------------------------------------------------- */
+
+/* Dropdown container */
+.dropdown-menu {
+    border-radius: 8px;
+    background-color: light-dark(#ffffff, #1f1f28);
+    border: 1px solid light-dark(#dcdcdc, #2c2c36);
+    padding: 0.25rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* Items */
+.dropdown-item {
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    transition: background-color 0.12s ease, color 0.12s ease, padding-left 0.12s ease;
+    color: light-dark(#333, #ddd);
+}
+
+/* Hover */
+.dropdown-item:hover {
+    background-color: light-dark(
+        rgba(0, 0, 0, 0.06),
+        rgba(255, 255, 255, 0.09)
+    );
+    padding-left: 0.95rem; /* subtle slide effect */
+}
+
+/* Active/pressed */
+.dropdown-item:active {
+    background-color: light-dark(
+        rgba(0, 0, 0, 0.12),
+        rgba(255, 255, 255, 0.16)
+    );
+}
+
+/* Disabled */
+.dropdown-item.disabled,
+.dropdown-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Divider consistency */
+.dropdown-divider {
+    border-color: light-dark(#ddd, #333);
+}
+
+/* Text-danger items */
+.dropdown-item.text-danger:hover {
+    background-color: light-dark(
+        rgba(255, 0, 0, 0.12),
+        rgba(255, 60, 60, 0.12)
+    );
+    color: light-dark(#b00020, #ff6b6b);
+}
+
 </style>
 {% endblock %} {% block scripts %}
 <!--<script src="{{ url_for('static', filename='js/deleteModal.js' )}}"></script>-->
@@ -173,7 +329,7 @@
 
         <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
         <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
-          <option value="all" {% if show_past == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
+          <option value="all" {% if show_past=='all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
           <option value="false" {% if not show_past %}selected{% endif %}>{{ _('Ei') }}</option>
           <option value="true" {% if show_past %}selected{% endif %}>{{ _('Kyllä') }}</option>
         </select>
@@ -198,86 +354,237 @@
         </tr>
       </thead>
       <tbody>
-        {% for demo in demonstrations|sort(attribute='approved') %}
-        <tr id="demo-{{ demo._id }}" {% if not demo.approved %}class="needs-attention" {% endif %}>
-          <td>{{ demo.title }}</td>
-          <td>{{ demo.city }}</td>
-          <td>{{ demo.date }}</td>
-          <td>{% if demo.recurs %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else %}<i
-              class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
-          <td data-col="approved">{% if demo.approved %}<i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}{% else
-            %}<i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}{% endif %}</td>
 
-          <td class="actions-cell">
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+{# Split demos into clean groups #}
+{% set pending = demonstrations|selectattr('approved', 'equalto', False)|list %}
+{% set approved = demonstrations|selectattr('approved', 'equalto', True)|list %}
+
+{# ----------------------------- #
+   PENDING SECTION
+   ----------------------------- #}
+{% if pending %}
+<tr class="section-header">
+    <td colspan="6"><strong>{{ _('Odottaa hyväksyntää') }}</strong></td>
+</tr>
+
+{% for demo in pending %}
+<tr id="demo-{{ demo._id }}" class="needs-attention">
+
+    <td>{{ demo.title }}</td>
+    <td>{{ demo.city }}</td>
+    <td>{{ demo.date }}</td>
+
+    <td>
+        {% if demo.recurs %}
+            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+        {% else %}
+            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+        {% endif %}
+    </td>
+
+    <td data-col="approved">
+        <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+    </td>
+
+    <td class="actions-cell">
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
-              </button>
-              <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
-                {% if not demo.approved %}
+            </button>
+
+            <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
+
+                {# Accept #}
                 {% if current_user.has_permission("ACCEPT_DEMO") %}
-                <li><button class="dropdown-item" type="button" onclick="acceptDemo('{{ demo._id }}')"><i
-                      class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</button></li>
+                    <li><button class="dropdown-item" type="button"
+                                onclick="acceptDemo('{{ demo._id }}')">
+                        <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
+                    </button></li>
                 {% else %}
-                <li><span class="dropdown-item disabled"><i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}</span>
-                </li>
+                    <li><span class="dropdown-item disabled">
+                        <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
+                    </span></li>
                 {% endif %}
-                {% endif %}
 
-
-
+                {# Recommend #}
                 {% if current_user.global_admin %}
-                <li><button class="dropdown-item" type="button" onclick="recommendDemo('{{ demo._id }}', this)"><i
-                      class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}</button></li>
+                    <li><button class="dropdown-item" type="button"
+                                onclick="recommendDemo('{{ demo._id }}', this)">
+                        <i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}
+                    </button></li>
                 {% endif %}
 
+                {# Edit #}
                 {% if current_user.has_permission("EDIT_DEMO") %}
-                <li><a class="dropdown-item" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}"><i
-                      class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>
+                    <li><a class="dropdown-item"
+                           href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
+                        <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
+                    </a></li>
                 {% endif %}
 
+                {# View #}
                 {% if current_user.has_permission("VIEW_DEMO") %}
-                <li><a class="dropdown-item" href="{{ url_for('demonstration_detail', demo_id=demo._id) }}"><i
-                      class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}</a></li>
-                <li><button class="dropdown-item" type="button" onclick="showSubmitterInfoModal('{{ demo._id }}')"><i
-                      class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}</button></li>
+                    <li><a class="dropdown-item"
+                           href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
+                        <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
+                    </a></li>
+
+                    <li><button class="dropdown-item" type="button"
+                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                        <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
+                    </button></li>
                 {% endif %}
 
+                {# Screenshot + Freeze #}
                 {% if current_user.has_permission("CREATE_DEMO") %}
-                <li>
-                  <button class="dropdown-item" type="button" onclick="triggerScreenshot('{{ demo._id }}', this)">
-                    <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
-                  </button>
-                </li>
+                    <li><button class="dropdown-item" type="button"
+                                onclick="triggerScreenshot('{{ demo._id }}', this)">
+                        <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
+                    </button></li>
 
-                <li>
-                  <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#freezeModal"
-                    onclick="openFreezeModal('{{ demo._id }}')">
-                    <i class="fas fa-snowflake me-2"></i>Jäädytys <span class="text-muted">(vain toistuville)</span>
-                  </button>
-                </li>
-
-
+                    <li><button class="dropdown-item" type="button"
+                                data-bs-toggle="modal" data-bs-target="#freezeModal"
+                                onclick="openFreezeModal('{{ demo._id }}')">
+                        <i class="fas fa-snowflake me-2"></i>Jäädytys
+                        <span class="text-muted">(vain toistuville)</span>
+                    </button></li>
                 {% endif %}
 
+                {# Edit history #}
+                <li><a class="dropdown-item"
+                       href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}">
+                    <i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}
+                </a></li>
 
-                <li><a class="dropdown-item" href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}"><i
-                      class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}</a></li>
-
+                {# Delete #}
                 {% if current_user.has_permission("DELETE_DEMO") %}
-                <li><button class="dropdown-item text-danger" type="button"
-                    onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')"><i
-                      class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</button></li>
+                    <li><button class="dropdown-item text-danger" type="button"
+                                onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+                        <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
+                    </button></li>
                 {% else %}
-                <li><span class="dropdown-item disabled"><i class="fas fa-ban me-2"></i>{{ _('Poista') }}</span></li>
+                    <li><span class="dropdown-item disabled">
+                        <i class="fas fa-ban me-2"></i>{{ _('Poista') }}
+                    </span></li>
                 {% endif %}
-              </ul>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+
+            </ul>
+        </div>
+    </td>
+
+</tr>
+{% endfor %}
+{% endif %}
+
+{# ----------------------------- #
+   APPROVED SECTION
+   ----------------------------- #}
+{% if approved %}
+<tr class="section-header approved">
+    <td colspan="6"><strong>{{ _('Hyväksytyt mielenosoitukset') }}</strong></td>
+</tr>
+
+{% for demo in approved %}
+<tr id="demo-{{ demo._id }}">
+
+    <td>{{ demo.title }}</td>
+    <td>{{ demo.city }}</td>
+    <td>{{ demo.date }}</td>
+
+    <td>
+        {% if demo.recurs %}
+            <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+        {% else %}
+            <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
+        {% endif %}
+    </td>
+
+    <td data-col="approved">
+        <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
+    </td>
+
+    <td class="actions-cell">
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
+            </button>
+
+            <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
+
+                {# Recommend #}
+                {% if current_user.global_admin %}
+                    <li><button class="dropdown-item" type="button"
+                                onclick="recommendDemo('{{ demo._id }}', this)">
+                        <i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}
+                    </button></li>
+                {% endif %}
+
+                {# Edit #}
+                {% if current_user.has_permission("EDIT_DEMO") %}
+                    <li><a class="dropdown-item"
+                           href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
+                        <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
+                    </a></li>
+                {% endif %}
+
+                {# View #}
+                {% if current_user.has_permission("VIEW_DEMO") %}
+                    <li><a class="dropdown-item"
+                           href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
+                        <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
+                    </a></li>
+
+                    <li><button class="dropdown-item" type="button"
+                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                        <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
+                    </button></li>
+                {% endif %}
+
+                {# Screenshot + Freeze #}
+                {% if current_user.has_permission("CREATE_DEMO") %}
+                    <li><button class="dropdown-item" type="button"
+                                onclick="triggerScreenshot('{{ demo._id }}', this)">
+                        <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
+                    </button></li>
+
+                    <li><button class="dropdown-item" type="button"
+                                data-bs-toggle="modal" data-bs-target="#freezeModal"
+                                onclick="openFreezeModal('{{ demo._id }}')">
+                        <i class="fas fa-snowflake me-2"></i>Jäädytys
+                        <span class="text-muted">(vain toistuville)</span>
+                    </button></li>
+                {% endif %}
+
+                {# Edit history #}
+                <li><a class="dropdown-item"
+                       href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}">
+                    <i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}
+                </a></li>
+
+                {# Delete #}
+                {% if current_user.has_permission("DELETE_DEMO") %}
+                    <li><button class="dropdown-item text-danger" type="button"
+                                onclick="openModal(event, '{{ demo.title }}', '{{ demo._id }}')">
+                        <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
+                    </button></li>
+                {% else %}
+                    <li><span class="dropdown-item disabled">
+                        <i class="fas fa-ban me-2"></i>{{ _('Poista') }}
+                    </span></li>
+                {% endif %}
+
+            </ul>
+        </div>
+    </td>
+
+</tr>
+{% endfor %}
+{% endif %}
+
+</tbody>
+
     </table>
     <nav aria-label="Stats pagination">
       <ul class="pagination justify-content-center">

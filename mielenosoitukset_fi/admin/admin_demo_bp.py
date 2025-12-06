@@ -638,11 +638,36 @@ def demo_control():
     # --- Count total documents ---
     total_count = mongo.demonstrations.count_documents(filter_query)
     total_pages = (total_count + per_page - 1) // per_page  # ceil division
-
     # --- Fetch current page ---
     skip_count = (page - 1) * per_page
-    demos_cursor = mongo.demonstrations.find(filter_query).sort([("date", 1), ("_id", 1)]).skip(skip_count).limit(per_page)
-    demos = list(demos_cursor)
+
+    #cursor = mongo.demonstrations.find(filter_query)
+    if page == 1 and not approved_only:
+        unapproved = list(mongo.demonstrations.find(
+            {**filter_query, "approved": False, "hide": False}
+        ).sort([("date", 1), ("_id", 1)]))
+
+        approved = list(mongo.demonstrations.find(
+            {**filter_query, "approved": True}
+        ).sort([("date", 1), ("_id", 1)]))
+
+        combined = unapproved + approved
+        total_count = len(combined)
+
+        start = 0
+        end = per_page
+        demos = combined[start:end]
+        
+        print(demos)
+
+    else:
+        # normal paging
+        skip_count = (page - 1) * per_page
+        demos_cursor = mongo.demonstrations.find(filter_query).sort([("date", 1), ("_id", 1)]) \
+                                        .skip(skip_count).limit(per_page)
+        demos = list(demos_cursor)
+
+
 
     # --- Determine next/previous pages ---
     prev_page = page - 1 if page > 1 else None

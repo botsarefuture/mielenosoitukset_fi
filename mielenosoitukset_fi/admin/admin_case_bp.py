@@ -39,22 +39,28 @@ from mielenosoitukset_fi.utils.classes import Case
 @admin_case_bp.route("/")
 @login_required
 def cases():
-    all_cases_docs = mongo.cases.find({})
-    all_cases = []
+    """List all cases, newest first."""
+    all_cases: list[Case] = []
 
-    for doc in all_cases_docs:
+    for doc in mongo.cases.find({}, sort=[("created_at", -1)]):
         case = Case.from_dict(doc)
 
-        # Attach demo object if it's a new_demo case
+        # Attach related demo if this is a “new_demo” case
         if case.case_type == "new_demo" and case.demo_id:
-            demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
-            case.demo = demo_doc if demo_doc else None
+            demo_doc = mongo.demonstrations.find_one(
+                {"_id": ObjectId(case.demo_id)},
+                {"accepted": 1, "rejected": 1, "title": 1}  # fetch only what’s needed
+            )
+            case.demo = demo_doc or None
         else:
             case.demo = None
 
         all_cases.append(case)
 
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}cases/all.html", all_cases=all_cases)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}cases/all.html",
+        all_cases=all_cases
+    )
 
 @admin_case_bp.route("/<case_id>/")
 @login_required

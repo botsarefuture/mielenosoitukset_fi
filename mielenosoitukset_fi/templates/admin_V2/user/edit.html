@@ -186,8 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="muted">{{ _('Globaalit oikeudet ovat vain superkäyttäjille.') }}</p>
             <div class="permissions-group">
                 <div class="select-all">
-                    <input type="checkbox" id="select_all_global"
-                        onchange="selectAllPermissions('global', this.checked)">
+                    <input type="checkbox"
+       id="select_all_global"
+       onchange="selectAllPermissions('global', this.checked)"
+       {{ 'checked' if not global_permissions else '' }}>
+
                     <label for="select_all_global">{{ _('Valitse kaikki') }}</label>
                 </div>
                 {% for group_name, permissions in PERMISSIONS_GROUPS.items() %}

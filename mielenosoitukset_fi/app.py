@@ -29,6 +29,7 @@ from mielenosoitukset_fi.utils import VERSION
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from mielenosoitukset_fi.kampanja import campaign_bp
+from mielenosoitukset_fi.notifications_bp import notif_bp
 
 import os
 
@@ -151,6 +152,14 @@ def create_app() -> Flask:
     
     
     app.register_blueprint(campaign_bp)
+    app.register_blueprint(notif_bp)
+    from flask_babel import format_timedelta, get_locale
+    def timeago(dt):
+        from datetime import datetime
+        return format_timedelta(datetime.utcnow() - dt,
+                                locale=str(get_locale()),
+                                granularity='minute')
+    app.jinja_env.filters["timeago"] = timeago
     app.register_blueprint(board_bp)
     
     socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
@@ -191,7 +200,14 @@ def create_app() -> Flask:
         except Exception:
             return value
 
-    
+    # utils/jinja_filters.py (or similar)
+    @app.template_filter('datetimeformat')
+    def datetimeformat(value, fmt="%d.%m.%Y %H:%M"):
+        if isinstance(value, (datetime,)):
+            return value.strftime(fmt)
+        return value  # fallback
+
+        
     
 
     @app.template_filter("time")

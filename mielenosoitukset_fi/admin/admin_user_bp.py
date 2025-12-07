@@ -109,64 +109,77 @@ def edit_user(user_id):
 
     user = User.from_db(user_doc)
 
-    # ────────────────────────────── permission gate ─────────────────────────────
+    # ─── permission gate ───────────────────────────────────────────────────────
     if user != current_user and not compare_user_levels(current_user, user):
         flash_message("Et voi muokata käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.", "error")
         return safe_redirect(request.referrer or url_for("admin_user.user_control"))
-    # ────────────────────────────────────────────────────────────────────────────
+    # ───────────────────────────────────────────────────────────────────────────
 
     if request.method == "POST":
-        username  = request.form.get("username")
-        email     = request.form.get("email")
-        role      = request.form.get("role")
-        confirmed = request.form.get("confirmed") == "on"
-        global_permissions = request.form.getlist("permissions[global][]")
+        # 1️⃣ Nykytila
+        current = {
+            "username":           user.username,
+            "email":              user.email,
+            "role":               user.role,
+            "confirmed":          bool(user.confirmed),
+            "global_permissions": list(user.global_permissions or []),
+        }
 
-        # ───── validation ─────
-        if not username or not email:
+        # 2️⃣ Lomakkeelta saapuvat arvot
+        incoming = {
+            "username":  request.form.get("username", "").strip(),
+            "email":     request.form.get("email", "").strip(),
+            "role":      request.form.get("role") or user.role,
+            "confirmed": request.form.get("confirmed") == "on",
+            "global_permissions": request.form.getlist("permissions[global][]")
+                                   or current["global_permissions"],
+        }
+
+        # ─── validoinnit ────────────────────────────────────────────────────────
+        if not incoming["username"] or not incoming["email"]:
             flash_message("Käyttäjänimi ja sähköposti ovat pakollisia.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        if not valid_email(email):
+        if not valid_email(incoming["email"]):
             flash_message("Virheellinen sähköpostimuoto.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        if current_user._id == user_id and role != current_user.role:
+        # estä oman roolin muutos
+        if current_user._id == user_id and incoming["role"] != current_user.role:
             flash_message("Et voi muuttaa omaa rooliasi.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        if USER_ACCESS_LEVELS.get(role, 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
+        # estä ylennys yli oman tason
+        if USER_ACCESS_LEVELS.get(incoming["role"], 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
             flash_message("Et voi korottaa omaa tai toisen käyttäjän roolia korkeammalle kuin oma roolisi.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        if user.role == "global_admin" and current_user._id == user_id and role != "global_admin":
+        # estä super-käyttäjän itse-alennus
+        if (user.role == "global_admin" and current_user._id == user_id
+                and incoming["role"] != "global_admin"):
             flash_message("Superkäyttäjät eivät voi alentaa itseään.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
-        # ───── apply changes ─────
-        mongo.users.update_one(
-            {"_id": ObjectId(user_id)},
-            {
-                "$set": {
-                    "username": username,
-                    "email": email,
-                    "role": role,
-                    "confirmed": confirmed,
-                    "global_permissions": global_permissions,
-                }
-            },
-        )
+        # 3️⃣ Muutosdiff
+        changes = {k: v for k, v in incoming.items() if v != current[k]}
 
-        flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
+        # 4️⃣ Päivitä vain jos on muutoksia
+        if changes:
+            mongo.users.update_one({"_id": ObjectId(user_id)}, {"$set": changes})
+            flash_message("Käyttäjä päivitetty onnistuneesti.", "approved")
+        else:
+            flash_message("Mitään ei muutettu.", "info")
+
         return safe_redirect(request.referrer or url_for("admin_user.user_control"))
 
-    # ───── GET: render form ─────
+    # ─── GET → lomake ──────────────────────────────────────────────────────────
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/edit.html",
         user=user,
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         global_permissions=user.global_permissions,
     )
+
 
 class UserOrg:
     """ """

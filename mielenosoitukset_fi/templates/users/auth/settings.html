@@ -6,24 +6,9 @@
 <link href="{{ url_for('static', filename='css/user/settings.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/v2/settings.css')}}" rel="stylesheet">
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
 <style>
-  .settings-container {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .settings-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e9ecef;
-  }
-
-  .settings-header h1 {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #212529;
-  }
-
+  /* ----- Tabs & sections (light) ------------------------------- */
   #settings-tabs {
     border: none;
   }
@@ -56,32 +41,35 @@
   }
 
   #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
-    color: white;
+    color: #ffffff;
   }
 
   .settings-section {
-    background: white;
+    background: #ffffff;
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin-bottom: 1.5rem;
   }
 
+  /* ----- Forms & buttons (light) -------------------------------- */
   .form-label {
     font-weight: 600;
     color: #495057;
     margin-bottom: 0.5rem;
   }
 
-  .form-control, .form-select {
+  .form-control,
+  .form-select {
     border-radius: 8px;
     border: 1px solid #dee2e6;
     padding: 0.625rem 0.875rem;
   }
 
-  .form-control:focus, .form-select:focus {
+  .form-control:focus,
+  .form-select:focus {
     border-color: #0d6efd;
-    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, .25);
   }
 
   .dropdown.mbCometDiv4109 {
@@ -91,12 +79,12 @@
   .dropbtn {
     width: 100%;
     text-align: left;
-    background: white;
+    background: #ffffff;
     border: 1px solid #dee2e6;
     border-radius: 8px;
     padding: 0.625rem 0.875rem;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 0.2s;
   }
 
   .dropbtn:hover {
@@ -106,9 +94,9 @@
   .dropdown-content {
     display: none;
     position: absolute;
-    background-color: white;
+    background-color: #ffffff;
     width: 100%;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1000;
     border-radius: 8px;
     margin-top: 0.25rem;
@@ -121,7 +109,7 @@
     border-bottom: 1px solid #e9ecef;
     position: sticky;
     top: 0;
-    background: white;
+    background: #ffffff;
     z-index: 1;
   }
 
@@ -167,7 +155,7 @@
     border-radius: 8px;
     padding: 0.625rem 1.5rem;
     font-weight: 500;
-    transition: all 0.2s;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   }
 
   .btn-primary {
@@ -178,7 +166,7 @@
   .btn-primary:hover {
     background-color: #0b5ed7;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(13,110,253,0.3);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
   }
 
   .spinner {
@@ -193,24 +181,15 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .mfa-section {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-top: 1.5rem;
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .list-group-item {
     border-radius: 6px;
     margin-bottom: 0.5rem;
     border: 1px solid #dee2e6;
-  }
-
-  .profile-preview {
-    margin-top: 1rem;
   }
 
   .form-text {
@@ -230,15 +209,7 @@
     border-color: #0d6efd;
   }
 
-  /* Dark Mode Styles */
-  html.dark .settings-header h1 {
-    color: #e9ecef;
-  }
-
-  html.dark .settings-header {
-    border-bottom-color: #495057;
-  }
-
+  /* ----- Dark mode overrides ----------------------------------- */
   html.dark #settings-tabs .ui-tabs-nav li {
     background: #343a40;
   }
@@ -252,12 +223,12 @@
   }
 
   html.dark #settings-tabs .ui-tabs-nav li.ui-tabs-active a {
-    color: white;
+    color: #ffffff;
   }
 
   html.dark .settings-section {
-    background: #212529;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    background: #111827;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   }
 
   html.dark .form-label {
@@ -267,16 +238,16 @@
   html.dark .form-control,
   html.dark .form-select,
   html.dark .dropbtn {
-    background-color: #343a40;
-    border-color: #495057;
+    background-color: #1f2933;
+    border-color: #4b5563;
     color: #e9ecef;
   }
 
   html.dark .form-control:focus,
   html.dark .form-select:focus,
   html.dark .dropbtn:hover {
-    background-color: #343a40;
-    border-color: #0d6efd;
+    background-color: #1f2933;
+    border-color: #3b82f6;
     color: #e9ecef;
   }
 
@@ -285,18 +256,18 @@
   }
 
   html.dark .dropdown-content {
-    background-color: #343a40;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    background-color: #111827;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
   }
 
   html.dark .dropdown-content .mbDracoDiv3949 {
-    background: #343a40;
-    border-bottom-color: #495057;
+    background: #111827;
+    border-bottom-color: #4b5563;
   }
 
   html.dark .dropdown-content .mbSolarInput9963 {
-    background-color: #212529;
-    border-color: #495057;
+    background-color: #020617;
+    border-color: #4b5563;
     color: #e9ecef;
   }
 
@@ -305,11 +276,11 @@
   }
 
   html.dark .dropdown-item:hover {
-    background-color: #495057;
+    background-color: #374151;
   }
 
   html.dark .dropdown-item.active {
-    background-color: #1e4d8b;
+    background-color: #1d4ed8;
     color: #ffffff;
   }
 
@@ -323,30 +294,26 @@
   }
 
   html.dark .form-check {
-    background: #343a40;
-  }
-
-  html.dark .mfa-section {
-    background: #343a40;
+    background: #1f2933;
   }
 
   html.dark .list-group-item {
-    background-color: #212529;
-    border-color: #495057;
+    background-color: #020617;
+    border-color: #4b5563;
     color: #e9ecef;
   }
 
   html.dark .modal-content {
-    background-color: #212529;
+    background-color: #111827;
     color: #e9ecef;
   }
 
   html.dark .modal-header {
-    border-bottom-color: #495057;
+    border-bottom-color: #4b5563;
   }
 
   html.dark .modal-footer {
-    border-top-color: #495057;
+    border-top-color: #4b5563;
   }
 
   html.dark .btn-close {
@@ -354,23 +321,91 @@
   }
 
   html.dark .text-muted {
-    color: #6c757d !important;
+    color: #6b7280 !important;
   }
 
-  html.dark h5, html.dark h6 {
+  html.dark h5,
+  html.dark h6 {
     color: #e9ecef;
   }
 
   html.dark p {
-    color: #adb5bd;
+    color: #9ca3af;
   }
 
   html.dark .badge.bg-secondary {
-    background-color: #495057 !important;
+    background-color: #4b5563 !important;
   }
 
   html.dark .badge.bg-success {
-    background-color: #198754 !important;
+    background-color: #16a34a !important;
+  }
+
+  /* ----- Login-history table (both themes) --------------------- */
+  #log-table {
+    font-size: 0.875rem;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  #log-table thead th {
+    background: #f1f5f9;
+    color: #111827;
+    font-weight: 600;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 2px solid #cbd5e1;
+    white-space: nowrap;
+  }
+
+  #log-table tbody td {
+    padding: 0.55rem 0.75rem;
+    color: #111827;
+  }
+
+  #log-table tbody tr:nth-child(odd) {
+    background: #ffffff;
+  }
+
+  #log-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  #log-table tbody tr:hover {
+    background: #e0f2fe;
+  }
+
+  html.dark #log-table thead th {
+    background: #020617;
+    color: #e5e7eb;
+    border-bottom-color: #4b5563;
+  }
+
+  html.dark #log-table tbody td {
+    color: #e5e7eb;
+  }
+
+  html.dark #log-table tbody tr:nth-child(odd) {
+    background: #020617;
+  }
+
+  html.dark #log-table tbody tr:nth-child(even) {
+    background: #111827;
+  }
+
+  html.dark #log-table tbody tr:hover {
+    background: #1f2937;
+  }
+
+  .badge.login-ok,
+  html.dark .badge.login-ok {
+    background-color: #16a34a !important;
+    color: #f9fafb !important;
+  }
+
+  .badge.login-fail,
+  html.dark .badge.login-fail {
+    background-color: #dc2626 !important;
+    color: #f9fafb !important;
   }
 </style>
 {% endblock %}
@@ -398,7 +433,7 @@
           </label>
 
           <input class="form-control mbBlackHoleInput1866" id="display_name" name="display_name" type="text"
-            placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
+                 placeholder="{{ _('Kirjoita haluamasi nimi, joka näkyy profiilissasi') }}" maxlength="40">
 
           <div class="form-text mt-1 mbCoronaDiv2172">
             <i class="fa-solid fa-circle-info me-1"></i>
@@ -418,28 +453,26 @@
 
           <div class="dropdown mbCometDiv4109" id="paikkakunta-drop">
             <button class="dropbtn form-control d-flex justify-content-between align-items-center mbSupernovaButton2432"
-              type="button" aria-expanded="false" aria-haspopup="listbox"
-              aria-label="{{ _('Avaa paikkakuntavalikko') }}">
-              <span id="selected-city-text">{{ _('Valitse paikkakunta')
-                }}</span>
+                    type="button" aria-expanded="false" aria-haspopup="listbox"
+                    aria-label="{{ _('Avaa paikkakuntavalikko') }}">
+              <span id="selected-city-text">{{ _('Valitse paikkakunta') }}</span>
               <i class="fa-solid fa-chevron-down ms-2"></i>
             </button>
 
             <div class="dropdown-content shadow mbUranusDiv8836" id="dropdown-content" role="listbox"
-              aria-labelledby="city">
+                 aria-labelledby="city">
 
               <div class="mbDracoDiv3949">
                 <i class="fa-solid fa-magnifying-glass me-2"></i>
                 <input class="form-control form-control-sm mbSolarInput9963" id="searchInput" type="text"
-                  aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
-                  placeholder="{{ _('Hae paikkakunta...') }}">
+                       aria-label="{{ _('Hae kaupungeista') }}" onkeyup="filterFunction()"
+                       placeholder="{{ _('Hae paikkakunta...') }}">
               </div>
 
               {% for city in city_list %}
               <a class="dropdown-item py-2 {% if demo is defined and demo.city==city %}active{% endif %} mbApolloA7791"
-                href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">
-                <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city
-                }}
+                 href="#" role="option" aria-selected="false" onclick="selectCity('{{ city }}'); return false;">
+                <i class="fa-solid fa-location-dot me-2 text-muted"></i>{{ city }}
               </a>
               {% endfor %}
             </div>
@@ -454,7 +487,7 @@
           </label>
           <select class="form-select" id="language" name="language">
             <option value="fi">{{ _('Suomi') }}</option>
-            <!--<option value="en">{{ _('English') }}</option>-->
+            <!-- <option value="en">{{ _('English') }}</option> -->
           </select>
 
           <br>
@@ -467,14 +500,11 @@
                 {{ _('Sivusto on tällä hetkellä käytettävissä vain suomeksi,
                 mutta englannin ja ruotsin käännökset ovat
                 parhaillaan työn alla.') }}
-                {{
-                _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:')
-                }}
+                {{ _('Voit seurata edistymistä ja halutessasi osallistua käännöstyöhön sivulla:') }}
               </p>
               <a class="btn btn-outline-dark btn-sm" href="https://mielenosoitukset.fi/upcoming/translations/"
-                target="_blank">
-                <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke')
-                }}
+                 target="_blank">
+                <i class="fa-solid fa-globe me-2"></i>{{ _('Katso käännöshanke') }}
               </a>
             </div>
           </div>
@@ -482,14 +512,12 @@
 
         <div class="form-check mb-3">
           <input class="form-check-input" id="dark_mode" name="dark_mode" type="checkbox">
-          <label class="form-check-label" for="dark_mode">{{ _('Tumma tila')
-            }}</label>
+          <label class="form-check-label" for="dark_mode">{{ _('Tumma tila') }}</label>
         </div>
 
         <div class="form-check mb-3 hidden" aria-hidden="true">
           <input class="form-check-input" id="subscribe_newsletter" name="subscribe_newsletter" type="checkbox">
-          <label class="form-check-label" for="subscribe_newsletter">{{
-            _('Tilaa uutiskirje') }}</label>
+          <label class="form-check-label" for="subscribe_newsletter">{{ _('Tilaa uutiskirje') }}</label>
         </div>
 
         <button class="btn btn-primary" type="submit">
@@ -502,49 +530,73 @@
     <!-- Turvallisuus Tab -->
     <div id="tab-security">
       <!-- icon and title -->
-       <div class="section-header mb-4">
+      <div class="section-header mb-4">
         <h4><i class="fas fa-shield-alt"></i> {{ _('Turvallisuusasetukset') }}</h4>
-        <p class="text-muted">{{ _('Hallinnoi tilisi turvallisuusasetuksia, kuten kaksivaiheista tunnistautumista (MFA).')
-          }}</p>
+        <p class="text-muted">
+          {{ _('Hallinnoi tilisi turvallisuusasetuksia, kuten kaksivaiheista tunnistautumista (MFA).') }}
+        </p>
       </div>
-      
+
       <div class="settings-section">
         <p>{{ _('Hallinnoi kaksivaiheista tunnistautumista ja MFA-laitteita.') }}</p>
 
-        <label class="form-label" for="mfa"><i class="fas fa-shield-alt"></i> {{
-          _('Kaksivaiheinen tunnistus (MFA)')
-          }}</label>
+        <label class="form-label" for="mfa">
+          <i class="fas fa-shield-alt"></i> {{ _('Kaksivaiheinen tunnistus (MFA)') }}
+        </label>
         <div class="d-flex flex-column gap-2" id="mfa-section">
           <div id="mfa-status-container">
-            <span class="text-success" id="mfa-status">{{ _('MFA ei käytössä')
-              }}</span>
+            <span class="text-success" id="mfa-status">{{ _('MFA ei käytössä') }}</span>
           </div>
-          <button class="btn btn-warning" id="init-mfa-btn" type="button">{{
-            _('Ota käyttöön MFA') }}</button>
-          <button class="btn btn-secondary mbCometButton1455" id="add-mfa-device-btn" type="button">{{ _('Lisää uusi
-            laite') }}</button>
+          <button class="btn btn-warning" id="init-mfa-btn" type="button">
+            {{ _('Ota käyttöön MFA') }}
+          </button>
+          <button class="btn btn-secondary mbCometButton1455" id="add-mfa-device-btn" type="button">
+            {{ _('Lisää uusi laite') }}
+          </button>
           <ul class="list-group mt-2" id="mfa-devices-list"></ul>
         </div>
       </div>
-      <!-- login logs etc -->
-      <div class="settings-section">
-        <h5><i class="fas fa-history"></i> {{ _('Kirjautumishistoria') }}</h5>
-        <p>{{ _('Tarkastele viimeisimpiä kirjautumisia tilillesi.') }}</p>
-        <!-- Placeholder for login history table -->
-        <div class="alert alert-info">
-          <i class="fa-solid fa-info-circle me-2"></i>
-          {{ _('Kirjautumishistoria-ominaisuus on tulossa pian!') }}
-        </div>
-      </div>
 
+      <!-- 🔒 Password change -->
       <div class="settings-section">
         <h5><i class="fas fa-key"></i> {{ _('Vaihda salasana') }}</h5>
-        <p>{{ _('Vaihda tilisi salasana säännöllisesti turvallisuuden parantamiseksi.')
-          }}</p>
-        <!-- Placeholder for change password form -->
-        <div class="alert alert-info">
-          <i class="fa-solid fa-info-circle me-2"></i>
-          {{ _('Salasanan vaihtaminen on tulossa pian!') }}
+        <form id="pw-form" class="row gy-2">
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('Nykyinen salasana') }}</label>
+            <input type="password" class="form-control" name="current" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('Uusi salasana') }}</label>
+            <input type="password" class="form-control" name="new" minlength="6" required>
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label">{{ _('Toista uusi salasana') }}</label>
+            <input type="password" class="form-control" name="confirm" minlength="6" required>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary mt-2" type="submit">
+              <i class="fa-solid fa-key me-1"></i> {{ _('Vaihda salasana') }}
+              <span class="spinner" id="pw-spinner"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 📜 Login history -->
+      <div class="settings-section">
+        <h5><i class="fas fa-history"></i> {{ _('Kirjautumishistoria') }}</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle" id="log-table">
+            <thead>
+              <tr>
+                <th>{{ _('Aika') }}</th>
+                <th>{{ _('IP-osoite') }}</th>
+                <th>{{ _('Selain') }}</th>
+                <th>{{ _('Tulos') }}</th>
+              </tr>
+            </thead>
+            <tbody><!-- populated by JS --></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -558,13 +610,13 @@
           <textarea class="form-control" id="bio" rows="3"></textarea>
         </div>
         <div class="mb-3">
-          <label class="form-label" for="profile-pic">{{ _('Profiilikuva')
-            }}</label>
+          <label class="form-label" for="profile-pic">{{ _('Profiilikuva') }}</label>
           <input class="form-control" id="profile-pic" type="file" accept="image/*">
         </div>
         <div class="mt-2" id="profile-pic-preview"></div>
-        <button class="btn btn-primary" type="submit">{{ _('Tallenna profiili')
-          }}</button>
+        <button class="btn btn-primary" type="submit">
+          {{ _('Tallenna profiili') }}
+        </button>
       </form>
     </div>
   </div>
@@ -680,8 +732,6 @@
   });
 </script>
 
-<!-- MFA QR Modal (unchanged) -->
-
 <!-- MFA QR Code Modal -->
 <div class="modal fade" id="mfaModal" aria-hidden="true" aria-labelledby="mfaModalLabel" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
@@ -691,17 +741,18 @@
         <button class="btn-close" data-bs-dismiss="modal" type="button" aria-label="{{ _('Close') }}"></button>
       </div>
       <div class="modal-body text-center">
-        <p>{{
-          _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.')
-          }}</p>
+        <p>{{ _('Skannaa tämä QR-koodi MFA-sovelluksellasi ja syötä koodi vahvistaaksesi.') }}</p>
         <img class="img-fluid rounded mb-3" id="mfa-qr-code" src alt="MFA QR Code">
         <input class="form-control" id="mfa-token-input" type="text"
-          placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
+               placeholder="{{ _('Syötä sovelluksen antama koodi') }}">
       </div>
       <div class="modal-footer">
-        <button class="btn btn-primary" id="confirm-mfa-btn" type="button">{{
-          _('Vahvista MFA') }}</button>
-        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">{{ _('Peruuta') }}</button>
+        <button class="btn btn-primary" id="confirm-mfa-btn" type="button">
+          {{ _('Vahvista MFA') }}
+        </button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+          {{ _('Peruuta') }}
+        </button>
       </div>
     </div>
   </div>
@@ -719,7 +770,6 @@
       hide: { effect: "fadeOut", duration: 200 }
     });
   });
-
 </script>
 
 <script>
@@ -741,7 +791,6 @@
       displayInput.value = settings.display_name || '';
       if (settings.city !== null) {
         selectCity(settings.city);
-        //cityInput.value = settings.city || '';
       }
       languageSelect.value = settings.language || 'fi';
       darkModeCheckbox.checked = settings.dark_mode || false;
@@ -791,7 +840,6 @@
     const mfaStatus = document.getElementById("mfa-status");
     const devicesList = document.getElementById("mfa-devices-list");
 
-    let currentStep = null;
     let pendingSecret = null;
 
     // Load existing MFA status & devices
@@ -808,7 +856,6 @@
             const li = document.createElement("li");
             li.className = "list-group-item d-flex justify-content-between align-items-center";
             li.textContent = `${d.name} (${d.created_at})`;
-            // Optional: add revoke button
             const revokeBtn = document.createElement("button");
             revokeBtn.className = "btn btn-sm btn-danger";
             revokeBtn.textContent = "Poista";
@@ -833,7 +880,6 @@
 
     loadMFAStatus();
 
-    // Initiate MFA (first setup or adding new device)
     async function initiateMFA() {
       hideSettingsMessage();
       try {
@@ -853,7 +899,7 @@
         }
       } catch (e) {
         console.error(e);
-          showSettingsMessage('{{ _("Virhe MFA:n aloittamisessa") }}');
+        showSettingsMessage('{{ _("Virhe MFA:n aloittamisessa") }}');
       }
     }
 
@@ -885,13 +931,12 @@
       }
     });
   });
-
 </script>
 
 <script>
   // Paikkakunta dropdown functions
   document.querySelector(".dropbtn").addEventListener("click", function (event) {
-    event.stopPropagation(); // Prevent click event from bubbling
+    event.stopPropagation();
     var dropdownContent = document.getElementById("dropdown-content");
     var expanded = this.getAttribute("aria-expanded") === "true" || false;
     dropdownContent.style.display = expanded ? "none" : "block";
@@ -900,8 +945,10 @@
 
   window.onclick = function (event) {
     if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
-      document.getElementById("dropdown-content").style.display = "none";
-      document.querySelector(".dropbtn").setAttribute("aria-expanded", "false");
+      const content = document.getElementById("dropdown-content");
+      if (content) content.style.display = "none";
+      const btn = document.querySelector(".dropbtn");
+      if (btn) btn.setAttribute("aria-expanded", "false");
     }
   };
 
@@ -925,6 +972,81 @@
       a[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
     }
   }
+</script>
+
+<script>
+  /* helpers for login history + password change */
+  function badge(ok) {
+    return ok
+      ? '<span class="badge login-ok">OK</span>'
+      : '<span class="badge login-fail">FAIL</span>';
+  }
+
+  function timeFmt(iso) {
+    return new Date(iso).toLocaleString('fi-FI', { hour12: false });
+  }
+
+  async function loadLoginLogs() {
+    try {
+      const res = await fetch("/users/auth/api/v2/login_logs?limit=30");
+      const json = await res.json();
+      if (json.status !== "success") return;
+      const rows = json.logs.map(l => `
+        <tr>
+          <td>${timeFmt(l.time)}</td>
+          <td>${l.ip || ''}</td>
+          <td class="text-truncate" style="max-width:260px"
+              title="${l.ua || ''}">${(l.ua || '').slice(0, 60)}</td>
+          <td>${badge(l.ok)}</td>
+        </tr>`).join('');
+      document.querySelector("#log-table tbody").innerHTML = rows || `
+        <tr><td colspan="4" class="text-center text-muted">
+          {{ _('Ei kirjautumisia') }}</td></tr>`;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const pwForm = document.getElementById("pw-form");
+    const pwSpinner = document.getElementById("pw-spinner");
+
+    if (pwForm) {
+      pwForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        hideSettingsMessage();
+        if (pwSpinner) pwSpinner.style.display = "inline-block";
+
+        const fd = new FormData(e.target);
+        const payload = Object.fromEntries(fd.entries());
+
+        try {
+          const res = await fetch("/users/auth/api/v2/change_password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const j = await res.json();
+          showSettingsMessage(j.message, j.status === "success" ? "success" : "error");
+          if (j.status === "success") e.target.reset();
+        } catch (err) {
+          console.error(err);
+          showSettingsMessage("{{ _('Salasanan vaihtaminen epäonnistui') }}");
+        } finally {
+          if (pwSpinner) pwSpinner.style.display = "none";
+        }
+      });
+    }
+  });
+
+  /* load logs when security tab is activated */
+  $(function () {
+    $("#settings-tabs").on("tabsactivate", function (event, ui) {
+      if (ui.newTab.find("a").attr("href") === "#tab-security") {
+        loadLoginLogs();
+      }
+    });
+  });
 </script>
 
 {% endblock %}

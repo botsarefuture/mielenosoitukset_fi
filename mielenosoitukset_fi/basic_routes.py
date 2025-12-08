@@ -1571,7 +1571,7 @@ def init_routes(app):
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
-    from utils.notifications import fetch_notifications, serialize_notification
+    
 
     @app.context_processor
     def inject_user_notifications():

@@ -3,12 +3,15 @@ import math
 import os
 import re
 import json
+import threading
+import time
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
 from flask_babel import _, refresh
 from flask import (
     app,
+    g,
     render_template,
     redirect,
     send_file,
@@ -23,6 +26,7 @@ from flask import (
 )
 from flask_login import current_user
 from bson.objectid import ObjectId
+from mielenosoitukset_fi.utils.notifications import fetch_notifications
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization, RecurringDemonstration
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -49,7 +53,24 @@ demonstrations_collection = mongo["demonstrations"]
 submitters_collection = mongo["submitters"]  # <-- Add this line
 malicious_reports_collection = mongo["malicious_reports"]
 
+PANIC_MODE = False
 
+
+def _load_panic():
+    a = mongo.panic.find_one({"name": "global"})
+    return a.get("panic", False) if a else False
+
+PANIC_MODE = _load_panic()
+
+def refresh_panic(interval=15):  # 180 seconds = 3 minutes
+    global PANIC_MODE
+    while True:
+        PANIC_MODE = _load_panic()
+        time.sleep(interval)
+
+# Start background thread
+threading.Thread(target=refresh_panic, daemon=True).start()
+    
 
 def generate_alternate_urls(app, endpoint, **values):
     """
@@ -1550,6 +1571,26 @@ def init_routes(app):
             session.modified = True
             new_path = "/" + "/".join(path[1:])
             return redirect(new_path)
+    
+
+    @app.context_processor
+    def inject_user_notifications():
+        """
+        Makes `user_notifications` available in all templates.
+
+        Shape per item:
+        id, type, message, icon, link, time, created_at, read
+        """
+        if not current_user.is_authenticated:
+            return {"user_notifications": []}
+
+        try:
+            raw = fetch_notifications(current_user.id, limit=20)
+            serialized = [serialize_notification(n) for n in raw]
+            return {"user_notifications": serialized}
+        except Exception:
+            # Avoid breaking templates if Mongo is down
+            return {"user_notifications": []}
 
     @app.route("/subscribe_reminder/<demo_id>", methods=["POST"])
     def subscribe_reminder(demo_id):
@@ -1891,3 +1932,9 @@ def init_routes(app):
     @app.route("/upcoming/translations/")
     def upcoming_translations():
         return render_template("upcoming/translations.html")
+    
+    @app.before_request
+    def _check_panic_mode():
+        if not request.path.startswith("/admin") and not request.path.startswith("/users/auth") and not request.path.startswith("/static"):
+            if PANIC_MODE:
+                return render_template("heavy.html")

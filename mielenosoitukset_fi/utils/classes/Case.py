@@ -1,65 +1,100 @@
-# mielenosoitukset_fi/utils/admin/models/Case.py
+"""Admin support Case model (demos, organisation suggestions, error reports …) 
+Refactored to preserve original timestamps instead of blindly overwriting them
+with datetime.utcnow() when loading from DB.
+"""
+from __future__ import annotations
+
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from bson import ObjectId
-from mielenosoitukset_fi.utils.database import get_database_manager, stringify_object_ids
+
+from mielenosoitukset_fi.utils.database import get_database_manager
 
 mongo = get_database_manager()
 
+
 class Case:
-    """
-    Admin support case model for demos, org suggestions, error reports, etc.
-    Includes action logs and running number support.
+    """Persisted admin‑side support case.
+
+    Attributes
+    ----------
+    running_num
+        Sequential public number, starts from :pyattr:`STARTING_NUM`.
+    created_at / updated_at
+        UTC datetimes; existing values from the database are preserved on load.
     """
 
     COLLECTION = "cases"
-    STARTING_NUM = 100001  # first case number
+    STARTING_NUM = 100_001
 
-    def __init__(self, case_type="new_demo", demo_id=None, organization_id=None,
-                 submitter_id=None, submitter=None, error_report=None, suggestion=None,
-                 meta=None, action_logs=None, case_history=None, running_num=None, _id=None):
-        self._id = ObjectId(_id) if _id else ObjectId()
-        self.case_type = case_type
-        self.demo_id = ObjectId(demo_id) if demo_id else None
-        self.organization_id = ObjectId(organization_id) if organization_id else None
-        self.submitter = submitter or None
-        self.submitter_id = ObjectId(submitter_id) if submitter_id else None
-        self.error_report = error_report or {}
-        self.suggestion = suggestion or {}
-        self.meta = meta or {}
-        self.action_logs = action_logs or []  # list of admin actions/notes
-        self.case_hisory = case_history or []
-        self.created_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
-        self.running_num = running_num or self._get_next_running_num()
-
-    def _get_next_running_num(self):
-        """
-        Get the next running number for a new case.
-        """
-        last_case = mongo[self.COLLECTION].find_one(
-            sort=[("running_num", -1)]
+    # ---------------------------------------------------------------------
+    # Construction helpers
+    # ---------------------------------------------------------------------
+    def __init__(
+        self,
+        case_type: str = "new_demo",
+        demo_id: Optional[str | ObjectId] = None,
+        organization_id: Optional[str | ObjectId] = None,
+        submitter_id: Optional[str | ObjectId] = None,
+        submitter: Optional[Dict[str, Any]] = None,
+        error_report: Optional[Dict[str, Any]] = None,
+        suggestion: Optional[Dict[str, Any]] = None,
+        meta: Optional[Dict[str, Any]] = None,
+        action_logs: Optional[List[Dict[str, Any]]] = None,
+        case_history: Optional[List[Dict[str, Any]]] = None,
+        running_num: Optional[int] = None,
+        created_at: Optional[datetime] = None,
+        updated_at: Optional[datetime] = None,
+        _id: Optional[str | ObjectId] = None,
+    ) -> None:
+        # IDs ----------------------------------------------------------------
+        self._id: ObjectId = ObjectId(_id) if _id else ObjectId()
+        self.demo_id: Optional[ObjectId] = ObjectId(demo_id) if demo_id else None
+        self.organization_id: Optional[ObjectId] = (
+            ObjectId(organization_id) if organization_id else None
         )
-        if last_case and last_case.get("running_num"):
-            return last_case["running_num"] + 1
-        return self.STARTING_NUM
+        self.submitter_id: Optional[ObjectId] = (
+            ObjectId(submitter_id) if submitter_id else None
+        )
 
-    def add_action(self, action_type, admin_user, note=None):
-        """
-        Add an action log entry.
-        """
-        self.action_logs.append({
-            "timestamp": datetime.utcnow(),
-            "admin": admin_user,
-            "action_type": action_type,
-            "note": note
-        })
+        # Core data ----------------------------------------------------------
+        self.case_type: str = case_type
+        self.submitter: Optional[Dict[str, Any]] = submitter
+        self.error_report: Dict[str, Any] = error_report or {}
+        self.suggestion: Dict[str, Any] = suggestion or {}
+        self.meta: Dict[str, Any] = meta or {}
+
+        # Logs ---------------------------------------------------------------
+        self.action_logs: List[Dict[str, Any]] = action_logs or []
+        self.case_history: List[Dict[str, Any]] = case_history or []
+
+        # Timestamps ---------------------------------------------------------
+        now = datetime.utcnow()
+        self.created_at: datetime = created_at or now
+        self.updated_at: datetime = updated_at or now
+
+        # Running number -----------------------------------------------------
+        self.running_num: int = running_num or self._get_next_running_num()
+
+    # ---------------------------------------------------------------------
+    # Internal helpers
+    # ---------------------------------------------------------------------
+    def _get_next_running_num(self) -> int:
+        """Return next sequential running number (atomic enough for admin use)."""
+        last = mongo[self.COLLECTION].find_one(sort=[("running_num", -1)])
+        return (last.get("running_num", self.STARTING_NUM - 1) + 1) if last else self.STARTING_NUM
+
+    def _touch(self) -> None:
+        """Update *updated_at* and persist current in‑memory state to MongoDB."""
         self.updated_at = datetime.utcnow()
-        self.save()
+        mongo[self.COLLECTION].update_one({"_id": self._id}, {"$set": self.to_dict()}, upsert=True)
 
-    def to_dict(self):
-        """
-        Convert the Case object to a dictionary for MongoDB insertion or JSON serialization.
-        """
+    # ---------------------------------------------------------------------
+    # Public API
+    # ---------------------------------------------------------------------
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to a Mongo‑serialisable dict."""
         return {
             "_id": self._id,
             "type": self.case_type,
@@ -71,14 +106,16 @@ class Case:
             "suggestion": self.suggestion,
             "meta": self.meta,
             "action_logs": self.action_logs,
-            "case_history": self.case_hisory,
+            "case_history": self.case_history,
             "running_num": self.running_num,
             "created_at": self.created_at,
-            "updated_at": self.updated_at
+            "updated_at": self.updated_at,
         }
 
+    # ------------------------------------------------------------------ class‑methods
     @classmethod
-    def from_dict(cls, data):
+    def from_dict(cls, data: Dict[str, Any]) -> "Case":
+        """Instantiate from MongoDB document."""
         return cls(
             _id=data.get("_id"),
             case_type=data.get("type", "new_demo"),
@@ -91,28 +128,28 @@ class Case:
             meta=data.get("meta"),
             action_logs=data.get("action_logs"),
             case_history=data.get("case_history"),
-            running_num=data.get("running_num")
-        )
-
-    def save(self):
-        """
-        Insert or update the case in the database.
-        """
-        self.updated_at = datetime.utcnow()
-        mongo[self.COLLECTION].update_one(
-            {"_id": self._id}, {"$set": self.to_dict()}, upsert=True
+            running_num=data.get("running_num"),
+            created_at=data.get("created_at"),
+            updated_at=data.get("updated_at"),
         )
 
     @classmethod
-    def get(cls, case_id):
+    def get(cls, case_id: str | ObjectId) -> Optional["Case"]:
         doc = mongo[cls.COLLECTION].find_one({"_id": ObjectId(case_id)})
-        if doc:
-            return cls.from_dict(doc)
-        return None
+        return cls.from_dict(doc) if doc else None
 
     @classmethod
-    def create_new(cls, case_type="new_demo", demo_id=None, organization_id=None,
-                   submitter_id=None, submitter=None, error_report=None, suggestion=None, meta=None):
+    def create_new(
+        cls,
+        case_type: str = "new_demo",
+        demo_id: Optional[str | ObjectId] = None,
+        organization_id: Optional[str | ObjectId] = None,
+        submitter_id: Optional[str | ObjectId] = None,
+        submitter: Optional[Dict[str, Any]] = None,
+        error_report: Optional[Dict[str, Any]] = None,
+        suggestion: Optional[Dict[str, Any]] = None,
+        meta: Optional[Dict[str, Any]] = None,
+    ) -> "Case":
         case = cls(
             case_type=case_type,
             demo_id=demo_id,
@@ -121,7 +158,29 @@ class Case:
             submitter=submitter,
             error_report=error_report,
             suggestion=suggestion,
-            meta=meta
+            meta=meta,
         )
-        case.save()
+        case._touch()
         return case
+
+    # ---------------------------------------------------------------------
+    # Mutators that auto‑persist
+    # ---------------------------------------------------------------------
+    def add_action(self, action_type: str, admin_user: str, note: str | None = None) -> None:
+        self.action_logs.append({
+            "timestamp": datetime.utcnow(),
+            "admin": admin_user,
+            "action_type": action_type,
+            "note": note,
+        })
+        self._touch()
+
+    def _add_history_entry(self, entry: Dict[str, Any]) -> None:
+        self.case_history.append(entry)
+        self._touch()
+
+    # ---------------------------------------------------------------------
+    # Convenience dunder methods
+    # ---------------------------------------------------------------------
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<Case {self.running_num} ({self.case_type})>"

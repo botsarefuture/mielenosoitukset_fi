@@ -1,22 +1,43 @@
 {% extends 'admin_base.html' %}
 
+{% block styles %}
+    <!-- Local confirmation-delete styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_confirm_delete.css') }}">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-GO4EvPiGv7vn5FJ7nUammkC5oPxVYt0RqcIJfoIzV1hR3n5D5qcl8gLDBsfbY8qF3X6UKOyoD6VwDaip+7Rckg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}
+
 {% block main_content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_confirm_delete.css') }}">
+<main class="container mx-auto mt-8 px-6">
+  <section class="bg-white border border-gray-300 shadow rounded-lg p-6" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-description">
+    <h2 id="confirm-title" class="text-2xl font-semibold mb-4">
+      {{ _('Vahvista poisto') }}
+    </h2>
 
-<div class="container mt-4 p-4 border border-gray-300 rounded shadow">
-    <h2 class="text-2xl font-bold mb-4">{{ _('Vahvista poisto') }}</h2>
-    <p>{{ _('Oletko varma, että haluat poistaa mielenosoituksen nimeltään') }} <strong>"{{ demo.title }}"</strong>?</p>
-    <p class="text-sm text-gray-600">{{ _('Huomaa, että tämä toiminto ei ole palautettavissa.') }}</p>
+    <p id="confirm-description" class="mb-2">
+      {{ _('Oletko varma, että haluat poistaa mielenosoituksen nimeltään') }} <strong>"{{ demo.title }}"</strong>?
+    </p>
+    <p class="text-sm text-gray-600">
+      {{ _('Huomaa, että tämä toiminto ei ole palautettavissa.') }}
+    </p>
 
-    <form method="POST" action="{{ url_for('admin_demo.delete_demo', demo_id=demo._id) }}" class="mt-4">
+    <form method="POST" action="{{ url_for('admin_demo.delete_demo', demo_id=demo._id) }}" class="mt-6 flex flex-wrap gap-3">
         <input type="hidden" name="confirm_delete" value="yes">
-        <button type="submit" class="delete-confirmation bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
-            aria-label="{{ _('Vahvista poisto') }}">{{ _('Kyllä, poista') }}</button>
-        <a href="{{ url_for('admin_demo.demo_control') }}"
-            class="button cancel-button bg-gray-300 text-black p-2 rounded ml-2 hover:bg-gray-400 transition"
-            aria-label="{{ _('Peruuta poisto') }}">{{ _('Peruuta') }}</a>
-    </form>
-</div>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_demo_confirm_delete.css') }}">
 
+        <button type="submit"
+                class="delete-confirmation inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                aria-label="{{ _('Vahvista poisto') }}">
+            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+            {{ _('Kyllä, poista') }}
+        </button>
+
+        <a href="{{ url_for('admin_demo.demo_control') }}"
+           class="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium px-4 py-2 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+           aria-label="{{ _('Peruuta poisto') }}">
+            <i class="fas fa-times" aria-hidden="true"></i>
+            {{ _('Peruuta') }}
+        </a>
+    </form>
+  </section>
+</main>
 {% endblock %}

@@ -1,462 +1,219 @@
+{# ==================================================================
+Responsive navigation bar with Facebook-style notification popover
+Requires Jinja context → user_notifications (list of dicts) (optional)
+current_user
+Notification dict keys: id, type, link, message, icon (optional),
+time (datetime) | iso string, read (bool)
+------------------------------------------------------------------ #}
+
+{% macro notif_badge(count) %}
+{% if count %}
+<span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle"></span>
+{% endif %}
+{% endmacro %}
+
+{% macro notif_dropdown(notifications) %}
+{% set unread = notifications|selectattr('read', 'equalto', False)|list %}
+{% set count  = unread|length %}
+<li id="notif-wrap" class="position-relative d-flex align-items-center ms-2" aria-expanded="false">
+  <button id="notif-btn"
+          class="btn p-0 position-relative"
+          aria-label="{{ _('Ilmoitukset') }}"
+          aria-haspopup="true"
+          aria-expanded="false">
+    <i class="fa-solid fa-bell fs-5"></i>
+    {{ notif_badge(count) }}
+  </button>
+
+  <div id="notif-panel" class="notif-panel card shadow border-0" role="menu" aria-labelledby="notif-btn">
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3 bg-white border-0">
+      <span class="fw-semibold">{{ _('Ilmoitukset') }}</span>
+      <button id="mark-read-btn"
+              class="btn btn-link btn-sm text-decoration-none d-none">{{ _('Merkitse luetuiksi') }}</button>
+    </div>
+
+    {# list will be filled by JS #}
+    <div class="list-group list-group-flush"
+         id="notif-list"
+         style="max-height:360px;overflow-y:auto;">
+      <div class="p-3 text-center text-muted small" id="notif-loading">
+        <i class="fa-solid fa-spinner fa-spin me-1"></i> {{ _('Ladataan…') }}
+      </div>
+    </div>
+
+    <div class="card-footer text-center bg-white py-2">
+      <a href="{{ url_for('notifications.list_all_page') }}"
+         class="small {% if request.endpoint == 'notifications.list_all_page' %}d-none{% endif %}">
+        {{ _('Näytä kaikki') }}
+      </a>
+    </div>
+  </div>
+</li>
+{% endmacro %}
+
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 
 <style>
-:root {
-  --color-bg: light-dark(#f8fafc, #0f1419);
-  --color-card-bg: light-dark(#ffffff, #1a1d23);
-  --color-text: light-dark(#1e293b, #e2e8f0);
-  --color-text-secondary: light-dark(#64748b, #94a3b8);
-  --color-primary: light-dark(#0052cc, #3b82f6);
-  --color-primary-hover: light-dark(#003d99, #2563eb);
-  --color-secondary: light-dark(#ff6b00, #f97316);
-  --color-secondary-hover: light-dark(#e55a00, #ea580c);
-  --color-border: light-dark(#e2e8f0, #374151);
-  --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-  --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
-  --border-radius: 16px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dark:root {
-  --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
-/* Skip to Content Link */
-.skip-link {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--color-primary);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  text-decoration: none;
-  font-weight: 600;
-  z-index: 100000;
-  border-radius: 0 0 8px 0;
-}
-
-.skip-link:focus {
-  top: 0;
-}
-
-/* Top Header */
-.top-header {
-  background: var(--color-gradient-primary);
-  color: white;
-  padding: 1rem 0;
-  box-shadow: var(--color-shadow);
-}
-
-.top-header .container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: none;
-}
-
-.branding .logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: white;
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-.branding .logo:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
-}
-
-.branding .logo:focus {
-  outline: 2px solid white;
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-/* Language Buttons */
-.language-buttons {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.language-buttons::before {
-  content: '🌐';
-  font-size: 1.25rem;
-  margin-right: 0.5rem;
-}
-
-.language-button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: inherit;
-}
-
-.language-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-}
-
-.language-button:focus {
-  outline: 2px solid white;
-  outline-offset: 2px;
-}
-
-.language-button.active {
-  background: white;
-  color: var(--color-primary);
-  border-color: white;
-  font-weight: 700;
-}
-
-.language-button.active:hover {
-  transform: translateY(-2px);
-}
-
-/* Main Navigation */
-.main-nav {
-  background: var(--color-card-bg);
-  border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 10000;
-  box-shadow: var(--color-shadow);
-}
-
-.nav-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 64px;
-}
-
-/* Mobile Menu Toggle */
-.mobile-menu-toggle {
-  display: none;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 0.75rem;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  font-size: 1.25rem;
-  transition: var(--transition);
-}
-
-.mobile-menu-toggle:hover {
-  background: var(--color-primary-hover);
-}
-
-.mobile-menu-toggle:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.mobile-menu-toggle[aria-expanded="true"] .fa-bars {
-  display: none;
-}
-
-.mobile-menu-toggle[aria-expanded="false"] .fa-times {
-  display: none;
-}
-
-/* Navigation List */
-.nav-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.nav-list li {
-  margin: 0;
-}
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  color: var(--color-text);
-  text-decoration: none;
-  border-radius: var(--border-radius);
-  font-weight: 500;
-  transition: var(--transition);
-  position: relative;
-}
-
-.nav-link:hover {
-  background: var(--color-bg);
-  color: var(--color-primary);
-}
-
-.nav-link:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.nav-link i {
-  font-size: 1rem;
-}
-
-/* Active Link Indicator */
-.nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 3px;
-  background: var(--color-primary);
-  border-radius: 3px 3px 0 0;
-}
-
-/* User Dropdown */
-.user-dropdown {
-  position: relative;
-}
-
-.user-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.user-toggle:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.user-toggle:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.profile-picture {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--color-border);
-}
-
-.user-toggle .fa-chevron-down {
-  font-size: 0.75rem;
-  transition: var(--transition);
-}
-
-.user-dropdown[aria-expanded="true"] .fa-chevron-down {
-  transform: rotate(180deg);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  box-shadow: var(--color-shadow);
-  min-width: 220px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: var(--transition);
-  z-index: 1000;
-}
-
-.user-dropdown[aria-expanded="true"] .dropdown-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-  display: revert;
-}
-
-
-/* Desktop hover behavior */
-@media (min-width: 769px) {
-  .user-dropdown:hover .dropdown-menu,
-  .user-dropdown:focus-within .dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-menu ul {
-  list-style: none;
-  margin: 0;
-  padding: 0.5rem;
-}
-
-.dropdown-menu li {
-  margin: 0;
-}
-
-.dropdown-menu a {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: var(--color-text);
-  text-decoration: none;
-  border-radius: calc(var(--border-radius) - 4px);
-  transition: var(--transition);
-  font-weight: 500;
-}
-
-.dropdown-menu a:hover {
-  background: var(--color-bg);
-  color: var(--color-primary);
-}
-
-.dropdown-menu a:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
-}
-
-/* Theme Toggle */
-.theme-toggle {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  padding: 0.75rem;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-}
-
-.theme-toggle:hover {
-  background: var(--color-primary);
-  color: white;
-  transform: rotate(180deg);
-}
-
-@media (max-width: 768px) {
-  .theme-toggle:hover {
-    transform: unset;
-    transition: all 0.5s;
-  }
-}
-
-.theme-toggle:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* Admin Alert */
-.admin-alert {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: var(--color-text);
-  padding: 1rem 1.5rem;
-  border-radius: var(--border-radius);
-  margin: 1rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.admin-alert i {
-  color: #ef4444;
-  font-size: 1.25rem;
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-  .top-header .container {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
+  :root {
+    --color-bg: light-dark(#f8fafc, #0f1419);
+    --color-card-bg: light-dark(#ffffff, #1a1d23);
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0052cc, #3b82f6);
+    --color-primary-hover: light-dark(#003d99, #2563eb);
+    --color-secondary: light-dark(#ff6b00, #f97316);
+    --color-secondary-hover: light-dark(#e55a00, #ea580c);
+    --color-border: light-dark(#e2e8f0, #374151);
+    --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
+    --color-gradient-primary: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+    --border-radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .language-buttons {
-    justify-content: center;
+  .dark:root {
+    --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
   }
 
-  .mobile-menu-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  * {
+    box-sizing: border-box;
   }
 
-  .nav-list {
-    position: fixed;
-    top: 0;
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Skip to Content Link */
+  .skip-link {
+    position: absolute;
+    top: -40px;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--color-card-bg);
-    flex-direction: column;
-    padding: 2rem;
-    gap: 0;
-    transform: translateX(-100%);
-    transition: var(--transition);
-    overflow-y: auto;
-    z-index: 9999;
+    background: var(--color-primary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    font-weight: 600;
+    z-index: 100000;
+    border-radius: 0 0 8px 0;
   }
 
-  .nav-list.active {
-    transform: translateX(0);
+  .skip-link:focus {
+    top: 0;
   }
 
-  .mobile-nav-header {
-    width: 100%;
+  /* Top Header */
+  .top-header {
+    background: var(--color-gradient-primary);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: var(--color-shadow);
+  }
+
+  .top-header .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--color-border);
+    background: none;
   }
 
-  .mobile-close {
+  .branding .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .branding .logo:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+
+  .branding .logo:focus {
+    outline: 2px solid white;
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  /* Language Buttons */
+  .language-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .language-buttons::before {
+    content: '🌐';
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+  }
+
+  .language-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+  }
+
+  .language-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .language-button:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+
+  .language-button.active {
+    background: white;
+    color: var(--color-primary);
+    border-color: white;
+    font-weight: 700;
+  }
+
+  .language-button.active:hover {
+    transform: translateY(-2px);
+  }
+
+  /* Main Navigation */
+  .main-nav {
+    background: var(--color-card-bg);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+    box-shadow: var(--color-shadow);
+  }
+
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 64px;
+  }
+
+  /* Mobile Menu Toggle */
+  .mobile-menu-toggle {
+    display: none;
     background: var(--color-primary);
     color: white;
     border: none;
@@ -464,75 +221,404 @@ body {
     border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 1.25rem;
+    transition: var(--transition);
+  }
+
+  .mobile-menu-toggle:hover {
+    background: var(--color-primary-hover);
+  }
+
+  .mobile-menu-toggle:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .mobile-menu-toggle[aria-expanded="true"] .fa-bars {
+    display: none;
+  }
+
+  .mobile-menu-toggle[aria-expanded="false"] .fa-times {
+    display: none;
+  }
+
+  /* Navigation List */
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .nav-list li {
-    width: 100%;
+    margin: 0;
   }
 
   .nav-link {
-    width: 100%;
-    padding: 1rem 1.5rem;
-    font-size: 1.1rem;
-    justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+    position: relative;
   }
 
+  .nav-link:hover {
+    background: var(--color-bg);
+    color: var(--color-primary);
+  }
+
+  .nav-link:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .nav-link i {
+    font-size: 1rem;
+  }
+
+  /* Active Link Indicator */
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 3px;
+    background: var(--color-primary);
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* User Dropdown */
   .user-dropdown {
-    width: 100%;
+    position: relative;
   }
 
   .user-toggle {
-    width: 100%;
-    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .user-toggle:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .user-toggle:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .profile-picture {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-border);
+  }
+
+  .user-toggle .fa-chevron-down {
+    font-size: 0.75rem;
+    transition: var(--transition);
+  }
+
+  .user-dropdown[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
   }
 
   .dropdown-menu {
-    position: static;
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--color-shadow);
+    min-width: 220px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    z-index: 1000;
+  }
+
+  .user-dropdown[aria-expanded="true"] .dropdown-menu {
     opacity: 1;
     visibility: visible;
-    transform: none;
-    margin-top: 0.5rem;
-    box-shadow: none;
-    border: none;
-    background: var(--color-bg);
+    transform: translateY(0);
+    display: revert;
   }
 
-  .theme-toggle-mobile {
-    width: 100%;
-    border-radius: var(--border-radius);
-    padding: 1rem 1.5rem;
-    justify-content: space-between;
+  /* Desktop hover behavior */
+  @media (min-width: 769px) {
+    .user-dropdown:hover .dropdown-menu,
+    .user-dropdown:focus-within .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
   }
 
-  .theme-toggle-mobile::before {
-    content: attr(aria-label);
-    font-size: 1.1rem;
+  .dropdown-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+  }
+
+  .dropdown-menu li {
+    margin: 0;
+  }
+
+  .dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-text);
+    text-decoration: none;
+    border-radius: calc(var(--border-radius) - 4px);
+    transition: var(--transition);
     font-weight: 500;
   }
-}
 
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-  .nav-link:focus,
-  .language-button:focus,
+  .dropdown-menu a:hover {
+    background: var(--color-bg);
+    color: var(--color-primary);
+  }
+
+  .dropdown-menu a:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    padding: 0.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+  }
+
+  .theme-toggle:hover {
+    background: var(--color-primary);
+    color: white;
+    transform: rotate(180deg);
+  }
+
+  @media (max-width: 768px) {
+    .theme-toggle:hover {
+      transform: unset;
+      transition: all 0.5s;
+    }
+  }
+
   .theme-toggle:focus {
-    outline-width: 3px;
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
-}
 
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  /* Admin Alert */
+  .admin-alert {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: var(--color-text);
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
-}
 
-/* Focus Visible Polyfill */
-.js-focus-visible :focus:not(.focus-visible) {
-  outline: none;
-}
+  .admin-alert i {
+    color: #ef4444;
+    font-size: 1.25rem;
+  }
+
+  /* Mobile Styles */
+  @media (max-width: 768px) {
+    .top-header .container {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .language-buttons {
+      justify-content: center;
+    }
+
+    .mobile-menu-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-list {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--color-card-bg);
+      flex-direction: column;
+      padding: 2rem;
+      gap: 0;
+      transform: translateX(-100%);
+      transition: var(--transition);
+      overflow-y: auto;
+      z-index: 9999;
+    }
+
+    .nav-list.active {
+      transform: translateX(0);
+    }
+
+    .mobile-nav-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .mobile-close {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 1.25rem;
+    }
+
+    .nav-list li {
+      width: 100%;
+    }
+
+    .nav-link {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 1.1rem;
+      justify-content: flex-start;
+    }
+
+    .user-dropdown {
+      width: 100%;
+    }
+
+    .user-toggle {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .dropdown-menu {
+      position: static;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      margin-top: 0.5rem;
+      box-shadow: none;
+      border: none;
+      background: var(--color-bg);
+    }
+
+    .theme-toggle-mobile {
+      width: 100%;
+      border-radius: var(--border-radius);
+      padding: 1rem 1.5rem;
+      justify-content: space-between;
+    }
+
+    .theme-toggle-mobile::before {
+      content: attr(aria-label);
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+  }
+
+  /* High Contrast Mode */
+  @media (prefers-contrast: high) {
+    .nav-link:focus,
+    .language-button:focus,
+    .theme-toggle:focus {
+      outline-width: 3px;
+    }
+  }
+
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus Visible Polyfill */
+  .js-focus-visible :focus:not(.focus-visible) {
+    outline: none;
+  }
+</style>
+
+<!-- CSS additions (inject into existing <style>) -->
+<style>
+  .notif-panel {
+    position: absolute;
+    top: calc(100% + .5rem);
+    right: 0;
+    width: 340px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all .18s ease-out;
+    z-index: 2000;
+  }
+
+  #notif-wrap[aria-expanded="true"] .notif-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* simple blue dot for unread */
+  .list-group-item.bg-light::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #0d6efd;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: .5rem;
+    align-self: center;
+  }
 </style>
 
 <!-- Skip to Content Link -->
@@ -546,14 +632,13 @@ body {
         {{ _('Mielenosoitukset.fi') }}
       </a>
     </div>
-    
+
     <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">
       {% for lang_code in get_supported_locales() %}
-      <button 
-        class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
-        onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'"
-        aria-label="{{ _('Vaihda kieleksi') }} {{ lang_code.upper() }}"
-        {% if session.get('locale', 'fi') == lang_code %}aria-current="true"{% endif %}>
+      <button class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
+              onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'"
+              aria-label="{{ _('Vaihda kieleksi') }} {{ lang_code.upper() }}"
+              {% if session.get('locale', 'fi') == lang_code %}aria-current="true"{% endif %}>
         {{ lang_code.upper() }}
       </button>
       {% endfor %}
@@ -564,12 +649,11 @@ body {
 <!-- Main Navigation -->
 <nav class="main-nav" role="navigation" aria-label="{{ _('Päävalikko') }}">
   <div class="nav-container">
-    <button 
-      class="mobile-menu-toggle" 
-      onclick="toggleMobileMenu()"
-      aria-expanded="false"
-      aria-controls="main-nav-list"
-      aria-label="{{ _('Avaa navigaatiovalikko') }}">
+    <button class="mobile-menu-toggle"
+            onclick="toggleMobileMenu()"
+            aria-expanded="false"
+            aria-controls="main-nav-list"
+            aria-label="{{ _('Avaa navigaatiovalikko') }}">
       <i class="fa-solid fa-bars"></i>
       <i class="fa-solid fa-times"></i>
     </button>
@@ -578,10 +662,7 @@ body {
       <!-- Mobile Header -->
       <li class="mobile-nav-header" style="display: none;">
         <span class="logo" style="font-weight: 700; color: var(--color-primary);">{{ _('Valikko') }}</span>
-        <button 
-          class="mobile-close" 
-          onclick="toggleMobileMenu()"
-          aria-label="{{ _('Sulje valikko') }}">
+        <button class="mobile-close" onclick="toggleMobileMenu()" aria-label="{{ _('Sulje valikko') }}">
           <i class="fa-solid fa-times"></i>
         </button>
       </li>
@@ -592,14 +673,14 @@ body {
           <span>{{ _('Etusivu') }}</span>
         </a>
       </li>
-      
+
       <li>
         <a href="{{ url_for('demonstrations') }}" class="nav-link" aria-label="{{ _('Mielenosoitukset') }}">
           <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
           <span>{{ _('Mielenosoitukset') }}</span>
         </a>
       </li>
-      
+
       <li>
         <a href="{{ url_for('submit') }}" class="nav-link" aria-label="{{ _('Ilmoita mielenosoituksesta') }}">
           <i class="fa-solid fa-plus-circle" aria-hidden="true"></i>
@@ -608,26 +689,24 @@ body {
       </li>
 
       {% if current_user.is_authenticated %}
+      <!-- Notifications go here BEFORE user dropdown -->
+      {{ notif_dropdown(user_notifications|default([], true)) }}
+
       <!-- User Dropdown -->
       <li class="user-dropdown" id="user-dropdown">
-        <button 
-          class="user-toggle"
-          id="user-toggle-btn"
-          aria-haspopup="true"
-          aria-expanded="false"
-          aria-controls="user-dropdown-menu"
-          aria-label="{{ _('Käyttäjävalikko') }}">
+        <button class="user-toggle"
+                id="user-toggle-btn"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="user-dropdown-menu"
+                aria-label="{{ _('Käyttäjävalikko') }}">
           {% if current_user.profile_picture %}
-          <img 
-            src="{{ current_user.profile_picture }}" 
-            alt="" 
-            class="profile-picture"
-            aria-hidden="true" />
+          <img src="{{ current_user.profile_picture }}" alt="" class="profile-picture" aria-hidden="true" />
           {% endif %}
           <span>{{ current_user.displayname if current_user.displayname else current_user.username }}</span>
           <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
         </button>
-        
+
         <div class="dropdown-menu" id="user-dropdown-menu" role="menu" aria-labelledby="user-toggle-btn">
           <ul>
             <li role="none">
@@ -672,11 +751,10 @@ body {
 
       <!-- Theme Toggle -->
       <li style="margin-left: auto;">
-        <button 
-          class="theme-toggle theme-toggle-mobile"
-          onclick="toggleDarkMode()"
-          aria-label="{{ _('Vaihda teemaa') }}"
-          aria-pressed="false">
+        <button class="theme-toggle theme-toggle-mobile"
+                onclick="toggleDarkMode()"
+                aria-label="{{ _('Vaihda teemaa') }}"
+                aria-pressed="false">
           <i class="fa-solid fa-moon theme-icon" aria-hidden="true"></i>
         </button>
       </li>
@@ -685,361 +763,449 @@ body {
 </nav>
 
 <script>
-// Toggle mobile menu
-function toggleMobileMenu() {
-  const navList = document.getElementById('main-nav-list');
-  const toggle = document.querySelector('.mobile-menu-toggle');
-  const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-  
-  toggle.setAttribute('aria-expanded', !isExpanded);
-  navList.classList.toggle('active');
-  
-  // Update label
-  if (!isExpanded) {
-    toggle.setAttribute('aria-label', '{{ _("Sulje navigaatiovalikko") }}');
-    document.body.style.overflow = 'hidden';
-    
-    // Show mobile header
-    const mobileHeader = document.querySelector('.mobile-nav-header');
-    const mobileOnly = document.querySelector('.mobile-only');
-    if (mobileHeader) mobileHeader.style.display = 'flex';
-    if (mobileOnly) mobileOnly.style.display = 'block';
-  } else {
-    toggle.setAttribute('aria-label', '{{ _("Avaa navigaatiovalikko") }}');
-    document.body.style.overflow = '';
-    
-    // Hide mobile header
-    const mobileHeader = document.querySelector('.mobile-nav-header');
-    const mobileOnly = document.querySelector('.mobile-only');
-    if (mobileHeader) mobileHeader.style.display = 'none';
-    if (mobileOnly) mobileOnly.style.display = 'none';
-  }
-}
+  // Toggle mobile menu
+  function toggleMobileMenu() {
+    const navList = document.getElementById('main-nav-list');
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
 
-// Toggle user dropdown
-function toggleUserDropdown() {
-  const dropdown = document.getElementById('user-dropdown');
-  const button = document.getElementById('user-toggle-btn');
-  const menu = document.getElementById('user-dropdown-menu');
-  
-  if (!dropdown || !button || !menu) return;
-  
-  const isExpanded = button.getAttribute('aria-expanded') === 'true';
-  
-  button.setAttribute('aria-expanded', !isExpanded);
-  dropdown.setAttribute('aria-expanded', !isExpanded);
-  
-  // Focus first menu item when opening
-  if (!isExpanded) {
-    setTimeout(() => {
-      const firstMenuItem = menu.querySelector('a');
-      if (firstMenuItem) firstMenuItem.focus();
-    }, 100);
-  }
-}
+    toggle.setAttribute('aria-expanded', !isExpanded);
+    navList.classList.toggle('active');
 
-// Close user dropdown
-function closeUserDropdown() {
-  const dropdown = document.getElementById('user-dropdown');
-  const button = document.getElementById('user-toggle-btn');
-  
-  if (!dropdown || !button) return;
-  
-  button.setAttribute('aria-expanded', 'false');
-  dropdown.setAttribute('aria-expanded', 'false');
-}
-// Setup user dropdown
-document.addEventListener('DOMContentLoaded', function() {
-  const button = document.getElementById('user-toggle-btn');
-  const dropdown = document.getElementById('user-dropdown');
-  const menu = document.getElementById('user-dropdown-menu');
-  if (!button || !dropdown || !menu) return;
+    // Update label
+    if (!isExpanded) {
+      toggle.setAttribute('aria-label', '{{ _("Sulje navigaatiovalikko") }}');
+      document.body.style.overflow = 'hidden';
 
-  let outsideListener = null;
-  let resizeListener = null;
-  let hoverHandlers = { enterBtn: null, leaveBtn: null, enterDropdown: null, leaveDropdown: null };
-  let closeTimer = null;
+      // Show mobile header
+      const mobileHeader = document.querySelector('.mobile-nav-header');
+      const mobileOnly = document.querySelector('.mobile-only');
+      if (mobileHeader) mobileHeader.style.display = 'flex';
+      if (mobileOnly) mobileOnly.style.display = 'block';
+    } else {
+      toggle.setAttribute('aria-label', '{{ _("Avaa navigaatiovalikko") }}');
+      document.body.style.overflow = '';
 
-  function isOpen() {
-    return button.getAttribute('aria-expanded') === 'true';
-  }
-
-  function openDropdown(focusFirst = true, manual = false) {
-    if (isOpen()) return;
-    button.setAttribute('aria-expanded', 'true');
-    dropdown.setAttribute('aria-expanded', 'true');
-    if (manual) button.setAttribute('data-manual-open', 'true');
-
-    if (focusFirst) {
-      const first = menu.querySelector('a, button');
-      if (first) first.focus();
-    }
-
-    if (!outsideListener) {
-      outsideListener = function(e) {
-        // pointerdown covers mouse/touch/stylus; ignore clicks inside dropdown
-        if (!dropdown.contains(e.target) && e.target !== button) closeDropdown();
-      };
-      document.addEventListener('pointerdown', outsideListener);
-      document.addEventListener('keydown', outsideKeyHandler);
+      // Hide mobile header
+      const mobileHeader = document.querySelector('.mobile-nav-header');
+      const mobileOnly = document.querySelector('.mobile-only');
+      if (mobileHeader) mobileHeader.style.display = 'none';
+      if (mobileOnly) mobileOnly.style.display = 'none';
     }
   }
 
-  function closeDropdown() {
-    if (!isOpen()) return;
+  // Toggle user dropdown
+  function toggleUserDropdown() {
+    const dropdown = document.getElementById('user-dropdown');
+    const button = document.getElementById('user-toggle-btn');
+    const menu = document.getElementById('user-dropdown-menu');
+
+    if (!dropdown || !button || !menu) return;
+
+    const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+    button.setAttribute('aria-expanded', !isExpanded);
+    dropdown.setAttribute('aria-expanded', !isExpanded);
+
+    // Focus first menu item when opening
+    if (!isExpanded) {
+      setTimeout(() => {
+        const firstMenuItem = menu.querySelector('a');
+        if (firstMenuItem) firstMenuItem.focus();
+      }, 100);
+    }
+  }
+
+  // Close user dropdown
+  function closeUserDropdown() {
+    const dropdown = document.getElementById('user-dropdown');
+    const button = document.getElementById('user-toggle-btn');
+
+    if (!dropdown || !button) return;
+
     button.setAttribute('aria-expanded', 'false');
     dropdown.setAttribute('aria-expanded', 'false');
-    button.setAttribute('data-manual-open', 'false');
-
-    if (outsideListener) {
-      document.removeEventListener('pointerdown', outsideListener);
-      document.removeEventListener('keydown', outsideKeyHandler);
-      outsideListener = null;
-    }
   }
 
-  function toggleDropdown() {
-    if (isOpen()) closeDropdown();
-    else openDropdown(false, true);
-  }
+  // Setup user dropdown behaviour
+  document.addEventListener('DOMContentLoaded', function () {
+    const button = document.getElementById('user-toggle-btn');
+    const dropdown = document.getElementById('user-dropdown');
+    const menu = document.getElementById('user-dropdown-menu');
+    if (!button || !dropdown || !menu) return;
 
-  function outsideKeyHandler(e) {
-    if (e.key === 'Escape') {
-      closeDropdown();
-      button.focus();
+    let outsideListener = null;
+    let resizeListener = null;
+    let hoverHandlers = { enterBtn: null, leaveBtn: null, enterDropdown: null, leaveDropdown: null };
+    let closeTimer = null;
+
+    function isOpen() {
+      return button.getAttribute('aria-expanded') === 'true';
     }
-  }
 
-  // Click / pointer on button
-  button.addEventListener('click', function(e) {
-    e.stopPropagation();
-    // mark manual open so hover-leave won't close it immediately
-    if (!isOpen()) button.setAttribute('data-manual-open', 'true');
-    toggleDropdown();
-  });
+    function openDropdown(focusFirst = true, manual = false) {
+      if (isOpen()) return;
+      button.setAttribute('aria-expanded', 'true');
+      dropdown.setAttribute('aria-expanded', 'true');
+      if (manual) button.setAttribute('data-manual-open', 'true');
 
-  // Keyboard activation (Enter / Space) + open on ArrowDown
-  button.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      // manual open for keyboard activation
-      if (!isOpen()) button.setAttribute('data-manual-open', 'true');
-      toggleDropdown();
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      openDropdown(true, false);
+      if (focusFirst) {
+        const first = menu.querySelector('a, button');
+        if (first) first.focus();
+      }
+
+      if (!outsideListener) {
+        outsideListener = function (e) {
+          if (!dropdown.contains(e.target) && e.target !== button) closeDropdown();
+        };
+        document.addEventListener('pointerdown', outsideListener);
+        document.addEventListener('keydown', outsideKeyHandler);
+      }
     }
-  });
 
-  // Keyboard navigation inside menu
-  menu.addEventListener('keydown', function(e) {
-    const items = Array.from(menu.querySelectorAll('a, button'));
-    if (!items.length) return;
-    let idx = items.indexOf(document.activeElement);
+    function closeDropdown() {
+      if (!isOpen()) return;
+      button.setAttribute('aria-expanded', 'false');
+      dropdown.setAttribute('aria-expanded', 'false');
+      button.setAttribute('data-manual-open', 'false');
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        items[(idx + 1) % items.length].focus();
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        items[(idx - 1 + items.length) % items.length].focus();
-        break;
-      case 'Home':
-        e.preventDefault();
-        items[0].focus();
-        break;
-      case 'End':
-        e.preventDefault();
-        items[items.length - 1].focus();
-        break;
-      case 'Escape':
-        e.preventDefault();
+      if (outsideListener) {
+        document.removeEventListener('pointerdown', outsideListener);
+        document.removeEventListener('keydown', outsideKeyHandler);
+        outsideListener = null;
+      }
+    }
+
+    function toggleDropdown() {
+      if (isOpen()) closeDropdown();
+      else openDropdown(false, true);
+    }
+
+    function outsideKeyHandler(e) {
+      if (e.key === 'Escape') {
         closeDropdown();
         button.focus();
-        break;
+      }
+    }
+
+    // Click / pointer on button
+    button.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (!isOpen()) button.setAttribute('data-manual-open', 'true');
+      toggleDropdown();
+    });
+
+    // Keyboard activation + open on ArrowDown
+    button.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!isOpen()) button.setAttribute('data-manual-open', 'true');
+        toggleDropdown();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        openDropdown(true, false);
+      }
+    });
+
+    // Keyboard navigation inside menu
+    menu.addEventListener('keydown', function (e) {
+      const items = Array.from(menu.querySelectorAll('a, button'));
+      if (!items.length) return;
+      let idx = items.indexOf(document.activeElement);
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          items[(idx + 1) % items.length].focus();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          items[(idx - 1 + items.length) % items.length].focus();
+          break;
+        case 'Home':
+          e.preventDefault();
+          items[0].focus();
+          break;
+        case 'End':
+          e.preventDefault();
+          items[items.length - 1].focus();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          closeDropdown();
+          button.focus();
+          break;
+      }
+    });
+
+    // Close when focus moves completely outside (keyboard navigation)
+    document.addEventListener('focusin', function (e) {
+      if (!dropdown.contains(e.target) && e.target !== button) {
+        if (isOpen()) closeDropdown();
+      }
+    });
+
+    // Desktop hover behaviour
+    function addHover() {
+      if (hoverHandlers.enterBtn) return;
+
+      hoverHandlers.enterBtn = function (e) {
+        clearTimeout(closeTimer);
+        button.setAttribute('aria-expanded', 'true');
+        dropdown.setAttribute('aria-expanded', 'true');
+      };
+      hoverHandlers.leaveBtn = function (e) {
+        const rt = e.relatedTarget;
+        if (rt && (dropdown.contains(rt) || button.contains(rt))) return;
+        if (button.getAttribute('data-manual-open') === 'true') return;
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => {
+          if (dropdown.matches(':hover') || button.matches(':hover')) return;
+          closeDropdown();
+        }, 160);
+      };
+
+      hoverHandlers.enterDropdown = function (e) {
+        clearTimeout(closeTimer);
+        button.setAttribute('aria-expanded', 'true');
+        dropdown.setAttribute('aria-expanded', 'true');
+      };
+      hoverHandlers.leaveDropdown = function (e) {
+        const rt = e.relatedTarget;
+        if (rt && (dropdown.contains(rt) || button.contains(rt))) return;
+        if (button.getAttribute('data-manual-open') === 'true') return;
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => {
+          if (dropdown.matches(':hover') || button.matches(':hover')) return;
+          closeDropdown();
+        }, 160);
+      };
+
+      button.addEventListener('pointerenter', hoverHandlers.enterBtn);
+      button.addEventListener('pointerleave', hoverHandlers.leaveBtn);
+      dropdown.addEventListener('pointerenter', hoverHandlers.enterDropdown);
+      dropdown.addEventListener('pointerleave', hoverHandlers.leaveDropdown);
+    }
+
+    function removeHover() {
+      if (!hoverHandlers.enterBtn) return;
+      button.removeEventListener('pointerenter', hoverHandlers.enterBtn);
+      button.removeEventListener('pointerleave', hoverHandlers.leaveBtn);
+      dropdown.removeEventListener('pointerenter', hoverHandlers.enterDropdown);
+      dropdown.removeEventListener('pointerleave', hoverHandlers.leaveDropdown);
+      hoverHandlers.enterBtn = null;
+      hoverHandlers.leaveBtn = null;
+      hoverHandlers.enterDropdown = null;
+      hoverHandlers.leaveDropdown = null;
+      clearTimeout(closeTimer);
+    }
+
+    function handleResize() {
+      if (window.innerWidth > 768) addHover();
+      else removeHover();
+    }
+
+    let resizeTimer = null;
+    resizeListener = function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(handleResize, 120);
+    };
+    window.addEventListener('resize', resizeListener);
+    handleResize();
+
+    window.addEventListener('unload', function () {
+      removeHover();
+      if (outsideListener) document.removeEventListener('pointerdown', outsideListener);
+      window.removeEventListener('resize', resizeListener);
+    });
+  });
+
+  // Close mobile menu + dropdown on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const toggle = document.querySelector('.mobile-menu-toggle');
+      if (toggle && toggle.getAttribute('aria-expanded') === 'true') {
+        toggleMobileMenu();
+      }
+      closeUserDropdown();
     }
   });
 
-  // Close when focus moves completely outside (keyboard navigation)
-  document.addEventListener('focusin', function(e) {
-    if (!dropdown.contains(e.target) && e.target !== button) {
-      if (isOpen()) closeDropdown();
-    }
-  });
-
-  // Improved hover behaviour for desktop:
-  // use pointerenter/pointerleave on both button and dropdown,
-  // cancel close if pointer is moving between them (relatedTarget check),
-  // and add a small delay before actually closing to allow natural cursor movement.
-  function addHover() {
-    if (hoverHandlers.enterBtn) return;
-
-    hoverHandlers.enterBtn = function(e) {
-      // cancel any scheduled close
-      clearTimeout(closeTimer);
-      // open visually but don't steal focus
-      button.setAttribute('aria-expanded', 'true');
-      dropdown.setAttribute('aria-expanded', 'true');
-    };
-    hoverHandlers.leaveBtn = function(e) {
-      // if pointer is moving into dropdown or button, do nothing
-      const rt = e.relatedTarget;
-      if (rt && (dropdown.contains(rt) || button.contains(rt))) return;
-      // don't close if opened manually via click/keyboard
-      if (button.getAttribute('data-manual-open') === 'true') return;
-      clearTimeout(closeTimer);
-      closeTimer = setTimeout(() => {
-        // if pointer ended up in button/dropdown, don't close
-        if (dropdown.matches(':hover') || button.matches(':hover')) return;
-        closeDropdown();
-      }, 160);
-    };
-
-    hoverHandlers.enterDropdown = function(e) {
-      clearTimeout(closeTimer);
-      // keep open while hovering dropdown
-      button.setAttribute('aria-expanded', 'true');
-      dropdown.setAttribute('aria-expanded', 'true');
-    };
-    hoverHandlers.leaveDropdown = function(e) {
-      const rt = e.relatedTarget;
-      if (rt && (dropdown.contains(rt) || button.contains(rt))) return;
-      if (button.getAttribute('data-manual-open') === 'true') return;
-      clearTimeout(closeTimer);
-      closeTimer = setTimeout(() => {
-        if (dropdown.matches(':hover') || button.matches(':hover')) return;
-        closeDropdown();
-      }, 160);
-    };
-
-    button.addEventListener('pointerenter', hoverHandlers.enterBtn);
-    button.addEventListener('pointerleave', hoverHandlers.leaveBtn);
-    dropdown.addEventListener('pointerenter', hoverHandlers.enterDropdown);
-    dropdown.addEventListener('pointerleave', hoverHandlers.leaveDropdown);
-  }
-
-  function removeHover() {
-    if (!hoverHandlers.enterBtn) return;
-    button.removeEventListener('pointerenter', hoverHandlers.enterBtn);
-    button.removeEventListener('pointerleave', hoverHandlers.leaveBtn);
-    dropdown.removeEventListener('pointerenter', hoverHandlers.enterDropdown);
-    dropdown.removeEventListener('pointerleave', hoverHandlers.leaveDropdown);
-    hoverHandlers.enterBtn = null;
-    hoverHandlers.leaveBtn = null;
-    hoverHandlers.enterDropdown = null;
-    hoverHandlers.leaveDropdown = null;
-    clearTimeout(closeTimer);
-  }
-
-  function handleResize() {
-    if (window.innerWidth > 768) addHover();
-    else removeHover();
-  }
-
-  // Debounced resize listener
-  let resizeTimer = null;
-  resizeListener = function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(handleResize, 120);
-  };
-  window.addEventListener('resize', resizeListener);
-  handleResize();
-
-  // Clean-up on unload
-  window.addEventListener('unload', function() {
-    removeHover();
-    if (outsideListener) document.removeEventListener('pointerdown', outsideListener);
-    window.removeEventListener('resize', resizeListener);
-  });
-});
-
-// Close mobile menu on escape
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    const toggle = document.querySelector('.mobile-menu-toggle');
-    if (toggle && toggle.getAttribute('aria-expanded') === 'true') {
-      toggleMobileMenu();
-    }
-    
-    // Close user dropdown
-    closeUserDropdown();
-  }
-});
-
-// Theme toggle function
-function toggleDarkMode() {
-  const button = document.querySelector('.theme-toggle');
-  const icon = button.querySelector('.theme-icon');
-  const isDark = document.documentElement.classList.toggle('dark');
-  
-  icon.classList.toggle('fa-moon');
-  icon.classList.toggle('fa-sun');
-  
-  button.setAttribute('aria-pressed', isDark);
-  button.setAttribute('aria-label', isDark ? '{{ _("Vaihda vaaleaan teemaan") }}' : '{{ _("Vaihda tummaan teemaan") }}');
-  
-  // Save preference
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-}
-
-// Load theme preference
-document.addEventListener('DOMContentLoaded', function() {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
-  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-    document.documentElement.classList.add('dark');
+  // Theme toggle function
+  function toggleDarkMode() {
     const button = document.querySelector('.theme-toggle');
-    if (button) {
-      const icon = button.querySelector('.theme-icon');
-      if (icon) {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-      }
-      button.setAttribute('aria-pressed', 'true');
-    }
-  }
-  
-  // Store user role
-  var user_role = "{{ current_user.role if current_user.is_authenticated else 'guest' }}";
-  localStorage.setItem('user_role', user_role);
-  
-  // Mark active link
-  const currentPath = window.location.pathname;
-  document.querySelectorAll('.nav-link').forEach(link => {
-    if (link.getAttribute('href') === currentPath) {
-      link.classList.add('active');
-      link.setAttribute('aria-current', 'page');
-    }
-  });
-});
+    const icon = button.querySelector('.theme-icon');
+    const isDark = document.documentElement.classList.toggle('dark');
 
-// Trap focus in mobile menu
-document.addEventListener('DOMContentLoaded', function() {
-  const navList = document.getElementById('main-nav-list');
-  
-  if (!navList) return;
-  
-  navList.addEventListener('keydown', function(e) {
-    if (e.key === 'Tab' && navList.classList.contains('active')) {
-      const focusableElements = navList.querySelectorAll('a, button');
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-      
-      if (e.shiftKey && document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
+    icon.classList.toggle('fa-moon');
+    icon.classList.toggle('fa-sun');
+
+    button.setAttribute('aria-pressed', isDark);
+    button.setAttribute('aria-label', isDark ? '{{ _("Vaihda vaaleaan teemaan") }}'
+                                             : '{{ _("Vaihda tummaan teemaan") }}');
+
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }
+
+  // Load theme preference and mark active nav link
+  document.addEventListener('DOMContentLoaded', function () {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add('dark');
+      const button = document.querySelector('.theme-toggle');
+      if (button) {
+        const icon = button.querySelector('.theme-icon');
+        if (icon) {
+          icon.classList.remove('fa-moon');
+          icon.classList.add('fa-sun');
+        }
+        button.setAttribute('aria-pressed', 'true');
       }
     }
+
+    var user_role = "{{ current_user.role if current_user.is_authenticated else 'guest' }}";
+    localStorage.setItem('user_role', user_role);
+
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.nav-link').forEach(link => {
+      if (link.getAttribute('href') === currentPath) {
+        link.classList.add('active');
+        link.setAttribute('aria-current', 'page');
+      }
+    });
   });
-});
+
+  // Trap focus in mobile menu
+  document.addEventListener('DOMContentLoaded', function () {
+    const navList = document.getElementById('main-nav-list');
+    if (!navList) return;
+
+    navList.addEventListener('keydown', function (e) {
+      if (e.key === 'Tab' && navList.classList.contains('active')) {
+        const focusableElements = navList.querySelectorAll('a, button');
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    });
+  });
 </script>
 
 {% if current_user.role != "user" and current_user.is_authenticated %}
 {% include "toolbar.html" %}
 {% endif %}
+
+<script>
+  // Notification popover: fetch via /api/notifications/, render, mark-all-read
+  (async () => {
+    const wrap     = document.getElementById('notif-wrap');
+    if (!wrap) return;
+
+    const btn      = document.getElementById('notif-btn');
+    const listBox  = document.getElementById('notif-list');
+    const markBtn  = document.getElementById('mark-read-btn');
+    const badgeTpl = '<span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle"></span>';
+
+    if (!btn || !listBox || !markBtn) return;
+
+    const render = (data = []) => {
+      // badge
+      btn.querySelector('.badge')?.remove();
+      if (data.some(n => !n.read)) {
+        btn.insertAdjacentHTML('beforeend', badgeTpl);
+      }
+
+      // mark-all-read button
+      markBtn.classList.toggle('d-none', !data.some(n => !n.read));
+
+      // list
+      if (!data.length) {
+        listBox.innerHTML = `<div class="p-3 text-center text-muted small">{{ _('Ei ilmoituksia') }}</div>`;
+        return;
+      }
+
+      listBox.innerHTML = data.map(n => {
+        const formattedTime =
+          (window.timeago && window.timeago.format)
+            ? window.timeago.format(n.time)
+            : n.time;
+
+        return `
+          <a href="${n.link}"
+             class="list-group-item list-group-item-action py-2 d-flex gap-2 ${n.read ? '' : 'bg-light'}">
+            <div class="pt-1">
+              <i class="${n.icon} fa-lg ${n.read ? 'text-secondary' : 'text-primary'}"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="small ${n.read ? '' : 'fw-semibold'}">${n.message}</div>
+              <div class="text-muted small">${formattedTime}</div>
+            </div>
+          </a>`;
+      }).join('');
+    };
+
+    async function loadNotifs() {
+      try {
+        const res  = await fetch('/api/notifications/');
+        const data = await res.json();
+        render(data);
+      } catch (err) {
+        console.error(err);
+        listBox.innerHTML = '<div class="p-3 text-center text-danger small">{{ _("Virhe ladattaessa") }}</div>';
+      }
+    }
+
+    const open  = () => {
+      btn.setAttribute('aria-expanded', 'true');
+      wrap.setAttribute('aria-expanded', 'true');
+    };
+    const close = () => {
+      btn.setAttribute('aria-expanded', 'false');
+      wrap.setAttribute('aria-expanded', 'false');
+    };
+    const toggle = () => {
+      if (btn.getAttribute('aria-expanded') === 'true') {
+        close();
+      } else {
+        open();
+        loadNotifs();
+      }
+    };
+
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggle();
+    });
+
+    document.addEventListener('click', e => {
+      if (!wrap.contains(e.target)) close();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') close();
+    });
+
+    // mark-all-read
+    markBtn.addEventListener('click', async e => {
+      e.preventDefault();
+      try {
+        await fetch('/api/notifications/mark-read', { method: 'POST' });
+        await loadNotifs();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // periodic refresh in background (badge + list contents)
+    setInterval(loadNotifs, 60_000);
+  })();
+</script>

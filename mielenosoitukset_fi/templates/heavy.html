@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fi">
+
+<head>
+    <meta charset="utf-8">
+    <title>Palvelu pois käytöstä - Mielenosoitukset.fi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b8;
+            --border: #2a2a3a;
+            --accent: #00d4ff;
+            --accent-glow: rgba(0, 212, 255, 0.3);
+            --warning: #ff3366;
+            --warning-glow: rgba(255, 51, 102, 0.2);
+            --purple: #a855f7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, var(--accent-glow) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, var(--warning-glow) 0%, transparent 50%);
+            animation: bgShift 15s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes bgShift {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.1);
+            }
+        }
+
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .header {
+            background: rgba(26, 26, 36, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .logo i {
+            color: var(--accent);
+            filter: drop-shadow(0 0 10px var(--accent));
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .status-card {
+            background: rgba(26, 26, 36, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-card>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .status-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--warning), #ff6b9d);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            box-shadow:
+                0 0 40px var(--warning-glow),
+                0 0 80px var(--warning-glow);
+            animation: pulse 2s ease-in-out infinite;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 40px var(--warning-glow), 0 0 80px var(--warning-glow);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 60px var(--warning-glow), 0 0 120px var(--warning-glow);
+            }
+        }
+
+        .status-icon i {
+            font-size: 3rem;
+            color: white;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .warning-text {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .warning-text strong {
+            color: var(--warning);
+            font-weight: 700;
+        }
+
+        .social-section {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(168, 85, 247, 0.08));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .social-section h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .social-link i {
+            font-size: 1.25rem;
+        }
+
+        .social-link.instagram:hover {
+            border-color: #E1306C;
+            box-shadow: 0 4px 20px rgba(225, 48, 108, 0.3);
+        }
+
+        .social-link.twitter:hover {
+            border-color: #1DA1F2;
+            box-shadow: 0 4px 20px rgba(29, 161, 242, 0.3);
+        }
+
+        .social-link.facebook:hover {
+            border-color: #1877F2;
+            box-shadow: 0 4px 20px rgba(24, 119, 242, 0.3);
+        }
+
+        .social-link.tiktok:hover {
+            border-color: #fe2c55;
+            box-shadow: 0 4px 20px rgba(254, 44, 85, 0.3);
+        }
+
+        .support-box {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .support-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
+            animation: rotate 25s linear infinite reverse;
+            opacity: 0.5;
+        }
+
+        .support-box>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .support-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(168, 85, 247, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--purple);
+            margin-bottom: 1rem;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .support-box h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--purple), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .support-box p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--purple), #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3);
+        }
+
+        .lang-toggle {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .lang-toggle a {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .lang-toggle a:hover {
+            color: var(--text-primary);
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .footer {
+            background: rgba(19, 19, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            margin-top: auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .warning-text {
+                font-size: 1rem;
+            }
+
+            .status-card {
+                padding: 2rem 1.5rem;
+            }
+
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .social-links {
+                flex-direction: column;
+            }
+
+            .social-link {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid-overlay"></div>
+
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <i class="fas fa-bullhorn"></i>
+                Mielenosoitukset.fi
+            </a>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Finnish -->
+            <div class="lang fi">
+                <div class="status-card">
+                    <div class="status-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+
+                    <h1>Palvelu pois käytöstä</h1>
+
+                    <p class="warning-text">
+                        <strong>Palvelumme on tällä hetkellä pois käytöstä palvelunestohyökkäyksestä johtuen.</strong>
+                    </p>
+
+                    <div class="social-section">
+                        <h3><i class="fas fa-info-circle"></i> Lisätietoja someistamme</h3>
+                        <div class="social-links">
+                            <a href="https://www.instagram.com/mielenosoitukset/" class="social-link instagram"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-instagram"></i>
+                                Instagram
+                            </a>
+
+                            <a href="https://www.facebook.com/mielenosoitukset/" class="social-link facebook"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-facebook"></i>
+                                Facebook
+                            </a>
+                            <a href="https://mastodon.social/@mielenosoitukset" class="social-link mastodon"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-mastodon"></i>
+                                Mastodon
+                            </a>
+
+                            <a href="https://www.tiktok.com/@mielenosoitukset" class="social-link tiktok"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-tiktok"></i>
+                                TikTok
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="support-box">
+                        <div class="support-badge">
+                            <i class="fas fa-heart"></i>
+                            Odotellessa
+                        </div>
+                        <h3>Tue työtämme</h3>
+                        <p>
+                            Odotellessa voit tutustua Mesenaatti-kampanjaamme ja tukea demokratian puolustamista
+                            Suomessa.
+                        </p>
+                        <a href="https://mesenaatti.me/4046/_/" class="btn btn-secondary" target="_blank"
+                            rel="noopener">
+                            <i class="fas fa-heart"></i>
+                            Tutustu kampanjaan
+                        </a>
+                    </div>
+
+                    <div class="lang-toggle">
+                        <a href="#" onclick="switchLang('en'); return false;">
+                            <i class="fas fa-globe"></i>
+                            Switch to English
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- English -->
+            <div class="lang en" style="display:none;">
+                <div class="status-card">
+                    <div class="status-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+
+                    <h1>Service Unavailable</h1>
+
+                    <p class="warning-text">
+                        <strong>Our service is currently unavailable due to a DDoS attack.</strong>
+                    </p>
+
+                    <div class="social-section">
+                        <h3><i class="fas fa-info-circle"></i> More information on our social media</h3>
+                        <div class="social-links">
+                            <a href="https://www.instagram.com/mielenosoitukset/" class="social-link instagram"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-instagram"></i>
+                                Instagram
+                            </a>
+
+                            <a href="https://www.facebook.com/mielenosoitukset" class="social-link facebook" target="_blank"
+                                rel="noopener noreferrer">
+                                <i class="fab fa-facebook"></i>
+                                Facebook
+                            </a>
+                            <a href="https://mastodon.social/@mielenosoitukset" class="social-link mastodon"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-mastodon"></i>
+                                Mastodon
+                            </a>
+
+                            <a href="https://www.tiktok.com/@mielenosoitukset" class="social-link tiktok"
+                                target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-tiktok"></i>
+                                TikTok
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="support-box">
+                        <div class="support-badge">
+                            <i class="fas fa-heart"></i>
+                            While You Wait
+                        </div>
+                        <h3>Support Our Work</h3>
+                        <p>
+                            While waiting, you can check out our Mesenaatti crowdfunding campaign and support democracy
+                            in Finland.
+                        </p>
+                        <a href="https://mesenaatti.me/4046/_/" class="btn btn-secondary" target="_blank"
+                            rel="noopener">
+                            <i class="fas fa-heart"></i>
+                            View Campaign
+                        </a>
+                    </div>
+
+                    <div class="lang-toggle">
+                        <a href="#" onclick="switchLang('fi'); return false;">
+                            <i class="fas fa-globe"></i>
+                            Vaihda suomeksi
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 Mielenosoitukset.fi. Kaikki oikeudet pidätetään.</p>
+        </div>
+    </footer>
+
+    <script>
+        function switchLang(l) {
+            document.querySelector('.fi').style.display = l === 'fi' ? 'block' : 'none';
+            document.querySelector('.en').style.display = l === 'en' ? 'block' : 'none';
+            document.documentElement.lang = l;
+        }
+
+        // Auto-detect language
+        const userLang = navigator.language || navigator.userLanguage;
+        if (userLang.startsWith("en")) {
+            switchLang("en");
+        }
+    </script>
+</body>
+
+</html>

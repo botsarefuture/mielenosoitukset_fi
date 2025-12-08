@@ -51,6 +51,28 @@
             "description": "Generate edit link for demo."
         }
     ],
+    "Case Management": [
+        {
+            "name": "CREATE_CASE",
+            "description": "Create cases."
+        },
+        {
+            "name": "EDIT_CASE",
+            "description": "Edit cases."
+        },
+        {
+            "name": "DELETE_CASE",
+            "description": "Delete cases."
+        },
+        {
+            "name": "VIEW_CASE",
+            "description": "View case details."
+        },
+        {
+            "name": "LIST_CASES",
+            "description": "List all cases."
+        }
+    ],
     "User Management": [
         {
             "name": "VIEW_USER",
@@ -114,13 +136,27 @@
         }
     ],
     "API": [
-  { "name": "API_READ", "description": "Read API data." },
-  { "name": "API_WRITE", "description": "Write via API." },
-  { "name": "API_WRITE_DEMOS", "description": "Write demos via API." },
-  { "name": "API_ADMIN", "description": "Admin-level API access." }
-],
-"KAMPANJA": [
-    {"name": "KAMPANJA", "description": "KAMPANJA"}
-]
-
+        {
+            "name": "API_READ",
+            "description": "Read API data."
+        },
+        {
+            "name": "API_WRITE",
+            "description": "Write via API."
+        },
+        {
+            "name": "API_WRITE_DEMOS",
+            "description": "Write demos via API."
+        },
+        {
+            "name": "API_ADMIN",
+            "description": "Admin-level API access."
+        }
+    ],
+    "KAMPANJA": [
+        {
+            "name": "KAMPANJA",
+            "description": "KAMPANJA"
+        }
+    ]
 }

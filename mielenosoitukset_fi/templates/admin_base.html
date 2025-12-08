@@ -241,6 +241,15 @@ function confirmAction(action, taskId) {
         </li>
       {% endif %}
 
+      {# ---- New link: Tapaukset ---- #}
+      {% if current_user.has_permission("LIST_CASES") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_case.cases') }}">
+            <i class="fas fa-briefcase me-2"></i>{{ _('Tapaukset') }}
+          </a>
+        </li>
+      {% endif %}
+
       {% if current_user.has_permission("VIEW_ANALYTICS") %}
         <li class="nav-item">
           <a class="nav-link text-light" href="{{ url_for('admin.stats') }}">

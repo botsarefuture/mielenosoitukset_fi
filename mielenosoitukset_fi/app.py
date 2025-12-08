@@ -22,13 +22,14 @@ from mielenosoitukset_fi.utils.analytics import prep
 import sys
 import os
 
-from flask_autosec import FlaskAutoSec
+
 
 from mielenosoitukset_fi.utils import VERSION
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from mielenosoitukset_fi.kampanja import campaign_bp
+from mielenosoitukset_fi.notifications_bp import notif_bp
 
 import os
 
@@ -53,19 +54,12 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     
-    try:
-        security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
-        security.init_app(app)
-        
-    except Exception as e:
-        Limiter(
-            get_remote_address,
-            app=app,
-            default_limits=["86400 per day", "3600 per hour", "10 per second"],
-            storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
-        )
-        logger.error(f"Error initializing FlaskAutoSec: {e}")
-        logger.info("Using Flask-Limiter instead.")
+    Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=["86400 per day", "3600 per hour", "10 per second"],
+        storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
+    )
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching
@@ -151,6 +145,14 @@ def create_app() -> Flask:
     
     
     app.register_blueprint(campaign_bp)
+    app.register_blueprint(notif_bp)
+    from flask_babel import format_timedelta, get_locale
+    def timeago(dt):
+        from datetime import datetime
+        return format_timedelta(datetime.utcnow() - dt,
+                                locale=str(get_locale()),
+                                granularity='minute')
+    app.jinja_env.filters["timeago"] = timeago
     app.register_blueprint(board_bp)
     
     socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
@@ -191,7 +193,14 @@ def create_app() -> Flask:
         except Exception:
             return value
 
-    
+    # utils/jinja_filters.py (or similar)
+    @app.template_filter('datetimeformat')
+    def datetimeformat(value, fmt="%d.%m.%Y %H:%M"):
+        if isinstance(value, (datetime,)):
+            return value.strftime(fmt)
+        return value  # fallback
+
+        
     
 
     @app.template_filter("time")

@@ -39,22 +39,28 @@ from mielenosoitukset_fi.utils.classes import Case
 @admin_case_bp.route("/")
 @login_required
 def cases():
-    all_cases_docs = mongo.cases.find({})
-    all_cases = []
+    """List all cases, newest first."""
+    all_cases: list[Case] = []
 
-    for doc in all_cases_docs:
+    for doc in mongo.cases.find({}, sort=[("created_at", -1)]):
         case = Case.from_dict(doc)
 
-        # Attach demo object if it's a new_demo case
+        # Attach related demo if this is a “new_demo” case
         if case.case_type == "new_demo" and case.demo_id:
-            demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
-            case.demo = demo_doc if demo_doc else None
+            demo_doc = mongo.demonstrations.find_one(
+                {"_id": ObjectId(case.demo_id)},
+                {"accepted": 1, "rejected": 1, "title": 1}  # fetch only what’s needed
+            )
+            case.demo = demo_doc or None
         else:
             case.demo = None
 
         all_cases.append(case)
 
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}cases/all.html", all_cases=all_cases)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}cases/all.html",
+        all_cases=all_cases
+    )
 
 @admin_case_bp.route("/<case_id>/")
 @login_required
@@ -121,6 +127,84 @@ def add_action(case_id):
     log_admin_action_V2(f"{current_user.username} lisäsi toimenpiteen: {action_type} ({reason})", case_id)
     flash_message(_("Merkintä lisätty!"), "success")
     return redirect(url_for("admin_case.single_case", case_id=case_id))
+
+
+from flask import jsonify, request, abort
+from flask_login import login_required, current_user
+from bson import ObjectId
+from datetime import datetime
+
+@admin_case_bp.route("/<case_id>/close/", methods=["POST"])
+@login_required
+@admin_required
+def close_case(case_id):
+    case = Case.get(case_id)
+    if not case:
+        return jsonify({"success": False, "error": "Tapausta ei löydy."}), 404
+
+    reason = (request.json.get("reason") or "").strip()
+    if case.meta.get("closed", False):
+        return jsonify({"success": False, "error": "Tapaus on jo suljettu."}), 400
+    if not reason:
+        return jsonify({"success": False, "error": "Syytä ei annettu."}), 400
+
+    case._add_history_entry({
+        "timestamp": datetime.utcnow(),
+        "action": "Tapaus suljettu",
+        "user": current_user.username,
+        "mech_action": "close_case",
+        "metadata": {
+            "reason": reason,
+            "permitted_by": current_user.username
+        },
+        "meta_schema": {"reason": "string", "permitted_by": "string"}
+    })
+
+    mongo.cases.update_one(
+        {"_id": ObjectId(case_id)},
+        {"$set": {"meta.closed": True, "updated_at": datetime.utcnow()}}
+    )
+
+    flash_message(_("Tapaus suljettu."), "success")
+
+    return jsonify({"success": True, "message": "Tapaus suljettu onnistuneesti."})
+
+
+@admin_case_bp.route("/<case_id>/reopen/", methods=["POST"])
+@login_required
+@admin_required
+def reopen_case(case_id):
+    case = Case.get(case_id)
+    if not case:
+        return jsonify({"success": False, "error": "Tapausta ei löydy."}), 404
+
+    reason = (request.json.get("reason") or "").strip()
+    if not case.meta.get("closed", False):
+        return jsonify({"success": False, "error": "Tapaus ei ole suljettu."}), 400
+    if not reason:
+        return jsonify({"success": False, "error": "Syytä ei annettu."}), 400
+
+    case._add_history_entry({
+        "timestamp": datetime.utcnow(),
+        "action": "Tapaus avattu uudelleen",
+        "user": current_user.username,
+        "mech_action": "reopen_case",
+        "metadata": {
+            "reason": reason,
+            "permitted_by": current_user.username
+        },
+        "meta_schema": {"reason": "string", "permitted_by": "string"}
+    })
+
+    mongo.cases.update_one(
+        {"_id": ObjectId(case_id)},
+        {"$set": {"meta.closed": False, "updated_at": datetime.utcnow()}}
+    )
+
+    flash_message(_("Tapaus avattu uudelleen."), "success")
+
+    return jsonify({"success": True, "message": "Tapaus avattu uudelleen onnistuneesti."})
+
 
 
 # --- Update demo info ---

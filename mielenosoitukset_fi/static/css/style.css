@@ -350,9 +350,12 @@ footer {
   box-sizing: content-box;
 }
 
-span i {
+span i,
+.org-edit-form i.fa-solid  {
   margin-right: 0.5em;
 }
+
+
 
 .location i,
 .city i {
@@ -897,3 +900,9 @@ header .container {
 .modal-backdrop { z-index: 1000001 !important; }
 .modal { z-index: 1000002 !important; }
 */
+
+.mobile-menu-toggle i.fa-solid,
+.mobile-close i.fa-solid {
+  margin-right: 0px !important;
+}
+

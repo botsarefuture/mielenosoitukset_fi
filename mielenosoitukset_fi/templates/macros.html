@@ -8,7 +8,7 @@
   {% endif %}
 
   {# --- Card Image --- #}
-  {% set image_url = attr_or_get(demo, 'img', 'cover_image', 'preview_image') %}
+  {% set image_url = attr_or_get(demo, 'cover_image', 'preview_image', 'img') %}
   {% if image_url %}
   <div class="demo-card-image">
     <img src="{{ image_url }}" alt="{{ demo['title'] }}">
@@ -22,11 +22,26 @@
   <div class="demo-card-details">
     <div class="demo-card-date-time">
       <span><i class="fa-regular fa-calendar"></i> {{ demo['date'] | date('%d.%m.%Y') }}</span>
-      <span><i class="fa-regular fa-clock"></i> {{ demo['start_time'] | time('%H:%M') }} - {{ demo['end_time'] |
-        time('%H:%M') }}</span>
+      <span><i class="fa-regular fa-clock"></i> 
+        {% if demo.start_time and not demo.end_time %}
+        {{ demo['start_time'] | time('%H:%M') }} alkaen
+        {% elif demo.start_time and demo.end_time %}
+        {{ demo['start_time'] | time('%H:%M') }}
+        - {{ demo['end_time'] |time('%H:%M') }}
+        {% endif %}
+      </span>
+
     </div>
 
-    {# --- Tags / Topics --- #}
+
+
+    {# --- Location --- #}
+    <div class="demo-card-location-row">
+      <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
+      <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
+    </div>
+
+        {# --- Tags / Topics --- #}
     <div class="demo-card-topics">
       <ul>
         {% if demo['tags'] %}
@@ -37,12 +52,6 @@
         <li><span class="demo-card-tag">#{{ _('EiAiheita') }}</span></li>
         {% endif %}
       </ul>
-    </div>
-
-    {# --- Location --- #}
-    <div class="demo-card-location-row">
-      <span><i class="fa-solid fa-city"></i> {{ demo['city'] }}</span>
-      <span><i class="fa-solid fa-location-dot"></i> {{ demo['address'] }}</span>
     </div>
   </div>
 </article>

@@ -9,8 +9,10 @@ from functools import wraps
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
 from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
+from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
 from mielenosoitukset_fi.utils.tokens import (
     TOKENS_COLLECTION,
@@ -212,7 +214,8 @@ def list_demonstrations():
     
 
     search = get_param("search")
-    city = get_param("city")
+    raw_city = request.args.get("city", "").strip()
+    city_list = [c.strip().casefold() for c in raw_city.split(",") if c.strip()]
     title = get_param("title")
     tag = get_param("tag")
     recurring = get_param("recurring")
@@ -285,7 +288,7 @@ def list_demonstrations():
 
         if (
             (not search or search in title_text)
-            and (not city or city in city_text)
+            and (not city_list or city_text in city_list)
             and (not title or title in title_text)
             and (not tag or tag in tags_text)
         ):
@@ -639,75 +642,90 @@ def friends_attending():
 @api_bp.route("/user/friends/")
 def friends():
     return redirect(url_for("users.profile.api_friends_list"))
+
 @api_bp.route("/demonstrations/<demo_id>/invite", methods=["POST"])
 @login_required
 def invite_friends(demo_id):
     """
-    Invite friends to a demo.
-    Expects JSON body: { "friend_ids": ["id1", "id2", ...] }
+    Invite friends to a demo and generate:
+      • notification bell entry   (notifications collection)
+      • chat message              (existing behaviour)
+    Body: { "friend_ids": ["id1", "id2", ...] }
     """
     try:
-        user_id = current_user._id  # current logged-in user
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         friend_ids = data.get("friend_ids", [])
         if not friend_ids:
             return jsonify({"error": "No friends provided"}), 400
 
         demo_obj_id = ObjectId(demo_id)
-        demo_doc = mongo.demonstrations.find_one({"_id": demo_obj_id})
-        demo_title = demo_doc.get("title", "Demo") if demo_doc else "Demo"
+        demo_doc    = mongo.demonstrations.find_one({"_id": demo_obj_id}) or {}
+        demo_title  = demo_doc.get("title") or "Demo"
 
-        inserted = []
+        inviter_id   = current_user._id
+        inviter_user = mongo.users.find_one({"_id": ObjectId(inviter_id)})
+        inviter_name = inviter_user.get("displayname") or inviter_user.get("username")
+
+        socketio = current_app.extensions["socketio"]
+        inserted  = []
+
         for fid in friend_ids:
-            # 1. Insert invite if not already there
-            existing = demo_invites_collection.find_one({
-                "demo_id": demo_obj_id,
-                "inviter_id": user_id,
-                "friend_id": fid
-            })
-            if existing:
+            fid_obj = ObjectId(fid)
+
+            # ───── Avoid duplicates ──────────────────────────────────────────
+            if demo_invites_collection.find_one(
+                {"demo_id": demo_obj_id, "inviter_id": inviter_id, "friend_id": fid_obj}
+            ):
                 continue
 
-            doc = {
-                "demo_id": demo_obj_id,
-                "inviter_id": user_id,
-                "friend_id": fid,
-                "created_at": datetime.utcnow()
-            }
-            demo_invites_collection.insert_one(doc)
+            # (1) Persist invite
+            demo_invites_collection.insert_one({
+                "demo_id":   demo_obj_id,
+                "inviter_id": inviter_id,
+                "friend_id":  fid_obj,
+                "created_at": datetime.utcnow(),
+            })
             inserted.append(fid)
 
-            # 2. Also create a chat message of type "invitation"
-            inviter_user = mongo.users.find_one({"_id": ObjectId(user_id)})
+            # (2) Bell-notification
+            create_notification(
+                user_id=fid,
+                n_type="demo_invite",
+                payload={
+                    "demo_title": demo_title,
+                    "inviter_name": inviter_name,
+                },
+                link=f"/demonstration/{demo_id}"
+            )
+
+            # (3) Chat message – unchanged
             msg = {
-                "sender_id": ObjectId(user_id),
-                "recipient_id": ObjectId(fid),
-                "type": "invitation",
-                "content": None,
+                "sender_id":     inviter_id,
+                "recipient_id":  fid_obj,
+                "type":          "invitation",
+                "content":       None,
                 "extra": {
                     "invitation_type": "demonstration",
-                    "demo_id": str(demo_obj_id),
+                    "demo_id":   demo_id,
                     "demo_title": demo_title,
-                    "inviter_name": inviter_user.get("displayname") or inviter_user.get("username"),
+                    "inviter_name": inviter_name,
                 },
                 "created_at": datetime.utcnow(),
-                "read": False
+                "read": False,
             }
             msg_id = mongo.messages.insert_one(msg).inserted_id
             msg["_id"] = msg_id
 
-            # 3. Emit to both inviter & invitee via Socket.IO
-            from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
             serialized = serialize_message(msg)
-            socketio = current_app.extensions['socketio']
-            socketio.emit("new_message", {"message": serialized}, room=str(user_id))
+            socketio.emit("new_message", {"message": serialized}, room=str(inviter_id))
             socketio.emit("new_message", {"message": serialized}, room=str(fid))
 
         return jsonify({
             "demo_id": demo_id,
             "invited_friends": inserted,
-            "message": f"Invited {len(inserted)} friends and sent invitations as messages."
+            "message": f"Invited {len(inserted)} friends; notifications + messages sent."
         })
 
     except Exception as e:
+        current_app.logger.exception("Invite failed")
         return jsonify({"error": str(e)}), 500

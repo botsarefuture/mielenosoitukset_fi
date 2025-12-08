@@ -1122,3 +1122,87 @@ def user_info_api():
     }
 
     return jsonify({"status": "success", "user_info": user_info})
+
+
+# ── users/auth/api additions ──────────────────────────────────────────────────
+from datetime import datetime
+from werkzeug.security import check_password_hash
+
+# ── 1A.  Login-logs feed ─────────────────────────────────────────────────────
+@auth_bp.route("/api/v2/login_logs")
+@login_required
+def api_login_logs():
+    """
+    Return latest login attempts for the current user.
+      GET  /users/auth/api/v2/login_logs?limit=25
+    """
+    limit = int(request.args.get("limit", 20))
+    cursor = (mongo.login_logs
+                    .find({"user_id": current_user._id})
+                    .sort("timestamp", -1)
+                    .limit(limit))
+    logs = []
+    for row in cursor:
+        logs.append({
+            "time":   row["timestamp"].isoformat(),
+            "ip":     row.get("ip"),
+            "ua":     row.get("user_agent", "")[:120],
+            "ok":     row["success"],
+            "reason": row.get("reason", "")
+        })
+    return jsonify({"status": "success", "logs": logs})
+
+
+# ── 1B.  Change-password endpoint for Settings page ──────────────────────────
+@auth_bp.route("/api/v2/change_password", methods=["POST"])
+@login_required
+def api_change_password():
+    """
+    JSON-only password change:
+    {
+      "current": "<current pw>",
+      "new":     "<new pw>",
+      "confirm": "<repeat>"
+    }
+    """
+    data = request.get_json(force=True)
+    cur, new, confirm = data.get("current"), data.get("new"), data.get("confirm")
+
+    if not all((cur, new, confirm)):
+        return jsonify({"status": "error",
+                        "message": "All fields required."}), 400
+    if new != confirm:
+        return jsonify({"status": "error",
+                        "message": "Passwords do not match."}), 400
+    if not current_user.check_password(cur):
+        return jsonify({"status": "error",
+                        "message": "Current password is wrong."}), 400
+    if not is_strong_password(new,
+                              username=current_user.username,
+                              email=current_user.email):
+        return jsonify({"status": "error",
+                        "message": "Password too weak."}), 400
+
+    # actually change & log
+    current_user._change_password(new)
+    mongo.password_changes.insert_one({
+        "user_id": current_user._id,
+        "datetime": datetime.utcnow(),
+        "ip": request.remote_addr,
+        "user_agent": request.headers.get("User-Agent", ""),
+        "method": "settings_page",
+        "changed": True
+    })
+
+    # optional mail
+    try:
+        email_sender.queue_email(
+            template_name="auth/password_changed.html",
+            subject="Salasanasi on vaihdettu",
+            recipients=[current_user.email],
+            context={"user_name": current_user.displayname or current_user.username},
+        )
+    except Exception:
+        pass
+
+    return jsonify({"status": "success", "message": "OK"})

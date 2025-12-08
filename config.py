@@ -124,6 +124,13 @@ class Config:
     # Admin stuff
     ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club")  # Admin email address
 
+    # Redis / Cache Configuration
+    CACHE_TYPE = config.get("CACHE_TYPE", "SimpleCache")
+    CACHE_DEFAULT_TIMEOUT = config.get("CACHE_DEFAULT_TIMEOUT", 300)
+    CACHE_REDIS_HOST = config.get("REDIS_HOST", "localhost")
+    CACHE_REDIS_PORT = config.get("REDIS_PORT", 6379)
+    CACHE_REDIS_DB = config.get("REDIS_DB", 0)
+    
     @classmethod
     def init_config(cls) -> None:
         """Initialize configuration and log validation messages.

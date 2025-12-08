@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify, render_template
 from flask_login import login_required, current_user
 
-from utils.notifications import (
+from mielenosoitukset_fi.utils.notifications import (
     fetch_notifications,
     mark_all_read,
     serialize_notification,

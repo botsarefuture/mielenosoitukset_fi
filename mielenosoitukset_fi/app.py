@@ -22,7 +22,7 @@ from mielenosoitukset_fi.utils.analytics import prep
 import sys
 import os
 
-from flask_autosec import FlaskAutoSec
+
 
 from mielenosoitukset_fi.utils import VERSION
 
@@ -54,19 +54,12 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     
-    try:
-        security = FlaskAutoSec(app.config.get("ENFORCE_RATELIMIT", True))
-        security.init_app(app)
-        
-    except Exception as e:
-        Limiter(
-            get_remote_address,
-            app=app,
-            default_limits=["86400 per day", "3600 per hour", "10 per second"],
-            storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
-        )
-        logger.error(f"Error initializing FlaskAutoSec: {e}")
-        logger.info("Using Flask-Limiter instead.")
+    Limiter(
+        get_remote_address,
+        app=app,
+        default_limits=["86400 per day", "3600 per hour", "10 per second"],
+        storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
+    )
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching

@@ -58,7 +58,7 @@ def create_app() -> Flask:
         get_remote_address,
         app=app,
         default_limits=["86400 per day", "3600 per hour", "10 per second"],
-        storage_uri=f"{app.config['MONGO_URI']}/mielenosoitukset_fi.limiter",
+        storage_uri=app.config['MONGO_URI'],
     )
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy

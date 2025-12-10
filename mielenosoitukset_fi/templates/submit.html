@@ -119,27 +119,27 @@
 
   @media screen and (max-width: 768px) {
     .progress-container {
-    background: var(--color-card-bg);
-    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0px 0px;
-    padding: 2rem 1rem;
-    padding-bottom: 1rem;
-    margin: 0px;
-    
-    box-shadow: var(--color-shadow);
-    border: 1px solid var(--color-border);
-    display: fixed;
-    margin-bottom: 0px;
-    position: absolute;
-    bottom: 0;
-    display: block;
-    z-index: 200;
-    width: 100vw;
-    left: 0;
-    height: min-content;
-    /* ignore touch and click events */
-    pointer-events: none;
+      background: var(--color-card-bg);
+      border-radius: var(--border-radius-lg) var(--border-radius-lg) 0px 0px;
+      padding: 2rem 1rem;
+      padding-bottom: 1rem;
+      margin: 0px;
 
-  }
+      box-shadow: var(--color-shadow);
+      border: 1px solid var(--color-border);
+      display: fixed;
+      margin-bottom: 0px;
+      position: absolute;
+      bottom: 0;
+      display: block;
+      z-index: 200;
+      width: 100vw;
+      left: 0;
+      height: min-content;
+      /* ignore touch and click events */
+      pointer-events: none;
+
+    }
   }
 
   .progress-steps {
@@ -175,7 +175,7 @@
     z-index: 2;
     flex: 1;
   }
-  
+
   @media screen and (max-width: 768px) {
     .progress-step {
       font-size: 0.75rem;
@@ -247,7 +247,7 @@
     border: 1px solid var(--color-border);
     position: relative;
     overflow: hidden;
-    
+
   }
 
   form.form-container {
@@ -492,6 +492,7 @@
     align-items: center;
     gap: 0.5rem;
   }
+
   .btn-remove {
     display: inline-flex;
     align-items: center;
@@ -514,7 +515,7 @@
     border-color: #ff1f2d;
     color: #fff;
     transform: translateY(-6px) scale(1.06) rotate(-1deg);
-    box-shadow: 0 12px 24px rgba(255,31,45,0.18), 0 4px 10px rgba(255,77,79,0.12);
+    box-shadow: 0 12px 24px rgba(255, 31, 45, 0.18), 0 4px 10px rgba(255, 77, 79, 0.12);
     transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1), box-shadow 0.35s ease, background 0.35s ease, border-color 0.35s ease, color 0.2s ease;
   }
 
@@ -677,9 +678,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
+  }
 
-.cache-notice button {
+  .cache-notice button {
     background: #ff8dbf;
     border: none;
     padding: 6px 12px;
@@ -687,11 +688,11 @@
     cursor: pointer;
     color: white;
     font-weight: 600;
-}
+  }
 
-.hidden {
+  .hidden {
     display: none;
-}
+  }
 
 
   /* Validation Messages */
@@ -887,7 +888,7 @@
   });
 
   // Form submission
-  document.getElementById("submit-form").addEventListener("click", async (event) => {
+  document.getElementById("myForm").addEventListener("submit", async (event) => {
     event.preventDefault();
 
     // render the editor content to hidden input on form submit
@@ -899,12 +900,15 @@
       return;
     }
 
-    const submitBtn = event.target;
+    const submitBtn = document.getElementById("submit-form");
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
-
-    const editorData = editor.getData();
-    document.getElementById("description").value = editorData;
+    editorData = "";
+    try {
+      const editorData = quill.root.innerHTML;
+    } finally {
+      document.getElementById("description").value = editorData;
+    }
 
     const form = document.querySelector("form");
     const formData = new FormData(form);
@@ -919,8 +923,8 @@
       if (response.status >= 300 && response.status < 400) {
         showPage(5); // Show success page
         Object.keys(localStorage).forEach(key => {
-        if (key.startsWith("form_")) localStorage.removeItem(key);
-    });
+          if (key.startsWith("form_")) localStorage.removeItem(key);
+        });
       } else {
         alert("ERROR!");
       }
@@ -962,10 +966,10 @@
     </div>
   </section>
 
-<div id="cacheNotice" class="cache-notice hidden">
-    Lomake ladattiin automaattisesti tallennetuista tiedoista 💾  
+  <div id="cacheNotice" class="cache-notice hidden">
+    Lomake ladattiin automaattisesti tallennetuista tiedoista 💾
     <button id="resetCacheBtn" type="button">Tyhjennä ja aloita alusta</button>
-</div>
+  </div>
 
 
   <!-- Progress Bar -->
@@ -1062,8 +1066,6 @@
 
           <!-- include quill library -->
           <style>
-            
-
             .ql-editor {
               /* use all the available height */
               height: 100%;
@@ -1115,7 +1117,7 @@
           </button>
           <script>
             // when loading from cache, show the preview if image is present
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
               const imageInput = document.getElementById('image');
               const preview = document.getElementById('image-preview');
               if (imageInput.files.length > 0) {
@@ -1133,10 +1135,10 @@
 
         {% include 'cropper-modal.html' %}
 
-      <!-- cropperjs -->
- 
-      <!-- after image preview is shown -->
-     <!--<script>
+        <!-- cropperjs -->
+
+        <!-- after image preview is shown -->
+        <!--<script>
         let cropper;
         document.addEventListener('DOMContentLoaded', function () {
           const imagePreview = document.getElementById('image-preview');
@@ -1150,7 +1152,7 @@
         });
         });
       </script>-->
-  <!--
+        <!--
 <script type="module">
 import Cropper from 'https://cdn2.mielenosoitukset.fi/cropperjs/cropper.esm.min.js';
 
@@ -1450,7 +1452,8 @@ function inSelection(selection, maxSelection) {
               placeholder="{{ _('Kuvaile marssin reitti pilkuilla eroteltuna, esim. Rautatientori, Mannerheimintie, Eduskuntatalo') }}"></textarea>
             <div class="helper-text">
               <i class="fa-solid fa-route"></i>
-              {{ _('Anna osallistujille käsitys marssin kulusta. Erota kadunnimet pilkulla (,) — näin voimme renderöidä ne demo-sivulla.') }}
+              {{ _('Anna osallistujille käsitys marssin kulusta. Erota kadunnimet pilkulla (,) — näin voimme renderöidä
+              ne demo-sivulla.') }}
             </div>
           </div>
 
@@ -1473,25 +1476,25 @@ function inSelection(selection, maxSelection) {
               const empty = document.getElementById('route-preview-empty');
 
               function escapeHtml(str) {
-          return str.replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;')
-              .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#39;');
+                return str.replace(/&/g, '&amp;')
+                  .replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;')
+                  .replace(/"/g, '&quot;')
+                  .replace(/'/g, '&#39;');
               }
 
               function renderPreview() {
-          const raw = textarea.value || '';
-          // somehow lets also include fullwidth commas and newlines as separators
-          const items = raw.split(/[,]+/).map(s => s.trim()).filter(Boolean);
-          if (items.length === 0) {
-            list.style.display = 'none';
-            empty.style.display = 'block';
-          } else {
-            list.innerHTML = items.map(i => `<li>${escapeHtml(i)}</li>`).join('');
-            list.style.display = 'block';
-            empty.style.display = 'none';
-          }
+                const raw = textarea.value || '';
+                // somehow lets also include fullwidth commas and newlines as separators
+                const items = raw.split(/[,]+/).map(s => s.trim()).filter(Boolean);
+                if (items.length === 0) {
+                  list.style.display = 'none';
+                  empty.style.display = 'block';
+                } else {
+                  list.innerHTML = items.map(i => `<li>${escapeHtml(i)}</li>`).join('');
+                  list.style.display = 'block';
+                  empty.style.display = 'none';
+                }
               }
 
               textarea.addEventListener('input', renderPreview);
@@ -1506,18 +1509,15 @@ function inSelection(selection, maxSelection) {
           <label for="address">
             {{ _('Katuosoite / paikannimi') }}<span class="required-asterisk">*</span>
           </label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            placeholder="{{ _('esim. Mannerheimintie 1, 00100 tai Eduskuntatalo') }}"
-            required
+          <input type="text" id="address" name="address"
+            placeholder="{{ _('esim. Mannerheimintie 1, 00100 tai Eduskuntatalo') }}" required
             pattern="^.+(?:,\s*\d{3,5})?$"
-            title="{{ _('Muoto: esim. Mannerheimintie 1, 00100 tai paikka kuten Eduskuntatalo. Älä lisää paikkakuntaa.') }}"
-          />
+            title="{{ _('Muoto: esim. Mannerheimintie 1, 00100 tai paikka kuten Eduskuntatalo. Älä lisää paikkakuntaa.') }}" />
           <div class="helper-text">
             <i class="fa-solid fa-map-marker-alt"></i>
-            {{ _('Anna katuosoite tai pelkkä paikannimi (esim. "Eduskuntatalo"). Voit lisätä postinumeron pilkun jälkeen, esim. "Mannerheimintie 1, 00100". Älä lisää paikkakuntaa, se lisätään automaattisesti paikkakuntavalinnan perusteella.') }}
+            {{ _('Anna katuosoite tai pelkkä paikannimi (esim. "Eduskuntatalo"). Voit lisätä postinumeron pilkun
+            jälkeen, esim. "Mannerheimintie 1, 00100". Älä lisää paikkakuntaa, se lisätään automaattisesti
+            paikkakuntavalinnan perusteella.') }}
           </div>
         </div>
 
@@ -1640,16 +1640,13 @@ function inSelection(selection, maxSelection) {
             {{ _('Edellinen') }}
           </button>
           <div class="btn-nav-spacer"></div>
-          <button type="button" id="submit-form" class="btn btn-success">
-            <i class="fa-solid fa-paper-plane"></i>
-            {{ _('Lähetä ilmoitus') }}
-          </button>
+
 
           <!-- submit btn -->
           <button type="submit" id="submit-form" class="btn btn-success">
             <i class="fa-solid fa-paper-plane"></i>
             {{ _('Lähetä ilmoitus') }}
-          </buttoAAAn>
+          </button>
         </div>
       </div>
 
@@ -1710,72 +1707,77 @@ function inSelection(selection, maxSelection) {
 <script>
   document.querySelectorAll("input, select, textarea").forEach(el => {
     el.addEventListener("input", () => {
-        localStorage.setItem(`form_${el.name}`, el.value);
+      if (el.type === "file") return;   // DO NOT STORE FILE INPUTS
+      localStorage.setItem(`form_${el.name}`, el.value);
     });
-});
+  });
 
-document.querySelectorAll("input, select, textarea").forEach(el => {
+  document.querySelectorAll("input, select, textarea").forEach(el => {
     const saved = localStorage.getItem(`form_${el.name}`);
+    if (el.type === "file") {
+      // never restore files from cache
+      return;
+    }
     if (saved !== null) {
-        el.value = saved;
+      el.value = saved;
     } else {
       if (el.type === "checkbox" || el.type === "radio") {
-          el.checked = false; // ensure unchecked if nothing saved
+        el.checked = false; // ensure unchecked if nothing saved
       } else {
         el.value = ""; // ensure empty if nothing saved, so that it does not pull from browser autofill
         // this helps with checkboxes/radio buttons too
       }
     }
-});
+  });
 
-// Check if there is ANY form data stored
-function formCacheExists() {
+  // Check if there is ANY form data stored
+  function formCacheExists() {
     return Object.keys(localStorage).some(key => key.startsWith("form_") && key !== "form_step"); // form step is not form data
-}
+  }
 
-// Show notice if cached
-window.addEventListener("DOMContentLoaded", () => {
+  // Show notice if cached
+  window.addEventListener("DOMContentLoaded", () => {
     const notice = document.getElementById("cacheNotice");
 
     if (formCacheExists()) {
-        notice.classList.remove("hidden");
+      notice.classList.remove("hidden");
     } else {
-        notice.classList.add("hidden");
+      notice.classList.add("hidden");
 
-        // Clear any step info if no form data
-        localStorage.removeItem("form_step");
-        // clear all form data // set value to "" in form
-        formData = document.querySelectorAll("input, select, textarea");
-        formData.forEach(el => {
-            localStorage.removeItem(`form_${el.name}`);
-            el.value = "";
-        });
+      // Clear any step info if no form data
+      localStorage.removeItem("form_step");
+      // clear all form data // set value to "" in form
+      formData = document.querySelectorAll("input, select, textarea");
+      formData.forEach(el => {
+        localStorage.removeItem(`form_${el.name}`);
+        el.value = "";
+      });
     }
 
     const savedStep = localStorage.getItem("form_step");
-if (savedStep) {
-    showPage(parseInt(savedStep));
-}
+    if (savedStep) {
+      showPage(parseInt(savedStep));
+    }
 
-});
+  });
 
-// Reset function
-document.getElementById("resetCacheBtn")?.addEventListener("click", () => {
+  // Reset function
+  document.getElementById("resetCacheBtn")?.addEventListener("click", () => {
     Object.keys(localStorage).forEach(key => {
-        if (key.startsWith("form_")) localStorage.removeItem(key);
+      if (key.startsWith("form_")) localStorage.removeItem(key);
     });
 
     localStorage.removeItem("form_step");
 
     // reload page clean
     location.reload();
-});
+  });
 
 
 
-document.getElementById("myForm").addEventListener("submit", () => {
-    
-});
+  document.getElementById("myForm").addEventListener("submit", () => {
+
+  });
 
 
 </script>

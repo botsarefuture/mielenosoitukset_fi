@@ -239,7 +239,7 @@ def trigger_cancellation_notifications(demo_doc: dict) -> None:
         try:
             email_sender.queue_email(
                 template_name="demo_cancelled_notification.html",
-                subject="Mielenosoitus on peruttu",
+                subject=f"Mielenosoitus peruttu: {context['title']}",
                 recipients=[email],
                 context=context,
             )

@@ -1329,9 +1329,20 @@ def init_routes(app):
                 "cancelled": False,
             }
 
+        demo_date = ""
+        try:
+            date_value = demo.get("date")
+            if isinstance(date_value, datetime):
+                demo_date = date_value.strftime("%d.%m.%Y")
+            elif date_value:
+                demo_date = datetime.fromisoformat(date_value).strftime("%d.%m.%Y")
+        except (TypeError, ValueError):
+            demo_date = date_value or ""
+
         return render_template(
             "cancel_demonstration.html",
             demo=demo,
+            demo_date=demo_date,
             token_error=token_error,
             cancellation_pending=cancellation_pending,
             can_cancel_directly=can_cancel_directly,

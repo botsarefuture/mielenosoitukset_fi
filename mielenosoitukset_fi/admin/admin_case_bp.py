@@ -16,6 +16,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
+from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
 
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
@@ -87,6 +88,21 @@ def single_case(case_id):
         org = mongo.organizations.find_one({"_id": ObjectId(case.organization_id)})
         case_data["organization"] = stringify_object_ids(org) if org else {}
         case_data["suggestion"] = case.suggestion
+
+    elif case.case_type in {"demo_cancellation_request", "demo_cancelled"} and case.demo_id:
+        demo = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
+        case_data["demo"] = stringify_object_ids(demo) if demo else {}
+        case_data["cancellation"] = {
+            "reason": (case.meta or {}).get("reason")
+            or (demo or {}).get("cancellation_reason"),
+            "requested_at": (demo or {}).get("cancellation_requested_at"),
+            "requested_by": (demo or {}).get("cancellation_requested_by")
+            or (case.meta or {}).get("requested_by"),
+            "source": (demo or {}).get("cancellation_request_source")
+            or (case.meta or {}).get("source"),
+            "cancelled": bool((demo or {}).get("cancelled")),
+            "cancelled_at": (demo or {}).get("cancelled_at"),
+        }
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}cases/case.html",
@@ -346,6 +362,71 @@ def demo_action(case_id):
 
     flash_message(_(action_reason), "success")
     return jsonify({"success": True, "status": response_status})
+
+
+@admin_case_bp.route("/<case_id>/approve_cancellation", methods=["POST"])
+@login_required
+@admin_required
+def approve_cancellation(case_id):
+    case = Case.get(case_id)
+    if not case or case.case_type != "demo_cancellation_request" or not case.demo_id:
+        abort(404)
+
+    demo = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitusta ei löydy."}), 404
+
+    if demo.get("cancelled"):
+        return jsonify({"success": True, "status": "already_cancelled"})
+
+    payload = request.get_json(silent=True) or {}
+    reason = (payload.get("reason") or demo.get("cancellation_reason") or case.meta.get("reason"))
+
+    try:
+        cancel_demo(
+            demo,
+            cancelled_by={
+                "user": current_user.username,
+                "source": "admin_case",
+                "official_contact": True,
+            },
+            reason=reason,
+            create_case=False,
+        )
+    except Exception:
+        logger.exception("Failed to approve cancellation for case %s", case_id)
+        return jsonify({"success": False, "error": "Peruutuksen hyväksyntä epäonnistui."}), 500
+
+    timestamp = datetime.utcnow()
+    mongo.cases.update_one(
+        {"_id": case._id},
+        {
+            "$set": {
+                "meta.closed": True,
+                "meta.cancellation_status": "accepted",
+                "meta.resolved_by": current_user.username,
+                "updated_at": timestamp,
+            },
+            "$push": {
+                "case_history": {
+                    "timestamp": timestamp,
+                    "action": "cancellation_accepted",
+                    "mech_action": "approve_cancellation",
+                    "user": current_user.username,
+                    "metadata": {"reason": reason},
+                },
+                "action_logs": {
+                    "user": current_user.username,
+                    "action_type": "approve_cancellation",
+                    "reason": reason or "Hyväksytty ilman erillistä perustetta",
+                    "timestamp": timestamp,
+                },
+            },
+        },
+    )
+
+    flash_message(_("Peruutus hyväksytty ja mielenosoitus merkitty perutuksi."), "success")
+    return jsonify({"success": True, "status": "cancelled"})
 
 @admin_case_bp.route("/<case_id>/demo_escalate", methods=["POST"])
 @login_required

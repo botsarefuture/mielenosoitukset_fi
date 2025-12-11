@@ -12,6 +12,7 @@ from flask_login import current_user, login_required
 from flask_babel import _
 
 from mielenosoitukset_fi.utils.classes import Demonstration, Organizer
+from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cancellation_links_for_demo
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
@@ -1077,7 +1078,13 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
             # Insert a new demonstration
-            mongo.demonstrations.insert_one(demonstration_data)
+            insert_result = mongo.demonstrations.insert_one(demonstration_data)
+            try:
+                demo_doc = demonstration_data.copy()
+                demo_doc["_id"] = insert_result.inserted_id
+                queue_cancellation_links_for_demo(demo_doc)
+            except Exception:
+                logger.exception("Failed to queue cancellation links for demo %s", insert_result.inserted_id)
             flash_message("Mielenosoitus luotu onnistuneesti.", "success")
 
         # Redirect to the demonstration control panel on success
@@ -1652,3 +1659,39 @@ def reject_demo(demo_id):
         )
 
     return jsonify({"success": True, "message": "Mielenosoitus hylättiin!"})
+
+
+@admin_demo_api_bp.route("/<demo_id>/cancel", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def admin_cancel_demo(demo_id):
+    try:
+        demo_oid = _require_valid_objectid(demo_id)
+    except ValueError:
+        return jsonify({"success": False, "error": "Virheellinen tunniste"}), 400
+
+    demo = mongo.demonstrations.find_one({"_id": demo_oid})
+    if not demo:
+        return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+
+    reason = None
+    if request.is_json:
+        reason = request.json.get("reason")
+    else:
+        reason = request.form.get("reason")
+
+    cancelled = cancel_demo(
+        demo,
+        cancelled_by={
+            "user_id": str(current_user.id),
+            "source": "admin_api",
+            "username": getattr(current_user, "username", None),
+        },
+        reason=reason,
+    )
+
+    if not cancelled:
+        return jsonify({"success": False, "message": "Mielenosoitus on jo merkitty perutuksi."}), 200
+
+    return jsonify({"success": True, "message": "Mielenosoitus merkitty perutuksi."})

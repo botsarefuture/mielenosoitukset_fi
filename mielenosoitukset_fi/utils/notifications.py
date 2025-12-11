@@ -2,8 +2,12 @@
 from datetime import datetime
 from bson import ObjectId
 
-from mielenosoitukset_fi.utils.database import get_database_manager
+from datetime import datetime
+
+from bson import ObjectId
 from flask_babel import _
+
+from mielenosoitukset_fi.utils.database import get_database_manager
 
 mongo = get_database_manager()
 
@@ -67,6 +71,9 @@ def serialize_notification(doc: dict) -> dict:
     elif n_type == "demo_invite":
         message = _("Kutsu mielenosoitukseen: ") + payload.get("demo_title", "")
         icon = "fa-solid fa-bullhorn"
+    elif n_type == "demo_cancelled":
+        message = _("Mielenosoitus peruttu: ") + payload.get("demo_title", "")
+        icon = "fa-solid fa-ban"
     else:
         # Fallback: either explicit message field or generic info
         message = doc.get("message", "")

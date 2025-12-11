@@ -1008,6 +1008,13 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   </section>
   {% endif %}
 
+  {% if demo.cancelled %}
+  <div class="alert alert-warning d-flex align-items-center gap-2 animate-fade-in-up" role="alert">
+    <i class="fa-solid fa-ban"></i>
+    <div>{{ _('Tämä mielenosoitus on peruttu.') }}</div>
+  </div>
+  {% endif %}
+
 
   <!-- Action Buttons -->
   <div class="action-buttons animate-fade-in-up">
@@ -1016,11 +1023,18 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <i class="fa-solid fa-flag"></i>
       {{ _('Ilmoita virheestä') }}
     </button>
+    {% if demo.cancelled %}
+    <button type="button" class="btn btn-secondary" disabled>
+      <i class="fa-solid fa-bell-slash"></i>
+      {{ _('Muistutukset eivät ole saatavilla perutulle tapahtumalle') }}
+    </button>
+    {% else %}
     <button type="button" class="btn btn-primary" id="open-reminder-btn" data-bs-toggle="modal"
       data-bs-target="#reminder-modal">
       <i class="fa-solid fa-bell"></i>
       {{ _('Tilaa muistutus') }}
     </button>
+    {% endif %}
   </div>
 
   <!-- Social Share -->
@@ -1048,6 +1062,14 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   </div>
 
   <!-- Participation Card -->
+  {% if demo.cancelled %}
+  <section class="participation-card animate-fade-in-up">
+    <div class="alert alert-warning mb-0 w-100 d-flex align-items-center gap-2" role="alert">
+      <i class="fa-solid fa-ban"></i>
+      <span>{{ _('Osallistumisilmoituksia ei voi tehdä, koska mielenosoitus on peruttu.') }}</span>
+    </div>
+  </section>
+  {% else %}
   <section class="participation-card animate-fade-in-up">
     <button id="like-button" class="like-button" onclick="handleLikeClick('{{ demo['_id'] }}')" aria-pressed="false">
       <i class="fa-solid fa-thumbs-up"></i>
@@ -1067,6 +1089,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <span>{{ _('osallistujaa') }}</span>
     </div>
   </section>
+  {% endif %}
 
   <!-- Tags -->
   {% if demo["tags"] and demo["tags"]|length > 0 %}

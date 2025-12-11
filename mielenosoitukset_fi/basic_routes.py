@@ -43,6 +43,13 @@ from mielenosoitukset_fi.a import generate_demo_sentence
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes import Case
+from mielenosoitukset_fi.utils.demo_cancellation import (
+    cancel_demo,
+    fetch_cancellation_token,
+    mark_token_used,
+    queue_cancellation_links_for_demo,
+    request_cancellation_case,
+)
 
 email_sender = EmailSender()
 
@@ -903,6 +910,12 @@ def init_routes(app):
             except Exception as e:
                 logger.exception("Failed to queue admin notification email: %s", e)
 
+            # --- Send organiser cancellation links ---
+            try:
+                queue_cancellation_links_for_demo(demonstration.to_dict(json=False))
+            except Exception:
+                logger.exception("Failed to queue cancellation links for demo %s", demo_id)
+
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
@@ -918,35 +931,52 @@ def init_routes(app):
         """
         Handle submission of a new error report.
         """
-        error = request.form.get("error") # Description of the error being reported
-        _type = request.form.get("type") # Type of the report (e.g., demonstration)
-        
+        error = request.form.get("error")  # Description of the error being reported
+        _type = request.form.get("type")  # Type of the report (e.g., demonstration)
+        mark_cancelled = bool(request.form.get("mark_cancelled"))
+        reporter_email = (request.form.get("reporter_email") or "").strip() or None
+
+        demo_oid = None
+        try:
+            demo_oid = ObjectId(request.form.get("demo_id")) if request.form.get("demo_id") else None
+        except Exception:
+            demo_oid = None
+
         if _type:
             if _type == "demonstration":
-                mongo.reports.insert_one(
-                    {
-                        "error": error,
-                        "demo_id": ObjectId(request.form.get("demo_id")),
-                        "date": datetime.now(),
-                        "user": (
-                            ObjectId(current_user._id)
-                            if current_user.is_authenticated
-                            else None
-                        ),
-                        "ip": request.remote_addr,
-                    }
-                    )
-                
+                report_doc = {
+                    "error": error,
+                    "demo_id": demo_oid,
+                    "date": datetime.now(),
+                    "user": (
+                        ObjectId(current_user._id)
+                        if current_user.is_authenticated
+                        else None
+                    ),
+                    "ip": request.remote_addr,
+                }
+                if mark_cancelled:
+                    report_doc["cancelled_reported"] = True
+                if reporter_email:
+                    report_doc["reporter_email"] = reporter_email
+                mongo.reports.insert_one(report_doc)
+
             # new case from report
             try:
                 Case.create_new(
                     case_type="demo_error_report",
-                    demo_id=ObjectId(request.form.get("demo_id")) if _type == "demonstration" else None,
+                    demo_id=demo_oid if _type == "demonstration" else None,
                     submitter_id=current_user._id if current_user.is_authenticated else None,
-                    meta={"urgency": "low", "report_type": _type, "error": error},
+                    meta={
+                        "urgency": "low",
+                        "report_type": _type,
+                        "error": error,
+                        "reported_cancelled": mark_cancelled,
+                        "reporter_email": reporter_email,
+                    },
                     error_report={
                         "error": error,
-                        "demo_id": ObjectId(request.form.get("demo_id")),
+                        "demo_id": demo_oid,
                         "date": datetime.now(),
                         "user": (
                             ObjectId(current_user._id)
@@ -954,9 +984,21 @@ def init_routes(app):
                             else None
                         ),
                         "ip": request.remote_addr,
+                        "reported_cancelled": mark_cancelled,
+                        "reporter_email": reporter_email,
                     }
                 )
-                
+
+                if mark_cancelled and _type == "demonstration" and demo_oid:
+                    demo_doc = mongo.demonstrations.find_one({"_id": demo_oid})
+                    if demo_doc:
+                        request_cancellation_case(
+                            demo_doc,
+                            reason=error,
+                            requester_email=reporter_email,
+                            official_contact=False,
+                            source="user_report",
+                        )
             except Exception as e:
                 logger.exception("Failed to create case from error report: %s", e)
 
@@ -967,6 +1009,8 @@ def init_routes(app):
                     "date": datetime.now(),
                     "user": current_user._id if current_user.is_authenticated else None,
                     "ip": request.remote_addr,
+                    "reported_cancelled": mark_cancelled,
+                    "reporter_email": reporter_email,
                 }
             )
 
@@ -1213,6 +1257,78 @@ def init_routes(app):
                 logger.exception("Failed to cache demonstration_detail for %s", demo_id)
 
         return response
+
+    @app.route("/cancel_demonstration/<token>", methods=["GET", "POST"])
+    def cancel_demo_with_token(token):
+        token_error = None
+        token_doc = fetch_cancellation_token(token)
+        demo = None
+        cancellation_pending = False
+        can_cancel_directly = False
+
+        if not token_doc:
+            token_error = _("Peruutuslinkkiä ei tunnistettu.")
+        else:
+            expires_at = token_doc.get("expires_at")
+            if expires_at and expires_at < datetime.utcnow():
+                token_error = _("Peruutuslinkki on vanhentunut.")
+
+            if token_doc.get("used_at"):
+                token_error = _("Peruutuslinkki on jo käytetty.")
+
+            demo = mongo.demonstrations.find_one({"_id": token_doc.get("demo_id")})
+            if not demo:
+                token_error = _("Mielenosoitusta ei löytynyt.")
+            else:
+                cancellation_pending = bool(demo.get("cancellation_requested"))
+                can_cancel_directly = bool(token_doc.get("official_contact"))
+
+                if request.method == "POST" and not token_error:
+                    reason = (request.form.get("reason") or "").strip() or None
+
+                    try:
+                        if can_cancel_directly:
+                            cancel_demo(
+                                demo,
+                                cancelled_by={
+                                    "email": token_doc.get("organizer_email"),
+                                    "source": "organizer_link",
+                                    "official_contact": True,
+                                },
+                                reason=reason,
+                            )
+                            flash_message(_("Mielenosoitus on merkitty perutuksi."), "success")
+                        else:
+                            request_cancellation_case(
+                                demo,
+                                reason=reason,
+                                requester_email=token_doc.get("organizer_email"),
+                                official_contact=False,
+                                source="organizer_link",
+                            )
+                            flash_message(_("Peruutuspyyntö on lähetetty ylläpidolle."), "info")
+
+                        mark_token_used(token_doc.get("_id"), reason or "submitted")
+                        return redirect(url_for("demonstration_detail", demo_id=token_doc.get("demo_id")))
+                    except Exception:
+                        logger.exception("Failed to handle cancellation from token")
+                        flash_message(_("Peruutusta ei voitu käsitellä."), "error")
+
+        if not demo:
+            demo = {
+                "title": _("Mielenosoitus"),
+                "date": "",
+                "city": "",
+                "cancelled": False,
+            }
+
+        return render_template(
+            "cancel_demonstration.html",
+            demo=demo,
+            token_error=token_error,
+            cancellation_pending=cancellation_pending,
+            can_cancel_directly=can_cancel_directly,
+        )
 
     def fetch_geocode_data(demo):
         address_query = f"{demo.address}, {demo.city}"

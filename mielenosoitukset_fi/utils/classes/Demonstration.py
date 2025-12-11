@@ -821,10 +821,21 @@ class Demonstration(BaseModel):
             created_datetime=get("created_datetime"),
             last_modified=get("last_modified"),
             merged_into=get("merged_into"),
-            
-            _id=get("_id"),            
+
+            _id=get("_id"),
             running_number=get("running_number"),
             slug=get("slug"),
+
+            # Cancellation fields
+            cancellation_reason=get("cancellation_reason"),
+            cancellation_requested=get("cancellation_requested", False),
+            cancellation_requested_at=get("cancellation_requested_at"),
+            cancellation_request_source=get("cancellation_request_source"),
+            cancellation_requested_by=get("cancellation_requested_by"),
+            cancellation_case_id=get("cancellation_case_id"),
+            cancelled=get("cancelled", False),
+            cancelled_at=get("cancelled_at"),
+            cancelled_by=get("cancelled_by"),
         )
 
 

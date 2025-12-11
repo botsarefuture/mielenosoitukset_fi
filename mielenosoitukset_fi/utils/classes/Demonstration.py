@@ -162,6 +162,15 @@ class Demonstration(BaseModel):
         _dont_override: bool = False,
         _rejected: bool = False,
         cover_source: str = None,
+        cancellation_reason: str = None,
+        cancellation_requested: bool = False,
+        cancellation_requested_at=None,
+        cancellation_request_source: str = None,
+        cancellation_requested_by: dict = None,
+        cancellation_case_id=None,
+        cancelled: bool = False,
+        cancelled_at=None,
+        cancelled_by: dict = None,
     ):
         """
         Initialize a new demonstration event.
@@ -345,6 +354,16 @@ class Demonstration(BaseModel):
         self.img = img
         self.cover_picture = cover_picture
         self.cover_source = cover_source
+
+        self.cancellation_reason = cancellation_reason
+        self.cancellation_requested = cancellation_requested
+        self.cancellation_requested_at = cancellation_requested_at
+        self.cancellation_request_source = cancellation_request_source
+        self.cancellation_requested_by = cancellation_requested_by or {}
+        self.cancellation_case_id = cancellation_case_id
+        self.cancelled = cancelled
+        self.cancelled_at = cancelled_at
+        self.cancelled_by = cancelled_by or {}
         
         if not self.cover_picture:
 
@@ -802,10 +821,21 @@ class Demonstration(BaseModel):
             created_datetime=get("created_datetime"),
             last_modified=get("last_modified"),
             merged_into=get("merged_into"),
-            
-            _id=get("_id"),            
+
+            _id=get("_id"),
             running_number=get("running_number"),
             slug=get("slug"),
+
+            # Cancellation fields
+            cancellation_reason=get("cancellation_reason"),
+            cancellation_requested=get("cancellation_requested", False),
+            cancellation_requested_at=get("cancellation_requested_at"),
+            cancellation_request_source=get("cancellation_request_source"),
+            cancellation_requested_by=get("cancellation_requested_by"),
+            cancellation_case_id=get("cancellation_case_id"),
+            cancelled=get("cancelled", False),
+            cancelled_at=get("cancelled_at"),
+            cancelled_by=get("cancelled_by"),
         )
 
 

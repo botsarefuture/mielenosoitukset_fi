@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="mb-4">{{ _('Mielenosoituksen peruminen') }}</h1>
+
+  {% if token_error %}
+    <div class="alert alert-danger" role="alert">
+      {{ token_error }}
+    </div>
+  {% else %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3">{{ demo.title }}</h2>
+        <p class="mb-1"><strong>{{ _('Päivämäärä:') }}</strong> {{ demo_date }}</p>
+        <p class="mb-1"><strong>{{ _('Kaupunki:') }}</strong> {{ demo.city }}</p>
+        <p class="text-muted mb-0">{{ _('Tämä linkki on tarkoitettu mielenosoituksen järjestäjille.') }}</p>
+      </div>
+    </div>
+
+    {% if demo.cancelled %}
+      <div class="alert alert-warning" role="alert">
+        <i class="fa-solid fa-ban me-2"></i>{{ _('Mielenosoitus on jo merkitty perutuksi.') }}
+      </div>
+    {% elif cancellation_pending %}
+      <div class="alert alert-info" role="alert">
+        <i class="fa-solid fa-hourglass-half me-2"></i>{{ _('Peruutuspyyntö on jo lähetetty ylläpidolle.') }}
+      </div>
+    {% else %}
+      <div class="alert {{ 'alert-danger' if can_cancel_directly else 'alert-secondary' }}" role="alert">
+        {% if can_cancel_directly %}
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ _('Vahvista, että haluat perua mielenosoituksen välittömästi.') }}
+        {% else %}
+          <i class="fa-solid fa-envelope me-2"></i>{{ _('Tämä lomake lähettää peruutuspyynnön ylläpidolle käsiteltäväksi.') }}
+        {% endif %}
+      </div>
+
+      <form method="POST" class="card shadow-sm">
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="reason" class="form-label">{{ _('Perumisen syy (valinnainen)') }}</label>
+            <textarea id="reason" name="reason" class="form-control" rows="3" placeholder="{{ _('Kerro lyhyesti miksi mielenosoitus perutaan...') }}"></textarea>
+          </div>
+          <button type="submit" class="btn {{ 'btn-danger' if can_cancel_directly else 'btn-primary' }}">
+            {% if can_cancel_directly %}
+              <i class="fa-solid fa-ban me-1"></i>{{ _('Peruuta mielenosoitus') }}
+            {% else %}
+              <i class="fa-solid fa-paper-plane me-1"></i>{{ _('Lähetä peruutuspyyntö') }}
+            {% endif %}
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

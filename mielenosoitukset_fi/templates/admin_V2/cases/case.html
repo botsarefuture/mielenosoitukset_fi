@@ -247,6 +247,115 @@
                         </a>
                     </div>
                 </div>
+                {% elif case_type in ["demo_cancellation_request", "demo_cancelled"] %}
+                <div class="info-grid">
+                    <div class="info-box">
+                        <h3>
+                            <i class="fa-solid fa-ban"></i>
+                            {{ _('Peruutuspyyntö') }}
+                        </h3>
+
+                        <div class="info-item">
+                            <strong>{{ _('Pyynnön lähde:') }}</strong>
+                            {{ case_data.cancellation.source or _('Tuntematon') }}
+                        </div>
+
+                        <div class="info-item">
+                            <strong>{{ _('Pyytäjä:') }}</strong>
+                            {% if case_data.cancellation.requested_by %}
+                            {{ case_data.cancellation.requested_by.email or _('Ei sähköpostia') }}
+                            {% else %}
+                            {{ _('Ei tietoa') }}
+                            {% endif %}
+                        </div>
+
+                        <div class="info-item">
+                            <strong>{{ _('Pyyntö vastaanotettu:') }}</strong>
+                            {% if case_data.cancellation.requested_at %}
+                            {{ case_data.cancellation.requested_at.strftime("%d.%m.%Y %H:%M") }}
+                            {% else %}
+                            {{ _('Ei tietoa') }}
+                            {% endif %}
+                        </div>
+
+                        <div class="info-item">
+                            <strong>{{ _('Peruutuksen syy:') }}</strong><br>
+                            {{ case_data.cancellation.reason or _('Ei syytä annettu') }}
+                        </div>
+
+                        <div class="info-item">
+                            <strong>{{ _('Nykytila:') }}</strong>
+                            {% if case_data.cancellation.cancelled %}
+                            <span class="badge bg-success">{{ _('Peruttu') }}</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">{{ _('Odottaa hyväksyntää') }}</span>
+                            {% endif %}
+                        </div>
+
+                        {% if not case_data.cancellation.cancelled %}
+                        <div class="info-item">
+                            <label for="cancellation-approval-reason" class="form-label">{{ _('Sisäinen perustelu (valinnainen)') }}</label>
+                            <textarea id="cancellation-approval-reason" class="form-control" rows="3"
+                                placeholder="{{ _('Lisää lyhyt perustelu peruutukselle...') }}"></textarea>
+                        </div>
+                        <button id="approve-cancellation" class="btn btn-danger">
+                            <i class="fa-solid fa-check"></i> {{ _('Hyväksy peruutus') }}
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <div class="info-box">
+                        <h3>
+                            <i class="fa-solid fa-bullhorn"></i>
+                            {{ _('Mielenosoituksen tiedot') }}
+                        </h3>
+                        <a class="btn btn-info mb-3" href="{{ url_for('demonstration_detail', demo_id=case_data.demo._id) }}">
+                            <i class="fa-solid fa-eye"></i> {{ _('Katsele mielenosoitusta') }}
+                        </a>
+                        <div class="info-item"><strong>{{ _('Nimi:') }}</strong> {{ case_data.demo.title }}</div>
+                        <div class="info-item"><strong>{{ _('Päivämäärä:') }}</strong> {{ case_data.demo.date }}</div>
+                        <div class="info-item"><strong>{{ _('Kaupunki:') }}</strong> {{ case_data.demo.city }}</div>
+                        <div class="info-item"><strong>{{ _('Osoite:') }}</strong> {{ case_data.demo.address }}</div>
+                        <div class="info-item"><strong>{{ _('Tapahtumatyyppi:') }}</strong> {{ case_data.demo.event_type }}</div>
+                        {% if case_data.demo.tags %}
+                        <div class="info-item">
+                            <strong>{{ _('Tunnisteet:') }}</strong>
+                            {% for tag in case_data.demo.tags %}
+                            <span class="badge bg-pink text-dark px-2 py-1 rounded-pill text-sm">
+                                <a href="{{ url_for('tag_detail', tag_name=tag) }}">#{{ tag }}</a>
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const approveButton = document.getElementById('approve-cancellation');
+                        if (!approveButton) return;
+
+                        approveButton.addEventListener('click', () => {
+                            const reason = (document.getElementById('cancellation-approval-reason')?.value || '').trim();
+
+                            fetch(`/admin/case/{{ case._id }}/approve_cancellation`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ reason })
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Onnistui', '{{ _('Mielenosoitus merkitty perutuksi.') }}', 'success').then(() => location.reload());
+                                    } else {
+                                        Swal.fire('Virhe', data.error || 'Peruutuksen hyväksyntä epäonnistui.', 'error');
+                                    }
+                                })
+                                .catch(() => Swal.fire('Virhe', 'Peruutusta ei voitu käsitellä.', 'error'));
+                        });
+                    });
+                </script>
+
                 {% elif case_type == "organization_edit_suggestion" %}
                 <div class="info-box" style="margin-top: 20px;">
                     <h3>

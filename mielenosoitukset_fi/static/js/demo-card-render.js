@@ -39,6 +39,13 @@ function renderDemoCards(demoData) {
     const badgeContainer = card.querySelector('.demo-card-badges');
     badgeContainer.innerHTML = ''; // clear existing
 
+    if (demo.cancelled) {
+      const cancelledBadge = document.createElement('span');
+      cancelledBadge.className = 'demo-badge cancelled-badge';
+      cancelledBadge.textContent = 'Peruttu';
+      badgeContainer.appendChild(cancelledBadge);
+    }
+
     // 🌟 "Tänään" badge if demo is today
     const demoDateObj = new Date(demo.date);
     demoDateObj.setHours(0, 0, 0, 0); // strip time

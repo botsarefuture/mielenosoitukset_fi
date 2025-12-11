@@ -1828,8 +1828,12 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     }
 
     if (action === "inviteFriends") {
-      const demoId = '{{ demo["_id"] }}'; // or dynamically from card if needed
-      openInviteDialog(demoId);
+      const inviteBtn = document.getElementById("invite-friends-btn");
+
+      if (inviteBtn && !inviteBtn.disabled) {
+        const demoId = '{{ demo["_id"] }}'; // or dynamically from card if needed
+        openInviteDialog(demoId);
+      }
     }
 
     if (urlParams.has('action')) {

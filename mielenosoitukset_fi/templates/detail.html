@@ -1055,10 +1055,18 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       {{ _('Jaa LinkedInissä') }}
     </a>
     <!-- Invite Friends Button -->
+    {% if demo.cancelled %}
+    <button type="button" class="btn btn-social btn-secondary" id="invite-friends-btn" disabled
+      title="{{ _('Kutsut eivät ole saatavilla perutuille tapahtumille') }}">
+      <i class="fa-solid fa-user-plus"></i>
+      {{ _('Kutsu kavereita') }}
+    </button>
+    {% else %}
     <button type="button" class="btn btn-social btn-secondary" id="invite-friends-btn">
       <i class="fa-solid fa-user-plus"></i>
       {{ _('Kutsu kavereita') }}
     </button>
+    {% endif %}
   </div>
 
   <!-- Participation Card -->
@@ -2005,7 +2013,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     const dialog = document.getElementById("invite-friends-dialog");
     const inviteBtn = document.getElementById("invite-friends-btn");
 
-    if (dialog && inviteBtn) {
+    if (dialog && inviteBtn && !inviteBtn.disabled) {
       inviteBtn.onclick = () => {
         openInviteDialog(window.demoId);
       };

@@ -157,6 +157,7 @@ def format_demo_for_api(demo):
         "tags": demo.get("tags", []),
         "description": demo.get("description", ""),
         "cover_image": _get_demo_img(demo),
+        "cancelled": bool(demo.get("cancelled")),
     }
 
 def filter_demonstrations_api(
@@ -194,6 +195,8 @@ def filter_demonstrations_api(
     for demo in demonstrations:
         # Only approved and not hidden
         if not demo.get("approved", True) or demo.get("hide", False):
+            continue
+        if demo.get("cancelled"):
             continue
         try:
             demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
@@ -648,6 +651,7 @@ def init_routes(app):
                     "_id": {"$in": demo_ids},
                     "approved": True,
                     "hide": {"$ne": True},
+                    "cancelled": {"$ne": True},
                 })
             )
 
@@ -674,6 +678,7 @@ def init_routes(app):
         filtered_demonstrations = [
             demo
             for demo in demonstrations
+            if not demo.get("cancelled")
             if datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today
         ]
         filtered_demonstrations.sort(
@@ -1084,6 +1089,8 @@ def init_routes(app):
         filtered = []
         added_demo_ids = set()
         for demo in demonstrations:
+            if demo.get("cancelled"):
+                continue
             if is_future_demo(demo, today):
                 if (
                     matches_filters(

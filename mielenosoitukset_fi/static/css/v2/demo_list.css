@@ -937,6 +937,10 @@ body {
   font-weight: 700;
 }
 
+.cancelled-badge {
+  background-color: #c0392b;
+}
+
 /* Optional: smooth fade-in for badges */
 .demo-badge {
   opacity: 0;

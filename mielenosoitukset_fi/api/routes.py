@@ -257,6 +257,9 @@ def list_demonstrations():
     # --- Base query ---
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
     query = dict(DEMO_FILTER)  # clone to avoid side effects
+    include_cancelled = bool(_org_id)
+    if include_cancelled:
+        query.pop("cancelled", None)
 
     if _parent_id:
         query["parent"] = _parent_id

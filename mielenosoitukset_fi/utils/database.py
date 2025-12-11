@@ -31,7 +31,8 @@ DEMO_FILTER = {
     "$or": [
         {"rejected": {"$exists": False}},
         {"rejected": False}
-    ]
+    ],
+    "cancelled": {"$ne": True},
 }
 
 

@@ -14,6 +14,16 @@
             <label for="error" class="form-label">{{ _('Virheen kuvaus') }}</label>
             <textarea name="error" id="error" class="form-control" rows="4" placeholder="{{ _('Kuvaile virhe mahdollisimman tarkasti...') }}" required></textarea>
           </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" value="1" id="mark-cancelled" name="mark_cancelled">
+            <label class="form-check-label" for="mark-cancelled">
+              {{ _('Tämä mielenosoitus on peruttu') }}
+            </label>
+          </div>
+          <div class="mb-3">
+            <label for="reporter_email" class="form-label">{{ _('Sähköposti (valinnainen)') }}</label>
+            <input type="email" name="reporter_email" id="reporter_email" class="form-control" placeholder="nimi@esimerkki.fi">
+          </div>
           <input type="hidden" name="type" value="demonstration">
           <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
           <div class="d-flex align-items-center mb-2 processing-indicator" style="display:none;">

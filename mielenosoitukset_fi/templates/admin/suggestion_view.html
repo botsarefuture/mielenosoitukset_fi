@@ -1,0 +1,393 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<style>
+  :root {
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0033a0, #4d79cc);
+    --color-card-bg: light-dark(#ffffff, #1e1e2e);
+    --color-border: light-dark(#e2e8f0, #404050);
+    --color-shadow: light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.2));
+    --color-success: light-dark(#10b981, #10b981);
+    --color-success-bg: light-dark(rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
+    --color-danger: light-dark(#ef4444, #f87171);
+    --color-danger-hover: light-dark(#dc2626, #fca5a5);
+  }
+
+  .view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .view-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .status-badge.new {
+    background: light-dark(#dcfce7, #1f3a3a);
+    color: light-dark(#166534, #86efac);
+  }
+
+  .status-badge.applied {
+    background: light-dark(#dbeafe, #1e3a5f);
+    color: light-dark(#1e40af, #93c5fd);
+  }
+
+  .status-badge.rejected {
+    background: light-dark(#fee2e2, #3a1f1f);
+    color: light-dark(#991b1b, #fca5a5);
+  }
+
+  .info-panel {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .info-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+
+  .info-value {
+    font-size: 1rem;
+    color: var(--color-text);
+    word-break: break-all;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 2rem 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .changes-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--color-card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+  }
+
+  .changes-table thead {
+    background: var(--color-shadow);
+  }
+
+  .changes-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .changes-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .changes-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .changes-table input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+  }
+
+  .original-value {
+    background: var(--color-shadow);
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    max-height: 200px;
+    overflow-y: auto;
+    color: var(--color-text);
+  }
+
+  .suggested-value {
+    background: var(--color-success-bg);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--color-success);
+    font-family: monospace;
+    font-size: 0.9rem;
+    max-height: 200px;
+    overflow-y: auto;
+    color: var(--color-text);
+  }
+
+  .comment-box {
+    background: var(--color-card-bg);
+    border-left: 4px solid var(--color-primary);
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .actions-panel {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    margin-top: 2rem;
+  }
+
+  .btn-apply {
+    background: var(--color-success);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-apply:hover {
+    background: light-dark(#059669, #059669);
+    transform: translateY(-2px);
+  }
+
+  .btn-reject {
+    background: var(--color-danger);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-reject:hover {
+    background: var(--color-danger-hover);
+    transform: translateY(-2px);
+  }
+
+  .btn-back {
+    color: var(--color-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn-back:hover {
+    transform: translateX(-2px);
+  }
+
+  @media (max-width: 768px) {
+    .view-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .actions-panel {
+      flex-direction: column;
+    }
+
+    .actions-panel button,
+    .actions-panel a {
+      width: 100%;
+    }
+
+    .changes-table {
+      font-size: 0.9rem;
+    }
+
+    .changes-table th,
+    .changes-table td {
+      padding: 0.75rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="admin-page">
+  {% if suggestion %}
+    <div class="view-header">
+      <div>
+        <a href="{{ url_for('admin_demo.suggestions_list') }}" class="btn-back">
+          <i class="fas fa-arrow-left"></i> {{ _('Takaisin') }}
+        </a>
+        <h1 style="margin-top: 1rem;">💬 {{ _('Ehdotuksen tarkastelu') }}</h1>
+      </div>
+      <span class="status-badge {{ suggestion.status }}">
+        {% if suggestion.status == 'new' %}
+          <i class="fas fa-star me-1"></i>{{ _('Uusi') }}
+        {% elif suggestion.status == 'applied' %}
+          <i class="fas fa-check me-1"></i>{{ _('Hyväksytty') }}
+        {% elif suggestion.status == 'rejected' %}
+          <i class="fas fa-times me-1"></i>{{ _('Hylätty') }}
+        {% else %}
+          {{ suggestion.status }}
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="info-panel">
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-label">{{ _('Mielenosoitus') }}</span>
+          <span class="info-value">
+            <a href="{{ url_for('demonstration_detail', demo_id=suggestion.demo_id) }}" target="_blank" style="color: var(--color-primary);">
+              {{ suggestion.demo_id[:12] }}...
+              <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8rem;"></i>
+            </a>
+          </span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ _('Lähettäjä') }}</span>
+          <span class="info-value">{{ suggestion.reporter_email or _('Tuntematon') }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ _('Luontiaika') }}</span>
+          <span class="info-value">{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M:%S') if suggestion.created_at else '—' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">{{ _('IP-osoite') }}</span>
+          <span class="info-value">{{ suggestion.ip or '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggested Changes -->
+    {% if suggestion.suggested_fields %}
+      <h2 class="section-title">📝 {{ _('Ehdotetut muutokset') }}</h2>
+      <form method="POST" action="{{ url_for('admin_demo.suggestion_apply', suggestion_id=suggestion._id) }}">
+        <div style="overflow-x: auto; margin-bottom: 1.5rem;">
+          <table class="changes-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">{{ _('Valitse') }}</th>
+                <th style="width: 120px;">{{ _('Kenttä') }}</th>
+                <th>{{ _('Nykyinen arvo') }}</th>
+                <th>{{ _('Ehdotettu arvo') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for k, v in suggestion.suggested_fields.items() %}
+              <tr>
+                <td style="text-align: center;">
+                  <input type="checkbox" name="apply_field" value="{{ k }}" checked>
+                </td>
+                <td style="font-weight: 600; color: var(--color-primary);">{{ k }}</td>
+                <td>
+                  <div class="original-value">
+                    {% if k == 'tags' and suggestion.original_values.get(k) is iterable and suggestion.original_values.get(k) is not string %}
+                      {{ suggestion.original_values.get(k, '') | join(', ') }}
+                    {% else %}
+                      {{ suggestion.original_values.get(k, '') }}
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <div class="suggested-value">
+                    {% if k == 'tags' and v is iterable and v is not string %}
+                      {{ v | join(', ') }}
+                    {% else %}
+                      {{ v }}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="actions-panel">
+          <button type="submit" class="btn-apply">
+            <i class="fas fa-check me-2"></i>{{ _('Päivitä valitut kentät') }}
+          </button>
+        </div>
+      </form>
+    {% else %}
+      <div class="comment-box">
+        <i class="fas fa-info-circle me-2"></i>
+        {{ suggestion.suggestion or _('Ei strukturoituja ehdotuksia.') }}
+      </div>
+    {% endif %}
+
+    <!-- Reporter Comment -->
+    {% if suggestion.reporter_comment %}
+      <h2 class="section-title">💬 {{ _('Lähettäjän kommentti') }}</h2>
+      <div class="comment-box" style="border-left-color: #f59e0b;">
+        {{ suggestion.reporter_comment }}
+      </div>
+    {% endif %}
+
+    <!-- Reject Action -->
+    <div style="margin-top: 2rem;">
+      <h2 class="section-title">⚙️ {{ _('Muut toiminnot') }}</h2>
+      <form method="POST" action="{{ url_for('admin_demo.suggestion_status_update', suggestion_id=suggestion._id) }}">
+        <input type="hidden" name="status" value="rejected" />
+        <button type="submit" class="btn-reject" onclick="return confirm('{{ _('Oletko varma että haluat hylätä tämän ehdotuksen?') }}')">
+          <i class="fas fa-ban me-2"></i>{{ _('Hylkää ehdotus') }}
+        </button>
+      </form>
+    </div>
+
+  {% else %}
+    <div style="text-align: center; padding: 3rem;">
+      <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i>
+      <h2>{{ _('Ehdotusta ei löytynyt') }}</h2>
+      <p class="text-muted">{{ _('Pyydetty ehdotus ei ole olemassa tai se on poistettu.') }}</p>
+      <a href="{{ url_for('admin_demo.suggestions_list') }}" class="btn btn-primary mt-3">
+        {{ _('Takaisin ehdotuksiin') }}
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

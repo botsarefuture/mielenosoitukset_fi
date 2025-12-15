@@ -233,6 +233,14 @@ function confirmAction(action, taskId) {
         </li>
       {% endif %}
 
+      {% if current_user.has_permission("EDIT_DEMO") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_demo.suggestions_list') }}">
+            <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
+          </a>
+        </li>
+      {% endif %}
+
       {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
         <li class="nav-item">
           <a class="nav-link text-light" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
@@ -259,6 +267,13 @@ function confirmAction(action, taskId) {
       {% endif %}
     </ul>
   </nav>
+
+  <!-- Theme toggle -->
+  <div style="margin-bottom: 1rem;">
+    <button id="theme-toggle" class="btn btn-outline-light w-100" title="{{ _('Vaihtele teema') }}">
+      <i class="fas fa-moon me-2"></i><span id="theme-label">{{ _('Tumma tila') }}</span>
+    </button>
+  </div>
 
   <!-- Logout -->
   <div class="mt-auto">
@@ -303,13 +318,49 @@ function confirmAction(action, taskId) {
     <!-- Your sidebar toggling logic -->
 
     <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeLabel = document.getElementById('theme-label');
+        const htmlElement = document.documentElement;
+
+        // Load theme preference from localStorage
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            htmlElement.className = savedTheme;
+            updateThemeToggleUI(savedTheme);
+        }
+
+        function updateThemeToggleUI(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (theme === 'dark') {
+                icon.className = 'fas fa-moon me-2';
+                themeLabel.textContent = '{{ _("Tumma tila") }}';
+            } else {
+                icon.className = 'fas fa-sun me-2';
+                themeLabel.textContent = '{{ _("Vaalea tila") }}';
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.className;
+            const newTheme = currentTheme === 'dark' ? '' : 'dark';
+            htmlElement.className = newTheme;
+            localStorage.setItem('theme', newTheme);
+            updateThemeToggleUI(newTheme);
+        });
+
+        // Initialize theme on page load
+        initializeTheme();
+
         const sidebar = document.querySelector('.container-sidebar');
         const toggleBtn = document.getElementById('maintoggle');
 
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            document.querySelector('main').classList.toggle('collapsed');
-        });
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                document.querySelector('main').classList.toggle('collapsed');
+            });
+        }
 
     </script>
     <script>

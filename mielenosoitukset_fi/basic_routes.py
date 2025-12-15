@@ -43,6 +43,13 @@ from mielenosoitukset_fi.a import generate_demo_sentence
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes import Case
+from mielenosoitukset_fi.utils.demo_cancellation import (
+    cancel_demo,
+    fetch_cancellation_token,
+    mark_token_used,
+    queue_cancellation_links_for_demo,
+    request_cancellation_case,
+)
 
 email_sender = EmailSender()
 
@@ -150,6 +157,7 @@ def format_demo_for_api(demo):
         "tags": demo.get("tags", []),
         "description": demo.get("description", ""),
         "cover_image": _get_demo_img(demo),
+        "cancelled": bool(demo.get("cancelled")),
     }
 
 def filter_demonstrations_api(
@@ -187,6 +195,8 @@ def filter_demonstrations_api(
     for demo in demonstrations:
         # Only approved and not hidden
         if not demo.get("approved", True) or demo.get("hide", False):
+            continue
+        if demo.get("cancelled"):
             continue
         try:
             demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
@@ -351,6 +361,59 @@ def add_api_routes(app):
         paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
         result = [format_demo_for_api(demo) for demo in paginated]
         return jsonify(demonstrations=result, total_pages=total_pages)
+
+    @app.route("/api/v1/check_demo_conflict", methods=["GET"])
+    def api_check_demo_conflict():
+        """
+        AJAX endpoint to check for similar demonstrations given title/date/city/address.
+
+        Query params: title, date (YYYY-MM-DD), city, address
+        Returns JSON: { matches: [ { _id, title, address, date } ... ] }
+        """
+        title = (request.args.get('title') or '').strip()
+        date_q = (request.args.get('date') or '').strip()
+        city_q = (request.args.get('city') or '').strip()
+        address_q = (request.args.get('address') or '').strip()
+
+        if not date_q or not city_q or not title:
+            return jsonify(matches=[])
+
+        try:
+            potential = demonstrations_collection.find({
+                "city": city_q,
+                "date": date_q,
+                "cancelled": {"$ne": True},
+                "hide": {"$ne": True},
+                "approved": True,
+            })
+            matches = []
+            title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
+            for d in potential:
+                if len(matches) >= 5:
+                    break
+                existing_title = (d.get('title') or '').lower()
+                existing_addr = (d.get('address') or '').lower()
+                matched = False
+                if title.lower() in existing_title or existing_title in title.lower():
+                    matched = True
+                else:
+                    existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
+                    if title_words and len(title_words & existing_words) >= 2:
+                        matched = True
+                if not matched and address_q:
+                    if address_q.lower() in existing_addr or existing_addr in address_q.lower():
+                        matched = True
+                if matched:
+                    matches.append({
+                        "_id": str(d.get('_id')),
+                        "title": d.get('title'),
+                        "address": d.get('address'),
+                        "date": d.get('date'),
+                    })
+            return jsonify(matches=matches)
+        except Exception:
+            logger.exception("Error while checking demo conflicts")
+            return jsonify(matches=[])
 
 
 def init_routes(app):
@@ -641,6 +704,7 @@ def init_routes(app):
                     "_id": {"$in": demo_ids},
                     "approved": True,
                     "hide": {"$ne": True},
+                    "cancelled": {"$ne": True},
                 })
             )
 
@@ -667,6 +731,7 @@ def init_routes(app):
         filtered_demonstrations = [
             demo
             for demo in demonstrations
+            if not demo.get("cancelled")
             if datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today
         ]
         filtered_demonstrations.sort(
@@ -697,6 +762,42 @@ def init_routes(app):
     )
     # upload_image_fileobj, Organizer, Demonstration, flash_message, mongo, email_sender, CITY_LIST
     # should already be imported elsewhere in your app/module
+
+    @app.route("/api/v1/search_organizations", methods=["GET"])
+    def search_organizations():
+        """
+        Search for existing organizations by name.
+        
+        Query parameters:
+        - q: search query (organization name)
+        
+        Returns JSON array of matching organizations with id, name, email, website.
+        """
+        query = (request.args.get("q") or "").strip()
+        
+        if not query or len(query) < 2:
+            return jsonify([])
+        
+        # Search in organizations collection using case-insensitive regex
+        mongo = DatabaseManager().get_instance().get_db()
+        organizations = mongo["organizations"].find(
+            {
+                "name": {"$regex": query, "$options": "i"}
+            },
+            {"_id": 1, "name": 1, "email": 1, "website": 1, "description": 1}
+        ).limit(10)
+        
+        results = []
+        for org in organizations:
+            results.append({
+                "id": str(org["_id"]),
+                "name": org.get("name", ""),
+                "email": org.get("email", ""),
+                "website": org.get("website", ""),
+                "description": org.get("description", "")[:100] + "..." if len(org.get("description", "")) > 100 else org.get("description", "")
+            })
+        
+        return jsonify(results)
 
     @app.route("/submit", methods=["GET", "POST"])
     def submit():
@@ -744,7 +845,8 @@ def init_routes(app):
             submitter_role = (request.form.get("submitter_role") or "").strip()
             submitter_email = (request.form.get("submitter_email") or "").strip()
             submitter_name = (request.form.get("submitter_name") or "").strip()
-            accept_terms = request.form.get("accept_terms")  # checkbox presence
+            # checkbox presence: normalize to boolean
+            accept_terms = bool(request.form.get("accept_terms"))
 
             # --- Required validation --
             missing = []
@@ -773,11 +875,16 @@ def init_routes(app):
                     + ", ".join(missing),
                     "error",
                 )
+                # If this is an AJAX submission, return JSON instead of redirect
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify(success=False, message=("Puuttuvat kentät: " + ", ".join(missing))), 400
                 return redirect(url_for("submit"))
 
             # Validate email format
             if not valid_email(submitter_email):
                 flash_message("Virheellinen sähköpostiosoite.", "error")
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify(success=False, message="Virheellinen sähköpostiosoite."), 400
                 return redirect(url_for("submit"))
 
             # --- Collect organizers ---
@@ -814,6 +921,54 @@ def init_routes(app):
                 tags=tags,
             )
 
+            # --- Check for similar demonstrations on same date/city to avoid duplicates ---
+            force_submit = bool(request.form.get('force_submit'))
+            if not force_submit:
+                try:
+                    potential = demonstrations_collection.find({
+                        "city": city,
+                        "date": date,
+                        "cancelled": {"$ne": True},
+                    })
+                    matches = []
+                    title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
+                    for d in potential:
+                        existing_title = (d.get('title') or '').lower()
+                        existing_addr = (d.get('address') or '').lower()
+                        # direct substring check
+                        if title.lower() in existing_title or existing_title in title.lower():
+                            matches.append(d)
+                            continue
+                        # word intersection heuristic
+                        existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
+                        if title_words and len(title_words & existing_words) >= 2:
+                            matches.append(d)
+                            continue
+                        # address similarity
+                        if address and (address.lower() in existing_addr or existing_addr in address.lower()):
+                            matches.append(d)
+                            continue
+                    if matches:
+                        # if AJAX, return structured JSON so frontend can prompt user
+                        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                            short = [
+                                {
+                                    "_id": str(x.get("_id")),
+                                    "title": x.get("title"),
+                                    "address": x.get("address"),
+                                    "date": x.get("date"),
+                                }
+                                for x in matches
+                            ]
+                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=short), 409
+                        # otherwise, flash and redirect back to form
+                        flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
+                        return redirect(url_for("submit"))
+                except Exception:
+                    # on any error in matching, continue with the normal flow
+                    logger.exception("Error checking for existing similar demonstrations")
+
+
             # Save demonstration
             try:
                 demo_dict = demonstration.to_dict()
@@ -823,6 +978,8 @@ def init_routes(app):
             except Exception as e:
                 logger.exception("Failed to insert demonstration: %s", e)
                 flash_message("Palvelinvirhe: mielenosoituksen tallentaminen epäonnistui.", "error")
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify(success=False, message="Palvelinvirhe: tallentaminen epäonnistui."), 500
                 return redirect(url_for("submit"))
 
             # --- Save submitter info in separate collection ---
@@ -903,14 +1060,35 @@ def init_routes(app):
             except Exception as e:
                 logger.exception("Failed to queue admin notification email: %s", e)
 
+            # --- Send organiser cancellation links ---
+            try:
+                queue_cancellation_links_for_demo(demonstration.to_dict(json=False))
+            except Exception:
+                logger.exception("Failed to queue cancellation links for demo %s", demo_id)
+
             flash_message(
                 "Mielenosoitus ilmoitettu onnistuneesti! Tiimimme tarkistaa sen, jonka jälkeen se tulee näkyviin sivustolle.",
                 "success",
             )
+            # If AJAX, return JSON success so frontend can show the success page without following redirects
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify(success=True, message="Mielenosoitus ilmoitettu onnistuneesti!"), 200
             return redirect(url_for("index"))
 
+        # Determine whether the current user is allowed to use test-mode autofill
+        try:
+            user_role = getattr(current_user, 'role', None)
+        except Exception:
+            user_role = None
+        test_mode_allowed = bool(current_user.is_authenticated and user_role in ("admin", "global_admin"))
+        # Determine whether current user can edit demonstrations
+        try:
+            can_edit_demo = bool(current_user.is_authenticated and current_user.has_permission("EDIT_DEMO"))
+        except Exception:
+            can_edit_demo = False
+
         # GET — render submission form
-        return render_template("submit.html", city_list=CITY_LIST)
+        return render_template("submit.html", city_list=CITY_LIST, test_mode_allowed=test_mode_allowed, can_edit_demo=can_edit_demo)
 
 
     @app.route("/report", methods=["GET", "POST"])
@@ -918,35 +1096,52 @@ def init_routes(app):
         """
         Handle submission of a new error report.
         """
-        error = request.form.get("error") # Description of the error being reported
-        _type = request.form.get("type") # Type of the report (e.g., demonstration)
-        
+        error = request.form.get("error")  # Description of the error being reported
+        _type = request.form.get("type")  # Type of the report (e.g., demonstration)
+        mark_cancelled = bool(request.form.get("mark_cancelled"))
+        reporter_email = (request.form.get("reporter_email") or "").strip() or None
+
+        demo_oid = None
+        try:
+            demo_oid = ObjectId(request.form.get("demo_id")) if request.form.get("demo_id") else None
+        except Exception:
+            demo_oid = None
+
         if _type:
             if _type == "demonstration":
-                mongo.reports.insert_one(
-                    {
-                        "error": error,
-                        "demo_id": ObjectId(request.form.get("demo_id")),
-                        "date": datetime.now(),
-                        "user": (
-                            ObjectId(current_user._id)
-                            if current_user.is_authenticated
-                            else None
-                        ),
-                        "ip": request.remote_addr,
-                    }
-                    )
-                
+                report_doc = {
+                    "error": error,
+                    "demo_id": demo_oid,
+                    "date": datetime.now(),
+                    "user": (
+                        ObjectId(current_user._id)
+                        if current_user.is_authenticated
+                        else None
+                    ),
+                    "ip": request.remote_addr,
+                }
+                if mark_cancelled:
+                    report_doc["cancelled_reported"] = True
+                if reporter_email:
+                    report_doc["reporter_email"] = reporter_email
+                mongo.reports.insert_one(report_doc)
+
             # new case from report
             try:
                 Case.create_new(
                     case_type="demo_error_report",
-                    demo_id=ObjectId(request.form.get("demo_id")) if _type == "demonstration" else None,
+                    demo_id=demo_oid if _type == "demonstration" else None,
                     submitter_id=current_user._id if current_user.is_authenticated else None,
-                    meta={"urgency": "low", "report_type": _type, "error": error},
+                    meta={
+                        "urgency": "low",
+                        "report_type": _type,
+                        "error": error,
+                        "reported_cancelled": mark_cancelled,
+                        "reporter_email": reporter_email,
+                    },
                     error_report={
                         "error": error,
-                        "demo_id": ObjectId(request.form.get("demo_id")),
+                        "demo_id": demo_oid,
                         "date": datetime.now(),
                         "user": (
                             ObjectId(current_user._id)
@@ -954,9 +1149,21 @@ def init_routes(app):
                             else None
                         ),
                         "ip": request.remote_addr,
+                        "reported_cancelled": mark_cancelled,
+                        "reporter_email": reporter_email,
                     }
                 )
-                
+
+                if mark_cancelled and _type == "demonstration" and demo_oid:
+                    demo_doc = mongo.demonstrations.find_one({"_id": demo_oid})
+                    if demo_doc:
+                        request_cancellation_case(
+                            demo_doc,
+                            reason=error,
+                            requester_email=reporter_email,
+                            official_contact=False,
+                            source="user_report",
+                        )
             except Exception as e:
                 logger.exception("Failed to create case from error report: %s", e)
 
@@ -967,6 +1174,8 @@ def init_routes(app):
                     "date": datetime.now(),
                     "user": current_user._id if current_user.is_authenticated else None,
                     "ip": request.remote_addr,
+                    "reported_cancelled": mark_cancelled,
+                    "reporter_email": reporter_email,
                 }
             )
 
@@ -1040,6 +1249,8 @@ def init_routes(app):
         filtered = []
         added_demo_ids = set()
         for demo in demonstrations:
+            if demo.get("cancelled"):
+                continue
             if is_future_demo(demo, today):
                 if (
                     matches_filters(
@@ -1213,6 +1424,193 @@ def init_routes(app):
                 logger.exception("Failed to cache demonstration_detail for %s", demo_id)
 
         return response
+
+    @app.route('/suggest_change/<demo_id>', methods=['GET', 'POST'])
+    def suggest_change(demo_id):
+        """
+        Allow users to suggest changes to an existing demonstration.
+
+        GET: render a small form showing demo info + textarea for suggestion
+        POST: store suggestion in `demo_suggestions` collection and notify admins via flash/email
+        """
+        try:
+            demo_doc = demonstrations_collection.find_one({"_id": ObjectId(demo_id)})
+        except Exception:
+            demo_doc = None
+
+        if not demo_doc:
+            flash_message("Mielenosoitusta ei löytynyt.", "error")
+            return redirect(url_for('index'))
+
+        if request.method == 'POST':
+            # Collect candidate fields that the user may suggest changes for
+            candidate_fields = [
+                'title',
+                'date',
+                'start_time',
+                'end_time',
+                'city',
+                'address',
+                'facebook',
+                'description',
+                'tags',
+                'route',
+            ]
+
+            suggested_fields = {}
+            original_values = {}
+            for f in candidate_fields:
+                val = (request.form.get(f) or '').strip()
+                # normalize tags as list if provided
+                if f == 'tags' and val:
+                    val_list = [t.strip() for t in val.split(',') if t.strip()]
+                    val = val_list
+
+                # compare to the stored demo_doc values and only store differences
+                orig = demo_doc.get(f)
+                # normalize original tags to list for comparison
+                if f == 'tags' and isinstance(orig, list):
+                    orig_comp = [str(x).strip() for x in orig]
+                else:
+                    orig_comp = (orig or '').strip() if orig is not None else ''
+
+                # For comparison, when tags -> convert to list
+                changed = False
+                if f == 'tags':
+                    if val and isinstance(val, list) and val != orig_comp:
+                        changed = True
+                else:
+                    if val and str(val) != str(orig_comp):
+                        changed = True
+
+                if changed:
+                    suggested_fields[f] = val
+                    original_values[f] = orig
+
+            reporter_email = (request.form.get('reporter_email') or '').strip() or None
+            reporter_comment = (request.form.get('reporter_comment') or '').strip() or None
+
+            if not suggested_fields and not reporter_comment:
+                flash_message("Kirjoita vähintään yksi kenttämuutos tai kommentti ennen lähettämistä.", "error")
+                return redirect(request.url)
+
+            doc = {
+                'demo_id': str(demo_id),
+                'suggested_fields': suggested_fields,
+                'original_values': original_values,
+                'reporter_comment': reporter_comment,
+                'reporter_email': reporter_email,
+                'created_at': datetime.utcnow(),
+                'ip': request.remote_addr,
+                'user_agent': request.headers.get('User-Agent'),
+                'status': 'new',
+            }
+            try:
+                mongo.demo_suggestions.insert_one(doc)
+                flash_message('Ehdotuksesi on vastaanotettu. Kiitos!', 'success')
+                # queue an email to admins with details
+                try:
+                    email_sender.queue_email(
+                        template_name='admin_suggestion_notification.html',
+                        subject=f'Uusi ehdotus mielenosoitukselle: {demo_doc.get("title")}',
+                        recipients=['tuki@mielenosoitukset.fi'],
+                        context={'demo': demo_doc, 'suggestion_doc': doc},
+                    )
+                except Exception:
+                    logger.exception('Failed to queue suggestion notification email')
+            except Exception:
+                logger.exception('Failed to save suggestion')
+                flash_message('Palvelinvirhe: ehdotuksen tallentaminen epäonnistui.', 'error')
+                return redirect(request.url)
+
+            return redirect(url_for('demonstration_detail', demo_id=demo_id))
+
+        # GET — render form with per-field inputs
+        demo = Demonstration.from_dict(demo_doc)
+        return render_template('suggest_change.html', demo=demo)
+
+    @app.route("/cancel_demonstration/<token>", methods=["GET", "POST"])
+    def cancel_demo_with_token(token):
+        token_error = None
+        token_doc = fetch_cancellation_token(token)
+        demo = None
+        cancellation_pending = False
+        can_cancel_directly = False
+
+        if not token_doc:
+            token_error = _("Peruutuslinkkiä ei tunnistettu.")
+        else:
+            expires_at = token_doc.get("expires_at")
+            if expires_at and expires_at < datetime.utcnow():
+                token_error = _("Peruutuslinkki on vanhentunut.")
+
+            if token_doc.get("used_at"):
+                token_error = _("Peruutuslinkki on jo käytetty.")
+
+            demo = mongo.demonstrations.find_one({"_id": token_doc.get("demo_id")})
+            if not demo:
+                token_error = _("Mielenosoitusta ei löytynyt.")
+            else:
+                cancellation_pending = bool(demo.get("cancellation_requested"))
+                can_cancel_directly = bool(token_doc.get("official_contact"))
+
+                if request.method == "POST" and not token_error:
+                    reason = (request.form.get("reason") or "").strip() or None
+
+                    try:
+                        if can_cancel_directly:
+                            cancel_demo(
+                                demo,
+                                cancelled_by={
+                                    "email": token_doc.get("organizer_email"),
+                                    "source": "organizer_link",
+                                    "official_contact": True,
+                                },
+                                reason=reason,
+                            )
+                            flash_message(_("Mielenosoitus on merkitty perutuksi."), "success")
+                        else:
+                            request_cancellation_case(
+                                demo,
+                                reason=reason,
+                                requester_email=token_doc.get("organizer_email"),
+                                official_contact=False,
+                                source="organizer_link",
+                            )
+                            flash_message(_("Peruutuspyyntö on lähetetty ylläpidolle."), "info")
+
+                        mark_token_used(token_doc.get("_id"), reason or "submitted")
+                        return redirect(url_for("demonstration_detail", demo_id=token_doc.get("demo_id")))
+                    except Exception:
+                        logger.exception("Failed to handle cancellation from token")
+                        flash_message(_("Peruutusta ei voitu käsitellä."), "error")
+
+        if not demo:
+            demo = {
+                "title": _("Mielenosoitus"),
+                "date": "",
+                "city": "",
+                "cancelled": False,
+            }
+
+        demo_date = ""
+        try:
+            date_value = demo.get("date")
+            if isinstance(date_value, datetime):
+                demo_date = date_value.strftime("%d.%m.%Y")
+            elif date_value:
+                demo_date = datetime.fromisoformat(date_value).strftime("%d.%m.%Y")
+        except (TypeError, ValueError):
+            demo_date = date_value or ""
+
+        return render_template(
+            "cancel_demonstration.html",
+            demo=demo,
+            demo_date=demo_date,
+            token_error=token_error,
+            cancellation_pending=cancellation_pending,
+            can_cancel_directly=can_cancel_directly,
+        )
 
     def fetch_geocode_data(demo):
         address_query = f"{demo.address}, {demo.city}"

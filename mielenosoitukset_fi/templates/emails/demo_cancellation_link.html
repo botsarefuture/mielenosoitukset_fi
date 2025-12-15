@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>Peru mielenosoitus</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #222;">
+    <h2>Hei!</h2>
+    <p>Sinut on merkitty mielenosoituksen järjestäjäksi.</p>
+
+    <p><strong>{{ title }}</strong><br>
+       {{ date }} – {{ city }}</p>
+
+    <p>Jos tapahtuma täytyy perua, voit tehdä sen turvallisesti alla olevasta linkistä.</p>
+    {% if official_contact %}
+      <p><strong>Huom!</strong> Organisaatiosi on merkitty vahvistetuksi, joten linkkiä käyttämällä
+      mielenosoitus merkitään välittömästi perutuksi.</p>
+    {% else %}
+      <p>Linkin kautta lähetetty pyyntö ohjautuu ylläpidon käsiteltäväksi.</p>
+    {% endif %}
+
+    <p style="margin: 20px 0;">
+        <a href="{{ cancellation_link }}" style="background: #d9534f; color: #fff; padding: 12px 18px; text-decoration: none; border-radius: 6px;">
+            Avaa perutuslinkki
+        </a>
+    </p>
+
+    <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi</p>
+</body>
+</html>

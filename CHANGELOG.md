@@ -5,15 +5,75 @@
 ## UNRELEASED
 
 ### Added
+* **Demonstration Cancellation Workflow**:
+  * New `/cancel_demonstration/<token>` route for organizers to securely cancel events via email links.
+  * Demonstration cancellation request system with admin approval workflow.
+  * Auto-generated cancellation tokens sent to all organizers (90-day expiry).
+  * Cancellation notifications to attendees and reminder subscribers via email.
+  * Admin case management for cancellation requests with approval/rejection actions.
+  * Cancelled demonstrations display warning badge on detail pages.
+
+* **Suggestion System for Demonstrations**:
+  * New `/suggest_change/<demo_id>` route allowing users to suggest edits to demonstrations.
+  * Admin interface for reviewing and applying suggestions (`/admin/demo/suggestions/`).
+  * Per-field suggestion tracking with original vs. suggested value comparison.
+  * Admin suggestion list with filtering by status (new, applied, rejected).
+  * Email notifications to admins when new suggestions arrive.
+
+* **Demonstration Conflict Detection**:
+  * New `/api/v1/check_demo_conflict` endpoint for detecting similar demonstrations on same date/city.
+  * Real-time conflict checking in submission form with debouncing.
+  * Conflict alert box with auto-scroll when matches found.
+  * Links to view/edit/suggest changes for conflicting demonstrations.
+
+* **Organization Search in Submission Form**:
+  * New `/api/v1/search_organizations` API endpoint for searching existing organizations.
+  * Real-time search dropdown in demo submission form for quick organizer lookup.
+  * Auto-fill organizer details when selecting from search results.
+  * Fallback to manual organizer entry if organization not found.
+
+* **Test Mode for Demo Submission**:
+  * `?mode=test` URL parameter autofills form with test data for admin/staff testing.
+  * Test banner with clear visual indication of test mode.
+  * Automatic data cleanup on successful test submission.
+
+* **Demo Suggestions Admin Templates**:
+  * New `admin/suggestions_list.html` for viewing all incoming suggestions with status badges.
+  * New `admin/suggestion_view.html` for detailed suggestion review with field-by-field comparison.
+  * Selectable fields for partial application of suggestions.
+
+* **Cancellation Email Templates**:
+  * `emails/demo_cancellation_link.html` - Email sent to organizers with cancellation link.
+  * `emails/demo_cancelled_notification.html` - Notification to attendees about cancellation.
+
+* **Admin Sidebar Navigation**:
+  * Dark/Light mode toggle button in admin sidebar with localStorage persistence.
+  * Suggestions menu link for admin suggestion review.
+
 * `/robots.txt` route to control web crawler access.
 
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.
 * Improved analytics rollup function to support single execution via `run_once` parameter.
-* Now running analytics rollups via a external systemd service for better reliability.
+* Now running analytics rollups via an external systemd service for better reliability.
 * Introduced a new `Case` class for managing admin support cases with action logs and running numbers.
 * New admin template for displaying all cases with improved UI/UX.
 * Added `merge_fields` method in `Demonstration` class for future enhancements.
+* Updated `Demonstration` class with cancellation-related fields (reason, request status, timestamps, etc).
+* Enhanced DEMO_FILTER in database.py to exclude cancelled demonstrations from listings.
+* Refactored form submission to support AJAX requests with JSON responses.
+* Improved error handling for demonstration insertion with proper case creation.
+* Rate limiting storage URI simplified in Flask-Limiter configuration.
+* Report modal enhanced with cancellation checkbox and reporter email field.
+* Demonstration detail pages now show "Cancelled" status with disabled participation/reminder buttons.
+* Suggestion templates (`suggestions_list.html`, `suggestion_view.html`) updated with dark/light mode support using CSS custom properties.
+* Demo cards now display "Peruttu" (Cancelled) badge for cancelled events.
+
+### Fixed
+* Skip link in base template now properly anchors to `#main-content`.
+* Checkbox value handling in form submission improved for reliable AJAX detection.
+* Organizer invitation links endpoint fixed for Azure DevOps support.
+* Conflict detection query now properly filters out cancelled and hidden demonstrations.
 
 ## v4.0.0-beta.1 – *Robots Control Edition* 🌟
 

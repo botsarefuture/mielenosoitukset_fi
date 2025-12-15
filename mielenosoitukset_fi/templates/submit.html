@@ -1205,7 +1205,16 @@
       if (box) return box;
       box = document.createElement('div');
       box.id = 'conflictBox';
-      box.style.cssText = 'background:#fff7f0;border:1px solid #ffd6a5;padding:12px;border-radius:8px;margin:12px 0;display:none;';
+      box.style.cssText = `
+        background: var(--color-card-bg);
+        border: 2px solid var(--color-border);
+        border-left: 4px solid var(--color-secondary);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin: 1.5rem 0;
+        display: none;
+        box-Noneshadow: var(--color-shadow);
+      `;
       const container = document.querySelector('.form-container') || document.querySelector('.container-main-content');
       if (container) container.parentNode.insertBefore(box, container);
       return box;
@@ -1218,20 +1227,127 @@
         box.innerHTML = '';
         return;
       }
-      let html = `<strong>{{ _('Huom: samankaltaisia ilmoituksia löytyi:') }}</strong><ul style="margin:8px 0 0 16px;">`;
-      matches.forEach(m => {
+      
+      let html = `
+        <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+          <div style="font-size: 1.5rem; min-width: 2rem;">⚠️</div>
+          <div>
+            <strong style="color: var(--color-text); font-size: 1.1rem; display: block; margin-bottom: 0.5rem;">
+              {{ _('Samankaltaisia mielenosoituksia löytyi') }}
+            </strong>
+            <p style="color: var(--color-text-secondary); margin: 0; font-size: 0.95rem;">
+              {{ _('Tarkista alla listatut mielenosoitukset varmistaaksesi, ettet luo päällekkäistä ilmoitusta.') }}
+            </p>
+          </div>
+        </div>
+        <ul style="margin: 1rem 0; padding: 0; list-style: none;">
+      `;
+      
+      matches.forEach((m, idx) => {
         const url = `/demonstration/${m._id}`;
-        html += `<li style="margin-bottom:6px;"><a href="${url}" target="_blank">${m.title || '(ilman otsikkoa)'}${m.address ? ' — ' + m.address : ''} (${m.date || ''})</a>`;
-          if (__CAN_EDIT) {
-            html += ` <a href="/admin/demo/edit_demo/${m._id}" target="_blank" style="margin-left:8px;font-weight:600;color:#0b5cff">[{{ _('Muokkaa') }}]</a>`;
-          }
-          // everyone can suggest a change
-          html += ` <a href="/suggest_change/${m._id}" target="_blank" style="margin-left:8px;font-weight:600;color:#16a34a">[{{ _('Ehdota muutosta') }}]</a>`;
-          html += `</li>`;
+        const dateStr = m.date ? new Date(m.date).toLocaleDateString('fi-FI') : '?';
+        html += `
+          <li style="
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            transition: var(--transition);
+          " onmouseover="this.style.boxShadow='var(--color-shadow)'" onmouseout="this.style.boxShadow='none'">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+              <div style="flex: 1;">
+                <a href="${url}" target="_blank" style="
+                  color: var(--color-primary);
+                  text-decoration: none;
+                  font-weight: 600;
+                  font-size: 1rem;
+                  transition: var(--transition);
+                " onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                  ${m.title || '(ilman otsikkoa)'}
+                </a>
+                <p style="color: var(--color-text-secondary); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                  📍 ${m.address || '?'} • 📅 ${dateStr}
+                </p>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+                <a href="${url}" target="_blank" style="
+                  padding: 0.5rem 1rem;
+                  background: var(--color-primary);
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 6px;
+                  font-size: 0.85rem;
+                  font-weight: 600;
+                  transition: var(--transition);
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.3rem;
+                " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                  <i class="fa-solid fa-eye"></i> {{ _('Katso') }}
+                </a>
+        `;
+        
+        if (__CAN_EDIT) {
+          html += `
+            <a href="/admin/demo/edit_demo/${m._id}" target="_blank" style="
+              padding: 0.5rem 1rem;
+              background: var(--color-secondary);
+              color: white;
+              text-decoration: none;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-weight: 600;
+              transition: var(--transition);
+              display: inline-flex;
+              align-items: center;
+              gap: 0.3rem;
+            " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              <i class="fa-solid fa-pen"></i> {{ _('Muokkaa') }}
+            </a>
+          `;
+        }
+        
+        html += `
+            <a href="/suggest_change/${m._id}" target="_blank" style="
+              padding: 0.5rem 1rem;
+              background: var(--color-success);
+              color: white;
+              text-decoration: none;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-weight: 600;
+              transition: var(--transition);
+              display: inline-flex;
+              align-items: center;
+              gap: 0.3rem;
+            " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              <i class="fa-solid fa-lightbulb"></i> {{ _('Ehdota') }}
+            </a>
+              </div>
+            </div>
+          </li>
+        `;
       });
-      html += `</ul><div style="margin-top:8px;display:flex;gap:8px;"><button id="conflictIgnore" class="btn btn-secondary">{{ _('Ohita') }}</button><button id="conflictReview" class="btn btn-primary">{{ _('Muokkaa tietoja') }}</button></div>`;
+      
+      html += `
+        </ul>
+        <div style="display: flex; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-border); margin-top: 1rem;">
+          <button id="conflictIgnore" class="btn btn-secondary" style="flex: 1;">
+            <i class="fa-solid fa-check-circle"></i> {{ _('Jatka silti') }}
+          </button>
+          <button id="conflictReview" class="btn btn-primary" style="flex: 1;">
+            <i class="fa-solid fa-arrow-up"></i> {{ _('Muokkaa tietoja') }}
+          </button>
+        </div>
+      `;
+      
       box.innerHTML = html;
       box.style.display = 'block';
+      
+      // Auto-scroll to conflict box when it appears
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
       document.getElementById('conflictIgnore').addEventListener('click', () => { box.style.display = 'none'; });
       document.getElementById('conflictReview').addEventListener('click', () => {
         try {

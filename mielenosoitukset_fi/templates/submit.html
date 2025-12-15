@@ -844,6 +844,16 @@
           <i class="fa-solid fa-times"></i>
         </button>
       </div>
+      
+      <div class="form-group">
+        <label for="org_search_${organizerCount}">{{ _('Etsi olemassa olevaa organisaatiota') }}</label>
+        <div style="position: relative;">
+          <input type="text" id="org_search_${organizerCount}" placeholder="{{ _('Kirjoita organisaation nimi...') }}" style="width: 100%; padding: 0.75rem; border: 2px solid var(--color-border); border-radius: 8px; font-family: inherit;" onkeyup="searchOrganizations(${organizerCount})">
+          <div id="org_search_results_${organizerCount}" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--color-card-bg); border: 2px solid var(--color-border); border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; z-index: 10; display: none;"></div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 0.5rem;">{{ _('tai täytä tiedot alla manuaalisesti') }}</p>
+      </div>
+      
       <div class="form-group">
         <label for="organizer_name_${organizerCount}">{{ _('Nimi') }}<span class="required-asterisk">*</span></label>
         <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" placeholder="{{ _('Järjestäjän nimi') }}" required>
@@ -866,6 +876,56 @@
       organizerDiv.style.opacity = '1';
       organizerDiv.style.transform = 'translateY(0)';
     }, 10);
+  };
+
+  // Search organizations and populate results
+  window.searchOrganizations = async function(organizerNum) {
+    const searchInput = document.getElementById(`org_search_${organizerNum}`);
+    const resultsContainer = document.getElementById(`org_search_results_${organizerNum}`);
+    const query = searchInput.value.trim();
+    
+    if (query.length < 2) {
+      resultsContainer.style.display = 'none';
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/v1/search_organizations?q=${encodeURIComponent(query)}`);
+      const results = await response.json();
+      
+      if (results.length === 0) {
+        resultsContainer.innerHTML = `<div style="padding: 1rem; color: var(--color-text-secondary); text-align: center;">{{ _('Organisaatiota ei löytynyt') }}</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+      
+      let html = '';
+      results.forEach(org => {
+        html += `
+          <div style="padding: 1rem; border-bottom: 1px solid var(--color-border); cursor: pointer; transition: var(--transition);" 
+               onmouseover="this.style.backgroundColor = 'var(--color-shadow)'" 
+               onmouseout="this.style.backgroundColor = 'transparent'"
+               onclick="selectOrganization(${organizerNum}, '${org.name.replace(/'/g, "\\'")}', '${org.email.replace(/'/g, "\\'")}', '${org.website.replace(/'/g, "\\'")}')" >
+            <strong style="color: var(--color-text);">${org.name}</strong>
+            ${org.email ? `<br><small style="color: var(--color-text-secondary);">${org.email}</small>` : ''}
+            ${org.description ? `<br><small style="color: var(--color-text-secondary);">${org.description}</small>` : ''}
+          </div>
+        `;
+      });
+      resultsContainer.innerHTML = html;
+      resultsContainer.style.display = 'block';
+    } catch (err) {
+      console.error('Error searching organizations:', err);
+    }
+  };
+
+  // Select organization from search results
+  window.selectOrganization = function(organizerNum, name, email, website) {
+    document.getElementById(`organizer_name_${organizerNum}`).value = name;
+    document.getElementById(`organizer_email_${organizerNum}`).value = email;
+    document.getElementById(`organizer_website_${organizerNum}`).value = website;
+    document.getElementById(`org_search_${organizerNum}`).value = '';
+    document.getElementById(`org_search_results_${organizerNum}`).style.display = 'none';
   };
 
   window.removeOrganizer = function (id) {
@@ -903,30 +963,96 @@
     const submitBtn = document.getElementById("submit-form");
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
-    editorData = "";
+
+    // Safely read editor content. Use a function-scoped variable so finally sees the value.
+    let editorData = "";
     try {
-      const editorData = quill.root.innerHTML;
-    } finally {
-      document.getElementById("description").value = editorData;
+      if (typeof quill !== 'undefined' && quill && quill.root) {
+        editorData = quill.root.innerHTML;
+      } else {
+        // fallback to existing description field value
+        editorData = document.getElementById("description").value || "";
+      }
+    } catch (err) {
+      console.error('Error reading editor content:', err);
     }
+    document.getElementById("description").value = editorData;
 
     const form = document.querySelector("form");
     const formData = new FormData(form);
+    // Ensure checkbox values are sent reliably (some browsers/forms omit unchecked inputs)
+    const acceptCheckbox = document.getElementById('accept_terms');
+    if (acceptCheckbox) {
+      // Use explicit value so backend can detect presence reliably
+      formData.set('accept_terms', acceptCheckbox.checked ? '1' : '');
+    }
 
     try {
       const response = await fetch(form.action, {
         method: form.method,
         body: formData,
-        redirect: "manual",
+        // mark as AJAX so backend can return JSON instead of redirect
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
       });
 
-      if (response.status >= 300 && response.status < 400) {
+      // Treat 2xx and 3xx statuses as success (redirects from server are 302).
+      if (response.ok || (response.status >= 300 && response.status < 400)) {
         showPage(5); // Show success page
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith("form_")) localStorage.removeItem(key);
         });
       } else {
-        alert("ERROR!");
+        // Handle conflict (duplicate) responses specially (409 + JSON)
+        try {
+          const contentType = response.headers.get('content-type') || '';
+          if (response.status === 409 && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (data && data.conflict) {
+              let msg = "{{ _('Samankaltaisia ilmoituksia löytyi:') }}\n\n";
+              data.demos.forEach(d => {
+                msg += `- ${d.title || ''} ${d.address ? '— ' + d.address : ''} (${d.date || ''})\n`;
+              });
+              msg += "\n{{ _('Onko tämä sama ilmoitus? Haluatko jatkaa silti?') }}";
+              if (confirm(msg)) {
+                // resend with force_submit flag
+                formData.set('force_submit', '1');
+                const response2 = await fetch(form.action, {
+                  method: form.method,
+                  body: formData,
+                  headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (response2.ok || (response2.status >= 300 && response2.status < 400)) {
+                  showPage(5);
+                  Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith("form_")) localStorage.removeItem(key);
+                  });
+                  return;
+                } else {
+                  const txt = await response2.text();
+                  alert(txt || "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}");
+                  return;
+                }
+              } else {
+                // user cancelled — do nothing
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error handling conflict response', e);
+        }
+
+        // Try to show server-provided message if available
+        let msg = "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}";
+        try {
+          const txt = await response.text();
+          if (txt && txt.trim()) msg = txt;
+        } catch (e) {
+          // ignore
+        }
+        alert(msg);
       }
     } catch (e) {
       console.error("Network error:", e);
@@ -945,10 +1071,245 @@
   document.addEventListener('DOMContentLoaded', () => {
     showPage(1);
   });
+
+  // server-provided flag — only allow test-mode for authorized users
+  const __TEST_MODE_ALLOWED = {{ 'true' if test_mode_allowed else 'false' }};
+  const __CAN_EDIT = {{ 'true' if can_edit_demo else 'false' }};
+
+  // Autofill test data when visiting /submit?mode=test
+  function fillTestData() {
+    try {
+      // Helper to set value by selector (id or name)
+      const setById = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      };
+      const setByName = (name, val) => {
+        const el = document.querySelector(`[name="${name}"]`);
+        if (el) el.value = val;
+      };
+
+      const today = new Date();
+      const future = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const yyyy = future.getFullYear();
+      const mm = String(future.getMonth() + 1).padStart(2, '0');
+      const dd = String(future.getDate()).padStart(2, '0');
+      const isoDate = `${yyyy}-${mm}-${dd}`;
+
+      setById('name', 'Testi-ilmoitus — automatisoitu');
+      setById('tags', 'testi, automaattinen');
+      // set iso date — backend accepts string; flatpickr may reformat if enabled
+      setById('date', isoDate);
+      setById('start_time', '18:00');
+      setById('end_time', '20:00');
+      // city dropdown uses selectCity helper which also sets the hidden input
+      if (typeof selectCity === 'function') {
+        selectCity('Helsinki');
+      } else {
+        setById('selected-city', 'Helsinki');
+      }
+      setById('address', 'Testikatu 1, 00100 Helsinki');
+      setById('facebook', 'https://facebook.com/events/0000000000');
+
+      // Ensure at least one organizer exists; use provided helper if available
+      if (typeof addOrganizer === 'function') {
+        // add one more organizer to ensure predictable IDs (it may already add one by default)
+        addOrganizer();
+      }
+      // Fill organizer fields by name (organizer_name_1 etc.)
+      const orgName = document.querySelector('[name^="organizer_name_"]');
+      if (orgName) orgName.value = 'Testijärjestäjä';
+      const orgEmail = document.querySelector('[name^="organizer_email_"]');
+      if (orgEmail) orgEmail.value = 'organizer@example.com';
+      const orgWebsite = document.querySelector('[name^="organizer_website_"]');
+      if (orgWebsite) orgWebsite.value = 'https://example.org';
+
+      // Submitter
+      setById('submitter_role', 'järjestäjä');
+      setById('submitter_name', 'Testikäyttäjä');
+      setById('submitter_email', 'test@example.com');
+      const accept = document.getElementById('accept_terms');
+      if (accept) accept.checked = true;
+
+      // Description — quill editor
+      const descriptionHtml = '<p>Tämä on automaattisesti täytetty testi-ilmoitus. Poista ennen julkaisua.</p>';
+      if (typeof quill !== 'undefined' && quill && quill.root) {
+        quill.root.innerHTML = descriptionHtml;
+      }
+      setById('description', descriptionHtml);
+
+      // Show a small non-blocking notice (console + visual)
+      console.info('Test mode: form auto-filled');
+    } catch (err) {
+      console.error('Error applying test data:', err);
+    }
+  }
+
+  // Check URL param
+  (function () {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'test' && __TEST_MODE_ALLOWED) {
+          // show visible test-mode banner and autofill after load
+          (function showTestBanner() {
+            try {
+              const container = document.querySelector('.container-main-content') || document.body;
+              const existing = document.getElementById('testModeBanner');
+              if (existing) return;
+              const banner = document.createElement('div');
+              banner.id = 'testModeBanner';
+              banner.setAttribute('role', 'status');
+              banner.setAttribute('aria-live', 'polite');
+              banner.style.cssText = 'background: linear-gradient(90deg,#fff7ed,#ffedd5); border-left:4px solid #fb923c; padding:12px 16px; border-radius:8px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px;';
+              banner.innerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <strong style="color:#92400e">Test Mode</strong>
+                  <span style="color:#92400e">Automaattinen testidata täytetty lomakkeelle. Muista poistaa ennen julkaisua.</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button id="testModeClose" style="background:transparent;border:none;color:#92400e;font-weight:700;cursor:pointer;padding:6px 8px;border-radius:6px">Sulje</button>
+                </div>
+              `;
+              // prepend so it's visible above the form
+              if (container.firstChild) container.insertBefore(banner, container.firstChild);
+              else container.appendChild(banner);
+              document.getElementById('testModeClose').addEventListener('click', function () { banner.remove(); });
+            } catch (e) { console.error('Could not show test banner', e); }
+          })();
+
+          // Wait a tick to ensure other DOM init code ran
+          window.addEventListener('load', () => setTimeout(fillTestData, 200));
+        }
+    } catch (e) {
+      // ignore
+    }
+  })();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
+
+<script>
+  // Real-time conflict checking (debounced)
+  (function () {
+    const debounce = (fn, wait) => {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(this, args), wait);
+      };
+    };
+
+    function createConflictBox() {
+      let box = document.getElementById('conflictBox');
+      if (box) return box;
+      box = document.createElement('div');
+      box.id = 'conflictBox';
+      box.style.cssText = 'background:#fff7f0;border:1px solid #ffd6a5;padding:12px;border-radius:8px;margin:12px 0;display:none;';
+      const container = document.querySelector('.form-container') || document.querySelector('.container-main-content');
+      if (container) container.parentNode.insertBefore(box, container);
+      return box;
+    }
+
+    function renderConflict(matches) {
+      const box = createConflictBox();
+      if (!matches || matches.length === 0) {
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+      }
+      let html = `<strong>{{ _('Huom: samankaltaisia ilmoituksia löytyi:') }}</strong><ul style="margin:8px 0 0 16px;">`;
+      matches.forEach(m => {
+        const url = `/demonstration/${m._id}`;
+        html += `<li style="margin-bottom:6px;"><a href="${url}" target="_blank">${m.title || '(ilman otsikkoa)'}${m.address ? ' — ' + m.address : ''} (${m.date || ''})</a>`;
+          if (__CAN_EDIT) {
+            html += ` <a href="/admin/demo/edit_demo/${m._id}" target="_blank" style="margin-left:8px;font-weight:600;color:#0b5cff">[{{ _('Muokkaa') }}]</a>`;
+          }
+          // everyone can suggest a change
+          html += ` <a href="/suggest_change/${m._id}" target="_blank" style="margin-left:8px;font-weight:600;color:#16a34a">[{{ _('Ehdota muutosta') }}]</a>`;
+          html += `</li>`;
+      });
+      html += `</ul><div style="margin-top:8px;display:flex;gap:8px;"><button id="conflictIgnore" class="btn btn-secondary">{{ _('Ohita') }}</button><button id="conflictReview" class="btn btn-primary">{{ _('Muokkaa tietoja') }}</button></div>`;
+      box.innerHTML = html;
+      box.style.display = 'block';
+      document.getElementById('conflictIgnore').addEventListener('click', () => { box.style.display = 'none'; });
+      document.getElementById('conflictReview').addEventListener('click', () => {
+        try {
+          if (__CAN_EDIT && matches && matches.length > 0) {
+            // If user can edit, open admin edit page for the first matched demo
+            window.location.href = `/admin/demo/edit_demo/${matches[0]._id}`;
+            return;
+          }
+          // Otherwise, bring user to the form to edit details: show page 1 and focus the title field
+          if (typeof showPage === 'function') showPage(1);
+          const field = document.getElementById('name');
+          if (field) {
+            field.focus();
+            const prev = field.style.boxShadow;
+            field.style.boxShadow = '0 0 0 4px rgba(250,180,60,0.35)';
+            setTimeout(() => { field.style.boxShadow = prev; }, 3000);
+          } else {
+            // Fallback to scrolling to the top of the form
+            window.scrollTo({ top: box.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+          }
+        } catch (e) {
+          console.error('Conflict review action failed', e);
+        }
+      });
+    }
+
+    async function checkConflictNow() {
+      try {
+        const title = (document.getElementById('name') || {}).value || '';
+        const date = (document.getElementById('date') || {}).value || '';
+        const city = (document.getElementById('selected-city') || {}).value || '';
+        const address = (document.getElementById('address') || {}).value || '';
+        if (!title || !date || !city) {
+          renderConflict([]);
+          return;
+        }
+        const params = new URLSearchParams({ title, date, city, address });
+        const res = await fetch(`/api/v1/check_demo_conflict?${params.toString()}`, { method: 'GET' });
+        if (!res.ok) { renderConflict([]); return; }
+        const data = await res.json();
+        renderConflict(data.matches || []);
+      } catch (e) {
+        console.error('Conflict check failed', e);
+      }
+    }
+
+    const debouncedCheck = debounce(checkConflictNow, 500);
+
+    // Wire inputs
+    ['name', 'date', 'address'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', debouncedCheck);
+    });
+
+    // selected-city is a hidden input; hook into selectCity if available or observe clicks
+    const cityInput = document.getElementById('selected-city');
+    if (cityInput) {
+      // If selectCity is defined by the paikkakunta dropdown, wrap it to emit a custom event
+      if (typeof window.selectCity === 'function') {
+        const _origSelectCity = window.selectCity;
+        window.selectCity = function (city) {
+          _origSelectCity(city);
+          try {
+            cityInput.dispatchEvent(new Event('citychanged'));
+          } catch (e) {}
+        };
+      }
+      cityInput.addEventListener('citychanged', debouncedCheck);
+      // attach click handlers to dropdown links as fallback
+      document.querySelectorAll('#dropdown-content a[role="option"]').forEach(a => a.addEventListener('click', debouncedCheck));
+      // also trigger on load if filled
+      if (cityInput.value) setTimeout(checkConflictNow, 300);
+    }
+
+    // initial check after page load if fields have values
+    window.addEventListener('load', () => setTimeout(checkConflictNow, 600));
+  })();
+</script>
 
 {% endblock %}
 
@@ -1775,9 +2136,7 @@ function inSelection(selection, maxSelection) {
 
 
 
-  document.getElementById("myForm").addEventListener("submit", () => {
-
-  });
+  // no-op duplicate submit listener removed
 
 
 </script>

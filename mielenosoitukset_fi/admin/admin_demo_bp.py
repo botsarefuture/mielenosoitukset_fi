@@ -119,6 +119,127 @@ def demo_edit_history(demo_id):
     current_demo_data=current_demo_data  # <-- pass current demo JSON   
         
     )
+
+
+@admin_demo_bp.route('/suggestions')
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestions_list():
+    """
+    List incoming demo suggestions for admin review.
+    """
+    suggestions = list(mongo.demo_suggestions.find({}).sort('created_at', -1).limit(200))
+    return render_template('admin/suggestions_list.html', suggestions=suggestions)
+
+
+@admin_demo_bp.route('/suggestions/<suggestion_id>')
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestion_view(suggestion_id):
+    """
+    View a single suggestion and offer apply/reject actions.
+    """
+    try:
+        s = mongo.demo_suggestions.find_one({'_id': ObjectId(suggestion_id)})
+    except Exception:
+        s = None
+    if not s:
+        flash_message('Ehdotusta ei löytynyt.', 'error')
+        return redirect(url_for('admin_demo.suggestions_list'))
+
+    demo = None
+    try:
+        demo = mongo.demonstrations.find_one({'_id': ObjectId(s.get('demo_id'))})
+    except Exception:
+        demo = None
+
+    return render_template('admin/suggestion_view.html', suggestion=s, demo=demo)
+
+
+@admin_demo_bp.route('/suggestions/<suggestion_id>/apply', methods=['POST'])
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestion_apply(suggestion_id):
+    """
+    Apply selected suggested fields from a suggestion to the demo.
+    Expects form input 'apply_field' (multiple) naming the fields to apply.
+    """
+    try:
+        s = mongo.demo_suggestions.find_one({'_id': ObjectId(suggestion_id)})
+    except Exception:
+        s = None
+    if not s:
+        flash_message('Ehdotusta ei löytynyt.', 'error')
+        return redirect(url_for('admin_demo.suggestions_list'))
+
+    demo_id = s.get('demo_id')
+    try:
+        demo_doc = mongo.demonstrations.find_one({'_id': ObjectId(demo_id)})
+    except Exception:
+        demo_doc = None
+
+    if not demo_doc:
+        flash_message('Mielenosoitusta ei löytynyt.', 'error')
+        return redirect(url_for('admin_demo.suggestions_list'))
+
+    # fields selected by admin
+    selected = request.form.getlist('apply_field') or []
+    suggested = s.get('suggested_fields', {})
+    update = {}
+    for f in selected:
+        if f in suggested:
+            update[f] = suggested[f]
+
+    if not update:
+        flash_message('Valitse vähintään yksi kenttä päivitettäväksi.', 'error')
+        return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
+
+    # Save edit history
+    try:
+        mongo.demo_edit_history.insert_one({
+            'demo_id': demo_id,
+            'edited_by': str(getattr(current_user, '_id', 'unknown')),
+            'edited_at': datetime.utcnow(),
+            'old_demo': demo_doc,
+            'new_demo': {**demo_doc, **update},
+        })
+    except Exception:
+        logger.exception('Failed to write demo_edit_history for suggestion apply')
+
+    # Apply update
+    try:
+        mongo.demonstrations.update_one({'_id': ObjectId(demo_id)}, {'$set': update})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': datetime.utcnow()}})
+        flash_message('Ehdotuksen valitut kentät on päivitetty.', 'success')
+    except Exception:
+        logger.exception('Failed to apply suggestion to demo')
+        flash_message('Päivitys epäonnistui.', 'error')
+
+    return redirect(url_for('admin_demo.suggestions_list'))
+
+
+@admin_demo_bp.route('/suggestions/<suggestion_id>/status', methods=['POST'])
+@login_required
+@admin_required
+@permission_required('EDIT_DEMO')
+def suggestion_status_update(suggestion_id):
+    """
+    Update suggestion status (e.g., reject). Expects form 'status' param.
+    """
+    status = request.form.get('status')
+    if status not in ('rejected', 'closed'):
+        flash_message('Tuntematon tila.', 'error')
+        return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
+    try:
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': datetime.utcnow()}})
+        flash_message('Ehdotuksen tila päivitetty.', 'success')
+    except Exception:
+        logger.exception('Failed to update suggestion status')
+        flash_message('Tilapäivitys epäonnistui.', 'error')
+    return redirect(url_for('admin_demo.suggestions_list'))
     
 @admin_demo_bp.route("/trigger_screenshot/<demo_id>")
 @login_required

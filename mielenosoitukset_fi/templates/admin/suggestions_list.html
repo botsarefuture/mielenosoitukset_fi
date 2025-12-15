@@ -1,0 +1,239 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<style>
+  :root {
+    --color-text: light-dark(#1e293b, #e2e8f0);
+    --color-text-secondary: light-dark(#64748b, #94a3b8);
+    --color-primary: light-dark(#0033a0, #4d79cc);
+    --color-card-bg: light-dark(#ffffff, #1e1e2e);
+    --color-border: light-dark(#e2e8f0, #404050);
+    --color-shadow: light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+  }
+
+  .suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .suggestions-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .suggestion-badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  .suggestion-badge.new {
+    background: light-dark(#dcfce7, #1f3a3a);
+    color: light-dark(#166534, #86efac);
+  }
+
+  .suggestion-badge.applied {
+    background: light-dark(#dbeafe, #1e3a5f);
+    color: light-dark(#1e40af, #93c5fd);
+  }
+
+  .suggestion-badge.rejected {
+    background: light-dark(#fee2e2, #3a1f1f);
+    color: light-dark(#991b1b, #fca5a5);
+  }
+
+  .suggestion-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .suggestion-card:hover {
+    box-shadow: 0 10px 25px var(--color-shadow);
+    transform: translateY(-2px);
+  }
+
+  .suggestion-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .suggestion-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .suggestion-card-meta {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .suggestion-card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .suggestion-changes-summary {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.75rem;
+  }
+
+  .suggestion-changes-count {
+    display: inline-block;
+    background: var(--color-primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .suggestion-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .suggestion-actions a {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-text-secondary);
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 768px) {
+    .suggestions-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .suggestion-card-header {
+      flex-direction: column;
+    }
+
+    .suggestion-actions {
+      flex-direction: column;
+    }
+
+    .suggestion-actions a {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="admin-page">
+  <div class="suggestions-header">
+    <div>
+      <h1>💬 {{ _('Ehdotukset') }}</h1>
+      <p class="text-muted mb-0">{{ _('Käyttäjien ehdottamat muutokset mielenosoituksiin') }}</p>
+    </div>
+    <div class="d-none d-md-block">
+      <span class="badge bg-primary" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
+        {{ suggestions|length }} {{ _('ehdotusta') }}
+      </span>
+    </div>
+  </div>
+
+  {% if suggestions %}
+    <div class="suggestions-list">
+      {% for s in suggestions %}
+        <div class="suggestion-card">
+          <div class="suggestion-card-header">
+            <div style="flex-grow: 1;">
+              <h3 class="suggestion-card-title">
+            
+                {{ s.original_values.get('title', 'Tuntematon mielenosoitus') }}
+              </h3>
+              <div class="suggestion-card-meta">
+                <span title="Mielenosoituksen ID">
+                  <i class="fas fa-hashtag" style="font-size: 0.8rem;"></i>
+                  {{ s.demo_id[:8] }}...
+                </span>
+                <span title="Luontiaika">
+                  <i class="fas fa-calendar"></i>
+                  {{ s.created_at.strftime('%d.%m.%Y %H:%M') if s.created_at else '—' }}
+                </span>
+                {% if s.reporter_email %}
+                  <span title="Tekijän sähköposti">
+                    <i class="fas fa-envelope"></i>
+                    {{ s.reporter_email[:20] }}{% if s.reporter_email|length > 20 %}...{% endif %}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+            <div>
+              <span class="suggestion-badge {{ s.status }}">
+                {% if s.status == 'new' %}
+                  <i class="fas fa-star me-1"></i>{{ _('Uusi') }}
+                {% elif s.status == 'applied' %}
+                  <i class="fas fa-check me-1"></i>{{ _('Hyväksytty') }}
+                {% elif s.status == 'rejected' %}
+                  <i class="fas fa-times me-1"></i>{{ _('Hylätty') }}
+                {% else %}
+                  {{ s.status }}
+                {% endif %}
+              </span>
+            </div>
+          </div>
+
+          {% if s.suggested_fields %}
+            <div class="suggestion-changes-summary">
+              <span class="suggestion-changes-count">
+                {{ s.suggested_fields|length }} {{ _('muutos') if s.suggested_fields|length == 1 else _('muutosta') }}
+              </span>
+              <span style="margin-left: 0.75rem;">
+                {{ s.suggested_fields.keys()|join(', ') }}
+              </span>
+            </div>
+          {% endif %}
+
+          <div class="suggestion-actions">
+            <a href="{{ url_for('admin_demo.suggestion_view', suggestion_id=s._id) }}" class="btn btn-primary">
+              <i class="fas fa-eye me-2"></i>{{ _('Tarkastele') }}
+            </a>
+            <a href="{{ url_for('demonstration_detail', demo_id=s.demo_id) }}" class="btn btn-outline-secondary" target="_blank">
+              <i class="fas fa-external-link-alt me-2"></i>{{ _('Mielenosoitus') }}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h3>{{ _('Ei ehdotuksia') }}</h3>
+      <p>{{ _('Kaikki ehdotukset on käsitelty tai ei ole vielä saapunut uusia ehdotuksia.') }}</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

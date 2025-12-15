@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ _('Ehdota muutosta') }} {% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<style>
+  .suggestion-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+
+  .suggestion-card {
+    background: var(--color-card-bg);
+    border-radius: 16px;
+    box-shadow: var(--color-shadow);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+  }
+
+  .suggestion-header {
+    background: var(--color-gradient-primary);
+    color: white;
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .suggestion-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .suggestion-header-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .suggestion-header h2 {
+    color: white;
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .suggestion-header p {
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .demo-preview {
+    background: var(--color-card-bg);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .demo-preview-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 0.3rem 0;
+  }
+
+  .demo-preview-meta {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .suggestion-form {
+    padding: 2rem;
+  }
+
+  .form-section {
+    margin-bottom: 2rem;
+  }
+
+  .form-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .form-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.4rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: var(--transition);
+    background: var(--color-card-bg);
+    color: var(--color-text);
+  }
+
+  .form-group input::placeholder,
+  .form-group textarea::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background: var(--color-card-bg);
+    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+
+  .form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    margin-top: 2rem;
+  }
+
+  .btn-suggestion {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+  }
+
+  .btn-cancel {
+    background: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .btn-cancel:hover {
+    background: var(--hover_bg_color);
+    transform: translateY(-2px);
+  }
+
+  .btn-submit {
+    background: var(--color-gradient-primary);
+    color: white;
+  }
+
+  .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .hint-text {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.3rem;
+    font-style: italic;
+  }
+
+  @media (max-width: 768px) {
+    .suggestion-container {
+      padding: 0 1rem;
+      margin: 1rem auto;
+    }
+
+    .suggestion-header {
+      padding: 2rem 1rem;
+    }
+
+    .demo-preview {
+      padding: 1rem;
+    }
+
+    .suggestion-form {
+      padding: 1.5rem;
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+      gap: 0.5rem;
+    }
+
+    .btn-suggestion {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="suggestion-container">
+  <div class="suggestion-card">
+    <div class="suggestion-header">
+      <div class="suggestion-header-content">
+        <h2>✏️ {{ _('Ehdota muutosta') }}</h2>
+        <p>{{ _('Auta parantamaan tätä mielenosoitusta ehdottamalla muutoksia. Jätä tyhjäksi ne kentät, joita et halua muuttaa.') }}</p>
+      </div>
+    </div>
+
+    <div class="demo-preview">
+      <p class="demo-preview-title">{{ demo.title }}</p>
+      <p class="demo-preview-meta">📅 {{ demo.date }} • 📍 {{ demo.city }} • 📮 {{ demo.address }}</p>
+    </div>
+
+    <form method="POST" action="" id="suggestForm" class="suggestion-form">
+      <!-- Basic Details Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">📝 {{ _('Perustiedot') }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="title">{{ _('Otsikko') }}</label>
+            <input type="text" id="title" name="title" value="{{ demo.title }}" />
+            <span class="hint-text">{{ _('Mielenosoituksen otsikko') }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="date">{{ _('Päivämäärä') }}</label>
+            <input type="text" id="date" name="date" value="{{ demo.date }}" placeholder="vvvv-kk-pp" />
+            <span class="hint-text">{{ _('Muoto: vvvv-kk-pp') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time & Location Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">⏰ {{ _('Aika ja paikka') }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="start_time">{{ _('Alkamisaika') }}</label>
+            <input type="text" id="start_time" name="start_time" value="{{ demo.start_time }}" placeholder="HH:MM" />
+            <span class="hint-text">{{ _('Esim. 10:00') }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="end_time">{{ _('Päättymisaika') }}</label>
+            <input type="text" id="end_time" name="end_time" value="{{ demo.end_time }}" placeholder="HH:MM" />
+            <span class="hint-text">{{ _('Valinnainen') }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="city">{{ _('Kaupunki') }}</label>
+            <input type="text" id="city" name="city" value="{{ demo.city }}" />
+          </div>
+
+          <div class="form-group">
+            <label for="address">{{ _('Osoite') }}</label>
+            <input type="text" id="address" name="address" value="{{ demo.address }}" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Details Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">🔗 {{ _('Tapahtuman tiedot') }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="facebook">{{ _('Facebook-tapahtuman URL') }}</label>
+            <input type="text" id="facebook" name="facebook" value="{{ demo.facebook }}" placeholder="https://facebook.com/events/..." />
+            <span class="hint-text">{{ _('Valinnainen') }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="route">{{ _('Reitti (marsseille)') }}</label>
+            <input type="text" id="route" name="route" value="{{ demo.route or '' }}" />
+            <span class="hint-text">{{ _('Valinnainen, vain marsseille') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">📄 {{ _('Sisältö') }}</h3>
+        <div class="form-grid full-width">
+          <div class="form-group full-width">
+            <label for="description">{{ _('Kuvaus') }}</label>
+            <textarea id="description" name="description">{{ demo.description }}</textarea>
+            <span class="hint-text">{{ _('Yksityiskohdat mielenosoituksesta') }}</span>
+          </div>
+
+          <div class="form-group full-width">
+            <label for="tags">{{ _('Aihetunnisteet') }}</label>
+            <input type="text" id="tags" name="tags" value="{{ demo.tags | join(', ') if demo.tags else '' }}" placeholder="ilmastonmuutos, oikeudet, ..." />
+            <span class="hint-text">{{ _('Pilkuin eroteltuna') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">💬 {{ _('Huomautukset') }}</h3>
+        <div class="form-grid full-width">
+          <div class="form-group full-width">
+            <label for="reporter_comment">{{ _('Viesti ylläpidolle') }}</label>
+            <textarea id="reporter_comment" name="reporter_comment" placeholder="{{ _('Esim. miksi nämä muutokset olisivat hyödyllisiä?') }}"></textarea>
+            <span class="hint-text">{{ _('Valinnainen - auta meitä ymmärtämään ehdotuksesi') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Section -->
+      <div class="form-section">
+        <h3 class="form-section-title">📧 {{ _('Yhteystiedot') }}</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="reporter_email">{{ _('Sähköpostiosoitteesi') }}</label>
+            <input type="email" id="reporter_email" name="reporter_email" placeholder="email@example.com" />
+            <span class="hint-text">{{ _('Valinnainen - jotta voimme ottaa sinuun yhteyttä') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="btn-suggestion btn-cancel">{{ _('Peruuta') }}</a>
+        <button type="submit" class="btn-suggestion btn-submit">✓ {{ _('Lähetä ehdotus') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

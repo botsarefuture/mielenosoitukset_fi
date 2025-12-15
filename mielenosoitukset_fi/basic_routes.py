@@ -383,6 +383,8 @@ def add_api_routes(app):
                 "city": city_q,
                 "date": date_q,
                 "cancelled": {"$ne": True},
+                "hide": {"$ne": True},
+                "approved": True,
             })
             matches = []
             title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])

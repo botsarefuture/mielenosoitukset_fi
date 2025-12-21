@@ -1,9 +1,11 @@
-from mielenosoitukset_fi.utils.logger import logger
 from functools import wraps
+from bson import ObjectId
 from flask import redirect, url_for, abort
 from flask_babel import _
 from flask_login import current_user
+from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.flashing import flash_message
+from mielenosoitukset_fi.utils.logger import logger
 
 
 def admin_required(f):
@@ -78,9 +80,149 @@ def admin_required(f):
 
     return decorated_function
 
-def has_demo_permission(current_user, _id, permission_name):
-    # TODO: #388 Add demo permission check logic
-    raise NotImplementedError("This function hasn't been implemented yet.")
+def _get_mongo():
+    """Safely obtain a MongoDB handle."""
+    try:
+        return DatabaseManager.get_instance().get_db()
+    except Exception as exc:  # pragma: no cover - defensive logging path
+        logger.error("Failed to obtain database connection: %s", exc)
+        return None
+
+
+def _normalize_object_id(value):
+    """Convert various ID formats to ObjectId or return None."""
+    if isinstance(value, dict) and "$oid" in value:
+        value = value.get("$oid")
+
+    if isinstance(value, ObjectId):
+        return value
+
+    if isinstance(value, str):
+        try:
+            return ObjectId(value)
+        except Exception:
+            return None
+
+    return None
+
+
+def has_demo_permission(user, _id, permission_name):
+    """
+    Determine whether a user has permission for a specific demonstration.
+
+    The check is intentionally defensive:
+    - Validates authentication and admin status early.
+    - Resolves the demonstration by `_id` (returns False if missing/invalid).
+    - Grants permission when the user is listed as an explicit editor.
+    - Grants permission when the user has the required permission in any
+      organization that appears in the demonstration's organizers.
+
+    Parameters
+    ----------
+    user :
+        The current user object (expected to behave like flask-login's
+        `current_user`).
+    _id : str | ObjectId
+        Demonstration identifier.
+    permission_name : str
+        Name of the permission being requested (e.g., "EDIT_DEMO").
+
+    Returns
+    -------
+    bool
+        True if permission is granted, otherwise False.
+    """
+    if user is None:
+        logger.warning("Demo permission denied: no user provided.")
+        return False
+
+    if getattr(user, "global_admin", False):
+        logger.info("Demo permission granted: user is global admin.")
+        return True
+
+    if not getattr(user, "is_authenticated", False):
+        logger.info("Demo permission denied: user not authenticated.")
+        return False
+
+    if not _id:
+        logger.warning(
+            "Demo permission denied: missing demonstration id for '%s'.",
+            permission_name,
+        )
+        return False
+
+    demo_id = _normalize_object_id(_id)
+    if not demo_id:
+        logger.warning(
+            "Demo permission denied: invalid demonstration id '%s' for '%s'.",
+            _id,
+            permission_name,
+        )
+        return False
+
+    mongo = _get_mongo()
+    if not mongo:
+        logger.error(
+            "Demo permission denied: database unavailable for '%s'.", permission_name
+        )
+        return False
+
+    demo_doc = mongo.demonstrations.find_one({"_id": demo_id})
+    if not demo_doc:
+        logger.warning(
+            "Demo permission denied: demonstration %s not found for '%s'.",
+            demo_id,
+            permission_name,
+        )
+        return False
+
+    # Explicit editors on the document
+    user_identifiers = {
+        str(getattr(user, "id", "")),
+        str(getattr(user, "_id", "")),
+    }
+    editors = {
+        str(e.get("$oid")) if isinstance(e, dict) and "$oid" in e else str(e)
+        for e in demo_doc.get("editors", [])
+    }
+    if user_identifiers & editors:
+        logger.info(
+            "Demo permission granted: user %s listed as editor for %s.",
+            getattr(user, "id", None),
+            demo_id,
+        )
+        return True
+
+    # Organization-based permissions via organizers
+    organizer_orgs = []
+    for organizer in demo_doc.get("organizers", []):
+        org_id = None
+        if isinstance(organizer, dict):
+            org_id = organizer.get("organization_id")
+        else:
+            org_id = getattr(organizer, "organization_id", None)
+
+        org_oid = _normalize_object_id(org_id)
+        if org_oid:
+            organizer_orgs.append(org_oid)
+
+    for org_oid in organizer_orgs:
+        if user.has_permission(permission_name, org_oid):
+            logger.info(
+                "Demo permission granted: user %s has '%s' for organization %s.",
+                getattr(user, "id", None),
+                permission_name,
+                org_oid,
+            )
+            return True
+
+    logger.info(
+        "Demo permission denied: user %s lacks '%s' for demonstration %s.",
+        getattr(user, "id", None),
+        permission_name,
+        demo_id,
+    )
+    return False
 
 def permission_required(permission_name: str, _id: str | None = None, _type: str | None = None):
     """
@@ -171,8 +313,13 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
             if _type == "DEMONSTRATION":
                 has = has_demo_permission(current_user, _id, permission_name)
                 if has:
-                    f(*args, **kwargs)
-                    
+                    return f(*args, **kwargs)
+                logger.warning(
+                    "Demonstration permission '%s' denied for user %s and demo %s.",
+                    permission_name,
+                    getattr(current_user, "id", None),
+                    _id,
+                )
                                 
             # Check if the user has the specified permission via user role permissions
             if current_user.has_permission(

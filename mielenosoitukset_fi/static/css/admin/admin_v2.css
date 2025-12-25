@@ -181,14 +181,14 @@
 }
 
 .dashboard-panel {
-    background-color: light-dark(#fafafa, #252525);
+    background-color: light-dark(#fafafa, #252525) !important;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .dashboard-panel .dashboard-panel {
-    background-color: light-dark(#f0f0f0, #2e2e2e);
+    background-color: light-dark(#f0f0f0, #2e2e2e) !important;
 }
 
 .search-bar {

@@ -1010,6 +1010,7 @@
   });
 
   // Form submission
+  let submittingDemo = false;
   document.getElementById("myForm").addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -1022,6 +1023,10 @@
       return;
     }
 
+    if (submittingDemo) {
+      return;
+    }
+    submittingDemo = true;
     const submitBtn = document.getElementById("submit-form");
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;

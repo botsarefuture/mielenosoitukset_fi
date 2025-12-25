@@ -603,6 +603,44 @@
     box-shadow: var(--color-shadow-lg);
   }
 
+  .org-hero-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .org-logo-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 30px;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: var(--color-shadow);
+  }
+
+  .org-logo-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 16px;
+  }
+
+  .org-logo-placeholder {
+    color: var(--color-text-secondary);
+    font-size: 2.5rem;
+  }
+
+  .org-hero-info {
+    flex: 1;
+    min-width: 240px;
+  }
+
   .org-hero::after {
     content: '';
     position: absolute;
@@ -624,24 +662,35 @@
 
 <section class="org-hero">
   <div class="org-hero-content">
-    <!-- Label / Verification -->
-    <div class="org-label {% if org.verified %}verified{% endif %}">
-      {% if org.verified %}
-        <i class="fa-solid fa-circle-check"></i>
-        <span>{{ _('Vahvistettu organisaatio') }}</span>
-      {% else %}
-        <i class="fa-solid fa-building"></i>
-        <span>{{ _('Organisaatio') }}</span>
-      {% endif %}
+    <div class="org-hero-header">
+      <div class="org-logo-wrapper">
+        {% if org.logo %}
+        <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async">
+        {% else %}
+        <div class="org-logo-placeholder">
+          <i class="fa-solid fa-building"></i>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="org-hero-info">
+        <div class="org-label {% if org.verified %}verified{% endif %}">
+          {% if org.verified %}
+            <i class="fa-solid fa-circle-check"></i>
+            <span>{{ _('Vahvistettu organisaatio') }}</span>
+          {% else %}
+            <i class="fa-solid fa-building"></i>
+            <span>{{ _('Organisaatio') }}</span>
+          {% endif %}
+        </div>
+
+        <h1 class="org-name">{{ org.name }}</h1>
+
+        {% if org.description %}
+        <p class="org-desc">{{ org.description }}</p>
+        {% endif %}
+      </div>
     </div>
-
-    <!-- Org name -->
-    <h1 class="org-name">{{ org.name }}</h1>
-
-    <!-- Description -->
-    {% if org.description %}
-    <p class="org-desc">{{ org.description }}</p>
-    {% endif %}
 
     <!-- Optional verified banner -->
     {% if org.verified %}

@@ -469,6 +469,31 @@
     transition: var(--transition);
   }
 
+  .privacy-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px dashed var(--color-border);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .privacy-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--color-text);
+  }
+
+  .privacy-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.35rem;
+  }
+
   .organizer-card:hover {
     border-color: var(--color-primary);
     box-shadow: var(--color-shadow);
@@ -866,6 +891,21 @@
         <label for="organizer_email_${organizerCount}">{{ _('Sähköpostiosoite') }}</label>
         <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" placeholder="email@example.com">
       </div>
+      <div class="privacy-options">
+        <label class="privacy-checkbox">
+          <input type="checkbox" id="organizer_is_private_${organizerCount}" name="organizer_is_private_${organizerCount}" onchange="handlePrivateToggle(${organizerCount})">
+          {{ _('Olen yksityishenkilö enkä edusta organisaatiota') }}
+        </label>
+        <label class="privacy-checkbox">
+          <input type="checkbox" id="organizer_show_name_${organizerCount}" name="organizer_show_name_${organizerCount}" checked>
+          {{ _('Saa näyttää nimeni julkisesti') }}
+        </label>
+        <label class="privacy-checkbox">
+          <input type="checkbox" id="organizer_show_email_${organizerCount}" name="organizer_show_email_${organizerCount}" checked>
+          {{ _('Saa näyttää sähköpostiosoitteeni julkisesti') }}
+        </label>
+        <p class="privacy-hint">{{ _('Jos valitset yksityishenkilön, voit piilottaa nimesi ja sähköpostisi. Käytämme tietoja silti yhteydenottoja varten.') }}</p>
+      </div>
     `;
 
     container.appendChild(organizerDiv);
@@ -876,6 +916,22 @@
       organizerDiv.style.opacity = '1';
       organizerDiv.style.transform = 'translateY(0)';
     }, 10);
+  };
+
+  window.handlePrivateToggle = function (index) {
+    const privateToggle = document.getElementById(`organizer_is_private_${index}`);
+    const showNameToggle = document.getElementById(`organizer_show_name_${index}`);
+    const showEmailToggle = document.getElementById(`organizer_show_email_${index}`);
+    if (!privateToggle || !showNameToggle || !showEmailToggle) {
+      return;
+    }
+
+    if (privateToggle.checked) {
+      showEmailToggle.checked = false;
+    } else {
+      showNameToggle.checked = true;
+      showEmailToggle.checked = true;
+    }
   };
 
   // Search organizations and populate results
@@ -924,6 +980,12 @@
     document.getElementById(`organizer_name_${organizerNum}`).value = name;
     document.getElementById(`organizer_email_${organizerNum}`).value = email;
     document.getElementById(`organizer_website_${organizerNum}`).value = website;
+    const privateToggle = document.getElementById(`organizer_is_private_${organizerNum}`);
+    const showNameToggle = document.getElementById(`organizer_show_name_${organizerNum}`);
+    const showEmailToggle = document.getElementById(`organizer_show_email_${organizerNum}`);
+    if (privateToggle) privateToggle.checked = false;
+    if (showNameToggle) showNameToggle.checked = true;
+    if (showEmailToggle) showEmailToggle.checked = true;
     document.getElementById(`org_search_${organizerNum}`).value = '';
     document.getElementById(`org_search_results_${organizerNum}`).style.display = 'none';
   };

@@ -280,7 +280,7 @@
     </div>
 
 
-    <form method="POST"
+    <form method="POST" enctype="multipart/form-data"
         action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
 
         <div class="form-group">
@@ -305,6 +305,36 @@
             <label for="website">{{ _('Verkkosivu') }}</label>
             <input type="url" id="website" name="website" class="form-control"
                 value="{{ organization.website if organization else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="logo_url">{{ _('Logon URL') }}</label>
+            <input type="url" id="logo_url" name="logo_url" class="form-control"
+                placeholder="https://example.com/logo.png"
+                value="{{ organization.logo if organization and organization.logo else '' }}">
+            <small class="muted">{{ _('Voit käyttää olemassa olevaa kuvalinkkiä, jos logo on jo verkossa.') }}</small>
+        </div>
+
+        <div class="form-group">
+            <label for="logo_file">{{ _('Lataa logo tiedostona') }}</label>
+            <input type="file" id="logo_file" name="logo_file" class="form-control" accept="image/*">
+            <small class="muted">{{ _('Ladattu tiedosto tallennetaan ja korvaa yllä olevan URL-osoitteen arvon.') }}</small>
+
+            {% if organization and organization.logo %}
+            <div class="logo-preview">
+                <img src="{{ organization.logo }}" alt="{{ _('Nykyinen logo: %(name)s', name=organization.name) }}"
+                    loading="lazy">
+                <div class="logo-actions">
+                    <a href="{{ organization.logo }}" target="_blank" rel="noopener">
+                        {{ _('Avaa nykyinen logo') }}
+                    </a>
+                    <label class="remove-logo-toggle">
+                        <input type="checkbox" name="remove_logo">
+                        {{ _('Poista logo tallennettaessa') }}
+                    </label>
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         {% if organization %}
@@ -369,3 +399,34 @@
     {% endif %}
 </div>
 {% endblock %}
+    .logo-preview {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .logo-preview img {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+        border-radius: 18px;
+        border: 1px solid var(--input-border);
+        background-color: var(--input-bg);
+        padding: 0.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, .08);
+    }
+
+    .logo-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .remove-logo-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+    }

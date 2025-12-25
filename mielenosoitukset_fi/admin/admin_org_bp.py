@@ -14,7 +14,7 @@ v2.4.0:
 
 from datetime import datetime
 from bson.objectid import ObjectId
-from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response
+from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response, current_app
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from mielenosoitukset_fi.users.models import User
@@ -26,6 +26,8 @@ from mielenosoitukset_fi.utils.classes import Organization, MemberShip
 
 from typing import Optional, Tuple, Any, Dict
 from bson import ObjectId  # if using pymongo
+from werkzeug.utils import secure_filename
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
@@ -228,18 +230,25 @@ def update_organization(org_id):
     description = request.form.get("description")
     website = request.form.get("website")
     social_media_links = get_social_media_links()
+    current_logo_doc = mongo.organizations.find_one({"_id": ObjectId(org_id)}, {"logo": 1})
+    current_logo = current_logo_doc.get("logo") if current_logo_doc else None
+    logo_value, logo_changed = resolve_logo_value(current_logo)
+
+    update_payload = {
+        "name": name,
+        "description": description,
+        "email": email,
+        "website": website,
+        "social_media_links": social_media_links,
+        "verified": request.form.get("verified") == "on",
+    }
+    if logo_changed:
+        update_payload["logo"] = logo_value
 
     mongo.organizations.update_one(
         {"_id": ObjectId(org_id)},
         {
-            "$set": {
-                "name": name,
-                "description": description,
-                "email": email,
-                "website": website,
-                "social_media_links": social_media_links,
-                "verified": request.form.get("verified") == "on",
-            }
+            "$set": update_payload
         },
     )
     return True
@@ -285,6 +294,53 @@ def get_social_media_links():
     platforms = request.form.getlist("social_media_platform[]")
     urls = request.form.getlist("social_media_url[]")
     return {platform: url for platform, url in zip(platforms, urls) if platform and url}
+
+
+def resolve_logo_value(current_logo: Optional[str] = None) -> tuple[Optional[str], bool]:
+    """
+    Determine the desired logo value based on form inputs and uploads.
+
+    Returns a tuple of (value, should_update) so callers can decide whether to include the field in DB writes.
+    """
+    file = request.files.get("logo_file")
+    logo_field = request.form.get("logo_url")
+    remove_logo = request.form.get("remove_logo") == "on"
+    normalized_current = (current_logo or "").strip()
+
+    if file and file.filename:
+        bucket_name = current_app.config.get("S3_BUCKET")
+        if not bucket_name:
+            logger.error("S3 bucket missing, cannot upload organization logo.")
+            flash_message(_("Logon lähetys epäonnistui, S3-asetukset puuttuvat."), "error")
+            return current_logo, False
+
+        filename = secure_filename(file.filename)
+        try:
+            uploaded_url = upload_image_fileobj(bucket_name, file.stream, filename, "organization_logos")
+            if uploaded_url:
+                return uploaded_url, True
+            flash_message(_("Logon lähetys epäonnistui."), "error")
+        except Exception:
+            logger.exception("Failed to upload organization logo.")
+            flash_message(_("Logon lähetys epäonnistui."), "error")
+        return current_logo, False
+
+    if remove_logo:
+        return None, True
+
+    if logo_field is None:
+        return current_logo, False
+
+    trimmed_logo = logo_field.strip()
+    if trimmed_logo:
+        if trimmed_logo != normalized_current:
+            return trimmed_logo, True
+        return current_logo, False
+
+    # Field submitted empty
+    if normalized_current:
+        return None, True
+    return None, False
 
 
 # Create organization
@@ -376,6 +432,12 @@ def insert_organization(org_data: Optional[dict] = None) -> Tuple[bool, Optional
     else:
         social_media_links = {}
 
+    if org_data:
+        logo_value = org_data.get("logo")
+        logo_should_set = "logo" in org_data and logo_value is not None
+    else:
+        logo_value, logo_should_set = resolve_logo_value()
+
     result = mongo.organizations.insert_one(
         {
             "name": name,
@@ -384,6 +446,7 @@ def insert_organization(org_data: Optional[dict] = None) -> Tuple[bool, Optional
             "website": website,
             "social_media_links": social_media_links,
             "members": [],
+            **({"logo": logo_value} if logo_should_set and logo_value else {}),
         }
     )
 

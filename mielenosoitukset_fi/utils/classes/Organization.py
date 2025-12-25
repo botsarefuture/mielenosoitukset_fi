@@ -18,6 +18,7 @@ class Organization(BaseEntity):
         description: str,
         email: str,
         website: str = "",
+        logo: str | None = None,
         social_media_links: Dict[str, str] = None,
         members: List[object] = None,          # kept for legacy compatibility – ignored
         verified: bool = False,
@@ -25,7 +26,7 @@ class Organization(BaseEntity):
         invitations: List[dict] = None,
         fill_url: str = None,
     ):
-        super().__init__(name, email, website, _id)
+        super().__init__(name=name, email=email, website=website, _id=_id, logo=logo)
         self.description        = description
         self.social_media_links = social_media_links or {}
         self.verified           = verified

@@ -35,6 +35,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import requests
 from mastodon import Mastodon, MastodonError
+from bson import ObjectId
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 
@@ -211,6 +212,31 @@ def index_events_by_id(events: Iterable[dict]) -> Dict[str, dict]:
         if demo_id:
             indexed[str(demo_id)] = event
     return indexed
+
+
+def fetch_demo_by_identifier(demo_id: str) -> Optional[dict]:
+    """
+    Fetch a demonstration document directly from Mongo using various identifiers.
+    Allows Mastobot to find demos that are no longer present in the public API listing.
+    """
+    if not demo_id:
+        return None
+
+    queries = []
+    try:
+        queries.append({"_id": ObjectId(demo_id)})
+    except Exception:
+        pass
+    queries.append({"slug": demo_id})
+    queries.append({"running_number": demo_id})
+
+    for query in queries:
+        demo = mongo.demonstrations.find_one(query)
+        if demo:
+            if isinstance(demo.get("_id"), ObjectId):
+                demo["_id"] = str(demo["_id"])
+            return demo
+    return None
 
 
 def strip_html_tags(text: str) -> str:
@@ -548,6 +574,13 @@ def subscribe_account(
         logging.warning("Subscription request missing account id; skipping")
         return
     demo = events_by_id.get(str(demo_id))
+    if not demo:
+        # Fall back to querying Mongo directly for older/archived demonstrations
+        demo = fetch_demo_by_identifier(str(demo_id))
+        if demo and not demo.get("formatted_date"):
+            parsed_dt = parse_event_date(demo.get("date"))
+            if parsed_dt:
+                demo["formatted_date"] = format_finnish_date(parsed_dt)
     if not demo:
         message = f"@{acct} En löytänyt mielenosoitusta tietokannasta – yritä hetken kuluttua uudelleen."
         post_to_mastodon(

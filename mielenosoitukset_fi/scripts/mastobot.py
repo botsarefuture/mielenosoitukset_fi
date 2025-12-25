@@ -632,6 +632,19 @@ def subscribe_account(
             in_reply_to_id=str(request_status.get("id")),
         )
         return
+    if demo.get("cancelled"):
+        message = (
+            f"@{acct} Tapahtuma on peruttu, joten siihen ei voi enää tilata muistutuksia. "
+            "Kiitos kiinnostuksesta!"
+        )
+        post_to_mastodon(
+            client,
+            message,
+            dry_run=dry_run,
+            visibility="direct",
+            in_reply_to_id=str(request_status.get("id")),
+        )
+        return
 
     title = demo.get("title") or demo.get("name") or "Mielenosoitus"
     date_text = demo.get("formatted_date") or demo.get("date") or ""

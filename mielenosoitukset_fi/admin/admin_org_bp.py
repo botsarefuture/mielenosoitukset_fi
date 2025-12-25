@@ -75,6 +75,8 @@ def organization_control():
 
     total_count = mongo.organizations.count_documents(query)
     total_pages = (total_count + per_page - 1) // per_page if total_count else 1
+    if page > total_pages:
+        page = total_pages
 
     organizations = list(
         mongo.organizations.find(query)

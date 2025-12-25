@@ -53,10 +53,14 @@ DEFAULT_API_URL = os.getenv(
 DEFAULT_MASTODON_BASE = os.getenv("MASTODON_API_BASE", "https://mastodon.social")
 DEFAULT_DATA_FILE = os.getenv("MO_POSTED_FILE", "posted_events.txt")
 DEFAULT_MAX_DAYS = int(os.getenv("MO_POST_MAX_DAYS", "60"))
-DEFAULT_CHECK_INTERVAL = int(os.getenv("MO_CHECK_INTERVAL", "3600"))
+DEFAULT_CHECK_INTERVAL = int(os.getenv("MO_CHECK_INTERVAL", "60"))
 
 subscriptions_collection = mongo["mastobot_subscriptions"]
 mastobot_meta_collection = mongo["mastobot_meta"]
+INSTRUCTIONS_COMMENT = (
+    "💡 Haluatko muistutuksen mielenosoituksesta? Vastaa tähän ketjuun kirjoittamalla `!subscribeme` "
+    "niin saat Mastodon-viestit 7 päivää ja 24 tuntia ennen tapahtumaa sekä tiedon peruutuksista."
+)
 
 
 @dataclass
@@ -136,6 +140,22 @@ def append_posted(
             state.status_to_demo[str(status_id)] = demo_id
     elif demo_id and post_type == "cancellation":
         state.cancellations.add(demo_id)
+
+
+def post_instructions_comment(
+    client: Optional[Mastodon],
+    base_status_id: Optional[str],
+    dry_run: bool,
+) -> None:
+    """Reply under the published status with instructions for !subscribeme usage."""
+    if not base_status_id:
+        return
+    post_to_mastodon(
+        client,
+        INSTRUCTIONS_COMMENT,
+        dry_run=dry_run,
+        in_reply_to_id=base_status_id,
+    )
 
 
 def build_event_link(demo_id: str) -> str:
@@ -445,6 +465,7 @@ def process_events(
                 status_id=status_id,
                 post_type="announcement",
             )
+            post_instructions_comment(client, status_id, dry_run)
             posted_count += 1
             time.sleep(1)
     logging.info("Posted %d new events", posted_count)
@@ -502,6 +523,7 @@ def handle_cancellations(
                 status_id=status_id,
                 post_type="cancellation",
             )
+            post_instructions_comment(client, status_id, dry_run)
             cancelled_posts += 1
             time.sleep(1)
 

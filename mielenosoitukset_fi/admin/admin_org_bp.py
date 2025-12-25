@@ -28,6 +28,7 @@ from typing import Optional, Tuple, Any, Dict
 from bson import ObjectId  # if using pymongo
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from urllib.parse import urlencode
 
 # Create a Blueprint for admin organization management
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
@@ -70,8 +71,8 @@ def organization_control():
     )
 
     search_query = request.args.get("search", "")
-    page = max(int(request.args.get("page", 1)), 1)
-    per_page = max(int(request.args.get("per_page", 20)), 1)
+    page = _parse_positive_int_arg("page", 1)
+    per_page = _parse_positive_int_arg("per_page", 20)
 
     query = construct_query(search_query, org_limiter)
 
@@ -90,6 +91,18 @@ def organization_control():
     prev_page = page - 1 if page > 1 else None
     next_page = page + 1 if page < total_pages else None
 
+    pagination_args = request.args.to_dict()
+    base_url = url_for("admin_org.organization_control")
+
+    def build_page_url(target_page):
+        args = pagination_args.copy()
+        args["page"] = target_page
+        args["per_page"] = per_page
+        return f"{base_url}?{urlencode(args)}"
+
+    prev_page_url = build_page_url(prev_page) if prev_page else None
+    next_page_url = build_page_url(next_page) if next_page else None
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/dashboard.html",
         organizations=organizations,
@@ -99,6 +112,8 @@ def organization_control():
         total_pages=total_pages,
         prev_page=prev_page,
         next_page=next_page,
+        prev_page_url=prev_page_url,
+        next_page_url=next_page_url,
     )
 
 
@@ -131,6 +146,18 @@ def construct_query(search_query, org_limiter):
         query["_id"] = {"$in": org_limiter}
 
     return query
+
+
+def _parse_positive_int_arg(arg_name, default_value):
+    """
+    Parse a query parameter as an integer and ensure it is at least 1.
+    Fall back to the default if parsing fails.
+    """
+    try:
+        parsed = int(request.args.get(arg_name, default_value))
+    except (TypeError, ValueError):
+        return default_value
+    return max(parsed, 1)
 
 
 # Edit organization

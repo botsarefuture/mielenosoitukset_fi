@@ -136,14 +136,14 @@
         <div class="pagination-controls">
             <ul class="pagination mb-0">
                 <li class="page-item {% if not prev_page %}disabled{% endif %}">
-                    <a class="page-link" href="{% if prev_page %}?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{% else %}#{% endif %}"
+                    <a class="page-link" href="{{ prev_page_url or '#' }}"
                         aria-label="{{ _('Edellinen sivu') }}">
                         <span aria-hidden="true">&laquo;</span>
                     </a>
                 </li>
                 <li class="page-item disabled"><span class="page-link">{{ current_page }}</span></li>
                 <li class="page-item {% if not next_page %}disabled{% endif %}">
-                    <a class="page-link" href="{% if next_page %}?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{% else %}#{% endif %}"
+                    <a class="page-link" href="{{ next_page_url or '#' }}"
                         aria-label="{{ _('Seuraava sivu') }}">
                         <span aria-hidden="true">&raquo;</span>
                     </a>

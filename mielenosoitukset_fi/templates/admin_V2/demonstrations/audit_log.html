@@ -1,0 +1,95 @@
+{% extends "admin_base.html" %}
+{% block styles %}
+<style>
+  .audit-list .list-group-item {
+    border-left: 4px solid transparent;
+  }
+  .audit-list .list-group-item[data-action="edit_demo"] {
+    border-left-color: var(--bs-primary);
+  }
+  .audit-list .list-group-item[data-action="cancel_demo"] {
+    border-left-color: var(--bs-danger);
+  }
+  .audit-list .list-group-item[data-action="approve_demo"] {
+    border-left-color: var(--bs-success);
+  }
+  .audit-list .list-group-item[data-action="reject_demo"] {
+    border-left-color: var(--bs-warning);
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="admin-page">
+  <div class="admin-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+    <div>
+      <h1 class="admin-section-title mb-1">{{ _('Audit-loki:') }} {{ demo.title }}</h1>
+      <p class="text-muted mb-0">{{ demo.date }} · {{ demo.city }}</p>
+    </div>
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
+    </a>
+  </div>
+
+  {% if entries %}
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="list-group list-group-flush audit-list">
+        {% for entry in entries %}
+        <div class="list-group-item" data-action="{{ entry.action }}">
+          <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <h6 class="mb-1">{{ entry.message or entry.action }}</h6>
+              <div class="text-muted small">
+                {{ entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') if entry.timestamp else '' }}
+                · {{ entry.username or '–' }} · {{ entry.ip_address or '–' }}
+              </div>
+            </div>
+            {% if entry.details and entry.details.changed_fields %}
+            <span class="badge bg-light text-dark ms-auto">
+              {{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}
+            </span>
+            {% endif %}
+          </div>
+          {% if entry.details and entry.details.history_id %}
+          <div class="mt-2">
+            <a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="btn btn-sm btn-outline-primary">
+              <i class="fa-solid fa-code-compare me-2"></i>{{ _('Näytä muutoshistoria') }}
+            </a>
+          </div>
+          {% endif %}
+          {% if entry.details and entry.details.merged_from %}
+          <div class="alert alert-info mt-2 mb-0 py-2 px-3">
+            <strong class="d-block mb-1">{{ _('Yhdistetyt mielenosoitukset:') }}</strong>
+            <ul class="mb-0 ps-3">
+              {% for merged in entry.details.merged_from %}
+              <li>
+                {{ merged.title or _('Mielenosoitus') }} <code>{{ merged.demo_id }}</code>
+                {% if merged.edit_history_url %}
+                · <a href="{{ merged.edit_history_url }}">{{ _('Muokkaushistoria') }}</a>
+                {% endif %}
+                {% if merged.audit_log_url %}
+                · <a href="{{ merged.audit_log_url }}">{{ _('Audit-loki') }}</a>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          {% if entry.details and entry.details.reason %}
+          <div class="alert alert-warning mt-2 mb-0 py-2 px-3">
+            <strong>{{ _('Syy:') }}</strong> {{ entry.details.reason }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    <i class="fa-solid fa-circle-info me-2"></i>{{ _('Ei audit-merkintöjä tälle mielenosoitukselle.') }}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

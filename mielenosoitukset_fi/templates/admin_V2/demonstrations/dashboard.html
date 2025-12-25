@@ -3,23 +3,119 @@
 <style>
   .search-and-filter {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1rem;
+    align-items: flex-start;
   }
 
-  @media (min-width: 768px) {
-    .search-and-filter {
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-    }
+  .search-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    max-width: 460px;
+    width: 100%;
+    flex: 1 1 320px;
+    padding: 0.9rem 1.1rem;
+    border-radius: 16px;
+    background: light-dark(#f8f9fb, #1f232f);
+    border: 1px solid light-dark(#d6dce8, rgba(255,255,255,0.08));
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  }
 
-    .filter-form {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
+  .search-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: light-dark(#4c5d7a, #b1b7c6);
+    background: light-dark(#e9edf6, rgba(255,255,255,0.06));
+    border: 1px solid light-dark(#d4daec, rgba(255,255,255,0.08));
+  }
+
+  .search-input {
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: light-dark(#111827, #f4f6ff);
+    padding: 0;
+  }
+
+  .search-input::placeholder {
+    color: light-dark(#9097a9, #7f879b);
+  }
+
+  .search-input:focus {
+    outline: none;
+  }
+
+  .search-button {
+    border: none;
+    border-radius: 12px;
+    padding: 0.65rem 1.3rem;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 15px 25px rgba(37, 99, 235, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .search-button i {
+    font-size: 0.9rem;
+  }
+
+  .search-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 28px rgba(37, 99, 235, 0.45);
+  }
+
+  .filter-select {
+    border-radius: 12px;
+    border: 1px solid light-dark(#d2d8e5, rgba(255,255,255,0.12));
+    background: light-dark(#ffffff, #1d2533);
+    color: light-dark(#111827, #f3f4ff);
+    padding: 0.55rem 0.9rem;
+    min-width: 110px;
+    transition: border 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 12px 26px rgba(37, 99, 235, 0.18);
+  }
+
+  .filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
+    flex: 2 1 420px;
+  }
+
+  .filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 190px;
+    flex: 1 1 200px;
+  }
+
+  .filter-field label {
+    font-weight: 500;
+    color: light-dark(#1f2937, #e5e7f4);
+  }
+
+  .filter-field label {
+    font-weight: 500;
+    color: light-dark(#1f2937, #e5e7f4);
   }
 
   .modal-dark {
@@ -311,45 +407,167 @@
     <div class="search-and-filter">
       <!-- Client-side search bar -->
       <div class="search-bar">
-        <label for="search" class="sr-only">{{ _('Hae mielenosoituksia:') }}</label>
+        <div class="search-icon">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
         <input type="search" id="search" class="search-input" placeholder="{{ _('Hae mielenosoituksia...') }}"
           aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ search_query }}">
         <button type="button" id="search-btn" class="search-button">
-          <i class="fas fa-search"></i>{{ _('Hae') }}
+          <i class="fa-solid fa-arrow-right"></i><span>{{ _('Hae') }}</span>
         </button>
       </div>
 
       <!-- Server-side filters -->
-      <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="filter-form">
-        <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
-        <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
-          <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
-          <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
-        </select>
+      <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="filter-form" id="dashboard-filter-form">
+        <input type="hidden" name="search" id="filter-search-hidden" value="{{ search_query }}">
+        <div class="filter-field">
+          <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
+          <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
+            <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
+            <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+          </select>
+        </div>
 
-        <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
-        <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
-          <option value="all" {% if show_past=='all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
-          <option value="false" {% if not show_past %}selected{% endif %}>{{ _('Ei') }}</option>
-          <option value="true" {% if show_past %}selected{% endif %}>{{ _('Kyllä') }}</option>
-        </select>
+        <div class="filter-field">
+          <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
+          <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
+            <option value="all" {% if show_past_filter=='all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
+            <option value="false" {% if show_past_filter=='false' %}selected{% endif %}>{{ _('Ei') }}</option>
+            <option value="true" {% if show_past_filter=='true' %}selected{% endif %}>{{ _('Kyllä') }}</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="show_hidden">{{ _('Näytä piilotetut mielenosoitukset:') }}</label>
+          <select name="show_hidden" id="show_hidden" class="filter-select" onchange="this.form.submit()">
+            <option value="false" {% if not show_hidden %}selected{% endif %}>{{ _('Ei') }}</option>
+            <option value="true" {% if show_hidden %}selected{% endif %}>{{ _('Kyllä') }}</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="show_cancelled">{{ _('Näytä perutut mielenosoitukset:') }}</label>
+          <select name="show_cancelled" id="show_cancelled" class="filter-select" onchange="this.form.submit()">
+            <option value="false" {% if not show_cancelled %}selected{% endif %}>{{ _('Ei') }}</option>
+            <option value="true" {% if show_cancelled %}selected{% endif %}>{{ _('Kyllä') }}</option>
+          </select>
+        </div>
       </form>
     </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('search');
+        const searchButton = document.getElementById('search-btn');
+        const filterForm = document.getElementById('dashboard-filter-form');
+        const filterSearchHidden = document.getElementById('filter-search-hidden');
+        if (!searchInput || !searchButton) return;
 
+        const dataRows = Array.from(document.querySelectorAll('tr[data-search-row="true"]'));
+        const sectionHeaders = Array.from(document.querySelectorAll('tr.section-header'));
+
+        const updateSectionHeaders = () => {
+          sectionHeaders.forEach(header => {
+            let hasVisible = false;
+            let next = header.nextElementSibling;
+            while (next && !next.classList.contains('section-header')) {
+              if (!next.classList.contains('d-none')) {
+                hasVisible = true;
+                break;
+              }
+              next = next.nextElementSibling;
+            }
+            header.classList.toggle('d-none', !hasVisible);
+          });
+        };
+
+        const syncHiddenSearch = () => {
+          if (filterSearchHidden) {
+            filterSearchHidden.value = searchInput.value || '';
+          }
+        };
+
+        const applyLocalSearch = term => {
+          const normalized = term.trim().toLowerCase();
+          dataRows.forEach(row => {
+            const haystack = row.getAttribute('data-search-text') || row.textContent.toLowerCase();
+            const match = !normalized || haystack.includes(normalized);
+            row.classList.toggle('d-none', !match);
+          });
+          updateSectionHeaders();
+        };
+
+        const commitSearch = () => {
+          const normalized = (searchInput.value || '').trim();
+          const url = new URL(window.location.href);
+          if (normalized) {
+            url.searchParams.set('search', normalized);
+          } else {
+            url.searchParams.delete('search');
+          }
+          window.location.href = url.toString();
+        };
+
+        searchInput.addEventListener('input', () => {
+          applyLocalSearch(searchInput.value || '');
+          syncHiddenSearch();
+        });
+
+        searchInput.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            commitSearch();
+          }
+        });
+
+        searchButton.addEventListener('click', () => {
+          commitSearch();
+        });
+
+        if (filterForm) {
+          filterForm.addEventListener('submit', () => {
+            syncHiddenSearch();
+          });
+        }
+
+        applyLocalSearch(searchInput.value || '');
+      });
+    </script>
+    {% if current_user.has_permission("EDIT_DEMO") %}
+    <div class="bulk-action-bar mt-3">
+      <button type="button" id="bulk-cancel-btn" class="btn btn-danger" disabled>
+        <i class="fa-solid fa-ban me-1"></i>{{ _('Peruuta valitut mielenosoitukset') }}
+      </button>
+      <button type="button" id="merge-demos-btn" class="btn btn-outline-primary ms-2" disabled>
+        <i class="fa-solid fa-object-group me-1"></i>{{ _('Yhdistä valitut mielenosoitukset') }}
+      </button>
+      <span id="bulk-action-feedback" class="text-muted ms-3 d-none"></span>
+    </div>
+    {% endif %}
 
   </div>
 
   <!-- Demonstrations table -->
   {% if demonstrations %}
+  {% set column_count = 6
+      + (1 if current_user.has_permission("EDIT_DEMO") else 0)
+      + (1 if show_cancelled else 0) %}
   <div class="table-container" style="background:none;">
     <table>
       <thead>
         <tr>
+          {% if current_user.has_permission("EDIT_DEMO") %}
+          <th class="select-col">
+            <input type="checkbox" id="select-all-demos" aria-label="{{ _('Valitse kaikki mielenosoitukset') }}">
+          </th>
+          {% endif %}
           <th>{{ _('Otsikko') }}</th>
           <th>{{ _('Kaupunki') }}</th>
           <th>{{ _('Päivämäärä') }}</th>
           <th>{{ _('Toistuva') }}</th>
           <th>{{ _('Hyväksytty') }}</th>
+          {% if show_cancelled %}
+          <th>{{ _('Peruttu') }}</th>
+          {% endif %}
           <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
         </tr>
       </thead>
@@ -364,11 +582,17 @@
    ----------------------------- #}
 {% if pending %}
 <tr class="section-header">
-    <td colspan="6"><strong>{{ _('Odottaa hyväksyntää') }}</strong></td>
+    <td colspan="{{ column_count }}"><strong>{{ _('Odottaa hyväksyntää') }}</strong></td>
 </tr>
 
 {% for demo in pending %}
-<tr id="demo-{{ demo._id }}" class="needs-attention">
+<tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or ''))|lower }}">
+
+    {% if current_user.has_permission("EDIT_DEMO") %}
+    <td class="select-col">
+        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
+    </td>
+    {% endif %}
 
     <td>{{ demo.title }}</td>
     <td>{{ demo.city }}</td>
@@ -385,6 +609,19 @@
     <td data-col="approved">
         <i class="fa-solid fa-times-circle"></i> {{ _('Ei') }}
     </td>
+
+    {% if show_cancelled %}
+    <td>
+        {% if demo.cancelled %}
+            <span class="badge bg-danger">{{ _('Peruttu') }}</span>
+            {% if demo.cancelled_at %}
+                <div class="text-muted small">{{ demo.cancelled_at }}</div>
+            {% endif %}
+        {% else %}
+            <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    {% endif %}
 
     <td class="actions-cell">
         <div class="dropdown">
@@ -407,12 +644,19 @@
                     </span></li>
                 {% endif %}
 
-                {# Recommend #}
+                {# Recommend toggle #}
                 {% if current_user.global_admin %}
-                    <li><button class="dropdown-item" type="button"
-                                onclick="recommendDemo('{{ demo._id }}', this)">
-                        <i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}
-                    </button></li>
+                    {% if demo.is_recommended %}
+                        <li><button class="dropdown-item" type="button"
+                                    onclick="toggleRecommendation('{{ demo._id }}', this, true)">
+                            <i class="fa-solid fa-star-half-stroke me-2"></i>{{ _('Poista suositus') }}
+                        </button></li>
+                    {% else %}
+                        <li><button class="dropdown-item" type="button"
+                                    onclick="toggleRecommendation('{{ demo._id }}', this, false)">
+                            <i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}
+                        </button></li>
+                    {% endif %}
                 {% endif %}
 
                 {# Edit #}
@@ -457,6 +701,11 @@
                     <i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}
                 </a></li>
 
+                <li><a class="dropdown-item"
+                       href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=demo._id) }}">
+                    <i class="fa-solid fa-clipboard-list me-2"></i>{{ _('Audit-loki') }}
+                </a></li>
+
                 {# Delete #}
                 {% if current_user.has_permission("DELETE_DEMO") %}
                     <li><button class="dropdown-item text-danger" type="button"
@@ -482,11 +731,17 @@
    ----------------------------- #}
 {% if approved %}
 <tr class="section-header approved">
-    <td colspan="6"><strong>{{ _('Hyväksytyt mielenosoitukset') }}</strong></td>
+    <td colspan="{{ column_count }}"><strong>{{ _('Hyväksytyt mielenosoitukset') }}</strong></td>
 </tr>
 
 {% for demo in approved %}
-<tr id="demo-{{ demo._id }}">
+<tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or ''))|lower }}">
+
+    {% if current_user.has_permission("EDIT_DEMO") %}
+    <td class="select-col">
+        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
+    </td>
+    {% endif %}
 
     <td>{{ demo.title }}</td>
     <td>{{ demo.city }}</td>
@@ -504,6 +759,19 @@
         <i class="fa-solid fa-check-circle"></i> {{ _('Kyllä') }}
     </td>
 
+    {% if show_cancelled %}
+    <td>
+        {% if demo.cancelled %}
+            <span class="badge bg-danger">{{ _('Peruttu') }}</span>
+            {% if demo.cancelled_at %}
+                <div class="text-muted small">{{ demo.cancelled_at }}</div>
+            {% endif %}
+        {% else %}
+            <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    {% endif %}
+
     <td class="actions-cell">
         <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
@@ -513,12 +781,19 @@
 
             <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
 
-                {# Recommend #}
+                {# Recommend toggle #}
                 {% if current_user.global_admin %}
-                    <li><button class="dropdown-item" type="button"
-                                onclick="recommendDemo('{{ demo._id }}', this)">
-                        <i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}
-                    </button></li>
+                    {% if demo.is_recommended %}
+                        <li><button class="dropdown-item" type="button"
+                                    onclick="toggleRecommendation('{{ demo._id }}', this, true)">
+                            <i class="fa-solid fa-star-half-stroke me-2"></i>{{ _('Poista suositus') }}
+                        </button></li>
+                    {% else %}
+                        <li><button class="dropdown-item" type="button"
+                                    onclick="toggleRecommendation('{{ demo._id }}', this, false)">
+                            <i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}
+                        </button></li>
+                    {% endif %}
                 {% endif %}
 
                 {# Edit #}
@@ -561,6 +836,11 @@
                 <li><a class="dropdown-item"
                        href="{{ url_for('admin_demo.demo_edit_history', demo_id=demo._id) }}">
                     <i class="fa-solid fa-history me-2"></i>{{ _('Muokkaushistoria') }}
+                </a></li>
+
+                <li><a class="dropdown-item"
+                       href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=demo._id) }}">
+                    <i class="fa-solid fa-clipboard-list me-2"></i>{{ _('Audit-loki') }}
                 </a></li>
 
                 {# Delete #}
@@ -885,12 +1165,151 @@
   </script>
 
   <script>
-    // Safe recommend function placed outside of inline HTML to avoid Jinja-in-JS parsing issues.
-    function recommendDemo(demoId, btn) {
-      if (!confirm("{{ _('Haluatko varmasti suositella tätä mielenosoitusta?') }}")) return;
-      btn.disabled = true;
+    document.addEventListener('DOMContentLoaded', () => {
+      const bulkBtn = document.getElementById('bulk-cancel-btn');
+      const mergeBtn = document.getElementById('merge-demos-btn');
+      if (!bulkBtn && !mergeBtn) return;
+      const masterCheckbox = document.getElementById('select-all-demos');
+      const feedbackEl = document.getElementById('bulk-action-feedback');
+      const selected = new Set();
+      const selectionLabel = {{ _('Valittuja mielenosoituksia')|tojson }};
+      const defaultBulkContent = bulkBtn ? bulkBtn.innerHTML : '';
+      const mergeUrlBase = {{ url_for('admin_demo.merge_demos')|tojson }};
+      const maxMergeCount = 4;
+      const mergeLimitMessage = {{ _('Voit yhdistää kerrallaan enintään %(count)s mielenosoitusta.', count=4)|tojson }};
 
-      fetch(`/admin/demo/recommend_demo/${demoId}`, {
+      const getCheckboxes = () => Array.from(document.querySelectorAll('.demo-select'));
+
+      function updateState() {
+        const total = getCheckboxes().length;
+        if (bulkBtn) {
+          bulkBtn.disabled = selected.size === 0;
+        }
+        if (mergeBtn) {
+          mergeBtn.disabled = selected.size < 2;
+        }
+        if (feedbackEl) {
+          if (selected.size === 0) {
+            feedbackEl.textContent = '';
+            feedbackEl.classList.add('d-none');
+          } else {
+            feedbackEl.textContent = selectionLabel + ': ' + selected.size;
+            feedbackEl.classList.remove('d-none');
+          }
+        }
+        if (masterCheckbox) {
+          if (selected.size === 0) {
+            masterCheckbox.checked = false;
+            masterCheckbox.indeterminate = false;
+          } else if (selected.size === total) {
+            masterCheckbox.checked = true;
+            masterCheckbox.indeterminate = false;
+          } else {
+            masterCheckbox.checked = false;
+            masterCheckbox.indeterminate = true;
+          }
+        }
+      }
+
+      function handleSelection(cb) {
+        if (!cb) return;
+        if (cb.checked) {
+          selected.add(cb.value);
+        } else {
+          selected.delete(cb.value);
+        }
+        updateState();
+      }
+
+      getCheckboxes().forEach(cb => cb.addEventListener('change', () => handleSelection(cb)));
+
+      if (masterCheckbox) {
+        masterCheckbox.addEventListener('change', () => {
+          const checkboxes = getCheckboxes();
+          checkboxes.forEach(cb => {
+            cb.checked = masterCheckbox.checked;
+            handleSelection(cb);
+          });
+        });
+      }
+
+      if (bulkBtn) {
+        bulkBtn.addEventListener('click', async () => {
+          if (selected.size === 0) return;
+          const ids = Array.from(selected);
+          const reason = prompt({{ _("Syötä peruutuksen syy (valinnainen)")|tojson }});
+          if (reason === null) return;
+          bulkBtn.disabled = true;
+          bulkBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ _("Peruutetaan...") }}';
+          try {
+            const res = await fetch("/api/admin/demo/bulk_cancel", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ demo_ids: ids, reason })
+            });
+            const data = await res.json();
+            const messages = [];
+            (data.results || []).forEach(result => {
+              const checkbox = document.querySelector(`.demo-select[data-demo-id="${result.demo_id}"]`);
+              if (result.status === "cancelled") {
+                const row = document.getElementById(`demo-${result.demo_id}`);
+                if (row) row.remove();
+                selected.delete(result.demo_id);
+              } else if (result.message) {
+                messages.push(`${result.demo_id}: ${result.message}`);
+                if (checkbox) {
+                  checkbox.checked = false;
+                }
+                selected.delete(result.demo_id);
+              }
+            });
+            if (messages.length) {
+              alert(messages.join('\n'));
+            }
+            if (!data.results || data.results.length === 0) {
+              alert(data.error || {{ _("Peruutus epäonnistui.")|tojson }});
+            }
+          } catch (err) {
+            console.error(err);
+            alert({{ _("Yhteysvirhe, yritä uudelleen.")|tojson }});
+          } finally {
+            bulkBtn.innerHTML = defaultBulkContent;
+            updateState();
+          }
+        });
+      }
+
+      if (mergeBtn) {
+        mergeBtn.addEventListener('click', () => {
+          if (selected.size < 2) return;
+          if (selected.size > maxMergeCount) {
+            alert(mergeLimitMessage);
+            return;
+          }
+          const params = new URLSearchParams();
+          params.set('ids', Array.from(selected).join(','));
+          window.location.href = `${mergeUrlBase}?${params.toString()}`;
+        });
+      }
+
+      updateState();
+    });
+  </script>
+
+
+  <script>
+    function toggleRecommendation(demoId, btn, isRecommended) {
+      const confirmMsg = isRecommended
+        ? "{{ _('Haluatko varmasti poistaa suosituksen?') }}"
+        : "{{ _('Haluatko varmasti suositella tätä mielenosoitusta?') }}";
+      if (!confirm(confirmMsg)) return;
+
+      btn.disabled = true;
+      const url = isRecommended
+        ? `/admin/demo/unrecommend_demo/${demoId}`
+        : `/admin/demo/recommend_demo/${demoId}`;
+
+      fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -898,18 +1317,24 @@
       })
         .then(res => res.json())
         .then(data => {
-          if (data.status === 'OK') {
-            // replace button content safely: keep icon and set label text
-            const icon = btn.querySelector('i')?.outerHTML || '';
-            btn.innerHTML = icon + ' ' + "{{ _('Suositeltu!') }}";
-            btn.classList.add('btn-success');
-            showToast("{{ _('Mielenosoitus suositeltu onnistuneesti!') }}", 'success');
+          if (data.status === 'OK' || data.success) {
+            if (isRecommended) {
+              btn.innerHTML = `<i class="fa-solid fa-star me-2"></i>{{ _('Suosittele') }}`;
+              btn.setAttribute('onclick', `toggleRecommendation('${demoId}', this, false)`);
+              showToast("{{ _('Suositus poistettu.') }}", 'info');
+            } else {
+              btn.innerHTML = `<i class="fa-solid fa-star-half-stroke me-2"></i>{{ _('Poista suositus') }}`;
+              btn.setAttribute('onclick', `toggleRecommendation('${demoId}', this, true)`);
+              showToast("{{ _('Mielenosoitus suositeltu onnistuneesti!') }}", 'success');
+            }
           } else {
-            showToast("{{ _('Virhe suositellessa.') }}", 'danger'); btn.disabled = false;
+            showToast(data.message || "{{ _('Virhe suositellessa.') }}", 'danger');
           }
         })
         .catch(() => {
           showToast("{{ _('Yhteysvirhe, yritä uudelleen.') }}", 'danger');
+        })
+        .finally(() => {
           btn.disabled = false;
         });
     }
@@ -977,6 +1402,7 @@
       </div>
     </div>
   </div>
+
 
   <script>
     let currentDemoId = null;

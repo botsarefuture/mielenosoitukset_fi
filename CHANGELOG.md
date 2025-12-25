@@ -52,6 +52,11 @@
 
 * `/robots.txt` route to control web crawler access.
 
+* **Organizer Branding & Privacy Controls**:
+  * Admin organization forms now upload or link `logo` assets and expose them via the public API/templates.
+  * Demonstration detail cards render organizer logos, badges, and privacy-respecting labels/message for individuals.
+  * Submission and admin demo forms gain explicit “yksityishenkilö” toggles plus name/email visibility checkboxes, preventing unconsented sharing in both self-service and staff workflows.
+
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.
 * Improved analytics rollup function to support single execution via `run_once` parameter.

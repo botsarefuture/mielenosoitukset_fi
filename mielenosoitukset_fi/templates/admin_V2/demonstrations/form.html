@@ -46,6 +46,9 @@
             <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control disabled" disabled value="{{ _('Täytetään automaattisesti') }}">
             <label for="organizer_id_${organizerCount}">{{ _('Organisaation ID') }}</label>
             <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" value="${selectedId}">
+            <input type="hidden" name="organizer_is_private_${organizerCount}" value="">
+            <input type="hidden" name="organizer_show_name_${organizerCount}" value="on">
+            <input type="hidden" name="organizer_show_email_${organizerCount}" value="on">
             <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
         `;
 
@@ -583,6 +586,26 @@
                     <label for="organizer_email_{{ loop.index }}">{{ _('Sähköposti') }}</label>
                     <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
                         class="form-control" value="{{ organizer.email }}">
+                    <div class="organizer-privacy">
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="checkbox" name="organizer_is_private_{{ loop.index }}"
+                                {% if organizer.is_private %}checked{% endif %}>
+                            {{ _('Merkitse järjestäjä yksityishenkilöksi') }}
+                        </label>
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="checkbox" name="organizer_show_name_{{ loop.index }}"
+                                {% if organizer.show_name_public is not defined or organizer.show_name_public %}checked{% endif %}>
+                            {{ _('Näytä nimi julkisesti') }}
+                        </label>
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="checkbox" name="organizer_show_email_{{ loop.index }}"
+                                {% if (organizer.show_email_public is defined and organizer.show_email_public) or (organizer.show_email_public is not defined and (organizer.is_private is not defined or not organizer.is_private)) %}checked{% endif %}>
+                            {{ _('Näytä sähköposti julkisesti') }}
+                        </label>
+                        <p class="muted small mb-0">
+                            {{ _('Yksityishenkilön sähköposti näytetään vain, jos tämä valinta on päällä.') }}
+                        </p>
+                    </div>
                     <label for="organizer_id_{{ loop.index }}">{{ _('ID') }}</label>
                     <input type="text" id="organizer_id_{{ loop.index }}" name="organizer_id_{{ loop.index }}"
                         class="form-control disabled" value="{{ organizer.organization_id }}" readonly>
@@ -649,6 +672,17 @@
 
             // You may want to call updateCreateButtons() after adding new organizers in your addOrganizer function as well:
             // e.g., after appending new organizer: updateCreateButtons();
+
+            document.addEventListener('change', (event) => {
+                if (event.target.matches('input[name^="organizer_is_private_"]')) {
+                    const wrapper = event.target.closest('.organizer-item');
+                    if (!wrapper) return;
+                    const emailToggle = wrapper.querySelector('input[name^="organizer_show_email_"]');
+                    if (emailToggle && event.target.checked && emailToggle.checked) {
+                        emailToggle.checked = false;
+                    }
+                }
+            });
         </script>
 
 

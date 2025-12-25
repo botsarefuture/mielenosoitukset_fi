@@ -75,8 +75,22 @@
                     <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}" class="form-control" value="{{ organizer.name }}" required>
                     <label for="organizer_website_{{ loop.index }}">Nettisivu</label>
                     <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}" class="form-control" value="{{ organizer.website }}">
-                    <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
-                    <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}" class="form-control" value="{{ organizer.email }}">
+                <label for="organizer_email_{{ loop.index }}">Sähköposti</label>
+                <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}" class="form-control" value="{{ organizer.email }}">
+                <div class="organizer-privacy">
+                    <label>
+                        <input type="checkbox" name="organizer_is_private_{{ loop.index }}" {% if organizer.is_private %}checked{% endif %}>
+                        {{ _('Merkitse järjestäjä yksityishenkilöksi') }}
+                    </label>
+                    <label>
+                        <input type="checkbox" name="organizer_show_name_{{ loop.index }}" {% if organizer.show_name_public is not defined or organizer.show_name_public %}checked{% endif %}>
+                        {{ _('Näytä nimi julkisesti') }}
+                    </label>
+                    <label>
+                        <input type="checkbox" name="organizer_show_email_{{ loop.index }}" {% if (organizer.show_email_public is defined and organizer.show_email_public) or (organizer.show_email_public is not defined and (organizer.is_private is not defined or not organizer.is_private)) %}checked{% endif %}>
+                        {{ _('Näytä sähköposti julkisesti') }}
+                    </label>
+                </div>
                     <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
                 </div>
                 {% endfor %}
@@ -230,6 +244,20 @@
             <input type="url" id="organizer_website_${index}" name="organizer_website_${index}" class="form-control">
             <label for="organizer_email_${index}">Sähköposti</label>
             <input type="email" id="organizer_email_${index}" name="organizer_email_${index}" class="form-control">
+            <div class="organizer-privacy">
+                <label>
+                    <input type="checkbox" name="organizer_is_private_${index}">
+                    {{ _('Merkitse järjestäjä yksityishenkilöksi') }}
+                </label>
+                <label>
+                    <input type="checkbox" name="organizer_show_name_${index}" checked>
+                    {{ _('Näytä nimi julkisesti') }}
+                </label>
+                <label>
+                    <input type="checkbox" name="organizer_show_email_${index}" checked>
+                    {{ _('Näytä sähköposti julkisesti') }}
+                </label>
+            </div>
             <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">Poista</button>
         </div>`;
         container.insertAdjacentHTML('beforeend', newItem);
@@ -241,6 +269,17 @@
 
     document.getElementById('type').addEventListener('change', function () {
         document.getElementById('march-route-container').style.display = this.value === 'marssi' ? 'block' : 'none';
+    });
+
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('input[name^="organizer_is_private_"]')) {
+            const wrapper = event.target.closest('.organizer-item');
+            if (!wrapper) return;
+            const emailToggle = wrapper.querySelector('input[name^="organizer_show_email_"]');
+            if (emailToggle && event.target.checked && emailToggle.checked) {
+                emailToggle.checked = false;
+            }
+        }
     });
 </script>
 

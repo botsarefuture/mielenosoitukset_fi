@@ -528,7 +528,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   }
 
   .organizer-card {
-    background: var(--color-bg);
+    background: linear-gradient(135deg, rgba(54, 88, 226, 0.08), rgba(19, 16, 26, 0)) var(--color-bg);
     border-radius: var(--border-radius);
     padding: 2rem;
     box-shadow: var(--color-shadow);
@@ -553,38 +553,102 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     box-shadow: var(--color-shadow-lg);
   }
 
-  .organizer-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin-bottom: 1rem;
+  .organizer-card-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .organizer-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: var(--color-shadow);
+  }
+
+  .organizer-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+  }
+
+  .organizer-logo.placeholder {
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--color-text-secondary);
+    font-size: 1.5rem;
+  }
+
+  .organizer-info {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .organizer-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+  }
+
+  .organizer-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+  }
+
+  .organizer-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .organizer-contact {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 0.75rem;
+    margin-top: 1.25rem;
   }
 
   .contact-item {
+    flex: 1 1 220px;
+    min-width: 200px;
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: var(--color-text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .contact-item i {
+    color: var(--color-primary);
   }
 
   .contact-item a {
-    color: var(--color-primary);
+    color: var(--color-text);
+    font-weight: 600;
     text-decoration: none;
     transition: var(--transition);
   }
 
   .contact-item a:hover {
-    color: var(--color-secondary);
-    text-decoration: underline;
+    color: var(--color-primary);
   }
 
   /* Info Alerts */
@@ -1123,11 +1187,21 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   </section>
   {% endif %}
 
-  <!-- Countdown -->
+  <!-- Countdown / Cancellation info -->
+  {% if demo.cancelled %}
+  <section class="countdown-card animate-fade-in-up">
+    <h2 class="countdown-title">{{ _('Tämä mielenosoitus on peruttu') }}</h2>
+    <div class="countdown-timer" style="font-size:1.2rem;">
+      <i class="fa-solid fa-circle-info"></i>
+      {{ _('Tapahtumaa ei järjestetä suunniteltuna ajankohtana.') }}
+    </div>
+  </section>
+  {% else %}
   <section class="countdown-card animate-fade-in-up">
     <h2 class="countdown-title">{{ _('Aikaa mielenosoituksen alkuun') }}</h2>
     <div id="timer" class="countdown-timer"></div>
   </section>
+  {% endif %}
 
   <!-- Location & Route -->
   <section class="content-section animate-fade-in-up">
@@ -1219,10 +1293,41 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     <div class="organizers-grid">
       {% for org in demo['organizers'] %}
       <div class="organizer-card">
-        <h3 class="organizer-name">
-          <i class="fa-solid fa-building"></i>
-          {{ org.name }}
-        </h3>
+        <div class="organizer-card-header">
+          <div class="organizer-logo {% if not org.logo %}placeholder{% endif %}">
+            {% if org.logo %}
+            <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async">
+            {% else %}
+            <i class="fa-solid fa-building"></i>
+            {% endif %}
+          </div>
+          <div class="organizer-info">
+            {% set display_name = org.name %}
+            {% if org.is_private and not org.show_name_public %}
+              {% set display_name = _('Yksityishenkilö (nimi piilotettu)') %}
+            {% elif org.is_private and not org.name %}
+              {% set display_name = _('Yksityishenkilö') %}
+            {% elif not org.name %}
+              {% set display_name = _('Tuntematon järjestäjä') %}
+            {% endif %}
+            <h3 class="organizer-name">{{ display_name }}</h3>
+            <div class="organizer-meta">
+              {% if org.is_private %}
+              <span><i class="fa-solid fa-user"></i>{{ _('Yksityishenkilö') }}</span>
+              {% elif org.organization_id and org.organization_id != "None" %}
+              <span><i class="fa-solid fa-id-card-clip"></i>{{ _('Organisaatioprofiili') }}</span>
+              {% else %}
+              <span><i class="fa-solid fa-user-group"></i>{{ _('Järjestäjäryhmä') }}</span>
+              {% endif %}
+              {% if org.is_private and not org.show_email_public and org.email %}
+              <span><i class="fa-solid fa-shield"></i>{{ _('Sähköposti piilotettu') }}</span>
+              {% endif %}
+              {% if org.tags %}
+              <span><i class="fa-solid fa-tags"></i>{{ org.tags|length }} {{ _('tunnistetta') }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
 
         <div class="organizer-contact">
           {% if (not org.website or not org.email or not org.url) and org.fill_url %}
@@ -1260,14 +1365,14 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
           </div>
           {% endif %}
 
-          {% if org.email %}
+          {% if org.email and (not org.is_private or org.show_email_public) %}
           <div class="contact-item">
             <i class="fa-solid fa-envelope"></i>
             <a href="mailto:{{ org.email }}">{{ org.email }}</a>
           </div>
           {% endif %}
 
-          {% if org.organization_id and org.organization_id != "None" %}
+          {% if org.organization_id and org.organization_id != "None" and not org.is_private %}
           <div class="contact-item">
             <i class="fa-solid fa-id-badge"></i>
             <a href="{{ org.url if org.url else '/organization/' ~ org._id }}" target="_blank">
@@ -1709,6 +1814,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 <script>
   // Demo data initialization
   var demoData = {{ demo | tojson | safe }};
+  const demoIsCancelled = {{ 'true' if demo.cancelled else 'false' }};
   window.demoId = "{{ demo['_id'] }}";
 
   // Check if demo has coordinates
@@ -1885,9 +1991,11 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       }
     }
 
-    // Initialize countdown
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    // Initialize countdown only if still active
+    if (!demoIsCancelled) {
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    }
 
     // Add scroll animations
     const observerOptions = {
@@ -1910,6 +2018,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   // Countdown timer
   function updateCountdown() {
+    if (demoIsCancelled) return;
     const demoDate = demoData.date;
     const demoTime = demoData.start_time;
     let demoEnds = demoData.end_time || "23:59:59";

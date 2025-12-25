@@ -70,14 +70,35 @@ def organization_control():
     )
 
     search_query = request.args.get("search", "")
+    page = max(int(request.args.get("page", 1)), 1)
+    per_page = max(int(request.args.get("per_page", 20)), 1)
+
     query = construct_query(search_query, org_limiter)
 
-    organizations = mongo.organizations.find(query)
+    total_count = mongo.organizations.count_documents(query)
+    total_pages = (total_count + per_page - 1) // per_page if total_count else 1
+    if page > total_pages:
+        page = total_pages
+
+    organizations = list(
+        mongo.organizations.find(query)
+        .sort("name", 1)
+        .skip((page - 1) * per_page)
+        .limit(per_page)
+    )
+
+    prev_page = page - 1 if page > 1 else None
+    next_page = page + 1 if page < total_pages else None
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/dashboard.html",
         organizations=organizations,
         search_query=search_query,
+        per_page=per_page,
+        current_page=page,
+        total_pages=total_pages,
+        prev_page=prev_page,
+        next_page=next_page,
     )
 
 

@@ -27,15 +27,16 @@
             {% endif %}
         </div>
 
-        <!-- Client‑side search (no backend round‑trip) -->
-        <div class="search-bar">
+        <form class="search-bar" method="get" action="{{ url_for('admin_org.organization_control') }}">
             <label for="search" class="sr-only">{{ _('Hae organisaatioita:') }}</label>
-            <input type="search" id="search" class="search-input" placeholder="{{ _('Hae organisaatioita...') }}"
-                aria-label="{{ _('Hae organisaatioita') }}">
-            <button type="button" id="search-btn" class="search-button">
+            <input type="search" id="search" name="search" class="search-input"
+                placeholder="{{ _('Hae organisaatioita...') }}" aria-label="{{ _('Hae organisaatioita') }}"
+                value="{{ search_query }}">
+            <input type="hidden" name="per_page" value="{{ per_page }}">
+            <button type="submit" class="search-button">
                 <i class="fas fa-search"></i>{{ _('Hae') }}
             </button>
-        </div>
+        </form>
     </div>
 
     <!-- Table of organisations -->
@@ -127,6 +128,29 @@
             </tbody>
         </table>
     </div>
+
+    <div class="pagination-container d-flex justify-content-between align-items-center mt-3">
+        <div class="pagination-info">
+            {{ _('Sivu') }} {{ current_page }} / {{ total_pages }}
+        </div>
+        <div class="pagination-controls">
+            <ul class="pagination mb-0">
+                <li class="page-item {% if not prev_page %}disabled{% endif %}">
+                    <a class="page-link" href="{% if prev_page %}?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{% else %}#{% endif %}"
+                        aria-label="{{ _('Edellinen sivu') }}">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item disabled"><span class="page-link">{{ current_page }}</span></li>
+                <li class="page-item {% if not next_page %}disabled{% endif %}">
+                    <a class="page-link" href="{% if next_page %}?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}{% else %}#{% endif %}"
+                        aria-label="{{ _('Seuraava sivu') }}">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
     {% else %}
     <div class="no-orgs">
         <p>{{ _('Organisaatioita ei löytynyt.') }}</p>
@@ -154,20 +178,6 @@
                 cb.closest('tr').classList.toggle('selected', cb.checked);
             });
         });
-
-        const searchInput = document.getElementById('search');
-        const searchBtn = document.getElementById('search-btn');
-        const rows = document.querySelectorAll('#org-table tbody tr');
-
-        const filterRows = () => {
-            const term = searchInput.value.trim().toLowerCase();
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-            });
-        };
-
-        searchInput.addEventListener('input', filterRows);
-        searchBtn.addEventListener('click', filterRows);
     });
 </script>
 {% endblock %}

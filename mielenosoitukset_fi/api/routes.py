@@ -172,6 +172,10 @@ def list_demonstrations():
     - **organization_id** (`str`, optional):  
       Filter by organizer organization ID.
 
+    - **include_cancelled** (`bool`, optional, default=`false`):  
+      Include cancelled demonstrations. Automatically enabled when filtering by organization or recurring
+      parent demonstrations.
+
     - **max_days_till** (`int`, optional):  
       Include only demonstrations within *N* days from today (inclusive).
 
@@ -257,7 +261,8 @@ def list_demonstrations():
     # --- Base query ---
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
     query = dict(DEMO_FILTER)  # clone to avoid side effects
-    include_cancelled = bool(_org_id)
+    include_cancelled_param = request.args.get("include_cancelled", "").strip().lower() == "true"
+    include_cancelled = include_cancelled_param or bool(_org_id or _parent_id)
     if include_cancelled:
         query.pop("cancelled", None)
 

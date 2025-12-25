@@ -320,6 +320,22 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
                     getattr(current_user, "id", None),
                     _id,
                 )
+                if permission_name in current_user.global_permissions:
+                    logger.info(
+                        "User %s has global permission '%s'.",
+                        current_user.username,
+                        permission_name,
+                    )
+                    return f(*args, **kwargs)
+                flash_message(
+                    "Sinun käyttöoikeutesi eivät riitä tämän toiminnon suorittamiseen."
+                )
+                logger.warning(
+                    "User %s does not have permission '%s'.",
+                    current_user.username,
+                    permission_name,
+                )
+                return abort(403)  # Forbidden
                                 
             # Check if the user has the specified permission via user role permissions
             if current_user.has_permission(

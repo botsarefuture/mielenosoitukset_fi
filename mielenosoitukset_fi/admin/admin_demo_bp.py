@@ -12,7 +12,7 @@ from flask_login import current_user, login_required
 
 from flask_babel import _
 
-from mielenosoitukset_fi.utils.classes import Demonstration, Organizer
+from mielenosoitukset_fi.utils.classes import Demonstration, Organizer, MemberShip
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cancellation_links_for_demo
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
@@ -20,6 +20,7 @@ from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.users.models import User
 from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
 
 from mielenosoitukset_fi.utils.database import stringify_object_ids
@@ -1363,6 +1364,8 @@ def create_demo():
         submit_button_text="Luo",
         demo=None,
         city_list=CITY_LIST,
+        demo_edit_access={"explicit_editors": [], "organizations": []},
+        show_demo_access_panel=False,
     )
 
 
@@ -1399,6 +1402,8 @@ def edit_demo(demo_id):
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
+    demo_edit_access = gather_demo_edit_access_info(demo_data)
+    show_demo_access_panel = _user_can_manage_demo_access(current_user, demo_data)
     
         
     # Render the edit form with pre-filled demonstration details
@@ -1410,7 +1415,9 @@ def edit_demo(demo_id):
         submit_button_text=_("Tallenna muutokset"),
         city_list=CITY_LIST,
         all_organizations=mongo.organizations.find(),
-        case_id=case_id
+        case_id=case_id,
+        demo_edit_access=demo_edit_access,
+        show_demo_access_panel=show_demo_access_panel,
     )
 
 @admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])
@@ -1523,6 +1530,7 @@ def edit_demo_with_token(token):
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
+    demo_edit_access = gather_demo_edit_access_info(demo_data)
 
     # Render the edit form with pre-filled demonstration details
     return render_template(
@@ -1534,6 +1542,8 @@ def edit_demo_with_token(token):
         city_list=CITY_LIST,
         all_organizations=mongo.organizations.find(),
         edit_demo_with_token=True,
+        demo_edit_access=demo_edit_access,
+        show_demo_access_panel=False,
     )
 
 def _deep_merge(old: dict, new: dict) -> dict:
@@ -1702,11 +1712,203 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
         flash_message(f"Virhe: {str(e)}", "error")
 
         # Redirect to the edit or create form based on operation type
-        return redirect(
-            url_for("admin_demo.edit_demo", demo_id=demo_id)
-            if is_edit
-            else url_for("admin_demo.create_demo")
+    return redirect(
+        url_for("admin_demo.edit_demo", demo_id=demo_id)
+        if is_edit
+        else url_for("admin_demo.create_demo")
+    )
+
+def gather_demo_edit_access_info(demo_doc: dict) -> dict:
+    """Collect users who have edit permissions for a specific demo."""
+    explicit_editors = []
+    seen_explicit = set()
+
+    def _format_user(user_obj, **extra):
+        data = {
+            "id": str(user_obj._id),
+            "displayname": user_obj.displayname or user_obj.username,
+            "username": user_obj.username,
+            "email": user_obj.email,
+            "role": user_obj.role,
+        }
+        data.update(extra)
+        return data
+
+    def _build_user(uid):
+        try:
+            user = User.from_OID(uid)
+        except Exception:
+            return None
+        return user
+
+    editors = demo_doc.get("editors") or []
+    for editor in editors:
+        user = _build_user(editor)
+        if not user:
+            continue
+        user_id = str(user._id)
+        if user_id in seen_explicit:
+            continue
+        seen_explicit.add(user_id)
+        explicit_editors.append(_format_user(user))
+
+    organizations = []
+    seen_org_ids = set()
+    for organizer in demo_doc.get("organizers") or []:
+        org_id = None
+        if isinstance(organizer, dict):
+            org_id = organizer.get("organization_id")
+        else:
+            org_id = getattr(organizer, "organization_id", None)
+        oid = _normalize_objectid(org_id)
+        if not oid or str(oid) in seen_org_ids:
+            continue
+        seen_org_ids.add(str(oid))
+        org_doc = mongo.organizations.find_one({"_id": oid}, {"name": 1})
+        org_name = org_doc.get("name") if org_doc else str(oid)
+
+        members = []
+        seen_member_ids = set()
+        for membership in MemberShip.all_in_organization(oid):
+            if "EDIT_DEMO" not in membership.permissions:
+                continue
+            member_user = None
+            try:
+                member_user = User.from_OID(membership.user_id)
+            except Exception:
+                continue
+            member_id = str(member_user._id)
+            if member_id in seen_member_ids:
+                continue
+            seen_member_ids.add(member_id)
+            members.append(
+                _format_user(
+                    member_user,
+                    membership_role=membership.role,
+                    membership_permissions=membership.permissions,
+                )
+            )
+
+        if members:
+            organizations.append(
+                {
+                    "organization_id": str(oid),
+                    "name": org_name,
+                    "members": members,
+                }
+            )
+
+    return {"explicit_editors": explicit_editors, "organizations": organizations}
+
+
+def _user_can_manage_demo_access(user, demo_doc: dict) -> bool:
+    """Return True if user should see the access panel."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    for organizer in demo_doc.get("organizers") or []:
+        org_id = None
+        if isinstance(organizer, dict):
+            org_id = organizer.get("organization_id")
+        else:
+            org_id = getattr(organizer, "organization_id", None)
+        if not org_id:
+            continue
+        membership = user.membership_for(org_id)
+        if membership and membership.role == "owner":
+            return True
+    return False
+
+
+@admin_demo_bp.route("/<demo_id>/editors/add", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def add_demo_editor(demo_id):
+    """Allow inviting an existing user to become an explicit demo editor."""
+    identifier = (request.form.get("identifier") or "").strip()
+    if not identifier:
+        flash_message(_("Syötä käyttäjänimi tai sähköpostiosoite."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    demo_obj = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_obj:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(request.referrer or url_for("admin_demo.demo_control"))
+
+    user_doc = None
+    if ObjectId.is_valid(identifier):
+        user_doc = mongo.users.find_one({"_id": ObjectId(identifier)})
+    if not user_doc:
+        user_doc = mongo.users.find_one({"email": identifier})
+    if not user_doc:
+        user_doc = mongo.users.find_one({"username": identifier})
+    if not user_doc:
+        flash_message(_("Käyttäjää ei löytynyt."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    user_id = str(user_doc["_id"])
+    result = mongo.demonstrations.update_one(
+        {"_id": ObjectId(demo_id)},
+        {"$addToSet": {"editors": user_id}}
+    )
+
+    if result.modified_count:
+        log_demo_audit_entry(
+            demo_id,
+            action="grant_editor",
+            message=_("%(actor)s antoi muokkausoikeuden käyttäjälle %(target)s vierailevan muokkaajan roolissa.") % {
+                "actor": _get_actor_label(),
+                "target": user_doc.get("username") or user_doc.get("email") or user_id,
+            },
+            details={"user_id": user_id},
         )
+        flash_message(_("Käyttäjä lisätty muokkaajaksi."), "success")
+    else:
+        flash_message(_("Käyttäjä on jo listalla."), "info")
+
+    return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+
+@admin_demo_bp.route("/<demo_id>/editors/remove", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_DEMO")
+def remove_demo_editor(demo_id):
+    demo_obj = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_obj:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(request.referrer or url_for("admin_demo.demo_control"))
+
+    if not _user_can_manage_demo_access(current_user, demo_obj):
+        flash_message(_("Sinulla ei ole oikeutta poistaa muokkaajia."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    user_id = request.form.get("user_id")
+    if not user_id:
+        flash_message(_("Käyttäjän tunniste puuttuu."), "error")
+        return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+    result = mongo.demonstrations.update_one(
+        {"_id": ObjectId(demo_id)},
+        {"$pull": {"editors": user_id}}
+    )
+    if result.modified_count:
+        log_demo_audit_entry(
+            demo_id,
+            action="revoke_editor",
+            message=_("%(actor)s poisti muokkaajan %(target)s oikeudet.") % {
+                "actor": _get_actor_label(),
+                "target": user_id,
+            },
+            details={"user_id": user_id},
+        )
+        flash_message(_("Muokkaaja poistettu."), "success")
+    else:
+        flash_message(_("Käyttäjä ei ole muokkaajalistalla."), "info")
+
+    return redirect(request.referrer or url_for("admin_demo.edit_demo", demo_id=demo_id))
 
 from flask import jsonify
 

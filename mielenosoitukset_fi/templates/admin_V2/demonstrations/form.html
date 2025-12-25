@@ -10,6 +10,42 @@
 <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.2.0/ckeditor5.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo.css' )}}">
+<style>
+  .access-panel-card {
+    border-color: var(--border-color, rgba(255, 255, 255, 0.2));
+    color: var(--text-on-panel, var(--text));
+  }
+
+  body.dark .access-panel-card {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .access-panel-card h2,
+  .access-panel-card h3,
+  .access-panel-card p,
+  .access-panel-card ul,
+  .access-panel-card li {
+    color: var(--text-on-panel, inherit) !important;
+  }
+
+  .list-group .list-group-item {
+    background-color: light-dark(#f0f0f0, #2e2e2e) !important;
+  }
+
+  .list-group .list-group-item:hover {
+    background-color: light-dark(#e0e0e0, #3a3a3a) !important;
+  }
+
+  .list-group .list-group-item p,
+  .list-group .list-group-item span,
+  .list-group .list-group-item div {
+    color: var(--text) !important;
+  }
+
+  .list-group .list-group-item .text-muted {
+    color: var(--muted-text) !important;
+  }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -685,7 +721,6 @@
             });
         </script>
 
-
         <!-- Approval Section -->
         {% if current_user.is_authenticated %}
         <section class="form-section dashboard-panel mb-8">
@@ -710,6 +745,77 @@
         </section>
     </form>
 </div>
+
+{% if show_demo_access_panel and demo and demo._id %}
+<section class="form-section dashboard-panel mb-8 border shadow-sm rounded-4 p-4 access-panel-card">
+    <h2 class="text-xl font-semibold mb-4">{{ _('Muokkausoikeudet') }}</h2>
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+            {% if demo_edit_access %}
+            {% if demo_edit_access.explicit_editors %}
+            <div class="mb-3">
+                <h3 class="h6 mb-2">{{ _('Kirjattuna muokkaajina') }}</h3>
+                <ul class="list-group">
+                    {% for editor in demo_edit_access.explicit_editors %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ editor.displayname }}</strong><br>
+                            <small class="text-muted">{{ editor.email }}</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-secondary me-3">{{ editor.role }}</span>
+                            <form method="post" action="{{ url_for('admin_demo.remove_demo_editor', demo_id=demo._id) }}" class="mb-0">
+                                <input type="hidden" name="user_id" value="{{ editor.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">{{ _('Poista') }}</button>
+                            </form>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if demo_edit_access.organizations %}
+            <div class="mb-3">
+                <h3 class="h6 mb-2">{{ _('Organisaation kautta muokkaavat') }}</h3>
+                {% for org in demo_edit_access.organizations %}
+                <div class="mb-3">
+                    <p class="mb-1"><strong>{{ org.name }}</strong></p>
+                    <ul class="list-group">
+                        {% for member in org.members %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ member.displayname }}</strong><br>
+                                    <small class="text-muted">{{ member.email }}</small>
+                                </div>
+                                <span class="badge bg-secondary">{{ member.membership_role }}</span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if not demo_edit_access.explicit_editors and not demo_edit_access.organizations %}
+            <p class="text-muted mb-0">{{ _('Tällä hetkellä ei ole tietoa muokkausoikeuksista.') }}</p>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <h3 class="h6 mb-3">{{ _('Kutsu muokkaajaksi') }}</h3>
+            <p class="text-muted mb-3">{{ _('Lisää henkilö, jolle haluat antaa muokkausoikeuden tähän mielenosoitukseen.') }}</p>
+            <form method="post" action="{{ url_for('admin_demo.add_demo_editor', demo_id=demo._id) }}" class="d-flex gap-2 flex-wrap">
+                <input name="identifier" type="text" class="form-control flex-grow-1 min-w-0" placeholder="{{ _('Sähköposti, käyttäjänimi tai ID') }}" required>
+                <button type="submit" class="btn btn-primary">{{ _('Lisää muokkaaja') }}</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 
 <!-- Edit Link Modal & Duplicate Button Section -->

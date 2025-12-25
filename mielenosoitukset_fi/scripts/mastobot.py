@@ -86,6 +86,9 @@ def load_posted_state() -> PostedState:
         link = doc.get("link")
         if link:
             state.links.add(link)
+        for alias in doc.get("link_aliases", []):
+            if alias:
+                state.links.add(alias)
         demo_id = str(doc.get("demo_id") or _extract_demo_id_from_link(link) or "")
         post_type = doc.get("post_type", "announcement")
         status_id = doc.get("status_id")
@@ -118,6 +121,8 @@ def append_posted(
     demo_id: Optional[str] = None,
     status_id: Optional[str] = None,
     post_type: str = "announcement",
+    slug: Optional[str] = None,
+    link_aliases: Optional[List[str]] = None,
 ) -> None:
     doc = {
         "link": link,
@@ -128,9 +133,16 @@ def append_posted(
         doc["demo_id"] = demo_id
     if status_id:
         doc["status_id"] = status_id
+    if slug:
+        doc["slug"] = slug
+    if link_aliases:
+        doc["link_aliases"] = link_aliases
     mongo.posted_events.insert_one(doc)
 
     state.links.add(link)
+    if link_aliases:
+        for alias in link_aliases:
+            state.links.add(alias)
     if demo_id and post_type == "announcement":
         state.announcements[demo_id] = {
             "link": link,
@@ -161,6 +173,25 @@ def post_instructions_comment(
 
 def build_event_link(demo_id: str) -> str:
     return f"https://mielenosoitukset.fi/demonstration/{demo_id}"
+
+
+def build_link_variants(primary_id: Optional[str], slug: Optional[str]) -> List[str]:
+    variants: List[str] = []
+    seen: Set[str] = set()
+
+    def _add(identifier: Optional[str]):
+        if not identifier:
+            return
+        identifier = str(identifier)
+        link = build_event_link(identifier)
+        if link not in seen:
+            seen.add(link)
+            variants.append(link)
+
+    _add(primary_id)
+    if slug and slug != primary_id:
+        _add(slug)
+    return variants
 
 
 def format_city_line(city: Optional[str]) -> str:
@@ -454,13 +485,17 @@ def process_events(
     posted_count = 0
     for event in events:
         slug_or_id = event.get("_id") or event.get("id")
-        if not slug_or_id:
+        slug_value = event.get("slug")
+        if not slug_or_id and not slug_value:
             logging.debug("Skipping event without id/slug: %s", event)
             continue
-        link = build_event_link(slug_or_id)
-        if link in posted_state.links:
-            logging.debug("Already posted: %s", link)
+        primary_id = str(slug_or_id or slug_value)
+        link_variants = build_link_variants(primary_id, slug_value)
+        already_posted = any(link in posted_state.links for link in link_variants)
+        if already_posted:
+            logging.debug("Already posted: %s", primary_id)
             continue
+        link = build_event_link(slug_value or primary_id)
 
         title = event.get("title") or event.get("name")
         if not title:
@@ -487,9 +522,11 @@ def process_events(
             append_posted(
                 link,
                 posted_state,
-                demo_id=str(slug_or_id),
+                demo_id=primary_id,
                 status_id=status_id,
                 post_type="announcement",
+                slug=slug_value,
+                link_aliases=link_variants,
             )
             post_instructions_comment(client, status_id, dry_run)
             posted_count += 1
@@ -508,10 +545,12 @@ def handle_cancellations(
     for event in events:
         if not event.get("cancelled"):
             continue
-        demo_id = event.get("_id") or event.get("id")
-        if not demo_id:
+        demo_id_value = event.get("_id") or event.get("id")
+        slug_value = event.get("slug")
+        if not demo_id_value and not slug_value:
             continue
-        demo_id = str(demo_id)
+        demo_id = str(demo_id_value or slug_value)
+        link_variants = build_link_variants(demo_id, slug_value)
         if demo_id in posted_state.cancellations:
             continue
         if demo_id not in posted_state.announcements:
@@ -548,6 +587,8 @@ def handle_cancellations(
                 demo_id=demo_id,
                 status_id=status_id,
                 post_type="cancellation",
+                slug=slug_value,
+                link_aliases=link_variants,
             )
             post_instructions_comment(client, status_id, dry_run)
             cancelled_posts += 1

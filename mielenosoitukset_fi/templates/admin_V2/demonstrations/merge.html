@@ -1,0 +1,209 @@
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<style>
+  .demo-merge-card {
+    border: 1px solid light-dark(#e0e0e0, #2d2d3a);
+    border-radius: 12px;
+    padding: 1rem;
+    height: 100%;
+  }
+
+  .merge-field-value {
+    font-size: 0.9rem;
+    color: light-dark(#444, #c9c9d9);
+    white-space: pre-wrap;
+  }
+
+  .merge-field-value code {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+    padding: 0.1rem 0.35rem;
+  }
+
+  .accordion-button:not(.collapsed) {
+    background-color: rgba(13,110,253,.08);
+  }
+</style>
+{% endblock %}
+
+{% macro render_field_value(demo, field) -%}
+  {% set value = demo.get(field.key) %}
+  {% if value is none or value == [] or value == '' %}
+    <span class="text-muted">—</span>
+  {% elif field.type == "list" %}
+    {{ value | join(", ") }}
+  {% elif field.type == "organizers" %}
+    {% set names = [] %}
+    {% for org in value %}
+      {% if org is mapping %}
+        {% set _ = names.append(org.get("name") or org.get("organization_name") or org.get("title")) %}
+      {% else %}
+        {% set _ = names.append(org) %}
+      {% endif %}
+    {% endfor %}
+    {{ names | reject("equalto", None) | list | join(", ") }}
+  {% elif field.type == "bool" %}
+    {% if value %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}
+  {% elif field.type == "objectid" %}
+    <code>{{ value }}</code>
+  {% elif field.type == "longtext" %}
+    {{ value | truncate(160, True, "...") }}
+  {% else %}
+    {{ value }}
+  {% endif %}
+{%- endmacro %}
+
+{% block main_content %}
+<div class="admin-page">
+  <div class="admin-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h1 class="admin-section-title mb-1">{{ _('Yhdistä mielenosoituksia') }}</h1>
+      <p class="text-muted mb-0">{{ _('Valittuja mielenosoituksia: %(count)s', count=demos|length) }}</p>
+    </div>
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
+    </a>
+  </div>
+
+  <div class="alert alert-warning">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    {{ _('Yhdistäminen siirtää tilastot, muistutukset ja seurannat valittuihin mielenosoituksiin. Valitse kenttäkohtaisesti, mitä tietoa haluat säilyttää.') }}
+  </div>
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+    {% for demo in demos %}
+    <div class="col">
+      <div class="demo-merge-card h-100">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="mb-1">{{ demo.title }}</h5>
+            <div class="text-muted small">{{ demo.date }} · {{ demo.city }}</div>
+          </div>
+          {% if demo.is_recommended %}
+          <span class="badge bg-success">{{ _('Suositeltu') }}</span>
+          {% endif %}
+        </div>
+        <dl class="mt-3 mb-0 small">
+          <dt class="text-muted">{{ _('ID') }}</dt>
+          <dd class="mb-2"><code>{{ demo.id }}</code></dd>
+          <dt class="text-muted">{{ _('Lyhytlinkki') }}</dt>
+          <dd class="mb-2">
+            {% if demo.slug %}
+            <code>{{ demo.slug }}</code>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </dd>
+          <dt class="text-muted">{{ _('Osoite') }}</dt>
+          <dd class="mb-0">{{ demo.address or '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <form method="POST" action="{{ url_for('admin_demo.merge_demos') }}" class="mt-4">
+    {% for demo_id in selected_ids %}
+      <input type="hidden" name="demo_ids" value="{{ demo_id }}">
+    {% endfor %}
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">
+        {{ _('Valitse päätapahtuma (säilytettävä ID)') }}
+      </div>
+      <div class="card-body">
+        {% for demo in demos %}
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="primary_demo_id" id="primary-{{ demo.id }}"
+                 value="{{ demo.id }}" {% if demo.id == default_primary %}checked{% endif %} required>
+          <label class="form-check-label" for="primary-{{ demo.id }}">
+            {{ demo.title }} · <small class="text-muted">{{ demo.date }} · {{ demo.city }}</small>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">
+        {{ _('Kenttien lähde') }}
+      </div>
+      <div class="card-body">
+        <div class="accordion" id="mergeFieldAccordion">
+          {% for field in merge_fields %}
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-{{ field.key }}">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#collapse-{{ field.key }}" aria-expanded="false"
+                      aria-controls="collapse-{{ field.key }}">
+                {{ field.label }}
+              </button>
+            </h2>
+            <div id="collapse-{{ field.key }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ field.key }}"
+                 data-bs-parent="#mergeFieldAccordion">
+              <div class="accordion-body">
+                {% for demo in demos %}
+                <div class="form-check mb-3">
+                  <input class="form-check-input" type="radio"
+                         name="field_source[{{ field.key }}]" id="{{ field.key }}-{{ demo.id }}"
+                         value="{{ demo.id }}"
+                         {% if demo.id == default_primary %}checked{% endif %}>
+                  <label class="form-check-label fw-semibold" for="{{ field.key }}-{{ demo.id }}">
+                    {{ demo.title }}
+                  </label>
+                  <div class="merge-field-value mt-1">
+                    {{ render_field_value(demo, field) }}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">
+        {{ _('Suosittelu ja toistuvuus') }}
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-2">{{ _('Valitse, minkä demon suositusmerkintä säilytetään (tai poistetaan kokonaan).') }}</p>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="recommendation_source" id="recommend-none"
+                 value="none" {% if recommended_default == 'none' %}checked{% endif %}>
+          <label class="form-check-label" for="recommend-none">
+            {{ _('Ei säilytettyä suositusta') }}
+          </label>
+        </div>
+        {% for demo in demos %}
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="recommendation_source"
+                 id="recommend-{{ demo.id }}" value="{{ demo.id }}"
+                 {% if recommended_default == demo.id %}checked{% endif %}>
+          <label class="form-check-label" for="recommend-{{ demo.id }}">
+            {{ _('Pidä suositus mielenosoitukselta %(title)s', title=demo.title) }}
+            {% if demo.is_recommended %}
+              <span class="badge bg-success ms-1">{{ _('Suositeltu') }}</span>
+            {% endif %}
+          </label>
+          {% if demo.recommendation and demo.recommendation.recommend_till %}
+          <div class="small text-muted ms-4">
+            {{ _('Suositus voimassa: %(date)s', date=demo.recommendation.recommend_till) }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary btn-lg">
+        <i class="fa-solid fa-object-group me-2"></i>{{ _('Yhdistä mielenosoitukset') }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

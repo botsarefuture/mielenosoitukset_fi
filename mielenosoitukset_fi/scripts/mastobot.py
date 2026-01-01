@@ -58,9 +58,11 @@ DEFAULT_CHECK_INTERVAL = int(os.getenv("MO_CHECK_INTERVAL", "60"))
 
 subscriptions_collection = mongo["mastobot_subscriptions"]
 mastobot_meta_collection = mongo["mastobot_meta"]
+SUBSCRIBE_COMMANDS: Tuple[str, ...] = ("!muistutaminua", "!subscribeme")
 INSTRUCTIONS_COMMENT = (
-    "💡 Haluatko muistutuksen mielenosoituksesta? Vastaa tähän ketjuun kirjoittamalla `!subscribeme` "
-    "niin saat Mastodon-viestit 7 päivää ja 24 tuntia ennen tapahtumaa sekä tiedon peruutuksista."
+    "💡 Haluatko muistutuksen mielenosoituksesta? Vastaa tähän ketjuun kirjoittamalla "
+    "`!muistutaminua` (tai `!subscribeme`) niin saat Mastodon-viestit 7 päivää ja 24 tuntia "
+    "ennen tapahtumaa sekä tiedon peruutuksista."
 )
 
 
@@ -160,7 +162,7 @@ def post_instructions_comment(
     base_status_id: Optional[str],
     dry_run: bool,
 ) -> None:
-    """Reply under the published status with instructions for !subscribeme usage."""
+    """Reply under the published status with instructions for subscription commands."""
     if not base_status_id:
         return
     post_to_mastodon(
@@ -740,7 +742,8 @@ def process_mentions(
             continue
         status = note.get("status") or {}
         content = strip_html_tags(status.get("content", ""))
-        if "!subscribeme" not in content.lower():
+        content_lower = content.lower()
+        if not any(command in content_lower for command in SUBSCRIBE_COMMANDS):
             continue
 
         account = note.get("account") or {}

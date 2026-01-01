@@ -90,6 +90,7 @@
 * Conflict detection query now properly filters out cancelled and hidden demonstrations.
 * Demonstration detail route now gracefully handles merged/alias IDs, preventing 500 errors and returning 404 when appropriate.
 * Admin merge flow updates Mastobot metadata so merged demonstrations are not reposted.
+* Admin command center now normalizes editor identifiers (string/OID/dict) and lists organization editors with member details, fixing missing or incomplete muokkausoikeus data.
 
 ## v4.0.0-beta.1 – *Robots Control Edition* 🌟
 

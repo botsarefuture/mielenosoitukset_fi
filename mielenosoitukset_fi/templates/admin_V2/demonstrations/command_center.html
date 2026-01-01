@@ -485,8 +485,8 @@
             <strong>{{ stats.reminders }}</strong>
           </div>
           <div class="stat-pill">
-            <span>{{ _('Tykkäykset') }}</span>
-            <strong>{{ stats.likes }}</strong>
+            <span>{{ _('Mastodon-muistutukset') }}</span>
+            <strong>{{ stats.mastodon_reminders }}</strong>
           </div>
           <div class="stat-pill">
             <span>{{ _('Tapaukset') }}</span>
@@ -708,7 +708,23 @@
               {% for org in edit_access.organizations %}
               <div class="linked-item">
                 <div class="fw-semibold">{{ org.name }}</div>
-                <div class="small text-muted">{{ _('Muokkausoikeuksia: %(count)s', count=org.members|length) }}</div>
+                {% if org.members %}
+                <ul class="list-unstyled small mt-2 mb-0">
+                  {% for member in org.members %}
+                  <li class="mb-1">
+                    <strong>{{ member.displayname or member.username }}</strong>
+                    {% if member.email %}
+                    <span class="text-muted">· {{ member.email }}</span>
+                    {% endif %}
+                    {% if member.membership_role %}
+                    <span class="badge bg-secondary ms-2">{{ member.membership_role }}</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <div class="small text-muted">{{ _('Ei jäseniä, joilla muokkausoikeuksia.') }}</div>
+                {% endif %}
               </div>
               {% endfor %}
               {% else %}
@@ -856,6 +872,11 @@
             </div>
             {% if event.link %}
             <a href="{{ event.link }}" target="_blank" rel="noopener">{{ event.link }}</a>
+            {% endif %}
+            {% if event.status_url %}
+            <div>
+              <a href="{{ event.status_url }}" target="_blank" rel="noopener">{{ _('Avaa Mastodonissa') }}</a>
+            </div>
             {% endif %}
           </li>
           {% endfor %}

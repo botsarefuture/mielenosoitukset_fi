@@ -1374,6 +1374,34 @@ def _summarize_analytics_doc(analytics_doc: dict | None) -> dict:
                     summary["last_7d"] += amount
     return summary
 
+def _coerce_datetime(value):
+    """Best-effort conversion of common date representations to datetime."""
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time())
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%fZ"):
+            try:
+                return datetime.strptime(value, fmt)
+            except ValueError:
+                continue
+    return None
+
+
+def _build_mastodon_status_url(status_id: str | None) -> str | None:
+    if not status_id:
+        return None
+    base_url = (
+        current_app.config.get("MASTODON_STATUS_BASE")
+        or current_app.config.get("MASTODON_WEB_BASE")
+        or current_app.config.get("MASTODON_API_BASE")
+        or "https://mastodon.social"
+    ).rstrip("/")
+    handle = current_app.config.get("MASTODON_ACCOUNT_HANDLE", "").lstrip("@")
+    if not handle:
+        handle = "mielenosoitukset"
+    return f"{base_url}/@{handle}/{status_id}"
 
 def filter_demonstrations(query, search_query, show_past, today):
     """Fetch and filter demonstrations based on search criteria.
@@ -1530,6 +1558,10 @@ def demo_command_center(demo_id):
 
     submitter = mongo.submitters.find_one({"demonstration_id": demo_data["_id"]})
     recommended_doc = mongo.recommended_demos.find_one({"demo_id": demo_id_str})
+    if recommended_doc:
+        coerced = _coerce_datetime(recommended_doc.get("recommend_till"))
+        if coerced:
+            recommended_doc["recommend_till"] = coerced
     analytics_doc = mongo.d_analytics.find_one({"_id": demo_data["_id"]})
     analytics_summary = _summarize_analytics_doc(analytics_doc)
 
@@ -1541,8 +1573,8 @@ def demo_command_center(demo_id):
         "reminders": mongo.demo_reminders.count_documents(
             {"demonstration_id": demo_data["_id"]}
         ),
-        "likes": int(
-            (mongo.demo_likes.find_one({"demo_id": demo_data["_id"]}) or {}).get("likes", 0)
+        "mastodon_reminders": mongo.mastobot_subscriptions.count_documents(
+            {"demo_id": demo_id_str}
         ),
         "cases": mongo.cases.count_documents({"demo_id": demo_data["_id"]}),
         "children": mongo.demonstrations.count_documents({"parent": demo_data["_id"]}),
@@ -1644,6 +1676,9 @@ def demo_command_center(demo_id):
         )
         for event in posted_events:
             event["_id"] = str(event.get("_id"))
+            status_url = _build_mastodon_status_url(event.get("status_id"))
+            if status_url:
+                event["status_url"] = status_url
 
     child_demos = []
     child_cursor = (
@@ -2021,9 +2056,22 @@ def gather_demo_edit_access_info(demo_doc: dict) -> dict:
         data.update(extra)
         return data
 
+    def _resolve_editor_id(raw):
+        if isinstance(raw, dict):
+            if "$oid" in raw:
+                return raw["$oid"]
+            if "_id" in raw:
+                return raw["_id"]
+            if "id" in raw:
+                return raw["id"]
+        return raw
+
     def _build_user(uid):
+        oid = _normalize_objectid(_resolve_editor_id(uid))
+        if not oid:
+            return None
         try:
-            user = User.from_OID(uid)
+            user = User.from_OID(oid)
         except Exception:
             return None
         return user

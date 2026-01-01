@@ -7,10 +7,12 @@
   }
 
   .hero-card {
-    background: light-dark(#ffffff, #1f2433);
+    background: light-dark(#ffffff, #101626);
     border-radius: 20px;
     padding: 2rem;
     box-shadow: 0 15px 40px rgba(15, 23, 42, 0.12);
+    color: light-dark(#0f172a, #f5f7ff);
+    border: 1px solid light-dark(#dfe3ec, rgba(255,255,255,0.08));
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;
@@ -55,10 +57,11 @@
     font-size: 2rem;
     font-weight: 700;
     margin-bottom: 0.35rem;
+    color: light-dark(#0f172a, #f8fafc);
   }
 
   .hero-subtitle {
-    color: light-dark(#475569, #cbd5f5);
+    color: light-dark(#334155, #cddbff);
     font-size: 1rem;
     margin-bottom: 1rem;
   }
@@ -73,11 +76,11 @@
   .hero-link {
     padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    background: light-dark(#eef2ff, rgba(255,255,255,0.08));
-    color: light-dark(#312e81, #e0e7ff);
+    background: light-dark(#eef2ff, rgba(255,255,255,0.12));
+    color: light-dark(#19154b, #e0e7ff);
     font-size: 0.9rem;
     text-decoration: none;
-    border: 1px solid light-dark(#c7d2fe, rgba(255,255,255,0.12));
+    border: 1px solid light-dark(#c7d2fe, rgba(255,255,255,0.3));
   }
 
   .hero-metadata {
@@ -88,11 +91,12 @@
   }
 
   .meta-item {
-    background: light-dark(rgba(99,102,241,0.08), rgba(99,102,241,0.18));
+    background: light-dark(rgba(99,102,241,0.08), rgba(99,102,241,0.25));
     border-radius: 16px;
     padding: 1rem;
     font-size: 0.9rem;
-    color: light-dark(#1e293b, #e2e8f0);
+    color: light-dark(#111c33, #e2e8f0);
+    border: 1px solid light-dark(#c7d2fe, rgba(255,255,255,0.12));
   }
 
   .meta-item span {
@@ -117,10 +121,12 @@
   }
 
   .info-card {
-    background: light-dark(#ffffff, #1f232f);
+    background: light-dark(#ffffff, #0e1526);
     border-radius: 18px;
     padding: 1.5rem;
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    border: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.1));
+    color: light-dark(#0f172a, #f8f9ff);
   }
 
   .info-card h3 {
@@ -128,6 +134,10 @@
     font-weight: 600;
     margin-bottom: 1rem;
     color: light-dark(#0f172a, #f8fafc);
+  }
+
+  .info-card h5 {
+    color: light-dark(#0f172a, #f8f9ff);
   }
 
   .stat-grid {
@@ -139,8 +149,9 @@
   .stat-pill {
     border-radius: 16px;
     padding: 1rem;
-    background: light-dark(#f8fafc, #262c3f);
-    border: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.1));
+    background: light-dark(#f8fafc, #1c2236);
+    border: 1px solid light-dark(#d7dce8, rgba(255,255,255,0.15));
+    color: light-dark(#0f172a, #f2f5ff);
   }
 
   .stat-pill span {
@@ -214,7 +225,7 @@
   }
 
   .timeline {
-    border-left: 2px solid light-dark(#e2e8f0, rgba(255,255,255,0.2));
+    border-left: 2px solid light-dark(#cbd5f5, rgba(255,255,255,0.25));
     padding-left: 1.25rem;
     margin-left: 0.5rem;
     display: flex;
@@ -243,8 +254,14 @@
     font-weight: 600;
   }
 
-  .timeline-entry small {
-    color: light-dark(#64748b, #cbd5f5);
+  .timeline-entry small,
+  .timeline-entry .small,
+  .timeline-entry .text-muted {
+    color: light-dark(#475569, #b7c4f0) !important;
+  }
+
+  .timeline-entry a {
+    color: light-dark(#1d4ed8, #7eb4ff);
   }
 
   .action-sidebar {
@@ -256,11 +273,12 @@
   }
 
   .action-card {
-    background: light-dark(#0f172a, #111826);
-    color: #f8fafc;
+    background: light-dark(#f8fafc, #050914);
+    color: light-dark(#0f172a, #f8fafc);
     border-radius: 18px;
     padding: 1.25rem;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.3);
+    border: 1px solid light-dark(rgba(15,23,42,0.08), rgba(255,255,255,0.1));
   }
 
   .action-card h3 {
@@ -277,7 +295,7 @@
   }
 
   .action-btn {
-    border: none;
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 12px;
     padding: 0.75rem 1rem;
     font-weight: 600;
@@ -303,7 +321,7 @@
   }
 
   .resources-list a {
-    color: inherit;
+    color: light-dark(#0f172a, #f8fafc);
     text-decoration: underline;
     font-size: 0.9rem;
   }
@@ -318,7 +336,8 @@
     border-radius: 16px;
     padding: 1rem;
     border: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.12));
-    background: light-dark(#f8fafc, #242a3d);
+    background: light-dark(#f8fafc, #1b2133);
+    color: light-dark(#0f172a, #f2f5ff);
   }
 
   .case-card h5 {
@@ -327,7 +346,16 @@
 
   .linked-item {
     padding: 0.65rem 0;
-    border-bottom: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.08));
+    border-bottom: 1px solid light-dark(#e2e8f0, rgba(255,255,255,0.12));
+    color: light-dark(#0f172a, #f8fafc);
+  }
+
+  .linked-item a {
+    color: light-dark(#1d4ed8, #7da9ff);
+  }
+
+  .linked-item a:hover {
+    color: light-dark(#1e40af, #a0c4ff);
   }
 
   .linked-item:last-child { border-bottom: none; }
@@ -867,7 +895,7 @@
       <div class="action-card">
         <h3>{{ _('Pikatoiminnot') }}</h3>
         <div class="action-grid">
-          {% if permissions.can_accept %}
+          {% if permissions.can_accept and not status_flags.approved %}
           <button class="action-btn primary js-command" data-command="approve">
             {{ _('Hyväksy mielenosoitus') }}
             <i class="fa-solid fa-check"></i>
@@ -1022,3 +1050,8 @@
   });
 </script>
 {% endblock %}
+
+  .info-card .text-muted,
+  .demo-command-center .text-muted {
+    color: light-dark(#6b7280, #aeb8d8) !important;
+  }

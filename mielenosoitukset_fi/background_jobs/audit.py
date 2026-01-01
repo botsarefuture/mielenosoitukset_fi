@@ -6,6 +6,14 @@ from typing import Any, Dict, Iterable, Optional
 
 from bson import ObjectId
 from pymongo.collection import Collection
+from pymongo.operations import (
+    DeleteMany,
+    DeleteOne,
+    InsertOne,
+    ReplaceOne,
+    UpdateMany,
+    UpdateOne,
+)
 from contextlib import contextmanager
 
 from mielenosoitukset_fi.demonstrations.audit import record_demo_change
@@ -82,6 +90,8 @@ def _ensure_patched():
                 return _handle_insert(method_name, original, recorder, self, *args, **kwargs)
             if method_name in {"delete_one", "delete_many", "find_one_and_delete"} and track:
                 return _handle_delete(method_name, original, recorder, self, *args, **kwargs)
+            if method_name == "bulk_write" and track:
+                return _handle_bulk_write(original, recorder, self, *args, **kwargs)
             return original(self, *args, **kwargs)
 
         setattr(Collection, method_name, wrapper)
@@ -97,6 +107,7 @@ def _ensure_patched():
         "delete_one",
         "delete_many",
         "find_one_and_delete",
+        "bulk_write",
     ]:
         wrap(name)
 
@@ -180,6 +191,180 @@ def _handle_delete(method_name, original, recorder, collection, filter_doc, *arg
     result = original(collection, filter_doc, *args, **kwargs)
     for _id, old_doc in before.items():
         recorder.record(old_doc, None, method_name, extra={"filter": str(filter_doc)})
+    return result
+
+
+def _handle_bulk_write(original, recorder, collection, requests, *args, **kwargs):
+    operations = []
+    for index, op in enumerate(requests):
+        if isinstance(op, InsertOne):
+            doc = getattr(op, "_doc", None)
+            operations.append({"type": "insert_one", "index": index, "doc": doc})
+        elif isinstance(op, UpdateOne):
+            filter_doc = getattr(op, "_filter", None)
+            update_doc = getattr(op, "_doc", None)
+            before_doc = collection.find_one(deepcopy(filter_doc)) if filter_doc else None
+            operations.append(
+                {
+                    "type": "update_one",
+                    "index": index,
+                    "before": before_doc,
+                    "filter": filter_doc,
+                    "update": update_doc,
+                }
+            )
+        elif isinstance(op, UpdateMany):
+            filter_doc = getattr(op, "_filter", None)
+            update_doc = getattr(op, "_doc", None)
+            before_docs = _materialize_docs(collection, filter_doc or {})
+            operations.append(
+                {
+                    "type": "update_many",
+                    "index": index,
+                    "before": before_docs,
+                    "filter": filter_doc,
+                    "update": update_doc,
+                }
+            )
+        elif isinstance(op, ReplaceOne):
+            filter_doc = getattr(op, "_filter", None)
+            replacement = getattr(op, "_doc", None)
+            before_doc = collection.find_one(deepcopy(filter_doc)) if filter_doc else None
+            operations.append(
+                {
+                    "type": "replace_one",
+                    "index": index,
+                    "before": before_doc,
+                    "filter": filter_doc,
+                    "replacement": replacement,
+                }
+            )
+        elif isinstance(op, DeleteOne):
+            filter_doc = getattr(op, "_filter", None)
+            before_doc = collection.find_one(deepcopy(filter_doc)) if filter_doc else None
+            operations.append(
+                {
+                    "type": "delete_one",
+                    "index": index,
+                    "before": before_doc,
+                    "filter": filter_doc,
+                }
+            )
+        elif isinstance(op, DeleteMany):
+            filter_doc = getattr(op, "_filter", None)
+            before_docs = _materialize_docs(collection, filter_doc or {})
+            operations.append(
+                {
+                    "type": "delete_many",
+                    "index": index,
+                    "before": before_docs,
+                    "filter": filter_doc,
+                }
+            )
+
+    result = original(collection, requests, *args, **kwargs)
+    upserted_ids = getattr(result, "upserted_ids", {}) or {}
+
+    for entry in operations:
+        operation_name = f"bulk_write.{entry['type']}"
+        if entry["type"] == "insert_one":
+            doc = entry.get("doc")
+            if doc and "_id" in doc:
+                inserted_id = doc["_id"]
+                new_doc = collection.find_one({"_id": inserted_id})
+                recorder.record(
+                    None,
+                    new_doc,
+                    operation_name,
+                    extra={"inserted_id": str(inserted_id)},
+                )
+        elif entry["type"] == "update_one":
+            before_doc = entry.get("before")
+            if before_doc and "_id" in before_doc:
+                after_doc = collection.find_one({"_id": before_doc["_id"]})
+                recorder.record(
+                    before_doc,
+                    after_doc,
+                    operation_name,
+                    extra={"filter": str(entry.get("filter")), "update": str(entry.get("update"))},
+                )
+            elif entry["index"] in upserted_ids:
+                upserted_id = upserted_ids[entry["index"]]
+                after_doc = collection.find_one({"_id": upserted_id})
+                recorder.record(
+                    None,
+                    after_doc,
+                    operation_name,
+                    extra={
+                        "upserted_id": str(upserted_id),
+                        "filter": str(entry.get("filter")),
+                        "update": str(entry.get("update")),
+                    },
+                )
+        elif entry["type"] == "update_many":
+            before_docs = entry.get("before") or {}
+            if before_docs:
+                after_docs = _fetch_docs_by_ids(collection, before_docs.keys())
+                for _id, old_doc in before_docs.items():
+                    recorder.record(
+                        old_doc,
+                        after_docs.get(_id),
+                        operation_name,
+                        extra={"filter": str(entry.get("filter")), "update": str(entry.get("update"))},
+                    )
+            elif entry["index"] in upserted_ids:
+                upserted_id = upserted_ids[entry["index"]]
+                after_doc = collection.find_one({"_id": upserted_id})
+                recorder.record(
+                    None,
+                    after_doc,
+                    operation_name,
+                    extra={
+                        "upserted_id": str(upserted_id),
+                        "filter": str(entry.get("filter")),
+                        "update": str(entry.get("update")),
+                    },
+                )
+        elif entry["type"] == "replace_one":
+            before_doc = entry.get("before")
+            if before_doc and "_id" in before_doc:
+                after_doc = collection.find_one({"_id": before_doc["_id"]})
+                recorder.record(
+                    before_doc,
+                    after_doc,
+                    operation_name,
+                    extra={"filter": str(entry.get("filter"))},
+                )
+            elif entry["index"] in upserted_ids:
+                upserted_id = upserted_ids[entry["index"]]
+                after_doc = collection.find_one({"_id": upserted_id})
+                recorder.record(
+                    None,
+                    after_doc,
+                    operation_name,
+                    extra={
+                        "upserted_id": str(upserted_id),
+                        "filter": str(entry.get("filter")),
+                    },
+                )
+        elif entry["type"] == "delete_one":
+            before_doc = entry.get("before")
+            if before_doc:
+                recorder.record(
+                    before_doc,
+                    None,
+                    operation_name,
+                    extra={"filter": str(entry.get("filter"))},
+                )
+        elif entry["type"] == "delete_many":
+            before_docs = entry.get("before") or {}
+            for _id, old_doc in before_docs.items():
+                recorder.record(
+                    old_doc,
+                    None,
+                    operation_name,
+                    extra={"filter": str(entry.get("filter"))},
+                )
     return result
 
 

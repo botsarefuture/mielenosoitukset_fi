@@ -2,7 +2,7 @@ import os
 import json
 import pytz
 from collections import defaultdict
-from typing import Dict
+from typing import Any, Dict
 from datetime import datetime, timedelta, timezone
 
 from bson.objectid import ObjectId

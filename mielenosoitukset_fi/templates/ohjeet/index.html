@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Ohjeita järjestäjille{% endblock %}
+
+{% block content %}
+<main class="guide-container">
+  <section class="guide-hero">
+    <p class="guide-badge">Ohjekeskus</p>
+    <h1>Selkeät ohjeet kaikille järjestäjille</h1>
+    <p>
+      Tältä sivulta löydät pähkinänkuoressa sen, mitä tarvitset onnistuaksesi: miten saat siistin kuvan tapahtumallesi,
+      missä kuva näkyy sivustolla ja kuinka organisaatiot saavat omat käyttäjätilit. Tekniset yksityiskohdat hoidamme
+      puolestasi – sinun tehtäväsi on keskittyä itse tapahtumaan.
+    </p>
+  </section>
+
+  <section class="guide-card" id="image-usage">
+    <h2>Missä esikatselukuva näkyy?</h2>
+    <div class="guide-grid">
+      <article>
+        <h3>Etusivun kortit</h3>
+        <p>Tietokoneella selaillessa jokainen tapahtumakortti näyttää kansikuvan. Jos omaa kuvaa ei ole, käytämme
+          automaattisesti luotua neliötä.</p>
+      </article>
+      <article>
+        <h3>Mobiilin kalenterilista</h3>
+        <p>Puhelimessa näkyy kortin yläosa. Pidä siis tärkeimmät sanat ja logot kuvan keskellä, jotta ne eivät mene
+          leikkausvaraan.</p>
+      </article>
+      <article>
+        <h3>Tapahtumasivu ja jaot</h3>
+        <p>Kun avaat yksittäisen tapahtuman tai jaat linkin Mastodoniin tai muualle someen, sama kuva kulkee linkin
+          mukana. Siksi kontrasti on tärkeää.</p>
+      </article>
+      <article>
+        <h3>Ladattava materiaali</h3>
+        <p>“Lataa materiaali” -painike antaa saman kuvan myös tukijoille ja vapaaehtoisille, jotta kaikki voivat jakaa
+          tietoa helposti.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="guide-card" id="image-spec">
+    <h2>Hyvä kuva pähkinänkuoressa</h2>
+    <ul class="guide-list">
+      <li><strong>Koko:</strong> 1080 × 1080 pikseliä (Instagram-tyylinen neliö).</li>
+      <li><strong>Turva-alue:</strong> jätä reunoille hieman tyhjää niin, ettei teksti leikkaudu puhelimessa.</li>
+      <li><strong>Kontrasti:</strong> vaalea teksti tummalla tai päinvastoin. Jos luet tekstin yhdellä vilkaisulla, se on
+        hyvä.</li>
+      <li><strong>Tekstin määrä:</strong> yksi pääotsikko ja lyhyt lisärivi. Vältä pitkiä selostuksia kuvassa.</li>
+      <li><strong>Tiedostomuoto:</strong> PNG tai JPG toimii. Automaattinen työkalu tekee puolestasi PNG:n.</li>
+    </ul>
+  </section>
+
+  <section class="guide-card" id="auto-preview">
+    <h2>Automaattinen kuva</h2>
+    <p>
+      Jos et lähetä omaa kuvaa, järjestelmä luo tummaan taustaan perustuvan kuvan, jossa on vaalea kehys ja yksi
+      korosteväri. Siinä näkyy tapahtuman nimi, sijainti, ajankohta sekä enintään kolme tärkeintä tunnistetta. Näin kuva
+      toimii sekä vaalealla että tummalla taustalla ja näyttää hyvältä sekä puhelimessa että työpöydällä.
+    </p>
+    <p>
+      Kuva päivittyy automaattisesti, kun tapahtuma hyväksytään tai kun ylläpito luo sen uudelleen. Voit aina korvata sen
+      myöhemmin lisäämällä oman kansikuvan tapahtuman tietoihin.
+    </p>
+  </section>
+
+  <section class="guide-card" id="org-help">
+    <h2>Organisaatiotilit</h2>
+    <p>
+      Jos edustat järjestöä, verkostoa tai muuta toimijaa, saat oman organisaatioprofiilin ottamalla yhteyttä tukeen.
+      Lähetä sähköpostia osoitteeseen <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> ja kerro:
+    </p>
+    <ul class="guide-list">
+      <li>organisaation nimi</li>
+      <li>virallinen sähköpostiosoite</li>
+      <li>verkkosivu (jos löytyy)</li>
+      <li>lyhyt kuvaus toiminnasta</li>
+      <li>mahdolliset some-kanavat</li>
+      <li>henkilöiden nimet ja sähköpostit, jotka haluat kutsua organisaatioon.</li>
+    </ul>
+    <p>
+      Tuemme käyttöä ja lisäämme kutsut manuaalisesti. Kun profiili on valmis, saat sähköpostin ja voit alkaa hallita
+      tapahtumia organisaation nimissä.
+    </p>
+  </section>
+
+  <section class="guide-card" id="faq">
+    <h2>Usein kysyttyä</h2>
+    <dl>
+      <dt>Kuva ei näy heti, mitä teen?</dt>
+      <dd>Automaattinen kuva ilmestyy, kun tapahtuma hyväksytään. Jos kuva puuttuu vielä sen jälkeen, laita viestiä
+        tukeen.</dd>
+      <dt>Voinko käyttää pystysuuntaista kuvaa?</dt>
+      <dd>Voit, mutta suosittelemme neliötä. Muuten puhelin rajaa kuvan keskeltä ja tärkeät yksityiskohdat voivat jäädä
+        pois.</dd>
+      <dt>Entä Mastodon-botti?</dt>
+      <dd>Mastodonissa käytetään samaa kuvaa kuin sivustolla. Jos tapahtuma yhdistetään toiseen, pidämme huolen siitä,
+        että botti käyttää uutta linkkiä eikä julkaise sitä uudelleen.</dd>
+    </dl>
+  </section>
+</main>
+
+<style>
+  .guide-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .guide-hero {
+    text-align: center;
+  }
+
+  .guide-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-gradient-secondary, #ffece0);
+    color: var(--color-primary, #9c2a00);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .guide-card {
+    background: var(--color-card-bg, #fff);
+    border-radius: 1.5rem;
+    box-shadow: var(--color-shadow, 0 10px 35px rgba(15, 20, 25, 0.1));
+    padding: 2rem 2.5rem;
+  }
+
+  .guide-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .guide-list {
+    list-style: disc;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 0.75rem 1.25rem;
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text-secondary, #4b5563);
+  }
+
+  @media (max-width: 720px) {
+    dl {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}

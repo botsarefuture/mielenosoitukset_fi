@@ -56,6 +56,7 @@
   * Admin organization forms now upload or link `logo` assets and expose them via the public API/templates.
   * Demonstration detail cards render organizer logos, badges, and privacy-respecting labels/message for individuals.
   * Submission and admin demo forms gain explicit “yksityishenkilö” toggles plus name/email visibility checkboxes, preventing unconsented sharing in both self-service and staff workflows.
+* `/ohjeet` user guide that explains image sizes, preview usage on mobile/desktop, and organisaation luontiaskelmat.
 
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.
@@ -73,6 +74,7 @@
 * Demonstration detail pages now show "Cancelled" status with disabled participation/reminder buttons.
 * Suggestion templates (`suggestions_list.html`, `suggestion_view.html`) updated with dark/light mode support using CSS custom properties.
 * Demo cards now display "Peruttu" (Cancelled) badge for cancelled events.
+* Preview image template redesigned to improve contrast and theme-neutral appearance for automatically generated promo cards.
 
 ### Fixed
 * Skip link in base template now properly anchors to `#main-content`.

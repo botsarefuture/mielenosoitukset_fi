@@ -24,7 +24,7 @@ from flask import (
     jsonify,
     session,
 )
-from flask_login import current_user
+from flask_login import current_user, login_required
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.notifications import fetch_notifications
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
@@ -35,7 +35,7 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER, stringify_object_ids
 from mielenosoitukset_fi.utils.analytics import log_demo_view
-from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
+from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
@@ -1709,6 +1709,13 @@ def init_routes(app):
             past_count=past_count,
             parent_id=parent
         )
+
+    @app.route("/ohjeet/")
+    @app.route("/ohjeet")
+    @login_required
+    @admin_required
+    def public_guides():
+        return render_template("ohjeet/index.html")
 
                 
     @app.route("/info")

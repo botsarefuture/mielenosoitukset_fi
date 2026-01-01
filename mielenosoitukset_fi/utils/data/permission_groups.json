@@ -21,6 +21,16 @@
             "description": "List all recurring demos."
         }
     ],
+    "Background Jobs": [
+        {
+            "name": "VIEW_BACKGROUND_JOBS",
+            "description": "View job schedules and history."
+        },
+        {
+            "name": "MANAGE_BACKGROUND_JOBS",
+            "description": "Run jobs manually and change schedules."
+        }
+    ],
     "Demonstration Management": [
         {
             "name": "CREATE_DEMO",

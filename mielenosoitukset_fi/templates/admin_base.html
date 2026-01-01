@@ -265,6 +265,14 @@ function confirmAction(action, taskId) {
           </a>
         </li>
       {% endif %}
+
+      {% if current_user.has_permission("VIEW_BACKGROUND_JOBS") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin.background_jobs') }}">
+            <i class="fas fa-gears me-2"></i>{{ _('Taustatyöt') }}
+          </a>
+        </li>
+      {% endif %}
     </ul>
   </nav>
 

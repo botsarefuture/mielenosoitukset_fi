@@ -3,22 +3,13 @@ from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
 from flask_login import LoginManager
 from bson.objectid import ObjectId
-from apscheduler.schedulers.background import BackgroundScheduler
+from mielenosoitukset_fi.background_jobs import JOB_DEFINITIONS, init_background_jobs
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.users.models import User, AnonymousUser
 from mielenosoitukset_fi.error_handlers import register_error_handlers
 
-from mielenosoitukset_fi.scripts.repeat_v2 import main as repeat_main
-from mielenosoitukset_fi.scripts.update_demo_organizers import main as update_main
-from mielenosoitukset_fi.scripts.in_past import hide_past
-from mielenosoitukset_fi.scripts.CL import main as cl_main
-from mielenosoitukset_fi.scripts.preview_image_creator import run as run_preview
-
-from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
-
-from mielenosoitukset_fi.utils.analytics import prep
 import sys
 import os
 
@@ -380,14 +371,7 @@ def create_app() -> Flask:
         # To unset: unset FORCERUN
         
         # Usage: python3 run.py force [task1,task2,...]
-        available_tasks = {
-            "cl_main": cl_main,
-            "repeat_main": repeat_main,
-            "update_main": update_main,
-            "hide_past": hide_past,
-            "prep": prep,
-            "run_preview": run_preview,
-        }
+        available_tasks = {job.key: job.func for job in JOB_DEFINITIONS}
 
         def run_selected_tasks(selected, till_param=None):
             """Run selected maintenance tasks.
@@ -431,20 +415,8 @@ def create_app() -> Flask:
             run_selected_tasks(list(available_tasks.keys()))
         exit()
 
-    # Create and configure the scheduler
-    scheduler = BackgroundScheduler()
-    with app.app_context():
-        scheduler.add_job(repeat_main, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(update_main, "interval", hours=1)  # Run every hour
-        scheduler.add_job(cl_main, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(prep, "interval", minutes=15)
-        scheduler.add_job(run_preview, "interval", hours=24)  # Run every 24 hours
-        scheduler.add_job(demo_sche, "interval", hours=24)
-
-        
-    with app.app_context():
-        scheduler.add_job(hide_past, "interval", hours=24)  # Run every 24 hours
-        scheduler.start()
+    # Initialize background jobs (scheduler + logging)
+    init_background_jobs(app)
         
     @app.template_filter('displayname_or_username')
     def displayname_or_username(user):
@@ -463,4 +435,3 @@ def create_app() -> Flask:
     app.jinja_env.globals.update(attr_or_get=attr_or_get)
 
     return app
-

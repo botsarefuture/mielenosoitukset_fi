@@ -57,6 +57,12 @@
   * Demonstration detail cards render organizer logos, badges, and privacy-respecting labels/message for individuals.
   * Submission and admin demo forms gain explicit “yksityishenkilö” toggles plus name/email visibility checkboxes, preventing unconsented sharing in both self-service and staff workflows.
 * `/ohjeet` user guide that explains image sizes, preview usage on mobile/desktop, and organisaation luontiaskelmat.
+* **Background job control center**:
+  * APScheduler integration refactored into a dedicated manager that logs every run (status, duration, tracebacks) to MongoDB.
+  * New `/admin/background-jobs` dashboard lists all recurring tasks, shows next/last runs, and lets global admins trigger jobs manually or toggle them on/off.
+  * Interval editor allows adjusting run cadence from the UI and saving overrides per job.
+  * Dedicated `VIEW_BACKGROUND_JOBS` and `MANAGE_BACKGROUND_JOBS` permissions restrict who can inspect vs. manipulate schedules.
+  * Per-job log view exposes detailed metadata, JSON payloads, and stack traces directly in the admin UI.
 
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.

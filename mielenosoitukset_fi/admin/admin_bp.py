@@ -8,6 +8,7 @@ from bson.objectid import ObjectId
 from flask import (
     Blueprint,
     abort,
+    current_app,
     redirect,
     render_template,
     request,
@@ -52,6 +53,13 @@ login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
 
 from .utils import AdminActParser, log_admin_action_V2
+
+
+def _get_job_manager_or_abort():
+    job_manager = current_app.extensions.get("job_manager")
+    if not job_manager:
+        abort(503, "Background jobs are not available in this deployment.")
+    return job_manager
 
 
 @admin_bp.before_request
@@ -187,6 +195,134 @@ def panic_status():
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
     return jsonify({"panic_mode": panic_mode})
+
+
+@admin_bp.route("/background-jobs")
+@login_required
+@admin_required
+@permission_required("VIEW_BACKGROUND_JOBS")
+def background_jobs():
+    """Dashboard for observing and controlling background jobs."""
+    job_manager = _get_job_manager_or_abort()
+    jobs = sorted(job_manager.list_jobs(), key=lambda job: job["name"].lower())
+    selected_job = request.args.get("job")
+    job_keys = {job["key"] for job in jobs}
+    if selected_job not in job_keys:
+        selected_job = None
+
+    try:
+        limit = min(int(request.args.get("limit", 50)), 200)
+    except (TypeError, ValueError):
+        limit = 50
+
+    runs = job_manager.get_recent_runs(selected_job, limit=limit)
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}background_jobs.html",
+        jobs=jobs,
+        runs=runs,
+        selected_job=selected_job,
+        limit=limit,
+        scheduler_disabled=current_app.config.get("DISABLE_BACKGROUND_JOBS", False),
+        can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
+    )
+
+
+@admin_bp.route("/background-jobs/<job_key>")
+@login_required
+@admin_required
+@permission_required("VIEW_BACKGROUND_JOBS")
+def background_job_detail(job_key):
+    job_manager = _get_job_manager_or_abort()
+    try:
+        job = job_manager.get_job_info(job_key)
+    except KeyError:
+        abort(404)
+
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    try:
+        limit = min(200, max(10, int(request.args.get("limit", 25))))
+    except (TypeError, ValueError):
+        limit = 25
+
+    skip = (page - 1) * limit
+    runs = job_manager.get_recent_runs(job_key, limit=limit, skip=skip)
+    total_runs = job_manager.count_runs(job_key)
+    has_next = skip + limit < total_runs
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}background_job_detail.html",
+        job=job,
+        runs=runs,
+        page=page,
+        limit=limit,
+        total_runs=total_runs,
+        has_next=has_next,
+        can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
+    )
+
+
+@admin_bp.route("/background-jobs/<job_key>/run", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("MANAGE_BACKGROUND_JOBS")
+def run_background_job(job_key):
+    """Trigger a background job to run immediately."""
+    job_manager = _get_job_manager_or_abort()
+    job = job_manager.get_job(job_key)
+
+    if not job.get("allow_manual_trigger", True):
+        flash_message("This job cannot be run manually.", "danger")
+        return redirect(url_for("admin.background_jobs", job=job_key))
+
+    triggered_by = f"admin:{current_user.get_id()}"
+    metadata = {
+        "user_id": str(getattr(current_user, "id", current_user.get_id())),
+        "username": getattr(current_user, "username", None),
+        "email": getattr(current_user, "email", None),
+    }
+    job_manager.run_job_now(job_key, triggered_by=triggered_by, metadata=metadata)
+    flash_message("Job queued to run now.", "success")
+    return redirect(url_for("admin.background_jobs", job=job_key))
+
+
+@admin_bp.route("/background-jobs/<job_key>/toggle", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("MANAGE_BACKGROUND_JOBS")
+def toggle_background_job(job_key):
+    """Enable or disable a background job."""
+    job_manager = _get_job_manager_or_abort()
+    enabled = request.form.get("enabled") == "1"
+    job_manager.set_job_enabled(job_key, enabled)
+    flash_message(
+        f"Job {'enabled' if enabled else 'disabled'} successfully.",
+        "success",
+    )
+    return redirect(url_for("admin.background_jobs", job=job_key))
+
+
+@admin_bp.route("/background-jobs/<job_key>/schedule", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("MANAGE_BACKGROUND_JOBS")
+def update_background_job_schedule(job_key):
+    """Update the interval schedule for a job."""
+    job_manager = _get_job_manager_or_abort()
+    interval_value = request.form.get("interval_value")
+    interval_unit = request.form.get("interval_unit")
+
+    try:
+        job_manager.update_interval(job_key, int(interval_value), interval_unit)
+        flash_message("Schedule updated.", "success")
+    except Exception as exc:  # pragma: no cover - defensive
+        flash_message(f"Failed to update schedule: {exc}", "danger")
+
+    return redirect(url_for("admin.background_jobs", job=job_key))
 
 def get_admin_activity(page=1, per_page=20):
     """Get the admin activity log with pagination.

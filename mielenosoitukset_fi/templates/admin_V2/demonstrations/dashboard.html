@@ -678,6 +678,10 @@
                                 onclick="showSubmitterInfoModal('{{ demo._id }}')">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
+                    <li><a class="dropdown-item"
+                           href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}">
+                        <i class="fa-solid fa-table-columns me-2"></i>{{ _('Hallintanäkymä') }}
+                    </a></li>
                 {% endif %}
 
                 {# Screenshot + Freeze #}

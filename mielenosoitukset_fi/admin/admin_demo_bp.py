@@ -4,15 +4,16 @@ from flask import abort, current_app
 import requests
 from copy import deepcopy
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from bson.objectid import ObjectId
 import logging
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from flask_babel import _
+from urllib.parse import quote_plus
 
-from mielenosoitukset_fi.utils.classes import Demonstration, Organizer, MemberShip
+from mielenosoitukset_fi.utils.classes import Demonstration, Organizer, MemberShip, Case
 from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cancellation_links_for_demo
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
@@ -1333,6 +1334,46 @@ def _build_canonical_demo_links(primary_id: str) -> list[str]:
             canonical_links.append(link)
     return canonical_links
 
+def _summarize_analytics_doc(analytics_doc: dict | None) -> dict:
+    """Return high-level counters from the aggregated analytics doc."""
+    summary = {"total": 0, "last_7d": 0, "last_24h": 0}
+    if not isinstance(analytics_doc, dict):
+        return summary
+
+    analytics_map = analytics_doc.get("analytics") or {}
+    if not isinstance(analytics_map, dict):
+        return summary
+
+    now = datetime.utcnow()
+    for day_str, hours in analytics_map.items():
+        if not isinstance(hours, dict):
+            continue
+        try:
+            day_base = datetime.strptime(day_str, "%Y-%m-%d")
+        except (TypeError, ValueError):
+            continue
+        for hour_str, minutes in hours.items():
+            if not isinstance(minutes, dict):
+                continue
+            try:
+                hour = int(hour_str)
+            except (TypeError, ValueError):
+                continue
+            for minute_str, count in minutes.items():
+                try:
+                    minute = int(minute_str)
+                    amount = int(count)
+                except (TypeError, ValueError):
+                    continue
+                summary["total"] += max(amount, 0)
+                stamp = day_base.replace(hour=hour, minute=minute)
+                delta = now - stamp
+                if timedelta(0) <= delta <= timedelta(days=1):
+                    summary["last_24h"] += amount
+                if timedelta(0) <= delta <= timedelta(days=7):
+                    summary["last_7d"] += amount
+    return summary
+
 
 def filter_demonstrations(query, search_query, show_past, today):
     """Fetch and filter demonstrations based on search criteria.
@@ -1471,6 +1512,259 @@ def edit_demo(demo_id):
         case_id=case_id,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=show_demo_access_panel,
+    )
+
+@admin_demo_bp.route("/command-center/<demo_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO")
+def demo_command_center(demo_id):
+    """Unified view for inspecting and acting on a single demonstration."""
+    demo_data = _find_demo_with_alias_support(demo_id)
+    if not demo_data:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_control"))
+
+    demo = Demonstration.from_dict(demo_data)
+    demo_id_str = str(demo_data["_id"])
+
+    submitter = mongo.submitters.find_one({"demonstration_id": demo_data["_id"]})
+    recommended_doc = mongo.recommended_demos.find_one({"demo_id": demo_id_str})
+    analytics_doc = mongo.d_analytics.find_one({"_id": demo_data["_id"]})
+    analytics_summary = _summarize_analytics_doc(analytics_doc)
+
+    stats = {
+        "attending": mongo.demo_attending.count_documents(
+            {"demo_id": demo_data["_id"], "attending": True}
+        ),
+        "invites": mongo.demo_invites.count_documents({"demo_id": demo_data["_id"]}),
+        "reminders": mongo.demo_reminders.count_documents(
+            {"demonstration_id": demo_data["_id"]}
+        ),
+        "likes": int(
+            (mongo.demo_likes.find_one({"demo_id": demo_data["_id"]}) or {}).get("likes", 0)
+        ),
+        "cases": mongo.cases.count_documents({"demo_id": demo_data["_id"]}),
+        "children": mongo.demonstrations.count_documents({"parent": demo_data["_id"]}),
+        "analytics": analytics_summary,
+    }
+
+    open_cases_count = mongo.cases.count_documents(
+        {"demo_id": demo_data["_id"], "meta.closed": {"$ne": True}}
+    )
+    suggestion_filter = {"demo_id": demo_id_str}
+    active_suggestion_filter = {
+        "demo_id": demo_id_str,
+        "status": {"$nin": ["closed", "rejected"]},
+    }
+    active_suggestion_count = mongo.demo_suggestions.count_documents(
+        active_suggestion_filter
+    )
+    suggestions = list(
+        mongo.demo_suggestions.find(suggestion_filter)
+        .sort("created_at", -1)
+        .limit(5)
+    )
+
+    linked_cases = []
+    case_cursor = (
+        mongo.cases.find({"demo_id": demo_data["_id"]})
+        .sort("created_at", -1)
+        .limit(6)
+    )
+    for case_doc in case_cursor:
+        case = Case.from_dict(case_doc)
+        actions = list(case_doc.get("action_logs") or [])
+        linked_cases.append(
+            {
+                "id": str(case_doc["_id"]),
+                "running_num": case.running_num,
+                "type": case.case_type,
+                "created_at": case.created_at,
+                "updated_at": case.updated_at,
+                "closed": bool((case.meta or {}).get("closed")),
+                "urgency": (case.meta or {}).get("urgency"),
+                "latest_action": actions[-1] if actions else None,
+                "meta": case.meta or {},
+                "submitter": case.submitter,
+                "url": url_for("admin_case.single_case", case_id=str(case_doc["_id"])),
+            }
+        )
+
+    organizer_cards = []
+    for organizer in demo_data.get("organizers") or []:
+        if isinstance(organizer, dict):
+            org_dict = dict(organizer)
+        else:
+            try:
+                org_dict = organizer.to_dict()
+            except Exception:
+                org_dict = {}
+        if not org_dict:
+            continue
+        org_id = org_dict.get("organization_id")
+        org_obj_id = _normalize_objectid(org_id)
+        org_doc = mongo.organizations.find_one({"_id": org_obj_id}) if org_obj_id else None
+        organizer_cards.append(
+            {
+                "name": org_dict.get("name"),
+                "email": org_dict.get("email"),
+                "phone": org_dict.get("phone"),
+                "organization_id": str(org_obj_id) if org_obj_id else None,
+                "organization": org_doc,
+                "url": org_dict.get("url"),
+                "website": org_dict.get("website"),
+            }
+        )
+
+    audit_logs = list(
+        mongo.demo_audit_logs.find({"demo_id": demo_id_str}).sort("timestamp", -1).limit(15)
+    )
+    for entry in audit_logs:
+        entry["_id"] = str(entry.get("_id"))
+
+    history_entries = list(
+        mongo.demo_edit_history.find({"demo_id": demo_id_str})
+        .sort("edited_at", -1)
+        .limit(12)
+    )
+    for entry in history_entries:
+        entry["_id"] = str(entry.get("_id"))
+
+    posted_filters = [{"demo_id": demo_id_str}]
+    slug_value = demo_data.get("slug")
+    if slug_value:
+        posted_filters.append({"slug": slug_value})
+    posted_events = []
+    if posted_filters:
+        posted_events = list(
+            mongo.posted_events.find({"$or": posted_filters})
+            .sort("created_at", -1)
+            .limit(5)
+        )
+        for event in posted_events:
+            event["_id"] = str(event.get("_id"))
+
+    child_demos = []
+    child_cursor = (
+        mongo.demonstrations.find({"parent": demo_data["_id"]}, {"title": 1, "date": 1, "slug": 1})
+        .sort("date", 1)
+        .limit(5)
+    )
+    for child in child_cursor:
+        child_demos.append(
+            {
+                "id": str(child.get("_id")),
+                "title": child.get("title"),
+                "date": child.get("date"),
+                "slug": child.get("slug"),
+            }
+        )
+
+    parent_demo = None
+    parent_id = _normalize_objectid(demo_data.get("parent"))
+    if parent_id:
+        parent_doc = mongo.demonstrations.find_one(
+            {"_id": parent_id}, {"title": 1, "date": 1, "slug": 1}
+        )
+        if parent_doc:
+            parent_demo = {
+                "id": str(parent_id),
+                "title": parent_doc.get("title"),
+                "date": parent_doc.get("date"),
+                "slug": parent_doc.get("slug"),
+            }
+
+    aliases = [str(alias) for alias in demo_data.get("aliases") or []]
+    edit_access = gather_demo_edit_access_info(demo_data)
+    status_flags = {
+        "approved": bool(demo_data.get("approved")),
+        "rejected": bool(demo_data.get("rejected")),
+        "hidden": bool(demo_data.get("hide")),
+        "cancelled": bool(demo_data.get("cancelled")),
+        "recurring": bool(demo_data.get("recurs")),
+        "recommended": bool(recommended_doc),
+        "needs_review": not demo_data.get("approved") and not demo_data.get("rejected"),
+        "cancellation_requested": bool(demo_data.get("cancellation_requested")),
+    }
+
+    location_query = " ".join(
+        part for part in [demo.address, demo.city if getattr(demo, "city", None) else None] if part
+    )
+    map_url = (
+        f"https://www.google.com/maps/search/?api=1&query={quote_plus(location_query)}"
+        if location_query
+        else None
+    )
+
+    public_identifier = demo.slug or demo_id_str
+    public_url = url_for("demonstration_detail", demo_id=public_identifier)
+
+    action_endpoints = {
+        "approve": {"url": url_for("admin_demo_api.approve_demo", demo_id=demo_id_str), "method": "POST"},
+        "reject": {"url": url_for("admin_demo_api.reject_demo", demo_id=demo_id_str), "method": "POST"},
+        "cancel": {"url": url_for("admin_demo_api.admin_cancel_demo", demo_id=demo_id_str), "method": "POST"},
+        "recommend": {"url": url_for("admin_demo.recommend_demo", demo_id=demo_id_str), "method": "POST"},
+        "unrecommend": {"url": url_for("admin_demo.unrecommend_demo", demo_id=demo_id_str), "method": "POST"},
+        "duplicate": {"url": url_for("admin_demo.duplicate_demo", demo_id=demo_id_str), "method": "POST"},
+        "screenshot": {"url": url_for("admin_demo.trigger_ss", demo_id=demo_id_str), "method": "GET"},
+    }
+    links = {
+        "edit": url_for("admin_demo.edit_demo", demo_id=demo_id_str),
+        "history": url_for("admin_demo.demo_edit_history", demo_id=demo_id_str),
+        "audit": url_for("admin_demo.view_demo_audit_log", demo_id=demo_id_str),
+        "analytics": url_for("admin.demo_analytics", demo_id=demo_id_str),
+    }
+
+    permissions = {
+        "can_edit": current_user.has_permission("EDIT_DEMO"),
+        "can_delete": current_user.has_permission("DELETE_DEMO"),
+        "can_accept": current_user.has_permission("ACCEPT_DEMO"),
+        "can_generate_link": current_user.has_permission("GENERATE_EDIT_LINK"),
+        "can_recommend": getattr(current_user, "global_admin", False),
+        "can_view_analytics": current_user.has_permission("VIEW_ANALYTICS"),
+    }
+
+    cancellation_context = {
+        "requested": demo_data.get("cancellation_requested"),
+        "requested_at": demo_data.get("cancellation_requested_at"),
+        "reason": demo_data.get("cancellation_reason"),
+        "requested_by": demo_data.get("cancellation_requested_by"),
+        "cancelled_at": demo_data.get("cancelled_at"),
+        "cancelled_by": demo_data.get("cancelled_by"),
+    }
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/command_center.html",
+        demo=demo,
+        demo_raw=demo_data,
+        demo_id=demo_id_str,
+        submitter=submitter,
+        stats=stats,
+        analytics_doc=analytics_doc or {},
+        analytics_summary=analytics_summary,
+        audit_logs=audit_logs,
+        history_entries=history_entries,
+        linked_cases=linked_cases,
+        suggestions=suggestions,
+        recommended=recommended_doc,
+        organizer_cards=organizer_cards,
+        edit_access=edit_access,
+        show_access_panel=_user_can_manage_demo_access(current_user, demo_data),
+        posted_events=posted_events,
+        child_demos=child_demos,
+        parent_demo=parent_demo,
+        aliases=aliases,
+        action_endpoints=action_endpoints,
+        resource_links=links,
+        permissions=permissions,
+        status_flags=status_flags,
+        public_url=public_url,
+        map_url=map_url,
+        cancellation_context=cancellation_context,
+        open_cases_count=open_cases_count,
+        active_suggestion_count=active_suggestion_count,
+        public_identifier=public_identifier,
     )
 
 @admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])

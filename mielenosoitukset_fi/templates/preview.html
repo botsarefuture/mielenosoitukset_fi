@@ -48,72 +48,58 @@
         #main {
             width: 1080px;
             height: 1080px;
-            padding: 120px 140px;
-            border-radius: 64px;
+            padding: 140px 160px;
+            border-radius: 72px;
             border: 32px solid #f7f8ff;
             background: linear-gradient(150deg, var(--surface), var(--surface-highlight));
             box-shadow: 0 40px 80px rgba(5, 7, 13, 0.8);
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-            justify-content: space-between;
-            color: var(--text-strong);
-        }
-
-        .brand-pill {
-            font-size: 1.2rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            display: inline-flex;
             align-items: center;
-            gap: 0.6rem;
-        }
-
-        .brand-pill::before,
-        .brand-pill::after {
-            content: "";
-            display: inline-block;
-            width: 28px;
-            height: 2px;
-            background: var(--surface-glow);
+            justify-content: center;
+            gap: 36px;
+            text-align: center;
+            color: var(--text-strong);
         }
 
         h1 {
             font-size: 5.2rem;
             line-height: 1.1;
-            margin: 24px 0 16px;
+            margin: 0 0 16px;
             color: var(--text-strong);
         }
 
-        .location {
+        .subtitle {
             font-size: 2rem;
             color: var(--text-muted);
-            margin: 0 0 8px;
+            margin: 0;
         }
 
         .city {
             font-size: 2.4rem;
             font-weight: 600;
             color: var(--accent-strong);
-            margin: 0 0 32px;
+            margin: 0;
         }
 
         .schedule {
-            width: 100%;
-            padding: 32px;
-            border-radius: 28px;
+            width: 75%;
+            padding: 40px 48px;
+            border-radius: 30px;
             border: 1px solid var(--surface-glow);
             background: rgba(255, 255, 255, 0.02);
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 32px;
+            text-align: center;
+            margin-top: 8px;
         }
 
         .schedule-block {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
+            align-items: center;
         }
 
         .schedule-label {
@@ -128,29 +114,21 @@
             font-weight: 600;
         }
 
-        .tag-cloud {
+        .tag-wrapper {
+            width: 100%;
             display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-top: 36px;
+            justify-content: center;
+            margin-top: 28px;
         }
 
         .tag {
             border-radius: 999px;
             border: 1px solid var(--tag-border);
             background: var(--tag-bg);
-            padding: 12px 32px;
+            padding: 12px 48px;
             font-size: 1.6rem;
             color: #dbeafe;
             text-transform: lowercase;
-        }
-
-        .footnote {
-            margin-top: auto;
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
         }
     </style>
 </head>
@@ -158,12 +136,10 @@
 <body>
 
     <div id="main">
-        <span class="brand-pill">mielenosoitukset.fi</span>
-
         <h1>{{ demo.get('title') }}</h1>
 
         {% if demo.get('address') %}
-        <p class="location">{{ demo.get('address') }}</p>
+        <p class="subtitle">{{ demo.get('address') }}</p>
         {% endif %}
 
         {% if demo.get('city') %}
@@ -189,14 +165,11 @@
         </div>
 
         {% if demo.get("tags") %}
-        <div class="tag-cloud">
-            {% for tag in demo.get("tags")[:3] %}
-            <span class="tag">#{{ tag }}</span>
-            {% endfor %}
+        {% set first_tag = demo.get("tags")[0] %}
+        <div class="tag-wrapper">
+            <span class="tag">#{{ first_tag }}</span>
         </div>
         {% endif %}
-
-        <span class="footnote">tule mukaan</span>
 
     </div>
 </body>

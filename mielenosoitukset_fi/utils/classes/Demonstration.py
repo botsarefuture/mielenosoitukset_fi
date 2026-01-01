@@ -728,16 +728,24 @@ class Demonstration(BaseModel):
         ValueError
             If the demonstration with the provided id/number/slug is not found.
         """
-        # Try ObjectId lookup68b9748683ca07b64b6cd87e
+        # Try ObjectId lookup first; fall back to alias lookup with the same id
+        obj_id = None
         try:
-            obj_id = ObjectId(demo_id)
-            data = DB["demonstrations"].find_one({"_id": obj_id})
-            if data:
-                logger.info("Found")
-                return cls.from_dict(data)
-
+            if ObjectId.is_valid(str(demo_id)):
+                obj_id = ObjectId(demo_id)
+                data = DB["demonstrations"].find_one({"_id": obj_id})
+                if data:
+                    logger.info("Found")
+                    return cls.from_dict(data)
         except Exception as e:
             logger.debug(f"ObjectId lookup failed for '{demo_id}': {e}")
+            obj_id = None
+
+        if obj_id:
+            alias_data = DB["demonstrations"].find_one({"aliases": {"$in": [obj_id]}})
+            if alias_data:
+                logger.info("Found via alias id lookup")
+                return cls.from_dict(alias_data)
 
         # Try running_number lookup
         try:

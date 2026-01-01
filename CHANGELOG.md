@@ -79,6 +79,8 @@
 * Checkbox value handling in form submission improved for reliable AJAX detection.
 * Organizer invitation links endpoint fixed for Azure DevOps support.
 * Conflict detection query now properly filters out cancelled and hidden demonstrations.
+* Demonstration detail route now gracefully handles merged/alias IDs, preventing 500 errors and returning 404 when appropriate.
+* Admin merge flow updates Mastobot metadata so merged demonstrations are not reposted.
 
 ## v4.0.0-beta.1 – *Robots Control Edition* 🌟
 

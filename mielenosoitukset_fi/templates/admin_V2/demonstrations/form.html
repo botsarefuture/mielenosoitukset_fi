@@ -12,11 +12,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/demo.css' )}}">
 <style>
   .access-panel-card {
+    background: var(--dashboard-panel-bg, rgba(255,255,255,0.05));
     border-color: var(--border-color, rgba(255, 255, 255, 0.2));
     color: var(--text-on-panel, var(--text));
   }
 
   body.dark .access-panel-card {
+    background: var(--dark-panel-bg, rgba(255,255,255,0.03));
     border-color: rgba(255, 255, 255, 0.1) !important;
   }
 
@@ -44,6 +46,11 @@
 
   .list-group .list-group-item .text-muted {
     color: var(--muted-text) !important;
+  }
+
+  .btn-disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
   }
 </style>
 {% endblock %}
@@ -164,7 +171,7 @@
     </section>
     {% endif %}
 
-    <form method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
+    <form id="demo-form" method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
 
         <!-- Basic Info Section -->
         <section class="form-section dashboard-panel mb-8">
@@ -921,6 +928,18 @@
             }
         });
         {% endif %}
+
+        const demoForm = document.getElementById('demo-form');
+        if (demoForm) {
+            const submitButton = demoForm.querySelector("button[type='submit']");
+            demoForm.addEventListener('submit', () => {
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.classList.add("btn-disabled");
+                    submitButton.textContent = "{{ _('Tallennetaan...') }}";
+                }
+            });
+        }
     </script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">

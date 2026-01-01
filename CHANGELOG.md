@@ -57,6 +57,13 @@
   * Demonstration detail cards render organizer logos, badges, and privacy-respecting labels/message for individuals.
   * Submission and admin demo forms gain explicit “yksityishenkilö” toggles plus name/email visibility checkboxes, preventing unconsented sharing in both self-service and staff workflows.
 * `/ohjeet` user guide that explains image sizes, preview usage on mobile/desktop, and organisaation luontiaskelmat.
+* **Background job control center**:
+  * APScheduler integration refactored into a dedicated manager that logs every run (status, duration, tracebacks) to MongoDB.
+  * New `/admin/background-jobs` dashboard lists all recurring tasks, shows next/last runs, and lets global admins trigger jobs manually or toggle them on/off.
+  * Interval editor allows adjusting run cadence from the UI and saving overrides per job.
+  * Dedicated `VIEW_BACKGROUND_JOBS` and `MANAGE_BACKGROUND_JOBS` permissions restrict who can inspect vs. manipulate schedules.
+  * Per-job log view exposes detailed metadata, JSON payloads, and stack traces directly in the admin UI.
+  * Background jobs now capture every demo mutation in the audit log + edit history (with per-run references), enabling the new UI to list exact demonstrations/fields touched.
 
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.
@@ -83,6 +90,7 @@
 * Conflict detection query now properly filters out cancelled and hidden demonstrations.
 * Demonstration detail route now gracefully handles merged/alias IDs, preventing 500 errors and returning 404 when appropriate.
 * Admin merge flow updates Mastobot metadata so merged demonstrations are not reposted.
+* Admin command center now normalizes editor identifiers (string/OID/dict) and lists organization editors with member details, fixing missing or incomplete muokkausoikeus data.
 
 ## v4.0.0-beta.1 – *Robots Control Edition* 🌟
 

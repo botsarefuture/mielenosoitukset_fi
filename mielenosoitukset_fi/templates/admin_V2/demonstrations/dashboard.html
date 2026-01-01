@@ -113,6 +113,12 @@
     color: light-dark(#1f2937, #e5e7f4);
   }
 
+  .actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .filter-field label {
     font-weight: 500;
     color: light-dark(#1f2937, #e5e7f4);
@@ -624,24 +630,35 @@
     {% endif %}
 
     <td class="actions-cell">
-        <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                    id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
-            </button>
+        <div class="d-flex align-items-center gap-2">
+            {% if current_user.has_permission("VIEW_DEMO") %}
+            <a class="btn btn-sm btn-outline-primary command-center-btn"
+               href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
+               title="{{ _('Hallintanäkymä') }}">
+                <i class="fa-solid fa-table-columns"></i>
+                <span class="visually-hidden">{{ _('Hallintanäkymä') }}</span>
+            </a>
+            {% endif %}
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                        id="actionsDropdown-approved-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
+                </button>
 
             <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ demo._id }}">
 
                 {# Accept #}
-                {% if current_user.has_permission("ACCEPT_DEMO") %}
-                    <li><button class="dropdown-item" type="button"
-                                onclick="acceptDemo('{{ demo._id }}')">
-                        <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
-                    </button></li>
-                {% else %}
-                    <li><span class="dropdown-item disabled">
-                        <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
-                    </span></li>
+                {% if not demo.approved %}
+                  {% if current_user.has_permission("ACCEPT_DEMO") %}
+                      <li><button class="dropdown-item" type="button"
+                                  onclick="acceptDemo('{{ demo._id }}')">
+                          <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
+                      </button></li>
+                  {% else %}
+                      <li><span class="dropdown-item disabled">
+                          <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
+                      </span></li>
+                  {% endif %}
                 {% endif %}
 
                 {# Recommend toggle #}
@@ -773,6 +790,14 @@
     {% endif %}
 
     <td class="actions-cell">
+        {% if current_user.has_permission("VIEW_DEMO") %}
+        <a class="btn btn-sm btn-outline-primary me-2 command-center-btn"
+           href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
+           title="{{ _('Hallintanäkymä') }}">
+            <i class="fa-solid fa-table-columns"></i>
+            <span class="visually-hidden">{{ _('Hallintanäkymä') }}</span>
+        </a>
+        {% endif %}
         <div class="dropdown">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                     id="actionsDropdown-{{ demo._id }}" data-bs-toggle="dropdown" aria-expanded="false">

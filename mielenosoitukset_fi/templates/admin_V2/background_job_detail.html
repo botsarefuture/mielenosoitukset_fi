@@ -1,0 +1,240 @@
+{% extends 'admin_base.html' %}
+
+{% macro interval_text(job) -%}
+  {%- set args = job.trigger_args or {} -%}
+  {%- set parts = [] -%}
+  {%- if args.get('days') -%}{%- set _ = parts.append(args.get('days')|int ~ 'd') -%}{%- endif -%}
+  {%- if args.get('hours') -%}{%- set _ = parts.append(args.get('hours')|int ~ 'h') -%}{%- endif -%}
+  {%- if args.get('minutes') -%}{%- set _ = parts.append(args.get('minutes')|int ~ 'min') -%}{%- endif -%}
+  {{ parts|join(' ') if parts else _('Ei asetettu') }}
+{%- endmacro %}
+
+{% block styles %}
+<style>
+  .log-row details summary {
+    cursor: pointer;
+  }
+  .metadata-block {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.85rem;
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <a href="{{ url_for('admin.background_jobs') }}" class="text-decoration-none">
+        <i class="fa-solid fa-arrow-left-long me-2"></i>{{ _('Takaisin listaukseen') }}
+      </a>
+      <h2 class="mt-2 mb-0">{{ job.name }}</h2>
+      <p class="text-muted mb-0">{{ job.description }}</p>
+    </div>
+    <div class="text-end">
+      <span class="badge {{ 'bg-success' if job.enabled else 'bg-secondary' }}">
+        {{ _('Käynnissä') if job.enabled else _('Pois käytöstä') }}
+      </span>
+      {% if job.allow_manual_trigger %}
+        <span class="badge bg-primary ms-1">{{ _('Manuaaliajo sallittu') }}</span>
+      {% else %}
+        <span class="badge bg-outline-secondary ms-1">{{ _('Manuaaliajo estetty') }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ _('Ajoituksen tiedot') }}</h5>
+          <dl class="mb-0 small">
+            <dt>{{ _('Tunniste') }}</dt>
+            <dd class="mb-2"><code>{{ job.key }}</code></dd>
+            <dt>{{ _('Ajoitus') }}</dt>
+            <dd class="mb-2">{{ interval_text(job) }}</dd>
+            <dt>{{ _('Seuraava ajo') }}</dt>
+            <dd class="mb-2">
+              {% if job.next_run_at %}
+                {{ job.next_run_at|datetimeformat('%d.%m.%Y %H:%M:%S') }}
+              {% else %}
+                <span class="text-muted">{{ _('Ei ajastusta') }}</span>
+              {% endif %}
+            </dd>
+            <dt>{{ _('Viimeisin ajo') }}</dt>
+            <dd class="mb-2">
+              {% if job.last_run_started_at %}
+                {{ job.last_run_started_at|datetimeformat('%d.%m.%Y %H:%M:%S') }}
+                ({{ _('tila') }}: {{ job.last_run_status|default(_('tuntematon'))|capitalize }})
+              {% else %}
+                <span class="text-muted">{{ _('Ei ajettu vielä') }}</span>
+              {% endif %}
+            </dd>
+            <dt>{{ _('Viimeisin viesti') }}</dt>
+            <dd>{{ job.last_message or _('Ei viestiä') }}</dd>
+          </dl>
+        </div>
+      </div>
+      {% if can_manage %}
+        <div class="card shadow-sm mt-3">
+          <div class="card-body">
+            <h5 class="card-title">{{ _('Nopeat toiminnot') }}</h5>
+            <form method="post" action="{{ url_for('admin.run_background_job', job_key=job.key) }}" class="d-grid gap-2">
+              <button class="btn btn-primary" {% if not job.allow_manual_trigger %}disabled{% endif %}>
+                <i class="fa-solid fa-play me-1"></i>{{ _('Aja työ nyt') }}
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+    <div class="col-lg-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="card-title mb-0">{{ _('Lokitapahtumat') }}</h5>
+              <small class="text-muted">{{ total_runs }} {{ _('kirjausta') }}</small>
+            </div>
+            <form method="get" class="d-flex gap-2 align-items-center">
+              <div>
+                <label class="form-label small mb-0">{{ _('Rivejä / sivu') }}</label>
+                <input type="number" name="limit" min="10" max="200" value="{{ limit }}" class="form-control form-control-sm">
+              </div>
+              <div class="pt-3">
+                <button class="btn btn-sm btn-outline-primary">{{ _('Päivitä') }}</button>
+              </div>
+            </form>
+          </div>
+
+          {% if runs %}
+            <div class="list-group">
+              {% for run in runs %}
+                <div class="list-group-item log-row mb-2 rounded">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <strong>{{ run.started_at|datetimeformat('%d.%m.%Y %H:%M:%S') if run.started_at }}</strong>
+                      <div class="text-muted small">
+                        {{ _('Kesto') }}: {{ run.duration_seconds|default(0)|round(2) }} s · {{ _('Laukaisi') }}: {{ run.triggered_by or _('Tuntematon') }}
+                      </div>
+                    </div>
+                    {% set status_map = {'success':'bg-success','error':'bg-danger','running':'bg-warning text-dark'} %}
+                    {% set badge = status_map.get(run.status, 'bg-secondary') %}
+                    <span class="badge {{ badge }}">{{ run.status|default('unknown')|capitalize }}</span>
+                  </div>
+                  <div class="mt-2 small">
+                    <strong>{{ _('Viesti') }}:</strong> {{ run.message or _('Ei viestiä') }}
+                  </div>
+                  {% if run.metadata %}
+                    <details class="mt-2">
+                      <summary class="small text-primary">{{ _('Näytä metadata') }}</summary>
+                      <pre class="metadata-block mt-2">{{ run.metadata | tojson(indent=2) }}</pre>
+                    </details>
+                  {% endif %}
+                  {% if run.trace %}
+                    <details class="mt-2">
+                      <summary class="small text-danger">{{ _('Näytä virheen stack trace') }}</summary>
+                      <pre class="metadata-block mt-2">{{ run.trace }}</pre>
+                    </details>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted">{{ _('Ei kirjauksia valitulla suodatuksella.') }}</p>
+          {% endif %}
+
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="small text-muted">
+              {{ _('Sivu') }} {{ page }} · {{ _('Näytetään') }} {{ runs|length }} / {{ total_runs }}
+            </div>
+            <div class="btn-group">
+              <a class="btn btn-outline-secondary btn-sm {% if page <= 1 %}disabled{% endif %}"
+                 href="{{ url_for('admin.background_job_detail', job_key=job.key, page=page-1, limit=limit) }}">
+                {{ _('Edellinen') }}
+              </a>
+              <a class="btn btn-outline-secondary btn-sm {% if not has_next %}disabled{% endif %}"
+                 href="{{ url_for('admin.background_job_detail', job_key=job.key, page=page+1, limit=limit) }}">
+                {{ _('Seuraava') }}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="card-title mb-0">{{ _('Demomuutokset tämän työn toimesta') }}</h5>
+          <small class="text-muted">{{ change_logs|length }} / 100 {{ _('viimeisintä merkintää') }}</small>
+        </div>
+        <form method="get" class="row g-2 align-items-end">
+          <input type="hidden" name="limit" value="{{ limit }}">
+          <input type="hidden" name="page" value="{{ page }}">
+          <div class="col-auto">
+            <label class="form-label small mb-0">{{ _('Rajaa ajokerralla') }}</label>
+            <select name="run_id" class="form-select form-select-sm">
+              <option value="">{{ _('Kaikki ajokerrat') }}</option>
+              {% for run in runs %}
+                <option value="{{ run.id }}" {% if selected_run_id == run.id %}selected{% endif %}>
+                  {{ run.started_at|datetimeformat('%d.%m.%Y %H:%M:%S') if run.started_at else run.id }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto pt-3">
+            <button class="btn btn-sm btn-outline-primary">{{ _('Suodata') }}</button>
+          </div>
+        </form>
+      </div>
+
+      {% if change_logs %}
+        <div class="list-group">
+          {% for change in change_logs %}
+            <div class="list-group-item mb-2 rounded">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ change.timestamp|datetimeformat('%d.%m.%Y %H:%M:%S') }}</strong>
+                  <div class="text-muted small">
+                    {{ _('Demo') }}:
+                    <a href="{{ url_for('admin_demo.edit_demo', demo_id=change.demo_id) }}">{{ change.demo_id }}</a>
+                  </div>
+                </div>
+                <span class="badge bg-info text-dark">{{ change.action }}</span>
+              </div>
+              <div class="mt-2 small">
+                <strong>{{ _('Muuttuneet kentät') }}:</strong>
+                {% set fields = change.details.changed_fields if change.details else [] %}
+                {% if fields %}
+                  {{ fields|join(', ') }}
+                {% else %}
+                  <span class="text-muted">{{ _('Ei tietoa') }}</span>
+                {% endif %}
+              </div>
+              {% if change.details and change.details.history_id %}
+                <div class="small mt-1">
+                  <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=change.demo_id) }}#{{ change.details.history_id }}">
+                    {{ _('Avaa muokkaushistoria') }}
+                  </a>
+                </div>
+              {% endif %}
+              <details class="mt-2">
+                <summary class="small text-secondary">{{ _('Näytä lisätiedot') }}</summary>
+                <div class="metadata-block mt-2">{{ (change.details or {}) | tojson(indent=2) }}</div>
+              </details>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">{{ _('Ei demomuutoksia valitulla hakuehdolla.') }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

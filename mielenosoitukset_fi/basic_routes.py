@@ -1346,7 +1346,10 @@ def init_routes(app):
         - the current_user has VIEW_DEMO permission (admins)
         """
         # Load demonstration and permission checks first (so we don't serve cached 401/404)
-        demo_obj = Demonstration.load_by_id(demo_id)
+        try:
+            demo_obj = Demonstration.load_by_id(demo_id)
+        except ValueError:
+            abort(404)
         if not demo_obj:
             abort(404)
 

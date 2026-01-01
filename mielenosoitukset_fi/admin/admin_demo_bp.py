@@ -1269,6 +1269,7 @@ def _repoint_related_demo_data(primary_id, secondary_ids):
         {"demo_id": {"$in": secondary_ids}},
         {"$set": {"demo_id": primary_id}},
     )
+    _ensure_posted_event_link_aliases(primary_id)
 
     for demo_id in secondary_ids:
         mongo.notifications.update_many(
@@ -1279,6 +1280,53 @@ def _repoint_related_demo_data(primary_id, secondary_ids):
             {"extra.demo_id": demo_id},
             {"$set": {"extra.demo_id": primary_id}},
         )
+
+
+def _ensure_posted_event_link_aliases(primary_id: str) -> None:
+    canonical_links = _build_canonical_demo_links(primary_id)
+    if not canonical_links:
+        return
+
+    for doc in mongo.posted_events.find({"demo_id": primary_id}):
+        existing_aliases = set(doc.get("link_aliases") or [])
+        updated = False
+        for link in canonical_links:
+            if link not in existing_aliases and link != doc.get("link"):
+                existing_aliases.add(link)
+                updated = True
+        if updated:
+            mongo.posted_events.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"link_aliases": sorted(existing_aliases)}},
+            )
+
+
+def _build_canonical_demo_links(primary_id: str) -> list[str]:
+    identifiers = {str(primary_id)}
+    try:
+        primary_obj = ObjectId(primary_id)
+    except Exception:
+        primary_obj = None
+
+    if primary_obj:
+        demo_doc = mongo.demonstrations.find_one(
+            {"_id": primary_obj},
+            {"slug": 1},
+        )
+        slug_value = demo_doc.get("slug") if demo_doc else None
+        if slug_value:
+            identifiers.add(str(slug_value))
+
+    canonical_links = []
+    for identifier in identifiers:
+        link = None
+        try:
+            link = url_for("demonstration_detail", demo_id=identifier, _external=True)
+        except Exception:
+            link = f"https://mielenosoitukset.fi/demonstration/{identifier}"
+        if link:
+            canonical_links.append(link)
+    return canonical_links
 
 
 def filter_demonstrations(query, search_query, show_past, today):

@@ -1127,6 +1127,7 @@
     } finally {
       submitBtn.classList.remove('loading');
       submitBtn.disabled = false;
+      submittingDemo = false; // allow retries after failures or cancellations
     }
   });
 

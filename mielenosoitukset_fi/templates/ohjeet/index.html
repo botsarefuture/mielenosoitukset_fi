@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Ohjeet ja materiaalit{% endblock %}
+
+{% block content %}
+<main class="guide-container">
+  <section class="guide-hero">
+    <p class="guide-badge">Ohjekeskus</p>
+    <h1>Kaikki oleellinen yhdellä sivulla</h1>
+    <p>
+      Tälle sivulle kokoamme vastaukset yleisimpiin kysymyksiin: millaisia kuvia mielenosoituksista kannattaa käyttää,
+      missä automaattisesti luotu esikatselukuva näkyy eri laitteilla sekä miten organisaatiot luodaan ja niitä hallitaan
+      mielenosoitukset.fi:ssä.
+    </p>
+  </section>
+
+  <section class="guide-card" id="image-usage">
+    <h2>Missä esikatselukuva näkyy?</h2>
+    <div class="guide-grid">
+      <article>
+        <h3>Työpöydän korttinäkymät</h3>
+        <p>Etusivun ja hakulistojen kortit (templates/macros.html → <code>demo_card</code>) näyttävät kansikuvan, jos
+          tapahtumalla on <code>cover_image</code>, <code>preview_image</code> tai <code>img</code> kenttä. Uusi
+          esikatselukuva toimii siis oletuksena kaikissa moderneissa ulkoasuissa.</p>
+      </article>
+      <article>
+        <h3>Mobiilin kalenterilista</h3>
+        <p>Mobiilin kuukausi-/viikkolistauksessa (<code>calendar_grid.html</code>) jokainen kortti hakee kuvan rivillä
+          699: <code>{{ "{{ demo.preview_image or demo.img }}" }}</code>. Kuva rajataan 150px korkeaksi, joten tärkeät
+          tekstit kannattaa pitää keskialueella.</p>
+      </article>
+      <article>
+        <h3>Tapahtumasivu ja jaettavat kortit</h3>
+        <p>Yksittäisen mielenosoituksen sivu (<code>detail.html</code>) käyttää <code>preview_image</code>-kenttää sekä
+          Open Graph– että Twitter-korteissa. Sama URL päätyy Mastobotiin ja muualle, joten riittävä kontrasti takaa
+          luettavuuden kaikissa some-palveluissa.</p>
+      </article>
+      <article>
+        <h3>Kalenterin materiaalilataus</h3>
+        <p>Listanäkymien “Lataa materiaali” -painikkeet (<code>list.html</code>) hakevat kuvan järjestyksessä
+          <code>img → cover_image → preview_image</code>. Automaattisesti luotu neliökuva varmistaa, että materiaalia
+          on saatavilla, vaikka muuta kuvaa ei olisi vielä ladattu.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="guide-card" id="image-spec">
+    <h2>Suositellut mitat ja kontrasti</h2>
+    <ul class="guide-list">
+      <li><strong>Koko:</strong> 1080 × 1080 px (1:1). Sama koko toimii Instagramissa, Mastodonissa ja etusivun
+        korteissa.</li>
+      <li><strong>Turva-alue:</strong> pidä tekstit ja logot noin 100 px päässä reunoista (n. 880 × 880 px keskialue),
+        jotta mobiilin 150px korkuinen rajaus näyttää tärkeimmän sisällön.</li>
+      <li><strong>Kontrasti:</strong> pyri vähintään WCAG 4.5:1 kontrastiin tekstin ja taustan välillä. Tumma tausta +
+        vaalea teksti toimii sekä tummassa että vaaleassa teemassa.</li>
+      <li><strong>Tekstin koko:</strong> automaattinen kuvageneraattori käyttää vähintään ~120 px otsikkokokoa. Jos
+        lisäät omia kuvia, vältä pienempää kuin 70 px tekstikokoa.</li>
+      <li><strong>Tiedostomuoto:</strong> PNG tai JPG. Automaattinen työkalu tuottaa PNG:n ja lataa sen S3:een.</li>
+    </ul>
+  </section>
+
+  <section class="guide-card" id="auto-preview">
+    <h2>Automaattisen kuvan uusi tyyli</h2>
+    <p>
+      Päivitimme <code>templates/preview.html</code> -pohjan luomaan kontrastrikkaan neliön, jossa on tummanharmaa
+      gradientti, vaalea kehys ja yksi korosteväri. Elementit ovat keskitetty 1080×1080 alueelle, joten kuva näyttää
+      selkeältä sekä vaalealla että tummalla taustalla. Tagit rajataan kolmeen tärkeimpään tunnisteeseen, jolloin
+      asettelu pysyy rauhallisena myös silloin kun tapahtumalla on kymmeniä tunnisteita.
+    </p>
+    <p>
+      Automaattinen kuva päivitetään, kun hyväksytty mielenosoitus saa uuden esikatselun (skripti
+      <code>scripts/preview_image_creator.py</code> tai adminin “Luo esikatselu” -painike). Tarvittaessa voit silti
+      korvata kuvan manuaalisesti <em>cover picture</em> -kentällä.
+    </p>
+  </section>
+
+  <section class="guide-card" id="org-help">
+    <h2>Organisaation luominen ja hallinta</h2>
+    <ol class="guide-steps">
+      <li>Kirjaudu sisään ja avaa oikean yläkulman työkalupakki.</li>
+      <li>Valitse <strong>“Hallinnoi organisaatioita”</strong> ja sen jälkeen <strong>“Luo uusi organisaatio”</strong>.
+        Linkki vie osoitteeseen <code>/admin/org/create</code>, joka käyttää lomaketta
+        <code>admin_V2/organizations/form.html</code>.</li>
+      <li>Täytä vähintään nimi ja yhteyssähköposti. Voit lisätä kuvauksen, verkkosivun sekä logon (suositus 512×512 px,
+        läpinäkyvä PNG).</li>
+      <li>Tallenna. Jos sinulla on <code>CREATE_ORGANIZATION</code>-oikeus, organisaatio syntyy heti ja näkyy
+        hallintapaneelissa. Muussa tapauksessa ota yhteyttä tukeen (<a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>).</li>
+      <li>Kutsut uusia jäseniä organisaation sivulta kohdasta “Kutsu käyttäjiä”. Kutsu käyttää
+        <code>invite_to_organization.html</code> -sähköpostipohjaa ja on voimassa kaksi viikkoa.</li>
+    </ol>
+    <p class="guide-note">
+      Vinkki: jos organisaatiolla ei ole logoa, voit käyttää samaa 1080×1080 esikatselukuvaa myös profiilikuvana.
+    </p>
+  </section>
+
+  <section class="guide-card" id="faq">
+    <h2>Usein kysyttyä</h2>
+    <dl>
+      <dt>Miksi korttini näyttää ilman kuvaa?</dt>
+      <dd>Tarkista, että tapahtuma ei ole vielä hyväksymätön ja että automaattinen kuvageneraattori on ehtinyt ajaa.
+        Voit pakottaa uuden kuvan admin-näkymän “Luo esikatselu” -painikkeella.</dd>
+      <dt>Voinko käyttää pystysuuntaista kuvaa?</dt>
+      <dd>Sivusto näyttää kuvat parhaimmillaan neliönä. Jos lataat muun kuvasuhteen, mobiililista rajaa sen keskeltä, ja
+        Open Graph -kortit saattavat lisätä tyhjät reunat. Suosittelemme pysymään 1:1-suhteessa.</dd>
+      <dt>Miten Mastobot valitsee kuvan?</dt>
+      <dd>Mastobot käyttää samaa <code>preview_image</code>-kenttää kuin muu sivusto. Kun mielenosoitus yhdistetään
+        toiseen, adminin merge-työkalu päivittää myös botin metadatan, joten vanhat linkit ohjautuvat samaan kuvaan.</dd>
+    </dl>
+  </section>
+</main>
+
+<style>
+  .guide-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .guide-hero {
+    text-align: center;
+  }
+
+  .guide-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-gradient-secondary, #ffece0);
+    color: var(--color-primary, #9c2a00);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .guide-card {
+    background: var(--color-card-bg, #fff);
+    border-radius: 1.5rem;
+    box-shadow: var(--color-shadow, 0 10px 35px rgba(15, 20, 25, 0.1));
+    padding: 2rem 2.5rem;
+  }
+
+  .guide-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .guide-list {
+    list-style: disc;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .guide-steps {
+    margin: 0;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .guide-note {
+    margin-top: 1rem;
+    font-style: italic;
+    color: var(--color-text-secondary, #4b5563);
+  }
+
+  dl {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 0.75rem 1.5rem;
+  }
+
+  dt {
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text-secondary, #4b5563);
+  }
+
+  @media (max-width: 720px) {
+    dl {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}

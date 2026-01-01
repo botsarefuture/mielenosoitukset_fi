@@ -1710,6 +1710,11 @@ def init_routes(app):
             parent_id=parent
         )
 
+    @app.route("/ohjeet/")
+    @app.route("/ohjeet")
+    def public_guides():
+        return render_template("ohjeet/index.html")
+
                 
     @app.route("/info")
     def info():

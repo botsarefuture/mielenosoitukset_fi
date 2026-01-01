@@ -63,6 +63,7 @@
   * Interval editor allows adjusting run cadence from the UI and saving overrides per job.
   * Dedicated `VIEW_BACKGROUND_JOBS` and `MANAGE_BACKGROUND_JOBS` permissions restrict who can inspect vs. manipulate schedules.
   * Per-job log view exposes detailed metadata, JSON payloads, and stack traces directly in the admin UI.
+  * Background jobs now capture every demo mutation in the audit log + edit history (with per-run references), enabling the new UI to list exact demonstrations/fields touched.
 
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.

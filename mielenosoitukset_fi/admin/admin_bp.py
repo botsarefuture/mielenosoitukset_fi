@@ -2,6 +2,7 @@ import os
 import json
 import pytz
 from collections import defaultdict
+from typing import Dict
 from datetime import datetime, timedelta, timezone
 
 from bson.objectid import ObjectId
@@ -254,6 +255,17 @@ def background_job_detail(job_key):
     total_runs = job_manager.count_runs(job_key)
     has_next = skip + limit < total_runs
 
+    selected_run_id = request.args.get("run_id")
+    changes_query: Dict[str, Any] = {"details.job_key": job_key}
+    if selected_run_id:
+        changes_query["details.job_run_id"] = selected_run_id
+
+    change_logs = list(
+        mongo.demo_audit_logs.find(changes_query)
+        .sort("timestamp", -1)
+        .limit(100)
+    )
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}background_job_detail.html",
         job=job,
@@ -263,6 +275,8 @@ def background_job_detail(job_key):
         total_runs=total_runs,
         has_next=has_next,
         can_manage=current_user.has_permission("MANAGE_BACKGROUND_JOBS"),
+        change_logs=change_logs,
+        selected_run_id=selected_run_id,
     )
 
 

@@ -26,6 +26,11 @@ from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_F
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from mielenosoitukset_fi.demonstrations.audit import (
+    record_demo_change,
+    log_demo_audit_entry,
+    save_demo_history,
+)
 
 
 # Secret key for generating tokens
@@ -1610,68 +1615,8 @@ def _deep_merge(old: dict, new: dict) -> dict:
     return merged
 
 
-def save_demo_history(demo_id, old_data, new_data, case_id=None):
-    _i = mongo.demo_edit_history.insert_one({
-        "demo_id": demo_id,
-        "edited_by": str(getattr(current_user, "id", "unknown")),
-        "edited_at": datetime.utcnow(),
-        "old_demo": old_data,
-        "new_demo": new_data,
-        "diff": None,  # can be populated later by batch job,
-        "rollbacked_from": None,
-        "case_id": case_id or None
-    })
-    
-    # lets return history id
-    return _i.inserted_id or None
-
-
 def _get_actor_label():
     return getattr(current_user, "username", None) or getattr(current_user, "email", None) or str(getattr(current_user, "id", "unknown"))
-
-
-def _summarize_changes(old_data, new_data):
-    if not isinstance(old_data, dict) or not isinstance(new_data, dict):
-        return []
-    changed = []
-    keys = set(old_data.keys()) | set(new_data.keys())
-    for key in keys:
-        if old_data.get(key) != new_data.get(key):
-            changed.append(key)
-    return changed
-
-
-def log_demo_audit_entry(demo_id, action, message=None, details=None):
-    try:
-        mongo.demo_audit_logs.insert_one({
-            "demo_id": str(demo_id),
-            "action": action,
-            "message": message or action,
-            "details": details or {},
-            "timestamp": datetime.utcnow(),
-            "user_id": str(getattr(current_user, "id", None)),
-            "username": getattr(current_user, "username", None),
-            "ip_address": request.remote_addr,
-        })
-    except Exception:
-        logger.exception("Failed to write demo audit log entry for %s", demo_id)
-
-
-def record_demo_change(demo_id, old_data, new_data, action, message=None, case_id=None, extra_details=None):
-    hist_id = save_demo_history(demo_id, old_data, new_data, case_id=case_id)
-    details = {
-        "history_id": str(hist_id) if hist_id else None,
-        "changed_fields": _summarize_changes(old_data or {}, new_data or {}),
-    }
-    if extra_details:
-        details.update(extra_details)
-    log_demo_audit_entry(
-        demo_id,
-        action,
-        message=message,
-        details=details,
-    )
-    return hist_id
 
 
 def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):

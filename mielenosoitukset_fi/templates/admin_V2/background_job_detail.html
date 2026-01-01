@@ -166,5 +166,75 @@
       </div>
     </div>
   </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="card-title mb-0">{{ _('Demomuutokset tämän työn toimesta') }}</h5>
+          <small class="text-muted">{{ change_logs|length }} / 100 {{ _('viimeisintä merkintää') }}</small>
+        </div>
+        <form method="get" class="row g-2 align-items-end">
+          <input type="hidden" name="limit" value="{{ limit }}">
+          <input type="hidden" name="page" value="{{ page }}">
+          <div class="col-auto">
+            <label class="form-label small mb-0">{{ _('Rajaa ajokerralla') }}</label>
+            <select name="run_id" class="form-select form-select-sm">
+              <option value="">{{ _('Kaikki ajokerrat') }}</option>
+              {% for run in runs %}
+                <option value="{{ run.id }}" {% if selected_run_id == run.id %}selected{% endif %}>
+                  {{ run.started_at|datetimeformat('%d.%m.%Y %H:%M:%S') if run.started_at else run.id }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-auto pt-3">
+            <button class="btn btn-sm btn-outline-primary">{{ _('Suodata') }}</button>
+          </div>
+        </form>
+      </div>
+
+      {% if change_logs %}
+        <div class="list-group">
+          {% for change in change_logs %}
+            <div class="list-group-item mb-2 rounded">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ change.timestamp|datetimeformat('%d.%m.%Y %H:%M:%S') }}</strong>
+                  <div class="text-muted small">
+                    {{ _('Demo') }}:
+                    <a href="{{ url_for('admin_demo.edit_demo', demo_id=change.demo_id) }}">{{ change.demo_id }}</a>
+                  </div>
+                </div>
+                <span class="badge bg-info text-dark">{{ change.action }}</span>
+              </div>
+              <div class="mt-2 small">
+                <strong>{{ _('Muuttuneet kentät') }}:</strong>
+                {% set fields = change.details.changed_fields if change.details else [] %}
+                {% if fields %}
+                  {{ fields|join(', ') }}
+                {% else %}
+                  <span class="text-muted">{{ _('Ei tietoa') }}</span>
+                {% endif %}
+              </div>
+              {% if change.details and change.details.history_id %}
+                <div class="small mt-1">
+                  <a href="{{ url_for('admin_demo.demo_edit_history', demo_id=change.demo_id) }}#{{ change.details.history_id }}">
+                    {{ _('Avaa muokkaushistoria') }}
+                  </a>
+                </div>
+              {% endif %}
+              <details class="mt-2">
+                <summary class="small text-secondary">{{ _('Näytä lisätiedot') }}</summary>
+                <div class="metadata-block mt-2">{{ (change.details or {}) | tojson(indent=2) }}</div>
+              </details>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted mb-0">{{ _('Ei demomuutoksia valitulla hakuehdolla.') }}</p>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

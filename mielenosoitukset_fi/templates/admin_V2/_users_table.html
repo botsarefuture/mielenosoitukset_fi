@@ -40,7 +40,7 @@
 
       <!-- Actions -->
       <td>
-        {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") %}
+        {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") or current_user.has_permission("FORCE_PASSWORD_CHANGE") or current_user.has_permission("VIEW_USER") %}
         <div class="dropdown">
           <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
                   id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
@@ -63,6 +63,16 @@
                       onclick="openForcePwdModal('{{ user.displayname or user.username }}', '{{ user._id }}')"
                       data-bs-toggle="tooltip" title="{{ _('Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä') }}">
                 <i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}
+              </button>
+            </li>
+            {% endif %}
+
+            {% if current_user.has_permission("VIEW_USER") %}
+            <li>
+              <button class="dropdown-item" type="button"
+                      onclick="openLoginHistoryModal('{{ user._id }}', {{ (user.displayname or user.username)|tojson }}, {{ user.username|tojson }})"
+                      data-bs-toggle="tooltip" title="{{ _('Näytä käyttäjän kirjautumishistoria') }}">
+                <i class="fas fa-clock-rotate-left me-2"></i>{{ _('Kirjautumishistoria') }}
               </button>
             </li>
             {% endif %}

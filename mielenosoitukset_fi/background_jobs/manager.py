@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
@@ -96,6 +97,10 @@ class BackgroundJobLeadership:
                 upsert=True,
                 return_document=ReturnDocument.AFTER,
             )
+        except DuplicateKeyError:
+            # Another worker inserted the leadership row at the same time.
+            logger.debug("Duplicate key while claiming background job leadership; will retry.")
+            return False
         except Exception:
             logger.exception("Failed to negotiate background job leadership.")
             return False

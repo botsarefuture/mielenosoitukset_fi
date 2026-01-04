@@ -215,6 +215,39 @@
   </div>
 </div>
 
+<!-- Login History Modal -->
+<div class="modal fade" id="loginHistoryModal" tabindex="-1" aria-labelledby="loginHistoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginHistoryModalLabel">{{ _('Kirjautumishistoria') }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <div id="loginHistoryStatus" class="text-muted text-center py-4">
+          {{ _('Valitse käyttäjä nähdäksesi kirjautumishistorian.') }}
+        </div>
+        <div id="loginHistoryTableWrapper" class="table-responsive d-none">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>{{ _('Aika') }}</th>
+                <th>{{ _('Tila') }}</th>
+                <th>{{ _('IP-osoite') }}</th>
+                <th>{{ _('Lisätiedot') }}</th>
+              </tr>
+            </thead>
+            <tbody id="loginHistoryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 function openForcePwdModal(username, userId) {
   // Update modal text
@@ -247,6 +280,112 @@ function openForcePwdModal(username, userId) {
 
   // Show modal
   $('#forcePwdModal').modal('show');
+}
+
+</script>
+
+<script>
+const loginHistoryMessages = {
+  loading: "{{ _('Haetaan kirjautumisia...') }}",
+  empty: "{{ _('Käyttäjälle ei ole kirjautumistietoja.') }}",
+  error: "{{ _('Kirjautumisia ei voitu hakea juuri nyt.') }}",
+  successLabel: "{{ _('Onnistui') }}",
+  failedLabel: "{{ _('Epäonnistui') }}",
+  noReason: "{{ _('Ei lisätietoa') }}",
+  successReason: "{{ _('Onnistunut kirjautuminen') }}"
+};
+
+const loginHistoryStatusEl = document.getElementById('loginHistoryStatus');
+const loginHistoryTableWrapper = document.getElementById('loginHistoryTableWrapper');
+const loginHistoryTableBody = document.getElementById('loginHistoryTableBody');
+const loginHistoryModalEl = document.getElementById('loginHistoryModal');
+const loginHistoryModalLabel = document.getElementById('loginHistoryModalLabel');
+let loginHistoryModalInstance;
+
+function escapeHtml(text) {
+  if (text === null || text === undefined) {
+    return '';
+  }
+  return text
+    .toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function showLoginHistoryStatus(message, isError = false) {
+  loginHistoryStatusEl.textContent = message;
+  loginHistoryStatusEl.classList.toggle('text-danger', isError);
+  loginHistoryStatusEl.classList.toggle('text-muted', !isError);
+  loginHistoryStatusEl.classList.remove('d-none');
+  loginHistoryTableWrapper.classList.add('d-none');
+}
+
+function renderLoginHistoryTable(logs) {
+  if (!logs.length) {
+    showLoginHistoryStatus(loginHistoryMessages.empty);
+    return;
+  }
+
+  const rows = logs
+    .map((log) => {
+      const statusBadge = log.success
+        ? `<span class="badge bg-success">${loginHistoryMessages.successLabel}</span>`
+        : `<span class="badge bg-danger">${loginHistoryMessages.failedLabel}</span>`;
+
+      const reason = log.success
+        ? loginHistoryMessages.successReason
+        : (log.reason ? escapeHtml(log.reason) : loginHistoryMessages.noReason);
+
+      const userAgentRow = log.user_agent
+        ? `<div class="small text-muted">${escapeHtml(log.user_agent)}</div>`
+        : '';
+
+      return `
+        <tr>
+          <td>${escapeHtml(log.timestamp_display || log.timestamp || '')}</td>
+          <td>${statusBadge}</td>
+          <td>${escapeHtml(log.ip || '-')}</td>
+          <td>${reason}${userAgentRow}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  loginHistoryTableBody.innerHTML = rows;
+  loginHistoryStatusEl.classList.add('d-none');
+  loginHistoryTableWrapper.classList.remove('d-none');
+}
+
+function openLoginHistoryModal(userId, displayName, username) {
+  if (!loginHistoryModalInstance) {
+    loginHistoryModalInstance = new bootstrap.Modal(loginHistoryModalEl);
+  }
+  const label = displayName || username || '';
+  loginHistoryModalLabel.textContent = `${"{{ _('Kirjautumishistoria') }}"} - ${label}`;
+  showLoginHistoryStatus(loginHistoryMessages.loading);
+  loginHistoryModalInstance.show();
+
+  fetch(`/admin/user/api/login_history/${userId}?limit=50`, {
+    headers: { 'Accept': 'application/json' }
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('HTTP error');
+      }
+      return response.json();
+    })
+    .then((payload) => {
+      if (payload.status !== "OK") {
+        throw new Error(payload.message || "unknown");
+      }
+      renderLoginHistoryTable(payload.logins || []);
+    })
+    .catch(() => {
+      showLoginHistoryStatus(loginHistoryMessages.error, true);
+    });
 }
 
 </script>

@@ -70,7 +70,7 @@
             {% if current_user.has_permission("VIEW_USER") %}
             <li>
               <button class="dropdown-item" type="button"
-                      onclick="openLoginHistoryModal('{{ user._id }}', {{ (user.displayname or user.username)|tojson }}, {{ user.username|tojson }})"
+                      onclick='openLoginHistoryModal("{{ user._id }}", {{ (user.displayname or user.username)|tojson|e }}, {{ user.username|tojson|e }})'
                       data-bs-toggle="tooltip" title="{{ _('Näytä käyttäjän kirjautumishistoria') }}">
                 <i class="fas fa-clock-rotate-left me-2"></i>{{ _('Kirjautumishistoria') }}
               </button>

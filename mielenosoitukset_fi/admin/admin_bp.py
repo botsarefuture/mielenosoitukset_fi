@@ -33,7 +33,6 @@ from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
-from mielenosoitukset_fi.utils.classes import AdminActivity
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
@@ -198,6 +197,108 @@ def panic_status():
     return jsonify({"panic_mode": panic_mode})
 
 
+def _serialize_login_log(doc: dict) -> dict:
+    """Normalize a login log document for JSON responses."""
+    timestamp = doc.get("timestamp")
+    if isinstance(timestamp, datetime):
+        timestamp_str = timestamp.replace(tzinfo=timezone.utc).isoformat()
+        time_ago = datetime.utcnow() - timestamp
+        minutes_ago = max(int(time_ago.total_seconds() // 60), 0)
+    else:
+        timestamp_str = ""
+        minutes_ago = None
+
+    return {
+        "id": str(doc.get("_id")),
+        "username": doc.get("username") or "unknown",
+        "ip": doc.get("ip") or "—",
+        "user_agent": doc.get("user_agent") or "",
+        "reason": doc.get("reason") or "",
+        "success": bool(doc.get("success")),
+        "status": "success" if doc.get("success") else "failure",
+        "user_id": str(doc.get("user_id")) if doc.get("user_id") else None,
+        "timestamp": timestamp_str,
+        "minutes_ago": minutes_ago,
+    }
+
+
+def _calculate_dashboard_snapshot() -> dict:
+    """Aggregate lightweight metrics for the dashboard."""
+    now = datetime.utcnow()
+    last_hour = now - timedelta(hours=1)
+    last_day = now - timedelta(days=1)
+
+    login_coll = mongo.login_logs
+    demos_coll = mongo.demonstrations
+
+    total_users = mongo.users.count_documents({})
+    confirmed_users = mongo.users.count_documents({"confirmed": True})
+    pending_users = mongo.users.count_documents({"confirmed": False})
+    admin_users = mongo.users.count_documents({"role": {"$in": ["admin", "global_admin", "moderator"]}})
+
+    active_orgs = mongo.organizations.count_documents({"archived": {"$ne": True}})
+    cases_open = mongo.cases.count_documents({"$or": [{"meta.closed": {"$ne": True}}, {"meta": {"$exists": False}}]})
+
+    upcoming_demos = demos_coll.count_documents({"cancelled": {"$ne": True}, "hide": {"$ne": True}})
+    pending_demos = demos_coll.count_documents({"approved": {"$ne": True}, "hide": {"$ne": True}})
+
+    logins_last_hour = login_coll.count_documents({"timestamp": {"$gte": last_hour}})
+    failed_logins_last_hour = login_coll.count_documents({"timestamp": {"$gte": last_hour}, "success": False})
+    logins_last_day = login_coll.count_documents({"timestamp": {"$gte": last_day}})
+
+    panic = mongo.panic.find_one({"name": "global"}) or {}
+
+    success_rate = 0
+    if logins_last_hour:
+        success_rate = round(((logins_last_hour - failed_logins_last_hour) / logins_last_hour) * 100)
+
+    return {
+        "users": {
+            "total": total_users,
+            "confirmed": confirmed_users,
+            "pending": pending_users,
+            "admins": admin_users,
+        },
+        "organizations": {"active": active_orgs},
+        "demos": {"live": upcoming_demos, "pending": pending_demos},
+        "cases": {"open": cases_open},
+        "logins": {
+            "last_hour": logins_last_hour,
+            "failed_last_hour": failed_logins_last_hour,
+            "last_day": logins_last_day,
+            "success_rate": success_rate,
+        },
+        "panic_mode": panic.get("panic", False),
+        "generated_at": now.replace(tzinfo=timezone.utc).isoformat(),
+    }
+
+
+@admin_bp.route("/dashboard/data")
+@login_required
+@admin_required
+def dashboard_data():
+    """Return aggregated dashboard metrics for polling."""
+    snapshot = _calculate_dashboard_snapshot()
+    return jsonify(snapshot)
+
+
+@admin_bp.route("/dashboard/login-feed")
+@login_required
+@admin_required
+def dashboard_login_feed():
+    """Return the most recent login attempts for the realtime feed."""
+    try:
+        limit = int(request.args.get("limit", 20))
+    except ValueError:
+        limit = 20
+
+    limit = max(5, min(limit, 100))
+
+    logs_cursor = mongo.login_logs.find({}).sort("_id", -1).limit(limit)
+    logs = [_serialize_login_log(doc) for doc in logs_cursor]
+    return jsonify({"logs": logs})
+
+
 @admin_bp.route("/background-jobs")
 @login_required
 @admin_required
@@ -338,24 +439,172 @@ def update_background_job_schedule(job_key):
 
     return redirect(url_for("admin.background_jobs", job=job_key))
 
-def get_admin_activity(page=1, per_page=20):
-    """Get the admin activity log with pagination.
 
-    Parameters
-    ----------
-    page : int, optional
-        The page number to retrieve, by default 1
-    per_page : int, optional
-        The number of items per page, by default 20
+def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
+    """Construct a MongoDB query for admin logs based on filter parameters."""
+    clauses = []
 
-    Returns
-    -------
-    list
-        A list of admin activity logs for the specified page
-    """
+    user_filter = filters.get("user")
+    if user_filter:
+        try:
+            clauses.append({"user._id": ObjectId(user_filter)})
+        except Exception:
+            pass
+
+    timestamp_range = {}
+    start_date = filters.get("start_date")
+    if start_date:
+        try:
+            timestamp_range["$gte"] = datetime.strptime(start_date, "%Y-%m-%d")
+        except ValueError:
+            pass
+    end_date = filters.get("end_date")
+    if end_date:
+        try:
+            timestamp_range["$lt"] = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+        except ValueError:
+            pass
+    if timestamp_range:
+        clauses.append({"timestamp": timestamp_range})
+
+    action_type = filters.get("action_type")
+    if action_type:
+        clauses.append({
+            "$or": [
+                {"request.method": action_type},
+                {"action.method": action_type},
+            ]
+        })
+
+    if not clauses:
+        return {}
+    if len(clauses) == 1:
+        return clauses[0]
+    return {"$and": clauses}
+
+
+def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a raw admin log entry into a UI friendly payload."""
+    request_data = doc.get("request") or doc.get("action") or {}
+    legacy_action = None
+    if not isinstance(request_data, dict):
+        legacy_action = str(request_data)
+        request_data = {}
+    environ = request_data.get("environ") or {}
+    headers = request_data.get("headers")
+
+    def _extract_user_agent():
+        ua = request_data.get("user_agent") or environ.get("HTTP_USER_AGENT")
+        if ua:
+            return ua
+        if isinstance(headers, dict):
+            return headers.get("User-Agent") or headers.get("user-agent")
+        if isinstance(headers, str) and "User-Agent" in headers:
+            try:
+                return headers.split("User-Agent:")[1].split("\\r")[0].strip()
+            except Exception:
+                return headers
+        return "—"
+
+    method = request_data.get("method") or environ.get("REQUEST_METHOD") or "—"
+    path = (
+        request_data.get("path")
+        or request_data.get("full_path")
+        or request_data.get("url")
+        or environ.get("PATH_INFO")
+        or "—"
+    )
+    if legacy_action and method == "—":
+        method = "ACTION"
+    if legacy_action and path == "—":
+        path = legacy_action
+    remote_addr = request_data.get("remote_addr") or environ.get("REMOTE_ADDR") or "—"
+
+    timestamp = doc.get("timestamp")
+    if isinstance(timestamp, datetime):
+        timestamp_display = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        timestamp_iso = timestamp.replace(tzinfo=timezone.utc).isoformat()
+        rel_minutes = max(int((datetime.utcnow() - timestamp).total_seconds() // 60), 0)
+    else:
+        timestamp_display = str(timestamp) if timestamp else "—"
+        timestamp_iso = timestamp_display
+        rel_minutes = None
+
+    user_doc = doc.get("user") or {}
+    by = {
+        "id": str(user_doc.get("_id")) if user_doc.get("_id") else None,
+        "username": user_doc.get("username") or "Unknown",
+        "displayname": user_doc.get("displayname") or user_doc.get("username") or "Unknown",
+        "profile_picture": user_doc.get("profile_picture"),
+        "email": user_doc.get("email"),
+    }
+
+    session_info = doc.get("session") or {}
+    session_id = (
+        session_info.get("sid")
+        or session_info.get("session_id")
+        or doc.get("session_id")
+        or "—"
+    )
+
+    def _stringify_payload(value):
+        if value in (None, "", {}, []):
+            return ""
+        if isinstance(value, (dict, list)):
+            try:
+                return json.dumps(value, ensure_ascii=False, default=str)
+            except Exception:
+                return str(value)
+        return str(value)
+
+    request_meta = {
+        "endpoint": request_data.get("endpoint") or request_data.get("url_rule"),
+        "blueprint": request_data.get("blueprint"),
+        "full_path": request_data.get("full_path") or request_data.get("url"),
+        "referrer": request_data.get("referrer")
+        or (headers.get("Referer") if isinstance(headers, dict) else None),
+        "view_args": _stringify_payload(request_data.get("view_args")),
+        "args": _stringify_payload(request_data.get("args")),
+        "form": _stringify_payload(request_data.get("form")),
+        "json": _stringify_payload(request_data.get("json")),
+    }
+
+    details_text = doc.get("details")
+    if isinstance(details_text, (dict, list)):
+        try:
+            details_text = json.dumps(details_text, ensure_ascii=False, default=str)
+        except Exception:
+            details_text = str(details_text)
+    elif details_text is not None:
+        details_text = str(details_text)
+
+    return {
+        "id": str(doc.get("_id")),
+        "timestamp": timestamp_display,
+        "timestamp_iso": timestamp_iso,
+        "relative_minutes": rel_minutes,
+        "action": {
+            "method": method,
+            "path": path,
+            "remote_addr": remote_addr,
+            "user_agent": _extract_user_agent(),
+        },
+        "by": by,
+        "session_id": session_id,
+        "details": details_text,
+        "request_meta": request_meta,
+    }
+
+def get_admin_activity(page=1, per_page=20, query=None):
+    """Return formatted admin activity logs with pagination."""
     skip = (page - 1) * per_page
-    activity = mongo.admin_logs.find({}).sort("_id", -1).skip(skip).limit(per_page)
-    return [AdminActivity.from_dict(doc).to_dict(True) for doc in activity]
+    cursor = (
+        mongo.admin_logs.find(query or {})
+        .sort("_id", -1)
+        .skip(skip)
+        .limit(per_page)
+    )
+    return [_format_log_entry(doc) for doc in cursor]
 
 
 # Admin statistics page
@@ -419,7 +668,28 @@ def manual_page(page):
 @admin_required
 @permission_required("VIEW_LOGS")
 def logs():
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}logs.html")
+    user_cursor = (
+        mongo.users.find({}, {"displayname": 1, "username": 1})
+        .sort("username", 1)
+        .limit(500)
+    )
+    users = [
+        {
+            "id": str(doc["_id"]),
+            "name": doc.get("displayname") or doc.get("username") or "Unknown",
+        }
+        for doc in user_cursor
+    ]
+
+    method_set = set(filter(None, mongo.admin_logs.distinct("request.method")))
+    method_set.update(filter(None, mongo.admin_logs.distinct("action.method")))
+    action_types = sorted(method_set)
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}logs.html",
+        users=users,
+        action_types=action_types,
+    )
 
 
 @admin_bp.route("/api/logs")
@@ -444,8 +714,15 @@ def api_logs():
     try:
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 20))
-        logs = get_admin_activity(page, per_page)
-        total_logs = mongo.admin_logs.count_documents({})
+        filters = {
+            "user": request.args.get("user"),
+            "start_date": request.args.get("start_date"),
+            "end_date": request.args.get("end_date"),
+            "action_type": request.args.get("action_type"),
+        }
+        query = _build_logs_query(filters)
+        logs = get_admin_activity(page, per_page, query)
+        total_logs = mongo.admin_logs.count_documents(query)
         total_pages = (total_logs + per_page - 1) // per_page
 
     except Exception as e:

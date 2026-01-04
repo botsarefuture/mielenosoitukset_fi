@@ -590,6 +590,35 @@ time (datetime) | iso string, read (bool)
 
 <!-- CSS additions (inject into existing <style>) -->
 <style>
+  #notif-wrap {
+    margin-left: 0.25rem;
+  }
+
+  #notif-btn {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.45rem 0.6rem;
+    color: var(--color-text);
+    transition: var(--transition);
+    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.12);
+  }
+
+  #notif-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+
+  #notif-btn .fa-bell {
+    color: light-dark(var(--color-primary), #facc15);
+    transition: color .18s ease;
+  }
+
+  #notif-btn:hover .fa-bell,
+  #notif-wrap[aria-expanded="true"] #notif-btn .fa-bell {
+    color: light-dark(var(--color-primary-hover), #fde047);
+  }
+
   .notif-panel {
     position: absolute;
     top: calc(100% + .5rem);
@@ -600,12 +629,78 @@ time (datetime) | iso string, read (bool)
     transform: translateY(-10px);
     transition: all .18s ease-out;
     z-index: 2000;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: 0 15px 45px rgba(15, 23, 42, 0.3);
+    color: var(--color-text);
+    overflow: hidden;
   }
 
   #notif-wrap[aria-expanded="true"] .notif-panel {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+  }
+
+  .notif-panel .card-header {
+    background: light-dark(#f8fafc, #151923);
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+  }
+
+  .notif-panel .card-header,
+  .notif-panel .card-footer {
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
+  .notif-panel .card-footer {
+    background: light-dark(#f8fafc, #141922);
+  }
+
+  .notif-panel .card-footer a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .notif-panel .card-footer a:hover {
+    text-decoration: underline;
+  }
+
+  .notif-panel .list-group-item {
+    background: transparent;
+    color: var(--color-text);
+    border-color: var(--color-border);
+    border-width: 0 0 1px;
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    padding-inline: 1rem;
+  }
+
+  .notif-panel .list-group-item .text-muted {
+    color: var(--color-text-secondary) !important;
+  }
+
+  .notif-panel .list-group-item.bg-light {
+    background: light-dark(#e8f0ff, rgba(59, 130, 246, 0.18));
+    border-radius: 12px;
+    margin: 0.4rem;
+    padding-inline: 0.85rem;
+    border-width: 0;
+  }
+
+  .notif-panel .list-group-item .fa-lg {
+    padding: 0.45rem;
+    border-radius: 12px;
+    background: light-dark(#eef2ff, rgba(59, 130, 246, 0.2));
+  }
+
+  #mark-read-btn {
+    color: var(--color-primary);
   }
 
   /* simple blue dot for unread */
@@ -1114,8 +1209,23 @@ time (datetime) | iso string, read (bool)
     const listBox  = document.getElementById('notif-list');
     const markBtn  = document.getElementById('mark-read-btn');
     const badgeTpl = '<span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 rounded-circle"></span>';
+    const locale   = document.documentElement.lang || 'fi-FI';
+    const fallbackFormatter = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
     if (!btn || !listBox || !markBtn) return;
+
+    const formatTimestamp = (value) => {
+      if (window.timeago?.format) {
+        try {
+          return window.timeago.format(value);
+        } catch (_) {
+          /* fall back below */
+        }
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return fallbackFormatter.format(date);
+    };
 
     const render = (data = []) => {
       // badge
@@ -1134,11 +1244,7 @@ time (datetime) | iso string, read (bool)
       }
 
       listBox.innerHTML = data.map(n => {
-        const formattedTime =
-          (window.timeago && window.timeago.format)
-            ? window.timeago.format(n.time)
-            : n.time;
-
+        const formattedTime = formatTimestamp(n.time);
         return `
           <a href="${n.link}"
              class="list-group-item list-group-item-action py-2 d-flex gap-2 ${n.read ? '' : 'bg-light'}">

@@ -31,14 +31,17 @@ class User(UserMixin):
         list of str or ObjectId
             List of organization IDs or "global" where the user has the permission.
         """
+        
         scopes = []
         if permission in self.global_permissions:
             scopes.append("global")
+        
         scopes.extend(
             m.organization_id for m in self.memberships if permission in m.permissions
         )
         # Remove duplicates while preserving order
         return list(dict.fromkeys(scopes))
+
     @classmethod
     def create_user(cls, username: str, password: str, email: str = None, displayname: str = None) -> dict:
         """
@@ -114,7 +117,6 @@ class User(UserMixin):
         """
         self.password_hash = generate_password_hash(new_password)
         self.save()
-        #mongo.users.update_one({"_id": self._id}, {"$set": {"password_hash": self.password_hash}})
 
     # ---------- INIT / FACTORIES -------------------------------------------------
 

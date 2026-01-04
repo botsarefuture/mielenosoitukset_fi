@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import atexit
+import os
+import socket
 import threading
 import traceback
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,6 +17,105 @@ from mielenosoitukset_fi.utils.logger import logger
 
 from .definitions import JOB_DEFINITION_MAP, JOB_DEFINITIONS, JobDefinition
 from .audit import job_audit_context
+
+
+class BackgroundJobLeadership:
+    """Coordinates which worker process owns the scheduler."""
+
+    def __init__(
+        self,
+        manager: BackgroundJobManager,
+        key: str,
+        ttl_seconds: int = 120,
+        refresh_seconds: Optional[int] = None,
+    ):
+        self.manager = manager
+        self._collection = DatabaseManager().get_instance().get_db()["background_job_leader"]
+        self.key = key
+        self.ttl_seconds = max(30, ttl_seconds)
+        self.refresh_seconds = refresh_seconds or max(5, self.ttl_seconds // 3)
+        self.owner_id = f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex}"
+        self.is_leader = False
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._started = False
+
+    def start(self):
+        if self._started:
+            return
+        self._started = True
+        if self._claim():
+            self._on_acquired()
+        else:
+            logger.info(
+                "Worker %s waiting for background job leadership (key=%s).",
+                self.owner_id,
+                self.key,
+            )
+        self._thread = threading.Thread(target=self._run, name="bg-job-leadership", daemon=True)
+        self._thread.start()
+        atexit.register(self.stop)
+
+    def stop(self):
+        self._stop_event.set()
+        if self.is_leader:
+            self._on_lost()
+        self._release()
+
+    def _run(self):
+        while not self._stop_event.wait(self.refresh_seconds):
+            has_lock = self._claim()
+            if has_lock and not self.is_leader:
+                self._on_acquired()
+            elif not has_lock and self.is_leader:
+                self._on_lost()
+        self._release()
+
+    def _claim(self) -> bool:
+        now = datetime.utcnow()
+        expires_at = now + timedelta(seconds=self.ttl_seconds)
+        try:
+            doc = self._collection.find_one_and_update(
+                {
+                    "_id": self.key,
+                    "$or": [
+                        {"owner_id": self.owner_id},
+                        {"expires_at": {"$lte": now}},
+                        {"expires_at": {"$exists": False}},
+                    ],
+                },
+                {
+                    "$set": {
+                        "owner_id": self.owner_id,
+                        "owner_host": socket.gethostname(),
+                        "owner_pid": os.getpid(),
+                        "refreshed_at": now,
+                        "expires_at": expires_at,
+                    }
+                },
+                upsert=True,
+                return_document=ReturnDocument.AFTER,
+            )
+        except Exception:
+            logger.exception("Failed to negotiate background job leadership.")
+            return False
+        return doc.get("owner_id") == self.owner_id
+
+    def _release(self):
+        try:
+            self._collection.delete_one({"_id": self.key, "owner_id": self.owner_id})
+        except Exception:
+            pass
+
+    def _on_acquired(self):
+        logger.info("Worker %s became background job leader for %s.", self.owner_id, self.key)
+        self.is_leader = True
+        self.manager.start()
+
+    def _on_lost(self):
+        logger.warning("Worker %s lost background job leadership for %s.", self.owner_id, self.key)
+        self.is_leader = False
+        self.manager.shutdown()
 
 
 class BackgroundJobManager:
@@ -345,9 +448,20 @@ class BackgroundJobManager:
 def init_background_jobs(app):
     """Factory called from the Flask app factory."""
     manager = BackgroundJobManager(app=app)
+    app.extensions["job_manager"] = manager
     if app.config.get("DISABLE_BACKGROUND_JOBS"):
         logger.warning("Background jobs disabled via config flag.")
-    else:
-        manager.start()
-    app.extensions["job_manager"] = manager
+        return manager
+
+    leader_key = app.config.get("BACKGROUND_JOB_LEADER_KEY", "default_background_jobs")
+    ttl_seconds = int(app.config.get("BACKGROUND_JOB_LEADER_TTL_SECONDS", 120))
+    refresh_seconds = app.config.get("BACKGROUND_JOB_LEADER_REFRESH_SECONDS")
+    leadership = BackgroundJobLeadership(
+        manager=manager,
+        key=leader_key,
+        ttl_seconds=ttl_seconds,
+        refresh_seconds=(int(refresh_seconds) if refresh_seconds else None),
+    )
+    leadership.start()
+    app.extensions["job_leadership"] = leadership
     return manager

@@ -3,24 +3,29 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Palvelu pois käytöstä - Mielenosoitukset.fi</title>
+    <title>Mielenosoitukset.fi – Palvelu hetkellisesti pois käytöstä</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
     <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #13131a;
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0b8;
-            --border: #2a2a3a;
-            --accent: #00d4ff;
-            --accent-glow: rgba(0, 212, 255, 0.3);
-            --warning: #ff3366;
-            --warning-glow: rgba(255, 51, 102, 0.2);
-            --purple: #a855f7;
+            color-scheme: light;
+            --card-radius: 20px;
+            --panel-bg: #ffffff;
+            --panel-border: #e1e4ef;
+            --panel-shadow: 0 30px 70px rgba(15, 23, 42, 0.1);
+            --chip-bg: rgba(0, 51, 160, 0.12);
+            --chip-border: rgba(0, 51, 160, 0.35);
+            --muted-text: #5f6475;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --panel-shadow: 0 40px 70px color-mix(in srgb, var(--black) 45%, transparent);
+            }
         }
 
         * {
@@ -30,648 +35,441 @@
         }
 
         body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
             font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
+            background: linear-gradient(180deg, rgba(0, 51, 160, 0.08), rgba(0, 51, 160, 0.02)), #f4f6fb;
+            color: #101530;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            position: relative;
-            overflow-x: hidden;
         }
 
-        /* Animated background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(circle at 20% 50%, var(--accent-glow) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 40% 20%, var(--warning-glow) 0%, transparent 50%);
-            animation: bgShift 15s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
+        header {
+            background: linear-gradient(135deg, #0033a0, #4d79cc);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 35px rgba(10, 22, 45, 0.35);
         }
 
-        @keyframes bgShift {
-
-            0%,
-            100% {
-                opacity: 0.3;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.5;
-                transform: scale(1.1);
-            }
-        }
-
-        .grid-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                linear-gradient(var(--border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.1;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .header {
-            background: rgba(26, 26, 36, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            padding: 1.5rem 2rem;
-            position: relative;
-            z-index: 10;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            animation: scanline 3s linear infinite;
-        }
-
-        @keyframes scanline {
-            0% {
-                transform: translateX(-100%);
-            }
-
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        .header-content {
-            max-width: 1200px;
+        .nav-shell {
+            max-width: 1100px;
             margin: 0 auto;
+            padding: 1.25rem 1.5rem;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            justify-content: space-between;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--text-primary);
-            text-decoration: none;
+        .brand {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            text-shadow: 0 0 20px var(--accent-glow);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--white);
         }
 
-        .logo i {
-            color: var(--accent);
-            filter: drop-shadow(0 0 10px var(--accent));
+        .brand i {
+            background: rgba(255, 255, 255, 0.18);
+            color: var(--white);
+            padding: 0.6rem;
+            border-radius: 14px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
         }
 
-        .main {
+        main {
             flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem 2rem;
-            position: relative;
-            z-index: 1;
+            padding: 3rem 1.25rem 4rem;
         }
 
-        .container {
-            max-width: 700px;
-            width: 100%;
+        .content-shell {
+            max-width: 960px;
+            margin: 0 auto;
         }
 
-        .status-card {
-            background: rgba(26, 26, 36, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 3rem 2.5rem;
-            box-shadow:
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
+        .notice-card {
+            background: var(--container_background);
+            border-radius: var(--radius);
+            padding: 2.75rem;
+            box-shadow: 0 25px 65px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--border_color);
         }
 
-        .status-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-            opacity: 0.3;
-        }
-
-        @keyframes rotate {
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .status-card>* {
-            position: relative;
-            z-index: 1;
-        }
-
-        .status-icon {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, var(--warning), #ff6b9d);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 2rem;
-            box-shadow:
-                0 0 40px var(--warning-glow),
-                0 0 80px var(--warning-glow);
-            animation: pulse 2s ease-in-out infinite;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 40px var(--warning-glow), 0 0 80px var(--warning-glow);
-            }
-
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 0 60px var(--warning-glow), 0 0 120px var(--warning-glow);
-            }
-        }
-
-        .status-icon i {
-            font-size: 3rem;
-            color: white;
-            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
+        .notice-card h1 {
+            font-size: clamp(2rem, 3vw, 2.55rem);
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
+            color: var(--primary_text_color);
         }
 
-        .warning-text {
-            font-size: 1.125rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
+        .notice-card p.lead {
+            color: var(--secondary_text_color);
+            font-size: 1.05rem;
             line-height: 1.7;
-        }
-
-        .warning-text strong {
-            color: var(--warning);
-            font-weight: 700;
-        }
-
-        .social-section {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(168, 85, 247, 0.08));
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
             margin-bottom: 2rem;
         }
 
-        .social-section h3 {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 1.5rem;
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-radius: 999px;
+            padding: 0.4rem 0.95rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: var(--primary_color);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            margin-bottom: 1.25rem;
+        }
+
+        .status-chip i {
+            color: var(--warning_text);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-panel {
+            padding: 1.25rem 1.35rem;
+            border-radius: calc(var(--radius) - 5px);
+            border: 1px solid var(--border_color);
+            background: linear-gradient(120deg, rgba(255, 255, 255, 0.95), var(--container_background));
+        }
+
+        .info-panel span {
+            display: block;
+            color: var(--secondary_text_color);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.4rem;
+        }
+
+        .info-panel strong {
+            font-size: 1.05rem;
+            color: var(--primary_text_color);
+        }
+
+        .panel-link {
+            margin-top: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 600;
+            color: var(--primary_color);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .panel-link i {
+            font-size: 0.85rem;
+        }
+
+        .social-block {
+            margin: 2.5rem 0;
+            border-radius: var(--radius);
+            border: 1px solid var(--border_color);
+            padding: 2rem;
+            background: linear-gradient(105deg, rgba(0, 51, 160, 0.12), rgba(0, 51, 160, 0.02));
+        }
+
+        .social-block h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.8rem;
         }
 
         .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1.25rem;
         }
 
         .social-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.25rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-primary);
             text-decoration: none;
+            padding: 0.95rem 1.1rem;
+            border-radius: 14px;
+            border: 1px solid var(--border_color);
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary_text_color);
             font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .social-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px var(--accent-glow);
+            transform: translateY(-1px);
+            box-shadow: 0 12px 25px rgba(15, 23, 42, 0.1);
         }
 
-        .social-link i {
-            font-size: 1.25rem;
-        }
-
-        .social-link.instagram:hover {
-            border-color: #E1306C;
-            box-shadow: 0 4px 20px rgba(225, 48, 108, 0.3);
-        }
-
-        .social-link.twitter:hover {
-            border-color: #1DA1F2;
-            box-shadow: 0 4px 20px rgba(29, 161, 242, 0.3);
-        }
-
-        .social-link.facebook:hover {
-            border-color: #1877F2;
-            box-shadow: 0 4px 20px rgba(24, 119, 242, 0.3);
-        }
-
-        .social-link.tiktok:hover {
-            border-color: #fe2c55;
-            box-shadow: 0 4px 20px rgba(254, 44, 85, 0.3);
-        }
-
-        .support-box {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(0, 212, 255, 0.1));
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            border-radius: 20px;
+        .support-callout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+            gap: 1.5rem;
             padding: 2rem;
-            margin-bottom: 2rem;
-            position: relative;
-            overflow: hidden;
+            border-radius: var(--radius);
+            background: linear-gradient(120deg, var(--primary_color), var(--blue_light));
+            color: var(--white);
+            align-items: center;
+            margin-top: 2.5rem;
         }
 
-        .support-box::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%);
-            animation: rotate 25s linear infinite reverse;
-            opacity: 0.5;
+        .support-callout p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin: 0.75rem 0 0;
         }
 
-        .support-box>* {
-            position: relative;
-            z-index: 1;
+        .support-callout strong {
+            font-size: 1.35rem;
         }
 
-        .support-badge {
+        .btn-primary {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            background: rgba(168, 85, 247, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--purple);
-            margin-bottom: 1rem;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-        }
-
-        .support-box h3 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            background: linear-gradient(135deg, var(--purple), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .support-box p {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary_color), var(--blue_light));
+            border-radius: 999px;
+            padding: 0.9rem 1.6rem;
+            color: #fff;
             text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
-            cursor: pointer;
-            font-family: inherit;
-            position: relative;
-            overflow: hidden;
+            font-weight: 600;
+            box-shadow: 0 20px 30px rgba(0, 51, 160, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+        .btn-primary i {
+            margin-left: 0.6rem;
         }
 
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn>* {
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--purple), #8b5cf6);
-            color: white;
-            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.2);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3);
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 25px 40px rgba(0, 51, 160, 0.4);
         }
 
         .lang-toggle {
             text-align: center;
+            border-top: 1px solid var(--border_color);
             margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
         }
 
         .lang-toggle a {
-            color: var(--accent);
-            text-decoration: none;
-            font-size: 0.9rem;
             font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--primary_color);
+            text-decoration: none;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            transition: all 0.3s ease;
         }
 
-        .lang-toggle a:hover {
-            color: var(--text-primary);
-            text-shadow: 0 0 10px var(--accent-glow);
-        }
-
-        .footer {
-            background: rgba(19, 19, 26, 0.8);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--border);
-            padding: 2rem;
+        footer {
             text-align: center;
-            margin-top: auto;
-            position: relative;
-            z-index: 10;
+            padding: 2rem 1.5rem;
+            font-size: 0.9rem;
+            color: var(--secondary_text_color);
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+        footer span {
+            color: var(--primary_color);
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
-            h1 {
-                font-size: 1.75rem;
+            .notice-card {
+                padding: 2rem 1.35rem;
             }
 
-            .warning-text {
-                font-size: 1rem;
-            }
-
-            .status-card {
-                padding: 2rem 1.5rem;
-            }
-
-            .header {
-                padding: 1rem 1.5rem;
-            }
-
-            .social-links {
+            .nav-shell {
                 flex-direction: column;
+                gap: 0.75rem;
             }
 
-            .social-link {
-                width: 100%;
-                justify-content: center;
+            .support-callout {
+                grid-template-columns: 1fr;
+                text-align: center;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="grid-overlay"></div>
-
-    <header class="header">
-        <div class="header-content">
-            <a href="/" class="logo">
-                <i class="fas fa-bullhorn"></i>
+    <header>
+        <div class="nav-shell">
+            <a href="/" class="brand">
+                <i class="fa-solid fa-bullhorn"></i>
                 Mielenosoitukset.fi
             </a>
         </div>
     </header>
 
-    <main class="main">
-        <div class="container">
-            <!-- Finnish -->
-            <div class="lang fi">
-                <div class="status-card">
-                    <div class="status-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
+    <main>
+        <div class="content-shell">
+            <section class="notice-card lang fi">
+                <span class="status-chip">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    Palvelutilanne
+                </span>
+                <h1>Palvelu on hetkellisesti pois käytöstä</h1>
+                <p class="lead">
+                    Suojaudumme parhaillaan palvelunestohyökkäykseltä, eikä palvelu ole siksi toistaiseksi käytettävissä.
+                    Tiimimme seuraa tilannetta ja palauttaa palvelun käyttöön heti kun se on turvallista.
+                </p>
+
+                <div class="info-grid">
+                    <div class="info-panel">
+                        <span>Viimeisin tilannepäivitys</span>
+                        <strong>Hetki sitten</strong>
                     </div>
-
-                    <h1>Palvelu pois käytöstä</h1>
-
-                    <p class="warning-text">
-                        <strong>Palvelumme on tällä hetkellä pois käytöstä palvelunestohyökkäyksestä johtuen.</strong>
-                    </p>
-
-                    <div class="social-section">
-                        <h3><i class="fas fa-info-circle"></i> Lisätietoja someistamme</h3>
-                        <div class="social-links">
-                            <a href="https://www.instagram.com/mielenosoitukset/" class="social-link instagram"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-instagram"></i>
-                                Instagram
-                            </a>
-
-                            <a href="https://www.facebook.com/mielenosoitukset/" class="social-link facebook"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-facebook"></i>
-                                Facebook
-                            </a>
-                            <a href="https://mastodon.social/@mielenosoitukset" class="social-link mastodon"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-mastodon"></i>
-                                Mastodon
-                            </a>
-
-                            <a href="https://www.tiktok.com/@mielenosoitukset" class="social-link tiktok"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-tiktok"></i>
-                                TikTok
-                            </a>
-                        </div>
+                    <div class="info-panel">
+                        <span>Seuraamme tilannetta</span>
+                        <strong>24/7</strong>
                     </div>
-
-                    <div class="support-box">
-                        <div class="support-badge">
-                            <i class="fas fa-heart"></i>
-                            Odotellessa
-                        </div>
-                        <h3>Tue työtämme</h3>
-                        <p>
-                            Odotellessa voit tutustua Mesenaatti-kampanjaamme ja tukea demokratian puolustamista
-                            Suomessa.
-                        </p>
-                        <a href="https://mesenaatti.me/4046/_/" class="btn btn-secondary" target="_blank"
-                            rel="noopener">
-                            <i class="fas fa-heart"></i>
-                            Tutustu kampanjaan
-                        </a>
-                    </div>
-
-                    <div class="lang-toggle">
-                        <a href="#" onclick="switchLang('en'); return false;">
-                            <i class="fas fa-globe"></i>
-                            Switch to English
+                    <div class="info-panel">
+                        <span>Pysy ajan tasalla</span>
+                        <strong>Seuraa kanaviamme</strong>
+                        <a class="panel-link" href="#social-block">
+                            <i class="fa-solid fa-arrow-down"></i> Näytä some-kanavat
                         </a>
                     </div>
                 </div>
-            </div>
 
-            <!-- English -->
-            <div class="lang en" style="display:none;">
-                <div class="status-card">
-                    <div class="status-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-
-                    <h1>Service Unavailable</h1>
-
-                    <p class="warning-text">
-                        <strong>Our service is currently unavailable due to a DDoS attack.</strong>
+                <div id="social-block" class="social-block">
+                    <h2>Seuraa tilannepäivityksiä somessa</h2>
+                    <p class="lead" style="font-size:1rem;color:var(--secondary_text_color);margin-bottom:1rem;">
+                        Julkaisemme tilanteesta säännöllisiä päivityksiä kanavissamme.
                     </p>
-
-                    <div class="social-section">
-                        <h3><i class="fas fa-info-circle"></i> More information on our social media</h3>
-                        <div class="social-links">
-                            <a href="https://www.instagram.com/mielenosoitukset/" class="social-link instagram"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-instagram"></i>
-                                Instagram
-                            </a>
-
-                            <a href="https://www.facebook.com/mielenosoitukset" class="social-link facebook" target="_blank"
-                                rel="noopener noreferrer">
-                                <i class="fab fa-facebook"></i>
-                                Facebook
-                            </a>
-                            <a href="https://mastodon.social/@mielenosoitukset" class="social-link mastodon"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-mastodon"></i>
-                                Mastodon
-                            </a>
-
-                            <a href="https://www.tiktok.com/@mielenosoitukset" class="social-link tiktok"
-                                target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-tiktok"></i>
-                                TikTok
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="support-box">
-                        <div class="support-badge">
-                            <i class="fas fa-heart"></i>
-                            While You Wait
-                        </div>
-                        <h3>Support Our Work</h3>
-                        <p>
-                            While waiting, you can check out our Mesenaatti crowdfunding campaign and support democracy
-                            in Finland.
-                        </p>
-                        <a href="https://mesenaatti.me/4046/_/" class="btn btn-secondary" target="_blank"
-                            rel="noopener">
-                            <i class="fas fa-heart"></i>
-                            View Campaign
+                    <div class="social-links">
+                        <a class="social-link" href="https://www.instagram.com/mielenosoitukset/" target="_blank" rel="noopener">
+                            <i class="fab fa-instagram"></i> Instagram
                         </a>
-                    </div>
-
-                    <div class="lang-toggle">
-                        <a href="#" onclick="switchLang('fi'); return false;">
-                            <i class="fas fa-globe"></i>
-                            Vaihda suomeksi
+                        <a class="social-link" href="https://www.facebook.com/mielenosoitukset/" target="_blank" rel="noopener">
+                            <i class="fab fa-facebook"></i> Facebook
+                        </a>
+                        <a class="social-link" href="https://mastodon.social/@mielenosoitukset" target="_blank" rel="noopener">
+                            <i class="fab fa-mastodon"></i> Mastodon
+                        </a>
+                        <a class="social-link" href="https://www.tiktok.com/@mielenosoitukset" target="_blank" rel="noopener">
+                            <i class="fab fa-tiktok"></i> TikTok
                         </a>
                     </div>
                 </div>
-            </div>
+
+                <div class="support-callout">
+                    <div>
+                        <strong>Tue työtämme demokratian puolesta</strong>
+                        <p>Odotellessa voit tutustua Mesenaatti-kampanjaamme ja auttaa kehittämään palvelua häiriöitä
+                            kestävämmäksi.</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <a class="btn-primary" href="https://mesenaatti.me/4046/_/" target="_blank" rel="noopener">
+                            Tutustu kampanjaan <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lang-toggle">
+                    <a href="#" onclick="switchLang('en'); return false;">
+                        <i class="fa-solid fa-globe"></i> Switch to English
+                    </a>
+                </div>
+            </section>
+
+            <section class="notice-card lang en" style="display:none;">
+                <span class="status-chip">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    Service Update
+                </span>
+                <h1>Service temporarily unavailable</h1>
+                <p class="lead">
+                    We are currently mitigating a DDoS attack. The service will return as soon as we can ensure
+                    a safe experience for everyone. Thank you for your patience.
+                </p>
+
+                <div class="info-grid">
+                    <div class="info-panel">
+                        <span>Latest update</span>
+                        <strong>A moment ago</strong>
+                    </div>
+                    <div class="info-panel">
+                        <span>Monitoring</span>
+                        <strong>around the clock</strong>
+                    </div>
+                    <div class="info-panel">
+                        <span>Follow us</span>
+                        <strong>Stay connected</strong>
+                        <a class="panel-link" href="#social-block-en">
+                            <i class="fa-solid fa-arrow-down"></i> View our channels
+                        </a>
+                    </div>
+                </div>
+
+                <div class="social-block" id="social-block-en">
+                    <h2>Stay informed via social media</h2>
+                    <p class="lead" style="font-size:1rem;color:var(--secondary_text_color);margin-bottom:1rem;">
+                        We share regular updates across our channels.
+                    </p>
+                    <div class="social-links">
+                        <a class="social-link" href="https://www.instagram.com/mielenosoitukset/" target="_blank" rel="noopener">
+                            <i class="fab fa-instagram"></i> Instagram
+                        </a>
+                        <a class="social-link" href="https://www.facebook.com/mielenosoitukset/" target="_blank" rel="noopener">
+                            <i class="fab fa-facebook"></i> Facebook
+                        </a>
+                        <a class="social-link" href="https://mastodon.social/@mielenosoitukset" target="_blank" rel="noopener">
+                            <i class="fab fa-mastodon"></i> Mastodon
+                        </a>
+                        <a class="social-link" href="https://www.tiktok.com/@mielenosoitukset" target="_blank" rel="noopener">
+                            <i class="fab fa-tiktok"></i> TikTok
+                        </a>
+                    </div>
+                </div>
+
+                <div class="support-callout">
+                    <div>
+                        <strong>Support our work</strong>
+                        <p>While you wait, feel free to check our Mesenaatti crowdfunding campaign and help us keep the
+                            service resilient.</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <a class="btn-primary" href="https://mesenaatti.me/4046/_/" target="_blank" rel="noopener">
+                            View Campaign <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lang-toggle">
+                    <a href="#" onclick="switchLang('fi'); return false;">
+                        <i class="fa-solid fa-globe"></i> Vaihda suomeksi
+                    </a>
+                </div>
+            </section>
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="footer-content">
-            <p>&copy; 2026 Mielenosoitukset.fi. Kaikki oikeudet pidätetään.</p>
-        </div>
+    <footer>
+        <p>&copy; <span>Mielenosoitukset.fi</span> – Kaikki oikeudet pidätetään.</p>
     </footer>
 
     <script>
-        function switchLang(l) {
-            document.querySelector('.fi').style.display = l === 'fi' ? 'block' : 'none';
-            document.querySelector('.en').style.display = l === 'en' ? 'block' : 'none';
-            document.documentElement.lang = l;
+        const sections = {
+            fi: document.querySelector(".lang.fi"),
+            en: document.querySelector(".lang.en"),
+        };
+
+        function switchLang(lang) {
+            sections.fi.style.display = lang === "fi" ? "block" : "none";
+            sections.en.style.display = lang === "en" ? "block" : "none";
+            document.documentElement.lang = lang;
         }
 
-        // Auto-detect language
-        const userLang = navigator.language || navigator.userLanguage;
-        if (userLang.startsWith("en")) {
-            switchLang("en");
-        }
+        const preferred = (navigator.language || "").toLowerCase().startsWith("en") ? "en" : "fi";
+        switchLang(preferred);
     </script>
 </body>
 

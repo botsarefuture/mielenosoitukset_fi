@@ -1,67 +1,292 @@
 {% extends "admin_base.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}" />
 <style>
-    .no-data {
-        color: #721c24;
-        font-weight: bold;
-        background: #f8d7da;
-        padding: 20px;
-        border: 1px dashed #f5c6cb;
-        border-radius: 5px;
-        text-align: center;
-        margin: 1rem 0;
+    :root {
+        --surface: #ffffff;
+        --surface-muted: #f6f7fb;
+        --border-color: #e4e7f1;
+        --text-soft: #6c757d;
     }
-    .back-button {
-        margin-top: 2rem;
-        text-align: center;
+
+    .logs-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
     }
+
+    .logs-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .logs-header h2 {
+        margin-bottom: 0.35rem;
+    }
+
+    .filter-card {
+        background: var(--surface);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        padding: 1.25rem;
+        box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+    }
+
+    .filter-grid input,
+    .filter-grid select {
+        padding: 0.55rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        background: var(--surface-muted);
+        transition: border-color 0.2s ease;
+    }
+
+    .filter-grid input:focus,
+    .filter-grid select:focus {
+        outline: none;
+        border-color: #4dabf7;
+        box-shadow: 0 0 0 2px rgba(76, 172, 244, 0.2);
+    }
+
+    .filter-grid button {
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .filter-grid button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+    }
+
+    .log-stream {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .log-card {
+        background: var(--surface);
+        border-radius: 18px;
+        border: 1px solid var(--border-color);
+        padding: 1.5rem;
+        box-shadow: 0 18px 35px rgba(15,23,42,0.06);
+    }
+
+    .log-card__head {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .method-pill {
+        border-radius: 999px;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        background: #edf2ff;
+        color: #1c4ed8;
+    }
+
+    .method-pill.method-post { background: #fff3bf; color: #ad7b00; }
+    .method-pill.method-delete { background: #ffe3e3; color: #c92a2a; }
+    .method-pill.method-put,
+    .method-pill.method-patch { background: #c3fae8; color: #087f5b; }
+
+    .path-block {
+        flex: 1 1 auto;
+        min-width: 200px;
+    }
+
+    .path-block .path {
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .path-block .endpoint {
+        font-size: 0.85rem;
+        color: var(--text-soft);
+    }
+
+    .timestamp {
+        text-align: right;
+        min-width: 140px;
+        font-weight: 600;
+    }
+
+    .timestamp small {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-soft);
+        font-weight: 400;
+    }
+
+    .log-card__meta {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.85rem;
+    }
+
+    .meta-item {
+        padding: 0.85rem;
+        border-radius: 12px;
+        background: var(--surface-muted);
+        border: 1px solid var(--border-color);
+    }
+
+    .meta-item span {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-soft);
+        margin-bottom: 0.35rem;
+    }
+
+    .log-note {
+        margin-top: 1rem;
+        border-radius: 12px;
+        background: #fff4e6;
+        border: 1px solid #ffd8a8;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .log-toggle {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-weight: 600;
+        margin-top: 1rem;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    .log-toggle:hover {
+        background: var(--surface-muted);
+    }
+
+    .log-toggle i {
+        transition: transform 0.25s ease;
+    }
+
+    .log-toggle.open i {
+        transform: rotate(180deg);
+    }
+
+    .log-details {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s ease;
+    }
+
+    .log-details.open {
+        max-height: 550px;
+        margin-top: 1rem;
+    }
+
+    .detail-row {
+        background: var(--surface-muted);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .detail-row span {
+        font-size: 0.8rem;
+        color: var(--text-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .detail-row code,
+    .detail-row pre {
+        display: block;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 0.85rem;
+        background: #fff;
+        border-radius: 10px;
+        border: 1px dashed var(--border-color);
+        padding: 0.5rem 0.75rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0;
+    }
+
+    .empty-state {
+        border-radius: 16px;
+        border: 1px dashed var(--border-color);
+        background: var(--surface-muted);
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-soft);
+    }
+
     .pagination {
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
         margin-top: 2rem;
+        gap: 0.5rem;
     }
+
     .pagination a {
-        margin: 0 5px;
-        padding: 8px 14px;
-        border: 1px solid #ccc;
-        color: #007bff;
+        min-width: 38px;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
         text-decoration: none;
-        border-radius: 4px;
+        color: inherit;
+        transition: background 0.2s ease;
     }
+
     .pagination a.active {
-        background-color: #007bff;
-        color: white;
-        font-weight: bold;
+        background: #2563eb;
+        color: #fff;
+        border-color: #1d4ed8;
     }
-    .filter-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    .filter-container select, 
-    .filter-container input,
-    .filter-container button {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        min-width: 120px;
+
+    @media (max-width: 640px) {
+        .timestamp {
+            text-align: left;
+        }
     }
 </style>
 {% endblock %}
 
 {% block main_content %}
-<div class="table-container">
-    <header>
-        <h2>{{ _('Admin Logs') }}</h2>
-        <p>{{ _('Here you can view the admin activity logs and filter them by user, date, and action type.') }}</p>
+<div class="logs-shell">
+    <header class="logs-header">
+        <h2>{{ _('Admin Activity Timeline') }}</h2>
+        <p class="text-muted mb-0">{{ _('Inspect privileged actions, filter by user or time range, and expand any row for raw request metadata.') }}</p>
     </header>
 
-    <section class="filter-container">
-        <form method="GET" action="{{ url_for('admin.logs') }}">
+    <section class="filter-card">
+        <form method="GET" action="{{ url_for('admin.logs') }}" class="filter-grid">
             <select name="user">
                 <option value="">{{ _('All Users') }}</option>
                 {% for user in users %}
@@ -70,28 +295,27 @@
                 </option>
                 {% endfor %}
             </select>
-            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
-            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}" placeholder="{{ _('Start date') }}">
+            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}" placeholder="{{ _('End date') }}">
             <select name="action_type">
-                <option value="">{{ _('All Actions') }}</option>
+                <option value="">{{ _('All Methods') }}</option>
                 {% for action in action_types %}
                 <option value="{{ action }}" {% if request.args.get('action_type') == action %}selected{% endif %}>
                     {{ action }}
                 </option>
                 {% endfor %}
             </select>
-            <button type="submit">{{ _('Filter') }}</button>
+            <button type="submit">{{ _('Apply Filters') }}</button>
         </form>
     </section>
 
-    <section class="logs-overview">
-        <h3 class="admin-section-title">{{ _('Recent Activities') }}</h3>
-        <activities></activities>
-    </section>
+    <div id="log-stream" class="log-stream">
+        <div class="empty-state">{{ _('Loading log entries...') }}</div>
+    </div>
 
-    <div class="pagination"></div>
+    <div class="pagination mt-3"></div>
 
-    <div class="back-button">
+    <div class="mt-4 text-center">
         <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
             <i class="fas fa-arrow-left"></i> {{ _('Back to Dashboard') }}
         </a>
@@ -101,49 +325,139 @@
 
 {% block scripts %}
 <script>
+    const apiBaseUrl = "{{ url_for('admin.api_logs') }}";
+    const logContainer = document.getElementById('log-stream');
+    const paginationEl = document.querySelector('.pagination');
+    const minuteLabel = "{{ _('min ago') }}";
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return value
+            .toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getActiveFilters() {
+        const params = new URLSearchParams(window.location.search);
+        const filters = {};
+        ["user", "start_date", "end_date", "action_type"].forEach(key => {
+            const value = params.get(key);
+            if (value) filters[key] = value;
+        });
+        return filters;
+    }
+
+    const activeFilters = getActiveFilters();
+
     async function fetchLogs(page = 1) {
-        const res = await fetch(`{{ url_for("admin.api_logs") }}?page=${page}`);
+        const params = new URLSearchParams({ page });
+        Object.entries(activeFilters).forEach(([key, value]) => params.append(key, value));
+        const res = await fetch(`${apiBaseUrl}?${params.toString()}`);
         const data = await res.json();
-        renderLogs(data.logs);
+        renderLogs(data.logs || []);
         renderPagination(data.page, data.total_pages);
     }
 
-    function renderLogs(logs) {
-        const container = document.querySelector('activities');
-        container.innerHTML = '';
+    function createMetaItem(label, value, { isCode = false } = {}) {
+        const display = value ? escapeHtml(value) : '—';
+        return `
+            <div class="meta-item">
+                <span>${label}</span>
+                <div>${isCode ? `<code>${display}</code>` : (display || '—')}</div>
+            </div>
+        `;
+    }
 
+    function renderDetailRows(meta = {}) {
+        const rows = [
+            { label: "{{ _('Endpoint') }}", value: meta.endpoint },
+            { label: "{{ _('Blueprint') }}", value: meta.blueprint },
+            { label: "{{ _('Full Path') }}", value: meta.full_path },
+            { label: "{{ _('Referrer') }}", value: meta.referrer },
+            { label: "{{ _('View Args') }}", value: meta.view_args, multiline: true },
+            { label: "{{ _('Query Params') }}", value: meta.args, multiline: true },
+            { label: "{{ _('Form Data') }}", value: meta.form, multiline: true },
+            { label: "{{ _('JSON Payload') }}", value: meta.json, multiline: true },
+        ];
+
+        return rows
+            .filter(row => row.value)
+            .map(row => `
+                <div class="detail-row">
+                    <span>${row.label}</span>
+                    ${row.multiline
+                        ? `<pre>${escapeHtml(row.value)}</pre>`
+                        : `<code>${escapeHtml(row.value)}</code>`}
+                </div>
+            `)
+            .join('');
+    }
+
+    function renderLogs(logs) {
+        if (!logContainer) return;
         if (!logs.length) {
-            container.innerHTML = '<div class="no-data">{{ _("No activities yet.") }}</div>';
+            logContainer.innerHTML = `<div class="empty-state">{{ _('No activities yet.') }}</div>`;
             return;
         }
 
-        logs.forEach(log => {
-            const activity = document.createElement('activity');
-            activity.setAttribute('data-activity', JSON.stringify(log));
-            activity.innerHTML = `
-                <activity-title><i class="fas fa-tasks"></i> ${log.action.method} ${log.action.path}</activity-title>
-                <activity-content>
-                    <aby>
-                        ${log.by.profile_picture 
-                            ? `<img src="${log.by.profile_picture}" alt="Profile" class="profile-pic">` 
-                            : '<i class="fas fa-user"></i>'}
-                        ${log.by.displayname || log.by.username}
-                    </aby>
-                    <atime><i class="fas fa-clock"></i> ${log.timestamp}</atime>
-                    <aaction onclick="expandAct(this)"><i class="fas fa-arrow-right"></i> {{ _('View More') }}</aaction>
-                </activity-content>
-                <activity-extra>
-                    <aip><i class="fas fa-globe"></i> {{ _('IP Address') }}: ${log.action.remote_addr}</aip>
-                    <asession><i class="fas fa-user-secret"></i> {{ _('Session') }}: ${log.session_id}</asession>
-                </activity-extra>
+        logContainer.innerHTML = logs.map(log => {
+            const rawMethod = log.action.method || 'GET';
+            const method = escapeHtml(rawMethod);
+            const methodClass = `method-${rawMethod.toLowerCase()}`;
+            const timestamp = escapeHtml(log.timestamp || '');
+            const relative = log.relative_minutes != null ? `${log.relative_minutes} ${minuteLabel}` : '';
+            const user = escapeHtml(log.by.displayname || log.by.username || '—');
+            const email = escapeHtml(log.by.email || '—');
+            const ip = escapeHtml(log.action.remote_addr || '—');
+            const session = escapeHtml(log.session_id || '—');
+            const userAgent = escapeHtml(log.action.user_agent || '—');
+            const path = escapeHtml(log.action.path || '—');
+            const endpoint = escapeHtml(log.request_meta?.endpoint || '');
+            const details = log.details ? `<div class="log-note">${escapeHtml(log.details)}</div>` : '';
+
+            return `
+                <article class="log-card" data-log="${escapeHtml(log.id)}">
+                    <div class="log-card__head">
+                        <span class="method-pill ${methodClass}">${method}</span>
+                        <div class="path-block">
+                            <div class="path">${path}</div>
+                            <div class="endpoint">${endpoint || '&nbsp;'}</div>
+                        </div>
+                        <div class="timestamp">
+                            ${timestamp}
+                            ${relative ? `<small>${relative}</small>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="log-card__meta">
+                        ${createMetaItem("{{ _('User') }}", user)}
+                        ${createMetaItem("{{ _('Email') }}", email)}
+                        ${createMetaItem("{{ _('IP Address') }}", ip)}
+                        ${createMetaItem("{{ _('Session') }}", session)}
+                        ${createMetaItem("{{ _('User Agent') }}", userAgent, { isCode: true })}
+                    </div>
+
+                    ${details}
+
+                    <button class="log-toggle" data-target="details-${log.id}">
+                        <span>{{ _('Request metadata') }}</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="log-details" id="details-${log.id}">
+                        ${renderDetailRows(log.request_meta || {}) || `<div class="detail-row"><span>{{ _('Metadata') }}</span><code>—</code></div>`}
+                    </div>
+                </article>
             `;
-            container.appendChild(activity);
-        });
+        }).join('');
     }
 
     function renderPagination(current, total) {
-        const pagination = document.querySelector('.pagination');
-        pagination.innerHTML = '';
+        if (!paginationEl) return;
+        paginationEl.innerHTML = '';
 
         const createPageLink = (text, page, isActive = false) => {
             const a = document.createElement('a');
@@ -158,31 +472,35 @@
         };
 
         if (current > 1) {
-            pagination.appendChild(createPageLink('« {{ _("Previous") }}', current - 1));
+            paginationEl.appendChild(createPageLink('« {{ _("Previous") }}', current - 1));
         }
 
         for (let i = 1; i <= total; i++) {
-            pagination.appendChild(createPageLink(i, i, i === current));
+            paginationEl.appendChild(createPageLink(i, i, i === current));
         }
 
         if (current < total) {
-            pagination.appendChild(createPageLink('{{ _("Next") }} »', current + 1));
+            paginationEl.appendChild(createPageLink('{{ _("Next") }} »', current + 1));
         }
     }
+
+    logContainer?.addEventListener('click', event => {
+        const toggle = event.target.closest('.log-toggle');
+        if (!toggle) return;
+        const targetId = toggle.dataset.target;
+        const detail = document.getElementById(targetId);
+        if (!detail) return;
+        const isOpen = detail.classList.toggle('open');
+        toggle.classList.toggle('open', isOpen);
+        if (isOpen) {
+            detail.style.maxHeight = detail.scrollHeight + "px";
+        } else {
+            detail.style.maxHeight = 0;
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         fetchLogs();
     });
 </script>
-
-<style>
-    .profile-pic {
-        width: 1.5em;
-        height: 1.5em;
-        border-radius: 50%;
-        margin-right: 0.5em;
-    }
-</style>
-
-<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
 {% endblock %}

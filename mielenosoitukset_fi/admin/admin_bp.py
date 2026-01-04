@@ -486,6 +486,10 @@ def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
 def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
     """Convert a raw admin log entry into a UI friendly payload."""
     request_data = doc.get("request") or doc.get("action") or {}
+    legacy_action = None
+    if not isinstance(request_data, dict):
+        legacy_action = str(request_data)
+        request_data = {}
     environ = request_data.get("environ") or {}
     headers = request_data.get("headers")
 
@@ -510,6 +514,10 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         or environ.get("PATH_INFO")
         or "—"
     )
+    if legacy_action and method == "—":
+        method = "ACTION"
+    if legacy_action and path == "—":
+        path = legacy_action
     remote_addr = request_data.get("remote_addr") or environ.get("REMOTE_ADDR") or "—"
 
     timestamp = doc.get("timestamp")

@@ -539,3 +539,65 @@ def api_force_password_change():
     user_.save()
     
     return jsonify({"status": "OK", "message": "Salasanan vaihto pakotettu onnistuneesti."})
+
+
+def _serialize_login_log(doc):
+    ts = doc.get("timestamp")
+    return {
+        "id": str(doc.get("_id")),
+        "timestamp": ts.isoformat() if ts else None,
+        "timestamp_display": ts.strftime("%d.%m.%Y %H:%M") if ts else None,
+        "ip": doc.get("ip"),
+        "success": bool(doc.get("success")),
+        "reason": doc.get("reason"),
+        "user_agent": doc.get("user_agent"),
+    }
+
+
+@admin_user_bp.route("/api/login_history/<user_id>")
+@login_required
+@admin_required
+@permission_required("VIEW_USER")
+def api_user_login_history(user_id):
+    """Return login attempts for the requested user (admin use only)."""
+    try:
+        object_id = ObjectId(user_id)
+    except Exception:
+        return jsonify({"status": "ERROR", "message": "Virheellinen käyttäjän tunniste."}), 400
+
+    user_doc = mongo.users.find_one({"_id": object_id})
+    if not user_doc:
+        return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
+
+    raw_limit = request.args.get("limit", 25)
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        limit = 25
+    limit = max(1, min(limit, 200))
+
+    query = {
+        "$or": [
+            {"user_id": object_id},
+            {"user_id": None, "username": user_doc.get("username")},
+        ]
+    }
+    cursor = (
+        mongo.login_logs.find(query)
+        .sort("timestamp", -1)
+        .limit(limit)
+    )
+    logs = [_serialize_login_log(doc) for doc in cursor]
+    return jsonify(
+        {
+            "status": "OK",
+            "user": {
+                "id": str(user_doc.get("_id")),
+                "username": user_doc.get("username"),
+                "displayname": user_doc.get("displayname"),
+                "email": user_doc.get("email"),
+            },
+            "logins": logs,
+            "limit": limit,
+        }
+    )

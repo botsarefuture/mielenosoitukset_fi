@@ -45,7 +45,11 @@ from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
 
-from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
+from mielenosoitukset_fi.utils.cache import (
+    cache,
+    should_skip_cache,
+    skip_cache_public_only,
+)
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
@@ -1671,11 +1675,17 @@ def init_routes(app):
             abort(401)
 
         # Determine whether to bypass cache
-        bypass_cache = bool(request.query_string) or should_skip_cache()
+        bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
         # Build a cache key that is stable for public users; include locale so localized pages differ
         locale = session.get("locale", "")
-        cache_key = f"demonstration_detail:v1:{demo_id}:locale={locale}"
+        viewer_segment = "anon"
+        if current_user.is_authenticated:
+            try:
+                viewer_segment = f"user={current_user.get_id() or 'anon'}"
+            except Exception:
+                viewer_segment = "user=unknown"
+        cache_key = f"demonstration_detail:v1:{demo_id}:locale={locale}:viewer={viewer_segment}"
 
         # Try to serve from cache if allowed
         if not bypass_cache and hasattr(cache, "get"):
@@ -1898,7 +1908,7 @@ def init_routes(app):
         response.headers["X-Cache"] = "MISS"
 
         # Store response in cache for future requests (if available)
-        if not (bypass_cache or should_skip_cache()) and hasattr(cache, "set"):
+        if not (bypass_cache or should_skip_cache(public_only=False)) and hasattr(cache, "set"):
             try:
                 # Capture headers as list of tuples
                 headers_snapshot = list(response.headers.items())
@@ -2741,7 +2751,7 @@ def init_routes(app):
     import hashlib
 
     @app.route("/demonstrations.rss")
-    @cache.cached(timeout=300, unless=should_skip_cache)  # cache for 5 minutes
+    @cache.cached(timeout=300, unless=skip_cache_public_only)  # cache for 5 minutes
     def demonstrations_rss():
         """
         Serve the RSS feed for demonstrations.

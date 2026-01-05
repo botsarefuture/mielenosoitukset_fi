@@ -205,7 +205,7 @@ def list_demonstrations():
     def get_param(name: str, default: str = ""):
         return request.args.get(name, default).strip().casefold()
     cache_key = make_cache_key()
-    use_cache = bool(cache) and not should_skip_cache()
+    use_cache = bool(cache) and not should_skip_cache(public_only=False)
 
     cached_response = cache.get(cache_key) if use_cache else None
 

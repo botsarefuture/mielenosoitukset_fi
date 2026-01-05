@@ -12,6 +12,7 @@
 * Introduced a `super_audit_logs` stream that records every demo audit event with full request metadata for ultimate traceability.
 * Admin log writes are now enriched with actor/request/process metadata and mirrored into the `super_audit_logs` stream so every privileged action is captured centrally.
 * Admin dashboard quick links now surface the Super Audit log so superusers can jump directly into the high-fidelity event stream.
+* Super Audit UI can safely render entries containing raw `ObjectId`/datetime values thanks to automatic JSON-safe serialization.
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.

@@ -327,6 +327,18 @@ def _deduplicate_demos(demo_list):
         unique.append(demo)
     return unique
 
+
+def _json_safe(value):
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return type(value)(_json_safe(v) for v in value)
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
 @admin_demo_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
@@ -818,7 +830,7 @@ def _log_token_event(
         return
     payload = _token_payload(doc)
     if extra:
-        payload.update(extra)
+        payload.update(_json_safe(extra))
     demo_id = payload.get("demo_id")
     tags = ["token"]
     if doc.get("action"):
@@ -838,7 +850,7 @@ def _log_token_event(
             demo_id,
             action=demo_action or f"token_{event}",
             message=message or f"Token {doc.get('action')} event '{event}'",
-            details=payload,
+            details=_json_safe(payload),
         )
 
 def _client_ip() -> str:
@@ -3384,6 +3396,11 @@ def view_super_audit_logs():
         entry["_id"] = str(entry.get("_id"))
         ts = entry.get("timestamp")
         entry["timestamp_str"] = ts.strftime("%d.%m.%Y %H:%M:%S") if isinstance(ts, datetime) else "-"
+        entry["payload"] = _json_safe(entry.get("payload"))
+        if entry.get("request"):
+            entry["request"] = _json_safe(entry.get("request"))
+        if entry.get("entity"):
+            entry["entity"] = _json_safe(entry.get("entity"))
 
     distinct_events = sorted(mongo.super_audit_logs.distinct("event"))
 

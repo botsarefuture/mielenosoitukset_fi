@@ -6,12 +6,18 @@
 
 ### Added
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
+* Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
+* Demo preview token route now renders even when `follow_meta` isn’t provided (detail template supplies a safe default).
+* Audit timeline’s manual/automatic filter now hides background-job entries when you opt to see only manual actions.
+* Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.
+* Admin token links that were previously consumed now render a friendly confirmation page instead of returning HTTP 409, making it clear the link has already been used.
+* Reuse attempts of admin approve/reject/preview tokens are now logged (including demo audit entries) with IP + metadata so the audit trail captures every invalid link use.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

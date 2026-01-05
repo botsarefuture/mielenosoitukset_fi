@@ -1,0 +1,88 @@
+{% extends "admin_base.html" %}
+
+{% block main_content %}
+<div class="admin-page">
+  <div class="admin-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+      <h1 class="admin-section-title mb-1">{{ _('Super Audit -loki') }}</h1>
+      <p class="text-muted mb-0">{{ _('Korkean tason tapahtumaloki kaikista toiminnoista.') }}</p>
+    </div>
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
+    </a>
+  </div>
+
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label class="form-label">{{ _('Tapahtuma') }}</label>
+      <select name="event" class="form-select">
+        <option value="">{{ _('Kaikki') }}</option>
+        {% for event in events %}
+        <option value="{{ event }}" {% if filters.event == event %}selected{% endif %}>{{ event }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">{{ _('Polku') }}</label>
+      <input type="text" class="form-control" name="path" value="{{ filters.path }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ _('Metodi') }}</label>
+      <input type="text" class="form-control" name="method" value="{{ filters.method }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ _('Tekstihaku') }}</label>
+      <input type="text" class="form-control" name="q" value="{{ filters.q }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">{{ _('Max merkintöjä') }}</label>
+      <input type="number" class="form-control" name="limit" value="{{ filters.limit }}">
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="fa-solid fa-filter me-2"></i>{{ _('Suodata') }}
+      </button>
+      <a href="{{ url_for('admin_demo.view_super_audit_logs') }}" class="btn btn-outline-secondary">{{ _('Tyhjennä') }}</a>
+    </div>
+  </form>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{{ _('Aika') }}</th>
+            <th>{{ _('Tapahtuma') }}</th>
+            <th>{{ _('Pyynnön tiedot') }}</th>
+            <th>{{ _('Sisältö') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          <tr>
+            <td>{{ entry.timestamp_str }}</td>
+            <td><code>{{ entry.event }}</code></td>
+            <td>
+              {% if entry.request %}
+                <div>{{ entry.request.method }} {{ entry.request.path }}</div>
+                <div class="text-muted small">{{ entry.request.remote_addr or '–' }}</div>
+              {% else %}
+                –
+              {% endif %}
+            </td>
+            <td>
+              <pre class="mb-0 small">{{ entry.payload | tojson(indent=2) }}</pre>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not entries %}
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">{{ _('Ei tapahtumia valituilla suodattimilla.') }}</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

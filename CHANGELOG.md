@@ -4,7 +4,11 @@
 
 ## UNRELEASED
 
-_No entries yet._
+### Added
+* `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
+
+### Fixed
+* Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

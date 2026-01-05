@@ -1,0 +1,126 @@
+{% extends "admin_base.html" %}
+
+{% block styles %}
+<style>
+  .timeline-card {
+    border-left: 4px solid var(--bs-primary);
+  }
+  .timeline-item {
+    border-left: 3px solid rgba(0,0,0,0.05);
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 1.1rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bs-primary);
+    box-shadow: 0 0 0 4px rgba(13,110,253,0.15);
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="admin-page">
+  <div class="admin-header d-flex flex-column flex-md-row justify-content-between gap-3 align-items-start align-items-md-center mb-4">
+    <div>
+      <h1 class="admin-section-title mb-1">{{ _('Audit-loki – aikajana') }}</h1>
+      <p class="text-muted mb-0">{{ _('Viimeisimmät merkinnät kaikista mielenosoituksista') }}</p>
+    </div>
+    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
+      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
+    </a>
+  </div>
+
+  <form method="get" class="row g-3 mb-4">
+    <div class="col-md-5">
+      <label for="demo_id" class="form-label">{{ _('Suodata mielenosoituksen ID:llä') }}</label>
+      <div class="input-group">
+        <input type="text" id="demo_id" name="demo_id" class="form-control" placeholder="6651c..." value="{{ filter_demo_id or '' }}">
+        {% if filter_demo_id %}
+        <a href="{{ url_for('admin_demo.audit_timeline') }}" class="btn btn-outline-secondary">{{ _('Tyhjennä') }}</a>
+        {% endif %}
+        <button class="btn btn-primary" type="submit">{{ _('Suodata') }}</button>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <label for="limit" class="form-label">{{ _('Näytä merkintöjä') }}</label>
+      <input type="number" min="10" max="500" class="form-control" id="limit" name="limit" value="{{ limit }}">
+    </div>
+    <div class="col-md-3">
+      <label for="automatic" class="form-label">{{ _('Toiminnot') }}</label>
+      <select id="automatic" name="automatic" class="form-select">
+        <option value="all" {% if automatic_filter == "all" %}selected{% endif %}>{{ _('Näytä kaikki') }}</option>
+        <option value="manual" {% if automatic_filter == "manual" %}selected{% endif %}>{{ _('Vain manuaaliset') }}</option>
+        <option value="auto" {% if automatic_filter == "auto" %}selected{% endif %}>{{ _('Vain automaattiset') }}</option>
+      </select>
+    </div>
+  </form>
+
+  {% if entries %}
+  <div class="card shadow-sm timeline-card">
+    <div class="card-body">
+      <div class="list-group list-group-flush">
+        {% for entry in entries %}
+        <div class="list-group-item timeline-item">
+          <div class="d-flex justify-content-between flex-wrap gap-2">
+            <div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark text-uppercase">{{ entry.action }}</span>
+                {% if entry.demo_title %}
+                <strong>{{ entry.demo_title }}</strong>
+                {% else %}
+                <code>{{ entry.demo_id }}</code>
+                {% endif %}
+              </div>
+              <div class="text-muted small mt-1">
+                {{ entry.timestamp.strftime('%d.%m.%Y %H:%M:%S') if entry.timestamp else '' }}
+                · {{ entry.username or '–' }} · {{ entry.ip_address or entry.details.ip or '–' }}
+                {% if entry.is_automatic %} · <span class="badge bg-secondary">{{ _('Automaattinen') }}</span>{% endif %}
+              </div>
+              {% if entry.demo_city or entry.demo_date %}
+              <div class="text-muted small">
+                {{ entry.demo_city or '' }} {{ entry.demo_date or '' }}
+              </div>
+              {% endif %}
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              {% if entry.demo_id %}
+              <a href="{{ url_for('admin_demo.view_demo_audit_log', demo_id=entry.demo_id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-list me-1"></i>{{ _('Demo-loki') }}
+              </a>
+              {% endif %}
+              {% if entry.details and entry.details.history_id %}
+              <a href="{{ url_for('admin_demo.view_demo_diff', history_id=entry.details.history_id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-code-compare me-1"></i>{{ _('Dif') }}
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          <p class="mb-2 mt-3">{{ entry.message or entry.action }}</p>
+          {% if entry.details and entry.details.changed_fields %}
+          <div class="small text-muted mb-1">
+            {{ _('Muokatut kentät:') }} {{ entry.details.changed_fields|join(', ') }}
+          </div>
+          {% endif %}
+          {% if entry.details and entry.details.reason %}
+          <div class="alert alert-warning py-2 mb-0">
+            <strong>{{ _('Syy:') }}</strong> {{ entry.details.reason }}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    <i class="fa-solid fa-circle-info me-2"></i>{{ _('Audit-merkintöjä ei löytynyt.') }}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

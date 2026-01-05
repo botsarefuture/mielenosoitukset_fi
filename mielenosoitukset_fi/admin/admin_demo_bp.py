@@ -8,7 +8,16 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 from bson.objectid import ObjectId
 import logging
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    make_response,
+    g,
+)
 from flask_login import current_user, login_required
 from pymongo import DESCENDING
 
@@ -313,6 +322,7 @@ def log_request_info():
     log_admin_action_V2(
         AdminActParser().log_request_info(request.__dict__, current_user)
     )
+    g.audit_timeline_url = url_for("admin_demo.audit_timeline")
 
 @admin_demo_bp.route("/recommend_demo/<demo_id>", methods=["POST"])
 @login_required
@@ -837,8 +847,31 @@ def _check_and_bind(action: str, token: str) -> dict:
             abort(410)
 
     if doc.get("used_at") is not None:
-        flash_message("Linkki on jo käytetty.", "warning")
-        abort(409)
+        client_ip = _client_ip()
+        log_admin_action_V2({
+            "event": "token_reuse_attempt",
+            "action": action,
+            "demo_id": doc.get("demo_id"),
+            "token_hash": doc.get("token_hash", ""),
+            "ip": client_ip,
+            "endpoint": request.path,
+        })
+        log_demo_audit_entry(
+            doc.get("demo_id"),
+            action="token_reuse_attempt",
+            message=_("Kertakäyttölinkkiä (%(action)s) yritettiin käyttää uudelleen IP-osoitteesta %(ip)s.")
+                    % {"action": action, "ip": client_ip or "unknown"},
+            details={
+                "ip": client_ip,
+                "endpoint": request.path,
+                "token_hash": doc.get("token_hash"),
+            },
+        )
+        response = make_response(
+            render_template("admin_V2/cc/link_already_used.html", action=action),
+            200,
+        )
+        abort(response)
 
     # IP bind on first open
     ip = _client_ip()
@@ -2916,6 +2949,73 @@ def view_demo_audit_log(demo_id):
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/audit_log.html",
         demo=demo,
         entries=entries,
+    )
+
+
+@admin_demo_bp.route("/audit/logs", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("VIEW_DEMO")
+def audit_timeline():
+    """Central timeline view for latest demo audit log entries."""
+    limit = min(max(int(request.args.get("limit", 200)), 1), 500)
+    demo_filter = (request.args.get("demo_id") or "").strip()
+    automatic = (request.args.get("automatic") or "all").lower()
+
+    query = {}
+    obj_id = None
+    if demo_filter:
+        if ObjectId.is_valid(demo_filter):
+            obj_id = ObjectId(demo_filter)
+            query["demo_id"] = str(obj_id)
+        else:
+            query["demo_id"] = demo_filter
+
+    entries = list(mongo.demo_audit_logs.find(query).sort("timestamp", -1).limit(limit))
+
+    def _is_automatic(entry):
+        if entry.get("automatic"):
+            return True
+        details = entry.get("details") or {}
+        if details.get("automatic"):
+            return True
+        username = (entry.get("username") or "").strip()
+        if username.startswith("[JOB]"):
+            return True
+        actor = entry.get("actor") or {}
+        actor_name = (actor.get("username") or "").strip()
+        return actor_name.startswith("[JOB]")
+
+    if automatic == "manual":
+        entries = [e for e in entries if not _is_automatic(e)]
+    elif automatic == "auto":
+        entries = [e for e in entries if _is_automatic(e)]
+
+    # Attach demo details for quick reference
+    demo_map = {}
+    demo_ids = {entry.get("demo_id") for entry in entries if entry.get("demo_id")}
+    obj_ids = []
+    for did in demo_ids:
+        if ObjectId.is_valid(did):
+            obj_ids.append(ObjectId(did))
+    if obj_ids:
+        for doc in mongo.demonstrations.find({"_id": {"$in": obj_ids}}, {"title": 1, "city": 1, "date": 1}):
+            demo_map[str(doc["_id"])] = doc
+
+    for entry in entries:
+        info = demo_map.get(entry.get("demo_id"))
+        if info:
+            entry["demo_title"] = info.get("title")
+            entry["demo_city"] = info.get("city")
+            entry["demo_date"] = info.get("date")
+        entry["is_automatic"] = _is_automatic(entry)
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/audit_timeline.html",
+        entries=entries,
+        limit=limit,
+        filter_demo_id=demo_filter,
+        automatic_filter=automatic,
     )
 
 

@@ -57,6 +57,10 @@ class DemoChangeRecorder:
         demo_id = (after or before or {}).get("_id")
         if not demo_id:
             return
+        before_snapshot = deepcopy(before) if before else None
+        after_snapshot = deepcopy(after) if after else None
+        if before_snapshot is not None and after_snapshot is not None and before_snapshot == after_snapshot:
+            return
         record_demo_change(
             demo_id=demo_id,
             old_data=before,
@@ -65,6 +69,7 @@ class DemoChangeRecorder:
             message=f"{self.job_key} {operation}",
             actor=self.actor,
             extra_details=self._build_details(operation, extra),
+            automatic=True,
         )
 
 

@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
 
 {% set formatted_date = demo.get('formatted_date') %}
+{% if follow_meta is not defined or follow_meta is none %}
+  {% set follow_meta = {
+    'organizer_follow_map': {},
+    'recurring_target_id': None,
+    'recurring_following': False
+  } %}
+{% endif %}
 
 {% block title %}
 {{ demo.get('title', 'Mielenosoitus') }}{% if formatted_date %} – {{ formatted_date }}{% endif %}

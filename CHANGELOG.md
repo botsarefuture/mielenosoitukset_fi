@@ -10,6 +10,9 @@
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
 
+### Changed
+* Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.
+
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 
 ### Changed

@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, date, time
+import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
 from flask_login import LoginManager
@@ -12,7 +13,7 @@ from mielenosoitukset_fi.error_handlers import register_error_handlers
 
 import sys
 import os
-
+from zoneinfo import ZoneInfo
 
 
 from mielenosoitukset_fi.utils import VERSION
@@ -28,8 +29,6 @@ from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
 
 from flask_caching import Cache  # Added for caching
 
-from datetime import datetime, date, time
-
 # Initialize Babel
 
 babel = Babel()
@@ -39,11 +38,28 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 
+def _configure_timezone(app):
+    """Ensure process-level timezone matches Finland (or configured value)."""
+    tz_name = app.config.get("DEFAULT_TIMEZONE") or "Europe/Helsinki"
+    os.environ["TZ"] = tz_name
+    try:
+        process_time.tzset()
+    except AttributeError:
+        logger.warning("tzset() not available on this platform; system timezone unchanged.")
+
+    try:
+        app.config["LOCAL_TIMEZONE"] = ZoneInfo(tz_name)
+    except Exception:
+        logger.exception("Failed to load timezone %s, falling back to UTC.", tz_name)
+        app.config["LOCAL_TIMEZONE"] = ZoneInfo("UTC")
+
+
 def create_app() -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
+    _configure_timezone(app)
     
     Limiter(
         get_remote_address,

@@ -161,11 +161,24 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   function updateFollowButton(button, following) {
     if (!button) return;
     button.dataset.following = following ? "1" : "0";
+    button.setAttribute("aria-pressed", following ? "true" : "false");
     const label = following ? button.dataset.followingLabel : button.dataset.followLabel;
-    const textNode = button.querySelector("span");
+    const textNode = button.querySelector(".follow-label") || button.querySelector("span");
     if (textNode && label) {
       textNode.textContent = label;
     }
+
+    const icon = button.querySelector(".follow-icon");
+    if (icon) {
+      icon.classList.toggle("fa-solid", following);
+      icon.classList.toggle("fa-regular", !following);
+    }
+
+    if (button.classList.contains("organizer-follow-btn")) {
+      button.classList.toggle("is-following", following);
+      return;
+    }
+
     if (following) {
       button.classList.add("btn-primary");
       button.classList.remove("btn-outline-primary", "btn-outline-secondary");
@@ -651,6 +664,51 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     gap: 1.25rem;
     margin-bottom: 1.25rem;
     flex-wrap: wrap;
+  }
+
+  .organizer-follow-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--color-text);
+    transition: var(--transition);
+    box-shadow: var(--color-shadow);
+    z-index: 2;
+  }
+
+  .organizer-follow-btn .follow-icon {
+    font-size: 0.95rem;
+  }
+
+  .organizer-follow-btn.is-following {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .organizer-follow-btn:hover:not(.loading) {
+    transform: translateY(-1px);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  @media (max-width: 600px) {
+    .organizer-follow-btn {
+      top: 1rem;
+      right: 1rem;
+      font-size: 0.78rem;
+    }
   }
 
   .organizer-logo {
@@ -1508,21 +1566,26 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
             {% set organizer_id_str = org.organization_id_str %}
             {% if organizer_id_str %}
               {% if current_user.is_authenticated %}
-              <button type="button"
-                      class="btn btn-sm btn-outline-primary follow-org-btn mt-2"
-                      data-org-id="{{ organizer_id_str }}"
-                      data-following="{{ '1' if follow_meta.organizer_follow_map.get(organizer_id_str) else '0' }}"
-                      data-follow-label="{{ _('Seuraa organisaatiota') }}"
-                      data-following-label="{{ _('Seurataan organisaatiota') }}">
-                <i class="fa-regular fa-star"></i>
-                <span>
-                  {% if follow_meta.organizer_follow_map.get(organizer_id_str) %}
-                    {{ _('Seurataan organisaatiota') }}
-                  {% else %}
-                    {{ _('Seuraa organisaatiota') }}
-                  {% endif %}
-                </span>
-              </button>
+                {% set is_following = follow_meta.organizer_follow_map.get(organizer_id_str) %}
+                {% set follow_label = _('Seuraa')|upper %}
+                {% set following_label = _('Seurataan')|upper %}
+                <button type="button"
+                        class="follow-org-btn organizer-follow-btn {% if is_following %}is-following{% endif %}"
+                        data-org-id="{{ organizer_id_str }}"
+                        data-following="{{ '1' if is_following else '0' }}"
+                        data-follow-label="{{ follow_label }}"
+                        data-following-label="{{ following_label }}"
+                        aria-pressed="{{ 'true' if is_following else 'false' }}"
+                        title="{{ _('Seuraa organisaatiota') }}">
+                  <span class="follow-icon {% if is_following %}fa-solid{% else %}fa-regular{% endif %} fa-star" aria-hidden="true"></span>
+                  <span class="follow-label">
+                    {% if is_following %}
+                      {{ following_label }}
+                    {% else %}
+                      {{ follow_label }}
+                    {% endif %}
+                  </span>
+                </button>
               {% else %}
               <div class="text-muted small mt-2">{{ _('Kirjaudu sisään seurataaksesi tätä organisaatiota') }}</div>
               {% endif %}

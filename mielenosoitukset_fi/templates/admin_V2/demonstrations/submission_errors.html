@@ -1,0 +1,163 @@
+{% extends 'admin_base.html' %}
+
+{% block main_content %}
+<div class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h1 class="h3 mb-1">{{ _('Ilmoitusvirheet') }}</h1>
+      <p class="text-muted mb-0">{{ _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.') }}</p>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-xl-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-header fw-semibold">{{ _('Suodattimet') }}</div>
+        <div class="card-body">
+          <form method="get" class="row g-3 align-items-end">
+            <div class="col-12 col-md-4">
+              <label for="error_code" class="form-label text-muted small mb-1">{{ _('Virhekoodi') }}</label>
+              <select class="form-select" id="error_code" name="error_code">
+                <option value="">{{ _('Kaikki koodit') }}</option>
+                {% for code in error_codes %}
+                <option value="{{ code }}" {% if filters.error_code == code %}selected{% endif %}>{{ code }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <label for="status" class="form-label text-muted small mb-1">{{ _('Status') }}</label>
+              <select class="form-select" id="status" name="status">
+                <option value="">{{ _('Kaikki') }}</option>
+                {% for status in status_options %}
+                <option value="{{ status }}" {% if filters.status == status|string %}selected{% endif %}>{{ status }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12 col-md-6 col-xl-6">
+              <label for="q" class="form-label text-muted small mb-1">{{ _('Hakusana (viesti)') }}</label>
+              <input type="text" class="form-control" id="q" name="q" value="{{ filters.q or '' }}" placeholder="{{ _('Esim. sähköposti') }}">
+            </div>
+            <div class="col-6 col-md-3">
+              <label for="start_date" class="form-label text-muted small mb-1">{{ _('Alkaen') }}</label>
+              <input type="date" class="form-control" id="start_date" name="start_date" value="{{ filters.start_date or '' }}">
+            </div>
+            <div class="col-6 col-md-3">
+              <label for="end_date" class="form-label text-muted small mb-1">{{ _('Päättyen') }}</label>
+              <input type="date" class="form-control" id="end_date" name="end_date" value="{{ filters.end_date or '' }}">
+            </div>
+            <div class="col-12 col-md-3">
+              <label for="ip" class="form-label text-muted small mb-1">{{ _('IP-osoite') }}</label>
+              <input type="text" class="form-control" id="ip" name="ip" value="{{ filters.ip or '' }}">
+            </div>
+            <div class="col-12 col-md-3">
+              <label for="user_id" class="form-label text-muted small mb-1">{{ _('Käyttäjän ID') }}</label>
+              <input type="text" class="form-control" id="user_id" name="user_id" value="{{ filters.user_id or '' }}">
+            </div>
+            <div class="col-12 col-md-6">
+              <label for="path" class="form-label text-muted small mb-1">{{ _('Polku') }}</label>
+              <input type="text" class="form-control" id="path" name="path" value="{{ filters.path or '' }}" placeholder="/submit">
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-filter me-2"></i>{{ _('Suodata') }}
+              </button>
+              {% if filters_active %}
+              <a href="{{ url_for('admin_demo.submission_errors_dashboard') }}" class="btn btn-outline-secondary">
+                {{ _('Tyhjennä') }}
+              </a>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">{{ _('Tulokset') }}</div>
+          <div class="h3 mb-1">{{ total_count }}</div>
+          <div class="text-muted">{{ _('Näytetään %(shown)s / %(total)s viimeisimmästä osumasta', shown=logs|length, total=total_count) }}</div>
+          {% if filters_active %}
+          <span class="badge bg-warning text-dark mt-2">{{ _('Suodattimet käytössä') }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if error_stats %}
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">{{ _('Yleisimmät virhekoodit (hakuun rajattuna)') }}</div>
+        <ul class="list-group list-group-flush">
+          {% for stat in error_stats %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ stat.code }}</span>
+            <span class="badge bg-secondary">{{ stat.count }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="table-responsive shadow-sm rounded bg-white">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>{{ _('Aika') }}</th>
+          <th>{{ _('Virhekoodi') }}</th>
+          <th>{{ _('Viesti') }}</th>
+          <th>{{ _('Status') }}</th>
+          <th>{{ _('IP / Käyttäjä') }}</th>
+          <th>{{ _('Lisätiedot') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.created_at_str or '-' }}</td>
+          <td><span class="badge bg-warning text-dark">{{ log.error_code }}</span></td>
+          <td>{{ log.message }}</td>
+          <td>{{ log.status or '-' }}</td>
+          <td>
+            <div><strong>IP:</strong> {{ log.ip or '-' }}</div>
+            {% if log.user %}
+            <div><strong>ID:</strong> {{ log.user.id or '-' }}</div>
+            <div><strong>Nimi:</strong> {{ log.user.username or '-' }}</div>
+            <div><strong>Rooli:</strong> {{ log.user.role or '-' }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#error-details-{{ log._id }}" aria-expanded="false">
+              {{ _('Näytä') }}
+            </button>
+            <div class="collapse mt-2" id="error-details-{{ log._id }}">
+              <div class="small text-muted">
+                <strong>{{ _('Lisätiedot') }}:</strong>
+                <pre class="bg-light p-2 rounded">{{ log.extra | tojson(indent=2) }}</pre>
+              </div>
+              <div class="small text-muted">
+                <strong>{{ _('Lomake') }}:</strong>
+                <pre class="bg-light p-2 rounded">{{ log.form_snapshot | tojson(indent=2) }}</pre>
+              </div>
+              <div class="small text-muted">
+                <strong>{{ _('HTTP') }}:</strong>
+                <pre class="bg-light p-2 rounded">{{ {
+                  "path": log.request_path,
+                  "method": log.request_method,
+                  "query": log.query_args,
+                  "referer": log.referer,
+                  "user_agent": log.user_agent
+                } | tojson(indent=2) }}</pre>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">{{ _('Ei kirjattuja virheitä.') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -999,6 +999,32 @@
     }
   };
 
+  const SUBMIT_ERROR_LABEL = "{{ _('Virhekoodi') }}";
+
+  async function showSubmitError(response, fallbackMessage) {
+    let message = fallbackMessage || "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}";
+    try {
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await response.json();
+        if (data && data.message) {
+          message = data.message;
+        }
+        if (data && data.error_code) {
+          message += ` (${SUBMIT_ERROR_LABEL}: ${data.error_code})`;
+        }
+      } else {
+        const txt = await response.text();
+        if (txt && txt.trim()) {
+          message = txt;
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing server response', err);
+    }
+    alert(message);
+  }
+
   // Type change handler
   document.getElementById("type").addEventListener("change", function () {
     const marchRouteContainer = document.getElementById("march-route-container");
@@ -1020,6 +1046,19 @@
 
     if (!document.getElementById("accept_terms").checked) {
       alert("{{ _('Sinun täytyy hyväksyä käyttöehdot ja tietosuojaseloste ennen lähettämistä.') }}");
+      return;
+    }
+
+    const form = document.querySelector("form");
+    const missingRequired = Array.from(form.querySelectorAll("[required]")).filter(el => {
+      if (el.type === "checkbox" || el.type === "radio") {
+        return !el.checked;
+      }
+      return !el.value || !el.value.trim();
+    });
+
+    if (missingRequired.length) {
+      alert("{{ _('Täytä kaikki pakolliset kentät ennen lähettämistä.') }}");
       return;
     }
 
@@ -1045,7 +1084,6 @@
     }
     document.getElementById("description").value = editorData;
 
-    const form = document.querySelector("form");
     const formData = new FormData(form);
     // Ensure checkbox values are sent reliably (some browsers/forms omit unchecked inputs)
     const acceptCheckbox = document.getElementById('accept_terms');
@@ -1071,55 +1109,41 @@
           if (key.startsWith("form_")) localStorage.removeItem(key);
         });
       } else {
-        // Handle conflict (duplicate) responses specially (409 + JSON)
-        try {
+        if (response.status === 409) {
+          let conflictData = null;
           const contentType = response.headers.get('content-type') || '';
-          if (response.status === 409 && contentType.includes('application/json')) {
-            const data = await response.json();
-            if (data && data.conflict) {
-              let msg = "{{ _('Samankaltaisia ilmoituksia löytyi:') }}\n\n";
-              data.demos.forEach(d => {
-                msg += `- ${d.title || ''} ${d.address ? '— ' + d.address : ''} (${d.date || ''})\n`;
-              });
-              msg += "\n{{ _('Onko tämä sama ilmoitus? Haluatko jatkaa silti?') }}";
-              if (confirm(msg)) {
-                // resend with force_submit flag
-                formData.set('force_submit', '1');
-                const response2 = await fetch(form.action, {
-                  method: form.method,
-                  body: formData,
-                  headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                if (response2.ok || (response2.status >= 300 && response2.status < 400)) {
-                  showPage(5);
-                  Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith("form_")) localStorage.removeItem(key);
-                  });
-                  return;
-                } else {
-                  const txt = await response2.text();
-                  alert(txt || "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}");
-                  return;
-                }
-              } else {
-                // user cancelled — do nothing
-                return;
-              }
+          if (contentType.includes('application/json')) {
+            try {
+              conflictData = await response.json();
+            } catch (err) {
+              console.error('Error parsing conflict response JSON', err);
             }
           }
-        } catch (e) {
-          console.error('Error handling conflict response', e);
+
+          if (conflictData && conflictData.conflict) {
+            formData.set('force_submit', '1');
+            const response2 = await fetch(form.action, {
+              method: form.method,
+              body: formData,
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (response2.ok || (response2.status >= 300 && response2.status < 400)) {
+              showPage(5);
+              Object.keys(localStorage).forEach(key => {
+                if (key.startsWith("form_")) localStorage.removeItem(key);
+              });
+              return;
+            } else {
+              await showSubmitError(response2);
+              return;
+            }
+          } else {
+            alert("{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }} (" + SUBMIT_ERROR_LABEL + ": SUBMIT_CONFLICT)");
+            return;
+          }
         }
 
-        // Try to show server-provided message if available
-        let msg = "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}";
-        try {
-          const txt = await response.text();
-          if (txt && txt.trim()) msg = txt;
-        } catch (e) {
-          // ignore
-        }
-        alert(msg);
+        await showSubmitError(response);
       }
     } catch (e) {
       console.error("Network error:", e);
@@ -1563,6 +1587,7 @@
 
   <!-- Form Container -->
   <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm">
+    <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
     <div class="form-container">
 
       <!-- Page 1: Basic Information -->

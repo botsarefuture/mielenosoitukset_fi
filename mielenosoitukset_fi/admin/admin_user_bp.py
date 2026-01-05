@@ -1,5 +1,5 @@
 from bson.objectid import ObjectId
-from flask import Blueprint, redirect, render_template, request, url_for, jsonify
+from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.users.models import User
@@ -86,12 +86,11 @@ def compare_user_levels(user1, user2):  # Check if the user1 is higher than user
 
 def safe_redirect(target):
     """Redirect safely with redi_count check to prevent loops."""
-    from flask import session, flash
     session["redi_count"] = session.get("redi_count", 0) + 1
     session.modified = True
     if session["redi_count"] > 2:
         session["redi_count"] = 0
-        flash("Liian monta uudelleenohjausta, palaa käyttäjälistaukseen.", "error")
+        flash_message("Liian monta uudelleenohjausta, palaa käyttäjälistaukseen.", "error")
         return redirect(url_for("admin_user.user_control"))
     return redirect(target)
 

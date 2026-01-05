@@ -1,4 +1,5 @@
 import sys
+import re
 import bson
 from flask import abort, current_app
 import requests
@@ -9,6 +10,7 @@ from bson.objectid import ObjectId
 import logging
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from pymongo import DESCENDING
 
 from flask_babel import _
 from urllib.parse import quote_plus
@@ -72,7 +74,189 @@ MERGE_FIELD_DEFINITIONS = [
 MERGE_BOOL_FIELDS = {"recurs", "approved", "hide"}
 
 
-MAX_MERGE_COUNT = 4
+MAX_MERGE_COUNT = 10
+
+
+def _value_is_empty(value):
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) == 0
+    return False
+
+
+def _normalize_datetime(value):
+    if isinstance(value, datetime):
+        return value
+    return datetime.min
+
+
+def _score_demo_for_guided(doc, submitter=None):
+    created = _normalize_datetime(doc.get("created_datetime"))
+    if created is datetime.min:
+        try:
+            created = doc.get("_id").generation_time
+        except Exception:
+            created = datetime.min
+    submitter_score = 0
+    if submitter:
+        if submitter.get("submitter_email"):
+            submitter_score = 2
+        elif submitter.get("submitter_name"):
+            submitter_score = 1
+    return (
+        1 if doc.get("approved") else 0,
+        1 if not doc.get("rejected") else 0,
+        1 if not doc.get("cancelled") else 0,
+        1 if not doc.get("hide") else 0,
+        submitter_score,
+        created.timestamp(),
+    )
+
+
+def _demo_status_meta(doc):
+    if doc.get("approved"):
+        return _("Hyväksytty"), "success", _("Tämä mielenosoitus on jo hyväksytty ja näkyy julkisesti.")
+    if doc.get("rejected"):
+        return _("Hylätty"), "danger", _("Tämä mielenosoitus on hylätty.")
+    if doc.get("cancelled"):
+        return _("Peruttu"), "warning", _("Tämä mielenosoitus on merkitty perutuksi.")
+    if doc.get("hide"):
+        return _("Piilotettu"), "secondary", _("Tämä mielenosoitus on piilotettu listauksista.")
+    return _("Kesken"), "info", _("Tämä mielenosoitus odottaa käsittelyä.")
+
+
+def _case_admin_username():
+    try:
+        return getattr(current_user, "username", None) or "system"
+    except Exception:
+        return "system"
+
+
+def _add_case_log(case_doc, action_type, note=None, close_case=False, new_demo_id=None, close_reason=None, metadata=None):
+    if not case_doc:
+        return
+    case_id = case_doc["_id"] if isinstance(case_doc, dict) else case_doc
+    now = datetime.utcnow()
+    log_entry = {
+        "timestamp": now,
+        "admin": _case_admin_username(),
+        "action_type": action_type,
+        "note": note,
+    }
+    history_entry = {
+        "timestamp": now,
+        "action": action_type,
+        "user": _case_admin_username(),
+        "metadata": metadata or {},
+    }
+    set_fields = {"updated_at": now}
+    if new_demo_id:
+        try:
+            set_fields["demo_id"] = ObjectId(new_demo_id)
+        except Exception:
+            pass
+    if close_case:
+        set_fields["meta.closed"] = True
+        set_fields["meta.closed_at"] = now
+        if close_reason:
+            set_fields["meta.closed_reason"] = close_reason
+    update_doc = {
+        "$push": {
+            "action_logs": log_entry,
+            "case_history": history_entry,
+        },
+        "$set": set_fields,
+    }
+    mongo.cases.update_one({"_id": case_id}, update_doc)
+
+
+def _handle_cases_after_merge(primary_id, secondary_ids, doc_map):
+    try:
+        all_obj_ids = [ObjectId(primary_id)] + [ObjectId(sec_id) for sec_id in secondary_ids]
+    except Exception:
+        return
+    case_docs = list(mongo.cases.find({"demo_id": {"$in": all_obj_ids}}))
+    if not case_docs:
+        return
+
+    def _case_sort_key(doc):
+        return doc.get("created_at") or getattr(doc.get("_id"), "generation_time", datetime.utcnow())
+
+    open_cases = [doc for doc in case_docs if not ((doc.get("meta") or {}).get("closed"))]
+    keep_case = min(open_cases, key=_case_sort_key) if open_cases else min(case_docs, key=_case_sort_key)
+
+    primary_title = doc_map.get(primary_id, {}).get("title") or _("tuntematon")
+    closed_case_labels = []
+
+    for case_doc in case_docs:
+        case_id = case_doc["_id"]
+        if case_id == keep_case["_id"]:
+            note = _(
+                "Mielenosoitukset yhdistettiin. Tämä tapaus jatkaa päämielenosoituksen %(title)s (%(id)s) käsittelyä."
+            ) % {"title": primary_title, "id": primary_id}
+            _add_case_log(
+                case_doc,
+                "merge_demo",
+                note=note,
+                close_case=False,
+                new_demo_id=primary_id,
+                metadata={"primary_demo_id": primary_id},
+            )
+            continue
+
+        note = _(
+            "Tapaus suljettiin, koska siihen liittyvä mielenosoitus yhdistettiin päämielenosoitukseen %(title)s (%(id)s)."
+        ) % {"title": primary_title, "id": primary_id}
+        _add_case_log(
+            case_doc,
+            "merge_demo_close",
+            note=note,
+            close_case=True,
+            close_reason="merged_demo",
+            metadata={"primary_demo_id": primary_id},
+        )
+        label = case_doc.get("running_num") or str(case_id)
+        closed_case_labels.append(str(label))
+
+    if closed_case_labels:
+        summary_note = _(
+            "Seuraavat tapaukset suljettiin ja linkitettiin tähän: %(cases)s."
+        ) % {"cases": ", ".join(closed_case_labels)}
+        _add_case_log(
+            keep_case,
+            "merge_demo_summary",
+            note=summary_note,
+            close_case=False,
+            new_demo_id=primary_id,
+            metadata={"closed_cases": closed_case_labels},
+        )
+
+
+def _log_case_decision(demo_id, demo_title, action_key, close_reason):
+    try:
+        demo_obj_id = ObjectId(demo_id)
+    except Exception:
+        return
+    case_docs = list(mongo.cases.find({"demo_id": demo_obj_id}))
+    if not case_docs:
+        return
+    status_text = _("hyväksyttiin") if action_key == "approve_demo" else _("hylättiin")
+    note = _(
+        "Mielenosoitus %(title)s (%(id)s) %(status)s hallintapaneelista."
+    ) % {"title": demo_title or _("tuntematon"), "id": demo_id, "status": status_text}
+    for case_doc in case_docs:
+        already_closed = bool((case_doc.get("meta") or {}).get("closed"))
+        _add_case_log(
+            case_doc,
+            action_key,
+            note=note,
+            close_case=not already_closed,
+            close_reason=close_reason if not already_closed else None,
+            metadata={"decision": action_key},
+        )
 
 
 def _split_demo_ids(raw_ids):
@@ -1065,6 +1249,13 @@ def merge_demos():
             doc.get("demo_id"): doc
             for doc in mongo.recommended_demos.find({"demo_id": {"$in": selected_ids}})
         }
+
+        submitter_docs = {
+            str(doc.get("demonstration_id")): doc
+            for doc in mongo.submitters.find(
+                {"demonstration_id": {"$in": [ObjectId(d) for d in selected_ids]}}
+            )
+        }
         display_demos = []
         for doc in ordered_docs:
             serialized = stringify_object_ids(doc)
@@ -1072,20 +1263,108 @@ def merge_demos():
             serialized["is_recommended"] = serialized["id"] in recommended_map
             rec_doc = recommended_map.get(serialized["id"])
             serialized["recommendation"] = stringify_object_ids(rec_doc) if rec_doc else None
+            status_label, status_variant, status_hint = _demo_status_meta(doc)
+            serialized["status_label"] = status_label
+            serialized["status_variant"] = status_variant
+            serialized["status_hint"] = status_hint
+            submitter_info = submitter_docs.get(serialized["id"])
+            if submitter_info:
+                serialized["submitter"] = stringify_object_ids(
+                    {
+                        "name": submitter_info.get("submitter_name"),
+                        "email": submitter_info.get("submitter_email"),
+                        "role": submitter_info.get("submitter_role"),
+                        "submitted_at": submitter_info.get("submitted_at"),
+                    }
+                )
+            else:
+                serialized["submitter"] = None
             display_demos.append(serialized)
 
-        recommended_default = next(
-            (demo["id"] for demo in display_demos if demo.get("is_recommended")),
+        score_order = sorted(
+            doc_map.keys(),
+            key=lambda did: _score_demo_for_guided(doc_map[did], submitter_docs.get(did)),
+            reverse=True,
+        )
+        recommended_primary_id = score_order[0] if score_order else display_demos[0]["id"]
+
+        guided_sources = {}
+        for field in MERGE_FIELD_DEFINITIONS:
+            chosen = recommended_primary_id
+            for demo_id in score_order:
+                doc = doc_map.get(demo_id)
+                if doc is None:
+                    continue
+                value = doc.get(field["key"])
+                if not _value_is_empty(value):
+                    chosen = demo_id
+                    break
+            guided_sources[field["key"]] = chosen
+
+        guided_recommendation = next(
+            (demo_id for demo_id in score_order if recommended_map.get(demo_id)),
             "none",
         )
+
+        merge_warnings = []
+        if any(doc.get("approved") for doc in ordered_docs) and not all(doc.get("approved") for doc in ordered_docs):
+            merge_warnings.append(
+                _("Osa valituista mielenosoituksista on jo hyväksytty. Suosittelemme käyttämään hyväksyttyä mielenosoitusta päätapahtumana.")
+            )
+        if any(doc.get("rejected") for doc in ordered_docs):
+            merge_warnings.append(_("Mukana on hylättyjä mielenosoituksia. Varmista, ettet vahingossa palauta niitä julkisiksi."))
+        if len({doc.get("city") for doc in ordered_docs if doc.get("city")}) > 1:
+            merge_warnings.append(_("Valitut mielenosoitukset sijaitsevat eri kaupungeissa. Varmista, että yhdistäminen on tarkoituksellista."))
+        if len({doc.get("date") for doc in ordered_docs if doc.get("date")}) > 1:
+            merge_warnings.append(_("Mielenosoituksilla on eri päivämäärät. Tarkista, kumpi tieto halutaan säilyttää."))
+
+        field_summary_keys = {"title", "date", "start_time", "address", "description", "organizers"}
+        guided_field_summary = []
+        for field in MERGE_FIELD_DEFINITIONS:
+            if field["key"] not in field_summary_keys:
+                continue
+            source_id = guided_sources.get(field["key"], recommended_primary_id)
+            guided_field_summary.append(
+                {
+                    "key": field["key"],
+                    "label": field["label"],
+                    "source_id": source_id,
+                    "source_title": doc_map.get(source_id, {}).get("title"),
+                }
+            )
+
+        demo_lookup = {demo["id"]: demo for demo in display_demos}
+
+        submitter_groups = {}
+        for demo_id, info in submitter_docs.items():
+            key = info.get("submitter_email") or info.get("submitter_name") or _("Tuntematon ilmoittaja")
+            submitter_groups.setdefault(key, []).append(demo_id)
+        if len(submitter_groups) > 1:
+            merge_warnings.append(_("Valituilla mielenosoituksilla on eri ilmoittajat. Tarkista, etteivät nämä ole toisistaan riippumattomia tapahtumia."))
+        elif not submitter_groups:
+            merge_warnings.append(_("Ilmoittajatietoja ei löytynyt kaikille mielenosoituksille. Varmista, että yhdistät oikeat tapahtumat."))
+
+        submitter_summary = [
+            {
+                "label": label,
+                "count": len(ids),
+                "demo_titles": [doc_map.get(did, {}).get("title") for did in ids],
+            }
+            for label, ids in submitter_groups.items()
+        ]
 
         return render_template(
             f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/merge.html",
             demos=display_demos,
             merge_fields=MERGE_FIELD_DEFINITIONS,
             selected_ids=[demo["id"] for demo in display_demos],
-            default_primary=display_demos[0]["id"],
-            recommended_default=recommended_default,
+            default_primary=recommended_primary_id,
+            guided_recommendation=guided_recommendation,
+            guided_sources=guided_sources,
+            merge_warnings=merge_warnings,
+            guided_field_summary=guided_field_summary,
+            demo_lookup=demo_lookup,
+            submitter_summary=submitter_summary,
         )
 
     # POST
@@ -1165,6 +1444,7 @@ def merge_demos():
     recommendation_source = request.form.get("recommendation_source")
     _apply_recommendation_choice(primary_id, secondary_ids, recommendation_source)
     _repoint_related_demo_data(primary_id, secondary_ids)
+    _handle_cases_after_merge(primary_id, secondary_ids, doc_map)
 
     merge_links = [
         {
@@ -2733,6 +3013,122 @@ def get_submitter_info(demo_id):
     }
     return jsonify({"status": "OK", "submitter": submitter_info})
 
+
+@admin_demo_bp.route("/submission_errors", methods=["GET"])
+@admin_required
+def submission_errors_dashboard():
+    args = request.args
+    filters = []
+    selected = {}
+
+    error_code = (args.get("error_code") or "").strip()
+    if error_code:
+        filters.append({"error_code": error_code})
+        selected["error_code"] = error_code
+
+    status_raw = (args.get("status") or "").strip()
+    if status_raw:
+        try:
+            status_value = int(status_raw)
+            filters.append({"status": status_value})
+            selected["status"] = status_raw
+        except ValueError:
+            pass
+
+    ip_value = (args.get("ip") or "").strip()
+    if ip_value:
+        filters.append({"ip": ip_value})
+        selected["ip"] = ip_value
+
+    user_id = (args.get("user_id") or "").strip()
+    if user_id:
+        filters.append({"user.id": user_id})
+        selected["user_id"] = user_id
+
+    request_path = (args.get("path") or "").strip()
+    if request_path:
+        filters.append({"request_path": {"$regex": re.escape(request_path), "$options": "i"}})
+        selected["path"] = request_path
+
+    query_text = (args.get("q") or "").strip()
+    if query_text:
+        filters.append({"message": {"$regex": re.escape(query_text), "$options": "i"}})
+        selected["q"] = query_text
+
+    created_bounds = {}
+    start_date_raw = (args.get("start_date") or "").strip()
+    if start_date_raw:
+        try:
+            created_bounds["$gte"] = datetime.strptime(start_date_raw, "%Y-%m-%d")
+            selected["start_date"] = start_date_raw
+        except ValueError:
+            pass
+
+    end_date_raw = (args.get("end_date") or "").strip()
+    if end_date_raw:
+        try:
+            created_bounds["$lt"] = datetime.strptime(end_date_raw, "%Y-%m-%d") + timedelta(days=1)
+            selected["end_date"] = end_date_raw
+        except ValueError:
+            pass
+
+    if created_bounds:
+        filters.append({"created_at": created_bounds})
+
+    query = {"$and": filters} if filters else {}
+
+    logs_cursor = (
+        mongo.demo_submission_errors.find(query)
+        .sort("created_at", DESCENDING)
+        .limit(200)
+    )
+
+    logs = []
+    for log in logs_cursor:
+        log["_id"] = str(log.get("_id"))
+        created = log.get("created_at")
+        if isinstance(created, datetime):
+            log["created_at_str"] = created.strftime("%d.%m.%Y %H:%M:%S")
+        else:
+            log["created_at_str"] = "-"
+        logs.append(log)
+
+    total_count = mongo.demo_submission_errors.count_documents(query)
+
+    pipeline = []
+    if query:
+        pipeline.append({"$match": query})
+    pipeline.extend(
+        [
+            {"$group": {"_id": "$error_code", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 5},
+        ]
+    )
+    error_stats = list(mongo.demo_submission_errors.aggregate(pipeline))
+    error_stats = [
+        {"code": stat.get("_id") or _("Tuntematon"), "count": stat.get("count", 0)}
+        for stat in error_stats
+    ]
+
+    error_codes = sorted(
+        [code for code in mongo.demo_submission_errors.distinct("error_code") if code]
+    )
+    status_options = sorted(
+        [status for status in mongo.demo_submission_errors.distinct("status") if status is not None]
+    )
+
+    return render_template(
+        "admin_V2/demonstrations/submission_errors.html",
+        logs=logs,
+        filters=selected,
+        filters_active=bool(selected),
+        error_codes=error_codes,
+        status_options=status_options,
+        total_count=total_count,
+        error_stats=error_stats,
+    )
+
 from flask import Blueprint, request, jsonify
 from bson import ObjectId
 
@@ -2829,6 +3225,8 @@ def approve_demo(demo_id):
             },
         )
 
+    _log_case_decision(demo_id, demo.get("title"), "approve_demo", close_reason="demo_approved")
+
     return jsonify({"success": True, "message": "Mielenosoitus hyväksyttiin!"})
 
 @admin_demo_api_bp.route("/<demo_id>/deny", methods=["POST"])
@@ -2870,6 +3268,8 @@ def reject_demo(demo_id):
                 "address": demo.get("address", ""),
             },
         )
+
+    _log_case_decision(demo_id, demo.get("title"), "reject_demo", close_reason="demo_rejected")
 
     return jsonify({"success": True, "message": "Mielenosoitus hylättiin!"})
 

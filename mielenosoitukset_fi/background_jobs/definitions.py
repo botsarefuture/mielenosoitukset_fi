@@ -13,6 +13,9 @@ from mielenosoitukset_fi.scripts.in_past import hide_past
 from mielenosoitukset_fi.scripts.CL import main as cl_main
 from mielenosoitukset_fi.scripts.preview_image_creator import run as run_preview
 from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
+from mielenosoitukset_fi.scripts.process_submission_notifications import (
+    run as process_submit_notifications,
+)
 from mielenosoitukset_fi.utils.analytics import prep
 
 
@@ -95,6 +98,13 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         description="Archives events that have already taken place.",
         func=hide_past,
         default_trigger=_interval(hours=24),
+    ),
+    JobDefinition(
+        key="process_submit_notifications",
+        name="New demo notification dispatcher",
+        description="Sends confirmation + admin notification emails for submitted demonstrations.",
+        func=process_submit_notifications,
+        default_trigger=_interval(minutes=5),
     ),
 ]
 

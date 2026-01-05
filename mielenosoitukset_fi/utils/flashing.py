@@ -1,4 +1,4 @@
-from flask import flash
+from flask import flash, g, has_request_context
 from flask_babel import _
 
 def flash_message(message, category="message"):
@@ -36,6 +36,10 @@ def flash_message(message, category="message"):
 
     # Get the mapped category or fallback to "default"
     mapped_category = categories_map.get(category.lower(), "default")
+
+    # Mark the current request as having flash messages so caches can opt-out
+    if has_request_context():
+        g._has_flash_messages = True
 
     # Flash the translated message
     flash(_(message), mapped_category)

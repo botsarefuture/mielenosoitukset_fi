@@ -9,6 +9,9 @@
 * Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 * Admin sidebar now includes a one-click link to the audit timeline for faster access.
 * Added `/admin/demo/tokens` view for superusers to inspect and revoke approve/reject/preview/edit links (with creator + expiry info and a sidebar shortcut).
+* Introduced a `super_audit_logs` stream that records every demo audit event with full request metadata for ultimate traceability.
+* Admin log writes are now enriched with actor/request/process metadata and mirrored into the `super_audit_logs` stream so every privileged action is captured centrally.
+* Admin dashboard quick links now surface the Super Audit log so superusers can jump directly into the high-fidelity event stream.
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
@@ -23,6 +26,7 @@
 * Admin token links that were previously consumed now render a friendly confirmation page instead of returning HTTP 409, making it clear the link has already been used.
 * Reuse attempts of admin approve/reject/preview tokens are now logged (including demo audit entries) with IP + metadata so the audit trail captures every invalid link use.
 * Approving or rejecting via token now automatically revokes the opposite link, preventing stale approve/reject URLs from being reused after a decision.
+* Magic token lifecycle is fully audited: creation now stores actor/request fingerprints, every bind/use/revoke/reuse attempt emits demo + super audit entries, and single/bulk revocations produce structured log payloads.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

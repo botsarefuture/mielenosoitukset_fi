@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime
+import os
+import threading
 from typing import Any, Dict, Optional
 
 from flask import has_app_context, has_request_context, request
@@ -23,6 +25,9 @@ def _resolve_actor(actor: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
                 "user_id": str(user_id) if user_id else None,
                 "username": getattr(current_user, "username", None),
                 "email": getattr(current_user, "email", None),
+                "role": getattr(current_user, "role", None),
+                "global_admin": getattr(current_user, "global_admin", False),
+                "global_permissions": list(getattr(current_user, "global_permissions", []) or []),
             }
         except Exception:  # pragma: no cover - defensive
             logger.debug("Failed to resolve current_user for audit logging.", exc_info=True)
@@ -30,6 +35,9 @@ def _resolve_actor(actor: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         "user_id": None,
         "username": "system",
         "email": None,
+        "role": None,
+        "global_admin": False,
+        "global_permissions": [],
     }
 
 
@@ -94,6 +102,14 @@ def log_demo_audit_entry(
     }
     try:
         mongo.demo_audit_logs.insert_one(entry)
+        log_super_audit(
+            event_type=f"demo:{action}",
+            payload={
+                "demo_id": str(demo_id),
+                "entry": entry,
+            },
+            entity={"type": "demo", "id": str(demo_id)},
+        )
     except Exception:  # pragma: no cover - persistence safeguard
         logger.exception("Failed to write demo audit log entry for %s", demo_id)
 
@@ -126,3 +142,53 @@ def record_demo_change(
         ip_address=ip_address,
     )
     return hist_id
+
+
+def _process_metadata() -> Dict[str, Any]:
+    return {
+        "pid": os.getpid(),
+        "thread": threading.current_thread().name,
+        "module": __name__,
+        "has_request_context": has_request_context(),
+        "has_app_context": has_app_context(),
+    }
+
+
+def log_super_audit(
+    event_type: str,
+    payload: Optional[Dict[str, Any]] = None,
+    *,
+    actor: Optional[Dict[str, Any]] = None,
+    entity: Optional[Dict[str, Any]] = None,
+    tags: Optional[list[str]] = None,
+):
+    doc: Dict[str, Any] = {
+        "event": event_type,
+        "payload": payload or {},
+        "timestamp": datetime.utcnow(),
+        "actor": _resolve_actor(actor),
+        "process": _process_metadata(),
+    }
+    if entity:
+        doc["entity"] = entity
+    if tags:
+        try:
+            doc["tags"] = sorted(set(tags))
+        except TypeError:
+            doc["tags"] = tags
+    if has_request_context():
+        try:
+            doc["request"] = {
+                "path": request.path,
+                "method": request.method,
+                "args": request.args.to_dict(flat=False),
+                "form_keys": list(request.form.keys()),
+                "remote_addr": request.remote_addr,
+                "user_agent": getattr(request.user_agent, "string", str(request.user_agent)),
+            }
+        except Exception:
+            logger.debug("Failed to capture request info for super audit.", exc_info=True)
+    try:
+        mongo.super_audit_logs.insert_one(doc)
+    except Exception:
+        logger.exception("Failed to write super audit entry for event %s", event_type)

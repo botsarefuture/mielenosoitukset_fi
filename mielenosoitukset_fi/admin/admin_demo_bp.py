@@ -21,7 +21,7 @@ from flask import (
     has_request_context,
 )
 from flask_login import current_user, login_required
-from pymongo import DESCENDING
+from pymongo import DESCENDING, ReturnDocument
 
 from flask_babel import _
 from urllib.parse import quote_plus
@@ -35,7 +35,15 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.users.models import User
-from .utils import mongo, log_admin_action_V2, AdminActParser, _ADMIN_TEMPLATE_FOLDER
+from .utils import (
+    mongo,
+    log_admin_action_V2,
+    AdminActParser,
+    _ADMIN_TEMPLATE_FOLDER,
+    capture_actor_context,
+    capture_request_context,
+    capture_process_context,
+)
 
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 
@@ -44,6 +52,7 @@ from mielenosoitukset_fi.demonstrations.audit import (
     record_demo_change,
     log_demo_audit_entry,
     save_demo_history,
+    log_super_audit,
 )
 
 
@@ -763,6 +772,75 @@ def _now_utc():
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
+
+def _token_payload(doc: dict | None) -> dict:
+    if not doc:
+        return {}
+    payload = {
+        "token_id": str(doc.get("_id")) if doc.get("_id") else None,
+        "token_hash": doc.get("token_hash"),
+        "action": doc.get("action"),
+        "demo_id": doc.get("demo_id"),
+        "created_at": doc.get("created_at"),
+        "expires_at": doc.get("expires_at"),
+        "created_by": doc.get("created_by"),
+        "created_by_id": doc.get("created_by_id"),
+        "created_by_role": doc.get("created_by_role"),
+        "created_global_admin": doc.get("created_global_admin"),
+        "created_permissions": doc.get("created_permissions"),
+        "created_remote_addr": doc.get("created_remote_addr"),
+        "created_request_path": doc.get("created_request_path"),
+        "created_request_method": doc.get("created_request_method"),
+        "created_user_agent": doc.get("created_user_agent"),
+        "created_process": doc.get("created_process"),
+        "created_actor": doc.get("created_actor"),
+        "bound_ip": doc.get("bound_ip"),
+        "first_seen_at": doc.get("first_seen_at"),
+        "ua_first": doc.get("ua_first"),
+        "ua_last": doc.get("ua_last"),
+        "used_at": doc.get("used_at"),
+        "revoked": doc.get("revoked"),
+        "revoked_at": doc.get("revoked_at"),
+    }
+    return {k: v for k, v in payload.items() if v is not None}
+
+
+def _log_token_event(
+    doc: dict | None,
+    event: str,
+    *,
+    message: str | None = None,
+    extra: dict | None = None,
+    include_demo: bool = True,
+    demo_action: str | None = None,
+):
+    if not doc:
+        return
+    payload = _token_payload(doc)
+    if extra:
+        payload.update(extra)
+    demo_id = payload.get("demo_id")
+    tags = ["token"]
+    if doc.get("action"):
+        tags.append(str(doc.get("action")))
+    if demo_id:
+        tags.append(f"demo:{demo_id}")
+
+    log_super_audit(
+        event_type=f"token:{event}",
+        payload=payload,
+        entity={"type": "token", "id": payload.get("token_id"), "demo_id": demo_id},
+        tags=tags,
+    )
+
+    if include_demo and demo_id:
+        log_demo_audit_entry(
+            demo_id,
+            action=demo_action or f"token_{event}",
+            message=message or f"Token {doc.get('action')} event '{event}'",
+            details=payload,
+        )
+
 def _client_ip() -> str:
     """
     Get the best-effort client IP.
@@ -788,11 +866,11 @@ def _registry_upsert_initial(token_hash: str, action: str, demo_id: str, creator
     Create registry doc if missing. Do not bind IP yet (bind on first GET).
     """
     now = _now_utc()
+    actor_ctx = capture_actor_context()
+    req_ctx = capture_request_context() if has_request_context() else None
+    proc_ctx = capture_process_context()
     if not creator:
-        if has_request_context():
-            creator = _get_actor_label()
-        else:
-            creator = "[system]"
+        creator = actor_ctx.get("username") or actor_ctx.get("email") or actor_ctx.get("user_id") or "[system]"
     mongo[MAGIC_COLLECTION].update_one(
         {"token_hash": token_hash},
         {
@@ -808,9 +886,35 @@ def _registry_upsert_initial(token_hash: str, action: str, demo_id: str, creator
                 "ua_first": None,
                 "ua_last": None,
                 "created_by": creator,
+                "created_by_id": actor_ctx.get("user_id"),
+                "created_by_role": actor_ctx.get("role"),
+                "created_global_admin": actor_ctx.get("global_admin"),
+                "created_permissions": actor_ctx.get("global_permissions"),
+                "created_remote_addr": req_ctx.get("remote_addr") if req_ctx else None,
+                "created_request_path": req_ctx.get("path") if req_ctx else None,
+                "created_request_method": req_ctx.get("method") if req_ctx else None,
+                "created_user_agent": req_ctx.get("user_agent") if req_ctx else None,
+                "created_process": proc_ctx,
+                "created_actor": actor_ctx,
             }
         },
         upsert=True,
+    )
+    details = {
+        "token_hash": token_hash,
+        "action": action,
+        "demo_id": str(demo_id),
+        "created_by": creator,
+        "actor": actor_ctx,
+        "request": req_ctx,
+        "process": proc_ctx,
+    }
+    log_super_audit(
+        "token:create",
+        details,
+        actor=actor_ctx,
+        entity={"type": "token", "id": token_hash, "demo_id": str(demo_id)},
+        tags=["token", action],
     )
 
 def _check_and_bind(action: str, token: str) -> dict:
@@ -830,7 +934,17 @@ def _check_and_bind(action: str, token: str) -> dict:
     # payload is the demo_id (string). You could also sign a dict with jti if you want.
     demo_id = str(payload)
     token_hash = _hash_token(token)
-    doc = mongo[MAGIC_COLLECTION].find_one({"token_hash": token_hash})
+    doc = mongo[MAGIC_COLLECTION].find_one_and_update(
+        {"token_hash": token_hash},
+        {
+            "$set": {
+                "last_accessed_at": _now_utc(),
+                "last_accessed_ip": _client_ip(),
+                "last_accessed_ua": _user_agent(),
+            }
+        },
+        return_document=ReturnDocument.AFTER,
+    )
 
     if not doc:
         # If missing (e.g., never inserted), reject: we require DB presence to prevent forged tokens.
@@ -864,16 +978,17 @@ def _check_and_bind(action: str, token: str) -> dict:
             "ip": client_ip,
             "endpoint": request.path,
         })
-        log_demo_audit_entry(
-            doc.get("demo_id"),
-            action="token_reuse_attempt",
+        _log_token_event(
+            doc,
+            "reuse_attempt",
             message=_("Kertakäyttölinkkiä (%(action)s) yritettiin käyttää uudelleen IP-osoitteesta %(ip)s.")
-                    % {"action": action, "ip": client_ip or "unknown"},
-            details={
+            % {"action": action, "ip": client_ip or "unknown"},
+            extra={
                 "ip": client_ip,
                 "endpoint": request.path,
-                "token_hash": doc.get("token_hash"),
+                "reason": "already_used",
             },
+            demo_action="token_reuse_attempt",
         )
         response = make_response(
             render_template("admin_V2/cc/link_already_used.html", action=action),
@@ -896,25 +1011,56 @@ def _check_and_bind(action: str, token: str) -> dict:
 
     # Touch doc
     mongo[MAGIC_COLLECTION].update_one({"_id": doc["_id"]}, updates)
-    # Refresh & return latest
-    return mongo[MAGIC_COLLECTION].find_one({"_id": doc["_id"]})
+    refreshed = mongo[MAGIC_COLLECTION].find_one({"_id": doc["_id"]})
+    if refreshed:
+        event = "bound" if "bound_ip" in updates["$set"] else "touch"
+        _log_token_event(
+            refreshed,
+            event,
+            message=_("Kertakäyttölinkki käytettiin ensimmäisen kerran") if event == "bound" else None,
+            demo_action="token_bound" if event == "bound" else None,
+        )
+    return refreshed
 
 def _mark_used(doc_id):
-    mongo[MAGIC_COLLECTION].update_one({"_id": doc_id}, {"$set": {"used_at": _now_utc()}})
+    updated = mongo[MAGIC_COLLECTION].find_one_and_update(
+        {"_id": doc_id},
+        {
+            "$set": {
+                "used_at": _now_utc(),
+                "used_by_ip": _client_ip() if has_request_context() else None,
+                "used_user_agent": _user_agent() if has_request_context() else None,
+            }
+        },
+        return_document=ReturnDocument.AFTER,
+    )
+    if updated:
+        _log_token_event(updated, "used", message=_("Kertakäyttölinkki käytettiin"))
 
 
 def _revoke_tokens_for_demo(demo_id: str, actions: list[str]):
     if not demo_id or not actions:
         return
-    mongo[MAGIC_COLLECTION].update_many(
-        {
-            "demo_id": str(demo_id),
-            "action": {"$in": actions},
-            "used_at": {"$exists": False},
-            "revoked": {"$ne": True},
-        },
-        {"$set": {"revoked": True, "revoked_at": _now_utc()}},
+    now = _now_utc()
+    revoked = list(
+        mongo[MAGIC_COLLECTION].find(
+            {
+                "demo_id": str(demo_id),
+                "action": {"$in": actions},
+                "used_at": {"$exists": False},
+                "revoked": {"$ne": True},
+            }
+        )
     )
+    if not revoked:
+        return
+    mongo[MAGIC_COLLECTION].update_many(
+        {"_id": {"$in": [doc["_id"] for doc in revoked]}},
+        {"$set": {"revoked": True, "revoked_at": now}},
+    )
+    for doc in revoked:
+        doc["revoked_at"] = now
+        _log_token_event(doc, "revoked", message=_("Kertakäyttölinkki mitätöitiin"), demo_action="token_revoked")
 
 def _load_demo_or_bust(demo_id: str):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
@@ -3205,6 +3351,47 @@ def manage_magic_tokens():
         filters=filters,
         actions=distinct_actions,
         action_counts=action_counts,
+    )
+
+
+@admin_demo_bp.route("/super_audit/logs", methods=["GET"])
+@login_required
+@admin_required
+def view_super_audit_logs():
+    if not getattr(current_user, "global_admin", False):
+        abort(403)
+
+    args = request.args
+    limit = min(max(int(args.get("limit", 200)), 10), 1000)
+    query = {}
+    event = (args.get("event") or "").strip()
+    if event:
+        query["event"] = event
+    path = (args.get("path") or "").strip()
+    if path:
+        query["request.path"] = {"$regex": re.escape(path), "$options": "i"}
+    method = (args.get("method") or "").strip().upper()
+    if method:
+        query["request.method"] = method
+    search_text = (args.get("q") or "").strip()
+    if search_text:
+        query["payload"] = {"$regex": re.escape(search_text), "$options": "i"}
+
+    entries = list(
+        mongo.super_audit_logs.find(query).sort("timestamp", -1).limit(limit)
+    )
+    for entry in entries:
+        entry["_id"] = str(entry.get("_id"))
+        ts = entry.get("timestamp")
+        entry["timestamp_str"] = ts.strftime("%d.%m.%Y %H:%M:%S") if isinstance(ts, datetime) else "-"
+
+    distinct_events = sorted(mongo.super_audit_logs.distinct("event"))
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}super_audit/logs.html",
+        entries=entries,
+        events=distinct_events,
+        filters={"event": event, "path": path, "method": method, "q": search_text, "limit": limit},
     )
 
 

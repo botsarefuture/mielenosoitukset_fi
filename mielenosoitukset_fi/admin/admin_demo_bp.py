@@ -8,7 +8,16 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 from bson.objectid import ObjectId
 import logging
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for, make_response
+from flask import (
+    Blueprint,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    make_response,
+    g,
+)
 from flask_login import current_user, login_required
 from pymongo import DESCENDING
 
@@ -313,6 +322,7 @@ def log_request_info():
     log_admin_action_V2(
         AdminActParser().log_request_info(request.__dict__, current_user)
     )
+    g.audit_timeline_url = url_for("admin_demo.audit_timeline")
 
 @admin_demo_bp.route("/recommend_demo/<demo_id>", methods=["POST"])
 @login_required

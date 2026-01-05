@@ -166,10 +166,17 @@
     <i class="fas fa-check-circle text-success fs-3 mb-1"></i>
     <p class="small mb-0">{{ _('Ei tehtäviä – hyvä sinä!') }}</p>
   </div>
-  {% endif %}
+{% endif %}
 </div>
 
-
+<!-- Quick access -->
+<div class="card bg-dark-subtle text-dark mb-3">
+  <div class="card-body d-grid gap-2">
+    <a href="{{ url_for('admin_demo.audit_timeline') }}" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center">
+      <i class="fa-solid fa-timeline me-2"></i>{{ _('Audit-loki (aikajana)') }}
+    </a>
+  </div>
+</div>
 
 
 <script>

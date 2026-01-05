@@ -55,7 +55,7 @@ def create_app() -> Flask:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching
         
-    from mielenosoitukset_fi.utils.cache import cache
+    from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
     cache.init_app(app)
     
 
@@ -235,7 +235,7 @@ def create_app() -> Flask:
     if app.debug:
 
         @app.route("/ping")
-        @cache.cached(timeout=30)  # Cache the response for 30 seconds
+        @cache.cached(timeout=30, unless=should_skip_cache)  # Cache the response for 30 seconds
         def ping():
             return f"Pong from {VERSION}"
         

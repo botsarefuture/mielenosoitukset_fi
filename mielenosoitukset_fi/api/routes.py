@@ -23,7 +23,7 @@ from mielenosoitukset_fi.utils.tokens import (
     check_token
 )
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
-from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
@@ -205,8 +205,9 @@ def list_demonstrations():
     def get_param(name: str, default: str = ""):
         return request.args.get(name, default).strip().casefold()
     cache_key = make_cache_key()
+    use_cache = bool(cache) and not should_skip_cache()
 
-    cached_response = cache.get(cache_key) if cache else None
+    cached_response = cache.get(cache_key) if use_cache else None
 
     if cached_response:
         from copy import deepcopy
@@ -338,7 +339,8 @@ def list_demonstrations():
     }
 
     # --- Cache the response ---
-    cache.set(cache_key, response_data)
+    if use_cache:
+        cache.set(cache_key, response_data)
 
     # --- Before returning, make a copy and set cached=False ---
     response_to_return = deepcopy(response_data)

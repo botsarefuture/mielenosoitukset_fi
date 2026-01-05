@@ -5,10 +5,12 @@ import re
 import json
 import threading
 import time
+import uuid
+import hashlib
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
-from flask_babel import _, refresh
+from flask_babel import _, refresh, format_date
 from flask import (
     app,
     g,
@@ -31,6 +33,7 @@ from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization, RecurringDemonstration
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
+from mielenosoitukset_fi.scripts.send_demo_reminders import generate_ical_event
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER, stringify_object_ids
@@ -39,6 +42,8 @@ from mielenosoitukset_fi.utils.wrappers import admin_required, permission_requir
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
+from pymongo.errors import DuplicateKeyError
+from pymongo import ASCENDING, DESCENDING
 
 from mielenosoitukset_fi.utils.cache import cache
 from mielenosoitukset_fi.utils.logger import logger
@@ -59,6 +64,30 @@ mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
 submitters_collection = mongo["submitters"]  # <-- Add this line
 malicious_reports_collection = mongo["malicious_reports"]
+submission_tokens_collection = mongo["demo_submission_tokens"]
+submission_tokens_collection.create_index("token", unique=True, background=True)
+submission_tokens_collection.create_index(
+    [("fingerprint", ASCENDING), ("created_at", DESCENDING)], background=True
+)
+demo_notifications_queue = mongo["demo_notifications_queue"]
+demo_notifications_queue.create_index("status", background=True)
+demo_notifications_queue.create_index("created_at", background=True)
+demo_notifications_queue.create_index(
+    [("demo_id", ASCENDING), ("status", ASCENDING)], background=True
+)
+demo_notifications_queue.create_index("notification_type", background=True)
+submission_errors_collection = mongo["demo_submission_errors"]
+submission_errors_collection.create_index("created_at", background=True)
+submission_errors_collection.create_index("error_code", background=True)
+
+SUBMISSION_DUPLICATE_WINDOW = timedelta(hours=12)
+SUBMIT_ERROR_CODES = {
+    "missing_required": "SUBMIT_MISSING_FIELDS",
+    "invalid_email": "SUBMIT_INVALID_EMAIL",
+    "stale_token": "SUBMIT_STALE_TOKEN",
+    "db_failure": "SUBMIT_SAVE_FAILED",
+    "duplicate_conflict": "SUBMIT_DUPLICATE_CONFLICT",
+}
 
 PANIC_MODE = False
 
@@ -77,6 +106,139 @@ def refresh_panic(interval=15):  # 180 seconds = 3 minutes
 
 # Start background thread
 threading.Thread(target=refresh_panic, daemon=True).start()
+
+
+def _new_submission_token():
+    return uuid.uuid4().hex
+
+
+def _build_submission_fingerprint(payload: dict) -> str:
+    """Build a stable fingerprint to detect quick duplicate submissions."""
+    def _norm(value):
+        return (value or "").strip().lower()
+
+    tags = payload.get("tags") or []
+    normalized_tags = [_norm(tag) for tag in tags if tag]
+
+    parts = [
+        _norm(payload.get("title")),
+        _norm(payload.get("date")),
+        _norm(payload.get("start_time")),
+        _norm(payload.get("end_time")),
+        _norm(payload.get("city")),
+        _norm(payload.get("address")),
+        _norm(payload.get("route")),
+        _norm(payload.get("submitter_email")),
+        _norm(payload.get("submitter_name")),
+        _norm(payload.get("submitter_role")),
+        "|".join(sorted(normalized_tags)),
+        _norm(payload.get("description")),
+    ]
+    base = "||".join(parts)
+    return hashlib.sha256(base.encode("utf-8")).hexdigest()
+
+
+def _respond_existing_submission(demo_id, reason="token"):
+    """Return the same success response when the submission was already saved."""
+    message = _(
+        "Olet jo lähettänyt tämän mielenosoituksen. Tarkistamme ilmoituksen parhaillaan."
+    )
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return (
+            jsonify(
+                success=True,
+                duplicate=True,
+                message=message,
+                demo_id=str(demo_id),
+                reason=reason,
+            ),
+            200,
+        )
+    flash_message(message, "success")
+    return redirect(url_for("index"))
+
+
+def _safe_objectid(value):
+    """Best-effort conversion to ObjectId, returning None on failure."""
+    try:
+        return ObjectId(str(value))
+    except Exception:
+        return None
+
+
+def _stringify_id(value):
+    """Return a string representation of Mongo-style IDs."""
+    if value is None:
+        return None
+    try:
+        return str(value)
+    except Exception:
+        return str(value)
+
+
+def _get_followed_org_ids():
+    """Return a set of organization IDs the current user follows (string form)."""
+    if not getattr(current_user, "is_authenticated", False):
+        return set()
+    try:
+        return {str(org_id) for org_id in getattr(current_user, "followed_organizations", []) if org_id}
+    except Exception:
+        return set()
+
+
+def _get_followed_recurring_ids():
+    """Return a set of recurring demo (parent) IDs the current user follows (string form)."""
+    if not getattr(current_user, "is_authenticated", False):
+        return set()
+    try:
+        return {str(rec_id) for rec_id in getattr(current_user, "followed_recurring_demos", []) if rec_id}
+    except Exception:
+        return set()
+
+
+def _log_submit_error(message, code, status=400, extra=None):
+    if request.method != "POST":
+        return
+    try:
+        form_snapshot = {}
+        for key in request.form.keys():
+            values = request.form.getlist(key)
+            form_snapshot[key] = values if len(values) > 1 else values[0]
+        submission_errors_collection.insert_one(
+            {
+                "created_at": datetime.utcnow(),
+                "message": message,
+                "error_code": code,
+                "status": status,
+                "extra": extra or {},
+                "request_path": request.path,
+                "request_method": request.method,
+                "query_args": request.args.to_dict(flat=False),
+                "ip": request.remote_addr,
+                "user_agent": request.headers.get("User-Agent"),
+                "referer": request.headers.get("Referer"),
+                "form_snapshot": form_snapshot,
+                "user": {
+                    "id": str(getattr(current_user, "_id", "")) if current_user.is_authenticated else None,
+                    "username": getattr(current_user, "username", None) if current_user.is_authenticated else None,
+                    "role": getattr(current_user, "role", None) if current_user.is_authenticated else None,
+                },
+            }
+        )
+    except Exception:
+        logger.exception("Failed to log submission error.")
+
+
+def _submit_error(message, code, status=400, extra=None):
+    """Consistently return/flash submission errors with support codes."""
+    _log_submit_error(message, code, status=status, extra=extra)
+    payload = {"success": False, "message": message, "error_code": code}
+    if extra:
+        payload.update(extra)
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(payload), status
+    flash_message(f"{message} (Virhekoodi: {code})", "error")
+    return redirect(url_for("submit"))
     
 
 def generate_alternate_urls(app, endpoint, **values):
@@ -847,6 +1009,27 @@ def init_routes(app):
             submitter_name = (request.form.get("submitter_name") or "").strip()
             # checkbox presence: normalize to boolean
             accept_terms = bool(request.form.get("accept_terms"))
+            submission_token = (request.form.get("submission_token") or "").strip()
+            if not submission_token:
+                logger.warning("Missing submission token on POST /submit; generating fallback token.")
+                submission_token = _new_submission_token()
+
+            submission_fingerprint = _build_submission_fingerprint(
+                {
+                    "title": title,
+                    "date": date,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "city": city,
+                    "address": address,
+                    "route": route,
+                    "submitter_email": submitter_email,
+                    "submitter_name": submitter_name,
+                    "submitter_role": submitter_role,
+                    "description": description,
+                    "tags": tags,
+                }
+            )
 
             # --- Required validation --
             missing = []
@@ -870,22 +1053,103 @@ def init_routes(app):
                 missing.append("ehdot")
 
             if missing:
-                flash_message(
+                return _submit_error(
                     "Ole hyvä, ja anna kaikki pakolliset tiedot sekä hyväksy käyttöehdot ja tietosuojaseloste. Puuttuvat kentät: "
                     + ", ".join(missing),
-                    "error",
+                    SUBMIT_ERROR_CODES["missing_required"],
+                    extra={"missing_fields": missing},
                 )
-                # If this is an AJAX submission, return JSON instead of redirect
-                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                    return jsonify(success=False, message=("Puuttuvat kentät: " + ", ".join(missing))), 400
-                return redirect(url_for("submit"))
 
             # Validate email format
             if not valid_email(submitter_email):
-                flash_message("Virheellinen sähköpostiosoite.", "error")
-                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                    return jsonify(success=False, message="Virheellinen sähköpostiosoite."), 400
-                return redirect(url_for("submit"))
+                return _submit_error(
+                    "Virheellinen sähköpostiosoite.",
+                    SUBMIT_ERROR_CODES["invalid_email"],
+                )
+
+            # --- Submission idempotency guard ---
+            now = datetime.utcnow()
+            duplicate_doc = submission_tokens_collection.find_one(
+                {
+                    "fingerprint": submission_fingerprint,
+                    "status": "completed",
+                    "created_at": {"$gte": now - SUBMISSION_DUPLICATE_WINDOW},
+                }
+            )
+            if duplicate_doc and duplicate_doc.get("demo_id"):
+                logger.info(
+                    "Duplicate demo submit detected via fingerprint %s -> %s",
+                    submission_token,
+                    duplicate_doc.get("demo_id"),
+                )
+                return _respond_existing_submission(
+                    duplicate_doc.get("demo_id"), reason="fingerprint"
+                )
+
+            token_doc = None
+            if submission_token:
+                token_doc = submission_tokens_collection.find_one({"token": submission_token})
+                if token_doc and token_doc.get("status") == "completed":
+                    if token_doc.get("fingerprint") and token_doc.get("fingerprint") != submission_fingerprint:
+                        stale_message = _(
+                            "Istuntosi on vanhentunut. Päivitä lomake ennen uuden ilmoituksen lähettämistä."
+                        )
+                        return _submit_error(
+                            stale_message,
+                            SUBMIT_ERROR_CODES["stale_token"],
+                            status=409,
+                            extra={"stale": True},
+                        )
+                    if token_doc.get("demo_id"):
+                        return _respond_existing_submission(
+                            token_doc.get("demo_id"), reason="token"
+                        )
+
+            if not token_doc:
+                token_doc = {
+                    "token": submission_token,
+                    "status": "processing",
+                    "created_at": now,
+                    "fingerprint": submission_fingerprint,
+                    "ip": request.remote_addr,
+                }
+                try:
+                    submission_tokens_collection.insert_one(token_doc)
+                except DuplicateKeyError:
+                    token_doc = submission_tokens_collection.find_one({"token": submission_token})
+                    if (
+                        token_doc
+                        and token_doc.get("status") == "completed"
+                    ):
+                        if token_doc.get("fingerprint") and token_doc.get("fingerprint") != submission_fingerprint:
+                            stale_message = _(
+                                "Istuntosi on vanhentunut. Päivitä lomake ennen uuden ilmoituksen lähettämistä."
+                            )
+                            return _submit_error(
+                                stale_message,
+                                SUBMIT_ERROR_CODES["stale_token"],
+                                status=409,
+                                extra={"stale": True},
+                            )
+                        if token_doc.get("demo_id"):
+                            return _respond_existing_submission(
+                                token_doc.get("demo_id"), reason="token"
+                            )
+                except Exception:
+                    logger.exception(
+                        "Failed to insert submission token %s", submission_token
+                    )
+            else:
+                submission_tokens_collection.update_one(
+                    {"_id": token_doc["_id"]},
+                    {
+                        "$set": {
+                            "fingerprint": submission_fingerprint,
+                            "updated_at": now,
+                            "ip": request.remote_addr,
+                        }
+                    },
+                )
 
             # --- Collect organizers ---
             organizers = []
@@ -949,18 +1213,24 @@ def init_routes(app):
                             matches.append(d)
                             continue
                     if matches:
+                        conflict_summary = [
+                            {
+                                "_id": str(x.get("_id")),
+                                "title": x.get("title"),
+                                "address": x.get("address"),
+                                "date": x.get("date"),
+                            }
+                            for x in matches
+                        ]
+                        _log_submit_error(
+                            "Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.",
+                            SUBMIT_ERROR_CODES["duplicate_conflict"],
+                            status=409,
+                            extra={"conflicts": conflict_summary},
+                        )
                         # if AJAX, return structured JSON so frontend can prompt user
                         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                            short = [
-                                {
-                                    "_id": str(x.get("_id")),
-                                    "title": x.get("title"),
-                                    "address": x.get("address"),
-                                    "date": x.get("date"),
-                                }
-                                for x in matches
-                            ]
-                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=short), 409
+                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=conflict_summary), 409
                         # otherwise, flash and redirect back to form
                         flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
                         return redirect(url_for("submit"))
@@ -975,12 +1245,34 @@ def init_routes(app):
                 demonstration.save()
                 #result = mongo.demonstrations.insert_one(demo_dict)
                 demo_id = demonstration._id
+                submission_tokens_collection.update_one(
+                    {"token": submission_token},
+                    {
+                        "$set": {
+                            "status": "completed",
+                            "demo_id": demo_id,
+                            "completed_at": datetime.utcnow(),
+                            "fingerprint": submission_fingerprint,
+                        }
+                    },
+                )
             except Exception as e:
                 logger.exception("Failed to insert demonstration: %s", e)
-                flash_message("Palvelinvirhe: mielenosoituksen tallentaminen epäonnistui.", "error")
-                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                    return jsonify(success=False, message="Palvelinvirhe: tallentaminen epäonnistui."), 500
-                return redirect(url_for("submit"))
+                submission_tokens_collection.update_one(
+                    {"token": submission_token},
+                    {
+                        "$set": {
+                            "status": "failed",
+                            "failed_at": datetime.utcnow(),
+                            "error": str(e),
+                        }
+                    },
+                )
+                return _submit_error(
+                    "Palvelinvirhe: mielenosoituksen tallentaminen epäonnistui.",
+                    SUBMIT_ERROR_CODES["db_failure"],
+                    status=500,
+                )
 
             # --- Save submitter info in separate collection ---
             try:
@@ -1010,23 +1302,6 @@ def init_routes(app):
             except Exception as e:
                 logger.exception("Failed to create admin case: %s", e)
             
-            # --- Send confirmation email to submitter ---
-            try:
-                if submitter_email:
-                    email_sender.queue_email(
-                        template_name="demo_submitter_confirmation.html",
-                        subject="Kiitos mielenosoituksen ilmoittamisesta",
-                        recipients=[submitter_email],
-                        context={
-                            "title": title,
-                            "date": date,
-                            "city": city,
-                            "address": address,
-                        },
-                    )
-            except Exception as e:
-                logger.exception("Failed to queue submitter confirmation email: %s", e)
-
             # --- Generate secure admin magic links (single-use, IP-bound) ---
             try:
                 # generate_demo_* helpers will create registry records and return external URLs
@@ -1037,28 +1312,59 @@ def init_routes(app):
                 logger.exception("Failed to generate admin magic links: %s", e)
                 approve_link = preview_link = reject_link = None
 
-            # --- Notify support team with secure links ---
-            try:
-                ctx = {
-                    "title": title,
-                    "date": date,
-                    "city": city,
-                    "address": address,
-                    "submitter_name": submitter_name,
-                    "submitter_email": submitter_email,
-                    "submitter_role": submitter_role,
-                    "approve_link": approve_link,
-                    "preview_link": preview_link,
-                    "reject_link": reject_link,
-                }
-                email_sender.queue_email(
-                    template_name="admin_demo_approve_notification.html",
-                    subject="Uusi mielenosoitus odottaa hyväksyntää",
-                    recipients=["tuki@mielenosoitukset.fi"],
-                    context=ctx,
+            # --- Queue notification job for background processing ---
+            notification_messages = []
+            if submitter_email:
+                notification_messages.append(
+                    {
+                        "template_name": "demo_submitter_confirmation.html",
+                        "subject": "Kiitos mielenosoituksen ilmoittamisesta",
+                        "recipients": [submitter_email],
+                        "context": {
+                            "title": title,
+                            "date": date,
+                            "city": city,
+                            "address": address,
+                        },
+                    }
                 )
-            except Exception as e:
-                logger.exception("Failed to queue admin notification email: %s", e)
+
+            notification_messages.append(
+                {
+                    "template_name": "admin_demo_approve_notification.html",
+                    "subject": "Uusi mielenosoitus odottaa hyväksyntää",
+                    "recipients": ["tuki@mielenosoitukset.fi"],
+                    "context": {
+                        "title": title,
+                        "date": date,
+                        "city": city,
+                        "address": address,
+                        "submitter_name": submitter_name,
+                        "submitter_email": submitter_email,
+                        "submitter_role": submitter_role,
+                        "approve_link": approve_link,
+                        "preview_link": preview_link,
+                        "reject_link": reject_link,
+                    },
+                }
+            )
+
+            if notification_messages:
+                try:
+                    demo_notifications_queue.insert_one(
+                        {
+                            "demo_id": demo_id,
+                            "status": "pending",
+                            "created_at": datetime.utcnow(),
+                            "notification_type": "initial_submission",
+                            "marks_admin_contact": True,
+                            "messages": notification_messages,
+                        }
+                    )
+                except Exception as e:
+                    logger.exception(
+                        "Failed to queue notification job for demo %s: %s", demo_id, e
+                    )
 
             # --- Send organiser cancellation links ---
             try:
@@ -1088,7 +1394,13 @@ def init_routes(app):
             can_edit_demo = False
 
         # GET — render submission form
-        return render_template("submit.html", city_list=CITY_LIST, test_mode_allowed=test_mode_allowed, can_edit_demo=can_edit_demo)
+        return render_template(
+            "submit.html",
+            city_list=CITY_LIST,
+            test_mode_allowed=test_mode_allowed,
+            can_edit_demo=can_edit_demo,
+            submission_token=_new_submission_token(),
+        )
 
 
     @app.route("/report", methods=["GET", "POST"])
@@ -1405,7 +1717,185 @@ def init_routes(app):
         if _demo.recurs:
             toistuvuus = generate_demo_sentence(demo)
 
-        response = make_response(render_template("detail.html", demo=demo, toistuvuus=toistuvuus))
+        def _format_suggestion_date(raw_value):
+            date_obj = None
+            if isinstance(raw_value, datetime):
+                date_obj = raw_value.date()
+            elif isinstance(raw_value, date):
+                date_obj = raw_value
+            elif isinstance(raw_value, str):
+                try:
+                    date_obj = datetime.strptime(raw_value, "%Y-%m-%d").date()
+                except ValueError:
+                    date_obj = None
+            if not date_obj:
+                return raw_value
+            try:
+                return format_date(date_obj, format="d.M.yyyy")
+            except Exception:
+                return date_obj.strftime("%d.%m.%Y")
+
+        user_follow_orgs = _get_followed_org_ids()
+        user_follow_recurring = _get_followed_recurring_ids()
+
+        organizer_follow_map = {}
+        for org in demo.get("organizers") or []:
+            org_identifier = org.get("organization_id") or org.get("_id")
+            org_id_str = _stringify_id(org_identifier)
+            if org_id_str:
+                organizer_follow_map[org_id_str] = org_id_str in user_follow_orgs
+                org["organization_id_str"] = org_id_str
+
+        recurring_target_id = None
+        #if demo.get("recurs"):
+        #    recurring_target_id = _stringify_id(demo_obj._id)
+        if demo.get("parent"):
+            recurring_target_id = _stringify_id(demo.get("parent"))
+        recurring_following = bool(recurring_target_id and recurring_target_id in user_follow_recurring)
+
+        similar_demos = []
+        seen_similar_ids = {str(demo_obj._id)}
+        seen_similar_objectids = set()
+        initial_oid = _safe_objectid(demo_obj._id)
+        if initial_oid:
+            seen_similar_objectids.add(initial_oid)
+
+        def _append_similar(doc):
+            raw_id = doc.get("_id")
+            sid = _stringify_id(raw_id)
+            if not sid or sid in seen_similar_ids:
+                return
+            seen_similar_ids.add(sid)
+            if isinstance(raw_id, ObjectId):
+                seen_similar_objectids.add(raw_id)
+            formatted_date = _format_suggestion_date(doc.get("date"))
+            similar_demos.append(
+                {
+                    "id": sid,
+                    "title": doc.get("title"),
+                    "city": doc.get("city"),
+                    "date": doc.get("date"),
+                    "formatted_date": formatted_date,
+                    "start_time": doc.get("start_time"),
+                    "address": doc.get("address"),
+                    "slug": doc.get("slug"),
+                }
+            )
+
+        try:
+            today_str = date.today().strftime("%Y-%m-%d")
+            base_query = {
+                "_id": {"$ne": demo_obj._id},
+                "approved": True,
+                "hide": {"$ne": True},
+                "cancelled": {"$ne": True},
+                "date": {"$gte": demo_obj.date or today_str},
+            }
+            or_conditions = []
+            if demo_obj.city:
+                or_conditions.append({"city": demo_obj.city})
+            tag_list = [tag for tag in (demo.get("tags") or []) if isinstance(tag, str)]
+            if tag_list:
+                or_conditions.append({"tags": {"$in": tag_list}})
+            if or_conditions:
+                base_query["$or"] = or_conditions
+            cursor = (
+                mongo.demonstrations.find(
+                    base_query,
+                    {
+                        "_id": 1,
+                        "title": 1,
+                        "city": 1,
+                        "date": 1,
+                        "start_time": 1,
+                        "address": 1,
+                        "slug": 1,
+                    },
+                )
+                .sort("date", ASCENDING)
+                .limit(6)
+            )
+            for doc in cursor:
+                if len(similar_demos) >= 4:
+                    break
+                _append_similar(doc)
+
+            if len(similar_demos) < 4 and user_follow_orgs:
+                org_filter_values = []
+                for oid in user_follow_orgs:
+                    org_filter_values.append(oid)
+                    converted = _safe_objectid(oid)
+                    if converted:
+                        org_filter_values.append(converted)
+                org_query = {
+                    "_id": {"$nin": list(seen_similar_objectids)},
+                    "approved": True,
+                    "hide": {"$ne": True},
+                    "cancelled": {"$ne": True},
+                    "date": {"$gte": today_str},
+                    "organizers.organization_id": {"$in": org_filter_values},
+                }
+                org_cursor = (
+                    mongo.demonstrations.find(
+                        org_query,
+                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                    )
+                    .sort("date", ASCENDING)
+                    .limit(6)
+                )
+                for doc in org_cursor:
+                    if len(similar_demos) >= 4:
+                        break
+                    _append_similar(doc)
+
+            if len(similar_demos) < 4 and user_follow_recurring:
+                rec_filter_values = []
+                for rid in user_follow_recurring:
+                    rec_filter_values.append(rid)
+                    converted = _safe_objectid(rid)
+                    if converted:
+                        rec_filter_values.append(converted)
+                rec_query = {
+                    "_id": {"$nin": list(seen_similar_objectids)},
+                    "approved": True,
+                    "hide": {"$ne": True},
+                    "cancelled": {"$ne": True},
+                    "date": {"$gte": today_str},
+                    "$or": [
+                        {"parent": {"$in": rec_filter_values}},
+                        {"_id": {"$in": rec_filter_values}},
+                    ],
+                }
+                rec_cursor = (
+                    mongo.demonstrations.find(
+                        rec_query,
+                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                    )
+                    .sort("date", ASCENDING)
+                    .limit(6)
+                )
+                for doc in rec_cursor:
+                    if len(similar_demos) >= 4:
+                        break
+                    _append_similar(doc)
+        except Exception:
+            logger.exception("Failed to load similar demonstrations for %s", demo_id)
+
+        follow_meta = {
+            "organizer_follow_map": organizer_follow_map,
+            "recurring_target_id": recurring_target_id,
+            "recurring_following": recurring_following,
+        }
+
+        response = make_response(
+            render_template(
+                "detail.html",
+                demo=demo,
+                toistuvuus=toistuvuus,
+                similar_demos=similar_demos,
+                follow_meta=follow_meta,
+            )
+        )
         response.headers["X-Cache"] = "MISS"
 
         # Store response in cache for future requests (if available)
@@ -1426,6 +1916,43 @@ def init_routes(app):
             except Exception:
                 logger.exception("Failed to cache demonstration_detail for %s", demo_id)
 
+        return response
+
+    @app.route("/demonstration/<demo_id>/ics")
+    def download_demo_ics(demo_id):
+        """
+        Provide an .ics calendar download for a demonstration.
+        """
+        try:
+            demo_obj = Demonstration.load_by_id(demo_id)
+        except ValueError:
+            abort(404)
+        if not demo_obj:
+            abort(404)
+
+        # Respect visibility rules — unpublished demos only for admins
+        if (not demo_obj.approved and not current_user.has_permission("VIEW_DEMO")) or \
+           (demo_obj.hide and not current_user.has_permission("VIEW_DEMO")):
+            abort(401)
+
+        if not demo_obj.date or not demo_obj.start_time:
+            abort(400)
+
+        description = demo_obj.description or ""
+        # Strip basic HTML tags for safer ICS content
+        description_plain = re.sub(r"<[^>]+>", "", description)
+        ical_content = generate_ical_event(
+            demo_obj.title or "Mielenosoitus",
+            demo_obj.date,
+            demo_obj.start_time,
+            demo_obj.city or "",
+            demo_obj.address or "",
+            description_plain,
+        )
+
+        filename_base = secure_filename(f"{demo_obj.title or 'mielenosoitus'}.ics") or "mielenosoitus.ics"
+        response = Response(ical_content, mimetype="text/calendar; charset=utf-8")
+        response.headers["Content-Disposition"] = f'attachment; filename=\"{filename_base}\"'
         return response
 
     @app.route('/suggest_change/<demo_id>', methods=['GET', 'POST'])
@@ -1700,6 +2227,8 @@ def init_routes(app):
         total_count = stats.get("total_count", 0)
         future_count = stats.get("future_count", 0)
         past_count = stats.get("past_count", 0)
+        recurring_target_id = str(parent_demo._id)
+        recurring_following = recurring_target_id in _get_followed_recurring_ids()
 
         return render_template(
             "siblings.html",
@@ -1707,7 +2236,9 @@ def init_routes(app):
             total_count=total_count,
             future_count=future_count,
             past_count=past_count,
-            parent_id=parent
+            parent_id=parent,
+            recurring_target_id=recurring_target_id,
+            recurring_following=recurring_following,
         )
 
     @app.route("/ohjeet/")
@@ -1768,11 +2299,16 @@ def init_routes(app):
         
         if not _org.verified:
             _org.fill_url = url_for("fill", org_id=org_id)
+
+        is_following_org = False
+        if current_user.is_authenticated:
+            is_following_org = str(_org._id) in getattr(current_user, "followed_organizations", [])
        
         return render_template(
             "organizations/details.html",
             org=_org,
-            org_id=str(org_id)
+            org_id=str(org_id),
+            is_following_org=is_following_org,
         )
         
     @app.route("/organization/<org_id>/save_suggestion", methods=["POST"])
@@ -2055,6 +2591,90 @@ def init_routes(app):
         })
 
         return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
+
+    def _resolve_recurring_follow_id(raw_demo_id):
+        """Return the canonical recurring parent ID for follow actions."""
+        demo_oid = _safe_objectid(raw_demo_id)
+        if not demo_oid:
+            return None
+        demo_doc = mongo.demonstrations.find_one({"_id": demo_oid})
+        if demo_doc:
+            parent_id = demo_doc.get("parent")
+            if parent_id:
+                return str(parent_id)
+            if demo_doc.get("recurs"):
+                return str(demo_doc.get("_id"))
+            return None
+        parent_doc = mongo.recu_demos.find_one({"_id": demo_oid})
+        if parent_doc:
+            return str(parent_doc.get("_id"))
+        return None
+
+    @app.route("/api/follow/organization/<org_id>", methods=["POST"])
+    @login_required
+    def api_follow_organization(org_id):
+        org_oid = _safe_objectid(org_id)
+        if not org_oid:
+            return jsonify({"status": "ERROR", "message": _("Tuntematon organisaatio.")}), 400
+        org_doc = mongo.organizations.find_one({"_id": org_oid})
+        if not org_doc:
+            return jsonify({"status": "ERROR", "message": _("Organisaatiota ei löytynyt.")}), 404
+
+        str_id = str(org_oid)
+        if str_id not in getattr(current_user, "followed_organizations", []):
+            current_user.followed_organizations.append(str_id)
+        mongo.users.update_one(
+            {"_id": current_user._id},
+            {"$addToSet": {"followed_organizations": str_id}},
+        )
+        return jsonify({"status": "OK", "following": True})
+
+    @app.route("/api/unfollow/organization/<org_id>", methods=["POST"])
+    @login_required
+    def api_unfollow_organization(org_id):
+        org_oid = _safe_objectid(org_id)
+        if not org_oid:
+            return jsonify({"status": "ERROR", "message": _("Tuntematon organisaatio.")}), 400
+        str_id = str(org_oid)
+        if hasattr(current_user, "followed_organizations"):
+            current_user.followed_organizations = [
+                oid for oid in current_user.followed_organizations if oid != str_id
+            ]
+        mongo.users.update_one(
+            {"_id": current_user._id},
+            {"$pull": {"followed_organizations": str_id}},
+        )
+        return jsonify({"status": "OK", "following": False})
+
+    @app.route("/api/follow/recurring/<demo_id>", methods=["POST"])
+    @login_required
+    def api_follow_recurring(demo_id):
+        target_str = _resolve_recurring_follow_id(demo_id)
+        if not target_str:
+            return jsonify({"status": "ERROR", "message": _("Tätä mielenosoitusta ei voi seurata sarjana.")}), 400
+        if target_str not in getattr(current_user, "followed_recurring_demos", []):
+            current_user.followed_recurring_demos.append(target_str)
+        mongo.users.update_one(
+            {"_id": current_user._id},
+            {"$addToSet": {"followed_recurring_demos": target_str}},
+        )
+        return jsonify({"status": "OK", "following": True, "target_id": target_str})
+
+    @app.route("/api/unfollow/recurring/<demo_id>", methods=["POST"])
+    @login_required
+    def api_unfollow_recurring(demo_id):
+        target_str = _resolve_recurring_follow_id(demo_id)
+        if not target_str:
+            return jsonify({"status": "ERROR", "message": _("Tätä mielenosoitusta ei voi seurata sarjana.")}), 400
+        if hasattr(current_user, "followed_recurring_demos"):
+            current_user.followed_recurring_demos = [
+                rid for rid in current_user.followed_recurring_demos if rid != target_str
+            ]
+        mongo.users.update_one(
+            {"_id": current_user._id},
+            {"$pull": {"followed_recurring_demos": target_str}},
+        )
+        return jsonify({"status": "OK", "following": False, "target_id": target_str})
 
     @app.route("/manifest.json")
     def manifest():

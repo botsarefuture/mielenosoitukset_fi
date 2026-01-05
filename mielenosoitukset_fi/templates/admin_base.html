@@ -239,6 +239,11 @@ function confirmAction(action, taskId) {
             <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
+            <i class="fas fa-triangle-exclamation me-2"></i>{{ _('Ilmoitusvirheet') }}
+          </a>
+        </li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}

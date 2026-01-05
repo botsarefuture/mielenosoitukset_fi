@@ -44,7 +44,39 @@ def profile(username=None):
         user_obj = User.from_db(user_data)
         user_obj.followers_count = len(user_obj.followers)
         user_obj.following_count = len(user_obj.following)
-        return render_template("users/profile/profile.html", user=user_obj)
+
+        followed_orgs = []
+        followed_recurring = []
+        if current_user.is_authenticated and current_user.username == user_obj.username:
+            org_ids = [org_id for org_id in user_obj.followed_organizations or [] if org_id]
+            if org_ids:
+                org_cursor = mongo.organizations.find({"_id": {"$in": [ObjectId(oid) for oid in org_ids]}})
+                for doc in org_cursor:
+                    doc["id"] = str(doc.get("_id"))
+                    followed_orgs.append(doc)
+
+            recurring_ids = [rid for rid in user_obj.followed_recurring_demos or [] if rid]
+            if recurring_ids:
+                valid_object_ids = []
+                for rid in recurring_ids:
+                    try:
+                        valid_object_ids.append(ObjectId(rid))
+                    except Exception:
+                        continue
+                if valid_object_ids:
+                    cursor = mongo.recu_demos.find({"_id": {"$in": valid_object_ids}})
+                    for doc in cursor:
+                        canonical_id = str(doc.get("_id"))
+                        doc["id"] = canonical_id
+                        doc["link"] = url_for("siblings_meeting", parent=canonical_id)
+                        followed_recurring.append(doc)
+
+        return render_template(
+            "users/profile/profile.html",
+            user=user_obj,
+            followed_orgs=followed_orgs,
+            followed_recurring=followed_recurring,
+        )
     else:
         flash_message("Käyttäjäprofiilia ei löytynyt.", "warning")
         return redirect(url_for("index"))

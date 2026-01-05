@@ -90,7 +90,95 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       "url": "{{ url_for('org', org_id=demo['organizers'][0]['organization_id']) if demo.get('organizers') and demo['organizers'][0].get('organization_id') else '#' }}"
     }
   }
-  </script>
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".follow-org-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        try {
+          await toggleOrganizationFollow(btn);
+        } catch (err) {
+          console.error(err);
+          alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+        }
+      });
+    });
+
+    const recurringBtn = document.getElementById("follow-recurring-btn");
+    if (recurringBtn) {
+      recurringBtn.addEventListener("click", async () => {
+        try {
+          await toggleRecurringFollow(recurringBtn);
+        } catch (err) {
+          console.error(err);
+          alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+        }
+      });
+    }
+  });
+
+  async function toggleOrganizationFollow(button) {
+    if (!button || button.dataset.loading === "1") return;
+    const orgId = button.dataset.orgId;
+    const following = button.dataset.following === "1";
+    const endpoint = following ? `/api/unfollow/organization/${orgId}` : `/api/follow/organization/${orgId}`;
+    button.dataset.loading = "1";
+    button.classList.add("loading");
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+    button.dataset.loading = "0";
+    button.classList.remove("loading");
+    if (!response.ok) {
+      throw new Error("Failed follow update");
+    }
+    const data = await response.json();
+    updateFollowButton(button, data.following);
+  }
+
+  async function toggleRecurringFollow(button) {
+    if (!button || button.dataset.loading === "1") return;
+    const targetId = button.dataset.target;
+    const following = button.dataset.following === "1";
+    const endpoint = following ? `/api/unfollow/recurring/${targetId}` : `/api/follow/recurring/${targetId}`;
+    button.dataset.loading = "1";
+    button.classList.add("loading");
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+    button.dataset.loading = "0";
+    button.classList.remove("loading");
+    if (!response.ok) {
+      throw new Error("Failed follow update");
+    }
+    const data = await response.json();
+    updateFollowButton(button, data.following);
+  }
+
+  function updateFollowButton(button, following) {
+    if (!button) return;
+    button.dataset.following = following ? "1" : "0";
+    const label = following ? button.dataset.followingLabel : button.dataset.followLabel;
+    const textNode = button.querySelector("span");
+    if (textNode && label) {
+      textNode.textContent = label;
+    }
+    if (following) {
+      button.classList.add("btn-primary");
+      button.classList.remove("btn-outline-primary", "btn-outline-secondary");
+    } else {
+      button.classList.remove("btn-primary");
+      if (button.id === "follow-recurring-btn") {
+        button.classList.add("btn-outline-secondary");
+      } else {
+        button.classList.add("btn-outline-primary");
+      }
+    }
+  }
+</script>
 {% endblock %}
 
 {% block styles %}
@@ -131,6 +219,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     --color-gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
     --color-gradient-secondary: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
     --color-gradient-accent: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  }
+
+  .dark body .text-muted {
+    color: #cbd5f5 !important;
   }
 
   * {
@@ -685,6 +777,58 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     margin: 3rem 0;
   }
 
+  .similar-demos {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--color-shadow);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+
+  .similar-demos .section-header p {
+    color: var(--color-text-secondary);
+  }
+
+  .similar-demos .suggestion-card {
+    background: light-dark(#fdfdfd, #111827);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    height: 100%;
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .similar-demos .suggestion-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-primary);
+    box-shadow: var(--color-shadow-lg);
+  }
+
+  .similar-demos .card-date {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .similar-demos .card-link {
+    color: var(--color-primary);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+  }
+
+  .similar-demos .card-link i {
+    transition: transform 0.2s ease;
+  }
+
+  .similar-demos .suggestion-card:hover .card-link i {
+    transform: translateX(3px);
+  }
+
   /* Report Button */
   #report-selection-btn {
     position: absolute;
@@ -1092,12 +1236,47 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <i class="fa-solid fa-bell-slash"></i>
       {{ _('Muistutukset eivät ole saatavilla perutulle tapahtumalle') }}
     </button>
+    <button type="button" class="btn btn-outline-primary" disabled
+      title="{{ _('Kalenterivienti ei ole saatavilla perutuille tapahtumille') }}">
+      <i class="fa-regular fa-calendar-plus"></i>
+      {{ _('Lisää kalenteriin (.ics)') }}
+    </button>
     {% else %}
     <button type="button" class="btn btn-primary" id="open-reminder-btn" data-bs-toggle="modal"
       data-bs-target="#reminder-modal">
       <i class="fa-solid fa-bell"></i>
       {{ _('Tilaa muistutus') }}
     </button>
+    <a class="btn btn-outline-primary" href="{{ url_for('download_demo_ics', demo_id=demo['_id']) }}">
+      <i class="fa-regular fa-calendar-plus"></i>
+      {{ _('Lisää kalenteriin (.ics)') }}
+    </a>
+    {% if follow_meta.recurring_target_id %}
+      {% if current_user.is_authenticated %}
+      <button type="button"
+              class="btn btn-outline-secondary"
+              id="follow-recurring-btn"
+              data-target="{{ follow_meta.recurring_target_id }}"
+              data-following="{{ '1' if follow_meta.recurring_following else '0' }}"
+              data-follow-label="{{ _('Seuraa sarjaa') }}"
+              data-following-label="{{ _('Seurataan sarjaa') }}">
+        <i class="fa-solid fa-arrows-spin"></i>
+        <span>
+          {% if follow_meta.recurring_following %}
+            {{ _('Seurataan sarjaa') }}
+          {% else %}
+            {{ _('Seuraa sarjaa') }}
+          {% endif %}
+        </span>
+      </button>
+      {% else %}
+      <button type="button" class="btn btn-outline-secondary" disabled
+        title="{{ _('Kirjaudu sisään seurataksesi tätä sarjaa') }}">
+        <i class="fa-solid fa-arrows-spin"></i>
+        {{ _('Seuraa sarjaa') }}
+      </button>
+      {% endif %}
+    {% endif %}
     {% endif %}
   </div>
 
@@ -1326,6 +1505,28 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
               <span><i class="fa-solid fa-tags"></i>{{ org.tags|length }} {{ _('tunnistetta') }}</span>
               {% endif %}
             </div>
+            {% set organizer_id_str = org.organization_id_str %}
+            {% if organizer_id_str %}
+              {% if current_user.is_authenticated %}
+              <button type="button"
+                      class="btn btn-sm btn-outline-primary follow-org-btn mt-2"
+                      data-org-id="{{ organizer_id_str }}"
+                      data-following="{{ '1' if follow_meta.organizer_follow_map.get(organizer_id_str) else '0' }}"
+                      data-follow-label="{{ _('Seuraa organisaatiota') }}"
+                      data-following-label="{{ _('Seurataan organisaatiota') }}">
+                <i class="fa-regular fa-star"></i>
+                <span>
+                  {% if follow_meta.organizer_follow_map.get(organizer_id_str) %}
+                    {{ _('Seurataan organisaatiota') }}
+                  {% else %}
+                    {{ _('Seuraa organisaatiota') }}
+                  {% endif %}
+                </span>
+              </button>
+              {% else %}
+              <div class="text-muted small mt-2">{{ _('Kirjaudu sisään seurataaksesi tätä organisaatiota') }}</div>
+              {% endif %}
+            {% endif %}
           </div>
         </div>
 
@@ -1401,6 +1602,46 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     </div>
     {% endif %}
   </section>
+
+  {% if similar_demos %}
+  <section class="similar-demos animate-fade-in-up">
+    <div class="section-header mb-3">
+      <h2 class="h4 mb-1">{{ _('Muita sinua kiinnostavia tapahtumia') }}</h2>
+      <p class="text-muted mb-0">{{ _('Poimimme samankaltaisia tai saman kaupungin tulevia tapahtumia.') }}</p>
+    </div>
+    <div class="row g-3">
+      {% for suggestion in similar_demos %}
+      <div class="col-12 col-md-6 col-lg-3">
+        <a class="text-decoration-none text-reset h-100 d-block" href="{{ url_for('demonstration_detail', demo_id=suggestion.slug or suggestion.id) }}">
+          <div class="suggestion-card">
+            {% set display_date = suggestion.formatted_date or suggestion.date %}
+            {% if display_date or suggestion.city %}
+            <div class="card-date">
+              <i class="fa-solid fa-calendar-day"></i>
+              <span>
+                {% if display_date %}{{ display_date }}{% endif %}
+                {% if suggestion.city %}
+                  {% if display_date %} · {% endif %}
+                  {{ suggestion.city }}
+                {% endif %}
+              </span>
+            </div>
+            {% endif %}
+            <h3 class="h6 mt-2 mb-2">{{ suggestion.title }}</h3>
+            {% if suggestion.address %}
+            <div class="text-muted small">{{ suggestion.address }}</div>
+            {% endif %}
+            <span class="card-link">
+              {{ _('Katso tapahtuma') }}
+              <i class="fa-solid fa-arrow-right-long"></i>
+            </span>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
 
   <!-- Navigation -->
   <div class="nav-buttons animate-fade-in-up">

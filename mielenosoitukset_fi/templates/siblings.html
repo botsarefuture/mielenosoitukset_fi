@@ -99,6 +99,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const followBtn = document.getElementById('follow-recurring-btn');
+  if (!followBtn) return;
+  followBtn.addEventListener('click', async () => {
+    if (followBtn.dataset.loading === "1") return;
+    const targetId = followBtn.dataset.target;
+    const following = followBtn.dataset.following === "1";
+    const endpoint = following ? `/api/unfollow/recurring/${targetId}` : `/api/follow/recurring/${targetId}`;
+    followBtn.dataset.loading = "1";
+    followBtn.classList.add('loading');
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      });
+      if (!response.ok) {
+        throw new Error("Failed to toggle follow");
+      }
+      const data = await response.json();
+      updateRecurringFollowButton(followBtn, data.following);
+    } catch (err) {
+      console.error(err);
+      alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+    } finally {
+      followBtn.dataset.loading = "0";
+      followBtn.classList.remove('loading');
+    }
+  });
+});
+
+function updateRecurringFollowButton(button, following) {
+  button.dataset.following = following ? "1" : "0";
+  const label = following ? button.dataset.followingLabel : button.dataset.followLabel;
+  const span = button.querySelector("span");
+  if (span && label) {
+    span.textContent = label;
+  }
+  if (following) {
+    button.classList.remove("button-light");
+    button.classList.add("button-primary");
+  } else {
+    button.classList.remove("button-primary");
+    button.classList.add("button-light");
+  }
+}
 </script>
 
 {% endblock %}
@@ -705,6 +751,30 @@ body {
       <p class="recurring-desc">
         {{ _('Tässä on lista kaikista mielenosoituksista, jotka ovat osa tätä toistuvaa tapahtumaa. Näet sekä menneet että tulevat mielenosoitukset.') }}
       </p>
+      {% if recurring_target_id %}
+        <div class="mt-4">
+          {% if current_user.is_authenticated %}
+          <button type="button"
+                  class="button button-light"
+                  id="follow-recurring-btn"
+                  data-target="{{ recurring_target_id }}"
+                  data-following="{{ '1' if recurring_following else '0' }}"
+                  data-follow-label="{{ _('Seuraa sarjaa') }}"
+                  data-following-label="{{ _('Seurataan sarjaa') }}">
+            <i class="fa-solid fa-arrows-spin me-1"></i>
+            <span>
+              {% if recurring_following %}
+                {{ _('Seurataan sarjaa') }}
+              {% else %}
+                {{ _('Seuraa sarjaa') }}
+              {% endif %}
+            </span>
+          </button>
+          {% else %}
+          <p class="text-muted mb-0">{{ _('Kirjaudu sisään seurataksesi tätä toistuvaa tapahtumaa ja saadaksesi ilmoituksia muutoksista.') }}</p>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </section>
 

@@ -225,6 +225,24 @@ def trigger_cancellation_notifications(demo_doc: dict) -> None:
         if email:
             recipients.add(email)
 
+    recurring_parent = demo.get("parent") or (demo.get("_id") if demo.get("recurs") else None)
+    if recurring_parent:
+        parent_str = str(recurring_parent)
+        follower_cursor = mongo.users.find(
+            {"followed_recurring_demos": parent_str},
+            {"email": 1},
+        )
+        for follower in follower_cursor:
+            user_id = follower.get("_id")
+            if user_id:
+                try:
+                    create_notification(user_id, "recurring_demo_update", payload, detail_link)
+                except Exception:
+                    logger.exception("Failed to create recurring follow notification for %s", user_id)
+            email = follower.get("email")
+            if email:
+                recipients.add(email)
+
     if not recipients:
         return
 

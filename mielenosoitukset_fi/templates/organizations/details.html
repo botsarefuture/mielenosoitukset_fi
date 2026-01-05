@@ -689,6 +689,29 @@
         {% if org.description %}
         <p class="org-desc">{{ org.description }}</p>
         {% endif %}
+
+        <div class="mt-3">
+          {% if current_user.is_authenticated %}
+          <button type="button"
+                  class="btn btn-light text-dark fw-semibold"
+                  id="org-follow-btn"
+                  data-org-id="{{ org_id }}"
+                  data-following="{{ '1' if is_following_org else '0' }}"
+                  data-follow-label="{{ _('Seuraa organisaatiota') }}"
+                  data-following-label="{{ _('Seurataan organisaatiota') }}">
+            <i class="fa-regular fa-star me-1"></i>
+            <span>
+              {% if is_following_org %}
+                {{ _('Seurataan organisaatiota') }}
+              {% else %}
+                {{ _('Seuraa organisaatiota') }}
+              {% endif %}
+            </span>
+          </button>
+          {% else %}
+          <p class="text-secondary mb-0">{{ _('Kirjaudu sisään seurataksesi organisaatioita ja saadaksesi ehdotuksia niiden tapahtumista.') }}</p>
+          {% endif %}
+        </div>
       </div>
     </div>
 
@@ -1310,6 +1333,54 @@
       top: 0,
       behavior: 'smooth'
     });
+  }
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const followBtn = document.getElementById('org-follow-btn');
+    if (!followBtn) return;
+    followBtn.addEventListener('click', async () => {
+      if (followBtn.dataset.loading === "1") return;
+      const orgId = followBtn.dataset.orgId;
+      const following = followBtn.dataset.following === "1";
+      const endpoint = following ? `/api/unfollow/organization/${orgId}` : `/api/follow/organization/${orgId}`;
+      followBtn.dataset.loading = "1";
+      followBtn.classList.add("loading");
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        if (!response.ok) {
+          throw new Error("Failed to update follow");
+        }
+        const data = await response.json();
+        updateOrgFollowButton(followBtn, data.following);
+      } catch (err) {
+        console.error(err);
+        alert("{{ _('Seurannan päivittäminen epäonnistui. Yritä uudelleen.') }}");
+      } finally {
+        followBtn.dataset.loading = "0";
+        followBtn.classList.remove("loading");
+      }
+    });
+  });
+
+  function updateOrgFollowButton(button, following) {
+    button.dataset.following = following ? "1" : "0";
+    const label = following ? button.dataset.followingLabel : button.dataset.followLabel;
+    const span = button.querySelector("span");
+    if (span && label) {
+      span.textContent = label;
+    }
+    if (following) {
+      button.classList.add("btn-success");
+      button.classList.remove("btn-light");
+    } else {
+      button.classList.remove("btn-success");
+      button.classList.add("btn-light");
+    }
   }
 </script>
 

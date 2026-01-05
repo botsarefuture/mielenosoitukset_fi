@@ -74,6 +74,9 @@ def serialize_notification(doc: dict) -> dict:
     elif n_type == "demo_cancelled":
         message = _("Mielenosoitus peruttu: ") + payload.get("demo_title", "")
         icon = "fa-solid fa-ban"
+    elif n_type == "recurring_demo_update":
+        message = _("Seuraamasi mielenosoitussarja päivittyi: ") + payload.get("demo_title", "")
+        icon = "fa-solid fa-arrows-rotate"
     else:
         # Fallback: either explicit message field or generic info
         message = doc.get("message", "")

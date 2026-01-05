@@ -77,6 +77,8 @@ class User(UserMixin):
             "mfa_enabled": False,
             "followers": [],
             "following": [],
+            "followed_organizations": [],
+            "followed_recurring_demos": [],
         }
         return user_doc
     
@@ -132,6 +134,8 @@ class User(UserMixin):
         bio: Optional[str] = None,
         followers: Optional[List[str]] = None,
         following: Optional[List[str]] = None,
+        followed_organizations: Optional[List[str]] = None,
+        followed_recurring_demos: Optional[List[str]] = None,
         global_admin: bool = False,
         confirmed: bool = False,
         global_permissions: Optional[List[str]] = None,
@@ -154,6 +158,8 @@ class User(UserMixin):
         self.bio               = bio
         self.followers         = followers or []
         self.following         = following or []
+        self.followed_organizations = followed_organizations or []
+        self.followed_recurring_demos = followed_recurring_demos or []
         self.global_admin      = global_admin
         self.confirmed         = confirmed
         self.global_permissions= global_permissions or []
@@ -184,6 +190,8 @@ class User(UserMixin):
             bio             = doc.get("bio"),
             followers       = doc.get("followers", []),
             following       = doc.get("following", []),
+            followed_organizations = doc.get("followed_organizations", []),
+            followed_recurring_demos = doc.get("followed_recurring_demos", []),
             global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
             confirmed       = doc.get("confirmed", False),
             global_permissions = doc.get("global_permissions", []),
@@ -376,6 +384,30 @@ class User(UserMixin):
             self.following.remove(oid)
             self.save()
 
+    def follow_organization(self, organization_id: Union[str, ObjectId]):
+        org_id = str(organization_id)
+        if org_id not in self.followed_organizations:
+            self.followed_organizations.append(org_id)
+            self.save()
+
+    def unfollow_organization(self, organization_id: Union[str, ObjectId]):
+        org_id = str(organization_id)
+        if org_id in self.followed_organizations:
+            self.followed_organizations.remove(org_id)
+            self.save()
+
+    def follow_recurring_demo(self, recurring_id: Union[str, ObjectId]):
+        rec_id = str(recurring_id)
+        if rec_id not in self.followed_recurring_demos:
+            self.followed_recurring_demos.append(rec_id)
+            self.save()
+
+    def unfollow_recurring_demo(self, recurring_id: Union[str, ObjectId]):
+        rec_id = str(recurring_id)
+        if rec_id in self.followed_recurring_demos:
+            self.followed_recurring_demos.remove(rec_id)
+            self.save()
+
     def ban_user(self):
         self.banned = True
         self.active = False
@@ -409,6 +441,8 @@ class User(UserMixin):
             "bio": self.bio,
             "followers": self.followers,
             "following": self.following,
+            "followed_organizations": self.followed_organizations,
+            "followed_recurring_demos": self.followed_recurring_demos,
             "global_admin": self.global_admin,
             "confirmed": self.confirmed,
             "global_permissions": self.global_permissions,

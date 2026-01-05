@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+_No entries yet._
+
+## v4.0.0-beta.2 – *Follower Delight Edition* 🌟
+
 ### Added
 * **Demonstration Cancellation Workflow**:
   * New `/cancel_demonstration/<token>` route for organizers to securely cancel events via email links.
@@ -65,6 +69,16 @@
   * Per-job log view exposes detailed metadata, JSON payloads, and stack traces directly in the admin UI.
   * Background jobs now capture every demo mutation in the audit log + edit history (with per-run references), enabling the new UI to list exact demonstrations/fields touched.
 
+* **Submission Reliability Enhancements**:
+  * Structured submission error logging stored in `demo_submission_errors` with request/form metadata.
+  * Admin dashboard at `/admin/demo/submission_errors` lists the latest errors with date/status filters, keyword search, and top error-code stats.
+* **Notification Pipeline**:
+  * New background job (`process_submission_notifications`) dequeues submitter/admin emails, enforces 24h admin reminders, and updates `admin_notification_last_sent_at`.
+* **End-User Upgrades**:
+  * Demo detail pages now expose “Add to calendar (.ics)” downloads plus show “Similar demonstrations” suggestions.
+  * Logged-in visitors can follow organizers and recurring demo series directly from detail cards, organization pages, and the sibling (recurring) overview.
+  * User profiles gained “Seuraamani organisaatiot” and “Seuraamani toistuvat mielenosoitukset” sections summarizing all follows with quick links.
+
 ### Changed
 * Moved all migrations to a dedicated `utils/migrations/` folder.
 * Improved analytics rollup function to support single execution via `run_once` parameter.
@@ -83,20 +97,6 @@
 * Demo cards now display "Peruttu" (Cancelled) badge for cancelled events.
 * Preview image template redesigned to improve contrast and theme-neutral appearance for automatically generated promo cards.
 
-## v4.0.0-beta.2 – *Follower Delight Edition* 🌟
-
-### Added
-* **Submission Reliability Enhancements**:
-  * Structured submission error logging stored in `demo_submission_errors` with request/form metadata.
-  * Admin dashboard at `/admin/demo/submission_errors` lists the latest errors with date/status filters, keyword search, and top error-code stats.
-* **Notification Pipeline**:
-  * New background job (`process_submission_notifications`) dequeues submitter/admin emails, enforces 24h admin reminders, and updates `admin_notification_last_sent_at`.
-* **End-User Upgrades**:
-  * Demo detail pages now expose “Add to calendar (.ics)” downloads plus show “Similar demonstrations” suggestions.
-  * Logged-in visitors can follow organizers and recurring demo series directly from detail cards, organization pages, and the sibling (recurring) overview.
-  * User profiles gained “Seuraamani organisaatiot” and “Seuraamani toistuvat mielenosoitukset” sections summarizing all follows with quick links.
-
-### Changed
 * Admin merge workflow expanded to guided/manual modes with submitter awareness, case log updates, and recommendation handling.
 * Demo submission form enforces stricter required-field validation, idempotent fingerprints, and consistent AJAX error messaging (with error codes surfaced to users).
 * Recurring follow APIs now normalize the canonical parent id via `recu_demos`, ensuring child occurrences map to the same follow record in every view.

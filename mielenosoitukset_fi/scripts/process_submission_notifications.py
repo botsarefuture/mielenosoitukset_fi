@@ -58,6 +58,8 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
     now = datetime.utcnow()
     cutoff = now - timedelta(hours=24)
 
+    today = datetime.utcnow().date()
+
     query = {
         "$and": [
             {"approved": False},
@@ -68,6 +70,12 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
                 "$or": [
                     {"admin_notification_last_sent_at": {"$exists": False}},
                     {"admin_notification_last_sent_at": {"$lte": cutoff}},
+                ]
+            },
+            {
+                "$or": [
+                    {"date": {"$gte": today.strftime("%Y-%m-%d")}},
+                    {"date": {"$exists": False}},
                 ]
             },
         ]
@@ -81,6 +89,19 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
     for demo in candidates:
         demo_id = demo["_id"]
         if _pending_admin_job_exists(queue, demo_id):
+            continue
+
+        if demo.get("rejected"):
+            continue
+
+        try:
+            demo_date = demo.get("date")
+            if demo_date:
+                parsed_date = datetime.strptime(demo_date, "%Y-%m-%d").date()
+                if parsed_date < today:
+                    continue
+        except Exception:
+            # If date parsing fails, prefer to skip reminder
             continue
 
         submitter = db.submitters.find_one({"demonstration_id": demo_id}) or {}

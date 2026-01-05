@@ -6,6 +6,16 @@
 
 _No entries yet._
 
+## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
+
+### Changed
+* **Cache safety improvements**:
+  * Added smarter skip logic so authenticated users get isolated cache entries (or bypass when flashes occur) without leaving public endpoints uncached.
+  * Demonstration detail, RSS feed, API `/demonstrations`, and debug `/ping` now use the new helpers with per-viewer cache keys, preventing stale/admin-only content from leaking to guests.
+* **Follow UI polish**:
+  * Demo detail organizer cards now show a compact pill in the top-right corner that toggles between `SEURAA` / `SEURATAAN` with animated star icons.
+  * Organization detail pages moved the follow CTA out of the hero banner into a dedicated “Pysy ajan tasalla” card, reusing the same pill interaction for a consistent experience.
+
 ## v4.0.0-beta.2 – *Follower Delight Edition* 🌟
 
 ### Added

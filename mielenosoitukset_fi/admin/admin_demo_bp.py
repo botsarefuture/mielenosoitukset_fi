@@ -17,6 +17,8 @@ from flask import (
     url_for,
     make_response,
     g,
+    abort,
+    has_request_context,
 )
 from flask_login import current_user, login_required
 from pymongo import DESCENDING
@@ -781,11 +783,16 @@ def _require_valid_objectid(oid: str) -> ObjectId:
         abort(400, "Invalid id")
     return ObjectId(oid)
 
-def _registry_upsert_initial(token_hash: str, action: str, demo_id: str):
+def _registry_upsert_initial(token_hash: str, action: str, demo_id: str, creator: str | None = None):
     """
     Create registry doc if missing. Do not bind IP yet (bind on first GET).
     """
     now = _now_utc()
+    if not creator:
+        if has_request_context():
+            creator = _get_actor_label()
+        else:
+            creator = "[system]"
     mongo[MAGIC_COLLECTION].update_one(
         {"token_hash": token_hash},
         {
@@ -800,6 +807,7 @@ def _registry_upsert_initial(token_hash: str, action: str, demo_id: str):
                 "revoked": False,
                 "ua_first": None,
                 "ua_last": None,
+                "created_by": creator,
             }
         },
         upsert=True,
@@ -894,6 +902,20 @@ def _check_and_bind(action: str, token: str) -> dict:
 def _mark_used(doc_id):
     mongo[MAGIC_COLLECTION].update_one({"_id": doc_id}, {"$set": {"used_at": _now_utc()}})
 
+
+def _revoke_tokens_for_demo(demo_id: str, actions: list[str]):
+    if not demo_id or not actions:
+        return
+    mongo[MAGIC_COLLECTION].update_many(
+        {
+            "demo_id": str(demo_id),
+            "action": {"$in": actions},
+            "used_at": {"$exists": False},
+            "revoked": {"$ne": True},
+        },
+        {"$set": {"revoked": True, "revoked_at": _now_utc()}},
+    )
+
 def _load_demo_or_bust(demo_id: str):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:
@@ -908,18 +930,51 @@ def _load_demo_or_bust(demo_id: str):
 def generate_demo_preview_link(demo_id: str) -> str:
     # Create signed token and registry doc
     token = serializer.dumps(str(demo_id), salt="preview-demo")
-    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id))
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_("%(user)s loi esikatselulinkin") % {"user": actor},
+        details={"token_type": "preview"},
+    )
     return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
 
 def generate_demo_approve_link(demo_id: str) -> str:
     token = serializer.dumps(str(demo_id), salt="approve-demo")
-    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id))
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_("%(user)s loi hyväksyntälinkin") % {"user": actor},
+        details={"token_type": "approve"},
+    )
     return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
 
 def generate_demo_reject_link(demo_id: str) -> str:
     token = serializer.dumps(str(demo_id), salt="reject-demo")
-    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id))
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_("%(user)s loi hylkäyslinkin") % {"user": actor},
+        details={"token_type": "reject"},
+    )
     return url_for("admin_demo.reject_demo_with_token", token=token, _external=True)
+
+def generate_demo_edit_link_token(demo_id: str) -> str:
+    token = serializer.dumps(str(demo_id), salt="edit-demo")
+    actor = _get_actor_label()
+    _registry_upsert_initial(_hash_token(token), "edit", str(demo_id), actor)
+    log_demo_audit_entry(
+        demo_id,
+        action="token_created",
+        message=_("%(user)s loi muokkauslinkin") % {"user": actor},
+        details={"token_type": "edit"},
+    )
+    return url_for("admin_demo.edit_demo_with_token", token=token, _external=True)
 
 # ------------------------------------------------------------------------------
 # PREVIEW (read-only) – allow via GET (single-use still enforced & IP-bound)
@@ -976,6 +1031,8 @@ def approve_demo_with_token(token):
         {"_id": _require_valid_objectid(demo_id)},
         {"$set": {"approved": True, "rejected": False}}
     )
+    _revoke_tokens_for_demo(demo_id, ["reject", "edit"])
+    _revoke_tokens_for_demo(demo_id, ["reject"])
 
     demo_url = url_for("demonstration_detail", demo_id=demo_id, _external=True)
 
@@ -1031,6 +1088,7 @@ def reject_demo_with_token(token):
         {"_id": _require_valid_objectid(demo_id)},
         {"$set": {"approved": False, "rejected": True}}
     )
+    _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 
     # Notify submitter
     submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
@@ -2139,7 +2197,7 @@ def send_edit_link(demo_id):
     try:
         data = request.get_json() if request.is_json else request.form
         email = data.get("email")
-        edit_link = data.get("edit_link")
+        edit_link = data.get("edit_link") or generate_demo_edit_link_token(demo_id)
 
         if not email:
             return jsonify(
@@ -2179,10 +2237,7 @@ def generate_edit_link(demo_id):
         JSON response containing the edit link or an error message.
     """
     try:
-        token = serializer.dumps(demo_id, salt="edit-demo")
-        edit_link = url_for(
-            "admin_demo.edit_demo_with_token", token=token, _external=True
-        )
+        edit_link = generate_demo_edit_link_token(demo_id)
         return jsonify({"status": "OK", "edit_link": edit_link})
     except Exception as e:
         logging.error("An error occurred while generating the edit link: %s", str(e))
@@ -3019,6 +3074,118 @@ def audit_timeline():
     )
 
 
+@admin_demo_bp.route("/tokens", methods=["GET", "POST"])
+@login_required
+@admin_required
+def manage_magic_tokens():
+    if not getattr(current_user, "global_admin", False):
+        abort(403)
+
+    if request.method == "POST":
+        if request.form.get("revoke_all") == "1":
+            result = mongo[MAGIC_COLLECTION].update_many(
+                {
+                    "revoked": {"$ne": True},
+                    "$or": [
+                        {"used_at": {"$exists": False}},
+                        {"used_at": None},
+                    ],
+                },
+                {"$set": {"revoked": True, "revoked_at": _now_utc()}},
+            )
+            flash_message(_("{} linkkiä mitätöitiin.").format(result.modified_count), "success")
+        else:
+            token_id = request.form.get("token_id")
+            if token_id and ObjectId.is_valid(token_id):
+                token_doc = mongo[MAGIC_COLLECTION].find_one_and_update(
+                    {"_id": ObjectId(token_id)},
+                    {"$set": {"revoked": True, "revoked_at": _now_utc()}},
+                    return_document=True,
+                )
+                flash_message(_("Linkki mitätöitiin."), "success")
+                if token_doc:
+                    log_demo_audit_entry(
+                        token_doc.get("demo_id"),
+                        action="token_revoked",
+                        message=_("%(user)s mitätöi yksittäisen linkin").format(user=_get_actor_label()),
+                        details={"token_id": token_id, "token_type": token_doc.get("action")},
+                    )
+        return redirect(url_for("admin_demo.manage_magic_tokens"))
+
+    filters = {
+        "action": (request.args.get("action") or "").strip(),
+        "demo_id": (request.args.get("demo_id") or "").strip(),
+        "status": (request.args.get("status") or "").strip(),
+    }
+
+    query = {}
+    if filters["action"]:
+        query["action"] = filters["action"]
+    if filters["demo_id"]:
+        query["demo_id"] = filters["demo_id"]
+    if filters["status"] == "active":
+        query["revoked"] = {"$ne": True}
+        query["used_at"] = {"$exists": False}
+    elif filters["status"] == "revoked":
+        query["revoked"] = True
+    elif filters["status"] == "used":
+        query["used_at"] = {"$exists": True}
+
+    tokens = list(
+        mongo[MAGIC_COLLECTION]
+        .find(query)
+        .sort("created_at", -1)
+        .limit(300)
+    )
+
+    summary_pipeline = []
+    if query:
+        summary_pipeline.append({"$match": query})
+    summary_pipeline.append({"$group": {"_id": "$action", "count": {"$sum": 1}}})
+    action_counts = {
+        doc["_id"] or "unknown": doc.get("count", 0)
+        for doc in mongo[MAGIC_COLLECTION].aggregate(summary_pipeline)
+    }
+
+    demo_map = {}
+    demo_ids = {t.get("demo_id") for t in tokens if t.get("demo_id")}
+    obj_ids = [ObjectId(d) for d in demo_ids if ObjectId.is_valid(d)]
+    if obj_ids:
+        for doc in mongo.demonstrations.find({"_id": {"$in": obj_ids}}, {"title": 1, "date": 1, "city": 1}):
+            demo_map[str(doc["_id"])] = doc
+
+    def _fmt(dt):
+        if isinstance(dt, datetime):
+            return dt.strftime("%d.%m.%Y %H:%M")
+        return "-"
+
+    for token in tokens:
+        token["_id"] = str(token["_id"])
+        demo_info = demo_map.get(token.get("demo_id"))
+        if demo_info:
+            token["demo_title"] = demo_info.get("title")
+            token["demo_date"] = demo_info.get("date")
+            token["demo_city"] = demo_info.get("city")
+        token["created_by_display"] = token.get("created_by") or "-"
+        token["created_at_display"] = _fmt(token.get("created_at"))
+        token["expires_at_display"] = _fmt(token.get("expires_at"))
+        token["first_seen_display"] = _fmt(token.get("first_seen_at"))
+        token["used_at_display"] = _fmt(token.get("used_at"))
+        token["revoked_at_display"] = _fmt(token.get("revoked_at"))
+        token["ua_first_display"] = token.get("ua_first")
+        token["ua_last_display"] = token.get("ua_last")
+
+    distinct_actions = sorted(mongo[MAGIC_COLLECTION].distinct("action"))
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/magic_tokens.html",
+        tokens=tokens,
+        filters=filters,
+        actions=distinct_actions,
+        action_counts=action_counts,
+    )
+
+
 @admin_demo_bp.route("/accept_demo/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
@@ -3307,6 +3474,7 @@ def approve_demo(demo_id):
         action="approve_demo",
         message=_("%(user)s hyväksyi mielenosoituksen") % {"user": _get_actor_label()},
     )
+    _revoke_tokens_for_demo(demo_id, ["reject"])
 
     # Notify submitter
     submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
@@ -3326,6 +3494,7 @@ def approve_demo(demo_id):
         )
 
     _log_case_decision(demo_id, demo.get("title"), "approve_demo", close_reason="demo_approved")
+    _revoke_tokens_for_demo(demo_id, ["reject", "edit"])
 
     return jsonify({"success": True, "message": "Mielenosoitus hyväksyttiin!"})
 
@@ -3342,6 +3511,7 @@ def reject_demo(demo_id):
         {"_id": _require_valid_objectid(demo_id)},
         {"$set": {"approved": False, "rejected": True}}
     )
+    _revoke_tokens_for_demo(demo_id, ["approve"])
 
     updated_demo = demo.copy()
     updated_demo["approved"] = False
@@ -3353,6 +3523,7 @@ def reject_demo(demo_id):
         action="reject_demo",
         message=_("%(user)s hylkäsi mielenosoituksen") % {"user": _get_actor_label()},
     )
+    _revoke_tokens_for_demo(demo_id, ["approve"])
 
     # Notify submitter
     submitter = mongo.submitters.find_one({"demonstration_id": _require_valid_objectid(demo_id)})
@@ -3370,6 +3541,7 @@ def reject_demo(demo_id):
         )
 
     _log_case_decision(demo_id, demo.get("title"), "reject_demo", close_reason="demo_rejected")
+    _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 
     return jsonify({"success": True, "message": "Mielenosoitus hylättiin!"})
 

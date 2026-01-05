@@ -16,6 +16,7 @@
 * Audit timeline’s manual/automatic filter now hides background-job entries when you opt to see only manual actions.
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
+* Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.

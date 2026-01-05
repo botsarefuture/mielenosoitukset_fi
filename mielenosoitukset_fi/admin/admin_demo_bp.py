@@ -932,11 +932,12 @@ def generate_demo_preview_link(demo_id: str) -> str:
     token = serializer.dumps(str(demo_id), salt="preview-demo")
     actor = _get_actor_label()
     _registry_upsert_initial(_hash_token(token), "preview", str(demo_id), actor)
+    demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
         action="token_created",
         message=_("%(user)s loi esikatselulinkin") % {"user": actor},
-        details={"token_type": "preview"},
+        details={"token_type": "preview", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
 
@@ -944,11 +945,12 @@ def generate_demo_approve_link(demo_id: str) -> str:
     token = serializer.dumps(str(demo_id), salt="approve-demo")
     actor = _get_actor_label()
     _registry_upsert_initial(_hash_token(token), "approve", str(demo_id), actor)
+    demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
         action="token_created",
         message=_("%(user)s loi hyväksyntälinkin") % {"user": actor},
-        details={"token_type": "approve"},
+        details={"token_type": "approve", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
 
@@ -956,11 +958,12 @@ def generate_demo_reject_link(demo_id: str) -> str:
     token = serializer.dumps(str(demo_id), salt="reject-demo")
     actor = _get_actor_label()
     _registry_upsert_initial(_hash_token(token), "reject", str(demo_id), actor)
+    demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
         action="token_created",
         message=_("%(user)s loi hylkäyslinkin") % {"user": actor},
-        details={"token_type": "reject"},
+        details={"token_type": "reject", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.reject_demo_with_token", token=token, _external=True)
 
@@ -968,11 +971,12 @@ def generate_demo_edit_link_token(demo_id: str) -> str:
     token = serializer.dumps(str(demo_id), salt="edit-demo")
     actor = _get_actor_label()
     _registry_upsert_initial(_hash_token(token), "edit", str(demo_id), actor)
+    demo = _load_demo_or_bust(demo_id)
     log_demo_audit_entry(
         demo_id,
         action="token_created",
         message=_("%(user)s loi muokkauslinkin") % {"user": actor},
-        details={"token_type": "edit"},
+        details={"token_type": "edit", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.edit_demo_with_token", token=token, _external=True)
 
@@ -3083,17 +3087,35 @@ def manage_magic_tokens():
 
     if request.method == "POST":
         if request.form.get("revoke_all") == "1":
+            revoke_filter = {
+                "revoked": {"$ne": True},
+                "$or": [
+                    {"used_at": {"$exists": False}},
+                    {"used_at": None},
+                ],
+            }
+            tokens_to_revoke = list(
+                mongo[MAGIC_COLLECTION].find(
+                    revoke_filter, {"demo_id": 1, "action": 1}
+                )
+            )
             result = mongo[MAGIC_COLLECTION].update_many(
-                {
-                    "revoked": {"$ne": True},
-                    "$or": [
-                        {"used_at": {"$exists": False}},
-                        {"used_at": None},
-                    ],
-                },
+                revoke_filter,
                 {"$set": {"revoked": True, "revoked_at": _now_utc()}},
             )
             flash_message(_("{} linkkiä mitätöitiin.").format(result.modified_count), "success")
+            actor = _get_actor_label()
+            for token in tokens_to_revoke:
+                log_demo_audit_entry(
+                    token.get("demo_id"),
+                    action="token_revoked",
+                    message=_("%(user)s mitätöi linkin massatoiminnolla").format(user=actor),
+                    details={
+                        "token_id": str(token.get("_id")),
+                        "token_type": token.get("action"),
+                        "mass_action": True,
+                    },
+                )
         else:
             token_id = request.form.get("token_id")
             if token_id and ObjectId.is_valid(token_id):

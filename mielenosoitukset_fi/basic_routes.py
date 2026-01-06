@@ -1315,24 +1315,33 @@ def init_routes(app):
             except Exception as e:
                 logger.exception("Failed to generate admin magic links: %s", e)
                 approve_link = preview_link = reject_link = None
-
-            # --- Queue notification job for background processing ---
-            notification_messages = []
+            
+            # --- Send submitter confirmation email immediately ---
             if submitter_email:
-                notification_messages.append(
-                    {
-                        "template_name": "demo_submitter_confirmation.html",
-                        "subject": "Kiitos mielenosoituksen ilmoittamisesta",
-                        "recipients": [submitter_email],
-                        "context": {
+                try:
+                    email_sender.queue_email(
+                        template_name="demo_submitter_confirmation.html",
+                        subject="Kiitos mielenosoituksen ilmoittamisesta",
+                        recipients=[submitter_email],
+                        context={
                             "title": title,
                             "date": date,
                             "city": city,
                             "address": address,
                         },
-                    }
-                )
+                    )
+                except Exception as e:
+                    logger.exception(
+                        "Failed to send submitter confirmation email for demo %s: %s",
+                        demo_id,
+                        e,
+                    )
+                    # Do NOT abort — demo is already saved
 
+            
+            # --- Queue notification job for background processing ---
+            notification_messages = []
+            
             notification_messages.append(
                 {
                     "template_name": "admin_demo_approve_notification.html",

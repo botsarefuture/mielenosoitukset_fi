@@ -1,30 +1,57 @@
-<!DOCTYPE html>
-<html lang="fi">
-<head>
-    <meta charset="UTF-8">
-    <title>Uusi mielenosoitus odottaa hyväksyntää</title>
-</head>
-<body>
-    <h2>Uusi mielenosoitus odottaa hyväksyntää</h2>
-    <p><strong>Otsikko:</strong> {{ title }}</p>
-    <p><strong>Päivämäärä:</strong> {{ date }}</p>
-    <p><strong>Kaupunki:</strong> {{ city }}</p>
-    <p><strong>Osoite:</strong> {{ address }}</p>
-    <hr>
-    <p><strong>Ilmoittajan nimi:</strong> {{ submitter_name }}</p>
-    <p><strong>Ilmoittajan sähköposti:</strong> {{ submitter_email }}</p>
-    <p><strong>Ilmoittajan rooli:</strong> {{ submitter_role }}</p>
-    <hr>
-    <p>Voit hyväksyä tai hylätä tämän mielenosoituksen suoraan alla olevista painikkeista:</p>
-    <p>
-        <a href="{{ approve_link }}" style="display:inline-block;padding:10px 20px;background:#4CAF50;color:#fff;text-decoration:none;border-radius:4px;margin-right:10px;">Hyväksy mielenosoitus</a>
-        <a href="{{ reject_link }}" style="display:inline-block;padding:10px 20px;background:#f44336;color:#fff;text-decoration:none;border-radius:4px;">Hylkää mielenosoitus</a>
-    </p>
-    <p>Linkit ovat kertakäyttöisiä ja toimivat ilman kirjautumista.</p>
-    <hr>
-    <p>Voit esikatsella mielenosoitusta ennen hyväksyntää:</p>
-    <p><a href="{{ preview_link }}">Esikatsele mielenosoitusta</a></p>
-    <p>Esikatselulinkki on voimassa 24 tuntia.</p>
-    <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi</p>
-</body>
-</html>
+{% extends "admin_email_base.html" %}
+{% set eyebrow = "Moderointipyyntö" %}
+{% set heading = "Uusi mielenosoitus odottaa hyväksyntää" %}
+
+{% block subject %}Uusi mielenosoitus odottaa hyväksyntää{% endblock %}
+
+{% block body %}
+<p>
+    Uusi ilmoitus on jonossa julkaistavaksi. Tarkista tiedot ja tee päätös suoraan alta löytyvillä painikkeilla.
+    Linkit ovat kertakäyttöisiä ja toimivat ilman kirjautumista.
+ </p>
+
+<ul class="data-list">
+    <li>
+        <strong>Otsikko</strong>
+        {{ title }}
+    </li>
+    <li>
+        <strong>Päivämäärä</strong>
+        {{ date }}
+    </li>
+    <li>
+        <strong>Kaupunki</strong>
+        {{ city }}
+    </li>
+    <li>
+        <strong>Osoite</strong>
+        {{ address }}
+    </li>
+</ul>
+
+<h2>Ilmoittajan tiedot</h2>
+<ul class="data-list">
+    <li>
+        <strong>Nimi</strong>
+        {{ submitter_name }}
+    </li>
+    <li>
+        <strong>Sähköposti</strong>
+        {{ submitter_email }}
+    </li>
+    <li>
+        <strong>Rooli</strong>
+        {{ submitter_role }}
+    </li>
+</ul>
+
+<div class="btn-group">
+    <a href="{{ approve_link }}" class="btn btn-primary">Hyväksy mielenosoitus</a>
+    <a href="{{ reject_link }}" class="btn btn-danger">Hylkää mielenosoitus</a>
+    <a href="{{ preview_link }}" class="btn btn-muted">Esikatsele mielenosoitusta</a>
+</div>
+
+<div class="meta">
+    <p>Esikatselulinkki on voimassa 24 tuntia. Kun päätös on tehty, vastakkainen toiminto mitätöityy automaattisesti.</p>
+</div>
+{% endblock %}

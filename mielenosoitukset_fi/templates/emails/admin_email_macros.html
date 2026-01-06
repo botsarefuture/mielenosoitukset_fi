@@ -1,0 +1,11 @@
+{% macro render_value(value) -%}
+    {%- if value is mapping -%}
+        {{ value | tojson }}
+    {%- elif value is sequence and not (value is string) -%}
+        {{ value | join(", ") }}
+    {%- elif value -%}
+        {{ value }}
+    {%- else -%}
+        —
+    {%- endif -%}
+{%- endmacro %}

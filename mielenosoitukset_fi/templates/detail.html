@@ -1292,7 +1292,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   <!-- Action Buttons -->
   <div class="action-buttons animate-fade-in-up">
     <button type="button" class="btn btn-secondary bg-warning text-black" data-bs-toggle="modal"
-      data-bs-target="#report-modal">
+      data-bs-target="#report-choice-modal">
       <i class="fa-solid fa-flag"></i>
       {{ _('Ilmoita virheestä') }}
     </button>
@@ -2367,11 +2367,20 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   // Report selection functionality
   const reportBtn = document.getElementById("report-selection-btn");
+  const reportChoiceModalEl = document.getElementById("report-choice-modal");
   let selectedText = "";
+  window.reportSelectedText = window.reportSelectedText || "";
+
+  function openReportChoiceModal() {
+    if (!reportChoiceModalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(reportChoiceModalEl);
+    modal.show();
+  }
 
   function showReportBtnAtSelection() {
     const selection = window.getSelection();
     selectedText = selection && selection.toString().trim();
+    window.reportSelectedText = selectedText || "";
     if (selectedText && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
@@ -2421,13 +2430,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   });
 
   reportBtn.addEventListener("click", function () {
-    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById("report-modal"));
-    modal.show();
-    const textarea = document.getElementById("error");
-    if (textarea && selectedText) {
-      textarea.value = "{{ _('Virheellinen kohta:') }}\n" + selectedText + "\n\n";
-      textarea.focus();
-    }
+    openReportChoiceModal();
     reportBtn.style.display = "none";
     window.getSelection().removeAllRanges();
   });

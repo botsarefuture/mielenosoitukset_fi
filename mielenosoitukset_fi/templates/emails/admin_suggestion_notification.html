@@ -1,0 +1,80 @@
+{% extends "admin_email_base.html" %}
+{% import "admin_email_macros.html" as admin_email %}
+{% set eyebrow = "Mielenosoituksen päivitys" %}
+{% set heading = "Uusi ehdotus mielenosoituksen päivittämiseksi" %}
+
+{% block subject %}Uusi ehdotus: {{ demo.title }}{% endblock %}
+
+{% block body %}
+<p>
+    Ylläpitoon saapui ehdotus, joka koskee mielenosoitusta <strong>{{ demo.title }}</strong>.
+    Tarkista alla olevat muutokset ja merkitse pyyntö käsitellyksi admin-paneelin ehdotusnäkymässä.
+</p>
+
+<h2>Mielenosoituksen tiedot</h2>
+<ul class="data-list">
+    <li>
+        <strong>Otsikko</strong>
+        {{ demo.title }}
+    </li>
+    {% if demo.date %}
+    <li>
+        <strong>Päivämäärä</strong>
+        {{ demo.date }}
+    </li>
+    {% endif %}
+    {% if demo.city %}
+    <li>
+        <strong>Kaupunki</strong>
+        {{ demo.city }}
+    </li>
+    {% endif %}
+    {% if demo.address %}
+    <li>
+        <strong>Osoite</strong>
+        {{ demo.address }}
+    </li>
+    {% endif %}
+</ul>
+
+<h2>Ehdotetut muutokset</h2>
+{% if suggestion_doc.suggested_fields %}
+    {% set original_values = suggestion_doc.original_values or {} %}
+    <ul class="data-list">
+        {% for field, value in suggestion_doc.suggested_fields.items() %}
+            {% set current_value = original_values.get(field) %}
+            <li>
+                <strong>{{ field }}</strong>
+                <div class="change-value change-value--new">
+                    <span>Ehdotettu arvo</span>
+                    {{ admin_email.render_value(value) }}
+                </div>
+                {% if current_value is not none %}
+                <div class="change-value change-value--original">
+                    <span>Nykyinen arvo</span>
+                    {{ admin_email.render_value(current_value) }}
+                </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Käyttäjä ei ehdottanut yksittäisiä kenttämuutoksia, mutta jätti kommentin tarkistettavaksi.</p>
+{% endif %}
+
+{% if suggestion_doc.reporter_comment %}
+<h2>Lisäkommentti</h2>
+<p>{{ suggestion_doc.reporter_comment }}</p>
+{% endif %}
+
+<div class="meta">
+    {% if suggestion_doc.reporter_email %}
+    <p><strong>Ilmoittajan sähköposti:</strong> {{ suggestion_doc.reporter_email }}</p>
+    {% endif %}
+    <p><strong>IP-osoite:</strong> {{ suggestion_doc.ip }}</p>
+    <p><strong>User-Agent:</strong> {{ suggestion_doc.user_agent }}</p>
+    {% if suggestion_doc.created_at %}
+    <p><strong>Vastaanotettu:</strong> {{ suggestion_doc.created_at.strftime('%d.%m.%Y %H:%M UTC') }}</p>
+    {% endif %}
+</div>
+{% endblock %}

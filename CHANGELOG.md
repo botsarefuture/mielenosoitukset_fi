@@ -28,6 +28,9 @@
 * Reuse attempts of admin approve/reject/preview tokens are now logged (including demo audit entries) with IP + metadata so the audit trail captures every invalid link use.
 * Approving or rejecting via token now automatically revokes the opposite link, preventing stale approve/reject URLs from being reused after a decision.
 * Magic token lifecycle is fully audited: creation now stores actor/request fingerprints, every bind/use/revoke/reuse attempt emits demo + super audit entries, and single/bulk revocations produce structured log payloads.
+* All admin notification emails now use a shared template without emojis, so demo approvals, organization edits, and suggestion alerts present a consistent, professional layout.
+* Demonstration detail pages now open a “What do you want to do?” modal before reporting issues so visitors discover the structured edit suggestion form before falling back to a generic error report.
+* Demo detail report modal no longer injects an extra jQuery payload at runtime; it now uses native Fetch/DOM APIs for much faster first paint.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

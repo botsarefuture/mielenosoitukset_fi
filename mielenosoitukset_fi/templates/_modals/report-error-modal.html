@@ -1,4 +1,54 @@
 {% macro render_report_error_modal(demo) %}
+<!-- Report Flow Choice Modal -->
+<div class="modal fade" id="report-choice-modal" tabindex="-1" aria-labelledby="reportChoiceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <p class="text-uppercase text-muted small mb-1">{{ _('Korjausehdotukset') }}</p>
+          <h5 class="modal-title" id="reportChoiceModalLabel">{{ _('Mitä haluat tehdä?') }}</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">{{ _('Voit joko ehdottaa muokkauksia suoraan tai välittää viestin ylläpidolle. Valitse sinulle sopivin tapa.') }}</p>
+
+        <div id="report-selection-preview" class="alert alert-info small d-none" role="status">
+          <strong>{{ _('Valittu teksti:') }}</strong>
+          <div class="mt-1 text-break" id="report-selection-preview-text"></div>
+        </div>
+
+        <div class="border rounded-3 p-3 mb-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-primary-subtle text-primary-emphasis">{{ _('Suositeltu') }}</span>
+            <span class="fw-semibold">{{ _('Ehdota muokkauksia') }}</span>
+          </div>
+          <p class="mb-3 text-muted small">{{ _('Pääset lomakkeeseen, jossa voit korjata kenttäkohtaisesti puuttuvat tai väärät tiedot. Muutokset on helppo hyväksyä suoraan järjestelmään.') }}</p>
+          <button type="button"
+                  class="btn btn-primary w-100"
+                  id="choose-suggest-edit"
+                  data-suggest-url="{{ url_for('suggest_change', demo_id=demo['_id']) }}">
+            <i class="fa-solid fa-pen-to-square"></i>
+            {{ _('Siirry ehdottamaan muokkauksia') }}
+          </button>
+        </div>
+
+        <div class="border rounded-3 p-3">
+          <span class="fw-semibold d-block mb-2">{{ _('Ilmoita ongelmasta ylläpidolle') }}</span>
+          <p class="mb-3 text-muted small">{{ _('Jos kyse on teknisestä virheestä tai muusta poikkeamasta, voit lähettää viestin ylläpidolle tällä lomakkeella.') }}</p>
+          <button type="button" class="btn btn-outline-secondary w-100" id="choose-report-error">
+            <i class="fa-solid fa-flag"></i>
+            {{ _('Haluan vain ilmoittaa virheen') }}
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer d-block">
+        <p class="text-muted small mb-0">{{ _('Vinkki: kenttäkohtaiset ehdotukset nopeuttavat korjausten julkaisua huomattavasti.') }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Report Error Modal -->
 <div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -44,66 +94,99 @@
 </div>
 
 <script>
-$(function() {
-  const $form = $("#report-error-form");
-  const $indicator = $form.find(".processing-indicator");
-  const $result = $("#report-error-result");
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("report-error-form");
+  if (!form) {
+    return;
+  }
 
-  // Hide the indicator initially
-  $indicator.hide(); // force hide on start
-  // find all children of indicator and hide them
-  $indicator.children().hide();
+  const indicator = form.querySelector(".processing-indicator");
+  const resultBox = document.getElementById("report-error-result");
+  const submitButton = form.querySelector('button[type="submit"]');
 
-  $form.on("submit", function(e) {
-    e.preventDefault();
-    $form.addClass("processing");
-    $form.find('button[type="submit"]').prop("disabled", true);
-    $indicator.show();
-    $result.empty();
+  function setLoading(isLoading) {
+    if (indicator) {
+      indicator.style.display = isLoading ? "flex" : "none";
+    }
+    if (submitButton) {
+      submitButton.disabled = isLoading;
+    }
+    form.classList.toggle("processing", isLoading);
+  }
 
-    $.ajax({
-      url: $form.attr("action"),
-      method: $form.attr("method"),
-      data: $form.serialize(),
-      success: function(response) {
-        let seconds = 3;
-        $result.html(`
+  if (indicator) {
+    indicator.style.display = "none";
+  }
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    if (resultBox) {
+      resultBox.innerHTML = "";
+    }
+    setLoading(true);
+
+    const formData = new FormData(form);
+    const body = new URLSearchParams();
+    formData.forEach((value, key) => {
+      body.append(key, value);
+    });
+
+    try {
+      const response = await fetch(form.action, {
+        method: form.method || "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: body.toString(),
+      });
+
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+
+      form.reset();
+      let seconds = 3;
+      if (resultBox) {
+        resultBox.innerHTML = `
           <div class="alert alert-success d-flex align-items-center justify-content-between">
             <i class="fas fa-check-circle me-2"></i>
             <span>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
             <span id="report-close-countdown" class="fw-bold">${seconds}</span>
           </div>
-        `);
+        `;
+      }
 
-        $form[0].reset();
-
-        const interval = setInterval(() => {
-          seconds -= 1;
-          $("#report-close-countdown").text(seconds);
-          if(seconds <= 0){
-            clearInterval(interval);
-            const modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
-            if(modal) modal.hide();
-            // clear the result after hiding
-            setTimeout(() => $result.empty(), 500);
+      const countdown = setInterval(() => {
+        seconds -= 1;
+        const countdownEl = document.getElementById("report-close-countdown");
+        if (countdownEl) {
+          countdownEl.textContent = seconds.toString();
+        }
+        if (seconds <= 0) {
+          clearInterval(countdown);
+          const modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
+          if (modal) {
+            modal.hide();
           }
-        }, 1000);
-      },
-      error: function(xhr) {
-        $result.html(`<div class="alert alert-danger">
+          if (resultBox) {
+            setTimeout(() => {
+              resultBox.innerHTML = "";
+            }, 500);
+          }
+        }
+      }, 1000);
+    } catch (err) {
+      if (resultBox) {
+        resultBox.innerHTML = `<div class="alert alert-danger">
             <i class="fas fa-exclamation-circle me-2"></i>
             {{ _("Virhe lähetyksessä. Yritä uudelleen.") }}
-             </div>`);
-      },
-      complete: function() {
-        $form.removeClass("processing");
-        $form.find('button[type="submit"]').prop("disabled", false);
-        $indicator.hide();
+          </div>`;
       }
-    });
+    } finally {
+      setLoading(false);
+    }
   });
-
-  $indicator.hide();
 });
 </script>
 {% endmacro %}

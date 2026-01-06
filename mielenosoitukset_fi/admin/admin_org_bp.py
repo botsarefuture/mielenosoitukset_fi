@@ -14,14 +14,14 @@ v2.4.0:
 
 from datetime import datetime
 from bson.objectid import ObjectId
-from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response, current_app
+from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response, current_app, has_request_context
 from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.validators import valid_email
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
-from .utils import log_admin_action, mongo, get_org_name as get_organization_name
+from .utils import mongo, get_org_name as get_organization_name
 from mielenosoitukset_fi.utils.classes import Organization, MemberShip
 
 from typing import Optional, Tuple, Any, Dict
@@ -34,6 +34,55 @@ from urllib.parse import urlencode
 admin_org_bp = Blueprint("admin_org", __name__, url_prefix="/admin/organization")
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
+
+
+def _json_safe(value):
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return type(value)(_json_safe(v) for v in value)
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _log_org_event(event: str, **details):
+    payload = {
+        "event": event,
+        "module": "admin_org_bp",
+    }
+    if has_request_context():
+        payload.update(
+            {
+                "path": request.path,
+                "method": request.method,
+                "endpoint": request.endpoint,
+            }
+        )
+    actor_info = {"id": None, "username": None, "email": None}
+    try:
+        if current_user and not getattr(current_user, "is_anonymous", True):
+            actor_id = (
+                getattr(current_user, "id", None)
+                or getattr(current_user, "_id", None)
+                or (current_user.get_id() if hasattr(current_user, "get_id") else None)
+            )
+            actor_info = {
+                "id": str(actor_id) if actor_id else None,
+                "username": getattr(current_user, "username", None),
+                "email": getattr(current_user, "email", None),
+            }
+    except Exception:
+        pass
+    payload["actor"] = actor_info
+    if details:
+        payload["details"] = _json_safe(details)
+    try:
+        log_admin_action_V2(payload)
+    except Exception:
+        logger.exception("Failed to log admin org event: %s", event)
 
 
 @admin_org_bp.before_request
@@ -60,10 +109,6 @@ email_sender = EmailSender()
 @permission_required("LIST_ORGANIZATIONS")
 def organization_control():
     """Render the organization control panel with a list of organizations."""
-    log_admin_action(
-        current_user, "View Organizations", "Accessed organization control panel"
-    )  # Admin action logging has been in use since V2.4.0, and it helps us keep track who did what.
-
     org_limiter = (
         [ObjectId(org) for org in current_user.org_ids()]
         if not current_user.global_admin
@@ -103,6 +148,13 @@ def organization_control():
     prev_page_url = build_page_url(prev_page) if prev_page else None
     next_page_url = build_page_url(next_page) if next_page else None
 
+    _log_org_event(
+        "organization_dashboard_view",
+        search=search_query,
+        page=page,
+        per_page=per_page,
+        total=total_count,
+    )
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/dashboard.html",
         organizations=organizations,
@@ -179,22 +231,16 @@ def edit_organization(org_id):
 
     """
     if not current_user.has_permission("EDIT_ORGANIZATION", org_id):
-        log_admin_action(
-            current_user, "Edit Organization (insuffient permissions)", f"Tried editing organization {org_id}")
+        _log_org_event("organization_edit_forbidden", org_id=org_id)
         abort(403)
         
-        
-    log_admin_action(
-        current_user, "Edit Organization", f"Editing organization {org_id}"
-    )
+    _log_org_event("organization_edit", org_id=org_id, method=request.method)
 
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if request.method == "POST":
         if update_organization(org_id):
-            log_admin_action(
-                current_user, "Update Organization", f"Updated organization {org_id}"
-            )
+            _log_org_event("organization_update", org_id=org_id)
             flash_message(_("Organisaatio päivitetty onnistuneesti."))
             return redirect(request.referrer)
 
@@ -251,9 +297,20 @@ def invite_to_organization(invitee_email, organization_id):
         )  # Add the email to the invitations list in the organization document.
 
         flash_message("Kutsu lähetetty onnistuneesti.", "success")
+        _log_org_event(
+            "organization_invite_sent",
+            organization_id=str(organization_id),
+            email=invitee_email,
+        )
     except Exception as e:
         logger.error(f"Kutsun lähettäminen epäonnistui: {e}")
         flash_message(f"Kutsun lähettäminen epäonnistui: {e}", "error")
+        _log_org_event(
+            "organization_invite_error",
+            organization_id=str(organization_id),
+            email=invitee_email,
+            reason=str(e),
+        )
 
 
 def update_organization(org_id):
@@ -499,11 +556,7 @@ def insert_organization(org_data: Optional[dict] = None) -> Tuple[bool, Optional
     )
 
     if result.inserted_id:
-        log_admin_action(
-            current_user,
-            "Create Organization",
-            f"Created organization {result.inserted_id}",
-        )
+        _log_org_event("organization_created", org_id=str(result.inserted_id))
         return True, result.inserted_id
 
     return False, None
@@ -531,21 +584,18 @@ def delete_organization(org_id):
     organization = mongo.organizations.find_one({"_id": ObjectId(org_id)})
 
     if not organization:
-        log_admin_action(
-            current_user, "Delete Organization", f"Failed to find organization {org_id}"
-        )
+        _log_org_event("organization_delete_missing", org_id=org_id)
         flash_message("Organisatiota ei löytynyt.", "error")
         return redirect(request.referrer or url_for("admin_org.organization_control"))
 
     if "confirm_delete" in request.form:
         mongo.organizations.delete_one({"_id": ObjectId(org_id)})
         flash_message(_("Organisaatio poistettu onnistuneesti."))
-        log_admin_action(
-            current_user, "Delete Organization", f"Deleted organization {org_id}"
-        )
+        _log_org_event("organization_deleted", org_id=org_id)
 
     else:
         flash_message("Organisaation poistoa ei vahvistettu.", "warning")
+        _log_org_event("organization_delete_cancelled", org_id=org_id)
 
     return redirect(request.referrer or url_for("admin_org.organization_control"))
 
@@ -643,6 +693,7 @@ def view_organization(org_id):
         user._ship_id = m._id
         members.append(user)
 
+    _log_org_event("organization_view", org_id=org_id)
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/view.html",
         organization=organization,
@@ -694,14 +745,17 @@ def delete_membership() -> Tuple[Response, int]:
     membership_id: str | None = data.get("membership_id")
 
     if not membership_id:
+        _log_org_event("membership_delete_error", reason="missing_membership_id")
         return jsonify({"error": "Membership ID puuttuu"}), 400
 
     # --- Delete membership ---
     result = mongo.memberships.delete_one({"_id": ObjectId(membership_id)})
 
     if result.deleted_count == 1:
+        _log_org_event("membership_deleted", membership_id=membership_id)
         return jsonify({"message": "Käyttäjä poistettu organisaatiosta"}), 200
 
+    _log_org_event("membership_delete_error", membership_id=membership_id, reason="not_deleted")
     return jsonify({"error": "Poisto epäonnistui"}), 500
 
 @admin_org_bp.route("/<org_id>/suggestion/<suggestion_id>")
@@ -754,6 +808,11 @@ def review_suggestion(org_id, suggestion_id):
     # Reload suggestion so we render fresh data
     suggestion = mongo.org_edit_suggestions.find_one({"_id": ObjectId(suggestion_id)})
 
+    _log_org_event(
+        "organization_suggestion_view",
+        org_id=org_id,
+        suggestion_id=suggestion_id,
+    )
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/review_suggestion.html",
         org=org,
@@ -771,11 +830,23 @@ from flask_login import current_user
 def apply_suggestion(org_id, suggestion_id):
     suggestion = mongo.org_edit_suggestions.find_one({"_id": ObjectId(suggestion_id)})
     if not suggestion:
+        _log_org_event(
+            "organization_suggestion_apply_error",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            reason="suggestion_not_found",
+        )
         flash_message("Ehdotusta ei löytynyt.", "error")
         return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
 
     selected_fields = request.form.getlist("apply_fields")
     if not selected_fields:
+        _log_org_event(
+            "organization_suggestion_apply_error",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            reason="no_fields_selected",
+        )
         flash_message("Et valinnut yhtään kenttää päivitettäväksi.", "info")
         return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
 
@@ -797,8 +868,20 @@ def apply_suggestion(org_id, suggestion_id):
         )
         applied_successfully = True
         flash_message("Organisaation tiedot päivitettiin valittujen kenttien osalta 💖", "success")
+        _log_org_event(
+            "organization_suggestion_fields_applied",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            fields=selected_fields,
+        )
     else:
         flash_message("Ei mitään päivitettävää.", "info")
+        _log_org_event(
+            "organization_suggestion_apply_error",
+            org_id=org_id,
+            suggestion_id=suggestion_id,
+            reason="no_update_data",
+        )
 
     # --- 🪄 Update suggestion status + audit log ---
     new_state = "applied" if applied_successfully else "in_review"
@@ -833,6 +916,14 @@ def apply_suggestion(org_id, suggestion_id):
             {"$set": {"status.completed_at": datetime.utcnow()}}
         )
 
+    _log_org_event(
+        "organization_suggestion_status_update",
+        org_id=org_id,
+        suggestion_id=suggestion_id,
+        state=new_state,
+        applied=applied_successfully,
+        selected_fields=selected_fields,
+    )
     return redirect(url_for("admin_org.review_suggestion", org_id=org_id, suggestion_id=suggestion_id))
 
 
@@ -885,6 +976,7 @@ def create_organization_api():
 
 
     if not org_name and not org_email:
+        _log_org_event("organization_create_api_error", reason="missing_name_email")
         return {"message": "Nimi ja sähköpostiosoite ovat pakollisia."}
 
     # if org_email is not None and not valid_email(org_email):
@@ -904,8 +996,10 @@ def create_organization_api():
     _, _id = insert_organization(org_data)
 
     if not _id is None:
+        _log_org_event("organization_created_api", org_id=str(_id))
         return {"message": "Organisaatio luotu onnistuneesti.", "id": str(_id)}
 
+    _log_org_event("organization_create_api_error", reason="insert_failed")
     return {"message": "Virhe organisaation luonnissa."}
 
 
@@ -966,6 +1060,7 @@ def force_accept_invite() -> Tuple[Response, int]:
 
     # --- Permission check ---
     if not getattr(current_user, "global_admin", False):
+        _log_org_event("organization_invite_force_accept_error", reason="not_global_admin")
         return (
             jsonify({
                 "status": "error",
@@ -980,6 +1075,7 @@ def force_accept_invite() -> Tuple[Response, int]:
     org_id: str | None = data.get("organization_id")
 
     if not email or not org_id:
+        _log_org_event("organization_invite_force_accept_error", reason="missing_fields")
         return (
             jsonify({"status": "error", "error": "Missing required fields."}),
             400,
@@ -988,6 +1084,7 @@ def force_accept_invite() -> Tuple[Response, int]:
     # --- Fetch organization ---
     org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
     if not org:
+        _log_org_event("organization_invite_force_accept_error", reason="organization_not_found", organization_id=org_id, email=email)
         return (
             jsonify({"status": "error", "error": "Organization not found."}),
             404,
@@ -1009,6 +1106,7 @@ def force_accept_invite() -> Tuple[Response, int]:
 
     user_doc = mongo.users.find_one({"email": email})
     if not user_doc:
+        _log_org_event("organization_invite_force_accept_error", reason="user_not_found", organization_id=org_id, email=email)
         return (
             jsonify({"status": "error", "error": "Käyttäjää ei löydy annetulla sähköpostilla."}),
             404,
@@ -1030,6 +1128,7 @@ def force_accept_invite() -> Tuple[Response, int]:
     # --- Membership check ---
     org_obj = Organization.from_dict(org)
     if org_obj.is_member(email):
+        _log_org_event("organization_invite_force_accept_error", reason="already_member", organization_id=org_id, email=email)
         return (
             jsonify({"status": "error", "error": "Käyttäjä on jo jäsen."}),
             400,
@@ -1052,6 +1151,7 @@ def force_accept_invite() -> Tuple[Response, int]:
         {"$set": {"invitations": new_invitations}},
     )
 
+    _log_org_event("organization_invite_force_accepted", organization_id=org_id, email=email, role=role)
     return jsonify({"status": "OK"}), 200
 
 
@@ -1095,11 +1195,13 @@ def cancel_invite() -> Tuple[Response, int]:
     org_id: str | None = data.get("organization_id")
 
     if not email or not org_id:
+        _log_org_event("organization_invite_cancel_error", reason="missing_fields")
         return jsonify({"status": "error", "error": "Missing required fields."}), 400
 
     # --- Fetch organization ---
     org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
     if not org:
+        _log_org_event("organization_invite_cancel_error", reason="organization_not_found", organization_id=org_id, email=email)
         return jsonify({"status": "error", "error": "Organization not found."}), 404
 
     # --- Process invitations ---
@@ -1117,6 +1219,7 @@ def cancel_invite() -> Tuple[Response, int]:
         new_invitations.append(invite)
 
     if not removed:
+        _log_org_event("organization_invite_cancel_error", reason="invite_not_found", organization_id=org_id, email=email)
         return jsonify({"status": "error", "error": "Invitation not found."}), 404
 
     # --- Update organization ---
@@ -1124,6 +1227,7 @@ def cancel_invite() -> Tuple[Response, int]:
         {"_id": ObjectId(org_id)},
         {"$set": {"invitations": new_invitations}},
     )
+    _log_org_event("organization_invite_cancelled", organization_id=org_id, email=email)
     return jsonify({"status": "OK"}), 200
 
 
@@ -1178,14 +1282,17 @@ def set_invite_role() -> Tuple[Response, int]:
     role: str | None = data.get("role")
 
     if not email or not org_id or not role:
+        _log_org_event("organization_invite_role_error", reason="missing_fields")
         return jsonify({"status": "error", "error": "Missing required fields."}), 400
 
     if role not in ["owner", "admin", "member"]:
+        _log_org_event("organization_invite_role_error", reason="invalid_role", role=role)
         return jsonify({"status": "error", "error": "Invalid role."}), 400
 
     # --- Fetch organization ---
     org = mongo.organizations.find_one({"_id": ObjectId(org_id)})
     if not org:
+        _log_org_event("organization_invite_role_error", reason="organization_not_found", organization_id=org_id, email=email)
         return jsonify({"status": "error", "error": "Organization not found."}), 404
 
     # --- Process invitations ---
@@ -1212,6 +1319,13 @@ def set_invite_role() -> Tuple[Response, int]:
     mongo.organizations.update_one(
         {"_id": ObjectId(org_id)},
         {"$set": {"invitations": invitations}},
+    )
+    _log_org_event(
+        "organization_invite_role_set",
+        organization_id=org_id,
+        email=email,
+        role=role,
+        updated=updated,
     )
     return jsonify({"status": "OK"}), 200
 
@@ -1266,6 +1380,13 @@ def change_access_level() -> Tuple[Response, int]:
 
     # --- Validate role ---
     if role not in ["member", "admin", "owner"]:
+        _log_org_event(
+            "organization_access_change_error",
+            reason="invalid_role",
+            organization_id=organization_id,
+            user_id=user_id,
+            role=role,
+        )
         return (
             jsonify({
                 "error": "Invalid role. Role must be one of these: 'member', 'admin', 'owner'"
@@ -1276,6 +1397,12 @@ def change_access_level() -> Tuple[Response, int]:
     # --- Fetch organization ---
     org_doc = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
     if not org_doc:
+        _log_org_event(
+            "organization_access_change_error",
+            reason="organization_not_found",
+            organization_id=organization_id,
+            user_id=user_id,
+        )
         flash_message("Organisaatiota ei löydy.", "error")
         return jsonify({"status": "error"}), 404
 
@@ -1298,7 +1425,19 @@ def change_access_level() -> Tuple[Response, int]:
             except Exception:
                 # Silently ignore errors; org update is more important
                 pass
+        _log_org_event(
+            "organization_access_changed",
+            organization_id=organization_id,
+            user_id=user_id,
+            role=role,
+        )
     else:
         flash_message("Ei käyttäjää.", "error")
+        _log_org_event(
+            "organization_access_change_error",
+            reason="membership_not_found",
+            organization_id=organization_id,
+            user_id=user_id,
+        )
 
     return jsonify({"status": "OK"}), 200

@@ -2510,6 +2510,38 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   }
 
 </script>
+<script>
+  (function disableCacheForLocalHost() {
+    const host = window.location.hostname;
+    if (!["127.0.0.1", "localhost"].includes(host)) {
+      return;
+    }
+
+    const noCacheMetas = [
+      { httpEquiv: "Cache-Control", content: "no-store, no-cache, must-revalidate, max-age=0" },
+      { httpEquiv: "Pragma", content: "no-cache" },
+      { httpEquiv: "Expires", content: "0" },
+    ];
+
+    noCacheMetas.forEach(({ httpEquiv, content }) => {
+      const meta = document.createElement("meta");
+      meta.httpEquiv = httpEquiv;
+      meta.content = content;
+      document.head.appendChild(meta);
+    });
+
+    const originalFetch = window.fetch;
+    window.fetch = function (input, init) {
+      const normalizedInit = Object.assign({}, init);
+      normalizedInit.cache = "no-store";
+      normalizedInit.headers = Object.assign(
+        { "Cache-Control": "no-cache" },
+        normalizedInit.headers || {}
+      );
+      return originalFetch.call(this, input, normalizedInit);
+    };
+  })();
+</script>
 <!-- Leaflet JS -->
 <script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_demo_info.js') }}"></script>

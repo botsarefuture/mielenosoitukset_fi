@@ -51,6 +51,11 @@ def should_skip_cache(public_only=True):
     if request.args.get("force_reload"):
         return True
 
+    # Disable cache entirely when developing on localhost to avoid stale pages
+    host = (request.host or "").split(":")[0].lower()
+    if host in {"127.0.0.1", "localhost"}:
+        return True
+
     if _has_pending_flashes():
         return True
 

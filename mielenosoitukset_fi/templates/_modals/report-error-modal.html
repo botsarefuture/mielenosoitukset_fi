@@ -1,4 +1,100 @@
 {% macro render_report_error_modal(demo) %}
+<style>
+  /* Light Mode (Default) */
+  :root {
+    --modal-bg: #ffffff;
+    --modal-text: #212529;
+    --modal-border: #dee2e6;
+    --card-bg: #ffffff;
+    --card-shadow: rgba(0, 0, 0, 0.075);
+    --muted-text: #6c757d;
+    --info-bg: #cff4fc;
+    --info-border: #9eeaf9;
+    --info-text: #055160;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --input-text: #212529;
+  }
+
+  /* Dark Mode */
+  html.dark {
+    --modal-bg: #212529;
+    --modal-text: #e9ecef;
+    --modal-border: #495057;
+    --card-bg: #2c3034;
+    --card-shadow: rgba(0, 0, 0, 0.5);
+    --muted-text: #adb5bd;
+    --info-bg: #0a3940;
+    --info-border: #0c4a54;
+    --info-text: #7dd3fc;
+    --input-bg: #2c3034;
+    --input-border: #495057;
+    --input-text: #e9ecef;
+  }
+
+  .modal-content {
+    background-color: var(--modal-bg);
+    color: var(--modal-text);
+    border-color: var(--modal-border);
+    
+  }
+
+  .card {
+    background-color: var(--card-bg);
+    color: var(--modal-text);
+  }
+
+  .card.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem var(--card-shadow) !important;
+  }
+
+  .text-muted {
+    color: var(--muted-text) !important;
+  }
+
+  .alert-info {
+    background-color: var(--info-bg);
+    border-color: var(--info-border);
+    color: var(--info-text);
+  }
+
+  .border-light-subtle {
+    border-color: var(--modal-border) !important;
+  }
+
+  .form-control,
+  .form-select {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--input-text);
+  }
+
+  html.dark .form-control:focus,
+  html.dark .form-select:focus {
+    background-color: var(--input-bg);
+    border-color: #6ea8fe;
+    color: var(--input-text);
+  }
+
+  html.dark .form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+  }
+
+  html.dark .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+
+  html.dark .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  html.dark .modal-header.bg-danger {
+    background-color: #dc3545 !important;
+  }
+</style>
+
 <!-- Report Flow Choice Modal -->
 <div class="modal fade" id="report-choice-modal" tabindex="-1" aria-labelledby="reportChoiceModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -11,39 +107,54 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted">{{ _('Voit joko ehdottaa muokkauksia suoraan tai välittää viestin ylläpidolle. Valitse sinulle sopivin tapa.') }}</p>
+        <p class="text-muted small mb-3">{{ _('Valitse sinulle sopivin tapa korjata tai raportoida virhe. Suosittelemme muokkauslomaketta, jos tiedät tarkalleen mitä kenttää pitäisi päivittää.') }}</p>
 
-        <div id="report-selection-preview" class="alert alert-info small d-none" role="status">
-          <strong>{{ _('Valittu teksti:') }}</strong>
-          <div class="mt-1 text-break" id="report-selection-preview-text"></div>
-        </div>
-
-        <div class="border rounded-3 p-3 mb-3">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="badge bg-primary-subtle text-primary-emphasis">{{ _('Suositeltu') }}</span>
-            <span class="fw-semibold">{{ _('Ehdota muokkauksia') }}</span>
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-primary-subtle text-primary-emphasis text-uppercase fw-semibold">{{ _('Suositeltu') }}</span>
+              <span class="text-muted small">{{ _('Nopein tapa korjata tiedot') }}</span>
+            </div>
+            <h3 class="h5 mb-2">{{ _('Korjaa tiedot muokkauslomakkeella') }}</h3>
+            <p class="text-muted mb-3">{{ _('Voit täyttää uudet arvot suoraan niille kentille, joissa huomasit virheen. Ylläpito saa ehdotukset rakenteisina ja ne voidaan hyväksyä muutamalla klikkauksella.') }}</p>
+            <ul class="small text-muted mb-3 ps-3">
+              <li>{{ _('Mahdollisuus korjata useita kenttiä samalla kertaa') }}</li>
+              <li>{{ _('Ehdotus tallentuu raporttiin ja nopeuttaa julkaisua') }}</li>
+              <li>{{ _('Voit jättää lisäperustelut ylläpidolle') }}</li>
+            </ul>
+            <button type="button"
+                    class="btn btn-primary w-100"
+                    id="choose-suggest-edit"
+                    data-report-action="suggest"
+                    data-suggest-url="{{ url_for('suggest_change', demo_id=demo['_id']) }}">
+              <i class="fa-solid fa-pen-to-square"></i>
+              {{ _('Siirry ehdottamaan muokkauksia') }}
+            </button>
           </div>
-          <p class="mb-3 text-muted small">{{ _('Pääset lomakkeeseen, jossa voit korjata kenttäkohtaisesti puuttuvat tai väärät tiedot. Muutokset on helppo hyväksyä suoraan järjestelmään.') }}</p>
-          <button type="button"
-                  class="btn btn-primary w-100"
-                  id="choose-suggest-edit"
-                  data-suggest-url="{{ url_for('suggest_change', demo_id=demo['_id']) }}">
-            <i class="fa-solid fa-pen-to-square"></i>
-            {{ _('Siirry ehdottamaan muokkauksia') }}
-          </button>
         </div>
 
-        <div class="border rounded-3 p-3">
-          <span class="fw-semibold d-block mb-2">{{ _('Ilmoita ongelmasta ylläpidolle') }}</span>
-          <p class="mb-3 text-muted small">{{ _('Jos kyse on teknisestä virheestä tai muusta poikkeamasta, voit lähettää viestin ylläpidolle tällä lomakkeella.') }}</p>
-          <button type="button" class="btn btn-outline-secondary w-100" id="choose-report-error">
-            <i class="fa-solid fa-flag"></i>
-            {{ _('Haluan vain ilmoittaa virheen') }}
-          </button>
+        <div class="card border border-light-subtle mb-3">
+          <div class="card-body">
+            <h3 class="h6 text-uppercase text-muted mb-1">{{ _('Vaihtoehto') }}</h3>
+            <h4 class="h5 mb-2">{{ _('Ilmoita ongelmasta ylläpidolle') }}</h4>
+            <p class="text-muted small mb-3">{{ _('Jos kyse on teknisestä virheestä, peruutuksesta tai muusta poikkeamasta, voit lähettää viestin ylläpidolle tällä lomakkeella.') }}</p>
+            <button type="button"
+                    class="btn btn-outline-secondary w-100"
+                    id="choose-report-error"
+                    data-report-action="report">
+              <i class="fa-solid fa-flag"></i>
+              {{ _('Haluan vain ilmoittaa virheen') }}
+            </button>
+          </div>
+        </div>
+
+        <div id="report-selection-preview" class="alert alert-info d-none" role="status">
+          <div class="text-uppercase fw-semibold small mb-1">{{ _('Valittu tekstikohta') }}</div>
+          <div class="mb-0 text-break" id="report-selection-preview-text"></div>
         </div>
       </div>
-      <div class="modal-footer d-block">
-        <p class="text-muted small mb-0">{{ _('Vinkki: kenttäkohtaiset ehdotukset nopeuttavat korjausten julkaisua huomattavasti.') }}</p>
+      <div class="modal-footer d-block text-center">
+        <p class="text-muted small mb-0">{{ _('Vinkki: korostamalla virheellisen kohdan sivulta saat sen liitettyä raporttilomakkeeseen automaattisesti.') }}</p>
       </div>
     </div>
   </div>
@@ -94,99 +205,308 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("report-error-form");
-  if (!form) {
-    return;
-  }
+/**
+ * Report Error Modal Manager
+ * Handles the flow for reporting errors and suggesting edits for demonstrations
+ */
+(() => {
+  'use strict';
 
-  const indicator = form.querySelector(".processing-indicator");
-  const resultBox = document.getElementById("report-error-result");
-  const submitButton = form.querySelector('button[type="submit"]');
+  // Configuration
+  const CONFIG = {
+    SELECTION_PREFIX: "{{ _('Virheellinen kohta:') }}",
+    MODAL_TRANSITION_DELAY: 180,
+    COUNTDOWN_SECONDS: 3,
+    FOCUS_DELAY: 60,
+    RESULT_CLEAR_DELAY: 500
+  };
 
-  function setLoading(isLoading) {
-    if (indicator) {
-      indicator.style.display = isLoading ? "flex" : "none";
+  // DOM Elements Cache
+  const elements = {
+    choiceModal: null,
+    reportModal: null,
+    suggestButton: null,
+    reportButton: null,
+    previewBox: null,
+    previewText: null,
+    form: null,
+    indicator: null,
+    resultBox: null,
+    submitButton: null,
+    errorField: null
+  };
+
+  /**
+   * Initialize DOM element references
+   */
+  function initializeElements() {
+    elements.choiceModal = document.getElementById('report-choice-modal');
+    elements.reportModal = document.getElementById('report-modal');
+    elements.suggestButton = document.getElementById('choose-suggest-edit');
+    elements.reportButton = document.getElementById('choose-report-error');
+    elements.previewBox = document.getElementById('report-selection-preview');
+    elements.previewText = document.getElementById('report-selection-preview-text');
+    elements.form = document.getElementById('report-error-form');
+    elements.errorField = document.getElementById('error');
+    elements.resultBox = document.getElementById('report-error-result');
+
+    if (elements.form) {
+      elements.indicator = elements.form.querySelector('.processing-indicator');
+      elements.submitButton = elements.form.querySelector('button[type="submit"]');
     }
-    if (submitButton) {
-      submitButton.disabled = isLoading;
+  }
+
+  /**
+   * Get the currently selected text from the global window object
+   * @returns {string} Trimmed selected text
+   */
+  function getSelectedText() {
+    const source = window.reportSelectedText || '';
+    return typeof source === 'string' ? source.trim() : '';
+  }
+
+  /**
+   * Update the selection preview display
+   */
+  function updateSelectionPreview() {
+    if (!elements.previewBox || !elements.previewText) return;
+
+    const selectedText = getSelectedText();
+    
+    if (selectedText) {
+      elements.previewBox.classList.remove('d-none');
+      elements.previewText.textContent = selectedText;
+    } else {
+      elements.previewBox.classList.add('d-none');
+      elements.previewText.textContent = '';
     }
-    form.classList.toggle("processing", isLoading);
   }
 
-  if (indicator) {
-    indicator.style.display = "none";
+  /**
+   * Show a Bootstrap modal
+   * @param {HTMLElement} element - Modal element to show
+   */
+  function showModal(element) {
+    if (!element) return;
+    bootstrap.Modal.getOrCreateInstance(element).show();
   }
 
-  form.addEventListener("submit", async function (event) {
+  /**
+   * Hide a Bootstrap modal
+   * @param {HTMLElement} element - Modal element to hide
+   */
+  function hideModal(element) {
+    if (!element) return;
+    const modal = bootstrap.Modal.getInstance(element);
+    if (modal) modal.hide();
+  }
+
+  /**
+   * Prefill the error field with selected text
+   */
+  function prefillErrorField() {
+    if (!elements.errorField) return;
+
+    const selectedText = getSelectedText();
+    if (selectedText) {
+      elements.errorField.value = `${CONFIG.SELECTION_PREFIX}\n${selectedText}\n\n`;
+    }
+
+    // Focus and move cursor to end
+    setTimeout(() => {
+      elements.errorField.focus();
+      const length = elements.errorField.value.length;
+      elements.errorField.setSelectionRange(length, length);
+    }, CONFIG.FOCUS_DELAY);
+  }
+
+  /**
+   * Set loading state for the form
+   * @param {boolean} isLoading - Whether the form is loading
+   */
+  function setLoadingState(isLoading) {
+    if (elements.indicator) {
+      elements.indicator.style.display = isLoading ? 'flex' : 'none';
+    }
+    if (elements.submitButton) {
+      elements.submitButton.disabled = isLoading;
+    }
+    if (elements.form) {
+      elements.form.classList.toggle('processing', isLoading);
+    }
+  }
+
+  /**
+   * Display success message with countdown
+   */
+  function displaySuccessMessage() {
+    if (!elements.resultBox) return;
+
+    let seconds = CONFIG.COUNTDOWN_SECONDS;
+    elements.resultBox.innerHTML = `
+      <div class="alert alert-success d-flex align-items-center justify-content-between">
+        <i class="fa-solid fa-check-circle me-2"></i>
+        <span>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
+        <span id="report-close-countdown" class="fw-bold">${seconds}</span>
+      </div>
+    `;
+
+    const countdown = setInterval(() => {
+      seconds -= 1;
+      const countdownEl = document.getElementById('report-close-countdown');
+      if (countdownEl) {
+        countdownEl.textContent = seconds.toString();
+      }
+
+      if (seconds <= 0) {
+        clearInterval(countdown);
+        hideModal(elements.reportModal);
+        
+        setTimeout(() => {
+          if (elements.resultBox) {
+            elements.resultBox.innerHTML = '';
+          }
+        }, CONFIG.RESULT_CLEAR_DELAY);
+      }
+    }, 1000);
+  }
+
+  /**
+   * Display error message
+   */
+  function displayErrorMessage() {
+    if (!elements.resultBox) return;
+
+    elements.resultBox.innerHTML = `
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ _("Virhe lähetyksessä. Yritä uudelleen.") }}
+      </div>
+    `;
+  }
+
+  /**
+   * Handle form submission
+   * @param {Event} event - Submit event
+   */
+  async function handleFormSubmit(event) {
     event.preventDefault();
-    if (resultBox) {
-      resultBox.innerHTML = "";
-    }
-    setLoading(true);
 
-    const formData = new FormData(form);
-    const body = new URLSearchParams();
-    formData.forEach((value, key) => {
-      body.append(key, value);
-    });
+    if (elements.resultBox) {
+      elements.resultBox.innerHTML = '';
+    }
+
+    setLoadingState(true);
+
+    // Prepare form data
+    const formData = new FormData(elements.form);
+    const encodedBody = new URLSearchParams();
+    formData.forEach((value, key) => encodedBody.append(key, value));
 
     try {
-      const response = await fetch(form.action, {
-        method: form.method || "POST",
+      const response = await fetch(elements.form.action, {
+        method: elements.form.method || 'POST',
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "X-Requested-With": "XMLHttpRequest",
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest'
         },
-        body: body.toString(),
+        body: encodedBody.toString()
       });
 
       if (!response.ok) {
-        throw new Error("Request failed");
+        throw new Error(`Request failed with status ${response.status}`);
       }
 
-      form.reset();
-      let seconds = 3;
-      if (resultBox) {
-        resultBox.innerHTML = `
-          <div class="alert alert-success d-flex align-items-center justify-content-between">
-            <i class="fas fa-check-circle me-2"></i>
-            <span>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
-            <span id="report-close-countdown" class="fw-bold">${seconds}</span>
-          </div>
-        `;
-      }
-
-      const countdown = setInterval(() => {
-        seconds -= 1;
-        const countdownEl = document.getElementById("report-close-countdown");
-        if (countdownEl) {
-          countdownEl.textContent = seconds.toString();
-        }
-        if (seconds <= 0) {
-          clearInterval(countdown);
-          const modal = bootstrap.Modal.getInstance(document.getElementById("report-modal"));
-          if (modal) {
-            modal.hide();
-          }
-          if (resultBox) {
-            setTimeout(() => {
-              resultBox.innerHTML = "";
-            }, 500);
-          }
-        }
-      }, 1000);
-    } catch (err) {
-      if (resultBox) {
-        resultBox.innerHTML = `<div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle me-2"></i>
-            {{ _("Virhe lähetyksessä. Yritä uudelleen.") }}
-          </div>`;
-      }
+      elements.form.reset();
+      displaySuccessMessage();
+    } catch (error) {
+      console.error('Form submission error:', error);
+      displayErrorMessage();
     } finally {
-      setLoading(false);
+      setLoadingState(false);
     }
-  });
-});
+  }
+
+  /**
+   * Handle navigation to suggest edit page
+   * @param {Event} event - Click event
+   */
+  function handleSuggestEdit(event) {
+    event.preventDefault();
+    const targetUrl = elements.suggestButton?.dataset?.suggestUrl;
+    if (targetUrl) {
+      window.location.assign(targetUrl);
+    }
+  }
+
+  /**
+   * Handle transition from choice modal to report modal
+   * @param {Event} event - Click event
+   */
+  function handleReportError(event) {
+    event.preventDefault();
+    hideModal(elements.choiceModal);
+    setTimeout(() => showModal(elements.reportModal), CONFIG.MODAL_TRANSITION_DELAY);
+  }
+
+  /**
+   * Attach event listeners
+   */
+  function attachEventListeners() {
+    // Choice modal shown event
+    if (elements.choiceModal) {
+      elements.choiceModal.addEventListener('shown.bs.modal', updateSelectionPreview);
+    }
+
+    // Report modal shown event
+    if (elements.reportModal) {
+      elements.reportModal.addEventListener('shown.bs.modal', () => {
+        updateSelectionPreview();
+        prefillErrorField();
+      });
+    }
+
+    // Suggest edit button
+    if (elements.suggestButton) {
+      elements.suggestButton.addEventListener('click', handleSuggestEdit);
+    }
+
+    // Report error button
+    if (elements.reportButton) {
+      elements.reportButton.addEventListener('click', handleReportError);
+    }
+
+    // Form submission
+    if (elements.form) {
+      elements.form.addEventListener('submit', handleFormSubmit);
+    }
+  }
+
+  /**
+   * Initialize the report modal system
+   */
+  function initialize() {
+    // Initialize global selected text variable
+    window.reportSelectedText = window.reportSelectedText || '';
+
+    // Cache DOM elements
+    initializeElements();
+
+    // Hide loading indicator initially
+    if (elements.indicator) {
+      elements.indicator.style.display = 'none';
+    }
+
+    // Attach all event listeners
+    attachEventListeners();
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+})();
 </script>
 {% endmacro %}

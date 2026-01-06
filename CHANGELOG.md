@@ -30,7 +30,11 @@
 * Magic token lifecycle is fully audited: creation now stores actor/request fingerprints, every bind/use/revoke/reuse attempt emits demo + super audit entries, and single/bulk revocations produce structured log payloads.
 * All admin notification emails now use a shared template without emojis, so demo approvals, organization edits, and suggestion alerts present a consistent, professional layout.
 * Demonstration detail pages now open a “What do you want to do?” modal before reporting issues so visitors discover the structured edit suggestion form before falling back to a generic error report.
-* Demo detail report modal no longer injects an extra jQuery payload at runtime; it now uses native Fetch/DOM APIs for much faster first paint.
+* Demo detail report modal was rebuilt with vanilla JavaScript: the guidance modal, preview, and submission flow now run without jQuery and feel noticeably faster.
+* When browsing demo detail pages from `127.0.0.1`/`localhost`, caching is disabled automatically (both response caching and client meta/fetch overrides) so developers always see the latest content.
+* Admin dashboard now offers a “clear cache” control for global admins, making it easy to purge stale responses after deployments.
+* Admin dashboard routes now emit structured audit logs (matching the new `admin_demo_bp` style) so every panic toggle, cache purge, job action, and analytics query is captured consistently.
+* Organization admin routes now emit structured audit logs for every invite, edit, deletion, suggestion review, and membership change, aligning them with the new admin logging standard.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

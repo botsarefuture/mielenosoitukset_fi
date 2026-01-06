@@ -245,6 +245,9 @@
   .quick-card strong {
     font-size: 1rem;
   }
+  .quick-card form {
+    margin: 0;
+  }
 
   .side-panel {
     display: flex;
@@ -512,6 +515,19 @@
           </div>
           <i class="fa-solid fa-book"></i>
         </a>
+        {% if current_user.role == "global_admin" %}
+        <div class="quick-card">
+          <div>
+            <strong>{{ _('Tyhjennä välimuisti') }}</strong>
+            <div class="text-muted small">{{ _('Pakota palvelu lataamaan uusimmat näkymät') }}</div>
+          </div>
+          <form method="POST" action="{{ url_for('admin.clear_cache') }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              <i class="fa-solid fa-broom me-1"></i>{{ _('Tyhjennä') }}
+            </button>
+          </form>
+        </div>
+        {% endif %}
       </div>
     </section>
 

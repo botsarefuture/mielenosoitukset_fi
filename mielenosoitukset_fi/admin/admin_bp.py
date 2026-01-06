@@ -17,7 +17,8 @@ from flask import (
     url_for,
     stream_template,
     stream_with_context,
-    jsonify
+    jsonify,
+    has_request_context,
 )
 from flask_login import (
     LoginManager,
@@ -33,6 +34,7 @@ from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
+from mielenosoitukset_fi.utils.cache import cache
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
@@ -60,6 +62,62 @@ def _get_job_manager_or_abort():
     if not job_manager:
         abort(503, "Background jobs are not available in this deployment.")
     return job_manager
+
+
+def _json_safe(value):
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return type(value)(_json_safe(v) for v in value)
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _log_admin_event(event: str, **details):
+    """Structured logging helper for admin blueprint actions."""
+    payload = {
+        "event": event,
+        "module": "admin_bp",
+    }
+    if has_request_context():
+        payload.update(
+            {
+                "path": request.path,
+                "method": request.method,
+                "endpoint": request.endpoint,
+            }
+        )
+
+    try:
+        actor_id = None
+        actor_username = None
+        actor_email = None
+        if current_user and not getattr(current_user, "is_anonymous", True):
+            actor_id = (
+                getattr(current_user, "id", None)
+                or getattr(current_user, "_id", None)
+                or (current_user.get_id() if hasattr(current_user, "get_id") else None)
+            )
+            actor_username = getattr(current_user, "username", None)
+            actor_email = getattr(current_user, "email", None)
+        payload["actor"] = {
+            "id": str(actor_id) if actor_id else None,
+            "username": actor_username,
+            "email": actor_email,
+        }
+    except Exception:
+        payload["actor"] = {"id": None, "username": None}
+
+    if details:
+        payload["details"] = _json_safe(details)
+
+    try:
+        log_admin_action_V2(payload)
+    except Exception:
+        logger.exception("Failed to log admin event: %s", event)
 
 
 @admin_bp.before_request
@@ -153,6 +211,7 @@ def admin_dashboard():
     # Load current panic mode
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
+    _log_admin_event("dashboard_view", panic_mode=panic_mode)
     return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html", panic_mode=panic_mode)
 
 
@@ -167,6 +226,7 @@ def activate_panic():
         {"$set": {"panic": True}},
         upsert=True
     )
+    _log_admin_event("panic_mode_update", panic_mode=True)
     flash_message("Panic mode activated!", "success")
     return redirect(url_for("admin.admin_dashboard"))
 
@@ -182,6 +242,7 @@ def deactivate_panic():
         {"$set": {"panic": False}},
         upsert=True
     )
+    _log_admin_event("panic_mode_update", panic_mode=False)
     flash_message("Panic mode deactivated!", "success")
     return redirect(url_for("admin.admin_dashboard"))
 
@@ -194,7 +255,24 @@ def panic_status():
     """Return current panic mode status as JSON."""
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
+    _log_admin_event("panic_status_requested", panic_mode=panic_mode)
     return jsonify({"panic_mode": panic_mode})
+
+
+@admin_bp.route("/dashboard/cache/clear", methods=["POST"])
+@login_required
+@admin_required
+def clear_cache():
+    """Allow admins to purge the application cache from the dashboard."""
+    try:
+        cache.clear()
+        _log_admin_event("cache_cleared", status="success")
+        flash_message("Välimuisti tyhjennettiin.", "success")
+    except Exception as exc:
+        logger.exception("Failed to clear cache via admin dashboard")
+        _log_admin_event("cache_cleared", status="error", reason=str(exc))
+        flash_message("Välimuistin tyhjennys epäonnistui.", "danger")
+    return redirect(url_for("admin.admin_dashboard"))
 
 
 def _serialize_login_log(doc: dict) -> dict:
@@ -279,6 +357,7 @@ def _calculate_dashboard_snapshot() -> dict:
 def dashboard_data():
     """Return aggregated dashboard metrics for polling."""
     snapshot = _calculate_dashboard_snapshot()
+    _log_admin_event("dashboard_snapshot_requested")
     return jsonify(snapshot)
 
 
@@ -296,6 +375,7 @@ def dashboard_login_feed():
 
     logs_cursor = mongo.login_logs.find({}).sort("_id", -1).limit(limit)
     logs = [_serialize_login_log(doc) for doc in logs_cursor]
+    _log_admin_event("login_feed_requested", limit=limit, returned=len(logs))
     return jsonify({"logs": logs})
 
 
@@ -319,6 +399,12 @@ def background_jobs():
 
     runs = job_manager.get_recent_runs(selected_job, limit=limit)
 
+    _log_admin_event(
+        "background_jobs_view",
+        selected_job=selected_job,
+        limit=limit,
+        total_jobs=len(jobs),
+    )
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}background_jobs.html",
         jobs=jobs,
@@ -367,6 +453,13 @@ def background_job_detail(job_key):
         .limit(100)
     )
 
+    _log_admin_event(
+        "background_job_detail_view",
+        job_key=job_key,
+        page=page,
+        limit=limit,
+        selected_run_id=selected_run_id,
+    )
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}background_job_detail.html",
         job=job,
@@ -392,6 +485,7 @@ def run_background_job(job_key):
 
     if not job.get("allow_manual_trigger", True):
         flash_message("This job cannot be run manually.", "danger")
+        _log_admin_event("background_job_run_now", job_key=job_key, status="forbidden")
         return redirect(url_for("admin.background_jobs", job=job_key))
 
     triggered_by = f"admin:{current_user.get_id()}"
@@ -401,6 +495,12 @@ def run_background_job(job_key):
         "email": getattr(current_user, "email", None),
     }
     job_manager.run_job_now(job_key, triggered_by=triggered_by, metadata=metadata)
+    _log_admin_event(
+        "background_job_run_now",
+        job_key=job_key,
+        triggered_by=triggered_by,
+        status="queued",
+    )
     flash_message("Job queued to run now.", "success")
     return redirect(url_for("admin.background_jobs", job=job_key))
 
@@ -414,6 +514,7 @@ def toggle_background_job(job_key):
     job_manager = _get_job_manager_or_abort()
     enabled = request.form.get("enabled") == "1"
     job_manager.set_job_enabled(job_key, enabled)
+    _log_admin_event("background_job_toggle", job_key=job_key, enabled=enabled)
     flash_message(
         f"Job {'enabled' if enabled else 'disabled'} successfully.",
         "success",
@@ -433,8 +534,23 @@ def update_background_job_schedule(job_key):
 
     try:
         job_manager.update_interval(job_key, int(interval_value), interval_unit)
+        _log_admin_event(
+            "background_job_schedule_update",
+            job_key=job_key,
+            interval_value=interval_value,
+            interval_unit=interval_unit,
+            status="success",
+        )
         flash_message("Schedule updated.", "success")
     except Exception as exc:  # pragma: no cover - defensive
+        _log_admin_event(
+            "background_job_schedule_update",
+            job_key=job_key,
+            interval_value=interval_value,
+            interval_unit=interval_unit,
+            status="error",
+            reason=str(exc),
+        )
         flash_message(f"Failed to update schedule: {exc}", "danger")
 
     return redirect(url_for("admin.background_jobs", job=job_key))
@@ -638,6 +754,12 @@ def stats():
         data_page = data[start_idx:end_idx]
 
         # Render template
+        _log_admin_event(
+            "stats_view",
+            page=page,
+            per_page=per_page,
+            total_count=total_count,
+        )
         return render_template(
             f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
             total_users=total_users,
@@ -652,15 +774,18 @@ def stats():
         )
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")
+        _log_admin_event("stats_view_error", reason=str(e))
         flash_message("An error occurred while loading statistics.", "danger")
         return redirect(url_for("admin.admin_dashboard"))
 
 @admin_bp.route("/manual/")
 def manual():
+    _log_admin_event("manual_index_view")
     return render_template("manuals/index.html")
 
 @admin_bp.route("/manual/<path:page>")
 def manual_page(page):
+    _log_admin_event("manual_page_view", page=page)
     return render_template(f"manuals/{page}.html")
 
 @admin_bp.route("/logs")
@@ -685,6 +810,7 @@ def logs():
     method_set.update(filter(None, mongo.admin_logs.distinct("action.method")))
     action_types = sorted(method_set)
 
+    _log_admin_event("admin_logs_view")
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}logs.html",
         users=users,
@@ -727,8 +853,15 @@ def api_logs():
 
     except Exception as e:
         logger.error(e)
+        _log_admin_event("admin_logs_api_error", reason=str(e))
         raise Exception from e
 
+    _log_admin_event(
+        "admin_logs_api",
+        page=page,
+        per_page=per_page,
+        filters=_json_safe(filters),
+    )
     return {
         "logs": logs,
         "page": page,
@@ -751,6 +884,7 @@ def get_user_role_counts():
 @permission_required("VIEW_ANALYTICS")
 def admin_analytics():
     """ """
+    _log_admin_event("analytics_overview_view")
     return demo_analytics()
 
 
@@ -770,10 +904,12 @@ def demo_analytics(demo_id):
     try:
         demo_oid = ObjectId(demo_id)
     except Exception:
+        _log_admin_event("demo_analytics_detail_error", demo_id=demo_id, reason="invalid_id")
         abort(404, "Invalid demo ID")
 
     anal = get_per_demo_anal(demo_oid)
     if not anal:
+        _log_admin_event("demo_analytics_detail_error", demo_id=demo_id, reason="missing_data")
         abort(404, "No analytics data found")
 
     analytics = anal.get("analytics", {})
@@ -848,6 +984,7 @@ def demo_analytics(demo_id):
         weekly_data.append(week_views)
 
     # --- Render template ---
+    _log_admin_event("demo_analytics_detail_view", demo_id=demo_id)
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}per_demo_analytics.html",
         analytics=anal,
@@ -946,6 +1083,7 @@ def api_demos_recommendations():
     Get demo recommendations for a user.
     """
     recommendations = recommend_demos_no_user()
+    _log_admin_event("recommendations_api_called", count=len(recommendations))
     return jsonify(recommendations)
 
 from flask import jsonify
@@ -1007,6 +1145,7 @@ def api_demos_nousussa():
         demo_data = mongo["demonstrations"].find_one({"_id": ObjectId(d["demo_id"])}, {"title": 1})
         d["title"] = demo_data.get("title") if demo_data else "Unknown"
 
+    _log_admin_event("demos_nousussa_requested", limit=limit, returned=len(demo_views))
     return jsonify({
         "demos": demo_views,
         "generated_at": now_utc.isoformat(),
@@ -1084,6 +1223,7 @@ def analytics_overall_24h():
     data   = [timeline[k] for k in sorted_keys]
 
 
+    _log_admin_event("analytics_overall_24h_view", interval=interval)
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}overall_24h_analytics.html",
         chart_labels = labels,
@@ -1145,6 +1285,7 @@ def analytics_overall_24h_api():
         labels.append(label)
         data.append(timeline[k])
 
+    _log_admin_event("analytics_overall_24h_api", interval=interval, data_points=len(labels))
     return jsonify({
         "labels": labels,
         "data": data,

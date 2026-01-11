@@ -1,5 +1,5 @@
 from copy import deepcopy
-from flask import current_app, jsonify, redirect, request, Blueprint, url_for
+from flask import current_app, jsonify, redirect, request, Blueprint, url_for, session
 from bson.objectid import ObjectId
 from datetime import datetime
 from flask_caching import Cache
@@ -13,6 +13,7 @@ from mielenosoitukset_fi.users.BPs.chat_ws import serialize_message
 from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
+from mielenosoitukset_fi.utils.demo_translations import apply_demo_translation
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
 from mielenosoitukset_fi.utils.tokens import (
     TOKENS_COLLECTION,
@@ -134,9 +135,22 @@ from flask import request
 
 def make_cache_key():
     params = request.args.to_dict(flat=True)
+    params["locale"] = _get_request_locale()
     # sort keys to make order irrelevant
     params_str = json.dumps(params, sort_keys=True)
     return "demonstrations:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+
+
+def _get_request_locale():
+    supported = current_app.config.get("BABEL_SUPPORTED_LOCALES") or []
+    default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
+    return (
+        request.args.get("locale")
+        or request.headers.get("X-Locale")
+        or session.get("locale")
+        or request.accept_languages.best_match(supported, default_locale)
+        or default_locale
+    )
 
 
 @api_bp.route("/demonstrations", methods=["GET"])
@@ -200,6 +214,8 @@ def list_demonstrations():
     }
     ```
     """
+    locale = _get_request_locale()
+    default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
 
     # --- Extract & normalize query parameters ---
     def get_param(name: str, default: str = ""):
@@ -291,6 +307,7 @@ def list_demonstrations():
             continue
 
         demo_obj = stringify_object_ids(demo)
+        apply_demo_translation(demo_obj, locale, default_locale)
         title_text = demo_obj.get("title", "").casefold()
         city_text = demo_obj.get("city", "").casefold()
         tags_text = [t.casefold() for t in demo_obj.get("tags", [])]
@@ -358,7 +375,11 @@ def get_demonstration(demo_id):
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     
     demo_obj = Demonstration.from_dict(demo)
-    return jsonify(stringify_object_ids(demo_obj.to_dict(json=False))), 200
+    locale = _get_request_locale()
+    default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
+    demo_payload = demo_obj.to_dict(json=False)
+    apply_demo_translation(demo_payload, locale, default_locale)
+    return jsonify(stringify_object_ids(demo_payload)), 200
 
 # -------------------------
 # DEMO STATS

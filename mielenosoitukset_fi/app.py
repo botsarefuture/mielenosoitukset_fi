@@ -366,6 +366,9 @@ def create_app() -> Flask:
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
+        def get_default_locale():
+            return app.config["BABEL_DEFAULT_LOCALE"]
+
         # Get all tasks
         tasks = get_admin_tasks()
         tasks_amount_total = len(tasks)
@@ -377,6 +380,7 @@ def create_app() -> Flask:
             get_org_name=get_org_name,
             get_supported_locales=get_supported_locales,
             get_lang_name=get_lang_name,
+            get_default_locale=get_default_locale,
             tasks=tasks,
             tasks_amount_total=tasks_amount_total,
             tasks_amount_done=tasks_amount_done,

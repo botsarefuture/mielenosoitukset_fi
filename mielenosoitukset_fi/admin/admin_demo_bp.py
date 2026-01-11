@@ -32,6 +32,10 @@ from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.flashing import flash_message
+from mielenosoitukset_fi.utils.demo_translations import (
+    build_translation_payload,
+    normalize_translation_languages,
+)
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.users.models import User
@@ -2898,6 +2902,18 @@ def collect_demo_data(request):
     description = request.form.get("description")
     latitude = request.form.get("latitude")
     longitude = request.form.get("longitude")
+    supported_locales = current_app.config.get("BABEL_SUPPORTED_LOCALES") or []
+    primary_language = (
+        (request.form.get("primary_language") or current_app.config.get("BABEL_DEFAULT_LOCALE"))
+    ).strip().lower()
+    if primary_language not in supported_locales:
+        primary_language = current_app.config.get("BABEL_DEFAULT_LOCALE")
+    translation_languages = normalize_translation_languages(
+        request.form.getlist("translation_languages"),
+        supported_locales,
+        primary_language=primary_language,
+    )
+    translations = build_translation_payload(request.form, translation_languages)
 
     # Validate latitude and longitude if provided
     if latitude and not is_valid_latitude(latitude):
@@ -2942,6 +2958,9 @@ def collect_demo_data(request):
         "description": description,
         "latitude": latitude,
         "longitude": longitude,
+        "translations": translations,
+        "translation_languages": translation_languages,
+        "primary_language": primary_language,
         "cover_picture": cover_picture,  # Add cover_picture to output
         "gallery_images": gallery_images,
     }

@@ -229,6 +229,25 @@
     color: var(--color-success);
   }
 
+  .translation-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    margin-top: 0.5rem;
+  }
+
+  .translation-block {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: var(--color-card-bg);
+  }
+
+  .translation-block[hidden] {
+    display: none;
+  }
+
   .step-icon {
     font-size: 1.1rem;
     margin: auto;
@@ -784,7 +803,7 @@
 <script>
 
   let currentPage = 1;
-  const totalPages = 5;
+  const totalPages = 6;
   // Page Navigation
   function showPage(pageNumber) {
     document.querySelectorAll('.form-page').forEach(page => {
@@ -1104,7 +1123,7 @@
 
       // Treat 2xx and 3xx statuses as success (redirects from server are 302).
       if (response.ok || (response.status >= 300 && response.status < 400)) {
-        showPage(5); // Show success page
+        showPage(6); // Show success page
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith("form_")) localStorage.removeItem(key);
         });
@@ -1128,7 +1147,7 @@
               headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             if (response2.ok || (response2.status >= 300 && response2.status < 400)) {
-              showPage(5);
+              showPage(6);
               Object.keys(localStorage).forEach(key => {
                 if (key.startsWith("form_")) localStorage.removeItem(key);
               });
@@ -1578,6 +1597,13 @@
 
       <div class="progress-step" data-page="5">
         <div class="step-circle">
+          <span class="step-icon">5</span>
+        </div>
+        <div class="step-label">{{ _('Käännökset') }}</div>
+      </div>
+
+      <div class="progress-step" data-page="6">
+        <div class="step-circle">
           <span class="step-icon"><i class="fa-solid fa-check"></i></span>
         </div>
         <div class="step-label">{{ _('Valmis') }}</div>
@@ -1588,6 +1614,7 @@
   <!-- Form Container -->
   <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm">
     <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
+    <input type="hidden" name="primary_language" value="{{ session.get('locale', get_default_locale()) }}">
     <div class="form-container">
 
       <!-- Page 1: Basic Information -->
@@ -1645,23 +1672,57 @@
           <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 
           <script>
-            const quill = new Quill('#editor', {
-              modules: {
-                toolbar: [
-                  ['bold', 'italic'],
-                  ['link', 'blockquote'],
-                  [{ list: 'ordered' }, { list: 'bullet' }],
-                ],
-              },
-              theme: 'snow',
+            document.addEventListener('DOMContentLoaded', () => {
+              const quillConfig = {
+                modules: {
+                  toolbar: [
+                    ['bold', 'italic'],
+                    ['link', 'blockquote'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                  ],
+                },
+                theme: 'snow',
+              };
+
+              const quill = new Quill('#editor', quillConfig);
+              const translationEditors = {};
+
+              document.querySelectorAll('[id^="translation_editor_"]').forEach((el) => {
+                const langCode = el.id.replace('translation_editor_', '');
+                translationEditors[langCode] = new Quill(`#${el.id}`, quillConfig);
+              });
+
+              const updateTranslationVisibility = () => {
+                const mode = (document.querySelector('input[name="translation_mode"]:checked') || {}).value;
+                document.querySelectorAll('input[name="translation_languages"]').forEach((checkbox) => {
+                  const block = document.querySelector(`[data-translation-block="${checkbox.value}"]`);
+                  if (block) {
+                    block.hidden = mode !== 'now' || !checkbox.checked;
+                  }
+                });
+              };
+
+              document.querySelectorAll('input[name="translation_mode"]').forEach((input) => {
+                input.addEventListener('change', updateTranslationVisibility);
+              });
+              document.querySelectorAll('input[name="translation_languages"]').forEach((input) => {
+                input.addEventListener('change', updateTranslationVisibility);
+              });
+              updateTranslationVisibility();
+
+              const form = document.querySelector('#myForm') || document.querySelector('form');
+              if (form) {
+                form.addEventListener('submit', () => {
+                  document.querySelector('#description').value = quill.root.innerHTML;
+                  Object.entries(translationEditors).forEach(([langCode, editor]) => {
+                    const hiddenInput = document.querySelector(`#translation_description_${langCode}`);
+                    if (hiddenInput) {
+                      hiddenInput.value = editor.root.innerHTML;
+                    }
+                  });
+                });
+              }
             });
-
-            document.querySelector('form').onsubmit = function () {
-              document.querySelector('#description').value = quill.root.innerHTML;
-            };
-
-
-            // no matter where on the quill element we click, the same event should be as if we click the 
           </script>
           <!-- import Quill -->
           <input type="hidden" id="description" name="description" />
@@ -2212,6 +2273,87 @@ function inSelection(selection, maxSelection) {
           <div class="btn-nav-spacer"></div>
 
 
+          <button type="button" class="btn btn-primary" onclick="nextPage()">
+            {{ _('Seuraava') }}
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Page 5: Translations -->
+      <div class="form-page" id="page-5">
+        <div class="page-header">
+          <h2>
+            <i class="fa-solid fa-language"></i>
+            {{ _('Käännökset') }}
+          </h2>
+          <p>{{ _('Haluatko lisätä kieliversioita? Voit tehdä sen nyt tai myöhemmin.') }}</p>
+        </div>
+
+        <div class="form-group">
+          <label>{{ _('Kieliversiot') }}</label>
+          <div class="translation-options">
+            <label>
+              <input type="radio" name="translation_mode" value="later" checked>
+              {{ _('Lisään käännökset myöhemmin') }}
+            </label>
+            <label>
+              <input type="radio" name="translation_mode" value="now">
+              {{ _('Lisään käännökset nyt') }}
+            </label>
+          </div>
+          <div class="helper-text">
+            <i class="fa-solid fa-language"></i>
+            {{ _('Voit valita kielet nyt ja lisätä käännökset heti tai myöhemmin.') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>{{ _('Valitse kielet') }}</label>
+          <div class="translation-options">
+            {% for lang_code in get_supported_locales() %}
+            {% if lang_code != session.get('locale', get_default_locale()) %}
+            <label>
+              <input type="checkbox" name="translation_languages" value="{{ lang_code }}">
+              {{ get_lang_name(lang_code) or lang_code }}
+            </label>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        {% for lang_code in get_supported_locales() %}
+        {% if lang_code != session.get('locale', get_default_locale()) %}
+        <div class="translation-block" data-translation-block="{{ lang_code }}" hidden>
+          <h3>{{ _('Käännös: %(lang)s', lang=(get_lang_name(lang_code) or lang_code)) }}</h3>
+          <div class="form-group">
+            <label for="translation_title_{{ lang_code }}">{{ _('Otsikko') }}</label>
+            <input type="text" id="translation_title_{{ lang_code }}" name="translation_title_{{ lang_code }}"
+              placeholder="{{ _('Käännöksen otsikko') }}">
+          </div>
+          <div class="form-group">
+            <label for="translation_tags_{{ lang_code }}">{{ _('Tagit (pilkuilla erotettuna)') }}</label>
+            <input type="text" id="translation_tags_{{ lang_code }}" name="translation_tags_{{ lang_code }}"
+              placeholder="{{ _('esim. ilmasto, tasa-arvo, oikeudet') }}">
+          </div>
+          <div class="form-group">
+            <label for="translation_description_{{ lang_code }}">{{ _('Kuvausteksti') }}</label>
+            <div class="editor-container">
+              <div id="translation_editor_{{ lang_code }}"></div>
+            </div>
+            <input type="hidden" id="translation_description_{{ lang_code }}" name="translation_description_{{ lang_code }}">
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+        <div class="form-navigation">
+          <button type="button" class="btn btn-secondary" onclick="previousPage()">
+            <i class="fa-solid fa-arrow-left"></i>
+            {{ _('Edellinen') }}
+          </button>
+          <div class="btn-nav-spacer"></div>
+
           <!-- submit btn -->
           <button type="submit" id="submit-form" class="btn btn-success">
             <i class="fa-solid fa-paper-plane"></i>
@@ -2220,8 +2362,8 @@ function inSelection(selection, maxSelection) {
         </div>
       </div>
 
-      <!-- Page 5: Success -->
-      <div class="form-page" id="page-5">
+      <!-- Page 6: Success -->
+      <div class="form-page" id="page-6">
         <div class="success-page">
           <div class="success-icon">
             <i class="fa-solid fa-check"></i>

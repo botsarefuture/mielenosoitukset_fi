@@ -6,6 +6,8 @@
 
 ### Added
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
+* Demonstration submissions and admin editing now support per-language title/description translations, with locale-aware rendering for public views and the API.
+* Translation entries can now store per-language tags (submission + admin), and localized views use those tags.
 * Multi-image demo galleries (admin URL list + detail-page carousel) that default cards/previews to the first image.
 * Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 * Admin sidebar now includes a one-click link to the audit timeline for faster access.
@@ -16,6 +18,7 @@
 * Super Audit UI can safely render entries containing raw `ObjectId`/datetime values thanks to automatic JSON-safe serialization.
 
 ### Fixed
+* Translation fields on the public demo submission form now initialize after the full DOM loads, so language blocks and editors show up when selected.
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
 * Demo cover selection now uses a shared helper across index/list/card rendering to avoid mismatched cover images.
 * Screenshot generation now skips demos that already have a preview image, preventing redundant auto previews.
@@ -27,6 +30,7 @@
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.
+* Demo submission flow now includes a dedicated translations step before final submission.
 * Admin token links that were previously consumed now render a friendly confirmation page instead of returning HTTP 409, making it clear the link has already been used.
 * Reuse attempts of admin approve/reject/preview tokens are now logged (including demo audit entries) with IP + metadata so the audit trail captures every invalid link use.
 * Approving or rejecting via token now automatically revokes the opposite link, preventing stale approve/reject URLs from being reused after a decision.

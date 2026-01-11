@@ -41,6 +41,11 @@ from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from mielenosoitukset_fi.utils.demo_translations import (
+    apply_demo_translation,
+    build_translation_payload,
+    normalize_translation_languages,
+)
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
@@ -837,10 +842,12 @@ def init_routes(app):
         Render the index page with recommended and featured demonstrations.
         Uses caching for recommended demos for performance.
         """
+        locale = session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE")
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
         today = date.today()
 
         # --- Recommended demos (cached) ---
-        cache_key = "recommended_demos_v1"
+        cache_key = f"recommended_demos_v1:locale={locale}"
         recommended_demos = None
 
         if hasattr(cache, "get") and callable(cache.get):
@@ -874,6 +881,8 @@ def init_routes(app):
                 if datetime.strptime(d["date"], "%Y-%m-%d").date() >= today
             ]
 
+            for demo in demos:
+                apply_demo_translation(demo, locale, default_locale)
             recommended_demos = demos
 
             if hasattr(cache, "set") and callable(cache.set):
@@ -887,6 +896,8 @@ def init_routes(app):
             if not demo.get("cancelled")
             if datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today
         ]
+        for demo in filtered_demonstrations:
+            apply_demo_translation(demo, locale, default_locale)
         filtered_demonstrations.sort(
             key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
@@ -973,6 +984,23 @@ def init_routes(app):
             address = (request.form.get("address") or "").strip()
             event_type = (request.form.get("type") or "").strip()
             route = request.form.get("route") if event_type == "marssi" else None
+
+            supported_locales = current_app.config.get("BABEL_SUPPORTED_LOCALES") or []
+            primary_language = (
+                (request.form.get("primary_language") or session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE"))
+            ).strip().lower()
+            if primary_language not in supported_locales:
+                primary_language = current_app.config.get("BABEL_DEFAULT_LOCALE")
+            translation_mode = (request.form.get("translation_mode") or "later").strip().lower()
+            raw_translation_languages = request.form.getlist("translation_languages")
+            translation_languages = normalize_translation_languages(
+                raw_translation_languages,
+                supported_locales,
+                primary_language=primary_language,
+            )
+            translations = {}
+            if translation_mode == "now" and translation_languages:
+                translations = build_translation_payload(request.form, translation_languages)
 
             # --- Tags (comma separated) ---
             tags_field = request.form.get("tags", "")
@@ -1175,6 +1203,9 @@ def init_routes(app):
                 gallery_images=[photo_url] if photo_url else None,
                 description=description,
                 tags=tags,
+                translations=translations,
+                translation_languages=translation_languages,
+                primary_language=primary_language,
             )
 
             # --- Check for similar demonstrations on same date/city to avoid duplicates ---
@@ -1524,6 +1555,8 @@ def init_routes(app):
         """
         List all upcoming approved demonstrations, optionally filtered by search query.
         """
+        locale = session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE")
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
         search_query = request.args.get("search", "").lower()
@@ -1543,6 +1576,8 @@ def init_routes(app):
         start = (page - 1) * per_page
         end = start + per_page
         paginated_demonstrations = filtered_demonstrations[start:end]
+        for demo in paginated_demonstrations:
+            apply_demo_translation(demo, locale, default_locale)
         return render_template(
             "city.html",
             demonstrations=paginated_demonstrations,
@@ -1675,7 +1710,8 @@ def init_routes(app):
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
         # Build a cache key that is stable for public users; include locale so localized pages differ
-        locale = session.get("locale", "")
+        locale = session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE")
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1714,6 +1750,7 @@ def init_routes(app):
         # Prepare response
         _demo = copy.copy(demo_obj)
         demo = Demonstration.to_dict(demo_obj, True)
+        apply_demo_translation(demo, locale, default_locale)
         try:
             log_demo_view(_demo._id, current_user._id if current_user.is_authenticated else None)
         except Exception:
@@ -1774,17 +1811,19 @@ def init_routes(app):
             seen_similar_ids.add(sid)
             if isinstance(raw_id, ObjectId):
                 seen_similar_objectids.add(raw_id)
+            localized_doc = doc.copy()
+            apply_demo_translation(localized_doc, locale, default_locale)
             formatted_date = _format_suggestion_date(doc.get("date"))
             similar_demos.append(
                 {
                     "id": sid,
-                    "title": doc.get("title"),
-                    "city": doc.get("city"),
-                    "date": doc.get("date"),
+                    "title": localized_doc.get("title"),
+                    "city": localized_doc.get("city"),
+                    "date": localized_doc.get("date"),
                     "formatted_date": formatted_date,
-                    "start_time": doc.get("start_time"),
-                    "address": doc.get("address"),
-                    "slug": doc.get("slug"),
+                    "start_time": localized_doc.get("start_time"),
+                    "address": localized_doc.get("address"),
+                    "slug": localized_doc.get("slug"),
                 }
             )
 
@@ -1816,6 +1855,8 @@ def init_routes(app):
                         "start_time": 1,
                         "address": 1,
                         "slug": 1,
+                        "translations": 1,
+                        "primary_language": 1,
                     },
                 )
                 .sort("date", ASCENDING)
@@ -1844,7 +1885,7 @@ def init_routes(app):
                 org_cursor = (
                     mongo.demonstrations.find(
                         org_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1, "translations": 1, "primary_language": 1},
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -1875,7 +1916,7 @@ def init_routes(app):
                 rec_cursor = (
                     mongo.demonstrations.find(
                         rec_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1, "translations": 1, "primary_language": 1},
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -1944,11 +1985,15 @@ def init_routes(app):
         if not demo_obj.date or not demo_obj.start_time:
             abort(400)
 
-        description = demo_obj.description or ""
+        locale = session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE")
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
+        demo_data = demo_obj.to_dict(json=True)
+        apply_demo_translation(demo_data, locale, default_locale)
+        description = demo_data.get("description") or ""
         # Strip basic HTML tags for safer ICS content
         description_plain = re.sub(r"<[^>]+>", "", description)
         ical_content = generate_ical_event(
-            demo_obj.title or "Mielenosoitus",
+            demo_data.get("title") or "Mielenosoitus",
             demo_obj.date,
             demo_obj.start_time,
             demo_obj.city or "",
@@ -1956,7 +2001,7 @@ def init_routes(app):
             description_plain,
         )
 
-        filename_base = secure_filename(f"{demo_obj.title or 'mielenosoitus'}.ics") or "mielenosoitus.ics"
+        filename_base = secure_filename(f"{demo_data.get('title') or 'mielenosoitus'}.ics") or "mielenosoitus.ics"
         response = Response(ical_content, mimetype="text/calendar; charset=utf-8")
         response.headers["Content-Disposition"] = f'attachment; filename=\"{filename_base}\"'
         return response
@@ -2429,6 +2474,8 @@ def init_routes(app):
     def tag_detail(tag_name):
         tag_regex = re.compile(f"^{re.escape(tag_name)}$", re.IGNORECASE)
         demonstrations_query = {"tags": tag_regex, **DEMO_FILTER}
+        locale = session.get("locale") or current_app.config.get("BABEL_DEFAULT_LOCALE")
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
         page = int(request.args.get("page", 1))
         per_page = int(request.args.get("per_page", 10) or 10)
         total_demos = mongo.demonstrations.count_documents(demonstrations_query)
@@ -2438,6 +2485,8 @@ def init_routes(app):
             per_page
         )
         paginated_demos_list = list(paginated_demos)
+        for demo in paginated_demos_list:
+            apply_demo_translation(demo, locale, default_locale)
         return render_template(
             "tag_list.html",
             demonstrations=paginated_demos_list,

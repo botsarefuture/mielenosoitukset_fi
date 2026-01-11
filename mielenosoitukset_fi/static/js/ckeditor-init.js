@@ -44,7 +44,7 @@ import {
     Undo
   } from 'ckeditor5';
   
-  export function initClassicEditor(selector = '#editor', hiddenInputId = 'description') {
+  export function initClassicEditor(selector = '#editor', hiddenInputId = 'description', initialData = '<h1>Tähän voit syöttää mielenosoituksen tarkemmat tiedot &lt;3</h1><p>:3</p>') {
     const editorConfig = {
       toolbar: {
         items: [
@@ -124,7 +124,6 @@ import {
           'resizeImage'
         ]
       },
-      initialData: '<h1>Tähän voit syöttää mielenosoituksen tarkemmat tiedot &lt;3</h1><p>:3</p>',
       link: {
         addTargetToExternalLinks: true,
         defaultProtocol: 'https://',
@@ -144,6 +143,10 @@ import {
         contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells', 'tableProperties', 'tableCellProperties']
       }
     };
+  
+    if (initialData !== null) {
+      editorConfig.initialData = initialData;
+    }
   
     ClassicEditor
       .create(document.querySelector(selector), editorConfig)

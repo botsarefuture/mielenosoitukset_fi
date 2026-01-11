@@ -174,6 +174,9 @@ class Demonstration(BaseModel):
         cancelled: bool = False,
         cancelled_at=None,
         cancelled_by: dict = None,
+        translations: dict = None,
+        translation_languages: list = None,
+        primary_language: str = None,
     ):
         """
         Initialize a new demonstration event.
@@ -368,6 +371,9 @@ class Demonstration(BaseModel):
         self.cancelled = cancelled
         self.cancelled_at = cancelled_at
         self.cancelled_by = cancelled_by or {}
+        self.translations = translations or {}
+        self.translation_languages = translation_languages or []
+        self.primary_language = primary_language
         
         if not self.cover_picture:
 
@@ -855,6 +861,9 @@ class Demonstration(BaseModel):
             cancelled=get("cancelled", False),
             cancelled_at=get("cancelled_at"),
             cancelled_by=get("cancelled_by"),
+            translations=get("translations") or {},
+            translation_languages=get("translation_languages") or [],
+            primary_language=get("primary_language"),
         )
 
 

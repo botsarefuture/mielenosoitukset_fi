@@ -52,6 +52,33 @@
     opacity: 0.65;
     cursor: not-allowed;
   }
+
+  .translation-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .translation-block {
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #fff;
+  }
+
+  body.dark .translation-block {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .translation-block[hidden] {
+    display: none;
+  }
+
+  .translation-block h3 {
+    margin-top: 0;
+  }
 </style>
 {% endblock %}
 
@@ -285,8 +312,84 @@
             <script type="module">
                 import { initClassicEditor } from '{{ url_for('static', filename='js/ckeditor-init.js') }}';
                 initClassicEditor('#editor', 'description');
+                document.querySelectorAll('[id^="translation_editor_"]').forEach((el) => {
+                    const langCode = el.id.replace('translation_editor_', '');
+                    initClassicEditor(`#${el.id}`, `translation_description_${langCode}`, '');
+                });
             </script>
         </section>
+
+        {% set translations = demo.translations if demo and demo.translations else {} %}
+        {% set primary_language = demo.primary_language if demo and demo.primary_language else session.get('locale', get_default_locale()) %}
+        <section class="form-section dashboard-panel">
+            <h2>{{ _('Käännökset') }}</h2>
+            <p class="text-muted">{{ _('Lisää tai muokkaa kieliversioita mielenosoituksen otsikolle ja kuvaukselle.') }}</p>
+            <input type="hidden" name="primary_language" value="{{ primary_language }}">
+
+            <div class="form-group">
+                <label>{{ _('Valitse kielet') }}</label>
+                <div class="translation-options">
+                    {% for lang_code in get_supported_locales() %}
+                    {% if lang_code != primary_language %}
+                    {% set lang_selected = (lang_code in (demo.translation_languages if demo and demo.translation_languages else [])) or translations.get(lang_code) %}
+                    <label>
+                        <input type="checkbox" name="translation_languages" value="{{ lang_code }}" {% if lang_selected %}checked{% endif %}>
+                        {{ get_lang_name(lang_code) or lang_code }}
+                    </label>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% for lang_code in get_supported_locales() %}
+            {% if lang_code != primary_language %}
+            {% set lang_translation = translations.get(lang_code, {}) %}
+            {% set lang_selected = (lang_code in (demo.translation_languages if demo and demo.translation_languages else [])) or translations.get(lang_code) %}
+            <div class="translation-block" data-translation-block="{{ lang_code }}" {% if not lang_selected %}hidden{% endif %}>
+                <h3>{{ _('Käännös: %(lang)s', lang=(get_lang_name(lang_code) or lang_code)) }}</h3>
+                <div class="form-group">
+                    <label for="translation_title_{{ lang_code }}">{{ _('Otsikko') }}</label>
+                    <input type="text" id="translation_title_{{ lang_code }}" name="translation_title_{{ lang_code }}"
+                        class="form-control" value="{{ lang_translation.get('title', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="translation_tags_{{ lang_code }}">{{ _('Tagit (pilkuilla erotettuna)') }}</label>
+                    <input type="text" id="translation_tags_{{ lang_code }}" name="translation_tags_{{ lang_code }}"
+                        class="form-control" value="{{ (lang_translation.get('tags', []) | join(', ')) if lang_translation.get('tags') else '' }}">
+                </div>
+                <div class="form-group">
+                    <label for="translation_description_{{ lang_code }}">{{ _('Kuvaus') }}</label>
+                    <div class="main-container" style="margin-bottom: 1.5rem;">
+                        <div id="translation_editor_container_{{ lang_code }}"
+                            class="editor-container editor-container_classic-editor editor-container_include-block-toolbar">
+                            <div class="editor-container__editor">
+                                <div id="translation_editor_{{ lang_code }}"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="translation_description_{{ lang_code }}" name="translation_description_{{ lang_code }}"
+                        value="{{ lang_translation.get('description', '') }}">
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </section>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const checkboxes = Array.from(document.querySelectorAll('input[name="translation_languages"]'));
+                const toggleBlocks = () => {
+                    checkboxes.forEach((checkbox) => {
+                        const block = document.querySelector(`[data-translation-block="${checkbox.value}"]`);
+                        if (block) {
+                            block.hidden = !checkbox.checked;
+                        }
+                    });
+                };
+                checkboxes.forEach((checkbox) => checkbox.addEventListener("change", toggleBlocks));
+                toggleBlocks();
+            });
+        </script>
 
         <section class="form-section dashboard-panel">
             <h2>{{ _('SEO / tagit') }}</h2>

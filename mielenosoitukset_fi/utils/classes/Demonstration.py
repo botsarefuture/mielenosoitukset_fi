@@ -57,6 +57,8 @@ class Demonstration(BaseModel):
         Facebook link for the event.
     img : optional
         Image associated with the event.
+    gallery_images : list, optional
+        Additional image URLs displayed as a carousel in detail view.
     preview_image : str, optional
         URL of the preview image for the event.
     cover_picture : str, optional
@@ -134,6 +136,7 @@ class Demonstration(BaseModel):
         # --- EXTERNAL LINKS & MEDIA ---
         facebook: str = None,
         img=None,
+        gallery_images: list = None,
         preview_image: str = None,
         cover_picture: str = None,
 
@@ -352,6 +355,7 @@ class Demonstration(BaseModel):
         # IMAGES
         self.preview_image = preview_image
         self.img = img
+        self.gallery_images = self._normalize_gallery_images(gallery_images)
         self.cover_picture = cover_picture
         self.cover_source = cover_source
 
@@ -371,7 +375,12 @@ class Demonstration(BaseModel):
                 # user-chosen image takes priority
                 self.cover_picture = self.img
                 self.cover_source = "user"
-                
+
+            elif self.gallery_images:
+                # default to first gallery image
+                self.cover_picture = self.gallery_images[0]
+                self.cover_source = "user"
+
             elif self.preview_image:
                 # fallback to auto-generated preview
                 self.cover_picture = self.preview_image
@@ -588,6 +597,7 @@ class Demonstration(BaseModel):
         ]
         data["aliases"] = [str(alias) for alias in self.aliases]
         data["preview_image"] = self.preview_image
+        data["gallery_images"] = self.gallery_images
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         data["running_number"] = self.running_number
         data["slug"] = self.slug
@@ -805,6 +815,7 @@ class Demonstration(BaseModel):
             facebook=get("facebook"),
             img=get("img"),
             preview_image=get("preview_image"),
+            gallery_images=get("gallery_images") or get("images"),
             cover_picture=get("cover_picture"),
             cover_source=get("cover_source"),
 
@@ -899,18 +910,44 @@ class Demonstration(BaseModel):
         """
         if is_none(time_str):
             return None
-        
+
         try:
             # If time_str is in HH:MM format, append seconds as "00"
             if time_str.count(":") == 1:
                 dt = datetime.strptime(time_str, "%H:%M")
                 return dt.time().replace(second=0).isoformat()
-            else:
-                dt = datetime.strptime(time_str, "%H:%M:%S")
-                return dt.time().isoformat()
-            
+            dt = datetime.strptime(time_str, "%H:%M:%S")
+            return dt.time().isoformat()
         except ValueError as e:
-            raise ValueError(f"Time {time_str} is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}") from e
+            raise ValueError(
+                f"Time {time_str} is not in ISO8601 format (HH:MM or HH:MM:SS): {time_str}"
+            ) from e
+
+
+    @staticmethod
+    def _normalize_gallery_images(values):
+        """Ensure gallery images are stored as a unique, trimmed list."""
+        normalized = []
+
+        def append(item):
+            if not item:
+                return
+            if isinstance(item, str):
+                for fragment in item.splitlines():
+                    trimmed = fragment.strip()
+                    if trimmed and trimmed not in normalized:
+                        normalized.append(trimmed)
+                return
+            if isinstance(item, (list, tuple, set)):
+                for entry in item:
+                    append(entry)
+                return
+            trimmed = str(item).strip()
+            if trimmed and trimmed not in normalized:
+                normalized.append(trimmed)
+
+        append(values or [])
+        return normalized
         
 def is_none(s):
     if s is None:

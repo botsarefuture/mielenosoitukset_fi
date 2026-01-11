@@ -147,6 +147,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
+    cover_picture = request.form.get("cover_picture")
+    gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
 
     # Process organizers dynamically
     organizers = []
@@ -214,6 +216,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "event_type": event_type,
         "route": route,
         "approved": approved,
+        "cover_picture": cover_picture,
+        "gallery_images": gallery_images,
         "repeat_schedule": repeat_schedule,
         "recurs": freq != "none",
         "organizers": organizers,
@@ -247,6 +251,18 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
                 demo_id=demo_id,
             )
         )
+
+
+def parse_gallery_images_field(raw_value):
+    """Convert textarea input into a clean list of gallery image URLs."""
+    if not raw_value:
+        return []
+    entries = []
+    for line in raw_value.replace("\r", "").splitlines():
+        url = line.strip()
+        if url:
+            entries.append(url)
+    return entries
 
 
 @admin_recu_demo_bp.route("/delete_recu_demo/<demo_id>", methods=["POST"])

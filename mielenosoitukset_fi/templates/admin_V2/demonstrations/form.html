@@ -411,6 +411,12 @@
                 </div>
                 {% endif %}
             </div>
+            <div class="form-group">
+                <label for="gallery_images">{{ _('Lisäkuvat (yksi URL per rivi)') }}</label>
+                <textarea id="gallery_images" name="gallery_images" class="form-control" rows="4"
+                    placeholder="{{ _('Ensimmäinen rivi näkyy korttien kuvana, loput muodostavat karusellin.') }}">{{ (demo.gallery_images | join('\n')) if demo and demo.gallery_images else '' }}</textarea>
+                <small class="text-muted">{{ _('Voit liittää useita kuvia; järjestys määrää karusellin järjestyksen.') }}</small>
+            </div>
         </section>
 
         <!-- Location Section -->

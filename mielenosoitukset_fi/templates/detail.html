@@ -323,19 +323,82 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     margin-bottom: 2rem;
   }
 
-  /* Cover Image */
-  .demo-cover {
+  /* Gallery */
+  .demo-gallery {
     margin-bottom: 3rem;
     border-radius: var(--border-radius-lg);
     overflow: hidden;
     box-shadow: var(--color-shadow-lg);
+    background: #000;
   }
 
-  .demo-cover img {
+  .demo-gallery-main {
+    position: relative;
+  }
+
+  .demo-gallery-slide {
+    display: none;
+  }
+
+  .demo-gallery-slide.is-active {
+    display: block;
+  }
+
+  .demo-gallery-slide img {
     width: 100%;
-    height: 400px;
+    height: 420px;
     object-fit: cover;
     display: block;
+  }
+
+  .demo-gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    color: #fff;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .demo-gallery-nav:hover {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  .demo-gallery-nav.prev {
+    left: 1rem;
+  }
+
+  .demo-gallery-nav.next {
+    right: 1rem;
+  }
+
+  .demo-gallery-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 0 0;
+    background: #0f172a;
+  }
+
+  .demo-gallery-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+  }
+
+  .demo-gallery-dot.is-active {
+    background: var(--color-secondary);
   }
 
   /* Action Buttons */
@@ -1273,11 +1336,37 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     </div>
   </section>
 
-  <!-- Cover Image -->
-  {% if demo.cover_picture and demo.cover_picture != 'None' and demo.cover_source != 'auto' %}
- 
-  <section class="demo-cover animate-fade-in-up">
-    <img src="{{ demo.cover_picture }}" alt="{{ demo.title }}">
+  {% set gallery_images = get_demo_gallery_images(demo, include_preview=False) %}
+  {% set cover_source = (demo.cover_source or '')|lower %}
+  {% set has_manual_gallery = (demo.gallery_images and demo.gallery_images|length > 0) or demo.img %}
+  {% if (cover_source in ['auto', 'automatic']) and not has_manual_gallery %}
+    {% set gallery_images = [] %}
+  {% endif %}
+  {% if not gallery_images and demo.cover_picture and cover_source not in ['auto', 'automatic'] %}
+    {% set gallery_images = [demo.cover_picture] %}
+  {% endif %}
+
+  {% if gallery_images %}
+  <section class="demo-gallery animate-fade-in-up" data-gallery>
+    <div class="demo-gallery-main">
+      {% for image in gallery_images %}
+      <div class="demo-gallery-slide{% if loop.first %} is-active{% endif %}" data-index="{{ loop.index0 }}">
+        <img src="{{ image }}" alt="{{ demo.title }} - {{ _('Kuva %(num)d', num=loop.index) }}">
+      </div>
+      {% endfor %}
+      {% if gallery_images|length > 1 %}
+      <button class="demo-gallery-nav prev" type="button" aria-label="{{ _('Edellinen kuva') }}">&lt;</button>
+      <button class="demo-gallery-nav next" type="button" aria-label="{{ _('Seuraava kuva') }}">&gt;</button>
+      {% endif %}
+    </div>
+    {% if gallery_images|length > 1 %}
+    <div class="demo-gallery-dots">
+      {% for image in gallery_images %}
+      <button class="demo-gallery-dot{% if loop.first %} is-active{% endif %}" type="button"
+        data-target-index="{{ loop.index0 }}" aria-label="{{ _('Siirry kuvaan %(num)d', num=loop.index) }}"></button>
+      {% endfor %}
+    </div>
+    {% endif %}
   </section>
   {% endif %}
 
@@ -2127,6 +2216,39 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   var demoData = {{ demo | tojson | safe }};
   const demoIsCancelled = {{ 'true' if demo.cancelled else 'false' }};
   window.demoId = "{{ demo['_id'] }}";
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-gallery]").forEach((gallery) => {
+      const slides = Array.from(gallery.querySelectorAll(".demo-gallery-slide"));
+      if (!slides.length) return;
+      const dots = Array.from(gallery.querySelectorAll(".demo-gallery-dot"));
+      let activeIndex = 0;
+
+      const setActive = (nextIndex) => {
+        const total = slides.length;
+        activeIndex = (nextIndex + total) % total;
+        slides.forEach((slide, idx) => slide.classList.toggle("is-active", idx === activeIndex));
+        dots.forEach((dot, idx) => dot.classList.toggle("is-active", idx === activeIndex));
+      };
+
+      const prevBtn = gallery.querySelector(".demo-gallery-nav.prev");
+      const nextBtn = gallery.querySelector(".demo-gallery-nav.next");
+      if (prevBtn) {
+        prevBtn.addEventListener("click", () => setActive(activeIndex - 1));
+      }
+      if (nextBtn) {
+        nextBtn.addEventListener("click", () => setActive(activeIndex + 1));
+      }
+      dots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const target = parseInt(dot.getAttribute("data-target-index"), 10);
+          if (!Number.isNaN(target)) {
+            setActive(target);
+          }
+        });
+      });
+    });
+  });
 
   // Check if demo has coordinates
   function _has_coords(demo) {

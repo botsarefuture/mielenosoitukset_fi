@@ -602,7 +602,7 @@ def suggestion_status_update(suggestion_id):
 def trigger_ss(demo_id):
     from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
     with current_app.app_context():
-        success, msg = trigger_screenshot(demo_id)
+        success, msg = trigger_screenshot(demo_id, force=True)
 
     if success:
         return jsonify({"status": "ok", "message": msg}), 200
@@ -2923,6 +2923,9 @@ def collect_demo_data(request):
         else:
             logger.error("Failed to upload cover picture to S3; falling back to provided URL if any")
 
+    gallery_images_field = request.form.get("gallery_images")
+    gallery_images = parse_gallery_images_field(gallery_images_field)
+
     return {
         "title": title,
         "date": date,
@@ -2940,7 +2943,20 @@ def collect_demo_data(request):
         "latitude": latitude,
         "longitude": longitude,
         "cover_picture": cover_picture,  # Add cover_picture to output
+        "gallery_images": gallery_images,
     }
+
+
+def parse_gallery_images_field(raw_value):
+    """Convert textarea input into a clean list of gallery image URLs."""
+    if not raw_value:
+        return []
+    entries = []
+    for line in raw_value.replace("\r", "").splitlines():
+        url = line.strip()
+        if url:
+            entries.append(url)
+    return entries
 
 
 def is_valid_latitude(lat):

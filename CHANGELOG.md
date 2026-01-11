@@ -6,6 +6,7 @@
 
 ### Added
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
+* Multi-image demo galleries (admin URL list + detail-page carousel) that default cards/previews to the first image.
 * Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 * Admin sidebar now includes a one-click link to the audit timeline for faster access.
 * Added `/admin/demo/tokens` view for superusers to inspect and revoke approve/reject/preview/edit links (with creator + expiry info and a sidebar shortcut).
@@ -16,6 +17,8 @@
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
+* Demo cover selection now uses a shared helper across index/list/card rendering to avoid mismatched cover images.
+* Screenshot generation now skips demos that already have a preview image, preventing redundant auto previews.
 * Demo preview token route now renders even when `follow_meta` isn’t provided (detail template supplies a safe default).
 * Audit timeline’s manual/automatic filter now hides background-job entries when you opt to see only manual actions.
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.

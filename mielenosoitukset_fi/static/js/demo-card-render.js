@@ -19,7 +19,8 @@ function renderDemoCards(demoData) {
 
     card.dataset.demoId = demo._id;
     card.querySelector('.demo-card-title span').textContent = demo.title;
-    card.querySelector('.demo-card-image img').src = demo.cover_picture;
+    const coverImage = demo.cover_picture || demo.cover_image || demo.preview_image || demo.img || "#";
+    card.querySelector('.demo-card-image img').src = coverImage;
     card.querySelector('.demo-card-date').append(demo.formatted_date);
 
     // Compute start & end display
@@ -275,4 +276,3 @@ function getFriendsAttending(demoCards) {
     })
     .catch(err => console.error('Failed to fetch friends attending:', err));
 }
-

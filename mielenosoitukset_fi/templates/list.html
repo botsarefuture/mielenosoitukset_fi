@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Join badges into a single string
   const badgeHtml = badges.join(" ");
 
-  const imageUrl = demo.img || demo.cover_image || demo.preview_image || `/download_material/${demo._id}`;
+  const imageUrl = demo.cover_image || `/download_material/${demo._id}`;
 
   return `
     <div class="grid-item demo-card" 

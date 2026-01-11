@@ -10,6 +10,10 @@ from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.users.models import User, AnonymousUser
 from mielenosoitukset_fi.error_handlers import register_error_handlers
+from mielenosoitukset_fi.utils.media_helpers import (
+    get_demo_cover_image,
+    get_demo_gallery_images,
+)
 
 import sys
 import os
@@ -270,6 +274,8 @@ def create_app() -> Flask:
         from mielenosoitukset_fi.utils.screenshot import create_screenshot
         from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
         data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+        if data and data.get("preview_image"):
+            return redirect(data.get("preview_image"))
         demo = Demonstration.from_dict(data)
         screenshot_path = create_screenshot(demo)
         if screenshot_path is None:
@@ -448,6 +454,10 @@ def create_app() -> Flask:
                 return obj[a]
         return None
     
-    app.jinja_env.globals.update(attr_or_get=attr_or_get)
+    app.jinja_env.globals.update(
+        attr_or_get=attr_or_get,
+        get_demo_cover_image=get_demo_cover_image,
+        get_demo_gallery_images=get_demo_gallery_images,
+    )
 
     return app

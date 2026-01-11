@@ -6,6 +6,9 @@ import threading
 import io
 from flask import current_app, has_app_context, render_template, url_for
 import imgkit
+from bson import ObjectId
+
+from mielenosoitukset_fi.database_manager import DatabaseManager
 
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils import _CUR_DIR
@@ -155,7 +158,7 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
 
 import threading
 
-def trigger_screenshot(demo_id, wait=False):
+def trigger_screenshot(demo_id, wait=False, force=False):
     """
     Trigger the creation of a screenshot for a given demonstration ID and upload to S3.
 
@@ -165,15 +168,15 @@ def trigger_screenshot(demo_id, wait=False):
         The ID of the demonstration.
     wait : bool
         If True, block until the screenshot is done.
+    force : bool
+        If True, regenerate even when a preview already exists.
 
     Returns
     -------
     bool, str
         True/False for success, message.
     """
-    def create_screenshot_thread(demo_id):
-        from DatabaseManager import DatabaseManager
-        from bson import ObjectId
+    def create_screenshot_thread(demo_id, force_generate):
         from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
         from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
         from config import Config
@@ -184,6 +187,9 @@ def trigger_screenshot(demo_id, wait=False):
             data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if not data:
                 logger.error(f"No demonstration found with ID {demo_id}")
+                return
+            if data.get("preview_image") and not force_generate:
+                logger.info(f"Preview already exists for demo {demo_id}; skipping screenshot generation.")
                 return
 
             demo = Demonstration.from_dict(data)
@@ -259,7 +265,7 @@ def trigger_screenshot(demo_id, wait=False):
             try:
                 # Ensure the worker has a proper application context
                 with app.app_context():
-                    create_screenshot_thread(demo_id)
+                    create_screenshot_thread(demo_id, force)
             except Exception as e:
                 logger.error(f"Exception in screenshot runner thread: {e}")
 

@@ -40,6 +40,7 @@ from mielenosoitukset_fi.utils.database import DEMO_FILTER, stringify_object_ids
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
+from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
@@ -292,20 +293,6 @@ def format_demo_for_api(demo):
             logger.exception(f"Error formatting time: {t}")
             return t
         
-    def _get_demo_img(demo):
-        """
-        Get the demonstration image URL.
-
-        Parameters
-        ----------
-        demo : dict
-
-        Returns
-        -------
-        str
-        """
-        return demo.get("img") or demo.get("preview_image") or demo.get("cover_image") or "#"
-
     try:
         date_obj = datetime.strptime(demo.get("date", ""), "%Y-%m-%d")
         date_display = date_obj.strftime("%d.%m.%Y")
@@ -322,7 +309,7 @@ def format_demo_for_api(demo):
         "address": demo.get("address", ""),
         "tags": demo.get("tags", []),
         "description": demo.get("description", ""),
-        "cover_image": _get_demo_img(demo),
+        "cover_image": get_demo_cover_image(demo),
         "cancelled": bool(demo.get("cancelled")),
     }
 
@@ -1185,6 +1172,7 @@ def init_routes(app):
                 organizers=organizers,
                 approved=False,
                 img=photo_url,
+                gallery_images=[photo_url] if photo_url else None,
                 description=description,
                 tags=tags,
             )

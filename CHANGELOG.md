@@ -24,6 +24,7 @@
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
+* Login now clearly instructs unverified users to confirm their email before signing in, including a reminder that a fresh link was sent.
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.
@@ -38,6 +39,7 @@
 * Admin dashboard now offers a “clear cache” control for global admins, making it easy to purge stale responses after deployments.
 * Admin dashboard routes now emit structured audit logs (matching the new `admin_demo_bp` style) so every panic toggle, cache purge, job action, and analytics query is captured consistently.
 * Organization admin routes now emit structured audit logs for every invite, edit, deletion, suggestion review, and membership change, aligning them with the new admin logging standard.
+* Login now uses a resend-verification popup so users can request a fresh email without leaving the sign-in page.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

@@ -304,6 +304,37 @@ def confirm_email(token):
     return redirect(url_for("users.auth.login"))
 
 
+@auth_bp.route("/resend_confirmation", methods=["POST"])
+def resend_confirmation():
+    email_or_username = (request.form.get("email_or_username") or "").strip()
+    if not email_or_username:
+        flash_message("Syötä sähköposti tai käyttäjänimi.", "warning")
+        return redirect(url_for("users.auth.login"))
+
+    lookup_values = [email_or_username]
+    if "@" in email_or_username:
+        lookup_values.append(email_or_username.lower())
+
+    user_doc = mongo.users.find_one({
+        "$or": [{"email": {"$in": lookup_values}}, {"username": email_or_username}]
+    })
+
+    if user_doc:
+        user = User.from_db(user_doc)
+        if not user.confirmed:
+            try:
+                verify_emailer(user.email, user.username)
+            except Exception as e:
+                flash_message(f"Vahvistusviestin lähetys epäonnistui: {e}", "error")
+                return redirect(url_for("users.auth.login"))
+
+    flash_message(
+        "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin.",
+        "info",
+    )
+    return redirect(url_for("users.auth.login"))
+
+
 @auth_bp.route("/2fa_check", methods=["POST"])
 def mfa_check():
     """
@@ -320,6 +351,13 @@ def mfa_check():
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
+
+        if not user.confirmed:
+            try:
+                verify_emailer(user.email, user.username)
+            except Exception:
+                pass
+            return jsonify({"enabled": False, "valid": False, "unverified": True})
 
         return jsonify({"enabled": user.mfa_enabled, "valid": True})
 
@@ -398,7 +436,11 @@ def login():
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
         if not user.confirmed:
-            flash_message("Sähköpostiosoitettasi ei ole vahvistettu. Tarkista sähköpostisi.")
+            flash_message(
+                "Kirjautuminen estetty: vahvista sähköpostiosoitteesi ennen kirjautumista. "
+                "Tarkista sähköpostisi ja avaa vahvistuslinkki (lähetimme uuden linkin).",
+                "warning",
+            )
             verify_emailer(user.email, username)
             log_login_attempt(username, False, user_ip, user_agent=user_agent, reason="Email not verified", user_id=user.id)
             return redirect(url_for("users.auth.login", next=safe_next_page))

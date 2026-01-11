@@ -78,6 +78,42 @@
       </button>
     </form>
 
+    <div class="verification-help">
+      <button type="button" class="btn btn-secondary btn-small" id="open-verification-modal">
+        <i class="fa-solid fa-envelope-open-text"></i>
+        {{ _('Lähetä uusi vahvistuslinkki') }}
+      </button>
+      <p class="verification-hint">
+        {{ _('Etkö saanut vahvistusviestiä? Voit pyytää uuden linkin tästä.') }}
+      </p>
+    </div>
+
+    <div class="verification-modal hidden" id="verification-modal" role="dialog" aria-modal="true" aria-labelledby="verification-modal-title">
+      <div class="verification-modal-content">
+        <button type="button" class="modal-close" id="close-verification-modal" aria-label="{{ _('Sulje') }}">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h2 id="verification-modal-title">{{ _('Lähetä uusi vahvistuslinkki') }}</h2>
+        <p class="verification-modal-subtitle">
+          {{ _('Syötä sähköposti tai käyttäjänimi. Lähetämme uuden vahvistuslinkin, jos tili löytyy.') }}
+        </p>
+        <form method="POST" action="{{ url_for('users.auth.resend_confirmation') }}" class="verification-form">
+          <input type="text"
+                 name="email_or_username"
+                 class="form-input verification-input"
+                 placeholder="{{ _('Sähköposti tai käyttäjänimi') }}"
+                 required
+                 autocomplete="email">
+          <button type="submit" class="btn btn-primary">
+            {{ _('Lähetä linkki') }}
+          </button>
+        </form>
+        <p class="verification-hint">
+          {{ _('Tarkista myös roskaposti. Linkki vanhenee, joten lähetämme aina uuden.') }}
+        </p>
+      </div>
+    </div>
+
     <div class="auth-divider">
       <span>{{ _('tai') }}</span>
     </div>
@@ -235,6 +271,13 @@ document.getElementById('login-form').addEventListener('submit', function(event)
   })
   .then(response => response.json())
   .then(data => {
+    if (data.unverified) {
+      showError('error-message', '{{ _("Sähköposti on vahvistamatta. Lähetimme uuden vahvistuslinkin.") }}');
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+      return;
+    }
+
     if (data.enabled) {
       // Smooth transition to 2FA form
       const loginCont = document.getElementById('login-cont');
@@ -311,6 +354,35 @@ document.getElementById('2fa_code').addEventListener('blur', function() {
 // Focus on first input on page load
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('username').focus();
+});
+
+const verificationModal = document.getElementById('verification-modal');
+const openVerificationModal = document.getElementById('open-verification-modal');
+const closeVerificationModal = document.getElementById('close-verification-modal');
+
+function showVerificationModal() {
+  verificationModal.classList.remove('hidden');
+  const input = verificationModal.querySelector('input[name="email_or_username"]');
+  if (input) {
+    input.focus();
+  }
+}
+
+function hideVerificationModal() {
+  verificationModal.classList.add('hidden');
+}
+
+openVerificationModal.addEventListener('click', showVerificationModal);
+closeVerificationModal.addEventListener('click', hideVerificationModal);
+verificationModal.addEventListener('click', function(event) {
+  if (event.target === verificationModal) {
+    hideVerificationModal();
+  }
+});
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape' && !verificationModal.classList.contains('hidden')) {
+    hideVerificationModal();
+  }
 });
 
 // Shake animation for errors

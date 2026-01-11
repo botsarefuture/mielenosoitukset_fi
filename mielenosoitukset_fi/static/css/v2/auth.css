@@ -383,6 +383,106 @@
 }
 
 /* ========================================
+   VERIFICATION HELP
+   ======================================== */
+
+.verification-help {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--border-radius);
+    background: light-dark(rgba(248, 250, 252, 0.8), rgba(15, 23, 42, 0.4));
+    text-align: center;
+}
+
+.verification-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.75rem;
+}
+
+.verification-title i {
+    color: var(--color-secondary);
+}
+
+.verification-form {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.verification-input {
+    flex: 1 1 220px;
+    padding-left: 1.25rem;
+}
+
+.btn-small {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 12px;
+}
+
+.verification-hint {
+    margin-top: 0.75rem;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.verification-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    z-index: 1000;
+}
+
+.verification-modal-content {
+    background: var(--color-card-bg);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--color-shadow-lg);
+    width: min(420px, 100%);
+    padding: 2rem;
+    position: relative;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.verification-modal-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-text);
+}
+
+.verification-modal-subtitle {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    color: var(--color-primary);
+}
+
+/* ========================================
    DIVIDER
    ======================================== */
 

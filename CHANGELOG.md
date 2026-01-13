@@ -17,6 +17,7 @@
 
 ### Fixed
 * Approval/rejection token flows now only mark single-use links as used after the database update is verified, preventing silent failures from consuming links without persisting the decision.
+* Approving or rejecting via token now updates the demonstration `last_modified` timestamp so audit views reflect the latest change.
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
 * Demo cover selection now uses a shared helper across index/list/card rendering to avoid mismatched cover images.
 * Screenshot generation now skips demos that already have a preview image, preventing redundant auto previews.

@@ -1192,7 +1192,7 @@ def approve_demo_with_token(token):
     try:
         result = mongo.demonstrations.update_one(
             {"_id": _require_valid_objectid(demo_id)},
-            {"$set": {"approved": True, "rejected": False}}
+            {"$set": {"approved": True, "rejected": False, "last_modified": datetime.utcnow()}}
         )
     except Exception:
         logger.exception("Failed to approve demo %s via token %s", demo_id, doc.get("_id"))
@@ -1266,7 +1266,7 @@ def reject_demo_with_token(token):
     try:
         result = mongo.demonstrations.update_one(
             {"_id": _require_valid_objectid(demo_id)},
-            {"$set": {"approved": False, "rejected": True}}
+            {"$set": {"approved": False, "rejected": True, "last_modified": datetime.utcnow()}}
         )
     except Exception:
         logger.exception("Failed to reject demo %s via token %s", demo_id, doc.get("_id"))

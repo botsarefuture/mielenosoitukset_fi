@@ -1210,6 +1210,15 @@ def approve_demo_with_token(token):
         flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
         return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
 
+    record_demo_change(
+        demo_id,
+        demo,
+        refreshed_demo,
+        action="approve_demo",
+        message=_("Kertakäyttölinkillä hyväksyttiin mielenosoitus"),
+        extra_details={"source": "token", "token_id": str(doc.get("_id"))},
+    )
+
     _revoke_tokens_for_demo(demo_id, ["reject", "edit"])
     _revoke_tokens_for_demo(demo_id, ["reject"])
 
@@ -1283,6 +1292,15 @@ def reject_demo_with_token(token):
         logger.error("Reject token %s did not persist rejection for demo %s", doc.get("_id"), demo_id)
         flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
         return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
+
+    record_demo_change(
+        demo_id,
+        demo,
+        refreshed_demo,
+        action="reject_demo",
+        message=_("Kertakäyttölinkillä hylättiin mielenosoitus"),
+        extra_details={"source": "token", "token_id": str(doc.get("_id"))},
+    )
 
     _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 

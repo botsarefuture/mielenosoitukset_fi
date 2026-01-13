@@ -14,6 +14,9 @@ from mielenosoitukset_fi.admin.admin_demo_bp import (
     generate_demo_preview_link,
     generate_demo_reject_link,
 )
+from mielenosoitukset_fi.scripts.merge_duplicate_submissions import (
+    merge_duplicate_submissions,
+)
 
 email_sender = EmailSender()
 ADMIN_RECIPIENTS = ["tuki@mielenosoitukset.fi"]
@@ -170,6 +173,11 @@ def run(max_jobs: int = 25):
     db = DatabaseManager().get_instance().get_db()
     queue = db["demo_notifications_queue"]
     processed = 0
+
+    try:
+        merge_duplicate_submissions(db=db, max_groups=25)
+    except Exception:
+        logger.exception("Failed to merge duplicate submission demos")
 
     # Ensure every pending demo gets at most one reminder per 24h
     _enqueue_admin_reminders(db)

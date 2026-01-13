@@ -17,6 +17,7 @@
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
+* Pending submission processing now merges duplicate demonstrations (including linked submitter data), reducing duplicate demos created per submission.
 * Demo cover selection now uses a shared helper across index/list/card rendering to avoid mismatched cover images.
 * Screenshot generation now skips demos that already have a preview image, preventing redundant auto previews.
 * Demo preview token route now renders even when `follow_meta` isn’t provided (detail template supplies a safe default).

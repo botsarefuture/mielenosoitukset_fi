@@ -6,6 +6,7 @@ from typing import Iterable, List, Sequence
 from bson import ObjectId
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.demonstrations.audit import log_demo_audit_entry
 from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
 from mielenosoitukset_fi.utils.logger import logger
 
@@ -73,6 +74,22 @@ def _move_references(db, from_id: ObjectId, to_id: ObjectId) -> None:
         db[collection].update_many({field: from_id}, {"$set": {field: to_id}})
 
 
+def _log_merge_audit(primary_id: ObjectId, merged_id: ObjectId) -> None:
+    details = {"kept_demo_id": str(primary_id), "merged_demo_id": str(merged_id)}
+    log_demo_audit_entry(
+        primary_id,
+        "merge_duplicate_submission",
+        message="Merged duplicate submission demo",
+        details=details,
+    )
+    log_demo_audit_entry(
+        merged_id,
+        "merged_into_duplicate_submission",
+        message="Duplicate submission demo merged into primary",
+        details=details,
+    )
+
+
 def merge_duplicate_submissions(db=None, max_groups: int = 50) -> int:
     if db is None:
         db = DatabaseManager().get_instance().get_db()
@@ -102,6 +119,7 @@ def merge_duplicate_submissions(db=None, max_groups: int = 50) -> int:
             _move_references(db, demo_id, primary_demo.get("_id"))
             try:
                 base_demo.merge(demo_id)
+                _log_merge_audit(primary_demo.get("_id"), demo_id)
                 merged_count += 1
             except Exception:
                 logger.exception("Failed to merge duplicate demo %s into %s", demo_id, primary_demo.get("_id"))

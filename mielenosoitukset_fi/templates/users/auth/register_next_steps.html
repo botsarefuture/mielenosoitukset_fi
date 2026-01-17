@@ -133,12 +133,19 @@
                 {{ _('Jos et saanut vahvistussähköpostia muutaman minuutin kuluessa, tarkista roskapostikansiosi tai
                 lähetä viesti uudelleen.') }}
             </p>
+             {% if email_found %}
             <form method="POST" action="{{ url_for('users.auth.resend_confirmation') }}" id="resend_form">
+               
                 <input type="hidden" name="email_or_username" value="{{ email }}">
                 <button type="submit" class="btn btn-link">
                     {{ _('Lähetä vahvistussähköposti uudelleen') }}
                 </button>
             </form>
+            {% else %}
+            <p class="muted">
+                {{ _('Emme löytäneet sähköpostiosoitetta. Emme voi lähettää vahvistussähköpostia uudelleen. Tarkista kuitenkin sähköpostisi.') }}
+            </p>
+            {% endif %}
         </div>
 
         <div class="auth-footer">

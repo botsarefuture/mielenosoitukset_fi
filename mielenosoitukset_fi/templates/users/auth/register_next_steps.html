@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Rekisteröidy') }}{% endblock %}
+
+{% block styles %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/auth.css') }}">
+<style>
+    .step-vertical {
+        display: flex;
+        position: relative;
+        padding: 1rem 0;
+    }
+
+    .step-vertical:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 25px;
+        top: 60px;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+
+    .step-vertical-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 20px;
+        color: #6c757d;
+        position: relative;
+        z-index: 2;
+        flex-shrink: 0;
+    }
+
+    .step-vertical-content {
+        padding-top: 0.5rem;
+    }
+
+    .step-vertical.active .step-vertical-icon {
+        background: #4361ee;
+        border-color: #4361ee;
+        color: white;
+        box-shadow: 0 0 0 5px rgba(67, 97, 238, 0.2);
+    }
+
+    .step-vertical.complete .step-vertical-icon {
+        background: #2ecc71;
+        border-color: #2ecc71;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-icon"><i class="fa-solid fa-user-plus"></i></div>
+            <h1>{{ _('Kiitos rekisteröitymisestäsi!') }}</h1>
+            <p class="auth-subtitle">{{ _('Alla lisätietoa seuraavista vaiheista') }}</p>
+        </div>
+
+        <div id="error-message" class="hidden"></div>
+        <div class="steps-vertical">
+            <div class="step-vertical complete">
+                <div class="step-vertical-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <div class="step-vertical-content">
+                    <h4>{{ _('Tili luotu') }}</h4>
+                    <p>{{ _('Tilisi on luotu onnistuneesti.') }}</p>
+                </div>
+            </div>
+            <div class="step-vertical active">
+                <div class="step-vertical-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="step-vertical-content">
+                    <h4>{{ _('Vahvista sähköpostiosoitteesi') }}</h4>
+                    <p>
+                        {{ _('Olemme lähettäneet sinulle vahvistussähköpostin. Avaa viesti ja klikkaa siinä olevaa
+                        linkkiä aktivoidaksesi tilisi.') }}
+                    </p>
+                    <p class="muted">
+                        {{ _('Vahvistus lähetetty osoitteeseen:') }}
+                        <strong>{{ email }}</strong>
+                    </p>
+                </div>
+            </div>
+
+            <div class="step-vertical">
+                <div class="step-vertical-icon">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <div class="step-vertical-content">
+                    <h4>{{ _('Valmis') }}</h4>
+                    <p>
+                        {{ _('Sähköpostisi on vahvistettu. Voit nyt aloittaa palvelun käytön.') }}
+                    </p>
+                </div>
+            </div>
+            <div class="step-vertical">
+                <div class="step-vertical-icon">
+                    <i class="fas fa-user-gear"></i>
+                </div>
+                <div class="step-vertical-content">
+                    <h4>{{ _('Voit nyt halutessasi viimeistellä profiilisi') }}</h4>
+                    <p>
+                        {{ _('Voit täydentää profiilisi tietoja myöhemmin. Tämä ei ole pakollista palvelun käytön
+                        aloittamiseksi.') }}
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="register-prompt">
+            <div class="auth-divider">
+                <span>{{ _('Tarvitsetko apua?') }}</span>
+            </div>
+
+            <p>
+                {{ _('Jos et saanut vahvistussähköpostia muutaman minuutin kuluessa, tarkista roskapostikansiosi tai
+                lähetä viesti uudelleen.') }}
+            </p>
+            <form method="POST" action="{{ url_for('users.auth.resend_confirmation') }}" id="resend_form">
+                <input type="hidden" name="email_or_username" value="{{ email }}">
+                <button type="submit" class="btn btn-link">
+                    {{ _('Lähetä vahvistussähköposti uudelleen') }}
+                </button>
+            </form>
+        </div>
+
+        <div class="auth-footer">
+            <p class="help-text">
+                <i class="fa-solid fa-circle-question"></i>
+                {{ _('Tarvitsetko apua?') }}
+                <a href="{{ url_for('contact') }}">
+                    {{ _('Ota yhteyttä tukeen') }}
+                </a>
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="{{ url_for('static', filename='js/toaster.js')}}"></script>
+<script>
+    // in real time update the step status based on email verification
+    // This is a placeholder for actual implementation
+
+    resend_form = document.getElementById('resend_form');
+    resend_form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        fetch(resend_form.action, {
+            method: 'POST',
+            body: new FormData(resend_form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.status == 'success') {
+                    showToast(data.message, 'success');
+                } else {
+                    showToast(data.message, 'error');
+                }
+            }).catch(() => {
+                showToast('Verkkovirhe, yritä uudelleen', 'warning');
+            });
+    });
+
+    loop_check = true;
+
+    // disable the loop check if email is not found
+    {% if not email_found %}
+    loop_check = false;
+    {% endif %}
+
+    // every 5 seconds, check if email is verified
+    setInterval(() => {
+        if (!loop_check) return;
+        fetch('{{ url_for("users.auth.check_email_verified") }}', {
+            method: 'POST',
+            body: JSON.stringify({ email: '{{ email }}' }),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(response => response.json())
+            .then(data => {
+                if (data.verified) {
+                    // update the steps
+                    const steps = document.querySelectorAll('.step-vertical');
+                    steps[1].classList.remove('active');
+                    steps[1].classList.add('complete');
+                    steps[2].classList.add('active');
+                    showToast('{{ _("Sähköpostisi on vahvistettu!") }}', 'success');
+                }
+            }).catch(() => {
+                console.log('Verkkovirhe tarkistettaessa sähköpostin vahvistusta');
+            });
+    }, 5000);
+</script>
+{% endblock %}

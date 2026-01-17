@@ -106,8 +106,9 @@
             </button>
         </form>
 
-        <div class="auth-divider"><span>{{ _('tai') }}</span></div>
         <div class="register-prompt">
+                    <div class="auth-divider"><span>{{ _('tai') }}</span></div>
+
             <p>{{ _('Onko sinulla jo tili?') }}</p>
             <a href="{{ url_for('users.auth.login') }}" class="btn btn-secondary">
                 <i class="fa-solid fa-right-to-bracket"></i>{{ _('Kirjaudu sisään') }}

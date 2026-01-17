@@ -105,7 +105,7 @@
                 <div class="step-vertical-content">
                     <h4>{{ _('Valmis') }}</h4>
                     <p>
-                        {{ _('Sähköpostisi on vahvistettu. Voit nyt aloittaa palvelun käytön.') }}
+                        {{ _('Sähköpostisi on vahvistettu. Voit nyt') }} <a href="{{ url_for('users.auth.login') }}">{{ _('kirjautua sisään') }}</a> {{ _('ja aloittaa palvelun käytön') }}.
                     </p>
                 </div>
             </div>

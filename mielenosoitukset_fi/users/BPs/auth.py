@@ -1,6 +1,7 @@
 import json
 from flask import (
     Blueprint,
+    g,
     render_template,
     request,
     redirect,
@@ -184,10 +185,18 @@ def register():
         except Exception as e:
             flash_message(f"Virhe vahvistusviestin lähettämisessä: {e}", "error")
 
+        # lets add the email to the session for next steps
+        g.email = email 
+        return redirect(url_for("users.auth.register_next_steps"))
         return redirect(url_for("users.auth.login"))
 
     return render_template("users/auth/register.html")
 
+
+@auth_bp.route("/register/next_steps")
+def register_next_steps():
+        
+    return render_template("users/auth/register_next_steps.html", email=g.get("email", 'Tapahtui virhe ja emme löydä sähköpostiasi.'), email_found=bool(g.get("email", None)))
 
 
 # ------------------------
@@ -307,6 +316,33 @@ def confirm_email(token):
 @auth_bp.route("/resend_confirmation", methods=["POST"])
 def resend_confirmation():
     email_or_username = (request.form.get("email_or_username") or "").strip()
+    
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        # AJAX request
+        if not email_or_username:
+            return jsonify({"status": "error", "message": "Syötä sähköposti tai käyttäjänimi."}), 400
+
+        lookup_values = [email_or_username]
+        if "@" in email_or_username:
+            lookup_values.append(email_or_username.lower())
+
+        user_doc = mongo.users.find_one({
+            "$or": [{"email": {"$in": lookup_values}}, {"username": email_or_username}]
+        })
+
+        if user_doc:
+            user = User.from_db(user_doc)
+            if not user.confirmed:
+                try:
+                    verify_emailer(user.email, user.username)
+                except Exception as e:
+                    return jsonify({"status": "error", "message": f"Vahvistusviestin lähetys epäonnistui: {e}"}), 500
+
+        return jsonify({
+            "status": "success",
+            "message": "Jos tili on olemassa ja sähköposti on vahvistamatta, lähetimme uuden vahvistuslinkin."
+        })
+    # Non-AJAX request
     if not email_or_username:
         flash_message("Syötä sähköposti tai käyttäjänimi.", "warning")
         return redirect(url_for("users.auth.login"))
@@ -334,6 +370,23 @@ def resend_confirmation():
     )
     return redirect(url_for("users.auth.login"))
 
+
+@auth_bp.route("/check_email_verified", methods=["POST"])
+def check_email_verified():
+    """
+    Check if the user's email is verified.
+
+    Returns
+    -------
+    dict
+        A dictionary indicating whether the email is verified.
+    """
+    try:
+        user = mongo.users.find_one({"email": request.json.get("email")})
+        user = User.from_db(user)
+        return jsonify({"verified": user.confirmed})
+    except Exception as e:
+        return jsonify({"verified": False})
 
 @auth_bp.route("/2fa_check", methods=["POST"])
 def mfa_check():

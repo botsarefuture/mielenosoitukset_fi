@@ -114,11 +114,12 @@
       </div>
     </div>
 
-    <div class="auth-divider">
-      <span>{{ _('tai') }}</span>
-    </div>
+    
 
     <div class="register-prompt">
+      <div class="auth-divider">
+      <span>{{ _('tai') }}</span>
+    </div>
       <p>{{ _('Eikö sinulla ole vielä tiliä?') }}</p>
       <a href="{{ url_for('users.auth.register') }}" class="btn btn-secondary">
         <i class="fa-solid fa-user-plus"></i>

@@ -604,6 +604,41 @@ def init_routes(app):
     """
         return Response(txt, mimetype="text/plain")
 
+    @app.route("/api-docs/")
+    def api_docs():
+        root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        docs_path = os.path.join(root_dir, "docs", "api.md")
+        try:
+            with open(docs_path, "r") as handle:
+                docs_text = handle.read()
+        except OSError:
+            docs_text = "API documentation is unavailable right now."
+        try:
+            import markdown
+            md = markdown.Markdown(
+                extensions=["fenced_code", "tables", "toc"],
+                extension_configs={
+                    "toc": {"permalink": True}
+                },
+            )
+            api_doc_html = md.convert(docs_text)
+            api_doc_toc = md.toc
+        except Exception:
+            from markupsafe import escape
+            api_doc_html = "<pre>" + escape(docs_text) + "</pre>"
+            api_doc_toc = ""
+        return render_template(
+            "api_docs.html",
+            api_doc=api_doc_html,
+            api_toc=api_doc_toc,
+            openapi_url=url_for("api_docs_openapi"),
+        )
+
+    @app.route("/api-docs/openapi.yaml")
+    def api_docs_openapi():
+        api_dir = os.path.join(os.path.dirname(__file__), "api")
+        return send_from_directory(api_dir, "api.yaml", mimetype="application/yaml")
+
         
     from flask import Response, url_for
     import xml.etree.ElementTree as ET

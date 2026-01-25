@@ -12,6 +12,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
 from flask_babel import _
+from datetime import datetime
 
 
 email_sender = EmailSender()
@@ -37,6 +38,7 @@ def log_request_info():
 def user_control():
     """Render the user control panel with a list of users."""
     search_query = request.args.get("search", "")
+    pending_token_requests = mongo.api_token_requests.count_documents({"status": "pending"})
     users_cursor = mongo.users.find(
         {
             "$or": [
@@ -48,7 +50,10 @@ def user_control():
         else {}
     )
     return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}user/list.html", users=users_cursor, search_query=search_query
+        f"{_ADMIN_TEMPLATE_FOLDER}user/list.html",
+        users=users_cursor,
+        search_query=search_query,
+        pending_token_requests=pending_token_requests,
     )
 
 
@@ -178,6 +183,8 @@ def edit_user(user_id):
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         global_permissions=user.global_permissions,
     )
+
+
 
 
 class UserOrg:

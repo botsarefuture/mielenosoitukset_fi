@@ -6,6 +6,19 @@
 
 ### Added
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
+* Expanded production-level codebase documentation in `docs/codebase.md` covering architecture, data flows, and ops.
+* Public API documentation at `/api-docs/` with downloadable OpenAPI spec and expanded `docs/api.md` coverage.
+* API docs now render Markdown with dark-mode styling on `/api-docs/`.
+* API docs layout refreshed with clearer typography and section styling for readability.
+* API docs now explicitly state authentication requirements per endpoint.
+* Added a table-of-contents sidebar to the public API docs page.
+* Footer now links to developer docs and API docs include contact info.
+* API docs now explain how to create, list, and revoke API tokens.
+* API docs include a step-by-step token usage example.
+* Token access now requires admin approval; settings page gained an API keys tab with request + list/revoke UI, plus admin can approve/deny requests.
+* Developer panel added for managing apps and app tokens; token model updated (48h short, 90d long via exchange, categories for user/app/system/session).
+* Developer dashboard and app pages now clarify scopes (incl. submit_demonstrations), show secrets inline, and footer link points to /developer/.
+* Scope request flow added: app owners can request extra scopes with reasons; admins can approve/deny in a new Kehittäjähallinta view.
 * Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 * Admin sidebar now includes a one-click link to the audit timeline for faster access.
 * Added `/admin/demo/tokens` view for superusers to inspect and revoke approve/reject/preview/edit links (with creator + expiry info and a sidebar shortcut).

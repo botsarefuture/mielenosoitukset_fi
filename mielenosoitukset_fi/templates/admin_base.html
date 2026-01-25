@@ -293,6 +293,14 @@ function confirmAction(action, taskId) {
           </a>
         </li>
       {% endif %}
+
+      {% if current_user.has_permission("EDIT_USER") %}
+        <li class="nav-item">
+          <a class="nav-link text-light" href="{{ url_for('admin_dev.list_requests') }}">
+            <i class="fas fa-key me-2"></i>{{ _('Kehittäjähallinta') }}
+          </a>
+        </li>
+      {% endif %}
     </ul>
   </nav>
 

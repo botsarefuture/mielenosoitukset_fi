@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Kehittäjäpaneeli{% endblock %}
+
+{% block styles %}
+<style>
+  .dev-wrap { max-width: 1080px; margin: 2rem auto; }
+  .dev-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; }
+  .dev-card { background: var(--dev-bg, #fff); border: 1px solid var(--dev-border, #e9ecef); border-radius: 10px; padding: 1.25rem; }
+  .token-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9ecef; padding: 0.35rem 0; }
+  .token-row:last-child { border-bottom: none; }
+  .muted { color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dev-wrap">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="mb-1"><i class="fa-solid fa-screwdriver-wrench"></i> Kehittäjäpaneeli</h1>
+      <p class="text-muted mb-0">Hallinnoi sovelluksia ja henkilökohtaisia avaimia. Lue <a href="{{ url_for('api_docs') }}">API-dokumentaatio</a> tai katso <a href="https://github.com/" target="_blank" rel="noopener">API-client -esimerkit</a>.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url_for('developer.apps_home') }}"><i class="fa-solid fa-laptop-code"></i> Sovellukset</a>
+  </div>
+
+  <div class="dev-grid">
+    <div class="dev-card">
+      <h4 class="mb-2">Henkilökohtaiset tokenit</h4>
+      <p class="muted">Käytä vain sallittuihin integraatioihin. Admin-oikeudet vaativat ylläpitäjän oikeudet. Long-tokenit syntyvät vaihtamalla short-tokenin.</p>
+      <button class="btn btn-primary btn-sm mb-2" id="create-personal-token"><i class="fa-solid fa-plus"></i> Luo uusi token</button>
+      <div id="personal-token-result" class="alert alert-info d-none">
+        <div class="fw-bold">Uusi token (tallenna heti)</div>
+        <code id="personal-token-value"></code>
+      </div>
+      <div class="mt-3">
+        {% if tokens %}
+          <div id="personal-token-list">
+            {% for t in tokens %}
+            <div class="token-row" data-id="{{ t._id }}">
+              <div>
+                <div><strong>{{ t.type }}</strong> — {{ ', '.join(t.scopes or []) }}</div>
+                <div class="muted">Voimassa: {{ t.expires_at if t.expires_at else '–' }}</div>
+              </div>
+              <button class="btn btn-sm btn-outline-danger revoke-personal" data-id="{{ t._id }}">
+                <i class="fa-solid fa-trash"></i> Peruuta
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="muted">Ei henkilökohtaisia tokeneita.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="dev-card">
+      <h4 class="mb-2">Sovellukset</h4>
+      <p class="muted">Ylläpidä omia integraatioita. Luonti, salaisuuksien vaihto ja app-tokenit löytyvät sovellusnäkymästä.</p>
+      <ul class="list-unstyled mb-0">
+        {% for app in apps %}
+          <li class="mb-2">
+            <a href="{{ url_for('developer.app_detail', app_id=app._id) }}"><strong>{{ app.name }}</strong></a>
+            <div class="muted">Client ID: <code>{{ app.client_id }}</code></div>
+          </li>
+        {% else %}
+          <li class="muted">Ei sovelluksia vielä.</li>
+        {% endfor %}
+      </ul>
+      <a class="btn btn-outline-secondary btn-sm mt-2" href="{{ url_for('developer.apps_home') }}">Avaa sovellusnäkymä</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for creating personal token -->
+<div class="modal fade" id="personalTokenModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Luo henkilökohtainen token</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="personal-token-form" class="row gy-3">
+          <div class="col-12">
+            <label class="form-label">Tyyppi</label>
+            <select class="form-select" name="type">
+              <option value="short">48h (short)</option>
+              <option value="long">90d (long) — vaatii short-tokenin vaihtoa</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Käyttöoikeudet</label>
+            <div class="d-flex flex-wrap gap-2">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="read" id="pt-scope-read" checked>
+                <label class="form-check-label" for="pt-scope-read">read</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="write" id="pt-scope-write">
+                <label class="form-check-label" for="pt-scope-write">write</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="admin" id="pt-scope-admin">
+                <label class="form-check-label" for="pt-scope-admin">admin</label>
+              </div>
+            </div>
+          </div>
+        </form>
+        <div id="pt-result" class="alert alert-info d-none mt-3">
+          <div class="fw-bold">Uusi token (näytetään vain kerran)</div>
+          <code id="pt-value"></code>
+        </div>
+        <div id="pt-message" class="alert d-none mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Sulje</button>
+        <button type="button" class="btn btn-primary" id="pt-create-btn">Luo</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const ptModalEl = document.getElementById('personalTokenModal');
+  const ptMessage = document.getElementById('pt-message');
+  const ptResult = document.getElementById('pt-result');
+  const ptValue = document.getElementById('pt-value');
+
+  function setPtMessage(msg, type='info') {
+    if (!ptMessage) return;
+    ptMessage.className = `alert alert-${type} mt-3`;
+    ptMessage.textContent = msg;
+    ptMessage.classList.remove('d-none');
+  }
+  function clearPtMessage() { if (ptMessage) ptMessage.classList.add('d-none'); }
+
+  document.getElementById('create-personal-token')?.addEventListener('click', () => {
+    clearPtMessage();
+    if (ptResult) ptResult.classList.add('d-none');
+    const modal = new bootstrap.Modal(ptModalEl);
+    modal.show();
+  });
+
+  document.getElementById('pt-create-btn')?.addEventListener('click', async () => {
+    clearPtMessage();
+    if (ptResult) ptResult.classList.add('d-none');
+    const form = document.getElementById('personal-token-form');
+    const type = form.querySelector('select[name="type"]').value;
+    const scopes = ['pt-scope-read','pt-scope-write','pt-scope-admin']
+      .map(id => document.getElementById(id))
+      .filter(cb => cb && cb.checked)
+      .map(cb => cb.value);
+    try {
+      const res = await fetch('/users/auth/api_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, scopes })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        if (ptValue) ptValue.textContent = data.token;
+        if (ptResult) ptResult.classList.remove('d-none');
+        setPtMessage('Token luotu. Talleta se heti.', 'success');
+      } else {
+        setPtMessage(data.error || 'Luonti epäonnistui', 'danger');
+      }
+    } catch (err) {
+      console.error(err);
+      setPtMessage('Luonti epäonnistui', 'danger');
+    }
+  });
+
+  document.getElementById('personal-token-list')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.revoke-personal');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    try {
+      const res = await fetch('/users/auth/api_tokens/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token_id: id })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        btn.closest('.token-row')?.remove();
+      } else {
+        setPtMessage(data.message || 'Peruutus epäonnistui', 'danger');
+      }
+    } catch (err) {
+      console.error(err);
+      setPtMessage('Peruutus epäonnistui', 'danger');
+    }
+  });
+</script>
+{% endblock %}

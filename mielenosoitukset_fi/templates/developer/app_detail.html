@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Sovellus | {{ app.name }}{% endblock %}
+
+{% block styles %}
+<style>
+  .dev-wrap { max-width: 960px; margin: 2rem auto; }
+  .dev-card { background: var(--dev-bg, #fff); border: 1px solid var(--dev-border, #e9ecef); border-radius: 10px; padding: 1.5rem; }
+  .dev-card + .dev-card { margin-top: 1rem; }
+  .meta { color: #6c757d; }
+  .pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; background: #e9ecef; margin-right: 0.25rem; font-size: 0.9rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dev-wrap">
+  <a class="btn btn-outline-secondary btn-sm mb-3" href="{{ url_for('developer.dashboard') }}">← Takaisin paneeliin</a>
+  <div class="dev-card">
+    <h3 class="mb-1">{{ app.name }}</h3>
+    <p class="meta mb-2">{{ app.description }}</p>
+    <div class="meta">Client ID: <code>{{ app.client_id }}</code></div>
+    <div class="mt-2">
+      <div class="meta mb-1">Sallitut scopet:</div>
+      {% for s in current_scopes %}
+        <span class="pill">{{ s }}</span>
+      {% else %}
+        <span class="meta">read</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="dev-card">
+    <h5 class="mb-2">Tokenit</h5>
+    <p class="meta">Valitse oikeudet ja luo 48h short-token (vaihda 90d longiksi API:n kautta).</p>
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      {% set allowed = current_scopes or ['read'] %}
+      <div class="form-check">
+        <input class="form-check-input scope-app" type="checkbox" value="read" id="scope-read" checked {% if 'read' not in allowed %}disabled{% endif %}>
+        <label class="form-check-label" for="scope-read">read</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input scope-app" type="checkbox" value="write" id="scope-write" {% if 'write' not in allowed %}disabled{% endif %}>
+        <label class="form-check-label" for="scope-write">write</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input scope-app" type="checkbox" value="submit_demonstrations" id="scope-submit" {% if 'submit_demonstrations' not in allowed %}disabled{% endif %}>
+        <label class="form-check-label" for="scope-submit">submit_demonstrations</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input scope-app" type="checkbox" value="admin" id="scope-admin" {% if 'admin' not in allowed %}disabled{% endif %}>
+        <label class="form-check-label" for="scope-admin">admin</label>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="create-token-btn"><i class="fa-solid fa-bolt"></i> Luo 48h token</button>
+    <div id="token-box" class="alert alert-info mt-3 d-none">
+      <div class="fw-bold">Token (tallenna heti)</div>
+      <code id="token-value"></code>
+    </div>
+    <div class="mt-3">
+      <h6 class="mb-1">Olemassa olevat tokenit</h6>
+      {% if tokens %}
+        <ul class="list-unstyled mb-0" id="token-list">
+          {% for t in tokens %}
+          <li class="meta d-flex justify-content-between align-items-center" data-id="{{ t._id }}">
+            <span>{{ t.type }} — {{ ', '.join(t.scopes or []) }} — {{ t.expires_at if t.expires_at else '–' }}</span>
+            <button class="btn btn-sm btn-outline-danger revoke-token" data-id="{{ t._id }}">
+              <i class="fa-solid fa-trash"></i> Peruuta
+            </button>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="meta" id="token-list">Ei token-historiaa</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="dev-card">
+    <h5 class="mb-2">Oikeudet ja pyynnöt</h5>
+    <p class="meta">Jos tarvitset lisäoikeuksia (esim. demojen luonti), pyydä niitä alla. Perustelu vaaditaan.</p>
+    <div id="scope-msg" class="alert d-none"></div>
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      <div class="form-check">
+        <input class="form-check-input scope-request" type="checkbox" value="read" id="req-read">
+        <label class="form-check-label" for="req-read">read</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input scope-request" type="checkbox" value="write" id="req-write">
+        <label class="form-check-label" for="req-write">write</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input scope-request" type="checkbox" value="submit_demonstrations" id="req-submit">
+        <label class="form-check-label" for="req-submit">submit_demonstrations</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input scope-request" type="checkbox" value="admin" id="req-admin">
+        <label class="form-check-label" for="req-admin">admin</label>
+      </div>
+    </div>
+    <textarea class="form-control mb-2" id="scope-reason" rows="3" placeholder="Perustele miksi tarvitset lisäoikeudet"></textarea>
+    <button class="btn btn-outline-primary btn-sm" id="scope-request-btn">Lähetä pyyntö</button>
+  </div>
+
+  <div class="dev-card">
+    <h5 class="mb-2">Rate limit</h5>
+    <p class="meta">Nykyinen raja: {{ rate_info.limit }}. Jäljellä: {{ rate_info.remaining }}. Reset: {{ rate_info.reset }}. (Tiedot viitteellisiä.)</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function selectedScopes() {
+    return Array.from(document.querySelectorAll('.scope-app'))
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+  }
+
+  function requestedScopes() {
+    return Array.from(document.querySelectorAll('.scope-request'))
+      .filter(cb => cb.checked)
+      .map(cb => cb.value);
+  }
+
+  document.getElementById('create-token-btn')?.addEventListener('click', async () => {
+    const scopes = selectedScopes();
+    const res = await fetch("{{ url_for('developer.create_app_token', app_id=app._id) }}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'short', scopes })
+    });
+    const data = await res.json();
+    const box = document.getElementById('token-box');
+    const val = document.getElementById('token-value');
+    if (data.status === 'success') {
+      val.textContent = data.token;
+      box.classList.remove('d-none');
+    } else {
+      box.classList.remove('d-none');
+      box.classList.replace('alert-info', 'alert-danger');
+      val.textContent = data.message || 'Tokenin luonti epäonnistui';
+    }
+  });
+
+  const scopeBtn = document.getElementById('scope-request-btn');
+  const scopeMsg = document.getElementById('scope-msg');
+  scopeBtn?.addEventListener('click', async () => {
+    const scopes = requestedScopes();
+    const reason = document.getElementById('scope-reason').value.trim();
+    if (!scopes.length) {
+      scopeMsg.className = 'alert alert-warning';
+      scopeMsg.textContent = 'Valitse vähintään yksi scope.';
+      scopeMsg.classList.remove('d-none');
+      return;
+    }
+    if (!reason) {
+      scopeMsg.className = 'alert alert-warning';
+      scopeMsg.textContent = 'Perustelu vaaditaan.';
+      scopeMsg.classList.remove('d-none');
+      return;
+    }
+    try {
+      const res = await fetch(\"{{ url_for('developer.request_scopes', app_id=app._id) }}\", {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ scopes, reason })\n      });\n      const data = await res.json();\n      if (data.status === 'success') {\n        scopeMsg.className = 'alert alert-success';\n        scopeMsg.textContent = data.message || 'Pyyntö lähetetty';\n      } else {\n        scopeMsg.className = 'alert alert-danger';\n        scopeMsg.textContent = data.message || 'Pyyntö epäonnistui';\n      }\n      scopeMsg.classList.remove('d-none');\n    } catch (err) {\n      console.error(err);\n      scopeMsg.className = 'alert alert-danger';\n      scopeMsg.textContent = 'Pyyntö epäonnistui';\n      scopeMsg.classList.remove('d-none');\n    }\n  });
+
+  document.getElementById('token-list')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.revoke-token');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    try {
+      const res = await fetch('/users/auth/api_tokens/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token_id: id })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        btn.closest('li')?.remove();
+      } else {
+        alert(data.message || 'Peruutus epäonnistui'); // fallback minimal
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+</script>
+{% endblock %}

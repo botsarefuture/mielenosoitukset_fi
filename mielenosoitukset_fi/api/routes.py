@@ -520,7 +520,10 @@ def renew_token():
         user_id=token_record.get("user_id"),
         token_type=token_record.get("type"),
         scopes=token_record.get("scopes"),
-        system=token_record.get("system", False)
+        system=token_record.get("system", False),
+        category=token_record.get("category", "user"),
+        app_id=token_record.get("app_id"),
+        session_id=token_record.get("session_id"),
     )
     
     return jsonify({
@@ -549,12 +552,15 @@ def create_long_lived_token():
     if token_expired(token_record):
         raise ApiException(Message("Short-lived token has expired", "token_expired"), 400)
 
-    # Create long-lived token
+    # Create long-lived token (90 days)
     long_token, expires_at = create_token(
         user_id=token_record.get("user_id"),
         token_type="long",
         scopes=token_record.get("scopes"),
-        system=token_record.get("system", False)
+        system=token_record.get("system", False),
+        category=token_record.get("category", "user"),
+        app_id=token_record.get("app_id"),
+        session_id=token_record.get("session_id"),
     )
 
     return jsonify({

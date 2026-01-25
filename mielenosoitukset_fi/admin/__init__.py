@@ -8,3 +8,4 @@ from .board_compliance import board_bp
 from .board_audit import audit_bp
 from .admin_kampanja_bp import admin_kampanja_bp
 from .admin_case_bp import admin_case_bp
+from .admin_dev_bp import admin_dev_bp

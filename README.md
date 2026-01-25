@@ -2,6 +2,16 @@
 
 Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions. The project is actively maintained and welcomes new contributors — see the Contributing section below for how to help.
 
+> ⚠️ **Documentation notice**
+>
+> This document is **not fully up to date** and may contain outdated information about the architecture, features, or setup of Mielenosoitukset.fi.
+>
+> **Always refer to the latest, authoritative documentation here:**
+> 👉 https://deepwiki.com/botsarefuture/mielenosoitukset_fi/
+>
+> The DeepWiki documentation reflects the current codebase and should be considered the source of truth.
+
+
 ---
 
 - [Features](#features)
@@ -13,6 +23,7 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 - [Translating](#translating)
 
 ---
+
 
 ## Features
 

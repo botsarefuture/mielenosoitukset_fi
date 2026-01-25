@@ -8,7 +8,7 @@
   {% endif %}
 
   {# --- Card Image --- #}
-  {% set image_url = attr_or_get(demo, 'cover_image', 'preview_image', 'img') %}
+  {% set image_url = get_demo_cover_image(demo) %}
   {% if image_url %}
   <div class="demo-card-image">
     <img src="{{ image_url }}" alt="{{ demo['title'] }}">

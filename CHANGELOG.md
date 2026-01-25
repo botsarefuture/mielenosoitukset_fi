@@ -20,6 +20,7 @@
 * Developer dashboard and app pages now clarify scopes (incl. submit_demonstrations), show secrets inline, and footer link points to /developer/.
 * Scope request flow added: app owners can request extra scopes with reasons; admins can approve/deny in a new Kehittäjähallinta view (includes dev-panel access requests and user app listing).
 * Token usage is logged for auditing when tokens are validated.
+* Multi-image demo galleries (admin URL list + detail-page carousel) that default cards/previews to the first image.
 * Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 * Admin sidebar now includes a one-click link to the audit timeline for faster access.
 * Added `/admin/demo/tokens` view for superusers to inspect and revoke approve/reject/preview/edit links (with creator + expiry info and a sidebar shortcut).
@@ -27,14 +28,18 @@
 * Admin log writes are now enriched with actor/request/process metadata and mirrored into the `super_audit_logs` stream so every privileged action is captured centrally.
 * Admin dashboard quick links now surface the Super Audit log so superusers can jump directly into the high-fidelity event stream.
 * Super Audit UI can safely render entries containing raw `ObjectId`/datetime values thanks to automatic JSON-safe serialization.
+* Added a reusable `showToast` helper and updated the register next steps page to show resend-confirmation feedback with the same inline toasts as the rest of auth.
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
+* Demo cover selection now uses a shared helper across index/list/card rendering to avoid mismatched cover images.
+* Screenshot generation now skips demos that already have a preview image, preventing redundant auto previews.
 * Demo preview token route now renders even when `follow_meta` isn’t provided (detail template supplies a safe default).
 * Audit timeline’s manual/automatic filter now hides background-job entries when you opt to see only manual actions.
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
+* Login now clearly instructs unverified users to confirm their email before signing in, including a reminder that a fresh link was sent.
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.
@@ -49,6 +54,7 @@
 * Admin dashboard now offers a “clear cache” control for global admins, making it easy to purge stale responses after deployments.
 * Admin dashboard routes now emit structured audit logs (matching the new `admin_demo_bp` style) so every panic toggle, cache purge, job action, and analytics query is captured consistently.
 * Organization admin routes now emit structured audit logs for every invite, edit, deletion, suggestion review, and membership change, aligning them with the new admin logging standard.
+* Login now uses a resend-verification popup so users can request a fresh email without leaving the sign-in page.
 
 ## v4.0.0-beta.3 – *Cache & Follow Polish* ✨
 

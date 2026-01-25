@@ -1207,9 +1207,12 @@ def approve_demo_with_token(token):
     try:
         refreshed_demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     except Exception:
-        logger.exception("Failed to reload demo %s after approval via token %s", demo_id, doc.get("_id"))
+        logger.exception(
+            "Failed to verify approval persistence for demo %s via token %s", demo_id, doc.get("_id")
+        )
         flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
         return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
+
     if not refreshed_demo or not refreshed_demo.get("approved"):
         logger.error("Approval token %s did not persist approval for demo %s", doc.get("_id"), demo_id)
         flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")

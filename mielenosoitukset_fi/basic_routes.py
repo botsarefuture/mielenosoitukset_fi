@@ -2959,6 +2959,8 @@ def init_routes(app):
         return True
 
     @app.route("/pride-nakyvaksi")
+    @app.route("/pride/")
+    @app.route("/pride")
     def pride_nakyvaksi():
         return render_template("pride-nakyvaksi/index.html")
 

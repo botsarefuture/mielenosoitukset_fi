@@ -1298,12 +1298,9 @@ def reject_demo_with_token(token):
     try:
         refreshed_demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     except Exception:
-        logger.exception(
-            "Failed to verify rejection persistence for demo %s via token %s", demo_id, doc.get("_id")
-        )
+        logger.exception("Failed to reload demo %s after rejection via token %s", demo_id, doc.get("_id"))
         flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
         return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
-
     if not refreshed_demo or refreshed_demo.get("approved") or not refreshed_demo.get("rejected"):
         logger.error("Reject token %s did not persist rejection for demo %s", doc.get("_id"), demo_id)
         flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")

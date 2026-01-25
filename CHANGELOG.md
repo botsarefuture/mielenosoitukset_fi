@@ -18,6 +18,7 @@
 ### Fixed
 * Approval/rejection token flows now only mark single-use links as used after the database update is verified, preventing silent failures from consuming links without persisting the decision.
 * Approval/rejection token flows now handle read failures during persistence verification, preventing transient errors from causing unexpected 500s.
+* Token approval/rejection flows now handle post-update read errors gracefully, prompting a retry instead of raising a 500 on transient lookup failures.
 * Approving or rejecting via token now updates the demonstration `last_modified` timestamp so audit views reflect the latest change.
 * Approving or rejecting via token now records the decision in the demo audit log for better traceability.
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.

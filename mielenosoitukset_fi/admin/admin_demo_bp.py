@@ -1189,10 +1189,44 @@ def approve_demo_with_token(token):
         _mark_used(doc["_id"])  # still burn token
         return redirect(url_for("admin_demo.demo_control"))
 
-    mongo.demonstrations.update_one(
-        {"_id": _require_valid_objectid(demo_id)},
-        {"$set": {"approved": True, "rejected": False}}
+    try:
+        result = mongo.demonstrations.update_one(
+            {"_id": _require_valid_objectid(demo_id)},
+            {"$set": {"approved": True, "rejected": False, "last_modified": datetime.utcnow()}}
+        )
+    except Exception:
+        logger.exception("Failed to approve demo %s via token %s", demo_id, doc.get("_id"))
+        flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
+
+    if result.matched_count != 1:
+        logger.error("Approval token %s could not find demo %s", doc.get("_id"), demo_id)
+        flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
+
+    try:
+        refreshed_demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    except Exception:
+        logger.exception(
+            "Failed to verify approval persistence for demo %s via token %s", demo_id, doc.get("_id")
+        )
+        flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
+
+    if not refreshed_demo or not refreshed_demo.get("approved"):
+        logger.error("Approval token %s did not persist approval for demo %s", doc.get("_id"), demo_id)
+        flash_message("Hyväksyntä epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.approve_demo_with_token", token=token))
+
+    record_demo_change(
+        demo_id,
+        demo,
+        refreshed_demo,
+        action="approve_demo",
+        message=_("Kertakäyttölinkillä hyväksyttiin mielenosoitus"),
+        extra_details={"source": "token", "token_id": str(doc.get("_id"))},
     )
+
     _revoke_tokens_for_demo(demo_id, ["reject", "edit"])
     _revoke_tokens_for_demo(demo_id, ["reject"])
 
@@ -1246,10 +1280,41 @@ def reject_demo_with_token(token):
         _mark_used(doc["_id"])  # still burn token
         return redirect(url_for("admin_demo.demo_control"))
 
-    mongo.demonstrations.update_one(
-        {"_id": _require_valid_objectid(demo_id)},
-        {"$set": {"approved": False, "rejected": True}}
+    try:
+        result = mongo.demonstrations.update_one(
+            {"_id": _require_valid_objectid(demo_id)},
+            {"$set": {"approved": False, "rejected": True, "last_modified": datetime.utcnow()}}
+        )
+    except Exception:
+        logger.exception("Failed to reject demo %s via token %s", demo_id, doc.get("_id"))
+        flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
+
+    if result.matched_count != 1:
+        logger.error("Reject token %s could not find demo %s", doc.get("_id"), demo_id)
+        flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
+
+    try:
+        refreshed_demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
+    except Exception:
+        logger.exception("Failed to reload demo %s after rejection via token %s", demo_id, doc.get("_id"))
+        flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
+    if not refreshed_demo or refreshed_demo.get("approved") or not refreshed_demo.get("rejected"):
+        logger.error("Reject token %s did not persist rejection for demo %s", doc.get("_id"), demo_id)
+        flash_message("Hylkäys epäonnistui. Yritä uudelleen.", "error")
+        return redirect(url_for("admin_demo.reject_demo_with_token", token=token))
+
+    record_demo_change(
+        demo_id,
+        demo,
+        refreshed_demo,
+        action="reject_demo",
+        message=_("Kertakäyttölinkillä hylättiin mielenosoitus"),
+        extra_details={"source": "token", "token_id": str(doc.get("_id"))},
     )
+
     _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 
     # Notify submitter

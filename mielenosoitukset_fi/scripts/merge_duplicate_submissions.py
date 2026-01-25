@@ -25,6 +25,7 @@ REFERENCE_UPDATES = (
     ("demo_notifications_queue", "demo_id"),
     ("cases", "demo_id"),
     ("demo_reminders", "demonstration_id"),
+    ("demo_cancellation_tokens", "demo_id"),
 )
 
 

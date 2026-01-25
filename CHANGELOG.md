@@ -40,6 +40,7 @@
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
 * Login now clearly instructs unverified users to confirm their email before signing in, including a reminder that a fresh link was sent.
+* Token validation no longer double-logs API usage when the `token_required` decorator already records usage per request.
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.

@@ -91,22 +91,6 @@ def check_token(token: str):
     if token_expired(record):
         raise ApiException(Message("Token has expired", "token_expired"), 401)
 
-    # Log usage for auditing
-    try:
-        TOKEN_USAGE_LOGS.insert_one({
-            "token_id": record.get("_id"),
-            "user_id": record.get("user_id"),
-            "app_id": record.get("app_id"),
-            "category": record.get("category"),
-            "scopes": record.get("scopes", []),
-            "path": getattr(request, "path", None),
-            "method": getattr(request, "method", None),
-            "ip": getattr(request, "remote_addr", None),
-            "timestamp": datetime.now(timezone.utc),
-        })
-    except Exception:
-        pass
-
     return record
 
 

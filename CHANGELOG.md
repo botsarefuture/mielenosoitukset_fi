@@ -28,7 +28,12 @@
 * Admin log writes are now enriched with actor/request/process metadata and mirrored into the `super_audit_logs` stream so every privileged action is captured centrally.
 * Admin dashboard quick links now surface the Super Audit log so superusers can jump directly into the high-fidelity event stream.
 * Super Audit UI can safely render entries containing raw `ObjectId`/datetime values thanks to automatic JSON-safe serialization.
+* Pride näkyväksi sivu löytyy nyt myös polusta `/pride` ja sisältää kartan, joka piirtää kaikki Pride-mielenosoitukset.
 * Added a reusable `showToast` helper and updated the register next steps page to show resend-confirmation feedback with the same inline toasts as the rest of auth.
+* Pride näkyväksi sivu hyödyntää nyt samaa listatyylien kokonaisuutta kuin päälistaus, jotta tapahtumakortit piirtyvät oikein.
+* Pride-kortit näyttävät oikein tyylitettyinä (tagit, ikonit, värit) lisäämällä puuttuvan `css/demo.css`-tyylin kampanjasivulle.
+* Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
+* Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
 * Admin reminder job now skips demonstrations that are already rejected or whose event date is in the past, preventing stale approval emails.
@@ -41,6 +46,8 @@
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
 * Login now clearly instructs unverified users to confirm their email before signing in, including a reminder that a fresh link was sent.
 * Token validation no longer double-logs API usage when the `token_required` decorator already records usage per request.
+* Pride näkyväksi sivun tilastot laskevat kaupungit oikein ja käyttävät samaa korttinäkymää kuin päälistaus, jotta tapahtumat näkyvät yhtenäisesti.
+* Pride näkyväksi -sivun sydänanimaatio on rajattu hero-osioon, jotta koristeet eivät leiju sisällön reunoilla.
 
 ### Changed
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.

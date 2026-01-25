@@ -5,6 +5,9 @@
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo-list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -30,6 +33,8 @@
   --pride-green: #008026;
   --pride-blue: #24408E;
   --pride-purple: #732982;
+  --pride-marker: #8b1c7a;
+  --pride-marker-fill: #d61f85;
 }
 
 * {
@@ -480,13 +485,110 @@ body {
   font-weight: 500;
 }
 
+.map-card {
+  margin: 3rem 0;
+}
+
+.map-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+#pride-map {
+  width: 100%;
+  height: 420px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--color-shadow);
+  overflow: hidden;
+  background: var(--color-card-bg);
+}
+
+.map-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--color-text);
+  box-shadow: var(--color-shadow);
+  font-weight: 600;
+}
+
+.map-legend .legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, var(--pride-marker-fill) 0%, var(--pride-marker) 80%);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0,0,0,0.08);
+}
+
+.map-empty-state {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.demos-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--color-shadow);
+}
+
+.demos-grid .demo-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--color-shadow);
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.demos-grid .demo-card-badges .demo-badge {
+  background: linear-gradient(120deg, rgba(255, 237, 0, 0.25), rgba(115, 41, 130, 0.3));
+  color: var(--pride-purple);
+  border: none;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.demos-grid .demo-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(120deg, rgba(228, 3, 3, 0.06), rgba(36, 64, 142, 0.06));
+}
+
+.demos-grid .demo-card .demo-card-tag {
+  border-color: transparent;
+  background: linear-gradient(135deg, rgba(115, 41, 130, 0.08), rgba(36, 64, 142, 0.08));
+  color: #1d4ed8;
+  font-weight: 700;
+  border-radius: 14px;
+}
+
+.demos-grid .demo-card-title span {
+  color: #1d4ed8;
+}
+
+.demos-grid .demo-card-details i {
+  color: #1d4ed8;
+}
+
 /* Pride Hearts Animation */
 .pride-hearts {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   pointer-events: none;
   z-index: 1;
   overflow: hidden;
@@ -558,6 +660,11 @@ body {
   .pride-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .map-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -593,11 +700,9 @@ body {
 {% endblock %}
 
 {% block content %}
-<!-- Pride Hearts Background Animation -->
-<div class="pride-hearts" id="pride-hearts"></div>
-
 <!-- Hero Section -->
 <section class="hero-section">
+  <div class="pride-hearts" id="pride-hearts"></div>
   <div class="rainbow-decoration"></div>
   <div class="rainbow-decoration"></div>
   <div class="hero-content">
@@ -642,6 +747,26 @@ body {
       <span class="stat-label">Rakkautta</span>
     </div>
   </div>
+
+  <section class="section-card map-card" id="pride-map-section">
+    <div class="map-card-header">
+      <div>
+        <h2>Pride-kartta</h2>
+        <p style="color: var(--color-text-secondary); margin-top: 0.35rem;">
+          Katso missä Pride-mielenosoitukset järjestetään ja löydä sinua lähimmät tapahtumat.
+        </p>
+      </div>
+      <div class="map-legend">
+        <span class="legend-dot"></span>
+        <span>Pride-mielenosoitus</span>
+      </div>
+    </div>
+    <div id="pride-map"></div>
+    <div id="map-empty-state" class="map-empty-state">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <p>Kartalla ei vielä ole Pride-mielenosoituksia.</p>
+    </div>
+  </section>
 
   <!-- Info Section -->
   <section class="section-card info-section">
@@ -728,6 +853,7 @@ body {
 
 {% include '_modals/_demo-card-template.html' %}
 <script src="{{ url_for('static', filename='js/demo-card-render.js') }}"></script>
+<script src="{{ url_for('static', filename='leaflet/leaflet.js') }}"></script>
 
 <script>
 // Pride hearts animation
@@ -762,15 +888,105 @@ document.addEventListener('DOMContentLoaded', () => {
   const grid = document.getElementById('demos-grid');
   const loadMoreBtn = document.getElementById('load-more-btn');
   const noResults = document.getElementById('no-results');
+  const mapContainer = document.getElementById('pride-map');
+  const mapEmptyState = document.getElementById('map-empty-state');
+  let prideMap;
+  let prideMarkers;
 
   let extraParams = {"tag": "pride"};
 
+  function ensureMap() {
+    if (!mapContainer) return null;
+    if (prideMap) return prideMap;
+
+    prideMap = L.map('pride-map', {
+      center: [64.5, 26.0],
+      zoom: 5,
+      scrollWheelZoom: false,
+      zoomControl: true,
+      attributionControl: true,
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(prideMap);
+
+    prideMarkers = L.layerGroup().addTo(prideMap);
+    return prideMap;
+  }
+
+  async function loadPrideMap() {
+    if (!mapContainer) return;
+    const map = ensureMap();
+    if (!map || !prideMarkers) return;
+
+    prideMarkers.clearLayers();
+    if (mapEmptyState) {
+      mapEmptyState.style.display = 'none';
+    }
+
+    let page = 1;
+    let totalPages = 1;
+    const bounds = [];
+
+    try {
+      do {
+        const params = new URLSearchParams({ page, per_page: 200, tag: 'pride' });
+        const res = await fetch(`/api/demonstrations?${params.toString()}`);
+        const data = await res.json();
+        totalPages = data.total_pages || 1;
+
+        (data.results || []).forEach(demo => {
+          const lat = parseFloat(demo.latitude);
+          const lng = parseFloat(demo.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+          const marker = L.circleMarker([lat, lng], {
+            radius: 9,
+            color: getComputedStyle(document.documentElement).getPropertyValue('--pride-marker')?.trim() || '#8b1c7a',
+            fillColor: getComputedStyle(document.documentElement).getPropertyValue('--pride-marker-fill')?.trim() || '#d61f85',
+            fillOpacity: 0.9,
+            weight: 2,
+          });
+
+          const labelParts = [
+            `<strong>${demo.title || 'Pride-mielenosoitus'}</strong>`,
+            demo.formatted_date || demo.date || '',
+            [demo.address, demo.city].filter(Boolean).join(', ')
+          ].filter(Boolean);
+
+          marker.bindPopup(labelParts.join('<br>'));
+          marker.addTo(prideMarkers);
+          bounds.push([lat, lng]);
+        });
+
+        page += 1;
+      } while (page <= totalPages);
+
+      if (bounds.length) {
+        map.fitBounds(bounds, { padding: [30, 30] });
+        setTimeout(() => map.invalidateSize(), 200);
+      } else if (mapEmptyState) {
+        mapEmptyState.style.display = 'flex';
+      }
+    } catch (error) {
+      console.error('Pride map load failed', error);
+      if (mapEmptyState) {
+        mapEmptyState.style.display = 'flex';
+        const message = mapEmptyState.querySelector('p');
+        if (message) {
+          message.textContent = 'Karttaa ei voitu ladata juuri nyt.';
+        }
+      }
+    }
+  }
+
   async function loadDemosWrapper(page = 1, append = false) {
     if (!append) {
-        grid.classList.add("loading");
+      grid.classList.add("loading");
       grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>`;
       noResults.style.display = 'none';
-    } else {
+    } else if (loadMoreBtn) {
       loadMoreBtn.classList.add('loading');
       loadMoreBtn.disabled = true;
     }
@@ -778,35 +994,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await loadDemos(page, append, extraParams);
 
-    // Update stats
     const demoCards = document.querySelectorAll('.demo-card');
-    document.getElementById('total-events').textContent = demoCards.length;
+    const totalEventsEl = document.getElementById('total-events');
+    const totalCitiesEl = document.getElementById('total-cities');
+
+    if (totalEventsEl) {
+      totalEventsEl.textContent = demoCards.length;
+    }
     
-    // Count unique cities
     const cities = new Set();
     demoCards.forEach(card => {
-      const city = card.querySelector('.demo-city')?.textContent;
+      const city = card.querySelector('.demo-card-city')?.textContent?.trim();
       if (city) cities.add(city);
     });
-    document.getElementById('total-cities').textContent = cities.size;
 
-    // Show no results if empty
+    if (totalCitiesEl) {
+      totalCitiesEl.textContent = cities.size;
+    }
+
     if (demoCards.length === 0) {
       noResults.style.display = 'block';
     }
 
-    loadMoreBtn.classList.remove('loading');
-    loadMoreBtn.disabled = false;
+    if (grid) {
+      grid.classList.remove('loading');
+    }
+
+    if (loadMoreBtn) {
+      loadMoreBtn.classList.remove('loading');
+      loadMoreBtn.disabled = false;
+    }
   }
 
   // Initial load
   loadDemosWrapper();
+  loadPrideMap();
   
   // Load more button
-  loadMoreBtn.addEventListener('click', () => {
-    const currentPage = Math.ceil(document.querySelectorAll('.demo-card').length / 20) + 1;
-    loadDemosWrapper(currentPage, true);
-  });
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      const pageSize = typeof perPage === 'number' ? perPage : 12;
+      const currentPage = Math.ceil(document.querySelectorAll('.demo-card').length / pageSize) + 1;
+      loadDemosWrapper(currentPage, true);
+    });
+  }
 });
 </script>
 {% endblock %}

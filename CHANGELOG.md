@@ -18,7 +18,8 @@
 * Token access now requires admin approval; settings page gained an API keys tab with request + list/revoke UI, plus admin can approve/deny requests.
 * Developer panel added for managing apps and app tokens; token model updated (48h short, 90d long via exchange, categories for user/app/system/session).
 * Developer dashboard and app pages now clarify scopes (incl. submit_demonstrations), show secrets inline, and footer link points to /developer/.
-* Scope request flow added: app owners can request extra scopes with reasons; admins can approve/deny in a new Kehittäjähallinta view.
+* Scope request flow added: app owners can request extra scopes with reasons; admins can approve/deny in a new Kehittäjähallinta view (includes dev-panel access requests and user app listing).
+* Token usage is logged for auditing when tokens are validated.
 * Central admin timeline at `/admin/demo/audit/logs` showing the latest demonstration audit entries, with filters (including auto/manual actions) and quick links back to per-demo history/diffs.
 * Admin sidebar now includes a one-click link to the audit timeline for faster access.
 * Added `/admin/demo/tokens` view for superusers to inspect and revoke approve/reject/preview/edit links (with creator + expiry info and a sidebar shortcut).

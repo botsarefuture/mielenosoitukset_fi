@@ -420,6 +420,7 @@
     <ul>
       <li><a href="#tab-general">{{ _('Yleinen') }}</a></li>
       <li><a href="#tab-security">{{ _('Turvallisuus') }}</a></li>
+      <li><a href="#tab-tokens">{{ _('API-avaimet') }}</a></li>
       <li><a href="#tab-profile">{{ _('Profiili') }}</a></li>
     </ul>
 
@@ -618,6 +619,94 @@
           {{ _('Tallenna profiili') }}
         </button>
       </form>
+    </div>
+
+    <!-- API Tokens Tab -->
+    <div id="tab-tokens">
+      <div class="section-header mb-4">
+        <h4><i class="fa-solid fa-key"></i> {{ _('API-avaimet') }}</h4>
+        <p class="text-muted">
+          {{ _('Luo ja hallitse API-avaimia integraatioita varten. Avaimet näytetään vain kerran, tallenna ne turvallisesti.') }}
+        </p>
+      </div>
+
+      <div id="token-message" class="alert d-none"></div>
+
+      <div id="token-locked" class="settings-section mb-4 d-none">
+        <h5 class="mb-2">{{ _('API-avaimet lukittu') }}</h5>
+        <p class="text-muted mb-3">
+          {{ _('Tietoturvan vuoksi API-avaimet on avattava ylläpitäjän toimesta. Lähetä pyyntö alla.') }}
+        </p>
+        <button class="btn btn-secondary" id="token-request-btn" type="button">
+          <i class="fa-solid fa-unlock"></i> {{ _('Pyydä käyttöoikeutta') }}
+        </button>
+      </div>
+
+      <div class="settings-section mb-4">
+        <h5 class="mb-3">{{ _('Luo uusi avain') }}</h5>
+        <div class="mb-2">
+          <a class="btn btn-outline-primary btn-sm" href="{{ url_for('developer.apps_home') }}">
+            <i class="fa-solid fa-screwdriver-wrench"></i> {{ _('Kehittäjäpaneeli (sovellukset)') }}
+          </a>
+        </div>
+        <form id="token-form" class="row gy-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label">{{ _('Tyyppi') }}</label>
+            <select class="form-select" id="token-type" name="type">
+              <option value="short">{{ _('Lyhytikäinen (2h)') }}</option>
+              <option value="long">{{ _('Pitkäikäinen (90 päivää)') }}</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label">{{ _('Käyttöoikeudet') }}</label>
+            <div class="d-flex flex-wrap gap-3">
+              <div class="form-check">
+                <input class="form-check-input" id="scope-read" type="checkbox" value="read" checked>
+                <label class="form-check-label" for="scope-read">read</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" id="scope-write" type="checkbox" value="write">
+                <label class="form-check-label" for="scope-write">write</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" id="scope-admin" type="checkbox" value="admin">
+                <label class="form-check-label" for="scope-admin">admin</label>
+              </div>
+            </div>
+            <div class="form-text">{{ _('Admin-oikeudet myönnetään vain ylläpitäjille.') }}</div>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-primary" id="token-create-btn" type="submit">
+              <i class="fa-solid fa-plus"></i> {{ _('Luo avain') }}
+            </button>
+          </div>
+        </form>
+        <div id="token-result" class="mt-3 d-none">
+          <label class="form-label">{{ _('Uusi avain (näytetään vain kerran)') }}</label>
+          <div class="alert alert-info">
+            <code id="token-value"></code>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h5 class="mb-3">{{ _('Nykyiset avaimet') }}</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>{{ _('Tyyppi') }}</th>
+                <th>{{ _('Käyttöoikeudet') }}</th>
+                <th>{{ _('Voimassa') }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="token-list">
+              <tr><td colspan="4" class="text-muted text-center">{{ _('Ladataan...') }}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1045,6 +1134,203 @@
       if (ui.newTab.find("a").attr("href") === "#tab-security") {
         loadLoginLogs();
       }
+    });
+  });
+
+  /* API token helpers */
+  document.addEventListener("DOMContentLoaded", () => {
+    const tokenForm = document.getElementById("token-form");
+    const tokenList = document.getElementById("token-list");
+    const tokenMsg = document.getElementById("token-message");
+    const tokenResult = document.getElementById("token-result");
+    const tokenValue = document.getElementById("token-value");
+    const requestBtn = document.getElementById("token-request-btn");
+    const lockedNotice = document.getElementById("token-locked");
+    let tokensLoaded = false;
+
+    function setTokenMessage(msg, type = "info") {
+      if (!tokenMsg) return;
+      tokenMsg.className = `alert alert-${type}`;
+      tokenMsg.textContent = msg;
+      tokenMsg.classList.remove("d-none");
+    }
+
+    function clearTokenMessage() {
+      if (tokenMsg) tokenMsg.classList.add("d-none");
+    }
+
+    function showLocked() {
+      if (lockedNotice) lockedNotice.classList.remove("d-none");
+      if (tokenForm) tokenForm.classList.add("d-none");
+    }
+
+    function showUnlocked() {
+      if (lockedNotice) lockedNotice.classList.add("d-none");
+      if (tokenForm) tokenForm.classList.remove("d-none");
+    }
+
+    async function loadStatus() {
+      try {
+        const res = await fetch("/users/auth/api_tokens/status");
+        const data = await res.json();
+        const approved = !!data.approved;
+        const requested = !!data.requested;
+        if (approved) {
+          showUnlocked();
+          clearTokenMessage();
+          if (!tokensLoaded) loadTokens();
+        } else {
+          showLocked();
+          setTokenMessage(
+            requested
+              ? "{{ _('Pyyntö lähetetty. Ylläpitäjän täytyy hyväksyä API-avainten käyttö.') }}"
+              : "{{ _('API-avaimet ovat lukittuina. Pyydä käyttöoikeutta alla.') }}",
+            "warning"
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Tilaa ei voitu tarkistaa') }}", "danger");
+      }
+    }
+
+    async function requestAccess() {
+      try {
+        const res = await fetch("/users/auth/api_tokens/request_access", {
+          method: "POST"
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          setTokenMessage(data.message || "{{ _('Pyyntö lähetetty') }}", "success");
+          showLocked();
+        } else {
+          setTokenMessage(data.message || "{{ _('Pyyntö epäonnistui') }}", "danger");
+        }
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Pyyntö epäonnistui') }}", "danger");
+      }
+    }
+
+    async function loadTokens() {
+      if (!tokenList) return;
+      tokenList.innerHTML = `<tr><td colspan="4" class="text-muted text-center">{{ _('Ladataan...') }}</td></tr>`;
+      try {
+        const res = await fetch("/users/auth/api_tokens/list");
+        const data = await res.json();
+        if (data.status !== "success") {
+          setTokenMessage(data.error || "Virhe ladattaessa avaimia", "warning");
+          return;
+        }
+        const rows = (data.tokens || []).map(t => {
+          const scopes = (t.scopes || []).join(", ") || "-";
+          const exp = t.expires_at ? new Date(t.expires_at).toLocaleString("fi-FI", { hour12: false }) : "—";
+          return `
+            <tr>
+              <td>${t.type}</td>
+              <td>${scopes}</td>
+              <td>${exp}</td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger token-revoke" data-id="${t._id}">
+                  <i class="fa-solid fa-trash"></i> {{ _('Peruuta') }}
+                </button>
+              </td>
+            </tr>`;
+        }).join("");
+        tokenList.innerHTML = rows || `<tr><td colspan="4" class="text-center text-muted">{{ _('Ei avaimia vielä') }}</td></tr>`;
+        tokensLoaded = true;
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Avainten lataus epäonnistui') }}", "danger");
+      }
+    }
+
+    async function revokeToken(id) {
+      try {
+        const res = await fetch("/users/auth/api_tokens/revoke", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token_id: id })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          clearTokenMessage();
+          loadTokens();
+        } else {
+          setTokenMessage(data.message || "Peruutus epäonnistui", "warning");
+        }
+      } catch (err) {
+        console.error(err);
+        setTokenMessage("{{ _('Peruutus epäonnistui') }}", "danger");
+      }
+    }
+
+    if (tokenList) {
+      tokenList.addEventListener("click", (e) => {
+        const btn = e.target.closest(".token-revoke");
+        if (btn) {
+          e.preventDefault();
+          revokeToken(btn.dataset.id);
+        }
+      });
+    }
+
+    if (tokenForm) {
+      tokenForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearTokenMessage();
+        if (tokenResult) tokenResult.classList.add("d-none");
+
+        const type = document.getElementById("token-type").value;
+        const scopes = ["scope-read", "scope-write", "scope-admin"]
+          .map(id => document.getElementById(id))
+          .filter(cb => cb && cb.checked)
+          .map(cb => cb.value);
+
+        const btn = document.getElementById("token-create-btn");
+        if (btn) btn.disabled = true;
+
+        try {
+          const res = await fetch("/users/auth/api_token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, scopes })
+          });
+          const data = await res.json();
+          if (data.status === "success") {
+            if (tokenValue) tokenValue.textContent = data.token;
+            if (tokenResult) tokenResult.classList.remove("d-none");
+            setTokenMessage("{{ _('Avain luotu. Tallenna se heti, sitä ei näytetä uudelleen.') }}", "success");
+            loadTokens();
+          } else {
+            setTokenMessage(data.error || "Avaimen luonti epäonnistui", "warning");
+          }
+        } catch (err) {
+          console.error(err);
+          setTokenMessage("{{ _('Avaimen luonti epäonnistui') }}", "danger");
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      });
+    }
+
+    if (requestBtn) {
+      requestBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        requestAccess();
+      });
+    }
+
+    // load tokens when tab is opened first time
+    $(function () {
+      $("#settings-tabs").on("tabsactivate", function (event, ui) {
+        if (ui.newTab.find("a").attr("href") === "#tab-tokens") {
+          loadStatus();
+        }
+        if (ui.newTab.find("a").attr("href") === "#tab-security") {
+          loadLoginLogs();
+        }
+      });
     });
   });
 </script>

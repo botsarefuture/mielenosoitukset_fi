@@ -1,0 +1,34 @@
+{% extends 'admin_base.html' %}
+
+{% block main_content %}
+<div class="container-fluid">
+  <h2 class="mb-4">Käyttäjän sovellukset</h2>
+  <p class="text-muted">Käyttäjä: {{ user.username or 'Tuntematon' }} ({{ user.email or '' }})</p>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Nimi</th>
+          <th>Kuvaus</th>
+          <th>Client ID</th>
+          <th>Sallitut scopet</th>
+          <th>Luotu</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in apps %}
+        <tr>
+          <td>{{ app.name }}</td>
+          <td>{{ app.description }}</td>
+          <td><code>{{ app.client_id }}</code></td>
+          <td>{{ ', '.join(app.allowed_scopes or []) }}</td>
+          <td>{{ app.created_at or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted">Ei sovelluksia.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

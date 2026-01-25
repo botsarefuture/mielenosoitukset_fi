@@ -58,6 +58,12 @@
     <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="btn btn-info">
       <i class="fa-solid fa-book me-1"></i> Käyttöohje
     </a>
+    <a href="{{ url_for('admin_user.api_token_requests') }}" class="btn btn-outline-primary ms-2">
+      <i class="fa-solid fa-key me-1"></i> API-avainten pyynnöt
+      {% if pending_token_requests %}
+      <span class="badge bg-danger">{{ pending_token_requests }}</span>
+      {% endif %}
+    </a>
   </div>
 
 

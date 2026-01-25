@@ -29,6 +29,9 @@ import importlib
 import os
 import jwt
 import datetime
+from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
 
 # import stuff needed for qr code generation
 import pyqrcode
@@ -79,7 +82,27 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 login_logs = mongo["login_logs"]
 
-from datetime import datetime
+token_access_requests = mongo["api_token_requests"]
+
+def _fresh_user_doc():
+    return mongo.users.find_one({"_id": current_user._id}) or {}
+
+
+def _notify_admin(subject, body, to=None):
+    to = to or ["emilia@mielenosoitukset.fi"]
+    try:
+        msg = MIMEText(body, "plain", "utf-8")
+        msg["Subject"] = subject
+        msg["From"] = Config.MAIL_DEFAULT_SENDER
+        msg["To"] = ", ".join(to)
+        with smtplib.SMTP(Config.MAIL_SERVER, Config.MAIL_PORT) as server:
+            if Config.MAIL_USE_TLS:
+                server.starttls()
+            if Config.MAIL_USERNAME and Config.MAIL_PASSWORD:
+                server.login(Config.MAIL_USERNAME, Config.MAIL_PASSWORD)
+            server.sendmail(Config.MAIL_DEFAULT_SENDER, to, msg.as_string())
+    except Exception:
+        current_app.logger.exception("Failed to send admin email")
 
 def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_id=None):
     """
@@ -209,6 +232,14 @@ def generate_api_token():
     token_type = data.get("type", "short")
     scopes = data.get("scopes", ["read"])
 
+    # Require admin approval for API token usage
+    user_doc = _fresh_user_doc()
+    if not user_doc.get("api_tokens_enabled", False):
+        return jsonify({
+            "status": "error",
+            "error": "API token access is locked. Request access from an admin first."
+        }), 403
+
     # Admin scope check
     if "admin" in scopes and not (current_user.global_admin or current_user.role in ["admin", "superuser"]):
         scopes.remove("admin")
@@ -223,7 +254,12 @@ def generate_api_token():
         })
 
     try:
-        token, expires_at = create_token(user_id=current_user._id, token_type=token_type, scopes=scopes)
+        token, expires_at = create_token(
+            user_id=current_user._id,
+            token_type=token_type,
+            scopes=scopes,
+            category="user",
+        )
         return jsonify({
             "status": "success",
             "token": token,          # raw token (showed only once)
@@ -267,7 +303,63 @@ def revoke_token():
     result = TOKENS_COLLECTION.delete_one({"_id": ObjectId(token_id), "user_id": current_user._id})
     if result.deleted_count == 1:
         return jsonify({"status": "success"})
-    return jsonify({"status": "error", "message": "Token not found"}), 404
+
+
+# ------------------------
+# API token access status + request
+# ------------------------
+@auth_bp.route("/api_tokens/status", methods=["GET"])
+@login_required
+def api_token_status():
+    user_doc = _fresh_user_doc()
+    approved = bool(user_doc.get("api_tokens_enabled", False))
+    requested = bool(user_doc.get("api_token_request", None))
+    return jsonify({
+        "status": "success",
+        "approved": approved,
+        "requested": requested,
+        "requested_at": user_doc.get("api_token_request", None),
+    })
+
+
+@auth_bp.route("/api_tokens/request_access", methods=["POST"])
+@login_required
+def request_api_token_access():
+    user_doc = _fresh_user_doc()
+    if user_doc.get("api_tokens_enabled", False):
+        return jsonify({"status": "success", "message": "Access already approved."})
+
+    if user_doc.get("api_token_request", None):
+        return jsonify({"status": "success", "message": "Request already sent."})
+
+    reason = (request.get_json() or {}).get("reason") or ""
+    reason = reason.strip()
+    timestamp = datetime.utcnow().isoformat()
+    try:
+        mongo.users.update_one(
+            {"_id": current_user._id},
+            {"$set": {"api_token_request": timestamp, "api_token_request_reason": reason}},
+        )
+        token_access_requests.insert_one({
+            "user_id": current_user._id,
+            "username": current_user.username,
+            "requested_at": timestamp,
+            "status": "pending",
+            "reason": reason,
+        })
+        _notify_admin(
+            "API token -käyttöoikeuspyyntö",
+            f"Käyttäjä {current_user.username} pyytää API-avainten käyttöönottoa.\nAika: {timestamp}\nPerustelu: {reason}",
+        )
+    except Exception as e:
+        current_app.logger.exception("Failed to record API token request")
+        return jsonify({"status": "error", "message": "Request failed"}), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "Request sent. An admin must approve API tokens for your account.",
+        "requested_at": timestamp
+    })
 
 @auth_bp.route("/ui/tokens")
 def tokens_ui():

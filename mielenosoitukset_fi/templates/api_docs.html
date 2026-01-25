@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}API Docs | Mielenosoitukset.fi{% endblock %}
+
+{% block styles %}
+<style>
+  .api-docs-wrap {
+    max-width: 1100px;
+    margin: 2rem auto 4rem;
+    padding: 1.5rem;
+    background: var(--api-docs-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--api-docs-shadow);
+  }
+  .api-docs-layout {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    gap: 2rem;
+    margin-top: 1.5rem;
+  }
+  .api-docs-sidebar {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    background: var(--api-docs-sidebar-bg);
+    border: 1px solid var(--api-docs-border);
+    border-radius: 6px;
+    padding: 1rem;
+  }
+  .api-docs-sidebar h2 {
+    margin-top: 0;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--api-docs-muted);
+  }
+  .api-docs-sidebar ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  .api-docs-sidebar li {
+    margin: 0.35rem 0;
+  }
+  .api-docs-sidebar a {
+    color: var(--api-docs-link);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .api-docs-sidebar a:hover {
+    text-decoration: underline;
+  }
+  .api-docs-wrap h1 {
+    margin-top: 0;
+  }
+  .api-docs-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .api-docs-title p {
+    margin: 0;
+    color: var(--api-docs-muted);
+  }
+  .api-docs-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .api-docs-meta a {
+    color: var(--api-docs-link);
+    text-decoration: none;
+  }
+  .api-docs-meta a:hover {
+    text-decoration: underline;
+  }
+  .api-docs-content {
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: var(--api-docs-text);
+    max-width: 100%;
+  }
+  .api-docs-content p {
+    margin: 0.8rem 0;
+  }
+  .api-docs-content ul,
+  .api-docs-content ol {
+    margin: 0.75rem 0 0.75rem 1.25rem;
+  }
+  .api-docs-content li {
+    margin: 0.35rem 0;
+  }
+  .api-docs-content pre {
+    background: var(--api-docs-code-bg);
+    color: var(--api-docs-code-text);
+    padding: 1rem;
+    border-radius: 6px;
+    overflow: auto;
+    border: 1px solid var(--api-docs-border);
+  }
+  .api-docs-content code {
+    background: var(--api-docs-inline-code-bg);
+    color: var(--api-docs-code-text);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+  }
+  .api-docs-content h1,
+  .api-docs-content h2,
+  .api-docs-content h3 {
+    margin-top: 1.5rem;
+  }
+  .api-docs-content h2 {
+    border-bottom: 1px solid var(--api-docs-border);
+    padding-bottom: 0.35rem;
+  }
+  .api-docs-content hr {
+    border: none;
+    border-top: 1px solid var(--api-docs-border);
+    margin: 1.5rem 0;
+  }
+  .api-docs-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  .api-docs-content th,
+  .api-docs-content td {
+    border: 1px solid var(--api-docs-border);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .api-docs-content th {
+    background: var(--api-docs-table-head);
+  }
+  .api-docs-content a {
+    color: var(--api-docs-link);
+  }
+  .api-docs-content blockquote {
+    border-left: 4px solid var(--api-docs-border);
+    margin: 1rem 0;
+    padding-left: 1rem;
+    color: var(--api-docs-muted);
+  }
+
+  body.dark .api-docs-wrap,
+  html.dark .api-docs-wrap {
+    --api-docs-bg: #121417;
+    --api-docs-text: #e6e6e6;
+    --api-docs-link: #7ab0ff;
+    --api-docs-border: #2b2f35;
+    --api-docs-shadow: rgba(0, 0, 0, 0.6);
+    --api-docs-code-bg: #1d2126;
+    --api-docs-inline-code-bg: #1f252b;
+    --api-docs-code-text: #f3f3f3;
+    --api-docs-table-head: #1b1f24;
+    --api-docs-muted: #a7b0bb;
+    --api-docs-sidebar-bg: #14181d;
+  }
+
+  body:not(.dark) .api-docs-wrap,
+  html:not(.dark) .api-docs-wrap {
+    --api-docs-bg: #ffffff;
+    --api-docs-text: #1a1a1a;
+    --api-docs-link: #0d6efd;
+    --api-docs-border: #e3e6ea;
+    --api-docs-shadow: rgba(0, 0, 0, 0.08);
+    --api-docs-code-bg: #f8f9fa;
+    --api-docs-inline-code-bg: #eef1f4;
+    --api-docs-code-text: #1a1a1a;
+    --api-docs-table-head: #f1f3f5;
+    --api-docs-muted: #5a6169;
+    --api-docs-sidebar-bg: #f8f9fb;
+  }
+  @media (max-width: 600px) {
+    .api-docs-wrap {
+      margin: 1rem;
+      padding: 1rem;
+    }
+  }
+  @media (max-width: 900px) {
+    .api-docs-layout {
+      grid-template-columns: 1fr;
+    }
+    .api-docs-sidebar {
+      position: static;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="api-docs-wrap">
+  <div class="api-docs-title">
+    <h1>API documentation</h1>
+    <p>Human-readable docs for the public API.</p>
+  </div>
+  <div class="api-docs-meta">
+    <span>OpenAPI spec: <a href="{{ openapi_url }}">openapi.yaml</a></span>
+    <span>Base URL: /api</span>
+  </div>
+  <div class="api-docs-layout">
+    <aside class="api-docs-sidebar">
+      <h2>Contents</h2>
+      {{ api_toc | safe }}
+    </aside>
+    <div class="api-docs-content">{{ api_doc | safe }}</div>
+  </div>
+</div>
+{% endblock %}

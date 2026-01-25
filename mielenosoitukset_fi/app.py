@@ -132,12 +132,14 @@ def create_app() -> Flask:
         admin_media_bp,
         board_bp,
         audit_bp,
-        admin_kampanja_bp
+        admin_kampanja_bp,
+        admin_dev_bp,
     )
     from users import _BLUEPRINT_ as user_bp
     from users import chat_ws
     from flask_socketio import SocketIO, emit, join_room
     from api import api_bp
+    from developer_bp import developer_bp
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
@@ -149,10 +151,12 @@ def create_app() -> Flask:
     app.register_blueprint(admin_media_bp)
     app.register_blueprint(admin_kampanja_bp)
     app.register_blueprint(admin_case_bp)
+    app.register_blueprint(admin_dev_bp)
     #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    app.register_blueprint(developer_bp, url_prefix="/developer")
     
     
     app.register_blueprint(campaign_bp)

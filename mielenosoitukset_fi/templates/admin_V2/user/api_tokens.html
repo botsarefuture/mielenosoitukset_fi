@@ -1,0 +1,75 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<style>
+  .token-actions button { margin-right: 0.5rem; }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="container-fluid">
+  <h2 class="mb-4">API-avainten pyynnöt</h2>
+  <p class="text-muted">Hyväksy tai hylkää käyttäjien tekemät API-avainten avauspyynnöt.</p>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Käyttäjä</th>
+          <th>Sähköposti</th>
+          <th>Pyydetty</th>
+          <th>Tila</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+        <tr>
+          <td>{{ r.user.username }}</td>
+          <td>{{ r.user.email }}</td>
+          <td>{{ r.requested_at or '' }}</td>
+          <td>{{ r.status|default('pending') }}</td>
+          <td class="text-end token-actions">
+            {% if r.status == 'pending' %}
+            <button class="btn btn-sm btn-success" data-id="{{ r._id }}" data-action="approve">
+              <i class="fa-solid fa-check"></i> Hyväksy
+            </button>
+            <button class="btn btn-sm btn-outline-danger" data-id="{{ r._id }}" data-action="deny">
+              <i class="fa-solid fa-xmark"></i> Hylkää
+            </button>
+            {% else %}
+            <span class="text-muted">–</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted">Ei pyyntöjä.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    try {
+      const res = await fetch(`/admin/user/api_tokens/${id}/${action}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        location.reload();
+      } else {
+        alert(data.message || 'Toiminto epäonnistui');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Toiminto epäonnistui');
+    }
+  });
+</script>
+{% endblock %}

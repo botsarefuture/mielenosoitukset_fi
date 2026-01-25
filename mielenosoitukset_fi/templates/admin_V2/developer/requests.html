@@ -1,0 +1,131 @@
+{% extends 'admin_base.html' %}
+
+{% block main_content %}
+<div class="container-fluid">
+  <h2 class="mb-4">Kehittäjähallinta</h2>
+  <p class="text-muted">Hallinnoi kehittäjäoikeuksia ja sovellusten scope-pyyntöjä.</p>
+
+  <h4 class="mt-4 mb-3">Kehittäjäpaneelin avauspyynnöt</h4>
+  <div class="table-responsive mb-4">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Käyttäjä</th>
+          <th>Sähköposti</th>
+          <th>Perustelu</th>
+          <th>Aika</th>
+          <th>Tila</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in dev_reqs %}
+        <tr>
+          <td>
+            {{ r.user.username or 'Tuntematon' }}
+            {% if r.user_id %}
+            <a class="btn btn-link btn-sm" href="{{ url_for('admin_dev.user_apps', user_id=r.user_id) }}">Sovellukset</a>
+            {% endif %}
+          </td>
+          <td>{{ r.user.email or '' }}</td>
+          <td>{{ r.reason or '' }}</td>
+          <td>{{ r.requested_at or '' }}</td>
+          <td>{{ r.status or 'pending' }}</td>
+          <td class="text-end">
+            {% if r.status == 'pending' %}
+            <button class="btn btn-sm btn-success act-token" data-id="{{ r._id }}" data-action="approve">Hyväksy</button>
+            <button class="btn btn-sm btn-outline-danger act-token" data-id="{{ r._id }}" data-action="deny">Hylkää</button>
+            {% else %}
+            <span class="text-muted">–</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-center text-muted">Ei pyyntöjä.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-responsive">
+    <h4 class="mb-3">Scope-pyynnöt (sovellukset)</h4>
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Sovellus</th>
+          <th>Käyttäjä</th>
+          <th>Pyydetyt scopet</th>
+          <th>Perustelu</th>
+          <th>Aika</th>
+          <th>Tila</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in scope_reqs %}
+        <tr>
+          <td>{{ r.app.name or 'Tuntematon' }}</td>
+          <td>{{ r.user.username or 'Tuntematon' }}</td>
+          <td>{{ ', '.join(r.scopes or []) }}</td>
+          <td>{{ r.reason or '' }}</td>
+          <td>{{ r.requested_at or '' }}</td>
+          <td>{{ r.status or 'pending' }}</td>
+          <td class="text-end">
+            {% if r.status == 'pending' %}
+            <button class="btn btn-sm btn-success act-btn" data-id="{{ r._id }}" data-action="approve">Hyväksy</button>
+            <button class="btn btn-sm btn-outline-danger act-btn" data-id="{{ r._id }}" data-action="deny">Hylkää</button>
+            {% else %}
+            <span class="text-muted">–</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted">Ei pyyntöjä.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.act-token');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    try {
+      const res = await fetch(`/admin/developer/access/${id}/${action}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        location.reload();
+      } else {
+        alert(data.message || 'Toiminto epäonnistui');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Toiminto epäonnistui');
+    }
+  });
+
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.act-btn');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    try {
+      const res = await fetch(`/admin/developer/requests/${id}/${action}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        location.reload();
+      } else {
+        alert(data.message || 'Toiminto epäonnistui');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Toiminto epäonnistui');
+    }
+  });
+</script>
+{% endblock %}

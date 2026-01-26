@@ -38,6 +38,8 @@ from mielenosoitukset_fi.utils.cache import cache
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
+# Timezone for rolling analytics into Helsinki-local buckets
+HELSINKI_TZ = pytz.timezone("Europe/Helsinki")
 # Constants
 LOG_FILE_PATH = "app.log"
 
@@ -175,10 +177,37 @@ def count_per_demo(data):
     ]
     return demo_count
 
+
+def _rollup_demo_analytics_on_demand(demo_id: ObjectId):
+    """Build d_analytics doc for a demo from raw analytics if missing."""
+    events = list(mongo["analytics"].find({"demo_id": demo_id}, {"timestamp": 1}))
+    if not events:
+        return None
+
+    rolled = {}
+    for ev in events:
+        ts = ev.get("timestamp")
+        if not ts:
+            continue
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        ts_hel = ts.astimezone(HELSINKI_TZ)
+        day_key = ts_hel.strftime("%Y-%m-%d")
+        hour_key = f"{ts_hel.hour:02d}"
+        minute_key = f"{ts_hel.minute:02d}"
+        day_bucket = rolled.setdefault(day_key, {})
+        hour_bucket = day_bucket.setdefault(hour_key, {})
+        hour_bucket[minute_key] = hour_bucket.get(minute_key, 0) + 1
+
+    doc = {"_id": demo_id, "analytics": rolled}
+    mongo["d_analytics"].replace_one({"_id": demo_id}, doc, upsert=True)
+    return doc
+
 def get_per_demo_anal(demo_id):
     analytics = mongo["d_analytics"].find_one({"_id": ObjectId(demo_id)})
-    
-    return analytics
+    if analytics:
+        return analytics
+    return _rollup_demo_analytics_on_demand(ObjectId(demo_id))
 
 
 # User loader function
@@ -928,11 +957,13 @@ def demo_analytics(demo_id):
     # --- Per minute today ---
     day_data = analytics.get(today_str, {})
     for hour in range(24):
-        hour_str = str(hour)
-        hour_data = day_data.get(hour_str, {})
+        hour_key = f"{hour:02d}"
+        hour_data = day_data.get(hour_key) or day_data.get(str(hour)) or {}
         for minute in range(60):
-            minute_str = str(minute)
-            count = hour_data.get(minute_str, 0)
+            minute_key = f"{minute:02d}"
+            count = hour_data.get(minute_key)
+            if count is None:
+                count = hour_data.get(str(minute), 0)
             total_views += count  # will sum all-time later
             views_today += count
             labels.append(f"{hour:02d}:{minute:02d}")

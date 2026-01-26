@@ -2,7 +2,7 @@
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo import MongoClient, UpdateOne
 from tqdm import tqdm
@@ -45,6 +45,15 @@ def set_last_seen_id(obj_id: ObjectId):
         upsert=True
     )
 
+
+def _normalize_timestamp(ts: datetime) -> datetime | None:
+    """Coerce raw timestamps to timezone-aware UTC datetimes."""
+    if ts is None:
+        return None
+    if ts.tzinfo is None:
+        return ts.replace(tzinfo=timezone.utc)
+    return ts
+
 def rollup_events(run_once: bool = False):
     """
     Process incoming analytics events.
@@ -71,6 +80,7 @@ def rollup_events(run_once: bool = False):
                 for ev in new_events:
                     demo_id = ev["demo_id"]
                     ts = ev["timestamp"]
+                    ts = _normalize_timestamp(ts)
                     if not ts:
                         continue
 

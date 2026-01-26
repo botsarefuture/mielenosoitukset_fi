@@ -1,5 +1,5 @@
 from mielenosoitukset_fi.database_manager import DatabaseManager
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bson.objectid import ObjectId
 
@@ -26,7 +26,8 @@ def log_demo_view(demo_id, user_id=None, session_id=None):
 
 
     """
-    view_data = {"demo_id": ObjectId(demo_id), "timestamp": datetime.now()}
+    # Store timestamps as UTC-aware to keep aggregation stable
+    view_data = {"demo_id": ObjectId(demo_id), "timestamp": datetime.now(timezone.utc)}
 
     if user_id:
         view_data["user_id"] = user_id

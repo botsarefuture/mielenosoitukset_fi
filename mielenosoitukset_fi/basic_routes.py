@@ -208,26 +208,6 @@ def _resolve_session_id():
         return None
 
 
-@app.route("/api/analytics/track_view", methods=["POST"])
-def track_demo_view():
-    """Record a demo view via beacon so cached pages still log analytics."""
-    payload = request.get_json(silent=True) or {}
-    demo_id = payload.get("demo_id") or request.form.get("demo_id")
-    demo_oid = _safe_objectid(demo_id)
-    if not demo_oid:
-        abort(400, "invalid demo_id")
-
-    try:
-        user_id = current_user._id if current_user.is_authenticated else None
-    except Exception:
-        user_id = None
-    try:
-        log_demo_view(demo_oid, user_id, session_id=_resolve_session_id())
-    except Exception:
-        logger.exception("Failed to log demo view via beacon", extra={"demo_id": demo_id})
-    return jsonify({"ok": True})
-
-
 def _log_submit_error(message, code, status=400, extra=None):
     if request.method != "POST":
         return
@@ -617,6 +597,25 @@ def init_routes(app):
     Disallow: /users/auth/forgot/
     """
         return Response(txt, mimetype="text/plain")
+
+    @app.route("/api/analytics/track_view", methods=["POST"])
+    def track_demo_view():
+        """Record a demo view via beacon so cached pages still log analytics."""
+        payload = request.get_json(silent=True) or {}
+        demo_id = payload.get("demo_id") or request.form.get("demo_id")
+        demo_oid = _safe_objectid(demo_id)
+        if not demo_oid:
+            abort(400, "invalid demo_id")
+
+        try:
+            user_id = current_user._id if current_user.is_authenticated else None
+        except Exception:
+            user_id = None
+        try:
+            log_demo_view(demo_oid, user_id, session_id=_resolve_session_id())
+        except Exception:
+            logger.exception("Failed to log demo view via beacon", extra={"demo_id": demo_id})
+        return jsonify({"ok": True})
 
     @app.route("/api-docs/")
     def api_docs():

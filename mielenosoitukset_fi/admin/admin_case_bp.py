@@ -42,25 +42,84 @@ from mielenosoitukset_fi.utils.classes import Case
 def cases():
     """List all cases, newest first."""
     all_cases: list[Case] = []
+    open_count = 0
+    closed_count = 0
+    escalated_count = 0
+    auto_closed = 0
+
+    def _auto_close(case_obj: Case):
+        """Close cases that are clearly resolved (e.g., demo approved/rejected/cancelled)."""
+        reason = None
+        if case_obj.case_type == "new_demo" and case_obj.demo_id and case_obj.demo:
+            demo_doc = case_obj.demo
+            if demo_doc.get("accepted"):
+                reason = "Demo hyväksytty"
+            elif demo_doc.get("rejected"):
+                reason = "Demo hylätty"
+            elif demo_doc.get("cancelled"):
+                reason = "Demo peruttu"
+        if case_obj.case_type in {"demo_cancellation_request", "demo_cancelled"} and case_obj.demo:
+            if case_obj.demo.get("cancelled"):
+                reason = "Peruutus käsitelty"
+        if reason:
+            case_obj._add_history_entry(
+                {
+                    "timestamp": datetime.utcnow(),
+                    "action": "Tapaus suljettu automaattisesti",
+                    "user": getattr(current_user, "username", "system"),
+                    "mech_action": "auto_close",
+                    "metadata": {"reason": reason},
+                    "meta_schema": {"reason": "string"},
+                }
+            )
+            mongo.cases.update_one(
+                {"_id": ObjectId(case_obj._id)},
+                {
+                    "$set": {
+                        "meta.closed": True,
+                        "meta.closed_reason": reason,
+                        "updated_at": datetime.utcnow(),
+                    }
+                },
+            )
+            return True
+        return False
 
     for doc in mongo.cases.find({}, sort=[("created_at", -1)]):
         case = Case.from_dict(doc)
 
-        # Attach related demo if this is a “new_demo” case
-        if case.case_type == "new_demo" and case.demo_id:
+        # Attach related demo if this is a “new_demo” or cancellation case
+        if case.case_type in {"new_demo", "demo_cancellation_request", "demo_cancelled"} and case.demo_id:
             demo_doc = mongo.demonstrations.find_one(
                 {"_id": ObjectId(case.demo_id)},
-                {"accepted": 1, "rejected": 1, "title": 1}  # fetch only what’s needed
+                {"accepted": 1, "rejected": 1, "cancelled": 1, "title": 1, "date": 1, "city": 1}
             )
             case.demo = demo_doc or None
         else:
             case.demo = None
 
+        if not (case.meta or {}).get("closed"):
+            if _auto_close(case):
+                case.meta = case.meta or {}
+                case.meta["closed"] = True
+                auto_closed += 1
+
+        if (case.meta or {}).get("closed"):
+            closed_count += 1
+        else:
+            open_count += 1
+        if case.meta and case.meta.get("superior_needed"):
+            escalated_count += 1
+
         all_cases.append(case)
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}cases/all.html",
-        all_cases=all_cases
+        all_cases=all_cases,
+        open_count=open_count,
+        closed_count=closed_count,
+        escalated_count=escalated_count,
+        auto_closed=auto_closed,
     )
 
 @admin_case_bp.route("/<case_id>/")
@@ -86,8 +145,22 @@ def single_case(case_id):
 
     elif case.case_type == "organization_edit_suggestion" and case.organization_id:
         org = mongo.organizations.find_one({"_id": ObjectId(case.organization_id)})
-        case_data["organization"] = stringify_object_ids(org) if org else {}
-        case_data["suggestion"] = case.suggestion
+        suggestion = case.suggestion or {}
+        organization = stringify_object_ids(org) if org else {}
+        changes = []
+        for key, new_val in suggestion.items():
+            old_val = organization.get(key)
+            if new_val != old_val:
+                changes.append(
+                    {
+                        "field": key.replace("_", " ").capitalize(),
+                        "old": old_val,
+                        "new": new_val,
+                    }
+                )
+        case_data["organization"] = organization
+        case_data["suggestion"] = suggestion
+        case_data["changes"] = changes
 
     elif case.case_type in {"demo_cancellation_request", "demo_cancelled"} and case.demo_id:
         demo = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})

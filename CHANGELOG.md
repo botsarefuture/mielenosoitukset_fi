@@ -58,6 +58,7 @@
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
+* Admin analytics summary now computes total and average views across all matching demos instead of the paginated slice, keeping stats consistent across pages.
 * Login now clearly instructs unverified users to confirm their email before signing in, including a reminder that a fresh link was sent.
 * Token validation no longer double-logs API usage when the `token_required` decorator already records usage per request.
 * Pride näkyväksi sivun tilastot laskevat kaupungit oikein ja käyttävät samaa korttinäkymää kuin päälistaus, jotta tapahtumat näkyvät yhtenäisesti.
@@ -69,6 +70,11 @@
 * Reuse attempts of admin approve/reject/preview tokens are now logged (including demo audit entries) with IP + metadata so the audit trail captures every invalid link use.
 * Approving or rejecting via token now automatically revokes the opposite link, preventing stale approve/reject URLs from being reused after a decision.
 * Magic token lifecycle is fully audited: creation now stores actor/request fingerprints, every bind/use/revoke/reuse attempt emits demo + super audit entries, and single/bulk revocations produce structured log payloads.
+* Admin stats dashboard rebuilt with a futuristic telemetry layout (live Matomo badges, neon cards, sortable analytics table) for `admin/stats`.
+* Admin stats now loads via API, defaults to future demonstrations only, and can optionally fetch Matomo Live data when configured.
+* Case list now auto-closes resolved demo cases (approved/rejected/cancelled), shows live counts, and features a redesigned filtering UI for faster support triage.
+* Case detail for organization edit suggestions now shows clear before/after diffs, and a background job auto-closes cases when linked demos are accepted/rejected/cancelled.
+* Added a scheduled background job to auto-close resolved cases hourly, so stale “open” cases are cleaned up without manual intervention.
 * All admin notification emails now use a shared template without emojis, so demo approvals, organization edits, and suggestion alerts present a consistent, professional layout.
 * Demonstration detail pages now open a “What do you want to do?” modal before reporting issues so visitors discover the structured edit suggestion form before falling back to a generic error report.
 * Demo detail report modal was rebuilt with vanilla JavaScript: the guidance modal, preview, and submission flow now run without jQuery and feel noticeably faster.

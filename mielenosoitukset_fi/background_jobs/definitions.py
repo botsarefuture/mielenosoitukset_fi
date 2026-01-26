@@ -17,6 +17,7 @@ from mielenosoitukset_fi.scripts.process_submission_notifications import (
     run as process_submit_notifications,
 )
 from mielenosoitukset_fi.utils.analytics import prep
+from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,14 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         description="Sends confirmation + admin notification emails for submitted demonstrations.",
         func=process_submit_notifications,
         default_trigger=_interval(minutes=5),
+    ),
+    JobDefinition(
+        key="auto_close_cases",
+        name="Case autoclose (demos/orgs)",
+        description="Closes cases whose linked demos were accepted/rejected/cancelled or org edits are applied.",
+        func=auto_close_cases,
+        default_trigger=_interval(hours=1),
+        allow_interval_override=True,
     ),
 ]
 

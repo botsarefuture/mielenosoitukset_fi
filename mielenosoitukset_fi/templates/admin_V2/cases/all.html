@@ -1,45 +1,120 @@
 {% extends "admin_base.html" %}
-{% block title %}{{ _('Kaikki tapaukset') }}{% endblock %}
+{% block title %}{{ _('Tapaukset') }}{% endblock %}
 
 {% block styles %}
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.bootstrap5.min.css">
   <style>
-    tbody tr      { cursor:pointer; transition:background-color .15s ease; }
-    tbody tr:hover{ background:rgba(13,110,253,.05); }
-    .badge-urgency-low    { background:#6c757d; }
-    .badge-urgency-medium { background:#ffc107; color:#212529; }
-    .badge-urgency-high   { background:#dc3545; }
-    .status-icon { width:1rem; }
-    /* colour bar for urgency */
-    tr.urgency-high   td { border-left:4px solid #dc3545; }
-    tr.urgency-medium td { border-left:4px solid #ffc107; }
-    tr.urgency-low    td { border-left:4px solid #6c757d; }
+    .case-shell {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .case-hero {
+      background: linear-gradient(120deg, rgba(13, 17, 38, 0.9), rgba(37, 99, 235, 0.35));
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      color: #e9f1ff;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1rem;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .case-hero::after {
+      content: "";
+      position: absolute;
+      inset: -40% auto auto 40%;
+      width: 45%;
+      height: 140%;
+      background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 60%);
+      filter: blur(10px);
+      transform: rotate(-12deg);
+    }
+    .case-hero h1 { margin: 0 0 .35rem 0; }
+    .case-hero p { margin: 0; color: #cdd9f2; }
+    .badges { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.5rem; }
+    .badge-chip { padding: .3rem .7rem; border-radius: 999px; border:1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #e9f1ff; }
+    .stat-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 0.9rem; }
+    .stat-card { background: #0f162b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 0.9rem; color: #e9f1ff; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .stat-card .label { text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; color: #9fb2d8; margin: 0; }
+    .stat-card .value { font-size: 1.7rem; font-weight: 800; margin: .15rem 0 0; }
+    .stat-card .hint { margin: 0; color: #8fa3cc; font-size: .9rem; }
+    .stat-card.emphasis { border-color: rgba(96,165,250,.4); background: linear-gradient(145deg, rgba(37,99,235,0.25), rgba(14,24,54,.9)); }
+    .controls { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+    .filter-chip { border-radius: 10px; border:1px solid #d0d7e5; padding: .45rem .75rem; background:#fff; color:#111; font-weight:600; cursor:pointer; }
+    .filter-chip.active { border-color:#2563eb; color:#2563eb; background:rgba(37,99,235,0.08); }
+    .case-list { display:grid; gap: 0.75rem; }
+    .case-card { background:#fff; border-radius:12px; border:1px solid #e4e8f1; padding:1rem; box-shadow:0 10px 35px rgba(15,23,42,0.08); display:grid; grid-template-columns: 1fr auto; gap:0.75rem; align-items:start; cursor:pointer; }
+    .case-card:hover { border-color:#c9d5ff; box-shadow:0 14px 40px rgba(37,99,235,0.12); }
+    .case-meta { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .pill { padding:.25rem .6rem; border-radius:999px; font-size:.82rem; font-weight:700; }
+    .pill.type { background:#eef2ff; color:#312e81; }
+    .pill.urg-high { background:#fee2e2; color:#b91c1c; }
+    .pill.urg-medium { background:#fff3cd; color:#b45309; }
+    .pill.urg-low { background:#e5f3ff; color:#1d4ed8; }
+    .pill.status-open { background:#dbeafe; color:#1e3a8a; }
+    .pill.status-closed { background:#dcfce7; color:#166534; }
+    .pill.status-esc { background:#fef2f2; color:#b91c1c; }
+    .case-title { margin:0; font-size:1.05rem; font-weight:700; }
+    .case-desc { margin:.15rem 0 0; color:#475569; }
+    .case-footer { color:#6b7280; font-size:.9rem; display:flex; gap:1rem; flex-wrap:wrap; }
+    @media (max-width: 768px) {
+      .case-hero { grid-template-columns: 1fr; }
+      .case-card { grid-template-columns: 1fr; }
+    }
   </style>
 {% endblock %}
 
 {% block main_content %}
-  <h1 class="mb-4">{{ _('Kaikki tapaukset') }}</h1>
+<div class="case-shell">
+  <div class="case-hero">
+    <div>
+      <h1>{{ _('Tapaukset & eskaloinnit') }}</h1>
+      <p>{{ _('Priorisoi avoimet tapaukset, sulje automaattisesti ratkaistut ja löydä esiin nostetut keissit nopeasti.') }}</p>
+      <div class="badges">
+        <span class="badge-chip"><i class="fas fa-robot me-1"></i>{{ _('Automaattisesti suljetut') }}: {{ auto_closed }}</span>
+        <span class="badge-chip"><i class="fas fa-layer-group me-1"></i>{{ _('Avoimet') }}: {{ open_count }}</span>
+        <span class="badge-chip"><i class="fas fa-check me-1"></i>{{ _('Suljetut') }}: {{ closed_count }}</span>
+        <span class="badge-chip"><i class="fas fa-arrow-up-right-from-square me-1"></i>{{ _('Eskaloinnit') }}: {{ escalated_count }}</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="filter-chip active" data-filter="all">{{ _('Kaikki') }}</button>
+      <button class="filter-chip" data-filter="open">{{ _('Avoimet') }}</button>
+      <button class="filter-chip" data-filter="closed">{{ _('Suljetut') }}</button>
+      <button class="filter-chip" data-filter="high">{{ _('Kriittiset') }}</button>
+      <button class="filter-chip" data-filter="escalated">{{ _('Eskaloinnit') }}</button>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card emphasis">
+      <p class="label">{{ _('Avoimet tapaukset') }}</p>
+      <p class="value">{{ open_count }}</p>
+      <p class="hint">{{ _('Keskity näihin ensin') }}</p>
+    </div>
+    <div class="stat-card">
+      <p class="label">{{ _('Suljetut') }}</p>
+      <p class="value">{{ closed_count }}</p>
+      <p class="hint">{{ _('Viimeisin automaattinen sulku') }}: {{ auto_closed }}</p>
+    </div>
+    <div class="stat-card">
+      <p aclass="label">{{ _('Eskaloinnit') }}</p>
+      <p class="value">{{ escalated_count }}</p>
+      <p class="hint">{{ _('Vaatii seniorin') }}</p>
+    </div>
+    <div class="stat-card">
+      <p class="label">{{ _('Kaikki tapaukset') }}</p>
+      <p class="value">{{ all_cases|length }}</p>
+      <p class="hint">{{ _('Päivitetty') }}: {{ (all_cases[0].created_at if all_cases else none)|datetimeformat("%d.%m.%Y") }}</p>
+    </div>
+  </div>
 
   {% if all_cases %}
-  <div class="table-responsive">
-    <table id="casesTable" class="table table-striped table-hover align-middle nowrap" style="width:100%">
-      <thead class="table-light">
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">{{ _('Tyyppi') }}</th>
-          <th scope="col">{{ _('Kuvaus') }}</th>
-          <th scope="col">{{ _('Kiireellisyys') }}</th>
-          <th scope="col">{{ _('Tila') }}</th>
-          <th scope="col">{{ _('Luotu') }}</th>
-          <th scope="col">{{ _('Lähettäjä') }}</th>
-          <th scope="col" class="text-end">{{ _('Toiminnot') }}</th>
-        </tr>
-      </thead>
-      <tbody>
+    <div class="case-list" id="case-list">
       {% for case in all_cases %}
         {% set urg = case.meta.urgency if case.meta else None %}
+        {% set closed = case.meta.closed if case.meta else False %}
+        {% set escalated = case.meta.superior_needed if case.meta else False %}
         {% set description %}
             {% if case.case_type == 'new_demo' and case.demo %}
                 {{ case.demo.title or case.demo.name or case.description or _('Ei kuvausta') }}
@@ -51,76 +126,71 @@
                 {{ case.description or _('Ei kuvausta') }}
             {% endif %}
         {% endset %}
-        <tr class="urgency-{{ urg }}" data-href="{{ url_for('admin_case.single_case', case_id=case._id) }}">
-          <th scope="row">{{ loop.index }}</th>
-          <td data-priority="1">
-            {% if case.case_type == "new_demo" %}
-              <i class="fas fa-bullhorn text-primary me-1 status-icon"></i>
-            {% elif case.case_type == "demo_error_report" %}
-              <i class="fas fa-exclamation-triangle text-warning me-1 status-icon"></i>
-            {% elif case.case_type == "organization_edit_suggestion" %}
-              <i class="fas fa-building text-success me-1 status-icon"></i>
-            {% endif %}
-            {{ case.case_type|replace("_"," ")|capitalize }}
-          </td>
-          <td class="text-truncate" style="max-width:260px;">{{ description|striptags }}</td>
-          <td>
-            {% if urg %}<span class="badge badge-urgency-{{ urg }}">{{ _(urg|capitalize) }}</span>{% endif %}
-          </td>
-          <td>
-            {% if case.case_type == "new_demo" %}
-              {% if case.meta and case.meta.superior_needed %}
-                <i class="fas fa-exclamation-triangle text-warning"></i> {{ _('Eskaloitu') }}
-              {% else %}
-                {% if case.demo and case.demo.accepted %}
-                  <i class="fas fa-check text-success"></i> {{ _('Hyväksytty') }}
-                {% elif case.demo and case.demo.rejected %}
-                  <i class="fas fa-times text-danger"></i> {{ _('Hylätty') }}
-                {% else %}
-                  <i class="fas fa-clock text-secondary"></i> {{ _('Odottaa') }}
-                {% endif %}
+        <div class="case-card"
+             data-status="{{ 'closed' if closed else 'open' }}"
+             data-urgency="{{ urg or 'none' }}"
+             data-escalated="{{ '1' if escalated else '0' }}"
+             onclick="window.location='{{ url_for('admin_case.single_case', case_id=case._id) }}'">
+          <div>
+            <div class="case-meta">
+              <span class="pill type">{{ case.case_type|replace("_"," ")|capitalize }}</span>
+              {% if urg %}
+                <span class="pill {% if urg=='high' %}urg-high{% elif urg=='medium' %}urg-medium{% else %}urg-low{% endif %}">{{ _(urg|capitalize) }}</span>
               {% endif %}
-            {% else %}-{% endif %}
-          </td>
-          <td data-order="{{ case.created_at.timestamp() if case.created_at else 0 }}">{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</td>
-          <td>{{ case.submitter.submitter_name or _('Ei tiedossa') }}</td>
-          <td class="text-end">
-            <a href="{{ url_for('admin_case.single_case', case_id=case._id) }}" class="btn btn-sm btn-outline-primary" title="{{ _('Näytä') }}">
-              <i class="fas fa-circle-info"></i>
-            </a>
-          </td>
-        </tr>
+              {% if closed %}
+                <span class="pill status-closed">{{ _('Suljettu') }}</span>
+              {% else %}
+                <span class="pill status-open">{{ _('Avoin') }}</span>
+              {% endif %}
+              {% if escalated %}
+                <span class="pill status-esc">{{ _('Eskalointi') }}</span>
+              {% endif %}
+            </div>
+            <p class="case-title">{{ description|striptags }}</p>
+            <p class="case-desc">
+              {% if case.case_type == "new_demo" and case.demo %}
+                {{ case.demo.city }} · {{ case.demo.date }}
+              {% else %}
+                {{ case.description or _('Lisätietoja avaa kortti') }}
+              {% endif %}
+            </p>
+            <div class="case-footer">
+              <span><i class="far fa-clock me-1"></i>{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</span>
+              <span><i class="far fa-user me-1"></i>{{ case.submitter.submitter_name or _('Ei tiedossa') }}</span>
+            </div>
+          </div>
+          <div>
+            <i class="fas fa-chevron-right text-muted"></i>
+          </div>
+        </div>
       {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    </div>
   {% else %}
     <div class="alert alert-info text-center">{{ _('Ei tapauksia tällä hetkellä.') }}</div>
   {% endif %}
+</div>
 {% endblock %}
 
 {% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-  <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-  <script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
   <script>
-    $(function(){
-      const table = $('#casesTable').DataTable({
-        responsive:true,
-        fixedHeader:true,
-        order:[[5,'desc']],
-        pageLength:25,
-        language:{ url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/fi.json' },
-        columnDefs:[
-          { targets:[0,3,6,7], className:'text-nowrap' }
-        ]
-      });
-      // clickable rows except on buttons/links
-      $('#casesTable tbody').on('click','tr',function(e){
-        if(!$(e.target).closest('a,button').length){ window.location = $(this).data('href'); }
+    const chips = document.querySelectorAll('.filter-chip');
+    const cards = document.querySelectorAll('.case-card');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const filter = chip.dataset.filter;
+        cards.forEach(card => {
+          const isClosed = card.dataset.status === 'closed';
+          const urgency = card.dataset.urgency;
+          const isEsc = card.dataset.escalated === '1';
+          let visible = true;
+          if (filter === 'open') visible = !isClosed;
+          if (filter === 'closed') visible = isClosed;
+          if (filter === 'high') visible = urgency === 'high';
+          if (filter === 'escalated') visible = isEsc;
+          card.style.display = visible ? '' : 'none';
+        });
       });
     });
   </script>

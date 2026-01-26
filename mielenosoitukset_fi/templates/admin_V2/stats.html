@@ -1,65 +1,8 @@
 {% extends "admin_base.html" %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/stats.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/activities.css') }}">
-
-<style>
-  .no-data {
-    color: var(--error_text, #721c24);
-    font-weight: 600;
-    background: var(--error_bg, #f8d7da);
-    padding: 1.5rem;
-    border: 1px dashed var(--error_border, #f5c6cb);
-    border-radius: 6px;
-    text-align: center;
-    margin: 2rem 0;
-  }
-
-  .back-button {
-    margin-top: 2rem;
-    text-align: left;
-  }
-
-  .analytics-container {
-    margin-top: 3rem;
-    background: var(--container_background);
-    border: 1px solid var(--border_color);
-    border-radius: 8px;
-    padding: 1.5rem;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    color: var(--text);
-  }
-
-  th, td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border_color);
-  }
-
-  th {
-    background: var(--bg_secondary);
-    text-align: left;
-  }
-
-  tbody tr:hover {
-    background-color: var(--bg_hover);
-  }
-
-  a.demo-link {
-    color: var(--primary_color);
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  a.demo-link:hover {
-    text-decoration: underline;
-  }
-</style>
 
 <style>
   th.sortable {
@@ -67,167 +10,115 @@
     position: relative;
   }
   th.sortable::after {
-    content: "⬍"; /* up/down arrow */
-    font-size: 0.7em;
+    content: "⬍";
+    font-size: 0.75em;
     color: var(--text_muted, #888);
     position: absolute;
-    right: 8px;
+    right: 0.75rem;
   }
-  th.sortable.asc::after {
-    content: "⬆";
-  }
-  th.sortable.desc::after {
-    content: "⬇";
-  }
+  th.sortable.asc::after { content: "⬆"; }
+  th.sortable.desc::after { content: "⬇"; }
 </style>
 {% endblock %}
 
 {% block main_content %}
-<div class="dashboard-container">
-    <div class="introduction">
-    <h1 id="tabletitle">{{ _('Tilastot') }}</h1>
-    <p class="muted">
-      {{ _('Tässä osiossa voit tarkastella sivuston tilastoja.') }}
-    </p>
-  </div>
-
-
-  <div class="stats-overview">
-    <stats>
-      <stat>
-        <stitle>{{ _('Käyttäjiä') }}</stitle>
-        <snum>{{ total_users }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Vahvistetut käyttäjät') }}</stitle>
-        <sdisc>{{ _('Käyttäjiä, jotka ovat vahvistaneet sähköpostiosoitteensa') }}</sdisc>
-        <snum>{{ active_users }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Organisaatioita') }}</stitle>
-        <snum>{{ total_organizations }}</snum>
-      </stat>
-      <div style="width: 100%; background-color: transparent; height: 1px;"></div>
-      <stat>
-        <stitle>{{ _('Mielenosoituksia') }}</stitle>
-        <snum>{{ total_demos }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Katselukerrat') }}</stitle>
-        <sdisc>{{ _('Kaikkien mielenosoitusten katselukerrat') }}</sdisc>
-        <snum>{{ total_views }}</snum>
-      </stat>
-      <stat>
-        <stitle>{{ _('Keskimääräinen katselukerrat') }}</stitle>
-        <sdisc>{{ _('Keskimääräinen katselukerrat mielenosoituksille') }}</sdisc>
-        <snum>{{ avg_views }}</snum>
-      </stat>
-      <last-updated>
-        <p>{{ _('Tilastot päivitetty viimeksi') }}: {{ last_updated }}</p>
-      </last-updated>
-    </stats>
-  </div>
-
-  <div class="analytics-container">
-    <h2>{{ _('Mielenosoitus analytiikka') }}</h2>
-<!-- 🆕 pretty 24 h overview button -->
-  <a href="{{ url_for('admin.analytics_overall_24h') }}"
-     class="btn btn-outline-primary btn-sm mb-3 d-inline-flex align-items-center gap-1">
-      <i class="fas fa-clock"></i>
-      {{ _('Yleiskatsaus • viimeiset 24 h') }}
-  </a>
-    {% if data %}
-   <table>
-  <thead>
-    <tr>
-      <th class="sortable" data-sort-key="id">{{ _('Mielenosoituksen ID') }}</th>
-      <th class="sortable" data-sort-key="views">{{ _('Katselukerrat') }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for demo in data %}
-    <tr>
-      <td>
-        <a href="{{ url_for('admin.demo_analytics', demo_id=demo.id) }}" class="demo-link" title="{{ _('Näytä analytiikka') }}">
-          {{ demo.id }}
-        </a>
-      </td>
-      <td>{{ demo.views }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-    {% else %}
-    <div class="no-data">
-      <p>{{ _('Ei tietoja saatavilla.') }}</p>
+<div class="stats-shell">
+  <section class="holo-hero">
+    <div class="holo-grid">
+      <div class="beam"></div><div class="beam"></div><div class="beam"></div>
     </div>
-    {% endif %}
-  </div>
+    <div class="hero-copy">
+      <p class="eyebrow">{{ _('Reaaliaikainen tilannekuva') }}</p>
+      <h1>{{ _('Tilastot & telemetria') }}</h1>
+      <p class="lede">
+        {{ _('Näe, miten yhteisö sykkii juuri nyt. Kaikki luvut päivittyvät live-datasta, Matomo-telemetriasta ja taustajobeista.') }}
+      </p>
+      <div class="hero-badges">
+        <span class="badge badge-pill badge-signal"><i class="fas fa-wave-square"></i> {{ _('Matomo live') }}</span>
+        <span class="badge badge-pill badge-fresh" id="last-updated">{{ _('Päivitetään...') }}</span>
+      </div>
+    </div>
+    <div class="hero-panels">
+      <div class="pulse-card">
+        <span class="label">{{ _('Katselut / demo (ka.)') }}</span>
+        <span class="value" id="avg-views">–</span>
+        <div class="pulse-bar"><span style="width: 64%"></span></div>
+      </div>
+      <div class="pulse-card">
+        <span class="label">{{ _('Vahvistetut käyttäjät') }}</span>
+        <span class="value" id="active-users">–</span>
+        <div class="pulse-bar alt"><span style="width: 78%"></span></div>
+      </div>
+    </div>
+  </section>
 
-<nav aria-label="Demo pagination">
-  <ul class="pagination justify-content-center align-items-center">
+  <section class="stat-grid">
+    <div class="stat-card">
+      <p class="stat-label">{{ _('Käyttäjiä') }}</p>
+      <p class="stat-value" id="total-users">–</p>
+      <p class="stat-sub">{{ _('Kaikki tilit') }}</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">{{ _('Organisaatioita') }}</p>
+      <p class="stat-value" id="total-orgs">–</p>
+      <p class="stat-sub">{{ _('Yhteisöä ja ryhmää') }}</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">{{ _('Mielenosoituksia') }}</p>
+      <p class="stat-value" id="total-demos">–</p>
+      <p class="stat-sub">{{ _('Julkaistut tapahtumat') }}</p>
+    </div>
+    <div class="stat-card highlight">
+      <p class="stat-label">{{ _('Katselukerrat') }}</p>
+      <p class="stat-value" id="total-views">–</p>
+      <p class="stat-sub">{{ _('Kaikki demot yhteensä') }}</p>
+    </div>
+  </section>
 
-    {# --- Previous button --- #}
-    {% if page > 1 %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page - 1 }}&per_page={{ per_page }}" aria-label="Previous">
-          <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
+  <section class="analytics-panel">
+    <header class="panel-header">
+      <div>
+        <p class="eyebrow">{{ _('Analytiikka') }}</p>
+        <h2>{{ _('Mielenosoitusnäkymät') }}</h2>
+        <p class="lede small">
+          {{ _('Järjestä ja poraa alas – sorttaus on client-pohjaista, tarkemmat luvut aukeavat demo-analytics-sivulle.') }}
+        </p>
+      </div>
+      <div class="cta-group">
+        <label class="ghost-link" style="gap:0.5rem; cursor:pointer;">
+          <input type="checkbox" id="toggle-past" style="accent-color: var(--holo-highlight);"> {{ _('Näytä menneet') }}
+        </label>
+        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="btn btn-light futuristic">
+          <i class="fas fa-clock"></i> {{ _('Viimeiset 24 h') }}
         </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span>
-      </li>
-    {% endif %}
-
-    {# --- Numbered page links --- #}
-    {% set page_window = 2 %} {# number of pages to show on each side of current page #}
-    {% set start_page = page - page_window if page - page_window > 1 else 1 %}
-    {% set end_page = page + page_window if page + page_window < total_pages else total_pages %}
-
-    {% if start_page > 1 %}
-      <li class="page-item">
-        <a class="page-link" href="?page=1&per_page={{ per_page }}">1</a>
-      </li>
-      {% if start_page > 2 %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endif %}
-
-    {% for p in range(start_page, end_page + 1) %}
-      {% if p == page %}
-        <li class="page-item active"><span class="page-link">{{ p }}</span></li>
-      {% else %}
-        <li class="page-item"><a class="page-link" href="?page={{ p }}&per_page={{ per_page }}">{{ p }}</a></li>
-      {% endif %}
-    {% endfor %}
-
-    {% if end_page < total_pages %}
-      {% if end_page < total_pages - 1 %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ total_pages }}&per_page={{ per_page }}">{{ total_pages }}</a>
-      </li>
-    {% endif %}
-
-    {# --- Next button --- #}
-    {% if page < total_pages %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ page + 1 }}&per_page={{ per_page }}" aria-label="Next">
-          {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
+        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="ghost-link" id="matomo-link">
+          <i class="fas fa-bolt"></i> {{ _('Matomo live pulse') }}
         </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled">
-        <span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span>
-      </li>
-    {% endif %}
+      </div>
+    </header>
 
-  </ul>
-</nav>
+      <div class="table-shell">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" data-sort-key="id">{{ _('Mielenosoituksen ID') }}</th>
+              <th class="sortable" data-sort-key="views">{{ _('Katselukerrat') }}</th>
+            </tr>
+          </thead>
+          <tbody id="analytics-body">
+            <tr class="loading-row">
+              <td colspan="2">{{ _('Ladataan...') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+  </section>
 
-
+  <nav aria-label="Demo pagination" class="pagination-shell">
+    <ul class="pagination justify-content-center align-items-center" id="pagination">
+      <li class="page-item disabled"><span class="page-link">{{ _('Ladataan...') }}</span></li>
+    </ul>
+  </nav>
 
   <div class="back-button">
     <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
@@ -239,11 +130,152 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/matomo.js') }}"></script>
+
+<script>
+  const summaryUrl = "{{ url_for('admin.stats_summary_api') }}";
+  const matomoUrl = "{{ url_for('admin.stats_matomo_live') }}";
+  const tbody = document.getElementById("analytics-body");
+  const pagination = document.getElementById("pagination");
+  const togglePast = document.getElementById("toggle-past");
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function buildPagination(data) {
+    if (!pagination) return;
+    const { page, total_pages } = data;
+    const per_page = data.per_page;
+    const includePast = data.include_past;
+    const paramsFor = (p) => {
+      const u = new URL(window.location.href);
+      u.searchParams.set("page", p);
+      u.searchParams.set("per_page", per_page);
+      if (includePast) {
+        u.searchParams.set("include_past", "1");
+      } else {
+        u.searchParams.delete("include_past");
+      }
+      return u.toString();
+    };
+    const items = [];
+    const disabled = (label) => `<li class="page-item disabled"><span class="page-link">${label}</span></li>`;
+    const link = (p, label, extra="") => `<li class="page-item"><a class="page-link" href="${paramsFor(p)}"${extra}>${label}</a></li>`;
+    const cur = (label) => `<li class="page-item active"><span class="page-link">${label}</span></li>`;
+
+    if (page > 1) {
+      items.push(link(page - 1, `<i class="fas fa-angle-left"></i>`));
+    } else {
+      items.push(disabled(`<i class="fas fa-angle-left"></i>`));
+    }
+
+    const windowSize = 2;
+    const start = Math.max(1, page - windowSize);
+    const end = Math.min(total_pages, page + windowSize);
+
+    if (start > 1) {
+      items.push(link(1, "1"));
+      if (start > 2) items.push(disabled("…"));
+    }
+
+    for (let p = start; p <= end; p++) {
+      items.push(p === page ? cur(p) : link(p, p));
+    }
+
+    if (end < total_pages) {
+      if (end < total_pages - 1) items.push(disabled("…"));
+      items.push(link(total_pages, total_pages));
+    }
+
+    if (page < total_pages) {
+      items.push(link(page + 1, `<i class="fas fa-angle-right"></i>`));
+    } else {
+      items.push(disabled(`<i class="fas fa-angle-right"></i>`));
+    }
+
+    pagination.innerHTML = items.join("");
+  }
+
+  function renderRows(rows) {
+    if (!tbody) return;
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="2">{{ _('Ei tietoja saatavilla.') }}</td></tr>`;
+      return;
+    }
+    const html = rows.map(row => {
+      const href = "{{ url_for('admin.demo_analytics', demo_id='__ID__') }}".replace("__ID__", row.id);
+      return `
+        <tr>
+          <td><a class="demo-link" href="${href}">${row.title || row.id}</a></td>
+          <td class="views-cell"><span class="chip neon">${row.views}</span></td>
+        </tr>
+      `;
+    }).join("");
+    tbody.innerHTML = html;
+  }
+
+  async function loadSummary() {
+    const params = new URLSearchParams(window.location.search);
+    const includePast = (params.get("include_past") || "0").toLowerCase() === "1";
+    if (togglePast) togglePast.checked = includePast;
+    try {
+      const res = await fetch(`${summaryUrl}?${params.toString()}`);
+      const payload = await res.json();
+      const { summary, analytics } = payload;
+      setText("total-users", summary.total_users);
+      setText("active-users", summary.active_users);
+      setText("total-orgs", summary.total_organizations);
+      setText("total-demos", includePast ? summary.total_demos : summary.total_demos_future);
+      setText("total-views", summary.total_views);
+      setText("avg-views", summary.avg_views);
+      setText("last-updated", `${"{{ _('Päivitetty') }}"}: ${summary.last_updated}`);
+
+      renderRows(analytics.rows);
+      buildPagination(analytics);
+    } catch (e) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="2">{{ _('Virhe ladattaessa dataa') }}</td></tr>`;
+    }
+  }
+
+  async function loadMatomo() {
+    const link = document.getElementById("matomo-link");
+    if (!link) return;
+    try {
+      const res = await fetch(matomoUrl);
+      const payload = await res.json();
+      if (!payload.enabled) {
+        link.innerHTML = `<i class="fas fa-bolt-slash"></i> {{ _('Matomo ei saatavilla') }}`;
+        return;
+      }
+      link.innerHTML = `<i class="fas fa-bolt"></i> {{ _('Matomo live') }} · ${payload.visits.length} {{ _('kävijää') }}`;
+    } catch (e) {
+      link.innerHTML = `<i class="fas fa-bolt-slash"></i> {{ _('Matomo ei saatavilla') }}`;
+    }
+  }
+
+  if (togglePast) {
+    togglePast.addEventListener("change", () => {
+      const u = new URL(window.location.href);
+      if (togglePast.checked) {
+        u.searchParams.set("include_past", "1");
+      } else {
+        u.searchParams.delete("include_past");
+      }
+      u.searchParams.delete("page");
+      window.location.href = u.toString();
+    });
+  }
+
+  loadSummary();
+  loadMatomo();
+</script>
 
 <script>
   // Vanilla JS sorting for the demo analytics table
   (() => {
-    const table = document.querySelector(".analytics-container table");
+    const table = document.querySelector(".analytics-panel table");
     if (!table) return;
 
     const tbody = table.querySelector("tbody");

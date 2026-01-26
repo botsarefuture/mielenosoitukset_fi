@@ -45,6 +45,12 @@ def set_last_seen_id(obj_id: ObjectId):
         upsert=True
     )
 
+def get_on_demand_max_ids() -> dict[str, ObjectId]:
+    doc = meta.find_one({"_id": "analytics_rollup"}, {"on_demand_max_ids": 1})
+    if not doc:
+        return {}
+    return doc.get("on_demand_max_ids", {})
+
 
 def _normalize_timestamp(ts: datetime) -> datetime | None:
     """Coerce raw timestamps to timezone-aware UTC datetimes."""
@@ -75,9 +81,14 @@ def rollup_events(run_once: bool = False):
             )
 
             if new_events:
+                on_demand_max_ids = get_on_demand_max_ids()
                 counters = {}  # { demo_id: { date: { hour: { minute: count } } } }
 
                 for ev in new_events:
+                    demo_id_str = str(ev["demo_id"])
+                    max_on_demand_id = on_demand_max_ids.get(demo_id_str)
+                    if max_on_demand_id is not None and ev["_id"] <= max_on_demand_id:
+                        continue
                     demo_id = ev["demo_id"]
                     ts = ev["timestamp"]
                     ts = _normalize_timestamp(ts)
@@ -111,8 +122,8 @@ def rollup_events(run_once: bool = False):
 
                 if ops:
                     aggr.bulk_write(ops, ordered=False)
-                    last_seen_id = new_events[-1]["_id"]
-                    set_last_seen_id(last_seen_id)
+                last_seen_id = new_events[-1]["_id"]
+                set_last_seen_id(last_seen_id)
 
         except Exception:
             # silently ignore errors; optionally log them if needed

@@ -180,12 +180,18 @@ def count_per_demo(data):
 
 def _rollup_demo_analytics_on_demand(demo_id: ObjectId):
     """Build d_analytics doc for a demo from raw analytics if missing."""
-    events = list(mongo["analytics"].find({"demo_id": demo_id}, {"timestamp": 1}))
+    events = list(
+        mongo["analytics"].find({"demo_id": demo_id}, {"timestamp": 1})
+    )
     if not events:
         return None
 
     rolled = {}
+    max_event_id = None
     for ev in events:
+        ev_id = ev.get("_id")
+        if ev_id is not None:
+            max_event_id = ev_id if max_event_id is None else max(max_event_id, ev_id)
         ts = ev.get("timestamp")
         if not ts:
             continue
@@ -201,6 +207,12 @@ def _rollup_demo_analytics_on_demand(demo_id: ObjectId):
 
     doc = {"_id": demo_id, "analytics": rolled}
     mongo["d_analytics"].replace_one({"_id": demo_id}, doc, upsert=True)
+    if max_event_id is not None:
+        mongo["_meta"].update_one(
+            {"_id": "analytics_rollup"},
+            {"$max": {f"on_demand_max_ids.{str(demo_id)}": max_event_id}},
+            upsert=True,
+        )
     return doc
 
 def get_per_demo_anal(demo_id):

@@ -58,6 +58,7 @@
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.
+* Admin analytics summary now computes total and average views across all matching demos instead of the paginated slice, keeping stats consistent across pages.
 * Login now clearly instructs unverified users to confirm their email before signing in, including a reminder that a fresh link was sent.
 * Token validation no longer double-logs API usage when the `token_required` decorator already records usage per request.
 * Pride näkyväksi sivun tilastot laskevat kaupungit oikein ja käyttävät samaa korttinäkymää kuin päälistaus, jotta tapahtumat näkyvät yhtenäisesti.

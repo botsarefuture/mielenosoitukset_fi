@@ -834,6 +834,9 @@ def _build_analytics_summary(include_past: bool, page: int, per_page: int):
     ]
     total_count_doc = list(mongo.analytics.aggregate(count_pipeline))
     total_count = total_count_doc[0]["total"] if total_count_doc else 0
+    total_views_pipeline = base_pipeline + [{"$count": "total_views"}]
+    total_views_doc = list(mongo.analytics.aggregate(total_views_pipeline))
+    total_views = total_views_doc[0]["total_views"] if total_views_doc else 0
 
     skip = max((page - 1) * per_page, 0)
     data_pipeline = base_pipeline + [
@@ -852,11 +855,9 @@ def _build_analytics_summary(include_past: bool, page: int, per_page: int):
             demo_map[doc["_id"]] = doc
 
     rows = []
-    total_views = 0
     for doc in grouped:
         did = doc["_id"]
         views = int(doc.get("views", 0))
-        total_views += views
         info = demo_map.get(did, {})
         rows.append(
             {

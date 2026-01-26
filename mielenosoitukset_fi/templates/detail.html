@@ -2633,6 +2633,42 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
 </script>
 <script>
+  (function logDemoViewBeacon() {
+    if (window.__demoViewLogged) return;
+    const demoId = "{{ demo['_id'] }}";
+    if (!demoId) return;
+    window.__demoViewLogged = true;
+
+    const url = "{{ url_for('track_demo_view') }}";
+    const payload = JSON.stringify({ demo_id: demoId });
+
+    const sendViaFetch = () => {
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    if (navigator.sendBeacon) {
+      try {
+        const blob = new Blob([payload], { type: "application/json" });
+        const ok = navigator.sendBeacon(url, blob);
+        if (ok) return;
+      } catch (e) {
+        // fall through to fetch
+      }
+    }
+    // Fallback
+    if (document.readyState === "complete") {
+      sendViaFetch();
+    } else {
+      window.addEventListener("load", sendViaFetch, { once: true });
+    }
+  })();
+</script>
+<script>
   (function disableCacheForLocalHost() {
     const host = window.location.hostname;
     if (!["127.0.0.1", "localhost"].includes(host)) {

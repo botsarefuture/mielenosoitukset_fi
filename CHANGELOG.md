@@ -38,6 +38,7 @@
 ### Fixed
 * Approval/rejection token flows now only mark single-use links as used after the database update is verified, preventing silent failures from consuming links without persisting the decision.
 * Approval/rejection token flows now handle read failures during persistence verification, preventing transient errors from causing unexpected 500s.
+* On-demand analytics rollups now mark demo events as handled so background aggregation won't double-count them later.
 * Token approval/rejection flows now handle post-update read errors gracefully, prompting a retry instead of raising a 500 on transient lookup failures.
 * Approving or rejecting via token now updates the demonstration `last_modified` timestamp so audit views reflect the latest change.
 * Approving or rejecting via token now records the decision in the demo audit log for better traceability.
@@ -48,7 +49,12 @@
 * Demo cover selection now uses a shared helper across index/list/card rendering to avoid mismatched cover images.
 * Screenshot generation now skips demos that already have a preview image, preventing redundant auto previews.
 * Demo preview token route now renders even when `follow_meta` isn’t provided (detail template supplies a safe default).
+* Background job audit logging no longer crashes when the automatic flag is provided, so scheduled reminder runs complete successfully.
 * Audit timeline’s manual/automatic filter now hides background-job entries when you opt to see only manual actions.
+* Per-demo analytics view now reads the zero-padded rollup keys correctly, so demonstration analytics charts and counters render real data again.
+* Per-demo analytics page now builds rollups on demand when missing, so demos without precomputed analytics still show their view counts.
+* Analytics ingestion now records UTC-aware timestamps and normalizes naive events during rollup, preventing aggregation from breaking on missing timezone info.
+* Demonstration view logging now uses a client beacon endpoint, ensuring cache hits (e.g., Cloudflare) are recorded once without double-counting.
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.

@@ -79,6 +79,7 @@ def log_demo_audit_entry(
     details: Optional[Dict[str, Any]] = None,
     actor: Optional[Dict[str, Any]] = None,
     ip_address: Optional[str] = None,
+    automatic: Optional[bool] = None,
 ):
     actor_data = _resolve_actor(actor)
     ip = ip_address
@@ -100,6 +101,8 @@ def log_demo_audit_entry(
         "ip_address": ip,
         "actor": actor_data,
     }
+    if automatic is not None:
+        entry["automatic"] = bool(automatic)
     try:
         mongo.demo_audit_logs.insert_one(entry)
         log_super_audit(
@@ -124,6 +127,7 @@ def record_demo_change(
     extra_details: Optional[Dict[str, Any]] = None,
     actor: Optional[Dict[str, Any]] = None,
     ip_address: Optional[str] = None,
+    automatic: Optional[bool] = None,
 ):
     hist_id = save_demo_history(demo_id, old_data, new_data, case_id=case_id, actor=actor)
     details = {
@@ -132,6 +136,8 @@ def record_demo_change(
     }
     if extra_details:
         details.update(extra_details)
+    if automatic is not None:
+        details["automatic"] = bool(automatic)
 
     log_demo_audit_entry(
         demo_id,
@@ -140,6 +146,7 @@ def record_demo_change(
         details=details,
         actor=actor,
         ip_address=ip_address,
+        automatic=automatic,
     )
     return hist_id
 

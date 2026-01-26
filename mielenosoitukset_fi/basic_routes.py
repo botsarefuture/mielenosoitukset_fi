@@ -200,6 +200,33 @@ def _get_followed_recurring_ids():
     except Exception:
         return set()
 
+def _resolve_session_id():
+    """Best-effort stable session identifier for analytics."""
+    try:
+        return session.get("_id") or session.get("sid") or request.cookies.get("session")
+    except Exception:
+        return None
+
+
+@app.route("/api/analytics/track_view", methods=["POST"])
+def track_demo_view():
+    """Record a demo view via beacon so cached pages still log analytics."""
+    payload = request.get_json(silent=True) or {}
+    demo_id = payload.get("demo_id") or request.form.get("demo_id")
+    demo_oid = _safe_objectid(demo_id)
+    if not demo_oid:
+        abort(400, "invalid demo_id")
+
+    try:
+        user_id = current_user._id if current_user.is_authenticated else None
+    except Exception:
+        user_id = None
+    try:
+        log_demo_view(demo_oid, user_id, session_id=_resolve_session_id())
+    except Exception:
+        logger.exception("Failed to log demo view via beacon", extra={"demo_id": demo_id})
+    return jsonify({"ok": True})
+
 
 def _log_submit_error(message, code, status=400, extra=None):
     if request.method != "POST":
@@ -1723,13 +1750,6 @@ def init_routes(app):
         if not bypass_cache and hasattr(cache, "get"):
             cached = cache.get(cache_key)
             if cached:
-                # still log the view for analytics even when serving cached HTML
-                try:
-                    log_demo_view(demo_id, current_user._id if current_user.is_authenticated else None)
-                except Exception:
-                    logger.exception("Failed to log demo view for cached response")
-
-
                 resp = Response(cached["data"], status=cached.get("status", 200), mimetype=cached.get("mimetype"))
                 # restore headers (skip over Content-Length to allow Flask to recalc)
                 for k, v in cached.get("headers", []):
@@ -1749,10 +1769,6 @@ def init_routes(app):
         # Prepare response
         _demo = copy.copy(demo_obj)
         demo = Demonstration.to_dict(demo_obj, True)
-        try:
-            log_demo_view(_demo._id, current_user._id if current_user.is_authenticated else None)
-        except Exception:
-            logger.exception("Failed to log demo view")
 
         toistuvuus = ""
         if _demo.recurs:

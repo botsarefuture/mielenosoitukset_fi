@@ -53,6 +53,7 @@
 * Per-demo analytics view now reads the zero-padded rollup keys correctly, so demonstration analytics charts and counters render real data again.
 * Per-demo analytics page now builds rollups on demand when missing, so demos without precomputed analytics still show their view counts.
 * Analytics ingestion now records UTC-aware timestamps and normalizes naive events during rollup, preventing aggregation from breaking on missing timezone info.
+* Demonstration view logging now uses a client beacon endpoint, ensuring cache hits (e.g., Cloudflare) are recorded once without double-counting.
 * Background job auditing now skips entries when no fields changed, reducing noise in the global audit log.
 * Token management view gained a “revoke all unused links” action for superusers.
 * Token revocations (single or bulk) now emit per-demo audit entries to capture who revoked which link.

@@ -3,7 +3,8 @@ import json
 import pytz
 from collections import defaultdict
 from typing import Any, Dict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
+import requests
 
 from bson.objectid import ObjectId
 from flask import (
@@ -774,50 +775,189 @@ from flask import request, render_template
 def stats():
     """Render statistics page with user, organization, and demo analytics."""
     try:
-        total_users = mongo.users.count_documents({})
-        active_users = mongo.users.count_documents({"confirmed": True})
-        total_organizations = mongo.organizations.count_documents({})
-
-        # Count users by role
-        role_counts = get_user_role_counts()
-
-        # Demo analytics data
-        data = get_demo_views()
-        data = count_per_demo(data)  # this returns a list of demo dicts
-
-        # --- Pagination ---
-        per_page = int(request.args.get("per_page", 20))
-        page = int(request.args.get("page", 1))
-        total_count = len(data)
-        total_pages = ceil(total_count / per_page)
-        start_idx = (page - 1) * per_page
-        end_idx = start_idx + per_page
-        data_page = data[start_idx:end_idx]
-
-        # Render template
         _log_admin_event(
             "stats_view",
-            page=page,
-            per_page=per_page,
-            total_count=total_count,
+            page=int(request.args.get("page", 1)),
+            per_page=int(request.args.get("per_page", 20)),
         )
         return render_template(
             f"{_ADMIN_TEMPLATE_FOLDER}stats.html",
-            total_users=total_users,
-            total_organizations=total_organizations,
-            role_counts=role_counts,
-            active_users=active_users,
-            data=data_page,
-            page=page,
-            per_page=per_page,
-            total_pages=total_pages,
-            total_count=total_count
+            page=int(request.args.get("page", 1)),
+            per_page=int(request.args.get("per_page", 20)),
         )
     except Exception as e:
         logger.error(f"Error rendering stats page: {e}")
         _log_admin_event("stats_view_error", reason=str(e))
         flash_message("An error occurred while loading statistics.", "danger")
         return redirect(url_for("admin.admin_dashboard"))
+
+
+def _parse_demo_date(value):
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, (date,)):
+        return value
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%fZ"):
+            try:
+                return datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+    return None
+
+
+def _future_demo_ids() -> set[ObjectId]:
+    today = datetime.utcnow().date()
+    ids: set[ObjectId] = set()
+    cursor = mongo.demonstrations.find(
+        {"date": {"$exists": True}},
+        {"_id": 1, "date": 1},
+    )
+    for doc in cursor:
+        parsed = _parse_demo_date(doc.get("date"))
+        if parsed and parsed >= today:
+            ids.add(doc["_id"])
+    return ids
+
+
+def _build_analytics_summary(include_past: bool, page: int, per_page: int):
+    match_stage = {}
+    future_ids = set()
+    if not include_past:
+        future_ids = _future_demo_ids()
+        match_stage["demo_id"] = {"$in": list(future_ids)} if future_ids else {"$in": []}
+
+    base_pipeline = [{"$match": match_stage}] if match_stage else []
+    count_pipeline = base_pipeline + [
+        {"$group": {"_id": "$demo_id"}},
+        {"$count": "total"},
+    ]
+    total_count_doc = list(mongo.analytics.aggregate(count_pipeline))
+    total_count = total_count_doc[0]["total"] if total_count_doc else 0
+
+    skip = max((page - 1) * per_page, 0)
+    data_pipeline = base_pipeline + [
+        {"$group": {"_id": "$demo_id", "views": {"$sum": 1}}},
+        {"$sort": {"views": -1}},
+        {"$skip": skip},
+        {"$limit": per_page},
+    ]
+    grouped = list(mongo.analytics.aggregate(data_pipeline))
+    demo_ids = [doc["_id"] for doc in grouped]
+    demo_map = {}
+    if demo_ids:
+        for doc in mongo.demonstrations.find(
+            {"_id": {"$in": demo_ids}}, {"title": 1, "date": 1}
+        ):
+            demo_map[doc["_id"]] = doc
+
+    rows = []
+    total_views = 0
+    for doc in grouped:
+        did = doc["_id"]
+        views = int(doc.get("views", 0))
+        total_views += views
+        info = demo_map.get(did, {})
+        rows.append(
+            {
+                "id": str(did),
+                "views": views,
+                "title": info.get("title"),
+                "date": info.get("date"),
+            }
+        )
+    total_pages = (total_count + per_page - 1) // per_page if per_page else 1
+    return rows, total_count, total_pages, total_views, len(future_ids)
+
+
+@admin_bp.route("/api/stats/summary")
+@login_required
+@admin_required
+def stats_summary_api():
+    """Return stats payload for the admin dashboard."""
+    per_page = max(min(int(request.args.get("per_page", 20)), 100), 1)
+    page = max(int(request.args.get("page", 1)), 1)
+    include_past = (request.args.get("include_past") or "0").lower() in {"1", "true", "yes"}
+
+    total_users = mongo.users.count_documents({})
+    active_users = mongo.users.count_documents({"confirmed": True})
+    total_organizations = mongo.organizations.count_documents({})
+    total_demos = mongo.demonstrations.count_documents({})
+
+    rows, total_count, total_pages, total_views, future_demo_count = _build_analytics_summary(
+        include_past, page, per_page
+    )
+    avg_views = round(total_views / total_count, 2) if total_count else 0
+
+    return jsonify(
+        {
+            "summary": {
+                "total_users": total_users,
+                "active_users": active_users,
+                "total_organizations": total_organizations,
+                "total_demos": total_demos,
+                "total_demos_future": future_demo_count,
+                "total_views": total_views,
+                "avg_views": avg_views,
+                "last_updated": datetime.utcnow().isoformat() + "Z",
+            },
+            "analytics": {
+                "rows": rows,
+                "page": page,
+                "per_page": per_page,
+                "total_pages": total_pages,
+                "total_count": total_count,
+                "include_past": include_past,
+            },
+        }
+    )
+
+
+def _matomo_config():
+    url = current_app.config.get("MATOMO_API_URL") or os.getenv("MATOMO_API_URL")
+    token = current_app.config.get("MATOMO_API_TOKEN") or os.getenv("MATOMO_API_TOKEN")
+    site_id = current_app.config.get("MATOMO_SITE_ID") or os.getenv("MATOMO_SITE_ID")
+    if url and token and site_id:
+        return {"url": url, "token": token, "site_id": site_id}
+    return None
+
+
+@admin_bp.route("/api/stats/matomo-live")
+@login_required
+@admin_required
+def stats_matomo_live():
+    cfg = _matomo_config()
+    if not cfg:
+        return jsonify({"enabled": False, "reason": "missing_config"})
+    params = {
+        "module": "API",
+        "method": "Live.getLastVisitsDetails",
+        "idSite": cfg["site_id"],
+        "period": "day",
+        "date": "today",
+        "format": "JSON",
+        "token_auth": cfg["token"],
+        "filter_limit": int(request.args.get("limit", 5)),
+    }
+    try:
+        resp = requests.get(cfg["url"], params=params, timeout=5)
+        resp.raise_for_status()
+        payload = resp.json()
+        visits = []
+        for visit in payload[: params["filter_limit"]]:
+            visits.append(
+                {
+                    "id": visit.get("idVisit"),
+                    "country": visit.get("country"),
+                    "visitLocalTime": visit.get("visitLocalTime"),
+                    "actions": len(visit.get("actionDetails", [])),
+                    "deviceType": visit.get("deviceType"),
+                }
+            )
+        return jsonify({"enabled": True, "visits": visits})
+    except Exception as exc:
+        logger.exception("Matomo live fetch failed")
+        return jsonify({"enabled": False, "reason": str(exc)})
 
 @admin_bp.route("/manual/")
 def manual():

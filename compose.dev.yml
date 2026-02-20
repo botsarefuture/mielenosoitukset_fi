@@ -1,0 +1,88 @@
+services:
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8443:443/udp"
+    volumes:
+      - ./caddyconf:/etc/caddy
+      - caddy_data:/data
+      - caddy_config:/config
+
+  backend:
+    build: .
+    container_name: mielenosoitukset_fi
+    ports:
+      - "5002:5002"
+    environment:
+      - HOST=0.0.0.0
+    depends_on:
+      mongo:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./config.compose.dev.yaml:/app/config.yaml
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8
+    container_name: miekkari_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
+    image: localstack/localstack
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
+      - DEBUG=${DEBUG:-0}
+      - LOCALSTACK_HOST=localstack:4566
+      - SERVICES=s3
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  localstack-init:
+    image: localstack/localstack
+    depends_on:
+      - localstack
+    entrypoint: >
+      sh -c "
+        until awslocal --endpoint-url=http://localstack:4566 s3api list-buckets; do
+          echo 'Waiting for LocalStack to be ready...';
+          sleep 5;
+        done;
+        awslocal --endpoint-url=http://localstack:4566 s3api create-bucket --bucket mielenosoitukset.fi;
+        echo 'Bucket created successfully.';
+      "
+
+  mailserver:
+    image: reachfive/fake-smtp-server
+    ports:
+      - "1025:1025"  # SMTP port
+      - "1080:1080"  # Web UI port
+    restart: unless-stopped
+
+
+volumes:
+  mongo_data:
+  locals3root:
+  caddy_data:
+  caddy_config:

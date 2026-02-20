@@ -19,6 +19,7 @@ WORKDIR /app
 
 # Install runtime dependencies for wkhtmltopdf
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
     libfontconfig1 \
     libfreetype6 \
     libjpeg62-turbo \
@@ -32,9 +33,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy wkhtmltopdf from builder stage
-COPY --from=wkhtmltopdf-builder /usr/bin/wkhtmltopdf /usr/bin/wkhtmltopdf
-COPY --from=wkhtmltopdf-builder /usr/bin/wkhtmltoimage /usr/bin/wkhtmltoimage
+
+COPY wkhtmltox_0.12.7-0.20230411.31.dev.024b2b2.bookworm_amd64.deb .
+RUN apt install -y --no-install-recommends ./wkhtmltox_0.12.7-0.20230411.31.dev.024b2b2.bookworm_amd64.deb \
+    && rm -f ./wkhtmltox_0.12.7-0.20230411.31.dev.024b2b2.bookworm_amd64.deb
 
 # Copy requirements first for better caching
 COPY requirements.txt .

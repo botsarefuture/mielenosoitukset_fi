@@ -1,6 +1,6 @@
 # Mielenosoitukset.fi
 
-Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions. The project is actively maintained and welcomes new contributors — see the Contributing section below for how to help.
+Mielenosoitukset.fi is an open-source platform for discovering and submitting demonstrations in Finland. Users can browse upcoming events, submit new demonstrations, and administrators can manage and approve submissions. The project is actively maintained and welcomes new contributors — see the Contributing section瑝
 
 > ⚠️ **Documentation notice**
 >
@@ -182,6 +182,10 @@ If you have any questions, suggestions, or feedback, feel free to reach out to u
 We appreciate your input and support!
 
 ---
+
+## Development Branch
+
+This repository has a dedicated development branch `dev-2026` for ongoing work in 2026. This branch serves as the staging area for all new features and fixes before they are merged into the main branch.
 
 ## Changelog
 

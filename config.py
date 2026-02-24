@@ -131,6 +131,7 @@ class Config:
     CACHE_REDIS_PORT = config.get("REDIS_PORT", 6379)
     CACHE_REDIS_DB = config.get("REDIS_DB", 0)
     DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
+    VALID_WINDOW = config.get("VALID_WINDOW", 5)
     
     @classmethod
     def init_config(cls) -> None:

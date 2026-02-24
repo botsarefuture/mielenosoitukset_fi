@@ -7,12 +7,13 @@ import pyotp, datetime
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip
+from mielenosoitukset_fi.config import Config
 #from mielenosoitukset_fi.utils.classes.BaseModel import BaseModel  # if still needed
 
 db  = DatabaseManager().get_instance()
 mongo = db.get_db()
 
-VALID_WINDOW = 5          # TODO → move to config
+VALID_WINDOW = Config.VALID_WINDOW
 DEFAULT_ROLE = "user"
 
 class User(UserMixin):

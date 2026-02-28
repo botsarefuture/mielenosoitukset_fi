@@ -23,11 +23,17 @@ from mielenosoitukset_fi.utils.tokens import (
     check_token
 )
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
+from mielenosoitukset_fi.utils.moltbook import attach_moltbook_agent
 from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
 CORS(api_bp, resources={r"/*": {"origins": "*"}})
+
+
+@api_bp.before_request
+def _attach_moltbook_identity():
+    return attach_moltbook_agent()
 
 
 demo_attending_collection = mongo["demo_attending"]

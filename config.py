@@ -1,3 +1,4 @@
+import os
 import yaml
 from typing import Any, Dict
 import logging
@@ -131,6 +132,8 @@ class Config:
     CACHE_REDIS_PORT = config.get("REDIS_PORT", 6379)
     CACHE_REDIS_DB = config.get("REDIS_DB", 0)
     DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
+
+    MOLTBOOK_APP_KEY = os.environ.get("MOLTBOOK_APP_KEY", "")
     
     @classmethod
     def init_config(cls) -> None:

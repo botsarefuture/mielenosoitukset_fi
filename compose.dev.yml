@@ -62,7 +62,8 @@ services:
   localstack-init:
     image: localstack/localstack
     depends_on:
-      - localstack
+      localstack:
+        condition: service_healthy
     entrypoint: >
       sh -c "
         until awslocal --endpoint-url=http://localstack:4566 s3api list-buckets; do

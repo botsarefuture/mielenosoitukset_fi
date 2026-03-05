@@ -1,13 +1,4 @@
 # Mielenosoitukset.fi Dockerfile
-
-# Stage 1: Builder for wkhtmltopdf
-FROM debian:bookworm-slim AS wkhtmltopdf-builder
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wkhtmltopdf \
-    && rm -rf /var/lib/apt/lists/*
-
-# Stage 2: Final application image
 FROM python:3.11-slim
 
 # Set environment variables
@@ -32,11 +23,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfonts-base \
     fontconfig \
     && rm -rf /var/lib/apt/lists/*
-
-
-COPY wkhtmltox_0.12.7-0.20230411.31.dev.024b2b2.bookworm_amd64.deb .
-RUN apt install -y --no-install-recommends ./wkhtmltox_0.12.7-0.20230411.31.dev.024b2b2.bookworm_amd64.deb \
-    && rm -f ./wkhtmltox_0.12.7-0.20230411.31.dev.024b2b2.bookworm_amd64.deb
 
 # Copy requirements first for better caching
 COPY requirements.txt .

@@ -113,6 +113,9 @@ class Config:
     S3_BUCKET = S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
     CDN_HOST = S3_CONFIG.get("CDN_HOST", "https://cdn2.mielenosoitukset.fi")
 
+    # Chat
+    ENABLE_CHAT = config.get("ENABLE_CHAT", True)
+
     # Allowed file extensions for uploads
     ALLOWED_EXTENSIONS = S3_CONFIG.get(
         "ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif"}

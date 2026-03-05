@@ -21,6 +21,7 @@ DEBUG: true  # Enable debugging mode for development
 # https://flask.palletsprojects.com/en/stable/config/#DEBUG
 
 CACHE_TYPE: "SimpleCache"
+ENABLE_CHAT: false
 
 # S3 Configuration
 S3:

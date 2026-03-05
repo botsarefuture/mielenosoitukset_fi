@@ -20,6 +20,8 @@ DEBUG: true  # Enable debugging mode for development
 # Debug mode exposes sensitive information and is not suitable for production environments!
 # https://flask.palletsprojects.com/en/stable/config/#DEBUG
 
+CDN_BASE_URL: "https://cdn.miekkari.localhost"
+
 CACHE_TYPE: "SimpleCache"
 ENABLE_CHAT: false
 

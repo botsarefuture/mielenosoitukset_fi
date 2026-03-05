@@ -80,6 +80,9 @@ class Config:
     # Load the configuration
     config = load_yaml("config.yaml")
 
+    # URL generation
+    CDN_BASE_URL = config.get("CDN_BASE_URL", "https://cdn2.mielenosoitukset.fi")
+
     # MongoDB Configuration
     MONGO_URI = config.get("MONGO_URI", "")
     MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")

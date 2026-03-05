@@ -1,3 +1,8 @@
+cdn.miekkari.localhost {
+    rewrite /mielenosoitukset.fi{uri}
+    reverse_proxy localstack:4566
+}
+
 miekkari.localhost {
     reverse_proxy backend:5002
 }

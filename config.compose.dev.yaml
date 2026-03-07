@@ -1,6 +1,6 @@
 # Application Configuration
 SECRET_KEY: "not_a_secret"  # Secret key for session management
-MONGO_URI: "mongodb://mongo:27017"  # MongoDB connection URI
+MONGO_URI: "mongodb://mongo:27018"  # MongoDB connection URI
 MONGO_DBNAME: "miekkari_db"  # Name of the MongoDB database
 MAIL:
   SERVER: "mailserver"  # SMTP server for sending emails

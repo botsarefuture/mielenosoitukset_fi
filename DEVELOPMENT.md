@@ -25,8 +25,8 @@ The following steps will set up the necessary environment for local development:
 5. Wait for services to start up. Get root certificate from Caddy and add it to your system's trusted certificates (Caddy will print instructions on how to do this in the terminal, 
    or check https://caddyserver.com/docs/running#local-https-with-docker) and possibly your browser's trusted certificates as well.
 6. Open your browser to access the application
- - `https://miekkari.localhost` goes landing page, do submit a demonstration
+ - `https://miekkari.localhost:8443` goes landing page, do submit a demonstration
  - `http://localhost:1080/` to access the fake SMTP server interface, see email was sent to organizer and admin
- - `https://miekkari.localhost/admin/demo/` to access the admin interface (TODO: create admin user)
+ - `https://miekkari.localhost:8443/admin/demo/` to access the admin interface (TODO: create admin user)
 
 NOTE: most services expose default port, so if you have other services running on those ports, you might need to stop them or change the port mappings in `compose.dev.yml`.

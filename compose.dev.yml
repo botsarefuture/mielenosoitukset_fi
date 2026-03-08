@@ -3,9 +3,9 @@ services:
     image: caddy:2.11-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "8443:443/udp"
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8443:443"
+      - "127.0.0.1:8443:443/udp"
     volumes:
       - ./caddyconf:/etc/caddy
       - caddy_data:/data
@@ -15,7 +15,7 @@ services:
     build: .
     container_name: mielenosoitukset_fi
     ports:
-      - "5002:5002"
+      - "127.0.0.1:5002:5002"
     environment:
       - HOST=0.0.0.0
     depends_on:
@@ -34,7 +34,7 @@ services:
     container_name: miekkari_mongo
     command: --port 27018
     ports:
-      - "27018:27018"
+      - "127.0.0.1:27018:27018"
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -78,8 +78,8 @@ services:
   mailserver:
     image: reachfive/fake-smtp-server
     ports:
-      - "8025:1025"
-      - "1080:1080"
+      - "127.0.0.1:8025:1025"
+      - "127.0.0.1:1080:1080"
 
 
 volumes:

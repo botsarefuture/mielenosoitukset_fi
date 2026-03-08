@@ -1479,6 +1479,7 @@ def init_routes(app):
         )
 
     def upload_image_to_s3(img):
+        photo_url = ""
         if img and getattr(img, "filename", ""):
             try:
                 filename = secure_filename(img.filename)

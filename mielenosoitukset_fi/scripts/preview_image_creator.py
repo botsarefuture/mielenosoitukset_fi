@@ -13,7 +13,7 @@ import io
 from datetime import datetime, timedelta
 from flask import has_app_context
 
-from DatabaseManager import DatabaseManager
+from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.screenshot import create_screenshot
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from config import Config

@@ -136,8 +136,6 @@ def create_app() -> Flask:
         admin_dev_bp,
     )
     from users import _BLUEPRINT_ as user_bp
-    from users import chat_ws
-    from flask_socketio import SocketIO, emit, join_room
     from api import api_bp
     from developer_bp import developer_bp
 
@@ -169,10 +167,14 @@ def create_app() -> Flask:
                                 granularity='minute')
     app.jinja_env.filters["timeago"] = timeago
     app.register_blueprint(board_bp)
-    
-    socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
-    app.register_blueprint(chat_ws.chat_ws)
-    chat_ws.init_socketio(socketio)
+
+    if app.config.get("ENABLE_CHAT", True):
+        from users import chat_ws
+        from flask_socketio import SocketIO, emit, join_room
+        socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
+        app.register_blueprint(chat_ws.chat_ws)
+        chat_ws.init_socketio(socketio)
+
     app.register_blueprint(audit_bp)
 
     # Import and initialize routes

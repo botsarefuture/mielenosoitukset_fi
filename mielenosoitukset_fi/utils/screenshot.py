@@ -18,7 +18,6 @@ from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
 os.environ["XDG_CACHE_HOME"] = tempfile.mkdtemp()
 # Set XDG_RUNTIME_DIR to a writable directory
 os.environ["XDG_RUNTIME_DIR"] = tempfile.mkdtemp()
-config = imgkit.config()
 
 save_path = os.environ.get("demo_image_save_path", "/var/www/mielenosoitukset_fi/mielenosoitukset_fi/static/demo_preview")
 
@@ -117,6 +116,8 @@ def create_screenshot(demo_data, output_path=save_path, return_bytes=False):
                     # Non-fatal: just log and continue
                     logger.exception("Error while popping the Flask app context")
 
+
+        config = imgkit.config()
         filename = f"{demo_data['_id']}.png"
 
         # If caller wants bytes, render into an in-memory buffer

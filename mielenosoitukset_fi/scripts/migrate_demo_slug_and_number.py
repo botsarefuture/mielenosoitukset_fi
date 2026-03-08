@@ -7,6 +7,7 @@ Migration script to add running_number and slug fields to all demonstrations.
 Usage:
     python migrate_demo_slug_and_number.py
 """
+import os
 import re
 from bson import ObjectId
 from pymongo import MongoClient
@@ -19,7 +20,7 @@ def slugify(text):
     return text or "demo"
 
 def main():
-    client = MongoClient("mongodb://95.216.148.93:27017/")
+    client = MongoClient(os.getenv("MONGO_URI", "mongodb://localhost:27018"))
     db = client.get_database("mielenosoitukset")
     demos = db.demonstrations
 

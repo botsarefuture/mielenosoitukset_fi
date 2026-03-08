@@ -9,7 +9,7 @@ from tqdm import tqdm
 import pytz  # <-- you need to install this: pip install pytz
 
 # ── CONFIG ──────────────────────────────────────────────────────
-MONGO_URI     = os.getenv("MONGO_URI", "mongodb://95.216.148.93:27017")
+MONGO_URI     = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 DB_NAME       = "mielenosoitukset"
 RAW_COLL      = "analytics"     # incoming view events
 AGGR_COLL     = "d_analytics"   # rolled-up analytics

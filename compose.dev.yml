@@ -32,11 +32,22 @@ services:
   mongo:
     image: mongo:8
     container_name: miekkari_mongo
-    command: --port 27018
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /logs
+        touch /logs/mongod.log
+        chown -R mongodb:mongodb /logs
+        exec docker-entrypoint.sh mongod \
+          --port 27018 \
+          --logpath /logs/mongod.log \
+          --logappend
     ports:
       - "127.0.0.1:27018:27018"
     volumes:
       - mongo_data:/data/db
+      - mongo_logs:/logs
     healthcheck:
       test: ["CMD", "mongosh", "--host", "mongo", "--port", "27018", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -87,3 +98,4 @@ volumes:
   locals3root:
   caddy_data:
   caddy_config:
+  mongo_logs:

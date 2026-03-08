@@ -14,3 +14,4 @@ mielenosoitukset_fi/scripts/.env
 posted_events.txt
 mielenosoitukset_fi/scripts/posted_events.txt
 volume/
+.volume/

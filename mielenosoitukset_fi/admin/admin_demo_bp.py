@@ -19,11 +19,12 @@ from flask import (
     g,
     abort,
     has_request_context,
+    has_app_context,
 )
 from flask_login import current_user, login_required
 from pymongo import DESCENDING, ReturnDocument
 
-from flask_babel import _
+from flask_babel import _, force_locale, gettext as babel_gettext
 from urllib.parse import quote_plus
 
 from mielenosoitukset_fi.utils.classes import Demonstration, Organizer, MemberShip, Case
@@ -95,6 +96,20 @@ MERGE_BOOL_FIELDS = {"recurs", "approved", "hide"}
 
 
 MAX_MERGE_COUNT = 10
+
+
+def _safe_translate(message: str, **kwargs) -> str:
+    if has_request_context():
+        return _(message) % kwargs
+    if has_app_context():
+        default_locale = current_app.config.get("BABEL_DEFAULT_LOCALE")
+        if default_locale:
+            try:
+                with force_locale(default_locale):
+                    return babel_gettext(message) % kwargs
+            except Exception:
+                pass
+    return message % kwargs
 
 
 def _value_is_empty(value):
@@ -1094,7 +1109,7 @@ def generate_demo_preview_link(demo_id: str) -> str:
     log_demo_audit_entry(
         demo_id,
         action="token_created",
-        message=_("%(user)s loi esikatselulinkin") % {"user": actor},
+        message=_safe_translate("%(user)s loi esikatselulinkin", user=actor),
         details={"token_type": "preview", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.preview_demo_with_token", token=token, _external=True)
@@ -1107,7 +1122,7 @@ def generate_demo_approve_link(demo_id: str) -> str:
     log_demo_audit_entry(
         demo_id,
         action="token_created",
-        message=_("%(user)s loi hyväksyntälinkin") % {"user": actor},
+        message=_safe_translate("%(user)s loi hyväksyntälinkin", user=actor),
         details={"token_type": "approve", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.approve_demo_with_token", token=token, _external=True)
@@ -1120,7 +1135,7 @@ def generate_demo_reject_link(demo_id: str) -> str:
     log_demo_audit_entry(
         demo_id,
         action="token_created",
-        message=_("%(user)s loi hylkäyslinkin") % {"user": actor},
+        message=_safe_translate("%(user)s loi hylkäyslinkin", user=actor),
         details={"token_type": "reject", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.reject_demo_with_token", token=token, _external=True)
@@ -1133,7 +1148,7 @@ def generate_demo_edit_link_token(demo_id: str) -> str:
     log_demo_audit_entry(
         demo_id,
         action="token_created",
-        message=_("%(user)s loi muokkauslinkin") % {"user": actor},
+        message=_safe_translate("%(user)s loi muokkauslinkin", user=actor),
         details={"token_type": "edit", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
     )
     return url_for("admin_demo.edit_demo_with_token", token=token, _external=True)

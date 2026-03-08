@@ -36,6 +36,9 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Admin action link generation in background jobs now avoids request-only locale lookups, preventing “working outside of request context” errors during notification processing.
+* Recurring demo processor now uses the configured MongoDB database name instead of forcing `mielenosoitukset`.
+* Analytics rollup now reads MongoDB connection settings from the app config, avoiding hardcoded localhost defaults that broke rollups in dev/compose setups.
 * Approval/rejection token flows now only mark single-use links as used after the database update is verified, preventing silent failures from consuming links without persisting the decision.
 * Approval/rejection token flows now handle read failures during persistence verification, preventing transient errors from causing unexpected 500s.
 * On-demand analytics rollups now mark demo events as handled so background aggregation won't double-count them later.

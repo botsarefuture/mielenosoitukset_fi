@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 
-import os
 import time
 from datetime import datetime, timezone
 from bson import ObjectId
 from pymongo import MongoClient, UpdateOne
 from tqdm import tqdm
 import pytz  # <-- you need to install this: pip install pytz
+from config import Config
 
 # ── CONFIG ──────────────────────────────────────────────────────
-MONGO_URI     = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME       = "mielenosoitukset"
+MONGO_URI     = Config.MONGO_URI or "mongodb://localhost:27017"
+DB_NAME       = Config.MONGO_DBNAME or "testdb"
 RAW_COLL      = "analytics"     # incoming view events
 AGGR_COLL     = "d_analytics"   # rolled-up analytics
 META_COLL     = "_meta"         # stores last processed ObjectId

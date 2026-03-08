@@ -38,7 +38,6 @@ Modification Notes
 """
 
 import copy
-import os
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pymongo import MongoClient, UpdateOne
@@ -107,8 +106,10 @@ logger.setLevel(logging.DEBUG)
 MAX_NEW_DEMOS_PER_RUN = 1000
 
 # Database setup
-client = MongoClient(os.getenv("MONGO_URI", Config.MONGO_URI))
-db = client["mielenosoitukset"]
+mongo_uri = Config.MONGO_URI or "mongodb://localhost:27017"
+db_name = Config.MONGO_DBNAME or "testdb"
+client = MongoClient(mongo_uri)
+db = client[db_name]
 recu_demos_collection = db["recu_demos"]
 demonstrations_collection = db["demonstrations"]
 runtime_log_collection = db["runtime_log"]
@@ -570,4 +571,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

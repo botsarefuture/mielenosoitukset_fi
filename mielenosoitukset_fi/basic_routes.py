@@ -1042,46 +1042,21 @@ def init_routes(app):
             # --- File upload (S3) ---
             img = request.files.get("image")
             photo_url = ""
-            if img and getattr(img, "filename", ""):
-                try:
-                    filename = secure_filename(img.filename)
-                    bucket_name = current_app.config.get("S3_BUCKET", "mielenosoitukset.fi")
-                    s3_url = upload_image_fileobj(bucket_name, img.stream, filename, "demo_pics")
-                    if s3_url:
-                        photo_url = s3_url
-                    else:
-                        # upload failed but we don't block submitter; log and continue
-                        logger.error("S3 upload failed for submit image: %s", filename)
-                except Exception as e:
-                    logger.exception("Error uploading image for demo submit: %s", e)
+            
+            photo_url = upload_image_to_s3(img)
 
             # --- Submitter info fields ---
             submitter_role = (request.form.get("submitter_role") or "").strip()
             submitter_email = (request.form.get("submitter_email") or "").strip()
             submitter_name = (request.form.get("submitter_name") or "").strip()
+            
             # checkbox presence: normalize to boolean
             accept_terms = bool(request.form.get("accept_terms"))
             submission_token = (request.form.get("submission_token") or "").strip()
+            
             if not submission_token:
                 logger.warning("Missing submission token on POST /submit; generating fallback token.")
-                submission_token = _new_submission_token()
-
-            submission_fingerprint = _build_submission_fingerprint(
-                {
-                    "title": title,
-                    "date": date,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                    "city": city,
-                    "address": address,
-                    "route": route,
-                    "submitter_email": submitter_email,
-                    "submitter_name": submitter_name,
-                    "submitter_role": submitter_role,
-                    "description": description,
-                    "tags": tags,
-                }
-            )
+                submission_token = _new_submission_token() # generate a fallback token to at least have something to correlate potential duplicates, even if the client failed to provide one. This is not ideal but better than nothing.
 
             # --- Required validation --
             missing = []
@@ -1118,6 +1093,25 @@ def init_routes(app):
                     "Virheellinen sähköpostiosoite.",
                     SUBMIT_ERROR_CODES["invalid_email"],
                 )
+                
+            
+            submission_fingerprint = _build_submission_fingerprint(
+                {
+                    "title": title,
+                    "date": date,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                    "city": city,
+                    "address": address,
+                    "route": route,
+                    "submitter_email": submitter_email,
+                    "submitter_name": submitter_name,
+                    "submitter_role": submitter_role,
+                    "description": description,
+                    "tags": tags,
+                }
+            )
+
 
             # --- Submission idempotency guard ---
             now = datetime.utcnow()
@@ -1128,6 +1122,8 @@ def init_routes(app):
                     "created_at": {"$gte": now - SUBMISSION_DUPLICATE_WINDOW},
                 }
             )
+            
+            
             if duplicate_doc and duplicate_doc.get("demo_id"):
                 logger.info(
                     "Duplicate demo submit detected via fingerprint %s -> %s",
@@ -1140,9 +1136,13 @@ def init_routes(app):
 
             token_doc = None
             if submission_token:
+                
                 token_doc = submission_tokens_collection.find_one({"token": submission_token})
-                if token_doc and token_doc.get("status") == "completed":
+                
+                if token_doc and token_doc.get("status") == "completed": # if the token exists and is marked completed, check if it's a duplicate submission or stale session
                     if token_doc.get("fingerprint") and token_doc.get("fingerprint") != submission_fingerprint:
+                        
+                        
                         stale_message = _(
                             "Istuntosi on vanhentunut. Päivitä lomake ennen uuden ilmoituksen lähettämistä."
                         )
@@ -1152,7 +1152,9 @@ def init_routes(app):
                             status=409,
                             extra={"stale": True},
                         )
+                        
                     if token_doc.get("demo_id"):
+                        
                         return _respond_existing_submission(
                             token_doc.get("demo_id"), reason="token"
                         )
@@ -1165,10 +1167,14 @@ def init_routes(app):
                     "fingerprint": submission_fingerprint,
                     "ip": request.remote_addr,
                 }
+                
                 try:
                     submission_tokens_collection.insert_one(token_doc)
+                    
                 except DuplicateKeyError:
+                    
                     token_doc = submission_tokens_collection.find_one({"token": submission_token})
+                    
                     if (
                         token_doc
                         and token_doc.get("status") == "completed"
@@ -1183,15 +1189,19 @@ def init_routes(app):
                                 status=409,
                                 extra={"stale": True},
                             )
+                            
                         if token_doc.get("demo_id"):
+                            
                             return _respond_existing_submission(
                                 token_doc.get("demo_id"), reason="token"
                             )
+                            
                 except Exception:
                     logger.exception(
                         "Failed to insert submission token %s", submission_token
                     )
             else:
+                
                 submission_tokens_collection.update_one(
                     {"_id": token_doc["_id"]},
                     {
@@ -1219,24 +1229,7 @@ def init_routes(app):
                 )
                 i += 1
 
-            # --- Assemble Demonstration object ---
-            demonstration = Demonstration(
-                title=title,
-                date=date,
-                start_time=start_time,
-                end_time=end_time,
-                facebook=facebook,
-                city=city,
-                address=address,
-                event_type=event_type,
-                route=route,
-                organizers=organizers,
-                approved=False,
-                img=photo_url,
-                gallery_images=[photo_url] if photo_url else None,
-                description=description,
-                tags=tags,
-            )
+            
 
             # --- Check for similar demonstrations on same date/city to avoid duplicates ---
             force_submit = bool(request.form.get('force_submit'))
@@ -1294,9 +1287,27 @@ def init_routes(app):
 
             # Save demonstration
             try:
+                # --- Assemble Demonstration object ---
+                demonstration = Demonstration(
+                    title=title,
+                    date=date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    facebook=facebook,
+                    city=city,
+                    address=address,
+                    event_type=event_type,
+                    route=route,
+                    organizers=organizers,
+                    approved=False,
+                    img=photo_url,
+                    gallery_images=[photo_url] if photo_url else None, #FIXME: we should support multiple images in the form and handle them properly, but for now just put the single uploaded image into gallery_images to at least have it show up in the demo detail page
+                    description=description,
+                    tags=tags,
+                )
                 demo_dict = demonstration.to_dict()
                 demonstration.save()
-                #result = mongo.demonstrations.insert_one(demo_dict)
+
                 demo_id = demonstration._id
                 submission_tokens_collection.update_one(
                     {"token": submission_token},
@@ -1321,6 +1332,7 @@ def init_routes(app):
                         }
                     },
                 )
+                
                 return _submit_error(
                     "Palvelinvirhe: mielenosoituksen tallentaminen epäonnistui.",
                     SUBMIT_ERROR_CODES["db_failure"],
@@ -1337,7 +1349,9 @@ def init_routes(app):
                     "accept_terms": bool(accept_terms),
                     "submitted_at": datetime.utcnow(),
                 }
+                
                 mongo.submitters.insert_one(submitter_doc)
+                
             except Exception as e:
                 logger.exception("Failed to save submitter info: %s", e)
                 # do not abort the workflow — demo exists, but warn admins
@@ -1463,6 +1477,21 @@ def init_routes(app):
             can_edit_demo=can_edit_demo,
             submission_token=_new_submission_token(),
         )
+
+    def upload_image_to_s3(img):
+        if img and getattr(img, "filename", ""):
+            try:
+                filename = secure_filename(img.filename)
+                bucket_name = current_app.config.get("S3_BUCKET", "mielenosoitukset.fi")
+                s3_url = upload_image_fileobj(bucket_name, img.stream, filename, "demo_pics")
+                if s3_url:
+                    photo_url = s3_url
+                else:
+                        # upload failed but we don't block submitter; log and continue
+                    logger.error("S3 upload failed for submit image: %s", filename)
+            except Exception as e:
+                logger.exception("Error uploading image for demo submit: %s", e)
+        return photo_url
 
 
     @app.route("/report", methods=["GET", "POST"])

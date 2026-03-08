@@ -20,7 +20,7 @@ The following steps will set up the necessary environment for local development:
     ```
 4. Run the following command to start the necessary services:
     ```
-    docker compose -f docker-compose.dev.yml up
+    docker compose -f compose.dev.yml up
     ```
 5. Wait for services to start up. Get root certificate from Caddy and add it to your system's trusted certificates (Caddy will print instructions on how to do this in the terminal, 
    or check https://caddyserver.com/docs/running#local-https-with-docker) and possibly your browser's trusted certificates as well.

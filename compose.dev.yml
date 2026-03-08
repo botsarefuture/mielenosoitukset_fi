@@ -78,9 +78,8 @@ services:
   mailserver:
     image: reachfive/fake-smtp-server
     ports:
-      - "1025:1025"  # SMTP port
-      - "1080:1080"  # Web UI port
-    restart: unless-stopped
+      - "8025:1025"
+      - "1080:1080"
 
 
 volumes:

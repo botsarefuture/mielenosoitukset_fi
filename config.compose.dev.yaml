@@ -5,7 +5,7 @@ MONGO_DBNAME: "miekkari_db"  # Name of the MongoDB database
 MAIL:
   SERVER: "mailserver"  # SMTP server for sending emails
   PORT: 1025  # SMTP port, typically 587 for TLS
-  USE_TLS: false  # Enable TLS for secure email sending
+  USE_TLS: true  # Enable TLS for secure email sending
   USERNAME: "example@example.com"  # SMTP username
   PASSWORD: "example_password"  # SMTP password
   DEFAULT_SENDER: "example@example.com"  # Default sender email address

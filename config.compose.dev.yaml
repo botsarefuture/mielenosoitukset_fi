@@ -10,9 +10,9 @@ MAIL:
   PASSWORD: "example_password"  # SMTP password
   DEFAULT_SENDER: "example@example.com"  # Default sender email address
 
-# Optional configurations
-# SERVER_NAME: "www.example.com"  # Server name for the application
-# PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)
+# These are needed for admin confirmation email generation
+SERVER_NAME: "miekkari.localhost"  # host name for dev (same as in /etc/hosts)
+PREFERRED_URL_SCHEME: "https"  # URL scheme (e.g., https)
 
 PORT: 5002  # Application port
 DEBUG: true  # Enable debugging mode for development

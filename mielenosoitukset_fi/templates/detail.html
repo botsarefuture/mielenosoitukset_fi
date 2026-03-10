@@ -123,6 +123,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         }
       });
     }
+
   });
 
   async function toggleOrganizationFollow(button) {
@@ -610,6 +611,16 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   .section-title i {
     font-size: 1.5rem;
+  }
+
+  .demo-description {
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+
+  .demo-description img {
+    max-width: 100%;
+    height: auto;
   }
 
   /* Tags */
@@ -1514,7 +1525,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <i class="fa-solid fa-align-left"></i>
       {{ _('Kuvaus') }}
     </h2>
-    <div style="font-size: 1.1rem; line-height: 1.8;">
+    <div class="demo-description">
       {{ demo['description']|safe }}
     </div>
   </section>

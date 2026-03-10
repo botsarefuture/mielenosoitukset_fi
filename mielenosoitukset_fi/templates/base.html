@@ -1034,6 +1034,20 @@ body.banner-closed {
     });
   </script>
 
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("img").forEach(img => {
+        const alt = img.getAttribute("alt") || "";
+        const src = img.getAttribute("src") || "";
+        const hasEmojiAlt = alt.length > 0 && alt.length <= 4 && !/[a-z0-9]/i.test(alt);
+        const hasEmojiSrc = /\/emoji\/|twemoji|emojione|openmoji|notoemoji/i.test(src);
+        if (hasEmojiAlt || hasEmojiSrc) {
+          img.classList.add("emoji-inline");
+        }
+      });
+    });
+  </script>
+
 
 
   {% block scripts %} {% endblock %}

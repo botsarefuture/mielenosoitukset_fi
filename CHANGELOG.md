@@ -36,6 +36,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Emoji images now match the surrounding font size across the site so pasted emoji graphics render inline.
 * Admin action link generation in background jobs now avoids request-only locale lookups, preventing “working outside of request context” errors during notification processing.
 * Recurring demo processor now uses the configured MongoDB database name instead of forcing `mielenosoitukset`.
 * Analytics rollup now reads MongoDB connection settings from the app config, avoiding hardcoded localhost defaults that broke rollups in dev/compose setups.

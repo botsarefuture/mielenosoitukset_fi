@@ -18,6 +18,7 @@ services:
       - "127.0.0.1:5002:5002"
     environment:
       - HOST=0.0.0.0
+      - DEBUG=1
     depends_on:
       mongo:
         condition: service_healthy
@@ -26,6 +27,7 @@ services:
       localstack-init:
         condition: service_completed_successfully
     volumes:
+      - .:/app
       - ./config.compose.dev.yaml:/app/config.yaml
     restart: unless-stopped
 

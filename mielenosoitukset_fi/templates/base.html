@@ -105,7 +105,7 @@
 
 
 <body>
- <div id="top-banner" class="top-banner">
+ <!--<div id="top-banner" class="top-banner">
   <div class="banner-content">
     <i class="fas fa-bullhorn banner-icon"></i>
     <span class="banner-text">
@@ -361,11 +361,11 @@ body.banner-closed {
   position: relative;
   top: auto;
 }
-</style>
+</style>-->
 
 <script>
 (function() {
-  const banner = document.getElementById('top-banner');
+  /*const banner = document.getElementById('top-banner');
   const closeBtn = document.getElementById('top-banner-close');
   
   // Check if banner was previously closed
@@ -393,7 +393,7 @@ body.banner-closed {
       banner.classList.add('has-flash');
       banner.style.top = flash.offsetHeight + 'px';
     }
-  });
+  });*/
   
   // Set logged in status (if needed)
   document.logged_in = {{ (current_user.is_authenticated or False) | tojson }};

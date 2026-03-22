@@ -1,3 +1,5 @@
+name: mielenosoitukset-fi-dev
+
 services:
   caddy:
     image: caddy:2.11-alpine

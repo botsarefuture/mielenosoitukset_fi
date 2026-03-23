@@ -172,6 +172,24 @@ class DatabaseManager:
                     cls._instance = DatabaseManager()
         return cls._instance
 
+    @classmethod
+    def reset_instance(cls):
+        """
+        Reset the singleton instance.
+
+        Intended for tests that need to swap configuration or database state
+        between runs.
+        """
+        with cls._lock:
+            instance = cls._instance
+            cls._instance = None
+
+        if instance is not None:
+            try:
+                instance.close_connection()
+            except Exception:
+                logger.exception("Failed to close MongoDB connection during reset.")
+
     @staticmethod
     def legacy_get_db():
         """

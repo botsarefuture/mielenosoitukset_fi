@@ -1,6 +1,8 @@
-import yaml
-from typing import Any, Dict
 import logging
+import os
+from typing import Any, Dict
+
+import yaml
 
 
 class Config:
@@ -54,6 +56,11 @@ class Config:
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
+    @classmethod
+    def _config_path(cls) -> str:
+        """Return the active configuration file path."""
+        return os.environ.get("CONFIG_YAML_PATH", "config.yaml")
+
     @staticmethod
     def load_yaml(file_path: str) -> Dict[str, Any]:
         """Load configuration from a YAML file.
@@ -77,63 +84,68 @@ class Config:
             logging.error(f"Failed to load configuration from {file_path}: {e}")
             return {}
 
-    # Load the configuration
-    config = load_yaml("config.yaml")
+    @classmethod
+    def _apply_config(cls, config: Dict[str, Any]) -> None:
+        """Apply loaded config values to the class attributes."""
+        cls.config = config
 
-    # MongoDB Configuration
-    MONGO_URI = config.get("MONGO_URI", "")
-    MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
+        cls.MONGO_URI = config.get("MONGO_URI", "")
+        cls.MONGO_DBNAME = config.get("MONGO_DBNAME", "default_db")
 
-    # Mail Configuration
-    MAIL_CONFIG = config.get("MAIL", {})
-    MAIL_SERVER = MAIL_CONFIG.get("SERVER", "localhost")
-    MAIL_PORT = MAIL_CONFIG.get("PORT", 587)
-    MAIL_USE_TLS = MAIL_CONFIG.get("USE_TLS", True)
-    MAIL_USERNAME = MAIL_CONFIG.get("USERNAME", "")
-    MAIL_PASSWORD = MAIL_CONFIG.get("PASSWORD", "")
-    MAIL_DEFAULT_SENDER = MAIL_CONFIG.get("DEFAULT_SENDER", MAIL_USERNAME)
+        cls.MAIL_CONFIG = config.get("MAIL", {})
+        cls.MAIL_SERVER = cls.MAIL_CONFIG.get("SERVER", "localhost")
+        cls.MAIL_PORT = cls.MAIL_CONFIG.get("PORT", 587)
+        cls.MAIL_USE_TLS = cls.MAIL_CONFIG.get("USE_TLS", True)
+        cls.MAIL_USERNAME = cls.MAIL_CONFIG.get("USERNAME", "")
+        cls.MAIL_PASSWORD = cls.MAIL_CONFIG.get("PASSWORD", "")
+        cls.MAIL_DEFAULT_SENDER = cls.MAIL_CONFIG.get(
+            "DEFAULT_SENDER",
+            cls.MAIL_USERNAME,
+        )
 
-    # Babel Configuration
-    BABEL_CONFIG = config.get("BABEL", {})
-    BABEL_DEFAULT_LOCALE = BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
-    BABEL_SUPPORTED_LOCALES = BABEL_CONFIG.get("SUPPORTED_LOCALES", ["en"])
-    BABEL_LANGUAGES = BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
+        cls.BABEL_CONFIG = config.get("BABEL", {})
+        cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
+        cls.BABEL_SUPPORTED_LOCALES = cls.BABEL_CONFIG.get(
+            "SUPPORTED_LOCALES",
+            ["en"],
+        )
+        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
 
-    # Flask Configuration
-    SECRET_KEY = config.get("SECRET_KEY", "secret_key")
-    PORT = config.get("PORT", 8000)
-    DEBUG = config.get("DEBUG", True)
+        cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
+        cls.PORT = config.get("PORT", 8000)
+        cls.DEBUG = config.get("DEBUG", True)
 
-    # S3 Configuration
-    S3_CONFIG = config.get("S3", {})
-    ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
-    SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
-    ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
-    # Canonical bucket and CDN host
-    S3_BUCKET = S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
-    CDN_BASE_URL = config.get("CDN_BASE_URL", "https://cdn2.mielenosoitukset.fi")
+        cls.S3_CONFIG = config.get("S3", {})
+        cls.ACCESS_KEY = cls.S3_CONFIG.get("ACCESS_KEY")
+        cls.SECRET_KEY = cls.S3_CONFIG.get("SECRET_KEY")
+        cls.ENDPOINT_URL = cls.S3_CONFIG.get("ENDPOINT_URI")
+        cls.S3_BUCKET = cls.S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
+        cls.CDN_BASE_URL = config.get(
+            "CDN_BASE_URL",
+            "https://cdn2.mielenosoitukset.fi",
+        )
 
-    # Chat
-    ENABLE_CHAT = config.get("ENABLE_CHAT", True)
+        cls.ENABLE_CHAT = config.get("ENABLE_CHAT", True)
+        cls.ALLOWED_EXTENSIONS = cls.S3_CONFIG.get(
+            "ALLOWED_EXTENSIONS",
+            {"png", "jpg", "jpeg", "gif"},
+        )
+        cls.UPLOADS_FOLDER = cls.S3_CONFIG.get("UPLOADS_FOLDER", "uploads")
+        cls.ENFORCE_RATELIMIT = config.get("ENFORCE_RATELIMIT", True)
 
-    # Allowed file extensions for uploads
-    ALLOWED_EXTENSIONS = S3_CONFIG.get(
-        "ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif"}
-    )
-    UPLOADS_FOLDER = S3_CONFIG.get("UPLOADS_FOLDER", "uploads")
+        cls.ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club")
 
-    ENFORCE_RATELIMIT = config.get("ENFORCE_RATELIMIT", True)  # Enable rate limiting
+        cls.CACHE_TYPE = config.get("CACHE_TYPE", "SimpleCache")
+        cls.CACHE_DEFAULT_TIMEOUT = config.get("CACHE_DEFAULT_TIMEOUT", 300)
+        cls.CACHE_REDIS_HOST = config.get("REDIS_HOST", "localhost")
+        cls.CACHE_REDIS_PORT = config.get("REDIS_PORT", 6379)
+        cls.CACHE_REDIS_DB = config.get("REDIS_DB", 0)
+        cls.DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
 
-    # Admin stuff
-    ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club")  # Admin email address
-
-    # Redis / Cache Configuration
-    CACHE_TYPE = config.get("CACHE_TYPE", "SimpleCache")
-    CACHE_DEFAULT_TIMEOUT = config.get("CACHE_DEFAULT_TIMEOUT", 300)
-    CACHE_REDIS_HOST = config.get("REDIS_HOST", "localhost")
-    CACHE_REDIS_PORT = config.get("REDIS_PORT", 6379)
-    CACHE_REDIS_DB = config.get("REDIS_DB", 0)
-    DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
+    @classmethod
+    def reload(cls) -> None:
+        """Reload configuration from the active config file."""
+        cls._apply_config(cls.load_yaml(cls._config_path()))
     
     @classmethod
     def init_config(cls) -> None:
@@ -165,4 +177,5 @@ class Config:
 
 
 # Initialize the configuration
+Config.reload()
 Config.init_config()  # This will log warnings if essential configuration variables are not set or use default values.

@@ -106,6 +106,21 @@ To run this project locally you'll typically need:
 
 ---
 
+## Testing
+
+Run the regression suite with:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+The GitHub Actions test workflow uses the same `pytest` runner. It also checks
+that the Flask route surface, background job inventory, Socket.IO events, and
+OpenAPI document stay synchronized with the codebase.
+
+---
+
 ## Usage
 
 ### Submitting a Demonstration

@@ -5,6 +5,9 @@
 ## UNRELEASED
 
 ### Added
+* Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
+* Added `pytest`-based test infrastructure, dev dependencies, and API contract checks that keep `mielenosoitukset_fi/api/api.yaml` aligned with the implemented `/api` routes.
+* Added a `unittest`-based regression suite for core helpers, flashing, error handlers, and access-control decorators, plus a GitHub Actions workflow that runs the suite automatically on pull requests and pushes to `main`.
 * `start-dev.sh` now gracefully shuts down and reopens Firefox when importing the development certificate, removing the need for manual browser closure during setup.
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
 * Expanded production-level codebase documentation in `docs/codebase.md` covering architecture, data flows, and ops.

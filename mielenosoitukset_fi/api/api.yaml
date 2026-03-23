@@ -1,344 +1,116 @@
 openapi: 3.0.0
 info:
-  title: Demonstrations API
-  version: 1.0.1
-  description: API for fetching and creating demonstrations data.
+  title: Mielenosoitukset.fi API
+  version: 1.1.0
+  description: Public and session-authenticated API routes exposed under `/api`.
 servers:
   - url: https://mielenosoitukset.fi/api
 tags:
   - name: Demonstrations
-    description: Endpoints for demonstrations.
-
+  - name: Friends
+  - name: Tokens
 paths:
   /demonstrations:
     get:
-      tags:
-        - Demonstrations
-      summary: Get all approved demonstrations
-      description: Fetch a list of upcoming approved demonstrations.
-      parameters:
-        - name: search
-          in: query
-          required: false
-          description: Search term to filter demonstrations by title, city, tags, or address.
-          schema:
-            type: string
+      tags: [Demonstrations]
+      summary: List demonstrations
       responses:
-        200:
-          description: A list of approved demonstrations.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id:
-                      type: string
-                      example: "66d05a1b90514a48b5a9f180"
-                    title:
-                      type: string
-                      example: "Kiehumispisteen katujuhla 7.9."
-                    date:
-                      type: string
-                      example: "07.09.2024"
-                    start_time:
-                      type: string
-                      example: "13:00"
-                    end_time:
-                      type: string
-                      example: "21:00"
-                    topic:
-                      type: string
-                      example: "Liity seuraamme Kansalaistorille."
-                    facebook:
-                      type: string
-                      example: ""
-                    city:
-                      type: string
-                      example: "Helsinki"
-                    address:
-                      type: string
-                      example: "Kansalaistori"
-                    type:
-                      type: string
-                      example: "marssi"
-                    route:
-                      type: string
-                      example: "Kulkue alkaa Kansalaistorilta."
-                    organizers:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          name:
-                            type: string
-                            example: "Elokapina"
-                          email:
-                            type: string
-                            example: "info@elokapina.me"
-                          website:
-                            type: string
-                            example: "https://elokapina.fi/"
-                    approved:
-                      type: boolean
-                      example: true
-        500:
-          description: Internal server error.
-
-  /demonstration/{demo_id}:
+        "200":
+          description: Demonstration list
+  /demonstrations/{demo_id}:
     get:
-      tags:
-        - Demonstrations
-      summary: Get a specific demonstration by ID
-      description: Retrieve details of an approved demonstration by its ID.
-      parameters:
-        - name: demo_id
-          in: path
-          required: true
-          description: The unique ID of the demonstration.
-          schema:
-            type: string
+      tags: [Demonstrations]
+      summary: Get a demonstration
       responses:
-        200:
-          description: Details of the requested demonstration.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                    example: "66d05a1b90514a48b5a9f180"
-                  title:
-                    type: string
-                    example: "Kiehumispisteen katujuhla 7.9."
-                  date:
-                    type: string
-                    example: "07.09.2024"
-                  start_time:
-                    type: string
-                    example: "13:00"
-                  end_time:
-                    type: string
-                    example: "21:00"
-                  topic:
-                    type: string
-                    example: "Kansalaistorille kokoonnumme vastarintaan."
-                  facebook:
-                    type: string
-                    example: ""
-                  city:
-                    type: string
-                    example: "Helsinki"
-                  address:
-                    type: string
-                    example: "Kansalaistori"
-                  type:
-                    type: string
-                    example: "marssi"
-                  route:
-                    type: string
-                    example: "Kansalaistori, kulkue kohti VM"
-                  organizers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                          example: "Elokapina"
-                        email:
-                          type: string
-                          example: "info@elokapina.me"
-                        website:
-                          type: string
-                          example: "https://elokapina.fi/"
-                  approved:
-                    type: boolean
-                    example: true
-        404:
-          description: Demonstration not found or not approved.
-
-  /demo/{demo_id}/like:
+        "200":
+          description: Demonstration payload
+  /demonstrations/{demo_id}/stats:
+    get:
+      tags: [Demonstrations]
+      summary: Get demonstration stats
+      responses:
+        "200":
+          description: Stats payload
+  /demonstrations/{demo_id}/like:
     post:
-      tags:
-        - Demonstrations
+      tags: [Demonstrations]
       summary: Like a demonstration
-      description: Increment the like count for a specific demonstration.
-      parameters:
-        - name: demo_id
-          in: path
-          required: true
-          description: The unique ID of the demonstration.
-          schema:
-            type: string
       responses:
-        200:
-          description: Like count updated successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  likes:
-                    type: integer
-                    example: 10
-        404:
-          description: Demonstration not found.
-
-  /demo/{demo_id}/unlike:
+        "200":
+          description: Updated likes count
+  /demonstrations/{demo_id}/attending:
+    get:
+      tags: [Demonstrations]
+      summary: Get attending state
+      responses:
+        "200":
+          description: Attending state
     post:
-      tags:
-        - Demonstrations
+      tags: [Demonstrations]
+      summary: Update attending state
+      responses:
+        "200":
+          description: Updated attending state
+  /demonstrations/{demo_id}/unlike:
+    post:
+      tags: [Demonstrations]
       summary: Unlike a demonstration
-      description: Decrement the like count for a specific demonstration.
-      parameters:
-        - name: demo_id
-          in: path
-          required: true
-          description: The unique ID of the demonstration.
-          schema:
-            type: string
       responses:
-        200:
-          description: Like count updated successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  likes:
-                    type: integer
-                    example: 8
-        404:
-          description: Demonstration not found.
-
-  /demo/{demo_id}/likes:
+        "200":
+          description: Updated likes count
+  /demonstrations/{demo_id}/likes:
     get:
-      tags:
-        - Demonstrations
-      summary: Get like count for a demonstration
-      description: Retrieve the current like count for a specific demonstration.
-      parameters:
-        - name: demo_id
-          in: path
-          required: true
-          description: The unique ID of the demonstration.
-          schema:
-            type: string
+      tags: [Demonstrations]
+      summary: Get likes count
       responses:
-        200:
-          description: Like count retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  likes:
-                    type: integer
-                    example: 10
-        404:
-          description: Demonstration not found.
-
-  /demo/{demo_id}/stats:
+        "200":
+          description: Like count
+  /demonstrations/unapproved:
     get:
-      tags:
-        - Demonstrations
-      summary: Get statistics for a demonstration
-      description: Retrieve statistics for a specific demonstration.
-      parameters:
-        - name: demo_id
-          in: path
-          required: true
-          description: The unique ID of the demonstration.
-          schema:
-            type: string
+      tags: [Demonstrations]
+      summary: List unapproved demonstrations
       responses:
-        200:
-          description: Statistics retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  stats:
-                    type: object
-                    additionalProperties:
-                      type: string
-        404:
-          description: Demonstration not found.
-
-  /admin/demo/info/{demo_id}:
+        "200":
+          description: Unapproved demonstrations
+  /admin/demonstrations/{demo_id}:
     get:
-      tags:
-        - Demonstrations
-      summary: Get detailed information for a demonstration (Admin)
-      description: Retrieve detailed information for a specific demonstration.
-      parameters:
-        - name: demo_id
-          in: path
-          required: true
-          description: The unique ID of the demonstration.
-          schema:
-            type: string
+      tags: [Demonstrations]
+      summary: Get admin demonstration details
       responses:
-        200:
-          description: Detailed information retrieved successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  _id:
-                    type: string
-                    example: "66d05a1b90514a48b5a9f180"
-                  title:
-                    type: string
-                    example: "Kiehumispisteen katujuhla 7.9."
-                  date:
-                    type: string
-                    example: "07.09.2024"
-                  start_time:
-                    type: string
-                    example: "13:00"
-                  end_time:
-                    type: string
-                    example: "21:00"
-                  topic:
-                    type: string
-                    example: "Kansalaistorille kokoonnumme vastarintaan."
-                  facebook:
-                    type: string
-                    example: ""
-                  city:
-                    type: string
-                    example: "Helsinki"
-                  address:
-                    type: string
-                    example: "Kansalaistori"
-                  type:
-                    type: string
-                    example: "marssi"
-                  route:
-                    type: string
-                    example: "Kansalaistori, kulkue kohti VM"
-                  organizers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        name:
-                          type: string
-                          example: "Elokapina"
-                        email:
-                          type: string
-                          example: "info@elokapina.me"
-                        website:
-                          type: string
-                          example: "https://elokapina.fi/"
-                  approved:
-                    type: boolean
-                    example: true
-        404:
-          description: Demonstration not found.
+        "200":
+          description: Demonstration payload
+  /token/renew:
+    post:
+      tags: [Tokens]
+      summary: Renew a short-lived token
+      responses:
+        "200":
+          description: Renewed token
+  /token/long_lived:
+    post:
+      tags: [Tokens]
+      summary: Exchange for a long-lived token
+      responses:
+        "200":
+          description: Long-lived token
+  /friends-attending:
+    post:
+      tags: [Friends]
+      summary: Get which friends are attending demonstrations
+      responses:
+        "200":
+          description: Friend attendance mapping
+  /user/friends/:
+    get:
+      tags: [Friends]
+      summary: List a user's friends
+      responses:
+        "200":
+          description: Friend list
+  /demonstrations/{demo_id}/invite:
+    post:
+      tags: [Friends]
+      summary: Invite friends to a demonstration
+      responses:
+        "200":
+          description: Invitation result

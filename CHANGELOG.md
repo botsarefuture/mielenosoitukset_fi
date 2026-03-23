@@ -7,8 +7,11 @@
 ### Added
 * Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
 * Added `pytest`-based test infrastructure, dev dependencies, and API contract checks that keep `mielenosoitukset_fi/api/api.yaml` aligned with the implemented `/api` routes.
+* Added comprehensive dependency validation tests via `test_dependencies.py` that check for missing imports, conflicting dependencies, and unpinned versions, preventing unnoticed dependency hell.
+* Added `pip-audit` and `pipdeptree` to dev dependencies for auditing security vulnerabilities and analyzing dependency trees.
 * Added a `unittest`-based regression suite for core helpers, flashing, error handlers, and access-control decorators, plus a GitHub Actions workflow that runs the suite automatically on pull requests and pushes to `main`.
-* Added disposable integration infrastructure for tests: `compose.test.yml`, service-health checks for Redis/S3/SMTP, and a live-HTTP smoke test that exercises the app over a real localhost server.
+* CI/CD reliability improvements: added healthcheck to LocalStack in `compose.test.yml`, increased test job timeout to 30 minutes, increased service startup wait from 120s to 240s, and added progress/debug output for easier troubleshooting.
+* Added `TESTING_WORKFLOWS_LOCALLY.md` guide with instructions for running GitHub Actions workflows locally via `act` or manual testing.
 * Added broad seeded smoke coverage for registered Flask routes, Socket.IO chat events, and background job execution so CI now catches breakage across more of the application surface.
 * Added headless Chromium end-to-end smoke coverage for public browsing plus authenticated user, developer, and admin flows, and wired GitHub Actions to install Playwright before running the suite.
 * `start-dev.sh` now gracefully shuts down and reopens Firefox when importing the development certificate, removing the need for manual browser closure during setup.

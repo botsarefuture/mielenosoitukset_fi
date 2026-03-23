@@ -9,7 +9,7 @@ on:
 jobs:
   python-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -29,6 +29,9 @@ jobs:
 
       - name: Start disposable test services
         run: docker compose -f compose.test.yml up -d mongo redis localstack mailpit
+
+      - name: Debug service startup
+        run: docker compose -f compose.test.yml ps
 
       - name: Wait for test services
         run: |
@@ -52,12 +55,13 @@ jobs:
                   try:
                       if check_type == "socket":
                           with socket.create_connection(target, timeout=2):
-                              pass
+                              print(f"✓ {name} is ready")
                       else:
                           with urllib.request.urlopen(target, timeout=2) as response:
                               if response.status >= 400:
                                   raise RuntimeError(f"{name} returned {response.status}")
-                  except Exception:
+                              print(f"✓ {name} is ready")
+                  except Exception as e:
                       remaining.append((name, check_type, target))
               if not remaining:
                   break
@@ -66,8 +70,12 @@ jobs:
 
           if pending:
               names = ", ".join(name for name, _, _ in pending)
-              raise SystemExit(f"Timed out waiting for: {names}")
+              raise SystemExit(f"⚠ Timed out waiting for: {names}")
           PY
+
+      - name: Show service logs if health checks failed
+        if: failure()
+        run: docker compose -f compose.test.yml logs --no-color --tail=50
 
       - name: Initialize LocalStack bucket
         run: |
@@ -100,7 +108,7 @@ jobs:
           TEST_S3_ENDPOINT: http://127.0.0.1:4566
         run: python -m pytest
 
-      - name: Dump service logs on failure
+      - name: Dump test service logs on test failure
         if: failure()
         run: docker compose -f compose.test.yml logs --no-color
 

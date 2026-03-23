@@ -15,3 +15,4 @@ posted_events.txt
 mielenosoitukset_fi/scripts/posted_events.txt
 volume/
 .volume/
+config.compose.dev.yaml

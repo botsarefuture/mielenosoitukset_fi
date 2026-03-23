@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Added
+* `start-dev.sh` now gracefully shuts down and reopens Firefox when importing the development certificate, removing the need for manual browser closure during setup.
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
 * Expanded production-level codebase documentation in `docs/codebase.md` covering architecture, data flows, and ops.
 * Public API documentation at `/api-docs/` with downloadable OpenAPI spec and expanded `docs/api.md` coverage.

@@ -44,7 +44,7 @@ jobs:
               ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info"),
           ]
 
-          deadline = time.time() + 120
+          deadline = time.time() + 240
           pending = list(checks)
           while pending and time.time() < deadline:
               remaining = []

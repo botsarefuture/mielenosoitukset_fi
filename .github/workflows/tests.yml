@@ -91,7 +91,10 @@ jobs:
               region_name="eu-north-1",
           )
           try:
-              client.create_bucket(Bucket="mielenosoitukset-test")
+              client.create_bucket(
+                  Bucket="mielenosoitukset-test",
+                  CreateBucketConfiguration={"LocationConstraint": "eu-north-1"}
+              )
           except ClientError as exc:
               error_code = exc.response.get("Error", {}).get("Code")
               if error_code not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:

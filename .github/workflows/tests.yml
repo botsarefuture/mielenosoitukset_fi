@@ -1,0 +1,109 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Install Chromium for Playwright
+        run: python -m playwright install --with-deps chromium
+
+      - name: Start disposable test services
+        run: docker compose -f compose.test.yml up -d mongo redis localstack mailpit
+
+      - name: Wait for test services
+        run: |
+          python - <<'PY'
+          import socket
+          import time
+          import urllib.request
+
+          checks = [
+              ("mongo", "socket", ("127.0.0.1", 27017)),
+              ("redis", "socket", ("127.0.0.1", 6379)),
+              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health"),
+              ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info"),
+          ]
+
+          deadline = time.time() + 240
+          pending = list(checks)
+          while pending and time.time() < deadline:
+              remaining = []
+              for name, check_type, target in pending:
+                  try:
+                      if check_type == "socket":
+                          with socket.create_connection(target, timeout=2):
+                              pass
+                      else:
+                          with urllib.request.urlopen(target, timeout=2) as response:
+                              if response.status >= 400:
+                                  raise RuntimeError(f"{name} returned {response.status}")
+                  except Exception:
+                      remaining.append((name, check_type, target))
+              if not remaining:
+                  break
+              time.sleep(2)
+              pending = remaining
+
+          if pending:
+              names = ", ".join(name for name, _, _ in pending)
+              raise SystemExit(f"Timed out waiting for: {names}")
+          PY
+
+      - name: Initialize LocalStack bucket
+        run: |
+          python - <<'PY'
+          import boto3
+          from botocore.exceptions import ClientError
+
+          client = boto3.client(
+              "s3",
+              endpoint_url="http://127.0.0.1:4566",
+              aws_access_key_id="test",
+              aws_secret_access_key="test",
+              region_name="eu-north-1",
+          )
+          try:
+              client.create_bucket(Bucket="mielenosoitukset-test")
+          except ClientError as exc:
+              error_code = exc.response.get("Error", {}).get("Code")
+              if error_code not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:
+                  raise
+          PY
+
+      - name: Run test suite
+        env:
+          TEST_MONGO_URI: mongodb://127.0.0.1:27017
+          TEST_REDIS_HOST: 127.0.0.1
+          TEST_REDIS_PORT: "6379"
+          TEST_MAIL_HOST: 127.0.0.1
+          TEST_MAIL_PORT: "1025"
+          TEST_S3_ENDPOINT: http://127.0.0.1:4566
+        run: python -m pytest
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: docker compose -f compose.test.yml logs --no-color
+
+      - name: Tear down test services
+        if: always()
+        run: docker compose -f compose.test.yml down -v

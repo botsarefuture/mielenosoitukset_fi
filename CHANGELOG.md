@@ -47,7 +47,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
-* Removed unreliable LocalStack from CI test services. S3 integration tests gracefully skip when unavailable, eliminating a source of CI flakiness without losing test coverage.
+* Re-enabled S3 integration tests in CI by including LocalStack in test services with corrected health check logic that properly updates service readiness state, eliminating the previous race condition.
 * Health check script for test services now uses per-service timeouts, giving LocalStack 10 seconds (vs. 2) to respond to the health endpoint, preventing premature CI failures on slower runners.
 * Fixed `pipdeptree==3.0.10` not being available on PyPI; updated to `2.33.0` (the latest available version).
 * CI workflow now passes `CreateBucketConfiguration` with `LocationConstraint` when initializing the LocalStack S3 bucket, fixing `IllegalLocationConstraintException` for non-`us-east-1` regions.

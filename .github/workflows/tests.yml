@@ -28,7 +28,7 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Start disposable test services
-        run: docker compose -f compose.test.yml up -d mongo redis mailpit
+        run: docker compose -f compose.test.yml up -d mongo redis mailpit localstack
 
       - name: Debug service startup
         run: docker compose -f compose.test.yml ps
@@ -44,6 +44,7 @@ jobs:
               ("mongo", "socket", ("127.0.0.1", 27017), 2),
               ("redis", "socket", ("127.0.0.1", 6379), 2),
               ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info", 2),
+              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health", 5),
           ]
 
           deadline = time.time() + 240
@@ -90,6 +91,7 @@ jobs:
           TEST_REDIS_PORT: "6379"
           TEST_MAIL_HOST: 127.0.0.1
           TEST_MAIL_PORT: "1025"
+          TEST_S3_ENDPOINT: http://127.0.0.1:4566
         run: python -m pytest
 
       - name: Dump test service logs on test failure

@@ -8,6 +8,9 @@
 * Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
 * Added `pytest`-based test infrastructure, dev dependencies, and API contract checks that keep `mielenosoitukset_fi/api/api.yaml` aligned with the implemented `/api` routes.
 * Added a `unittest`-based regression suite for core helpers, flashing, error handlers, and access-control decorators, plus a GitHub Actions workflow that runs the suite automatically on pull requests and pushes to `main`.
+* Added disposable integration infrastructure for tests: `compose.test.yml`, service-health checks for Redis/S3/SMTP, and a live-HTTP smoke test that exercises the app over a real localhost server.
+* Added broad seeded smoke coverage for registered Flask routes, Socket.IO chat events, and background job execution so CI now catches breakage across more of the application surface.
+* Added headless Chromium end-to-end smoke coverage for public browsing plus authenticated user, developer, and admin flows, and wired GitHub Actions to install Playwright before running the suite.
 * `start-dev.sh` now gracefully shuts down and reopens Firefox when importing the development certificate, removing the need for manual browser closure during setup.
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
 * Expanded production-level codebase documentation in `docs/codebase.md` covering architecture, data flows, and ops.
@@ -40,6 +43,9 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Admin analytics overview and profile message APIs now serialize Mongo `ObjectId` values safely, preventing 500s in templates and JSON responses.
+* Admin organization suggestion review now tolerates legacy suggestion documents that stored edited values outside the `fields` payload.
+* Calendar, admin analytics, organization suggestion review, recurring-child listing, and admin media pages no longer fail under the expanded integration smoke suite.
 * Admin action link generation in background jobs now avoids request-only locale lookups, preventing “working outside of request context” errors during notification processing.
 * Recurring demo processor now uses the configured MongoDB database name instead of forcing `mielenosoitukset`.
 * Analytics rollup now reads MongoDB connection settings from the app config, avoiding hardcoded localhost defaults that broke rollups in dev/compose setups.

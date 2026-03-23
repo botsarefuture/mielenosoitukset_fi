@@ -111,13 +111,33 @@ To run this project locally you'll typically need:
 Run the regression suite with:
 
 ```bash
+docker compose -f compose.test.yml up -d mongo redis localstack mailpit
 pip install -r requirements-dev.txt
+python -m playwright install chromium
 python -m pytest
 ```
 
 The GitHub Actions test workflow uses the same `pytest` runner. It also checks
 that the Flask route surface, background job inventory, Socket.IO events, and
 OpenAPI document stay synchronized with the codebase.
+
+The disposable `compose.test.yml` stack provides the same local service
+dependencies the CI job uses:
+
+- MongoDB on `127.0.0.1:27017`
+- Redis on `127.0.0.1:6379`
+- LocalStack S3 on `127.0.0.1:4566`
+- Mailpit SMTP on `127.0.0.1:1025`
+
+The suite now includes:
+
+- unit tests for core helpers and wrappers
+- route-wide Flask smoke coverage against a seeded database
+- Socket.IO chat smoke coverage
+- background job execution coverage
+- live HTTP smoke over a real localhost server
+- browser-driven end-to-end smoke in headless Chromium
+- service integration checks for Redis, SMTP, and S3
 
 ---
 

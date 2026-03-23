@@ -58,11 +58,13 @@ def _configure_timezone(app):
         app.config["LOCAL_TIMEZONE"] = ZoneInfo("UTC")
 
 
-def create_app() -> Flask:
+def create_app(config_overrides=None) -> Flask:
     """Create and configure the Flask application."""
 
     app = Flask(__name__)
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
+    if config_overrides:
+        app.config.update(config_overrides)
     _configure_timezone(app)
     
     Limiter(
@@ -171,7 +173,12 @@ def create_app() -> Flask:
     if app.config.get("ENABLE_CHAT", True):
         from users import chat_ws
         from flask_socketio import SocketIO, emit, join_room
-        socketio = SocketIO(app, cors_allowed_origins="*", message_queue="redis://localhost:6379/mosoitukset_fi")
+        socketio = SocketIO(
+            app,
+            cors_allowed_origins="*",
+            message_queue=app.config.get("SOCKETIO_MESSAGE_QUEUE") or None,
+        )
+        app.extensions["socketio"] = socketio
         app.register_blueprint(chat_ws.chat_ws)
         chat_ws.init_socketio(socketio)
 
@@ -444,7 +451,8 @@ def create_app() -> Flask:
         exit()
 
     # Initialize background jobs (scheduler + logging)
-    init_background_jobs(app)
+    if app.config.get("ENABLE_BACKGROUND_JOBS", True):
+        init_background_jobs(app)
         
     @app.template_filter('displayname_or_username')
     def displayname_or_username(user):

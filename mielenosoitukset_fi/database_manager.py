@@ -21,7 +21,7 @@ Examples
 
 from mielenosoitukset_fi.utils.logger import logger
 from pymongo import MongoClient, errors
-from threading import Lock
+from threading import RLock
 from config import Config  # Import the Config class
 
 
@@ -34,7 +34,7 @@ class DatabaseManager:
     """
 
     _instance = None  # Singleton instance
-    _lock = Lock()  # Ensure thread-safe initialization
+    _lock = RLock()  # Ensure thread-safe initialization, including nested singleton bootstrap
 
     def __init__(self):
         """
@@ -186,7 +186,12 @@ class DatabaseManager:
 
         if instance is not None:
             try:
-                instance.close_connection()
+                if isinstance(instance, cls) and getattr(Config, "TESTING", False):
+                    # Test suites keep module-level DB handles around; avoid invalidating
+                    # them between tests by leaving the underlying client open.
+                    pass
+                else:
+                    instance.close_connection()
             except Exception:
                 logger.exception("Failed to close MongoDB connection during reset.")
 

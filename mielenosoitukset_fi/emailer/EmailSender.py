@@ -17,7 +17,7 @@ class EmailSender:
     """
 
     def __init__(self, config=Config):
-        self._config = Config()
+        self._config = config() if isinstance(config, type) else config
         self._db_manager = DatabaseManager().get_instance()
         self._db = self._db_manager.get_db()
         self._queue_collection = self._db["email_queue"]
@@ -31,7 +31,8 @@ class EmailSender:
         # unique instance id for scoping jobs
         self._instance_id = str(uuid.uuid4())
 
-        self.start_worker()
+        if getattr(self._config, "ENABLE_EMAIL_WORKER", True):
+            self.start_worker()
 
     def start_worker(self):
         worker_thread = threading.Thread(target=self.process_queue)

@@ -142,7 +142,7 @@ class DemoViewCount:
     """ """
 
     def __init__(self, demo_id, count):
-        self.id = demo_id
+        self.id = str(demo_id)
         self.views = count
 
     def __repr__(self):
@@ -1067,10 +1067,10 @@ def get_user_role_counts():
 def admin_analytics():
     """ """
     _log_admin_event("analytics_overview_view")
-    return demo_analytics()
+    return render_analytics_overview()
 
 
-def demo_analytics():
+def render_analytics_overview():
     """ """
     data = get_demo_views()
     data = count_per_demo(data)

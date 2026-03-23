@@ -141,6 +141,18 @@ class Config:
         cls.CACHE_REDIS_PORT = config.get("REDIS_PORT", 6379)
         cls.CACHE_REDIS_DB = config.get("REDIS_DB", 0)
         cls.DEFAULT_TIMEZONE = config.get("DEFAULT_TIMEZONE", "Europe/Helsinki")
+        cls.TESTING = config.get("TESTING", False)
+        cls.ENABLE_EMAIL_WORKER = config.get("ENABLE_EMAIL_WORKER", True)
+        cls.ENABLE_PANIC_THREAD = config.get("ENABLE_PANIC_THREAD", True)
+        cls.ENABLE_BACKGROUND_JOBS = config.get("ENABLE_BACKGROUND_JOBS", True)
+        cls.DISABLE_BACKGROUND_JOBS = config.get(
+            "DISABLE_BACKGROUND_JOBS",
+            not cls.ENABLE_BACKGROUND_JOBS,
+        )
+        cls.SOCKETIO_MESSAGE_QUEUE = config.get(
+            "SOCKETIO_MESSAGE_QUEUE",
+            "redis://localhost:6379/mosoitukset_fi",
+        )
 
     @classmethod
     def reload(cls) -> None:

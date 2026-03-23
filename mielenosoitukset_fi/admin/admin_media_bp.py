@@ -82,7 +82,7 @@ def dashboard():
     Response
         Rendered HTML page for the dashboard.
     """
-    return render_template("admin/s3/dashboard.html")
+    return render_template("admin_V2/s3/dashboard.html")
 
 
 # route for viewing all media
@@ -96,7 +96,7 @@ def view_media():
         Rendered HTML page with all media files.
     """
     media = list(mongo.media.find())
-    return render_template("admin/s3/view_media.html", media=media)
+    return render_template("admin_V2/s3/view_media.html", media=media)
 
 
 @admin_media_bp.route("/upload_multiple", methods=["POST"])

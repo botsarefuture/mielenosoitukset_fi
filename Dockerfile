@@ -9,7 +9,8 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install runtime dependencies for wkhtmltopdf
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::ForceIPv4=true update \
+    && apt-get -o Acquire::ForceIPv4=true install -y --no-install-recommends \
     git \
     libfontconfig1 \
     libfreetype6 \

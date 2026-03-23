@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Added
+* `start-dev.sh` now gracefully shuts down and reopens Firefox when importing the development certificate, removing the need for manual browser closure during setup.
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
 * Expanded production-level codebase documentation in `docs/codebase.md` covering architecture, data flows, and ops.
 * Public API documentation at `/api-docs/` with downloadable OpenAPI spec and expanded `docs/api.md` coverage.
@@ -194,6 +195,7 @@
 * Organization detail, siblings listing, and profile follow sections now reflect the actual follow state for authenticated viewers and gracefully degrade when logged out.
 
 ### Fixed
+* Docker builds now override broken container DNS with public IPv4 resolvers and force `apt-get` to use IPv4, preventing the Debian package step from hanging during image builds.
 * Skip link in base template now properly anchors to `#main-content`.
 * Checkbox value handling in form submission improved for reliable AJAX detection.
 * Organizer invitation links endpoint fixed for Azure DevOps support.

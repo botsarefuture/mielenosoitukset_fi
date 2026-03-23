@@ -1,5 +1,8 @@
+name: mielenosoitukset-fi-dev
+
 services:
   caddy:
+    container_name: mielenosoitukset_caddy
     image: caddy:2.11-alpine
     restart: unless-stopped
     ports:

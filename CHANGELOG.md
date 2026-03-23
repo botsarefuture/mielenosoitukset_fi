@@ -46,6 +46,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Fixed `pipdeptree==3.0.10` not being available on PyPI; updated to `2.33.0` (the latest available version).
 * CI workflow now passes `CreateBucketConfiguration` with `LocationConstraint` when initializing the LocalStack S3 bucket, fixing `IllegalLocationConstraintException` for non-`us-east-1` regions.
 * Admin analytics overview and profile message APIs now serialize Mongo `ObjectId` values safely, preventing 500s in templates and JSON responses.
 * Admin organization suggestion review now tolerates legacy suggestion documents that stored edited values outside the `fields` payload.

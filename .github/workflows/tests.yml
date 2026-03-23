@@ -69,7 +69,7 @@ jobs:
               pending = remaining
 
           if pending:
-              names = ", ".join(name for name, _, _ in pending)
+              names = ", ".join(name for name, _, _, _ in pending)
               raise SystemExit(f"⚠ Timed out waiting for: {names}")
           PY
 

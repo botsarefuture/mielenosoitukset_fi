@@ -6,6 +6,7 @@
 
 ### Added
 * Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
+* Route-surface manifest now includes blueprint URL prefixes so changes to `url_prefix` in blueprint registration (e.g., `/users/`, `/api/`, `/api/admin/demo/`) are detected by CI and block merge unless tests are explicitly updated.
 * Added `pytest`-based test infrastructure, dev dependencies, and API contract checks that keep `mielenosoitukset_fi/api/api.yaml` aligned with the implemented `/api` routes.
 * Added comprehensive dependency validation tests via `test_dependencies.py` that check for missing imports, conflicting dependencies, and unpinned versions, preventing unnoticed dependency hell.
 * Added `pip-audit` and `pipdeptree` to dev dependencies for auditing security vulnerabilities and analyzing dependency trees.

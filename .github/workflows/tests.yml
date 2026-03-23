@@ -48,8 +48,10 @@ jobs:
 
           deadline = time.time() + 240
           pending = list(checks)
+
           while pending and time.time() < deadline:
               remaining = []
+
               for name, check_type, target, timeout in pending:
                   try:
                       if check_type == "socket":
@@ -61,11 +63,14 @@ jobs:
                                   raise RuntimeError(f"{name} returned {response.status}")
                               print(f"✓ {name} is ready")
                   except Exception as e:
+                      print(f"… {name} not ready yet: {e}")
                       remaining.append((name, check_type, target, timeout))
-              if not remaining:
-                  break
-              time.sleep(2)
+
               pending = remaining
+              if not pending:
+                  break
+
+              time.sleep(2)
 
           if pending:
               names = ", ".join(name for name, _, _, _ in pending)

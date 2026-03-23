@@ -28,7 +28,7 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Start disposable test services
-        run: docker compose -f compose.test.yml up -d mongo redis localstack mailpit
+        run: docker compose -f compose.test.yml up -d mongo redis mailpit
 
       - name: Debug service startup
         run: docker compose -f compose.test.yml ps
@@ -43,7 +43,6 @@ jobs:
           checks = [
               ("mongo", "socket", ("127.0.0.1", 27017), 2),
               ("redis", "socket", ("127.0.0.1", 6379), 2),
-              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health", 10),
               ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info", 2),
           ]
 
@@ -77,29 +76,7 @@ jobs:
         if: failure()
         run: docker compose -f compose.test.yml logs --no-color --tail=50
 
-      - name: Initialize LocalStack bucket
-        run: |
-          python - <<'PY'
-          import boto3
-          from botocore.exceptions import ClientError
 
-          client = boto3.client(
-              "s3",
-              endpoint_url="http://127.0.0.1:4566",
-              aws_access_key_id="test",
-              aws_secret_access_key="test",
-              region_name="eu-north-1",
-          )
-          try:
-              client.create_bucket(
-                  Bucket="mielenosoitukset-test",
-                  CreateBucketConfiguration={"LocationConstraint": "eu-north-1"}
-              )
-          except ClientError as exc:
-              error_code = exc.response.get("Error", {}).get("Code")
-              if error_code not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:
-                  raise
-          PY
 
       - name: Run test suite
         env:
@@ -108,7 +85,6 @@ jobs:
           TEST_REDIS_PORT: "6379"
           TEST_MAIL_HOST: 127.0.0.1
           TEST_MAIL_PORT: "1025"
-          TEST_S3_ENDPOINT: http://127.0.0.1:4566
         run: python -m pytest
 
       - name: Dump test service logs on test failure

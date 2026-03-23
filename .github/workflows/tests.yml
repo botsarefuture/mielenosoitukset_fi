@@ -41,28 +41,28 @@ jobs:
           import urllib.request
 
           checks = [
-              ("mongo", "socket", ("127.0.0.1", 27017)),
-              ("redis", "socket", ("127.0.0.1", 6379)),
-              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health"),
-              ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info"),
+              ("mongo", "socket", ("127.0.0.1", 27017), 2),
+              ("redis", "socket", ("127.0.0.1", 6379), 2),
+              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health", 10),
+              ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info", 2),
           ]
 
           deadline = time.time() + 240
           pending = list(checks)
           while pending and time.time() < deadline:
               remaining = []
-              for name, check_type, target in pending:
+              for name, check_type, target, timeout in pending:
                   try:
                       if check_type == "socket":
-                          with socket.create_connection(target, timeout=2):
+                          with socket.create_connection(target, timeout=timeout):
                               print(f"✓ {name} is ready")
                       else:
-                          with urllib.request.urlopen(target, timeout=2) as response:
+                          with urllib.request.urlopen(target, timeout=timeout) as response:
                               if response.status >= 400:
                                   raise RuntimeError(f"{name} returned {response.status}")
                               print(f"✓ {name} is ready")
                   except Exception as e:
-                      remaining.append((name, check_type, target))
+                      remaining.append((name, check_type, target, timeout))
               if not remaining:
                   break
               time.sleep(2)

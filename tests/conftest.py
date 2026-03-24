@@ -1,6 +1,7 @@
 import io
 import importlib
 import os
+import shutil
 import sys
 import tempfile
 import uuid
@@ -723,6 +724,42 @@ def ensure_test_config(test_config_path):
     DatabaseManager.reset_instance()
 
 
+def _cleanup_app_resources(app):
+    job_leadership = app.extensions.get("job_leadership")
+    if job_leadership is not None:
+        try:
+            job_leadership.stop()
+        except Exception:
+            pass
+
+    job_manager = app.extensions.get("job_manager")
+    if job_manager is not None:
+        try:
+            job_manager.shutdown()
+        except Exception:
+            pass
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_test_resources():
+    yield
+
+    instance = DatabaseManager._instance
+    if instance is not None:
+        try:
+            instance.get_db().client.drop_database(TEST_DB_NAME)
+        except Exception:
+            pass
+        try:
+            instance.close_connection()
+        except Exception:
+            pass
+        DatabaseManager._instance = None
+
+    DatabaseManager.close_retired_test_connections()
+    shutil.rmtree(_CONFIG_DIR, ignore_errors=True)
+
+
 @pytest.fixture
 def db():
     return DatabaseManager.get_instance().get_db()
@@ -796,12 +833,20 @@ def app_factory(external_side_effects):
 
 @pytest.fixture
 def app(app_factory):
-    return app_factory()
+    app = app_factory()
+    try:
+        yield app
+    finally:
+        _cleanup_app_resources(app)
 
 
 @pytest.fixture
 def chat_app(app_factory):
-    return app_factory(ENABLE_CHAT=True)
+    app = app_factory(ENABLE_CHAT=True)
+    try:
+        yield app
+    finally:
+        _cleanup_app_resources(app)
 
 
 @pytest.fixture

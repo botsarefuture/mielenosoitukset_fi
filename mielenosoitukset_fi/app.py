@@ -67,12 +67,13 @@ def create_app(config_overrides=None) -> Flask:
         app.config.update(config_overrides)
     _configure_timezone(app)
     
-    Limiter(
-        get_remote_address,
-        app=app,
-        default_limits=["86400 per day", "3600 per hour", "10 per second"],
-        storage_uri=app.config['MONGO_URI'],
-    )
+    if app.config.get("ENFORCE_RATELIMIT", True):
+        Limiter(
+            get_remote_address,
+            app=app,
+            default_limits=["86400 per day", "3600 per hour", "10 per second"],
+            storage_uri=app.config["MONGO_URI"],
+        )
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching

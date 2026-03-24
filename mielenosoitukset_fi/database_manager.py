@@ -35,6 +35,7 @@ class DatabaseManager:
 
     _instance = None  # Singleton instance
     _lock = RLock()  # Ensure thread-safe initialization, including nested singleton bootstrap
+    _retired_test_instances = []
 
     def __init__(self):
         """
@@ -188,12 +189,26 @@ class DatabaseManager:
             try:
                 if isinstance(instance, cls) and getattr(Config, "TESTING", False):
                     # Test suites keep module-level DB handles around; avoid invalidating
-                    # them between tests by leaving the underlying client open.
-                    pass
+                    # them between tests by deferring connection teardown until the suite
+                    # has finished.
+                    cls._retired_test_instances.append(instance)
                 else:
                     instance.close_connection()
             except Exception:
                 logger.exception("Failed to close MongoDB connection during reset.")
+
+    @classmethod
+    def close_retired_test_connections(cls):
+        """Close Mongo clients deferred during test-only singleton resets."""
+        with cls._lock:
+            retired_instances = cls._retired_test_instances
+            cls._retired_test_instances = []
+
+        for instance in retired_instances:
+            try:
+                instance.close_connection()
+            except Exception:
+                logger.exception("Failed to close deferred test MongoDB connection.")
 
     @staticmethod
     def legacy_get_db():

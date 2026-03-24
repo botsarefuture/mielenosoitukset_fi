@@ -45,6 +45,7 @@ from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
+from config import Config
 
 from mielenosoitukset_fi.utils.cache import (
     cache,
@@ -109,8 +110,8 @@ def refresh_panic(interval=15):  # 180 seconds = 3 minutes
         PANIC_MODE = _load_panic()
         time.sleep(interval)
 
-# Start background thread
-threading.Thread(target=refresh_panic, daemon=True).start()
+if Config.ENABLE_PANIC_THREAD:
+    threading.Thread(target=refresh_panic, daemon=True).start()
 
 
 def _new_submission_token():
@@ -2879,6 +2880,9 @@ def init_routes(app):
         
         noindex_nofollow = False
 
+        if year is None or month is None:
+            year, month = today.year, today.month
+
         
         if month == 0 and year == 0:
             month = today.month
@@ -2887,11 +2891,6 @@ def init_routes(app):
         
         if year < 2000 or year > 2100:
             noindex_nofollow = True
-            
-            
-            
-        if year is None or month is None:
-            year, month = today.year, today.month
 
         # Haetaan kaikki demonstraatiot
         demonstrations = list(demonstrations_collection.find(DEMO_FILTER))

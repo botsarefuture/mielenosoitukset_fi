@@ -85,6 +85,20 @@ def _log_org_event(event: str, **details):
         logger.exception("Failed to log admin org event: %s", event)
 
 
+def _normalized_suggestion_fields(suggestion):
+    fields = suggestion.get("fields")
+    if isinstance(fields, dict):
+        return fields
+
+    # Legacy suggestion documents stored edited values at the top level.
+    legacy_fields = {}
+    for key in ["name", "description", "website", "email", "social_media_links"]:
+        value = suggestion.get(key)
+        if value not in (None, "", []):
+            legacy_fields[key] = value
+    return legacy_fields
+
+
 @admin_org_bp.before_request
 def log_request_info():
     """Log request information before handling it."""
@@ -807,6 +821,7 @@ def review_suggestion(org_id, suggestion_id):
 
     # Reload suggestion so we render fresh data
     suggestion = mongo.org_edit_suggestions.find_one({"_id": ObjectId(suggestion_id)})
+    suggestion["fields"] = _normalized_suggestion_fields(suggestion)
 
     _log_org_event(
         "organization_suggestion_view",

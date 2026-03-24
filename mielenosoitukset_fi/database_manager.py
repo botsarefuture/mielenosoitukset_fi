@@ -21,7 +21,7 @@ Examples
 
 from mielenosoitukset_fi.utils.logger import logger
 from pymongo import MongoClient, errors
-from threading import Lock
+from threading import RLock
 from config import Config  # Import the Config class
 
 
@@ -34,7 +34,8 @@ class DatabaseManager:
     """
 
     _instance = None  # Singleton instance
-    _lock = Lock()  # Ensure thread-safe initialization
+    _lock = RLock()  # Ensure thread-safe initialization, including nested singleton bootstrap
+    _retired_test_instances = []
 
     def __init__(self):
         """
@@ -171,6 +172,43 @@ class DatabaseManager:
                 if cls._instance is None:
                     cls._instance = DatabaseManager()
         return cls._instance
+
+    @classmethod
+    def reset_instance(cls):
+        """
+        Reset the singleton instance.
+
+        Intended for tests that need to swap configuration or database state
+        between runs.
+        """
+        with cls._lock:
+            instance = cls._instance
+            cls._instance = None
+
+        if instance is not None:
+            try:
+                if isinstance(instance, cls) and getattr(Config, "TESTING", False):
+                    # Test suites keep module-level DB handles around; avoid invalidating
+                    # them between tests by deferring connection teardown until the suite
+                    # has finished.
+                    cls._retired_test_instances.append(instance)
+                else:
+                    instance.close_connection()
+            except Exception:
+                logger.exception("Failed to close MongoDB connection during reset.")
+
+    @classmethod
+    def close_retired_test_connections(cls):
+        """Close Mongo clients deferred during test-only singleton resets."""
+        with cls._lock:
+            retired_instances = cls._retired_test_instances
+            cls._retired_test_instances = []
+
+        for instance in retired_instances:
+            try:
+                instance.close_connection()
+            except Exception:
+                logger.exception("Failed to close deferred test MongoDB connection.")
 
     @staticmethod
     def legacy_get_db():

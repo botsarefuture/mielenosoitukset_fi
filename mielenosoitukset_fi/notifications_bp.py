@@ -23,7 +23,7 @@ def list_notifications():
     return jsonify(data)
 
 
-@notif_bp.route("/mark-read", methods=["POST"])
+@notif_bp.route("/mark-read", methods=["POST"], endpoint="mark_all_read")
 @login_required
 def mark_read():
     """

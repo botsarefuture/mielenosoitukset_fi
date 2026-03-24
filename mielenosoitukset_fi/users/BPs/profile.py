@@ -514,7 +514,7 @@ def api_get_messages():
         msg["created_at"] = msg["created_at"].isoformat()
         msg["read"] = msg.get("read", False)
 
-    return msgs, 200
+    return stringify_object_ids(msgs), 200
 
 
 @profile_bp.route("/api/messages/send/", methods=["POST"])

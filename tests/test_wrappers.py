@@ -33,11 +33,28 @@ class FakeUser:
 
 
 class HasDemoPermissionTests(unittest.TestCase):
+    def test_normalize_object_id_accepts_object_id_dict(self):
+        object_id = ObjectId()
+        self.assertEqual(
+            wrappers._normalize_object_id({"$oid": str(object_id)}),
+            object_id,
+        )
+
+    def test_normalize_object_id_returns_none_for_unsupported_value(self):
+        self.assertIsNone(wrappers._normalize_object_id(123))
+
     def test_denies_for_unauthenticated_user(self):
         user = FakeUser(is_authenticated=False)
         self.assertFalse(
             wrappers.has_demo_permission(user, ObjectId(), "EDIT_DEMO"),
             "Unauthenticated users should not be authorized.",
+        )
+
+    def test_allows_global_admin_without_db_lookup(self):
+        user = FakeUser(global_admin=True)
+        self.assertTrue(
+            wrappers.has_demo_permission(user, ObjectId(), "EDIT_DEMO"),
+            "Global admins should bypass demonstration-specific checks.",
         )
 
     def test_denies_for_invalid_demo_id(self):
@@ -71,6 +88,21 @@ class HasDemoPermissionTests(unittest.TestCase):
                 "Editors should be authorized for demo actions.",
             )
 
+    def test_allows_user_listed_as_editor_with_oid_dict(self):
+        user = FakeUser()
+        demo_id = ObjectId()
+        demo_doc = {
+            demo_id: {"_id": demo_id, "editors": [{"$oid": str(user._id)}]}
+        }
+        with patch(
+            "mielenosoitukset_fi.utils.wrappers._get_mongo",
+            return_value=FakeMongo(demo_doc),
+        ):
+            self.assertTrue(
+                wrappers.has_demo_permission(user, demo_id, "EDIT_DEMO"),
+                "Editor lists stored as $oid dictionaries should still match.",
+            )
+
     def test_allows_permission_via_organizer_membership(self):
         org_id = ObjectId()
         user = FakeUser(permissions={("EDIT_DEMO", str(org_id)): True})
@@ -88,6 +120,25 @@ class HasDemoPermissionTests(unittest.TestCase):
             self.assertTrue(
                 wrappers.has_demo_permission(user, demo_id, "EDIT_DEMO"),
                 "Users with organizer permissions should be authorized.",
+            )
+
+    def test_allows_permission_via_organizer_oid_dict(self):
+        org_id = ObjectId()
+        user = FakeUser(permissions={("EDIT_DEMO", str(org_id)): True})
+        demo_id = ObjectId()
+        demo_doc = {
+            demo_id: {
+                "_id": demo_id,
+                "organizers": [{"organization_id": {"$oid": str(org_id)}}],
+            }
+        }
+        with patch(
+            "mielenosoitukset_fi.utils.wrappers._get_mongo",
+            return_value=FakeMongo(demo_doc),
+        ):
+            self.assertTrue(
+                wrappers.has_demo_permission(user, demo_id, "EDIT_DEMO"),
+                "Organizer IDs stored as $oid dictionaries should be supported.",
             )
 
     def test_denies_without_matching_permissions(self):

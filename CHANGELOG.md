@@ -5,6 +5,16 @@
 ## UNRELEASED
 
 ### Added
+* Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
+* Route-surface manifest now includes blueprint URL prefixes so changes to `url_prefix` in blueprint registration (e.g., `/users/`, `/api/`, `/api/admin/demo/`) are detected by CI and block merge unless tests are explicitly updated.
+* Added `pytest`-based test infrastructure, dev dependencies, and API contract checks that keep `mielenosoitukset_fi/api/api.yaml` aligned with the implemented `/api` routes.
+* Added comprehensive dependency validation tests via `test_dependencies.py` that check for missing imports, conflicting dependencies, and unpinned versions, preventing unnoticed dependency hell.
+* Added `pip-audit` and `pipdeptree` to dev dependencies for auditing security vulnerabilities and analyzing dependency trees.
+* Added a `unittest`-based regression suite for core helpers, flashing, error handlers, and access-control decorators, plus a GitHub Actions workflow that runs the suite automatically on pull requests and pushes to `main`.
+* CI/CD reliability improvements: added healthcheck to LocalStack in `compose.test.yml`, increased test job timeout to 30 minutes, increased service startup wait from 120s to 240s, and added progress/debug output for easier troubleshooting.
+* Added `TESTING_WORKFLOWS_LOCALLY.md` guide with instructions for running GitHub Actions workflows locally via `act` or manual testing.
+* Added broad seeded smoke coverage for registered Flask routes, Socket.IO chat events, and background job execution so CI now catches breakage across more of the application surface.
+* Added headless Chromium end-to-end smoke coverage for public browsing plus authenticated user, developer, and admin flows, and wired GitHub Actions to install Playwright before running the suite.
 * `start-dev.sh` now gracefully shuts down and reopens Firefox when importing the development certificate, removing the need for manual browser closure during setup.
 * `AGENTS.md` guide describing expectations for external contributors (always update changelog, validate work, etc.) so every agent follows the same workflow.
 * Expanded production-level codebase documentation in `docs/codebase.md` covering architecture, data flows, and ops.
@@ -37,6 +47,14 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Test teardown now explicitly stops background job helpers, closes deferred MongoDB clients, avoids initializing the rate limiter when disabled, and marks email retry timers as daemon threads so CI no longer risks hanging after `pytest` finishes.
+* Re-enabled S3 integration tests in CI by including LocalStack in test services with corrected health check logic that properly updates service readiness state, eliminating the previous race condition.
+* Health check script for test services now uses per-service timeouts, giving LocalStack 10 seconds (vs. 2) to respond to the health endpoint, preventing premature CI failures on slower runners.
+* Fixed `pipdeptree==3.0.10` not being available on PyPI; updated to `2.33.0` (the latest available version).
+* CI workflow now passes `CreateBucketConfiguration` with `LocationConstraint` when initializing the LocalStack S3 bucket, fixing `IllegalLocationConstraintException` for non-`us-east-1` regions.
+* Admin analytics overview and profile message APIs now serialize Mongo `ObjectId` values safely, preventing 500s in templates and JSON responses.
+* Admin organization suggestion review now tolerates legacy suggestion documents that stored edited values outside the `fields` payload.
+* Calendar, admin analytics, organization suggestion review, recurring-child listing, and admin media pages no longer fail under the expanded integration smoke suite.
 * Admin action link generation in background jobs now avoids request-only locale lookups, preventing “working outside of request context” errors during notification processing.
 * Recurring demo processor now uses the configured MongoDB database name instead of forcing `mielenosoitukset`.
 * Analytics rollup now reads MongoDB connection settings from the app config, avoiding hardcoded localhost defaults that broke rollups in dev/compose setups.

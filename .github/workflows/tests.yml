@@ -9,7 +9,7 @@ on:
 jobs:
   python-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
@@ -28,7 +28,10 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Start disposable test services
-        run: docker compose -f compose.test.yml up -d mongo redis localstack mailpit
+        run: docker compose -f compose.test.yml up -d mongo redis mailpit localstack
+
+      - name: Debug service startup
+        run: docker compose -f compose.test.yml ps
 
       - name: Wait for test services
         run: |
@@ -38,57 +41,48 @@ jobs:
           import urllib.request
 
           checks = [
-              ("mongo", "socket", ("127.0.0.1", 27017)),
-              ("redis", "socket", ("127.0.0.1", 6379)),
-              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health"),
-              ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info"),
+              ("mongo", "socket", ("127.0.0.1", 27017), 2),
+              ("redis", "socket", ("127.0.0.1", 6379), 2),
+              ("mailpit", "http", "http://127.0.0.1:8025/api/v1/info", 2),
+              ("localstack", "http", "http://127.0.0.1:4566/_localstack/health", 5),
           ]
 
           deadline = time.time() + 240
           pending = list(checks)
+
           while pending and time.time() < deadline:
               remaining = []
-              for name, check_type, target in pending:
+
+              for name, check_type, target, timeout in pending:
                   try:
                       if check_type == "socket":
-                          with socket.create_connection(target, timeout=2):
-                              pass
+                          with socket.create_connection(target, timeout=timeout):
+                              print(f"✓ {name} is ready")
                       else:
-                          with urllib.request.urlopen(target, timeout=2) as response:
+                          with urllib.request.urlopen(target, timeout=timeout) as response:
                               if response.status >= 400:
                                   raise RuntimeError(f"{name} returned {response.status}")
-                  except Exception:
-                      remaining.append((name, check_type, target))
-              if not remaining:
-                  break
-              time.sleep(2)
+                              print(f"✓ {name} is ready")
+                  except Exception as e:
+                      print(f"… {name} not ready yet: {e}")
+                      remaining.append((name, check_type, target, timeout))
+
               pending = remaining
+              if not pending:
+                  break
+
+              time.sleep(2)
 
           if pending:
-              names = ", ".join(name for name, _, _ in pending)
-              raise SystemExit(f"Timed out waiting for: {names}")
+              names = ", ".join(name for name, _, _, _ in pending)
+              raise SystemExit(f"⚠ Timed out waiting for: {names}")
           PY
 
-      - name: Initialize LocalStack bucket
-        run: |
-          python - <<'PY'
-          import boto3
-          from botocore.exceptions import ClientError
+      - name: Show service logs if health checks failed
+        if: failure()
+        run: docker compose -f compose.test.yml logs --no-color --tail=50
 
-          client = boto3.client(
-              "s3",
-              endpoint_url="http://127.0.0.1:4566",
-              aws_access_key_id="test",
-              aws_secret_access_key="test",
-              region_name="eu-north-1",
-          )
-          try:
-              client.create_bucket(Bucket="mielenosoitukset-test")
-          except ClientError as exc:
-              error_code = exc.response.get("Error", {}).get("Code")
-              if error_code not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:
-                  raise
-          PY
+
 
       - name: Run test suite
         env:
@@ -100,7 +94,7 @@ jobs:
           TEST_S3_ENDPOINT: http://127.0.0.1:4566
         run: python -m pytest
 
-      - name: Dump service logs on failure
+      - name: Dump test service logs on test failure
         if: failure()
         run: docker compose -f compose.test.yml logs --no-color
 

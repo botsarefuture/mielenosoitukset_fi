@@ -17,7 +17,7 @@ class EmailSender:
     """
 
     def __init__(self, config=Config):
-        self._config = Config()
+        self._config = config() if isinstance(config, type) else config
         self._db_manager = DatabaseManager().get_instance()
         self._db = self._db_manager.get_db()
         self._queue_collection = self._db["email_queue"]
@@ -31,12 +31,22 @@ class EmailSender:
         # unique instance id for scoping jobs
         self._instance_id = str(uuid.uuid4())
 
-        self.start_worker()
+        if getattr(self._config, "ENABLE_EMAIL_WORKER", True):
+            self.start_worker()
 
     def start_worker(self):
-        worker_thread = threading.Thread(target=self.process_queue)
-        worker_thread.daemon = True
+        worker_thread = threading.Thread(
+            target=self.process_queue,
+            name=f"email-worker-{self._instance_id[:8]}",
+            daemon=True,
+        )
         worker_thread.start()
+
+    @staticmethod
+    def _start_retry_timer(delay_seconds, func, args):
+        timer = threading.Timer(delay_seconds, func, args)
+        timer.daemon = True
+        timer.start()
 
     def process_queue(self):
         """Only pull jobs that belong to this instance"""
@@ -151,7 +161,7 @@ class EmailSender:
                 self._logger.error(f"Failed to queue email: {str(e)}")
                 if attempt < retry_attempts - 1:
                     self._logger.info("Retrying in 1 hour...")
-                    threading.Timer(3600, attempt_insert, [attempt + 1]).start()
+                    self._start_retry_timer(3600, attempt_insert, [attempt + 1])
                 else:
                     self._logger.error("Max retry attempts reached. Email not queued.")
 
@@ -183,7 +193,7 @@ class EmailSender:
                 self._logger.error(f"Failed to send email immediately: {str(e)}")
                 if attempt < retry_attempts - 1:
                     self._logger.info("Retrying in 1 hour...")
-                    threading.Timer(3600, attempt_send, [attempt + 1]).start()
+                    self._start_retry_timer(3600, attempt_send, [attempt + 1])
                 else:
                     self._logger.error("Max retry attempts reached. Email not sent.")
 

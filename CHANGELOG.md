@@ -48,6 +48,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Aligned `botocore` pin with `boto3==1.42.74` in `requirements.txt` to keep pip dependency resolution valid.
 * Test teardown now explicitly stops background job helpers, closes deferred MongoDB clients, avoids initializing the rate limiter when disabled, and marks email retry timers as daemon threads so CI no longer risks hanging after `pytest` finishes.
 * Re-enabled S3 integration tests in CI by including LocalStack in test services with corrected health check logic that properly updates service readiness state, eliminating the previous race condition.
 * Health check script for test services now uses per-service timeouts, giving LocalStack 10 seconds (vs. 2) to respond to the health endpoint, preventing premature CI failures on slower runners.

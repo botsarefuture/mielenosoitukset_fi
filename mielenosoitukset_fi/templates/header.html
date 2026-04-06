@@ -461,6 +461,14 @@ time (datetime) | iso string, read (bool)
     font-size: 1.25rem;
   }
 
+  @media (max-width: 1200px) {
+    .top-header .container {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+    }
+  }
+
   /* Mobile Styles */
   @media (max-width: 768px) {
     .top-header .container {

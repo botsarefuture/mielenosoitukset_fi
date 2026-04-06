@@ -48,7 +48,7 @@ require_cmd() {
 }
 
 file_sha256() {
-  sha256sum "$1" | awk '{print $1}'
+  sudo sha256sum "$1" | awk '{print $1}'
 }
 
 wait_for_command_success() {

@@ -1,97 +1,498 @@
 {% macro render_report_error_modal(demo) %}
 <style>
-  /* Light Mode (Default) */
   :root {
     --modal-bg: #ffffff;
     --modal-text: #212529;
     --modal-border: #dee2e6;
     --card-bg: #ffffff;
-    --card-shadow: rgba(0, 0, 0, 0.075);
+    --card-shadow: rgba(15, 23, 42, 0.12);
     --muted-text: #6c757d;
-    --info-bg: #cff4fc;
-    --info-border: #9eeaf9;
-    --info-text: #055160;
+    --info-bg: #eef6ff;
+    --info-border: rgba(13, 110, 253, 0.16);
+    --info-text: #0b5394;
     --input-bg: #ffffff;
     --input-border: #ced4da;
     --input-text: #212529;
+    --report-primary: #0d6efd;
+    --report-primary-soft: rgba(13, 110, 253, 0.08);
+    --report-secondary-soft: rgba(108, 117, 125, 0.08);
+    --report-danger: #dc3545;
+    --report-surface: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+    --report-ring: rgba(13, 110, 253, 0.16);
+    --report-success-bg: #e8fff3;
+    --report-success-text: #0f7a44;
+    --report-error-bg: #fff1f2;
+    --report-error-text: #b42318;
   }
 
-  /* Dark Mode */
   html.dark {
-    --modal-bg: #212529;
+    --modal-bg: #111827;
     --modal-text: #e9ecef;
-    --modal-border: #495057;
-    --card-bg: #2c3034;
+    --modal-border: #374151;
+    --card-bg: #172033;
     --card-shadow: rgba(0, 0, 0, 0.5);
     --muted-text: #adb5bd;
-    --info-bg: #0a3940;
-    --info-border: #0c4a54;
-    --info-text: #7dd3fc;
-    --input-bg: #2c3034;
-    --input-border: #495057;
+    --info-bg: rgba(37, 99, 235, 0.14);
+    --info-border: rgba(96, 165, 250, 0.22);
+    --info-text: #bfdbfe;
+    --input-bg: #1f2937;
+    --input-border: #4b5563;
     --input-text: #e9ecef;
+    --report-primary: #60a5fa;
+    --report-primary-soft: rgba(96, 165, 250, 0.14);
+    --report-secondary-soft: rgba(148, 163, 184, 0.12);
+    --report-danger: #f87171;
+    --report-surface: linear-gradient(180deg, rgba(23,32,51,0.98), rgba(17,24,39,0.98));
+    --report-ring: rgba(96, 165, 250, 0.22);
+    --report-success-bg: rgba(16, 185, 129, 0.14);
+    --report-success-text: #a7f3d0;
+    --report-error-bg: rgba(248, 113, 113, 0.14);
+    --report-error-text: #fecaca;
   }
 
-  .modal-content {
+  #report-choice-modal .modal-dialog,
+  #report-modal .modal-dialog {
+    max-width: 720px;
+  }
+
+  #report-choice-modal .modal-content,
+  #report-modal .modal-content {
     background-color: var(--modal-bg);
     color: var(--modal-text);
     border-color: var(--modal-border);
-    
+    border-radius: 1.35rem;
+    overflow: hidden;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
   }
 
-  .card {
-    background-color: var(--card-bg);
+  #report-choice-modal .modal-header,
+  #report-modal .modal-header {
+    border-bottom: 1px solid var(--modal-border);
+    padding: 1.4rem 1.5rem 1rem;
+    background:
+      radial-gradient(circle at top left, rgba(13, 110, 253, 0.12), transparent 48%),
+      var(--report-surface);
+  }
+
+  #report-choice-modal .modal-header .modal-title,
+  #report-modal .modal-header .modal-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  #report-choice-modal .modal-body,
+  #report-modal .modal-body {
+    padding: 1.5rem;
+  }
+
+  #report-choice-modal .modal-footer,
+  #report-modal .modal-footer {
+    border-top: 1px solid var(--modal-border);
+    background: linear-gradient(180deg, transparent, rgba(148, 163, 184, 0.05));
+    padding: 1rem 1.5rem 1.35rem;
+  }
+
+  #report-choice-modal .btn,
+  #report-modal .btn {
+    border-radius: 999px;
+    font-weight: 700;
+    padding: 0.85rem 1.15rem;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+
+  #report-choice-modal .btn:hover,
+  #report-choice-modal .btn:focus,
+  #report-modal .btn:hover,
+  #report-modal .btn:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+  }
+
+  #report-choice-modal .btn-primary,
+  #report-modal .btn-primary {
+    background: linear-gradient(135deg, var(--report-primary), #2563eb);
+    border-color: transparent;
+  }
+
+  #report-choice-modal .btn-outline-secondary,
+  #report-modal .btn-outline-secondary,
+  #report-modal .btn-secondary {
+    background: transparent;
+    border-color: var(--modal-border);
     color: var(--modal-text);
   }
 
-  .card.shadow-sm {
-    box-shadow: 0 0.125rem 0.25rem var(--card-shadow) !important;
+  #report-choice-modal .btn-outline-secondary:hover,
+  #report-choice-modal .btn-outline-secondary:focus,
+  #report-modal .btn-outline-secondary:hover,
+  #report-modal .btn-outline-secondary:focus,
+  #report-modal .btn-secondary:hover,
+  #report-modal .btn-secondary:focus {
+    background: var(--report-secondary-soft);
+    border-color: var(--modal-border);
+    color: var(--modal-text);
   }
 
-  .text-muted {
+  #report-modal .btn-secondary,
+  #report-modal .btn-danger {
+    min-width: 8.5rem;
+  }
+
+  #report-modal .btn-secondary,
+  #report-modal .btn-danger {
+    min-width: 8.5rem;
+  }
+
+  #report-modal .btn-danger {
+    background: linear-gradient(135deg, var(--report-danger), #ef4444);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  #report-modal .btn-danger:hover,
+  #report-modal .btn-danger:focus {
+    color: #fff;
+  }
+
+  #report-modal .btn-danger:disabled {
+    opacity: 0.7;
+    transform: none;
+    box-shadow: none;
+    cursor: wait;
+  }
+
+  #report-choice-modal .card,
+  #report-modal .card {
+    background-color: var(--card-bg);
+    color: var(--modal-text);
+    border-radius: 1.2rem;
+  }
+
+  #report-choice-modal .card.shadow-sm,
+  #report-modal .card.shadow-sm {
+    box-shadow: 0 12px 28px var(--card-shadow) !important;
+  }
+
+  #report-choice-modal .text-muted,
+  #report-modal .text-muted {
     color: var(--muted-text) !important;
   }
 
-  .alert-info {
+  #report-choice-modal .alert-info,
+  #report-modal .alert-info {
     background-color: var(--info-bg);
     border-color: var(--info-border);
     color: var(--info-text);
+    border-radius: 1rem;
   }
 
-  .border-light-subtle {
+  #report-choice-modal .border-light-subtle,
+  #report-modal .border-light-subtle {
     border-color: var(--modal-border) !important;
   }
 
-  .form-control,
-  .form-select {
+  #report-choice-modal .form-control,
+  #report-choice-modal .form-select,
+  #report-modal .form-control,
+  #report-modal .form-select {
     background-color: var(--input-bg);
     border-color: var(--input-border);
     color: var(--input-text);
+    border-radius: 0.95rem;
+    min-height: 3rem;
+    padding: 0.85rem 1rem;
+    box-shadow: none;
   }
 
-  html.dark .form-control:focus,
-  html.dark .form-select:focus {
+  #report-modal textarea.form-control {
+    min-height: 9.5rem;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  #report-choice-modal .form-control:focus,
+  #report-choice-modal .form-select:focus,
+  #report-modal .form-control:focus,
+  #report-modal .form-select:focus {
     background-color: var(--input-bg);
-    border-color: #6ea8fe;
+    border-color: var(--report-primary);
     color: var(--input-text);
+    box-shadow: 0 0 0 0.22rem var(--report-ring);
   }
 
-  html.dark .form-check-input {
+  #report-choice-modal .form-check-input,
+  #report-modal .form-check-input {
     background-color: var(--input-bg);
     border-color: var(--input-border);
   }
 
-  html.dark .form-check-input:checked {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+  #report-choice-modal .form-check-input:checked,
+  #report-modal .form-check-input:checked {
+    background-color: var(--report-primary);
+    border-color: var(--report-primary);
   }
 
-  html.dark .btn-close {
+  html.dark #report-choice-modal .btn-close,
+  html.dark #report-modal .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%);
   }
 
-  html.dark .modal-header.bg-danger {
-    background-color: #dc3545 !important;
+  .report-flow-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--report-primary);
+    background: var(--report-primary-soft);
+    border-radius: 999px;
+    padding: 0.42rem 0.8rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .report-flow-lead {
+    font-size: 0.98rem;
+    line-height: 1.65;
+    margin-bottom: 1.25rem;
+  }
+
+  .report-option-card {
+    border: 1px solid var(--modal-border);
+    border-radius: 1.2rem;
+    padding: 1.25rem;
+    background: var(--card-bg);
+    box-shadow: 0 12px 28px var(--card-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .report-option-card + .report-option-card {
+    margin-top: 1rem;
+  }
+
+  .report-option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px var(--card-shadow);
+  }
+
+  .report-option-card-primary {
+    border-color: var(--report-ring);
+    background:
+      linear-gradient(180deg, var(--report-primary-soft), transparent 40%),
+      var(--card-bg);
+  }
+
+  .report-option-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .report-option-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    background: var(--report-primary-soft);
+    color: var(--report-primary);
+    flex-shrink: 0;
+  }
+
+  .report-option-card-secondary .report-option-icon {
+    background: var(--report-secondary-soft);
+    color: var(--muted-text);
+  }
+
+  .report-option-card h3,
+  .report-option-card h4 {
+    margin: 0 0 0.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .report-option-card ul {
+    margin: 0.9rem 0 1.1rem;
+    padding-left: 1.2rem;
+    color: var(--muted-text);
+  }
+
+  .report-option-card li + li {
+    margin-top: 0.35rem;
+  }
+
+  .report-selection-preview {
+    border: 1px solid var(--info-border);
+    background: var(--info-bg);
+    border-radius: 1rem;
+    padding: 0.95rem 1rem;
+    margin-top: 1rem;
+  }
+
+  .report-selection-preview-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+
+  .report-selection-preview-text {
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .report-hint {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .report-form-intro {
+    display: grid;
+    gap: 0.8rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .report-form-note {
+    border: 1px solid var(--modal-border);
+    border-radius: 1rem;
+    background: linear-gradient(180deg, rgba(148, 163, 184, 0.06), transparent);
+    padding: 0.9rem 1rem;
+    color: var(--muted-text);
+  }
+
+  .report-form-note strong {
+    color: var(--modal-text);
+  }
+
+  .report-cancel-check {
+    border: 1px solid var(--modal-border);
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    background: linear-gradient(180deg, rgba(220, 53, 69, 0.04), transparent);
+  }
+
+  .processing-indicator {
+    display: flex;
+    align-items: center;
+    border-radius: 1rem;
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    background: rgba(245, 158, 11, 0.09);
+    padding: 0.8rem 1rem;
+  }
+
+  .processing-indicator[hidden],
+  .report-selection-preview[hidden] {
+    display: none !important;
+  }
+
+  .processing-indicator[hidden],
+  .report-selection-preview[hidden] {
+    display: none !important;
+  }
+
+  .report-result-alert {
+    border-radius: 1rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .report-result-alert-success {
+    background: var(--report-success-bg);
+    color: var(--report-success-text);
+    border: 1px solid rgba(16, 185, 129, 0.18);
+  }
+
+  .report-result-alert-error {
+    background: var(--report-error-bg);
+    color: var(--report-error-text);
+    border: 1px solid rgba(220, 53, 69, 0.18);
+  }
+
+  @media (max-width: 576px) {
+    #report-choice-modal .modal-dialog,
+    #report-modal .modal-dialog {
+      margin: 0.65rem;
+      max-width: calc(100vw - 1.3rem);
+    }
+
+    #report-choice-modal .modal-content,
+    #report-modal .modal-content {
+      border-radius: 1.05rem;
+    }
+
+    #report-choice-modal .modal-body,
+    #report-modal .modal-body,
+    #report-choice-modal .modal-header,
+    #report-modal .modal-header,
+    #report-choice-modal .modal-footer,
+    #report-modal .modal-footer {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .report-option-head {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    #report-choice-modal .modal-header .modal-title,
+    #report-modal .modal-header .modal-title {
+      font-size: 1.15rem;
+    }
+
+    .report-option-card {
+      padding: 1rem;
+    }
+
+    .report-flow-kicker {
+      font-size: 0.7rem;
+      padding: 0.36rem 0.7rem;
+    }
+
+    .report-flow-lead,
+    .report-hint,
+    .report-form-note,
+    .report-selection-preview-text {
+      font-size: 0.94rem;
+    }
+
+    #report-modal textarea.form-control {
+      min-height: 8rem;
+    }
+
+    #report-choice-modal .btn,
+    #report-modal .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    #report-modal .modal-footer {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    #report-modal .btn-secondary,
+    #report-modal .btn-danger {
+      min-width: 0;
+    }
+
+    .report-result-alert {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 </style>
 
@@ -101,60 +502,80 @@
     <div class="modal-content">
       <div class="modal-header">
         <div>
-          <p class="text-uppercase text-muted small mb-1">{{ _('Korjausehdotukset') }}</p>
+          <div class="report-flow-kicker">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            {{ _('Korjausehdotukset') }}
+          </div>
           <h5 class="modal-title" id="reportChoiceModalLabel">{{ _('Mitä haluat tehdä?') }}</h5>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
-        <p class="text-muted small mb-3">{{ _('Valitse sinulle sopivin tapa korjata tai raportoida virhe. Suosittelemme muokkauslomaketta, jos tiedät tarkalleen mitä kenttää pitäisi päivittää.') }}</p>
+        <p class="text-muted report-flow-lead">{{ _('Valitse sinulle sopivin tapa korjata tai raportoida virhe. Suosittelemme muokkauslomaketta, jos tiedät tarkalleen mitä kenttää pitäisi päivittää.') }}</p>
 
-        <div class="card border-0 shadow-sm mb-3">
-          <div class="card-body">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <span class="badge bg-primary-subtle text-primary-emphasis text-uppercase fw-semibold">{{ _('Suositeltu') }}</span>
-              <span class="text-muted small">{{ _('Nopein tapa korjata tiedot') }}</span>
+        <div class="report-option-card report-option-card-primary">
+          <div class="report-option-head">
+            <div class="d-flex align-items-start gap-3">
+              <span class="report-option-icon">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </span>
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                  <span class="badge bg-primary-subtle text-primary-emphasis text-uppercase fw-semibold">{{ _('Suositeltu') }}</span>
+                  <span class="text-muted small">{{ _('Nopein tapa korjata tiedot') }}</span>
+                </div>
+                <h3 class="h5">{{ _('Korjaa tiedot muokkauslomakkeella') }}</h3>
+                <p class="text-muted mb-0">{{ _('Voit täyttää uudet arvot suoraan niille kentille, joissa huomasit virheen. Ylläpito saa ehdotukset rakenteisina ja ne voidaan hyväksyä muutamalla klikkauksella.') }}</p>
+              </div>
             </div>
-            <h3 class="h5 mb-2">{{ _('Korjaa tiedot muokkauslomakkeella') }}</h3>
-            <p class="text-muted mb-3">{{ _('Voit täyttää uudet arvot suoraan niille kentille, joissa huomasit virheen. Ylläpito saa ehdotukset rakenteisina ja ne voidaan hyväksyä muutamalla klikkauksella.') }}</p>
-            <ul class="small text-muted mb-3 ps-3">
-              <li>{{ _('Mahdollisuus korjata useita kenttiä samalla kertaa') }}</li>
-              <li>{{ _('Ehdotus tallentuu raporttiin ja nopeuttaa julkaisua') }}</li>
-              <li>{{ _('Voit jättää lisäperustelut ylläpidolle') }}</li>
-            </ul>
-            <button type="button"
-                    class="btn btn-primary w-100"
-                    id="choose-suggest-edit"
-                    data-report-action="suggest"
-                    data-suggest-url="{{ url_for('suggest_change', demo_id=demo['_id']) }}">
-              <i class="fa-solid fa-pen-to-square"></i>
-              {{ _('Siirry ehdottamaan muokkauksia') }}
-            </button>
           </div>
+          <ul class="small">
+            <li>{{ _('Mahdollisuus korjata useita kenttiä samalla kertaa') }}</li>
+            <li>{{ _('Ehdotus tallentuu raporttiin ja nopeuttaa julkaisua') }}</li>
+            <li>{{ _('Voit jättää lisäperustelut ylläpidolle') }}</li>
+          </ul>
+          <button type="button"
+                  class="btn btn-primary w-100"
+                  id="choose-suggest-edit"
+                  data-report-action="suggest"
+                  data-suggest-url="{{ url_for('suggest_change', demo_id=demo['_id']) }}">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            {{ _('Siirry ehdottamaan muokkauksia') }}
+          </button>
         </div>
 
-        <div class="card border border-light-subtle mb-3">
-          <div class="card-body">
-            <h3 class="h6 text-uppercase text-muted mb-1">{{ _('Vaihtoehto') }}</h3>
-            <h4 class="h5 mb-2">{{ _('Ilmoita ongelmasta ylläpidolle') }}</h4>
-            <p class="text-muted small mb-3">{{ _('Jos kyse on teknisestä virheestä, peruutuksesta tai muusta poikkeamasta, voit lähettää viestin ylläpidolle tällä lomakkeella.') }}</p>
-            <button type="button"
-                    class="btn btn-outline-secondary w-100"
-                    id="choose-report-error"
-                    data-report-action="report">
-              <i class="fa-solid fa-flag"></i>
-              {{ _('Haluan vain ilmoittaa virheen') }}
-            </button>
+        <div class="report-option-card report-option-card-secondary">
+          <div class="report-option-head">
+            <div class="d-flex align-items-start gap-3">
+              <span class="report-option-icon">
+                <i class="fa-solid fa-flag"></i>
+              </span>
+              <div>
+                <h3 class="h6 text-uppercase text-muted mb-1">{{ _('Vaihtoehto') }}</h3>
+                <h4 class="h5">{{ _('Ilmoita ongelmasta ylläpidolle') }}</h4>
+                <p class="text-muted mb-0">{{ _('Jos kyse on teknisestä virheestä, peruutuksesta tai muusta poikkeamasta, voit lähettää viestin ylläpidolle tällä lomakkeella.') }}</p>
+              </div>
+            </div>
           </div>
+          <button type="button"
+                  class="btn btn-outline-secondary w-100"
+                  id="choose-report-error"
+                  data-report-action="report">
+            <i class="fa-solid fa-message"></i>
+            {{ _('Haluan vain ilmoittaa virheen') }}
+          </button>
         </div>
 
-        <div id="report-selection-preview" class="alert alert-info d-none" role="status">
-          <div class="text-uppercase fw-semibold small mb-1">{{ _('Valittu tekstikohta') }}</div>
-          <div class="mb-0 text-break" id="report-selection-preview-text"></div>
+        <div id="report-selection-preview" class="report-selection-preview" role="status" hidden style="display:none;">
+          <div class="report-selection-preview-label">
+            <i class="fa-solid fa-highlighter"></i>
+            {{ _('Valittu tekstikohta') }}
+          </div>
+          <div class="report-selection-preview-text text-break" id="report-selection-preview-text"></div>
         </div>
       </div>
       <div class="modal-footer d-block text-center">
-        <p class="text-muted small mb-0">{{ _('Vinkki: korostamalla virheellisen kohdan sivulta saat sen liitettyä raporttilomakkeeseen automaattisesti.') }}</p>
+        <p class="text-muted report-hint mb-0">{{ _('Vinkki: korostamalla virheellisen kohdan sivulta saat sen liitettyä raporttilomakkeeseen automaattisesti.') }}</p>
       </div>
     </div>
   </div>
@@ -164,22 +585,36 @@
 <div class="modal fade" id="report-modal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="reportModalLabel">{{ _('Ilmoita virheestä') }}</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      <div class="modal-header">
+        <div>
+          <div class="report-flow-kicker">
+            <i class="fa-solid fa-flag"></i>
+            {{ _('Ilmoita virheestä') }}
+          </div>
+          <h5 class="modal-title" id="reportModalLabel">{{ _('Kerro mikä tiedoissa on pielessä') }}</h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
       </div>
       <div class="modal-body">
-        <p>{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, ilmoita siitä alla olevalla lomakkeella.') }}</p>
+        <div class="report-form-intro">
+          <p class="text-muted mb-0">{{ _('Jos huomaat virheen mielenosoituksen tiedoissa, ilmoita siitä alla olevalla lomakkeella.') }}</p>
+          <div class="report-form-note">
+            <strong>{{ _('Milloin tätä kannattaa käyttää?') }}</strong>
+            {{ _('Valitse tämä vaihtoehto etenkin silloin, kun kyse on peruutuksesta, teknisestä ongelmasta tai muusta havainnosta, jota ei tarvitse täyttää kenttäkohtaisena muokkausehdotuksena.') }}
+          </div>
+        </div>
         <form id="report-error-form" action="/report" method="POST" autocomplete="off">
           <div class="mb-3">
             <label for="error" class="form-label">{{ _('Virheen kuvaus') }}</label>
             <textarea name="error" id="error" class="form-control" rows="4" placeholder="{{ _('Kuvaile virhe mahdollisimman tarkasti...') }}" required></textarea>
           </div>
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" value="1" id="mark-cancelled" name="mark_cancelled">
-            <label class="form-check-label" for="mark-cancelled">
-              {{ _('Tämä mielenosoitus on peruttu') }}
-            </label>
+          <div class="report-cancel-check mb-3">
+            <div class="form-check mb-0">
+              <input class="form-check-input" type="checkbox" value="1" id="mark-cancelled" name="mark_cancelled">
+              <label class="form-check-label" for="mark-cancelled">
+                {{ _('Tämä mielenosoitus on peruttu') }}
+              </label>
+            </div>
           </div>
           <div class="mb-3">
             <label for="reporter_email" class="form-label">{{ _('Sähköposti (valinnainen)') }}</label>
@@ -187,7 +622,7 @@
           </div>
           <input type="hidden" name="type" value="demonstration">
           <input type="hidden" name="demo_id" value="{{ demo['_id'] }}">
-          <div class="d-flex align-items-center mb-2 processing-indicator" style="display:none;">
+          <div class="processing-indicator mb-2" hidden style="display:none;">
             <div class="spinner-border text-warning me-2" role="status" style="width:1.2rem; height:1.2rem;">
               <span class="visually-hidden">{{ _('Käsitellään...') }}</span>
             </div>
@@ -197,8 +632,8 @@
         </form>
       </div>
       <div class="modal-footer">
-        <button type="submit" form="report-error-form" class="btn btn-danger">{{ _('Lähetä') }}</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+        <button type="submit" form="report-error-form" class="btn btn-danger">{{ _('Lähetä') }}</button>
       </div>
     </div>
   </div>
@@ -252,7 +687,7 @@
 
     if (elements.form) {
       elements.indicator = elements.form.querySelector('.processing-indicator');
-      elements.submitButton = elements.form.querySelector('button[type="submit"]');
+      elements.submitButton = document.querySelector('#report-modal button[type="submit"][form="report-error-form"]');
     }
   }
 
@@ -274,10 +709,12 @@
     const selectedText = getSelectedText();
     
     if (selectedText) {
-      elements.previewBox.classList.remove('d-none');
+      elements.previewBox.hidden = false;
+      elements.previewBox.style.display = 'block';
       elements.previewText.textContent = selectedText;
     } else {
-      elements.previewBox.classList.add('d-none');
+      elements.previewBox.hidden = true;
+      elements.previewBox.style.display = 'none';
       elements.previewText.textContent = '';
     }
   }
@@ -326,6 +763,7 @@
    */
   function setLoadingState(isLoading) {
     if (elements.indicator) {
+      elements.indicator.hidden = !isLoading;
       elements.indicator.style.display = isLoading ? 'flex' : 'none';
     }
     if (elements.submitButton) {
@@ -344,9 +782,8 @@
 
     let seconds = CONFIG.COUNTDOWN_SECONDS;
     elements.resultBox.innerHTML = `
-      <div class="alert alert-success d-flex align-items-center justify-content-between">
-        <i class="fa-solid fa-check-circle me-2"></i>
-        <span>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
+      <div class="report-result-alert report-result-alert-success">
+        <span><i class="fa-solid fa-check-circle me-2"></i>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
         <span id="report-close-countdown" class="fw-bold">${seconds}</span>
       </div>
     `;
@@ -378,7 +815,7 @@
     if (!elements.resultBox) return;
 
     elements.resultBox.innerHTML = `
-      <div class="alert alert-danger">
+      <div class="report-result-alert report-result-alert-error">
         <i class="fas fa-exclamation-circle me-2"></i>
         {{ _("Virhe lähetyksessä. Yritä uudelleen.") }}
       </div>
@@ -464,6 +901,15 @@
         updateSelectionPreview();
         prefillErrorField();
       });
+      elements.reportModal.addEventListener('hidden.bs.modal', () => {
+        if (elements.form) {
+          elements.form.reset();
+        }
+        if (elements.resultBox) {
+          elements.resultBox.innerHTML = '';
+        }
+        setLoadingState(false);
+      });
     }
 
     // Suggest edit button
@@ -494,6 +940,7 @@
 
     // Hide loading indicator initially
     if (elements.indicator) {
+      elements.indicator.hidden = true;
       elements.indicator.style.display = 'none';
     }
 

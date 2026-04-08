@@ -455,40 +455,6 @@ body {
   .demos-grid { grid-template-columns: 1fr; }
 }
 
-/* Demo Card Enhancement */
-
-/*.demo-card {
-  background: var(--color-card-bg);
-  border-radius: var(--border-radius);
-  padding: 2rem;
-  box-shadow: var(--color-shadow);
-  border: 1px solid var(--color-border);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.demo-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--color-gradient-accent);
-  opacity: 0;
-  transition: var(--transition);
-}
-*/
-.demo-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--color-shadow-lg);
-}
-
-.demo-card:hover::before {
-  opacity: 1;
-}
-
 /* Empty State */
 .no-results {
   text-align: center;

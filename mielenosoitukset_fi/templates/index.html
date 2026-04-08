@@ -1,6 +1,4 @@
 {% extends 'base.html' %}
-{% import 'macros.html' as macros %}
-
 {% block styles %}
 <!-- Non-critical local CSS preloaded to avoid blocking initial render -->
 <link rel="preload" href="{{ url_for('static', filename='css/toolbox.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
@@ -186,6 +184,22 @@ body {
   font-size: 1rem;
   margin-bottom: 1.5rem;
   opacity: 0.95;
+}
+
+.campaign-banner-pride {
+  background: linear-gradient(
+    135deg,
+    #e40303 0%,
+    #ff8c00 16.66%,
+    #ffed00 33.33%,
+    #008026 50%,
+    #24408e 66.66%,
+    #732982 100%
+  );
+}
+
+.campaign-banner-pride .campaign-badge {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 /* Buttons */
@@ -524,7 +538,9 @@ body {
 {% endblock %}
 
 {% block scripts %}
+{% include "_modals/_demo-card-template.html" %}
 <script src="{{ url_for('static', filename='js/demo.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
 <script>
 // Add scroll animations
 const observerOptions = {
@@ -547,14 +563,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // what this does: adds the element to be observed by the IntersectionObserver
 
   });
-});
 
-// Add click analytics (optional)
-document.querySelectorAll('.button').forEach(button => {
-  button.addEventListener('click', () => {
-    // Add analytics tracking here if needed
-    console.log('Button clicked:', button.textContent);
+  // Add click analytics (optional)
+  document.querySelectorAll('.button').forEach(button => {
+    button.addEventListener('click', () => {
+      // Add analytics tracking here if needed
+      console.log('Button clicked:', button.textContent);
+    });
   });
+
+  const recommendedDemos = {{ recommended_demos_json|tojson }};
+  const featuredDemos = {{ featured_demos_json|tojson }};
+
+  if (recommendedDemos.length) {
+    const cards = renderDemoCards(recommendedDemos, {
+      containerId: 'recommended-demos-grid',
+      clear: true,
+    });
+    setup_grid_navigation(cards);
+    cards.forEach(card => observer.observe(card));
+  }
+
+  if (featuredDemos.length) {
+    const cards = renderDemoCards(featuredDemos, {
+      containerId: 'featured-demos-grid',
+      clear: true,
+    });
+    setup_grid_navigation(cards);
+    cards.forEach(card => observer.observe(card));
+  }
 });
 </script>
 {% endblock %}
@@ -609,11 +646,7 @@ document.querySelectorAll('.button').forEach(button => {
     <span class="icon"><i class="fa-solid fa-star"></i></span>
     {{ _('Suosittelemme') }}
   </h2>
-  <div class="grid-container">
-    {% for demo in recommended_demos %}
-      {{ macros.demo_card(demo) }}
-    {% endfor %}
-  </div>
+  <div class="grid-container" id="recommended-demos-grid"></div>
   <div class="section-note">
     <i class="fa-solid fa-info-circle"></i>
     {{ _('Mielenosoitukset.fi suosittelee näitä mielenosoituksia kaikille.') }}
@@ -635,11 +668,8 @@ document.querySelectorAll('.button').forEach(button => {
     <span class="icon"><i class="fa-solid fa-bolt"></i></span>
     {{ _('Esitellyt mielenosoitukset') }}
   </h2>
-  <div class="grid-container">
+  <div class="grid-container" id="featured-demos-grid">
     {% if demonstrations %}
-      {% for demo in demonstrations[:6] %}
-        {{ macros.demo_card(demo) }}
-      {% endfor %}
     {% else %}
       <div class="grid-item no-demos">
         <i class="fa-regular fa-face-frown fa-3x"></i>
@@ -663,26 +693,24 @@ document.querySelectorAll('.button').forEach(button => {
 {% endif %}
 
 <!-- Campaign Banner -->
- <!--
-<section class="campaign-banner">
+<section class="campaign-banner campaign-banner-pride">
   <div class="campaign-banner-content">
     <div class="campaign-badge">
-      <i class="fa-solid fa-sparkles"></i>
-      {{ _('Kampanja 2026') }}
+      <i class="fa-solid fa-flag"></i>
+      {{ _('Pride 2026') }}
     </div>
-    <h3>{{ _('Tule mukaan valtakunnalliseen kampanjaan!') }}</h3>
-    <p>{{ _('Levitetään tieto mielenosoitukset.fi:stä kaikkialle Suomeen. Kampanja alkaa 1.3.2026 - tilaa materiaalit, tule vapaaehtoiseksi tai jaa tietoa.') }}</p>
+    <h3>{{ _('Pride näkyväksi koko Suomessa') }}</h3>
+    <p>{{ _('Tutustu Pride näkyväksi -sivuun, katso Pride-mielenosoitukset kartalla ja lisää myös oma tapahtumasi mukaan.') }}</p>
     <div class="buttons-div">
-      <a class="button button-outline" href="/kampanja">
-        <i class="fa-solid fa-bullhorn"></i> {{ _('Tutustu kampanjaan') }}
+      <a class="button button-outline" href="{{ url_for('pride_nakyvaksi') }}">
+        <i class="fa-solid fa-rainbow"></i> {{ _('Avaa Pride näkyväksi') }}
       </a>
-      <a class="button button-outline" href="/kampanja#vapaaehtoiseksi">
-        <i class="fa-solid fa-hand-heart"></i> {{ _('Tule vapaaehtoiseksi') }}
+      <a class="button button-outline" href="{{ url_for('submit') }}">
+        <i class="fa-solid fa-plus"></i> {{ _('Ilmoita Pride-mielenosoitus') }}
       </a>
     </div>
   </div>
 </section>
--->
 
 
 {% endblock %}

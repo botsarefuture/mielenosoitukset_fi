@@ -5,27 +5,69 @@ function format_time(time) {
 }
 
 
+function normalizeDemoCardData(demo) {
+  const tags = Array.isArray(demo.tags) ? demo.tags : [];
+  const coverImage = demo.cover_picture || demo.cover_image || demo.preview_image || demo.img || "";
+  const formattedDate = demo.formatted_date || demo.date_display || demo.date || "";
+  const startTime = demo.start_time_display || format_time(demo.start_time);
+  const endTime = demo.end_time_display || (demo.end_time ? format_time(demo.end_time) : "");
+  const detailId = demo.slug || demo.running_number || demo._id;
+
+  return {
+    ...demo,
+    tags,
+    coverImage,
+    formattedDate,
+    startTime,
+    endTime,
+    detailUrl: detailId ? `/demonstration/${detailId}` : "",
+  };
+}
+
+
 // 1️⃣ Render all demo cards
-function renderDemoCards(demoData) {
-  const container = document.getElementById('demos-grid');
+function renderDemoCards(demoData, options = {}) {
+  const container = document.getElementById(options.containerId || 'demos-grid');
   const template = document.getElementById('demo-card-template');
+  if (!container || !template) return [];
 
   const todayDate = new Date();
   todayDate.setHours(0, 0, 0, 0); // strip time
+  const fragment = document.createDocumentFragment();
+  const newCards = [];
+
+  if (options.clear) {
+    container.innerHTML = '';
+  }
 
   demoData.forEach(demo => {
+    const normalizedDemo = normalizeDemoCardData(demo);
     const clone = template.content.cloneNode(true);
     const card = clone.querySelector('.demo-card');
+    const imageWrapper = clone.querySelector('.demo-card-image');
+    const imageEl = imageWrapper?.querySelector('img');
+    const isPride = normalizedDemo.tags.some(tag => String(tag).toLowerCase() === 'pride');
 
-    card.dataset.demoId = demo._id;
-    card.querySelector('.demo-card-title span').textContent = demo.title;
-    const coverImage = demo.cover_picture || demo.cover_image || demo.preview_image || demo.img || "#";
-    card.querySelector('.demo-card-image img').src = coverImage;
-    card.querySelector('.demo-card-date').append(demo.formatted_date);
+    card.dataset.demoId = normalizedDemo._id;
+    if (normalizedDemo.detailUrl) {
+      card.dataset.href = normalizedDemo.detailUrl;
+    }
+    if (isPride) {
+      card.classList.add('demo-card-pride');
+    }
+    card.querySelector('.demo-card-title span').textContent = normalizedDemo.title || '';
+
+    if (imageEl && normalizedDemo.coverImage) {
+      imageEl.src = normalizedDemo.coverImage;
+      imageEl.alt = normalizedDemo.title || '';
+    } else if (imageWrapper) {
+      imageWrapper.remove();
+    }
+    card.querySelector('.demo-card-date').append(normalizedDemo.formattedDate);
 
     // Compute start & end display
-    const demoStartTime = format_time(demo.start_time);
-    const demoEndTime = demo.end_time ? format_time(demo.end_time) : null;
+    const demoStartTime = normalizedDemo.startTime || "";
+    const demoEndTime = normalizedDemo.endTime || null;
 
     // Combine for display
     const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : `${demoStartTime} alkaen`;
@@ -33,14 +75,14 @@ function renderDemoCards(demoData) {
     // Set in card
     card.querySelector('.demo-card-time').append(timeText);
 
-    card.querySelector('.demo-card-city').append(demo.city);
-    card.querySelector('.demo-card-address').append(demo.address);
+    card.querySelector('.demo-card-city').append(normalizedDemo.city || "");
+    card.querySelector('.demo-card-address').append(normalizedDemo.address || "");
     
     // Add badges container
     const badgeContainer = card.querySelector('.demo-card-badges');
     badgeContainer.innerHTML = ''; // clear existing
 
-    if (demo.cancelled) {
+    if (normalizedDemo.cancelled) {
       const cancelledBadge = document.createElement('span');
       cancelledBadge.className = 'demo-badge cancelled-badge';
       cancelledBadge.textContent = 'Peruttu';
@@ -48,18 +90,20 @@ function renderDemoCards(demoData) {
     }
 
     // 🌟 "Tänään" badge if demo is today
-    const demoDateObj = new Date(demo.date);
-    demoDateObj.setHours(0, 0, 0, 0); // strip time
-    if (demoDateObj.getTime() === todayDate.getTime()) {
-      const todayBadge = document.createElement('span');
-      todayBadge.className = 'demo-badge today-badge';
-      todayBadge.textContent = 'Tänään';
-      badgeContainer.appendChild(todayBadge);
+    if (normalizedDemo.date) {
+      const demoDateObj = new Date(normalizedDemo.date);
+      demoDateObj.setHours(0, 0, 0, 0); // strip time
+      if (demoDateObj.getTime() === todayDate.getTime()) {
+        const todayBadge = document.createElement('span');
+        todayBadge.className = 'demo-badge today-badge';
+        todayBadge.textContent = 'Tänään';
+        badgeContainer.appendChild(todayBadge);
+      }
     }
 
     // 🌈 Tags-based badges (e.g., Pride)
-    if (demo.tags && demo.tags.length > 0) {
-      demo.tags.forEach(tag => {
+    if (normalizedDemo.tags.length > 0) {
+      normalizedDemo.tags.forEach(tag => {
         if (tag.toLowerCase() === 'pride') {
           const prideBadge = document.createElement('span');
           prideBadge.className = 'demo-badge pride-badge';
@@ -72,8 +116,8 @@ function renderDemoCards(demoData) {
     }
     // Optional: tags
     const tagsContainer = card.querySelector('.demo-card-tags');
-    if (demo.tags && demo.tags.length > 0) {
-      demo.tags.forEach(tag => {
+    if (normalizedDemo.tags.length > 0) {
+      normalizedDemo.tags.forEach(tag => {
         const a = document.createElement('a');
         a.href = `/tag/${tag}`;
         a.textContent = `#${tag}`;
@@ -82,12 +126,13 @@ function renderDemoCards(demoData) {
       });
     }
 
-    container.appendChild(clone);
-
+    const appendedCard = clone.querySelector('.demo-card');
+    newCards.push(appendedCard);
+    fragment.appendChild(clone);
   });
 
-  // Return all card elements
-  return Array.from(container.querySelectorAll('.demo-card'));
+  container.appendChild(fragment);
+  return newCards;
 }
 
 // Attach click events (both existing and new cards)
@@ -98,7 +143,8 @@ function setup_grid_navigation(cards) {
     // Main card click
     item.addEventListener('click', e => {
       if (e.target.closest('a') || e.target.closest('.demo-card-invite-btn') || e.target.closest('.demo-card-no-friends')) return;
-      if (demoId) window.location.href = `/demonstration/${demoId}`;
+      const detailUrl = item.dataset.href || (demoId ? `/demonstration/${demoId}` : '');
+      if (detailUrl) window.location.href = detailUrl;
     });
 
     // Invite button
@@ -106,7 +152,8 @@ function setup_grid_navigation(cards) {
     if (inviteBtn) {
       inviteBtn.addEventListener('click', e => {
         e.stopPropagation();
-        if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
+        const detailUrl = item.dataset.href || (demoId ? `/demonstration/${demoId}` : '');
+        if (detailUrl) window.location.href = `${detailUrl}?action=inviteFriends`;
       });
     }
 
@@ -115,7 +162,8 @@ function setup_grid_navigation(cards) {
     if (noFriendsDiv) {
       noFriendsDiv.addEventListener('click', e => {
         e.stopPropagation();
-        if (demoId) window.location.href = `/demonstration/${demoId}?action=inviteFriends`;
+        const detailUrl = item.dataset.href || (demoId ? `/demonstration/${demoId}` : '');
+        if (detailUrl) window.location.href = `${detailUrl}?action=inviteFriends`;
       });
     }
   });

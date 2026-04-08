@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% import 'macros.html' as macros %}
 {% block title %}
 {{ org.name }} - {{ _('Tiedot') }}
 {% endblock %}
@@ -507,16 +506,6 @@
     .demos-grid {
       grid-template-columns: 1fr;
     }
-  }
-
-
-  .demo-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--color-shadow-lg);
-  }
-
-  .demo-card:hover::before {
-    opacity: 1;
   }
 
   /* Pagination */

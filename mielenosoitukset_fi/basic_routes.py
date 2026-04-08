@@ -98,6 +98,21 @@ SUBMIT_ERROR_CODES = {
 PANIC_MODE = False
 
 
+def _normalize_tag_value(tag):
+    if tag is None:
+        return ""
+    return str(tag).strip().lstrip("#").strip()
+
+
+def _normalize_tag_list(raw_tags):
+    normalized = []
+    for raw_tag in raw_tags or []:
+        cleaned = _normalize_tag_value(raw_tag)
+        if cleaned:
+            normalized.append(cleaned)
+    return normalized
+
+
 def _load_panic():
     a = mongo.panic.find_one({"name": "global"})
     return a.get("panic", False) if a else False
@@ -957,6 +972,8 @@ def init_routes(app):
             "index.html",
             demonstrations=filtered_demonstrations,
             recommended_demos=recommended_demos,
+            featured_demos_json=[format_demo_for_api(demo) for demo in filtered_demonstrations[:6]],
+            recommended_demos_json=[format_demo_for_api(demo) for demo in (recommended_demos or [])],
         )
 
 
@@ -1038,7 +1055,7 @@ def init_routes(app):
 
             # --- Tags (comma separated) ---
             tags_field = request.form.get("tags", "")
-            tags = [t.strip() for t in tags_field.split(",") if t.strip()] if tags_field else []
+            tags = _normalize_tag_list(tags_field.split(",")) if tags_field else []
 
             # --- File upload (S3) ---
             img = request.files.get("image")
@@ -2080,14 +2097,13 @@ def init_routes(app):
                 val = (request.form.get(f) or '').strip()
                 # normalize tags as list if provided
                 if f == 'tags' and val:
-                    val_list = [t.strip() for t in val.split(',') if t.strip()]
-                    val = val_list
+                    val = _normalize_tag_list(val.split(','))
 
                 # compare to the stored demo_doc values and only store differences
                 orig = demo_doc.get(f)
                 # normalize original tags to list for comparison
                 if f == 'tags' and isinstance(orig, list):
-                    orig_comp = [str(x).strip() for x in orig]
+                    orig_comp = _normalize_tag_list(orig)
                 else:
                     orig_comp = (orig or '').strip() if orig is not None else ''
 

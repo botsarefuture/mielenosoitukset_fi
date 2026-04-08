@@ -4,6 +4,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <style>
   .suggestion-container {
     max-width: 900px;
@@ -157,6 +158,35 @@
     resize: vertical;
   }
 
+  .editor-container {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--color-card-bg);
+    transition: var(--transition);
+  }
+
+  .editor-container:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+  }
+
+  .ql-toolbar.ql-snow {
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-card-bg) 88%, white 12%);
+  }
+
+  .ql-container.ql-snow {
+    border: none;
+  }
+
+  .ql-editor {
+    min-height: 180px;
+    font-size: 0.95rem;
+    color: var(--color-text);
+  }
+
   .full-width {
     grid-column: 1 / -1;
   }
@@ -203,6 +233,107 @@
     box-shadow: var(--color-shadow-lg);
   }
 
+  .route-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .route-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .route-input-row input {
+    flex: 1;
+  }
+
+  .route-add-btn {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .route-add-btn:hover {
+    background: var(--color-primary-hover, var(--color-primary));
+  }
+
+  .route-pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 36px;
+  }
+
+  .pill-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pill-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .pill-input-row input {
+    flex: 1;
+  }
+
+  .pill-add-btn {
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .pill-add-btn:hover {
+    background: var(--color-primary-hover, var(--color-primary));
+  }
+
+  .route-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--color-title-accent);
+    color: var(--color-text);
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .route-pill button {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .route-pill-empty {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .tag-pill-empty {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+  }
+
   .hint-text {
     font-size: 0.8rem;
     color: var(--color-text-secondary);
@@ -241,6 +372,7 @@
 {% endblock %}
 
 {% block content %}
+{% set preview_date = demo.formatted_date or demo.date %}
 <div class="suggestion-container">
   <div class="suggestion-card">
     <div class="suggestion-header">
@@ -252,7 +384,7 @@
 
     <div class="demo-preview">
       <p class="demo-preview-title">{{ demo.title }}</p>
-      <p class="demo-preview-meta">📅 {{ demo.date }} • 📍 {{ demo.city }} • 📮 {{ demo.address }}</p>
+      <p class="demo-preview-meta">📅 {{ preview_date }} • 📍 {{ demo.city }} • 📮 {{ demo.address }}</p>
     </div>
 
     <form method="POST" action="" id="suggestForm" class="suggestion-form">
@@ -314,8 +446,17 @@
 
           <div class="form-group">
             <label for="route">{{ _('Reitti (marsseille)') }}</label>
-            <input type="text" id="route" name="route" value="{{ demo.route or '' }}" />
-            <span class="hint-text">{{ _('Valinnainen, vain marsseille') }}</span>
+            <div class="route-editor">
+              <div class="route-input-row">
+                <input type="text" id="route-input" placeholder="{{ _('Kirjoita reittipiste ja paina Enter') }}" aria-describedby="route-help-text" />
+                <button type="button" class="route-add-btn" id="route-add-btn">+</button>
+              </div>
+              <div class="route-pill-list" id="route-pill-list" aria-live="polite"></div>
+              <input type="hidden" id="route" name="route" value="{{ demo.route or '' }}">
+              <span class="hint-text" id="route-help-text">
+                {{ _('Lisää marssin reittipisteet yksi kerrallaan oikeassa järjestyksessä. Tallennamme ne pilkulla eroteltuna.') }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -326,14 +467,26 @@
         <div class="form-grid full-width">
           <div class="form-group full-width">
             <label for="description">{{ _('Kuvaus') }}</label>
-            <textarea id="description" name="description">{{ demo.description }}</textarea>
-            <span class="hint-text">{{ _('Yksityiskohdat mielenosoituksesta') }}</span>
+            <div class="editor-container">
+              <div id="description-editor"></div>
+            </div>
+            <input type="hidden" id="description" name="description" value="{{ demo.description or '' }}">
+            <span class="hint-text">{{ _('Yksityiskohdat mielenosoituksesta. Voit käyttää lihavointia, listoja ja linkkejä.') }}</span>
           </div>
 
           <div class="form-group full-width">
             <label for="tags">{{ _('Aihetunnisteet') }}</label>
-            <input type="text" id="tags" name="tags" value="{{ demo.tags | join(', ') if demo.tags else '' }}" placeholder="ilmastonmuutos, oikeudet, ..." />
-            <span class="hint-text">{{ _('Pilkuin eroteltuna') }}</span>
+            <div class="pill-editor">
+              <div class="pill-input-row">
+                <input type="text" id="tag-input" placeholder="{{ _('Kirjoita tagi ja paina Enter') }}" aria-describedby="tag-help-text" />
+                <button type="button" class="pill-add-btn" id="tag-add-btn">+</button>
+              </div>
+              <div class="route-pill-list" id="tag-pill-list" aria-live="polite"></div>
+              <input type="hidden" id="tags" name="tags" value="{{ demo.tags | join(', ') if demo.tags else '' }}" />
+              <span class="hint-text" id="tag-help-text">
+                {{ _('Lisää tagit ilman #-merkkiä. Jos kirjoitat sen, poistamme sen automaattisesti.') }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -370,4 +523,165 @@
     </form>
   </div>
 </div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script>
+  (() => {
+    const descriptionInput = document.getElementById('description');
+    const descriptionEditorRoot = document.getElementById('description-editor');
+
+    if (descriptionInput && descriptionEditorRoot && window.Quill) {
+      const quill = new Quill(descriptionEditorRoot, {
+        modules: {
+          toolbar: [
+            ['bold', 'italic'],
+            ['link', 'blockquote'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+          ],
+        },
+        theme: 'snow',
+      });
+
+      quill.root.innerHTML = descriptionInput.value || '';
+
+      const form = document.getElementById('suggestForm');
+      if (form) {
+        form.addEventListener('submit', () => {
+          descriptionInput.value = quill.root.innerHTML;
+        });
+      }
+    }
+
+    const normalizeTag = (value) => (value || '').trim().replace(/^#+/, '').trim();
+    const splitTags = (value) => (value || '')
+      .split(/[,\n]+/)
+      .map((tag) => normalizeTag(tag))
+      .filter(Boolean);
+
+    const initializePillEditor = ({
+      hiddenInputId,
+      textInputId,
+      addButtonId,
+      listId,
+      emptyClassName,
+      emptyText,
+      removeAriaLabel,
+      normalizeValue = (value) => (value || '').trim(),
+      splitValue = (value) => (value || '').split(/[,\n]+/).map((item) => normalizeValue(item)).filter(Boolean),
+      syncValue = (items) => items.join(', '),
+    }) => {
+      const hiddenInput = document.getElementById(hiddenInputId);
+      const textInput = document.getElementById(textInputId);
+      const addButton = document.getElementById(addButtonId);
+      const list = document.getElementById(listId);
+
+      if (!hiddenInput || !textInput || !addButton || !list) return null;
+
+      let items = splitValue(hiddenInput.value);
+
+      const render = () => {
+        list.innerHTML = '';
+
+        if (!items.length) {
+          const empty = document.createElement('div');
+          empty.className = emptyClassName;
+          empty.textContent = emptyText;
+          list.appendChild(empty);
+          hiddenInput.value = syncValue(items);
+          return;
+        }
+
+        items.forEach((item, idx) => {
+          const pill = document.createElement('span');
+          pill.className = 'route-pill';
+          pill.textContent = item;
+
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.setAttribute('aria-label', `${removeAriaLabel} ${item}`);
+          removeButton.textContent = '×';
+          removeButton.addEventListener('click', () => {
+            items.splice(idx, 1);
+            render();
+          });
+
+          pill.appendChild(removeButton);
+          list.appendChild(pill);
+        });
+
+        hiddenInput.value = syncValue(items);
+      };
+
+      const addItems = (value) => {
+        const candidates = splitValue(value);
+        let changed = false;
+
+        candidates.forEach((candidate) => {
+          if (!items.includes(candidate)) {
+            items.push(candidate);
+            changed = true;
+          }
+        });
+
+        textInput.value = '';
+
+        if (changed) {
+          render();
+        }
+      };
+
+      addButton.addEventListener('click', () => addItems(textInput.value));
+
+      textInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+          e.preventDefault();
+          addItems(textInput.value);
+        }
+      });
+
+      textInput.addEventListener('blur', () => addItems(textInput.value));
+
+      textInput.addEventListener('paste', (e) => {
+        const pasted = (e.clipboardData || window.clipboardData)?.getData('text');
+        if (pasted && (pasted.includes(',') || pasted.includes('\n'))) {
+          e.preventDefault();
+          addItems(pasted);
+        }
+      });
+
+      render();
+      return { addItems };
+    };
+
+    initializePillEditor({
+      hiddenInputId: 'tags',
+      textInputId: 'tag-input',
+      addButtonId: 'tag-add-btn',
+      listId: 'tag-pill-list',
+      emptyClassName: 'tag-pill-empty',
+      emptyText: "{{ _('Ei tageja vielä lisätty.') }}",
+      removeAriaLabel: "{{ _('Poista tagi') }}",
+      normalizeValue: normalizeTag,
+      splitValue: splitTags,
+      syncValue: (items) => items.join(', '),
+    });
+
+    const splitPoints = (value) => (value || '')
+      .split(/[,\\n]+/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    initializePillEditor({
+      hiddenInputId: 'route',
+      textInputId: 'route-input',
+      addButtonId: 'route-add-btn',
+      listId: 'route-pill-list',
+      emptyClassName: 'route-pill-empty',
+      emptyText: "{{ _('Ei reittipisteitä vielä lisätty.') }}",
+      removeAriaLabel: "{{ _('Poista reittipiste') }}",
+      splitValue: splitPoints,
+      syncValue: (items) => items.join(', '),
+    });
+  })();
+</script>
 {% endblock %}

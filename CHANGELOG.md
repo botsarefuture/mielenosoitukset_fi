@@ -48,6 +48,8 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Demo cards keep cover images centered without stretching, preventing warped previews across list views.
+* Tag normalization now strips leading `#` in public submit and demo change suggestion flows, preventing accidental `##tag` rendering.
 * Aligned `botocore` pin with `boto3==1.42.74` in `requirements.txt` to keep pip dependency resolution valid.
 * Test teardown now explicitly stops background job helpers, closes deferred MongoDB clients, avoids initializing the rate limiter when disabled, and marks email retry timers as daemon threads so CI no longer risks hanging after `pytest` finishes.
 * Re-enabled S3 integration tests in CI by including LocalStack in test services with corrected health check logic that properly updates service readiness state, eliminating the previous race condition.
@@ -89,6 +91,14 @@
 * Pride näkyväksi -sivun sydänanimaatio on rajattu hero-osioon, jotta koristeet eivät leiju sisällön reunoilla.
 
 ### Changed
+* Demo edit suggestion form now has a pill-based march route editor (Enter/comma to add points) so users can propose route changes without wrestling with a single text field.
+* Demo edit suggestion form now uses the same pill-style add/remove flow for tags and clarifies that tags should be entered without `#`.
+* Demo edit suggestion form now uses a rich-text description editor, matching the public submit flow for easier content fixes.
+* Demo edit suggestion preview now shows the same Finnish-formatted event date as the detail page instead of the raw ISO date.
+* Front page now highlights the Pride näkyväksi campaign with direct links to the campaign page and demo submission flow.
+* Pride-tagged demo cards now get a rainbow border treatment across shared card views so Pride events stand out visually.
+* Browser demo cards now render through the shared JS renderer on homepage, list, and city views instead of maintaining separate Jinja/card-markup implementations.
+* Browser demo cards now rely on the shared card CSS across city, organization, siblings, tag, and Pride views so the same demo renders with the same visual treatment everywhere.
 * Application boot now forces the process timezone (and exposes `LOCAL_TIMEZONE`) to Europe/Helsinki so all naive `datetime.now()` calls align with Finnish local time.
 * Admin token links that were previously consumed now render a friendly confirmation page instead of returning HTTP 409, making it clear the link has already been used.
 * Reuse attempts of admin approve/reject/preview tokens are now logged (including demo audit entries) with IP + metadata so the audit trail captures every invalid link use.
@@ -456,6 +466,12 @@
 
 * Modals and popups never hidden behind the header.
 * Removed unnecessary borders from stacked containers for cleaner UI.
+* Demo cards now use one shared browser styling source across homepage, list, city, tag, organization, siblings, and Pride views, fixing page-to-page visual drift from conflicting card CSS.
+* The Pride page now loads the correct shared `demo_list.css` asset path, so its shared card support styles apply consistently.
+* Shared demonstration card titles are now centered consistently across the browser-rendered card views.
+* The demonstration detail page’s report-error menu now uses a more polished card-based modal design with clearer actions and feedback while keeping the existing reporting flow unchanged.
+* The detail-page error report form now correctly hides its loading spinner until submission, resets cleanly when the modal closes, and uses more deliberate modal button styling.
+* The detail-page report flow now has explicit mobile modal layout rules so the form, actions, and status blocks stay usable on narrow screens.
 
 ---
 

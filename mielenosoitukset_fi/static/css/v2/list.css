@@ -10,6 +10,7 @@
   --color-text-secondary: light-dark(#444, #c7c7c7);
   --color-primary: light-dark(#0056b3, #4ea1ff);
   --color-primary-dark: light-dark(#003d80, #0056b3);
+  --color-accent: light-dark(#06b6d4, #0891b2);
   --color-title-accent: light-dark(#e3f0ff, #2a3a4a);
   --color-shadow: light-dark(0 2px 12px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.3));
   --color-shadow-hover: light-dark(0 4px 16px rgba(0,86,179,0.08), 0 4px 16px rgba(78,161,255,0.12));
@@ -227,6 +228,31 @@ h1 {
   z-index: 2;
 }
 
+.demo-card-pride {
+  border: 1.5px solid transparent;
+  background: var(--color-card-bg);
+  isolation: isolate;
+  box-shadow: 0 0 0 1px rgba(115, 41, 130, 0.18), 0 8px 22px rgba(115, 41, 130, 0.14), 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.demo-card-pride::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #e40303, #ff8c00, #ffed00, #008026, #24408e, #732982);
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.demo-card-pride:hover,
+.demo-card-pride:focus {
+  box-shadow: 0 0 0 1px rgba(115, 41, 130, 0.24), 0 12px 30px rgba(115, 41, 130, 0.18), 0 3px 10px rgba(0,0,0,0.1);
+}
+
 .demo-card-title {
   font-size: 1.25em;
   font-weight: 800;
@@ -234,7 +260,17 @@ h1 {
   margin-bottom: 0.2em;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5em;
+  width: 100%;
+  text-align: center;
+}
+
+.demo-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  align-items: center;
 }
 
 .demo-card-date-time,
@@ -243,7 +279,10 @@ h1 {
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1.2em;
+  width: 100%;
+  max-width: 100%;
 }
 
 .demo-card-date-time i,
@@ -252,11 +291,21 @@ h1 {
   margin-right: 0.3em;
 }
 
+.demo-card-date-time span,
+.demo-card-location-row span {
+  flex: 1 1 50%;
+  max-width: 50%;
+  min-width: 0;
+  text-align: center;
+}
+
 .demo-card-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4em;
   margin-top: 0.2em;
+  justify-content: center;
+  text-align: center;
 }
 
 .demo-card-tag,
@@ -331,12 +380,17 @@ h1 {
   border-radius: 12px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-card-bg);
 }
 
 .demo-card-image img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .demo-card-image::after {
@@ -345,6 +399,144 @@ h1 {
   inset: 0;
   border-radius: 12px;
   background: linear-gradient(to top, rgba(0,0,0,0.3), transparent);
+}
+
+.demo-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.1em;
+}
+
+.demo-badge {
+  display: inline-block;
+  padding: 0.2em 0.65em;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: 999px;
+  color: #fff;
+  background: #888;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(-4px);
+  animation: badge-fade-in 0.3s forwards;
+}
+
+.today-badge {
+  background: #ff595e;
+}
+
+.pride-badge {
+  background: linear-gradient(45deg, #e40303, #ff8c00, #ffed00, #008026, #24408e, #732982);
+}
+
+.cancelled-badge {
+  background: #c0392b;
+}
+
+.demo-card-attending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  margin-top: 0.8em;
+  flex-wrap: wrap;
+  font-size: 0.95em;
+  color: var(--color-text-secondary);
+}
+
+.demo-card-friends {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.demo-card-friends .friend-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-accent);
+  transition: transform 0.2s;
+}
+
+.demo-card-friends .friend-avatar:hover {
+  transform: scale(1.2);
+}
+
+.demo-card-friends .friends-text {
+  font-weight: 500;
+  color: var(--color-primary);
+}
+
+.demo-card-no-friends {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.demo-card-no-friends .login-prompt {
+  text-align: center;
+}
+
+.demo-card-no-friends .plus-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2em;
+  border: 2px solid var(--color-accent);
+}
+
+.demo-card-no-friends:hover {
+  transform: translateY(-2px);
+  color: var(--color-accent);
+}
+
+.demo-card-no-friends:hover .plus-avatar {
+  background: var(--color-accent);
+}
+
+.attending-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  font-size: 0.95em;
+  color: var(--color-text-secondary);
+  padding: 0.5em 0;
+  opacity: 0.7;
+}
+
+.attending-loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-title-accent);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes badge-fade-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ==========================

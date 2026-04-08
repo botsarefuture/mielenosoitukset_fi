@@ -979,6 +979,31 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     box-shadow: var(--color-shadow-lg);
   }
 
+  .report-flow-trigger {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    color: #111827;
+    border: none;
+    box-shadow: 0 12px 30px rgba(249, 115, 22, 0.22);
+    font-weight: 700;
+  }
+
+  .report-flow-trigger::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(255,255,255,0.22), transparent 55%);
+    pointer-events: none;
+  }
+
+  .report-flow-trigger:hover,
+  .report-flow-trigger:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(249, 115, 22, 0.28);
+    color: #111827;
+  }
+
   /* Mobile Responsive */
   @media (max-width: 768px) {
     .container-main-content {
@@ -1380,7 +1405,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   <!-- Action Buttons -->
   <div class="action-buttons animate-fade-in-up">
-    <button type="button" class="btn btn-secondary bg-warning text-black" data-bs-toggle="modal"
+    <button type="button" class="btn report-flow-trigger" data-bs-toggle="modal"
       data-bs-target="#report-choice-modal">
       <i class="fa-solid fa-flag"></i>
       {{ _('Ilmoita virheestä') }}

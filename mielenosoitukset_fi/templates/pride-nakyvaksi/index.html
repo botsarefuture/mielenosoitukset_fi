@@ -4,7 +4,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/gen.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo-list.css') }}" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/v2/demo_list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/v2/list.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}" />
 <link rel="stylesheet" href="{{ url_for('static', filename='leaflet/leaflet.css') }}" />
@@ -542,47 +542,6 @@ body {
   background: var(--color-card-bg);
   border: 1px solid var(--color-border);
   box-shadow: var(--color-shadow);
-}
-
-.demos-grid .demo-card {
-  background: var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--color-shadow);
-  position: relative;
-  overflow: hidden;
-  border-radius: 18px;
-}
-
-.demos-grid .demo-card-badges .demo-badge {
-  background: linear-gradient(120deg, rgba(255, 237, 0, 0.25), rgba(115, 41, 130, 0.3));
-  color: var(--pride-purple);
-  border: none;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-.demos-grid .demo-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(120deg, rgba(228, 3, 3, 0.06), rgba(36, 64, 142, 0.06));
-}
-
-.demos-grid .demo-card .demo-card-tag {
-  border-color: transparent;
-  background: linear-gradient(135deg, rgba(115, 41, 130, 0.08), rgba(36, 64, 142, 0.08));
-  color: #1d4ed8;
-  font-weight: 700;
-  border-radius: 14px;
-}
-
-.demos-grid .demo-card-title span {
-  color: #1d4ed8;
-}
-
-.demos-grid .demo-card-details i {
-  color: #1d4ed8;
 }
 
 /* Pride Hearts Animation */

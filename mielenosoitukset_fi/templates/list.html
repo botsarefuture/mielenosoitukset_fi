@@ -27,6 +27,7 @@
 {% endblock %}
 
 {% block content %}
+{% include "_modals/_demo-card-template.html" %}
 <section class="hero">
   <!-- lets add hero here-->
   <div class="hero-content">
@@ -92,6 +93,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/demo-card-render.js') }}" defer></script>
 <script>
 const cityList = {{ city_list | tojson }};
 </script>
@@ -111,72 +113,6 @@ document.addEventListener("DOMContentLoaded", function () {
       today.getFullYear() === parseInt(y, 10)
     );
   }
-
-  function renderDemoCard(demo) {
-  const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
-
-  // Build badges dynamically
-  const badges = [];
-  if (isTodayDate(demo.date_display)) {
-    badges.push(`<span class="demo-card-badge demo-card-badge-today">{{ _("Tänään") }}</span>`);
-  }
-  if (demo.is_trending) { // example field for “Nousussa”
-    badges.push(`<span class="demo-card-badge demo-card-badge-trending">{{ _("Nousussa") }}</span>`);
-  }
-  if (demo.is_recommended) { // example field for “Suositeltu”
-    badges.push(`<span class="demo-card-badge demo-card-badge-recommended">{{ _("Suositeltu") }}</span>`);
-  }
-  // Join badges into a single string
-  const badgeHtml = badges.join(" ");
-
-  const imageUrl = demo.cover_image || `/download_material/${demo._id}`;
-
-  return `
-    <div class="grid-item demo-card" 
-         data-demo-id="${demo._id}" 
-         tabindex="0"
-         onclick="window.location='${demoUrl}'" 
-         onkeypress="if(event.key==='Enter'){window.location='${demoUrl}'}">
-
-      ${badgeHtml}
-
-      <div class="demo-card-image">
-        <img src="${imageUrl}" alt="${demo.title} - ${demo.city || ''} - ${demo.date_display}" loading="lazy">
-      </div>
-
-      <div class="demo-card-title">
-        <span>${demo.title}</span>
-      </div>
-
-      <div class="demo-card-date-time">
-        <span title="{{ _('Päivämäärä') }}"><i class="fa-regular fa-calendar"></i> ${demo.date_display}</span>
-        <span title="{{ _('Aika') }}"><i class="fa-regular fa-clock"></i> ${demo.start_time_display || ""}${demo.end_time_display ? " - " + demo.end_time_display : ""}</span>
-      </div>
-
-      <div class="demo-card-location-row">
-        <span title="{{ _('Kaupunki') }}"><i class="fa-solid fa-city"></i> ${demo.city || ""}</span>
-        <span title="{{ _('Sijainti') }}"><i class="fa-solid fa-location-dot"></i> ${demo.address || ""}</span>
-      </div>
-
-      <div class="demo-card-tags">
-        ${(demo.tags && demo.tags.length > 0)
-          ? demo.tags.map(tag => `<a href="/tag/${tag}" class="demo-table-tag demo-card-tag" tabindex="0">#${tag}</a>`).join(" ")
-          : `<span class="demo-table-tag demo-card-tag">#${demo.topic || ""}</span>`}
-      </div>
-
-      <div class="demo-card-actions">
-        <button class="demo-card-action-btn" onclick="event.stopPropagation(); window.location='${demoUrl}'">
-          <i class="fa-solid fa-arrow-right"></i> {{ _("Avaa") }}
-        </button>
-        <button class="demo-card-action-btn" onclick="event.stopPropagation(); navigator.clipboard.writeText(window.location.origin + '${demoUrl}'); this.innerHTML='<i class=\'fa-solid fa-check\'></i> {{ _("Kopioitu!") }}'; setTimeout(()=>{this.innerHTML='<i class=\'fa-solid fa-link\'></i> {{ _("Kopioi linkki") }}'},1200)">
-          <i class="fa-solid fa-link"></i> {{ _("Kopioi linkki") }}
-        </button>
-      </div>
-    </div>
-  `;
-}
-
-
 
   function renderDemoTableRow(demo) {
     const demoUrl = `/demonstration/${demo.slug || demo.running_number || demo._id}`;
@@ -253,8 +189,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderDemos(demos, append = false) {
     if (view === "grid") {
-      if (!append) gridContainer.innerHTML = "";
-      gridContainer.innerHTML += demos.map(renderDemoCard).join("");
+      const cards = renderDemoCards(demos, {
+        containerId: "demo-container-grid",
+        clear: !append,
+      });
+      setup_grid_navigation(cards);
+      getFriendsAttending(cards);
     } else {
       if (!append) tableBody.innerHTML = "";
       tableBody.innerHTML += demos.map(renderDemoTableRow).join("");

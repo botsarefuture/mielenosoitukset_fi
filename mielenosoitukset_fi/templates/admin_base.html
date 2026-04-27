@@ -2,7 +2,7 @@
 {% import 'admin_V2/organizations/macros.html' as org_macros %}
 
 <!DOCTYPE html>
-<html lang="{{ session.get('locale', 'fi') }}" class="dark">
+<html lang="{{ session.get('locale', 'fi') }}" class="dark" data-bs-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -30,16 +30,61 @@
         }
       }
 
-  /* Sidebar nav links hover */
-  #sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* subtle light overlay */
-    border-radius: 0.375rem; /* same as btn rounded */
+  .admin-sidebar {
+    background: light-dark(#eef2f7, #111827);
+    color: light-dark(#0f172a, #f8fafc);
+    border-right: 1px solid light-dark(#d8e0ea, rgba(255,255,255,0.08));
   }
 
-  /* Sidebar card hover for task items */
-  #sidebar .list-group-item:hover {
-    background-color: rgba(0, 123, 255, 0.1); /* light blue overlay */
+  .admin-sidebar-link {
+    color: light-dark(#1f2937, #e5e7eb) !important;
+  }
+
+  .admin-sidebar-link:hover,
+  .admin-sidebar-link:focus {
+    background-color: light-dark(rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.08));
+    border-radius: 0.375rem;
+    color: light-dark(#0f172a, #ffffff) !important;
+  }
+
+  .admin-sidebar-card {
+    background: light-dark(#ffffff, #1f2937);
+    color: light-dark(#111827, #f3f4f6);
+    border: 1px solid light-dark(#d7dee9, rgba(255,255,255,0.08));
+  }
+
+  .admin-sidebar-card .card-header,
+  .admin-sidebar-card .list-group-item,
+  .admin-sidebar-card .card-body {
+    background: transparent;
+    color: inherit;
+    border-color: light-dark(#d7dee9, rgba(255,255,255,0.08));
+  }
+
+  .admin-sidebar-card .list-group-item:hover {
+    background-color: light-dark(rgba(37, 99, 235, 0.08), rgba(59, 130, 246, 0.18));
     cursor: pointer;
+  }
+
+  .admin-sidebar-card a {
+    color: light-dark(#0f172a, #f8fafc);
+  }
+
+  .admin-sidebar-card a:hover {
+    color: light-dark(#1d4ed8, #93c5fd);
+  }
+
+  .admin-theme-toggle {
+    border-color: light-dark(#c7d2e2, rgba(255,255,255,0.18));
+    color: light-dark(#1f2937, #e5e7eb);
+    background: light-dark(#ffffff, rgba(255,255,255,0.04));
+  }
+
+  .admin-theme-toggle:hover,
+  .admin-theme-toggle:focus {
+    background: light-dark(#f8fbff, rgba(255,255,255,0.1));
+    color: light-dark(#0f172a, #ffffff);
+    border-color: light-dark(#93c5fd, rgba(147,197,253,0.35));
   }
 
   /* Buttons hover (logout etc.) */
@@ -61,6 +106,12 @@
 /* all modal texts with light theme supporting text */
 .modal-content, .modal-header, .modal-body, .modal-footer {
   color: #000;
+}
+
+.admin-footer {
+  background: light-dark(#e9eef5, #0b1220);
+  color: light-dark(#334155, #cbd5e1);
+  border-top: 1px solid light-dark(#d7dee9, rgba(255,255,255,0.08));
 }
     </style>
     {% block styles %}{% endblock %}
@@ -100,19 +151,19 @@
     <div class="d-flex flex-grow-1">
 
         {# ---------- Sidebar (desktop) ---------- #}
-<aside id="sidebar" class="d-flex flex-column flex-shrink-0 bg-dark text-light p-3"
+<aside id="sidebar" class="admin-sidebar d-flex flex-column flex-shrink-0 p-3"
        style="width: 280px; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
   <!-- Toggle button (mobile) -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="h5 mb-0 text-center flex-grow-1">
       <i class="fas fa-toolbox me-2"></i>      {{ _('Työkalupakki') }}
     </h2>
-    <button class="btn btn-outline-light d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+    <button class="btn admin-theme-toggle d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
       &#9776;
     </button>
   </div>
 <!-- Tasks widget -->
-<div class="card bg-dark-subtle text-dark mb-3">
+<div class="card admin-sidebar-card mb-3">
   <div class="card-header d-flex justify-content-between align-items-center">
     <span class="d-flex align-items-center">
       <i class="fas fa-tasks me-2"></i>{{ _('Tehtävät') }}
@@ -171,7 +222,7 @@
 
 <!-- Quick access -->
 {% if current_user.global_admin %}
-<div class="card bg-dark-subtle text-dark mb-3">
+<div class="card admin-sidebar-card mb-3">
   <div class="card-body d-grid gap-2">
     <a href="{{ url_for('admin_demo.audit_timeline') }}" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center">
       <i class="fa-solid fa-timeline me-2"></i>{{ _('Audit-loki (aikajana)') }}
@@ -218,7 +269,7 @@ function confirmAction(action, taskId) {
     <ul class="nav nav-pills flex-column mb-3">
       {% if current_user.global_admin %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin.admin_dashboard') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin.admin_dashboard') }}">
             <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}
           </a>
         </li>
@@ -226,7 +277,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("LIST_USERS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_user.user_control') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_user.user_control') }}">
             <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}
           </a>
         </li>
@@ -234,7 +285,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_org.organization_control') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_org.organization_control') }}">
             <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}
           </a>
         </li>
@@ -242,7 +293,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("LIST_DEMOS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_demo.demo_control') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
             <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}
           </a>
         </li>
@@ -250,12 +301,12 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("EDIT_DEMO") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_demo.suggestions_list') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.suggestions_list') }}">
             <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
             <i class="fas fa-triangle-exclamation me-2"></i>{{ _('Ilmoitusvirheet') }}
           </a>
         </li>
@@ -263,7 +314,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
             <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}
           </a>
         </li>
@@ -272,7 +323,7 @@ function confirmAction(action, taskId) {
       {# ---- New link: Tapaukset ---- #}
       {% if current_user.has_permission("LIST_CASES") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_case.cases') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_case.cases') }}">
             <i class="fas fa-briefcase me-2"></i>{{ _('Tapaukset') }}
           </a>
         </li>
@@ -280,7 +331,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("VIEW_ANALYTICS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin.stats') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin.stats') }}">
             <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
           </a>
         </li>
@@ -288,7 +339,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("VIEW_BACKGROUND_JOBS") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin.background_jobs') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin.background_jobs') }}">
             <i class="fas fa-gears me-2"></i>{{ _('Taustatyöt') }}
           </a>
         </li>
@@ -296,7 +347,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("EDIT_USER") %}
         <li class="nav-item">
-          <a class="nav-link text-light" href="{{ url_for('admin_dev.list_requests') }}">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_dev.list_requests') }}">
             <i class="fas fa-key me-2"></i>{{ _('Kehittäjähallinta') }}
           </a>
         </li>
@@ -306,7 +357,7 @@ function confirmAction(action, taskId) {
 
   <!-- Theme toggle -->
   <div style="margin-bottom: 1rem;">
-    <button id="theme-toggle" class="btn btn-outline-light w-100" title="{{ _('Vaihtele teema') }}">
+    <button id="theme-toggle" class="btn admin-theme-toggle w-100" title="{{ _('Vaihtele teema') }}">
       <i class="fas fa-moon me-2"></i><span id="theme-label">{{ _('Tumma tila') }}</span>
     </button>
   </div>
@@ -344,7 +395,7 @@ function confirmAction(action, taskId) {
     </div>
 
     {# ==== FOOTER ==== #}
-    <footer class="bg-dark text-light text-center py-3 small mt-auto">
+    <footer class="admin-footer text-center py-3 small mt-auto">
         &copy; 2026 Mielenosoitukset.fi — {{ _('Kaikki oikeudet pidätetään.') }}
         <p class="version">V4.0.0-beta.1</p>
     </footer>
@@ -359,11 +410,21 @@ function confirmAction(action, taskId) {
         const themeLabel = document.getElementById('theme-label');
         const htmlElement = document.documentElement;
 
+        function applyTheme(theme, { persist = true } = {}) {
+            const normalizedTheme = theme === 'light' ? 'light' : 'dark';
+            htmlElement.classList.remove('light', 'dark');
+            htmlElement.classList.add(normalizedTheme);
+            htmlElement.setAttribute('data-bs-theme', normalizedTheme);
+            if (persist) {
+                localStorage.setItem('theme', normalizedTheme);
+            }
+            updateThemeToggleUI(normalizedTheme);
+        }
+
         // Load theme preference from localStorage
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
-            htmlElement.className = savedTheme;
-            updateThemeToggleUI(savedTheme);
+            applyTheme(savedTheme, { persist: false });
         }
 
         function updateThemeToggleUI(theme) {
@@ -378,11 +439,9 @@ function confirmAction(action, taskId) {
         }
 
         themeToggle.addEventListener('click', () => {
-            const currentTheme = htmlElement.className;
-            const newTheme = currentTheme === 'dark' ? '' : 'dark';
-            htmlElement.className = newTheme;
-            localStorage.setItem('theme', newTheme);
-            updateThemeToggleUI(newTheme);
+            const currentTheme = htmlElement.classList.contains('dark') ? 'dark' : 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
         });
 
         // Initialize theme on page load

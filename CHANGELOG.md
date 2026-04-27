@@ -48,6 +48,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.
 * Tag normalization now strips leading `#` in public submit and demo change suggestion flows, preventing accidental `##tag` rendering.
 * Aligned `botocore` pin with `boto3==1.42.74` in `requirements.txt` to keep pip dependency resolution valid.

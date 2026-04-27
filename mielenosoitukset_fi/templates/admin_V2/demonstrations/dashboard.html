@@ -162,6 +162,10 @@
     color: light-dark(#000, #fff);
   }
 
+  .submitter-info-body {
+    color: light-dark(#1f2937, #e5e7f4);
+  }
+
   /* smooth fade/slide when a row is removed */
   tr.fade‑out {
     opacity: 0;
@@ -969,7 +973,7 @@
           <button type="button" class="btn-close btn-close-white" aria-label="{{ _('Sulje') }}"
             id="submitterInfoCloseBtn"></button>
         </div>
-        <div class="modal-body p-4 text-center" id="submitter-info-content" style="color: white;">
+        <div class="modal-body p-4 text-center submitter-info-body" id="submitter-info-content">
           <!-- Dynamically filled content -->
           <div id="noSubmitterInfo" class="alert alert-warning d-none">
             <i class="fa-solid fa-circle-exclamation me-2"></i>

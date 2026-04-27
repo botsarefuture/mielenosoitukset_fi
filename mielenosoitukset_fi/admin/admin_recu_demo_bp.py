@@ -30,6 +30,53 @@ def log_request_info():
     )
 
 
+def _safe_text(value):
+    """Return a lower-cased string for filtering, tolerating missing fields."""
+    return (value or "").lower()
+
+
+def _safe_demo_date(value):
+    """Return a sortable date, falling back for malformed legacy records."""
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return date.max
+
+
+def _get_repeat_frequency(form):
+    """Support both legacy and current recurrence field names."""
+    raw_frequency = form.get("frequency_type") or form.get("recurrence_type") or "none"
+    return raw_frequency.lower()
+
+
+def _get_repeat_interval(form, frequency):
+    """Normalize repeat interval so `none` schedules always serialize safely."""
+    if frequency == "none":
+        return 0
+
+    raw_interval = form.get("frequency_interval") or form.get("recurrence_interval") or "1"
+    try:
+        interval = int(raw_interval)
+    except (TypeError, ValueError):
+        interval = 1
+    return max(interval, 1)
+
+
+def _get_route_points(form):
+    """Collect route points from both pill-based and legacy text inputs."""
+    route_points = [
+        point.strip() for point in form.getlist("route[]") if point and point.strip()
+    ]
+    if route_points:
+        return route_points
+
+    legacy_route = form.get("route")
+    if not legacy_route:
+        return []
+
+    return [point.strip() for point in legacy_route.split(",") if point.strip()]
+
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required
@@ -43,26 +90,26 @@ def recu_demo_control():
 
     # Construct query based on approval status
     query = {"approved": approved_status} if approved_status else {}
-    recurring_demos = [
-        RecurringDemonstration.from_dict(recudemo)
-        for recudemo in list(mongo.recu_demos.find(query))
-    ]  #  .recu_demos.find(query)
+    recurring_demos = []
+    for recudemo in list(mongo.recu_demos.find(query)):
+        try:
+            recurring_demos.append(RecurringDemonstration.from_dict(recudemo))
+        except Exception:
+            continue
 
     # Filter based on search query and date
     filtered_recurring_demos = [
         demo
         for demo in recurring_demos
         if (
-            search_query.lower() in demo.title.lower()
-            or search_query.lower() in demo.city.lower()
-            or search_query.lower() in demo.address.lower()
+            _safe_text(search_query) in _safe_text(demo.title)
+            or _safe_text(search_query) in _safe_text(demo.city)
+            or _safe_text(search_query) in _safe_text(demo.address)
         )
     ]
 
     # Sort the filtered recurring demonstrations by date
-    filtered_recurring_demos.sort(
-        key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date()
-    )
+    filtered_recurring_demos.sort(key=lambda x: _safe_demo_date(x.date))
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/dashboard.html",
@@ -136,14 +183,15 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
 
     # Basic info
     title = request.form.get("title")
+    description = request.form.get("description")
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
-    city = request.form.get("city")
+    city = request.form.get("city") or ""
     address = request.form.get("address")
     event_type = request.form.get("type")
-    route = request.form.get("route")
+    route = _get_route_points(request.form)
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
@@ -166,9 +214,9 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         index += 1
 
     # Recurrence / repeat schedule
-    freq = request.form.get("frequency_type", "none")
-    interval = int(request.form.get("frequency_interval", 1))
-    end_date = request.form.get("end_date")
+    freq = _get_repeat_frequency(request.form)
+    interval = _get_repeat_interval(request.form, freq)
+    end_date = request.form.get("end_date") or request.form.get("recurrence_end_date")
 
     # Weekly
     weekday = None
@@ -206,6 +254,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     # Assemble demonstration data
     demonstration_data = {
         "title": title,
+        "description": description,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,

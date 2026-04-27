@@ -63,6 +63,8 @@
 <section class="form-section dashboard-panel mb-8">
     <h2 class="text-xl font-semibold mb-4">{{ _('Sijainti') }}</h2>
 
+    {% include "paikkakunta-dropdown.html" %}
+
     <div class="form-group">
         <label for="address" class="block font-medium mb-1">{{ _('Osoite') }} <span
                 class="text-red-500">*</span></label>

@@ -28,7 +28,10 @@ def _history_for_demo(db, demo_id):
 
 
 def _audit_actions_for_demo(db, demo_id):
-    return [doc["action"] for doc in db.demo_audit_logs.find({"demo_id": str(demo_id)})]
+    cursor = db.demo_audit_logs.find({"demo_id": str(demo_id)}).sort(
+        [("timestamp", 1), ("_id", 1)]
+    )
+    return [doc["action"] for doc in cursor]
 
 
 @pytest.mark.integration

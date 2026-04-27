@@ -410,19 +410,21 @@ function confirmAction(action, taskId) {
         const themeLabel = document.getElementById('theme-label');
         const htmlElement = document.documentElement;
 
-        function applyTheme(theme) {
+        function applyTheme(theme, { persist = true } = {}) {
             const normalizedTheme = theme === 'light' ? 'light' : 'dark';
             htmlElement.classList.remove('light', 'dark');
             htmlElement.classList.add(normalizedTheme);
             htmlElement.setAttribute('data-bs-theme', normalizedTheme);
-            localStorage.setItem('theme', normalizedTheme);
+            if (persist) {
+                localStorage.setItem('theme', normalizedTheme);
+            }
             updateThemeToggleUI(normalizedTheme);
         }
 
         // Load theme preference from localStorage
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme') || 'dark';
-            applyTheme(savedTheme);
+            applyTheme(savedTheme, { persist: false });
         }
 
         function updateThemeToggleUI(theme) {

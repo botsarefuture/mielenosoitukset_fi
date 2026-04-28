@@ -30,6 +30,31 @@ def log_request_info():
     )
 
 
+def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None):
+    """Render the shared recurring-demonstration form."""
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+        demo=demo,
+        form_action=form_action,
+        title=title,
+        submit_button_text=submit_button_text,
+        city_list=CITY_LIST,
+        all_organizations=list(mongo.organizations.find()),
+    )
+
+
+def _get_route_points(form):
+    """Support both pill-based route inputs and legacy text route values."""
+    route_points = [
+        point.strip() for point in form.getlist("route[]") if point and point.strip()
+    ]
+    if route_points:
+        return route_points
+
+    legacy_route = form.get("route")
+    return legacy_route.strip() if legacy_route else None
+
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required
@@ -81,13 +106,10 @@ def create_recu_demo():
     if request.method == "POST":
         return handle_recu_demo_form(request, is_edit=False)
 
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
+    return _render_recu_demo_form(
         form_action=url_for("admin_recu_demo.create_recu_demo"),
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
-        city_list=CITY_LIST,
-        all_organizations=list(mongo.organizations.find()),
     )
 
 
@@ -123,19 +145,18 @@ def edit_recu_demo(demo_id):
         return handle_recu_demo_form(request, is_edit=True, demo_id=demo_id)
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+    return _render_recu_demo_form(
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
-        city_list=CITY_LIST,
     )
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a recurring demonstration."""
 
     # Basic info
     title = request.form.get("title")
+    description = request.form.get("description")
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
@@ -143,7 +164,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     city = request.form.get("city")
     address = request.form.get("address")
     event_type = request.form.get("type")
-    route = request.form.get("route")
+    route = _get_route_points(request.form)
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
@@ -206,6 +227,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     # Assemble demonstration data
     demonstration_data = {
         "title": title,
+        "description": description,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,

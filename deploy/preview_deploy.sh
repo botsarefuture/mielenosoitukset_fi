@@ -39,10 +39,11 @@ render_config() {
   local config_file="$1"
   local hostname="$2"
   local db_name="$3"
+  local mongo_host="$4"
 
   cat >"$config_file" <<EOF
 SECRET_KEY: "${PREVIEW_SECRET_KEY}"
-MONGO_URI: "mongodb://mongo:27017"
+MONGO_URI: "mongodb://${mongo_host}:27017"
 MONGO_DBNAME: "${db_name}"
 MAIL:
   SERVER: "${PREVIEW_MAIL_SERVER:-mailserver}"
@@ -78,9 +79,10 @@ EOF
 
 wait_for_mongo() {
   local network="$1"
+  local mongo_host="$2"
 
   for _ in $(seq 1 60); do
-    if docker run --rm --network "$network" mongo:8 mongosh "mongodb://mongo:27017" --quiet --eval 'db.adminCommand({ ping: 1 }).ok' >/dev/null 2>&1; then
+    if docker run --rm --network "$network" mongo:8 mongosh "mongodb://${mongo_host}:27017" --quiet --eval 'db.adminCommand({ ping: 1 }).ok' >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
@@ -93,6 +95,7 @@ seed_mongo_if_requested() {
   local network="$1"
   local preview_dir="$2"
   local dest_db="$4"
+  local mongo_host="$5"
 
   if [[ -z "${PREVIEW_MONGO_SOURCE_URI:-}" || -z "${PREVIEW_MONGO_SOURCE_DB:-}" ]]; then
     return 0
@@ -111,7 +114,8 @@ seed_mongo_if_requested() {
     -v "${preview_dir}:/dump" \
     -e SOURCE_DB="${PREVIEW_MONGO_SOURCE_DB}" \
     -e DEST_DB="${dest_db}" \
-    mongo:8 bash -lc 'mongorestore --uri "mongodb://mongo:27017" --nsFrom "${SOURCE_DB}.*" --nsTo "${DEST_DB}.*" --drop --archive=/dump/mongo-seed.archive.gz --gzip'
+    -e MONGO_HOST="${mongo_host}" \
+    mongo:8 bash -lc 'mongorestore --uri "mongodb://${MONGO_HOST}:27017" --nsFrom "${SOURCE_DB}.*" --nsTo "${DEST_DB}.*" --drop --archive=/dump/mongo-seed.archive.gz --gzip'
 
   rm -f "$dump_file"
 }
@@ -185,6 +189,7 @@ deploy_preview() {
   local port_base="${PREVIEW_PORT_BASE:-20000}"
   local port="$((port_base + pr_number))"
   local db_name="${PREVIEW_MONGO_DBNAME_PREFIX:-preview_pr_}${pr_number}"
+  local mongo_host="${mongo_container}"
   local mongo_data_dir="${preview_dir}/mongo"
 
   mkdir -p "$preview_dir" "$snippets_dir"
@@ -196,14 +201,14 @@ deploy_preview() {
   start_mail_container "$mail_container" "$network_name"
 
   echo "[preview] waiting for MongoDB to become ready"
-  wait_for_mongo "$network_name"
+  wait_for_mongo "$network_name" "$mongo_host"
 
   echo "[preview] writing preview application config"
-  render_config "$config_file" "$hostname" "$db_name"
+  render_config "$config_file" "$hostname" "$db_name" "$mongo_host"
   chmod 0640 "$config_file"
 
   echo "[preview] seeding preview database if configured"
-  seed_mongo_if_requested "$network_name" "$preview_dir" "$db_name"
+  seed_mongo_if_requested "$network_name" "$preview_dir" "$db_name" "$mongo_host"
 
   echo "[preview] starting application container"
   docker rm -f "$container_name" >/dev/null 2>&1 || true

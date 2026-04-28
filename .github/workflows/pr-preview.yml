@@ -27,6 +27,7 @@ jobs:
       PREVIEW_SSH_USER: ${{ vars.PREVIEW_SSH_USER }}
       PREVIEW_DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
       PREVIEW_ENV_FILE: ${{ vars.PREVIEW_ENV_FILE }}
+      PREVIEW_REMOTE_SCRIPT: /home/preview/preview_deploy.sh
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
@@ -56,7 +57,7 @@ jobs:
           ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Copy deploy script
-        run: scp workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:/tmp/preview_deploy.sh"
+        run: scp workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:$PREVIEW_REMOTE_SCRIPT"
 
       - name: Load image on preview server
         run: docker save "preview-pr-${PR_NUMBER}:${PR_HEAD_SHA}" | ssh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST" "docker load"
@@ -67,7 +68,7 @@ jobs:
           set -euo pipefail
           preview_url="https://pr-${PR_NUMBER}.${PREVIEW_DOMAIN}"
           ssh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST" \
-            "PREVIEW_ENV_FILE='${PREVIEW_ENV_FILE:-/etc/mielenosoitukset-preview.env}' /tmp/preview_deploy.sh deploy '${PR_NUMBER}' 'preview-pr-${PR_NUMBER}:${PR_HEAD_SHA}'"
+            "PREVIEW_ENV_FILE='${PREVIEW_ENV_FILE:-/etc/mielenosoitukset-preview.env}' $PREVIEW_REMOTE_SCRIPT deploy '${PR_NUMBER}' 'preview-pr-${PR_NUMBER}:${PR_HEAD_SHA}'"
           printf 'preview_url=%s\n' "$preview_url" >> "$GITHUB_OUTPUT"
 
       - name: Publish preview comment
@@ -125,6 +126,7 @@ jobs:
       PREVIEW_SSH_USER: ${{ vars.PREVIEW_SSH_USER }}
       PREVIEW_DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
       PREVIEW_ENV_FILE: ${{ vars.PREVIEW_ENV_FILE }}
+      PREVIEW_REMOTE_SCRIPT: /home/preview/preview_deploy.sh
       PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
@@ -145,12 +147,12 @@ jobs:
           ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy script to preview host
-        run: scp workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:/tmp/preview_deploy.sh"
+        run: scp workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:$PREVIEW_REMOTE_SCRIPT"
 
       - name: Destroy preview container
         run: |
           ssh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST" \
-            "PREVIEW_ENV_FILE='${PREVIEW_ENV_FILE:-/etc/mielenosoitukset-preview.env}' /tmp/preview_deploy.sh destroy '${PR_NUMBER}'"
+            "PREVIEW_ENV_FILE='${PREVIEW_ENV_FILE:-/etc/mielenosoitukset-preview.env}' $PREVIEW_REMOTE_SCRIPT destroy '${PR_NUMBER}'"
 
       - name: Close preview comment
         uses: actions/github-script@v7

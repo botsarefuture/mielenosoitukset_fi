@@ -5,6 +5,9 @@
 ## UNRELEASED
 
 ### Added
+* Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
+* Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
+* Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 * Added regression coverage for duplicate demo submissions, duplicate-submission merge handling, and background-job demo audit/history recording so CI catches duplicate creation and demo ID drift earlier.
 * Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
 * Route-surface manifest now includes blueprint URL prefixes so changes to `url_prefix` in blueprint registration (e.g., `/users/`, `/api/`, `/api/admin/demo/`) are detected by CI and block merge unless tests are explicitly updated.
@@ -94,6 +97,9 @@
 * Token validation no longer double-logs API usage when the `token_required` decorator already records usage per request.
 * Pride näkyväksi sivun tilastot laskevat kaupungit oikein ja käyttävät samaa korttinäkymää kuin päälistaus, jotta tapahtumat näkyvät yhtenäisesti.
 * Pride näkyväksi -sivun sydänanimaatio on rajattu hero-osioon, jotta koristeet eivät leiju sisällön reunoilla.
+* Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
+* Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
+* Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.

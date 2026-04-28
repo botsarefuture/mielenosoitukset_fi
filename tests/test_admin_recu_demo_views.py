@@ -6,6 +6,7 @@ def test_create_recu_demo_uses_shared_admin_form(admin_client):
     assert 'name="cover_picture"' in page
     assert 'id="organization"' in page
     assert "Lisäkuvat" in page
+    assert "Luo muokkauslinkki" not in page
 
 
 def test_edit_recu_demo_renders_shared_admin_form_with_org_selector(admin_client, seeded_data):

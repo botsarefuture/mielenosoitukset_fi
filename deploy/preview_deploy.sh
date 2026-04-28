@@ -45,7 +45,7 @@ SECRET_KEY: "${PREVIEW_SECRET_KEY}"
 MONGO_URI: "mongodb://mongo:27017"
 MONGO_DBNAME: "${db_name}"
 MAIL:
-  SERVER: "${PREVIEW_MAIL_SERVER:-localhost}"
+  SERVER: "${PREVIEW_MAIL_SERVER:-mailserver}"
   PORT: ${PREVIEW_MAIL_PORT:-1025}
   USE_TLS: ${PREVIEW_MAIL_USE_TLS:-false}
   USERNAME: "${PREVIEW_MAIL_USERNAME:-}"
@@ -127,10 +127,24 @@ start_mongo_container() {
   docker run -d \
     --name "$mongo_container" \
     --network "$network" \
+    --network-alias mongo \
     --restart unless-stopped \
     -v "$mongo_data_dir:/data/db" \
     mongo:8 \
     mongod --bind_ip_all --port 27017 >/dev/null
+}
+
+start_mail_container() {
+  local mail_container="$1"
+  local network="$2"
+
+  docker rm -f "$mail_container" >/dev/null 2>&1 || true
+  docker run -d \
+    --name "$mail_container" \
+    --network "$network" \
+    --network-alias mailserver \
+    --restart unless-stopped \
+    reachfive/fake-smtp-server >/dev/null
 }
 
 create_network() {
@@ -166,6 +180,7 @@ deploy_preview() {
   local snippet_file="${snippets_dir}/pr-${pr_number}.caddy"
   local container_name="mielenosoitukset-preview-pr-${pr_number}"
   local mongo_container="mielenosoitukset-preview-mongo-pr-${pr_number}"
+  local mail_container="mielenosoitukset-preview-mail-pr-${pr_number}"
   local network_name="${PREVIEW_NETWORK_PREFIX:-mielenosoitukset-preview}-pr-${pr_number}"
   local port_base="${PREVIEW_PORT_BASE:-20000}"
   local port="$((port_base + pr_number))"
@@ -175,13 +190,22 @@ deploy_preview() {
   mkdir -p "$preview_dir" "$snippets_dir"
   chmod 0750 "$preview_dir" "$snippets_dir"
 
+  echo "[preview] creating isolated network and service containers"
   create_network "$network_name"
   start_mongo_container "$mongo_container" "$network_name" "$mongo_data_dir"
+  start_mail_container "$mail_container" "$network_name"
+
+  echo "[preview] waiting for MongoDB to become ready"
   wait_for_mongo "$network_name"
+
+  echo "[preview] writing preview application config"
   render_config "$config_file" "$hostname" "$db_name"
   chmod 0640 "$config_file"
+
+  echo "[preview] seeding preview database if configured"
   seed_mongo_if_requested "$network_name" "$preview_dir" "$db_name"
 
+  echo "[preview] starting application container"
   docker rm -f "$container_name" >/dev/null 2>&1 || true
 
   docker run -d \
@@ -203,6 +227,7 @@ deploy_preview() {
     -v "$config_file:/app/config.preview.yaml:ro" \
     "$image_tag" >/dev/null
 
+  echo "[preview] publishing caddy snippet"
   cat >"$snippet_file" <<EOF
 $hostname {
   encode zstd gzip
@@ -211,6 +236,7 @@ $hostname {
 EOF
   chmod 0644 "$snippet_file"
 
+  echo "[preview] reloading caddy"
   eval "$reload_cmd"
 
   echo "https://${hostname}"
@@ -233,10 +259,12 @@ destroy_preview() {
   local snippet_file="${snippets_dir}/pr-${pr_number}.caddy"
   local container_name="mielenosoitukset-preview-pr-${pr_number}"
   local mongo_container="mielenosoitukset-preview-mongo-pr-${pr_number}"
+  local mail_container="mielenosoitukset-preview-mail-pr-${pr_number}"
   local network_name="${PREVIEW_NETWORK_PREFIX:-mielenosoitukset-preview}-pr-${pr_number}"
 
   docker rm -f "$container_name" >/dev/null 2>&1 || true
   docker rm -f "$mongo_container" >/dev/null 2>&1 || true
+  docker rm -f "$mail_container" >/dev/null 2>&1 || true
   rm -f "$snippet_file"
   rm -rf "$preview_dir"
   docker network rm "$network_name" >/dev/null 2>&1 || true

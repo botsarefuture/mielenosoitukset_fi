@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
@@ -88,6 +89,40 @@ def _get_route_points(form):
         return []
 
     return [point.strip() for point in legacy_route.split(",") if point.strip()]
+
+
+def _collect_organizers(form):
+    """Collect organizer cards even if client-side indexes become sparse."""
+    organizers = []
+    organizer_indexes = sorted(
+        {
+            int(match.group(1))
+            for key in form.keys()
+            if (match := re.match(r"organizer_name_(\d+)$", key))
+        }
+        | {
+            int(match.group(1))
+            for key in form.keys()
+            if (match := re.match(r"organizer_id_(\d+)$", key))
+        }
+    )
+
+    for index in organizer_indexes:
+        name = form.get(f"organizer_name_{index}")
+        organization_id = form.get(f"organizer_id_{index}")
+        if not name and not organization_id:
+            continue
+
+        organizers.append(
+            Organizer(
+                name=name,
+                email=form.get(f"organizer_email_{index}"),
+                website=form.get(f"organizer_website_{index}"),
+                organization_id=organization_id,
+            ).to_dict()
+        )
+
+    return organizers
 
 
 @admin_recu_demo_bp.route("/")
@@ -208,20 +243,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     cover_picture = request.form.get("cover_picture")
     gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
 
-    # Process organizers dynamically
-    organizers = []
-    index = 1
-    while True:
-        name = request.form.get(f"organizer_name_{index}")
-        _id = request.form.get(f"organizer_id_{index}")
-        if not name and not _id:
-            break
-        website = request.form.get(f"organizer_website_{index}")
-        email = request.form.get(f"organizer_email_{index}")
-        organizers.append(
-            Organizer(name=name, email=email, website=website, organization_id=_id).to_dict()
-        )
-        index += 1
+    organizers = _collect_organizers(request.form)
 
     # Recurrence / repeat schedule
     freq = _get_repeat_frequency(request.form)

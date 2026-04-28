@@ -51,6 +51,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* PR preview workflow now uses SSH keepalive options for long-running deploys so Mongo seeding and image loading do not drop the connection mid-run.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.
 * Admin demo create form keeps the shared submit-lock behavior outside the edit-only controls, so create submissions still disable the button and show the saving state.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.

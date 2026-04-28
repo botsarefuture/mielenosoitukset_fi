@@ -487,7 +487,7 @@
 * The demonstration detail page’s report-error menu now uses a more polished card-based modal design with clearer actions and feedback while keeping the existing reporting flow unchanged.
 * The detail-page error report form now correctly hides its loading spinner until submission, resets cleanly when the modal closes, and uses more deliberate modal button styling.
 * The detail-page report flow now has explicit mobile modal layout rules so the form, actions, and status blocks stay usable on narrow screens.
-* Preview environments now start the isolated MongoDB container with the `mongo` network alias and a dedicated mail container, so PR previews can connect to their own services and finish seeding instead of stalling on startup.
+* Preview environments now connect to their own MongoDB container by container name and start a dedicated mail container, so PR previews can resolve their services reliably and finish seeding instead of stalling on startup.
 * Preview deploys now print explicit progress markers during setup, seeding, app startup, and Caddy reload so long-running previews remain observable in GitHub Actions.
 
 ---

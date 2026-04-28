@@ -158,6 +158,10 @@ The suite now includes:
 1. Admins can log in to access the admin dashboard and manage submissions.
 2. Admins can approve, reject, or edit submitted demonstrations directly from the dashboard.
 
+### Preview Environments
+
+For PR preview deployment details, see [docs/preview-environments.md](docs/preview-environments.md).
+
 ---
 
 ## Contributing

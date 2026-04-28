@@ -846,7 +846,8 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   .contact-item {
     flex: 1 1 220px;
-    min-width: 200px;
+    min-width: 0;
+    max-width: 100%;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -861,10 +862,14 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   }
 
   .contact-item a {
+    min-width: 0;
+    max-width: 100%;
     color: var(--color-text);
     font-weight: 600;
     text-decoration: none;
     transition: var(--transition);
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .contact-item a:hover {
@@ -1040,6 +1045,10 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
     .organizers-grid {
       grid-template-columns: 1fr;
+    }
+
+    .contact-item {
+      flex-basis: 100%;
     }
 
     .countdown-timer {

@@ -832,13 +832,11 @@
 
 
 <!-- Edit Link Modal & Duplicate Button Section -->
-{% if current_user.is_authenticated %}
+{% if current_user.is_authenticated and demo and demo._id %}
 <div>
     <div class="text-center mt-4" style="display: flex; gap: 1rem; justify-content: center;">
         <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki') }}</button>
-        {% if demo and demo._id %}
         <button type="button" class="btn btn-warning" id="duplicate-demo-btn">{{ _('Luo kopio mielenosoituksesta') }}</button>
-        {% endif %}
     </div>
 
     <div id="overlay" class="modal-overlay"></div>
@@ -910,7 +908,6 @@
         });
 
         // Duplicate demonstration functionality
-        {% if demo and demo._id %}
         document.getElementById('duplicate-demo-btn').addEventListener('click', function () {
             if (confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta ? ') }}')) {
                 fetch(`/admin/demo/duplicate/{{ demo._id }}`, {
@@ -933,7 +930,6 @@
                     });
             }
         });
-        {% endif %}
 
         const demoForm = document.getElementById('demo-form');
         if (demoForm) {

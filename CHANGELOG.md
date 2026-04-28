@@ -96,6 +96,7 @@
 
 ### Changed
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.
+* Admin demonstration create pages no longer show edit-link or duplication controls before a demo exists, reducing dead functionality in the admin UI.
 * Demo edit suggestion form now has a pill-based march route editor (Enter/comma to add points) so users can propose route changes without wrestling with a single text field.
 * Demo edit suggestion form now uses the same pill-style add/remove flow for tags and clarifies that tags should be entered without `#`.
 * Demo edit suggestion form now uses a rich-text description editor, matching the public submit flow for easier content fixes.

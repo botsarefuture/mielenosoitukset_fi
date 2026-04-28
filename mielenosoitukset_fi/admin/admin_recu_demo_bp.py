@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
@@ -11,8 +12,6 @@ from mielenosoitukset_fi.utils.wrappers import permission_required, admin_requir
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
-
-from mielenosoitukset_fi.utils.classes import RecurringDemonstration
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
@@ -30,6 +29,102 @@ def log_request_info():
     )
 
 
+def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None):
+    """Render the shared recurring-demonstration form."""
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+        demo=demo,
+        form_action=form_action,
+        title=title,
+        submit_button_text=submit_button_text,
+        city_list=CITY_LIST,
+        all_organizations=list(mongo.organizations.find()),
+    )
+
+
+def _safe_text(value):
+    """Return a lower-cased string for filtering, tolerating missing fields."""
+    return (value or "").lower()
+
+
+def _safe_demo_date(value):
+    """Return a sortable date, falling back for malformed legacy records."""
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return date.max
+
+
+def _get_repeat_frequency(form):
+    """Support both legacy and current recurrence field names."""
+    raw_frequency = form.get("frequency_type") or form.get("recurrence_type") or "none"
+    return raw_frequency.lower()
+
+
+def _get_repeat_interval(form, frequency):
+    """Normalize repeat interval so `none` schedules always serialize safely."""
+    if frequency == "none":
+        return 0
+
+    raw_interval = (
+        form.get("frequency_interval") or form.get("recurrence_interval") or "1"
+    )
+    try:
+        interval = int(raw_interval)
+    except (TypeError, ValueError):
+        interval = 1
+    return max(interval, 1)
+
+
+def _get_route_points(form):
+    """Collect route points from both pill-based and legacy text inputs."""
+    route_points = [
+        point.strip() for point in form.getlist("route[]") if point and point.strip()
+    ]
+    if route_points:
+        return route_points
+
+    legacy_route = form.get("route")
+    if not legacy_route:
+        return []
+
+    return [point.strip() for point in legacy_route.split(",") if point.strip()]
+
+
+def _collect_organizers(form):
+    """Collect organizer cards even if client-side indexes become sparse."""
+    organizers = []
+    organizer_indexes = sorted(
+        {
+            int(match.group(1))
+            for key in form.keys()
+            if (match := re.match(r"organizer_name_(\d+)$", key))
+        }
+        | {
+            int(match.group(1))
+            for key in form.keys()
+            if (match := re.match(r"organizer_id_(\d+)$", key))
+        }
+    )
+
+    for index in organizer_indexes:
+        name = form.get(f"organizer_name_{index}")
+        organization_id = form.get(f"organizer_id_{index}")
+        if not name and not organization_id:
+            continue
+
+        organizers.append(
+            Organizer(
+                name=name,
+                email=form.get(f"organizer_email_{index}"),
+                website=form.get(f"organizer_website_{index}"),
+                organization_id=organization_id,
+            ).to_dict()
+        )
+
+    return organizers
+
+
 @admin_recu_demo_bp.route("/")
 @login_required
 @admin_required
@@ -43,26 +138,26 @@ def recu_demo_control():
 
     # Construct query based on approval status
     query = {"approved": approved_status} if approved_status else {}
-    recurring_demos = [
-        RecurringDemonstration.from_dict(recudemo)
-        for recudemo in list(mongo.recu_demos.find(query))
-    ]  #  .recu_demos.find(query)
+    recurring_demos = []
+    for recudemo in list(mongo.recu_demos.find(query)):
+        try:
+            recurring_demos.append(RecurringDemonstration.from_dict(recudemo))
+        except Exception:
+            continue
 
     # Filter based on search query and date
     filtered_recurring_demos = [
         demo
         for demo in recurring_demos
         if (
-            search_query.lower() in demo.title.lower()
-            or search_query.lower() in demo.city.lower()
-            or search_query.lower() in demo.address.lower()
+            _safe_text(search_query) in _safe_text(demo.title)
+            or _safe_text(search_query) in _safe_text(demo.city)
+            or _safe_text(search_query) in _safe_text(demo.address)
         )
     ]
 
     # Sort the filtered recurring demonstrations by date
-    filtered_recurring_demos.sort(
-        key=lambda x: datetime.strptime(x.date, "%Y-%m-%d").date()
-    )
+    filtered_recurring_demos.sort(key=lambda x: _safe_demo_date(x.date))
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/dashboard.html",
@@ -81,13 +176,10 @@ def create_recu_demo():
     if request.method == "POST":
         return handle_recu_demo_form(request, is_edit=False)
 
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
+    return _render_recu_demo_form(
         form_action=url_for("admin_recu_demo.create_recu_demo"),
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
-        city_list=CITY_LIST,
-        all_organizations=list(mongo.organizations.find()),
     )
 
 
@@ -123,52 +215,40 @@ def edit_recu_demo(demo_id):
         return handle_recu_demo_form(request, is_edit=True, demo_id=demo_id)
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+    return _render_recu_demo_form(
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
-        city_list=CITY_LIST,
     )
+
+
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a recurring demonstration."""
 
     # Basic info
     title = request.form.get("title")
+    description = request.form.get("description")
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
-    city = request.form.get("city")
+    city = request.form.get("city") or ""
     address = request.form.get("address")
     event_type = request.form.get("type")
-    route = request.form.get("route")
+    route = _get_route_points(request.form)
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
     cover_picture = request.form.get("cover_picture")
     gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
 
-    # Process organizers dynamically
-    organizers = []
-    index = 1
-    while True:
-        name = request.form.get(f"organizer_name_{index}")
-        _id = request.form.get(f"organizer_id_{index}")
-        if not name and not _id:
-            break
-        website = request.form.get(f"organizer_website_{index}")
-        email = request.form.get(f"organizer_email_{index}")
-        organizers.append(
-            Organizer(name=name, email=email, website=website, organization_id=_id).to_dict()
-        )
-        index += 1
+    organizers = _collect_organizers(request.form)
 
     # Recurrence / repeat schedule
-    freq = request.form.get("frequency_type", "none")
-    interval = int(request.form.get("frequency_interval", 1))
-    end_date = request.form.get("end_date")
+    freq = _get_repeat_frequency(request.form)
+    interval = _get_repeat_interval(request.form, freq)
+    end_date = request.form.get("end_date") or request.form.get("recurrence_end_date")
 
     # Weekly
     weekday = None
@@ -206,6 +286,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     # Assemble demonstration data
     demonstration_data = {
         "title": title,
+        "description": description,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
@@ -243,11 +324,16 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         import logging
+
         logging.error(f"An error occurred: {str(e)}")
         flash_message(f"Virhe: {str(e)}")
         return redirect(
             url_for(
-                "admin_recu_demo.edit_recu_demo" if is_edit else "admin_recu_demo.create_recu_demo",
+                (
+                    "admin_recu_demo.edit_recu_demo"
+                    if is_edit
+                    else "admin_recu_demo.create_recu_demo"
+                ),
                 demo_id=demo_id,
             )
         )

@@ -51,6 +51,9 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.
+* Admin recurring demonstration creation now accepts the current create-form recurrence fields and city selection without crashing the dashboard redirect after save.
+* Organizer contact cards on demonstration detail pages now wrap long website and email links on mobile instead of overflowing the layout.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.
@@ -94,8 +97,12 @@
 * Token validation no longer double-logs API usage when the `token_required` decorator already records usage per request.
 * Pride näkyväksi sivun tilastot laskevat kaupungit oikein ja käyttävät samaa korttinäkymää kuin päälistaus, jotta tapahtumat näkyvät yhtenäisesti.
 * Pride näkyväksi -sivun sydänanimaatio on rajattu hero-osioon, jotta koristeet eivät leiju sisällön reunoilla.
+* Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
+* Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
+* Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.
 * Demo edit suggestion form now has a pill-based march route editor (Enter/comma to add points) so users can propose route changes without wrestling with a single text field.
 * Demo edit suggestion form now uses the same pill-style add/remove flow for tags and clarifies that tags should be entered without `#`.
 * Demo edit suggestion form now uses a rich-text description editor, matching the public submit flow for easier content fixes.

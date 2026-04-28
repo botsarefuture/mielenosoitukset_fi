@@ -12,8 +12,6 @@ from mielenosoitukset_fi.utils.wrappers import permission_required, admin_requir
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
-from mielenosoitukset_fi.utils.classes import RecurringDemonstration
-
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
@@ -27,6 +25,19 @@ def log_request_info():
     """Log request information before handling it."""
     log_admin_action_V2(
         AdminActParser().log_request_info(request.__dict__, current_user)
+    )
+
+
+def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None):
+    """Render the shared recurring-demonstration form."""
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+        demo=demo,
+        form_action=form_action,
+        title=title,
+        submit_button_text=submit_button_text,
+        city_list=CITY_LIST,
+        all_organizations=list(mongo.organizations.find()),
     )
 
 
@@ -54,7 +65,9 @@ def _get_repeat_interval(form, frequency):
     if frequency == "none":
         return 0
 
-    raw_interval = form.get("frequency_interval") or form.get("recurrence_interval") or "1"
+    raw_interval = (
+        form.get("frequency_interval") or form.get("recurrence_interval") or "1"
+    )
     try:
         interval = int(raw_interval)
     except (TypeError, ValueError):
@@ -128,13 +141,10 @@ def create_recu_demo():
     if request.method == "POST":
         return handle_recu_demo_form(request, is_edit=False)
 
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/form.html",
+    return _render_recu_demo_form(
         form_action=url_for("admin_recu_demo.create_recu_demo"),
         title="Luo toistuva mielenosoitus",
         submit_button_text="Luo",
-        city_list=CITY_LIST,
-        all_organizations=list(mongo.organizations.find()),
     )
 
 
@@ -170,14 +180,14 @@ def edit_recu_demo(demo_id):
         return handle_recu_demo_form(request, is_edit=True, demo_id=demo_id)
 
     recurring_demo = RecurringDemonstration.from_dict(demo_data)
-    return render_template(
-        f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
+    return _render_recu_demo_form(
         demo=recurring_demo,
         form_action=url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id),
         title="Muokkaa toistuvaa mielenosoitusta",
         submit_button_text="Vahvista muokkaus",
-        city_list=CITY_LIST,
     )
+
+
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a recurring demonstration."""
 
@@ -292,11 +302,16 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         return redirect(url_for("admin_recu_demo.recu_demo_control"))
     except Exception as e:
         import logging
+
         logging.error(f"An error occurred: {str(e)}")
         flash_message(f"Virhe: {str(e)}")
         return redirect(
             url_for(
-                "admin_recu_demo.edit_recu_demo" if is_edit else "admin_recu_demo.create_recu_demo",
+                (
+                    "admin_recu_demo.edit_recu_demo"
+                    if is_edit
+                    else "admin_recu_demo.create_recu_demo"
+                ),
                 demo_id=demo_id,
             )
         )

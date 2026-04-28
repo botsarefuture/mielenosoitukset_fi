@@ -23,6 +23,28 @@
     // Organizers logic
     let organizerCount = {{ demo.organizers| length if demo and demo.organizers else 0 }};
 
+    function addBlankOrganizer() {
+        organizerCount++;
+        const container = document.getElementById('organizers-container');
+        const organizerDiv = document.createElement('div');
+        organizerDiv.classList.add('dashboard-panel', 'form-group', 'organizer-item');
+
+        organizerDiv.innerHTML = `
+            <label for="organizer_name_${organizerCount}">{{ _('Järjestäjätahon nimi') }} <span class="required">*</span></label>
+            <input type="text" id="organizer_name_${organizerCount}" name="organizer_name_${organizerCount}" class="form-control" required>
+            <label for="organizer_website_${organizerCount}">{{ _('Nettisivu') }}</label>
+            <input type="url" id="organizer_website_${organizerCount}" name="organizer_website_${organizerCount}" class="form-control">
+            <label for="organizer_email_${organizerCount}">{{ _('Sähköposti') }}</label>
+            <input type="email" id="organizer_email_${organizerCount}" name="organizer_email_${organizerCount}" class="form-control">
+            <label for="organizer_id_${organizerCount}">{{ _('ID') }}</label>
+            <input type="text" id="organizer_id_${organizerCount}" name="organizer_id_${organizerCount}" class="form-control disabled" readonly>
+            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeOrganizer(this)">{{ _('Poista') }}</button>
+            <button type="button" class="btn btn-primary mt-2" onclick="createNewOrganizer(this)">{{ _('Luo uusi järjestäjä') }}</button>
+        `;
+
+        container.appendChild(organizerDiv);
+    }
+
     function addOrganizer() {
         const orgSelect = document.getElementById('organization');
         const selectedId = orgSelect.value;
@@ -649,7 +671,7 @@
                 </div>
                 {% endfor %}
                 {% else %}
-                <script>addOrganizer();</script>
+                <script>addBlankOrganizer();</script>
                 {% endif %}
             </div>
 
@@ -746,15 +768,13 @@
 
 
 <!-- Edit Link Modal & Duplicate Button Section -->
-{% if current_user.is_authenticated %}
+{% if current_user.is_authenticated and demo and demo._id %}
 <div>
     <div class="text-center mt-4" style="display: flex; gap: 1rem; justify-content: center;">
         <button type="button" class="btn btn-secondary" id="generate-edit-link-btn">{{ _('Luo muokkauslinkki')
             }}</button>
-        {% if demo and demo._id %}
         <button type="button" class="btn btn-warning" id="duplicate-demo-btn">{{ _('Luo kopio mielenosoituksesta')
             }}</button>
-        {% endif %}
     </div>
 
     <div id="overlay" class="modal-overlay"></div>
@@ -826,7 +846,6 @@
         });
 
         // Duplicate demonstration functionality
-        {% if demo and demo._id %}
         document.getElementById('duplicate-demo-btn').addEventListener('click', function () {
             if (confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta ? ') }}')) {
                 fetch(`/admin/demo/duplicate/{{ demo._id }}`, {
@@ -849,7 +868,6 @@
                     });
             }
         });
-        {% endif %}
     </script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">

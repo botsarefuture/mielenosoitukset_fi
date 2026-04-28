@@ -931,22 +931,25 @@
             }
         });
 
-        const demoForm = document.getElementById('demo-form');
-        if (demoForm) {
-            const submitButton = demoForm.querySelector("button[type='submit']");
-            demoForm.addEventListener('submit', () => {
-                if (submitButton) {
-                    submitButton.disabled = true;
-                    submitButton.classList.add("btn-disabled");
-                    submitButton.textContent = "{{ _('Tallennetaan...') }}";
-                }
-            });
-        }
     </script>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 </div>
 {% endif %}
+
+<script>
+    const demoForm = document.getElementById('demo-form');
+    if (demoForm) {
+        const submitButton = demoForm.querySelector("button[type='submit']");
+        demoForm.addEventListener('submit', () => {
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.classList.add("btn-disabled");
+                submitButton.textContent = "{{ _('Tallennetaan...') }}";
+            }
+        });
+    }
+</script>
 
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 

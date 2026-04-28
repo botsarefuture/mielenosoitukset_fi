@@ -51,6 +51,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Admin demo create form keeps the shared submit-lock behavior outside the edit-only controls, so create submissions still disable the button and show the saving state.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.
 * Admin recurring demonstration creation now accepts the current create-form recurrence fields and city selection without crashing the dashboard redirect after save.
 * Organizer contact cards on demonstration detail pages now wrap long website and email links on mobile instead of overflowing the layout.

@@ -54,6 +54,7 @@
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.
 * Admin recurring demonstration creation now accepts the current create-form recurrence fields and city selection without crashing the dashboard redirect after save.
 * Organizer contact cards on demonstration detail pages now wrap long website and email links on mobile instead of overflowing the layout.
+* PR preview workflow now sources `deploy/preview_deploy.sh` from the default branch instead of the PR checkout, so older branches can still trigger preview deployments successfully.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.

@@ -39,6 +39,12 @@ jobs:
       - name: Build preview image
         run: docker build --pull -t preview-pr-${PR_NUMBER}:${PR_HEAD_SHA} .
 
+      - name: Checkout workflow files
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: workflow
+
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -50,7 +56,7 @@ jobs:
           ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Copy deploy script
-        run: scp deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:/tmp/preview_deploy.sh"
+        run: scp workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:/tmp/preview_deploy.sh"
 
       - name: Load image on preview server
         run: docker save "preview-pr-${PR_NUMBER}:${PR_HEAD_SHA}" | ssh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST" "docker load"
@@ -127,19 +133,19 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.PREVIEW_SSH_PRIVATE_KEY }}
 
+      - name: Checkout workflow files
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: workflow
+
       - name: Trust preview host
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Copy deploy script
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: repo
-
       - name: Deploy script to preview host
-        run: scp repo/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:/tmp/preview_deploy.sh"
+        run: scp workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:/tmp/preview_deploy.sh"
 
       - name: Destroy preview container
         run: |

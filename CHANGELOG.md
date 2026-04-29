@@ -69,6 +69,8 @@
 * Admin user list now paginates server-side and searches display names in addition to usernames and emails, making the user control panel easier to scan at larger scale.
 * Fixed the config loader so the Flask session secret stays separate from the S3 secret key; preview login pages no longer 500 because `session` is unavailable.
 * Added a branch-sync helper script that rebases the current branch onto `origin/main` before PR creation, so future feature branches stay closer to the base branch and conflict-prone drift is caught earlier.
+* Developer app detail now shows the actual global rate-limit defaults instead of placeholder `N/A` values, making the permissions and requests panel easier to read.
+* Developer app detail now hides rate-limit policy text in environments where limiter enforcement is disabled, so the preview/admin UI no longer implies limits are active when they are not.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.

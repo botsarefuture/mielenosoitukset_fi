@@ -66,7 +66,9 @@
 * PR preview URLs now use `pr-<id>.mielenosoitukset.fi` instead of the deeper `previews.*` nesting, which keeps them within Cloudflare's normal first-level subdomain coverage.
 * Preview config files are now written world-readable inside the container mount, so the app process can load its per-PR config instead of crashing on permission denied.
 * Preview Caddy routing now points directly at each app container's Docker IP, avoiding the flaky localhost publish path on the preview host.
+* Admin user list now paginates server-side and searches display names in addition to usernames and emails, making the user control panel easier to scan at larger scale.
 * Fixed the config loader so the Flask session secret stays separate from the S3 secret key; preview login pages no longer 500 because `session` is unavailable.
+* Added a branch-sync helper script that rebases the current branch onto `origin/main` before PR creation, so future feature branches stay closer to the base branch and conflict-prone drift is caught earlier.
 * Developer app detail now shows the actual global rate-limit defaults instead of placeholder `N/A` values, making the permissions and requests panel easier to read.
 * Developer app detail now hides rate-limit policy text in environments where limiter enforcement is disabled, so the preview/admin UI no longer implies limits are active when they are not.
 * Developer permissions/request panel now separates current rights, current limits, and new-scope requests into clearer sections with better spacing and helper copy.

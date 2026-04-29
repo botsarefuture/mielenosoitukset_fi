@@ -112,18 +112,35 @@
   }
 
   // ======== Live Search ========
+  function loadUserTable(url) {
+    $.get(url, function (html) {
+      const newTable = $(html).find('#usersTableContainer').html();
+      $('#usersTableContainer').html(newTable);
+      initUserTableEnhancements($('#usersTableContainer'));
+    });
+  }
+
   let searchTimeout;
   $('#userSearch').on('input', function () {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       const query = encodeURIComponent($(this).val());
-      $.get(`{{ url_for('admin_user.user_control') }}?search=${query}`, function (html) {
-        // Extract only the table part from the returned HTML
-        const newTable = $(html).find('#usersTableContainer').html();
-        $('#usersTableContainer').html(newTable);
-      });
+      loadUserTable(`{{ url_for('admin_user.user_control') }}?search=${query}&page=1&per_page={{ per_page }}`);
     }, 300);
   });
+
+  $(document).on('click', '#usersTableContainer .pagination a.page-link', function (event) {
+    event.preventDefault();
+    loadUserTable(this.href);
+  });
+
+  function initUserTableEnhancements(scope = $(document)) {
+    scope.find('[data-bs-toggle="tooltip"]').each(function () {
+      bootstrap.Tooltip.getOrCreateInstance(this);
+    });
+  }
+
+  initUserTableEnhancements();
 
   // ======== Sortable Table Columns ========
   $(document).on('click', 'th.sortable', function () {

@@ -66,6 +66,7 @@
 * PR preview URLs now use `pr-<id>.mielenosoitukset.fi` instead of the deeper `previews.*` nesting, which keeps them within Cloudflare's normal first-level subdomain coverage.
 * Preview config files are now written world-readable inside the container mount, so the app process can load its per-PR config instead of crashing on permission denied.
 * Preview Caddy routing now points directly at each app container's Docker IP, avoiding the flaky localhost publish path on the preview host.
+* Public guides at `/ohjeet` are now accessible without login, and the public footer links to them directly so the documentation is easier to find.
 * Fixed the config loader so the Flask session secret stays separate from the S3 secret key; preview login pages no longer 500 because `session` is unavailable.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.

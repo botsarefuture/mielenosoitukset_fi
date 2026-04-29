@@ -59,7 +59,7 @@
 * PR preview workflow now sources `deploy/preview_deploy.sh` from the default branch instead of the PR checkout, so older branches can still trigger preview deployments successfully.
 * Preview environments now connect to their own MongoDB container by container name and start a dedicated mail container, so PR previews can resolve their services reliably and finish seeding instead of stalling on startup.
 * Preview deploys now print explicit progress markers during setup, seeding, app startup, and Caddy reload so long-running previews remain observable in GitHub Actions.
-* Preview database seeding now reads the correct argument positions in `deploy/preview_deploy.sh`, preventing previews from failing with an unbound-variable error after Mongo startup.
+* Preview database seeding now reads the correct argument positions in `deploy/preview_deploy.sh` and normalizes the source URI with `authSource=admin` when needed, preventing previews from failing after Mongo startup.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.

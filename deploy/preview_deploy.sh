@@ -102,10 +102,18 @@ seed_mongo_if_requested() {
   fi
 
   local dump_file="${preview_dir}/mongo-seed.archive.gz"
+  local source_uri="${PREVIEW_MONGO_SOURCE_URI}"
+  if [[ "$source_uri" != *"authSource="* ]]; then
+    if [[ "$source_uri" == *"?"* ]]; then
+      source_uri="${source_uri}&authSource=admin"
+    else
+      source_uri="${source_uri}?authSource=admin"
+    fi
+  fi
 
   docker run --rm \
     -v "${preview_dir}:/dump" \
-    -e SOURCE_URI="${PREVIEW_MONGO_SOURCE_URI}" \
+    -e SOURCE_URI="${source_uri}" \
     -e SOURCE_DB="${PREVIEW_MONGO_SOURCE_DB}" \
     mongo:8 bash -lc 'mongodump --uri "$SOURCE_URI" --db "$SOURCE_DB" --archive=/dump/mongo-seed.archive.gz --gzip'
 

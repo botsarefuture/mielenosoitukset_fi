@@ -2346,8 +2346,6 @@ def init_routes(app):
 
     @app.route("/ohjeet/")
     @app.route("/ohjeet")
-    @login_required
-    @admin_required
     def public_guides():
         return render_template("ohjeet/index.html")
 

@@ -7,6 +7,7 @@
 ### Added
 * Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
 * Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
+* Preview Caddy snippets now use per-PR matcher names, so multiple active previews no longer collide when Caddy reloads the imported routes.
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 * Added regression coverage for duplicate demo submissions, duplicate-submission merge handling, and background-job demo audit/history recording so CI catches duplicate creation and demo ID drift earlier.
 * Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.
@@ -66,6 +67,7 @@
 * PR preview URLs now use `pr-<id>.mielenosoitukset.fi` instead of the deeper `previews.*` nesting, which keeps them within Cloudflare's normal first-level subdomain coverage.
 * Preview config files are now written world-readable inside the container mount, so the app process can load its per-PR config instead of crashing on permission denied.
 * Preview Caddy routing now points directly at each app container's Docker IP, avoiding the flaky localhost publish path on the preview host.
+* Public guides at `/ohjeet` are now accessible without login, and the public footer links to them directly so the documentation is easier to find.
 * Admin user list now paginates server-side and searches display names in addition to usernames and emails, making the user control panel easier to scan at larger scale.
 * Fixed the config loader so the Flask session secret stays separate from the S3 secret key; preview login pages no longer 500 because `session` is unavailable.
 * Added a branch-sync helper script that rebases the current branch onto `origin/main` before PR creation, so future feature branches stay closer to the base branch and conflict-prone drift is caught earlier.

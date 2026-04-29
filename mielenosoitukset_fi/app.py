@@ -66,12 +66,15 @@ def create_app(config_overrides=None) -> Flask:
     if config_overrides:
         app.config.update(config_overrides)
     _configure_timezone(app)
+
+    rate_limit_defaults = ["86400 per day", "3600 per hour", "10 per second"]
+    app.config["RATE_LIMIT_DEFAULTS"] = rate_limit_defaults
     
     if app.config.get("ENFORCE_RATELIMIT", True):
         Limiter(
             get_remote_address,
             app=app,
-            default_limits=["86400 per day", "3600 per hour", "10 per second"],
+            default_limits=rate_limit_defaults,
             storage_uri=app.config["MONGO_URI"],
         )
     

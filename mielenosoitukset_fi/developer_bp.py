@@ -83,11 +83,10 @@ def app_detail(app_id):
         t["_id"] = str(t["_id"])
         if t.get("expires_at"):
             t["expires_at"] = t["expires_at"].isoformat()
-    # Placeholder rate-limit info
+    rate_limits = list(current_app.config.get("RATE_LIMIT_DEFAULTS", []))
     rate_info = {
-        "limit": "100/min",
-        "remaining": "N/A",
-        "reset": "N/A",
+        "limits": rate_limits,
+        "policy": "Sovelluksen oletusrajat",
     }
     current_scopes = sorted(list(set(app.get("allowed_scopes", ["read"]))))
     return render_template("developer/app_detail.html", app=app, tokens=tokens, rate_info=rate_info, current_scopes=current_scopes)

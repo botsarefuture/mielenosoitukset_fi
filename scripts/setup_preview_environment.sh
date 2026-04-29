@@ -126,7 +126,7 @@ main() {
   local preview_domain="${PREVIEW_DOMAIN:-}"
   local preview_base_dir="${PREVIEW_BASE_DIR:-/srv/mielenosoitukset-fi-previews}"
   local preview_snippets_dir="${PREVIEW_SNIPPETS_DIR:-/etc/caddy/previews}"
-  local preview_reload_cmd="${PREVIEW_RELOAD_CMD:-systemctl reload caddy}"
+  local preview_reload_cmd="${PREVIEW_RELOAD_CMD:-sudo -n /usr/bin/systemctl restart caddy}"
   local preview_env_file="${PREVIEW_ENV_FILE:-/etc/mielenosoitukset-preview.env}"
   local preview_secret_key="${PREVIEW_SECRET_KEY:-}"
   local preview_mongo_source_uri="${PREVIEW_MONGO_SOURCE_URI:-}"

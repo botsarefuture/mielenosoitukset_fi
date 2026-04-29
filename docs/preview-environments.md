@@ -21,6 +21,7 @@ The preview deployment is intentionally isolated from the rest of the host:
 - the filesystem is read-only except for small tmpfs scratch areas
 - the preview app gets its own Docker network
 - the preview services should be preview-only, not production services
+- the host reverse proxy points at the preview app container's Docker IP, not a shared production port
 
 That isolation reduces the blast radius if a branch contains malicious or broken code. It does not replace server hardening. The preview server should still be dedicated to previews or otherwise tightly firewalled.
 
@@ -34,7 +35,7 @@ Install and configure:
 - Docker
 - Caddy, or another reverse proxy that can route per-PR hostnames
 - SSH access for GitHub Actions
-- wildcard DNS for the preview subdomain, such as `*.preview.example.com`
+- wildcard DNS for the preview subdomain, such as `*.example.com`
 
 Create a server environment file, by default:
 
@@ -67,6 +68,10 @@ Configure Caddy to import the generated snippets directory, for example:
 import /etc/caddy/previews/*.caddy
 ```
 
+The preview deploy user should also be able to write the snippets directory,
+while the `caddy` service user must be able to read it. The current setup uses
+the shared `caddy` group for that directory and the generated snippet files.
+
 ## GitHub secrets
 
 Add these repository secrets:
@@ -82,6 +87,15 @@ Add these repository variables:
 - `PREVIEW_BASE_DIR`
 - `PREVIEW_SNIPPETS_DIR`
 - `PREVIEW_RELOAD_CMD`
+
+The preview host should allow the preview user to restart Caddy without a
+password, typically through a narrow sudoers rule for:
+
+- `sudo -n /usr/bin/systemctl restart caddy`
+
+For this repository, the preview domain is `mielenosoitukset.fi`, so previews
+will be published at `pr-<id>.mielenosoitukset.fi`. That keeps the hostname in
+Cloudflare's normal first-level wildcard coverage.
 
 The helper script `scripts/setup_preview_environment.sh` can print the values you need,
 or apply them directly if `gh` is already authenticated.

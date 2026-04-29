@@ -98,9 +98,7 @@
   </tbody>
 </table>
 
-<!-- Pagination -->
-<!-- AS OF NOW WE DO NOT SUPPORT NAVIGATION -->
-<!--
+{% if users %}
 <nav aria-label="User pagination">
   <ul class="pagination justify-content-center mt-3">
     {% if prev_page %}
@@ -123,14 +121,12 @@
       <li class="page-item disabled"><span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span></li>
     {% endif %}
   </ul>
-</nav>-->
-
-<script>
-// Initialize Bootstrap tooltips
-document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-  new bootstrap.Tooltip(el);
-});
-</script>
+</nav>
+{% else %}
+<div class="alert alert-light border mt-3 mb-0">
+  {{ _('Ei käyttäjiä tällä haulla.') }}
+</div>
+{% endif %}
 
 <style>
 /* Hover effect + pointer */

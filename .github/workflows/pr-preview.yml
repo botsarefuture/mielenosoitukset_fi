@@ -38,6 +38,46 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Publish spinning-up comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- preview-environment -->';
+            const body = [
+              marker,
+              '### Preview Environment',
+              '',
+              'Status: spinning up',
+              '',
+              'Starting to spin up the preview environment. I will update this comment with the live URL when it is ready.',
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -51,6 +91,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Checkout workflow files
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: workflow
+
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -62,7 +108,7 @@ jobs:
           ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Copy deploy script
-        run: scp $PREVIEW_SSH_OPTS deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:$PREVIEW_REMOTE_SCRIPT"
+        run: scp $PREVIEW_SSH_OPTS workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:$PREVIEW_REMOTE_SCRIPT"
 
       - name: Load image on preview server
         run: docker save "preview-pr-${PR_NUMBER}:${PR_HEAD_SHA}" | ssh $PREVIEW_SSH_OPTS "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST" "docker load"
@@ -141,16 +187,16 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.PREVIEW_SSH_PRIVATE_KEY }}
 
-      - name: Trust preview host
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
-
-      - name: Copy deploy script
+      - name: Checkout workflow files
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: workflow
+
+      - name: Trust preview host
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$PREVIEW_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Deploy script to preview host
         run: scp $PREVIEW_SSH_OPTS workflow/deploy/preview_deploy.sh "$PREVIEW_SSH_USER@$PREVIEW_SSH_HOST:$PREVIEW_REMOTE_SCRIPT"

@@ -51,13 +51,14 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
-* PR preview workflow now uses BuildKit cache-backed Docker image builds, so repeated PR preview runs can reuse cached layers instead of rebuilding the app image from scratch every time.
-* PR preview workflow now uses SSH keepalive options for long-running deploys so Mongo seeding and image loading do not drop the connection mid-run.
+* PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.
-* Admin demo create form keeps the shared submit-lock behavior outside the edit-only controls, so create submissions still disable the button and show the saving state.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.
 * Admin recurring demonstration creation now accepts the current create-form recurrence fields and city selection without crashing the dashboard redirect after save.
 * Organizer contact cards on demonstration detail pages now wrap long website and email links on mobile instead of overflowing the layout.
+* PR preview workflow now sources `deploy/preview_deploy.sh` from the default branch instead of the PR checkout, so older branches can still trigger preview deployments successfully.
+* Preview environments now connect to their own MongoDB container by container name and start a dedicated mail container, so PR previews can resolve their services reliably and finish seeding instead of stalling on startup.
+* Preview deploys now print explicit progress markers during setup, seeding, app startup, and Caddy reload so long-running previews remain observable in GitHub Actions.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.
@@ -489,6 +490,8 @@
 * The demonstration detail page’s report-error menu now uses a more polished card-based modal design with clearer actions and feedback while keeping the existing reporting flow unchanged.
 * The detail-page error report form now correctly hides its loading spinner until submission, resets cleanly when the modal closes, and uses more deliberate modal button styling.
 * The detail-page report flow now has explicit mobile modal layout rules so the form, actions, and status blocks stay usable on narrow screens.
+* Preview environments now connect to their own MongoDB container by container name and start a dedicated mail container, so PR previews can resolve their services reliably and finish seeding instead of stalling on startup.
+* Preview deploys now print explicit progress markers during setup, seeding, app startup, and Caddy reload so long-running previews remain observable in GitHub Actions.
 
 ---
 

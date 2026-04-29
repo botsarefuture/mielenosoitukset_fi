@@ -122,6 +122,8 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
+
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.
 * Admin demonstration create pages no longer show edit-link or duplication controls before a demo exists, reducing dead functionality in the admin UI.
 * Demo edit suggestion form now has a pill-based march route editor (Enter/comma to add points) so users can propose route changes without wrestling with a single text field.

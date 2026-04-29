@@ -63,7 +63,7 @@ class Config:
     # S3 Configuration
     S3_CONFIG = config.get("S3", {})
     ACCESS_KEY = S3_CONFIG.get("ACCESS_KEY")
-    SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
+    S3_SECRET_KEY = S3_CONFIG.get("SECRET_KEY")
     ENDPOINT_URL = S3_CONFIG.get("ENDPOINT_URI")
 
     @classmethod
@@ -79,4 +79,3 @@ class Config:
 
 # Initialize the configuration
 Config.init_config()
-

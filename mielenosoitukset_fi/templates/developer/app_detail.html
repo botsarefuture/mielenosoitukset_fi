@@ -102,15 +102,15 @@
 
   <div class="dev-card">
     <h5 class="mb-2">Rate limit</h5>
-    <p class="meta mb-2">{{ rate_info.policy }} koskee tätä kehittäjäpaneelia.</p>
-    {% if rate_info.limits %}
+    {% if rate_info.enabled %}
+      <p class="meta mb-2">{{ rate_info.policy }} koskee tätä kehittäjäpaneelia.</p>
       <ul class="list-unstyled mb-0">
         {% for limit in rate_info.limits %}
           <li class="mb-2"><span class="pill">{{ limit }}</span></li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="meta mb-0">Rajoituksia ei ole määritelty.</p>
+      <p class="meta mb-0">Rajoitusten valvonta on pois käytöstä tässä ympäristössä.</p>
     {% endif %}
   </div>
 </div>

@@ -83,9 +83,11 @@ def app_detail(app_id):
         t["_id"] = str(t["_id"])
         if t.get("expires_at"):
             t["expires_at"] = t["expires_at"].isoformat()
+    rate_limit_enabled = current_app.config.get("ENFORCE_RATELIMIT", True)
     rate_limits = list(current_app.config.get("RATE_LIMIT_DEFAULTS", []))
     rate_info = {
-        "limits": rate_limits,
+        "enabled": rate_limit_enabled,
+        "limits": rate_limits if rate_limit_enabled else [],
         "policy": "Sovelluksen oletusrajat",
     }
     current_scopes = sorted(list(set(app.get("allowed_scopes", ["read"]))))

@@ -22,8 +22,11 @@ class ConfigReloadTests(unittest.TestCase):
                     [
                         "MONGO_URI: mongodb://example.test:27017",
                         "MONGO_DBNAME: integration_suite",
+                        "SECRET_KEY: app-secret",
                         "PORT: 9001",
                         "DEFAULT_TIMEZONE: UTC",
+                        "S3:",
+                        "  SECRET_KEY: s3-secret",
                     ]
                 ),
                 encoding="utf-8",
@@ -37,6 +40,8 @@ class ConfigReloadTests(unittest.TestCase):
                 "mongodb://example.test:27017",
             )
             self.assertEqual(config_module.Config.MONGO_DBNAME, "integration_suite")
+            self.assertEqual(config_module.Config.SECRET_KEY, "app-secret")
+            self.assertEqual(config_module.Config.S3_SECRET_KEY, "s3-secret")
             self.assertEqual(config_module.Config.PORT, 9001)
             self.assertEqual(config_module.Config.DEFAULT_TIMEZONE, "UTC")
 

@@ -94,8 +94,8 @@ wait_for_mongo() {
 seed_mongo_if_requested() {
   local network="$1"
   local preview_dir="$2"
-  local dest_db="$4"
-  local mongo_host="$5"
+  local dest_db="$3"
+  local mongo_host="$4"
 
   if [[ -z "${PREVIEW_MONGO_SOURCE_URI:-}" || -z "${PREVIEW_MONGO_SOURCE_DB:-}" ]]; then
     return 0

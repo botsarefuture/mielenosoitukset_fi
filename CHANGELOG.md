@@ -57,6 +57,9 @@
 * Admin recurring demonstration creation now accepts the current create-form recurrence fields and city selection without crashing the dashboard redirect after save.
 * Organizer contact cards on demonstration detail pages now wrap long website and email links on mobile instead of overflowing the layout.
 * PR preview workflow now sources `deploy/preview_deploy.sh` from the default branch instead of the PR checkout, so older branches can still trigger preview deployments successfully.
+* Preview environments now connect to their own MongoDB container by container name and start a dedicated mail container, so PR previews can resolve their services reliably and finish seeding instead of stalling on startup.
+* Preview deploys now print explicit progress markers during setup, seeding, app startup, and Caddy reload so long-running previews remain observable in GitHub Actions.
+* Preview database seeding now reads the correct argument positions in `deploy/preview_deploy.sh`, preventing previews from failing with an unbound-variable error after Mongo startup.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.
@@ -106,6 +109,7 @@
 
 ### Changed
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.
+* Admin demonstration create pages no longer show edit-link or duplication controls before a demo exists, reducing dead functionality in the admin UI.
 * Demo edit suggestion form now has a pill-based march route editor (Enter/comma to add points) so users can propose route changes without wrestling with a single text field.
 * Demo edit suggestion form now uses the same pill-style add/remove flow for tags and clarifies that tags should be entered without `#`.
 * Demo edit suggestion form now uses a rich-text description editor, matching the public submit flow for easier content fixes.

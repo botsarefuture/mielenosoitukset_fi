@@ -74,6 +74,9 @@ BABEL:
     - "fi"
   LANGUAGES:
     fi: "Suomi"
+SERVER_NAME: "${hostname}"
+PREFERRED_URL_SCHEME: "https"
+CDN_BASE_URL: "${PREVIEW_CDN_BASE_URL:-https://${hostname}}"
 EOF
 }
 
@@ -107,7 +110,7 @@ seed_mongo_if_requested() {
     if [[ "$source_uri" == *"?"* ]]; then
       source_uri="${source_uri}&authSource=admin"
     else
-      source_uri="${source_uri}?authSource=admin"
+      source_uri="${source_uri}/?authSource=admin"
     fi
   fi
 
@@ -179,13 +182,13 @@ deploy_preview() {
   require_var PREVIEW_DOMAIN "${PREVIEW_DOMAIN:-}"
   require_var PREVIEW_BASE_DIR "${PREVIEW_BASE_DIR:-/srv/mielenosoitukset-fi-previews}"
   require_var PREVIEW_SNIPPETS_DIR "${PREVIEW_SNIPPETS_DIR:-/etc/caddy/previews}"
-  require_var PREVIEW_RELOAD_CMD "${PREVIEW_RELOAD_CMD:-systemctl reload caddy}"
+  require_var PREVIEW_RELOAD_CMD "${PREVIEW_RELOAD_CMD:-sudo -n /usr/bin/systemctl restart caddy}"
   require_var PREVIEW_SECRET_KEY "${PREVIEW_SECRET_KEY:-}"
 
   local domain="${PREVIEW_DOMAIN}"
   local base_dir="${PREVIEW_BASE_DIR:-/srv/mielenosoitukset-fi-previews}"
   local snippets_dir="${PREVIEW_SNIPPETS_DIR:-/etc/caddy/previews}"
-  local reload_cmd="${PREVIEW_RELOAD_CMD:-systemctl reload caddy}"
+  local reload_cmd="${PREVIEW_RELOAD_CMD:-sudo -n /usr/bin/systemctl restart caddy}"
   local hostname="pr-${pr_number}.${domain}"
   local preview_dir="${base_dir}/pr-${pr_number}"
   local config_file="${preview_dir}/config.preview.yaml"
@@ -194,14 +197,14 @@ deploy_preview() {
   local mongo_container="mielenosoitukset-preview-mongo-pr-${pr_number}"
   local mail_container="mielenosoitukset-preview-mail-pr-${pr_number}"
   local network_name="${PREVIEW_NETWORK_PREFIX:-mielenosoitukset-preview}-pr-${pr_number}"
-  local port_base="${PREVIEW_PORT_BASE:-20000}"
-  local port="$((port_base + pr_number))"
   local db_name="${PREVIEW_MONGO_DBNAME_PREFIX:-preview_pr_}${pr_number}"
   local mongo_host="${mongo_container}"
   local mongo_data_dir="${preview_dir}/mongo"
 
   mkdir -p "$preview_dir" "$snippets_dir"
   chmod 0750 "$preview_dir" "$snippets_dir"
+  chgrp caddy "$snippets_dir"
+  chmod 0770 "$snippets_dir"
 
   echo "[preview] creating isolated network and service containers"
   create_network "$network_name"
@@ -213,7 +216,7 @@ deploy_preview() {
 
   echo "[preview] writing preview application config"
   render_config "$config_file" "$hostname" "$db_name" "$mongo_host"
-  chmod 0640 "$config_file"
+  chmod 0644 "$config_file"
 
   echo "[preview] seeding preview database if configured"
   seed_mongo_if_requested "$network_name" "$preview_dir" "$db_name" "$mongo_host"
@@ -224,7 +227,6 @@ deploy_preview() {
   docker run -d \
     --name "$container_name" \
     --network "$network_name" \
-    -p "127.0.0.1:${port}:5002" \
     --cap-drop=ALL \
     --security-opt no-new-privileges:true \
     --pids-limit 256 \
@@ -240,14 +242,21 @@ deploy_preview() {
     -v "$config_file:/app/config.preview.yaml:ro" \
     "$image_tag" >/dev/null
 
+  local container_ip
+  container_ip="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container_name")"
+  if [[ -z "$container_ip" ]]; then
+    die "failed to determine preview container IP for $container_name"
+  fi
+
   echo "[preview] publishing caddy snippet"
   cat >"$snippet_file" <<EOF
-$hostname {
-  encode zstd gzip
-  reverse_proxy 127.0.0.1:${port}
+@preview host ${hostname}
+handle @preview {
+  reverse_proxy ${container_ip}:5002
 }
 EOF
-  chmod 0644 "$snippet_file"
+  chgrp caddy "$snippet_file"
+  chmod 0660 "$snippet_file"
 
   echo "[preview] reloading caddy"
   eval "$reload_cmd"
@@ -263,11 +272,11 @@ destroy_preview() {
   require_var PREVIEW_DOMAIN "${PREVIEW_DOMAIN:-}"
   require_var PREVIEW_BASE_DIR "${PREVIEW_BASE_DIR:-/srv/mielenosoitukset-fi-previews}"
   require_var PREVIEW_SNIPPETS_DIR "${PREVIEW_SNIPPETS_DIR:-/etc/caddy/previews}"
-  require_var PREVIEW_RELOAD_CMD "${PREVIEW_RELOAD_CMD:-systemctl reload caddy}"
+  require_var PREVIEW_RELOAD_CMD "${PREVIEW_RELOAD_CMD:-sudo -n /usr/bin/systemctl restart caddy}"
 
   local base_dir="${PREVIEW_BASE_DIR:-/srv/mielenosoitukset-fi-previews}"
   local snippets_dir="${PREVIEW_SNIPPETS_DIR:-/etc/caddy/previews}"
-  local reload_cmd="${PREVIEW_RELOAD_CMD:-systemctl reload caddy}"
+  local reload_cmd="${PREVIEW_RELOAD_CMD:-sudo -n /usr/bin/systemctl restart caddy}"
   local preview_dir="${base_dir}/pr-${pr_number}"
   local snippet_file="${snippets_dir}/pr-${pr_number}.caddy"
   local container_name="mielenosoitukset-preview-pr-${pr_number}"

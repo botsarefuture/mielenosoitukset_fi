@@ -60,6 +60,12 @@
 * Preview environments now connect to their own MongoDB container by container name and start a dedicated mail container, so PR previews can resolve their services reliably and finish seeding instead of stalling on startup.
 * Preview deploys now print explicit progress markers during setup, seeding, app startup, and Caddy reload so long-running previews remain observable in GitHub Actions.
 * Preview database seeding now reads the correct argument positions in `deploy/preview_deploy.sh` and normalizes the source URI with `authSource=admin` when needed, preventing previews from failing after Mongo startup.
+* Preview Caddy snippets now write directive-only config fragments, matching the host `import` layout so reloads no longer fail on invalid site-block syntax.
+* Preview deploys now restart Caddy through passwordless sudo, which lets the preview user publish routes without broad server access while keeping the host route publication step working.
+* Preview Caddy snippets now live in the shared `caddy` group so the host service can actually read them during reload while the preview user still writes the files.
+* PR preview URLs now use `pr-<id>.mielenosoitukset.fi` instead of the deeper `previews.*` nesting, which keeps them within Cloudflare's normal first-level subdomain coverage.
+* Preview config files are now written world-readable inside the container mount, so the app process can load its per-PR config instead of crashing on permission denied.
+* Preview Caddy routing now points directly at each app container's Docker IP, avoiding the flaky localhost publish path on the preview host.
 * Admin dashboard theme switching now applies explicit `light`/`dark` modes consistently in the shared admin shell, aligning Bootstrap theme variables with the custom theme classes and improving sidebar/footer readability.
 * Admin dashboard reporter info popups now use theme-aware body text colors, fixing unreadable white-on-white submitter details in the modal.
 * Demo cards keep cover images centered without stretching, preventing warped previews across list views.

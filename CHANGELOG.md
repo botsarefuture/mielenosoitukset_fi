@@ -7,6 +7,7 @@
 ### Added
 * Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
 * Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
+* Preview Caddy snippets now use per-PR matcher names, so multiple active previews no longer collide when Caddy reloads the imported routes.
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 * Added regression coverage for duplicate demo submissions, duplicate-submission merge handling, and background-job demo audit/history recording so CI catches duplicate creation and demo ID drift earlier.
 * Added a source-driven surface manifest for Flask routes, background jobs, and Socket.IO events so CI fails when the application surface changes without an explicit test coverage update.

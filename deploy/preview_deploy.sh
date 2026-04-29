@@ -250,8 +250,8 @@ deploy_preview() {
 
   echo "[preview] publishing caddy snippet"
   cat >"$snippet_file" <<EOF
-@preview host ${hostname}
-handle @preview {
+@preview_pr_${pr_number} host ${hostname}
+handle @preview_pr_${pr_number} {
   reverse_proxy ${container_ip}:5002
 }
 EOF

@@ -31,3 +31,15 @@ def test_developer_app_detail_shows_actual_rate_limits_when_enforcement_enabled(
     assert "3600 per hour" in body
     assert "10 per second" in body
     assert "Sovelluksen oletusrajat" in body
+
+
+@pytest.mark.integration
+def test_developer_app_detail_has_clear_permissions_sections(seeded_data, developer_client):
+    response = developer_client.get(f"/developer/apps/{seeded_data['app_id']}")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Nykyiset oikeudet" in body
+    assert "Pyydä lisää oikeuksia" in body
+    assert "Nykyiset rajat" in body
+    assert "Nykyiset oikeudet ja rajat näkyvät alla erillisessä osiossa." in body

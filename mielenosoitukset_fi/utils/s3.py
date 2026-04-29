@@ -58,7 +58,7 @@ def create_s3_client():
         return boto3.client(
             "s3",
             aws_access_key_id=Config.ACCESS_KEY,
-            aws_secret_access_key=Config.SECRET_KEY,
+            aws_secret_access_key=Config.S3_SECRET_KEY,
             endpoint_url=Config.ENDPOINT_URL,
         )
     except NoCredentialsError:

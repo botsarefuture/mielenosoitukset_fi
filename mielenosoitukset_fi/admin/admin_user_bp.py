@@ -1,6 +1,8 @@
 from bson.objectid import ObjectId
 from flask import Blueprint, redirect, render_template, request, session, url_for, jsonify
 from flask_login import current_user, login_required
+import math
+import re
 
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
@@ -47,23 +49,44 @@ def log_request_info():
 @permission_required("LIST_USERS")
 def user_control():
     """Render the user control panel with a list of users."""
-    search_query = request.args.get("search", "")
+    search_query = (request.args.get("search", "") or "").strip()
+    page = max(request.args.get("page", default=1, type=int) or 1, 1)
+    per_page = request.args.get("per_page", default=20, type=int) or 20
+    per_page = min(max(per_page, 1), 100)
     pending_token_requests = mongo.api_token_requests.count_documents({"status": "pending"})
-    users_cursor = mongo.users.find(
-        {
+    search_filter = {}
+    if search_query:
+        escaped_query = re.escape(search_query)
+        search_filter = {
             "$or": [
-                {"username": {"$regex": search_query, "$options": "i"}},
-                {"email": {"$regex": search_query, "$options": "i"}},
+                {"username": {"$regex": escaped_query, "$options": "i"}},
+                {"email": {"$regex": escaped_query, "$options": "i"}},
+                {"displayname": {"$regex": escaped_query, "$options": "i"}},
             ]
         }
-        if search_query
-        else {}
+
+    total_users = mongo.users.count_documents(search_filter)
+    total_pages = max(math.ceil(total_users / per_page), 1)
+    page = min(page, total_pages)
+    prev_page = page - 1 if page > 1 else None
+    next_page = page + 1 if page < total_pages else None
+    users_cursor = (
+        mongo.users.find(search_filter)
+        .sort("username", 1)
+        .skip((page - 1) * per_page)
+        .limit(per_page)
     )
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/list.html",
-        users=users_cursor,
+        users=list(users_cursor),
         search_query=search_query,
+        current_page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+        prev_page=prev_page,
+        next_page=next_page,
         pending_token_requests=pending_token_requests,
+        total_users=total_users,
     )
 
 

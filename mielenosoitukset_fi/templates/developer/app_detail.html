@@ -4,10 +4,23 @@
 {% block styles %}
 <style>
   .dev-wrap { max-width: 960px; margin: 2rem auto; }
-  .dev-card { background: var(--dev-bg, #fff); border: 1px solid var(--dev-border, #e9ecef); border-radius: 10px; padding: 1.5rem; }
+  .dev-card { background: var(--dev-bg, #fff); border: 1px solid var(--dev-border, #e9ecef); border-radius: 12px; padding: 1.5rem; }
   .dev-card + .dev-card { margin-top: 1rem; }
   .meta { color: #6c757d; }
   .pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; background: #e9ecef; margin-right: 0.25rem; font-size: 0.9rem; }
+  .dev-panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .panel-box { border: 1px solid #e9ecef; border-radius: 0.9rem; background: #f8f9fa; padding: 1rem; }
+  .panel-heading { font-weight: 600; margin-bottom: 0.25rem; }
+  .panel-copy { color: #6c757d; margin-bottom: 0.75rem; }
+  .scope-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+  .scope-item { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.8rem 0.9rem; border: 1px solid #dee2e6; border-radius: 0.75rem; background: #fff; }
+  .scope-item .form-check-input { margin-top: 0.25rem; }
+  .scope-item .form-check-label { font-weight: 600; }
+  .scope-note { font-size: 0.92rem; color: #6c757d; margin-bottom: 0; }
+  @media (max-width: 768px) {
+    .dev-panel-grid { grid-template-columns: 1fr; }
+    .scope-grid { grid-template-columns: 1fr; }
+  }
 </style>
 {% endblock %}
 
@@ -18,14 +31,7 @@
     <h3 class="mb-1">{{ app.name }}</h3>
     <p class="meta mb-2">{{ app.description }}</p>
     <div class="meta">Client ID: <code>{{ app.client_id }}</code></div>
-    <div class="mt-2">
-      <div class="meta mb-1">Sallitut scopet:</div>
-      {% for s in current_scopes %}
-        <span class="pill">{{ s }}</span>
-      {% else %}
-        <span class="meta">read</span>
-      {% endfor %}
-    </div>
+    <div class="meta mt-2">Nykyiset oikeudet ja rajat näkyvät alla erillisessä osiossa.</div>
   </div>
 
   <div class="dev-card">
@@ -76,33 +82,86 @@
 
   <div class="dev-card">
     <h5 class="mb-2">Oikeudet ja pyynnöt</h5>
-    <p class="meta">Jos tarvitset lisäoikeuksia (esim. demojen luonti), pyydä niitä alla. Perustelu vaaditaan.</p>
+    <p class="meta">Tässä osiossa näet nykyiset oikeudet, nykyiset rajat ja pyytät lisää vain tarvittaessa.</p>
     <div id="scope-msg" class="alert d-none"></div>
-    <div class="d-flex flex-wrap gap-2 mb-2">
-      <div class="form-check">
-        <input class="form-check-input scope-request" type="checkbox" value="read" id="req-read">
-        <label class="form-check-label" for="req-read">read</label>
+    <div class="dev-panel-grid">
+      <div class="panel-box">
+        <div class="panel-heading">Nykyiset oikeudet</div>
+        <p class="panel-copy">Näillä scopella sovellus voi toimia juuri nyt.</p>
+        <div class="d-flex flex-wrap gap-2">
+          {% for s in current_scopes %}
+            <span class="pill">{{ s }}</span>
+          {% else %}
+            <span class="meta">read</span>
+          {% endfor %}
+        </div>
       </div>
-      <div class="form-check">
-        <input class="form-check-input scope-request" type="checkbox" value="write" id="req-write">
-        <label class="form-check-label" for="req-write">write</label>
-      </div>
-      <div class="form-check">
-        <input class="form-check-input scope-request" type="checkbox" value="submit_demonstrations" id="req-submit">
-        <label class="form-check-label" for="req-submit">submit_demonstrations</label>
-      </div>
-      <div class="form-check">
-        <input class="form-check-input scope-request" type="checkbox" value="admin" id="req-admin">
-        <label class="form-check-label" for="req-admin">admin</label>
+
+      <div class="panel-box">
+        <div class="panel-heading">Nykyiset rajat</div>
+        <p class="panel-copy">Rajojen tarkka arvo näkyy tässä ympäristön mukaan.</p>
+        {% if rate_info.enabled %}
+          <div class="d-flex flex-wrap gap-2">
+            {% for limit in rate_info.limits %}
+              <span class="pill">{{ limit }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="scope-note mb-0">Rajoitusten valvonta on pois käytöstä tässä ympäristössä.</p>
+        {% endif %}
       </div>
     </div>
-    <textarea class="form-control mb-2" id="scope-reason" rows="3" placeholder="Perustele miksi tarvitset lisäoikeudet"></textarea>
-    <button class="btn btn-outline-primary btn-sm" id="scope-request-btn">Lähetä pyyntö</button>
+
+    <div class="mt-3 panel-box">
+      <div class="panel-heading">Pyydä lisää oikeuksia</div>
+      <p class="panel-copy">Valitse vain ne oikeudet, joita sovellus todella tarvitsee. Perustelu vaaditaan.</p>
+      <div class="scope-grid">
+        <label class="scope-item" for="req-read">
+          <input class="form-check-input scope-request" type="checkbox" value="read" id="req-read">
+          <span>
+            <span class="form-check-label d-block">read</span>
+            <span class="scope-note">Peruslukuoikeus palvelun dataan.</span>
+          </span>
+        </label>
+        <label class="scope-item" for="req-write">
+          <input class="form-check-input scope-request" type="checkbox" value="write" id="req-write">
+          <span>
+            <span class="form-check-label d-block">write</span>
+            <span class="scope-note">Tarvitaan, jos sovellus muokkaa sisältöä.</span>
+          </span>
+        </label>
+        <label class="scope-item" for="req-submit">
+          <input class="form-check-input scope-request" type="checkbox" value="submit_demonstrations" id="req-submit">
+          <span>
+            <span class="form-check-label d-block">submit_demonstrations</span>
+            <span class="scope-note">Käytetään demojen lähetykseen.</span>
+          </span>
+        </label>
+        <label class="scope-item" for="req-admin">
+          <input class="form-check-input scope-request" type="checkbox" value="admin" id="req-admin">
+          <span>
+            <span class="form-check-label d-block">admin</span>
+            <span class="scope-note">Vain hallintatoimintoihin, käsitellään erikseen.</span>
+          </span>
+        </label>
+      </div>
+      <textarea class="form-control mb-2" id="scope-reason" rows="3" placeholder="Perustele miksi tarvitset lisäoikeudet"></textarea>
+      <button class="btn btn-outline-primary btn-sm w-100 w-sm-auto" id="scope-request-btn">Lähetä pyyntö</button>
+    </div>
   </div>
 
   <div class="dev-card">
     <h5 class="mb-2">Rate limit</h5>
-    <p class="meta">Nykyinen raja: {{ rate_info.limit }}. Jäljellä: {{ rate_info.remaining }}. Reset: {{ rate_info.reset }}. (Tiedot viitteellisiä.)</p>
+    {% if rate_info.enabled %}
+      <p class="meta mb-2">{{ rate_info.policy }} koskee tätä kehittäjäpaneelia.</p>
+      <ul class="list-unstyled mb-0">
+        {% for limit in rate_info.limits %}
+          <li class="mb-2"><span class="pill">{{ limit }}</span></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="meta mb-0">Rajoitusten valvonta on pois käytöstä tässä ympäristössä.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

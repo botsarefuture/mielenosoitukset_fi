@@ -117,7 +117,7 @@ class Config:
 
         cls.S3_CONFIG = config.get("S3", {})
         cls.ACCESS_KEY = cls.S3_CONFIG.get("ACCESS_KEY")
-        cls.SECRET_KEY = cls.S3_CONFIG.get("SECRET_KEY")
+        cls.S3_SECRET_KEY = cls.S3_CONFIG.get("SECRET_KEY")
         cls.ENDPOINT_URL = cls.S3_CONFIG.get("ENDPOINT_URI")
         cls.S3_BUCKET = cls.S3_CONFIG.get("BUCKET", "mielenosoitukset.fi")
         cls.CDN_BASE_URL = config.get(

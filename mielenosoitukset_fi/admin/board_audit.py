@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, render_template
-from flask_login import login_required, current_user
+from flask_login import login_required
 from datetime import datetime
 
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import permission_required
 from .utils import mongo
 from bson.objectid import ObjectId
 
@@ -30,7 +30,6 @@ def log_board_action(user_id, action, granted_by):
 
 @audit_bp.route("/logs", methods=["GET"])
 @login_required
-@admin_required
 @permission_required("VIEW_CLEARANCE_AUDIT")
 def get_logs():
     """Return all board compliance audit logs."""
@@ -51,7 +50,6 @@ def get_logs():
 
 @audit_bp.route("/ui")
 @login_required
-@admin_required
 @permission_required("VIEW_CLEARANCE_AUDIT")
 def audit_ui():
     """Render the audit log UI for the board."""

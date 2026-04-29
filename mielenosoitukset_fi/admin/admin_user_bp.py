@@ -4,7 +4,11 @@ from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    permission_required,
+    has_board_approved_god_access,
+)
 from mielenosoitukset_fi.utils.variables import PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.validators import valid_email
 from mielenosoitukset_fi.utils.database import stringify_object_ids
@@ -13,6 +17,12 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
 from flask_babel import _
 from datetime import datetime
+from mielenosoitukset_fi.admin.board_compliance import (
+    BOARD_MANAGED_ROLES,
+    BOARD_MEMBER_ROLE,
+    has_board_clearance,
+    has_global_admin_clearance,
+)
 
 
 email_sender = EmailSender()
@@ -57,7 +67,24 @@ def user_control():
     )
 
 
-USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "user": 1}
+USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "board_member": 1, "user": 1}
+
+
+def _effective_access_level(user):
+    if not getattr(user, "is_authenticated", False):
+        return 0
+
+    if has_board_approved_god_access(user):
+        return USER_ACCESS_LEVELS["god"]
+
+    if getattr(user, "global_admin", False):
+        return USER_ACCESS_LEVELS["global_admin"]
+
+    role = getattr(user, "role", None)
+    if role == "god":
+        return 0
+
+    return USER_ACCESS_LEVELS.get(role, 0)
 
 
 def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
@@ -75,19 +102,17 @@ def compare_user_levels(user1, user2):  # Check if the user1 is higher than user
 
 
     """
-    if user1.role not in USER_ACCESS_LEVELS or user2.role not in USER_ACCESS_LEVELS:
-        if user2.role not in USER_ACCESS_LEVELS:
-            user2.role = "user"
-        else:
-            raise ValueError("Invalid user role")
-    
-    if user1._id == ObjectId("66c25768dad432ad39ce38d5"):
+    if has_board_approved_god_access(user1):
         return True
 
-    if user1.role == user2.role and not user1._id == ObjectId("66c25768dad432ad39ce38d5"): # HARD CODED EXCEPTION FOR EMILIA
+    if user1.role == user2.role:
         return False
 
-    return USER_ACCESS_LEVELS[user1.role] > USER_ACCESS_LEVELS[user2.role]
+    return _effective_access_level(user1) > _effective_access_level(user2)
+
+def _role_change_requires_board(current_role, requested_role) -> bool:
+    return requested_role in BOARD_MANAGED_ROLES and requested_role != current_role
+
 
 def safe_redirect(target):
     """Redirect safely with redi_count check to prevent loops."""
@@ -149,23 +174,34 @@ def edit_user(user_id):
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä oman roolin muutos
-        if current_user._id == user_id and incoming["role"] != current_user.role:
+        if current_user._id == ObjectId(user_id) and incoming["role"] != current_user.role:
             flash_message("Et voi muuttaa omaa rooliasi.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä ylennys yli oman tason
-        if USER_ACCESS_LEVELS.get(incoming["role"], 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
+        if _role_change_requires_board(current["role"], incoming["role"]):
+            flash_message("God- ja global_admin-roolit myonnetaan board request -prosessin kautta, ei talla lomakkeella.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+        if current["role"] == "god" and incoming["role"] != "god":
+            flash_message("God-roolin poisto vaatii board requestin ja board member -hyvaksynta ketjun.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+        if current["role"] == "global_admin" and incoming["role"] == "god":
+            flash_message("God-rooli ei siirry suoraan lomakkeesta. Luo board request.", "error")
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+        elif USER_ACCESS_LEVELS.get(incoming["role"], 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
             flash_message("Et voi korottaa omaa tai toisen käyttäjän roolia korkeammalle kuin oma roolisi.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä super-käyttäjän itse-alennus
-        if (user.role == "global_admin" and current_user._id == user_id
+        if (user.role == "global_admin" and current_user._id == ObjectId(user_id)
                 and incoming["role"] != "global_admin"):
             flash_message("Superkäyttäjät eivät voi alentaa itseään.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # 3️⃣ Muutosdiff
         changes = {k: v for k, v in incoming.items() if v != current[k]}
+        if "role" in changes:
+            changes["global_admin"] = changes["role"] == "global_admin"
 
         # 4️⃣ Päivitä vain jos on muutoksia
         if changes:
@@ -253,17 +289,27 @@ def save_user(user_id):
     global_permissions = request.form.getlist("permissions[global][]")  # ← 🔥 this line
 
     # Prevent role escalation
-    if current_user._id == user_id and role != current_user.role:
+    if current_user._id == ObjectId(user_id) and role != current_user.role:
         flash_message("Et voi muuttaa omaa rooliasi.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Prevent global admins from lowering their role
     if (
         user.role == "global_admin"
-        and current_user._id == user_id
+        and current_user._id == ObjectId(user_id)
         and role != "global_admin"
     ):
         flash_message("Et voi alentaa omaa rooliasi globaalina ylläpitäjänä.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
+    if _role_change_requires_board(user.role, role):
+        flash_message("God- ja global_admin-roolit myonnetaan board request -prosessin kautta, ei talla lomakkeella.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+    if user.role == "god" and role != "god":
+        flash_message("God-roolin poisto vaatii board requestin ja board member -hyvaksynta ketjun.", "error")
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+    if USER_ACCESS_LEVELS.get(role, 0) > USER_ACCESS_LEVELS.get(current_user.role, 0):
+        flash_message("Et voi korottaa omaa tai toisen käyttäjän roolia korkeammalle kuin oma roolisi.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
     # Validate required fields
@@ -280,6 +326,7 @@ def save_user(user_id):
     user.username = username
     user.email = email
     user.role = role
+    user.global_admin = role == "global_admin"
     user.confirmed = confirmed
     user.global_permissions = global_permissions  # ← 🔥 this line
 
@@ -324,13 +371,16 @@ import warnings
 
 
 @admin_user_bp.route("/api/check_clearance/<user_id>")
+@login_required
+@admin_required
+@permission_required("EDIT_USER")
 def check_clearance(user_id):
     """
-    Temporary endpoint to check if the board has approved the user for global_admin role.
-    Currently always returns False.
+    Check whether the user has a valid signed board clearance for god access.
     """
     return jsonify({
-        "has_clearance": False
+        "has_clearance": has_board_clearance(user_id),
+        "has_global_admin_clearance": has_global_admin_clearance(user_id),
     })
 
 
@@ -458,8 +508,12 @@ def create_user():
     if not valid_email(email):
         flash_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
-    if role not in ["user", "admin", "global_admin"]:
+    if role not in ["user", "admin", BOARD_MEMBER_ROLE, "global_admin", "god"]:
         flash_message("Rooli ei ole kelvollinen.", "error")
+        return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    if role in BOARD_MANAGED_ROLES:
+        flash_message("God- ja global_admin-roolit luodaan board request -prosessin kautta, eika suoraan lomakkeella.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # Check if email already exists
@@ -529,7 +583,7 @@ def api_force_password_change():
     flask.Response
         JSON response indicating success or failure.
     """
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     user_id = data.get("user_id")
 
     if not user_id:
@@ -540,6 +594,12 @@ def api_force_password_change():
         return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
 
     user_ = User.from_db(user)
+
+    if compare_user_levels(current_user, user_) is False:
+        return jsonify({
+            "status": "ERROR",
+            "message": "Et voi pakottaa saman tai korkeamman tason käyttäjän salasanan vaihtoa.",
+        }), 403
     
     user_.forced_pwd_reset = True
     user_.save()

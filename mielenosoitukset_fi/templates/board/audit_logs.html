@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
 <style>
     .container {
-        max-width: 1200px;
+        max-width: 1280px;
         margin: 2rem auto;
         background-color: var(--container-bg);
         color: var(--text);
@@ -16,7 +16,34 @@
     h2 {
         font-size: 2rem;
         color: var(--primary);
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .audit-summary {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin: 1rem 0 1.25rem;
+    }
+
+    .summary-card {
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .summary-card .label {
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .summary-card .value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-top: 0.25rem;
     }
 
     table {
@@ -29,10 +56,14 @@
         padding: 0.75rem 1rem;
         text-align: left;
         border-bottom: 1px solid var(--input-border);
+        vertical-align: top;
     }
 
     th {
         background-color: var(--input-bg);
+        position: sticky;
+        top: 0;
+        z-index: 1;
     }
 
     tr:hover {
@@ -41,16 +72,56 @@
 
     input.search-box {
         width: 100%;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
+        padding: 0.65rem 1rem;
+        border-radius: 10px;
         border: 1px solid var(--input-border);
         margin-bottom: 1rem;
         font-size: 0.95rem;
+        background: var(--input-bg);
+        color: var(--text);
     }
 
     .muted {
         font-size: 0.9rem;
         color: var(--muted);
+    }
+
+    .badge-approved {
+        background: #1f8e4b;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+    }
+
+    .badge-revoked {
+        background: #c62828;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+    }
+
+    .badge-created {
+        background: #0d6efd;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+    }
+
+    .badge-vote {
+        background: #6f42c1;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+    }
+
+    .audit-link {
+        color: var(--primary);
+        text-decoration: underline;
+        word-break: break-all;
     }
 </style>
 {% endblock %}
@@ -59,8 +130,59 @@
 <script>
     async function fetchLogs() {
         const res = await fetch("{{ url_for('board_audit.get_logs') }}");
-        const logs = await res.json();
-        return logs;
+        return await res.json();
+    }
+
+    function describeAction(action) {
+        const parts = (action || '').split(':');
+        if (parts[0] !== 'request' || parts.length < 4) {
+            return {
+                badgeClass: 'badge-vote',
+                badgeLabel: 'Event',
+                label: action || 'Unknown event'
+            };
+        }
+
+        const [, requestType, role, stage] = parts;
+        const roleLabel = role === 'global_admin' ? 'global admin' : role;
+
+        if (stage === 'created') {
+            return {
+                badgeClass: 'badge-created',
+                badgeLabel: 'Requested',
+                label: requestType === 'revoke_god'
+                    ? `God demotion request created`
+                    : `${roleLabel} request created`
+            };
+        }
+
+        if (stage === 'approve' || stage === 'reject') {
+            return {
+                badgeClass: 'badge-vote',
+                badgeLabel: stage === 'approve' ? 'Vote' : 'Rejected vote',
+                label: requestType === 'revoke_god'
+                    ? `Board member marked god demotion as ${stage}`
+                    : `Board member marked ${roleLabel} request as ${stage}`
+            };
+        }
+
+        if (stage === 'approved') {
+            return {
+                badgeClass: 'badge-approved',
+                badgeLabel: 'Applied',
+                label: requestType === 'revoke_god'
+                    ? 'God demotion approved and applied'
+                    : `${roleLabel} access approved and applied`
+            };
+        }
+
+        return {
+            badgeClass: 'badge-revoked',
+            badgeLabel: 'Rejected',
+            label: requestType === 'revoke_god'
+                ? 'God demotion request rejected'
+                : `${roleLabel} request rejected`
+        };
     }
 
     function renderLogs(logs) {
@@ -68,10 +190,12 @@
         tbody.innerHTML = "";
         logs.forEach(log => {
             const tr = document.createElement("tr");
+            const action = describeAction(log.action);
+            const badge = `<span class="${action.badgeClass}">${action.badgeLabel}</span>`;
             tr.innerHTML = `
                 <td>${log.username || 'Unknown'}</td>
-                <td>${log.action}</td>
-                <td>${log.granted_by}</td>
+                <td>${badge} <span class="ms-2">${action.label}</span></td>
+                <td>${log.granted_by || '-'}</td>
                 <td>${new Date(log.timestamp).toLocaleString()}</td>
             `;
             tbody.appendChild(tr);
@@ -84,10 +208,11 @@
 
         const searchInput = document.querySelector("#search-log");
         searchInput.addEventListener("input", () => {
-            const filtered = logs.filter(log => 
-                log.username?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-                log.action.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-                log.granted_by.toLowerCase().includes(searchInput.value.toLowerCase())
+            const term = searchInput.value.toLowerCase();
+            const filtered = logs.filter(log =>
+                log.username?.toLowerCase().includes(term) ||
+                log.action.toLowerCase().includes(term) ||
+                log.granted_by?.toLowerCase().includes(term)
             );
             renderLogs(filtered);
         });
@@ -99,22 +224,39 @@
 
 {% block main_content %}
 <section class="container">
-    <h2>Board Compliance Audit Log</h2>
-    <p class="muted">Tässä näet kaikki hallintopäätökset, roolimuutokset ja oikeuksien myöntämiset.</p>
-    <input type="text" class="search-box" id="search-log" placeholder="Hae käyttäjää, toimintoa tai myöntäjää...">
-    
+    <h2>Board clearance audit</h2>
+    <p class="muted">
+        This log tracks board requests, board member votes, automatic promotions to <code>god</code> / <code>global_admin</code>,
+        and board-approved <code>god</code> removals.
+    </p>
+
+    <div class="audit-summary">
+        <div class="summary-card">
+            <div class="label">Purpose</div>
+            <div class="value">Board decision history</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">What it shows</div>
+            <div class="value">Requests, votes, promotions, demotions</div>
+        </div>
+        <div class="summary-card">
+            <div class="label">Related page</div>
+            <div class="value"><a class="audit-link" href="{{ url_for('board_compliance.clearance_ui') }}">Board clearances</a></div>
+        </div>
+    </div>
+
+    <input type="text" class="search-box" id="search-log" placeholder="Search user, action, or approver...">
+
     <table id="audit-log-table">
         <thead>
             <tr>
-                <th>Käyttäjä</th>
-                <th>Toiminto</th>
-                <th>Myöntäjä</th>
-                <th>Aika</th>
+                <th>User</th>
+                <th>Decision</th>
+                <th>Approver</th>
+                <th>Timestamp</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- JS will fill this -->
-        </tbody>
+        <tbody></tbody>
     </table>
 </section>
 {% endblock %}

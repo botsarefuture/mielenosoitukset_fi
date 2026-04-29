@@ -1,66 +1,365 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="container mt-5">
-  <h1 class="mb-4">Board Clearance Management</h1>
+{% extends 'admin_base.html' %}
 
-  <div class="table-responsive">
-    <table class="table table-bordered table-hover">
-      <thead class="table-dark">
-        <tr>
-          <th>Username</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Granted By</th>
-          <th>Timestamp</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in users %}
-        <tr>
-          <td>{{ user.username }}</td>
-          <td>{{ user.role | capitalize }}</td>
-          <td>
-            {% if user.approved %}
-              <span class="badge bg-success">Approved</span>
-            {% else %}
-              <span class="badge bg-danger">Not Approved</span>
-            {% endif %}
-          </td>
-          <td>{{ user.granted_by or "-" }}</td>
-          <td>{{ user.timestamp or "-" }}</td>
-          <td>
-            {% if not user.approved %}
-              <button class="btn btn-sm btn-success" onclick="updateClearance('{{ user.id }}', true)">
-                Grant
-              </button>
-            {% else %}
-              <button class="btn btn-sm btn-warning" onclick="updateClearance('{{ user.id }}', false)">
-                Revoke
-              </button>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+{% block styles %}
+<style>
+  .board-shell {
+    max-width: 1440px;
+    margin: 2rem auto;
+    padding: 0 1rem 2rem;
+    color: var(--text);
+  }
 
-<script>
-async function updateClearance(userId, approve) {
-    const response = await fetch(`/board/api/clearance/${userId}`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({approved: approve})
-    });
-    const result = await response.json();
-    if (result.status === "OK") {
-        alert(result.message);
-        location.reload();
-    } else {
-        alert("Error: " + result.message);
+  .board-hero {
+    background:
+      radial-gradient(circle at top right, rgba(13, 110, 253, 0.18), transparent 28%),
+      linear-gradient(135deg, var(--container-bg), color-mix(in srgb, var(--container-bg) 70%, var(--primary) 30%));
+    border: 1px solid var(--input-border);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+  }
+
+  .board-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-top: 1rem;
+  }
+
+  .stat-card,
+  .panel {
+    background: var(--container-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-card {
+    padding: 1rem 1.1rem;
+  }
+
+  .stat-label {
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stat-value {
+    margin-top: 0.4rem;
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .board-panels {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .panel {
+    padding: 1.25rem;
+  }
+
+  .panel h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .user-table,
+  .request-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .user-table th,
+  .user-table td,
+  .request-table th,
+  .request-table td {
+    padding: 0.75rem 0.6rem;
+    vertical-align: top;
+    border-bottom: 1px solid var(--input-border);
+  }
+
+  .user-table th,
+  .request-table th {
+    color: var(--muted);
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .request-card {
+    border: 1px solid var(--input-border);
+    border-radius: 16px;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--container-bg) 82%, var(--primary) 18%);
+    margin-top: 0.9rem;
+  }
+
+  .request-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 0.92rem;
+    margin: 0.65rem 0;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .pill-pending { background: #fff3cd; color: #7a5a00; }
+  .pill-approved { background: #d1f0dd; color: #1f6a3a; }
+  .pill-rejected { background: #f8d7da; color: #8a1f2d; }
+  .pill-invalid { background: #212529; color: #f8d7da; }
+
+  .request-actions,
+  .vote-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+
+  .vote-list {
+    margin-top: 0.8rem;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .vote-item {
+    padding: 0.65rem 0.8rem;
+    border-radius: 12px;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+  }
+
+  .request-form {
+    margin-top: 0.8rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .request-form select,
+  .request-form input,
+  .request-form textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text);
+    padding: 0.7rem 0.8rem;
+  }
+
+  @media (max-width: 1040px) {
+    .board-panels {
+      grid-template-columns: 1fr;
     }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function createBoardRequest(userId, requestType) {
+  const roleField = document.getElementById(`requested_role-${userId}`);
+  const fallbackField = document.getElementById(`fallback_role-${userId}`);
+  const docField = document.getElementById(`approval_document_url-${userId}`);
+  const hashField = document.getElementById(`approval_document_sha256-${userId}`);
+  const reasonField = document.getElementById(`reason-${userId}`);
+
+  const payload = {
+    request_type: requestType,
+    requested_role: roleField ? roleField.value : '',
+    fallback_role: fallbackField ? fallbackField.value : 'admin',
+    approval_document_url: docField ? docField.value.trim() : '',
+    approval_document_sha256: hashField ? hashField.value.trim() : '',
+    reason: reasonField ? reasonField.value.trim() : ''
+  };
+
+  const response = await fetch(`/board/api/clearance/${userId}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const result = await response.json();
+  if (result.status === 'OK') {
+    location.reload();
+    return;
+  }
+  alert(result.message || 'Board requestin luonti epäonnistui.');
+}
+
+async function decideBoardRequest(requestId, decision) {
+  const noteField = document.getElementById(`vote-note-${requestId}`);
+  const response = await fetch(`/board/api/clearance/request/${requestId}/decision`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      decision,
+      note: noteField ? noteField.value.trim() : ''
+    })
+  });
+  const result = await response.json();
+  if (result.status === 'OK') {
+    location.reload();
+    return;
+  }
+  alert(result.message || 'Board decisionin tallennus epäonnistui.');
 }
 </script>
+{% endblock %}
+
+{% block main_content %}
+<section class="board-shell">
+  <div class="board-hero">
+    <h1>Board role governance</h1>
+    <p class="muted mb-0">
+      `god` ja `global_admin` syntyvät vain board requestin kautta. Requestiin liitetään lupalappu,
+      ja jokainen aktiivinen `board_member` hyväksyy tai hylkää sen omalla tunnuksellaan.
+    </p>
+    <div class="board-grid">
+      <div class="stat-card">
+        <div class="stat-label">Board members</div>
+        <div class="stat-value">{{ board_member_count }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open requests</div>
+        <div class="stat-value">{{ requests | selectattr('status', 'equalto', 'pending') | list | length }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Current user can vote</div>
+        <div class="stat-value">{{ 'Yes' if is_board_member else 'No' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-panels">
+    <div class="panel">
+      <h2>Create requests</h2>
+      <p class="muted">Manual role edits do not grant `god` or `global_admin`. Create the board request here instead.</p>
+      <div class="table-responsive">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Current role</th>
+              <th>Board status</th>
+              <th>Request</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>{{ user.username }}</td>
+              <td>{{ user.role }}</td>
+              <td>
+                {% if user.has_god_clearance %}<div class="pill pill-approved">god active</div>{% endif %}
+                {% if user.has_global_admin_clearance %}<div class="pill pill-approved">global_admin active</div>{% endif %}
+                {% if not user.has_god_clearance and not user.has_global_admin_clearance %}<span class="muted">No active board-managed role</span>{% endif %}
+              </td>
+              <td>
+                <div class="request-form">
+                  <select id="requested_role-{{ user.id }}">
+                    <option value="global_admin">global_admin</option>
+                    <option value="god">god</option>
+                  </select>
+                  <input id="approval_document_url-{{ user.id }}" type="url" placeholder="Board document URL">
+                  <input id="approval_document_sha256-{{ user.id }}" type="text" placeholder="Board document SHA256">
+                  <textarea id="reason-{{ user.id }}" rows="2" placeholder="Why is this access needed?"></textarea>
+                  <div class="request-actions">
+                    <button class="btn btn-primary btn-sm" type="button" onclick="createBoardRequest('{{ user.id }}', 'assign_role')">Create role request</button>
+                    {% if user.role == 'god' %}
+                    <select id="fallback_role-{{ user.id }}">
+                      <option value="admin">admin</option>
+                      <option value="user">user</option>
+                      <option value="board_member">board_member</option>
+                    </select>
+                    <button class="btn btn-outline-danger btn-sm" type="button" onclick="createBoardRequest('{{ user.id }}', 'revoke_god')">Request god demotion</button>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Requests and votes</h2>
+      <p class="muted">Each active board member must log in and confirm the request individually.</p>
+      {% for req in requests %}
+      <div class="request-card">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div>
+            <strong>{{ req.username }}</strong>
+            <div class="muted">{{ req.request_type }} -> {{ req.requested_role }}</div>
+          </div>
+          <div class="pill {% if req.status == 'approved' %}pill-approved{% elif req.status == 'rejected' %}pill-rejected{% else %}pill-pending{% endif %}">
+            {{ req.status }}
+          </div>
+        </div>
+        {% if not req.integrity_valid %}
+        <div class="mt-2 pill pill-invalid">integrity mismatch detected</div>
+        {% endif %}
+        <div class="request-meta">
+          <span>Current role: {{ req.current_role }}</span>
+          <span>Requested by: {{ req.requested_by }}</span>
+          <span>Created: {{ req.created_at or '-' }}</span>
+        </div>
+        {% if req.reason %}
+        <div class="muted">{{ req.reason }}</div>
+        {% endif %}
+        {% if req.approval_document_url %}
+        <div class="mt-2">
+          <a href="{{ req.approval_document_url }}" target="_blank" rel="noopener">{{ req.approval_document_url }}</a>
+          <div class="muted">SHA256: {{ req.approval_document_sha256 or '-' }}</div>
+        </div>
+        {% endif %}
+
+        <div class="vote-list">
+          {% for vote in req.approvals %}
+          <div class="vote-item">
+            <strong>{{ vote.username }}</strong> -> {{ vote.decision }}{% if vote.decided_at %} at {{ vote.decided_at }}{% endif %}
+            {% if vote.note %}<div class="muted">{{ vote.note }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          {% if not req.approvals %}
+          <div class="muted">No board decisions yet.</div>
+          {% endif %}
+        </div>
+
+        {% if req.status == 'pending' and is_board_member and req.integrity_valid %}
+        <div class="vote-actions">
+          <input id="vote-note-{{ req.id }}" type="text" placeholder="Optional board note">
+          <button class="btn btn-success btn-sm" type="button" onclick="decideBoardRequest('{{ req.id }}', 'approve')">Approve</button>
+          <button class="btn btn-outline-danger btn-sm" type="button" onclick="decideBoardRequest('{{ req.id }}', 'reject')">Reject</button>
+        </div>
+        {% elif req.status == 'pending' and is_board_member and not req.integrity_valid %}
+        <div class="muted mt-2">Voting is blocked until the request integrity issue is investigated.</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% if not requests %}
+      <p class="muted mb-0">No board requests yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
 {% endblock %}

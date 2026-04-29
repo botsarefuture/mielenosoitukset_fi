@@ -14,6 +14,9 @@ mongo = db.get_db()
 
 VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
+ROLE_GLOBAL_PERMISSIONS = {
+    "board_member": {"MANAGE_CLEARANCE", "VIEW_CLEARANCE_AUDIT"},
+}
 
 class User(UserMixin):
     def _perm_in(self, permission: str) -> List[Union[str, ObjectId]]:
@@ -33,7 +36,7 @@ class User(UserMixin):
         """
         
         scopes = []
-        if permission in self.global_permissions:
+        if permission in self.effective_global_permissions:
             scopes.append("global")
         
         scopes.extend(
@@ -180,6 +183,16 @@ class User(UserMixin):
 
     @classmethod
     def from_db(cls, doc: dict) -> "User":
+        role = doc.get("role", DEFAULT_ROLE)
+        god_access = False
+        if role == "god":
+            try:
+                from mielenosoitukset_fi.admin.board_compliance import has_board_clearance
+
+                god_access = bool(has_board_clearance(doc["_id"]))
+            except Exception:
+                god_access = False
+
         return cls(
             user_id         = doc["_id"],
             username        = doc["username"],
@@ -192,10 +205,10 @@ class User(UserMixin):
             following       = doc.get("following", []),
             followed_organizations = doc.get("followed_organizations", []),
             followed_recurring_demos = doc.get("followed_recurring_demos", []),
-            global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
+            global_admin    = doc.get("global_admin", False) or role == "global_admin" or god_access,
             confirmed       = doc.get("confirmed", False),
             global_permissions = doc.get("global_permissions", []),
-            role            = doc.get("role", DEFAULT_ROLE),
+            role            = role,
             banned          = doc.get("banned", False),
             mfa_enabled     = doc.get("mfa_enabled", False),
             friends         = doc.get("friends", []),
@@ -269,7 +282,7 @@ class User(UserMixin):
         scopes: List[Union[str, ObjectId]] = []
 
         # 1️⃣ global scope
-        if permission in self.global_permissions:
+        if permission in self.effective_global_permissions:
             scopes.append("global")
 
         # 2️⃣ per‑organization scope
@@ -350,14 +363,14 @@ class User(UserMixin):
     def permissions_for(self, organization_id: Optional[Union[str, ObjectId]] = None) -> List[str]:
         if organization_id is None:
             # global scope
-            perms = set(self.global_permissions)
+            perms = set(self.effective_global_permissions)
         else:
             ms = self.membership_for(organization_id)
             perms = set(ms.permissions) if ms else set()
         return list(perms)
 
     def has_permission(self, perm: str, organization_id: Optional[Union[str, ObjectId]]=None, strict=False) -> bool:
-        if perm in self.global_permissions:
+        if perm in self.effective_global_permissions:
             return True
         
         if organization_id:
@@ -369,6 +382,12 @@ class User(UserMixin):
             return bool(ms and perm in ms.permissions)
         # if org not specified, check all org memberships
         return any(perm in m.permissions for m in self.memberships)
+
+    @property
+    def effective_global_permissions(self) -> List[str]:
+        perms = set(self.global_permissions or [])
+        perms.update(ROLE_GLOBAL_PERMISSIONS.get(self.role, set()))
+        return sorted(perms)
 
     # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 

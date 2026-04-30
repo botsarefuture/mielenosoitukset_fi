@@ -1294,7 +1294,17 @@ def init_routes(app):
                         )
                         # if AJAX, return structured JSON so frontend can prompt user
                         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=conflict_summary), 409
+                            return (
+                                jsonify(
+                                    success=False,
+                                    conflict=True,
+                                    requires_confirmation=True,
+                                    message="Löytyi samankaltaisia ilmoituksia tälle päivälle.",
+                                    error_code=SUBMIT_ERROR_CODES["duplicate_conflict"],
+                                    demos=conflict_summary,
+                                ),
+                                409,
+                            )
                         # otherwise, flash and redirect back to form
                         flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
                         return redirect(url_for("submit"))

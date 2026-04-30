@@ -1000,6 +1000,32 @@
   };
 
   const SUBMIT_ERROR_LABEL = "{{ _('Virhekoodi') }}";
+  const SUBMIT_CONFLICT_TITLE = "{{ _('Löytyi mahdollinen päällekkäinen ilmoitus') }}";
+  const SUBMIT_CONFLICT_INTRO = "{{ _('Samalle päivälle löytyi samankaltainen mielenosoitusilmoitus.') }}";
+  const SUBMIT_CONFLICT_REVIEW = "{{ _('Tarkista osumat alta. Jos tämä on silti eri tapahtuma, paina OK lähettääksesi ilmoituksen. Peruuta, jos haluat vielä muokata tietoja.') }}";
+  const SUBMIT_CONFLICT_MATCHES = "{{ _('Mahdolliset osumat') }}";
+  const SUBMIT_CONFLICT_CANCELLED = "{{ _('Lähetystä ei tehty vielä. Tarkista tiedot ja lähetä uudelleen, jos ilmoitus on oikea.') }}";
+  const SUBMIT_CONFLICT_FORCE_FAILED = "{{ _('Ilmoituksen lähetys ei onnistunut vahvistuksen jälkeen. Tarkista tiedot ja yritä uudelleen.') }}";
+
+  function buildConflictConfirmationMessage(conflictData) {
+    const lines = [
+      SUBMIT_CONFLICT_TITLE,
+      "",
+      conflictData?.message || SUBMIT_CONFLICT_INTRO,
+      SUBMIT_CONFLICT_REVIEW,
+    ];
+
+    const matches = Array.isArray(conflictData?.demos) ? conflictData.demos : [];
+    if (matches.length) {
+      lines.push("", `${SUBMIT_CONFLICT_MATCHES}:`);
+      matches.slice(0, 5).forEach((demo, index) => {
+        const parts = [demo?.title, demo?.date, demo?.address].filter(Boolean);
+        lines.push(`${index + 1}. ${parts.join(" | ")}`);
+      });
+    }
+
+    return lines.join("\n");
+  }
 
   async function showSubmitError(response, fallbackMessage) {
     let message = fallbackMessage || "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}";
@@ -1121,6 +1147,12 @@
           }
 
           if (conflictData && conflictData.conflict) {
+            const shouldForceSubmit = window.confirm(buildConflictConfirmationMessage(conflictData));
+            if (!shouldForceSubmit) {
+              alert(SUBMIT_CONFLICT_CANCELLED);
+              return;
+            }
+
             formData.set('force_submit', '1');
             const response2 = await fetch(form.action, {
               method: form.method,
@@ -1134,7 +1166,7 @@
               });
               return;
             } else {
-              await showSubmitError(response2);
+              await showSubmitError(response2, SUBMIT_CONFLICT_FORCE_FAILED);
               return;
             }
           } else {

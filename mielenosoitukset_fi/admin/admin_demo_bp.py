@@ -2186,9 +2186,6 @@ def demo_command_center(demo_id):
         "reminders": mongo.demo_reminders.count_documents(
             {"demonstration_id": demo_data["_id"]}
         ),
-        "mastodon_reminders": mongo.mastobot_subscriptions.count_documents(
-            {"demo_id": demo_id_str}
-        ),
         "cases": mongo.cases.count_documents({"demo_id": demo_data["_id"]}),
         "children": mongo.demonstrations.count_documents({"parent": demo_data["_id"]}),
         "analytics": analytics_summary,

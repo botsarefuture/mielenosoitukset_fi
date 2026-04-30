@@ -107,6 +107,22 @@
     line-height: 1.6;
   }
 
+  .hero-help-link {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 0.2rem;
+  }
+
+  .hero-help-link:hover {
+    color: white;
+    opacity: 0.92;
+  }
+
   /* Progress Bar */
   .progress-container {
     background: var(--color-card-bg);
@@ -262,6 +278,23 @@
     right: 0;
     height: 4px;
     background: var(--color-gradient-primary);
+  }
+
+  .submit-help-card {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    background: light-dark(#eef6ff, #172131);
+    border: 1px solid light-dark(#bfdbfe, #2b4c7e);
+    color: var(--color-text);
+  }
+
+  .submit-help-card p {
+    margin: 0.35rem 0;
+  }
+
+  .submit-help-card a {
+    font-weight: 700;
   }
 
   /* Page Content */
@@ -1564,6 +1597,10 @@
         {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja
         kattavammin alustalla on mielenosoituksista tietoa, sitä useammille siitä on hyötyä.') }}
       </p>
+      <a class="hero-help-link" href="{{ url_for('public_guides') }}#submit-help">
+        <i class="fa-solid fa-circle-question"></i>
+        {{ _('Jos lähetys takkuaa, katso ohjeet') }}
+      </a>
     </div>
   </section>
 
@@ -1621,6 +1658,12 @@
   <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm">
     <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
     <div class="form-container">
+      <div class="submit-help-card">
+        <p><strong>{{ _('Ennen lähetystä:') }}</strong> {{ _('tarkista nimi, päivämäärä, paikka ja sähköpostiosoite huolellisesti.') }}</p>
+        <p>{{ _('Jos järjestelmä ilmoittaa samankaltaisesta tapahtumasta tai lähetys ei mene heti läpi, lue toimintaohjeet tästä:') }}
+          <a href="{{ url_for('public_guides') }}#submit-help">{{ _('ohjeet ilmoituksen lähettämiseen') }}</a>.
+        </p>
+      </div>
 
       <!-- Page 1: Basic Information -->
       <div class="form-page active" id="page-1">

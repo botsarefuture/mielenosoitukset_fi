@@ -1269,7 +1269,9 @@ def init_routes(app):
                             continue
                         # word intersection heuristic
                         existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                        if title_words and len(title_words & existing_words) >= 2:
+                        # Keep the warning threshold fairly high so we do not
+                        # block real users too aggressively on merely similar titles.
+                        if title_words and len(title_words & existing_words) >= 3:
                             matches.append(d)
                             continue
                         # address similarity

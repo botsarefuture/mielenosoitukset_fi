@@ -64,6 +64,12 @@ The first admin UI slice is now in place too:
 - admin demo create/edit form stores translated `title`, `description`, and `tags`
 - edit views prefill saved translations back into the form
 
+The next admin/public slice is now also in place:
+- recurring demo create/edit form exposes `default_language`
+- recurring demo create/edit form stores translated `title`, `description`, and `tags`
+- public submit flow stores the authored language of the base fields through `default_language`
+- public submit still does not expose per-locale translation editors; that remains a later UX decision
+
 ## Next implementation slices
 
 1. Public rendering

@@ -25,6 +25,7 @@ from flask import (
     get_flashed_messages,
     jsonify,
     session,
+    current_app,
 )
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
@@ -1097,6 +1098,10 @@ def init_routes(app):
             address = (request.form.get("address") or "").strip()
             event_type = (request.form.get("type") or "").strip()
             route = request.form.get("route") if event_type == "marssi" else None
+            default_language = (
+                request.form.get("default_language")
+                or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+            ).strip().lower()
 
             # --- Tags (comma separated) ---
             tags_field = request.form.get("tags", "")
@@ -1367,6 +1372,7 @@ def init_routes(app):
                     gallery_images=[photo_url] if photo_url else None, #FIXME: we should support multiple images in the form and handle them properly, but for now just put the single uploaded image into gallery_images to at least have it show up in the demo detail page
                     description=description,
                     tags=tags,
+                    default_language=default_language,
                 )
                 demo_dict = demonstration.to_dict()
                 demonstration.save()
@@ -1539,6 +1545,9 @@ def init_routes(app):
             test_mode_allowed=test_mode_allowed,
             can_edit_demo=can_edit_demo,
             submission_token=_new_submission_token(),
+            translation_locales=app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
+            translation_language_names=app.config.get("BABEL_LANGUAGES") or {},
+            default_demo_language=app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
         )
 
     def upload_image_to_s3(img):

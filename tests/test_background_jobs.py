@@ -204,6 +204,7 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
         "title": "Idempotent Submission Demo",
         "date": "2026-08-15",
         "description": "Regression test for duplicate submission handling.",
+        "default_language": "en",
         "start_time": "15:00",
         "end_time": "17:00",
         "facebook": "",
@@ -237,6 +238,7 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
 
     matching_demos = list(db.demonstrations.find({"title": "Idempotent Submission Demo"}))
     assert len(matching_demos) == 1
+    assert matching_demos[0]["default_language"] == "en"
 
     submitters = list(db.submitters.find({"demonstration_id": matching_demos[0]["_id"]}))
     assert len(submitters) == 1

@@ -1314,7 +1314,9 @@ def init_routes(app):
                             continue
                         # word intersection heuristic
                         existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                        if title_words and len(title_words & existing_words) >= 2:
+                        # Keep the warning threshold fairly high so we do not
+                        # block real users too aggressively on merely similar titles.
+                        if title_words and len(title_words & existing_words) >= 3:
                             matches.append(d)
                             continue
                         # address similarity
@@ -1339,7 +1341,17 @@ def init_routes(app):
                         )
                         # if AJAX, return structured JSON so frontend can prompt user
                         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=conflict_summary), 409
+                            return (
+                                jsonify(
+                                    success=False,
+                                    conflict=True,
+                                    requires_confirmation=True,
+                                    message="Löytyi samankaltaisia ilmoituksia tälle päivälle.",
+                                    error_code=SUBMIT_ERROR_CODES["duplicate_conflict"],
+                                    demos=conflict_summary,
+                                ),
+                                409,
+                            )
                         # otherwise, flash and redirect back to form
                         flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
                         return redirect(url_for("submit"))

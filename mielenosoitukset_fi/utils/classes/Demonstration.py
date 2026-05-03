@@ -22,6 +22,7 @@ class Demonstration(BaseModel):
     # Running number and slug fields for user-friendly URLs
     running_number: int = None
     slug: str = None
+    TRANSLATABLE_FIELDS = {"title", "description", "tags"}
   
     """
     A class to represent a demonstration event.
@@ -162,6 +163,8 @@ class Demonstration(BaseModel):
         last_modified=None,
         _id: ObjectId = None,
         description: str = None,
+        translations: dict = None,
+        default_language: str = "fi",
         _dont_override: bool = False,
         _rejected: bool = False,
         cover_source: str = None,
@@ -270,6 +273,8 @@ class Demonstration(BaseModel):
 
         self.title = title
         self.description = description
+        self.default_language = (default_language or "fi").strip().lower()
+        self.translations = self._normalize_translations(translations)
 
         # Removed direct assignment for date, start_time, end_time
 
@@ -412,6 +417,80 @@ class Demonstration(BaseModel):
         self.validate_fields(
             title, date, start_time, city, address
         )  # Validate required fields
+
+    def _normalize_translation_value(self, field, value):
+        if field == "tags":
+            if value is None:
+                return []
+            if isinstance(value, str):
+                return [tag.strip() for tag in value.split(",") if tag.strip()]
+            if isinstance(value, list):
+                return [str(tag).strip() for tag in value if str(tag).strip()]
+            return []
+
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    def _normalize_translations(self, translations):
+        normalized = {}
+        if not isinstance(translations, dict):
+            return normalized
+
+        for language, values in translations.items():
+            lang = (language or "").strip().lower()
+            if not lang or not isinstance(values, dict):
+                continue
+
+            lang_values = {}
+            for field in self.TRANSLATABLE_FIELDS:
+                if field in values:
+                    lang_values[field] = self._normalize_translation_value(
+                        field, values.get(field)
+                    )
+
+            if lang_values:
+                normalized[lang] = lang_values
+
+        return normalized
+
+    def set_translation(self, language: str, field: str, value):
+        lang = (language or "").strip().lower()
+        if field not in self.TRANSLATABLE_FIELDS:
+            raise ValueError(f"Unsupported translatable field: {field}")
+        if not lang:
+            raise ValueError("Translation language is required")
+
+        if lang not in self.translations:
+            self.translations[lang] = {}
+        self.translations[lang][field] = self._normalize_translation_value(field, value)
+
+    def get_translation(self, language: str, field: str, fallback: bool = True):
+        lang = (language or "").strip().lower()
+        if field not in self.TRANSLATABLE_FIELDS:
+            raise ValueError(f"Unsupported translatable field: {field}")
+
+        if lang:
+            translated = self.translations.get(lang, {}).get(field)
+            if translated not in (None, "", []):
+                return copy.deepcopy(translated)
+
+        if fallback:
+            return copy.deepcopy(getattr(self, field))
+
+        return [] if field == "tags" else None
+
+    def available_translation_languages(self):
+        return sorted(self.translations.keys())
+
+    def get_localized_fields(self, language: str, fallback: bool = True):
+        return {
+            "title": self.get_translation(language, "title", fallback=fallback),
+            "description": self.get_translation(
+                language, "description", fallback=fallback
+            ),
+            "tags": self.get_translation(language, "tags", fallback=fallback),
+        }
 
 
     def _format_date(self):
@@ -601,6 +680,8 @@ class Demonstration(BaseModel):
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         data["running_number"] = self.running_number
         data["slug"] = self.slug
+        data["translations"] = copy.deepcopy(self.translations)
+        data["default_language"] = self.default_language
         # Include last_modified in the dictionary. If JSON output is requested,
         # convert datetimes to ISO strings.
         try:
@@ -800,6 +881,8 @@ class Demonstration(BaseModel):
             # Basic Info
             title=get("title"),
             description=get("description"),
+            translations=get("translations") or {},
+            default_language=get("default_language", "fi"),
             date=get("date"),
             start_time=get("start_time"),
             end_time=get("end_time"),

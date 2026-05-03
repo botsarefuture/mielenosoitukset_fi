@@ -10,7 +10,7 @@ import hashlib
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
-from flask_babel import _, refresh, format_date
+from flask_babel import _, refresh, format_date, get_locale
 from flask import (
     app,
     g,
@@ -53,6 +53,7 @@ from mielenosoitukset_fi.utils.cache import (
     skip_cache_public_only,
 )
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.demo_localization import get_demo_localized_fields
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -279,7 +280,37 @@ def generate_alternate_urls(app, endpoint, **values):
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
 
-def format_demo_for_api(demo):
+
+def _current_demo_language():
+    try:
+        locale = str(get_locale() or "").strip().lower()
+        if locale:
+            return locale
+    except Exception:
+        pass
+    return (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+
+
+def _localized_demo_copy(demo, language=None):
+    if not isinstance(demo, dict):
+        return demo
+
+    localized = copy.deepcopy(demo)
+    localized.update(
+        get_demo_localized_fields(
+            localized,
+            language=language or _current_demo_language(),
+        )
+    )
+    return localized
+
+
+def _localized_demo_list(demos, language=None):
+    target_language = language or _current_demo_language()
+    return [_localized_demo_copy(demo, target_language) for demo in demos]
+
+
+def format_demo_for_api(demo, language=None):
     """
     Format a demonstration document for API output.
 
@@ -316,24 +347,26 @@ def format_demo_for_api(demo):
             logger.exception(f"Error formatting time: {t}")
             return t
         
+    localized_demo = _localized_demo_copy(demo, language)
+
     try:
-        date_obj = datetime.strptime(demo.get("date", ""), "%Y-%m-%d")
+        date_obj = datetime.strptime(localized_demo.get("date", ""), "%Y-%m-%d")
         date_display = date_obj.strftime("%d.%m.%Y")
     except Exception:
-        date_display = demo.get("date", "")
+        date_display = localized_demo.get("date", "")
 
     return {
-        "_id": str(demo.get("_id")),
-        "title": demo.get("title", ""),
+        "_id": str(localized_demo.get("_id")),
+        "title": localized_demo.get("title", ""),
         "date_display": date_display,
-        "start_time_display": fmt_time(demo.get("start_time")),
-        "end_time_display": fmt_time(demo.get("end_time")),
-        "city": demo.get("city", ""),
-        "address": demo.get("address", ""),
-        "tags": demo.get("tags", []),
-        "description": demo.get("description", ""),
-        "cover_image": get_demo_cover_image(demo),
-        "cancelled": bool(demo.get("cancelled")),
+        "start_time_display": fmt_time(localized_demo.get("start_time")),
+        "end_time_display": fmt_time(localized_demo.get("end_time")),
+        "city": localized_demo.get("city", ""),
+        "address": localized_demo.get("address", ""),
+        "tags": localized_demo.get("tags", []),
+        "description": localized_demo.get("description", ""),
+        "cover_image": get_demo_cover_image(localized_demo),
+        "cancelled": bool(localized_demo.get("cancelled")),
     }
 
 def filter_demonstrations_api(
@@ -968,12 +1001,24 @@ def init_routes(app):
             key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
 
+        locale = _current_demo_language()
+        localized_filtered_demonstrations = _localized_demo_list(
+            filtered_demonstrations, locale
+        )
+        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
+
         return render_template(
             "index.html",
-            demonstrations=filtered_demonstrations,
-            recommended_demos=recommended_demos,
-            featured_demos_json=[format_demo_for_api(demo) for demo in filtered_demonstrations[:6]],
-            recommended_demos_json=[format_demo_for_api(demo) for demo in (recommended_demos or [])],
+            demonstrations=localized_filtered_demonstrations,
+            recommended_demos=localized_recommended_demos,
+            featured_demos_json=[
+                format_demo_for_api(demo, locale)
+                for demo in filtered_demonstrations[:6]
+            ],
+            recommended_demos_json=[
+                format_demo_for_api(demo, locale)
+                for demo in (recommended_demos or [])
+            ],
         )
 
 
@@ -1815,7 +1860,8 @@ def init_routes(app):
 
         # Prepare response
         _demo = copy.copy(demo_obj)
-        demo = Demonstration.to_dict(demo_obj, True)
+        locale = _current_demo_language()
+        demo = _localized_demo_copy(Demonstration.to_dict(demo_obj, True), locale)
 
         toistuvuus = ""
         if _demo.recurs:
@@ -1876,7 +1922,7 @@ def init_routes(app):
             similar_demos.append(
                 {
                     "id": sid,
-                    "title": doc.get("title"),
+                    "title": get_demo_localized_fields(doc, locale).get("title"),
                     "city": doc.get("city"),
                     "date": doc.get("date"),
                     "formatted_date": formatted_date,
@@ -2310,7 +2356,9 @@ def init_routes(app):
             except (requests.exceptions.RequestException, IndexError):
                 ...
                 
-        demo = Demonstration.to_dict(demo, True)
+        demo = _localized_demo_copy(
+            Demonstration.to_dict(demo, True), _current_demo_language()
+        )
         log_demo_view(
             demo_id, current_user._id if current_user.is_authenticated else None
         )
@@ -2916,7 +2964,9 @@ def init_routes(app):
             if demo_date:
                 dd = datetime.strptime(demo_date, "%Y-%m-%d").date()
                 if dd.year == year and dd.month == month:
-                    month_demos[dd.day].append(demo)
+                    month_demos[dd.day].append(
+                        _localized_demo_copy(demo, _current_demo_language())
+                    )
 
         # Kalenteri kuukaudelle
         cal = calendar.Calendar(firstweekday=0)  # 0 = Monday
@@ -2982,7 +3032,9 @@ def init_routes(app):
             if demo_date_str:
                 dd = datetime.strptime(demo_date_str, "%Y-%m-%d").date()
                 if dd.year == year:
-                    year_demos[dd.month]["days"][dd.day].append(demo)
+                    year_demos[dd.month]["days"][dd.day].append(
+                        _localized_demo_copy(demo, _current_demo_language())
+                    )
 
         # Kuukausien nimet
         month_names = {

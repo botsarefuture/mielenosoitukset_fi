@@ -5,6 +5,10 @@
 ## UNRELEASED
 
 ### Added
+* Added the first multilingual demonstration data-model foundation: `Demonstration` now supports `default_language`, a `translations` map, and helper methods for localized title/description/tag access without breaking existing base fields.
+* Added shared demo-localization helpers so multilingual title, description, and tag resolution can be reused consistently from both `Demonstration` objects and plain demonstration dictionaries.
+* Public demo rendering now uses locale-aware demonstration title, description, and tag values on detail pages, calendar views, and API/card payloads while still falling back to legacy base fields when translations are missing.
+* Admin demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, so demonstration translations can be managed from the existing moderation UI.
 * Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
 * Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
 * Preview Caddy snippets now use per-PR matcher names, so multiple active previews no longer collide when Caddy reloads the imported routes.

@@ -2094,6 +2094,7 @@ def create_demo():
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/form.html",
         organizations=organizations,
+        all_organizations=organizations,
         form_action=url_for("admin_demo.create_demo"),
         title="Luo mielenosoitus",
         submit_button_text="Luo",
@@ -2101,6 +2102,9 @@ def create_demo():
         city_list=CITY_LIST,
         demo_edit_access={"explicit_editors": [], "organizations": []},
         show_demo_access_panel=False,
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
 
 
@@ -2153,6 +2157,9 @@ def edit_demo(demo_id):
         case_id=case_id,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=show_demo_access_panel,
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
 
 @admin_demo_bp.route("/command-center/<demo_id>")
@@ -2973,6 +2980,11 @@ def collect_demo_data(request):
     tags = collect_tags(request)
 
     description = request.form.get("description")
+    default_language = (
+        request.form.get("default_language")
+        or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+    )
+    translations = collect_demo_translations(request, default_language)
     latitude = request.form.get("latitude")
     longitude = request.form.get("longitude")
 
@@ -3017,11 +3029,51 @@ def collect_demo_data(request):
         "approved": approved,
         "tags": tags,
         "description": description,
+        "default_language": default_language,
+        "translations": translations,
         "latitude": latitude,
         "longitude": longitude,
         "cover_picture": cover_picture,  # Add cover_picture to output
         "gallery_images": gallery_images,
     }
+
+
+def _supported_demo_translation_locales():
+    return list(current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+
+
+def _translation_language_names():
+    return dict(current_app.config.get("BABEL_LANGUAGES") or {})
+
+
+def collect_demo_translations(request, default_language):
+    supported_locales = _supported_demo_translation_locales()
+    normalized_default = (default_language or "fi").strip().lower()
+    translations = {}
+
+    for language in supported_locales:
+        normalized_language = (language or "").strip().lower()
+        if not normalized_language or normalized_language == normalized_default:
+            continue
+
+        title = (request.form.get(f"translation_{normalized_language}_title") or "").strip()
+        description = request.form.get(f"translation_{normalized_language}_description") or ""
+        description = description.strip()
+        raw_tags = (request.form.get(f"translation_{normalized_language}_tags") or "").strip()
+        tags = [tag.strip().lstrip("#") for tag in raw_tags.split(",") if tag.strip()]
+
+        entry = {}
+        if title:
+            entry["title"] = title
+        if description:
+            entry["description"] = description
+        if tags:
+            entry["tags"] = tags
+
+        if entry:
+            translations[normalized_language] = entry
+
+    return translations
 
 
 def parse_gallery_images_field(raw_value):

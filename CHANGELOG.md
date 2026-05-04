@@ -11,6 +11,9 @@
 * Admin demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, so demonstration translations can be managed from the existing moderation UI.
 * Recurring demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, extending the same translation model to recurring-event administration.
 * Public submit flow now records the authored language of the base demonstration fields through a `default_language` selector, so multilingual data starts with the correct source language even before public translation inputs exist.
+* Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
+* Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
+* `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.
 * Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
 * Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
 * Preview Caddy snippets now use per-PR matcher names, so multiple active previews no longer collide when Caddy reloads the imported routes.

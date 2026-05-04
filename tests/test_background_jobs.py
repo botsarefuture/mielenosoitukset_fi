@@ -250,6 +250,121 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
 
 
 @pytest.mark.integration
+def test_submit_route_duplicate_conflict_returns_confirmation_payload(client, db):
+    existing_id = ObjectId()
+    db.demonstrations.insert_one(
+        {
+            "_id": existing_id,
+            "title": "Ei ydinaseita Suomeen!",
+            "date": "2026-08-15",
+            "start_time": "15:00",
+            "end_time": "17:00",
+            "facebook": "",
+            "city": "Helsinki",
+            "address": "Rautatientori",
+            "event_type": "other",
+            "route": "",
+            "organizers": [],
+            "approved": True,
+            "img": "",
+            "description": "Existing demo for duplicate detection.",
+            "tags": ["test"],
+        }
+    )
+
+    form_data = {
+        "title": "Ei ydinaseita Suomeen!",
+        "date": "2026-08-15",
+        "description": "Regression test for duplicate conflict UX.",
+        "start_time": "15:00",
+        "end_time": "17:00",
+        "facebook": "",
+        "city": "Helsinki",
+        "address": "Rautatientori",
+        "type": "other",
+        "tags": "test,duplicate",
+        "submitter_role": "organizer",
+        "submitter_email": "submitter@example.test",
+        "submitter_name": "Submitter Example",
+        "accept_terms": "on",
+        "submission_token": "duplicate-conflict-token",
+    }
+
+    response = client.post(
+        "/submit",
+        data=form_data,
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 409
+    payload = response.get_json()
+    assert payload["success"] is False
+    assert payload["conflict"] is True
+    assert payload["requires_confirmation"] is True
+    assert payload["error_code"] == "SUBMIT_DUPLICATE_CONFLICT"
+    assert payload["demos"]
+    assert payload["demos"][0]["title"] == "Ei ydinaseita Suomeen!"
+
+    token_doc = db.demo_submission_tokens.find_one({"token": "duplicate-conflict-token"})
+    assert token_doc is not None
+    assert token_doc["status"] == "processing"
+
+    assert db.demonstrations.count_documents({"title": "Ei ydinaseita Suomeen!"}) == 1
+
+
+@pytest.mark.integration
+def test_submit_route_does_not_flag_weak_title_overlap_as_duplicate_conflict(client, db):
+    db.demonstrations.insert_one(
+        {
+            "_id": ObjectId(),
+            "title": "Fridays for Future Helsinki",
+            "date": "2026-08-15",
+            "start_time": "15:00",
+            "end_time": "17:00",
+            "facebook": "",
+            "city": "Helsinki",
+            "address": "Kansalaistori",
+            "event_type": "other",
+            "route": "",
+            "organizers": [],
+            "approved": True,
+            "img": "",
+            "description": "Existing demo for overlap threshold testing.",
+            "tags": ["test"],
+        }
+    )
+
+    form_data = {
+        "title": "Fridays for Palestine Helsinki",
+        "date": "2026-08-15",
+        "description": "Should not be blocked by weak title overlap alone.",
+        "start_time": "15:00",
+        "end_time": "17:00",
+        "facebook": "",
+        "city": "Helsinki",
+        "address": "Narinkkatori",
+        "type": "other",
+        "tags": "test,overlap",
+        "submitter_role": "organizer",
+        "submitter_email": "submitter@example.test",
+        "submitter_name": "Submitter Example",
+        "accept_terms": "on",
+        "submission_token": "weak-overlap-token",
+    }
+
+    response = client.post(
+        "/submit",
+        data=form_data,
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["success"] is True
+    assert db.demonstrations.count_documents({"title": "Fridays for Palestine Helsinki"}) == 1
+
+
+@pytest.mark.integration
 @pytest.mark.jobs
 def test_merge_duplicate_submissions_repoints_references_and_audits(db):
     from mielenosoitukset_fi.scripts.merge_duplicate_submissions import merge_duplicate_submissions

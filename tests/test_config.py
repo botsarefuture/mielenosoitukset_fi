@@ -63,6 +63,24 @@ class ConfigReloadTests(unittest.TestCase):
         finally:
             DatabaseManager._instance = original
 
+    def test_reload_uses_finnish_and_english_as_default_supported_locales(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.yaml"
+            config_path.write_text("{}", encoding="utf-8")
+
+            with patch.dict(os.environ, {"CONFIG_YAML_PATH": str(config_path)}):
+                config_module.Config.reload()
+
+            self.assertEqual(config_module.Config.BABEL_DEFAULT_LOCALE, "en")
+            self.assertEqual(
+                config_module.Config.BABEL_SUPPORTED_LOCALES,
+                ["fi", "en"],
+            )
+            self.assertEqual(
+                config_module.Config.BABEL_LANGUAGES,
+                {"fi": "Suomi", "en": "English"},
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

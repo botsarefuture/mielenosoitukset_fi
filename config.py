@@ -107,9 +107,12 @@ class Config:
         cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
         cls.BABEL_SUPPORTED_LOCALES = cls.BABEL_CONFIG.get(
             "SUPPORTED_LOCALES",
-            ["en"],
+            ["fi", "en"],
         )
-        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
+        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get(
+            "LANGUAGES",
+            {"fi": "Suomi", "en": "English"},
+        )
 
         cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
         cls.PORT = config.get("PORT", 8000)

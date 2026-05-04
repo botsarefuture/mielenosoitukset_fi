@@ -72,8 +72,10 @@ BABEL:
   DEFAULT_LOCALE: "${PREVIEW_DEFAULT_LOCALE:-fi}"
   SUPPORTED_LOCALES:
     - "fi"
+    - "en"
   LANGUAGES:
     fi: "Suomi"
+    en: "English"
 SERVER_NAME: "${hostname}"
 PREFERRED_URL_SCHEME: "https"
 CDN_BASE_URL: "${PREVIEW_CDN_BASE_URL:-https://${hostname}}"

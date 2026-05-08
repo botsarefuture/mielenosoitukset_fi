@@ -725,7 +725,7 @@ def init_routes(app):
         """
         try:
             # Supported locales (fallback to Finnish)
-            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]
+            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi", "en"]
             locales = [l for l in locales if l]  # normalize
 
             # If only Finnish is available, do not include alternate links

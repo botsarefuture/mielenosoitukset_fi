@@ -1,0 +1,141 @@
+{% extends 'admin_base.html' %}
+
+{% block main_content %}
+<section class="dashboard-container">
+  <div class="introduction">
+    <h1 class="text-3xl font-bold">{{ _('Käännökset') }}: {{ demo.title or _('Nimetön mielenosoitus') }}</h1>
+    <p class="text-muted max-w-xl">
+      {{ _('Tee käännösehdotus valitulle kielelle. Ehdotus ei julkaise sisältöä suoraan, vaan jää tarkistettavaksi.') }}
+    </p>
+    <div class="d-flex gap-2 mt-3">
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">{{ _('Takaisin työjonoon') }}</a>
+      {% if current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_DEMO') %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">{{ _('Avaa demo-editori') }}</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <section class="dashboard-panel mb-4">
+    <h2 class="text-xl font-semibold mb-3">{{ _('Käännöstilanne') }}</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>{{ _('Kieli') }}</th>
+            <th>{{ _('Hyväksytty sisältö') }}</th>
+            <th>{{ _('Ehdotuksen tila') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in translation_rows %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>
+              {% if row.approved %}
+              <span class="badge bg-success">{{ _('Hyväksytty') }}</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ _('Ei julkaistua käännöstä') }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.proposal_status == 'pending' %}
+              <span class="badge bg-warning text-dark">{{ _('Odottaa tarkistusta') }}</span>
+              {% elif row.proposal_status == 'approved' %}
+              <span class="badge bg-success">{{ _('Hyväksytty') }}</span>
+              {% elif row.proposal_status == 'rejected' %}
+              <span class="badge bg-danger">{{ _('Hylätty') }}</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ _('Ei ehdotusta') }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="dashboard-panel mb-4">
+    <h2 class="text-xl font-semibold mb-3">{{ _('Lähdesisältö') }}</h2>
+    <p class="text-muted">{{ _('Lähdekieli') }}: {{ translation_language_names.get(source_language, source_language) }}</p>
+    <div class="mb-3">
+      <label class="form-label">{{ _('Otsikko') }}</label>
+      <div class="form-control" readonly>{{ demo.title or '' }}</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{{ _('Kuvaus') }}</label>
+      <div class="form-control" style="min-height: 8rem;" readonly>{{ demo.description or '' }}</div>
+    </div>
+    <div class="mb-0">
+      <label class="form-label">{{ _('Tunnisteet') }}</label>
+      <div class="form-control" readonly>{{ (demo.tags or [])|join(', ') }}</div>
+    </div>
+  </section>
+
+  <section class="dashboard-panel">
+    <h2 class="text-xl font-semibold mb-3">{{ _('Käännösehdotus') }}</h2>
+    {% if translation_locales %}
+    <form method="GET" class="mb-4">
+      <label for="language" class="form-label">{{ _('Kohdekieli') }}</label>
+      <div class="d-flex gap-2">
+        <select id="language" name="language" class="form-control">
+          {% for locale in translation_locales %}
+          <option value="{{ locale }}" {% if locale == selected_language %}selected{% endif %}>{{ translation_language_names.get(locale, locale) }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline-primary" type="submit">{{ _('Vaihda kieli') }}</button>
+      </div>
+    </form>
+
+    {% if can_translate_demos and selected_language %}
+    <form method="POST" class="mb-4">
+      <input type="hidden" name="language" value="{{ selected_language }}">
+      <div class="mb-3">
+        <label for="translated_title" class="form-label">{{ _('Käännetty otsikko') }}</label>
+        <input id="translated_title" name="translated_title" class="form-control" value="{{ translation_proposal.title or approved_translation.title or '' }}">
+      </div>
+      <div class="mb-3">
+        <label for="translated_description" class="form-label">{{ _('Käännetty kuvaus') }}</label>
+        <textarea id="translated_description" name="translated_description" class="form-control" rows="8">{{ translation_proposal.description or approved_translation.description or '' }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label for="translated_tags" class="form-label">{{ _('Käännetyt tunnisteet') }}</label>
+        <input id="translated_tags" name="translated_tags" class="form-control" value="{{ (translation_proposal.tags or approved_translation.tags or [])|join(', ') }}">
+        <small class="text-muted">{{ _('Erottele tunnisteet pilkulla.') }}</small>
+      </div>
+      <button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistettavaksi') }}</button>
+    </form>
+    {% endif %}
+
+    {% if translation_proposal %}
+    <div class="border rounded p-3">
+      <h3 class="h5">{{ _('Nykyinen ehdotus') }}</h3>
+      <p class="mb-2"><strong>{{ _('Tila') }}:</strong> {{ translation_proposal.status or _('luonnos') }}</p>
+      {% if translation_proposal.submitted_by_name %}
+      <p class="mb-2"><strong>{{ _('Lähettäjä') }}:</strong> {{ translation_proposal.submitted_by_name }}</p>
+      {% endif %}
+      {% if translation_proposal.review_notes %}
+      <p class="mb-2"><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ translation_proposal.review_notes }}</p>
+      {% endif %}
+
+      {% if can_review_demo_translations and translation_proposal.status == 'pending' %}
+      <form method="POST" action="{{ url_for('admin_demo.approve_demo_translation', demo_id=demo._id, language=selected_language) }}" class="mb-2">
+        <label for="approve_notes" class="form-label">{{ _('Muistiinpanot hyväksynnälle') }}</label>
+        <textarea id="approve_notes" name="review_notes" class="form-control mb-2" rows="3"></textarea>
+        <button class="btn btn-success" type="submit">{{ _('Hyväksy käännös') }}</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('admin_demo.reject_demo_translation', demo_id=demo._id, language=selected_language) }}">
+        <label for="reject_notes" class="form-label">{{ _('Muistiinpanot hylkäykselle') }}</label>
+        <textarea id="reject_notes" name="review_notes" class="form-control mb-2" rows="3" required></textarea>
+        <button class="btn btn-danger" type="submit">{{ _('Hylkää ehdotus') }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="alert alert-info mb-0">{{ _('Tälle mielenosoitukselle ei ole konfiguroitu erillisiä kohdekieliä.') }}</div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

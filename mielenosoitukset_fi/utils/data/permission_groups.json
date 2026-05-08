@@ -59,6 +59,14 @@
         {
             "name": "GENERATE_EDIT_LINK",
             "description": "Generate edit link for demo."
+        },
+        {
+            "name": "TRANSLATE_DEMO",
+            "description": "Create translation proposals for demos."
+        },
+        {
+            "name": "REVIEW_DEMO_TRANSLATIONS",
+            "description": "Approve or reject demo translation proposals."
         }
     ],
     "Case Management": [

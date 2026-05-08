@@ -169,11 +169,12 @@
         <div class="alert alert-info align-items-start mb-3" role="alert">
           <i class="fa-solid fa-circle-info me-2 mt-1"></i>
           <div class="flex-grow-1">
-            Huomio: <strong>Superkäyttäjä / global_admin</strong> -roolia voidaan myöntää vain automaattisesti 
-            sen jälkeen, kun hallitus on antanut kirjallisen hyväksynnän ja turvaluokituksen. 
-            Roolia ei voi valita tai myöntää manuaalisesti tässä muodossa.
+            Huomio: <strong>Superkäyttäjä / global_admin</strong> ja <strong>god</strong> vaativat
+            board requestin, lupalapun dokumentoinnin ja kaikkien aktiivisten <strong>board_member</strong>-kayttajien
+            kirjautuneen vahvistuksen. Niita ei voi myontaa suoraan tasta lomakkeesta.
             <br><br>
-            Mikä tahansa yritys myöntää roolin manuaalisesti ohittaa hyväksynnän, ei onnistu järjestelmässä.
+            Tasta lomakkeesta voi luoda tavallisia kayttajia, admineja ja board membereita. Board-managed roolit syntyvat
+            vasta board approval -nakymassa.
           </div>
         </div>
 
@@ -202,7 +203,9 @@
             <select class="form-select" id="role" name="role" required>
               <option value="user">{{ _('Käyttäjä') }}</option>
               <option value="admin">{{ _('Admin') }}</option>
+              <option value="board_member">{{ _('Board member') }}</option>
               <option value="global_admin" disabled>{{ _('Superkäyttäjä (vain hallituksen hyväksynnän jälkeen)') }}</option>
+              <option value="god" disabled>{{ _('God (vain board request + board member -vahvistuksilla)') }}</option>
             </select>
           </div>
           <div class="modal-footer">

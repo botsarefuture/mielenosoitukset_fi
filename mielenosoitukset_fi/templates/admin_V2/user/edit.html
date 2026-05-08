@@ -96,33 +96,30 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const roleSelect = document.getElementById('role');
-    const globalAdminOption = document.getElementById('role_global_admin');
     const clearanceInfoEl = document.getElementById('clearanceInfo');
 
-    // API endpoint to check clearance
     fetch('{{ url_for("board_compliance.get_clearance", user_id=user.id) }}')
         .then(res => res.json())
         .then(data => {
-            if (data.approved) {
-                globalAdminOption.disabled = false;
-
-                // Show info about who granted it and when
-                const grantedBy = data.granted_by || "N/A";
-                const timestamp = data.timestamp ? new Date(data.timestamp).toLocaleString() : "N/A";
-                clearanceInfoEl.innerHTML = `
-                    <strong>{{ _('Hallituksen hyväksyntä myönnetty') }}:</strong> ${grantedBy} <br>
-                    <strong>{{ _('Päivämäärä') }}:</strong> ${timestamp}
-                `;
+            const latest = data.latest_request;
+            const rows = [];
+            rows.push(`<strong>{{ _('Nykyinen rooli') }}:</strong> ${data.role || "N/A"}`);
+            rows.push(`<strong>{{ _('God-clearance aktiivinen') }}:</strong> ${data.has_god_clearance ? "{{ _('Kyllä') }}" : "{{ _('Ei') }}"}`);
+            rows.push(`<strong>{{ _('Global admin clearance aktiivinen') }}:</strong> ${data.has_global_admin_clearance ? "{{ _('Kyllä') }}" : "{{ _('Ei') }}"}`);
+            if (latest) {
+                rows.push(`<strong>{{ _('Viimeisin board request') }}:</strong> ${latest.request_type} / ${latest.requested_role}`);
+                rows.push(`<strong>{{ _('Tila') }}:</strong> ${latest.status}`);
+                if (latest.approval_document_url) {
+                    rows.push(`<strong>{{ _('Dokumentti') }}:</strong> <a href="${latest.approval_document_url}" target="_blank" rel="noopener">${latest.approval_document_url}</a>`);
+                }
+            }
+            if (rows.length) {
+                clearanceInfoEl.innerHTML = rows.join('<br>');
                 clearanceInfoEl.style.display = "block";
-            } else {
-                globalAdminOption.disabled = true;
-                clearanceInfoEl.style.display = "none";
             }
         })
         .catch(err => {
             console.error('Error checking board clearance:', err);
-            globalAdminOption.disabled = true;
             clearanceInfoEl.style.display = "none";
         });
 });
@@ -166,13 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <option value="user" {% if user.role=='user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
                 <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}
                 </option>
-                <option value="global_admin" id="role_global_admin" {% if user.role=='global_admin' %}selected{% endif
-                    %} disabled>
+                <option value="board_member" {% if user.role=='board_member' %}selected{% endif %}>
+                    {{ _('Board member') }}
+                </option>
+                <option value="global_admin" id="role_global_admin" {% if user.role=='global_admin' %}selected{% endif %} disabled>
                     {{ _('Superkäyttäjä (vain hallituksen hyväksynnän jälkeen)') }}
+                </option>
+                <option value="god" id="role_god" {% if user.role=='god' %}selected{% endif %} disabled>
+                    {{ _('God (board request + kaikkien board memberien hyväksyntä)') }}
                 </option>
             </select>
             <small class="muted" id="globalAdminNotice">
-                {{ _('Superkäyttäjärooli voidaan valita vain, jos hallitus on antanut hyväksynnän.') }}
+                {{ _('Board member voidaan asettaa tästä. God ja global_admin syntyvät board request -prosessin kautta automaattisesti.') }}
             </small>
 <div id="clearanceInfo" style="margin-top:0.5rem; display:none; padding:0.5rem; background-color:var(--input-bg); border-radius:8px;">
     <!-- Filled dynamically by JS -->

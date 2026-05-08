@@ -112,6 +112,10 @@ class Config:
         cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
 
         cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
+        cls.BOARD_APPROVAL_SIGNING_KEY = config.get(
+            "BOARD_APPROVAL_SIGNING_KEY",
+            cls.SECRET_KEY,
+        )
         cls.PORT = config.get("PORT", 8000)
         cls.DEBUG = config.get("DEBUG", True)
 
@@ -134,7 +138,6 @@ class Config:
         cls.ENFORCE_RATELIMIT = config.get("ENFORCE_RATELIMIT", True)
 
         cls.ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club")
-
         cls.CACHE_TYPE = config.get("CACHE_TYPE", "SimpleCache")
         cls.CACHE_DEFAULT_TIMEOUT = config.get("CACHE_DEFAULT_TIMEOUT", 300)
         cls.CACHE_REDIS_HOST = config.get("REDIS_HOST", "localhost")

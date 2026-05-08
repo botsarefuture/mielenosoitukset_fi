@@ -10,6 +10,7 @@
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.
 * Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
 * Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
+* Added a board-member approval workflow for `god` and `global_admin` access, including approval documents, per-member confirmation, automatic role application, tamper-evident signed request records, audited god demotion requests, and clearer board request/audit UI status messaging.
 * Preview Caddy snippets now use per-PR matcher names, so multiple active previews no longer collide when Caddy reloads the imported routes.
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 * Added regression coverage for duplicate demo submissions, duplicate-submission merge handling, and background-job demo audit/history recording so CI catches duplicate creation and demo ID drift earlier.

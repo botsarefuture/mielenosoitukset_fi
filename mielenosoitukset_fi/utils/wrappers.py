@@ -8,6 +8,31 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.logger import logger
 
 
+def has_board_approved_god_access(user) -> bool:
+    """Return True when a user has board-approved god access."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+
+    if getattr(user, "role", None) != "god":
+        return False
+
+    try:
+        from mielenosoitukset_fi.admin.board_compliance import has_board_clearance
+
+        return has_board_clearance(getattr(user, "id", None) or getattr(user, "_id", None))
+    except Exception:
+        logger.debug("Failed to verify board-approved god access.", exc_info=True)
+        return False
+
+
+def has_superuser_access(user) -> bool:
+    """Return True when a user has any superuser-level access."""
+    return bool(getattr(user, "global_admin", False) or has_board_approved_god_access(user))
+
+
+_has_board_approved_god_access = has_board_approved_god_access
+
+
 def admin_required(f):
     """Decorator to enforce that a user has global admin privileges to access a specific route.
 
@@ -68,9 +93,9 @@ def admin_required(f):
             abort(401)
 
         # Check if the user has global admin privileges
-        if not current_user.role in ["global_admin", "admin"]:
+        if not (current_user.role in ["global_admin", "admin"] or has_board_approved_god_access(current_user)):
             logger.warning(
-                f"User {current_user.username} is not a global admin, access forbidden (403)."
+                f"User {current_user.username} is not an admin or board-approved god user, access forbidden (403)."
             )
             abort(403)
 
@@ -136,7 +161,7 @@ def has_demo_permission(user, _id, permission_name):
         logger.warning("Demo permission denied: no user provided.")
         return False
 
-    if getattr(user, "global_admin", False):
+    if has_superuser_access(user):
         logger.info("Demo permission granted: user is global admin.")
         return True
 
@@ -306,7 +331,7 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
                 return redirect(url_for("users.auth.login"))
 
             # Allow access if the user is a global admin
-            if current_user.global_admin:
+            if has_superuser_access(current_user):
                 logger.info("Global admin access granted.")
                 return f(*args, **kwargs)
 

@@ -1319,9 +1319,7 @@ def init_routes(app):
                             continue
                         # word intersection heuristic
                         existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                        # Keep the warning threshold fairly high so we do not
-                        # block real users too aggressively on merely similar titles.
-                        if title_words and len(title_words & existing_words) >= 3:
+                        if title_words and len(title_words & existing_words) >= 2:
                             matches.append(d)
                             continue
                         # address similarity
@@ -1346,17 +1344,7 @@ def init_routes(app):
                         )
                         # if AJAX, return structured JSON so frontend can prompt user
                         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                            return (
-                                jsonify(
-                                    success=False,
-                                    conflict=True,
-                                    requires_confirmation=True,
-                                    message="Löytyi samankaltaisia ilmoituksia tälle päivälle.",
-                                    error_code=SUBMIT_ERROR_CODES["duplicate_conflict"],
-                                    demos=conflict_summary,
-                                ),
-                                409,
-                            )
+                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=conflict_summary), 409
                         # otherwise, flash and redirect back to form
                         flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
                         return redirect(url_for("submit"))
@@ -1849,9 +1837,8 @@ def init_routes(app):
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
-        # Build a cache key that is stable for public users; include the resolved locale
-        # so Accept-Language-driven variants do not collide in cache.
-        locale = _current_demo_language()
+        # Build a cache key that is stable for public users; include locale so localized pages differ
+        locale = session.get("locale", "")
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1882,6 +1869,7 @@ def init_routes(app):
 
         # Prepare response
         _demo = copy.copy(demo_obj)
+        locale = _current_demo_language()
         demo = _localized_demo_copy(Demonstration.to_dict(demo_obj, True), locale)
 
         toistuvuus = ""

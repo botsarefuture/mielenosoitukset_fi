@@ -107,22 +107,6 @@
     line-height: 1.6;
   }
 
-  .hero-help-link {
-    margin-top: 1rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: white;
-    font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 0.2rem;
-  }
-
-  .hero-help-link:hover {
-    color: white;
-    opacity: 0.92;
-  }
-
   /* Progress Bar */
   .progress-container {
     background: var(--color-card-bg);
@@ -278,23 +262,6 @@
     right: 0;
     height: 4px;
     background: var(--color-gradient-primary);
-  }
-
-  .submit-help-card {
-    margin-bottom: 1.5rem;
-    padding: 1rem 1.25rem;
-    border-radius: 1rem;
-    background: light-dark(#eef6ff, #172131);
-    border: 1px solid light-dark(#bfdbfe, #2b4c7e);
-    color: var(--color-text);
-  }
-
-  .submit-help-card p {
-    margin: 0.35rem 0;
-  }
-
-  .submit-help-card a {
-    font-weight: 700;
   }
 
   /* Page Content */
@@ -1033,32 +1000,6 @@
   };
 
   const SUBMIT_ERROR_LABEL = "{{ _('Virhekoodi') }}";
-  const SUBMIT_CONFLICT_TITLE = "{{ _('Löytyi mahdollinen päällekkäinen ilmoitus') }}";
-  const SUBMIT_CONFLICT_INTRO = "{{ _('Samalle päivälle löytyi samankaltainen mielenosoitusilmoitus.') }}";
-  const SUBMIT_CONFLICT_REVIEW = "{{ _('Tarkista osumat alta. Jos tämä on silti eri tapahtuma, paina OK lähettääksesi ilmoituksen. Jos kyse on vahingossa duplikaatista, voimme yhdistää sen myöhemmin meidän päässä.') }}";
-  const SUBMIT_CONFLICT_MATCHES = "{{ _('Mahdolliset osumat') }}";
-  const SUBMIT_CONFLICT_CANCELLED = "{{ _('Lähetystä ei tehty vielä. Tarkista tiedot ja lähetä uudelleen, jos ilmoitus on oikea.') }}";
-  const SUBMIT_CONFLICT_FORCE_FAILED = "{{ _('Ilmoituksen lähetys ei onnistunut vahvistuksen jälkeen. Tarkista tiedot ja yritä uudelleen.') }}";
-
-  function buildConflictConfirmationMessage(conflictData) {
-    const lines = [
-      SUBMIT_CONFLICT_TITLE,
-      "",
-      conflictData?.message || SUBMIT_CONFLICT_INTRO,
-      SUBMIT_CONFLICT_REVIEW,
-    ];
-
-    const matches = Array.isArray(conflictData?.demos) ? conflictData.demos : [];
-    if (matches.length) {
-      lines.push("", `${SUBMIT_CONFLICT_MATCHES}:`);
-      matches.slice(0, 5).forEach((demo, index) => {
-        const parts = [demo?.title, demo?.date, demo?.address].filter(Boolean);
-        lines.push(`${index + 1}. ${parts.join(" | ")}`);
-      });
-    }
-
-    return lines.join("\n");
-  }
 
   async function showSubmitError(response, fallbackMessage) {
     let message = fallbackMessage || "{{ _('Lähetyksessä tapahtui virhe. Yritä uudelleen.') }}";
@@ -1180,12 +1121,6 @@
           }
 
           if (conflictData && conflictData.conflict) {
-            const shouldForceSubmit = window.confirm(buildConflictConfirmationMessage(conflictData));
-            if (!shouldForceSubmit) {
-              alert(SUBMIT_CONFLICT_CANCELLED);
-              return;
-            }
-
             formData.set('force_submit', '1');
             const response2 = await fetch(form.action, {
               method: form.method,
@@ -1199,7 +1134,7 @@
               });
               return;
             } else {
-              await showSubmitError(response2, SUBMIT_CONFLICT_FORCE_FAILED);
+              await showSubmitError(response2);
               return;
             }
           } else {
@@ -1597,10 +1532,6 @@
         {{ _('Ilmoittamalla mielenosoituksesta autat muita löytämään tietoa mielenosoituksista. Mitä useampia ja
         kattavammin alustalla on mielenosoituksista tietoa, sitä useammille siitä on hyötyä.') }}
       </p>
-      <a class="hero-help-link" href="{{ url_for('public_guides') }}#submit-help">
-        <i class="fa-solid fa-circle-question"></i>
-        {{ _('Jos lähetys takkuaa, katso ohjeet') }}
-      </a>
     </div>
   </section>
 
@@ -1658,12 +1589,6 @@
   <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" id="myForm">
     <input type="hidden" name="submission_token" value="{{ submission_token or '' }}">
     <div class="form-container">
-      <div class="submit-help-card">
-        <p><strong>{{ _('Ennen lähetystä:') }}</strong> {{ _('tarkista nimi, päivämäärä, paikka ja sähköpostiosoite huolellisesti.') }}</p>
-        <p>{{ _('Jos järjestelmä ilmoittaa samankaltaisesta tapahtumasta tai lähetys ei mene heti läpi, lue toimintaohjeet tästä:') }}
-          <a href="{{ url_for('public_guides') }}#submit-help">{{ _('ohjeet ilmoituksen lähettämiseen') }}</a>.
-        </p>
-      </div>
 
       <!-- Page 1: Basic Information -->
       <div class="form-page active" id="page-1">

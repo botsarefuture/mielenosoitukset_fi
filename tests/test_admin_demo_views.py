@@ -46,6 +46,33 @@ def test_edit_demo_prefills_translation_fields(admin_client, db, seeded_data):
     assert 'value="peace, climate"' in page
 
 
+def test_edit_demo_with_token_includes_translation_context(client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
+        {
+            "$set": {
+                "default_language": "fi",
+                "translations": {
+                    "en": {
+                        "title": "English Climate March",
+                    }
+                },
+            }
+        },
+    )
+
+    response = client.get(
+        f"/admin/demo/edit_demo_with_token/{seeded_data['edit_token']}"
+    )
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'name="default_language"' in page
+    assert 'value="fi" selected' in page
+    assert 'name="translation_en_title"' in page
+    assert "English Climate March" in page
+
+
 def test_create_demo_persists_translation_payload(admin_client, db):
     response = admin_client.post(
         "/admin/demo/create_demo",

@@ -1840,8 +1840,9 @@ def init_routes(app):
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
-        # Build a cache key that is stable for public users; include locale so localized pages differ
-        locale = session.get("locale", "")
+        # Build a cache key that is stable for public users; include the resolved locale
+        # so Accept-Language-driven variants do not collide in cache.
+        locale = _current_demo_language()
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1872,7 +1873,6 @@ def init_routes(app):
 
         # Prepare response
         _demo = copy.copy(demo_obj)
-        locale = _current_demo_language()
         demo = _localized_demo_copy(Demonstration.to_dict(demo_obj, True), locale)
 
         toistuvuus = ""

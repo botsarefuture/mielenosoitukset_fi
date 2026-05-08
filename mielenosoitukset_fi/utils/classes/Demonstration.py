@@ -162,6 +162,8 @@ class Demonstration(BaseModel):
         last_modified=None,
         _id: ObjectId = None,
         description: str = None,
+        default_language: str = "fi",
+        translations: dict = None,
         _dont_override: bool = False,
         _rejected: bool = False,
         cover_source: str = None,
@@ -270,6 +272,8 @@ class Demonstration(BaseModel):
 
         self.title = title
         self.description = description
+        self.default_language = (default_language or "fi").strip().lower()
+        self.translations = copy.deepcopy(translations or {})
 
         # Removed direct assignment for date, start_time, end_time
 
@@ -601,6 +605,8 @@ class Demonstration(BaseModel):
         data["merged_into"] = str(self.merged_into) if self.merged_into else None  # Added line
         data["running_number"] = self.running_number
         data["slug"] = self.slug
+        data["default_language"] = self.default_language
+        data["translations"] = copy.deepcopy(self.translations or {})
         # Include last_modified in the dictionary. If JSON output is requested,
         # convert datetimes to ISO strings.
         try:
@@ -800,6 +806,8 @@ class Demonstration(BaseModel):
             # Basic Info
             title=get("title"),
             description=get("description"),
+            default_language=get("default_language", "fi"),
+            translations=get("translations") or {},
             date=get("date"),
             start_time=get("start_time"),
             end_time=get("end_time"),

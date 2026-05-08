@@ -41,6 +41,7 @@ from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from mielenosoitukset_fi.utils.demo_localization import get_demo_localized_fields
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
@@ -278,6 +279,24 @@ def generate_alternate_urls(app, endpoint, **values):
         with app.test_request_context():
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
+
+
+def _current_demo_language():
+    return (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+
+
+def _localized_demo_copy(demo, language=None):
+    if not isinstance(demo, dict):
+        return demo
+
+    localized = copy.deepcopy(demo)
+    localized.update(
+        get_demo_localized_fields(
+            localized,
+            language=language or _current_demo_language(),
+        )
+    )
+    return localized
 
 def format_demo_for_api(demo):
     """
@@ -1827,7 +1846,8 @@ def init_routes(app):
 
         # Prepare response
         _demo = copy.copy(demo_obj)
-        demo = Demonstration.to_dict(demo_obj, True)
+        locale = _current_demo_language()
+        demo = _localized_demo_copy(Demonstration.to_dict(demo_obj, True), locale)
 
         toistuvuus = ""
         if _demo.recurs:
@@ -1888,7 +1908,7 @@ def init_routes(app):
             similar_demos.append(
                 {
                     "id": sid,
-                    "title": doc.get("title"),
+                    "title": get_demo_localized_fields(doc, locale).get("title"),
                     "city": doc.get("city"),
                     "date": doc.get("date"),
                     "formatted_date": formatted_date,
@@ -1921,6 +1941,8 @@ def init_routes(app):
                     {
                         "_id": 1,
                         "title": 1,
+                        "default_language": 1,
+                        "translations": 1,
                         "city": 1,
                         "date": 1,
                         "start_time": 1,
@@ -1954,7 +1976,17 @@ def init_routes(app):
                 org_cursor = (
                     mongo.demonstrations.find(
                         org_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -1985,7 +2017,17 @@ def init_routes(app):
                 rec_cursor = (
                     mongo.demonstrations.find(
                         rec_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -2003,6 +2045,16 @@ def init_routes(app):
             "recurring_following": recurring_following,
         }
 
+        available_demo_languages = []
+        default_demo_language = (demo.get("default_language") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        if default_demo_language:
+            available_demo_languages.append(default_demo_language)
+        for language_code, translation in (demo.get("translations") or {}).items():
+            if translation and any(translation.get(field) not in (None, "", []) for field in ("title", "description", "tags")):
+                normalized = str(language_code).strip().lower()
+                if normalized and normalized not in available_demo_languages:
+                    available_demo_languages.append(normalized)
+
         response = make_response(
             render_template(
                 "detail.html",
@@ -2010,6 +2062,9 @@ def init_routes(app):
                 toistuvuus=toistuvuus,
                 similar_demos=similar_demos,
                 follow_meta=follow_meta,
+                current_demo_language=locale,
+                default_demo_language=default_demo_language,
+                available_demo_languages=available_demo_languages,
             )
         )
         response.headers["X-Cache"] = "MISS"

@@ -104,3 +104,4 @@ def test_edit_user_exposes_translator_role_and_auto_assigns_permission(admin_cli
     user_doc = db.users.find_one({"_id": translator_id})
     assert user_doc["role"] == "translator"
     assert "TRANSLATE_DEMO" in user_doc.get("global_permissions", [])
+    assert "TRANSLATE_UI" in user_doc.get("global_permissions", [])

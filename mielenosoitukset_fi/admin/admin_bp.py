@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Any, Dict
 from datetime import datetime, timedelta, timezone, date
 import requests
+from flask_babel import _
 
 from bson.objectid import ObjectId
 from flask import (
@@ -36,6 +37,14 @@ from mielenosoitukset_fi.utils.wrappers import admin_required, permission_requir
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.ui_translation_catalog import (
+    entry_state,
+    get_catalog_entry,
+    iter_catalog_entries,
+    proposal_key,
+    supported_ui_translation_locales,
+    update_catalog_entry,
+)
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
@@ -53,6 +62,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 # Initialize MongoDB and Flask-Login
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
+ui_translation_proposals = mongo["ui_translation_proposals"]
 
 login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
@@ -123,6 +133,85 @@ def _log_admin_event(event: str, **details):
         logger.exception("Failed to log admin event: %s", event)
 
 
+def _can_translate_ui(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "translator"}:
+        return True
+    return user.has_permission("TRANSLATE_UI")
+
+
+def _can_review_ui_translations(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "global_admin"}:
+        return True
+    return user.has_permission("REVIEW_UI_TRANSLATIONS")
+
+
+def _ui_translation_language_names():
+    return current_app.config.get("BABEL_LANGUAGES", {})
+
+
+def _normalize_ui_translation_rows(locale: str, search_query: str = "", state_filter: str = "pending"):
+    normalized_search = (search_query or "").strip().casefold()
+    proposals = {
+        proposal["msgid"]: proposal
+        for proposal in ui_translation_proposals.find({"locale": locale})
+    }
+
+    rows = []
+    untranslated = 0
+    fuzzy = 0
+    translated = 0
+    pending = 0
+    for entry in iter_catalog_entries(locale):
+        catalog_state = entry_state(entry)
+        if catalog_state == "untranslated":
+            untranslated += 1
+        elif catalog_state == "fuzzy":
+            fuzzy += 1
+        else:
+            translated += 1
+
+        proposal = proposals.get(entry.msgid)
+        effective_state = "pending" if proposal and proposal.get("status") == "pending" else catalog_state
+        if effective_state == "pending":
+            pending += 1
+
+        if normalized_search and normalized_search not in entry.msgid.casefold() and normalized_search not in entry.msgstr.casefold():
+            continue
+        if state_filter not in {"all", "", None} and effective_state != state_filter:
+            continue
+
+        rows.append(
+            {
+                "msgid": entry.msgid,
+                "msgstr": entry.msgstr,
+                "flags": entry.flags,
+                "locations": entry.locations,
+                "catalog_state": catalog_state,
+                "effective_state": effective_state,
+                "proposal": proposal,
+            }
+        )
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": untranslated + fuzzy + translated,
+            "untranslated": untranslated,
+            "fuzzy": fuzzy,
+            "translated": translated,
+            "pending": pending,
+        },
+    }
+
+
 @admin_bp.before_request
 def log_request_info():
     try:
@@ -136,6 +225,193 @@ def log_request_info():
     except Exception as e:
         logger.error(e)
         pass
+
+
+@admin_bp.route("/ui-translations")
+@login_required
+def ui_translation_dashboard():
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales and locales:
+        selected_locale = locales[0]
+
+    search_query = (request.args.get("search") or "").strip()
+    default_state = "pending" if _can_review_ui_translations(current_user) else "untranslated"
+    state_filter = (request.args.get("state") or default_state).strip().lower()
+    if state_filter not in {"pending", "untranslated", "fuzzy", "translated", "all"}:
+        state_filter = "pending"
+
+    locale_summaries = []
+    selected_rows = []
+    selected_counts = {"total": 0, "untranslated": 0, "fuzzy": 0, "translated": 0, "pending": 0}
+    for locale in locales:
+        normalized = _normalize_ui_translation_rows(
+            locale,
+            search_query=search_query if locale == selected_locale else "",
+            state_filter=state_filter if locale == selected_locale else "all",
+        )
+        locale_summaries.append(
+            {
+                "locale": locale,
+                "label": _ui_translation_language_names().get(locale, locale),
+                **normalized["counts"],
+            }
+        )
+        if locale == selected_locale:
+            selected_rows = normalized["rows"][:200]
+            selected_counts = normalized["counts"]
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/dashboard.html",
+        locales=locale_summaries,
+        selected_locale=selected_locale,
+        selected_rows=selected_rows,
+        selected_counts=selected_counts,
+        language_names=_ui_translation_language_names(),
+        search_query=search_query,
+        state_filter=state_filter,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/edit")
+@login_required
+def ui_translation_editor(locale):
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = request.args.get("msgid") or ""
+    entry = get_catalog_entry(locale, msgid)
+    if entry is None:
+        abort(404)
+
+    proposal = ui_translation_proposals.find_one(
+        {"_id": proposal_key(locale, msgid)}
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/editor.html",
+        locale=locale,
+        locale_label=_ui_translation_language_names().get(locale, locale),
+        entry=entry,
+        proposal=proposal,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/propose", methods=["POST"])
+@login_required
+def submit_ui_translation_proposal(locale):
+    if not _can_translate_ui(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    msgid = request.form.get("msgid") or ""
+    proposed_text = (request.form.get("proposed_text") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
+
+    entry = get_catalog_entry(locale, msgid)
+    if entry is None:
+        abort(404)
+    if not proposed_text:
+        flash_message(_("Syötä käännösehdotus ennen lähettämistä."), "error")
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+    now = datetime.utcnow()
+    ui_translation_proposals.update_one(
+        {"_id": proposal_key(locale, msgid)},
+        {
+            "$set": {
+                "locale": locale,
+                "msgid": msgid,
+                "current_msgstr": entry.msgstr,
+                "proposed_text": proposed_text,
+                "notes": notes,
+                "status": "pending",
+                "submitted_at": now,
+                "submitted_by": str(getattr(current_user, "_id", "")),
+                "submitted_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "reviewed_at": None,
+                "reviewed_by": None,
+                "reviewed_by_name": None,
+                "review_notes": "",
+                "locations": list(entry.locations),
+            }
+        },
+        upsert=True,
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus tallennettiin tarkistettavaksi."), "success")
+    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+
+@admin_bp.route("/ui-translations/<locale>/approve", methods=["POST"])
+@login_required
+def approve_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+    update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+            }
+        },
+    )
+    flash_message(_("Käyttöliittymäkäännös hyväksyttiin ja kirjoitettiin kielikatalogiin."), "success")
+    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+
+@admin_bp.route("/ui-translations/<locale>/reject", methods=["POST"])
+@login_required
+def reject_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "rejected",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+            }
+        },
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus hylättiin."), "success")
+    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
 
 
 class DemoViewCount:

@@ -20,6 +20,7 @@
 * Adminiin lisättiin ensimmäinen demojen käännöstyöjono: uusi `translator`-rooli voi tehdä käännösehdotuksia demojen otsikoille, kuvauksille ja tunnisteille, ja admin hyväksyy tai hylkää ne ennen julkaisua.
 * Demojen detail-sivu näyttää nyt hyväksytyt käännökset aktiivisen kielen mukaan, lokalisoi samankaltaisten tapahtumien otsikot, ja kertoo suoraan millä kielellä tapahtumaa katsotaan.
 * Käännöstyökalu osaa nyt pyytää backendissä välimuistitetyn DeepL-ehdotuksen demolle, jotta kääntäjät voivat käyttää automaattista luonnosta ilman että sama käännös generoidaan selaimessa joka näkymässä uudelleen.
+* Adminiin lisättiin ensimmäinen käyttöliittymäkäännösten workflow: translator/admin voivat avata gettext-rivejä, lähettää käännösehdotuksia ja hyväksyä ne suoraan `.po`/`.mo`-katalogeihin.
 * Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
 * Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.

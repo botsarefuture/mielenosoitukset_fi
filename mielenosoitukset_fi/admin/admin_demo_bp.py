@@ -32,6 +32,11 @@ from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cance
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
+from mielenosoitukset_fi.utils.demo_translation_cache import (
+    demo_is_translation_candidate,
+    get_cached_deepl_suggestion_for_demo,
+    get_or_create_deepl_suggestions_for_demo,
+)
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
@@ -244,12 +249,22 @@ def _can_review_demo_translations(user):
 def _collect_translation_proposal_form(language):
     tags_raw = request.form.get("translated_tags", "")
     tags = [tag.strip() for tag in tags_raw.split(",") if tag.strip()]
-    return {
+    proposal = {
         "language": language,
         "title": (request.form.get("translated_title") or "").strip(),
         "description": (request.form.get("translated_description") or "").strip(),
         "tags": tags,
     }
+    provider = (request.form.get("suggestion_provider") or "").strip()
+    source_hash = (request.form.get("suggestion_source_hash") or "").strip()
+    auto_generated = (request.form.get("suggestion_auto_generated") or "").strip().lower() == "true"
+    if provider:
+        proposal["_meta"] = {
+            "provider": provider,
+            "source_hash": source_hash or None,
+            "auto_generated": auto_generated,
+        }
+    return proposal
 
 
 def _proposal_has_content(proposal):
@@ -1599,7 +1614,10 @@ def demo_translation_dashboard():
         abort(403)
 
     search_query = (request.args.get("search") or "").strip()
+    include_past = (request.args.get("include_past") or "").strip().lower() == "true"
     query = {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]}
+    if not include_past:
+        query["date"] = {"$gte": date.today().strftime("%Y-%m-%d")}
     if search_query:
         query["title"] = {"$regex": re.escape(search_query), "$options": "i"}
 
@@ -1635,6 +1653,7 @@ def demo_translation_dashboard():
         demos=demos,
         pending_items=pending_items,
         search_query=search_query,
+        include_past=include_past,
         can_review_demo_translations=_can_review_demo_translations(current_user),
         can_translate_demos=_can_translate_demos(current_user),
         translation_language_names=_translation_language_names(),
@@ -1697,9 +1716,34 @@ def edit_demo_translations(demo_id):
         return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
 
     selected_language = (request.args.get("language") or "").strip()
+    prefill_mode = (request.args.get("prefill") or "").strip().lower()
     supported_locales = _supported_translation_locales(demo_doc)
     if selected_language not in supported_locales and supported_locales:
         selected_language = supported_locales[0]
+
+    deepl_suggestion_payload = (
+        get_cached_deepl_suggestion_for_demo(demo_doc, selected_language)
+        if selected_language
+        else None
+    )
+    deepl_suggestion = (
+        (deepl_suggestion_payload or {}).get("suggestion") or {}
+    )
+    form_seed_translation = (
+        _demo_translation_proposal(demo_doc, selected_language)
+        if selected_language
+        else {}
+    )
+    approved_translation = (
+        _demo_translation_payload(demo_doc, selected_language)
+        if selected_language
+        else {}
+    )
+    if not form_seed_translation:
+        if prefill_mode == "deepl" and deepl_suggestion:
+            form_seed_translation = deepl_suggestion
+        else:
+            form_seed_translation = approved_translation
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_editor.html",
@@ -1708,11 +1752,59 @@ def edit_demo_translations(demo_id):
         translation_locales=supported_locales,
         translation_language_names=_translation_language_names(),
         source_language=_demo_source_language(demo_doc),
-        approved_translation=_demo_translation_payload(demo_doc, selected_language) if selected_language else {},
+        approved_translation=approved_translation,
         translation_proposal=_demo_translation_proposal(demo_doc, selected_language) if selected_language else {},
+        deepl_suggestion=deepl_suggestion,
+        deepl_suggestion_payload=deepl_suggestion_payload or {},
+        deepl_prefill_active=bool(prefill_mode == "deepl" and deepl_suggestion),
+        form_seed_translation=form_seed_translation,
+        is_translation_candidate=demo_is_translation_candidate(demo_doc),
         translation_rows=_translation_summary_rows(demo_doc),
         can_review_demo_translations=_can_review_demo_translations(current_user),
         can_translate_demos=_can_translate_demos(current_user),
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/suggest", methods=["POST"])
+@login_required
+def generate_demo_translation_suggestion(demo_id, language):
+    if not _can_translate_demos(current_user):
+        abort(403)
+
+    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    if language not in _supported_translation_locales(demo_doc):
+        flash_message(_("Valittu kieli ei ole sallittu käännöskieli."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id))
+
+    result = get_or_create_deepl_suggestions_for_demo(
+        demo_doc,
+        [language],
+        force_refresh=(request.form.get("force_refresh") or "").strip().lower() == "true",
+    )
+
+    if result.get("skipped"):
+        flash_message(
+            _("Automaattisia käännösehdotuksia ei luoda menneille mielenosoituksille oletuksena."),
+            "info",
+        )
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    if result.get("cached"):
+        flash_message(_("Valmis DeepL-ehdotus löytyi välimuistista."), "success")
+    else:
+        flash_message(_("DeepL-ehdotus luotiin lähdesisällöstä."), "success")
+
+    return redirect(
+        url_for(
+            "admin_demo.edit_demo_translations",
+            demo_id=demo_id,
+            language=language,
+            prefill="deepl",
+        )
     )
 
 

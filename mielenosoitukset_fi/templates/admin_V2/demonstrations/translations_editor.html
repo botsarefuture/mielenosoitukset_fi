@@ -72,6 +72,50 @@
     </div>
   </section>
 
+  <section class="dashboard-panel mb-4">
+    <h2 class="text-xl font-semibold mb-3">{{ _('Automaattinen ehdotus') }}</h2>
+    {% if is_translation_candidate %}
+      <p class="text-muted">
+        {{ _('DeepL voi luoda luonnosehdotuksen tämän demon lähdesisällöstä. Ehdotus ei julkaise mitään suoraan, vaan toimii kääntäjän pohjana.') }}
+      </p>
+      {% if selected_language %}
+      <form method="POST" action="{{ url_for('admin_demo.generate_demo_translation_suggestion', demo_id=demo._id, language=selected_language) }}" class="d-flex gap-2 flex-wrap mb-3">
+        <button class="btn btn-outline-primary" type="submit">
+          <i class="fas fa-wand-magic-sparkles me-1"></i>{{ _('Luo DeepL-ehdotus') }}
+        </button>
+        {% if deepl_suggestion %}
+        <button class="btn btn-outline-secondary" type="submit" name="force_refresh" value="true">
+          {{ _('Päivitä ehdotus lähdesisällöstä') }}
+        </button>
+        {% endif %}
+      </form>
+      {% endif %}
+
+      {% if deepl_suggestion %}
+      <div class="border rounded p-3">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+          <div>
+            <h3 class="h5 mb-1">{{ _('Tallennettu DeepL-ehdotus') }}</h3>
+            <div class="text-muted small">
+              {{ _('Tämä ehdotus on generoitu backendissä ja välimuistitetty lähdesisällön nykyiselle versiolle.') }}
+            </div>
+          </div>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id, language=selected_language, prefill='deepl') }}">
+            {{ _('Käytä ehdotusta lomakkeessa') }}
+          </a>
+        </div>
+        <div class="mb-2"><strong>{{ _('Otsikko') }}:</strong> {{ deepl_suggestion.title or '' }}</div>
+        <div class="mb-2"><strong>{{ _('Kuvaus') }}:</strong> {{ deepl_suggestion.description or '' }}</div>
+        <div class="mb-0"><strong>{{ _('Tunnisteet') }}:</strong> {{ (deepl_suggestion.tags or [])|join(', ') }}</div>
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="alert alert-secondary mb-0">
+        {{ _('Menneille mielenosoituksille ei luoda automaattisia käännösehdotuksia oletuksena.') }}
+      </div>
+    {% endif %}
+  </section>
+
   <section class="dashboard-panel">
     <h2 class="text-xl font-semibold mb-3">{{ _('Käännösehdotus') }}</h2>
     {% if translation_locales %}
@@ -90,17 +134,22 @@
     {% if can_translate_demos and selected_language %}
     <form method="POST" class="mb-4">
       <input type="hidden" name="language" value="{{ selected_language }}">
+      {% if deepl_prefill_active and deepl_suggestion %}
+      <input type="hidden" name="suggestion_provider" value="{{ (deepl_suggestion._meta or {}).get('provider', 'deepl') }}">
+      <input type="hidden" name="suggestion_source_hash" value="{{ deepl_suggestion_payload.get('source_hash', '') }}">
+      <input type="hidden" name="suggestion_auto_generated" value="true">
+      {% endif %}
       <div class="mb-3">
         <label for="translated_title" class="form-label">{{ _('Käännetty otsikko') }}</label>
-        <input id="translated_title" name="translated_title" class="form-control" value="{{ translation_proposal.title or approved_translation.title or '' }}">
+        <input id="translated_title" name="translated_title" class="form-control" value="{{ form_seed_translation.title or '' }}">
       </div>
       <div class="mb-3">
         <label for="translated_description" class="form-label">{{ _('Käännetty kuvaus') }}</label>
-        <textarea id="translated_description" name="translated_description" class="form-control" rows="8">{{ translation_proposal.description or approved_translation.description or '' }}</textarea>
+        <textarea id="translated_description" name="translated_description" class="form-control" rows="8">{{ form_seed_translation.description or '' }}</textarea>
       </div>
       <div class="mb-3">
         <label for="translated_tags" class="form-label">{{ _('Käännetyt tunnisteet') }}</label>
-        <input id="translated_tags" name="translated_tags" class="form-control" value="{{ (translation_proposal.tags or approved_translation.tags or [])|join(', ') }}">
+        <input id="translated_tags" name="translated_tags" class="form-control" value="{{ (form_seed_translation.tags or [])|join(', ') }}">
         <small class="text-muted">{{ _('Erottele tunnisteet pilkulla.') }}</small>
       </div>
       <button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistettavaksi') }}</button>
@@ -116,6 +165,9 @@
       {% endif %}
       {% if translation_proposal.review_notes %}
       <p class="mb-2"><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ translation_proposal.review_notes }}</p>
+      {% endif %}
+      {% if translation_proposal._meta %}
+      <p class="mb-2"><strong>{{ _('Ehdotuksen alkuperä') }}:</strong> {{ translation_proposal._meta.provider or _('manuaalinen') }}</p>
       {% endif %}
 
       {% if can_review_demo_translations and translation_proposal.status == 'pending' %}

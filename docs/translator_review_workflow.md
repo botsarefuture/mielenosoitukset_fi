@@ -8,6 +8,7 @@ This branch adds the first reviewable translator workflow for demonstration tran
 - An implied translator permission: `TRANSLATE_DEMO`
 - A dedicated admin-side translation queue: `/admin/demo/translations`
 - A dedicated translation editor per demonstration: `/admin/demo/<demo_id>/translations`
+- Backend-generated DeepL suggestions that can be cached per demo source state and used as translation drafts
 - Review actions for admins:
   - approve proposal
   - reject proposal
@@ -53,6 +54,8 @@ Example:
 - Recurring-demo translation review still needs a matching workflow.
 - Public rendering does not yet consume approved translations from this branch.
 - There is no separate `moderator` role yet; review is handled by admin/global admin.
+- Past demonstrations are hidden from the translation queue by default.
+- DeepL suggestions do not publish automatically; they only help translators draft proposals.
 
 ## Recommended next slices
 

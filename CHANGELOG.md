@@ -72,6 +72,7 @@
 
 ### Fixed
 * Demojen käännöstyöjono piilottaa menneet mielenosoitukset oletuksena ja näyttää ne vain erikseen pyydettäessä, jotta kääntäjien näkymä pysyy keskittyneenä aktiivisiin tapahtumiin.
+* Mielenosoituksen detail-sivun HTML-cache käyttää nyt samaa resolved localea kuin itse renderöinti, jotta eri kieliversiot eivät vuoda toistensa yli vaikka hakulistaus näyttäisi oikean kielen.
 * PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.

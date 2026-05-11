@@ -1812,8 +1812,10 @@ def init_routes(app):
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
+        # Resolve locale once and reuse the exact same value for rendering and caching.
+        locale = _current_demo_language()
+
         # Build a cache key that is stable for public users; include locale so localized pages differ
-        locale = session.get("locale", "")
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1843,7 +1845,6 @@ def init_routes(app):
                 logger.exception("Error fetching geocode for demo %s", demo_id)
 
         # Prepare response
-        locale = _current_demo_language()
         demo = demo_obj.to_localized_dict(language=locale, json=True)
 
         toistuvuus = ""

@@ -56,11 +56,19 @@ def test_demo_detail_renders_translated_fields_and_language_switcher(
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert "English Climate March" in body
+    assert '<h1 class="demo-title">English Climate March</h1>' in body
     assert "English description for the seeded demonstration." in body
-    assert "Climate March Helsinki" not in body
+    assert '<h1 class="demo-title">Climate March Helsinki</h1>' not in body
     assert "/set_language/fi" in body
     assert "/set_language/en" in body
+
+    _set_client_locale(client, "fi")
+    finnish_response = client.get(f"/demonstration/{seeded_data['demo_id']}")
+
+    assert finnish_response.status_code == 200
+    finnish_body = finnish_response.get_data(as_text=True)
+    assert '<h1 class="demo-title">Climate March Helsinki</h1>' in finnish_body
+    assert '<h1 class="demo-title">English Climate March</h1>' not in finnish_body
 
 
 def test_demo_api_returns_translated_card_fields_for_active_locale(

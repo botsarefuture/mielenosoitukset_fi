@@ -250,6 +250,92 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
 
 
 @pytest.mark.integration
+def test_submit_duplicate_conflict_can_match_existing_translation_title(client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
+        {
+            "$set": {
+                "date": "2026-08-20",
+                "city": "Helsinki",
+                "address": "Mannerheimintie 1, Helsinki",
+                "default_language": "fi",
+                "translations": {
+                    "en": {
+                        "title": "English Climate March",
+                        "description": "Translated description",
+                        "tags": ["peace", "climate"],
+                    }
+                },
+            }
+        },
+    )
+
+    response = client.post(
+        "/submit",
+        data={
+            "title": "English Climate March",
+            "date": "2026-08-20",
+            "description": "Trying to submit a same-day duplicate via translation title.",
+            "default_language": "en",
+            "start_time": "15:00",
+            "end_time": "17:00",
+            "facebook": "",
+            "city": "Helsinki",
+            "address": "Mannerheimintie 1, Helsinki",
+            "type": "other",
+            "tags": "peace,climate",
+            "submitter_role": "organizer",
+            "submitter_email": "submitter@example.test",
+            "submitter_name": "Submitter Example",
+            "accept_terms": "on",
+            "submission_token": "translation-conflict-token",
+        },
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+
+    assert response.status_code == 409
+    payload = response.get_json()
+    assert payload["conflict"] is True
+    assert any(item["_id"] == str(seeded_data["demo_id"]) for item in payload["demos"])
+
+
+@pytest.mark.integration
+def test_conflict_api_can_match_existing_translation_title(client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
+        {
+            "$set": {
+                "date": "2026-08-21",
+                "city": "Helsinki",
+                "address": "Mannerheimintie 1, Helsinki",
+                "default_language": "fi",
+                "translations": {
+                    "en": {
+                        "title": "English Climate March",
+                        "description": "Translated description",
+                        "tags": ["peace", "climate"],
+                    }
+                },
+            }
+        },
+    )
+
+    response = client.get(
+        "/api/v1/check_demo_conflict",
+        query_string={
+            "title": "English Climate March",
+            "date": "2026-08-21",
+            "city": "Helsinki",
+            "address": "Mannerheimintie 1, Helsinki",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert any(item["_id"] == str(seeded_data["demo_id"]) for item in payload["matches"])
+
+
+@pytest.mark.integration
 @pytest.mark.jobs
 def test_merge_duplicate_submissions_repoints_references_and_audits(db):
     from mielenosoitukset_fi.scripts.merge_duplicate_submissions import merge_duplicate_submissions

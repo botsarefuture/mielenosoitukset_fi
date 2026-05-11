@@ -44,6 +44,11 @@ class ConfigReloadTests(unittest.TestCase):
             self.assertEqual(config_module.Config.S3_SECRET_KEY, "s3-secret")
             self.assertEqual(config_module.Config.PORT, 9001)
             self.assertEqual(config_module.Config.DEFAULT_TIMEZONE, "UTC")
+            self.assertEqual(config_module.Config.DEEPL_API_KEY, "")
+            self.assertEqual(
+                config_module.Config.DEEPL_API_URL,
+                "https://api-free.deepl.com/v2/translate",
+            )
 
     def test_database_manager_reset_clears_singleton(self):
         class FakeManager:

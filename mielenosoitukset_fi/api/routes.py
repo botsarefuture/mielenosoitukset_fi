@@ -14,6 +14,12 @@ from mielenosoitukset_fi.utils.classes import Demonstration
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.notifications import create_notification    # NEW
 from mielenosoitukset_fi.utils.analytics import get_prepped_data
+from mielenosoitukset_fi.utils.demo_localization import (
+    demo_has_tag,
+    demo_matches_search_query,
+    demo_matches_title_query,
+    get_demo_localized_dict,
+)
 from mielenosoitukset_fi.utils.tokens import (
     TOKENS_COLLECTION,
     TOKEN_USAGE_LOGS,
@@ -204,6 +210,10 @@ def list_demonstrations():
     # --- Extract & normalize query parameters ---
     def get_param(name: str, default: str = ""):
         return request.args.get(name, default).strip().casefold()
+    requested_language = (request.args.get("lang") or "").strip().lower() or None
+    include_translations = (
+        request.args.get("include_translations", "").strip().lower() == "true"
+    )
     cache_key = make_cache_key()
     use_cache = bool(cache) and not should_skip_cache(public_only=False)
 
@@ -291,17 +301,21 @@ def list_demonstrations():
             continue
 
         demo_obj = stringify_object_ids(demo)
-        title_text = demo_obj.get("title", "").casefold()
         city_text = demo_obj.get("city", "").casefold()
-        tags_text = [t.casefold() for t in demo_obj.get("tags", [])]
 
         if (
-            (not search or search in title_text)
+            (not search or demo_matches_search_query(demo_obj, search))
             and (not city_list or city_text in city_list)
-            and (not title or title in title_text)
-            and (not tag or tag in tags_text)
+            and (not title or demo_matches_title_query(demo_obj, title))
+            and (not tag or demo_has_tag(demo_obj, tag))
         ):
-            filtered.append(demo_obj)
+            filtered.append(
+                get_demo_localized_dict(
+                    demo_obj,
+                    language=requested_language,
+                    include_translations=include_translations,
+                )
+            )
 
     # --- Sort chronologically ---
     filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
@@ -357,8 +371,18 @@ def get_demonstration(demo_id):
     if not demo:
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     
+    requested_language = (request.args.get("lang") or "").strip().lower() or None
+    include_translations = (
+        request.args.get("include_translations", "").strip().lower() == "true"
+    )
+
     demo_obj = Demonstration.from_dict(demo)
-    return jsonify(stringify_object_ids(demo_obj.to_dict(json=False))), 200
+    payload = demo_obj.to_localized_dict(
+        language=requested_language,
+        include_translations=include_translations,
+        json=False,
+    )
+    return jsonify(stringify_object_ids(payload)), 200
 
 # -------------------------
 # DEMO STATS

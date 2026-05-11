@@ -54,7 +54,13 @@ from mielenosoitukset_fi.utils.cache import (
     skip_cache_public_only,
 )
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils.demo_localization import get_demo_localized_fields
+from mielenosoitukset_fi.utils.demo_localization import (
+    demo_has_tag,
+    demo_matches_conflict_candidate,
+    demo_matches_search_query,
+    get_demo_localized_dict,
+    get_demo_localized_fields,
+)
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -295,15 +301,11 @@ def _current_demo_language():
 def _localized_demo_copy(demo, language=None):
     if not isinstance(demo, dict):
         return demo
-
-    localized = copy.deepcopy(demo)
-    localized.update(
-        get_demo_localized_fields(
-            localized,
-            language=language or _current_demo_language(),
-        )
+    return get_demo_localized_dict(
+        demo,
+        language=language or _current_demo_language(),
+        include_translations=True,
     )
-    return localized
 
 
 def _localized_demo_list(demos, language=None):
@@ -359,6 +361,9 @@ def format_demo_for_api(demo, language=None):
     return {
         "_id": str(localized_demo.get("_id")),
         "title": localized_demo.get("title", ""),
+        "default_language": localized_demo.get("default_language", "fi"),
+        "resolved_language": localized_demo.get("resolved_language"),
+        "available_languages": localized_demo.get("available_languages", []),
         "date_display": date_display,
         "start_time_display": fmt_time(localized_demo.get("start_time")),
         "end_time_display": fmt_time(localized_demo.get("end_time")),
@@ -415,10 +420,8 @@ def filter_demonstrations_api(
         if demo_date < today:
             continue
         # Search
-        if search_query:
-            if search_query not in demo.get("title", "").lower() and \
-               search_query not in demo.get("address", "").lower():
-                continue
+        if search_query and not demo_matches_search_query(demo, search_query):
+            continue
         # City
         if city_query:
             if isinstance(city_query, list):
@@ -441,10 +444,8 @@ def filter_demonstrations_api(
             except Exception:
                 pass
         # Tag filter
-        if tag_query:
-            tags = [t.lower() for t in demo.get("tags", [])]
-            if tag_query.lower() not in tags:
-                continue
+        if tag_query and not demo_has_tag(demo, tag_query):
+            continue
         if demo["_id"] not in added_demo_ids:
             filtered.append(demo)
             added_demo_ids.add(demo["_id"])
@@ -555,6 +556,7 @@ def add_api_routes(app):
             JSON with keys: demonstrations, total_pages
         """
         args = get_api_pagination_args()
+        requested_language = (request.args.get("lang") or "").strip().lower() or None
         today = date.today()
         demos_cursor = demonstrations_collection.find(DEMO_FILTER)
         filtered = filter_demonstrations_api(
@@ -569,7 +571,7 @@ def add_api_routes(app):
         )
         filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
         paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
-        result = [format_demo_for_api(demo) for demo in paginated]
+        result = [format_demo_for_api(demo, requested_language) for demo in paginated]
         return jsonify(demonstrations=result, total_pages=total_pages)
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
@@ -597,23 +599,10 @@ def add_api_routes(app):
                 "approved": True,
             })
             matches = []
-            title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
             for d in potential:
                 if len(matches) >= 5:
                     break
-                existing_title = (d.get('title') or '').lower()
-                existing_addr = (d.get('address') or '').lower()
-                matched = False
-                if title.lower() in existing_title or existing_title in title.lower():
-                    matched = True
-                else:
-                    existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                    if title_words and len(title_words & existing_words) >= 2:
-                        matched = True
-                if not matched and address_q:
-                    if address_q.lower() in existing_addr or existing_addr in address_q.lower():
-                        matched = True
-                if matched:
+                if demo_matches_conflict_candidate(d, title, address_q):
                     matches.append({
                         "_id": str(d.get('_id')),
                         "title": d.get('title'),
@@ -1309,23 +1298,9 @@ def init_routes(app):
                         "cancelled": {"$ne": True},
                     })
                     matches = []
-                    title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
                     for d in potential:
-                        existing_title = (d.get('title') or '').lower()
-                        existing_addr = (d.get('address') or '').lower()
-                        # direct substring check
-                        if title.lower() in existing_title or existing_title in title.lower():
+                        if demo_matches_conflict_candidate(d, title, address):
                             matches.append(d)
-                            continue
-                        # word intersection heuristic
-                        existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                        if title_words and len(title_words & existing_words) >= 2:
-                            matches.append(d)
-                            continue
-                        # address similarity
-                        if address and (address.lower() in existing_addr or existing_addr in address.lower()):
-                            matches.append(d)
-                            continue
                     if matches:
                         conflict_summary = [
                             {
@@ -1768,8 +1743,7 @@ def init_routes(app):
             True if demo matches all filters, False otherwise
         """
         matches_search = (
-            search_query in demo["title"].lower()
-            or search_query in demo["address"].lower()
+            demo_matches_search_query(demo, search_query)
         )
         
         matches_city = (
@@ -1868,12 +1842,11 @@ def init_routes(app):
                 logger.exception("Error fetching geocode for demo %s", demo_id)
 
         # Prepare response
-        _demo = copy.copy(demo_obj)
         locale = _current_demo_language()
-        demo = _localized_demo_copy(Demonstration.to_dict(demo_obj, True), locale)
+        demo = demo_obj.to_localized_dict(language=locale, json=True)
 
         toistuvuus = ""
-        if _demo.recurs:
+        if demo_obj.recurs:
             toistuvuus = generate_demo_sentence(demo)
 
         def _format_suggestion_date(raw_value):

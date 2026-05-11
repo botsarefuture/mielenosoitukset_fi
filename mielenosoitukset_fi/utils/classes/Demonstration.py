@@ -483,6 +483,12 @@ class Demonstration(BaseModel):
     def available_translation_languages(self):
         return sorted(self.translations.keys())
 
+    def available_languages(self):
+        languages = set(self.available_translation_languages())
+        if self.default_language:
+            languages.add(self.default_language)
+        return sorted(language for language in languages if language)
+
     def get_localized_fields(self, language: str, fallback: bool = True):
         return {
             "title": self.get_translation(language, "title", fallback=fallback),
@@ -491,6 +497,24 @@ class Demonstration(BaseModel):
             ),
             "tags": self.get_translation(language, "tags", fallback=fallback),
         }
+
+    def to_localized_dict(
+        self,
+        language: str = None,
+        fallback: bool = True,
+        json: bool = False,
+        include_translations: bool = True,
+    ):
+        data = self.to_dict(json=json)
+        localized = self.get_localized_fields(language, fallback=fallback)
+        data.update(localized)
+        data["resolved_language"] = (language or self.default_language or "fi").strip().lower()
+        data["available_languages"] = self.available_languages()
+
+        if not include_translations:
+            data.pop("translations", None)
+
+        return data
 
 
     def _format_date(self):

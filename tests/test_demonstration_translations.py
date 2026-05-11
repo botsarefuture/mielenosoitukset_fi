@@ -90,10 +90,37 @@ def test_demonstration_translation_normalizes_tags_and_roundtrips_to_dict(monkey
     assert data["translations"]["en"]["tags"] == ["peace", "rally"]
     assert restored.get_translation("en", "tags") == ["peace", "rally"]
     assert restored.get_translation("sv", "description") == "Svensk beskrivning"
+    assert restored.available_languages() == ["en", "fi", "sv"]
+
+
+def test_demonstration_can_serialize_localized_payload(monkeypatch):
+    Demonstration = _load_demonstration_class(monkeypatch)
+
+    demo = _build_demo(
+        Demonstration,
+        default_language="fi",
+        translations={
+            "en": {
+                "title": "English title",
+                "description": "English description",
+            }
+        },
+    )
+
+    localized = demo.to_localized_dict("en", include_translations=False)
+
+    assert localized["title"] == "English title"
+    assert localized["description"] == "English description"
+    assert localized["tags"] == ["rauha", "testi"]
+    assert localized["resolved_language"] == "en"
+    assert localized["available_languages"] == ["en", "fi"]
+    assert "translations" not in localized
 
 
 def test_demo_localization_helper_supports_dict_payloads():
     from mielenosoitukset_fi.utils.demo_localization import (
+        get_demo_available_languages,
+        get_demo_localized_dict,
         get_demo_localized_fields,
         get_demo_localized_value,
     )
@@ -117,8 +144,17 @@ def test_demo_localization_helper_supports_dict_payloads():
         == "Suomenkielinen kuvaus"
     )
     assert get_demo_localized_value(demo, "title", "sv", fallback=False) is None
+    assert get_demo_available_languages(demo) == ["en", "fi"]
     assert get_demo_localized_fields(demo, "en") == {
         "title": "English title",
         "description": "Suomenkielinen kuvaus",
         "tags": ["peace"],
     }
+    localized = get_demo_localized_dict(demo, "en", include_translations=False)
+    assert localized["title"] == "English title"
+    assert localized["description"] == "Suomenkielinen kuvaus"
+    assert localized["tags"] == ["peace"]
+    assert localized["default_language"] == "fi"
+    assert localized["resolved_language"] == "en"
+    assert localized["available_languages"] == ["en", "fi"]
+    assert "translations" not in localized

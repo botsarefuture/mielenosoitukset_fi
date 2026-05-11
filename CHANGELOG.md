@@ -7,6 +7,11 @@
 ### Added
 * Added the first multilingual demonstration data-model foundation: `Demonstration` now supports `default_language`, a `translations` map, and helper methods for localized title/description/tag access without breaking existing base fields.
 * Added shared demo-localization helpers so multilingual title, description, and tag resolution can be reused consistently from both `Demonstration` objects and plain demonstration dictionaries.
+* `Demonstration` now exposes translations-first serialization helpers for localized payloads and available-language discovery, so API and UI code can consume one consistent multilingual model instead of rebuilding locale resolution ad hoc.
+* Public demonstration APIs and filtering now understand multilingual demonstration content: localized API payloads expose resolved and available languages, and search/tag filters can match translated titles, descriptions, and tags instead of only the base language fields.
+* Added a DeepL-backed translation suggestion service for demonstration content, so translator workflows can request machine-generated title/description/tag proposals with provenance metadata while still keeping human review in control.
+* DeepL suggestions can now be cached backend-side by demo source content hash, so translator UIs can show ready-made proposal drafts without re-translating unchanged content on every view.
+* DeepL suggestion generation now skips past demonstrations by default, so translator workflows can keep old events hidden unless someone explicitly opts into backfilling them.
 * Public demo rendering now uses locale-aware demonstration title, description, and tag values on detail pages, calendar views, and API/card payloads while still falling back to legacy base fields when translations are missing.
 * Admin demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, so demonstration translations can be managed from the existing moderation UI.
 * Recurring demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, extending the same translation model to recurring-event administration.

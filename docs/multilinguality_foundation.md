@@ -45,19 +45,29 @@ This branch starts the data-model groundwork for full multilingual demonstration
   - `get_translation(language, field, fallback=True)`
   - `get_localized_fields(language, fallback=True)`
   - `available_translation_languages()`
+  - `available_languages()`
+  - `to_localized_dict(language=None, fallback=True, include_translations=True)`
 - shared utility helpers:
   - `get_demo_localized_value(demo, field, language=None, fallback=True)`
   - `get_demo_localized_fields(demo, language=None, fallback=True)`
+  - `get_demo_available_languages(demo)`
+  - `get_demo_localized_dict(demo, language=None, fallback=True, include_translations=True)`
 
 Those helpers are intentionally backward-compatible:
 - they use translated content when it exists for the requested language
 - they fall back to the legacy base fields when it does not
 - they work for both `Demonstration` objects and plain demo dictionaries
+- they let later API/admin/public slices serialize a resolved language view without losing access to the underlying translation map when it is needed
 
 The first public UI slice is also now in place:
 - demo detail rendering resolves localized `title`, `description`, and `tags`
 - calendar views resolve localized demo titles/descriptions/tags from the active locale
 - API/card-format demo payloads use the same localization helper path
+- public API payloads can now expose a resolved localized view plus the demo's available languages
+- multilingual search/tag filtering now matches translated title/description/tag content instead of only the base-language fields
+- a reusable DeepL suggestion provider can now generate translation proposals for demo `title`, `description`, and `tags`, ready to be consumed by a translator/review workflow instead of publishing directly
+- DeepL suggestions can also be cached backend-side against the current source-content hash, so translator/admin UIs can reuse prepared drafts until the source text changes
+- past demos can be excluded from automatic suggestion generation by default, so translator queues can stay focused on upcoming/current events unless old content is explicitly included
 
 The first admin UI slice is now in place too:
 - admin demo create/edit form exposes `default_language`

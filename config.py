@@ -113,6 +113,11 @@ class Config:
             "LANGUAGES",
             {"fi": "Suomi", "en": "English"},
         )
+        cls.DEEPL_API_KEY = config.get("DEEPL_API_KEY", "")
+        cls.DEEPL_API_URL = config.get(
+            "DEEPL_API_URL",
+            "https://api-free.deepl.com/v2/translate",
+        )
 
         cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
         cls.PORT = config.get("PORT", 8000)

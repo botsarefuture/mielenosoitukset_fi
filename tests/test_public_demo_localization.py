@@ -27,6 +27,7 @@ def _set_client_locale(client, locale):
 
 def _issue_read_token(db, user_id):
     from bson import ObjectId
+
     from mielenosoitukset_fi.utils.tokens import _hash_token
 
     token = "integration-read-token"
@@ -45,7 +46,9 @@ def _issue_read_token(db, user_id):
     return token
 
 
-def test_demo_detail_renders_translated_fields_for_active_locale(client, db, seeded_data):
+def test_demo_detail_renders_translated_fields_and_language_switcher(
+    client, db, seeded_data
+):
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
@@ -56,11 +59,13 @@ def test_demo_detail_renders_translated_fields_for_active_locale(client, db, see
     assert "English Climate March" in body
     assert "English description for the seeded demonstration." in body
     assert "Climate March Helsinki" not in body
-    assert '/set_language/fi' in body
-    assert '/set_language/en' in body
+    assert "/set_language/fi" in body
+    assert "/set_language/en" in body
 
 
-def test_demo_api_returns_translated_card_fields_for_active_locale(client, db, seeded_data):
+def test_demo_api_returns_translated_card_fields_for_active_locale(
+    client, db, seeded_data
+):
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
@@ -93,7 +98,9 @@ def test_demo_api_v1_search_matches_translated_fields(client, db, seeded_data):
     )
 
 
-def test_demo_api_blueprint_returns_localized_results_for_requested_language(client, db, seeded_data):
+def test_demo_api_blueprint_returns_localized_results_for_requested_language(
+    client, db, seeded_data
+):
     _set_demo_translation(db, seeded_data["demo_id"])
 
     response = client.get("/api/demonstrations?lang=en")
@@ -101,9 +108,7 @@ def test_demo_api_blueprint_returns_localized_results_for_requested_language(cli
     assert response.status_code == 200
     payload = response.get_json()
     matching = next(
-        demo
-        for demo in payload["results"]
-        if demo["_id"] == str(seeded_data["demo_id"])
+        demo for demo in payload["results"] if demo["_id"] == str(seeded_data["demo_id"])
     )
     assert matching["title"] == "English Climate March"
     assert matching["description"] == "English description for the seeded demonstration."
@@ -111,6 +116,21 @@ def test_demo_api_blueprint_returns_localized_results_for_requested_language(cli
     assert matching["resolved_language"] == "en"
     assert matching["available_languages"] == ["en", "fi"]
     assert "translations" not in matching
+
+
+def test_demo_api_blueprint_uses_session_locale_when_lang_missing(client, db, seeded_data):
+    _set_demo_translation(db, seeded_data["demo_id"])
+    _set_client_locale(client, "en")
+
+    response = client.get("/api/demonstrations")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    matching = next(
+        demo for demo in payload["results"] if demo["_id"] == str(seeded_data["demo_id"])
+    )
+    assert matching["title"] == "English Climate March"
+    assert matching["resolved_language"] == "en"
 
 
 def test_demo_api_blueprint_can_include_translation_map(client, db, seeded_data):
@@ -121,9 +141,7 @@ def test_demo_api_blueprint_can_include_translation_map(client, db, seeded_data)
     assert response.status_code == 200
     payload = response.get_json()
     matching = next(
-        demo
-        for demo in payload["results"]
-        if demo["_id"] == str(seeded_data["demo_id"])
+        demo for demo in payload["results"] if demo["_id"] == str(seeded_data["demo_id"])
     )
     assert matching["translations"]["en"]["title"] == "English Climate March"
 
@@ -146,7 +164,9 @@ def test_demo_api_blueprint_detail_returns_localized_payload(client, db, seeded_
     assert "translations" not in payload
 
 
-def test_demo_api_blueprint_detail_can_include_translation_map(client, db, seeded_data):
+def test_demo_api_blueprint_detail_can_include_translation_map(
+    client, db, seeded_data
+):
     _set_demo_translation(db, seeded_data["demo_id"])
     token = _issue_read_token(db, seeded_data["user_id"])
 
@@ -160,7 +180,9 @@ def test_demo_api_blueprint_detail_can_include_translation_map(client, db, seede
     assert payload["translations"]["en"]["title"] == "English Climate March"
 
 
-def test_demo_api_blueprint_search_and_tag_filters_match_translations(client, db, seeded_data):
+def test_demo_api_blueprint_search_and_tag_filters_match_translations(
+    client, db, seeded_data
+):
     _set_demo_translation(db, seeded_data["demo_id"])
 
     response = client.get("/api/demonstrations?search=english&tag=peace")
@@ -182,3 +204,10 @@ def test_calendar_month_view_renders_translated_demo_titles(client, db, seeded_d
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "English Climate March" in body
+
+
+def test_set_language_redirects_back_to_safe_next_path(client):
+    response = client.get("/set_language/en?next=/demonstrations?search=climate")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/demonstrations?search=climate")

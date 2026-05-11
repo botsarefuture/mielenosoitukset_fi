@@ -411,6 +411,12 @@
         <i class="fas fa-ban"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% endif %}
+
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission('TRANSLATE_DEMO') or current_user.has_permission('REVIEW_DEMO_TRANSLATIONS') %}
+      <a href="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="btn new-item">
+        <i class="fas fa-language"></i>{{ _('Käännöstyöjono') }}
+      </a>
+      {% endif %}
     </div>
 
 

@@ -1,10 +1,11 @@
 from copy import deepcopy
-from flask import current_app, jsonify, redirect, request, Blueprint, url_for
+from flask import current_app, jsonify, redirect, request, Blueprint, url_for, session
 from bson.objectid import ObjectId
 from datetime import datetime
 from flask_caching import Cache
 from flask_cors import CORS
 from functools import wraps
+from flask_babel import get_locale
 
 from flask_login import current_user, login_required
 
@@ -210,7 +211,20 @@ def list_demonstrations():
     # --- Extract & normalize query parameters ---
     def get_param(name: str, default: str = ""):
         return request.args.get(name, default).strip().casefold()
-    requested_language = (request.args.get("lang") or "").strip().lower() or None
+
+    def _requested_language():
+        explicit = (request.args.get("lang") or "").strip().lower()
+        if explicit:
+            return explicit
+        try:
+            locale = str(get_locale() or "").strip().lower()
+            if locale:
+                return locale
+        except Exception:
+            pass
+        return (session.get("locale") or "").strip().lower() or None
+
+    requested_language = _requested_language()
     include_translations = (
         request.args.get("include_translations", "").strip().lower() == "true"
     )
@@ -372,6 +386,13 @@ def get_demonstration(demo_id):
         raise ApiException(Message("Demonstration not found", "demo_not_found"), 404)
     
     requested_language = (request.args.get("lang") or "").strip().lower() or None
+    if not requested_language:
+        try:
+            requested_language = str(get_locale() or "").strip().lower() or None
+        except Exception:
+            requested_language = None
+    if not requested_language:
+        requested_language = (session.get("locale") or "").strip().lower() or None
     include_translations = (
         request.args.get("include_translations", "").strip().lower() == "true"
     )

@@ -154,7 +154,9 @@ def demo_has_tag(demo, tag_query: str) -> bool:
     if not isinstance(demo, dict):
         raise TypeError("demo must be a Demonstration instance or a dict")
 
-    base_tags = [str(tag).strip().casefold() for tag in demo.get("tags") or [] if str(tag).strip()]
+    base_tags = [
+        str(tag).strip().casefold() for tag in demo.get("tags") or [] if str(tag).strip()
+    ]
     if normalized_tag in base_tags:
         return True
 
@@ -223,7 +225,9 @@ def demo_title_candidates(demo):
     return candidates
 
 
-def demo_matches_conflict_candidate(demo, submitted_title: str, submitted_address: str = "") -> bool:
+def demo_matches_conflict_candidate(
+    demo, submitted_title: str, submitted_address: str = ""
+) -> bool:
     normalized_title = (submitted_title or "").strip().casefold()
     normalized_address = (submitted_address or "").strip().casefold()
     if not normalized_title:
@@ -245,7 +249,9 @@ def demo_matches_conflict_candidate(demo, submitted_title: str, submitted_addres
             return True
 
     if normalized_address:
-        existing_addr = str((demo.get("address") if isinstance(demo, dict) else "") or "").casefold()
+        existing_addr = str(
+            (demo.get("address") if isinstance(demo, dict) else "") or ""
+        ).casefold()
         if existing_addr and (
             normalized_address in existing_addr or existing_addr in normalized_address
         ):

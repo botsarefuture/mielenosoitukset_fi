@@ -10,6 +10,7 @@ import hashlib
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
+from urllib.parse import urlsplit
 from flask_babel import _, refresh, format_date, get_locale
 from flask import (
     app,
@@ -42,6 +43,7 @@ from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from mielenosoitukset_fi.utils.demo_localization import get_demo_localized_fields
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
@@ -286,7 +288,6 @@ def generate_alternate_urls(app, endpoint, **values):
         with app.test_request_context():
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
-
 
 def _current_demo_language():
     try:
@@ -1937,6 +1938,8 @@ def init_routes(app):
                     {
                         "_id": 1,
                         "title": 1,
+                        "default_language": 1,
+                        "translations": 1,
                         "city": 1,
                         "date": 1,
                         "start_time": 1,
@@ -1970,7 +1973,17 @@ def init_routes(app):
                 org_cursor = (
                     mongo.demonstrations.find(
                         org_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -2001,7 +2014,17 @@ def init_routes(app):
                 rec_cursor = (
                     mongo.demonstrations.find(
                         rec_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -2019,6 +2042,16 @@ def init_routes(app):
             "recurring_following": recurring_following,
         }
 
+        available_demo_languages = []
+        default_demo_language = (demo.get("default_language") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        if default_demo_language:
+            available_demo_languages.append(default_demo_language)
+        for language_code, translation in (demo.get("translations") or {}).items():
+            if translation and any(translation.get(field) not in (None, "", []) for field in ("title", "description", "tags")):
+                normalized = str(language_code).strip().lower()
+                if normalized and normalized not in available_demo_languages:
+                    available_demo_languages.append(normalized)
+
         response = make_response(
             render_template(
                 "detail.html",
@@ -2026,6 +2059,9 @@ def init_routes(app):
                 toistuvuus=toistuvuus,
                 similar_demos=similar_demos,
                 follow_meta=follow_meta,
+                current_demo_language=locale,
+                default_demo_language=default_demo_language,
+                available_demo_languages=available_demo_languages,
             )
         )
         response.headers["X-Cache"] = "MISS"
@@ -2601,9 +2637,22 @@ def init_routes(app):
             return redirect(request.referrer)
         session["locale"] = lang
         session.modified = True
-        referrer = request.referrer
-        if referrer and referrer.startswith(request.host_url):
-            return redirect(referrer)
+
+        next_target = (request.args.get("next") or "").strip()
+        if next_target:
+            parsed = urlsplit(next_target)
+            if not parsed.scheme and not parsed.netloc and next_target.startswith("/"):
+                return redirect(next_target)
+
+        referrer = request.referrer or ""
+        if referrer:
+            parsed_referrer = urlsplit(referrer)
+            current_host = urlsplit(request.host_url).netloc
+            if parsed_referrer.netloc == current_host:
+                safe_path = parsed_referrer.path or "/"
+                if parsed_referrer.query:
+                    safe_path = f"{safe_path}?{parsed_referrer.query}"
+                return redirect(safe_path)
         return redirect(url_for("index"))
     
     @app.route("/download_material/<demo_id>", methods=["GET"])

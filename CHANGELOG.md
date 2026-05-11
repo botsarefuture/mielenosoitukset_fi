@@ -17,6 +17,12 @@
 * Recurring demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, extending the same translation model to recurring-event administration.
 * Public submit flow now records the authored language of the base demonstration fields through a `default_language` selector, so multilingual data starts with the correct source language even before public translation inputs exist.
 * Repository and preview runtime config defaults now expose both Finnish and English as supported UI languages, so multilinguality previews show `fi` and `en` selectors without requiring separate server-side config edits.
+* Adminiin lisättiin ensimmäinen demojen käännöstyöjono: uusi `translator`-rooli voi tehdä käännösehdotuksia demojen otsikoille, kuvauksille ja tunnisteille, ja admin hyväksyy tai hylkää ne ennen julkaisua.
+* Demojen detail-sivu näyttää nyt hyväksytyt käännökset aktiivisen kielen mukaan, lokalisoi samankaltaisten tapahtumien otsikot, ja kertoo suoraan millä kielellä tapahtumaa katsotaan.
+* Käännöstyökalu osaa nyt pyytää backendissä välimuistitetyn DeepL-ehdotuksen demolle, jotta kääntäjät voivat käyttää automaattista luonnosta ilman että sama käännös generoidaan selaimessa joka näkymässä uudelleen.
+* Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
+* Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
+* `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.
 * Added `scripts/setup_preview_environment.sh` so preview repository variables and secrets can be printed or written through `gh` after the preview server is provisioned.
 * Added automated PR preview environments that build same-repository branches in isolated Docker containers on a dedicated preview server, post a sticky preview URL comment on the PR, and tear the preview down when the PR closes.
 * Preview Caddy snippets now use per-PR matcher names, so multiple active previews no longer collide when Caddy reloads the imported routes.
@@ -64,6 +70,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Demojen käännöstyöjono piilottaa menneet mielenosoitukset oletuksena ja näyttää ne vain erikseen pyydettäessä, jotta kääntäjien näkymä pysyy keskittyneenä aktiivisiin tapahtumiin.
 * PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.

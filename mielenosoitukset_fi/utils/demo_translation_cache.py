@@ -61,7 +61,9 @@ def _normalize_target_languages(target_languages: Iterable[str], source_language
     return normalized
 
 
-def _source_hash(source_payload: dict, source_language: str, target_languages: Iterable[str]) -> str:
+def _source_hash(
+    source_payload: dict, source_language: str, target_languages: Iterable[str]
+) -> str:
     encoded = json.dumps(
         {
             "source_language": (source_language or "fi").strip().lower(),
@@ -74,7 +76,9 @@ def _source_hash(source_payload: dict, source_language: str, target_languages: I
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def demo_is_translation_candidate(demo, *, today: date | None = None, include_past: bool = False) -> bool:
+def demo_is_translation_candidate(
+    demo, *, today: date | None = None, include_past: bool = False
+) -> bool:
     if hasattr(demo, "to_dict"):
         demo = demo.to_dict(json=False)
 
@@ -95,6 +99,40 @@ def demo_is_translation_candidate(demo, *, today: date | None = None, include_pa
         return True
 
     return parsed >= reference_day
+
+
+def get_cached_deepl_suggestion_for_demo(demo, target_language: str):
+    if hasattr(demo, "to_dict"):
+        demo_dict = demo.to_dict(json=False)
+    else:
+        demo_dict = dict(demo)
+
+    source_language = (demo_dict.get("default_language") or "fi").strip().lower()
+    normalized_targets = _normalize_target_languages([target_language], source_language)
+    if not normalized_targets:
+        return None
+
+    source_payload = _demo_source_payload(demo_dict)
+    payload_hash = _source_hash(source_payload, source_language, normalized_targets)
+    demo_id = demo_dict.get("_id")
+    demo_id_str = str(demo_id) if demo_id is not None else None
+
+    doc = _get_translation_suggestions_collection().find_one(
+        {
+            "demo_id": demo_id_str,
+            "provider": "deepl",
+            "source_hash": payload_hash,
+        }
+    )
+    if not doc:
+        return None
+
+    return {
+        "cached": True,
+        "provider": "deepl",
+        "source_hash": payload_hash,
+        "suggestion": (doc.get("suggestions") or {}).get(normalized_targets[0]),
+    }
 
 
 def get_or_create_deepl_suggestions_for_demo(
@@ -157,7 +195,11 @@ def get_or_create_deepl_suggestions_for_demo(
         {
             "$set": {
                 "demo_id": demo_id_str,
-                "demo_object_id": ObjectId(demo_id) if isinstance(demo_id, str) and ObjectId.is_valid(demo_id) else demo_id,
+                "demo_object_id": (
+                    ObjectId(demo_id)
+                    if isinstance(demo_id, str) and ObjectId.is_valid(demo_id)
+                    else demo_id
+                ),
                 "provider": "deepl",
                 "source_language": source_language,
                 "target_languages": normalized_targets,

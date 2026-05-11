@@ -299,6 +299,14 @@ function confirmAction(action, taskId) {
         </li>
       {% endif %}
 
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">
+            <i class="fas fa-language me-2"></i>{{ _('Käännöstyöjono') }}
+          </a>
+        </li>
+      {% endif %}
+
       {% if current_user.has_permission("EDIT_DEMO") %}
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.suggestions_list') }}">

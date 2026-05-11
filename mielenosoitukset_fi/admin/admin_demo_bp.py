@@ -32,6 +32,11 @@ from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo, queue_cance
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
+from mielenosoitukset_fi.utils.demo_translation_cache import (
+    demo_is_translation_candidate,
+    get_cached_deepl_suggestion_for_demo,
+    get_or_create_deepl_suggestions_for_demo,
+)
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
@@ -161,6 +166,112 @@ def _demo_status_meta(doc):
     if doc.get("hide"):
         return _("Piilotettu"), "secondary", _("Tämä mielenosoitus on piilotettu listauksista.")
     return _("Kesken"), "info", _("Tämä mielenosoitus odottaa käsittelyä.")
+
+
+TRANSLATION_EDITABLE_FIELDS = ("title", "description", "tags")
+
+
+def _default_demo_language():
+    return current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+
+
+def _supported_translation_locales(demo_doc=None):
+    configured = current_app.config.get("BABEL_SUPPORTED_LOCALES", ["fi"])
+    default_language = (
+        (demo_doc or {}).get("default_language")
+        or _default_demo_language()
+    )
+    locales = []
+    for locale in configured:
+        if locale == default_language:
+            continue
+        locales.append(locale)
+    return locales
+
+
+def _translation_language_names():
+    return current_app.config.get("BABEL_LANGUAGES", {})
+
+
+def _demo_source_language(demo_doc):
+    return demo_doc.get("default_language") or _default_demo_language()
+
+
+def _demo_translation_payload(demo_doc, language):
+    return ((demo_doc.get("translations") or {}).get(language) or {})
+
+
+def _demo_translation_proposal(demo_doc, language):
+    return ((demo_doc.get("translation_proposals") or {}).get(language) or {})
+
+
+def _translation_summary_rows(demo_doc):
+    rows = []
+    language_names = _translation_language_names()
+    supported_locales = _supported_translation_locales(demo_doc)
+    approved = demo_doc.get("translations") or {}
+    proposals = demo_doc.get("translation_proposals") or {}
+    for locale in supported_locales:
+        proposal = proposals.get(locale) or {}
+        approved_translation = approved.get(locale) or {}
+        rows.append(
+            {
+                "locale": locale,
+                "label": language_names.get(locale, locale),
+                "approved": approved_translation,
+                "proposal": proposal,
+                "proposal_status": proposal.get("status"),
+            }
+        )
+    return rows
+
+
+def _can_translate_demos(user):
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "translator"}:
+        return True
+    return user.has_permission("TRANSLATE_DEMO")
+
+
+def _can_review_demo_translations(user):
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "global_admin"}:
+        return True
+    return user.has_permission("REVIEW_DEMO_TRANSLATIONS")
+
+
+def _collect_translation_proposal_form(language):
+    tags_raw = request.form.get("translated_tags", "")
+    tags = [tag.strip() for tag in tags_raw.split(",") if tag.strip()]
+    proposal = {
+        "language": language,
+        "title": (request.form.get("translated_title") or "").strip(),
+        "description": (request.form.get("translated_description") or "").strip(),
+        "tags": tags,
+    }
+    provider = (request.form.get("suggestion_provider") or "").strip()
+    source_hash = (request.form.get("suggestion_source_hash") or "").strip()
+    auto_generated = (request.form.get("suggestion_auto_generated") or "").strip().lower() == "true"
+    if provider:
+        proposal["_meta"] = {
+            "provider": provider,
+            "source_hash": source_hash or None,
+            "auto_generated": auto_generated,
+        }
+    return proposal
+
+
+def _proposal_has_content(proposal):
+    return any(
+        bool(proposal.get(field))
+        for field in TRANSLATION_EDITABLE_FIELDS
+    )
 
 
 def _case_admin_username():
@@ -1494,6 +1605,299 @@ def demo_control():
         prev_page=prev_page,
         next_page=next_page
     )
+
+
+@admin_demo_bp.route("/translations", methods=["GET"])
+@login_required
+def demo_translation_dashboard():
+    if not (_can_translate_demos(current_user) or _can_review_demo_translations(current_user)):
+        abort(403)
+
+    search_query = (request.args.get("search") or "").strip()
+    include_past = (request.args.get("include_past") or "").strip().lower() == "true"
+    query = {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]}
+    if not include_past:
+        query["date"] = {"$gte": date.today().strftime("%Y-%m-%d")}
+    if search_query:
+        query["title"] = {"$regex": re.escape(search_query), "$options": "i"}
+
+    demos = list(
+        mongo.demonstrations.find(
+            query,
+            {"title": 1, "default_language": 1, "translations": 1, "translation_proposals": 1},
+        )
+        .sort([("date", 1), ("_id", 1)])
+        .limit(100)
+    )
+
+    pending_items = []
+    if _can_review_demo_translations(current_user):
+        for demo in demos:
+            for locale, proposal in (demo.get("translation_proposals") or {}).items():
+                if proposal.get("status") != "pending":
+                    continue
+                pending_items.append(
+                    {
+                        "demo_id": str(demo["_id"]),
+                        "demo_title": demo.get("title") or _("Nimetön mielenosoitus"),
+                        "language": locale,
+                        "language_label": _translation_language_names().get(locale, locale),
+                        "submitted_at": proposal.get("submitted_at"),
+                        "submitted_by": proposal.get("submitted_by_name") or proposal.get("submitted_by"),
+                        "proposal": proposal,
+                    }
+                )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_dashboard.html",
+        demos=demos,
+        pending_items=pending_items,
+        search_query=search_query,
+        include_past=include_past,
+        can_review_demo_translations=_can_review_demo_translations(current_user),
+        can_translate_demos=_can_translate_demos(current_user),
+        translation_language_names=_translation_language_names(),
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations", methods=["GET", "POST"])
+@login_required
+def edit_demo_translations(demo_id):
+    if not (_can_translate_demos(current_user) or _can_review_demo_translations(current_user)):
+        abort(403)
+
+    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    if request.method == "POST":
+        if not _can_translate_demos(current_user):
+            abort(403)
+        language = (request.form.get("language") or "").strip()
+        if language not in _supported_translation_locales(demo_doc):
+            flash_message(_("Valittu kieli ei ole sallittu käännöskieli."), "error")
+            return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id))
+        proposal_fields = _collect_translation_proposal_form(language)
+        if not _proposal_has_content(proposal_fields):
+            flash_message(_("Syötä ainakin otsikko, kuvaus tai tunnisteet käännösehdotukseen."), "error")
+            return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+        proposal_doc = {
+            **proposal_fields,
+            "status": "pending",
+            "submitted_at": datetime.utcnow(),
+            "submitted_by": str(getattr(current_user, "_id", "")),
+            "submitted_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+            "reviewed_at": None,
+            "reviewed_by": None,
+            "reviewed_by_name": None,
+            "review_notes": "",
+        }
+        mongo.demonstrations.update_one(
+            {"_id": ObjectId(demo_id)},
+            {
+                "$set": {
+                    f"translation_proposals.{language}": proposal_doc,
+                    "default_language": _demo_source_language(demo_doc),
+                }
+            },
+        )
+        log_demo_audit_entry(
+            demo_id,
+            action="submit_translation_proposal",
+            message=_("%(actor)s lähetti käännösehdotuksen kielelle %(language)s.") % {
+                "actor": _get_actor_label(),
+                "language": _translation_language_names().get(language, language),
+            },
+            details={"language": language},
+        )
+        flash_message(_("Käännösehdotus tallennettiin ja lähetettiin tarkistettavaksi."), "success")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    selected_language = (request.args.get("language") or "").strip()
+    prefill_mode = (request.args.get("prefill") or "").strip().lower()
+    supported_locales = _supported_translation_locales(demo_doc)
+    if selected_language not in supported_locales and supported_locales:
+        selected_language = supported_locales[0]
+
+    deepl_suggestion_payload = (
+        get_cached_deepl_suggestion_for_demo(demo_doc, selected_language)
+        if selected_language
+        else None
+    )
+    deepl_suggestion = (
+        (deepl_suggestion_payload or {}).get("suggestion") or {}
+    )
+    form_seed_translation = (
+        _demo_translation_proposal(demo_doc, selected_language)
+        if selected_language
+        else {}
+    )
+    approved_translation = (
+        _demo_translation_payload(demo_doc, selected_language)
+        if selected_language
+        else {}
+    )
+    if not form_seed_translation:
+        if prefill_mode == "deepl" and deepl_suggestion:
+            form_seed_translation = deepl_suggestion
+        else:
+            form_seed_translation = approved_translation
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_editor.html",
+        demo=demo_doc,
+        selected_language=selected_language,
+        translation_locales=supported_locales,
+        translation_language_names=_translation_language_names(),
+        source_language=_demo_source_language(demo_doc),
+        approved_translation=approved_translation,
+        translation_proposal=_demo_translation_proposal(demo_doc, selected_language) if selected_language else {},
+        deepl_suggestion=deepl_suggestion,
+        deepl_suggestion_payload=deepl_suggestion_payload or {},
+        deepl_prefill_active=bool(prefill_mode == "deepl" and deepl_suggestion),
+        form_seed_translation=form_seed_translation,
+        is_translation_candidate=demo_is_translation_candidate(demo_doc),
+        translation_rows=_translation_summary_rows(demo_doc),
+        can_review_demo_translations=_can_review_demo_translations(current_user),
+        can_translate_demos=_can_translate_demos(current_user),
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/suggest", methods=["POST"])
+@login_required
+def generate_demo_translation_suggestion(demo_id, language):
+    if not _can_translate_demos(current_user):
+        abort(403)
+
+    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    if language not in _supported_translation_locales(demo_doc):
+        flash_message(_("Valittu kieli ei ole sallittu käännöskieli."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id))
+
+    result = get_or_create_deepl_suggestions_for_demo(
+        demo_doc,
+        [language],
+        force_refresh=(request.form.get("force_refresh") or "").strip().lower() == "true",
+    )
+
+    if result.get("skipped"):
+        flash_message(
+            _("Automaattisia käännösehdotuksia ei luoda menneille mielenosoituksille oletuksena."),
+            "info",
+        )
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    if result.get("cached"):
+        flash_message(_("Valmis DeepL-ehdotus löytyi välimuistista."), "success")
+    else:
+        flash_message(_("DeepL-ehdotus luotiin lähdesisällöstä."), "success")
+
+    return redirect(
+        url_for(
+            "admin_demo.edit_demo_translations",
+            demo_id=demo_id,
+            language=language,
+            prefill="deepl",
+        )
+    )
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/approve", methods=["POST"])
+@login_required
+def approve_demo_translation(demo_id, language):
+    if not _can_review_demo_translations(current_user):
+        abort(403)
+
+    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    proposal = _demo_translation_proposal(demo_doc, language)
+    if proposal.get("status") != "pending":
+        flash_message(_("Tälle kielelle ei ole odottavaa käännösehdotusta."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    review_notes = (request.form.get("review_notes") or "").strip()
+    approved_translation = {
+        "title": proposal.get("title", ""),
+        "description": proposal.get("description", ""),
+        "tags": proposal.get("tags", []),
+    }
+    mongo.demonstrations.update_one(
+        {"_id": ObjectId(demo_id)},
+        {
+            "$set": {
+                f"translations.{language}": approved_translation,
+                f"translation_proposals.{language}.status": "approved",
+                f"translation_proposals.{language}.reviewed_at": datetime.utcnow(),
+                f"translation_proposals.{language}.reviewed_by": str(getattr(current_user, "_id", "")),
+                f"translation_proposals.{language}.reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                f"translation_proposals.{language}.review_notes": review_notes,
+                "default_language": _demo_source_language(demo_doc),
+            }
+        },
+    )
+    log_demo_audit_entry(
+        demo_id,
+        action="approve_translation_proposal",
+        message=_("%(actor)s hyväksyi käännösehdotuksen kielelle %(language)s.") % {
+            "actor": _get_actor_label(),
+            "language": _translation_language_names().get(language, language),
+        },
+        details={"language": language},
+    )
+    flash_message(_("Käännösehdotus hyväksyttiin."), "success")
+    return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+
+@admin_demo_bp.route("/<demo_id>/translations/<language>/reject", methods=["POST"])
+@login_required
+def reject_demo_translation(demo_id, language):
+    if not _can_review_demo_translations(current_user):
+        abort(403)
+
+    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not demo_doc:
+        flash_message(_("Mielenosoitusta ei löytynyt."), "error")
+        return redirect(url_for("admin_demo.demo_translation_dashboard"))
+
+    proposal = _demo_translation_proposal(demo_doc, language)
+    if proposal.get("status") != "pending":
+        flash_message(_("Tälle kielelle ei ole odottavaa käännösehdotusta."), "error")
+        return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
+
+    review_notes = (request.form.get("review_notes") or "").strip()
+    mongo.demonstrations.update_one(
+        {"_id": ObjectId(demo_id)},
+        {
+            "$set": {
+                f"translation_proposals.{language}.status": "rejected",
+                f"translation_proposals.{language}.reviewed_at": datetime.utcnow(),
+                f"translation_proposals.{language}.reviewed_by": str(getattr(current_user, "_id", "")),
+                f"translation_proposals.{language}.reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                f"translation_proposals.{language}.review_notes": review_notes,
+                "default_language": _demo_source_language(demo_doc),
+            }
+        },
+    )
+    log_demo_audit_entry(
+        demo_id,
+        action="reject_translation_proposal",
+        message=_("%(actor)s hylkäsi käännösehdotuksen kielelle %(language)s.") % {
+            "actor": _get_actor_label(),
+            "language": _translation_language_names().get(language, language),
+        },
+        details={"language": language},
+    )
+    flash_message(_("Käännösehdotus hylättiin."), "success")
+    return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
 
 @admin_demo_bp.route("/duplicate/<demo_id>", methods=["POST"])
 @login_required

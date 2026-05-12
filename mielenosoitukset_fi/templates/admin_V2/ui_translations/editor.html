@@ -82,6 +82,28 @@
           {% if proposal.review_notes %}
           <p><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ proposal.review_notes }}</p>
           {% endif %}
+          {% if ui_translation_sync_enabled and proposal.status == 'approved' and proposal.github_sync %}
+          <div class="border rounded p-3 bg-light mb-3">
+            <p class="mb-2"><strong>{{ _('GitHub-synkin tila') }}:</strong> {{ proposal.github_sync.status }}</p>
+            {% if proposal.github_sync.branch_name %}
+            <p class="mb-2"><strong>{{ _('Branch') }}:</strong> <code>{{ proposal.github_sync.branch_name }}</code></p>
+            {% endif %}
+            {% if proposal.github_sync.pr_url %}
+            <p class="mb-2"><strong>{{ _('Pull request') }}:</strong> <a href="{{ proposal.github_sync.pr_url }}" target="_blank" rel="noopener">{{ proposal.github_sync.pr_url }}</a></p>
+            {% endif %}
+            {% if proposal.github_sync.last_error %}
+            <p class="mb-2 text-danger"><strong>{{ _('Viimeisin virhe') }}:</strong> {{ proposal.github_sync.last_error }}</p>
+            {% elif proposal.github_sync.message %}
+            <p class="mb-2 text-muted"><strong>{{ _('Lisätieto') }}:</strong> {{ proposal.github_sync.message }}</p>
+            {% endif %}
+            {% if can_review_ui_translations and proposal.github_sync.status in ['retry', 'committed_local_branch'] %}
+            <form method="POST" action="{{ url_for('admin.requeue_ui_translation_sync', locale=locale) }}">
+              <input type="hidden" name="msgid" value="{{ entry.msgid }}">
+              <button class="btn btn-outline-primary btn-sm" type="submit">{{ _('Yritä GitHub-synkkiä uudelleen') }}</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
 
           {% if can_review_ui_translations and proposal.status == 'pending' %}
           <form method="POST" action="{{ url_for('admin.approve_ui_translation_proposal', locale=locale) }}" class="mb-3">

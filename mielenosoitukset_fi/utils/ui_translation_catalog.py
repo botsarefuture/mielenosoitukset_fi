@@ -18,19 +18,21 @@ class CatalogEntrySnapshot:
     locations: tuple[str, ...]
 
 
-def _translations_root() -> Path:
+def _translations_root(root: str | Path | None = None) -> Path:
+    if root:
+        return Path(root)
     configured = current_app.config.get("TRANSLATIONS_DIR")
     if configured:
         return Path(configured)
     return Path(current_app.root_path) / "translations"
 
 
-def _po_path(locale: str) -> Path:
-    return _translations_root() / locale / "LC_MESSAGES" / "messages.po"
+def _po_path(locale: str, root: str | Path | None = None) -> Path:
+    return _translations_root(root) / locale / "LC_MESSAGES" / "messages.po"
 
 
-def _mo_path(locale: str) -> Path:
-    return _translations_root() / locale / "LC_MESSAGES" / "messages.mo"
+def _mo_path(locale: str, root: str | Path | None = None) -> Path:
+    return _translations_root(root) / locale / "LC_MESSAGES" / "messages.mo"
 
 
 def supported_ui_translation_locales() -> list[str]:
@@ -39,8 +41,8 @@ def supported_ui_translation_locales() -> list[str]:
     return [locale for locale in locales if locale != default_locale]
 
 
-def load_catalog(locale: str):
-    po_path = _po_path(locale)
+def load_catalog(locale: str, root: str | Path | None = None):
+    po_path = _po_path(locale, root=root)
     if not po_path.exists():
         raise FileNotFoundError(f"Missing gettext catalog: {po_path}")
 
@@ -48,9 +50,9 @@ def load_catalog(locale: str):
         return pofile.read_po(handle, locale=locale)
 
 
-def save_catalog(locale: str, catalog) -> None:
-    po_path = _po_path(locale)
-    mo_path = _mo_path(locale)
+def save_catalog(locale: str, catalog, root: str | Path | None = None) -> None:
+    po_path = _po_path(locale, root=root)
+    mo_path = _mo_path(locale, root=root)
     po_path.parent.mkdir(parents=True, exist_ok=True)
     mo_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -71,8 +73,8 @@ def _normalize_locations(locations: Iterable[tuple[str, int]] | None) -> tuple[s
     return tuple(result)
 
 
-def iter_catalog_entries(locale: str):
-    catalog = load_catalog(locale)
+def iter_catalog_entries(locale: str, root: str | Path | None = None):
+    catalog = load_catalog(locale, root=root)
     for message in catalog:
         if not message.id or isinstance(message.id, tuple):
             continue
@@ -85,8 +87,8 @@ def iter_catalog_entries(locale: str):
         )
 
 
-def get_catalog_entry(locale: str, msgid: str):
-    catalog = load_catalog(locale)
+def get_catalog_entry(locale: str, msgid: str, root: str | Path | None = None):
+    catalog = load_catalog(locale, root=root)
     message = catalog.get(msgid)
     if message is None:
         return None
@@ -99,8 +101,8 @@ def get_catalog_entry(locale: str, msgid: str):
     )
 
 
-def update_catalog_entry(locale: str, msgid: str, translated_text: str):
-    catalog = load_catalog(locale)
+def update_catalog_entry(locale: str, msgid: str, translated_text: str, root: str | Path | None = None):
+    catalog = load_catalog(locale, root=root)
     message = catalog.get(msgid)
     if message is None:
         raise KeyError(msgid)
@@ -108,7 +110,7 @@ def update_catalog_entry(locale: str, msgid: str, translated_text: str):
     message.string = translated_text
     if "fuzzy" in (message.flags or set()):
         message.flags.discard("fuzzy")
-    save_catalog(locale, catalog)
+    save_catalog(locale, catalog, root=root)
 
 
 def entry_state(snapshot: CatalogEntrySnapshot) -> str:

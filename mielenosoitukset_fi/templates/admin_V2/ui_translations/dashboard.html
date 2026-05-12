@@ -94,6 +94,23 @@
                 {% else %}
                 <span class="badge bg-success">{{ _('Valmis') }}</span>
                 {% endif %}
+                {% if ui_translation_sync_enabled and row.proposal and row.proposal.status == 'approved' and row.github_sync %}
+                <div class="small mt-2">
+                  {% if row.github_sync.status == 'queued' %}
+                  <span class="badge bg-secondary">{{ _('Git-sync jonossa') }}</span>
+                  {% elif row.github_sync.status == 'running' %}
+                  <span class="badge bg-info text-dark">{{ _('Git-sync käynnissä') }}</span>
+                  {% elif row.github_sync.status == 'pr_opened' %}
+                  <span class="badge bg-primary">{{ _('PR avattu') }}</span>
+                  {% elif row.github_sync.status == 'branch_pushed' %}
+                  <span class="badge bg-primary">{{ _('Branch pushattu') }}</span>
+                  {% elif row.github_sync.status == 'committed_local_branch' %}
+                  <span class="badge bg-warning text-dark">{{ _('Commit tehty, push puuttuu') }}</span>
+                  {% elif row.github_sync.status == 'retry' %}
+                  <span class="badge bg-danger">{{ _('Git-sync epäonnistui') }}</span>
+                  {% endif %}
+                </div>
+                {% endif %}
               </td>
               <td>
                 <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=selected_locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a>

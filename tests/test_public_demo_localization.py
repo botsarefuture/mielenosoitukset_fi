@@ -214,6 +214,15 @@ def test_calendar_month_view_renders_translated_demo_titles(client, db, seeded_d
     assert "English Climate March" in body
 
 
+def test_demonstrations_list_page_renders_without_server_error(client):
+    response = client.get("/demonstrations")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "demo-container-grid" in body
+    assert "search-form" in body
+
+
 def test_set_language_redirects_back_to_safe_next_path(client):
     response = client.get("/set_language/en?next=/demonstrations?search=climate")
 

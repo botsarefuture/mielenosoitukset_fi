@@ -1641,8 +1641,8 @@ def init_routes(app):
         """
         Render the demonstrations listing page.
 
-        This route serves the main demonstrations listing interface, which loads 
-        the `list copy.html` template. The page itself handles all search, filter, 
+        This route serves the main demonstrations listing interface, which loads
+        the `list.html` template. The page itself handles all search, filter,
         and pagination logic on the client side via JavaScript — fetching data 
         dynamically from the API and rendering demonstration cards.
 
@@ -1652,10 +1652,10 @@ def init_routes(app):
         Returns
         -------
         flask.Response
-            Rendered HTML page (`list copy.html`), which serves as the frontend 
+            Rendered HTML page (`list.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
-        return render_template("list copy.html")
+        return render_template("list.html")
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too

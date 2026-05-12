@@ -25,6 +25,8 @@ class UiTranslationGitSyncResult:
     pr_number: int | None = None
     pr_url: str | None = None
     message: str | None = None
+    merge_status: str | None = None
+    merge_message: str | None = None
 
 
 def build_ui_translation_sync_branch_name(locale: str, msgid: str) -> str:
@@ -144,6 +146,38 @@ def _create_pull_request(branch_name: str, locale: str, msgid: str) -> tuple[int
     return payload.get("number"), payload.get("html_url")
 
 
+def _auto_merge_enabled() -> bool:
+    return bool(current_app.config.get("UI_TRANSLATION_GITHUB_AUTO_MERGE", False))
+
+
+def _attempt_merge_pull_request(pr_number: int) -> tuple[str, str | None]:
+    repo = _github_repo()
+    if not repo or not _github_token():
+        return "not_configured", "GitHub repository or token is not configured for PR merging."
+
+    merge_method = (current_app.config.get("UI_TRANSLATION_GITHUB_MERGE_METHOD") or "squash").strip().lower()
+    if merge_method not in {"merge", "squash", "rebase"}:
+        merge_method = "squash"
+
+    response = requests.put(
+        f"{_github_api_url()}/repos/{repo}/pulls/{pr_number}/merge",
+        headers=_github_headers(),
+        json={
+            "merge_method": merge_method,
+        },
+        timeout=15,
+    )
+    if response.status_code == 200:
+        payload = response.json() or {}
+        return "merged", payload.get("message") or "Pull request merged successfully."
+    if response.status_code in {405, 409, 422}:
+        payload = response.json() or {}
+        return "merge_blocked", payload.get("message") or "Pull request merge is currently blocked."
+
+    response.raise_for_status()
+    return "merge_unknown", None
+
+
 def sync_ui_translation_to_git(locale: str, msgid: str, translated_text: str) -> UiTranslationGitSyncResult:
     repo_path = _repo_path()
     if not repo_path.exists():
@@ -202,12 +236,18 @@ def sync_ui_translation_to_git(locale: str, msgid: str, translated_text: str) ->
             )
 
         pr_number, pr_url = _create_pull_request(branch_name, locale, msgid)
+        merge_status = None
+        merge_message = None
+        if pr_number and _auto_merge_enabled():
+            merge_status, merge_message = _attempt_merge_pull_request(pr_number)
         return UiTranslationGitSyncResult(
             status="pr_opened" if pr_number else "branch_pushed",
             branch_name=branch_name,
             commit_sha=commit_sha,
             pr_number=pr_number,
             pr_url=pr_url,
+            merge_status=merge_status,
+            merge_message=merge_message,
         )
     finally:
         try:

@@ -52,6 +52,8 @@ def run(limit: int = 10):
                         "github_sync.pr_url": result.pr_url,
                         "github_sync.last_error": "" if result.status not in {"committed_local_branch"} else (result.message or ""),
                         "github_sync.message": result.message or "",
+                        "github_sync.merge_status": result.merge_status,
+                        "github_sync.merge_message": result.merge_message or "",
                         "github_sync.finished_at": datetime.utcnow(),
                     }
                 },

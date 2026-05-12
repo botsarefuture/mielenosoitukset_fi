@@ -91,8 +91,13 @@
             {% if proposal.github_sync.pr_url %}
             <p class="mb-2"><strong>{{ _('Pull request') }}:</strong> <a href="{{ proposal.github_sync.pr_url }}" target="_blank" rel="noopener">{{ proposal.github_sync.pr_url }}</a></p>
             {% endif %}
+            {% if proposal.github_sync.merge_status %}
+            <p class="mb-2"><strong>{{ _('Merge-tila') }}:</strong> {{ proposal.github_sync.merge_status }}</p>
+            {% endif %}
             {% if proposal.github_sync.last_error %}
             <p class="mb-2 text-danger"><strong>{{ _('Viimeisin virhe') }}:</strong> {{ proposal.github_sync.last_error }}</p>
+            {% elif proposal.github_sync.merge_message %}
+            <p class="mb-2 text-muted"><strong>{{ _('Merge-viesti') }}:</strong> {{ proposal.github_sync.merge_message }}</p>
             {% elif proposal.github_sync.message %}
             <p class="mb-2 text-muted"><strong>{{ _('Lisätieto') }}:</strong> {{ proposal.github_sync.message }}</p>
             {% endif %}

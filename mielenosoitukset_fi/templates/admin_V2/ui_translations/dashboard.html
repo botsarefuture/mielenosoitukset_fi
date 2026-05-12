@@ -109,6 +109,13 @@
                   {% elif row.github_sync.status == 'retry' %}
                   <span class="badge bg-danger">{{ _('Git-sync epäonnistui') }}</span>
                   {% endif %}
+                  {% if row.github_sync.merge_status == 'merged' %}
+                  <span class="badge bg-success">{{ _('Mergetty') }}</span>
+                  {% elif row.github_sync.merge_status == 'merge_blocked' %}
+                  <span class="badge bg-warning text-dark">{{ _('Merge blokattu') }}</span>
+                  {% elif row.github_sync.merge_status == 'not_configured' %}
+                  <span class="badge bg-secondary">{{ _('Automerge ei käytössä') }}</span>
+                  {% endif %}
                 </div>
                 {% endif %}
               </td>

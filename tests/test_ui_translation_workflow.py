@@ -2,7 +2,10 @@ import subprocess
 from pathlib import Path
 
 from mielenosoitukset_fi.utils.ui_translation_catalog import proposal_key
-from mielenosoitukset_fi.utils.ui_translation_git_sync import build_ui_translation_sync_branch_name
+from mielenosoitukset_fi.utils.ui_translation_git_sync import (
+    build_ui_translation_sync_branch_name,
+    sync_ui_translation_to_git,
+)
 
 
 PO_TEMPLATE = '''msgid ""
@@ -190,3 +193,58 @@ def test_background_sync_can_push_approved_ui_translation_to_git(app, db, tmp_pa
         text=True,
     ).stdout.strip()
     assert branch_sha == proposal["github_sync"]["commit_sha"]
+
+
+def test_sync_can_open_pr_and_attempt_auto_merge(app, tmp_path, monkeypatch):
+    workspace_root, _ = _init_sync_repo(tmp_path / "sync-pr-repo")
+    app.config["UI_TRANSLATION_SYNC_REPO_PATH"] = str(workspace_root)
+    app.config["UI_TRANSLATION_SYNC_BASE_BRANCH"] = "main"
+    app.config["UI_TRANSLATION_SYNC_REMOTE"] = "origin"
+    app.config["UI_TRANSLATION_GITHUB_REPO"] = "botsarefuture/mielenosoitukset_fi"
+    app.config["UI_TRANSLATION_GITHUB_TOKEN"] = "test-token"
+    app.config["UI_TRANSLATION_GITHUB_AUTO_MERGE"] = True
+
+    class FakeResponse:
+        def __init__(self, status_code, payload):
+            self.status_code = status_code
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise RuntimeError(f"HTTP {self.status_code}")
+
+    requests_seen = {"get": [], "post": [], "put": []}
+
+    def fake_get(url, **kwargs):
+        requests_seen["get"].append((url, kwargs))
+        return FakeResponse(200, [])
+
+    def fake_post(url, **kwargs):
+        requests_seen["post"].append((url, kwargs))
+        return FakeResponse(201, {"number": 584, "html_url": "https://github.com/example/pr/584"})
+
+    def fake_put(url, **kwargs):
+        requests_seen["put"].append((url, kwargs))
+        return FakeResponse(200, {"message": "Pull Request successfully merged"})
+
+    monkeypatch.setattr("mielenosoitukset_fi.utils.ui_translation_git_sync.requests.get", fake_get)
+    monkeypatch.setattr("mielenosoitukset_fi.utils.ui_translation_git_sync.requests.post", fake_post)
+    monkeypatch.setattr("mielenosoitukset_fi.utils.ui_translation_git_sync.requests.put", fake_put)
+
+    with app.app_context():
+        result = sync_ui_translation_to_git(
+            locale="en",
+            msgid="Submit demonstration",
+            translated_text="Submit a demonstration",
+        )
+
+    assert result.status == "pr_opened"
+    assert result.pr_number == 584
+    assert result.pr_url == "https://github.com/example/pr/584"
+    assert result.merge_status == "merged"
+    assert "merged" in (result.merge_message or "").lower()
+    assert requests_seen["post"]
+    assert requests_seen["put"]

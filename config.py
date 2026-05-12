@@ -140,6 +140,14 @@ class Config:
             "UI_TRANSLATION_GITHUB_API_URL",
             "https://api.github.com",
         )
+        cls.UI_TRANSLATION_GITHUB_AUTO_MERGE = config.get(
+            "UI_TRANSLATION_GITHUB_AUTO_MERGE",
+            False,
+        )
+        cls.UI_TRANSLATION_GITHUB_MERGE_METHOD = config.get(
+            "UI_TRANSLATION_GITHUB_MERGE_METHOD",
+            "squash",
+        )
 
         cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
         cls.PORT = config.get("PORT", 8000)

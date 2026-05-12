@@ -164,6 +164,12 @@ def _ui_translation_sync_enabled() -> bool:
     return bool(current_app.config.get("UI_TRANSLATION_SYNC_ENABLED", False))
 
 
+def _redirect_ui_translation_action_target(locale: str, msgid: str = ""):
+    if msgid:
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+
 def _normalize_ui_translation_rows(locale: str, search_query: str = "", state_filter: str = "pending"):
     normalized_search = (search_query or "").strip().casefold()
     proposals = {
@@ -464,19 +470,25 @@ def submit_ui_translation_proposal(locale):
     return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
 
 
-@admin_bp.route("/ui-translations/<locale>/approve", methods=["POST"])
+@admin_bp.route("/ui-translations/<locale>/approve", methods=["GET", "POST"])
 @login_required
 def approve_ui_translation_proposal(locale):
     if not _can_review_ui_translations(current_user):
         abort(403)
 
     locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hyväksyntä tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
     msgid = request.form.get("msgid") or ""
     review_notes = (request.form.get("review_notes") or "").strip()
     proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
     if not proposal or proposal.get("status") != "pending":
         flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
-        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+        return _redirect_ui_translation_action_target(locale, msgid)
 
     update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
     sync_metadata = {
@@ -523,22 +535,28 @@ def approve_ui_translation_proposal(locale):
                 _("Hyväksytty käännös jonotettiin GitHub-synkkiä varten."),
                 "info",
             )
-    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return _redirect_ui_translation_action_target(locale, msgid)
 
 
-@admin_bp.route("/ui-translations/<locale>/reject", methods=["POST"])
+@admin_bp.route("/ui-translations/<locale>/reject", methods=["GET", "POST"])
 @login_required
 def reject_ui_translation_proposal(locale):
     if not _can_review_ui_translations(current_user):
         abort(403)
 
     locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hylkäys tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
     msgid = request.form.get("msgid") or ""
     review_notes = (request.form.get("review_notes") or "").strip()
     proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
     if not proposal or proposal.get("status") != "pending":
         flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
-        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+        return _redirect_ui_translation_action_target(locale, msgid)
 
     ui_translation_proposals.update_one(
         {"_id": proposal["_id"]},
@@ -553,21 +571,27 @@ def reject_ui_translation_proposal(locale):
         },
     )
     flash_message(_("Käyttöliittymäkäännösehdotus hylättiin."), "success")
-    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return _redirect_ui_translation_action_target(locale, msgid)
 
 
-@admin_bp.route("/ui-translations/<locale>/requeue-sync", methods=["POST"])
+@admin_bp.route("/ui-translations/<locale>/requeue-sync", methods=["GET", "POST"])
 @login_required
 def requeue_ui_translation_sync(locale):
     if not _can_review_ui_translations(current_user):
         abort(403)
 
     locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("GitHub-synkin uudelleenjonotus tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
     msgid = request.form.get("msgid") or ""
     proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
     if not proposal or proposal.get("status") != "approved":
         flash_message(_("Tälle käyttöliittymätekstille ei ole hyväksyttyä käännöstä synkattavaksi."), "error")
-        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+        return _redirect_ui_translation_action_target(locale, msgid)
 
     ui_translation_proposals.update_one(
         {"_id": proposal["_id"]},
@@ -596,7 +620,7 @@ def requeue_ui_translation_sync(locale):
         )
 
     flash_message(_("GitHub-synkki jonotettiin uudelleen hyväksytylle käyttöliittymäkäännökselle."), "success")
-    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return _redirect_ui_translation_action_target(locale, msgid)
 
 
 @admin_bp.route("/ui-translations/sync/requeue", methods=["POST"])

@@ -71,6 +71,15 @@ def test_admin_can_access_ui_translation_sync_dashboard(admin_client, app, db):
     assert "Submit demonstration" in body
 
 
+def test_admin_get_to_approve_route_redirects_instead_of_error(admin_client, app, db):
+    app.config["UI_TRANSLATION_SYNC_ENABLED"] = True
+
+    response = admin_client.get("/admin/ui-translations/en/approve", follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/ui-translations?locale=en")
+
+
 def test_translator_can_open_ui_translation_editor(translator_client, app, tmp_path):
     _seed_translation_catalogs(app, tmp_path)
 

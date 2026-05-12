@@ -24,6 +24,7 @@
 * Hyväksytyt käyttöliittymäkäännökset voidaan nyt jonottaa taustalla Git-branch/PR-synkkiin näkyvällä statuksella, jotta admin-review ja GitHub-lähdekoodisynkki pysyvät samassa workflow’ssa ilman että live checkout likaantuu.
 * UI-käännösten GitHub-synkki näyttää nyt erikseen PR- ja merge-tilan, ja voi haluttaessa yrittää automergeä hyväksytylle käännös-PR:lle konfiguraation perusteella.
 * Adminiin lisättiin erillinen käyttöliittymäkäännösten GitHub-sync-dashboard suodatuksilla ja bulk-retryllä, jotta epäonnistuneet branch/PR-syncit voidaan hallita yhdestä näkymästä.
+* UI-käännösten approve/reject/requeue action-URL:t ohjaavat nyt turvallisesti takaisin editoriin tai listaan, jos niitä avataan selaimessa GET-linkkinä, joten preview ei enää kaadu 500-sivulle vahingossa avatusta toimintalinkistä.
 * Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
 * Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.

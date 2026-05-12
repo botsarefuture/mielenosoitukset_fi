@@ -16,3 +16,5 @@ mielenosoitukset_fi/scripts/posted_events.txt
 volume/
 .volume/
 config.compose.dev.yaml
+.playwright-cli
+.codex

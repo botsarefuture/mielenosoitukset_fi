@@ -1,0 +1,141 @@
+{% extends "admin_base.html" %}
+
+{% block title %}{{ _('Käyttöliittymäkäännökset') }}{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännökset') }}</h1>
+      <p class="text-muted mb-0">{{ _('Hallitse sivuston ydinkomponenttien gettext-käännöksiä ja tarkista ehdotukset ennen hyväksyntää.') }}</p>
+    </div>
+    {% if ui_translation_sync_enabled and can_review_ui_translations %}
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Avaa GitHub-synkit') }}</a>
+    {% endif %}
+  </div>
+
+  <div class="row g-3 mb-4">
+    {% for locale in locales %}
+    <div class="col-md-4">
+      <a class="card h-100 text-decoration-none {% if locale.locale == selected_locale %}border-primary{% endif %}" href="{{ url_for('admin.ui_translation_dashboard', locale=locale.locale, search=search_query, state=state_filter) }}">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h2 class="h5 mb-0">{{ locale.label }}</h2>
+            {% if locale.pending %}
+            <span class="badge bg-warning text-dark">{{ locale.pending }} {{ _('odottaa') }}</span>
+            {% endif %}
+          </div>
+          <div class="small text-muted">
+            <div>{{ _('Kääntämättä') }}: {{ locale.untranslated }}</div>
+            <div>{{ _('Fuzzy') }}: {{ locale.fuzzy }}</div>
+            <div>{{ _('Valmiina') }}: {{ locale.translated }}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if selected_locale %}
+  <form method="GET" class="row g-3 align-items-end mb-4">
+    <input type="hidden" name="locale" value="{{ selected_locale }}">
+    <div class="col-md-5">
+      <label class="form-label" for="search">{{ _('Haku') }}</label>
+      <input class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="{{ _('Hae msgid:llä tai nykyisellä käännöksellä') }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label" for="state">{{ _('Tila') }}</label>
+      <select class="form-select" id="state" name="state">
+        {% for value, label in [('pending', _('Odottaa tarkistusta')), ('untranslated', _('Kääntämättä')), ('fuzzy', _('Fuzzy')), ('translated', _('Valmiit')), ('all', _('Kaikki'))] %}
+        <option value="{{ value }}" {% if state_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">{{ _('Suodata') }}</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Tyhjennä') }}</a>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-3 mb-3 small text-muted">
+        <span>{{ _('Yhteensä') }}: {{ selected_counts.total }}</span>
+        <span>{{ _('Kääntämättä') }}: {{ selected_counts.untranslated }}</span>
+        <span>{{ _('Fuzzy') }}: {{ selected_counts.fuzzy }}</span>
+        <span>{{ _('Valmiina') }}: {{ selected_counts.translated }}</span>
+        <span>{{ _('Odottaa tarkistusta') }}: {{ selected_counts.pending }}</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>{{ _('Avainteksti') }}</th>
+              <th>{{ _('Nykyinen käännös') }}</th>
+              <th>{{ _('Tila') }}</th>
+              <th>{{ _('Toiminnot') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in selected_rows %}
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ row.msgid }}</div>
+                {% if row.locations %}
+                <div class="small text-muted">{{ row.locations|join(', ') }}</div>
+                {% endif %}
+              </td>
+              <td>{{ row.proposal.proposed_text if row.proposal and row.proposal.status == 'pending' else (row.msgstr or '—') }}</td>
+              <td>
+                {% if row.effective_state == 'pending' %}
+                <span class="badge bg-warning text-dark">{{ _('Odottaa') }}</span>
+                {% elif row.effective_state == 'untranslated' %}
+                <span class="badge bg-secondary">{{ _('Kääntämättä') }}</span>
+                {% elif row.effective_state == 'fuzzy' %}
+                <span class="badge bg-info text-dark">Fuzzy</span>
+                {% else %}
+                <span class="badge bg-success">{{ _('Valmis') }}</span>
+                {% endif %}
+                {% if ui_translation_sync_enabled and row.proposal and row.proposal.status == 'approved' and row.github_sync %}
+                <div class="small mt-2">
+                  {% if row.github_sync.status == 'queued' %}
+                  <span class="badge bg-secondary">{{ _('Git-sync jonossa') }}</span>
+                  {% elif row.github_sync.status == 'running' %}
+                  <span class="badge bg-info text-dark">{{ _('Git-sync käynnissä') }}</span>
+                  {% elif row.github_sync.status == 'pr_opened' %}
+                  <span class="badge bg-primary">{{ _('PR avattu') }}</span>
+                  {% elif row.github_sync.status == 'branch_pushed' %}
+                  <span class="badge bg-primary">{{ _('Branch pushattu') }}</span>
+                  {% elif row.github_sync.status == 'committed_local_branch' %}
+                  <span class="badge bg-warning text-dark">{{ _('Commit tehty, push puuttuu') }}</span>
+                  {% elif row.github_sync.status == 'retry' %}
+                  <span class="badge bg-danger">{{ _('Git-sync epäonnistui') }}</span>
+                  {% endif %}
+                  {% if row.github_sync.merge_status == 'merged' %}
+                  <span class="badge bg-success">{{ _('Mergetty') }}</span>
+                  {% elif row.github_sync.merge_status == 'merge_blocked' %}
+                  <span class="badge bg-warning text-dark">{{ _('Merge blokattu') }}</span>
+                  {% elif row.github_sync.merge_status == 'not_configured' %}
+                  <span class="badge bg-secondary">{{ _('Automerge ei käytössä') }}</span>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=selected_locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-muted">{{ _('Ei rivejä valituilla suodattimilla.') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

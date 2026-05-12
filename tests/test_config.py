@@ -44,6 +44,11 @@ class ConfigReloadTests(unittest.TestCase):
             self.assertEqual(config_module.Config.S3_SECRET_KEY, "s3-secret")
             self.assertEqual(config_module.Config.PORT, 9001)
             self.assertEqual(config_module.Config.DEFAULT_TIMEZONE, "UTC")
+            self.assertEqual(config_module.Config.DEEPL_API_KEY, "")
+            self.assertEqual(
+                config_module.Config.DEEPL_API_URL,
+                "https://api-free.deepl.com/v2/translate",
+            )
 
     def test_database_manager_reset_clears_singleton(self):
         class FakeManager:
@@ -62,6 +67,24 @@ class ConfigReloadTests(unittest.TestCase):
             self.assertIsNone(DatabaseManager._instance)
         finally:
             DatabaseManager._instance = original
+
+    def test_reload_uses_finnish_and_english_as_default_supported_locales(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_path = Path(temp_dir) / "config.yaml"
+            config_path.write_text("{}", encoding="utf-8")
+
+            with patch.dict(os.environ, {"CONFIG_YAML_PATH": str(config_path)}):
+                config_module.Config.reload()
+
+            self.assertEqual(config_module.Config.BABEL_DEFAULT_LOCALE, "en")
+            self.assertEqual(
+                config_module.Config.BABEL_SUPPORTED_LOCALES,
+                ["fi", "en"],
+            )
+            self.assertEqual(
+                config_module.Config.BABEL_LANGUAGES,
+                {"fi": "Suomi", "en": "English"},
+            )
 
 
 if __name__ == "__main__":

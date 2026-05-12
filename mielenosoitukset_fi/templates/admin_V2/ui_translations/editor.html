@@ -1,0 +1,139 @@
+{% extends "admin_base.html" %}
+
+{% block title %}{{ _('Käyttöliittymäkäännös') }}{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännös') }}</h1>
+      <p class="text-muted mb-0">{{ locale_label }} · {{ _('Tarkista ja ehdota käännöstä yhdelle gettext-riville.') }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      {% if ui_translation_sync_enabled and can_review_ui_translations %}
+      <a class="btn btn-outline-primary" href="{{ url_for('admin.ui_translation_sync_dashboard', locale=locale) }}">{{ _('GitHub-synkit') }}</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=locale) }}">{{ _('Takaisin listaan') }}</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">{{ _('Lähdeteksti') }}</h2>
+          <div class="mb-3">
+            <div class="small text-muted mb-1">msgid</div>
+            <pre class="p-3 bg-light border rounded small mb-0" style="white-space: pre-wrap;">{{ entry.msgid }}</pre>
+          </div>
+          <div class="mb-3">
+            <div class="small text-muted mb-1">{{ _('Nykyinen käännös') }}</div>
+            <pre class="p-3 bg-light border rounded small mb-0" style="white-space: pre-wrap;">{{ entry.msgstr or '—' }}</pre>
+          </div>
+          {% if entry.flags %}
+          <div class="mb-3">
+            <div class="small text-muted mb-1">{{ _('Liput') }}</div>
+            <div class="d-flex flex-wrap gap-2">
+              {% for flag in entry.flags %}
+              <span class="badge bg-secondary">{{ flag }}</span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if entry.locations %}
+          <div>
+            <div class="small text-muted mb-1">{{ _('Sijainnit') }}</div>
+            <div class="small">{{ entry.locations|join(', ') }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h2 class="h5 mb-3">{{ _('Käännösehdotus') }}</h2>
+          {% if can_translate_ui %}
+          <form method="POST" action="{{ url_for('admin.submit_ui_translation_proposal', locale=locale) }}">
+            <input type="hidden" name="msgid" value="{{ entry.msgid }}">
+            <div class="mb-3">
+              <label class="form-label" for="proposed_text">{{ _('Ehdotettu käännös') }}</label>
+              <textarea class="form-control" id="proposed_text" name="proposed_text" rows="6">{{ proposal.proposed_text if proposal else entry.msgstr }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="notes">{{ _('Huomiot tarkistajalle') }}</label>
+              <textarea class="form-control" id="notes" name="notes" rows="3">{{ proposal.notes if proposal else '' }}</textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistukseen') }}</button>
+          </form>
+          {% else %}
+          <p class="text-muted mb-0">{{ _('Sinulla ei ole oikeutta lähettää käännösehdotuksia.') }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if proposal %}
+      <div class="card">
+        <div class="card-body">
+          <h2 class="h5 mb-3">{{ _('Nykyinen ehdotustila') }}</h2>
+          <p><strong>{{ _('Tila') }}:</strong> {{ proposal.status }}</p>
+          {% if proposal.submitted_by_name %}
+          <p><strong>{{ _('Lähettäjä') }}:</strong> {{ proposal.submitted_by_name }}</p>
+          {% endif %}
+          {% if proposal.notes %}
+          <p><strong>{{ _('Kommentit') }}:</strong> {{ proposal.notes }}</p>
+          {% endif %}
+          {% if proposal.review_notes %}
+          <p><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ proposal.review_notes }}</p>
+          {% endif %}
+          {% if ui_translation_sync_enabled and proposal.status == 'approved' and proposal.github_sync %}
+          <div class="border rounded p-3 bg-light mb-3">
+            <p class="mb-2"><strong>{{ _('GitHub-synkin tila') }}:</strong> {{ proposal.github_sync.status }}</p>
+            {% if proposal.github_sync.branch_name %}
+            <p class="mb-2"><strong>{{ _('Branch') }}:</strong> <code>{{ proposal.github_sync.branch_name }}</code></p>
+            {% endif %}
+            {% if proposal.github_sync.pr_url %}
+            <p class="mb-2"><strong>{{ _('Pull request') }}:</strong> <a href="{{ proposal.github_sync.pr_url }}" target="_blank" rel="noopener">{{ proposal.github_sync.pr_url }}</a></p>
+            {% endif %}
+            {% if proposal.github_sync.merge_status %}
+            <p class="mb-2"><strong>{{ _('Merge-tila') }}:</strong> {{ proposal.github_sync.merge_status }}</p>
+            {% endif %}
+            {% if proposal.github_sync.last_error %}
+            <p class="mb-2 text-danger"><strong>{{ _('Viimeisin virhe') }}:</strong> {{ proposal.github_sync.last_error }}</p>
+            {% elif proposal.github_sync.merge_message %}
+            <p class="mb-2 text-muted"><strong>{{ _('Merge-viesti') }}:</strong> {{ proposal.github_sync.merge_message }}</p>
+            {% elif proposal.github_sync.message %}
+            <p class="mb-2 text-muted"><strong>{{ _('Lisätieto') }}:</strong> {{ proposal.github_sync.message }}</p>
+            {% endif %}
+            {% if can_review_ui_translations and proposal.github_sync.status in ['retry', 'committed_local_branch'] %}
+            <form method="POST" action="{{ url_for('admin.requeue_ui_translation_sync', locale=locale) }}">
+              <input type="hidden" name="msgid" value="{{ entry.msgid }}">
+              <button class="btn btn-outline-primary btn-sm" type="submit">{{ _('Yritä GitHub-synkkiä uudelleen') }}</button>
+            </form>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if can_review_ui_translations and proposal.status == 'pending' %}
+          <form method="POST" action="{{ url_for('admin.approve_ui_translation_proposal', locale=locale) }}" class="mb-3">
+            <input type="hidden" name="msgid" value="{{ entry.msgid }}">
+            <label class="form-label" for="review_notes_approve">{{ _('Tarkistusmuistiinpanot') }}</label>
+            <textarea class="form-control mb-3" id="review_notes_approve" name="review_notes" rows="3"></textarea>
+            <button class="btn btn-success" type="submit">{{ _('Hyväksy ja kirjoita katalogiin') }}</button>
+          </form>
+
+          <form method="POST" action="{{ url_for('admin.reject_ui_translation_proposal', locale=locale) }}">
+            <input type="hidden" name="msgid" value="{{ entry.msgid }}">
+            <label class="form-label" for="review_notes_reject">{{ _('Hylkäyksen syy') }}</label>
+            <textarea class="form-control mb-3" id="review_notes_reject" name="review_notes" rows="3"></textarea>
+            <button class="btn btn-outline-danger" type="submit">{{ _('Hylkää') }}</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

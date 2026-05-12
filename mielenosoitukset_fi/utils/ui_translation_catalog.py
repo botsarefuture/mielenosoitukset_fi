@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import errno
+import logging
+import os
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Iterable
 from urllib.parse import unquote_plus
 
 from babel.messages import mofile, pofile
 from flask import current_app
+from mielenosoitukset_fi.utils.logger import logger
 
 
 @dataclass(frozen=True)
@@ -51,18 +56,71 @@ def load_catalog(locale: str, root: str | Path | None = None):
         return pofile.read_po(handle, locale=locale)
 
 
+
+
 def save_catalog(locale: str, catalog, root: str | Path | None = None) -> None:
+    """
+    Persist a gettext catalog (.po and .mo files) to disk.
+
+    ⚠️ Environment note
+    -------------------
+    In some development or CI environments, the application filesystem may be
+    mounted as read-only. In those cases, this function may fail with
+    OSError: [Errno 30] Read-only file system.
+
+    The UI translation system is designed so that filesystem writes are not
+    strictly required for correctness in all environments:
+    - Approved translations are stored in the database (proposal system)
+    - GitHub sync is responsible for persisting translations to source control
+    - Local .po/.mo writes are primarily for development convenience
+
+    In read-only environments, failures should be treated as non-fatal and
+    logged, not as application errors.
+    """
     po_path = _po_path(locale, root=root)
     mo_path = _mo_path(locale, root=root)
-    po_path.parent.mkdir(parents=True, exist_ok=True)
-    mo_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with po_path.open("wb") as handle:
-        pofile.write_po(handle, catalog, width=120)
+    try:
+        po_path.parent.mkdir(parents=True, exist_ok=True)
+        mo_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with mo_path.open("wb") as handle:
-        mofile.write_mo(handle, catalog, use_fuzzy=False)
+        # --- atomic write PO ---
+        with NamedTemporaryFile(
+            mode="wb",
+            delete=False,
+            dir=str(po_path.parent),
+        ) as tmp_po:
+            pofile.write_po(tmp_po, catalog, width=120)
+            tmp_po_path = Path(tmp_po.name)
 
+        os.replace(tmp_po_path, po_path)
+
+        # --- atomic write MO ---
+        with NamedTemporaryFile(
+            mode="wb",
+            delete=False,
+            dir=str(mo_path.parent),
+        ) as tmp_mo:
+            mofile.write_mo(tmp_mo, catalog, use_fuzzy=False)
+            tmp_mo_path = Path(tmp_mo.name)
+
+        os.replace(tmp_mo_path, mo_path)
+
+    except OSError as exc:
+        # Dev containers / CI / read-only mounts
+        if exc.errno == errno.EROFS:
+            logger.warning(
+                "Skipping catalog write (read-only filesystem): %s",
+                po_path,
+            )
+            return
+
+        logger.exception("Failed to save catalog (OS error)")
+        raise
+
+    except Exception:
+        logger.exception("Failed to save catalog")
+        raise
 
 def _normalize_locations(locations: Iterable[tuple[str, int]] | None) -> tuple[str, ...]:
     result = []

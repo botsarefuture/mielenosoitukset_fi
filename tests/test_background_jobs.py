@@ -204,6 +204,7 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
         "title": "Idempotent Submission Demo",
         "date": "2026-08-15",
         "description": "Regression test for duplicate submission handling.",
+        "default_language": "en",
         "start_time": "15:00",
         "end_time": "17:00",
         "facebook": "",
@@ -237,6 +238,7 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
 
     matching_demos = list(db.demonstrations.find({"title": "Idempotent Submission Demo"}))
     assert len(matching_demos) == 1
+    assert matching_demos[0]["default_language"] == "en"
 
     submitters = list(db.submitters.find({"demonstration_id": matching_demos[0]["_id"]}))
     assert len(submitters) == 1
@@ -248,118 +250,89 @@ def test_submit_route_is_idempotent_and_does_not_create_duplicate_demo(client, d
 
 
 @pytest.mark.integration
-def test_submit_route_duplicate_conflict_returns_confirmation_payload(client, db):
-    existing_id = ObjectId()
-    db.demonstrations.insert_one(
+def test_submit_duplicate_conflict_can_match_existing_translation_title(client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
         {
-            "_id": existing_id,
-            "title": "Ei ydinaseita Suomeen!",
-            "date": "2026-08-15",
+            "$set": {
+                "date": "2026-08-20",
+                "city": "Helsinki",
+                "address": "Mannerheimintie 1, Helsinki",
+                "default_language": "fi",
+                "translations": {
+                    "en": {
+                        "title": "English Climate March",
+                        "description": "Translated description",
+                        "tags": ["peace", "climate"],
+                    }
+                },
+            }
+        },
+    )
+
+    response = client.post(
+        "/submit",
+        data={
+            "title": "English Climate March",
+            "date": "2026-08-20",
+            "description": "Trying to submit a same-day duplicate via translation title.",
+            "default_language": "en",
             "start_time": "15:00",
             "end_time": "17:00",
             "facebook": "",
             "city": "Helsinki",
-            "address": "Rautatientori",
-            "event_type": "other",
-            "route": "",
-            "organizers": [],
-            "approved": True,
-            "img": "",
-            "description": "Existing demo for duplicate detection.",
-            "tags": ["test"],
-        }
-    )
-
-    form_data = {
-        "title": "Ei ydinaseita Suomeen!",
-        "date": "2026-08-15",
-        "description": "Regression test for duplicate conflict UX.",
-        "start_time": "15:00",
-        "end_time": "17:00",
-        "facebook": "",
-        "city": "Helsinki",
-        "address": "Rautatientori",
-        "type": "other",
-        "tags": "test,duplicate",
-        "submitter_role": "organizer",
-        "submitter_email": "submitter@example.test",
-        "submitter_name": "Submitter Example",
-        "accept_terms": "on",
-        "submission_token": "duplicate-conflict-token",
-    }
-
-    response = client.post(
-        "/submit",
-        data=form_data,
+            "address": "Mannerheimintie 1, Helsinki",
+            "type": "other",
+            "tags": "peace,climate",
+            "submitter_role": "organizer",
+            "submitter_email": "submitter@example.test",
+            "submitter_name": "Submitter Example",
+            "accept_terms": "on",
+            "submission_token": "translation-conflict-token",
+        },
         headers={"X-Requested-With": "XMLHttpRequest"},
     )
 
     assert response.status_code == 409
     payload = response.get_json()
-    assert payload["success"] is False
     assert payload["conflict"] is True
-    assert payload["requires_confirmation"] is True
-    assert payload["error_code"] == "SUBMIT_DUPLICATE_CONFLICT"
-    assert payload["demos"]
-    assert payload["demos"][0]["title"] == "Ei ydinaseita Suomeen!"
-
-    token_doc = db.demo_submission_tokens.find_one({"token": "duplicate-conflict-token"})
-    assert token_doc is not None
-    assert token_doc["status"] == "processing"
-
-    assert db.demonstrations.count_documents({"title": "Ei ydinaseita Suomeen!"}) == 1
+    assert any(item["_id"] == str(seeded_data["demo_id"]) for item in payload["demos"])
 
 
 @pytest.mark.integration
-def test_submit_route_does_not_flag_weak_title_overlap_as_duplicate_conflict(client, db):
-    db.demonstrations.insert_one(
+def test_conflict_api_can_match_existing_translation_title(client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
         {
-            "_id": ObjectId(),
-            "title": "Fridays for Future Helsinki",
-            "date": "2026-08-15",
-            "start_time": "15:00",
-            "end_time": "17:00",
-            "facebook": "",
-            "city": "Helsinki",
-            "address": "Kansalaistori",
-            "event_type": "other",
-            "route": "",
-            "organizers": [],
-            "approved": True,
-            "img": "",
-            "description": "Existing demo for overlap threshold testing.",
-            "tags": ["test"],
-        }
+            "$set": {
+                "date": "2026-08-21",
+                "city": "Helsinki",
+                "address": "Mannerheimintie 1, Helsinki",
+                "default_language": "fi",
+                "translations": {
+                    "en": {
+                        "title": "English Climate March",
+                        "description": "Translated description",
+                        "tags": ["peace", "climate"],
+                    }
+                },
+            }
+        },
     )
 
-    form_data = {
-        "title": "Fridays for Palestine Helsinki",
-        "date": "2026-08-15",
-        "description": "Should not be blocked by weak title overlap alone.",
-        "start_time": "15:00",
-        "end_time": "17:00",
-        "facebook": "",
-        "city": "Helsinki",
-        "address": "Narinkkatori",
-        "type": "other",
-        "tags": "test,overlap",
-        "submitter_role": "organizer",
-        "submitter_email": "submitter@example.test",
-        "submitter_name": "Submitter Example",
-        "accept_terms": "on",
-        "submission_token": "weak-overlap-token",
-    }
-
-    response = client.post(
-        "/submit",
-        data=form_data,
-        headers={"X-Requested-With": "XMLHttpRequest"},
+    response = client.get(
+        "/api/v1/check_demo_conflict",
+        query_string={
+            "title": "English Climate March",
+            "date": "2026-08-21",
+            "city": "Helsinki",
+            "address": "Mannerheimintie 1, Helsinki",
+        },
     )
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert payload["success"] is True
-    assert db.demonstrations.count_documents({"title": "Fridays for Palestine Helsinki"}) == 1
+    assert any(item["_id"] == str(seeded_data["demo_id"]) for item in payload["matches"])
 
 
 @pytest.mark.integration

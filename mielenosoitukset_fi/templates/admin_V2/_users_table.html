@@ -20,6 +20,8 @@
       <td>
         {% if user.role == 'admin' %}
           <span class="badge bg-warning text-dark">{{ _('Admin') }}</span>
+        {% elif user.role == 'translator' %}
+          <span class="badge bg-info text-dark">{{ _('Kääntäjä') }}</span>
         {% elif user.role == 'global_admin' %}
           <span class="badge bg-danger">{{ _('Superkäyttäjä') }}</span>
         {% else %}

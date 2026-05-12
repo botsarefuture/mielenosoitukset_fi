@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Any, Dict
 from datetime import datetime, timedelta, timezone, date
 import requests
+from flask_babel import _
 
 from bson.objectid import ObjectId
 from flask import (
@@ -36,6 +37,17 @@ from mielenosoitukset_fi.utils.wrappers import admin_required, permission_requir
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 from mielenosoitukset_fi.utils.cache import cache
+from mielenosoitukset_fi.utils.ui_translation_catalog import (
+    entry_state,
+    get_catalog_entry,
+    iter_catalog_entries,
+    proposal_key,
+    supported_ui_translation_locales,
+    update_catalog_entry,
+)
+from mielenosoitukset_fi.utils.ui_translation_git_sync import (
+    build_ui_translation_sync_branch_name,
+)
 
 from .utils import AdminActParser, log_admin_action_V2, _ADMIN_TEMPLATE_FOLDER
 
@@ -53,6 +65,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 # Initialize MongoDB and Flask-Login
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
+ui_translation_proposals = mongo["ui_translation_proposals"]
 
 login_manager = LoginManager()
 login_manager.login_view = "users.auth.login"
@@ -123,6 +136,155 @@ def _log_admin_event(event: str, **details):
         logger.exception("Failed to log admin event: %s", event)
 
 
+def _can_translate_ui(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "translator"}:
+        return True
+    return user.has_permission("TRANSLATE_UI")
+
+
+def _can_review_ui_translations(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    if getattr(user, "role", None) in {"admin", "global_admin"}:
+        return True
+    return user.has_permission("REVIEW_UI_TRANSLATIONS")
+
+
+def _ui_translation_language_names():
+    return current_app.config.get("BABEL_LANGUAGES", {})
+
+
+def _ui_translation_sync_enabled() -> bool:
+    return bool(current_app.config.get("UI_TRANSLATION_SYNC_ENABLED", False))
+
+
+def _redirect_ui_translation_action_target(locale: str, msgid: str = ""):
+    if msgid:
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+    return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+
+def _normalize_ui_translation_rows(locale: str, search_query: str = "", state_filter: str = "pending"):
+    normalized_search = (search_query or "").strip().casefold()
+    proposals = {
+        proposal["msgid"]: proposal
+        for proposal in ui_translation_proposals.find({"locale": locale})
+    }
+
+    rows = []
+    untranslated = 0
+    fuzzy = 0
+    translated = 0
+    pending = 0
+    for entry in iter_catalog_entries(locale):
+        catalog_state = entry_state(entry)
+        if catalog_state == "untranslated":
+            untranslated += 1
+        elif catalog_state == "fuzzy":
+            fuzzy += 1
+        else:
+            translated += 1
+
+        proposal = proposals.get(entry.msgid)
+        effective_state = "pending" if proposal and proposal.get("status") == "pending" else catalog_state
+        if effective_state == "pending":
+            pending += 1
+
+        if normalized_search and normalized_search not in entry.msgid.casefold() and normalized_search not in entry.msgstr.casefold():
+            continue
+        if state_filter not in {"all", "", None} and effective_state != state_filter:
+            continue
+
+        rows.append(
+            {
+                "msgid": entry.msgid,
+                "msgstr": entry.msgstr,
+                "flags": entry.flags,
+                "locations": entry.locations,
+                "catalog_state": catalog_state,
+                "effective_state": effective_state,
+                "proposal": proposal,
+                "github_sync": (proposal or {}).get("github_sync") or {},
+            }
+        )
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": untranslated + fuzzy + translated,
+            "untranslated": untranslated,
+            "fuzzy": fuzzy,
+            "translated": translated,
+            "pending": pending,
+        },
+    }
+
+
+def _normalize_ui_translation_sync_rows(
+    locale_filter: str = "",
+    sync_status_filter: str = "all",
+    merge_status_filter: str = "all",
+    search_query: str = "",
+):
+    normalized_search = (search_query or "").strip().casefold()
+    query: Dict[str, Any] = {"github_sync": {"$exists": True, "$ne": {}}}
+    if locale_filter:
+        query["locale"] = locale_filter
+    if sync_status_filter not in {"", "all", None}:
+        query["github_sync.status"] = sync_status_filter
+    if merge_status_filter not in {"", "all", None}:
+        query["github_sync.merge_status"] = merge_status_filter
+    if normalized_search:
+        query["$or"] = [
+            {"msgid": {"$regex": search_query, "$options": "i"}},
+            {"proposed_text": {"$regex": search_query, "$options": "i"}},
+            {"github_sync.branch_name": {"$regex": search_query, "$options": "i"}},
+        ]
+
+    rows = list(
+        ui_translation_proposals.find(query).sort(
+            [
+                ("github_sync.queued_at", -1),
+                ("reviewed_at", -1),
+                ("submitted_at", -1),
+                ("msgid", 1),
+            ]
+        ).limit(300)
+    )
+
+    status_counts = {
+        "queued": 0,
+        "running": 0,
+        "retry": 0,
+        "branch_pushed": 0,
+        "pr_opened": 0,
+        "committed_local_branch": 0,
+        "noop": 0,
+    }
+    retryable_count = 0
+    for row in rows:
+        sync_status = ((row.get("github_sync") or {}).get("status") or "").strip()
+        if sync_status in status_counts:
+            status_counts[sync_status] += 1
+        if sync_status in {"retry", "committed_local_branch"}:
+            retryable_count += 1
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": len(rows),
+            "retryable": retryable_count,
+            **status_counts,
+        },
+    }
+
+
 @admin_bp.before_request
 def log_request_info():
     try:
@@ -136,6 +298,407 @@ def log_request_info():
     except Exception as e:
         logger.error(e)
         pass
+
+
+@admin_bp.route("/ui-translations")
+@login_required
+def ui_translation_dashboard():
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales and locales:
+        selected_locale = locales[0]
+
+    search_query = (request.args.get("search") or "").strip()
+    default_state = "pending" if _can_review_ui_translations(current_user) else "untranslated"
+    state_filter = (request.args.get("state") or default_state).strip().lower()
+    if state_filter not in {"pending", "untranslated", "fuzzy", "translated", "all"}:
+        state_filter = "pending"
+
+    locale_summaries = []
+    selected_rows = []
+    selected_counts = {"total": 0, "untranslated": 0, "fuzzy": 0, "translated": 0, "pending": 0}
+    for locale in locales:
+        normalized = _normalize_ui_translation_rows(
+            locale,
+            search_query=search_query if locale == selected_locale else "",
+            state_filter=state_filter if locale == selected_locale else "all",
+        )
+        locale_summaries.append(
+            {
+                "locale": locale,
+                "label": _ui_translation_language_names().get(locale, locale),
+                **normalized["counts"],
+            }
+        )
+        if locale == selected_locale:
+            selected_rows = normalized["rows"][:200]
+            selected_counts = normalized["counts"]
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/dashboard.html",
+        locales=locale_summaries,
+        selected_locale=selected_locale,
+        selected_rows=selected_rows,
+        selected_counts=selected_counts,
+        language_names=_ui_translation_language_names(),
+        search_query=search_query,
+        state_filter=state_filter,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+        ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+    )
+
+
+@admin_bp.route("/ui-translations/sync")
+@login_required
+def ui_translation_sync_dashboard():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales:
+        selected_locale = ""
+
+    sync_status = (request.args.get("sync_status") or "all").strip().lower()
+    if sync_status not in {"all", "queued", "running", "retry", "branch_pushed", "pr_opened", "committed_local_branch", "noop"}:
+        sync_status = "all"
+
+    merge_status = (request.args.get("merge_status") or "all").strip().lower()
+    if merge_status not in {"all", "merged", "merge_blocked", "not_configured", "merge_unknown"}:
+        merge_status = "all"
+
+    search_query = (request.args.get("search") or "").strip()
+    normalized = _normalize_ui_translation_sync_rows(
+        locale_filter=selected_locale,
+        sync_status_filter=sync_status,
+        merge_status_filter=merge_status,
+        search_query=search_query,
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/sync_dashboard.html",
+        locales=locales,
+        language_names=_ui_translation_language_names(),
+        selected_locale=selected_locale,
+        sync_status=sync_status,
+        merge_status=merge_status,
+        search_query=search_query,
+        sync_rows=normalized["rows"],
+        sync_counts=normalized["counts"],
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/edit")
+@login_required
+def ui_translation_editor(locale):
+    if not (_can_translate_ui(current_user) or _can_review_ui_translations(current_user)):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = (request.args.get("msgid") or "").strip()
+    if not msgid:
+        flash_message(_("Valitse käyttöliittymätekstirivi listasta avataksesi editorin."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        logger.exception("Missing UI translation catalog for locale %s.", locale)
+        flash_message(_("Tämän kielen käyttöliittymäkatalogia ei löytynyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+    except Exception:
+        logger.exception("Failed to load UI translation catalog entry for locale=%s msgid=%s", locale, msgid)
+        flash_message(_("Käyttöliittymäkäännösriviä ei voitu avata juuri nyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    if entry is None:
+        flash_message(_("Pyydettyä käyttöliittymäkäännösriviä ei löytynyt tästä kielikatalogista."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    proposal = ui_translation_proposals.find_one(
+        {"_id": proposal_key(locale, msgid)}
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/editor.html",
+        locale=locale,
+        locale_label=_ui_translation_language_names().get(locale, locale),
+        entry=entry,
+        proposal=proposal,
+        can_translate_ui=_can_translate_ui(current_user),
+        can_review_ui_translations=_can_review_ui_translations(current_user),
+        ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+    )
+
+
+@admin_bp.route("/ui-translations/<locale>/propose", methods=["POST"])
+@login_required
+def submit_ui_translation_proposal(locale):
+    if not _can_translate_ui(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
+    msgid = request.form.get("msgid") or ""
+    proposed_text = (request.form.get("proposed_text") or "").strip()
+    notes = (request.form.get("notes") or "").strip()
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        abort(404)
+    if entry is None:
+        abort(404)
+    if not proposed_text:
+        flash_message(_("Syötä käännösehdotus ennen lähettämistä."), "error")
+        return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+    now = datetime.utcnow()
+    ui_translation_proposals.update_one(
+        {"_id": proposal_key(locale, msgid)},
+        {
+            "$set": {
+                "locale": locale,
+                "msgid": msgid,
+                "current_msgstr": entry.msgstr,
+                "proposed_text": proposed_text,
+                "notes": notes,
+                "status": "pending",
+                "submitted_at": now,
+                "submitted_by": str(getattr(current_user, "_id", "")),
+                "submitted_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "reviewed_at": None,
+                "reviewed_by": None,
+                "reviewed_by_name": None,
+                "review_notes": "",
+                "locations": list(entry.locations),
+            }
+        },
+        upsert=True,
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus tallennettiin tarkistettavaksi."), "success")
+    return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+
+@admin_bp.route("/ui-translations/<locale>/approve", methods=["GET", "POST"])
+@login_required
+def approve_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hyväksyntä tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    update_catalog_entry(locale, msgid, proposal.get("proposed_text", ""))
+    sync_metadata = {
+        "status": "queued",
+        "queued_at": datetime.utcnow(),
+        "branch_name": build_ui_translation_sync_branch_name(locale, msgid),
+        "pr_url": None,
+        "pr_number": None,
+        "commit_sha": None,
+        "last_error": "",
+        "message": "",
+        "attempts": 0,
+    }
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "approved",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+                "github_sync": sync_metadata if _ui_translation_sync_enabled() else {},
+            }
+        },
+    )
+    flash_message(
+        _("Käyttöliittymäkäännös hyväksyttiin ja kirjoitettiin kielikatalogiin."),
+        "success",
+    )
+    if _ui_translation_sync_enabled():
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_id": str(proposal["_id"]),
+                    "locale": locale,
+                    "msgid": msgid,
+                },
+            )
+            flash_message(
+                _("Hyväksytty käännös jonotettiin GitHub-synkkiä varten."),
+                "info",
+            )
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/<locale>/reject", methods=["GET", "POST"])
+@login_required
+def reject_ui_translation_proposal(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("Käyttöliittymäkäännöksen hylkäys tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    review_notes = (request.form.get("review_notes") or "").strip()
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "pending":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole odottavaa käännösehdotusta."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "status": "rejected",
+                "reviewed_at": datetime.utcnow(),
+                "reviewed_by": str(getattr(current_user, "_id", "")),
+                "reviewed_by_name": getattr(current_user, "displayname", None) or getattr(current_user, "username", None),
+                "review_notes": review_notes,
+            }
+        },
+    )
+    flash_message(_("Käyttöliittymäkäännösehdotus hylättiin."), "success")
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/<locale>/requeue-sync", methods=["GET", "POST"])
+@login_required
+def requeue_ui_translation_sync(locale):
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+
+    locale = (locale or "").strip().lower()
+    if request.method == "GET":
+        flash_message(
+            _("GitHub-synkin uudelleenjonotus tehdään lomakkeen kautta, ei suoralla linkillä."),
+            "error",
+        )
+        return _redirect_ui_translation_action_target(locale, request.args.get("msgid") or "")
+    msgid = request.form.get("msgid") or ""
+    proposal = ui_translation_proposals.find_one({"_id": proposal_key(locale, msgid)})
+    if not proposal or proposal.get("status") != "approved":
+        flash_message(_("Tälle käyttöliittymätekstille ei ole hyväksyttyä käännöstä synkattavaksi."), "error")
+        return _redirect_ui_translation_action_target(locale, msgid)
+
+    ui_translation_proposals.update_one(
+        {"_id": proposal["_id"]},
+        {
+            "$set": {
+                "github_sync.status": "queued",
+                "github_sync.queued_at": datetime.utcnow(),
+                "github_sync.branch_name": build_ui_translation_sync_branch_name(locale, msgid),
+                "github_sync.last_error": "",
+                "github_sync.message": "",
+            }
+        },
+    )
+
+    job_manager = current_app.extensions.get("job_manager")
+    if job_manager is not None:
+        job_manager.run_job_now(
+            "process_ui_translation_sync",
+            triggered_by=f"admin:{current_user.get_id()}",
+            metadata={
+                "proposal_id": str(proposal["_id"]),
+                "locale": locale,
+                "msgid": msgid,
+                "requeued": True,
+            },
+        )
+
+    flash_message(_("GitHub-synkki jonotettiin uudelleen hyväksytylle käyttöliittymäkäännökselle."), "success")
+    return _redirect_ui_translation_action_target(locale, msgid)
+
+
+@admin_bp.route("/ui-translations/sync/requeue", methods=["POST"])
+@login_required
+def bulk_requeue_ui_translation_sync():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    selected_ids = [value for value in request.form.getlist("proposal_ids") if value]
+    if not selected_ids:
+        flash_message(_("Valitse vähintään yksi käyttöliittymäkäännössynkki uudelleenjonotettavaksi."), "error")
+        return redirect(url_for("admin.ui_translation_sync_dashboard"))
+
+    updated = 0
+    requeued_ids = []
+    for proposal in ui_translation_proposals.find({"_id": {"$in": selected_ids}}):
+        sync_status = ((proposal.get("github_sync") or {}).get("status") or "").strip()
+        if proposal.get("status") != "approved" or sync_status not in {"retry", "committed_local_branch"}:
+            continue
+        ui_translation_proposals.update_one(
+            {"_id": proposal["_id"]},
+            {
+                "$set": {
+                    "github_sync.status": "queued",
+                    "github_sync.queued_at": datetime.utcnow(),
+                    "github_sync.last_error": "",
+                    "github_sync.message": "",
+                }
+            },
+        )
+        updated += 1
+        requeued_ids.append(str(proposal["_id"]))
+
+    if updated:
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_ids": requeued_ids,
+                    "bulk_requeue": True,
+                },
+            )
+        flash_message(
+            _("Valitut käyttöliittymäkäännössynkit jonotettiin uudelleen GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Valituista riveistä yksikään ei ollut uudelleenjonotettavassa GitHub-synkin tilassa."),
+            "error",
+        )
+
+    return redirect(url_for("admin.ui_translation_sync_dashboard"))
 
 
 class DemoViewCount:

@@ -5,6 +5,27 @@
 ## UNRELEASED
 
 ### Added
+* Added the first multilingual demonstration data-model foundation: `Demonstration` now supports `default_language`, a `translations` map, and helper methods for localized title/description/tag access without breaking existing base fields.
+* Added shared demo-localization helpers so multilingual title, description, and tag resolution can be reused consistently from both `Demonstration` objects and plain demonstration dictionaries.
+* `Demonstration` now exposes translations-first serialization helpers for localized payloads and available-language discovery, so API and UI code can consume one consistent multilingual model instead of rebuilding locale resolution ad hoc.
+* Public demonstration APIs and filtering now understand multilingual demonstration content: localized API payloads expose resolved and available languages, and search/tag filters can match translated titles, descriptions, and tags instead of only the base language fields.
+* Added a DeepL-backed translation suggestion service for demonstration content, so translator workflows can request machine-generated title/description/tag proposals with provenance metadata while still keeping human review in control.
+* DeepL suggestions can now be cached backend-side by demo source content hash, so translator UIs can show ready-made proposal drafts without re-translating unchanged content on every view.
+* DeepL suggestion generation now skips past demonstrations by default, so translator workflows can keep old events hidden unless someone explicitly opts into backfilling them.
+* Public demo rendering now uses locale-aware demonstration title, description, and tag values on detail pages, calendar views, and API/card payloads while still falling back to legacy base fields when translations are missing.
+* Admin demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, so demonstration translations can be managed from the existing moderation UI.
+* Recurring demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, extending the same translation model to recurring-event administration.
+* Public submit flow now records the authored language of the base demonstration fields through a `default_language` selector, so multilingual data starts with the correct source language even before public translation inputs exist.
+* Repository and preview runtime config defaults now expose both Finnish and English as supported UI languages, so multilinguality previews show `fi` and `en` selectors without requiring separate server-side config edits.
+* Adminiin lisättiin ensimmäinen demojen käännöstyöjono: uusi `translator`-rooli voi tehdä käännösehdotuksia demojen otsikoille, kuvauksille ja tunnisteille, ja admin hyväksyy tai hylkää ne ennen julkaisua.
+* Demojen detail-sivu näyttää nyt hyväksytyt käännökset aktiivisen kielen mukaan, lokalisoi samankaltaisten tapahtumien otsikot, ja kertoo suoraan millä kielellä tapahtumaa katsotaan.
+* Käännöstyökalu osaa nyt pyytää backendissä välimuistitetyn DeepL-ehdotuksen demolle, jotta kääntäjät voivat käyttää automaattista luonnosta ilman että sama käännös generoidaan selaimessa joka näkymässä uudelleen.
+* Adminiin lisättiin ensimmäinen käyttöliittymäkäännösten workflow: translator/admin voivat avata gettext-rivejä, lähettää käännösehdotuksia ja hyväksyä ne suoraan `.po`/`.mo`-katalogeihin.
+* Hyväksytyt käyttöliittymäkäännökset voidaan nyt jonottaa taustalla Git-branch/PR-synkkiin näkyvällä statuksella, jotta admin-review ja GitHub-lähdekoodisynkki pysyvät samassa workflow’ssa ilman että live checkout likaantuu.
+* UI-käännösten GitHub-synkki näyttää nyt erikseen PR- ja merge-tilan, ja voi haluttaessa yrittää automergeä hyväksytylle käännös-PR:lle konfiguraation perusteella.
+* Adminiin lisättiin erillinen käyttöliittymäkäännösten GitHub-sync-dashboard suodatuksilla ja bulk-retryllä, jotta epäonnistuneet branch/PR-syncit voidaan hallita yhdestä näkymästä.
+* UI-käännösten approve/reject/requeue action-URL:t ohjaavat nyt turvallisesti takaisin editoriin tai listaan, jos niitä avataan selaimessa GET-linkkinä, joten preview ei enää kaadu 500-sivulle vahingossa avatusta toimintalinkistä.
+* UI-käännöseditori käsittelee nyt puuttuvat tai erikoisesti enkoodatut gettext-avaimet turvallisesti ja avaa annetun oikean catalog-rivin myös suoraan querystring-URL:sta ilman previewssa nähtyä 500-virhettä.
 * Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
 * Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.
@@ -55,6 +76,9 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Demojen käännöstyöjono piilottaa menneet mielenosoitukset oletuksena ja näyttää ne vain erikseen pyydettäessä, jotta kääntäjien näkymä pysyy keskittyneenä aktiivisiin tapahtumiin.
+* UI-käännösehdotusten lähetys torjuu nyt virheelliset locale-polut siististi 404:llä FileNotFound-virheen sijaan, joten admin-route smoke- ja oikeat virhepolut eivät enää kaadu palvelinvirheeseen.
+* Mielenosoituksen detail-sivun HTML-cache käyttää nyt samaa resolved localea kuin itse renderöinti, jotta eri kieliversiot eivät vuoda toistensa yli vaikka hakulistaus näyttäisi oikean kielen.
 * PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.

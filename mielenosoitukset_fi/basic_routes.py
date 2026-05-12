@@ -10,7 +10,8 @@ import hashlib
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
-from flask_babel import _, refresh, format_date
+from urllib.parse import urlsplit
+from flask_babel import _, refresh, format_date, get_locale
 from flask import (
     app,
     g,
@@ -25,6 +26,7 @@ from flask import (
     get_flashed_messages,
     jsonify,
     session,
+    current_app,
 )
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
@@ -41,6 +43,7 @@ from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from mielenosoitukset_fi.utils.demo_localization import get_demo_localized_fields
 from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
@@ -53,6 +56,13 @@ from mielenosoitukset_fi.utils.cache import (
     skip_cache_public_only,
 )
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.demo_localization import (
+    demo_has_tag,
+    demo_matches_conflict_candidate,
+    demo_matches_search_query,
+    get_demo_localized_dict,
+    get_demo_localized_fields,
+)
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -279,7 +289,32 @@ def generate_alternate_urls(app, endpoint, **values):
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
 
-def format_demo_for_api(demo):
+def _current_demo_language():
+    try:
+        locale = str(get_locale() or "").strip().lower()
+        if locale:
+            return locale
+    except Exception:
+        pass
+    return (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+
+
+def _localized_demo_copy(demo, language=None):
+    if not isinstance(demo, dict):
+        return demo
+    return get_demo_localized_dict(
+        demo,
+        language=language or _current_demo_language(),
+        include_translations=True,
+    )
+
+
+def _localized_demo_list(demos, language=None):
+    target_language = language or _current_demo_language()
+    return [_localized_demo_copy(demo, target_language) for demo in demos]
+
+
+def format_demo_for_api(demo, language=None):
     """
     Format a demonstration document for API output.
 
@@ -316,24 +351,29 @@ def format_demo_for_api(demo):
             logger.exception(f"Error formatting time: {t}")
             return t
         
+    localized_demo = _localized_demo_copy(demo, language)
+
     try:
-        date_obj = datetime.strptime(demo.get("date", ""), "%Y-%m-%d")
+        date_obj = datetime.strptime(localized_demo.get("date", ""), "%Y-%m-%d")
         date_display = date_obj.strftime("%d.%m.%Y")
     except Exception:
-        date_display = demo.get("date", "")
+        date_display = localized_demo.get("date", "")
 
     return {
-        "_id": str(demo.get("_id")),
-        "title": demo.get("title", ""),
+        "_id": str(localized_demo.get("_id")),
+        "title": localized_demo.get("title", ""),
+        "default_language": localized_demo.get("default_language", "fi"),
+        "resolved_language": localized_demo.get("resolved_language"),
+        "available_languages": localized_demo.get("available_languages", []),
         "date_display": date_display,
-        "start_time_display": fmt_time(demo.get("start_time")),
-        "end_time_display": fmt_time(demo.get("end_time")),
-        "city": demo.get("city", ""),
-        "address": demo.get("address", ""),
-        "tags": demo.get("tags", []),
-        "description": demo.get("description", ""),
-        "cover_image": get_demo_cover_image(demo),
-        "cancelled": bool(demo.get("cancelled")),
+        "start_time_display": fmt_time(localized_demo.get("start_time")),
+        "end_time_display": fmt_time(localized_demo.get("end_time")),
+        "city": localized_demo.get("city", ""),
+        "address": localized_demo.get("address", ""),
+        "tags": localized_demo.get("tags", []),
+        "description": localized_demo.get("description", ""),
+        "cover_image": get_demo_cover_image(localized_demo),
+        "cancelled": bool(localized_demo.get("cancelled")),
     }
 
 def filter_demonstrations_api(
@@ -381,10 +421,8 @@ def filter_demonstrations_api(
         if demo_date < today:
             continue
         # Search
-        if search_query:
-            if search_query not in demo.get("title", "").lower() and \
-               search_query not in demo.get("address", "").lower():
-                continue
+        if search_query and not demo_matches_search_query(demo, search_query):
+            continue
         # City
         if city_query:
             if isinstance(city_query, list):
@@ -407,10 +445,8 @@ def filter_demonstrations_api(
             except Exception:
                 pass
         # Tag filter
-        if tag_query:
-            tags = [t.lower() for t in demo.get("tags", [])]
-            if tag_query.lower() not in tags:
-                continue
+        if tag_query and not demo_has_tag(demo, tag_query):
+            continue
         if demo["_id"] not in added_demo_ids:
             filtered.append(demo)
             added_demo_ids.add(demo["_id"])
@@ -521,6 +557,7 @@ def add_api_routes(app):
             JSON with keys: demonstrations, total_pages
         """
         args = get_api_pagination_args()
+        requested_language = (request.args.get("lang") or "").strip().lower() or None
         today = date.today()
         demos_cursor = demonstrations_collection.find(DEMO_FILTER)
         filtered = filter_demonstrations_api(
@@ -535,7 +572,7 @@ def add_api_routes(app):
         )
         filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
         paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
-        result = [format_demo_for_api(demo) for demo in paginated]
+        result = [format_demo_for_api(demo, requested_language) for demo in paginated]
         return jsonify(demonstrations=result, total_pages=total_pages)
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
@@ -563,23 +600,10 @@ def add_api_routes(app):
                 "approved": True,
             })
             matches = []
-            title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
             for d in potential:
                 if len(matches) >= 5:
                     break
-                existing_title = (d.get('title') or '').lower()
-                existing_addr = (d.get('address') or '').lower()
-                matched = False
-                if title.lower() in existing_title or existing_title in title.lower():
-                    matched = True
-                else:
-                    existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                    if title_words and len(title_words & existing_words) >= 2:
-                        matched = True
-                if not matched and address_q:
-                    if address_q.lower() in existing_addr or existing_addr in address_q.lower():
-                        matched = True
-                if matched:
+                if demo_matches_conflict_candidate(d, title, address_q):
                     matches.append({
                         "_id": str(d.get('_id')),
                         "title": d.get('title'),
@@ -691,7 +715,7 @@ def init_routes(app):
         """
         try:
             # Supported locales (fallback to Finnish)
-            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]
+            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi", "en"]
             locales = [l for l in locales if l]  # normalize
 
             # If only Finnish is available, do not include alternate links
@@ -968,12 +992,24 @@ def init_routes(app):
             key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
         )
 
+        locale = _current_demo_language()
+        localized_filtered_demonstrations = _localized_demo_list(
+            filtered_demonstrations, locale
+        )
+        localized_recommended_demos = _localized_demo_list(recommended_demos or [], locale)
+
         return render_template(
             "index.html",
-            demonstrations=filtered_demonstrations,
-            recommended_demos=recommended_demos,
-            featured_demos_json=[format_demo_for_api(demo) for demo in filtered_demonstrations[:6]],
-            recommended_demos_json=[format_demo_for_api(demo) for demo in (recommended_demos or [])],
+            demonstrations=localized_filtered_demonstrations,
+            recommended_demos=localized_recommended_demos,
+            featured_demos_json=[
+                format_demo_for_api(demo, locale)
+                for demo in filtered_demonstrations[:6]
+            ],
+            recommended_demos_json=[
+                format_demo_for_api(demo, locale)
+                for demo in (recommended_demos or [])
+            ],
         )
 
 
@@ -1052,6 +1088,10 @@ def init_routes(app):
             address = (request.form.get("address") or "").strip()
             event_type = (request.form.get("type") or "").strip()
             route = request.form.get("route") if event_type == "marssi" else None
+            default_language = (
+                request.form.get("default_language")
+                or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi")
+            ).strip().lower()
 
             # --- Tags (comma separated) ---
             tags_field = request.form.get("tags", "")
@@ -1259,25 +1299,9 @@ def init_routes(app):
                         "cancelled": {"$ne": True},
                     })
                     matches = []
-                    title_words = set([w for w in re.findall(r"\w+", title.lower()) if len(w) > 3])
                     for d in potential:
-                        existing_title = (d.get('title') or '').lower()
-                        existing_addr = (d.get('address') or '').lower()
-                        # direct substring check
-                        if title.lower() in existing_title or existing_title in title.lower():
+                        if demo_matches_conflict_candidate(d, title, address):
                             matches.append(d)
-                            continue
-                        # word intersection heuristic
-                        existing_words = set([w for w in re.findall(r"\w+", existing_title) if len(w) > 3])
-                        # Keep the warning threshold fairly high so we do not
-                        # block real users too aggressively on merely similar titles.
-                        if title_words and len(title_words & existing_words) >= 3:
-                            matches.append(d)
-                            continue
-                        # address similarity
-                        if address and (address.lower() in existing_addr or existing_addr in address.lower()):
-                            matches.append(d)
-                            continue
                     if matches:
                         conflict_summary = [
                             {
@@ -1296,17 +1320,7 @@ def init_routes(app):
                         )
                         # if AJAX, return structured JSON so frontend can prompt user
                         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                            return (
-                                jsonify(
-                                    success=False,
-                                    conflict=True,
-                                    requires_confirmation=True,
-                                    message="Löytyi samankaltaisia ilmoituksia tälle päivälle.",
-                                    error_code=SUBMIT_ERROR_CODES["duplicate_conflict"],
-                                    demos=conflict_summary,
-                                ),
-                                409,
-                            )
+                            return jsonify(success=False, conflict=True, message="Löytyi samankaltaisia ilmoituksia tälle päivälle.", demos=conflict_summary), 409
                         # otherwise, flash and redirect back to form
                         flash_message("Löytyi samankaltaisia ilmoituksia tälle päivälle. Ole hyvä ja tarkista ennen julkaisua.", "warning")
                         return redirect(url_for("submit"))
@@ -1334,6 +1348,7 @@ def init_routes(app):
                     gallery_images=[photo_url] if photo_url else None, #FIXME: we should support multiple images in the form and handle them properly, but for now just put the single uploaded image into gallery_images to at least have it show up in the demo detail page
                     description=description,
                     tags=tags,
+                    default_language=default_language,
                 )
                 demo_dict = demonstration.to_dict()
                 demonstration.save()
@@ -1506,6 +1521,9 @@ def init_routes(app):
             test_mode_allowed=test_mode_allowed,
             can_edit_demo=can_edit_demo,
             submission_token=_new_submission_token(),
+            translation_locales=app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"],
+            translation_language_names=app.config.get("BABEL_LANGUAGES") or {},
+            default_demo_language=app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
         )
 
     def upload_image_to_s3(img):
@@ -1623,8 +1641,8 @@ def init_routes(app):
         """
         Render the demonstrations listing page.
 
-        This route serves the main demonstrations listing interface, which loads 
-        the `list copy.html` template. The page itself handles all search, filter, 
+        This route serves the main demonstrations listing interface, which loads
+        the `list.html` template. The page itself handles all search, filter,
         and pagination logic on the client side via JavaScript — fetching data 
         dynamically from the API and rendering demonstration cards.
 
@@ -1634,10 +1652,13 @@ def init_routes(app):
         Returns
         -------
         flask.Response
-            Rendered HTML page (`list copy.html`), which serves as the frontend 
+            Rendered HTML page (`list copy.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
-        return render_template("list copy.html")
+        current_locale = (
+            (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        )
+        return render_template("list copy.html", current_locale=current_locale)
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too
@@ -1726,8 +1747,7 @@ def init_routes(app):
             True if demo matches all filters, False otherwise
         """
         matches_search = (
-            search_query in demo["title"].lower()
-            or search_query in demo["address"].lower()
+            demo_matches_search_query(demo, search_query)
         )
         
         matches_city = (
@@ -1795,8 +1815,10 @@ def init_routes(app):
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
+        # Resolve locale once and reuse the exact same value for rendering and caching.
+        locale = _current_demo_language()
+
         # Build a cache key that is stable for public users; include locale so localized pages differ
-        locale = session.get("locale", "")
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1826,11 +1848,10 @@ def init_routes(app):
                 logger.exception("Error fetching geocode for demo %s", demo_id)
 
         # Prepare response
-        _demo = copy.copy(demo_obj)
-        demo = Demonstration.to_dict(demo_obj, True)
+        demo = demo_obj.to_localized_dict(language=locale, json=True)
 
         toistuvuus = ""
-        if _demo.recurs:
+        if demo_obj.recurs:
             toistuvuus = generate_demo_sentence(demo)
 
         def _format_suggestion_date(raw_value):
@@ -1888,7 +1909,7 @@ def init_routes(app):
             similar_demos.append(
                 {
                     "id": sid,
-                    "title": doc.get("title"),
+                    "title": get_demo_localized_fields(doc, locale).get("title"),
                     "city": doc.get("city"),
                     "date": doc.get("date"),
                     "formatted_date": formatted_date,
@@ -1921,6 +1942,8 @@ def init_routes(app):
                     {
                         "_id": 1,
                         "title": 1,
+                        "default_language": 1,
+                        "translations": 1,
                         "city": 1,
                         "date": 1,
                         "start_time": 1,
@@ -1954,7 +1977,17 @@ def init_routes(app):
                 org_cursor = (
                     mongo.demonstrations.find(
                         org_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -1985,7 +2018,17 @@ def init_routes(app):
                 rec_cursor = (
                     mongo.demonstrations.find(
                         rec_query,
-                        {"_id": 1, "title": 1, "city": 1, "date": 1, "start_time": 1, "address": 1, "slug": 1},
+                        {
+                            "_id": 1,
+                            "title": 1,
+                            "default_language": 1,
+                            "translations": 1,
+                            "city": 1,
+                            "date": 1,
+                            "start_time": 1,
+                            "address": 1,
+                            "slug": 1,
+                        },
                     )
                     .sort("date", ASCENDING)
                     .limit(6)
@@ -2003,6 +2046,16 @@ def init_routes(app):
             "recurring_following": recurring_following,
         }
 
+        available_demo_languages = []
+        default_demo_language = (demo.get("default_language") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        if default_demo_language:
+            available_demo_languages.append(default_demo_language)
+        for language_code, translation in (demo.get("translations") or {}).items():
+            if translation and any(translation.get(field) not in (None, "", []) for field in ("title", "description", "tags")):
+                normalized = str(language_code).strip().lower()
+                if normalized and normalized not in available_demo_languages:
+                    available_demo_languages.append(normalized)
+
         response = make_response(
             render_template(
                 "detail.html",
@@ -2010,6 +2063,9 @@ def init_routes(app):
                 toistuvuus=toistuvuus,
                 similar_demos=similar_demos,
                 follow_meta=follow_meta,
+                current_demo_language=locale,
+                default_demo_language=default_demo_language,
+                available_demo_languages=available_demo_languages,
             )
         )
         response.headers["X-Cache"] = "MISS"
@@ -2322,7 +2378,9 @@ def init_routes(app):
             except (requests.exceptions.RequestException, IndexError):
                 ...
                 
-        demo = Demonstration.to_dict(demo, True)
+        demo = _localized_demo_copy(
+            Demonstration.to_dict(demo, True), _current_demo_language()
+        )
         log_demo_view(
             demo_id, current_user._id if current_user.is_authenticated else None
         )
@@ -2583,9 +2641,22 @@ def init_routes(app):
             return redirect(request.referrer)
         session["locale"] = lang
         session.modified = True
-        referrer = request.referrer
-        if referrer and referrer.startswith(request.host_url):
-            return redirect(referrer)
+
+        next_target = (request.args.get("next") or "").strip()
+        if next_target:
+            parsed = urlsplit(next_target)
+            if not parsed.scheme and not parsed.netloc and next_target.startswith("/"):
+                return redirect(next_target)
+
+        referrer = request.referrer or ""
+        if referrer:
+            parsed_referrer = urlsplit(referrer)
+            current_host = urlsplit(request.host_url).netloc
+            if parsed_referrer.netloc == current_host:
+                safe_path = parsed_referrer.path or "/"
+                if parsed_referrer.query:
+                    safe_path = f"{safe_path}?{parsed_referrer.query}"
+                return redirect(safe_path)
         return redirect(url_for("index"))
     
     @app.route("/download_material/<demo_id>", methods=["GET"])
@@ -2928,7 +2999,9 @@ def init_routes(app):
             if demo_date:
                 dd = datetime.strptime(demo_date, "%Y-%m-%d").date()
                 if dd.year == year and dd.month == month:
-                    month_demos[dd.day].append(demo)
+                    month_demos[dd.day].append(
+                        _localized_demo_copy(demo, _current_demo_language())
+                    )
 
         # Kalenteri kuukaudelle
         cal = calendar.Calendar(firstweekday=0)  # 0 = Monday
@@ -2994,7 +3067,9 @@ def init_routes(app):
             if demo_date_str:
                 dd = datetime.strptime(demo_date_str, "%Y-%m-%d").date()
                 if dd.year == year:
-                    year_demos[dd.month]["days"][dd.day].append(demo)
+                    year_demos[dd.month]["days"][dd.day].append(
+                        _localized_demo_copy(demo, _current_demo_language())
+                    )
 
         # Kuukausien nimet
         month_names = {

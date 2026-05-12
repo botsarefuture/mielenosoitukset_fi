@@ -1,8 +1,8 @@
 {
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {
-      "count": 25,
-      "sha256": "a1b7f38e96edbb54c9ccebd305fab33d1cd90da15bda1bc803fae4e6e7b0cb62",
+      "count": 33,
+      "sha256": "5f437889348e981e2ba9793ec85042e60582b8aa3f1a83c72d2e168c39761ead",
       "coverage": [
         "integration",
         "e2e-admin"
@@ -17,8 +17,8 @@
       ]
     },
     "mielenosoitukset_fi/admin/admin_demo_bp.py": {
-      "count": 41,
-      "sha256": "d60a35056535d103fa958399c06a6d34b713cb927fdc30838523f143c4808207",
+      "count": 46,
+      "sha256": "8175e5fb53c35240dafa87601bd8073e8676c0227d53d951ae504bf2fc1a6d86",
       "coverage": [
         "integration",
         "e2e-admin"
@@ -286,8 +286,8 @@
     ]
   },
   "background_jobs": {
-    "count": 9,
-    "sha256": "99e3be0a0c0d69e5dec9e6b79ca4ee5463a6916a4b655d730748be4224748711",
+    "count": 10,
+    "sha256": "9682ed3d9025ddd0db93fe3c6ccf815faba39ade36d30bf77d305f819111ba93",
     "coverage": [
       "jobs",
       "integration"

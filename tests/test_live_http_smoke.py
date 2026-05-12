@@ -12,7 +12,7 @@ def test_public_pages_render_over_real_http(app, db, live_server):
     with urlopen(f"{live_server}/", timeout=10) as index_response:
         index_body = index_response.read().decode("utf-8")
         assert index_response.status == 200
-    assert "demo-container-grid" in index_body
+    assert "demos-grid" in index_body
     assert "search-form" in index_body
 
     with urlopen(

@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
 const cityList = {{ city_list | tojson }};
-window.currentLocale = {{ (session.get('locale') or get_locale() or config.BABEL_DEFAULT_LOCALE or 'fi') | tojson }};
+window.currentLocale = {{ current_locale | tojson }};
 window.demoCardI18n = {
   loading: {{ _('Ladataan mielenosoituksia...') | tojson }},
   loadMore: {{ _('Lataa lisää') | tojson }},

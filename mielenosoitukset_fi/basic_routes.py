@@ -1655,7 +1655,10 @@ def init_routes(app):
             Rendered HTML page (`list copy.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
-        return render_template("list copy.html")
+        current_locale = (
+            (session.get("locale") or Config.BABEL_DEFAULT_LOCALE or "fi").strip().lower()
+        )
+        return render_template("list copy.html", current_locale=current_locale)
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too

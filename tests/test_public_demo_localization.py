@@ -219,7 +219,7 @@ def test_demonstrations_list_page_renders_without_server_error(client):
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert "demo-container-grid" in body
+    assert "demos-grid" in body
     assert "search-form" in body
 
 

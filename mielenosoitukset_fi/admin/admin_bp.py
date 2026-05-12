@@ -404,10 +404,25 @@ def ui_translation_editor(locale):
     if locale not in supported_ui_translation_locales():
         abort(404)
 
-    msgid = request.args.get("msgid") or ""
-    entry = get_catalog_entry(locale, msgid)
+    msgid = (request.args.get("msgid") or "").strip()
+    if not msgid:
+        flash_message(_("Valitse käyttöliittymätekstirivi listasta avataksesi editorin."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        logger.exception("Missing UI translation catalog for locale %s.", locale)
+        flash_message(_("Tämän kielen käyttöliittymäkatalogia ei löytynyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+    except Exception:
+        logger.exception("Failed to load UI translation catalog entry for locale=%s msgid=%s", locale, msgid)
+        flash_message(_("Käyttöliittymäkäännösriviä ei voitu avata juuri nyt."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
+
     if entry is None:
-        abort(404)
+        flash_message(_("Pyydettyä käyttöliittymäkäännösriviä ei löytynyt tästä kielikatalogista."), "error")
+        return redirect(url_for("admin.ui_translation_dashboard", locale=locale))
 
     proposal = ui_translation_proposals.find_one(
         {"_id": proposal_key(locale, msgid)}

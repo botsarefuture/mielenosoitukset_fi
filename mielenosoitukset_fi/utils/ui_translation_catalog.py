@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import unquote_plus
 
 from babel.messages import mofile, pofile
 from flask import current_app
@@ -90,6 +91,14 @@ def iter_catalog_entries(locale: str, root: str | Path | None = None):
 def get_catalog_entry(locale: str, msgid: str, root: str | Path | None = None):
     catalog = load_catalog(locale, root=root)
     message = catalog.get(msgid)
+    if message is None and msgid:
+        normalized_msgid = " ".join(unquote_plus(str(msgid)).split())
+        for candidate in catalog:
+            if not candidate.id or isinstance(candidate.id, tuple):
+                continue
+            if " ".join(str(candidate.id).split()) == normalized_msgid:
+                message = candidate
+                break
     if message is None:
         return None
     return CatalogEntrySnapshot(

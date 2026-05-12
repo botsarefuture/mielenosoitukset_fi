@@ -90,6 +90,16 @@ def test_translator_can_open_ui_translation_editor(translator_client, app, tmp_p
     assert response.status_code == 200
 
 
+def test_admin_can_open_real_catalog_ui_translation_editor(admin_client):
+    response = admin_client.get(
+        "/admin/ui-translations/en/edit?msgid=Virheellinen+p%C3%A4iv%C3%A4m%C3%A4%C3%A4r%C3%A4n+muoto.+Ole+hyv%C3%A4+ja+k%C3%A4yt%C3%A4+muotoa+vvvv-kk-pp."
+    )
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Incorrect date format. Please use the format dd.mm.yyyy." in body
+
+
 def test_translator_can_submit_ui_translation_proposal(translator_client, app, db, tmp_path):
     _seed_translation_catalogs(app, tmp_path)
 

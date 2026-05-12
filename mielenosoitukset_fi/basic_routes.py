@@ -1652,10 +1652,10 @@ def init_routes(app):
         Returns
         -------
         flask.Response
-            Rendered HTML page (`list.html`), which serves as the frontend
+            Rendered HTML page (`list copy.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
-        return render_template("list.html")
+        return render_template("list copy.html")
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too

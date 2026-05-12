@@ -447,11 +447,17 @@ def submit_ui_translation_proposal(locale):
         abort(403)
 
     locale = (locale or "").strip().lower()
+    if locale not in supported_ui_translation_locales():
+        abort(404)
+
     msgid = request.form.get("msgid") or ""
     proposed_text = (request.form.get("proposed_text") or "").strip()
     notes = (request.form.get("notes") or "").strip()
 
-    entry = get_catalog_entry(locale, msgid)
+    try:
+        entry = get_catalog_entry(locale, msgid)
+    except FileNotFoundError:
+        abort(404)
     if entry is None:
         abort(404)
     if not proposed_text:

@@ -69,6 +69,7 @@ def create_app(config_overrides=None) -> Flask:
 
     rate_limit_defaults = ["86400 per day", "3600 per hour", "10 per second"]
     app.config["RATE_LIMIT_DEFAULTS"] = rate_limit_defaults
+    app.config["DEBUG"] = True
     
     if app.config.get("ENFORCE_RATELIMIT", True):
         Limiter(

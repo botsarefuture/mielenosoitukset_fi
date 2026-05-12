@@ -9,7 +9,12 @@
       <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännös') }}</h1>
       <p class="text-muted mb-0">{{ locale_label }} · {{ _('Tarkista ja ehdota käännöstä yhdelle gettext-riville.') }}</p>
     </div>
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=locale) }}">{{ _('Takaisin listaan') }}</a>
+    <div class="d-flex gap-2">
+      {% if ui_translation_sync_enabled and can_review_ui_translations %}
+      <a class="btn btn-outline-primary" href="{{ url_for('admin.ui_translation_sync_dashboard', locale=locale) }}">{{ _('GitHub-synkit') }}</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=locale) }}">{{ _('Takaisin listaan') }}</a>
+    </div>
   </div>
 
   <div class="row g-4">

@@ -46,6 +46,31 @@ def test_translator_can_access_ui_translation_dashboard(translator_client, app, 
     assert "Käyttöliittymäkäännökset" in body
 
 
+def test_admin_can_access_ui_translation_sync_dashboard(admin_client, app, db):
+    app.config["UI_TRANSLATION_SYNC_ENABLED"] = True
+    db.ui_translation_proposals.insert_one(
+        {
+            "_id": proposal_key("en", "Submit demonstration"),
+            "locale": "en",
+            "msgid": "Submit demonstration",
+            "proposed_text": "Submit a demonstration",
+            "status": "approved",
+            "github_sync": {
+                "status": "retry",
+                "branch_name": build_ui_translation_sync_branch_name("en", "Submit demonstration"),
+                "last_error": "Push failed",
+            },
+        }
+    )
+
+    response = admin_client.get("/admin/ui-translations/sync")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Käyttöliittymäkäännösten GitHub-synkit" in body
+    assert "Submit demonstration" in body
+
+
 def test_translator_can_open_ui_translation_editor(translator_client, app, tmp_path):
     _seed_translation_catalogs(app, tmp_path)
 
@@ -124,6 +149,44 @@ def test_admin_can_approve_ui_translation_proposal(admin_client, app, db, seeded
     assert proposal["github_sync"]["status"] == "queued"
     assert proposal["github_sync"]["branch_name"] == build_ui_translation_sync_branch_name("en", "Submit demonstration")
     assert queued["job_key"] == "process_ui_translation_sync"
+
+
+def test_admin_can_bulk_requeue_ui_translation_sync(admin_client, app, db):
+    app.config["UI_TRANSLATION_SYNC_ENABLED"] = True
+    queued = {}
+    app.extensions["job_manager"].run_job_now = (
+        lambda job_key, triggered_by, metadata=None: queued.update(
+            {"job_key": job_key, "triggered_by": triggered_by, "metadata": metadata or {}}
+        )
+    )
+    proposal_id = proposal_key("en", "Submit demonstration")
+    db.ui_translation_proposals.insert_one(
+        {
+            "_id": proposal_id,
+            "locale": "en",
+            "msgid": "Submit demonstration",
+            "proposed_text": "Submit a demonstration",
+            "status": "approved",
+            "github_sync": {
+                "status": "retry",
+                "branch_name": build_ui_translation_sync_branch_name("en", "Submit demonstration"),
+                "last_error": "Push failed",
+            },
+        }
+    )
+
+    response = admin_client.post(
+        "/admin/ui-translations/sync/requeue",
+        data={"proposal_ids": [proposal_id]},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    proposal = db.ui_translation_proposals.find_one({"_id": proposal_id})
+    assert proposal["github_sync"]["status"] == "queued"
+    assert proposal["github_sync"]["last_error"] == ""
+    assert queued["job_key"] == "process_ui_translation_sync"
+    assert queued["metadata"]["bulk_requeue"] is True
 
 
 def _init_sync_repo(repo_root: Path):

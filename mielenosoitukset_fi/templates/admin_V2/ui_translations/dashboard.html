@@ -9,6 +9,9 @@
       <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännökset') }}</h1>
       <p class="text-muted mb-0">{{ _('Hallitse sivuston ydinkomponenttien gettext-käännöksiä ja tarkista ehdotukset ennen hyväksyntää.') }}</p>
     </div>
+    {% if ui_translation_sync_enabled and can_review_ui_translations %}
+    <a class="btn btn-outline-primary" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Avaa GitHub-synkit') }}</a>
+    {% endif %}
   </div>
 
   <div class="row g-3 mb-4">

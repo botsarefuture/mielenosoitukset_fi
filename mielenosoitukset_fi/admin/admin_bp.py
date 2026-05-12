@@ -220,6 +220,65 @@ def _normalize_ui_translation_rows(locale: str, search_query: str = "", state_fi
     }
 
 
+def _normalize_ui_translation_sync_rows(
+    locale_filter: str = "",
+    sync_status_filter: str = "all",
+    merge_status_filter: str = "all",
+    search_query: str = "",
+):
+    normalized_search = (search_query or "").strip().casefold()
+    query: Dict[str, Any] = {"github_sync": {"$exists": True, "$ne": {}}}
+    if locale_filter:
+        query["locale"] = locale_filter
+    if sync_status_filter not in {"", "all", None}:
+        query["github_sync.status"] = sync_status_filter
+    if merge_status_filter not in {"", "all", None}:
+        query["github_sync.merge_status"] = merge_status_filter
+    if normalized_search:
+        query["$or"] = [
+            {"msgid": {"$regex": search_query, "$options": "i"}},
+            {"proposed_text": {"$regex": search_query, "$options": "i"}},
+            {"github_sync.branch_name": {"$regex": search_query, "$options": "i"}},
+        ]
+
+    rows = list(
+        ui_translation_proposals.find(query).sort(
+            [
+                ("github_sync.queued_at", -1),
+                ("reviewed_at", -1),
+                ("submitted_at", -1),
+                ("msgid", 1),
+            ]
+        ).limit(300)
+    )
+
+    status_counts = {
+        "queued": 0,
+        "running": 0,
+        "retry": 0,
+        "branch_pushed": 0,
+        "pr_opened": 0,
+        "committed_local_branch": 0,
+        "noop": 0,
+    }
+    retryable_count = 0
+    for row in rows:
+        sync_status = ((row.get("github_sync") or {}).get("status") or "").strip()
+        if sync_status in status_counts:
+            status_counts[sync_status] += 1
+        if sync_status in {"retry", "committed_local_branch"}:
+            retryable_count += 1
+
+    return {
+        "rows": rows,
+        "counts": {
+            "total": len(rows),
+            "retryable": retryable_count,
+            **status_counts,
+        },
+    }
+
+
 @admin_bp.before_request
 def log_request_info():
     try:
@@ -284,6 +343,48 @@ def ui_translation_dashboard():
         can_translate_ui=_can_translate_ui(current_user),
         can_review_ui_translations=_can_review_ui_translations(current_user),
         ui_translation_sync_enabled=_ui_translation_sync_enabled(),
+    )
+
+
+@admin_bp.route("/ui-translations/sync")
+@login_required
+def ui_translation_sync_dashboard():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    locales = supported_ui_translation_locales()
+    selected_locale = (request.args.get("locale") or "").strip().lower()
+    if selected_locale not in locales:
+        selected_locale = ""
+
+    sync_status = (request.args.get("sync_status") or "all").strip().lower()
+    if sync_status not in {"all", "queued", "running", "retry", "branch_pushed", "pr_opened", "committed_local_branch", "noop"}:
+        sync_status = "all"
+
+    merge_status = (request.args.get("merge_status") or "all").strip().lower()
+    if merge_status not in {"all", "merged", "merge_blocked", "not_configured", "merge_unknown"}:
+        merge_status = "all"
+
+    search_query = (request.args.get("search") or "").strip()
+    normalized = _normalize_ui_translation_sync_rows(
+        locale_filter=selected_locale,
+        sync_status_filter=sync_status,
+        merge_status_filter=merge_status,
+        search_query=search_query,
+    )
+
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}ui_translations/sync_dashboard.html",
+        locales=locales,
+        language_names=_ui_translation_language_names(),
+        selected_locale=selected_locale,
+        sync_status=sync_status,
+        merge_status=merge_status,
+        search_query=search_query,
+        sync_rows=normalized["rows"],
+        sync_counts=normalized["counts"],
     )
 
 
@@ -496,6 +597,63 @@ def requeue_ui_translation_sync(locale):
 
     flash_message(_("GitHub-synkki jonotettiin uudelleen hyväksytylle käyttöliittymäkäännökselle."), "success")
     return redirect(url_for("admin.ui_translation_editor", locale=locale, msgid=msgid))
+
+
+@admin_bp.route("/ui-translations/sync/requeue", methods=["POST"])
+@login_required
+def bulk_requeue_ui_translation_sync():
+    if not _can_review_ui_translations(current_user):
+        abort(403)
+    if not _ui_translation_sync_enabled():
+        abort(404)
+
+    selected_ids = [value for value in request.form.getlist("proposal_ids") if value]
+    if not selected_ids:
+        flash_message(_("Valitse vähintään yksi käyttöliittymäkäännössynkki uudelleenjonotettavaksi."), "error")
+        return redirect(url_for("admin.ui_translation_sync_dashboard"))
+
+    updated = 0
+    requeued_ids = []
+    for proposal in ui_translation_proposals.find({"_id": {"$in": selected_ids}}):
+        sync_status = ((proposal.get("github_sync") or {}).get("status") or "").strip()
+        if proposal.get("status") != "approved" or sync_status not in {"retry", "committed_local_branch"}:
+            continue
+        ui_translation_proposals.update_one(
+            {"_id": proposal["_id"]},
+            {
+                "$set": {
+                    "github_sync.status": "queued",
+                    "github_sync.queued_at": datetime.utcnow(),
+                    "github_sync.last_error": "",
+                    "github_sync.message": "",
+                }
+            },
+        )
+        updated += 1
+        requeued_ids.append(str(proposal["_id"]))
+
+    if updated:
+        job_manager = current_app.extensions.get("job_manager")
+        if job_manager is not None:
+            job_manager.run_job_now(
+                "process_ui_translation_sync",
+                triggered_by=f"admin:{current_user.get_id()}",
+                metadata={
+                    "proposal_ids": requeued_ids,
+                    "bulk_requeue": True,
+                },
+            )
+        flash_message(
+            _("Valitut käyttöliittymäkäännössynkit jonotettiin uudelleen GitHub-synkkiä varten."),
+            "success",
+        )
+    else:
+        flash_message(
+            _("Valituista riveistä yksikään ei ollut uudelleenjonotettavassa GitHub-synkin tilassa."),
+            "error",
+        )
+
+    return redirect(url_for("admin.ui_translation_sync_dashboard"))
 
 
 class DemoViewCount:

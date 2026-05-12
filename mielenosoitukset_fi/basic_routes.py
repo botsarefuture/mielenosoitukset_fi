@@ -1641,8 +1641,8 @@ def init_routes(app):
         """
         Render the demonstrations listing page.
 
-        This route serves the main demonstrations listing interface, which loads 
-        the `list copy.html` template. The page itself handles all search, filter, 
+        This route serves the main demonstrations listing interface, which loads
+        the `list.html` template. The page itself handles all search, filter,
         and pagination logic on the client side via JavaScript — fetching data 
         dynamically from the API and rendering demonstration cards.
 
@@ -1652,10 +1652,10 @@ def init_routes(app):
         Returns
         -------
         flask.Response
-            Rendered HTML page (`list copy.html`), which serves as the frontend 
+            Rendered HTML page (`list.html`), which serves as the frontend
             container for dynamic demonstration listings.
         """
-        return render_template("list copy.html")
+        return render_template("list.html")
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too
@@ -1812,8 +1812,10 @@ def init_routes(app):
         # Determine whether to bypass cache
         bypass_cache = bool(request.query_string) or should_skip_cache(public_only=False)
 
+        # Resolve locale once and reuse the exact same value for rendering and caching.
+        locale = _current_demo_language()
+
         # Build a cache key that is stable for public users; include locale so localized pages differ
-        locale = session.get("locale", "")
         viewer_segment = "anon"
         if current_user.is_authenticated:
             try:
@@ -1843,7 +1845,6 @@ def init_routes(app):
                 logger.exception("Error fetching geocode for demo %s", demo_id)
 
         # Prepare response
-        locale = _current_demo_language()
         demo = demo_obj.to_localized_dict(language=locale, json=True)
 
         toistuvuus = ""

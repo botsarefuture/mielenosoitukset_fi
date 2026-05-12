@@ -82,7 +82,7 @@ def user_control():
 
 USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "translator": 1, "user": 1}
 ROLE_IMPLIED_GLOBAL_PERMISSIONS = {
-    "translator": {"TRANSLATE_DEMO"},
+    "translator": {"TRANSLATE_DEMO", "TRANSLATE_UI"},
 }
 
 

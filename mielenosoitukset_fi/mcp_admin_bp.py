@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -24,6 +25,7 @@ from mielenosoitukset_fi.utils.tokens import check_token
 
 
 mcp_admin_bp = Blueprint("admin_mcp", __name__)
+logger = logging.getLogger(__name__)
 
 
 def _mongo():
@@ -364,6 +366,7 @@ def _scopes_from_claims(claims: dict[str, Any]) -> list[str]:
 def _authenticate_oauth_bearer(supplied_token: str) -> dict[str, Any] | None:
     oauth = _oauth_config()
     if not _oauth_enabled():
+        logger.debug("OAuth not enabled")
         return None
 
     algorithms = oauth.get("JWT_ALGORITHMS") or ["HS256"]
@@ -375,6 +378,7 @@ def _authenticate_oauth_bearer(supplied_token: str) -> dict[str, Any] | None:
 
     verification_key = public_key or shared_secret
     if not verification_key:
+        logger.warning("OAuth verification key not configured")
         return None
 
     decode_kwargs: dict[str, Any] = {"algorithms": algorithms}
@@ -383,9 +387,12 @@ def _authenticate_oauth_bearer(supplied_token: str) -> dict[str, Any] | None:
     if issuer:
         decode_kwargs["issuer"] = issuer
 
+    logger.debug(f"Decoding OAuth JWT with algorithms: {algorithms}, audience: {audience}")
     claims = jwt.decode(supplied_token, verification_key, **decode_kwargs)
     scopes = _scopes_from_claims(claims)
+    logger.debug(f"OAuth JWT decoded successfully. Scopes: {scopes}, Required: {required_scopes}")
     if required_scopes and not all(scope in scopes for scope in required_scopes):
+        logger.warning(f"OAuth token missing required scopes. Token has: {scopes}, Required: {required_scopes}")
         raise PermissionError("OAuth token missing required MCP scopes")
 
     return {
@@ -398,32 +405,41 @@ def _authenticate_oauth_bearer(supplied_token: str) -> dict[str, Any] | None:
 
 def _authenticate() -> dict[str, Any] | None:
     if not _get_mcp_config().get("ENABLED", False):
+        logger.debug("MCP not enabled in config")
         return None
 
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
+        logger.debug("No Bearer token in Authorization header")
         return None
 
     supplied_token = auth_header.split(" ", 1)[1].strip()
     if not supplied_token:
+        logger.debug("Empty Bearer token")
         return None
+
+    logger.debug(f"Attempting MCP authentication with token (first 20 chars): {supplied_token[:20]}...")
 
     try:
         token_record = check_token(supplied_token)
+        logger.info(f"MCP authenticated via API token: {token_record.get('user_id') or token_record.get('app_id')}")
         return {
             "name": str(token_record.get("user_id") or token_record.get("app_id") or "api-token"),
             "scopes": token_record.get("scopes") or ["read"],
             "token_record": token_record,
             "auth_type": "api_token",
         }
-    except ApiException:
+    except ApiException as e:
+        logger.debug(f"API token check failed: {e}")
         pass
 
     try:
         oauth_entry = _authenticate_oauth_bearer(supplied_token)
         if oauth_entry:
+            logger.info(f"MCP authenticated via OAuth bearer: {oauth_entry.get('name')}")
             return oauth_entry
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as e:
+        logger.debug(f"OAuth bearer check failed: {e}")
         pass
 
     supplied_hash = hashlib.sha256(supplied_token.encode("utf-8")).hexdigest()
@@ -431,9 +447,12 @@ def _authenticate() -> dict[str, Any] | None:
         entry_token = entry.get("token")
         entry_hash = entry.get("sha256")
         if entry_token and hmac.compare_digest(entry_token, supplied_token):
+            logger.info(f"MCP authenticated via configured token: {entry.get('name')}")
             return entry
         if entry_hash and hmac.compare_digest(entry_hash, supplied_hash):
+            logger.info(f"MCP authenticated via configured token hash: {entry.get('name')}")
             return entry
+    logger.warning("MCP authentication failed - no matching token found")
     return None
 
 
@@ -1049,23 +1068,25 @@ TOOLS: dict[str, dict[str, Any]] = {
 }
 
 
-@mcp_admin_bp.route("/.well-known/oauth-authorization-server", methods=["GET"])
-@mcp_admin_bp.route("/.well-known/oauth-authorization-server/api/admin/mcp", methods=["GET"])
-@mcp_admin_bp.route("/.well-known/openid-configuration", methods=["GET"])
+@mcp_admin_bp.route("/.well-known/oauth-authorization-server", methods=["GET"], strict_slashes=False)
+@mcp_admin_bp.route("/.well-known/oauth-authorization-server/api/admin/mcp", methods=["GET"], strict_slashes=False)
+@mcp_admin_bp.route("/.well-known/openid-configuration", methods=["GET"], strict_slashes=False)
 def oauth_authorization_server_metadata():
     if not _oauth_enabled():
         return jsonify({"error": "OAuth is disabled"}), 404
-    return jsonify(_oauth_authorization_server_metadata())
+    metadata = _oauth_authorization_server_metadata()
+    logger.info(f"OAuth server metadata requested. Token endpoint: {metadata.get('token_endpoint')}")
+    return jsonify(metadata)
 
 
-@mcp_admin_bp.route("/.well-known/oauth-protected-resource/api/admin/mcp", methods=["GET"])
+@mcp_admin_bp.route("/.well-known/oauth-protected-resource/api/admin/mcp", methods=["GET"], strict_slashes=False)
 def oauth_protected_resource_metadata():
     if not _oauth_enabled():
         return jsonify({"error": "OAuth is disabled"}), 404
     return jsonify(_oauth_protected_resource_metadata_payload())
 
 
-@mcp_admin_bp.route("/api/admin/mcp/oauth/register", methods=["POST"])
+@mcp_admin_bp.route("/api/admin/mcp/oauth/register", methods=["POST"], strict_slashes=False)
 def oauth_register():
     if not _oauth_enabled():
         return jsonify({"error": "OAuth is disabled"}), 404
@@ -1077,7 +1098,7 @@ def oauth_register():
     return jsonify(client_doc), 201
 
 
-@mcp_admin_bp.route("/api/admin/mcp/oauth/authorize", methods=["GET", "POST"])
+@mcp_admin_bp.route("/api/admin/mcp/oauth/authorize", methods=["GET", "POST"], strict_slashes=False)
 def oauth_authorize():
     if not _oauth_enabled():
         return jsonify({"error": "OAuth is disabled"}), 404
@@ -1171,26 +1192,35 @@ def oauth_authorize():
     return redirect(f"{redirect_uri}{separator}{urlencode(params)}")
 
 
-@mcp_admin_bp.route("/api/admin/mcp/oauth/token", methods=["POST"])
+@mcp_admin_bp.route("/api/admin/mcp/oauth/token", methods=["POST"], strict_slashes=False)
 def oauth_token():
+    logger.info("OAuth token exchange requested")
     if not _oauth_enabled():
+        logger.warning("OAuth not enabled, rejecting token request")
         return jsonify({"error": "OAuth is disabled"}), 404
 
     grant_type = (request.form.get("grant_type") or "").strip()
+    logger.debug(f"OAuth token request - grant_type: {grant_type}")
     if grant_type != "authorization_code":
+        logger.warning(f"Unsupported grant type: {grant_type}")
         return _oauth_json_error("unsupported_grant_type", "Only authorization_code is supported", status=400)
 
     client, client_id, client_secret = _resolve_client_auth()
+    logger.debug(f"OAuth client resolution - client_id: {client_id}, auth method: {'basic' if request.authorization else 'form'}")
     try:
         client = _validate_client_auth(client, client_id, client_secret)
+        logger.info(f"OAuth client authenticated successfully: {client_id}")
     except LookupError as exc:
+        logger.warning(f"OAuth client lookup failed: {exc}")
         return _oauth_json_error("invalid_client", str(exc), status=401)
     except PermissionError as exc:
+        logger.warning(f"OAuth client secret invalid: {exc}")
         return _oauth_json_error("invalid_client", str(exc), status=401)
 
     code_value = (request.form.get("code") or "").strip()
     redirect_uri = (request.form.get("redirect_uri") or "").strip()
     code_verifier = (request.form.get("code_verifier") or "").strip()
+    logger.debug(f"OAuth token exchange - code present: {bool(code_value)}, redirect_uri: {redirect_uri}")
     if not code_value or not redirect_uri:
         return _oauth_json_error("invalid_request", "code and redirect_uri are required", status=400)
 
@@ -1238,13 +1268,24 @@ def oauth_token():
     )
 
 
-@mcp_admin_bp.route("/api/admin/mcp", methods=["POST"])
+# Alternative token endpoint routes for OAuth client compatibility
+@mcp_admin_bp.route("/token", methods=["POST"], strict_slashes=False)
+@mcp_admin_bp.route("/.well-known/oauth/token", methods=["POST"], strict_slashes=False)
+def oauth_token_alias():
+    """Alias endpoint for OAuth token exchange (for client compatibility)"""
+    logger.debug("OAuth token request via alternative endpoint (/token)")
+    return oauth_token()
+
+
+@mcp_admin_bp.route("/api/admin/mcp", methods=["POST"], strict_slashes=False)
 def handle_admin_mcp():
     request_json = request.get_json(silent=True) or {}
     request_id = request_json.get("id")
+    logger.debug(f"MCP request received - ID: {request_id}, Method: {request_json.get('method')}, Params: {list(request_json.get('params', {}).keys())}")
 
     token_entry = _authenticate()
     if not token_entry:
+        logger.warning(f"MCP request unauthorized - ID: {request_id}")
         return _unauthorized_mcp_response(request_id)
 
     method = request_json.get("method")
@@ -1286,16 +1327,24 @@ def handle_admin_mcp():
         arguments = params.get("arguments") or {}
         tool = TOOLS.get(tool_name)
         if not tool:
+            logger.error(f"MCP tool not found - ID: {request_id}, Tool: {tool_name}")
             return _jsonrpc_error(request_id, -32602, f"Unknown tool: {tool_name}")
+        logger.debug(f"MCP tool call - ID: {request_id}, Tool: {tool_name}, Arguments: {list(arguments.keys())}")
         try:
-            return _jsonrpc_response(tool["handler"](arguments, token_entry), request_id)
+            result = tool["handler"](arguments, token_entry)
+            logger.debug(f"MCP tool succeeded - ID: {request_id}, Tool: {tool_name}")
+            return _jsonrpc_response(result, request_id)
         except PermissionError as exc:
+            logger.warning(f"MCP tool permission denied - ID: {request_id}, Tool: {tool_name}, Error: {exc}")
             return _jsonrpc_error(request_id, -32003, str(exc), http_status=403)
         except (ValueError, TypeError) as exc:
+            logger.warning(f"MCP tool invalid argument - ID: {request_id}, Tool: {tool_name}, Error: {exc}")
             return _jsonrpc_error(request_id, -32602, str(exc))
         except LookupError as exc:
+            logger.warning(f"MCP tool not found - ID: {request_id}, Tool: {tool_name}, Error: {exc}")
             return _jsonrpc_error(request_id, -32004, str(exc), http_status=404)
         except Exception as exc:
+            logger.exception(f"MCP tool error - ID: {request_id}, Tool: {tool_name}, Error: {exc}")
             return _jsonrpc_error(request_id, -32603, "Internal MCP tool error", data=str(exc), http_status=500)
 
     return _jsonrpc_error(request_id, -32601, f"Method not found: {method}")

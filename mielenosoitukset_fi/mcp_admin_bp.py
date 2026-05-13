@@ -5,7 +5,7 @@ import hashlib
 import hmac
 import json
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlencode
 
@@ -256,8 +256,8 @@ def _register_client_document(payload: dict[str, Any]) -> dict[str, Any]:
         "response_types": payload.get("response_types") or ["code"],
         "scope": _serialize_scope_list(_normalize_scope_list(payload.get("scope"), default_to_all=True)),
         "token_endpoint_auth_method": token_auth_method,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
     }
     if client_secret:
         doc["client_secret_hash"] = _hash_client_secret(client_secret)
@@ -325,8 +325,8 @@ def _store_authorization_code(
             "scope": scope,
             "code_challenge": code_challenge,
             "code_challenge_method": code_challenge_method or "plain",
-            "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(minutes=10),
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10),
             "used_at": None,
         }
     )
@@ -334,7 +334,7 @@ def _store_authorization_code(
 
 
 def _issue_oauth_access_token(*, client_id: str, user_id: Any, scope: str) -> str:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     claims = {
         "iss": _oauth_issuer(),
         "sub": str(user_id),
@@ -554,8 +554,8 @@ def _create_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         organizers=_normalize_organizers(arguments.get("organizers")),
         approved=bool(arguments.get("approved", False)),
         hide=bool(arguments.get("hide", False)),
-        created_datetime=datetime.utcnow(),
-        last_modified=datetime.utcnow(),
+        created_datetime=datetime.now(timezone.utc),
+        last_modified=datetime.now(timezone.utc),
     )
     demo.save()
     return _serialize_result({"created": True, "demo_id": demo._id, "slug": demo.slug})
@@ -607,7 +607,7 @@ def _update_demo(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
     if not applied:
         raise ValueError("No supported fields in patch")
 
-    demo.last_modified = datetime.utcnow()
+    demo.last_modified = datetime.now(timezone.utc)
     demo.save()
     return _serialize_result({"updated": True, "demo_id": demo._id, "applied": applied})
 
@@ -786,13 +786,13 @@ def _close_case(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[
     if not doc:
         raise LookupError("Case not found")
     action_entry = {
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "admin": actor,
         "action_type": "close_case",
         "note": reason,
     }
     history_entry = {
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "action": "Case closed",
         "user": actor,
         "metadata": {"reason": reason, "source": "mcp"},
@@ -803,7 +803,7 @@ def _close_case(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict[
             "$set": {
                 "meta.closed": True,
                 "meta.closed_reason": reason,
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             },
             "$push": {"action_logs": action_entry, "case_history": history_entry},
         },
@@ -823,13 +823,13 @@ def _reopen_case(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
     if not doc:
         raise LookupError("Case not found")
     action_entry = {
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "admin": actor,
         "action_type": "reopen_case",
         "note": reason,
     }
     history_entry = {
-        "timestamp": datetime.utcnow(),
+        "timestamp": datetime.now(timezone.utc),
         "action": "Case reopened",
         "user": actor,
         "metadata": {"reason": reason, "source": "mcp"},
@@ -839,7 +839,7 @@ def _reopen_case(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
         {
             "$set": {
                 "meta.closed": False,
-                "updated_at": datetime.utcnow(),
+                "updated_at": datetime.now(timezone.utc),
             },
             "$unset": {"meta.closed_reason": ""},
             "$push": {"action_logs": action_entry, "case_history": history_entry},
@@ -1199,8 +1199,12 @@ def oauth_token():
         return _oauth_json_error("invalid_grant", "Authorization code is invalid", status=400)
     if code_doc.get("used_at") is not None:
         return _oauth_json_error("invalid_grant", "Authorization code has already been used", status=400)
-    if code_doc.get("expires_at") and code_doc["expires_at"] < datetime.utcnow():
-        return _oauth_json_error("invalid_grant", "Authorization code has expired", status=400)
+    expires_at = code_doc.get("expires_at")
+    if expires_at:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            return _oauth_json_error("invalid_grant", "Authorization code has expired", status=400)
     if code_doc.get("client_id") != client["client_id"]:
         return _oauth_json_error("invalid_grant", "Authorization code was issued to another client", status=400)
     if code_doc.get("redirect_uri") != redirect_uri:
@@ -1217,7 +1221,7 @@ def oauth_token():
 
     _authorization_code_collection().update_one(
         {"_id": code_doc["_id"]},
-        {"$set": {"used_at": datetime.utcnow()}},
+        {"$set": {"used_at": datetime.now(timezone.utc)}},
     )
     access_token = _issue_oauth_access_token(
         client_id=client["client_id"],

@@ -1,4 +1,5 @@
 import hashlib
+import jwt
 
 from bson import ObjectId
 
@@ -29,6 +30,35 @@ def _mcp_client(app_factory, seeded_data):
     return client, token, seeded_data
 
 
+def _oauth_mcp_client(app_factory, seeded_data):
+    secret = "oauth-mcp-secret"
+    token = jwt.encode(
+        {
+            "sub": "pytest-oauth-client",
+            "iss": "https://auth.example.test",
+            "aud": "mielenosoitukset-admin-mcp",
+            "scope": "mcp.admin write read",
+        },
+        secret,
+        algorithm="HS256",
+    )
+    app = app_factory(
+        ADMIN_MCP={
+            "ENABLED": True,
+            "OAUTH": {
+                "ENABLED": True,
+                "ISSUER": "https://auth.example.test",
+                "AUDIENCE": "mielenosoitukset-admin-mcp",
+                "JWT_ALGORITHMS": ["HS256"],
+                "JWT_SHARED_SECRET": secret,
+                "REQUIRED_SCOPES": ["mcp.admin"],
+            },
+        }
+    )
+    client = app.test_client()
+    return client, token, seeded_data
+
+
 def test_admin_mcp_requires_bearer_token(app_factory, seeded_data):
     client, _, _ = _mcp_client(app_factory, seeded_data)
 
@@ -49,6 +79,16 @@ def test_admin_mcp_lists_tools(app_factory, seeded_data):
     tools = tools_response.get_json()["result"]["tools"]
     tool_names = {tool["name"] for tool in tools}
     assert {"list_demos", "update_demo", "list_cases", "update_organization"} <= tool_names
+
+
+def test_admin_mcp_accepts_oauth_bearer_tokens(app_factory, seeded_data):
+    client, token, _ = _oauth_mcp_client(app_factory, seeded_data)
+
+    response = client.post("/api/admin/mcp", json=_rpc("tools/list"), headers=_mcp_headers(token))
+
+    assert response.status_code == 200
+    tool_names = {tool["name"] for tool in response.get_json()["result"]["tools"]}
+    assert "list_demos" in tool_names
 
 
 def test_admin_mcp_can_search_demos(app_factory, seeded_data):

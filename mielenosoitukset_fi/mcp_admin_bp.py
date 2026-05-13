@@ -8,6 +8,7 @@ from typing import Any
 
 from bson import ObjectId
 from flask import Blueprint, current_app, jsonify, request
+import jwt
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.classes.Case import Case
@@ -82,6 +83,61 @@ def _token_entries() -> list[dict[str, Any]]:
     return normalized
 
 
+def _oauth_config() -> dict[str, Any]:
+    oauth = _get_mcp_config().get("OAUTH") or {}
+    return oauth if isinstance(oauth, dict) else {}
+
+
+def _scopes_from_claims(claims: dict[str, Any]) -> list[str]:
+    scopes: list[str] = []
+    scope_claim = claims.get("scope")
+    if isinstance(scope_claim, str):
+        scopes.extend(part for part in scope_claim.split() if part)
+    scp_claim = claims.get("scp")
+    if isinstance(scp_claim, list):
+        scopes.extend(str(part) for part in scp_claim if str(part))
+    unique_scopes: list[str] = []
+    for scope in scopes:
+        if scope not in unique_scopes:
+            unique_scopes.append(scope)
+    return unique_scopes
+
+
+def _authenticate_oauth_bearer(supplied_token: str) -> dict[str, Any] | None:
+    oauth = _oauth_config()
+    if not oauth.get("ENABLED", False):
+        return None
+
+    algorithms = oauth.get("JWT_ALGORITHMS") or ["HS256"]
+    issuer = oauth.get("ISSUER")
+    audience = oauth.get("AUDIENCE")
+    shared_secret = oauth.get("JWT_SHARED_SECRET")
+    public_key = oauth.get("JWT_PUBLIC_KEY")
+    required_scopes = oauth.get("REQUIRED_SCOPES") or []
+
+    verification_key = public_key or shared_secret
+    if not verification_key:
+        return None
+
+    decode_kwargs: dict[str, Any] = {"algorithms": algorithms}
+    if audience:
+        decode_kwargs["audience"] = audience
+    if issuer:
+        decode_kwargs["issuer"] = issuer
+
+    claims = jwt.decode(supplied_token, verification_key, **decode_kwargs)
+    scopes = _scopes_from_claims(claims)
+    if required_scopes and not all(scope in scopes for scope in required_scopes):
+        raise PermissionError("OAuth token missing required MCP scopes")
+
+    return {
+        "name": claims.get("sub") or claims.get("client_id") or "oauth-token",
+        "scopes": scopes or ["read"],
+        "claims": claims,
+        "auth_type": "oauth_bearer",
+    }
+
+
 def _authenticate() -> dict[str, Any] | None:
     if not _get_mcp_config().get("ENABLED", False):
         return None
@@ -93,6 +149,13 @@ def _authenticate() -> dict[str, Any] | None:
     supplied_token = auth_header.split(" ", 1)[1].strip()
     if not supplied_token:
         return None
+
+    try:
+        oauth_entry = _authenticate_oauth_bearer(supplied_token)
+        if oauth_entry:
+            return oauth_entry
+    except jwt.PyJWTError:
+        pass
 
     supplied_hash = hashlib.sha256(supplied_token.encode("utf-8")).hexdigest()
     for entry in _token_entries():
@@ -107,7 +170,13 @@ def _authenticate() -> dict[str, Any] | None:
 
 def _require_scope(token_entry: dict[str, Any], scope: str) -> None:
     scopes = token_entry.get("scopes") or []
-    if scope not in scopes and "write" not in scopes and "admin" not in scopes:
+    if scope == "read" and ("read" in scopes or "write" in scopes or "admin" in scopes):
+        return
+    if scope == "write" and ("write" in scopes or "admin" in scopes):
+        return
+    if scope == "admin" and "admin" in scopes:
+        return
+    if scope not in scopes:
         raise PermissionError(f"Token missing required scope: {scope}")
 
 

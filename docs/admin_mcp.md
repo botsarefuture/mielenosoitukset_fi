@@ -13,13 +13,29 @@ Admin MCP is disabled by default. Enable it in `config.yaml`:
 ```yaml
 ADMIN_MCP:
   ENABLED: true
+  OAUTH:
+    ENABLED: true
+    ISSUER: "https://auth.example.test"
+    AUDIENCE: "mielenosoitukset-admin-mcp"
+    JWT_ALGORITHMS: ["HS256"]
+    JWT_SHARED_SECRET: "replace-with-oauth-resource-secret"
+    REQUIRED_SCOPES: ["mcp.admin"]
+```
+
+This is the recommended mode for OpenAI-compatible remote MCP authentication: OpenAI can pass your OAuth access token to the MCP server as a bearer token, and the server validates the JWT claims locally.
+
+For bootstrap or private local use, the legacy static-token mode is still supported:
+
+```yaml
+ADMIN_MCP:
+  ENABLED: true
   TOKENS:
     - name: codex
       sha256: "paste_sha256_here"
       scopes: ["read", "write"]
 ```
 
-Use `scripts/hash_admin_mcp_token.py` to generate a SHA-256 hash for a token:
+Use `scripts/hash_admin_mcp_token.py` to generate a SHA-256 hash for a legacy static token:
 
 ```bash
 python scripts/hash_admin_mcp_token.py
@@ -86,3 +102,13 @@ It does not yet expose every admin-dashboard action. The intended next expansion
 - organization membership/invite actions
 - translator/admin review workflows
 - audit log reads and selected write actions
+
+## Important limitation
+
+This foundation implements the **resource server** side of OAuth bearer-token validation. It does **not** yet implement a full authorization server, consent UI, or dynamic client registration flow by itself.
+
+That means:
+
+- it is ready to accept OAuth access tokens issued by your auth system
+- it is compatible with the OpenAI-side bearer-token pattern
+- but a complete end-user "Sign in with OpenAI/ChatGPT connector" flow still requires the surrounding OAuth issuer setup

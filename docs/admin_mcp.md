@@ -1,6 +1,6 @@
 # Admin MCP
 
-This repository now includes a token-protected MCP-compatible admin endpoint at:
+This repository now includes an MCP-compatible admin endpoint at:
 
 - `POST /api/admin/mcp`
 
@@ -22,7 +22,18 @@ ADMIN_MCP:
     REQUIRED_SCOPES: ["mcp.admin"]
 ```
 
-This is the recommended mode for OpenAI-compatible remote MCP authentication: OpenAI can pass your OAuth access token to the MCP server as a bearer token, and the server validates the JWT claims locally.
+By default, once `ADMIN_MCP.ENABLED` is on, the server now exposes a full OAuth authorization-code flow for ChatGPT / remote MCP clients:
+
+- `GET /.well-known/oauth-authorization-server`
+- `GET /.well-known/openid-configuration`
+- `GET /.well-known/oauth-protected-resource/api/admin/mcp`
+- `POST /api/admin/mcp/oauth/register`
+- `GET|POST /api/admin/mcp/oauth/authorize`
+- `POST /api/admin/mcp/oauth/token`
+
+ChatGPT developer mode can use these endpoints directly with dynamic client registration, consent, and PKCE.
+
+If you already have your own issuer, you can still configure the JWT validation fields above so MCP accepts externally issued bearer tokens too.
 
 ## Easiest login path right now
 
@@ -78,6 +89,19 @@ Then send the token as:
 ```http
 Authorization: Bearer <your-token>
 ```
+
+## ChatGPT OAuth flow
+
+For the easiest ChatGPT setup:
+
+1. Turn on developer mode in ChatGPT.
+2. Add your MCP server URL:
+   - `https://your-host/api/admin/mcp`
+3. Pick `OAuth` authentication.
+4. Leave static client credentials empty and let ChatGPT use dynamic client registration.
+5. ChatGPT will register a public OAuth client, send the user to `/api/admin/mcp/oauth/authorize`, and exchange the resulting authorization code at `/api/admin/mcp/oauth/token`.
+
+The consent screen requires a logged-in admin-capable account (`global_admin`, `admin`, `superuser`, or `god`), so regular users cannot grant MCP admin access.
 
 ## Supported MCP methods
 
@@ -135,13 +159,8 @@ It does not yet expose every admin-dashboard action. The intended next expansion
 - translator/admin review workflows
 - audit log reads and selected write actions
 
-## Important limitation
+## Current limitations
 
-This foundation implements the **resource server** side of OAuth bearer-token validation. It does **not** yet implement a full authorization server, consent UI, or dynamic client registration flow by itself.
-
-That means:
-
-- it is ready to accept OAuth access tokens issued by your auth system
-- it is ready to accept this repo's existing API tokens directly
-- it is compatible with the OpenAI-side bearer-token pattern
-- but a complete end-user "Sign in with OpenAI/ChatGPT connector" flow still requires the surrounding OAuth issuer setup
+- Dynamic client registration is implemented, but CIMD is not advertised.
+- OAuth access tokens are short-lived bearer JWTs intended for MCP use; refresh tokens are not issued yet.
+- The first tool slice still covers only demonstrations, organizations, and support/admin cases, not the full admin dashboard surface.

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
-from datetime import datetime
+import secrets
+from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import urlencode
 
 from bson import ObjectId
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user
 import jwt
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -19,7 +23,7 @@ from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.tokens import check_token
 
 
-mcp_admin_bp = Blueprint("admin_mcp", __name__, url_prefix="/api/admin/mcp")
+mcp_admin_bp = Blueprint("admin_mcp", __name__)
 
 
 def _mongo():
@@ -90,6 +94,258 @@ def _oauth_config() -> dict[str, Any]:
     return oauth if isinstance(oauth, dict) else {}
 
 
+def _oauth_enabled() -> bool:
+    if not _get_mcp_config().get("ENABLED", False):
+        return False
+    oauth = _oauth_config()
+    return oauth.get("ENABLED", True) is not False
+
+
+def _oauth_signing_secret() -> str:
+    oauth = _oauth_config()
+    return str(oauth.get("JWT_SHARED_SECRET") or current_app.config.get("SECRET_KEY") or "")
+
+
+def _oauth_audience() -> str:
+    oauth = _oauth_config()
+    return str(oauth.get("AUDIENCE") or _mcp_endpoint_url())
+
+
+def _oauth_required_scopes() -> list[str]:
+    oauth = _oauth_config()
+    required = oauth.get("REQUIRED_SCOPES")
+    if isinstance(required, list) and required:
+        return [str(scope) for scope in required if str(scope)]
+    return ["mcp.admin"]
+
+
+def _oauth_supported_scopes() -> list[str]:
+    oauth = _oauth_config()
+    configured = oauth.get("SUPPORTED_SCOPES")
+    if isinstance(configured, list) and configured:
+        return [str(scope) for scope in configured if str(scope)]
+    return ["mcp.admin", "read", "write", "admin"]
+
+
+def _oauth_default_scopes() -> list[str]:
+    oauth = _oauth_config()
+    configured = oauth.get("DEFAULT_SCOPES")
+    if isinstance(configured, list) and configured:
+        return [str(scope) for scope in configured if str(scope)]
+    default_scopes = _oauth_supported_scopes()
+    if "mcp.admin" not in default_scopes:
+        default_scopes.insert(0, "mcp.admin")
+    return default_scopes
+
+
+def _oauth_issuer() -> str:
+    oauth = _oauth_config()
+    return str(oauth.get("ISSUER") or request.url_root.rstrip("/"))
+
+
+def _mcp_endpoint_url() -> str:
+    return request.url_root.rstrip("/") + url_for("admin_mcp.handle_admin_mcp")
+
+
+def _oauth_authorization_endpoint_url() -> str:
+    return request.url_root.rstrip("/") + url_for("admin_mcp.oauth_authorize")
+
+
+def _oauth_token_endpoint_url() -> str:
+    return request.url_root.rstrip("/") + url_for("admin_mcp.oauth_token")
+
+
+def _oauth_registration_endpoint_url() -> str:
+    return request.url_root.rstrip("/") + url_for("admin_mcp.oauth_register")
+
+
+def _oauth_resource_metadata_url() -> str:
+    return request.url_root.rstrip("/") + url_for("admin_mcp.oauth_protected_resource_metadata")
+
+
+def _oauth_authorization_server_metadata() -> dict[str, Any]:
+    return {
+        "issuer": _oauth_issuer(),
+        "authorization_endpoint": _oauth_authorization_endpoint_url(),
+        "token_endpoint": _oauth_token_endpoint_url(),
+        "registration_endpoint": _oauth_registration_endpoint_url(),
+        "response_types_supported": ["code"],
+        "grant_types_supported": ["authorization_code"],
+        "code_challenge_methods_supported": ["S256", "plain"],
+        "token_endpoint_auth_methods_supported": ["none", "client_secret_post", "client_secret_basic"],
+        "scopes_supported": _oauth_supported_scopes(),
+    }
+
+
+def _oauth_protected_resource_metadata_payload() -> dict[str, Any]:
+    return {
+        "resource": _mcp_endpoint_url(),
+        "authorization_servers": [_oauth_issuer()],
+        "scopes_supported": _oauth_supported_scopes(),
+        "bearer_methods_supported": ["header"],
+    }
+
+
+def _client_collection():
+    return _mongo().oauth_clients
+
+
+def _authorization_code_collection():
+    return _mongo().oauth_authorization_codes
+
+
+def _normalize_scope_list(raw_scope: str | None, *, default_to_all: bool = False) -> list[str]:
+    if raw_scope:
+        requested = [part for part in str(raw_scope).split() if part]
+    elif default_to_all:
+        requested = list(_oauth_default_scopes())
+    else:
+        requested = []
+
+    supported = _oauth_supported_scopes()
+    normalized: list[str] = []
+    for scope in requested:
+        if scope in supported and scope not in normalized:
+            normalized.append(scope)
+    return normalized
+
+
+def _serialize_scope_list(scopes: list[str]) -> str:
+    return " ".join(scope for scope in scopes if scope)
+
+
+def _code_challenge_s256(value: str) -> str:
+    digest = hashlib.sha256(value.encode("utf-8")).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+
+
+def _hash_client_secret(secret: str) -> str:
+    return hashlib.sha256(secret.encode("utf-8")).hexdigest()
+
+
+def _is_mcp_admin_user(user: Any) -> bool:
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "global_admin", False):
+        return True
+    return getattr(user, "role", None) in {"god", "global_admin", "admin", "superuser"}
+
+
+def _lookup_client(client_id: str) -> dict[str, Any] | None:
+    if not client_id:
+        return None
+    return _client_collection().find_one({"client_id": client_id})
+
+
+def _register_client_document(payload: dict[str, Any]) -> dict[str, Any]:
+    redirect_uris = payload.get("redirect_uris") or []
+    if not isinstance(redirect_uris, list) or not redirect_uris:
+        raise ValueError("redirect_uris is required")
+
+    token_auth_method = str(payload.get("token_endpoint_auth_method") or "none")
+    if token_auth_method not in {"none", "client_secret_post", "client_secret_basic"}:
+        raise ValueError("Unsupported token_endpoint_auth_method")
+
+    client_id = f"mcp_{secrets.token_urlsafe(18)}"
+    client_secret = secrets.token_urlsafe(32) if token_auth_method != "none" else None
+    doc = {
+        "client_id": client_id,
+        "client_name": payload.get("client_name") or "ChatGPT MCP Client",
+        "redirect_uris": [str(uri) for uri in redirect_uris if str(uri)],
+        "grant_types": payload.get("grant_types") or ["authorization_code"],
+        "response_types": payload.get("response_types") or ["code"],
+        "scope": _serialize_scope_list(_normalize_scope_list(payload.get("scope"), default_to_all=True)),
+        "token_endpoint_auth_method": token_auth_method,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+    }
+    if client_secret:
+        doc["client_secret_hash"] = _hash_client_secret(client_secret)
+    _client_collection().insert_one(doc)
+    response_doc = {
+        "client_id": client_id,
+        "client_name": doc["client_name"],
+        "redirect_uris": doc["redirect_uris"],
+        "grant_types": doc["grant_types"],
+        "response_types": doc["response_types"],
+        "scope": doc["scope"],
+        "token_endpoint_auth_method": token_auth_method,
+        "client_id_issued_at": int(doc["created_at"].timestamp()),
+    }
+    if client_secret:
+        response_doc["client_secret"] = client_secret
+        response_doc["client_secret_expires_at"] = 0
+    return response_doc
+
+
+def _resolve_client_auth() -> tuple[dict[str, Any] | None, str | None, str | None]:
+    basic_auth = request.authorization
+    if basic_auth and basic_auth.username:
+        return _lookup_client(basic_auth.username), basic_auth.username, basic_auth.password
+
+    json_payload = request.get_json(silent=True) if request.is_json else {}
+    client_id = (request.form.get("client_id") or (json_payload or {}).get("client_id"))
+    client_secret = (request.form.get("client_secret") or (json_payload or {}).get("client_secret"))
+    if client_id:
+        return _lookup_client(client_id), client_id, client_secret
+    return None, None, None
+
+
+def _validate_client_auth(client: dict[str, Any] | None, client_id: str | None, client_secret: str | None) -> dict[str, Any]:
+    if not client or not client_id:
+        raise LookupError("Unknown OAuth client")
+
+    auth_method = client.get("token_endpoint_auth_method") or "none"
+    if auth_method == "none":
+        return client
+
+    expected_hash = client.get("client_secret_hash")
+    supplied_hash = _hash_client_secret(client_secret or "")
+    if not expected_hash or not hmac.compare_digest(expected_hash, supplied_hash):
+        raise PermissionError("Invalid OAuth client secret")
+    return client
+
+
+def _store_authorization_code(
+    *,
+    client_id: str,
+    user_id: Any,
+    redirect_uri: str,
+    scope: str,
+    code_challenge: str | None,
+    code_challenge_method: str | None,
+) -> str:
+    code = secrets.token_urlsafe(32)
+    _authorization_code_collection().insert_one(
+        {
+            "code": code,
+            "client_id": client_id,
+            "user_id": user_id,
+            "redirect_uri": redirect_uri,
+            "scope": scope,
+            "code_challenge": code_challenge,
+            "code_challenge_method": code_challenge_method or "plain",
+            "created_at": datetime.utcnow(),
+            "expires_at": datetime.utcnow() + timedelta(minutes=10),
+            "used_at": None,
+        }
+    )
+    return code
+
+
+def _issue_oauth_access_token(*, client_id: str, user_id: Any, scope: str) -> str:
+    now = datetime.utcnow()
+    claims = {
+        "iss": _oauth_issuer(),
+        "sub": str(user_id),
+        "aud": _oauth_audience(),
+        "scope": scope,
+        "client_id": client_id,
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(hours=1)).timestamp()),
+    }
+    return jwt.encode(claims, _oauth_signing_secret(), algorithm="HS256")
+
 def _scopes_from_claims(claims: dict[str, Any]) -> list[str]:
     scopes: list[str] = []
     scope_claim = claims.get("scope")
@@ -107,15 +363,15 @@ def _scopes_from_claims(claims: dict[str, Any]) -> list[str]:
 
 def _authenticate_oauth_bearer(supplied_token: str) -> dict[str, Any] | None:
     oauth = _oauth_config()
-    if not oauth.get("ENABLED", False):
+    if not _oauth_enabled():
         return None
 
     algorithms = oauth.get("JWT_ALGORITHMS") or ["HS256"]
     issuer = oauth.get("ISSUER")
-    audience = oauth.get("AUDIENCE")
-    shared_secret = oauth.get("JWT_SHARED_SECRET")
+    audience = oauth.get("AUDIENCE") or _oauth_audience()
+    shared_secret = _oauth_signing_secret()
     public_key = oauth.get("JWT_PUBLIC_KEY")
-    required_scopes = oauth.get("REQUIRED_SCOPES") or []
+    required_scopes = _oauth_required_scopes()
 
     verification_key = public_key or shared_secret
     if not verification_key:
@@ -183,6 +439,8 @@ def _authenticate() -> dict[str, Any] | None:
 
 def _require_scope(token_entry: dict[str, Any], scope: str) -> None:
     scopes = token_entry.get("scopes") or []
+    if "mcp.admin" in scopes:
+        return
     if scope == "read" and ("read" in scopes or "write" in scopes or "admin" in scopes):
         return
     if scope == "write" and ("write" in scopes or "admin" in scopes):
@@ -590,6 +848,29 @@ def _reopen_case(arguments: dict[str, Any], token_entry: dict[str, Any]) -> dict
     return _serialize_result({"updated": True, "case_id": case_id, "closed": False})
 
 
+def _oauth_error_redirect(redirect_uri: str, *, error: str, state: str | None = None, description: str | None = None):
+    params = {"error": error}
+    if state:
+        params["state"] = state
+    if description:
+        params["error_description"] = description
+    separator = "&" if "?" in redirect_uri else "?"
+    return redirect(f"{redirect_uri}{separator}{urlencode(params)}")
+
+
+def _oauth_json_error(error: str, description: str, status: int = 400):
+    return jsonify({"error": error, "error_description": description}), status
+
+
+def _unauthorized_mcp_response(request_id: Any):
+    response, status = _jsonrpc_error(request_id, -32001, "Unauthorized MCP token", http_status=401)
+    response.headers["WWW-Authenticate"] = (
+        f'Bearer realm="mielenosoitukset-admin-mcp", '
+        f'resource_metadata="{_oauth_resource_metadata_url()}"'
+    )
+    return response, status
+
+
 TOOLS: dict[str, dict[str, Any]] = {
     "list_demos": {
         "description": "List and search demonstrations from the admin dashboard dataset.",
@@ -768,14 +1049,199 @@ TOOLS: dict[str, dict[str, Any]] = {
 }
 
 
-@mcp_admin_bp.route("", methods=["POST"])
+@mcp_admin_bp.route("/.well-known/oauth-authorization-server", methods=["GET"])
+@mcp_admin_bp.route("/.well-known/oauth-authorization-server/api/admin/mcp", methods=["GET"])
+@mcp_admin_bp.route("/.well-known/openid-configuration", methods=["GET"])
+def oauth_authorization_server_metadata():
+    if not _oauth_enabled():
+        return jsonify({"error": "OAuth is disabled"}), 404
+    return jsonify(_oauth_authorization_server_metadata())
+
+
+@mcp_admin_bp.route("/.well-known/oauth-protected-resource/api/admin/mcp", methods=["GET"])
+def oauth_protected_resource_metadata():
+    if not _oauth_enabled():
+        return jsonify({"error": "OAuth is disabled"}), 404
+    return jsonify(_oauth_protected_resource_metadata_payload())
+
+
+@mcp_admin_bp.route("/api/admin/mcp/oauth/register", methods=["POST"])
+def oauth_register():
+    if not _oauth_enabled():
+        return jsonify({"error": "OAuth is disabled"}), 404
+    payload = request.get_json(silent=True) or {}
+    try:
+        client_doc = _register_client_document(payload)
+    except ValueError as exc:
+        return _oauth_json_error("invalid_client_metadata", str(exc), status=400)
+    return jsonify(client_doc), 201
+
+
+@mcp_admin_bp.route("/api/admin/mcp/oauth/authorize", methods=["GET", "POST"])
+def oauth_authorize():
+    if not _oauth_enabled():
+        return jsonify({"error": "OAuth is disabled"}), 404
+
+    if request.method == "GET":
+        if not getattr(current_user, "is_authenticated", False):
+            return redirect(url_for("users.auth.login", next=request.url))
+        if not _is_mcp_admin_user(current_user):
+            return "Admin MCP access requires an admin-capable account.", 403
+
+        client_id = (request.args.get("client_id") or "").strip()
+        redirect_uri = (request.args.get("redirect_uri") or "").strip()
+        response_type = (request.args.get("response_type") or "").strip()
+        state = (request.args.get("state") or "").strip()
+        scope = request.args.get("scope")
+        code_challenge = (request.args.get("code_challenge") or "").strip()
+        code_challenge_method = (request.args.get("code_challenge_method") or "plain").strip()
+
+        client = _lookup_client(client_id)
+        if not client:
+            return _oauth_json_error("invalid_client", "Unknown OAuth client", status=400)
+        if response_type != "code":
+            return _oauth_json_error("unsupported_response_type", "Only authorization code flow is supported", status=400)
+        if redirect_uri not in (client.get("redirect_uris") or []):
+            return _oauth_json_error("invalid_request", "redirect_uri is not registered for this client", status=400)
+        if code_challenge_method not in {"plain", "S256"}:
+            return _oauth_json_error("invalid_request", "Unsupported code_challenge_method", status=400)
+
+        requested_scopes = _normalize_scope_list(scope, default_to_all=True)
+        if not requested_scopes:
+            return _oauth_json_error("invalid_scope", "No supported scopes were requested", status=400)
+
+        return render_template(
+            "oauth/mcp_consent.html",
+            client=client,
+            client_name=client.get("client_name") or client_id,
+            redirect_uri=redirect_uri,
+            response_type=response_type,
+            state=state,
+            scope=_serialize_scope_list(requested_scopes),
+            scopes=requested_scopes,
+            code_challenge=code_challenge,
+            code_challenge_method=code_challenge_method,
+        )
+
+    if not getattr(current_user, "is_authenticated", False):
+        return redirect(url_for("users.auth.login", next=request.url))
+    if not _is_mcp_admin_user(current_user):
+        return "Admin MCP access requires an admin-capable account.", 403
+
+    client_id = (request.form.get("client_id") or "").strip()
+    redirect_uri = (request.form.get("redirect_uri") or "").strip()
+    state = (request.form.get("state") or "").strip()
+    scope = request.form.get("scope")
+    code_challenge = (request.form.get("code_challenge") or "").strip() or None
+    code_challenge_method = (request.form.get("code_challenge_method") or "plain").strip()
+    decision = (request.form.get("decision") or "deny").strip()
+
+    client = _lookup_client(client_id)
+    if not client or redirect_uri not in (client.get("redirect_uris") or []):
+        return _oauth_json_error("invalid_client", "Unknown OAuth client", status=400)
+    if decision != "approve":
+        return _oauth_error_redirect(
+            redirect_uri,
+            error="access_denied",
+            state=state or None,
+            description="The user denied the MCP authorization request.",
+        )
+
+    granted_scopes = _normalize_scope_list(scope, default_to_all=True)
+    if not granted_scopes:
+        return _oauth_error_redirect(
+            redirect_uri,
+            error="invalid_scope",
+            state=state or None,
+            description="No supported scopes were requested.",
+        )
+
+    code = _store_authorization_code(
+        client_id=client_id,
+        user_id=current_user._id,
+        redirect_uri=redirect_uri,
+        scope=_serialize_scope_list(granted_scopes),
+        code_challenge=code_challenge,
+        code_challenge_method=code_challenge_method,
+    )
+    params = {"code": code}
+    if state:
+        params["state"] = state
+    separator = "&" if "?" in redirect_uri else "?"
+    return redirect(f"{redirect_uri}{separator}{urlencode(params)}")
+
+
+@mcp_admin_bp.route("/api/admin/mcp/oauth/token", methods=["POST"])
+def oauth_token():
+    if not _oauth_enabled():
+        return jsonify({"error": "OAuth is disabled"}), 404
+
+    grant_type = (request.form.get("grant_type") or "").strip()
+    if grant_type != "authorization_code":
+        return _oauth_json_error("unsupported_grant_type", "Only authorization_code is supported", status=400)
+
+    client, client_id, client_secret = _resolve_client_auth()
+    try:
+        client = _validate_client_auth(client, client_id, client_secret)
+    except LookupError as exc:
+        return _oauth_json_error("invalid_client", str(exc), status=401)
+    except PermissionError as exc:
+        return _oauth_json_error("invalid_client", str(exc), status=401)
+
+    code_value = (request.form.get("code") or "").strip()
+    redirect_uri = (request.form.get("redirect_uri") or "").strip()
+    code_verifier = (request.form.get("code_verifier") or "").strip()
+    if not code_value or not redirect_uri:
+        return _oauth_json_error("invalid_request", "code and redirect_uri are required", status=400)
+
+    code_doc = _authorization_code_collection().find_one({"code": code_value})
+    if not code_doc:
+        return _oauth_json_error("invalid_grant", "Authorization code is invalid", status=400)
+    if code_doc.get("used_at") is not None:
+        return _oauth_json_error("invalid_grant", "Authorization code has already been used", status=400)
+    if code_doc.get("expires_at") and code_doc["expires_at"] < datetime.utcnow():
+        return _oauth_json_error("invalid_grant", "Authorization code has expired", status=400)
+    if code_doc.get("client_id") != client["client_id"]:
+        return _oauth_json_error("invalid_grant", "Authorization code was issued to another client", status=400)
+    if code_doc.get("redirect_uri") != redirect_uri:
+        return _oauth_json_error("invalid_grant", "redirect_uri does not match the original authorization request", status=400)
+
+    code_challenge = code_doc.get("code_challenge")
+    code_challenge_method = code_doc.get("code_challenge_method") or "plain"
+    if code_challenge:
+        if not code_verifier:
+            return _oauth_json_error("invalid_request", "code_verifier is required for this authorization code", status=400)
+        derived_challenge = _code_challenge_s256(code_verifier) if code_challenge_method == "S256" else code_verifier
+        if not hmac.compare_digest(code_challenge, derived_challenge):
+            return _oauth_json_error("invalid_grant", "code_verifier did not match the original code challenge", status=400)
+
+    _authorization_code_collection().update_one(
+        {"_id": code_doc["_id"]},
+        {"$set": {"used_at": datetime.utcnow()}},
+    )
+    access_token = _issue_oauth_access_token(
+        client_id=client["client_id"],
+        user_id=code_doc["user_id"],
+        scope=code_doc.get("scope") or _serialize_scope_list(_oauth_default_scopes()),
+    )
+    return jsonify(
+        {
+            "access_token": access_token,
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "scope": code_doc.get("scope") or _serialize_scope_list(_oauth_default_scopes()),
+        }
+    )
+
+
+@mcp_admin_bp.route("/api/admin/mcp", methods=["POST"])
 def handle_admin_mcp():
     request_json = request.get_json(silent=True) or {}
     request_id = request_json.get("id")
 
     token_entry = _authenticate()
     if not token_entry:
-        return _jsonrpc_error(request_id, -32001, "Unauthorized MCP token", http_status=401)
+        return _unauthorized_mcp_response(request_id)
 
     method = request_json.get("method")
     params = request_json.get("params") or {}

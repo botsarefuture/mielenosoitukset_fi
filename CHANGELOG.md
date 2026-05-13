@@ -9,6 +9,7 @@
 * Added `scripts/hash_admin_mcp_token.py` and `docs/admin_mcp.md` to help provision hashed MCP bearer tokens safely instead of storing raw admin-control tokens in config.
 * Admin MCP now also accepts OAuth-style bearer tokens validated from configured JWT claims (`iss`, `aud`, scopes), making it compatible with the OpenAI MCP bearer-token pattern instead of requiring only project-specific static tokens.
 * Admin MCP now also accepts the repository's existing API tokens directly, so the easiest supported login path is to create a normal user/app API token and pass it to OpenAI as the MCP bearer token.
+* Admin MCP now exposes OAuth discovery, dynamic client registration, an admin consent screen, and PKCE-backed authorization-code token exchange, so ChatGPT developer mode can connect with the OpenAI-supported OAuth login flow instead of requiring only manual bearer token provisioning.
 * Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
 * Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.

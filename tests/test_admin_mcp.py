@@ -1,4 +1,6 @@
 import hashlib
+import base64
+from urllib.parse import parse_qs, urlparse
 import jwt
 
 from bson import ObjectId
@@ -11,6 +13,11 @@ def _mcp_headers(token: str) -> dict[str, str]:
 
 def _rpc(method: str, params=None, request_id=1):
     return {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params or {}}
+
+
+def _pkce_s256(verifier: str) -> str:
+    digest = hashlib.sha256(verifier.encode("utf-8")).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
 def _mcp_client(app_factory, seeded_data):
@@ -80,6 +87,110 @@ def test_admin_mcp_lists_tools(app_factory, seeded_data):
     tools = tools_response.get_json()["result"]["tools"]
     tool_names = {tool["name"] for tool in tools}
     assert {"list_demos", "update_demo", "list_cases", "update_organization"} <= tool_names
+
+
+def test_admin_mcp_oauth_metadata_advertises_registration_and_pkce(app_factory, seeded_data):
+    app = app_factory(ADMIN_MCP={"ENABLED": True})
+    client = app.test_client()
+
+    metadata_response = client.get("/.well-known/oauth-authorization-server")
+    resource_response = client.get("/.well-known/oauth-protected-resource/api/admin/mcp")
+
+    assert metadata_response.status_code == 200
+    metadata = metadata_response.get_json()
+    assert metadata["authorization_endpoint"].endswith("/api/admin/mcp/oauth/authorize")
+    assert metadata["token_endpoint"].endswith("/api/admin/mcp/oauth/token")
+    assert metadata["registration_endpoint"].endswith("/api/admin/mcp/oauth/register")
+    assert "S256" in metadata["code_challenge_methods_supported"]
+
+    assert resource_response.status_code == 200
+    resource_metadata = resource_response.get_json()
+    assert resource_metadata["resource"].endswith("/api/admin/mcp")
+    assert resource_metadata["authorization_servers"]
+
+
+def test_admin_mcp_dynamic_client_registration_and_oauth_code_flow(app_factory, seeded_data):
+    app = app_factory(ADMIN_MCP={"ENABLED": True})
+    client = app.test_client()
+
+    register_response = client.post(
+        "/api/admin/mcp/oauth/register",
+        json={
+            "client_name": "Pytest ChatGPT",
+            "redirect_uris": ["https://chatgpt.com/connector/oauth/test-callback"],
+            "token_endpoint_auth_method": "none",
+            "scope": "mcp.admin read write",
+        },
+    )
+    assert register_response.status_code == 201
+    registered = register_response.get_json()
+    client_id = registered["client_id"]
+    redirect_uri = registered["redirect_uris"][0]
+
+    with client.session_transaction() as session:
+        session["_user_id"] = str(seeded_data["admin_id"])
+        session["_fresh"] = True
+
+    code_verifier = "pytest-code-verifier-123456789"
+    auth_page = client.get(
+        "/api/admin/mcp/oauth/authorize",
+        query_string={
+            "response_type": "code",
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "scope": "mcp.admin read write",
+            "state": "pytest-state",
+            "code_challenge": _pkce_s256(code_verifier),
+            "code_challenge_method": "S256",
+        },
+    )
+    assert auth_page.status_code == 200
+    assert "Salli MCP-yhteys?" in auth_page.get_data(as_text=True)
+    assert "Pytest ChatGPT" in auth_page.get_data(as_text=True)
+
+    approve_response = client.post(
+        "/api/admin/mcp/oauth/authorize",
+        data={
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "scope": "mcp.admin read write",
+            "state": "pytest-state",
+            "code_challenge": _pkce_s256(code_verifier),
+            "code_challenge_method": "S256",
+            "decision": "approve",
+        },
+        follow_redirects=False,
+    )
+    assert approve_response.status_code == 302
+    location = approve_response.headers["Location"]
+    redirect_parts = urlparse(location)
+    redirect_params = parse_qs(redirect_parts.query)
+    code = redirect_params["code"][0]
+    assert redirect_params["state"][0] == "pytest-state"
+
+    token_response = client.post(
+        "/api/admin/mcp/oauth/token",
+        data={
+            "grant_type": "authorization_code",
+            "client_id": client_id,
+            "code": code,
+            "redirect_uri": redirect_uri,
+            "code_verifier": code_verifier,
+        },
+    )
+    assert token_response.status_code == 200
+    token_payload = token_response.get_json()
+    assert token_payload["token_type"] == "Bearer"
+    assert "mcp.admin" in token_payload["scope"]
+
+    mcp_response = client.post(
+        "/api/admin/mcp",
+        json=_rpc("tools/list"),
+        headers=_mcp_headers(token_payload["access_token"]),
+    )
+    assert mcp_response.status_code == 200
+    tool_names = {tool["name"] for tool in mcp_response.get_json()["result"]["tools"]}
+    assert "list_demos" in tool_names
 
 
 def test_admin_mcp_accepts_oauth_bearer_tokens(app_factory, seeded_data):

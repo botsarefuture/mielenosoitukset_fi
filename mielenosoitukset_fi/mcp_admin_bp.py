@@ -11,10 +11,12 @@ from flask import Blueprint, current_app, jsonify, request
 import jwt
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.api.exceptions import ApiException
 from mielenosoitukset_fi.utils.classes.Case import Case
 from mielenosoitukset_fi.utils.classes.Demonstration import Demonstration
 from mielenosoitukset_fi.utils.classes.Organization import Organization
 from mielenosoitukset_fi.utils.database import stringify_object_ids
+from mielenosoitukset_fi.utils.tokens import check_token
 
 
 mcp_admin_bp = Blueprint("admin_mcp", __name__, url_prefix="/api/admin/mcp")
@@ -149,6 +151,17 @@ def _authenticate() -> dict[str, Any] | None:
     supplied_token = auth_header.split(" ", 1)[1].strip()
     if not supplied_token:
         return None
+
+    try:
+        token_record = check_token(supplied_token)
+        return {
+            "name": str(token_record.get("user_id") or token_record.get("app_id") or "api-token"),
+            "scopes": token_record.get("scopes") or ["read"],
+            "token_record": token_record,
+            "auth_type": "api_token",
+        }
+    except ApiException:
+        pass
 
     try:
         oauth_entry = _authenticate_oauth_bearer(supplied_token)

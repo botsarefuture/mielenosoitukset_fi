@@ -24,6 +24,38 @@ ADMIN_MCP:
 
 This is the recommended mode for OpenAI-compatible remote MCP authentication: OpenAI can pass your OAuth access token to the MCP server as a bearer token, and the server validates the JWT claims locally.
 
+## Easiest login path right now
+
+The easiest supported way to use this MCP server is to reuse the repository's **existing API token system**.
+
+That means you do **not** need a separate MCP-specific login product before trying it.
+
+Practical flow:
+
+1. Get API token access approved for your user in the existing developer/API-token flow.
+2. Create a token with the scopes you need.
+3. Pass that token to OpenAI as the MCP `authorization` bearer token.
+
+Examples:
+
+- personal user token: create from `/users/auth/api_token`
+- developer app token: create from `/developer/apps/<app_id>/token`
+
+If you need admin dashboard control through MCP, the token must include at least:
+
+- `admin`
+
+Usually you also want:
+
+- `read`
+- `write`
+
+So the practical MCP token scope set is usually:
+
+- `["read", "write", "admin"]`
+
+Then use it in OpenAI's MCP tool config as the `authorization` bearer token.
+
 For bootstrap or private local use, the legacy static-token mode is still supported:
 
 ```yaml
@@ -110,5 +142,6 @@ This foundation implements the **resource server** side of OAuth bearer-token va
 That means:
 
 - it is ready to accept OAuth access tokens issued by your auth system
+- it is ready to accept this repo's existing API tokens directly
 - it is compatible with the OpenAI-side bearer-token pattern
 - but a complete end-user "Sign in with OpenAI/ChatGPT connector" flow still requires the surrounding OAuth issuer setup

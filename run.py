@@ -61,7 +61,7 @@ def main():
         }
     )  # Change the default language to Finnish
     
-    #run_rollup_in_thread()
+    run_rollup_in_thread()
 
     app.run(host=host, debug=debug, port=port)
 

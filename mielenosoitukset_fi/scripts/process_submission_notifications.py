@@ -7,6 +7,7 @@ from bson import ObjectId
 from pymongo import ASCENDING, ReturnDocument
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.emailer.EmailJob import EmailJob
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.admin.admin_demo_bp import (
@@ -33,12 +34,15 @@ def _send_messages(messages: List[Dict[str, Any]]) -> int:
         if not template or not recipients or not subject:
             continue
 
-        email_sender.queue_email(
-            template_name=template,
+        rendered_body = email_sender._env.get_template(template).render(context)
+        email_job = EmailJob(
             subject=subject,
             recipients=recipients,
-            context=context,
+            body=rendered_body,
+            html=rendered_body,
+            instance_id=email_sender._instance_id,
         )
+        email_sender.send_email(email_job, raise_on_error=True)
         sent += 1
     return sent
 

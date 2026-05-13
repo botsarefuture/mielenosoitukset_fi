@@ -5,6 +5,8 @@
 ## UNRELEASED
 
 ### Added
+* Added a token-protected admin MCP endpoint at `/api/admin/mcp` with foundation tools for listing, reading, creating, and updating demonstrations, organizations, and support cases so AI agents can begin driving core admin dashboard work without browser automation.
+* Added `scripts/hash_admin_mcp_token.py` and `docs/admin_mcp.md` to help provision hashed MCP bearer tokens safely instead of storing raw admin-control tokens in config.
 * Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
 * Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.

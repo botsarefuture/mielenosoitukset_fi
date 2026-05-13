@@ -407,6 +407,7 @@ def test_merge_duplicate_submissions_repoints_references_and_audits(db):
 def test_process_submit_notifications_sends_admin_notifications_immediately(db, monkeypatch):
     from mielenosoitukset_fi.scripts import process_submission_notifications as script
 
+    db.demo_notifications_queue.delete_many({})
     demo_id = ObjectId()
     db.demonstrations.insert_one(_demo_doc(demo_id, "Queued Admin Notification Demo"))
     db.demo_notifications_queue.insert_one(
@@ -466,6 +467,7 @@ def test_process_submit_notifications_sends_admin_notifications_immediately(db, 
 def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, monkeypatch):
     from mielenosoitukset_fi.scripts import process_submission_notifications as script
 
+    db.demo_notifications_queue.delete_many({})
     demo_id = ObjectId()
     db.demonstrations.insert_one(_demo_doc(demo_id, "Broken Admin Notification Demo"))
     job_id = ObjectId()

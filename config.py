@@ -134,6 +134,7 @@ class Config:
         cls.ENFORCE_RATELIMIT = config.get("ENFORCE_RATELIMIT", True)
 
         cls.ADMIN_EMAIL = config.get("ADMIN_EMAIL", "itc@luova.club")
+        cls.ADMIN_MCP = config.get("ADMIN_MCP", {})
 
         cls.CACHE_TYPE = config.get("CACHE_TYPE", "SimpleCache")
         cls.CACHE_DEFAULT_TIMEOUT = config.get("CACHE_DEFAULT_TIMEOUT", 300)

@@ -144,6 +144,7 @@ def create_app(config_overrides=None) -> Flask:
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
     from developer_bp import developer_bp
+    from mielenosoitukset_fi.mcp_admin_bp import mcp_admin_bp
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
@@ -160,6 +161,7 @@ def create_app(config_overrides=None) -> Flask:
     
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    app.register_blueprint(mcp_admin_bp)
     app.register_blueprint(developer_bp, url_prefix="/developer")
     
     

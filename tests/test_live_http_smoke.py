@@ -12,7 +12,8 @@ def test_public_pages_render_over_real_http(app, db, live_server):
     with urlopen(f"{live_server}/", timeout=10) as index_response:
         index_body = index_response.read().decode("utf-8")
         assert index_response.status == 200
-    assert "Climate March Helsinki" in index_body
+    assert "demos-grid" in index_body
+    assert "Submit a demonstration" in index_body
 
     with urlopen(
         f"{live_server}/demonstration/{seeded_data['demo_id']}",

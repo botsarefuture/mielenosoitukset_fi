@@ -59,7 +59,7 @@ class EmailSender:
                 self.send_email(email_job)
             time.sleep(5)
 
-    def send_email(self, email_job):
+    def send_email(self, email_job, raise_on_error=False):
         try:
             # Determine SMTP settings
             if email_job.sender:
@@ -131,9 +131,13 @@ class EmailSender:
                     server.starttls()
                 server.login(smtp_username, smtp_password)
                 server.sendmail(sender_address, email_job.recipients, msg.as_string())
+            return True
 
         except Exception as e:
             self._logger.error(f"Failed to send email: {str(e)}")
+            if raise_on_error:
+                raise
+            return False
 
     def queue_email(
         self, template_name, subject, recipients, context,

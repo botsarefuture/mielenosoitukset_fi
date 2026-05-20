@@ -28,7 +28,7 @@ from flask import (
 )
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
-from mielenosoitukset_fi.utils.notifications import fetch_notifications
+from mielenosoitukset_fi.utils.notifications import fetch_notifications, serialize_notification
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization, RecurringDemonstration
 from mielenosoitukset_fi.database_manager import DatabaseManager

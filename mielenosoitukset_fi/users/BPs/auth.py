@@ -11,6 +11,8 @@ from flask import (
 )
 from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
+
+from config import Config
 from mielenosoitukset_fi.users.models import MFAToken, PendingMFA, User, UserMFA
 from mielenosoitukset_fi.utils.auth import (
     generate_confirmation_token,

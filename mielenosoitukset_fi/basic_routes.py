@@ -1,28 +1,20 @@
 import copy
-import math
 import os
 import re
-import json
 import threading
 import time
 import uuid
 import hashlib
 import requests
-import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
-from flask_babel import _, refresh, format_date
+from flask_babel import _, format_date
 from flask import (
-    app,
-    g,
-    render_template,
     redirect,
     send_file,
     send_from_directory,
     url_for,
     request,
     abort,
-    Response,
-    get_flashed_messages,
     jsonify,
     session,
 )
@@ -36,19 +28,16 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.scripts.send_demo_reminders import generate_ical_event
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
-from mielenosoitukset_fi.utils.database import DEMO_FILTER, stringify_object_ids
+from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
-from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
+from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
-from werkzeug.utils import secure_filename
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
 from config import Config
 
 from mielenosoitukset_fi.utils.cache import (
-    cache,
     should_skip_cache,
     skip_cache_public_only,
 )

@@ -13,7 +13,7 @@ def test_public_pages_render_over_real_http(app, db, live_server):
         index_body = index_response.read().decode("utf-8")
         assert index_response.status == 200
     assert "demos-grid" in index_body
-    assert "Submit a demonstration" in index_body
+    assert "Ilmoita mielenosoituksesta" in index_body
 
     with urlopen(
         f"{live_server}/demonstration/{seeded_data['demo_id']}",

@@ -569,6 +569,7 @@
       normalizeValue = (value) => (value || '').trim(),
       splitValue = (value) => (value || '').split(/[,\n]+/).map((item) => normalizeValue(item)).filter(Boolean),
       syncValue = (items) => items.join(', '),
+      allowDuplicates = false,
     }) => {
       const hiddenInput = document.getElementById(hiddenInputId);
       const textInput = document.getElementById(textInputId);
@@ -617,7 +618,7 @@
         let changed = false;
 
         candidates.forEach((candidate) => {
-          if (!items.includes(candidate)) {
+          if (allowDuplicates || !items.includes(candidate)) {
             items.push(candidate);
             changed = true;
           }
@@ -681,6 +682,7 @@
       removeAriaLabel: "{{ _('Poista reittipiste') }}",
       splitValue: splitPoints,
       syncValue: (items) => items.join(', '),
+      allowDuplicates: true,
     });
   })();
 </script>

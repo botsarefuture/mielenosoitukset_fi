@@ -60,6 +60,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
 * New demonstration admin notification emails are now sent directly during the background notification job instead of being re-queued into a second email worker queue, so failed admin alert deliveries are surfaced as job errors instead of being silently marked complete.
 * PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.

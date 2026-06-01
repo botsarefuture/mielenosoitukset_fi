@@ -135,6 +135,13 @@
         "e2e-public"
       ]
     },
+    "mielenosoitukset_fi/mcp_admin_bp.py": {
+      "count": 10,
+      "sha256": "8f213902698ea302ccab346abe22fd0c49668d2baf571559a467d00a0c4af90a",
+      "coverage": [
+        "integration"
+      ]
+    },
     "mielenosoitukset_fi/notifications_bp.py": {
       "count": 3,
       "sha256": "1b4b57b231a01be68a23f14adb6f01592d0bd8ad21982ee29f506299107feca7",

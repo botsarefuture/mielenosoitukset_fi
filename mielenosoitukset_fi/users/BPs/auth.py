@@ -9,8 +9,9 @@ from flask import (
     current_app,
     session,
 )
-from urllib.parse import urlparse
 from flask_login import login_user, logout_user, login_required, current_user
+
+from config import Config
 from mielenosoitukset_fi.users.models import MFAToken, PendingMFA, User, UserMFA
 from mielenosoitukset_fi.utils.auth import (
     generate_confirmation_token,
@@ -20,16 +21,12 @@ from mielenosoitukset_fi.utils.auth import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
-from mielenosoitukset_fi.utils.s3 import upload_image, upload_image_fileobj
+from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.database_manager import DatabaseManager
-from mielenosoitukset_fi.utils.classes import Organization
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 import importlib
-import os
-import jwt
 import datetime
-from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
 

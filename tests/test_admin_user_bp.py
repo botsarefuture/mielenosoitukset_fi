@@ -143,7 +143,7 @@ def test_delete_user_removes_direct_personal_data(admin_client, db, seeded_data)
     assert db.demo_submission_tokens.count_documents({"demo_id": pending_demo_id}) == 1
     assert db.demo_cancellation_tokens.count_documents({"demo_id": pending_demo_id}) == 1
     assert db.demo_audit_logs.count_documents({"demo_id": str(pending_demo_id)}) == 1
-    assert db.magic_links.count_documents({"demo_id": str(pending_demo_id)}) == 1
+    assert db.magic_links.find_one({"demo_id": str(pending_demo_id), "action": "preview"}) is not None
     assert db.users.count_documents({"friends.user_id": user_id}) == 0
     assert db.users.count_documents({"friend_requests.sent_by": user_id}) == 0
     assert db.demonstrations.count_documents({"editors": user_id}) == 0

@@ -20,6 +20,7 @@
 
 - [ ] Dashboard
 - [ ] Form
+- [ ] Rework the user settings page layout and visual hierarchy; the current page is hard to scan and looks unfinished.
 
 
 ## Logical stuff

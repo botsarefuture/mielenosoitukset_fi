@@ -877,7 +877,7 @@ def account_deletion_request():
         "email": user.email,
         "reason": reason,
         "status": "pending",
-        "created_at": datetime.datetime.utcnow(),
+        "created_at": datetime.utcnow(),
         "ip": request.remote_addr,
         "user_agent": request.headers.get("User-Agent", ""),
     }
@@ -1058,7 +1058,7 @@ def mfa_setup_api():
                 "user_id": user._id,
                 "secret": secret,
                 "device_name": device_name,
-                "created_at": datetime.datetime.utcnow()
+                "created_at": datetime.utcnow()
             })
             PendingMFA.delete(user._id, secret)
             user.mfa_enabled = True

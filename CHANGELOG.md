@@ -62,6 +62,7 @@
 ### Fixed
 * Admin user deletion now requires top-level approval in addition to delete permission, shows an impact warning before confirmation, removes directly associated personal-data records while keeping submitted public demonstrations for separate review, and lets users request account deletion from their own settings page with a destructive-action warning and explicit confirmation phrase.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
+* User settings change notifications now have the missing `auth/settings_changed.html` email template, preventing settings updates from reporting a template lookup error.
 * New demonstration admin notification emails are now sent directly during the background notification job instead of being re-queued into a second email worker queue, so failed admin alert deliveries are surfaced as job errors instead of being silently marked complete.
 * PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.

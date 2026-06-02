@@ -600,6 +600,48 @@
           </table>
         </div>
       </div>
+
+      <div class="settings-section border border-danger">
+        <h5 class="text-danger"><i class="fas fa-user-slash"></i> {{ _('Tilin poisto') }}</h5>
+        <p class="text-muted">
+          {{ _('Voit pyytää käyttäjätilisi poistamista. Pyyntö lähetetään asiakastukeen, koska tilin poistaminen poistaa henkilötietojasi ja voi vaatia myös ilmoittamiesi mielenosoitusten erillistä arviointia.') }}
+        </p>
+        <div class="alert alert-danger">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>
+          <strong>{{ _('Tämä on tuhoisa ja vaikeasti peruttava toimenpide.') }}</strong>
+          <ul class="mb-0 mt-2">
+            <li>{{ _('Tilisi ja siihen liittyvät henkilötiedot voidaan poistaa pysyvästi.') }}</li>
+            <li>{{ _('Ilmoittajatietosi ja tukipyyntöihin liittyvät henkilötietosi poistetaan tai käsitellään tietosuojaprosessin mukaisesti.') }}</li>
+            <li>{{ _('Tililläsi ilmoittamiasi julkisia mielenosoituksia ei poisteta automaattisesti, mutta tuki arvioi erikseen, pitääkö tapahtumatietoja poistaa tai muuttaa.') }}</li>
+            <li>{{ _('Pyyntö voi vaikuttaa myös muihin käyttäjiin, järjestäjiin ja sivustolla julkaistuihin tapahtumatietoihin.') }}</li>
+          </ul>
+        </div>
+        <div class="alert alert-warning">
+          <i class="fa-solid fa-circle-info me-2"></i>
+          {{ _('Tämä nappi ei poista tiliä heti. Se lähettää tukipyynnön, jonka ylläpito käsittelee vaikutusarvion ja ylimmän hyväksynnän kautta.') }}
+        </div>
+        <form id="account-deletion-form">
+          <div class="mb-3">
+            <label class="form-label" for="account-deletion-reason">{{ _('Lisätiedot tuelle') }}</label>
+            <textarea class="form-control" id="account-deletion-reason" rows="3"
+                      placeholder="{{ _('Voit kertoa esimerkiksi, haluatko samalla poistaa ilmoittamasi mielenosoitukset.') }}"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="account-deletion-confirmation">
+              {{ _('Vahvista pyyntö kirjoittamalla täsmälleen:') }}
+            </label>
+            <code class="d-block mb-2">YMMÄRRÄN ETTÄ TILIN POISTO ON PYSYVÄ JA VOI VAIKUTTAA ILMOITTAMIINI MIELENOSOITUKSIIN</code>
+            <input class="form-control" id="account-deletion-confirmation" type="text" autocomplete="off"
+                   aria-describedby="account-deletion-confirmation-help">
+            <div class="form-text" id="account-deletion-confirmation-help">
+              {{ _('Vahvistuslause vaaditaan, jotta on selvää että ymmärrät pyynnön mahdolliset seuraukset.') }}
+            </div>
+          </div>
+          <button class="btn btn-danger" id="account-deletion-submit" type="submit">
+            <i class="fa-solid fa-paper-plane me-1"></i> {{ _('Lähetä poistopyyntö asiakastukeen') }}
+          </button>
+        </form>
+      </div>
     </div>
 
     <!-- Profiili Tab -->
@@ -734,6 +776,46 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+    const accountDeletionForm = document.getElementById("account-deletion-form");
+    const accountDeletionReason = document.getElementById("account-deletion-reason");
+    const accountDeletionConfirmation = document.getElementById("account-deletion-confirmation");
+    const accountDeletionSubmit = document.getElementById("account-deletion-submit");
+    const accountDeletionRequiredConfirmation = "YMMÄRRÄN ETTÄ TILIN POISTO ON PYSYVÄ JA VOI VAIKUTTAA ILMOITTAMIINI MIELENOSOITUKSIIN";
+
+    accountDeletionForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      hideSettingsMessage();
+
+      if (accountDeletionConfirmation.value.trim().toUpperCase() !== accountDeletionRequiredConfirmation) {
+        showSettingsMessage("{{ _('Kirjoita koko vahvistuslause lähettääksesi poistopyynnön.') }}");
+        return;
+      }
+
+      accountDeletionSubmit.disabled = true;
+      try {
+        const response = await fetch("/users/auth/api/v2/account_deletion_request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            confirmation: accountDeletionConfirmation.value,
+            reason: accountDeletionReason.value
+          })
+        });
+        const result = await response.json();
+        if (result.status === "success") {
+          showSettingsMessage(result.message, "success");
+          accountDeletionForm.reset();
+        } else {
+          showSettingsMessage(result.message || "{{ _('Poistopyynnön lähettäminen epäonnistui.') }}");
+        }
+      } catch (error) {
+        console.error(error);
+        showSettingsMessage("{{ _('Poistopyynnön lähettäminen epäonnistui yhteysvirheen vuoksi.') }}");
+      } finally {
+        accountDeletionSubmit.disabled = false;
+      }
+    });
+
     const profileForm = document.getElementById("profile-form");
     const bioInput = document.getElementById("bio");
     const fileInput = document.getElementById("profile-pic");

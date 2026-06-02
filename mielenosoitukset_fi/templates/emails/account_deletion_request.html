@@ -1,0 +1,54 @@
+{% extends "admin_email_base.html" %}
+{% set eyebrow = "Tietosuojapyyntö" %}
+{% set heading = "Käyttäjä pyytää tilinsä poistamista" %}
+
+{% block subject %}Käyttäjä pyytää tilin poistoa{% endblock %}
+
+{% block body %}
+<p>
+    Käyttäjä on lähettänyt pyynnön tilinsä poistamisesta omalta asetussivultaan.
+    Tarkista pyyntö, arvioi vaikutukset admin-paneelissa ja käsittele tilin poisto ylimmän hyväksynnän prosessin mukaisesti.
+    Jos käyttäjän ilmoittamia julkisia mielenosoituksia pitää poistaa tai muuttaa, tee se erillisenä päätöksenä vaikutusarvion jälkeen.
+</p>
+
+<ul class="data-list">
+    <li>
+        <strong>Käyttäjä-ID</strong>
+        {{ request_doc.user_id }}
+    </li>
+    <li>
+        <strong>Käyttäjänimi</strong>
+        {{ request_doc.username }}
+    </li>
+    <li>
+        <strong>Näyttönimi</strong>
+        {{ request_doc.displayname or "ei asetettu" }}
+    </li>
+    <li>
+        <strong>Sähköposti</strong>
+        {{ request_doc.email or "ei asetettu" }}
+    </li>
+    {% if request_doc.reason %}
+    <li>
+        <strong>Käyttäjän lisätiedot</strong>
+        {{ request_doc.reason }}
+    </li>
+    {% endif %}
+    <li>
+        <strong>IP-osoite</strong>
+        {{ request_doc.ip or "ei saatavilla" }}
+    </li>
+    <li>
+        <strong>User-Agent</strong>
+        {{ request_doc.user_agent or "ei saatavilla" }}
+    </li>
+    <li>
+        <strong>Vastaanotettu</strong>
+        {{ request_doc.created_at.strftime('%d.%m.%Y %H:%M UTC') if request_doc.created_at else "ei saatavilla" }}
+    </li>
+</ul>
+
+<div class="btn-group">
+    <a class="btn btn-danger" href="{{ admin_user_url }}">Avaa käyttäjä adminissa</a>
+</div>
+{% endblock %}

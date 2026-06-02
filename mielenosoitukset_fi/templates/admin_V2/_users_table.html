@@ -77,13 +77,20 @@
             </li>
             {% endif %}
 
-            {% if current_user.has_permission("DELETE_USER") %}
+            {% if current_user.has_permission("DELETE_USER") and (current_user.global_admin or current_user.role in ["global_admin", "god"]) %}
             <li>
               <button class="dropdown-item text-danger" type="button"
                       onclick="openDeleteModal(event, '{{ user.displayname or user.username }}', '{{ user._id }}', 'user')"
                       data-bs-toggle="tooltip" title="{{ _('Poista käyttäjä') }}">
                 <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
               </button>
+            </li>
+            {% elif current_user.has_permission("DELETE_USER") %}
+            <li>
+              <span class="dropdown-item disabled text-muted"
+                    data-bs-toggle="tooltip" title="{{ _('Käyttäjän poisto vaatii ylimmän hyväksynnän') }}">
+                <i class="fas fa-lock me-2"></i>{{ _('Poisto vaatii ylimmän hyväksynnän') }}
+              </span>
             </li>
             {% endif %}
 

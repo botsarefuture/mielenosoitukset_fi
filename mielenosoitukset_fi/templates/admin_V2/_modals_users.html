@@ -31,6 +31,13 @@
       </div>
       <div class="modal-body">
         <p>{{ _('Haluatko poistaa käyttäjän:') }} <strong id="userTitle"></strong>?</p>
+        <div id="deleteImpactBox" class="alert alert-warning" role="alert">
+          <div class="d-flex align-items-center gap-2">
+            <span class="spinner-border spinner-border-sm" id="deleteImpactSpinner" aria-hidden="true"></span>
+            <strong>{{ _('Lasketaan poiston vaikutuksia...') }}</strong>
+          </div>
+          <div id="deleteImpactContent" class="mt-2"></div>
+        </div>
         <div id="vahvistaContainer" style="margin-top:15px;">
           <label for="confirmInput">{{ _('Kirjoita VAHVISTA vahvistaaksesi poiston') }}</label>
           <input type="text" id="confirmInput" class="form-control">
@@ -58,6 +65,10 @@
     const finalDeleteBtn = document.getElementById('finalDeleteBtn');
     const countdownText = document.getElementById('countdownText');
     const cancelBtn = document.getElementById('cancelDeleteBtn');
+    const impactBox = document.getElementById('deleteImpactBox');
+    const impactSpinner = document.getElementById('deleteImpactSpinner');
+    const impactContent = document.getElementById('deleteImpactContent');
+    let impactLoaded = false;
 
     // Reset modal
     userTitle.textContent = username;
@@ -65,8 +76,51 @@
     finalDeleteBtn.disabled = true;
     countdownText.style.display = "none";
     countdownText.textContent = "";
+    impactBox.className = "alert alert-warning";
+    impactSpinner.style.display = "inline-block";
+    impactContent.innerHTML = "";
     clearInterval(countdown3Sec);
     clearInterval(countdownInterval);
+
+    fetch(`{{ url_for('admin_user.delete_user_impact', user_id='__USER_ID__') }}`.replace('__USER_ID__', encodeURIComponent(userId)))
+      .then(res => res.json())
+      .then(data => {
+        impactSpinner.style.display = "none";
+        if (data.status !== "OK") {
+          impactBox.className = "alert alert-danger";
+          impactContent.textContent = data.message || "Poiston vaikutuksia ei voitu laskea.";
+          return;
+        }
+
+        const impact = data.impact || {};
+        const collections = impact.collections || {};
+        const collectionRows = Object.entries(collections)
+          .filter(([, count]) => count > 0)
+          .map(([name, count]) => `<li><strong>${name}</strong>: ${count}</li>`)
+          .join("");
+        const submittedCount = impact.submitted_demonstrations || 0;
+        const totalRecords = impact.total_collection_records || 0;
+        const relationshipDocs = impact.relationship_documents || 0;
+        const editorLinks = impact.demonstration_editor_links || 0;
+
+        impactContent.innerHTML = `
+          <p class="mb-2"><strong>Tämä poisto vaikuttaa seuraaviin tietoihin:</strong></p>
+          <ul class="mb-2">
+            <li>Käyttäjätili poistetaan.</li>
+            <li>${submittedCount} käyttäjän ilmoittamaa mielenosoitusta jää erillisen tukiarvion piiriin eikä poistu automaattisesti.</li>
+            <li>${totalRecords} suoraan liittyvää tietoriviä poistetaan eri kokoelmista.</li>
+            <li>${relationshipDocs} muun käyttäjän ystävä-/seuraussuhderiviä siivotaan.</li>
+            <li>${editorLinks} mielenosoituksen editoriviittausta siivotaan.</li>
+          </ul>
+          ${collectionRows ? `<details><summary>Näytä poistettavat kokoelmat</summary><ul class="mb-0 mt-2">${collectionRows}</ul></details>` : ""}
+        `;
+        impactLoaded = true;
+      })
+      .catch(() => {
+        impactSpinner.style.display = "none";
+        impactBox.className = "alert alert-danger";
+        impactContent.textContent = "Poiston vaikutuksia ei voitu laskea yhteysvirheen vuoksi.";
+      });
 
     // Cancel button stops everything
     const stopAll = () => {
@@ -84,6 +138,12 @@
       clearInterval(countdown3Sec);
       finalDeleteBtn.disabled = true;
       countdownText.style.display = "none";
+
+      if (!impactLoaded) {
+        countdownText.style.display = "block";
+        countdownText.textContent = "Odota, että poiston vaikutusarvio latautuu.";
+        return;
+      }
 
       if (confirmInput.value.toUpperCase() === "VAHVISTA") {
         let countdown = 3;

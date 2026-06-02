@@ -385,6 +385,245 @@ def is_valid_email(email):
     return "@" in email and "." in email.split("@")[-1]
 
 
+def _has_user_deletion_clearance(user):
+    """Require top-level approval for destructive user erasure."""
+    return bool(getattr(user, "global_admin", False)) or getattr(user, "role", None) in {
+        "global_admin",
+        "god",
+    }
+
+
+def _user_deletion_clearance_error():
+    return "Käyttäjän poisto on erittäin vaativa toimenpide ja vaatii ylimmän hyväksynnän."
+
+
+def _build_user_erasure_plan(user_id, user_data):
+    """Build the collection queries used for user erasure."""
+    user_object_id = ObjectId(user_id)
+    user_id_str = str(user_object_id)
+    username = user_data.get("username")
+    email = user_data.get("email")
+
+    email_queries = []
+    if email:
+        email_queries = [
+            {"email": email},
+            {"username": email},
+            {"user_email": email},
+            {"reporter_email": email},
+            {"submitter.email": email},
+            {"submitter_email": email},
+            {"suggested_by.email": email},
+            {"form_snapshot.email": email},
+            {"form_snapshot.user_email": email},
+            {"form_snapshot.reporter_email": email},
+            {"form_snapshot.submitter_email": email},
+            {"query_args.email": email},
+            {"query_args.user_email": email},
+        ]
+
+    username_queries = []
+    if username:
+        username_queries = [
+            {"username": username},
+            {"user.username": username},
+            {"form_snapshot.username": username},
+        ]
+
+    submitter_lookup = {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}, *email_queries]}
+    submitted_demo_ids = set()
+    for submitter in mongo.submitters.find(submitter_lookup, {"demonstration_id": 1}):
+        demo_id = submitter.get("demonstration_id")
+        if demo_id:
+            submitted_demo_ids.add(demo_id)
+            submitted_demo_ids.add(str(demo_id))
+
+    case_lookup = {"$or": [{"submitter_id": user_object_id}, {"submitter_id": user_id_str}, *email_queries]}
+    for case in mongo.cases.find(case_lookup, {"demo_id": 1}):
+        demo_id = case.get("demo_id")
+        if demo_id:
+            submitted_demo_ids.add(demo_id)
+            submitted_demo_ids.add(str(demo_id))
+
+    submitted_demo_object_ids = [
+        demo_id for demo_id in submitted_demo_ids if isinstance(demo_id, ObjectId)
+    ]
+    for demo_id in list(submitted_demo_ids):
+        if isinstance(demo_id, str):
+            try:
+                submitted_demo_object_ids.append(ObjectId(demo_id))
+            except Exception:
+                pass
+    submitted_demo_object_ids = list({demo_id for demo_id in submitted_demo_object_ids})
+    submitted_demo_strings = [str(demo_id) for demo_id in submitted_demo_object_ids]
+
+    cleanup_plan = [
+        ("user_settings", {"user_id": user_object_id}),
+        ("login_logs", {"$or": [{"user_id": user_object_id}, *username_queries, *email_queries]}),
+        (
+            "password_changes",
+            {
+                "$or": [
+                    {"user_id": user_object_id},
+                    {"user_id": user_id_str},
+                    *email_queries,
+                ]
+            },
+        ),
+        (
+            "demo_reminders",
+            {
+                "$or": [
+                    {"user_id": user_object_id},
+                    {"user_id": user_id_str},
+                    *email_queries,
+                ]
+            },
+        ),
+        (
+            "reports",
+            {
+                "$or": [
+                    {"user": user_object_id},
+                    {"user": user_id_str},
+                    *email_queries,
+                ]
+            },
+        ),
+        ("malicious_reports", {"$or": email_queries or [{"_id": None}]}),
+        ("demo_submission_errors", {"$or": [{"user.id": user_id_str}, *username_queries, *email_queries]}),
+        ("notifications", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}]}),
+        ("messages", {"$or": [{"sender_id": user_object_id}, {"recipient_id": user_object_id}]}),
+        ("memberships", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}]}),
+        ("api_tokens", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}]}),
+        ("api_token_requests", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}, *username_queries]}),
+        ("developer_apps", {"$or": [{"owner_id": user_object_id}, {"owner_id": user_id_str}]}),
+        ("developer_scope_requests", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}]}),
+        ("account_deletion_requests", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}, *email_queries]}),
+        ("submitters", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}, *email_queries]}),
+        ("demo_suggestions", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}, *email_queries]}),
+        ("cases", {"$or": [{"submitter_id": user_object_id}, {"submitter_id": user_id_str}, *email_queries]}),
+        ("board_audit_logs", {"$or": [{"user_id": user_object_id}, {"user_id": user_id_str}]}),
+    ]
+
+    return {
+        "cleanup_plan": cleanup_plan,
+        "submitted_demo_object_ids": submitted_demo_object_ids,
+        "submitted_demo_strings": submitted_demo_strings,
+        "user_object_id": user_object_id,
+        "user_id_str": user_id_str,
+    }
+
+
+def _calculate_user_erasure_impact(user_id, user_data):
+    """Count records that would be removed with the user."""
+    plan = _build_user_erasure_plan(user_id, user_data)
+    collection_counts = {}
+    for collection_name, query in plan["cleanup_plan"]:
+        if query.get("$or") == []:
+            continue
+        count = mongo[collection_name].count_documents(query)
+        if count:
+            collection_counts[collection_name] = count
+
+    user_object_id = plan["user_object_id"]
+    user_id_str = plan["user_id_str"]
+    relationship_query = {
+        "$or": [
+            {"friends.user_id": {"$in": [user_object_id, user_id_str]}},
+            {"friend_requests.user_id": {"$in": [user_object_id, user_id_str]}},
+            {"friend_requests.sent_by": {"$in": [user_object_id, user_id_str]}},
+            {"followers": {"$in": [user_object_id, user_id_str]}},
+            {"following": {"$in": [user_object_id, user_id_str]}},
+        ]
+    }
+
+    return {
+        "collections": collection_counts,
+        "submitted_demonstrations": len(plan["submitted_demo_object_ids"]),
+        "submitted_demonstration_ids": plan["submitted_demo_strings"],
+        "submitted_demonstrations_deleted": 0,
+        "relationship_documents": mongo.users.count_documents(relationship_query),
+        "demonstration_editor_links": mongo.demonstrations.count_documents(
+            {"editors": {"$in": [user_object_id, user_id_str]}}
+        ),
+        "total_collection_records": sum(collection_counts.values()),
+    }
+
+
+def _delete_user_personal_data(user_id, user_data):
+    """Delete records that directly identify the removed user."""
+    plan = _build_user_erasure_plan(user_id, user_data)
+    user_object_id = plan["user_object_id"]
+    user_id_str = plan["user_id_str"]
+
+    deleted_counts = {}
+    for collection_name, query in plan["cleanup_plan"]:
+        if query.get("$or") == []:
+            continue
+        result = mongo[collection_name].delete_many(query)
+        if result.deleted_count:
+            deleted_counts[collection_name] = result.deleted_count
+
+    mongo.users.update_many(
+        {},
+        {
+            "$pull": {
+                "friends": {"user_id": {"$in": [user_object_id, user_id_str]}},
+                "friend_requests": {"user_id": {"$in": [user_object_id, user_id_str]}},
+                "followers": {"$in": [user_object_id, user_id_str]},
+                "following": {"$in": [user_object_id, user_id_str]},
+            }
+        },
+    )
+    mongo.users.update_many(
+        {},
+        {"$pull": {"friend_requests": {"sent_by": {"$in": [user_object_id, user_id_str]}}}},
+    )
+
+    mongo.demonstrations.update_many(
+        {"editors": {"$in": [user_object_id, user_id_str]}},
+        {"$pull": {"editors": {"$in": [user_object_id, user_id_str]}}},
+    )
+
+    return deleted_counts
+
+
+@admin_user_bp.route("/delete_user/impact/<user_id>", methods=["GET"])
+@login_required
+@admin_required
+@permission_required("DELETE_USER")
+def delete_user_impact(user_id):
+    """Return the records affected by deleting a user."""
+    if not _has_user_deletion_clearance(current_user):
+        return jsonify({"status": "ERROR", "message": _user_deletion_clearance_error()}), 403
+
+    try:
+        user_object_id = ObjectId(user_id)
+    except Exception:
+        return jsonify({"status": "ERROR", "message": "Virheellinen käyttäjän tunniste."}), 400
+
+    user_data = mongo.users.find_one({"_id": user_object_id})
+    if not user_data:
+        return jsonify({"status": "ERROR", "message": "Käyttäjää ei löydy."}), 404
+
+    target_user = User.from_db(user_data)
+    if compare_user_levels(current_user, target_user) is False:
+        return jsonify(
+            {
+                "status": "ERROR",
+                "message": "Et voi poistaa käyttäjää, jolla on korkeampi käyttöoikeustaso kuin sinulla.",
+            }
+        ), 403
+
+    return jsonify(
+        {
+            "status": "OK",
+            "impact": _calculate_user_erasure_impact(user_id, user_data),
+        }
+    )
+
+
 # Delete user
 @admin_user_bp.route("/delete_user", methods=["POST"])
 @login_required
@@ -413,8 +652,26 @@ def delete_user():
             else redirect(request.referrer or url_for("admin_user.user_control"))
         )
 
+    if not _has_user_deletion_clearance(current_user):
+        error_message = _user_deletion_clearance_error()
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message}), 403
+        else:
+            flash_message(error_message, "error")
+            return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    try:
+        user_object_id = ObjectId(user_id)
+    except Exception:
+        error_message = "Virheellinen käyttäjän tunniste."
+        if json_mode:
+            return jsonify({"status": "ERROR", "message": error_message})
+        else:
+            flash_message(error_message, "error")
+            return redirect(request.referrer or url_for("admin_user.user_control"))
+
     # Fetch the user from the database
-    user_data = mongo.users.find_one({"_id": ObjectId(user_id)})
+    user_data = mongo.users.find_one({"_id": user_object_id})
 
     if not user_data:
         error_message = "Käyttäjää ei löydy."
@@ -435,7 +692,8 @@ def delete_user():
             return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # Perform deletion
-    mongo.users.delete_one({"_id": ObjectId(user_id)})
+    _delete_user_personal_data(user_id, user_data)
+    mongo.users.delete_one({"_id": user_object_id})
 
     success_message = "Käyttäjä poistettu onnistuneesti."
     if json_mode:

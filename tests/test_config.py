@@ -32,8 +32,7 @@ class ConfigReloadTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch.dict(os.environ, {"CONFIG_YAML_PATH": str(config_path)}):
-                config_module.Config.reload()
+            config_module.Config.reload(str(config_path))
 
             self.assertEqual(
                 config_module.Config.MONGO_URI,

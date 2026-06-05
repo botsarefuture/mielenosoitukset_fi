@@ -14,7 +14,7 @@ class ConfigReloadTests(unittest.TestCase):
         config_module.Config.reload()
         DatabaseManager.reset_instance()
 
-    def test_reload_reads_config_from_env_selected_path(self):
+    def test_reload_reads_config_from_given_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_path = Path(temp_dir) / "config.yaml"
             config_path.write_text(

@@ -62,6 +62,7 @@
 * Pride-kortit näyttävät oikein tyylitettyinä (tagit, ikonit, värit) lisäämällä puuttuvan `css/demo.css`-tyylin kampanjasivulle.
 * Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
+* `Config.reload()` now accepts an explicit config path, making test and runtime config reloads less dependent on environment mutation.
 
 ### Fixed
 * City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.

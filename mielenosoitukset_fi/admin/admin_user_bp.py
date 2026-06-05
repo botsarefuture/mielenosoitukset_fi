@@ -7,7 +7,8 @@ import re
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
-from mielenosoitukset_fi.utils.variables import PERMISSIONS_GROUPS
+from mielenosoitukset_fi.utils.variables import CITY_LIST, PERMISSIONS_GROUPS
+from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, CITY_NAME_TO_KEY, normalize_city_key
 from mielenosoitukset_fi.utils.validators import valid_email
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
@@ -81,6 +82,79 @@ def user_control():
 
 
 USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "user": 1}
+
+CITY_ADMIN_PERMISSIONS = [
+    "LIST_DEMOS",
+    "VIEW_DEMO",
+    "EDIT_DEMO",
+    "ACCEPT_DEMO",
+    "CREATE_DEMO",
+    "GENERATE_EDIT_LINK",
+]
+
+
+def _can_manage_scope_grants(actor) -> bool:
+    return bool(getattr(actor, "global_admin", False)) or getattr(actor, "role", None) in {
+        "global_admin",
+        "god",
+    }
+
+
+def _city_scope_grant_for_user(user_id: ObjectId) -> dict:
+    grant = mongo.admin_scope_grants.find_one(
+        {
+            "user_id": {"$in": [user_id, str(user_id)]},
+            "scope_type": "city",
+            "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
+        }
+    )
+    if not grant:
+        return {"scope_keys": [], "permissions": []}
+
+    scope_keys = grant.get("scope_keys")
+    if scope_keys is None and grant.get("scope_key"):
+        scope_keys = [grant.get("scope_key")]
+    grant["scope_keys"] = [normalize_city_key(key) for key in scope_keys or [] if normalize_city_key(key)]
+    grant["permissions"] = [
+        permission for permission in grant.get("permissions", []) if permission in CITY_ADMIN_PERMISSIONS
+    ]
+    return grant
+
+
+def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions: list[str]) -> None:
+    city_keys = sorted({normalize_city_key(key) for key in city_keys if normalize_city_key(key) in CITY_KEY_TO_NAME})
+    permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_PERMISSIONS})
+
+    query = {
+        "user_id": {"$in": [user_id, str(user_id)]},
+        "scope_type": "city",
+        "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
+    }
+
+    if not city_keys or not permissions:
+        mongo.admin_scope_grants.update_many(
+            query,
+            {"$set": {"revoked_at": datetime.utcnow(), "revoked_by": str(current_user._id)}},
+        )
+        return
+
+    existing = mongo.admin_scope_grants.find_one(query)
+    payload = {
+        "user_id": user_id,
+        "scope_type": "city",
+        "scope_keys": city_keys,
+        "role": "city_reviewer",
+        "permissions": permissions,
+        "updated_at": datetime.utcnow(),
+        "updated_by": str(current_user._id),
+        "revoked_at": None,
+    }
+    if existing:
+        mongo.admin_scope_grants.update_one({"_id": existing["_id"]}, {"$set": payload})
+    else:
+        payload["created_at"] = datetime.utcnow()
+        payload["granted_by"] = str(current_user._id)
+        mongo.admin_scope_grants.insert_one(payload)
 
 
 def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
@@ -172,7 +246,7 @@ def edit_user(user_id):
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä oman roolin muutos
-        if current_user._id == user_id and incoming["role"] != current_user.role:
+        if current_user._id == user._id and incoming["role"] != current_user.role:
             flash_message("Et voi muuttaa omaa rooliasi.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
@@ -182,7 +256,7 @@ def edit_user(user_id):
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä super-käyttäjän itse-alennus
-        if (user.role == "global_admin" and current_user._id == user_id
+        if (user.role == "global_admin" and current_user._id == user._id
                 and incoming["role"] != "global_admin"):
             flash_message("Superkäyttäjät eivät voi alentaa itseään.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
@@ -197,14 +271,25 @@ def edit_user(user_id):
         else:
             flash_message("Mitään ei muutettu.", "info")
 
+        if _can_manage_scope_grants(current_user):
+            city_scope_keys = request.form.getlist("admin_scope_cities[]")
+            city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
+            _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
+
         return safe_redirect(request.referrer or url_for("admin_user.user_control"))
 
     # ─── GET → lomake ──────────────────────────────────────────────────────────
+    city_scope_grant = _city_scope_grant_for_user(user._id)
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/edit.html",
         user=user,
         PERMISSIONS_GROUPS=PERMISSIONS_GROUPS,
         global_permissions=user.global_permissions,
+        can_manage_scope_grants=_can_manage_scope_grants(current_user),
+        city_list=CITY_LIST,
+        city_name_to_key=CITY_NAME_TO_KEY,
+        city_scope_grant=city_scope_grant,
+        city_admin_permissions=CITY_ADMIN_PERMISSIONS,
     )
 
 
@@ -308,6 +393,11 @@ def save_user(user_id):
 
 
     user.save()
+
+    if _can_manage_scope_grants(current_user):
+        city_scope_keys = request.form.getlist("admin_scope_cities[]")
+        city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
+        _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
 
     # Build email summary
     permission_summary_html = "<p>Sinulla on seuraavat oikeudet:</p>"

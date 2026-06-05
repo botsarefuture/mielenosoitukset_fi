@@ -5,6 +5,10 @@
 ## UNRELEASED
 
 ### Added
+* Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
+* Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
+* Pinned the Docker Compose development LocalStack image to a community release so local S3 startup no longer depends on a floating image that may require a commercial auth token.
+* Docker Compose development now points the app at `config.compose.dev.yaml` through `CONFIG_YAML_PATH`, avoiding a nested bind mount that can prevent the backend container from starting on Docker Desktop.
 * Added a token-protected admin MCP endpoint at `/api/admin/mcp` with foundation tools for listing, reading, creating, and updating demonstrations, organizations, and support cases so AI agents can begin driving core admin dashboard work without browser automation.
 * Added `scripts/hash_admin_mcp_token.py` and `docs/admin_mcp.md` to help provision hashed MCP bearer tokens safely instead of storing raw admin-control tokens in config.
 * Admin MCP now also accepts OAuth-style bearer tokens validated from configured JWT claims (`iss`, `aud`, scopes), making it compatible with the OpenAI MCP bearer-token pattern instead of requiring only project-specific static tokens.
@@ -60,6 +64,8 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.
+* Runtime models and user/profile helpers now resolve the active MongoDB database per operation, preventing stale database handles after app/test database resets.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
 * User settings change notifications now have the missing `auth/settings_changed.html` email template, preventing settings updates from reporting a template lookup error.
 * New demonstration admin notification emails are now sent directly during the background notification job instead of being re-queued into a second email worker queue, so failed admin alert deliveries are surfaced as job errors instead of being silently marked complete.

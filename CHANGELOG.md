@@ -58,6 +58,7 @@
 * Pride-kortit näyttävät oikein tyylitettyinä (tagit, ikonit, värit) lisäämällä puuttuvan `css/demo.css`-tyylin kampanjasivulle.
 * Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
+* Email sending now respects `MAIL.USE_TLS: false`, allowing local or non-TLS SMTP servers to work correctly
 
 ### Fixed
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.

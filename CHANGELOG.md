@@ -5,8 +5,6 @@
 ## UNRELEASED
 
 ### Added
-* Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
-* Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
 * Added a token-protected admin MCP endpoint at `/api/admin/mcp` with foundation tools for listing, reading, creating, and updating demonstrations, organizations, and support cases so AI agents can begin driving core admin dashboard work without browser automation.
 * Added `scripts/hash_admin_mcp_token.py` and `docs/admin_mcp.md` to help provision hashed MCP bearer tokens safely instead of storing raw admin-control tokens in config.
 * Admin MCP now also accepts OAuth-style bearer tokens validated from configured JWT claims (`iss`, `aud`, scopes), making it compatible with the OpenAI MCP bearer-token pattern instead of requiring only project-specific static tokens.

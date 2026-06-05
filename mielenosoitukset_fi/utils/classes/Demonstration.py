@@ -2,7 +2,6 @@ import copy
 import string
 
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils.cities import normalize_city_key
 from .BaseModel import BaseModel
 from .Organizer import Organizer
 from mielenosoitukset_fi.utils.database import get_database_manager
@@ -275,7 +274,6 @@ class Demonstration(BaseModel):
         # Removed direct assignment for date, start_time, end_time
 
         self.city = city
-        self.city_key = normalize_city_key(city)
         self.address = address
 
         self.latitude = latitude

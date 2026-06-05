@@ -2,7 +2,7 @@ from datetime import datetime, date, time
 import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.background_jobs import JOB_DEFINITIONS, init_background_jobs
 
@@ -29,7 +29,7 @@ from mielenosoitukset_fi.notifications_bp import notif_bp
 
 import os
 
-from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
+from mielenosoitukset_fi.utils.wrappers import depracated_endpoint, has_demo_permission
 
 from flask_caching import Cache  # Added for caching
 
@@ -325,6 +325,12 @@ def create_app(config_overrides=None) -> Flask:
                 }).sort("created_at", -1)
             )
             for demo in waiting_demos:
+                if not getattr(current_user, "global_admin", False) and not has_demo_permission(
+                    current_user,
+                    demo["_id"],
+                    "LIST_DEMOS",
+                ):
+                    continue
                 tasks.append({
                     "type": "demo",
                     "id": str(demo["_id"]),
@@ -341,6 +347,11 @@ def create_app(config_overrides=None) -> Flask:
         }).sort("created_at", -1)
             )
             for s in org_suggestions:
+                if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
+                    "EDIT_ORGANIZATION",
+                    s["organization_id"],
+                ):
+                    continue
                 org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
                 org_name = org["name"] if org else "Tuntematon organisaatio"
                 tasks.append({

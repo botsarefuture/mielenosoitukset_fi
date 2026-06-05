@@ -1492,6 +1492,13 @@ def demo_control():
                                         .skip(skip_count).limit(per_page)
         demos = _deduplicate_demos(list(demos_cursor))
 
+    if not current_user.global_admin:
+        demos = [
+            demo
+            for demo in demos
+            if _user_can_access_demo(demo.get("_id"), "LIST_DEMOS")
+        ]
+
     recommended_lookup = {
         doc.get("demo_id"): True for doc in mongo.recommended_demos.find({}, {"demo_id": 1})
     }

@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import pyotp, datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip
 #from mielenosoitukset_fi.utils.classes.BaseModel import BaseModel  # if still needed
@@ -175,6 +176,7 @@ class User(UserMixin):
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
+        self._admin_scope_grants: Optional[List[dict]] = None
 
     # ---------- CLASS HELPERS ----------------------------------------------------
 
@@ -225,6 +227,61 @@ class User(UserMixin):
 
     def org_ids(self) -> List[ObjectId]:
         return [m.organization_id for m in self.memberships]
+
+    @property
+    def admin_scope_grants(self) -> List[dict]:
+        """Lazy-load active scoped admin grants for this user."""
+        if self._admin_scope_grants is None:
+            self._admin_scope_grants = list(
+                mongo.admin_scope_grants.find(
+                    {
+                        "user_id": {"$in": [self._id, str(self._id)]},
+                        "$or": [
+                            {"revoked_at": {"$exists": False}},
+                            {"revoked_at": None},
+                        ],
+                    }
+                )
+            )
+        return self._admin_scope_grants
+
+    def has_admin_scope_grants(self) -> bool:
+        return bool(self.admin_scope_grants)
+
+    def scoped_city_keys_for(self, permission: str) -> List[str]:
+        """Return normalized city keys where this user has a scoped permission."""
+        keys: list[str] = []
+        for grant in self.admin_scope_grants:
+            if grant.get("scope_type") != "city":
+                continue
+            if permission not in (grant.get("permissions") or []):
+                continue
+
+            raw_keys = grant.get("scope_keys")
+            if raw_keys is None and grant.get("scope_key"):
+                raw_keys = [grant.get("scope_key")]
+            if isinstance(raw_keys, str):
+                raw_keys = [raw_keys]
+
+            for raw_key in raw_keys or []:
+                city_key = normalize_city_key(raw_key)
+                if city_key:
+                    keys.append(city_key)
+
+        return list(dict.fromkeys(keys))
+
+    def has_scoped_permission(
+        self,
+        permission: str,
+        *,
+        scope_type: str,
+        scope_key: str,
+    ) -> bool:
+        if permission in self.global_permissions:
+            return True
+        if scope_type != "city":
+            return False
+        return normalize_city_key(scope_key) in self.scoped_city_keys_for(permission)
     
     def has_invite(self, organization_id: Union[str, ObjectId]) -> bool:
         """
@@ -368,7 +425,9 @@ class User(UserMixin):
             
             return bool(ms and perm in ms.permissions)
         # if org not specified, check all org memberships
-        return any(perm in m.permissions for m in self.memberships)
+        return any(perm in m.permissions for m in self.memberships) or bool(
+            self.scoped_city_keys_for(perm)
+        )
 
     # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 
@@ -427,6 +486,7 @@ class User(UserMixin):
         mongo.users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
         # invalidate cache after save
         self._memberships = None
+        self._admin_scope_grants = None
 
     # ---------- SERIALISATION ----------------------------------------------------
 

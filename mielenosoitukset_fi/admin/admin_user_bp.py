@@ -394,6 +394,11 @@ def save_user(user_id):
 
     user.save()
 
+    if _can_manage_scope_grants(current_user):
+        city_scope_keys = request.form.getlist("admin_scope_cities[]")
+        city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
+        _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
+
     # Build email summary
     permission_summary_html = "<p>Sinulla on seuraavat oikeudet:</p>"
 

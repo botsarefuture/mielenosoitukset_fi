@@ -175,7 +175,7 @@ def has_demo_permission(user, _id, permission_name):
         return False
 
     mongo = _get_mongo()
-    if not mongo:
+    if mongo is None:
         logger.error(
             "Demo permission denied: database unavailable for '%s'.", permission_name
         )

@@ -4,7 +4,7 @@ from mielenosoitukset_fi.utils.database import get_database_manager
 
 def migrate_city_keys(db=None):
     """Backfill normalized city keys for city-scoped admin permissions."""
-    db = db or get_database_manager()
+    db = db if db is not None else get_database_manager()
     results = {}
 
     for collection_name in ("demonstrations", "recu_demos"):

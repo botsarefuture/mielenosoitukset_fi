@@ -60,8 +60,10 @@
 * Pride-kortit näyttävät oikein tyylitettyinä (tagit, ikonit, värit) lisäämällä puuttuvan `css/demo.css`-tyylin kampanjasivulle.
 * Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
+* README now links directly to the project's DeepWiki documentation badge, and the backlog notes that the user settings page needs a broader UX cleanup.
 
 ### Fixed
+* Admin user deletion now requires top-level approval in addition to delete permission, shows an impact warning before confirmation, removes directly associated personal-data records while keeping submitted public demonstrations for separate review, and lets users request account deletion from their own settings page with a destructive-action warning and explicit confirmation phrase.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
 * User settings change notifications now have the missing `auth/settings_changed.html` email template, preventing settings updates from reporting a template lookup error.
 * New demonstration admin notification emails are now sent directly during the background notification job instead of being re-queued into a second email worker queue, so failed admin alert deliveries are surfaced as job errors instead of being silently marked complete.

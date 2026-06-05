@@ -843,6 +843,78 @@ def process_settings_change(user, changed_fields):
         print("Updated display name to the user object too")
         user.save()
 
+
+@auth_bp.route("/api/v2/account_deletion_request", methods=["POST"])
+@login_required
+def account_deletion_request():
+    """Let the current user request account deletion from support."""
+    user = current_user
+    payload = request.get_json(silent=True) or {}
+    confirmation = (payload.get("confirmation") or "").strip().upper()
+    reason = (payload.get("reason") or "").strip()
+    required_confirmation = "YMMÄRRÄN ETTÄ TILIN POISTO ON PYSYVÄ JA VOI VAIKUTTAA ILMOITTAMIINI MIELENOSOITUKSIIN"
+
+    if confirmation != required_confirmation:
+        return jsonify({
+            "status": "error",
+            "message": "Kirjoita koko vahvistuslause lähettääksesi poistopyynnön.",
+        }), 400
+
+    existing = mongo.account_deletion_requests.find_one({
+        "user_id": ObjectId(user._id),
+        "status": {"$in": ["pending", "open"]},
+    })
+    if existing:
+        return jsonify({
+            "status": "success",
+            "message": "Poistopyyntösi on jo vastaanotettu. Tuki käsittelee sen mahdollisimman pian.",
+        })
+
+    request_doc = {
+        "user_id": ObjectId(user._id),
+        "username": user.username,
+        "displayname": getattr(user, "displayname", None),
+        "email": user.email,
+        "reason": reason,
+        "status": "pending",
+        "created_at": datetime.utcnow(),
+        "ip": request.remote_addr,
+        "user_agent": request.headers.get("User-Agent", ""),
+    }
+    result = mongo.account_deletion_requests.insert_one(request_doc)
+    request_doc["_id"] = result.inserted_id
+
+    try:
+        email_sender.queue_email(
+            template_name="account_deletion_request.html",
+            subject="Käyttäjä pyytää tilin poistoa",
+            recipients=["tuki@mielenosoitukset.fi"],
+            context={
+                "request_doc": request_doc,
+                "admin_user_url": url_for(
+                    "admin_user.edit_user",
+                    user_id=str(user._id),
+                    _external=True,
+                ),
+            },
+        )
+    except Exception as exc:
+        current_app.logger.exception("Failed to send account deletion request email")
+        mongo.account_deletion_requests.update_one(
+            {"_id": result.inserted_id},
+            {"$set": {"email_error": str(exc)}},
+        )
+        return jsonify({
+            "status": "error",
+            "message": "Poistopyyntö tallennettiin, mutta tukiviestin lähetys epäonnistui. Ota yhteyttä tukeen.",
+        }), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "Poistopyyntö on lähetetty asiakastukeen. Saat vahvistuksen, kun tuki käsittelee pyynnön.",
+    })
+
+
 @auth_bp.route("/api/v2/settings", methods=["GET", "POST"])
 @login_required
 def settings_api_v2():
@@ -986,7 +1058,7 @@ def mfa_setup_api():
                 "user_id": user._id,
                 "secret": secret,
                 "device_name": device_name,
-                "created_at": datetime.datetime.utcnow()
+                "created_at": datetime.utcnow()
             })
             PendingMFA.delete(user._id, secret)
             user.mfa_enabled = True

@@ -106,6 +106,10 @@ def create_app(config_overrides=None) -> Flask:
     # Initialize MongoDB
     db_manager = DatabaseManager().get_instance()
     mongo = db_manager.get_db()
+    if app.config.get("AUTO_RUN_MIGRATIONS", True):
+        from mielenosoitukset_fi.utils.migration_runner import run_auto_migrations
+
+        run_auto_migrations(mongo)
 
     # Initialize Flask-Login
     login_manager = LoginManager()

@@ -20,16 +20,27 @@ class FakeMongo:
 
 
 class FakeUser:
-    def __init__(self, *, is_authenticated=True, global_admin=False, permissions=None):
+    def __init__(
+        self,
+        *,
+        is_authenticated=True,
+        global_admin=False,
+        permissions=None,
+        city_permissions=None,
+    ):
         self.is_authenticated = is_authenticated
         self.global_admin = global_admin
         self._id = ObjectId()
         self.id = str(self._id)
         self.permissions = permissions or {}
+        self.city_permissions = city_permissions or {}
 
     def has_permission(self, perm, organization_id=None, strict=False):
         key = (perm, str(organization_id) if organization_id else None)
         return self.permissions.get(key, False)
+
+    def has_scoped_permission(self, perm, *, scope_type, scope_key):
+        return self.city_permissions.get((perm, scope_type, scope_key), False)
 
 
 class HasDemoPermissionTests(unittest.TestCase):
@@ -158,6 +169,42 @@ class HasDemoPermissionTests(unittest.TestCase):
             self.assertFalse(
                 wrappers.has_demo_permission(user, demo_id, "EDIT_DEMO"),
                 "Users without relevant permissions should be denied.",
+            )
+
+    def test_allows_permission_via_city_scope(self):
+        user = FakeUser(city_permissions={("ACCEPT_DEMO", "city", "jyvaskyla"): True})
+        demo_id = ObjectId()
+        demo_doc = {
+            demo_id: {
+                "_id": demo_id,
+                "city": "Jyväskylä",
+            }
+        }
+        with patch(
+            "mielenosoitukset_fi.utils.wrappers._get_mongo",
+            return_value=FakeMongo(demo_doc),
+        ):
+            self.assertTrue(
+                wrappers.has_demo_permission(user, demo_id, "ACCEPT_DEMO"),
+                "Users with matching city-scoped permissions should be authorized.",
+            )
+
+    def test_denies_city_scope_for_other_city(self):
+        user = FakeUser(city_permissions={("ACCEPT_DEMO", "city", "tampere"): True})
+        demo_id = ObjectId()
+        demo_doc = {
+            demo_id: {
+                "_id": demo_id,
+                "city": "Jyväskylä",
+            }
+        }
+        with patch(
+            "mielenosoitukset_fi.utils.wrappers._get_mongo",
+            return_value=FakeMongo(demo_doc),
+        ):
+            self.assertFalse(
+                wrappers.has_demo_permission(user, demo_id, "ACCEPT_DEMO"),
+                "City-scoped permissions should not cross municipality boundaries.",
             )
 
 

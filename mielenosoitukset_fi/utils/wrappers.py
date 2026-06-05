@@ -341,14 +341,20 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
                 return f(*args, **kwargs)
 
             if _type == "DEMONSTRATION":
-                has = has_demo_permission(current_user, _id, permission_name)
+                resource_id = (
+                    _id
+                    or kwargs.get("demo_id")
+                    or kwargs.get("demonstration_id")
+                    or kwargs.get("id")
+                )
+                has = has_demo_permission(current_user, resource_id, permission_name)
                 if has:
                     return f(*args, **kwargs)
                 logger.warning(
                     "Demonstration permission '%s' denied for user %s and demo %s.",
                     permission_name,
                     getattr(current_user, "id", None),
-                    _id,
+                    resource_id,
                 )
                 if permission_name in current_user.global_permissions:
                     logger.info(
@@ -374,6 +380,18 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
             ):  # DEPRACED: Use has_permission instead
                 logger.info(
                     f"User {current_user.username} has permission '{permission_name}' via role."
+                )
+                return f(*args, **kwargs)
+
+            if (
+                permission_name == "LIST_DEMOS"
+                and hasattr(current_user, "scoped_city_keys_for")
+                and current_user.scoped_city_keys_for(permission_name)
+            ):
+                logger.info(
+                    "User %s has scoped city permission '%s'.",
+                    current_user.username,
+                    permission_name,
                 )
                 return f(*args, **kwargs)
 

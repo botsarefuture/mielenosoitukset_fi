@@ -431,9 +431,7 @@ class User(UserMixin):
             
             return bool(ms and perm in ms.permissions)
         # if org not specified, check all org memberships
-        return any(perm in m.permissions for m in self.memberships) or bool(
-            self.scoped_city_keys_for(perm)
-        )
+        return any(perm in m.permissions for m in self.memberships)
 
     # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 

@@ -95,3 +95,45 @@ def test_city_scoped_admin_can_approve_only_assigned_city(app, db, seeded_data):
 
     assert denied.status_code == 403
     assert db.demonstrations.find_one({"_id": turku_demo_id})["approved"] is False
+
+
+def test_city_scoped_permission_does_not_satisfy_unscoped_route_gate(db):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["CREATE_DEMO"],
+    )
+
+    user = User.from_db(db.users.find_one({"_id": scoped_user_id}))
+
+    assert user.has_scoped_permission(
+        "CREATE_DEMO",
+        scope_type="city",
+        scope_key="helsinki",
+    )
+    assert user.has_permission("CREATE_DEMO") is False
+
+
+def test_edit_user_revokes_object_id_backed_city_scope_grant(app, db, seeded_data):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "VIEW_DEMO"],
+    )
+    client = _client_for_user(app, seeded_data["admin_id"])
+
+    response = client.post(
+        f"/admin/user/edit_user/{scoped_user_id}",
+        data={
+            "username": "city-admin",
+            "email": "city-admin@example.test",
+            "role": "user",
+            "confirmed": "on",
+        },
+    )
+
+    assert response.status_code == 302
+    grant = db.admin_scope_grants.find_one(
+        {"user_id": scoped_user_id, "scope_type": "city"}
+    )
+    assert grant["revoked_at"] is not None

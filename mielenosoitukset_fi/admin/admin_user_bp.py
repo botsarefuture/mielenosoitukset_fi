@@ -246,7 +246,7 @@ def edit_user(user_id):
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä oman roolin muutos
-        if current_user._id == user_id and incoming["role"] != current_user.role:
+        if current_user._id == user._id and incoming["role"] != current_user.role:
             flash_message("Et voi muuttaa omaa rooliasi.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
@@ -256,7 +256,7 @@ def edit_user(user_id):
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
         # estä super-käyttäjän itse-alennus
-        if (user.role == "global_admin" and current_user._id == user_id
+        if (user.role == "global_admin" and current_user._id == user._id
                 and incoming["role"] != "global_admin"):
             flash_message("Superkäyttäjät eivät voi alentaa itseään.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
@@ -274,7 +274,7 @@ def edit_user(user_id):
         if _can_manage_scope_grants(current_user):
             city_scope_keys = request.form.getlist("admin_scope_cities[]")
             city_scope_permissions = request.form.getlist("admin_scope_permissions[city][]")
-            _sync_city_scope_grant(user_id, city_scope_keys, city_scope_permissions)
+            _sync_city_scope_grant(user._id, city_scope_keys, city_scope_permissions)
 
         return safe_redirect(request.referrer or url_for("admin_user.user_control"))
 

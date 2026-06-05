@@ -64,6 +64,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.
 * Runtime models and user/profile helpers now resolve the active MongoDB database per operation, preventing stale database handles after app/test database resets.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
 * User settings change notifications now have the missing `auth/settings_changed.html` email template, preventing settings updates from reporting a template lookup error.

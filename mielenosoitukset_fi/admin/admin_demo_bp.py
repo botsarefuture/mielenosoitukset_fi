@@ -1528,7 +1528,7 @@ def demo_control():
 @admin_demo_bp.route("/duplicate/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("CREATE_DEMO")
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
 def duplicate_demo(demo_id):
     """
     Duplicate a demonstration. The duplicate will have 'approved' set to False.
@@ -2447,7 +2447,7 @@ def demo_command_center(demo_id):
 @admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("GENERATE_EDIT_LINK")
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
 def send_edit_link(demo_id):
     """
     Send a secure edit link via email for a demonstration.
@@ -2493,7 +2493,7 @@ def send_edit_link(demo_id):
 @admin_demo_bp.route("/generate_edit_link/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("GENERATE_EDIT_LINK")
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
 def generate_edit_link(demo_id):
     """Generate a secure edit link for a demonstration.
 
@@ -3296,7 +3296,7 @@ def delete_demo():
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("DELETE_DEMO")
+@permission_required("DELETE_DEMO", _type="DEMONSTRATION")
 def confirm_delete_demo(demo_id):
     """Render a confirmation page before deleting a demonstration.
 
@@ -3330,7 +3330,7 @@ def confirm_delete_demo(demo_id):
 @admin_demo_bp.route("/<demo_id>/audit_log", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def view_demo_audit_log(demo_id):
     demo = _find_demo_with_alias_support(demo_id)
     if not demo:
@@ -3594,7 +3594,7 @@ def view_super_audit_logs():
 @admin_demo_bp.route("/accept_demo/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("ACCEPT_DEMO")
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def accept_demo(demo_id):
     """Accept an existing demonstration by updating its status.
 
@@ -3658,7 +3658,7 @@ def accept_demo(demo_id):
 @admin_demo_bp.route("/get_submitter_info/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def get_submitter_info(demo_id):
     """
     Get submitter information for a demonstration.
@@ -3859,7 +3859,7 @@ def geocode_address():
 @admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("ACCEPT_DEMO")
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def approve_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:
@@ -3911,7 +3911,7 @@ def approve_demo(demo_id):
 @admin_demo_api_bp.route("/<demo_id>/deny", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("ACCEPT_DEMO")
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def reject_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:

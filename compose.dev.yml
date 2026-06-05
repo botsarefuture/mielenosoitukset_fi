@@ -22,6 +22,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - DEBUG=1
+      - CONFIG_YAML_PATH=/app/config.compose.dev.yaml
     depends_on:
       mongo:
         condition: service_healthy
@@ -31,7 +32,6 @@ services:
         condition: service_completed_successfully
     volumes:
       - .:/app
-      - ./config.compose.dev.yaml:/app/config.yaml
     restart: unless-stopped
 
   mongo:
@@ -74,7 +74,7 @@ services:
 
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
-    image: localstack/localstack
+    image: localstack/localstack:3.8.1
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
@@ -88,7 +88,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
 
   localstack-init:
-    image: localstack/localstack
+    image: localstack/localstack:3.8.1
     depends_on:
       localstack:
         condition: service_healthy

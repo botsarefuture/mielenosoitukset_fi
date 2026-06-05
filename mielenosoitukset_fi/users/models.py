@@ -5,12 +5,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import pyotp, datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.classes.MemberShip import MemberShip
 #from mielenosoitukset_fi.utils.classes.BaseModel import BaseModel  # if still needed
 
-db  = DatabaseManager().get_instance()
-mongo = db.get_db()
+
+def _get_mongo():
+    """Return the current database handle.
+
+    Tests reset DatabaseManager between app instances, so keeping a module-level
+    database object makes user helpers read and write stale databases.
+    """
+    return DatabaseManager().get_instance().get_db()
 
 VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
@@ -175,6 +182,7 @@ class User(UserMixin):
 
         # CACHED memberships (lazy)  --------------------------------------------
         self._memberships: Optional[List[MemberShip]] = None
+        self._admin_scope_grants: Optional[List[dict]] = None
 
     # ---------- CLASS HELPERS ----------------------------------------------------
 
@@ -209,7 +217,7 @@ class User(UserMixin):
     def from_OID(cls, oid: Union[str, ObjectId]) -> "User":
         if isinstance(oid, str):
             oid = ObjectId(oid)
-        doc = mongo.users.find_one({"_id": oid})
+        doc = _get_mongo().users.find_one({"_id": oid})
         if not doc:
             raise ValueError("User not found")
         return cls.from_db(doc)
@@ -225,6 +233,61 @@ class User(UserMixin):
 
     def org_ids(self) -> List[ObjectId]:
         return [m.organization_id for m in self.memberships]
+
+    @property
+    def admin_scope_grants(self) -> List[dict]:
+        """Lazy-load active scoped admin grants for this user."""
+        if self._admin_scope_grants is None:
+            self._admin_scope_grants = list(
+                _get_mongo().admin_scope_grants.find(
+                    {
+                        "user_id": {"$in": [self._id, str(self._id)]},
+                        "$or": [
+                            {"revoked_at": {"$exists": False}},
+                            {"revoked_at": None},
+                        ],
+                    }
+                )
+            )
+        return self._admin_scope_grants
+
+    def has_admin_scope_grants(self) -> bool:
+        return bool(self.admin_scope_grants)
+
+    def scoped_city_keys_for(self, permission: str) -> List[str]:
+        """Return normalized city keys where this user has a scoped permission."""
+        keys: list[str] = []
+        for grant in self.admin_scope_grants:
+            if grant.get("scope_type") != "city":
+                continue
+            if permission not in (grant.get("permissions") or []):
+                continue
+
+            raw_keys = grant.get("scope_keys")
+            if raw_keys is None and grant.get("scope_key"):
+                raw_keys = [grant.get("scope_key")]
+            if isinstance(raw_keys, str):
+                raw_keys = [raw_keys]
+
+            for raw_key in raw_keys or []:
+                city_key = normalize_city_key(raw_key)
+                if city_key:
+                    keys.append(city_key)
+
+        return list(dict.fromkeys(keys))
+
+    def has_scoped_permission(
+        self,
+        permission: str,
+        *,
+        scope_type: str,
+        scope_key: str,
+    ) -> bool:
+        if permission in self.global_permissions:
+            return True
+        if scope_type != "city":
+            return False
+        return normalize_city_key(scope_key) in self.scoped_city_keys_for(permission)
     
     def has_invite(self, organization_id: Union[str, ObjectId]) -> bool:
         """
@@ -242,7 +305,7 @@ class User(UserMixin):
         """
         oid = ObjectId(organization_id) if isinstance(organization_id, str) else organization_id
 
-        org = mongo.organizations.find_one({"_id": oid})
+        org = _get_mongo().organizations.find_one({"_id": oid})
         if not org or "invitations" not in org:
             return False
 
@@ -424,9 +487,10 @@ class User(UserMixin):
         """Persist user (does **not** touch memberships)."""
         doc = self.to_dict()
         doc.pop("_id", None)
-        mongo.users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
+        _get_mongo().users.update_one({"_id": self._id}, {"$set": doc}, upsert=True)
         # invalidate cache after save
         self._memberships = None
+        self._admin_scope_grants = None
 
     # ---------- SERIALISATION ----------------------------------------------------
 
@@ -509,7 +573,7 @@ class PendingMFA:
     def create(user_id: ObjectId) -> str:
         """Create a new pending MFA secret."""
         secret = pyotp.random_base32()
-        mongo[PendingMFA.COLLECTION].insert_one({
+        _get_mongo()[PendingMFA.COLLECTION].insert_one({
             "user_id": user_id,
             "secret": secret,
             "created_at": datetime.datetime.utcnow()
@@ -522,7 +586,7 @@ class PendingMFA:
         query = {"user_id": user_id}
         if secret:
             query["secret"] = secret
-        docs = mongo[PendingMFA.COLLECTION].find(query)
+        docs = _get_mongo()[PendingMFA.COLLECTION].find(query)
         return [doc["secret"] for doc in docs]
 
     @staticmethod
@@ -531,7 +595,7 @@ class PendingMFA:
         query = {"user_id": user_id}
         if secret:
             query["secret"] = secret
-        mongo[PendingMFA.COLLECTION].delete_many(query)
+        _get_mongo()[PendingMFA.COLLECTION].delete_many(query)
 
 
 class MFAToken:
@@ -552,7 +616,7 @@ class UserMFA:
 
     def list_devices(self) -> List[Dict]:
         """Return metadata for all active MFA secrets/devices."""
-        docs = mongo.mfas.find({"user_id": self.user_id})
+        docs = _get_mongo().mfas.find({"user_id": self.user_id})
         return [
             {
                 "id": str(doc["_id"]),
@@ -574,7 +638,7 @@ class UserMFA:
     def add_device(self, device_name: str = "New device") -> str:
         """Generate a new secret and store it as a device."""
         secret = pyotp.random_base32()
-        mongo.mfas.insert_one({
+        _get_mongo().mfas.insert_one({
             "user_id": self.user_id,
             "secret": secret,
             "device_name": device_name,
@@ -584,7 +648,7 @@ class UserMFA:
 
     def remove_device(self, device_id: str):
         """Remove a specific device by Mongo _id."""
-        result = mongo.mfas.delete_one({"_id": ObjectId(device_id), "user_id": self.user_id})
+        result = _get_mongo().mfas.delete_one({"_id": ObjectId(device_id), "user_id": self.user_id})
         return result.deleted_count > 0
 
     def get_qr_code_url(self, secret: str) -> str:

@@ -11,7 +11,10 @@ from bson import ObjectId
 
 from mielenosoitukset_fi.utils.database import get_database_manager
 
-mongo = get_database_manager()
+
+def _get_db():
+    """Return the current database handle."""
+    return get_database_manager()
 
 
 class Case:
@@ -82,13 +85,13 @@ class Case:
     # ---------------------------------------------------------------------
     def _get_next_running_num(self) -> int:
         """Return next sequential running number (atomic enough for admin use)."""
-        last = mongo[self.COLLECTION].find_one(sort=[("running_num", -1)])
+        last = _get_db()[self.COLLECTION].find_one(sort=[("running_num", -1)])
         return (last.get("running_num", self.STARTING_NUM - 1) + 1) if last else self.STARTING_NUM
 
     def _touch(self) -> None:
         """Update *updated_at* and persist current in‑memory state to MongoDB."""
         self.updated_at = datetime.utcnow()
-        mongo[self.COLLECTION].update_one({"_id": self._id}, {"$set": self.to_dict()}, upsert=True)
+        _get_db()[self.COLLECTION].update_one({"_id": self._id}, {"$set": self.to_dict()}, upsert=True)
 
     # ---------------------------------------------------------------------
     # Public API
@@ -135,7 +138,7 @@ class Case:
 
     @classmethod
     def get(cls, case_id: str | ObjectId) -> Optional["Case"]:
-        doc = mongo[cls.COLLECTION].find_one({"_id": ObjectId(case_id)})
+        doc = _get_db()[cls.COLLECTION].find_one({"_id": ObjectId(case_id)})
         return cls.from_dict(doc) if doc else None
 
     @classmethod

@@ -64,6 +64,7 @@
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 
 ### Fixed
+* Runtime models and user/profile helpers now resolve the active MongoDB database per operation, preventing stale database handles after app/test database resets.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
 * User settings change notifications now have the missing `auth/settings_changed.html` email template, preventing settings updates from reporting a template lookup error.
 * New demonstration admin notification emails are now sent directly during the background notification job instead of being re-queued into a second email worker queue, so failed admin alert deliveries are surfaced as job errors instead of being silently marked complete.

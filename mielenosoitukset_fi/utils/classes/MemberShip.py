@@ -6,7 +6,13 @@ from mielenosoitukset_fi.utils.database import (
     get_database_manager,
 )
 
-DB = get_database_manager()
+def _get_db():
+    """Return the current database handle.
+
+    DatabaseManager can be reset during tests, so membership lookups should not
+    keep an import-time database object.
+    """
+    return get_database_manager()
 
 
 class MemberShip(BaseModel):
@@ -96,7 +102,8 @@ class MemberShip(BaseModel):
 
     def save(self):
         """Ensure unique user/org combo and upsert safely."""
-        existing = DB["memberships"].find_one({
+        db = _get_db()
+        existing = db["memberships"].find_one({
             "user_id": self.user_id,
             "organization_id": self.organization_id
         })
@@ -109,7 +116,7 @@ class MemberShip(BaseModel):
             merged = default_perms | existing_perms | set(self.permissions)
             self.permissions = sorted(merged)
 
-        DB["memberships"].update_one(
+        db["memberships"].update_one(
             {
                 "user_id": self.user_id,
                 "organization_id": self.organization_id
@@ -161,7 +168,7 @@ class MemberShip(BaseModel):
     @classmethod
     def _find_by_user_and_org(cls, user_id, org_id):
         """Find one membership for this user+org combo."""
-        result = DB["memberships"].find_one({
+        result = _get_db()["memberships"].find_one({
             "user_id": ObjectId(user_id),
             "organization_id": ObjectId(org_id)
         })
@@ -174,10 +181,10 @@ class MemberShip(BaseModel):
     def all_in_organization(cls, organization_id: Union[str, ObjectId]) -> List["MemberShip"]:
         """Fetch all memberships in a specific organization."""
         organization_id = ObjectId(organization_id)
-        return [cls.from_dict(doc) for doc in DB["memberships"].find({"organization_id": organization_id})]
+        return [cls.from_dict(doc) for doc in _get_db()["memberships"].find({"organization_id": organization_id})]
 
     @classmethod
     def all_per_user(cls, user_id: Union[str, ObjectId]) -> List["MemberShip"]:
         """Fetch all memberships belonging to a user."""
         user_id = ObjectId(user_id)
-        return [cls.from_dict(doc) for doc in DB["memberships"].find({"user_id": user_id})]
+        return [cls.from_dict(doc) for doc in _get_db()["memberships"].find({"user_id": user_id})]

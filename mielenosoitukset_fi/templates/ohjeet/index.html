@@ -46,27 +46,27 @@
   </section>
 
   <section class="guide-card" id="image-usage">
-    <h2>Missä esikatselukuva näkyy?</h2>
+    <h2>Missä tapahtumakuva ja esikatselukuva näkyvät?</h2>
     <div class="guide-grid">
       <article>
         <h3>Etusivun kortit</h3>
-        <p>Tietokoneella selaillessa jokainen tapahtumakortti näyttää kansikuvan. Jos omaa kuvaa ei ole, käytämme
-          automaattisesti luotua neliötä.</p>
+        <p>Tietokoneella selaillessa tapahtumakortti käyttää ensisijaisesti omaa tapahtumakuvaa. Jos sitä ei ole,
+          kortissa voidaan käyttää automaattisesti luotua esikatselukuvaa.</p>
       </article>
       <article>
         <h3>Mobiilin kalenterilista</h3>
-        <p>Puhelimessa näkyy kortin yläosa. Pidä siis tärkeimmät sanat ja logot kuvan keskellä, jotta ne eivät mene
-          leikkausvaraan.</p>
+        <p>Kuva voidaan rajata kortin muotoon. Pidä tärkeimmät ihmiset, sanat ja logot kuvan keskialueella, jotta ne
+          eivät jää rajauksen ulkopuolelle.</p>
       </article>
       <article>
-        <h3>Tapahtumasivu ja jaot</h3>
-        <p>Kun avaat yksittäisen tapahtuman tai jaat linkin Mastodoniin tai muualle someen, sama kuva kulkee linkin
-          mukana. Siksi kontrasti on tärkeää.</p>
+        <h3>Tapahtumasivu</h3>
+        <p>Tapahtumasivu näyttää lähettämäsi kuvan leveässä galleriassa. Hyvin pieniä kuvia ei venytetä koko
+          sisältöalueen levyisiksi, koska voimakas suurennus tekee niistä sumeita.</p>
       </article>
       <article>
-        <h3>Ladattava materiaali</h3>
-        <p>“Lataa materiaali” -painike antaa saman kuvan myös tukijoille ja vapaaehtoisille, jotta kaikki voivat jakaa
-          tietoa helposti.</p>
+        <h3>Linkkien jaot</h3>
+        <p>Somepalvelut käyttävät yleensä erillistä automaattista esikatselukuvaa. Se sisältää tapahtuman nimen,
+          paikan ja ajan, eikä ole sama asia kuin tapahtumasivun galleriakuva.</p>
       </article>
     </div>
   </section>
@@ -74,12 +74,13 @@
   <section class="guide-card" id="image-spec">
     <h2>Hyvä kuva pähkinänkuoressa</h2>
     <ul class="guide-list">
-      <li><strong>Koko:</strong> 1080 × 1080 pikseliä (Instagram-tyylinen neliö).</li>
-      <li><strong>Turva-alue:</strong> jätä reunoille hieman tyhjää niin, ettei teksti leikkaudu puhelimessa.</li>
+      <li><strong>Suositeltu koko:</strong> vähintään 1200 × 675 pikseliä (16:9-vaakakuva). 1600 × 900 tai suurempi toimii erinomaisesti.</li>
+      <li><strong>Vältä pieniä kuvia:</strong> alle 800 × 450 pikselin kuva ei riitä terävään koko sivun levyiseen esitykseen.</li>
+      <li><strong>Turva-alue:</strong> jätä reunoille hieman tyhjää, koska kortit voivat rajata kuvaa eri tavoin.</li>
       <li><strong>Kontrasti:</strong> vaalea teksti tummalla tai päinvastoin. Jos luet tekstin yhdellä vilkaisulla, se on
         hyvä.</li>
       <li><strong>Tekstin määrä:</strong> yksi pääotsikko ja lyhyt lisärivi. Vältä pitkiä selostuksia kuvassa.</li>
-      <li><strong>Tiedostomuoto:</strong> PNG tai JPG toimii. Automaattinen työkalu tekee puolestasi PNG:n.</li>
+      <li><strong>Tiedostomuoto:</strong> PNG, JPG tai WebP käy. Palvelu tallentaa lähetetyn kuvan verkkokäyttöön sopivaksi.</li>
     </ul>
   </section>
 
@@ -123,11 +124,11 @@
       <dd>Automaattinen kuva ilmestyy, kun tapahtuma hyväksytään. Jos kuva puuttuu vielä sen jälkeen, laita viestiä
         tukeen.</dd>
       <dt>Voinko käyttää pystysuuntaista kuvaa?</dt>
-      <dd>Voit, mutta suosittelemme neliötä. Muuten puhelin rajaa kuvan keskeltä ja tärkeät yksityiskohdat voivat jäädä
-        pois.</dd>
+      <dd>Voit, mutta suosittelemme 16:9-vaakakuvaa. Pystykuvan reunoille jää tapahtumasivulla tyhjää tai pehmennetty
+        tausta, ja korteissa kuvaa voidaan rajata keskeltä.</dd>
       <dt>Entä Mastodon-botti?</dt>
-      <dd>Mastodonissa käytetään samaa kuvaa kuin sivustolla. Jos tapahtuma yhdistetään toiseen, pidämme huolen siitä,
-        että botti käyttää uutta linkkiä eikä julkaise sitä uudelleen.</dd>
+      <dd>Mastodonissa ja linkkien esikatseluissa käytetään yleensä tapahtuman automaattista esikatselukuvaa. Jos
+        tapahtuma yhdistetään toiseen, pidämme huolen siitä, että botti käyttää uutta linkkiä eikä julkaise sitä uudelleen.</dd>
     </dl>
   </section>
 </main>

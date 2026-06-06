@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Demonstration detail galleries now avoid aggressively upscaling undersized event photos, presenting them sharply over a softened backdrop instead, and public image guidance now recommends dimensions that match the wide gallery layout.
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added

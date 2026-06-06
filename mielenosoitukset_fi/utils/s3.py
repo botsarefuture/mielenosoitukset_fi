@@ -2,7 +2,7 @@ import os
 import io
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
-from PIL import Image
+from PIL import Image, ImageOps
 from config import Config  # Import your Config class
 from mielenosoitukset_fi.utils.logger import logger
 import time
@@ -184,9 +184,16 @@ def convert_image_fileobj_to_jpeg_bytes(fileobj) -> bytes:
     try:
         fileobj.seek(0)
         with Image.open(fileobj) as img:
+            img = ImageOps.exif_transpose(img)
             img = img.convert("RGB")
             out = io.BytesIO()
-            img.save(out, format="JPEG")
+            img.save(
+                out,
+                format="JPEG",
+                quality=90,
+                optimize=True,
+                progressive=True,
+            )
             out.seek(0)
             return out.read()
     except Exception as e:

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
 * The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.
 * Demonstration detail galleries now avoid aggressively upscaling undersized event photos, presenting them sharply over a softened backdrop instead; new uploads keep more JPEG detail and respect camera orientation, and public image guidance now recommends dimensions that match the wide gallery layout.
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.

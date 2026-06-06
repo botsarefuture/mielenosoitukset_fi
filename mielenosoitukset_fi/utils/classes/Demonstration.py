@@ -13,6 +13,7 @@ from mielenosoitukset_fi.utils.validators import (
 )
 from .RepeatSchedule import RepeatSchedule
 from bson import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime  # Added import for datetime
 
 
@@ -327,7 +328,7 @@ class Demonstration(BaseModel):
         self.created_datetime = created_datetime or None
         # last_modified stores the last time this object was changed and saved
         # If provided, use it; otherwise set to current UTC time
-        self.last_modified = last_modified or datetime.utcnow()
+        self.last_modified = last_modified or utcnow()
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
@@ -688,7 +689,7 @@ class Demonstration(BaseModel):
         """
 
         # Update last_modified to now and prepare data for saving
-        self.last_modified = datetime.utcnow()
+        self.last_modified = utcnow()
 
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary

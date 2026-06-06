@@ -172,16 +172,24 @@ def _request_kwargs_for(path, method, seeded_data):
     return {"follow_redirects": False, "json": payload}
 
 
-def _client_for_path(path, clients):
+def _client_key_for_path(path):
     if path.startswith("/api/admin/demo/"):
-        return clients["admin"]
+        return "admin"
     if path.startswith("/admin") or path.startswith("/board"):
-        return clients["admin"]
+        return "admin"
     if path.startswith("/developer"):
-        return clients["developer"]
+        return "developer"
     if path.startswith("/users") or path.startswith("/api/"):
-        return clients["user"]
-    return clients["anon"]
+        return "user"
+    return "anon"
+
+
+def _reset_client_session(client, user_id=None):
+    with client.session_transaction() as session:
+        session.clear()
+        if user_id:
+            session["_user_id"] = str(user_id)
+            session["_fresh"] = True
 
 
 def _mongo_snapshot(db):
@@ -223,9 +231,15 @@ def test_all_registered_http_routes_respond_without_server_errors(
 
     clients = {
         "anon": app.test_client(),
-        "user": _client_for_user(app, seeded_data["user_id"]),
-        "admin": _client_for_user(app, seeded_data["admin_id"]),
-        "developer": _client_for_user(app, seeded_data["developer_id"]),
+        "user": app.test_client(),
+        "admin": app.test_client(),
+        "developer": app.test_client(),
+    }
+    client_user_ids = {
+        "anon": None,
+        "user": seeded_data["user_id"],
+        "admin": seeded_data["admin_id"],
+        "developer": seeded_data["developer_id"],
     }
 
     snapshot = _mongo_snapshot(db)
@@ -235,9 +249,11 @@ def test_all_registered_http_routes_respond_without_server_errors(
 
     for raw_path, methods, endpoint in rules:
         path = _build_path(raw_path, seeded_data)
-        client = _client_for_path(path, clients)
 
         for method in methods:
+            client_key = _client_key_for_path(path)
+            client = clients[client_key]
+            _reset_client_session(client, client_user_ids[client_key])
             kwargs = _request_kwargs_for(path, method, seeded_data)
 
             try:
@@ -251,3 +267,16 @@ def test_all_registered_http_routes_respond_without_server_errors(
                 _mongo_restore(db, snapshot)
 
     assert not failures, "Route smoke failures:\n" + "\n".join(failures)
+
+
+def test_reset_client_session_restores_authentication_after_logout(app, db):
+    seeded_data = _seed_database(app, db)
+    client = _client_for_user(app, seeded_data["user_id"])
+
+    logout_response = client.get("/users/auth/logout", follow_redirects=False)
+    assert logout_response.status_code < 500
+
+    _reset_client_session(client, seeded_data["user_id"])
+    profile_response = client.get("/users/profile/", follow_redirects=False)
+
+    assert profile_response.status_code == 200

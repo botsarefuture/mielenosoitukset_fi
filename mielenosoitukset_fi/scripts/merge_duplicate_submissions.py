@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from typing import Iterable, List, Sequence
 
@@ -57,7 +58,7 @@ def _sort_key(demo: dict) -> datetime:
     demo_id = demo.get("_id")
     if isinstance(demo_id, ObjectId):
         return demo_id.generation_time
-    return datetime.utcnow()
+    return utcnow()
 
 
 def _pick_primary_demo(demos: Iterable[dict], submitter_demo_ids: set[ObjectId]) -> dict:

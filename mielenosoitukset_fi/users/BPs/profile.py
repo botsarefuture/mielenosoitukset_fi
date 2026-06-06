@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, render_template, request, redirect, ur
 from flask_login import current_user, login_required
 from urllib.parse import urlparse
 from bson.objectid import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -261,7 +262,7 @@ def send_friend_request():
 
     other.friend_requests.append({
         "sent_by": current_user._id,
-        "sent_at": datetime.utcnow(),
+        "sent_at": utcnow(),
         "sent_ip": request.remote_addr
     })
     other.save()
@@ -301,8 +302,8 @@ def accept_friend_request():
         return {"error": "No friend request from this user"}, 400
 
     current_user.friend_requests = [r for r in current_user.friend_requests if r["sent_by"] != other._id]
-    current_user.friends.append({"user_id": other._id, "last_updated": datetime.utcnow()})
-    other.friends.append({"user_id": current_user._id, "last_updated": datetime.utcnow()})
+    current_user.friends.append({"user_id": other._id, "last_updated": utcnow()})
+    other.friends.append({"user_id": current_user._id, "last_updated": utcnow()})
 
     current_user.save()
     other.save()
@@ -569,7 +570,7 @@ def send_message():
         "sender_id": current_user._id,
         "recipient_id": recipient._id,
         "content": content,
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "read": False
     }
     _get_mongo().messages.insert_one(message)

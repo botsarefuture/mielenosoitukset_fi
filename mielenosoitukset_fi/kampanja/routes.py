@@ -1,5 +1,6 @@
 # Standard library
 import secrets
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
 
 # Third-party
@@ -30,7 +31,7 @@ def add_volunteer():
         return jsonify({"success": False, "error": "Name and email are required"}), 400
 
     token = secrets.token_urlsafe(16)
-    expires_at = datetime.utcnow() + timedelta(days=1)
+    expires_at = utcnow() + timedelta(days=1)
 
     volunteer = {
         "name": data["name"],
@@ -64,7 +65,7 @@ def confirm_volunteer(token):
     if not volunteer:
         return "Virheellinen tai vanhentunut vahvistuslinkki.", 400
 
-    if volunteer["confirmation_expires"] < datetime.utcnow():
+    if volunteer["confirmation_expires"] < utcnow():
         return "Vahvistusaika on umpeutunut.", 400
 
     mongo.volunteers.update_one(

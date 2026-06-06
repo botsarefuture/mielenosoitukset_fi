@@ -1,5 +1,6 @@
 import os
 import threading
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from typing import Any
 
@@ -97,7 +98,7 @@ def log_admin_action(user, action: str, details: str):
                 "email": user.email,
                 "action": action,
                 "details": details,
-                "timestamp": datetime.utcnow(),  # using UTC time
+                "timestamp": utcnow(),  # using UTC time
             }
         )
         logger.info(f"Admin action logged: {action} by user {user.email}")
@@ -216,7 +217,7 @@ def _prepare_log_payload(entry: Any, related_id=None) -> dict:
         payload.setdefault("request", request_ctx)
 
     payload.setdefault("process", capture_process_context())
-    payload.setdefault("timestamp", datetime.utcnow())
+    payload.setdefault("timestamp", utcnow())
     return dictify_object(payload)
 
 

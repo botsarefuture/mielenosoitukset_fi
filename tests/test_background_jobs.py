@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from bson import ObjectId
@@ -415,7 +416,7 @@ def test_process_submit_notifications_sends_admin_notifications_immediately(db, 
             "_id": ObjectId(),
             "demo_id": demo_id,
             "status": "pending",
-            "created_at": datetime.utcnow(),
+            "created_at": utcnow(),
             "marks_admin_contact": True,
             "messages": [
                 {
@@ -476,7 +477,7 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
             "_id": job_id,
             "demo_id": demo_id,
             "status": "pending",
-            "created_at": datetime.utcnow(),
+            "created_at": utcnow(),
             "marks_admin_contact": True,
             "messages": [
                 {

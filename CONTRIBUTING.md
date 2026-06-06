@@ -1,7 +1,7 @@
 ## **Mielenosoitukset.fi Code Style Guide**
 
 ### **1. General Guidelines**
-- **Python Version:** Use Python 3.9+.
+- **Python Version:** Use Python 3.12 or newer.
 - **Code Readability:** Prioritize readability over cleverness.
 - **DRY Principle:** Avoid code duplication by reusing logic and components.
 - **Error Handling:** Catch exceptions thoughtfully, and avoid generic `except:` clauses.

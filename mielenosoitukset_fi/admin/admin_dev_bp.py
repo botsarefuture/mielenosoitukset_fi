@@ -1,6 +1,7 @@
 from bson.objectid import ObjectId
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
@@ -82,7 +83,7 @@ def _update_app_scopes(app_id, scopes):
 def _set_request_status(req_id, status):
     mongo.developer_scope_requests.update_one(
         {"_id": req_id},
-        {"$set": {"status": status, "reviewed_at": datetime.utcnow(), "reviewed_by": current_user._id}},
+        {"$set": {"status": status, "reviewed_at": utcnow(), "reviewed_by": current_user._id}},
     )
 
 
@@ -151,7 +152,7 @@ def approve_access(req_id):
                 pass
     mongo.api_token_requests.update_one(
         {"_id": req_obj["_id"]},
-        {"$set": {"status": "approved", "reviewed_at": datetime.utcnow(), "reviewed_by": current_user._id}},
+        {"$set": {"status": "approved", "reviewed_at": utcnow(), "reviewed_by": current_user._id}},
     )
     return jsonify({"status": "success"})
 
@@ -169,6 +170,6 @@ def deny_access(req_id):
         mongo.users.update_one({"_id": user_id}, {"$unset": {"api_token_request": ""}, "$set": {"api_tokens_enabled": False}})
     mongo.api_token_requests.update_one(
         {"_id": req_obj["_id"]},
-        {"$set": {"status": "denied", "reviewed_at": datetime.utcnow(), "reviewed_by": current_user._id}},
+        {"$set": {"status": "denied", "reviewed_at": utcnow(), "reviewed_by": current_user._id}},
     )
     return jsonify({"status": "success"})

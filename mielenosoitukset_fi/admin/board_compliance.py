@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.users.models import User
@@ -55,7 +56,7 @@ def set_clearance(user_id):
     BOARD_CLEARANCES[user_id] = {
         "approved": approved,
         "granted_by": current_user.username,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utcnow().isoformat(),
     }
 
     action = "myönnetty" if approved else "peruttu"

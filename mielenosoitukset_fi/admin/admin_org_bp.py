@@ -12,6 +12,7 @@ v2.4.0:
 - Admin action logging has been in use since V2.4.0, and it helps us keep track who did what.
 """
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from bson.objectid import ObjectId
 from flask import Blueprint, abort, redirect, render_template, request, url_for, jsonify, Response, current_app, has_request_context
@@ -798,12 +799,12 @@ def review_suggestion(org_id, suggestion_id):
     # --- 🪄 Mark as viewed ---
     update_ops = {
         "$set": {
-            "status.updated_at": datetime.utcnow(),
+            "status.updated_at": utcnow(),
         },
         "$push": {
             "audit_log": {
                 "action": "viewed",
-                "timestamp": datetime.utcnow(),
+                "timestamp": utcnow(),
                 "user": getattr(current_user, "username", None),  # if you have Flask-Login
             }
         }
@@ -906,14 +907,14 @@ def apply_suggestion(org_id, suggestion_id):
     update_ops = {
         "$set": {
             "status.state": new_state,
-            "status.updated_at": datetime.utcnow(),
+            "status.updated_at": utcnow(),
             "status.updated_by": getattr(current_user, "username", None),
         },
         "$push": {
             "audit_log": {
                 "action": "apply_fields",
                 "fields": selected_fields,
-                "timestamp": datetime.utcnow(),
+                "timestamp": utcnow(),
                 "user": getattr(current_user, "username", None),
             }
         }
@@ -928,7 +929,7 @@ def apply_suggestion(org_id, suggestion_id):
     if new_state == "applied":
         mongo.org_edit_suggestions.update_one(
             {"_id": ObjectId(suggestion_id)},
-            {"$set": {"status.completed_at": datetime.utcnow()}}
+            {"$set": {"status.completed_at": utcnow()}}
         )
 
     _log_org_event(
@@ -954,7 +955,7 @@ def get_suggestion_with_expiry_check(suggestion_id):
     status = suggestion.get("status", {})
     if status.get("state") == "in_review":
         updated_at = status.get("updated_at")
-        if updated_at and datetime.utcnow() - updated_at > timedelta(minutes=30):
+        if updated_at and utcnow() - updated_at > timedelta(minutes=30):
             mongo.org_edit_suggestions.update_one(
                 {"_id": ObjectId(suggestion_id)},
                 {"$set": {"status.state": "pending"}}

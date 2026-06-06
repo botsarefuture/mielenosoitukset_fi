@@ -26,6 +26,7 @@ verify_confirmation_token(token: str) -> Optional[str]
 
 from typing import Tuple, Optional
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 import datetime
 import jwt
 from flask import current_app
@@ -52,7 +53,7 @@ def _generate_token(data, expiration):
     return jwt.encode(
         {
             **data,
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=expiration),
+            "exp": utcnow() + datetime.timedelta(seconds=expiration),
         },
         current_app.config["SECRET_KEY"],
         algorithm="HS256",

@@ -15,6 +15,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
 from flask_babel import _
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 
@@ -134,7 +135,7 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
     if not city_keys or not permissions:
         mongo.admin_scope_grants.update_many(
             query,
-            {"$set": {"revoked_at": datetime.utcnow(), "revoked_by": str(current_user._id)}},
+            {"$set": {"revoked_at": utcnow(), "revoked_by": str(current_user._id)}},
         )
         return
 
@@ -145,14 +146,14 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         "scope_keys": city_keys,
         "role": "city_reviewer",
         "permissions": permissions,
-        "updated_at": datetime.utcnow(),
+        "updated_at": utcnow(),
         "updated_by": str(current_user._id),
         "revoked_at": None,
     }
     if existing:
         mongo.admin_scope_grants.update_one({"_id": existing["_id"]}, {"$set": payload})
     else:
-        payload["created_at"] = datetime.utcnow()
+        payload["created_at"] = utcnow()
         payload["granted_by"] = str(current_user._id)
         mongo.admin_scope_grants.insert_one(payload)
 

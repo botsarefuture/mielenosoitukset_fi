@@ -1,9 +1,10 @@
 """Admin support Case model (demos, organisation suggestions, error reports …) 
 Refactored to preserve original timestamps instead of blindly overwriting them
-with datetime.utcnow() when loading from DB.
+with utcnow() when loading from DB.
 """
 from __future__ import annotations
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -73,7 +74,7 @@ class Case:
         self.case_history: List[Dict[str, Any]] = case_history or []
 
         # Timestamps ---------------------------------------------------------
-        now = datetime.utcnow()
+        now = utcnow()
         self.created_at: datetime = created_at or now
         self.updated_at: datetime = updated_at or now
 
@@ -90,7 +91,7 @@ class Case:
 
     def _touch(self) -> None:
         """Update *updated_at* and persist current in‑memory state to MongoDB."""
-        self.updated_at = datetime.utcnow()
+        self.updated_at = utcnow()
         _get_db()[self.COLLECTION].update_one({"_id": self._id}, {"$set": self.to_dict()}, upsert=True)
 
     # ---------------------------------------------------------------------
@@ -171,7 +172,7 @@ class Case:
     # ---------------------------------------------------------------------
     def add_action(self, action_type: str, admin_user: str, note: str | None = None) -> None:
         self.action_logs.append({
-            "timestamp": datetime.utcnow(),
+            "timestamp": utcnow(),
             "admin": admin_user,
             "action_type": action_type,
             "note": note,

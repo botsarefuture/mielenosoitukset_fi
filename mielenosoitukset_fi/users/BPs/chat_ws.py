@@ -2,6 +2,7 @@
 from flask import Blueprint
 from flask_socketio import SocketIO, join_room, emit
 from flask_login import current_user
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -110,7 +111,7 @@ def init_socketio(socketio: SocketIO):
             "type": msg_type,
             "content": content if msg_type == "chat" else None,
             "extra": extra,
-            "created_at": datetime.utcnow(),
+            "created_at": utcnow(),
             "read": False
         }
         msg_id = _get_mongo().messages.insert_one(msg).inserted_id

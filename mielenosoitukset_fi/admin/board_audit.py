@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, render_template
 from flask_login import login_required, current_user
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
@@ -24,7 +25,7 @@ def log_board_action(user_id, action, granted_by):
         "user_id": str(user_id),
         "action": action,
         "granted_by": granted_by,
-        "timestamp": datetime.utcnow()
+        "timestamp": utcnow()
     })
 
 

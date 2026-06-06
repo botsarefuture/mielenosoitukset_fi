@@ -50,7 +50,7 @@ Mielenosoitukset.fi is an open-source platform for discovering and submitting de
 
 To run this project locally you'll typically need:
 
-- Python 3.10+ (3.11 recommended)
+- Python 3.12+
 - MongoDB (or a compatible hosted MongoDB URI)
 - Flask
 - Project dependencies (installable via `requirements.txt`)

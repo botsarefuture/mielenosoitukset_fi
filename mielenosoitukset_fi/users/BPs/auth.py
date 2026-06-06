@@ -26,6 +26,7 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 import importlib
+from mielenosoitukset_fi.utils.time_utils import utcnow
 import datetime
 import smtplib
 from email.mime.text import MIMEText
@@ -124,7 +125,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
             if user:
                 mongo.users.update_one(
                     {"_id": ObjectId(user["_id"])},
-                    {"$set": {"last_login": datetime.utcnow()}}
+                    {"$set": {"last_login": utcnow()}}
                 )
                 
         except Exception as e:
@@ -138,7 +139,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
         "ip": ip,
         "user_agent": user_agent,
         "reason": reason,
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
     })
 
 
@@ -331,7 +332,7 @@ def request_api_token_access():
 
     reason = (request.get_json() or {}).get("reason") or ""
     reason = reason.strip()
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = utcnow().isoformat()
     try:
         mongo.users.update_one(
             {"_id": current_user._id},
@@ -629,7 +630,7 @@ def forced_pwd_reset():
 
     log_entry = {
         "user_id": str(current_user.id),
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": ip,
         "user_agent": user_agent,
         "visit": True,
@@ -986,7 +987,7 @@ def mfa_setup_api():
                 "user_id": user._id,
                 "secret": secret,
                 "device_name": device_name,
-                "created_at": datetime.datetime.utcnow()
+                "created_at": utcnow()
             })
             PendingMFA.delete(user._id, secret)
             user.mfa_enabled = True
@@ -1184,7 +1185,7 @@ def password_reset(token):
     log_entry = {
         "token": token,
         "email": email or None,
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": ip,
         "user_agent": user_agent,
         "visit": True,
@@ -1234,7 +1235,7 @@ def password_reset(token):
             mongo.used_password_change_tokens.insert_one({
                 "token": token,
                 "email": email,
-                "used_at": datetime.utcnow(),
+                "used_at": utcnow(),
                 "ip": ip,
                 "user_agent": user_agent,
                 "password_change_success": True
@@ -1371,7 +1372,7 @@ def api_change_password():
     current_user._change_password(new)
     mongo.password_changes.insert_one({
         "user_id": current_user._id,
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": request.remote_addr,
         "user_agent": request.headers.get("User-Agent", ""),
         "method": "settings_page",

@@ -1,4 +1,5 @@
 import json
+import re
 from flask import (
     Blueprint,
     g,
@@ -21,6 +22,7 @@ from mielenosoitukset_fi.utils.auth import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
+from mielenosoitukset_fi.utils.validators import normalize_username, validate_username
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
@@ -87,6 +89,24 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 login_logs = mongo["login_logs"]
 
 token_access_requests = mongo["api_token_requests"]
+
+
+def _username_exists(username: str) -> bool:
+    """Check canonical usernames while remaining compatible with older user documents."""
+    case_insensitive_username = {
+        "$regex": f"^{re.escape(username)}$",
+        "$options": "i",
+    }
+    return mongo.users.find_one(
+        {
+            "$or": [
+                {"username_canonical": username},
+                {"username": case_insensitive_username},
+            ]
+        },
+        {"_id": 1},
+    ) is not None
+
 
 def _fresh_user_doc():
     return mongo.users.find_one({"_id": current_user._id}) or {}
@@ -178,18 +198,23 @@ def verify_emailer(email, username):
 def register():
     """ """
     if request.method == "POST":
-        username = request.form.get("username")
+        username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
         email = request.form.get("email")
 
-        if not username or not password or len(username) < 3 or not is_strong_password(password):
+        username_valid, username_error = validate_username(username)
+        if not username_valid:
+            flash_message(username_error, "error")
+            return redirect(url_for("users.auth.register"))
+
+        if not password or not is_strong_password(password):
             flash_message(
-                "Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.",
+                "Virheellinen salasana.",
                 "error",
             )
             return redirect(url_for("users.auth.register"))
 
-        if mongo.users.find_one({"username": username}):
+        if _username_exists(username):
             flash_message("Käyttäjänimi on jo käytössä.", "warning")
             return redirect(url_for("users.auth.register"))
 
@@ -201,6 +226,7 @@ def register():
             return redirect(url_for("users.auth.login"))
 
         user_data = User.create_user(username, password, email)
+        user_data["username_canonical"] = username
         mongo.users.insert_one(user_data)
 
         try:
@@ -394,11 +420,12 @@ def tokens_ui():
 
 @auth_bp.route("/api/username_free", methods=["GET"])
 def api_username_free():
-    username = request.args.get("username", "").strip()
-    if not username:
-        return jsonify({"available": False, "error": "Username is required."}), 400
+    username = normalize_username(request.args.get("username"))
+    username_valid, username_error = validate_username(username)
+    if not username_valid:
+        return jsonify({"available": False, "error": username_error}), 400
 
-    is_taken = mongo.users.find_one({"username": username}) is not None
+    is_taken = _username_exists(username)
     return jsonify({"available": not is_taken})
 
 @auth_bp.route("/confirm_email/<token>")

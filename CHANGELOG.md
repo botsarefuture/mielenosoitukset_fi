@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
 * Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
 * The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.

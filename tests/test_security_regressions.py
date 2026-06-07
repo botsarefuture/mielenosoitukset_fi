@@ -87,3 +87,40 @@ def test_global_admin_can_issue_mcp_admin_token(admin_client, db, seeded_data):
         }
     )
     assert token is not None
+
+
+def test_auth_security_routes_ignore_stale_module_database_handle(
+    monkeypatch,
+    user_client,
+    db,
+    seeded_data,
+):
+    import mielenosoitukset_fi.users.BPs.auth as auth_module
+
+    class StaleUsers:
+        def find_one(self, *args, **kwargs):
+            return None
+
+        def update_one(self, *args, **kwargs):
+            return None
+
+    class StaleDatabase:
+        users = StaleUsers()
+
+    monkeypatch.setattr(auth_module, "mongo", StaleDatabase())
+
+    unknown_scope_response = user_client.post(
+        "/users/auth/api_token",
+        json={"type": "short", "scopes": ["read", "totally.unknown"]},
+    )
+    settings_response = user_client.post(
+        "/users/auth/api/v1/settings/",
+        data={"language": "fi", "dark_mode": "true", "city": "Helsinki"},
+    )
+
+    assert unknown_scope_response.status_code == 400
+    assert settings_response.status_code == 200
+    user = db.users.find_one({"_id": seeded_data["user_id"]})
+    assert user["language"] == "fi"
+    assert user["dark_mode"] == "true"
+    assert user["city"] == "Helsinki"

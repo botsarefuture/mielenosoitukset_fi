@@ -148,6 +148,7 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Redesigned `/ohjeet` into a clearer documentation-style guide with blue and orange site branding, a scannable table of contents, step-by-step submission help, improved troubleshooting, and mobile-friendly sections.
 * Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
 
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.

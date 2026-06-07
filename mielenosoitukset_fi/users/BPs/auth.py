@@ -771,27 +771,37 @@ def settings_api():
     user_data = request.form.to_dict()
     changed_fields = {}
 
-    # Build current_user_data from attributes (use underscore field names)
+    # EMERGENCY FIX: Strict allowlist to prevent privilege escalation via mass assignment.
+    ALLOWED_FIELDS = {
+        "display_name",
+        "language",
+        "dark_mode",
+        "city",
+    }
+
+    # Filter incoming data - IGNORE EVERYTHING ELSE
+    filtered_data = {k: v for k, v in user_data.items() if k in ALLOWED_FIELDS}
+
+    # Build current_user_data for audit logging
     current_user_data = {
-        "username": getattr(user, "username", None),
-        "email": getattr(user, "email", None),
-        "mfa_enabled": getattr(user, "mfa_enabled", None),
+        "display_name": getattr(user, "displayname", None),
         "language": getattr(user, "language", None),
         "dark_mode": getattr(user, "dark_mode", None),
         "city": getattr(user, "city", None),
-        # add other fields as needed
     }
 
-    for field, new_value in user_data.items():
+    for field, new_value in filtered_data.items():
         current_value = current_user_data.get(field)
         if current_value is None or str(current_value) != str(new_value):
-            print(field)
             changed_fields[field] = {"old": current_value, "new": new_value}
-            setattr(user, field, new_value)
+            
+            # Map display_name to displayname attribute
+            attr_name = "displayname" if field == "display_name" else field
+            setattr(user, attr_name, new_value)
 
     if changed_fields:
-        # Update the user's document in the database
-        mongo.users.update_one({"_id": user._id}, {"$set": user_data})
+        # Update database using ONLY the safe filtered data
+        mongo.users.update_one({"_id": user._id}, {"$set": filtered_data})
 
         # Send an email notification about the changes
         try:
@@ -943,7 +953,12 @@ def settings():
     """Let users activate MFA"""
     user = current_user
 
-    
+    # Temporary service notice during security hardening
+    flash_message(
+        "Huomio: Suoritamme parhaillaan tietoturvapäivityksiä. "
+        "Jotkin asetukset saattavat olla tilapäisesti poissa käytöstä.",
+        "warning"
+    )
 
     return render_template("users/auth/settings.html", user=user)
 

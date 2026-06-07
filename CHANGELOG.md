@@ -12,7 +12,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
-* Added shared detailed and boolean username validators, canonical username storage for new accounts, and case-insensitive availability checks for consistent, safer public registration.
+* Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
 * Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
 * Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
 * Pinned the Docker Compose development LocalStack image to a community release so local S3 startup no longer depends on a floating image that may require a commercial auth token.

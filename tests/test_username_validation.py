@@ -94,3 +94,24 @@ def test_registration_normalizes_username(client, db):
     assert user is not None
     assert user["username_canonical"] == "new-user"
     assert db.users.find_one({"username": " New-User "}) is None
+
+
+def test_login_normalizes_username(client, db):
+    response = client.post(
+        "/users/auth/login",
+        data={"username": " ALICE ", "password": "UserPass1!"},
+    )
+
+    assert response.status_code == 302
+    with client.session_transaction() as session:
+        assert session["_user_id"] == str(db.users.find_one({"username": "alice"})["_id"])
+
+
+def test_mfa_check_normalizes_username(client):
+    response = client.post(
+        "/users/auth/2fa_check",
+        data={"username": " ALICE ", "password": "UserPass1!"},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == {"enabled": False, "valid": True}

@@ -91,13 +91,18 @@ login_logs = mongo["login_logs"]
 token_access_requests = mongo["api_token_requests"]
 
 
+def _get_mongo():
+    """Return the active database handle."""
+    return DatabaseManager.get_instance().get_db()
+
+
 def _username_exists(username: str) -> bool:
     """Check canonical usernames while remaining compatible with older user documents."""
     case_insensitive_username = {
         "$regex": f"^{re.escape(username)}$",
         "$options": "i",
     }
-    return mongo.users.find_one(
+    return _get_mongo().users.find_one(
         {
             "$or": [
                 {"username_canonical": username},
@@ -109,7 +114,7 @@ def _username_exists(username: str) -> bool:
 
 
 def _fresh_user_doc():
-    return mongo.users.find_one({"_id": current_user._id}) or {}
+    return _get_mongo().users.find_one({"_id": current_user._id}) or {}
 
 
 def _notify_admin(subject, body, to=None):
@@ -218,6 +223,7 @@ def register():
             flash_message("Käyttäjänimi on jo käytössä.", "warning")
             return redirect(url_for("users.auth.register"))
 
+        mongo = _get_mongo()
         if mongo.users.find_one({"email": email}):
             flash_message(
                 "Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.",
@@ -546,7 +552,8 @@ def mfa_check():
     """
 
     try:
-        user = mongo.users.find_one({"username": request.form.get("username")})
+        username = normalize_username(request.form.get("username"))
+        user = _get_mongo().users.find_one({"username": username})
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
@@ -611,14 +618,14 @@ def login():
         return redirect(safe_next_page)
 
     if request.method == "POST":
-        username = request.form.get("username")
+        username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
 
         if not username or not password:
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user_doc = mongo.users.find_one({"username": username})
+        user_doc = _get_mongo().users.find_one({"username": username})
         
         user_ip = request.remote_addr
         user_agent = request.headers.get("User-Agent", "")
@@ -856,7 +863,7 @@ def settings_api():
 
     if changed_fields:
         # Update the user's document in the database
-        mongo.users.update_one({"_id": user._id}, {"$set": user_data})
+        _get_mongo().users.update_one({"_id": user._id}, {"$set": user_data})
 
         # Send an email notification about the changes
         try:

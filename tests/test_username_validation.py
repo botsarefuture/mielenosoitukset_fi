@@ -115,3 +115,36 @@ def test_mfa_check_normalizes_username(client):
 
     assert response.status_code == 200
     assert response.get_json() == {"enabled": False, "valid": True}
+
+
+def test_login_supports_legacy_mixed_case_username(client, db):
+    db.users.update_one(
+        {"username": "alice"},
+        {"$set": {"username": "LegacyAlice"}, "$unset": {"username_canonical": ""}},
+    )
+
+    response = client.post(
+        "/users/auth/login",
+        data={"username": "legacyalice", "password": "UserPass1!"},
+    )
+
+    assert response.status_code == 302
+    with client.session_transaction() as session:
+        assert session["_user_id"] == str(
+            db.users.find_one({"username": "LegacyAlice"})["_id"]
+        )
+
+
+def test_mfa_check_supports_legacy_mixed_case_username(client, db):
+    db.users.update_one(
+        {"username": "alice"},
+        {"$set": {"username": "LegacyAlice"}, "$unset": {"username_canonical": ""}},
+    )
+
+    response = client.post(
+        "/users/auth/2fa_check",
+        data={"username": "LEGACYALICE", "password": "UserPass1!"},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == {"enabled": False, "valid": True}

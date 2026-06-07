@@ -23,11 +23,6 @@ VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
 
 class User(UserMixin):
-    @property
-    def is_active(self):
-        """Emergency override: Ensure banned or inactive users are rejected by Flask-Login."""
-        return getattr(self, "active", True) and not getattr(self, "banned", False)
-
     def _perm_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
         Return a list of scopes (organization IDs or the literal string "global")

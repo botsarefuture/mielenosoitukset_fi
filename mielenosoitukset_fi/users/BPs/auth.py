@@ -96,21 +96,27 @@ def _get_mongo():
     return DatabaseManager.get_instance().get_db()
 
 
-def _username_exists(username: str) -> bool:
-    """Check canonical usernames while remaining compatible with older user documents."""
+def _find_user_by_username(username: str):
+    """Find a user by canonical username, falling back to legacy casing."""
+    username = normalize_username(username)
+    if not username:
+        return None
+
+    users = _get_mongo().users
+    user = users.find_one({"username_canonical": username})
+    if user:
+        return user
+
     case_insensitive_username = {
         "$regex": f"^{re.escape(username)}$",
         "$options": "i",
     }
-    return _get_mongo().users.find_one(
-        {
-            "$or": [
-                {"username_canonical": username},
-                {"username": case_insensitive_username},
-            ]
-        },
-        {"_id": 1},
-    ) is not None
+    return users.find_one({"username": case_insensitive_username})
+
+
+def _username_exists(username: str) -> bool:
+    """Check canonical usernames while remaining compatible with older user documents."""
+    return _find_user_by_username(username) is not None
 
 
 def _fresh_user_doc():
@@ -553,7 +559,7 @@ def mfa_check():
 
     try:
         username = normalize_username(request.form.get("username"))
-        user = _get_mongo().users.find_one({"username": username})
+        user = _find_user_by_username(username)
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
@@ -625,7 +631,7 @@ def login():
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user_doc = _get_mongo().users.find_one({"username": username})
+        user_doc = _find_user_by_username(username)
         
         user_ip = request.remote_addr
         user_agent = request.headers.get("User-Agent", "")

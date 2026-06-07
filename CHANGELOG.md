@@ -6,6 +6,7 @@
 
 ### Fixed
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
+* Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
 * Recurring demonstration admin views now show records after the city-key migration instead of silently dropping every migrated series.
 * Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
 * Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.

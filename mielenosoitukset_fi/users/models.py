@@ -214,7 +214,7 @@ class User(UserMixin):
             friends         = doc.get("friends", []),
             friend_requests = doc.get("friend_requests", []),
             forced_pwd_reset = doc.get("forced_pwd_reset", False),
-            active          = doc.get("active", False),
+            active          = doc.get("active", True),
             last_login      = doc.get("last_login", None)
         )
 

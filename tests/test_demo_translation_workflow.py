@@ -94,6 +94,10 @@ def test_translator_can_open_translation_editor(translator_client, seeded_data):
     assert "translation-editor.js" in body
     assert "translation-accessibility-mode" in body
     assert "Helppokäyttötila" in body
+    assert "Mistä kielestä" in body
+    assert "Mille kielelle" in body
+    assert body.count("Suomi · Lähde") == 3
+    assert body.count("English · Käännös") == 3
 
 
 def test_translation_editor_displays_descriptions_as_markdown(translator_client, db, seeded_data):

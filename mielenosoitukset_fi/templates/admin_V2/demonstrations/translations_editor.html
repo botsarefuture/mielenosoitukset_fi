@@ -64,6 +64,61 @@
     white-space: pre-wrap;
   }
 
+  .translation-direction {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 2px solid rgba(79, 70, 229, 0.35);
+    border-radius: 1rem;
+    background: rgba(79, 70, 229, 0.07);
+  }
+
+  .translation-direction-language {
+    padding: 0.85rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--bs-body-bg);
+    text-align: center;
+  }
+
+  .translation-direction-arrow {
+    color: var(--translation-accent);
+    font-size: 1.5rem;
+  }
+
+  .translation-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .translation-pair-column {
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.85rem;
+  }
+
+  .translation-pair-source {
+    background: rgba(148, 163, 184, 0.08);
+  }
+
+  .translation-pair-target {
+    border-color: rgba(79, 70, 229, 0.45);
+  }
+
+  .translation-column-language {
+    display: block;
+    margin-bottom: 0.65rem;
+    color: var(--translation-accent);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
   .translation-step {
     border-left: 0.35rem solid var(--translation-accent);
   }
@@ -228,8 +283,18 @@
   }
 
   @media (max-width: 900px) {
-    .translation-description-grid {
+    .translation-description-grid,
+    .translation-pair {
       grid-template-columns: 1fr;
+    }
+
+    .translation-direction {
+      grid-template-columns: 1fr;
+    }
+
+    .translation-direction-arrow {
+      transform: rotate(90deg);
+      text-align: center;
     }
   }
 
@@ -287,28 +352,6 @@
     </div>
   </section>
 
-  <section class="dashboard-panel mb-4">
-    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-      <div>
-        <h2 class="text-xl font-semibold mb-1">{{ _('Lähdesisältö') }}</h2>
-        <p class="text-muted mb-0">{{ _('Lähdekieli') }}: {{ translation_language_names.get(source_language, source_language) }}</p>
-      </div>
-      <span class="badge bg-secondary">{{ _('Vain luku') }}</span>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('Otsikko') }}</label>
-      <div class="translation-source-field">{{ demo.title or '' }}</div>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('Kuvaus') }}</label>
-      <div class="translation-source-field" style="min-height: 8rem;">{{ source_description_markdown }}</div>
-    </div>
-    <div class="mb-0">
-      <label class="form-label">{{ _('Tunnisteet') }}</label>
-      <div class="translation-source-field">{{ (demo.tags or [])|join(', ') }}</div>
-    </div>
-  </section>
-
   <section class="dashboard-panel">
     <div class="translation-eyebrow mb-2">{{ _('Käännösehdotus') }}</div>
     <h2 class="text-xl font-semibold mb-2">{{ _('Tee käännös kolmessa helpossa vaiheessa') }}</h2>
@@ -332,6 +375,18 @@
     </nav>
 
     {% if can_translate_demos and selected_language %}
+    <div class="translation-direction mb-4" aria-label="{{ _('Käännössuunta') }}">
+      <div class="translation-direction-language">
+        <span class="text-muted d-block">{{ _('Mistä kielestä') }}</span>
+        <strong class="h4 mb-0">{{ translation_language_names.get(source_language, source_language) }}</strong>
+      </div>
+      <span class="translation-direction-arrow" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+      <div class="translation-direction-language">
+        <span class="text-muted d-block">{{ _('Mille kielelle') }}</span>
+        <strong class="h4 mb-0">{{ translation_language_names.get(selected_language, selected_language) }}</strong>
+      </div>
+    </div>
+
     <aside class="markdown-guide mb-4" id="markdown-guide" aria-labelledby="markdown-guide-title">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
@@ -373,33 +428,53 @@
           <p class="text-muted mb-0">{{ _('Esikatselu näyttää heti, miltä kuvaus näyttää valmiina.') }}</p>
         </div>
       </div>
-      <div class="mb-3">
-        <label for="translated_title" class="form-label">{{ _('Käännetty otsikko') }}</label>
-        <input id="translated_title" name="translated_title" class="form-control form-control-lg" value="{{ form_seed_translation.title or '' }}">
-      </div>
-      <div class="mb-3">
-        <label for="translated_description" class="form-label">{{ _('Käännetty kuvaus') }}</label>
-        <div class="markdown-toolbar" aria-label="{{ _('Tekstin muotoilupainikkeet') }}">
-          <button class="btn btn-outline-secondary" type="button" data-markdown-before="**" data-markdown-after="**" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lihavoi') }}</button>
-          <button class="btn btn-outline-secondary" type="button" data-markdown-line="## " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Väliotsikko') }}</button>
-          <button class="btn btn-outline-secondary" type="button" data-markdown-line="- " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lista') }}</button>
-          <button class="btn btn-outline-secondary" type="button" data-markdown-before="[" data-markdown-after="](https://)" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Linkki') }}</button>
+      <div class="translation-pair">
+        <div class="translation-pair-column translation-pair-source">
+          <span class="translation-column-language">{{ translation_language_names.get(source_language, source_language) }} · {{ _('Lähde') }}</span>
+          <label class="form-label">{{ _('Otsikko') }}</label>
+          <div class="translation-source-field">{{ demo.title or '' }}</div>
         </div>
-        <div class="translation-description-grid">
-          <div>
-            <textarea id="translated_description" name="translated_description" class="form-control" rows="12" aria-describedby="translated-description-help">{{ form_seed_description_markdown }}</textarea>
-            <p class="text-muted mt-2 mb-0" id="translated-description-help">{{ _('Voit kirjoittaa tavallista tekstiä tai käyttää yllä olevia muotoilupainikkeita.') }}</p>
-          </div>
-          <div>
-            <div class="form-label" id="translation-preview-label">{{ _('Valmiin kuvauksen esikatselu') }}</div>
-            <div class="translation-preview" id="translation-description-preview" data-empty-message="{{ _('Esikatselu ilmestyy tähän kirjoittaessasi.') }}" aria-labelledby="translation-preview-label" aria-live="polite"></div>
-          </div>
+        <div class="translation-pair-column translation-pair-target">
+          <span class="translation-column-language">{{ translation_language_names.get(selected_language, selected_language) }} · {{ _('Käännös') }}</span>
+          <label for="translated_title" class="form-label">{{ _('Otsikko') }}</label>
+          <input id="translated_title" name="translated_title" class="form-control form-control-lg" value="{{ form_seed_translation.title or '' }}">
         </div>
       </div>
-      <div class="mb-3">
-        <label for="translated_tags" class="form-label">{{ _('Käännetyt tunnisteet') }}</label>
-        <input id="translated_tags" name="translated_tags" class="form-control form-control-lg" value="{{ (form_seed_translation.tags or [])|join(', ') }}">
-        <small class="text-muted">{{ _('Erottele tunnisteet pilkulla.') }}</small>
+
+      <div class="translation-pair">
+        <div class="translation-pair-column translation-pair-source">
+          <span class="translation-column-language">{{ translation_language_names.get(source_language, source_language) }} · {{ _('Lähde') }}</span>
+          <label class="form-label">{{ _('Kuvaus') }}</label>
+          <div class="translation-source-field" style="min-height: 15rem;">{{ source_description_markdown }}</div>
+        </div>
+        <div class="translation-pair-column translation-pair-target">
+          <span class="translation-column-language">{{ translation_language_names.get(selected_language, selected_language) }} · {{ _('Käännös') }}</span>
+          <label for="translated_description" class="form-label">{{ _('Kuvaus') }}</label>
+          <div class="markdown-toolbar" aria-label="{{ _('Tekstin muotoilupainikkeet') }}">
+            <button class="btn btn-outline-secondary" type="button" data-markdown-before="**" data-markdown-after="**" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lihavoi') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-markdown-line="## " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Väliotsikko') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-markdown-line="- " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lista') }}</button>
+            <button class="btn btn-outline-secondary" type="button" data-markdown-before="[" data-markdown-after="](https://)" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Linkki') }}</button>
+          </div>
+          <textarea id="translated_description" name="translated_description" class="form-control" rows="12" aria-describedby="translated-description-help">{{ form_seed_description_markdown }}</textarea>
+          <p class="text-muted mt-2" id="translated-description-help">{{ _('Voit kirjoittaa tavallista tekstiä tai käyttää yllä olevia muotoilupainikkeita.') }}</p>
+          <div class="form-label" id="translation-preview-label">{{ _('Valmiin kuvauksen esikatselu') }}</div>
+          <div class="translation-preview" id="translation-description-preview" data-empty-message="{{ _('Esikatselu ilmestyy tähän kirjoittaessasi.') }}" aria-labelledby="translation-preview-label" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="translation-pair">
+        <div class="translation-pair-column translation-pair-source">
+          <span class="translation-column-language">{{ translation_language_names.get(source_language, source_language) }} · {{ _('Lähde') }}</span>
+          <label class="form-label">{{ _('Tunnisteet') }}</label>
+          <div class="translation-source-field">{{ (demo.tags or [])|join(', ') }}</div>
+        </div>
+        <div class="translation-pair-column translation-pair-target">
+          <span class="translation-column-language">{{ translation_language_names.get(selected_language, selected_language) }} · {{ _('Käännös') }}</span>
+          <label for="translated_tags" class="form-label">{{ _('Tunnisteet') }}</label>
+          <input id="translated_tags" name="translated_tags" class="form-control form-control-lg" value="{{ (form_seed_translation.tags or [])|join(', ') }}">
+          <small class="text-muted">{{ _('Erottele tunnisteet pilkulla.') }}</small>
+        </div>
       </div>
       <div class="translation-step-heading mt-4 mb-3">
         <span class="translation-step-number" aria-hidden="true">3</span>

@@ -4,8 +4,22 @@ from flask import redirect, url_for, abort
 from flask_babel import _
 from flask_login import current_user
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.logger import logger
+
+
+def has_admin_access(user) -> bool:
+    """Return True when a user may enter an admin surface."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "role", None) in ["global_admin", "admin", "god"]:
+        return True
+    if getattr(user, "global_admin", False):
+        return True
+    if hasattr(user, "has_admin_scope_grants") and user.has_admin_scope_grants():
+        return True
+    return False
 
 
 def admin_required(f):
@@ -67,15 +81,15 @@ def admin_required(f):
             logger.warning("User not authenticated, Unauthorized (401).")
             abort(401)
 
-        # Check if the user has global admin privileges
-        if not current_user.role in ["global_admin", "admin"]:
+        # Check if the user has admin privileges or scoped admin grants
+        if not has_admin_access(current_user):
             logger.warning(
-                f"User {current_user.username} is not a global admin, access forbidden (403)."
+                f"User {current_user.username} is not an admin, access forbidden (403)."
             )
             abort(403)
 
         # User is a global admin, access granted
-        logger.info(f"User {current_user.username} is an admin, access granted.")
+        logger.info(f"User {current_user.username} has admin access, access granted.")
         return f(*args, **kwargs)
 
     return decorated_function
@@ -161,7 +175,7 @@ def has_demo_permission(user, _id, permission_name):
         return False
 
     mongo = _get_mongo()
-    if not mongo:
+    if mongo is None:
         logger.error(
             "Demo permission denied: database unavailable for '%s'.", permission_name
         )
@@ -213,6 +227,22 @@ def has_demo_permission(user, _id, permission_name):
                 getattr(user, "id", None),
                 permission_name,
                 org_oid,
+            )
+            return True
+
+    # City-scoped admin permissions
+    city_key = demo_doc.get("city_key") or normalize_city_key(demo_doc.get("city"))
+    if city_key and hasattr(user, "has_scoped_permission"):
+        if user.has_scoped_permission(
+            permission_name,
+            scope_type="city",
+            scope_key=city_key,
+        ):
+            logger.info(
+                "Demo permission granted: user %s has '%s' for city %s.",
+                getattr(user, "id", None),
+                permission_name,
+                city_key,
             )
             return True
 
@@ -311,14 +341,20 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
                 return f(*args, **kwargs)
 
             if _type == "DEMONSTRATION":
-                has = has_demo_permission(current_user, _id, permission_name)
+                resource_id = (
+                    _id
+                    or kwargs.get("demo_id")
+                    or kwargs.get("demonstration_id")
+                    or kwargs.get("id")
+                )
+                has = has_demo_permission(current_user, resource_id, permission_name)
                 if has:
                     return f(*args, **kwargs)
                 logger.warning(
                     "Demonstration permission '%s' denied for user %s and demo %s.",
                     permission_name,
                     getattr(current_user, "id", None),
-                    _id,
+                    resource_id,
                 )
                 if permission_name in current_user.global_permissions:
                     logger.info(
@@ -344,6 +380,18 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
             ):  # DEPRACED: Use has_permission instead
                 logger.info(
                     f"User {current_user.username} has permission '{permission_name}' via role."
+                )
+                return f(*args, **kwargs)
+
+            if (
+                permission_name == "LIST_DEMOS"
+                and hasattr(current_user, "scoped_city_keys_for")
+                and current_user.scoped_city_keys_for(permission_name)
+            ):
+                logger.info(
+                    "User %s has scoped city permission '%s'.",
+                    current_user.username,
+                    permission_name,
                 )
                 return f(*args, **kwargs)
 

@@ -35,39 +35,20 @@ ChatGPT developer mode can use these endpoints directly with dynamic client regi
 
 If you already have your own issuer, you can still configure the JWT validation fields above so MCP accepts externally issued bearer tokens too.
 
-## Easiest login path right now
+## Recommended login path
 
-The easiest supported way to use this MCP server is to reuse the repository's **existing API token system**.
+Use the OAuth flow described below for remote MCP clients. It binds MCP access
+to an explicit administrator consent flow and issues a short-lived token with
+the required `mcp.admin` scope.
 
-That means you do **not** need a separate MCP-specific login product before trying it.
+The repository API-token system is also accepted, but every API token used for
+Admin MCP must include `mcp.admin`. Only a global administrator can issue that
+privileged scope. Ordinary `read`, `write`, or `admin` API tokens are rejected
+by the MCP endpoint.
 
-Practical flow:
-
-1. Get API token access approved for your user in the existing developer/API-token flow.
-2. Create a token with the scopes you need.
-3. Pass that token to OpenAI as the MCP `authorization` bearer token.
-
-Examples:
-
-- personal user token: create from `/users/auth/api_token`
-- developer app token: create from `/developer/apps/<app_id>/token`
-
-If you need admin dashboard control through MCP, the token must include at least:
-
-- `admin`
-
-Usually you also want:
-
-- `read`
-- `write`
-
-So the practical MCP token scope set is usually:
-
-- `["read", "write", "admin"]`
-
-Then use it in OpenAI's MCP tool config as the `authorization` bearer token.
-
-For bootstrap or private local use, the legacy static-token mode is still supported:
+For bootstrap or private local use, the legacy static-token mode is still supported.
+Configured static tokens remain limited by their configured `read`, `write`, or
+`admin` scopes:
 
 ```yaml
 ADMIN_MCP:

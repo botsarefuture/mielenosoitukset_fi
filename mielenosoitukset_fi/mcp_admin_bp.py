@@ -458,6 +458,8 @@ def _authenticate() -> dict[str, Any] | None:
 
 def _require_scope(token_entry: dict[str, Any], scope: str) -> None:
     scopes = token_entry.get("scopes") or []
+    if token_entry.get("auth_type") == "api_token" and "mcp.admin" not in scopes:
+        raise PermissionError("API token missing required scope: mcp.admin")
     if "mcp.admin" in scopes:
         return
     if scope == "read" and ("read" in scopes or "write" in scopes or "admin" in scopes):
@@ -1287,6 +1289,15 @@ def handle_admin_mcp():
     if not token_entry:
         logger.warning(f"MCP request unauthorized - ID: {request_id}")
         return _unauthorized_mcp_response(request_id)
+    try:
+        _require_scope(token_entry, "read")
+    except PermissionError as exc:
+        logger.warning(
+            "MCP connection permission denied - ID: %s, Error: %s",
+            request_id,
+            exc,
+        )
+        return _jsonrpc_error(request_id, -32003, str(exc), http_status=403)
 
     method = request_json.get("method")
     params = request_json.get("params") or {}

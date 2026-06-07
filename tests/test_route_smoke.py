@@ -1,5 +1,5 @@
+from copy import deepcopy
 import re
-
 import pytest
 
 from tests.conftest import _client_for_user, _seed_database
@@ -18,9 +18,7 @@ def _path_value(rule, key, seeded_data):
     if key == "city":
         return "Helsinki"
     if key == "demo_id":
-        if "pending" in rule:
-            return str(seeded_data["pending_demo_id"])
-        return str(seeded_data["demo_id"])
+        return str(seeded_data["pending_demo_id"]) if "pending" in rule else str(seeded_data["demo_id"])
     if key == "filename":
         return "demo.jpg"
     if key == "friend_username":
@@ -40,13 +38,9 @@ def _path_value(rule, key, seeded_data):
     if key == "parent":
         return str(seeded_data["recu_demo_id"])
     if key == "req_id":
-        if "/developer/requests/" in rule:
-            return str(seeded_data["scope_request_id"])
-        return str(seeded_data["api_access_request_id"])
+        return str(seeded_data["scope_request_id"]) if "/developer/requests/" in rule else str(seeded_data["api_access_request_id"])
     if key == "suggestion_id":
-        if "/organization/" in rule:
-            return str(seeded_data["org_suggestion_id"])
-        return str(seeded_data["suggestion_id"])
+        return str(seeded_data["org_suggestion_id"]) if "/organization/" in rule else str(seeded_data["suggestion_id"])
     if key == "tag_name":
         return "test-tag"
     if key == "token":
@@ -79,7 +73,7 @@ def _path_value(rule, key, seeded_data):
 
 
 def _build_path(rule, seeded_data):
-    return PARAM_PATTERN.sub(lambda match: _path_value(rule, match.group(1), seeded_data), rule)
+    return PARAM_PATTERN.sub(lambda m: _path_value(rule, m.group(1), seeded_data), rule)
 
 
 def _payload_for(path, seeded_data):
@@ -92,69 +86,125 @@ def _payload_for(path, seeded_data):
         "address": "Mannerheimintie 1",
         "type": "other",
     }
+
     if path == "/kampanja/api/volunteers":
         return {"name": "Volunteer User", "email": "volunteer@example.test"}
-    if path == "/admin/demo/create_demo":
+
+    if path in {"/admin/demo/create_demo"}:
         return demo_form
+
     if "/admin/demo/edit_demo/" in path:
         return demo_form
+
     if "/admin/demo/edit_demo_with_token/" in path:
         return demo_form
+
     if path == "/developer/apps":
         return {"name": "New App", "description": "Smoke-created app"}
+
     if path.endswith("/request_scopes"):
         return {"scopes": ["write"], "reason": "Smoke test"}
+
     if path.endswith("/token"):
         return {"type": "short", "scopes": ["read"]}
+
     if path.startswith("/api/follow/organization/"):
         return {"follow": True}
+
     if path.startswith("/api/unfollow/organization/"):
         return {"follow": False}
+
     if path.startswith("/users/profile/api/follow/"):
         return {"username": seeded_data["friend_username"]}
+
     if path.startswith("/users/profile/api/unfollow/"):
         return {"username": seeded_data["friend_username"]}
+
     if path.startswith("/users/profile/api/send_friend_request/"):
         return {"username": seeded_data["friend_username"]}
+
     if path.startswith("/users/profile/api/accept_friend_request/"):
         return {"username": seeded_data["friend_username"]}
+
     if path.startswith("/users/profile/api/decline_friend_request/"):
         return {"username": seeded_data["friend_username"]}
+
     if path.startswith("/users/profile/api/send_message/"):
-        return {"friend_username": seeded_data["friend_username"], "content": "Hello from smoke test"}
+        return {
+            "friend_username": seeded_data["friend_username"],
+            "content": "Hello from smoke test",
+        }
+
     if path.startswith("/users/auth/password_reset/"):
-        return {"password": "UpdatedPass1!", "password_confirm": "UpdatedPass1!"}
+        return {
+            "password": "UpdatedPass1!",
+            "password_confirm": "UpdatedPass1!",
+        }
+
     if path == "/admin/user/create_user":
-        return {"email": "created.user@example.test", "username": "created-user", "displayname": "Created User", "role": "user"}
+        return {
+            "email": "created.user@example.test",
+            "username": "created-user",
+            "displayname": "Created User",
+            "role": "user",
+        }
+
     if path.endswith("/api/clearance/" + str(seeded_data["user_id"])):
         return {"approved": True}
+
     return {}
 
 
 def _request_kwargs_for(path, method, seeded_data):
-    payload = _payload_for(path, seeded_data)
     if method == "GET":
         return {"follow_redirects": False}
 
-    if path in {
-        "/admin/demo/create_demo",
-        "/admin/user/create_user",
-    } or "/admin/demo/edit_demo/" in path or "/admin/demo/edit_demo_with_token/" in path or path.startswith("/users/auth/password_reset/"):
+    payload = _payload_for(path, seeded_data)
+
+    if (
+        path in {"/admin/demo/create_demo", "/admin/user/create_user"}
+        or "/admin/demo/edit_demo/" in path
+        or "/admin/demo/edit_demo_with_token/" in path
+        or path.startswith("/users/auth/password_reset/")
+    ):
         return {"follow_redirects": False, "data": payload}
 
     return {"follow_redirects": False, "json": payload}
 
 
-def _client_for_path(path, clients):
+def _client_key_for_path(path):
     if path.startswith("/api/admin/demo/"):
-        return clients["admin"]
+        return "admin"
     if path.startswith("/admin") or path.startswith("/board"):
-        return clients["admin"]
+        return "admin"
     if path.startswith("/developer"):
-        return clients["developer"]
+        return "developer"
     if path.startswith("/users") or path.startswith("/api/"):
-        return clients["user"]
-    return clients["anon"]
+        return "user"
+    return "anon"
+
+
+def _reset_client_session(client, user_id=None):
+    with client.session_transaction() as session:
+        session.clear()
+        if user_id:
+            session["_user_id"] = str(user_id)
+            session["_fresh"] = True
+
+
+def _mongo_snapshot(db):
+    return {
+        name: list(db[name].find())
+        for name in db.list_collection_names()
+    }
+
+
+def _mongo_restore(db, snapshot):
+    for name in db.list_collection_names():
+        db[name].delete_many({})
+    for name, docs in snapshot.items():
+        if docs:
+            db[name].insert_many(deepcopy(docs))
 
 
 @pytest.mark.integration
@@ -169,42 +219,64 @@ def test_all_registered_http_routes_respond_without_server_errors(
         BackgroundJobManager,
         "run_job_now",
         lambda self, job_key, triggered_by, metadata=None: None,
-        raising=True,
     )
 
-    rules = sorted(
-        (
-            rule.rule,
-            tuple(sorted(method for method in rule.methods if method not in {"HEAD", "OPTIONS"})),
-            rule.endpoint,
-        )
-        for rule in app.url_map.iter_rules()
-        if rule.endpoint != "static"
-    )
+    rules = [
+        (r.rule, tuple(m for m in r.methods if m not in {"HEAD", "OPTIONS"}), r.endpoint)
+        for r in app.url_map.iter_rules()
+        if r.endpoint != "static"
+    ]
+
+    seeded_data = _seed_database(app, db)
+
+    clients = {
+        "anon": app.test_client(),
+        "user": app.test_client(),
+        "admin": app.test_client(),
+        "developer": app.test_client(),
+    }
+    client_user_ids = {
+        "anon": None,
+        "user": seeded_data["user_id"],
+        "admin": seeded_data["admin_id"],
+        "developer": seeded_data["developer_id"],
+    }
+
+    snapshot = _mongo_snapshot(db)
 
     failures = []
+    append = failures.append
+
     for raw_path, methods, endpoint in rules:
-        seeded_data = _seed_database(app, db)
-        clients = {
-            "anon": app.test_client(),
-            "user": _client_for_user(app, seeded_data["user_id"]),
-            "admin": _client_for_user(app, seeded_data["admin_id"]),
-            "developer": _client_for_user(app, seeded_data["developer_id"]),
-        }
         path = _build_path(raw_path, seeded_data)
-        selected_client = _client_for_path(path, clients)
+
         for method in methods:
-            request_kwargs = _request_kwargs_for(path, method, seeded_data)
+            client_key = _client_key_for_path(path)
+            client = clients[client_key]
+            _reset_client_session(client, client_user_ids[client_key])
+            kwargs = _request_kwargs_for(path, method, seeded_data)
 
             try:
-                response = selected_client.open(path, method=method, **request_kwargs)
+                response = client.open(path, method=method, **kwargs)
             except Exception as exc:
-                failures.append(f"{method} {path} ({endpoint}) raised {type(exc).__name__}: {exc}")
-                continue
-
-            if response.status_code >= 500:
-                failures.append(
-                    f"{method} {path} ({endpoint}) returned {response.status_code}"
-                )
+                append(f"{method} {path} ({endpoint}) raised {type(exc).__name__}: {exc}")
+            else:
+                if response.status_code >= 500:
+                    append(f"{method} {path} ({endpoint}) returned {response.status_code}")
+            finally:
+                _mongo_restore(db, snapshot)
 
     assert not failures, "Route smoke failures:\n" + "\n".join(failures)
+
+
+def test_reset_client_session_restores_authentication_after_logout(app, db):
+    seeded_data = _seed_database(app, db)
+    client = _client_for_user(app, seeded_data["user_id"])
+
+    logout_response = client.get("/users/auth/logout", follow_redirects=False)
+    assert logout_response.status_code < 500
+
+    _reset_client_session(client, seeded_data["user_id"])
+    profile_response = client.get("/users/profile/", follow_redirects=False)
+
+    assert profile_response.status_code == 200

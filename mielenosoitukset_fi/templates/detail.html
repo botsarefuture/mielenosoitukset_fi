@@ -338,6 +338,9 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   .demo-gallery-slide {
     display: none;
+    position: relative;
+    overflow: hidden;
+    background: #000;
   }
 
   .demo-gallery-slide.is-active {
@@ -349,6 +352,38 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     height: 420px;
     object-fit: cover;
     display: block;
+  }
+
+  .demo-gallery-slide.is-low-resolution {
+    min-height: 420px;
+    align-items: center;
+    justify-content: center;
+    isolation: isolate;
+  }
+
+  .demo-gallery-slide.is-low-resolution.is-active {
+    display: flex;
+  }
+
+  .demo-gallery-slide.is-low-resolution::before {
+    content: "";
+    position: absolute;
+    inset: -24px;
+    z-index: -1;
+    background-image: var(--gallery-image);
+    background-position: center;
+    background-size: cover;
+    filter: blur(20px) brightness(0.55);
+    transform: scale(1.08);
+  }
+
+  .demo-gallery-slide.is-low-resolution img {
+    width: auto;
+    max-width: min(100%, var(--gallery-natural-width));
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
   }
 
   .demo-gallery-nav {
@@ -1011,6 +1046,14 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   /* Mobile Responsive */
   @media (max-width: 768px) {
+    .demo-gallery-slide.is-low-resolution {
+      min-height: 260px;
+    }
+
+    .demo-gallery-slide.is-low-resolution img {
+      max-height: 260px;
+    }
+
     .container-main-content {
       padding: 0 1rem;
       margin: 1rem auto;
@@ -1385,7 +1428,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     <div class="demo-gallery-main">
       {% for image in gallery_images %}
       <div class="demo-gallery-slide{% if loop.first %} is-active{% endif %}" data-index="{{ loop.index0 }}">
-        <img src="{{ image }}" alt="{{ demo.title }} - {{ _('Kuva %(num)d', num=loop.index) }}">
+        <img src="{{ image }}" alt="{{ demo.title }} - {{ _('Kuva %(num)d', num=loop.index) }}" data-gallery-image>
       </div>
       {% endfor %}
       {% if gallery_images|length > 1 %}
@@ -2252,6 +2295,26 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   window.demoId = "{{ demo['_id'] }}";
 
   document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-gallery-image]").forEach((image) => {
+      const markLowResolution = () => {
+        const slide = image.closest(".demo-gallery-slide");
+        if (!slide || !image.naturalWidth || !image.naturalHeight) return;
+
+        const isLowResolution = image.naturalWidth < 800 || image.naturalHeight < 450;
+        slide.classList.toggle("is-low-resolution", isLowResolution);
+        if (isLowResolution) {
+          slide.style.setProperty("--gallery-image", `url("${image.currentSrc}")`);
+          slide.style.setProperty("--gallery-natural-width", `${image.naturalWidth}px`);
+        }
+      };
+
+      if (image.complete) {
+        markLowResolution();
+      } else {
+        image.addEventListener("load", markLowResolution, { once: true });
+      }
+    });
+
     document.querySelectorAll("[data-gallery]").forEach((gallery) => {
       const slides = Array.from(gallery.querySelectorAll(".demo-gallery-slide"));
       if (!slides.length) return;

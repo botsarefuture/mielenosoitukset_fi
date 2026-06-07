@@ -7,6 +7,8 @@ def test_public_guides_are_accessible_without_login(client):
     assert "Ohjekeskus" in body
     assert "Jos ilmoituksen lähetys ei mene heti läpi" in body
     assert "yritä tarvittaessa uudelleen" in body
+    assert "vähintään 1200 × 675 pikseliä" in body
+    assert "erillistä automaattista esikatselukuvaa" in body
 
 
 def test_submit_page_links_to_guides_for_submission_help(client):
@@ -16,3 +18,4 @@ def test_submit_page_links_to_guides_for_submission_help(client):
     body = response.get_data(as_text=True)
     assert 'href="/ohjeet#submit-help"' in body or 'href="/ohjeet/#submit-help"' in body
     assert "Jos lähetys takkuaa, katso ohjeet" in body
+    assert "vähintään 1200 × 675 px" in body

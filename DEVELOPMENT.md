@@ -4,7 +4,7 @@
 Local development depends on following tools:
 - Caddy as reverse proxy and TLS certificate provider (using Caddy's local CA)
 - LocalStack to provide a local non-persistent AWS environment (just S3 for now)
-- reachfive/fake-smtp-server (might change) to provide a local SMTP server for testing email sending
+- Mailpit to provide a local SMTP server and web UI for testing email sending
 
 Configuration for backend is in `config.compose.dev.yaml` and mounted as volume mount to the backend container.
 
@@ -33,7 +33,7 @@ The following steps will set up the necessary environment for local development:
    or check https://caddyserver.com/docs/running#local-https-with-docker) and possibly your browser's trusted certificates as well.
 7. Open your browser to access the application
  - `https://miekkari.localhost:8443` goes landing page, do submit a demonstration
- - `http://localhost:1080/` to access the fake SMTP server interface, see email was sent to organizer and admin
+ - `http://localhost:8085/` to access Mailpit web UI to inspect emails sent to organizer and admin
  - `https://miekkari.localhost:8443/admin/demo/` to access the admin interface (TODO: create admin user)
 
 NOTE: most services expose default port, so if you have other services running on those ports, you might need to stop them or change the port mappings in `compose.dev.yml`.

@@ -6,6 +6,7 @@ import sys
 import tempfile
 import uuid
 from contextlib import contextmanager
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from threading import Thread
@@ -225,7 +226,7 @@ def _user_doc(username, email, password, **updates):
             "followed_organizations": [],
             "followed_recurring_demos": [],
             "bio": f"Bio for {username}",
-            "last_login": datetime.utcnow(),
+            "last_login": utcnow(),
         }
     )
     doc.update(updates)
@@ -246,7 +247,7 @@ def _seed_database(app, db):
             continue
         db[collection_name].delete_many({})
 
-    now = datetime.utcnow()
+    now = utcnow()
     admin_id = ObjectId()
     user_id = ObjectId()
     friend_id = ObjectId()

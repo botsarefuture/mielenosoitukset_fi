@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 import secrets
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -112,7 +113,7 @@ def request_scopes(app_id):
         "scopes": scopes,
         "reason": reason,
         "status": "pending",
-        "requested_at": datetime.utcnow(),
+        "requested_at": utcnow(),
         "current_scopes": app.get("allowed_scopes", ["read"]),
     }
     mongo.developer_scope_requests.insert_one(doc)
@@ -136,7 +137,7 @@ def request_access():
         flash_message("Perustelu vaaditaan.", "error")
         return redirect(url_for("developer.dashboard"))
 
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = utcnow().isoformat()
     mongo.users.update_one(
         {"_id": current_user._id},
         {"$set": {"api_token_request": timestamp, "api_token_request_reason": reason}},
@@ -176,7 +177,7 @@ def create_app():
         "owner_id": owner_id,
         "client_id": client_id,
         "client_secret": client_secret,
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "allowed_scopes": ["read"],
     }
     inserted = mongo.developer_apps.insert_one(doc)
@@ -237,6 +238,6 @@ def rotate_secret(app_id):
     cid, csecret = _gen_credentials()
     mongo.developer_apps.update_one(
         {"_id": app["_id"]},
-        {"$set": {"client_id": cid, "client_secret": csecret, "rotated_at": datetime.utcnow()}}
+        {"$set": {"client_id": cid, "client_secret": csecret, "rotated_at": utcnow()}}
     )
     return jsonify({"status": "success", "client_id": cid, "client_secret": csecret})

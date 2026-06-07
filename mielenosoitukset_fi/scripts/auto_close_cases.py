@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from bson import ObjectId
@@ -9,7 +10,7 @@ from mielenosoitukset_fi.utils.logger import logger
 
 def _resolve(db):
     mongo = db
-    now = datetime.utcnow()
+    now = utcnow()
     closed = 0
     checked = 0
 

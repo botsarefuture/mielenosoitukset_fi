@@ -2,6 +2,7 @@ import copy
 import string
 
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from .BaseModel import BaseModel
 from .Organizer import Organizer
 from mielenosoitukset_fi.utils.database import get_database_manager
@@ -12,10 +13,13 @@ from mielenosoitukset_fi.utils.validators import (
 )
 from .RepeatSchedule import RepeatSchedule
 from bson import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime  # Added import for datetime
 
 
-DB = get_database_manager()
+def _get_db():
+    """Return the current database handle."""
+    return get_database_manager()
 
 
 class Demonstration(BaseModel):
@@ -274,6 +278,7 @@ class Demonstration(BaseModel):
         # Removed direct assignment for date, start_time, end_time
 
         self.city = city
+        self.city_key = normalize_city_key(city)
         self.address = address
 
         self.latitude = latitude
@@ -281,7 +286,7 @@ class Demonstration(BaseModel):
         
         if parent:
             try:
-                _parent = DB["recu_demos"].find_one({"_id": ObjectId(parent)})
+                _parent = _get_db()["recu_demos"].find_one({"_id": ObjectId(parent)})
             except Exception as e:
                 print(f"Error fetching parent demonstration: {e}")
 
@@ -323,7 +328,7 @@ class Demonstration(BaseModel):
         self.created_datetime = created_datetime or None
         # last_modified stores the last time this object was changed and saved
         # If provided, use it; otherwise set to current UTC time
-        self.last_modified = last_modified or datetime.utcnow()
+        self.last_modified = last_modified or utcnow()
 
         # RECURRING DEMO STUFF
         self.parent: ObjectId = parent or None
@@ -482,7 +487,7 @@ class Demonstration(BaseModel):
         >>> demo = Demonstration(...)
         >>> demo.merge("60f8e1e7a1b9c9b8f6b3f3b2") # Merge the demonstration with ID "60f8e1e7a1b9c9b8f6b3f3b2" into the current demonstration.
         """
-        other_demo_data = DB["demonstrations"].find_one(
+        other_demo_data = _get_db()["demonstrations"].find_one(
             {"_id": ObjectId(id_of_other_demo)}
         )
         if not other_demo_data:
@@ -499,7 +504,7 @@ class Demonstration(BaseModel):
         self.save()
 
         # Ensure the merged demonstration can be found by both IDs
-        DB["demonstrations"].update_one(
+        _get_db()["demonstrations"].update_one(
             {"_id": ObjectId(id_of_other_demo)},
             {"$set": {"merged_into": self._id, "hide": True}},
         )
@@ -684,7 +689,7 @@ class Demonstration(BaseModel):
         """
 
         # Update last_modified to now and prepare data for saving
-        self.last_modified = datetime.utcnow()
+        self.last_modified = utcnow()
 
         # Get the database instance from DatabaseManager
         data = self.to_dict()  # Convert the object to a dictionary
@@ -700,9 +705,10 @@ class Demonstration(BaseModel):
         data.pop("parent_object", None)  # Remove parent_object if present
         
         # Check if the demonstration already exists in the database
-        if DB["demonstrations"].find_one({"_id": self._id}):
+        db = _get_db()
+        if db["demonstrations"].find_one({"_id": self._id}):
             # Update existing entry
-            result = DB["demonstrations"].replace_one({"_id": self._id}, data)
+            result = db["demonstrations"].replace_one({"_id": self._id}, data)
             if result.modified_count:
                 print(
                     "Demonstration updated successfully."
@@ -713,7 +719,7 @@ class Demonstration(BaseModel):
                 )  # TODO: #191 Use utils.logger instead of print
         else:
             # Insert new entry
-            DB["demonstrations"].insert_one(data)
+            db["demonstrations"].insert_one(data)
             print(
                 "Demonstration saved successfully."
             )  # TODO: #191 Use utils.logger instead of print
@@ -743,7 +749,7 @@ class Demonstration(BaseModel):
         try:
             if ObjectId.is_valid(str(demo_id)):
                 obj_id = ObjectId(demo_id)
-                data = DB["demonstrations"].find_one({"_id": obj_id})
+                data = _get_db()["demonstrations"].find_one({"_id": obj_id})
                 if data:
                     logger.info("Found")
                     return cls.from_dict(data)
@@ -752,7 +758,7 @@ class Demonstration(BaseModel):
             obj_id = None
 
         if obj_id:
-            alias_data = DB["demonstrations"].find_one({"aliases": {"$in": [obj_id]}})
+            alias_data = _get_db()["demonstrations"].find_one({"aliases": {"$in": [obj_id]}})
             if alias_data:
                 logger.info("Found via alias id lookup")
                 return cls.from_dict(alias_data)
@@ -760,7 +766,7 @@ class Demonstration(BaseModel):
         # Try running_number lookup
         try:
             num = int(demo_id)
-            data = DB["demonstrations"].find_one({"running_number": num})
+            data = _get_db()["demonstrations"].find_one({"running_number": num})
             if data:
                 return cls.from_dict(data)
         except ValueError:
@@ -769,7 +775,7 @@ class Demonstration(BaseModel):
             pass
 
         # Try slug lookup
-        data = DB["demonstrations"].find_one({"slug": demo_id})
+        data = _get_db()["demonstrations"].find_one({"slug": demo_id})
         if data:
             return cls.from_dict(data)
 

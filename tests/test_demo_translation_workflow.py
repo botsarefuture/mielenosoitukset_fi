@@ -88,6 +88,10 @@ def test_translator_can_open_translation_editor(translator_client, seeded_data):
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Käännösehdotus" in body
+    assert "Tee käännös kolmessa helpossa vaiheessa" in body
+    assert "Näytä opastus uudelleen" in body
+    assert "translation-description-preview" in body
+    assert "translation-editor.js" in body
 
 
 def test_translation_editor_displays_descriptions_as_markdown(translator_client, db, seeded_data):

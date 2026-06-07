@@ -63,6 +63,122 @@
     background: rgba(148, 163, 184, 0.08);
     white-space: pre-wrap;
   }
+
+  .translation-step {
+    border-left: 0.35rem solid var(--translation-accent);
+  }
+
+  .translation-step-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .translation-step-number {
+    display: inline-grid;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex: 0 0 2.6rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--translation-accent);
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 800;
+  }
+
+  .markdown-guide {
+    padding: 1.25rem;
+    border: 2px solid rgba(79, 70, 229, 0.35);
+    border-radius: 1rem;
+    background: rgba(79, 70, 229, 0.07);
+  }
+
+  .markdown-guide-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .markdown-guide-step {
+    padding: 1rem;
+    border: 2px solid transparent;
+    border-radius: 0.85rem;
+    background: var(--bs-body-bg);
+    opacity: 0.55;
+    transform: translateY(0.25rem);
+    transition: opacity 250ms ease, transform 250ms ease, border-color 250ms ease;
+  }
+
+  .markdown-guide-step.is-active,
+  .markdown-guide-step.is-complete {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .markdown-guide-step.is-active {
+    border-color: var(--translation-accent);
+  }
+
+  .markdown-example {
+    display: block;
+    margin-top: 0.65rem;
+    padding: 0.65rem;
+    border-radius: 0.5rem;
+    background: rgba(148, 163, 184, 0.14);
+    font-size: 1rem;
+  }
+
+  .markdown-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .markdown-toolbar .btn {
+    min-height: 2.75rem;
+    font-weight: 700;
+  }
+
+  .translation-description-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .translation-preview {
+    min-height: 15rem;
+    padding: 1rem;
+    overflow-wrap: anywhere;
+    border: 2px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    background: var(--bs-body-bg);
+  }
+
+  .translation-editor .form-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  .translation-editor .form-control {
+    min-height: 3rem;
+    font-size: 1.05rem;
+  }
+
+  @media (max-width: 900px) {
+    .translation-description-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .markdown-guide-step {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
 </style>
 
 <section class="dashboard-container translation-editor">
@@ -123,9 +239,17 @@
   </section>
 
   <section class="dashboard-panel">
-    <h2 class="text-xl font-semibold mb-2">{{ _('Käännösehdotus') }}</h2>
-    <p class="text-muted mb-3">{{ _('Valitse kohdekieli ja viimeistele julkaistavaksi ehdotettava sisältö.') }}</p>
+    <div class="translation-eyebrow mb-2">{{ _('Käännösehdotus') }}</div>
+    <h2 class="text-xl font-semibold mb-2">{{ _('Tee käännös kolmessa helpossa vaiheessa') }}</h2>
+    <p class="text-muted mb-4">{{ _('Valitse kieli, kirjoita käännös ja lähetä se tarkistettavaksi.') }}</p>
     {% if translation_locales %}
+    <div class="translation-step-heading mb-3">
+      <span class="translation-step-number" aria-hidden="true">1</span>
+      <div>
+        <h3 class="h4 mb-1">{{ _('Valitse käännöksen kieli') }}</h3>
+        <p class="text-muted mb-0">{{ _('Valittu kieli näkyy korostettuna.') }}</p>
+      </div>
+    </div>
     <nav class="translation-language-tabs mb-4" aria-label="{{ _('Kohdekieli') }}">
       {% for locale in translation_locales %}
       <a class="translation-language-tab{% if locale == selected_language %} is-active{% endif %}"
@@ -137,28 +261,83 @@
     </nav>
 
     {% if can_translate_demos and selected_language %}
-    <form method="POST" class="mb-4">
+    <aside class="markdown-guide mb-4" aria-labelledby="markdown-guide-title">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+          <h3 class="h4 mb-1" id="markdown-guide-title">{{ _('Näin muotoilet tekstiä') }}</h3>
+          <p class="text-muted mb-0">{{ _('Markdown on helppo tapa tehdä tekstistä selkeää. Katso kolme esimerkkiä.') }}</p>
+        </div>
+        <button class="btn btn-outline-primary btn-lg" id="replay-markdown-guide" type="button">
+          <i class="fas fa-rotate-right me-1" aria-hidden="true"></i>{{ _('Näytä opastus uudelleen') }}
+        </button>
+      </div>
+      <div class="markdown-guide-steps" id="markdown-guide-steps">
+        <div class="markdown-guide-step" data-guide-step>
+          <strong>{{ _('Lihavoi tärkeä asia') }}</strong>
+          <code class="markdown-example">**{{ _('tärkeä teksti') }}**</code>
+        </div>
+        <div class="markdown-guide-step" data-guide-step>
+          <strong>{{ _('Tee selkeä lista') }}</strong>
+          <code class="markdown-example">- {{ _('ensimmäinen asia') }}<br>- {{ _('toinen asia') }}</code>
+        </div>
+        <div class="markdown-guide-step" data-guide-step>
+          <strong>{{ _('Lisää väliotsikko') }}</strong>
+          <code class="markdown-example">## {{ _('Ohjelma') }}</code>
+        </div>
+      </div>
+      <p class="visually-hidden" id="markdown-guide-status" aria-live="polite"></p>
+    </aside>
+
+    <form method="POST" class="mb-4 translation-step dashboard-panel">
       <input type="hidden" name="language" value="{{ selected_language }}">
       {% if deepl_prefill_active and deepl_suggestion %}
       <input type="hidden" name="suggestion_provider" value="{{ (deepl_suggestion._meta or {}).get('provider', 'deepl') }}">
       <input type="hidden" name="suggestion_source_hash" value="{{ deepl_suggestion_payload.get('source_hash', '') }}">
       <input type="hidden" name="suggestion_auto_generated" value="true">
       {% endif %}
+      <div class="translation-step-heading mb-4">
+        <span class="translation-step-number" aria-hidden="true">2</span>
+        <div>
+          <h3 class="h4 mb-1">{{ _('Kirjoita käännös') }}</h3>
+          <p class="text-muted mb-0">{{ _('Esikatselu näyttää heti, miltä kuvaus näyttää valmiina.') }}</p>
+        </div>
+      </div>
       <div class="mb-3">
         <label for="translated_title" class="form-label">{{ _('Käännetty otsikko') }}</label>
-        <input id="translated_title" name="translated_title" class="form-control" value="{{ form_seed_translation.title or '' }}">
+        <input id="translated_title" name="translated_title" class="form-control form-control-lg" value="{{ form_seed_translation.title or '' }}">
       </div>
       <div class="mb-3">
         <label for="translated_description" class="form-label">{{ _('Käännetty kuvaus') }}</label>
-        <textarea id="translated_description" name="translated_description" class="form-control" rows="8">{{ form_seed_description_markdown }}</textarea>
-        <small class="text-muted">{{ _('Muotoile kuvaus Markdownilla. Se tallennetaan turvallisesti muotoiltuna HTML-sisältönä.') }}</small>
+        <div class="markdown-toolbar" aria-label="{{ _('Tekstin muotoilupainikkeet') }}">
+          <button class="btn btn-outline-secondary" type="button" data-markdown-before="**" data-markdown-after="**">{{ _('Lihavoi') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-line="## ">{{ _('Väliotsikko') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-line="- ">{{ _('Lista') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-before="[" data-markdown-after="](https://)">{{ _('Linkki') }}</button>
+        </div>
+        <div class="translation-description-grid">
+          <div>
+            <textarea id="translated_description" name="translated_description" class="form-control" rows="12" aria-describedby="translated-description-help">{{ form_seed_description_markdown }}</textarea>
+            <p class="text-muted mt-2 mb-0" id="translated-description-help">{{ _('Voit kirjoittaa tavallista tekstiä tai käyttää yllä olevia muotoilupainikkeita.') }}</p>
+          </div>
+          <div>
+            <div class="form-label" id="translation-preview-label">{{ _('Valmiin kuvauksen esikatselu') }}</div>
+            <div class="translation-preview" id="translation-description-preview" aria-labelledby="translation-preview-label" aria-live="polite"></div>
+          </div>
+        </div>
       </div>
       <div class="mb-3">
         <label for="translated_tags" class="form-label">{{ _('Käännetyt tunnisteet') }}</label>
-        <input id="translated_tags" name="translated_tags" class="form-control" value="{{ (form_seed_translation.tags or [])|join(', ') }}">
+        <input id="translated_tags" name="translated_tags" class="form-control form-control-lg" value="{{ (form_seed_translation.tags or [])|join(', ') }}">
         <small class="text-muted">{{ _('Erottele tunnisteet pilkulla.') }}</small>
       </div>
-      <button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistettavaksi') }}</button>
+      <div class="translation-step-heading mt-4 mb-3">
+        <span class="translation-step-number" aria-hidden="true">3</span>
+        <div>
+          <h3 class="h4 mb-1">{{ _('Lähetä käännös tarkistettavaksi') }}</h3>
+          <p class="text-muted mb-0">{{ _('Käännös ei julkaistu heti. Tarkistaja hyväksyy sen ensin.') }}</p>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-lg px-4" type="submit">{{ _('Lähetä tarkistettavaksi') }}</button>
     </form>
     {% endif %}
 
@@ -196,4 +375,5 @@
     {% endif %}
   </section>
 </section>
+<script src="{{ url_for('static', filename='js/translation-editor.js') }}"></script>
 {% endblock %}

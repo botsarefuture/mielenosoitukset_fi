@@ -85,7 +85,7 @@ SUBMIT_ERROR_CODES = {
     "duplicate_conflict": "SUBMIT_DUPLICATE_CONFLICT",
 }
 
-PANIC_MODE = True  # Forced maintenance mode for security remediation
+PANIC_MODE = False  # Forced maintenance mode for security remediation
 
 
 def _normalize_tag_value(tag):

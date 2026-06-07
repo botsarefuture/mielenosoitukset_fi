@@ -30,11 +30,12 @@
                 </label>
                 <div class="form-input-wrapper">
                     <i class="fa-solid fa-user form-input-icon"></i>
-                    <input type="text" id="username" name="username" required minlength="3" class="form-input"
+                    <input type="text" id="username" name="username" required minlength="3" maxlength="30"
+                           pattern="[A-Za-z0-9](?:[A-Za-z0-9_-]*[A-Za-z0-9])?" class="form-input"
                            placeholder="{{ _('Valitse käyttäjätunnus') }}" autocomplete="username">
                 </div>
                 <div id="username-status" class="password-match"></div>
-                <p class="form-hint" id="sillyhint"><i class="fa-solid fa-circle-info"></i>{{ _('Vähintään 3 merkkiä pitkä') }}</p>
+                <p class="form-hint" id="sillyhint"><i class="fa-solid fa-circle-info"></i>{{ _('3–30 merkkiä; kirjaimia, numeroita, alaviivoja ja yhdysmerkkejä') }}</p>
             </div>
 
             <!-- Email -->
@@ -328,7 +329,13 @@ usernameInput.addEventListener("input", () => {
             const currentUname = usernameInput.value.trim();
             if (uname !== lastCheckValue || currentUname.length < 3 || currentUname !== uname) return; // ignore stale response or cleared input
 
-            if (data.available) {
+            if (!resp.ok || data.error) {
+                setUsernameStatus(
+                    USERNAME_STATE.INVALID,
+                    `<i class="fa-solid fa-xmark-circle"></i> ${data.error || "Käyttäjätunnus ei kelpaa"}`,
+                    { color: "#a12a2a" }
+                );
+            } else if (data.available) {
                 setUsernameStatus(
                     USERNAME_STATE.AVAILABLE,
                     '<i class="fa-solid fa-check-circle"></i> Käyttäjätunnus on vapaa',

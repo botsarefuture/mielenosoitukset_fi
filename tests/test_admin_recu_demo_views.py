@@ -49,3 +49,17 @@ def test_edit_recu_demo_prefills_translation_fields(admin_client, db, seeded_dat
     assert 'value="Recurring demo in English"' in page
     assert "English recurring demo description" in page
     assert 'value="recurring, peace"' in page
+
+
+def test_recu_demo_dashboard_lists_demos_with_migrated_city_key(
+    admin_client, db, seeded_data
+):
+    db.recu_demos.update_one(
+        {"_id": seeded_data["recu_demo_id"]},
+        {"$set": {"city_key": "helsinki"}},
+    )
+
+    response = admin_client.get("/admin/recu_demo/")
+
+    assert response.status_code == 200
+    assert "Recurring Test Series" in response.get_data(as_text=True)

@@ -41,6 +41,7 @@ from mielenosoitukset_fi.utils.demo_translation_cache import (
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.wrappers import admin_required, has_demo_permission, permission_required
 from mielenosoitukset_fi.users.models import User
 from .utils import (
@@ -254,7 +255,7 @@ def _collect_translation_proposal_form(language):
     proposal = {
         "language": language,
         "title": (request.form.get("translated_title") or "").strip(),
-        "description": (request.form.get("translated_description") or "").strip(),
+        "description": markdown_to_html(request.form.get("translated_description")),
         "tags": tags,
     }
     provider = (request.form.get("suggestion_provider") or "").strip()
@@ -1775,6 +1776,9 @@ def edit_demo_translations(demo_id):
             form_seed_translation = deepl_suggestion
         else:
             form_seed_translation = approved_translation
+    form_seed_description_markdown = html_to_markdown(
+        form_seed_translation.get("description")
+    )
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/translations_editor.html",
@@ -1789,6 +1793,8 @@ def edit_demo_translations(demo_id):
         deepl_suggestion_payload=deepl_suggestion_payload or {},
         deepl_prefill_active=bool(prefill_mode == "deepl" and deepl_suggestion),
         form_seed_translation=form_seed_translation,
+        form_seed_description_markdown=form_seed_description_markdown,
+        source_description_markdown=html_to_markdown(demo_doc.get("description")),
         is_translation_candidate=demo_is_translation_candidate(demo_doc),
         translation_rows=_translation_summary_rows(demo_doc),
         can_review_demo_translations=_can_review_demo_translations(current_user),

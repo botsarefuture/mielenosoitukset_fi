@@ -6,6 +6,7 @@
 
 ### Changed
 * Language controls now use a compact accessible switcher that keeps visitors on the current page, and the demonstration translation workspace has a clearer status and editing layout without the DeepL generation button.
+* Demonstration descriptions in the translation workspace are now displayed and edited as Markdown while approved content remains stored as safe formatted HTML.
 
 ### Fixed
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.

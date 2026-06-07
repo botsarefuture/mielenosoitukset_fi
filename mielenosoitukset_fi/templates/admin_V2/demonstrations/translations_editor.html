@@ -114,7 +114,7 @@
     </div>
     <div class="mb-3">
       <label class="form-label">{{ _('Kuvaus') }}</label>
-      <div class="translation-source-field" style="min-height: 8rem;">{{ demo.description or '' }}</div>
+      <div class="translation-source-field" style="min-height: 8rem;">{{ source_description_markdown }}</div>
     </div>
     <div class="mb-0">
       <label class="form-label">{{ _('Tunnisteet') }}</label>
@@ -150,7 +150,8 @@
       </div>
       <div class="mb-3">
         <label for="translated_description" class="form-label">{{ _('Käännetty kuvaus') }}</label>
-        <textarea id="translated_description" name="translated_description" class="form-control" rows="8">{{ form_seed_translation.description or '' }}</textarea>
+        <textarea id="translated_description" name="translated_description" class="form-control" rows="8">{{ form_seed_description_markdown }}</textarea>
+        <small class="text-muted">{{ _('Muotoile kuvaus Markdownilla. Se tallennetaan turvallisesti muotoiltuna HTML-sisältönä.') }}</small>
       </div>
       <div class="mb-3">
         <label for="translated_tags" class="form-label">{{ _('Käännetyt tunnisteet') }}</label>

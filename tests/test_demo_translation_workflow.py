@@ -38,6 +38,34 @@ def test_translator_can_open_translation_editor(translator_client, seeded_data):
     assert "Käännösehdotus" in body
 
 
+def test_translation_editor_displays_descriptions_as_markdown(translator_client, db, seeded_data):
+    db.demonstrations.update_one(
+        {"_id": seeded_data["demo_id"]},
+        {
+            "$set": {
+                "description": "<p>Source <strong>bold</strong></p><ul><li>First item</li></ul>",
+                "translation_proposals.en": {
+                    "language": "en",
+                    "title": "English title",
+                    "description": "<p>Proposal <em>emphasis</em></p>",
+                    "tags": [],
+                    "status": "pending",
+                },
+            }
+        },
+    )
+
+    response = translator_client.get(f"/admin/demo/{seeded_data['demo_id']}/translations?language=en")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Source **bold**" in body
+    assert "- First item" in body
+    assert "Proposal *emphasis*" in body
+    assert "<p>Source <strong>bold</strong></p>" not in body
+    assert "<p>Proposal <em>emphasis</em></p>" not in body
+
+
 def test_translator_can_generate_cached_deepl_suggestion(translator_client, db, seeded_data, monkeypatch):
     db.demonstrations.update_one(
         {"_id": seeded_data["demo_id"]},
@@ -127,9 +155,35 @@ def test_translator_can_submit_demo_translation_proposal(translator_client, db, 
     proposal = demo_doc["translation_proposals"]["en"]
     assert proposal["status"] == "pending"
     assert proposal["title"] == "Climate March Helsinki in English"
-    assert proposal["description"] == "An English translation proposal."
+    assert proposal["description"] == "<p>An English translation proposal.</p>"
     assert proposal["tags"] == ["climate", "march"]
     assert proposal["submitted_by"] == str(seeded_data["translator_id"])
+
+
+def test_translation_proposal_stores_markdown_as_safe_html(translator_client, db, seeded_data):
+    demo_id = seeded_data["demo_id"]
+
+    response = translator_client.post(
+        f"/admin/demo/{demo_id}/translations",
+        data={
+            "language": "en",
+            "translated_title": "English title",
+            "translated_description": (
+                "**Important**\n\n- One\n- Two\n\n<script>alert(1)</script>\n\n"
+                "[Unsafe link](javascript:alert(1))"
+            ),
+            "translated_tags": "",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    proposal = db.demonstrations.find_one({"_id": demo_id})["translation_proposals"]["en"]
+    assert "<strong>Important</strong>" in proposal["description"]
+    assert "<li>One</li>" in proposal["description"]
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in proposal["description"]
+    assert "<script>" not in proposal["description"]
+    assert "javascript:" not in proposal["description"]
 
 
 def test_translator_proposal_can_record_deepl_provenance(translator_client, db, seeded_data):

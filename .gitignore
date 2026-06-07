@@ -18,3 +18,4 @@ volume/
 config.compose.dev.yaml
 .playwright-cli
 .codex
+**/.DS_Store

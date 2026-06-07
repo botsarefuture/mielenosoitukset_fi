@@ -1,8 +1,9 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, time
 import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
 from flask_babel import Babel
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.background_jobs import JOB_DEFINITIONS, init_background_jobs
 
@@ -29,7 +30,7 @@ from mielenosoitukset_fi.notifications_bp import notif_bp
 
 import os
 
-from mielenosoitukset_fi.utils.wrappers import depracated_endpoint
+from mielenosoitukset_fi.utils.wrappers import depracated_endpoint, has_demo_permission
 
 from flask_caching import Cache  # Added for caching
 
@@ -106,6 +107,10 @@ def create_app(config_overrides=None) -> Flask:
     # Initialize MongoDB
     db_manager = DatabaseManager().get_instance()
     mongo = db_manager.get_db()
+    if app.config.get("AUTO_RUN_MIGRATIONS", True):
+        from mielenosoitukset_fi.utils.migration_runner import run_auto_migrations
+
+        run_auto_migrations(mongo)
 
     # Initialize Flask-Login
     login_manager = LoginManager()
@@ -144,6 +149,7 @@ def create_app(config_overrides=None) -> Flask:
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
     from developer_bp import developer_bp
+    from mielenosoitukset_fi.mcp_admin_bp import mcp_admin_bp
 
     app.register_blueprint(admin_bp)
     app.register_blueprint(admin_demo_bp)
@@ -160,6 +166,7 @@ def create_app(config_overrides=None) -> Flask:
     
     app.register_blueprint(user_bp, url_prefix="/users/")
     app.register_blueprint(api_bp, url_prefix="/api/")
+    app.register_blueprint(mcp_admin_bp)
     app.register_blueprint(developer_bp, url_prefix="/developer")
     
     
@@ -167,8 +174,7 @@ def create_app(config_overrides=None) -> Flask:
     app.register_blueprint(notif_bp)
     from flask_babel import format_timedelta, get_locale
     def timeago(dt):
-        from datetime import datetime
-        return format_timedelta(datetime.utcnow() - dt,
+        return format_timedelta(utcnow() - dt,
                                 locale=str(get_locale()),
                                 granularity='minute')
     app.jinja_env.filters["timeago"] = timeago
@@ -319,6 +325,12 @@ def create_app(config_overrides=None) -> Flask:
                 }).sort("created_at", -1)
             )
             for demo in waiting_demos:
+                if not getattr(current_user, "global_admin", False) and not has_demo_permission(
+                    current_user,
+                    demo["_id"],
+                    "LIST_DEMOS",
+                ):
+                    continue
                 tasks.append({
                     "type": "demo",
                     "id": str(demo["_id"]),
@@ -335,6 +347,11 @@ def create_app(config_overrides=None) -> Flask:
         }).sort("created_at", -1)
             )
             for s in org_suggestions:
+                if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
+                    "EDIT_ORGANIZATION",
+                    s["organization_id"],
+                ):
+                    continue
                 org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
                 org_name = org["name"] if org else "Tuntematon organisaatio"
                 tasks.append({

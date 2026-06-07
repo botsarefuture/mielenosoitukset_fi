@@ -651,15 +651,6 @@
                             const newPoint = routeInput.value.trim();
                             if (newPoint === '') return;
 
-                            // Avoid duplicates (case insensitive)
-                            const existingPoints = Array.from(routeWrapper.querySelectorAll('input[name="route[]"]'))
-                                .map(input => input.value.toLowerCase());
-                            if (existingPoints.includes(newPoint.toLowerCase())) {
-                                alert('{{ _("Reittipiste on jo lisätty.") }}');
-                                routeInput.value = '';
-                                return;
-                            }
-
                             const newRouteElem = createRouteElement(newPoint);
                             routeWrapper.insertBefore(newRouteElem, routeInput);
                             routeInput.value = '';

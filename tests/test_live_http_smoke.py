@@ -13,7 +13,6 @@ def test_public_pages_render_over_real_http(app, db, live_server):
         index_body = index_response.read().decode("utf-8")
         assert index_response.status == 200
     assert "demos-grid" in index_body
-    assert "buttons-div" in index_body
     assert "Ilmoita mielenosoituksesta" in index_body
 
     with urlopen(

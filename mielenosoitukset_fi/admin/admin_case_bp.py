@@ -1,4 +1,5 @@
 import sys
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 import logging
 from bson.objectid import ObjectId
@@ -64,7 +65,7 @@ def cases():
         if reason:
             case_obj._add_history_entry(
                 {
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": utcnow(),
                     "action": "Tapaus suljettu automaattisesti",
                     "user": getattr(current_user, "username", "system"),
                     "mech_action": "auto_close",
@@ -78,7 +79,7 @@ def cases():
                     "$set": {
                         "meta.closed": True,
                         "meta.closed_reason": reason,
-                        "updated_at": datetime.utcnow(),
+                        "updated_at": utcnow(),
                     }
                 },
             )
@@ -205,7 +206,7 @@ def add_action(case_id):
         "user": current_user.username,
         "action_type": action_type,
         "reason": reason,
-        "timestamp": datetime.utcnow()
+        "timestamp": utcnow()
     }
 
     mongo.cases.update_one(
@@ -238,7 +239,7 @@ def close_case(case_id):
         return jsonify({"success": False, "error": "Syytä ei annettu."}), 400
 
     case._add_history_entry({
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "action": "Tapaus suljettu",
         "user": current_user.username,
         "mech_action": "close_case",
@@ -251,7 +252,7 @@ def close_case(case_id):
 
     mongo.cases.update_one(
         {"_id": ObjectId(case_id)},
-        {"$set": {"meta.closed": True, "updated_at": datetime.utcnow()}}
+        {"$set": {"meta.closed": True, "updated_at": utcnow()}}
     )
 
     flash_message(_("Tapaus suljettu."), "success")
@@ -274,7 +275,7 @@ def reopen_case(case_id):
         return jsonify({"success": False, "error": "Syytä ei annettu."}), 400
 
     case._add_history_entry({
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "action": "Tapaus avattu uudelleen",
         "user": current_user.username,
         "mech_action": "reopen_case",
@@ -287,7 +288,7 @@ def reopen_case(case_id):
 
     mongo.cases.update_one(
         {"_id": ObjectId(case_id)},
-        {"$set": {"meta.closed": False, "updated_at": datetime.utcnow()}}
+        {"$set": {"meta.closed": False, "updated_at": utcnow()}}
     )
 
     flash_message(_("Tapaus avattu uudelleen."), "success")
@@ -421,7 +422,7 @@ def demo_action(case_id):
         "user": current_user.username,
         "action_type": action_type,
         "reason": action_reason,
-        "timestamp": datetime.utcnow()
+        "timestamp": utcnow()
     }
     mongo.cases.update_one(
         {"_id": ObjectId(case_id)},
@@ -470,7 +471,7 @@ def approve_cancellation(case_id):
         logger.exception("Failed to approve cancellation for case %s", case_id)
         return jsonify({"success": False, "error": "Peruutuksen hyväksyntä epäonnistui."}), 500
 
-    timestamp = datetime.utcnow()
+    timestamp = utcnow()
     mongo.cases.update_one(
         {"_id": case._id},
         {
@@ -530,7 +531,7 @@ def demo_escalate(case_id):
         "user": current_user.username,
         "action_type": "escalate_demo",
         "reason": "Demo status needs superior review",
-        "timestamp": datetime.utcnow()
+        "timestamp": utcnow()
     }
     mongo.cases.update_one(
         {"_id": ObjectId(case_id)},
@@ -551,7 +552,7 @@ def deescalate_case(case_id):
         return jsonify({"success": False, "error": "Case not found."}), 404
 
     try:
-        timestamp = datetime.utcnow()
+        timestamp = utcnow()
 
         # Update the case: remove superior_needed and append logs
         mongo.cases.update_one(

@@ -7,6 +7,7 @@ Run from repository root:
     python3 mielenosoitukset_fi/scripts/migrate_set_last_modified.py
 
 """
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.utils.logger import logger
@@ -15,7 +16,7 @@ from mielenosoitukset_fi.utils.database import get_database_manager
 
 def main():
     db = get_database_manager()
-    now = datetime.utcnow()
+    now = utcnow()
 
     # Update all documents in the `demonstrations` collection
     result = db["demonstrations"].update_many({}, {"$set": {"last_modified": now}})

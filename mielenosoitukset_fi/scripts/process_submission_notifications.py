@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
@@ -7,6 +8,7 @@ from bson import ObjectId
 from pymongo import ASCENDING, ReturnDocument
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
+from mielenosoitukset_fi.emailer.EmailJob import EmailJob
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.admin.admin_demo_bp import (
@@ -33,12 +35,15 @@ def _send_messages(messages: List[Dict[str, Any]]) -> int:
         if not template or not recipients or not subject:
             continue
 
-        email_sender.queue_email(
-            template_name=template,
+        rendered_body = email_sender._env.get_template(template).render(context)
+        email_job = EmailJob(
             subject=subject,
             recipients=recipients,
-            context=context,
+            body=rendered_body,
+            html=rendered_body,
+            instance_id=email_sender._instance_id,
         )
+        email_sender.send_email(email_job, raise_on_error=True)
         sent += 1
     return sent
 
@@ -58,10 +63,10 @@ def _pending_admin_job_exists(queue, demo_id: ObjectId) -> bool:
 def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
     """Ensure pending demos trigger at-least-daily reminders."""
     queue = db["demo_notifications_queue"]
-    now = datetime.utcnow()
+    now = utcnow()
     cutoff = now - timedelta(hours=24)
 
-    today = datetime.utcnow().date()
+    today = utcnow().date()
 
     query = {
         "$and": [
@@ -140,7 +145,7 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
                 {
                     "demo_id": demo_id,
                     "status": "pending",
-                    "created_at": datetime.utcnow(),
+                    "created_at": utcnow(),
                     "notification_type": "admin_pending_reminder",
                     "marks_admin_contact": True,
                     "messages": [message],
@@ -164,7 +169,7 @@ def _mark_admin_contact(db, demo_id):
             return
     db.demonstrations.update_one(
         {"_id": demo_id},
-        {"$set": {"admin_notification_last_sent_at": datetime.utcnow()}},
+        {"$set": {"admin_notification_last_sent_at": utcnow()}},
     )
 
 
@@ -188,8 +193,8 @@ def run(max_jobs: int = 25):
             {
                 "$set": {
                     "status": "processing",
-                    "processing_started_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow(),
+                    "processing_started_at": utcnow(),
+                    "updated_at": utcnow(),
                 }
             },
             sort=[("created_at", ASCENDING)],
@@ -208,9 +213,9 @@ def run(max_jobs: int = 25):
                 {
                     "$set": {
                         "status": "completed",
-                        "processed_at": datetime.utcnow(),
+                        "processed_at": utcnow(),
                         "messages_sent": sent_count,
-                        "updated_at": datetime.utcnow(),
+                        "updated_at": utcnow(),
                     }
                 },
             )
@@ -222,7 +227,7 @@ def run(max_jobs: int = 25):
                     "$set": {
                         "status": "error",
                         "error": str(exc),
-                        "updated_at": datetime.utcnow(),
+                        "updated_at": utcnow(),
                     }
                 },
             )

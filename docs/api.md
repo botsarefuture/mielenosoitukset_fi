@@ -328,8 +328,10 @@ Body:
 
 Notes:
 - `type` can be `short` or `long` (long is typically created via exchange; short = 48h, long = 90d).
-- `scopes` can include `read`, `write`, `admin`.
-- If you request `admin` scope without admin rights, it is removed automatically.
+- `scopes` must be a JSON list containing supported scope names.
+- Supported scopes are `read`, `write`, `submit_demonstrations`, `admin`, and `mcp.admin`.
+- `admin` and `mcp.admin` are privileged scopes and are rejected unless the requesting user is a global administrator.
+- Admin MCP requires `mcp.admin`; ordinary `read`, `write`, or `admin` API tokens cannot connect to it.
 - The raw token is returned **only once**.
 
 Response:

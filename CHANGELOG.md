@@ -4,6 +4,14 @@
 
 ## UNRELEASED
 
+### Fixed
+* Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
+* Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
+* Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
+* The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.
+* Demonstration detail galleries now avoid aggressively upscaling undersized event photos, presenting them sharply over a softened backdrop instead; new uploads keep more JPEG detail and respect camera orientation, and public image guidance now recommends dimensions that match the wide gallery layout.
+* Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
+
 ### Added
 * Added the first multilingual demonstration data-model foundation: `Demonstration` now supports `default_language`, a `translations` map, and helper methods for localized title/description/tag access without breaking existing base fields.
 * Added shared demo-localization helpers so multilingual title, description, and tag resolution can be reused consistently from both `Demonstration` objects and plain demonstration dictionaries.
@@ -26,6 +34,16 @@
 * Adminiin lisättiin erillinen käyttöliittymäkäännösten GitHub-sync-dashboard suodatuksilla ja bulk-retryllä, jotta epäonnistuneet branch/PR-syncit voidaan hallita yhdestä näkymästä.
 * UI-käännösten approve/reject/requeue action-URL:t ohjaavat nyt turvallisesti takaisin editoriin tai listaan, jos niitä avataan selaimessa GET-linkkinä, joten preview ei enää kaadu 500-sivulle vahingossa avatusta toimintalinkistä.
 * UI-käännöseditori käsittelee nyt puuttuvat tai erikoisesti enkoodatut gettext-avaimet turvallisesti ja avaa annetun oikean catalog-rivin myös suoraan querystring-URL:sta ilman previewssa nähtyä 500-virhettä.
+* Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
+* Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
+* Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
+* Pinned the Docker Compose development LocalStack image to a community release so local S3 startup no longer depends on a floating image that may require a commercial auth token.
+* Docker Compose development now points the app at `config.compose.dev.yaml` through `CONFIG_YAML_PATH`, avoiding a nested bind mount that can prevent the backend container from starting on Docker Desktop.
+* Added a token-protected admin MCP endpoint at `/api/admin/mcp` with foundation tools for listing, reading, creating, and updating demonstrations, organizations, and support cases so AI agents can begin driving core admin dashboard work without browser automation.
+* Added `scripts/hash_admin_mcp_token.py` and `docs/admin_mcp.md` to help provision hashed MCP bearer tokens safely instead of storing raw admin-control tokens in config.
+* Admin MCP now also accepts OAuth-style bearer tokens validated from configured JWT claims (`iss`, `aud`, scopes), making it compatible with the OpenAI MCP bearer-token pattern instead of requiring only project-specific static tokens.
+* Admin MCP now also accepts the repository's existing API tokens directly, so the easiest supported login path is to create a normal user/app API token and pass it to OpenAI as the MCP bearer token.
+* Admin MCP now exposes OAuth discovery, dynamic client registration, an admin consent screen, and PKCE-backed authorization-code token exchange, so ChatGPT developer mode can connect with the OpenAI-supported OAuth login flow instead of requiring only manual bearer token provisioning.
 * Public demo submission now asks for explicit confirmation when a possible duplicate is detected, instead of silently retrying the submission and making successful sends look broken.
 * Public demo submission duplicate warnings are now less trigger-happy on weak title similarity, so real users are less likely to get blocked by false duplicate alarms.
 * `/ohjeet/` now includes clearer submission troubleshooting advice, including when to retry and what details to send to support, and the public submit form now links directly to that help.
@@ -74,11 +92,17 @@
 * Pride-kortit näyttävät oikein tyylitettyinä (tagit, ikonit, värit) lisäämällä puuttuvan `css/demo.css`-tyylin kampanjasivulle.
 * Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
+* Docker Compose development now uses Mailpit for local SMTP testing and exposes Redis alongside the app dependencies, making the dev stack closer to the test stack.
 
 ### Fixed
 * Demojen käännöstyöjono piilottaa menneet mielenosoitukset oletuksena ja näyttää ne vain erikseen pyydettäessä, jotta kääntäjien näkymä pysyy keskittyneenä aktiivisiin tapahtumiin.
 * UI-käännösehdotusten lähetys torjuu nyt virheelliset locale-polut siististi 404:llä FileNotFound-virheen sijaan, joten admin-route smoke- ja oikeat virhepolut eivät enää kaadu palvelinvirheeseen.
 * Mielenosoituksen detail-sivun HTML-cache käyttää nyt samaa resolved localea kuin itse renderöinti, jotta eri kieliversiot eivät vuoda toistensa yli vaikka hakulistaus näyttäisi oikean kielen.
+* City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.
+* Runtime models and user/profile helpers now resolve the active MongoDB database per operation, preventing stale database handles after app/test database resets.
+* Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
+* User settings change notifications now have the missing `auth/settings_changed.html` email template, preventing settings updates from reporting a template lookup error.
+* New demonstration admin notification emails are now sent directly during the background notification job instead of being re-queued into a second email worker queue, so failed admin alert deliveries are surfaced as job errors instead of being silently marked complete.
 * PR preview workflow now posts an immediate spinning-up comment before building the preview, then edits the same comment into the final live URL once deploy completes.
 * PR preview workflow now stages the deploy script under the dedicated preview user's home directory instead of `/tmp`, avoiding permission failures on the server-side copy step.
 * Recurring demo admin create/edit now preserve organizer data even if organizer cards are removed and re-added out of sequence, and the shared recurring description editor now loads its real CKEditor initializer.
@@ -149,6 +173,7 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Redesigned `/ohjeet` into a clearer documentation-style guide with blue and orange site branding, a scannable table of contents, step-by-step submission help, improved troubleshooting, and mobile-friendly sections.
 * Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
 
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.

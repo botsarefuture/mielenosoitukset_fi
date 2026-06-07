@@ -1,6 +1,7 @@
 from copy import deepcopy
 from flask import current_app, jsonify, redirect, request, Blueprint, url_for, session
 from bson.objectid import ObjectId
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from flask_caching import Cache
 from flask_cors import CORS
@@ -362,7 +363,7 @@ def list_demonstrations():
         "next_url": next_url,
         "prev_url": prev_url,
         "results": paginated,
-        "rendered_at": datetime.utcnow().isoformat() + "Z",
+        "rendered_at": utcnow().isoformat() + "Z",
         "cached": True  # mark as cached
     }
 
@@ -744,7 +745,7 @@ def invite_friends(demo_id):
                 "demo_id":   demo_obj_id,
                 "inviter_id": inviter_id,
                 "friend_id":  fid_obj,
-                "created_at": datetime.utcnow(),
+                "created_at": utcnow(),
             })
             inserted.append(fid)
 
@@ -771,7 +772,7 @@ def invite_friends(demo_id):
                     "demo_title": demo_title,
                     "inviter_name": inviter_name,
                 },
-                "created_at": datetime.utcnow(),
+                "created_at": utcnow(),
                 "read": False,
             }
             msg_id = mongo.messages.insert_one(msg).inserted_id

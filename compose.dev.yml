@@ -22,6 +22,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - DEBUG=1
+      - CONFIG_YAML_PATH=/app/config.compose.dev.yaml
     depends_on:
       mongo:
         condition: service_healthy
@@ -31,7 +32,6 @@ services:
         condition: service_completed_successfully
     volumes:
       - .:/app
-      - ./config.compose.dev.yaml:/app/config.yaml
     restart: unless-stopped
 
   mongo:
@@ -61,9 +61,20 @@ services:
       start_period: 30s
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
-    image: localstack/localstack
+    image: localstack/localstack:3.8.1
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
@@ -77,7 +88,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
 
   localstack-init:
-    image: localstack/localstack
+    image: localstack/localstack:3.8.1
     depends_on:
       localstack:
         condition: service_healthy
@@ -92,11 +103,19 @@ services:
       "
 
   mailserver:
-    image: reachfive/fake-smtp-server
+    container_name: mailpit
+    restart: unless-stopped
+    image: axllent/mailpit:v1.21.5
+    volumes:
+      - ./data:/data
     ports:
-      - "127.0.0.1:8025:1025"
-      - "127.0.0.1:1080:1080"
-
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8085:8025"
+    environment:
+        MP_MAX_MESSAGES: 50
+        MP_DATABASE: /data/mailpit.db
+        MP_SMTP_AUTH_ACCEPT_ANY: 1
+        MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
 volumes:
   mongo_data:

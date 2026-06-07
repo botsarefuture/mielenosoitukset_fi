@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 import os
 import threading
@@ -58,7 +59,7 @@ def save_demo_history(demo_id, old_data, new_data, case_id=None, actor: Optional
         result = mongo.demo_edit_history.insert_one({
             "demo_id": str(demo_id),
             "edited_by": actor_data.get("user_id") or "unknown",
-            "edited_at": datetime.utcnow(),
+            "edited_at": utcnow(),
             "old_demo": deepcopy(old_data),
             "new_demo": deepcopy(new_data),
             "diff": None,  # placeholder for future rollups
@@ -94,7 +95,7 @@ def log_demo_audit_entry(
         "action": action,
         "message": message or action,
         "details": details or {},
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "user_id": actor_data.get("user_id"),
         "username": actor_data.get("username"),
         "email": actor_data.get("email"),
@@ -172,7 +173,7 @@ def log_super_audit(
     doc: Dict[str, Any] = {
         "event": event_type,
         "payload": payload or {},
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "actor": _resolve_actor(actor),
         "process": _process_metadata(),
     }

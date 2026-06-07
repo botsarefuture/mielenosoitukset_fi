@@ -7,6 +7,7 @@ from flask_login import login_required
 from mielenosoitukset_fi.utils.flashing import flash_message
 
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer
+from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
 
@@ -305,6 +306,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "tags": tags,
         "facebook": facebook,
         "city": city,
+        "city_key": normalize_city_key(city),
         "address": address,
         "event_type": event_type,
         "route": route,

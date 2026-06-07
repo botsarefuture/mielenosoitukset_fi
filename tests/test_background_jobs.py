@@ -1,3 +1,6 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
+from datetime import datetime
+
 from bson import ObjectId
 from pymongo import DeleteMany, DeleteOne, InsertOne, ReplaceOne, UpdateMany, UpdateOne
 import pytest
@@ -371,3 +374,118 @@ def test_merge_duplicate_submissions_repoints_references_and_audits(db):
     duplicate_actions = _audit_actions_for_demo(db, duplicate_id)
     assert "merge_duplicate_submission" in primary_actions
     assert "merged_into_duplicate_submission" in duplicate_actions
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_submit_notifications_sends_admin_notifications_immediately(db, monkeypatch):
+    from mielenosoitukset_fi.scripts import process_submission_notifications as script
+
+    db.demo_notifications_queue.delete_many({})
+    demo_id = ObjectId()
+    db.demonstrations.insert_one(_demo_doc(demo_id, "Queued Admin Notification Demo"))
+    db.demo_notifications_queue.insert_one(
+        {
+            "_id": ObjectId(),
+            "demo_id": demo_id,
+            "status": "pending",
+            "created_at": utcnow(),
+            "marks_admin_contact": True,
+            "messages": [
+                {
+                    "template_name": "admin_demo_approve_notification.html",
+                    "subject": "Uusi demo odottaa hyväksyntää",
+                    "recipients": ["tuki@mielenosoitukset.fi"],
+                    "context": {
+                        "title": "Queued Admin Notification Demo",
+                        "date": "2026-05-01",
+                        "city": "Helsinki",
+                        "address": "Mannerheimintie 1, Helsinki",
+                        "submitter_name": "Submitter Example",
+                        "submitter_email": "submitter@example.test",
+                        "submitter_role": "organizer",
+                        "approve_link": "https://example.test/approve",
+                        "preview_link": "https://example.test/preview",
+                        "reject_link": "https://example.test/reject",
+                    },
+                }
+            ],
+        }
+    )
+
+    sent_jobs = []
+
+    def fake_send_email(email_job, raise_on_error=False):
+        sent_jobs.append({"job": email_job, "raise_on_error": raise_on_error})
+        return True
+
+    monkeypatch.setattr(script.email_sender, "send_email", fake_send_email)
+    monkeypatch.setattr(script, "merge_duplicate_submissions", lambda db, max_groups=25: 0)
+    monkeypatch.setattr(script, "_enqueue_admin_reminders", lambda db: None)
+
+    script.run(max_jobs=1)
+
+    queue_job = db.demo_notifications_queue.find_one({"demo_id": demo_id})
+    assert queue_job["status"] == "completed"
+    assert queue_job["messages_sent"] == 1
+    assert len(sent_jobs) == 1
+    assert sent_jobs[0]["job"].recipients == ["tuki@mielenosoitukset.fi"]
+    assert sent_jobs[0]["raise_on_error"] is True
+
+    demo = db.demonstrations.find_one({"_id": demo_id})
+    assert demo.get("admin_notification_last_sent_at") is not None
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, monkeypatch):
+    from mielenosoitukset_fi.scripts import process_submission_notifications as script
+
+    db.demo_notifications_queue.delete_many({})
+    demo_id = ObjectId()
+    db.demonstrations.insert_one(_demo_doc(demo_id, "Broken Admin Notification Demo"))
+    job_id = ObjectId()
+    db.demo_notifications_queue.insert_one(
+        {
+            "_id": job_id,
+            "demo_id": demo_id,
+            "status": "pending",
+            "created_at": utcnow(),
+            "marks_admin_contact": True,
+            "messages": [
+                {
+                    "template_name": "admin_demo_approve_notification.html",
+                    "subject": "Uusi demo odottaa hyväksyntää",
+                    "recipients": ["tuki@mielenosoitukset.fi"],
+                    "context": {
+                        "title": "Broken Admin Notification Demo",
+                        "date": "2026-05-01",
+                        "city": "Helsinki",
+                        "address": "Mannerheimintie 1, Helsinki",
+                        "submitter_name": "Submitter Example",
+                        "submitter_email": "submitter@example.test",
+                        "submitter_role": "organizer",
+                        "approve_link": "https://example.test/approve",
+                        "preview_link": "https://example.test/preview",
+                        "reject_link": "https://example.test/reject",
+                    },
+                }
+            ],
+        }
+    )
+
+    def fake_send_email(email_job, raise_on_error=False):
+        raise RuntimeError("smtp down")
+
+    monkeypatch.setattr(script.email_sender, "send_email", fake_send_email)
+    monkeypatch.setattr(script, "merge_duplicate_submissions", lambda db, max_groups=25: 0)
+    monkeypatch.setattr(script, "_enqueue_admin_reminders", lambda db: None)
+
+    script.run(max_jobs=1)
+
+    queue_job = db.demo_notifications_queue.find_one({"_id": job_id})
+    assert queue_job["status"] == "error"
+    assert "smtp down" in queue_job["error"]
+
+    demo = db.demonstrations.find_one({"_id": demo_id})
+    assert demo.get("admin_notification_last_sent_at") is None

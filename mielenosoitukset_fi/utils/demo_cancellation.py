@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 
@@ -88,8 +89,8 @@ def queue_cancellation_links_for_demo(demo_doc: dict) -> None:
             "organizer_name": organizer.get("name"),
             "organization_id": organizer.get("organization_id"),
             "official_contact": official_contact,
-            "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(days=TOKEN_EXPIRY_DAYS),
+            "created_at": utcnow(),
+            "expires_at": utcnow() + timedelta(days=TOKEN_EXPIRY_DAYS),
             "used_at": None,
         }
 
@@ -133,7 +134,7 @@ def fetch_cancellation_token(token: str) -> Optional[dict]:
 
 
 def mark_token_used(record_id: ObjectId, reason: Optional[str] = None) -> None:
-    updates: Dict[str, object] = {"used_at": datetime.utcnow()}
+    updates: Dict[str, object] = {"used_at": utcnow()}
     if reason:
         updates["used_reason"] = reason
     mongo[TOKEN_COLLECTION].update_one({"_id": record_id}, {"$set": updates})
@@ -151,7 +152,7 @@ def request_cancellation_case(
     demo_id = _object_id(demo_doc.get("_id"))
     update_doc = {
         "cancellation_requested": True,
-        "cancellation_requested_at": datetime.utcnow(),
+        "cancellation_requested_at": utcnow(),
         "cancellation_request_source": source,
         "cancellation_requested_by": {
             "email": requester_email,
@@ -178,7 +179,7 @@ def request_cancellation_case(
     if case:
         case._add_history_entry(
             {
-                "timestamp": datetime.utcnow(),
+                "timestamp": utcnow(),
                 "action": "cancellation_requested",
                 "mech_action": source,
                 "metadata": {
@@ -282,7 +283,7 @@ def cancel_demo(
 
     update_doc = {
         "cancelled": True,
-        "cancelled_at": datetime.utcnow(),
+        "cancelled_at": utcnow(),
         "cancelled_by": cancelled_by,
         "cancellation_requested": False,
     }
@@ -306,7 +307,7 @@ def cancel_demo(
         if case:
             case._add_history_entry(
                 {
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": utcnow(),
                     "action": "cancelled",
                     "mech_action": cancelled_by.get("source", "manual"),
                     "metadata": {"reason": reason, "cancelled_by": cancelled_by},

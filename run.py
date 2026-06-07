@@ -1,5 +1,9 @@
 import os
 import sys
+
+if sys.version_info < (3, 12):
+    raise RuntimeError("Mielenosoitukset.fi requires Python 3.12 or newer.")
+
 from mielenosoitukset_fi.app import create_app
 from mielenosoitukset_fi.scripts.send_demo_reminders import send_reminders_scheduled as send_reminders
 

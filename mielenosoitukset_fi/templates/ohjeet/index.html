@@ -1,171 +1,539 @@
 {% extends "base.html" %}
 
-{% block title %}Ohjeita järjestäjille{% endblock %}
+{% block title %}Ohjeet järjestäjille{% endblock %}
+
+{% block meta %}
+<meta name="description" content="Selkeät ohjeet mielenosoituksen ilmoittamiseen, tapahtumakuviin ja organisaatiotileihin." />
+{% endblock %}
 
 {% block content %}
-<main class="guide-container">
-  <section class="guide-hero">
-    <p class="guide-badge">Ohjekeskus</p>
-    <h1>Selkeät ohjeet kaikille järjestäjille</h1>
-    <p>
-      Tältä sivulta löydät pähkinänkuoressa sen, mitä tarvitset onnistuaksesi: miten saat siistin kuvan tapahtumallesi,
-      missä kuva näkyy sivustolla ja kuinka organisaatiot saavat omat käyttäjätilit. Tekniset yksityiskohdat hoidamme
-      puolestasi – sinun tehtäväsi on keskittyä itse tapahtumaan.
-    </p>
-  </section>
-
-  <section class="guide-card" id="image-usage">
-    <h2>Missä esikatselukuva näkyy?</h2>
-    <div class="guide-grid">
-      <article>
-        <h3>Etusivun kortit</h3>
-        <p>Tietokoneella selaillessa jokainen tapahtumakortti näyttää kansikuvan. Jos omaa kuvaa ei ole, käytämme
-          automaattisesti luotua neliötä.</p>
-      </article>
-      <article>
-        <h3>Mobiilin kalenterilista</h3>
-        <p>Puhelimessa näkyy kortin yläosa. Pidä siis tärkeimmät sanat ja logot kuvan keskellä, jotta ne eivät mene
-          leikkausvaraan.</p>
-      </article>
-      <article>
-        <h3>Tapahtumasivu ja jaot</h3>
-        <p>Kun avaat yksittäisen tapahtuman tai jaat linkin Mastodoniin tai muualle someen, sama kuva kulkee linkin
-          mukana. Siksi kontrasti on tärkeää.</p>
-      </article>
-      <article>
-        <h3>Ladattava materiaali</h3>
-        <p>“Lataa materiaali” -painike antaa saman kuvan myös tukijoille ja vapaaehtoisille, jotta kaikki voivat jakaa
-          tietoa helposti.</p>
-      </article>
+<div class="guide-page">
+  <header class="guide-hero">
+    <div class="guide-hero-content">
+      <p class="guide-eyebrow"><i class="fas fa-book-open" aria-hidden="true"></i> Ohjekeskus</p>
+      <h1>Selkeät ohjeet kaikille järjestäjille</h1>
+      <p class="guide-lead">
+        Ilmoita tapahtuma onnistuneesti, valitse toimiva kuva ja löydä apu nopeasti.
+        Aloita alta tai siirry suoraan tarvitsemaasi ohjeeseen.
+      </p>
+      <div class="guide-hero-actions">
+        <a class="guide-button guide-button-primary" href="{{ url_for('submit') }}">
+          <i class="fas fa-bullhorn" aria-hidden="true"></i>
+          Ilmoita mielenosoitus
+        </a>
+        <a class="guide-button guide-button-secondary" href="#submit-checklist">
+          Katso tarkistuslista
+          <i class="fas fa-arrow-down" aria-hidden="true"></i>
+        </a>
+      </div>
     </div>
-  </section>
+    <div class="guide-hero-summary" aria-label="Ohjeen tärkeimmät vaiheet">
+      <p class="guide-summary-title">Onnistunut ilmoitus kolmessa vaiheessa</p>
+      <ol>
+        <li><span>1</span><div><strong>Tarkista perustiedot</strong><small>Nimi, aika, paikka ja yhteystiedot</small></div></li>
+        <li><span>2</span><div><strong>Lisää selkeä kuva</strong><small>Suositus vähintään 1200 × 675 px</small></div></li>
+        <li><span>3</span><div><strong>Lähetä ja seuraa sähköpostia</strong><small>Otamme yhteyttä, jos tarvitsemme lisätietoja</small></div></li>
+      </ol>
+    </div>
+  </header>
 
-  <section class="guide-card" id="image-spec">
-    <h2>Hyvä kuva pähkinänkuoressa</h2>
-    <ul class="guide-list">
-      <li><strong>Koko:</strong> 1080 × 1080 pikseliä (Instagram-tyylinen neliö).</li>
-      <li><strong>Turva-alue:</strong> jätä reunoille hieman tyhjää niin, ettei teksti leikkaudu puhelimessa.</li>
-      <li><strong>Kontrasti:</strong> vaalea teksti tummalla tai päinvastoin. Jos luet tekstin yhdellä vilkaisulla, se on
-        hyvä.</li>
-      <li><strong>Tekstin määrä:</strong> yksi pääotsikko ja lyhyt lisärivi. Vältä pitkiä selostuksia kuvassa.</li>
-      <li><strong>Tiedostomuoto:</strong> PNG tai JPG toimii. Automaattinen työkalu tekee puolestasi PNG:n.</li>
-    </ul>
-  </section>
+  <div class="guide-layout">
+    <aside class="guide-sidebar">
+      <nav class="guide-nav" aria-label="Ohjesivun sisällysluettelo">
+        <p>Sisällys</p>
+        <a href="#getting-started"><i class="fas fa-play-circle" aria-hidden="true"></i> Aloita tästä</a>
+        <a href="#submit-checklist"><i class="fas fa-check-circle" aria-hidden="true"></i> Tarkistuslista</a>
+        <a href="#submit-help"><i class="fas fa-life-ring" aria-hidden="true"></i> Lähetys ei onnistu</a>
+        <a href="#image-guide"><i class="fas fa-image" aria-hidden="true"></i> Tapahtumakuva</a>
+        <a href="#org-help"><i class="fas fa-users" aria-hidden="true"></i> Organisaatiotilit</a>
+        <a href="#faq"><i class="fas fa-question-circle" aria-hidden="true"></i> Usein kysyttyä</a>
+      </nav>
+      <div class="guide-support-card">
+        <i class="fas fa-headset" aria-hidden="true"></i>
+        <strong>Tarvitsetko apua?</strong>
+        <p>Kerro tapahtuman nimi, päivä ja paikkakunta, niin pääsemme nopeasti alkuun.</p>
+        <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a>
+      </div>
+    </aside>
 
-  <section class="guide-card" id="auto-preview">
-    <h2>Automaattinen kuva</h2>
-    <p>
-      Jos et lähetä omaa kuvaa, järjestelmä luo tummaan taustaan perustuvan kuvan, jossa on vaalea kehys ja yksi
-      korosteväri. Siinä näkyy tapahtuman nimi, sijainti, ajankohta sekä enintään kolme tärkeintä tunnistetta. Näin kuva
-      toimii sekä vaalealla että tummalla taustalla ja näyttää hyvältä sekä puhelimessa että työpöydällä.
-    </p>
-    <p>
-      Kuva päivittyy automaattisesti, kun tapahtuma hyväksytään tai kun ylläpito luo sen uudelleen. Voit aina korvata sen
-      myöhemmin lisäämällä oman kansikuvan tapahtuman tietoihin.
-    </p>
-  </section>
+    <main class="guide-content">
+      <section class="guide-section" id="getting-started">
+        <div class="guide-section-heading">
+          <span class="guide-section-number">01</span>
+          <div>
+            <p class="guide-kicker">Aloita tästä</p>
+            <h2>Näin ilmoitat mielenosoituksen</h2>
+            <p>Ilmoittaminen onnistuu ilman käyttäjätiliä. Varaa muutama minuutti ja pidä tapahtuman perustiedot valmiina.</p>
+          </div>
+        </div>
 
-  <section class="guide-card" id="org-help">
-    <h2>Organisaatiotilit</h2>
-    <p>
-      Jos edustat järjestöä, verkostoa tai muuta toimijaa, saat oman organisaatioprofiilin ottamalla yhteyttä tukeen.
-      Lähetä sähköpostia osoitteeseen <a href="mailto:tuki@mielenosoitukset.fi">tuki@mielenosoitukset.fi</a> ja kerro:
-    </p>
-    <ul class="guide-list">
-      <li>organisaation nimi</li>
-      <li>virallinen sähköpostiosoite</li>
-      <li>verkkosivu (jos löytyy)</li>
-      <li>lyhyt kuvaus toiminnasta</li>
-      <li>mahdolliset some-kanavat</li>
-      <li>henkilöiden nimet ja sähköpostit, jotka haluat kutsua organisaatioon.</li>
-    </ul>
-    <p>
-      Tuemme käyttöä ja lisäämme kutsut manuaalisesti. Kun profiili on valmis, saat sähköpostin ja voit alkaa hallita
-      tapahtumia organisaation nimissä.
-    </p>
-  </section>
+        <ol class="guide-steps">
+          <li>
+            <span class="guide-step-number">1</span>
+            <div>
+              <h3>Avaa ilmoituslomake</h3>
+              <p>Siirry <a href="{{ url_for('submit') }}">ilmoituslomakkeelle</a> ja täytä tapahtuman nimi, ajankohta sekä kokoontumispaikka.</p>
+            </div>
+          </li>
+          <li>
+            <span class="guide-step-number">2</span>
+            <div>
+              <h3>Kerro olennaiset tiedot</h3>
+              <p>Kirjoita lyhyt kuvaus tavoitteesta ja käytännön järjestelyistä. Lisää toimiva sähköpostiosoite yhteydenottoja varten.</p>
+            </div>
+          </li>
+          <li>
+            <span class="guide-step-number">3</span>
+            <div>
+              <h3>Lähetä ilmoitus</h3>
+              <p>Tarkista tiedot vielä kerran ja lähetä. Ylläpito käsittelee ilmoituksen, ja saat tarvittaessa lisäkysymykset sähköpostitse.</p>
+            </div>
+          </li>
+        </ol>
 
-  <section class="guide-card" id="faq">
-    <h2>Usein kysyttyä</h2>
-    <dl>
-      <dt>Kuva ei näy heti, mitä teen?</dt>
-      <dd>Automaattinen kuva ilmestyy, kun tapahtuma hyväksytään. Jos kuva puuttuu vielä sen jälkeen, laita viestiä
-        tukeen.</dd>
-      <dt>Voinko käyttää pystysuuntaista kuvaa?</dt>
-      <dd>Voit, mutta suosittelemme neliötä. Muuten puhelin rajaa kuvan keskeltä ja tärkeät yksityiskohdat voivat jäädä
-        pois.</dd>
-      <dt>Entä Mastodon-botti?</dt>
-      <dd>Mastodonissa käytetään samaa kuvaa kuin sivustolla. Jos tapahtuma yhdistetään toiseen, pidämme huolen siitä,
-        että botti käyttää uutta linkkiä eikä julkaise sitä uudelleen.</dd>
-    </dl>
-  </section>
-</main>
+        <div class="guide-note guide-note-blue">
+          <i class="fas fa-info-circle" aria-hidden="true"></i>
+          <div>
+            <strong>Ilmoituksen ei tarvitse olla täydellinen.</strong>
+            <p>Voit lähettää meille myöhemmin korjauksia tai lisätietoja. Tärkeintä on, että tapahtuman aika, paikka ja yhteystiedot ovat oikein.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="guide-section" id="submit-checklist">
+        <div class="guide-section-heading">
+          <span class="guide-section-number">02</span>
+          <div>
+            <p class="guide-kicker">Ennen lähetystä</p>
+            <h2>Nopea tarkistuslista</h2>
+            <p>Käy nämä läpi ennen kuin painat lähetä. Näin ilmoitus voidaan käsitellä nopeammin.</p>
+          </div>
+        </div>
+
+        <ul class="guide-checklist">
+          <li><i class="fas fa-check" aria-hidden="true"></i><div><strong>Selkeä nimi</strong><span>Nimestä ymmärtää heti, mistä tapahtumassa on kyse.</span></div></li>
+          <li><i class="fas fa-check" aria-hidden="true"></i><div><strong>Oikea päivä ja aika</strong><span>Päivämäärä, alkamisaika ja paikkakunta on tarkistettu.</span></div></li>
+          <li><i class="fas fa-check" aria-hidden="true"></i><div><strong>Tarkka kokoontumispaikka</strong><span>Osoite tai helposti tunnistettava kohta on ilmoitettu.</span></div></li>
+          <li><i class="fas fa-check" aria-hidden="true"></i><div><strong>Ytimekäs kuvaus</strong><span>Tavoite, kohderyhmä ja tärkeät käytännön tiedot löytyvät kuvauksesta.</span></div></li>
+          <li><i class="fas fa-check" aria-hidden="true"></i><div><strong>Toimiva sähköposti</strong><span>Ylläpito voi tavoittaa sinut, jos jokin tieto vaatii tarkennusta.</span></div></li>
+          <li><i class="fas fa-check" aria-hidden="true"></i><div><strong>Käyttökelpoinen kuva</strong><span>Kuva on riittävän suuri ja tärkeä sisältö on keskialueella.</span></div></li>
+        </ul>
+      </section>
+
+      <section class="guide-section" id="submit-help">
+        <div class="guide-section-heading">
+          <span class="guide-section-number">03</span>
+          <div>
+            <p class="guide-kicker">Ongelmatilanteet</p>
+            <h2>Jos ilmoituksen lähetys ei mene heti läpi</h2>
+            <p>Useimmat lähetysongelmat ratkeavat tarkistamalla lomakkeen viestin ja yrittämällä rauhassa uudelleen.</p>
+          </div>
+        </div>
+
+        <div class="guide-note guide-note-orange">
+          <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+          <div>
+            <strong>Samankaltaista tapahtumaa koskeva ilmoitus ei välttämättä tarkoita virhettä.</strong>
+            <p>Tarkista viesti rauhassa ja yritä tarvittaessa uudelleen, jos olet varma, että kyseessä on eri tapahtuma.</p>
+          </div>
+        </div>
+
+        <div class="guide-troubleshooting">
+          <article>
+            <span>1</span>
+            <div><h3>Lue virheilmoitus loppuun</h3><p>Viesti kertoo yleensä, puuttuuko jokin tieto vai löytyikö mahdollinen päällekkäinen ilmoitus.</p></div>
+          </article>
+          <article>
+            <span>2</span>
+            <div><h3>Tarkista mahdollinen kaksoiskappale</h3><p>Vertaa nimeä, päivämäärää, kaupunkia ja osoitetta. Jos kyse on eri tapahtumasta, vahvista ja lähetä uudelleen.</p></div>
+          </article>
+          <article>
+            <span>3</span>
+            <div><h3>Yritä samalla selaimella uudelleen</h3><p>Odota hetki äläkä avaa samaa lomaketta moneen välilehteen yhtä aikaa.</p></div>
+          </article>
+          <article>
+            <span>4</span>
+            <div><h3>Tarkista sähköpostisi</h3><p>Katso saapuiko vahvistus ja varmista, ettei sähköpostiosoitteessa ole kirjoitusvirhettä.</p></div>
+          </article>
+        </div>
+
+        <div class="guide-support-wide">
+          <div>
+            <p class="guide-kicker">Jos ongelma jatkuu</p>
+            <h3>Lähetä meille nämä tiedot</h3>
+            <p>Tapahtuman nimi, paikkakunta, päivämäärä ja mahdollinen virheilmoitus. Kuvakaappaus auttaa paljon.</p>
+          </div>
+          <a class="guide-button guide-button-primary" href="mailto:tuki@mielenosoitukset.fi">
+            <i class="fas fa-envelope" aria-hidden="true"></i>
+            Ota yhteyttä tukeen
+          </a>
+        </div>
+      </section>
+
+      <section class="guide-section" id="image-guide">
+        <div class="guide-section-heading">
+          <span class="guide-section-number">04</span>
+          <div>
+            <p class="guide-kicker">Kuvat</p>
+            <h2>Toimiva tapahtumakuva</h2>
+            <p>Hyvä vaakakuva näyttää terävältä tapahtumasivulla ja kestää rajauksen myös pienemmissä korteissa.</p>
+          </div>
+        </div>
+
+        <div class="guide-image-spec" id="image-spec">
+          <div class="guide-ratio-preview" aria-hidden="true">
+            <div class="guide-safe-area">
+              <i class="fas fa-image"></i>
+              <strong>Pidä tärkeä sisältö tässä</strong>
+              <span>16:9</span>
+            </div>
+          </div>
+          <div>
+            <p class="guide-kicker">Suositus</p>
+            <h3>Suositeltu koko: vähintään 1200 × 675 pikseliä</h3>
+            <p>1600 × 900 tai suurempi toimii erinomaisesti. Alle 800 × 450 pikselin kuva ei yleensä riitä terävään koko sivun levyiseen esitykseen.</p>
+            <ul class="guide-compact-list">
+              <li><i class="fas fa-check" aria-hidden="true"></i> PNG, JPG ja WebP käyvät</li>
+              <li><i class="fas fa-check" aria-hidden="true"></i> Jätä reunoille hieman tyhjää</li>
+              <li><i class="fas fa-check" aria-hidden="true"></i> Käytä vähän tekstiä ja vahvaa kontrastia</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 class="guide-subheading" id="image-usage">Missä kuva näkyy?</h3>
+        <div class="guide-feature-grid">
+          <article><i class="fas fa-th-large" aria-hidden="true"></i><h3>Etusivun kortit</h3><p>Oma tapahtumakuva näkyy ensisijaisesti korteissa. Kuvaa voidaan rajata kortin muotoon.</p></article>
+          <article><i class="fas fa-mobile-alt" aria-hidden="true"></i><h3>Mobiililista</h3><p>Pidä ihmiset, sanat ja logot keskialueella, jotta ne eivät jää rajauksen ulkopuolelle.</p></article>
+          <article><i class="fas fa-window-maximize" aria-hidden="true"></i><h3>Tapahtumasivu</h3><p>Kuva näkyy leveässä galleriassa. Hyvin pieniä kuvia ei venytetä sumeiksi.</p></article>
+          <article><i class="fas fa-share-alt" aria-hidden="true"></i><h3>Linkkien jaot</h3><p>Somepalvelut käyttävät yleensä erillistä automaattista esikatselukuvaa.</p></article>
+        </div>
+
+        <div class="guide-note guide-note-blue" id="auto-preview">
+          <i class="fas fa-magic" aria-hidden="true"></i>
+          <div>
+            <strong>Jos et lisää omaa kuvaa, luomme automaattisen kuvan.</strong>
+            <p>Siinä näkyvät tapahtuman nimi, sijainti, ajankohta ja tärkeimmät tunnisteet. Voit korvata sen myöhemmin omalla kansikuvalla.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="guide-section" id="org-help">
+        <div class="guide-section-heading">
+          <span class="guide-section-number">05</span>
+          <div>
+            <p class="guide-kicker">Järjestöt ja ryhmät</p>
+            <h2>Organisaatiotilit</h2>
+            <p>Järjestö, verkosto tai muu toimija voi saada oman profiilin ja hallita tapahtumia organisaation nimissä.</p>
+          </div>
+        </div>
+
+        <div class="guide-org-grid">
+          <div>
+            <h3>Lähetä tukeen</h3>
+            <ul class="guide-compact-list">
+              <li><i class="fas fa-check" aria-hidden="true"></i> organisaation nimi</li>
+              <li><i class="fas fa-check" aria-hidden="true"></i> virallinen sähköpostiosoite</li>
+              <li><i class="fas fa-check" aria-hidden="true"></i> verkkosivu ja some-kanavat</li>
+              <li><i class="fas fa-check" aria-hidden="true"></i> lyhyt kuvaus toiminnasta</li>
+              <li><i class="fas fa-check" aria-hidden="true"></i> kutsuttavien henkilöiden nimet ja sähköpostit</li>
+            </ul>
+          </div>
+          <div class="guide-org-process">
+            <h3>Mitä tapahtuu seuraavaksi?</h3>
+            <ol>
+              <li><span>1</span><p>Lähetät tiedot sähköpostitse.</p></li>
+              <li><span>2</span><p>Luomme profiilin ja lisäämme kutsut.</p></li>
+              <li><span>3</span><p>Saat sähköpostin, kun profiili on valmis.</p></li>
+            </ol>
+          </div>
+        </div>
+        <a class="guide-button guide-button-primary" href="mailto:tuki@mielenosoitukset.fi?subject=Organisaatiotili">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          Pyydä organisaatiotiliä
+        </a>
+      </section>
+
+      <section class="guide-section" id="faq">
+        <div class="guide-section-heading">
+          <span class="guide-section-number">06</span>
+          <div>
+            <p class="guide-kicker">Usein kysyttyä</p>
+            <h2>Nopeat vastaukset</h2>
+          </div>
+        </div>
+
+        <div class="guide-faq">
+          <details>
+            <summary>Kuva ei näy heti. Mitä teen?<i class="fas fa-plus" aria-hidden="true"></i></summary>
+            <p>Automaattinen kuva ilmestyy, kun tapahtuma hyväksytään. Jos kuva puuttuu vielä sen jälkeen, ota yhteyttä tukeen.</p>
+          </details>
+          <details>
+            <summary>Voinko käyttää pystysuuntaista kuvaa?<i class="fas fa-plus" aria-hidden="true"></i></summary>
+            <p>Voit, mutta suosittelemme 16:9-vaakakuvaa. Pystykuvan reunoille voi jäädä tapahtumasivulla pehmennetty tausta, ja korteissa kuvaa voidaan rajata keskeltä.</p>
+          </details>
+          <details>
+            <summary>Mikä on automaattinen esikatselukuva?<i class="fas fa-plus" aria-hidden="true"></i></summary>
+            <p>Se on tapahtuman tiedoista luotu erillinen automaattinen esikatselukuva, jota käytetään yleensä linkkien jaoissa ja Mastodonissa.</p>
+          </details>
+          <details>
+            <summary>Mistä tiedän, menikö ilmoitus perille?<i class="fas fa-plus" aria-hidden="true"></i></summary>
+            <p>Tarkista sähköpostisi. Jos et saanut viestiä tai olet epävarma, lähetä tukeen tapahtuman nimi, päivämäärä ja paikkakunta.</p>
+          </details>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
 
 <style>
-  .guide-container {
-    max-width: 960px;
+  .guide-page {
+    --guide-blue: var(--blue, #0033a0);
+    --guide-blue-strong: light-dark(#00267a, #76a3ff);
+    --guide-blue-soft: light-dark(#edf4ff, #17233b);
+    --guide-orange: var(--orange, #ff6600);
+    --guide-orange-soft: light-dark(#fff2e8, #3a2418);
+    --guide-surface: light-dark(#ffffff, #202124);
+    --guide-surface-muted: light-dark(#f6f8fb, #292b2f);
+    --guide-border: light-dark(#dce3ec, #42464d);
+    --guide-text-muted: var(--secondary_text_color, light-dark(#5b6574, #c0c0c0));
+    max-width: 1380px;
     margin: 0 auto;
-    padding: 4rem 1.5rem 6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    padding: 2rem 1.5rem 6rem;
   }
+
+  .guide-page *, .guide-page *::before, .guide-page *::after { box-sizing: border-box; }
+  .guide-page a { color: var(--guide-blue-strong); font-weight: 600; }
+  .guide-page p { line-height: 1.75; }
+  .guide-page section { scroll-margin-top: 1.5rem; }
 
   .guide-hero {
-    text-align: center;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+    gap: 3rem;
+    align-items: center;
+    min-height: 430px;
+    padding: clamp(2rem, 5vw, 5rem);
+    border-radius: 1.75rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 88% 5%, rgba(255, 102, 0, .42), transparent 24rem),
+      linear-gradient(135deg, #001d61 0%, #0033a0 62%, #0745bd 100%);
+    box-shadow: 0 24px 70px rgba(0, 34, 112, .24);
   }
 
-  .guide-badge {
-    display: inline-flex;
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-    background: var(--color-gradient-secondary, #ffece0);
-    color: var(--color-primary, #9c2a00);
-    font-size: 0.85rem;
-    letter-spacing: 0.08em;
+  .guide-hero::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    right: -100px;
+    bottom: -150px;
+    border: 45px solid rgba(255, 255, 255, .08);
+    border-radius: 50%;
+  }
+
+  .guide-hero-content, .guide-hero-summary { position: relative; z-index: 1; }
+  .guide-eyebrow, .guide-kicker {
+    margin: 0 0 .7rem;
+    color: var(--guide-orange);
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .12em;
     text-transform: uppercase;
   }
-
-  .guide-card {
-    background: var(--color-card-bg, #fff);
-    border-radius: 1.5rem;
-    box-shadow: var(--color-shadow, 0 10px 35px rgba(15, 20, 25, 0.1));
-    padding: 2rem 2.5rem;
+  .guide-eyebrow {
+    display: inline-flex;
+    gap: .55rem;
+    align-items: center;
+    padding: .42rem .75rem;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
   }
+  .guide-hero h1 {
+    max-width: 760px;
+    margin: 1rem 0;
+    color: #fff;
+    font-size: clamp(2.4rem, 5vw, 4.6rem);
+    line-height: 1.04;
+    letter-spacing: -.045em;
+  }
+  .guide-lead { max-width: 670px; margin: 0; color: rgba(255, 255, 255, .82); font-size: 1.12rem; }
+  .guide-hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
 
-  .guide-grid {
+  .guide-button {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: .65rem;
+    min-height: 48px;
+    padding: .75rem 1.15rem;
+    border: 2px solid transparent;
+    border-radius: .75rem;
+    text-decoration: none;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .guide-button:hover { transform: translateY(-2px); }
+  .guide-button-primary { color: #fff !important; background: var(--guide-orange); }
+  .guide-button-primary:hover { background: #e85d00; }
+  .guide-button-secondary { color: #fff !important; border-color: rgba(255, 255, 255, .36); background: rgba(255, 255, 255, .1); }
+  .guide-button-secondary:hover { background: rgba(255, 255, 255, .18); }
+
+  .guide-hero-summary {
+    padding: 1.4rem;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 1.2rem;
+    background: rgba(0, 16, 59, .4);
+    backdrop-filter: blur(12px);
+  }
+  .guide-summary-title { margin: 0 0 1rem; color: #fff; font-weight: 700; }
+  .guide-hero-summary ol { display: grid; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+  .guide-hero-summary li { display: flex; gap: .8rem; align-items: center; padding: .7rem; border-radius: .8rem; background: rgba(255, 255, 255, .07); }
+  .guide-hero-summary li > span, .guide-step-number {
     display: grid;
-    gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    flex: 0 0 2rem;
+    width: 2rem;
+    height: 2rem;
+    place-items: center;
+    border-radius: .55rem;
+    color: #fff;
+    font-weight: 800;
+    background: var(--guide-orange);
   }
+  .guide-hero-summary strong, .guide-hero-summary small { display: block; }
+  .guide-hero-summary small { margin-top: .15rem; color: rgba(255, 255, 255, .68); line-height: 1.4; }
 
-  .guide-list {
-    list-style: disc;
-    padding-left: 1.5rem;
+  .guide-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 3rem; margin-top: 3rem; align-items: start; }
+  .guide-sidebar { position: sticky; top: 1.5rem; display: grid; gap: 1rem; }
+  .guide-nav, .guide-support-card { border: 1px solid var(--guide-border); border-radius: 1rem; background: var(--guide-surface); }
+  .guide-nav { overflow: hidden; padding: .75rem; }
+  .guide-nav p { margin: .35rem .65rem .55rem; color: var(--guide-text-muted); font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .guide-nav a {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    gap: .7rem;
+    align-items: center;
+    padding: .7rem .75rem;
+    border-left: 3px solid transparent;
+    border-radius: .55rem;
+    color: var(--primary_text_color);
+    text-decoration: none;
+    font-size: .92rem;
   }
+  .guide-nav a:hover { border-left-color: var(--guide-orange); color: var(--guide-blue-strong); background: var(--guide-blue-soft); }
+  .guide-nav i { width: 1rem; color: var(--guide-blue-strong); text-align: center; }
+  .guide-support-card { padding: 1.15rem; border-top: 4px solid var(--guide-orange); }
+  .guide-support-card > i { margin-bottom: .75rem; color: var(--guide-orange); font-size: 1.35rem; }
+  .guide-support-card strong, .guide-support-card p { display: block; }
+  .guide-support-card p { margin: .5rem 0; color: var(--guide-text-muted); font-size: .85rem; line-height: 1.55; }
+  .guide-support-card a { overflow-wrap: anywhere; font-size: .85rem; }
 
-  dl {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 0.75rem 1.25rem;
+  .guide-content { min-width: 0; }
+  .guide-section {
+    padding: 0 0 3.5rem;
+    margin-bottom: 3.5rem;
+    border-bottom: 1px solid var(--guide-border);
   }
+  .guide-section:last-child { margin-bottom: 0; border-bottom: 0; }
+  .guide-section-heading { display: grid; grid-template-columns: auto 1fr; gap: 1.2rem; margin-bottom: 2rem; }
+  .guide-section-number { color: var(--guide-orange); font-family: "Montserrat", sans-serif; font-size: .85rem; font-weight: 800; letter-spacing: .08em; }
+  .guide-section-heading h2 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.35rem); letter-spacing: -.025em; }
+  .guide-section-heading p:last-child { max-width: 760px; margin: .6rem 0 0; color: var(--guide-text-muted); }
+  .guide-kicker { color: var(--guide-blue-strong); }
 
-  dt {
-    font-weight: 600;
+  .guide-steps { display: grid; gap: .9rem; margin: 0 0 1.5rem; padding: 0; list-style: none; }
+  .guide-steps li { display: flex; gap: 1rem; padding: 1.25rem; border: 1px solid var(--guide-border); border-radius: 1rem; background: var(--guide-surface); }
+  .guide-steps h3, .guide-troubleshooting h3, .guide-feature-grid h3 { margin: 0 0 .35rem; font-size: 1rem; }
+  .guide-steps p, .guide-troubleshooting p, .guide-feature-grid p { margin: 0; color: var(--guide-text-muted); font-size: .93rem; }
+
+  .guide-note {
+    display: flex;
+    gap: .9rem;
+    padding: 1.15rem 1.25rem;
+    border: 1px solid;
+    border-radius: .9rem;
   }
+  .guide-note i { margin-top: .25rem; font-size: 1.15rem; }
+  .guide-note strong, .guide-note p { display: block; }
+  .guide-note p { margin: .2rem 0 0; color: var(--guide-text-muted); font-size: .92rem; }
+  .guide-note-blue { border-color: light-dark(#b7d1ff, #31558d); background: var(--guide-blue-soft); }
+  .guide-note-blue i { color: var(--guide-blue-strong); }
+  .guide-note-orange { border-color: light-dark(#ffc79f, #92522b); background: var(--guide-orange-soft); }
+  .guide-note-orange i { color: var(--guide-orange); }
 
-  dd {
-    margin: 0;
-    color: var(--color-text-secondary, #4b5563);
+  .guide-checklist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin: 0; padding: 0; list-style: none; }
+  .guide-checklist li { display: flex; gap: .85rem; padding: 1rem; border: 1px solid var(--guide-border); border-radius: .8rem; background: var(--guide-surface); }
+  .guide-checklist i { display: grid; flex: 0 0 1.65rem; width: 1.65rem; height: 1.65rem; place-items: center; border-radius: 50%; color: #fff; background: var(--guide-blue); font-size: .7rem; }
+  .guide-checklist strong, .guide-checklist span { display: block; }
+  .guide-checklist span { margin-top: .25rem; color: var(--guide-text-muted); font-size: .85rem; line-height: 1.5; }
+
+  .guide-troubleshooting { display: grid; gap: .75rem; margin-top: 1.25rem; }
+  .guide-troubleshooting article { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--guide-border); }
+  .guide-troubleshooting article:last-child { border-bottom: 0; }
+  .guide-troubleshooting article > span { color: var(--guide-orange); font-family: "Montserrat", sans-serif; font-weight: 800; }
+  .guide-support-wide { display: flex; gap: 1.5rem; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding: 1.5rem; border-radius: 1rem; color: #fff; background: var(--guide-blue); }
+  .guide-support-wide h3, .guide-support-wide p { margin: 0; color: #fff; }
+  .guide-support-wide .guide-kicker { color: #ffb27f; }
+  .guide-support-wide p:last-child { max-width: 650px; margin-top: .35rem; color: rgba(255, 255, 255, .76); font-size: .9rem; }
+  .guide-support-wide .guide-button { flex-shrink: 0; }
+
+  .guide-image-spec { display: grid; grid-template-columns: minmax(280px, .9fr) minmax(0, 1.1fr); gap: 2rem; align-items: center; padding: 1.5rem; border: 1px solid var(--guide-border); border-radius: 1rem; background: var(--guide-surface-muted); }
+  .guide-ratio-preview { display: grid; aspect-ratio: 16 / 9; padding: 8%; border-radius: .8rem; background: linear-gradient(135deg, var(--guide-blue), #001d61); box-shadow: inset 0 0 0 6px rgba(255, 102, 0, .78); }
+  .guide-safe-area { display: grid; place-items: center; align-content: center; border: 2px dashed rgba(255, 255, 255, .65); border-radius: .5rem; color: #fff; text-align: center; }
+  .guide-safe-area i { margin-bottom: .55rem; font-size: 1.7rem; }
+  .guide-safe-area strong { font-size: .85rem; }
+  .guide-safe-area span { margin-top: .2rem; color: rgba(255, 255, 255, .72); font-size: .75rem; }
+  .guide-image-spec h3 { margin: 0; font-size: 1.4rem; }
+  .guide-image-spec p { color: var(--guide-text-muted); }
+  .guide-compact-list { display: grid; gap: .55rem; margin: 1rem 0; padding: 0; list-style: none; }
+  .guide-compact-list li { display: flex; gap: .65rem; align-items: flex-start; }
+  .guide-compact-list i { margin-top: .25rem; color: var(--guide-orange); font-size: .75rem; }
+  .guide-subheading { margin: 2rem 0 1rem; font-size: 1.15rem; }
+  .guide-feature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-bottom: 1.25rem; }
+  .guide-feature-grid article { padding: 1.15rem; border-left: 4px solid var(--guide-blue); border-radius: .4rem .8rem .8rem .4rem; background: var(--guide-surface-muted); }
+  .guide-feature-grid article > i { margin-bottom: .75rem; color: var(--guide-orange); }
+
+  .guide-org-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+  .guide-org-grid > div { padding: 1.3rem; border: 1px solid var(--guide-border); border-radius: 1rem; background: var(--guide-surface); }
+  .guide-org-grid h3 { margin-top: 0; font-size: 1.05rem; }
+  .guide-org-process ol { display: grid; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+  .guide-org-process li { display: flex; gap: .75rem; align-items: center; }
+  .guide-org-process span { display: grid; flex: 0 0 1.75rem; width: 1.75rem; height: 1.75rem; place-items: center; border-radius: .45rem; color: #fff; background: var(--guide-blue); font-weight: 800; }
+  .guide-org-process p { margin: 0; color: var(--guide-text-muted); font-size: .9rem; }
+
+  .guide-faq { border-top: 1px solid var(--guide-border); }
+  .guide-faq details { border-bottom: 1px solid var(--guide-border); }
+  .guide-faq summary { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 1.15rem 0; cursor: pointer; color: var(--primary_text_color); font-weight: 700; list-style: none; }
+  .guide-faq summary::-webkit-details-marker { display: none; }
+  .guide-faq summary i { color: var(--guide-orange); transition: transform .18s ease; }
+  .guide-faq details[open] summary i { transform: rotate(45deg); }
+  .guide-faq details p { max-width: 800px; margin: -.35rem 0 1.2rem; color: var(--guide-text-muted); }
+
+  @media (max-width: 980px) {
+    .guide-hero { grid-template-columns: 1fr; }
+    .guide-hero-summary { max-width: 620px; }
+    .guide-layout { grid-template-columns: 1fr; }
+    .guide-sidebar { position: static; }
+    .guide-nav { display: flex; gap: .35rem; overflow-x: auto; }
+    .guide-nav p, .guide-support-card { display: none; }
+    .guide-nav a { flex: 0 0 auto; border-left: 0; border-bottom: 3px solid transparent; }
+    .guide-nav a:hover { border-left-color: transparent; border-bottom-color: var(--guide-orange); }
   }
 
   @media (max-width: 720px) {
-    dl {
-      grid-template-columns: 1fr;
-    }
+    .guide-page { padding: .75rem .75rem 4rem; }
+    .guide-hero { min-height: auto; padding: 2rem 1.25rem; border-radius: 1rem; }
+    .guide-hero h1 { font-size: 2.35rem; }
+    .guide-hero-actions, .guide-support-wide { align-items: stretch; flex-direction: column; }
+    .guide-button { width: 100%; }
+    .guide-layout { gap: 2rem; margin-top: 1.25rem; }
+    .guide-section { margin-bottom: 2.5rem; padding-bottom: 2.5rem; }
+    .guide-section-heading { gap: .7rem; }
+    .guide-checklist, .guide-feature-grid, .guide-org-grid, .guide-image-spec { grid-template-columns: 1fr; }
+    .guide-image-spec { gap: 1.25rem; padding: 1rem; }
+    .guide-note { padding: 1rem; }
   }
 </style>
 {% endblock %}

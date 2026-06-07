@@ -19,7 +19,7 @@ def test_admin_can_create_recurring_demo_with_create_form_fields(admin_client, d
             "recurrence_type": "WEEKLY",
             "recurrence_interval": "2",
             "recurrence_end_date": "2026-06-01",
-            "route[]": ["Senate Square", "Railway Station"],
+            "route[]": ["Senate Square", "Railway Station", "Senate Square"],
         },
         follow_redirects=False,
     )
@@ -30,7 +30,7 @@ def test_admin_can_create_recurring_demo_with_create_form_fields(admin_client, d
     created = db.recu_demos.find_one({"title": "Weekly recurring demo"})
     assert created is not None
     assert created["city"] == "Helsinki"
-    assert created["route"] == ["Senate Square", "Railway Station"]
+    assert created["route"] == ["Senate Square", "Railway Station", "Senate Square"]
     assert created["recurs"] is True
     assert created["repeat_schedule"]["frequency"] == "weekly"
     assert created["repeat_schedule"]["interval"] == 2

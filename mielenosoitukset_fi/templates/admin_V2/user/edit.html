@@ -214,6 +214,43 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
 
+        {% if can_manage_scope_grants %}
+        <div class="permissions-panel">
+            <h3>{{ _('Paikkakuntakohtainen ylläpito') }}</h3>
+            <p class="muted">{{ _('Valitse paikkakunnat ja oikeudet, joilla käyttäjä voi käsitellä niiden mielenosoituksia.') }}</p>
+
+            <div class="form-group">
+                <label for="admin_scope_cities">{{ _('Paikkakunnat') }}</label>
+                <select id="admin_scope_cities" name="admin_scope_cities[]" class="form-control" multiple size="10">
+                    {% for city in city_list %}
+                    {% set city_key = city_name_to_key[city] %}
+                    <option value="{{ city_key }}" {% if city_key in city_scope_grant.scope_keys %}selected{% endif %}>
+                        {{ city }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="permissions-group">
+                <div class="permission-category">
+                    <h4>{{ _('Mielenosoitusoikeudet valituissa paikkakunnissa') }}</h4>
+                    <div class="permission-list" id="permissions_city_scope">
+                        {% for permission in city_admin_permissions %}
+                        <div class="permission-item">
+                            <input type="checkbox"
+                                   id="perm_city_{{ permission }}"
+                                   name="admin_scope_permissions[city][]"
+                                   value="{{ permission }}"
+                                   {% if permission in city_scope_grant.permissions %}checked{% endif %}>
+                            <label for="perm_city_{{ permission }}">{{ permission }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="form-group" style="text-align:center;">
             <button type="submit" class="btn-primary">{{ _('Tallenna muutokset') }}</button>
             <a href="{{ url_for('admin_user.user_control') }}" class="btn" style="margin-left:0.75rem;">{{ _('Peruuta')

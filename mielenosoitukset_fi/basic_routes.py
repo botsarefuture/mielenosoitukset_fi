@@ -1,36 +1,29 @@
 import copy
-import math
 import os
 import re
-import json
 import threading
 import time
 import uuid
 import hashlib
 import requests
-import xml.etree.ElementTree as ET
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta
 from urllib.parse import urlsplit
 from flask_babel import _, refresh, format_date, get_locale
 from flask import (
-    app,
-    g,
-    render_template,
     redirect,
     send_file,
     send_from_directory,
     url_for,
     request,
     abort,
-    Response,
-    get_flashed_messages,
     jsonify,
     session,
     current_app,
 )
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
-from mielenosoitukset_fi.utils.notifications import fetch_notifications
+from mielenosoitukset_fi.utils.notifications import fetch_notifications, serialize_notification
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.classes import Organizer, Demonstration, Organization, RecurringDemonstration
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -38,10 +31,9 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.scripts.send_demo_reminders import generate_ical_event
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.flashing import flash_message
-from mielenosoitukset_fi.utils.database import DEMO_FILTER, stringify_object_ids
+from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required, depracated_endpoint
-from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
+from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
 from mielenosoitukset_fi.utils.demo_localization import get_demo_localized_fields
 from werkzeug.utils import secure_filename
@@ -51,7 +43,6 @@ from pymongo import ASCENDING, DESCENDING
 from config import Config
 
 from mielenosoitukset_fi.utils.cache import (
-    cache,
     should_skip_cache,
     skip_cache_public_only,
 )
@@ -105,7 +96,7 @@ SUBMIT_ERROR_CODES = {
     "duplicate_conflict": "SUBMIT_DUPLICATE_CONFLICT",
 }
 
-PANIC_MODE = False
+PANIC_MODE = False  # Forced maintenance mode for security remediation
 
 
 def _normalize_tag_value(tag):
@@ -244,7 +235,7 @@ def _log_submit_error(message, code, status=400, extra=None):
             form_snapshot[key] = values if len(values) > 1 else values[0]
         submission_errors_collection.insert_one(
             {
-                "created_at": datetime.utcnow(),
+                "created_at": utcnow(),
                 "message": message,
                 "error_code": code,
                 "status": status,
@@ -1172,7 +1163,7 @@ def init_routes(app):
 
 
             # --- Submission idempotency guard ---
-            now = datetime.utcnow()
+            now = utcnow()
             duplicate_doc = submission_tokens_collection.find_one(
                 {
                     "fingerprint": submission_fingerprint,
@@ -1360,7 +1351,7 @@ def init_routes(app):
                         "$set": {
                             "status": "completed",
                             "demo_id": demo_id,
-                            "completed_at": datetime.utcnow(),
+                            "completed_at": utcnow(),
                             "fingerprint": submission_fingerprint,
                         }
                     },
@@ -1372,7 +1363,7 @@ def init_routes(app):
                     {
                         "$set": {
                             "status": "failed",
-                            "failed_at": datetime.utcnow(),
+                            "failed_at": utcnow(),
                             "error": str(e),
                         }
                     },
@@ -1392,7 +1383,7 @@ def init_routes(app):
                     "submitter_email": submitter_email,
                     "submitter_name": submitter_name,
                     "accept_terms": bool(accept_terms),
-                    "submitted_at": datetime.utcnow(),
+                    "submitted_at": utcnow(),
                 }
                 
                 mongo.submitters.insert_one(submitter_doc)
@@ -1476,7 +1467,7 @@ def init_routes(app):
                         {
                             "demo_id": demo_id,
                             "status": "pending",
-                            "created_at": datetime.utcnow(),
+                            "created_at": utcnow(),
                             "notification_type": "initial_submission",
                             "marks_admin_contact": True,
                             "messages": notification_messages,
@@ -2201,7 +2192,7 @@ def init_routes(app):
                 'original_values': original_values,
                 'reporter_comment': reporter_comment,
                 'reporter_email': reporter_email,
-                'created_at': datetime.utcnow(),
+                'created_at': utcnow(),
                 'ip': request.remote_addr,
                 'user_agent': request.headers.get('User-Agent'),
                 'status': 'new',
@@ -2242,7 +2233,7 @@ def init_routes(app):
             token_error = _("Peruutuslinkkiä ei tunnistettu.")
         else:
             expires_at = token_doc.get("expires_at")
-            if expires_at and expires_at < datetime.utcnow():
+            if expires_at and expires_at < utcnow():
                 token_error = _("Peruutuslinkki on vanhentunut.")
 
             if token_doc.get("used_at"):
@@ -2491,8 +2482,8 @@ def init_routes(app):
 
         suggestion = {
             "organization_id": ObjectId(org_id),
-            "timestamp": datetime.utcnow(),
-            "created_at": datetime.utcnow(),
+            "timestamp": utcnow(),
+            "created_at": utcnow(),
             "fields": {},
             "meta": {
                 "ip": request.remote_addr,
@@ -2501,14 +2492,14 @@ def init_routes(app):
             },
             "status": {
                 "state": "pending",
-                "updated_at": datetime.utcnow(),
+                "updated_at": utcnow(),
                 "updated_by": None,
                 "notes": None
             },
             "audit_log": [
                 {
                     "action": "created",
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": utcnow(),
                     "user": None
                 }
             ]
@@ -2750,7 +2741,7 @@ def init_routes(app):
             return jsonify({"status": "OK", "message": "Olet jo tilannut muistutuksen tälle mielenosoitukselle."})
 
         # Rate limit by IP (max 5 per hour)
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = utcnow() - timedelta(hours=1)
         recent_requests = reminders_collection.count_documents({
             "user_ip": user_ip,
             "created_at": {"$gte": one_hour_ago}
@@ -2771,7 +2762,7 @@ def init_routes(app):
             "user_email": user_email,
             "user_ip": user_ip,
             "user_agent": user_agent,
-            "created_at": datetime.utcnow(),
+            "created_at": utcnow(),
         })
 
         return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
@@ -2891,7 +2882,7 @@ def init_routes(app):
         ET.SubElement(channel, "description").text = "Viimeisimmät mielenosoitukset."
         ET.SubElement(channel, "language").text = "fi-fi"
 
-        now = datetime.utcnow()
+        now = utcnow()
         ET.SubElement(channel, "pubDate").text = format_datetime(now)
         ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
         ET.SubElement(channel, "copyright").text = "© 2025 Mielenosoitukset.fi"
@@ -2945,7 +2936,7 @@ def init_routes(app):
 
         # Create ETag for conditional GET
         etag = hashlib.md5(feed_xml).hexdigest()
-        last_modified = datetime.utcnow()
+        last_modified = utcnow()
 
         # Check if client already has this version
         if request.headers.get("If-None-Match") == etag:
@@ -3117,7 +3108,7 @@ def init_routes(app):
             "user_email": user_email,
             "demo_id": demo_id if isinstance(demo_id, str) else str(demo_id) if demo_id else None,
             "user_agent": user_agent,
-            "reported_at": datetime.utcnow(),
+            "reported_at": utcnow(),
         }
         malicious_reports_collection.insert_one(doc)
 

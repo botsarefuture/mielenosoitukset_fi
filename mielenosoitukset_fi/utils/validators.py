@@ -1,10 +1,16 @@
 """
 Module for validating various types of data.
 
-This module provides functions to validate email addresses, event types, and to return existing values among provided variables.
+This module provides shared validation and normalization functions.
 
 Functions
 ---------
+normalize_username(username)
+    Return the canonical lowercase form of a username.
+validate_username(username)
+    Validate a username and return a detailed error message.
+valid_username(username)
+    Return whether a username satisfies the username rules.
 valid_email(email)
     Check if the given email address is valid.
 valid_event_type(event_type)
@@ -22,8 +28,65 @@ v2.6.0:
 """
 
 import re
-from typing import Union
+from typing import Final, Union
 from mielenosoitukset_fi.utils.variables import EVENT_TYPES
+
+
+USERNAME_MIN_LENGTH: Final = 3
+USERNAME_MAX_LENGTH: Final = 30
+USERNAME_PATTERN: Final = re.compile(r"^[a-z0-9](?:[a-z0-9_-]*[a-z0-9])?$")
+USERNAME_CONSECUTIVE_SEPARATOR_PATTERN: Final = re.compile(r"[_-]{2}")
+RESERVED_USERNAMES: Final = frozenset(
+    {
+        "admin",
+        "administrator",
+        "anonymous",
+        "api",
+        "moderator",
+        "root",
+        "support",
+        "system",
+        "www",
+    }
+)
+
+
+def normalize_username(username: object) -> str:
+    """Return the canonical form used to store and compare usernames."""
+    if not isinstance(username, str):
+        return ""
+    return username.strip().casefold()
+
+
+def validate_username(username: object) -> tuple[bool, str]:
+    """Validate a username and return ``(is_valid, error_message)``.
+
+    Usernames are normalized before validation. Valid usernames contain 3-30
+    lowercase ASCII letters, digits, underscores, or hyphens. They must begin
+    and end with a letter or digit, cannot contain consecutive separators, and
+    cannot use a reserved system name.
+    """
+    normalized = normalize_username(username)
+
+    if not normalized:
+        return False, "Käyttäjätunnus on pakollinen."
+    if len(normalized) < USERNAME_MIN_LENGTH:
+        return False, f"Käyttäjätunnuksen tulee olla vähintään {USERNAME_MIN_LENGTH} merkkiä pitkä."
+    if len(normalized) > USERNAME_MAX_LENGTH:
+        return False, f"Käyttäjätunnus saa olla enintään {USERNAME_MAX_LENGTH} merkkiä pitkä."
+    if normalized in RESERVED_USERNAMES:
+        return False, "Tämä käyttäjätunnus on varattu."
+    if not USERNAME_PATTERN.fullmatch(normalized):
+        return False, "Käyttäjätunnuksessa voi käyttää pieniä kirjaimia, numeroita, alaviivaa ja yhdysmerkkiä."
+    if USERNAME_CONSECUTIVE_SEPARATOR_PATTERN.search(normalized):
+        return False, "Käyttäjätunnuksessa ei voi olla peräkkäisiä väli- tai alaviivoja."
+
+    return True, ""
+
+
+def valid_username(username: object) -> bool:
+    """Return whether a username satisfies the application's username rules."""
+    return validate_username(username)[0]
 
 
 def valid_email(email):

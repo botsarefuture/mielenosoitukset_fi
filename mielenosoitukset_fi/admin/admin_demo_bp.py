@@ -5,6 +5,7 @@ from flask import abort, current_app
 import requests
 from copy import deepcopy
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import date, datetime, timedelta
 from bson.objectid import ObjectId
 import logging
@@ -39,7 +40,8 @@ from mielenosoitukset_fi.utils.demo_translation_cache import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.wrappers import admin_required, has_demo_permission, permission_required
 from mielenosoitukset_fi.users.models import User
 from .utils import (
     mongo,
@@ -285,7 +287,7 @@ def _add_case_log(case_doc, action_type, note=None, close_case=False, new_demo_i
     if not case_doc:
         return
     case_id = case_doc["_id"] if isinstance(case_doc, dict) else case_doc
-    now = datetime.utcnow()
+    now = utcnow()
     log_entry = {
         "timestamp": now,
         "admin": _case_admin_username(),
@@ -329,7 +331,7 @@ def _handle_cases_after_merge(primary_id, secondary_ids, doc_map):
         return
 
     def _case_sort_key(doc):
-        return doc.get("created_at") or getattr(doc.get("_id"), "generation_time", datetime.utcnow())
+        return doc.get("created_at") or getattr(doc.get("_id"), "generation_time", utcnow())
 
     open_cases = [doc for doc in case_docs if not ((doc.get("meta") or {}).get("closed"))]
     keep_case = min(open_cases, key=_case_sort_key) if open_cases else min(case_docs, key=_case_sort_key)
@@ -515,7 +517,7 @@ def recommend_demo(demo_id):
     annotated_demo["_audit_note"] = {
         "action": "recommend_demo",
         "recommend_till": recommend_till,
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "user": _get_actor_label(),
     }
     hist_id = save_demo_history(
@@ -551,7 +553,7 @@ def unrecommend_demo(demo_id):
     annotated_demo = deepcopy(demo_data)
     annotated_demo["_audit_note"] = {
         "action": "unrecommend_demo",
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "user": _get_actor_label(),
     }
     hist_id = save_demo_history(str(demo_id), demo_data, annotated_demo)
@@ -586,6 +588,7 @@ def demo_edit_history(demo_id):
     if not demo_data:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
     history = list(
         mongo.demo_edit_history.find({"demo_id": str(demo_data["_id"])}).sort("edited_at", -1)
@@ -682,7 +685,7 @@ def suggestion_apply(suggestion_id):
         mongo.demo_edit_history.insert_one({
             'demo_id': demo_id,
             'edited_by': str(getattr(current_user, '_id', 'unknown')),
-            'edited_at': datetime.utcnow(),
+            'edited_at': utcnow(),
             'old_demo': demo_doc,
             'new_demo': {**demo_doc, **update},
         })
@@ -692,7 +695,7 @@ def suggestion_apply(suggestion_id):
     # Apply update
     try:
         mongo.demonstrations.update_one({'_id': ObjectId(demo_id)}, {'$set': update})
-        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': datetime.utcnow()}})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': utcnow()}})
         flash_message('Ehdotuksen valitut kentät on päivitetty.', 'success')
     except Exception:
         logger.exception('Failed to apply suggestion to demo')
@@ -714,7 +717,7 @@ def suggestion_status_update(suggestion_id):
         flash_message('Tuntematon tila.', 'error')
         return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
     try:
-        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': datetime.utcnow()}})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': utcnow()}})
         flash_message('Ehdotuksen tila päivitetty.', 'success')
     except Exception:
         logger.exception('Failed to update suggestion status')
@@ -867,7 +870,7 @@ def rollback_demo(history_id):
     mongo.demo_edit_history.insert_one({
         "demo_id": demo_id,
         "edited_by": str(getattr(current_user, "_id", "unknown")),
-        "edited_at": datetime.utcnow(),
+        "edited_at": utcnow(),
         "old_demo": current_demo,
         "new_demo": old_data,
         "diff": None,  # can compute later
@@ -1318,7 +1321,7 @@ def approve_demo_with_token(token):
     try:
         result = mongo.demonstrations.update_one(
             {"_id": _require_valid_objectid(demo_id)},
-            {"$set": {"approved": True, "rejected": False, "last_modified": datetime.utcnow()}}
+            {"$set": {"approved": True, "rejected": False, "last_modified": utcnow()}}
         )
     except Exception:
         logger.exception("Failed to approve demo %s via token %s", demo_id, doc.get("_id"))
@@ -1409,7 +1412,7 @@ def reject_demo_with_token(token):
     try:
         result = mongo.demonstrations.update_one(
             {"_id": _require_valid_objectid(demo_id)},
-            {"$set": {"approved": False, "rejected": True, "last_modified": datetime.utcnow()}}
+            {"$set": {"approved": False, "rejected": True, "last_modified": utcnow()}}
         )
     except Exception:
         logger.exception("Failed to reject demo %s via token %s", demo_id, doc.get("_id"))
@@ -1526,13 +1529,34 @@ def demo_control():
 
     # Permissions
     if not current_user.global_admin:
-        _where = current_user._perm_in("EDIT_DEMO")
-        filter_clauses.append({
-            "$or": [
-                {"organizers": {"$elemMatch": {"organization_id": {"$in": [BsonObjectId(org) for org in _where]}}}},
-                {"editors": current_user.id},
-            ]
-        })
+        _where = current_user._perm_in("LIST_DEMOS")
+        org_scope_ids = [
+            BsonObjectId(org)
+            for org in _where
+            if str(org) != "global" and BsonObjectId.is_valid(str(org))
+        ]
+        city_scope_keys = (
+            current_user.scoped_city_keys_for("LIST_DEMOS")
+            if hasattr(current_user, "scoped_city_keys_for")
+            else []
+        )
+        city_scope_names = [city for city in CITY_LIST if normalize_city_key(city) in city_scope_keys]
+        permission_filters = [{"editors": current_user.id}]
+        if org_scope_ids:
+            permission_filters.append(
+                {"organizers": {"$elemMatch": {"organization_id": {"$in": org_scope_ids}}}}
+            )
+        if city_scope_keys:
+            permission_filters.append(
+                {
+                    "$or": [
+                        {"city_key": {"$in": city_scope_keys}},
+                        {"city": {"$in": city_scope_names}},
+                    ]
+                }
+            )
+        if "global" not in _where:
+            filter_clauses.append({"$or": permission_filters})
 
     def build_query(extra=None):
         clauses = list(filter_clauses)
@@ -1579,6 +1603,13 @@ def demo_control():
         demos_cursor = mongo.demonstrations.find(filter_query).sort([("date", 1), ("_id", 1)]) \
                                         .skip(skip_count).limit(per_page)
         demos = _deduplicate_demos(list(demos_cursor))
+
+    if not current_user.global_admin:
+        demos = [
+            demo
+            for demo in demos
+            if _user_can_access_demo(demo.get("_id"), "LIST_DEMOS")
+        ]
 
     recommended_lookup = {
         doc.get("demo_id"): True for doc in mongo.recommended_demos.find({}, {"demo_id": 1})
@@ -1902,7 +1933,7 @@ def reject_demo_translation(demo_id, language):
 @admin_demo_bp.route("/duplicate/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("CREATE_DEMO")
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
 def duplicate_demo(demo_id):
     """
     Duplicate a demonstration. The duplicate will have 'approved' set to False.
@@ -1927,7 +1958,7 @@ def duplicate_demo(demo_id):
     demo_data["approved"] = False
     demo_data["title"] = f"{demo_data['title']} (Kopio)"
     # Set created_datetime to current time for the new demo
-    demo_data["created_datetime"] = datetime.utcnow()
+    demo_data["created_datetime"] = utcnow()
 
         
     # If it was a recurring demo, turn it into a non-recurring one
@@ -2156,7 +2187,7 @@ def merge_demos():
     alias_values = _build_merged_aliases(doc_map, primary_id)
     merged_doc["aliases"] = alias_values
     merged_doc["merged_into"] = None
-    merged_doc["last_modified"] = datetime.utcnow()
+    merged_doc["last_modified"] = utcnow()
 
     mongo.demonstrations.replace_one({"_id": primary_doc["_id"]}, merged_doc)
 
@@ -2167,7 +2198,7 @@ def merge_demos():
         "primary_demo_id": primary_id,
         "secondary_demo_ids": secondary_ids,
         "selected_demo_ids": selected_ids,
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "actor": {
             "user_id": str(getattr(current_user, "id", "")),
             "username": getattr(current_user, "username", None),
@@ -2361,7 +2392,7 @@ def _summarize_analytics_doc(analytics_doc: dict | None) -> dict:
     if not isinstance(analytics_map, dict):
         return summary
 
-    now = datetime.utcnow()
+    now = utcnow()
     for day_str, hours in analytics_map.items():
         if not isinstance(hours, dict):
             continue
@@ -2536,6 +2567,7 @@ def edit_demo(demo_id):
     if not demo_data:
         flash_message("Mielenosoitusta ei löytynyt.", "error")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "EDIT_DEMO")
 
     case_id = request.args.get("case_id") or None
    
@@ -2576,6 +2608,7 @@ def demo_command_center(demo_id):
     if not demo_data:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "VIEW_DEMO")
 
     demo = Demonstration.from_dict(demo_data)
     demo_id_str = str(demo_data["_id"])
@@ -2773,10 +2806,10 @@ def demo_command_center(demo_id):
     }
 
     permissions = {
-        "can_edit": current_user.has_permission("EDIT_DEMO"),
-        "can_delete": current_user.has_permission("DELETE_DEMO"),
-        "can_accept": current_user.has_permission("ACCEPT_DEMO"),
-        "can_generate_link": current_user.has_permission("GENERATE_EDIT_LINK"),
+        "can_edit": _user_can_access_demo(demo_data["_id"], "EDIT_DEMO"),
+        "can_delete": _user_can_access_demo(demo_data["_id"], "DELETE_DEMO"),
+        "can_accept": _user_can_access_demo(demo_data["_id"], "ACCEPT_DEMO"),
+        "can_generate_link": _user_can_access_demo(demo_data["_id"], "GENERATE_EDIT_LINK"),
         "can_recommend": getattr(current_user, "global_admin", False),
         "can_view_analytics": current_user.has_permission("VIEW_ANALYTICS"),
     }
@@ -2826,7 +2859,7 @@ def demo_command_center(demo_id):
 @admin_demo_bp.route("/send_edit_link_email/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("GENERATE_EDIT_LINK")
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
 def send_edit_link(demo_id):
     """
     Send a secure edit link via email for a demonstration.
@@ -2872,7 +2905,7 @@ def send_edit_link(demo_id):
 @admin_demo_bp.route("/generate_edit_link/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("GENERATE_EDIT_LINK")
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
 def generate_edit_link(demo_id):
     """Generate a secure edit link for a demonstration.
 
@@ -2966,6 +2999,46 @@ def _get_actor_label():
     return getattr(current_user, "username", None) or getattr(current_user, "email", None) or str(getattr(current_user, "id", "unknown"))
 
 
+def _user_has_global_demo_permission(permission_name: str) -> bool:
+    if getattr(current_user, "global_admin", False):
+        return True
+    return permission_name in getattr(current_user, "global_permissions", [])
+
+
+def _user_can_access_demo(demo_id, permission_name: str) -> bool:
+    if _user_has_global_demo_permission(permission_name):
+        return True
+    return has_demo_permission(current_user, demo_id, permission_name)
+
+
+def _abort_if_demo_forbidden(demo_id, permission_name: str):
+    if not _user_can_access_demo(demo_id, permission_name):
+        flash_message(_("Sinun käyttöoikeutesi eivät riitä tämän mielenosoituksen käsittelyyn."), "error")
+        abort(403)
+
+
+def _user_can_create_demo_in_city(city: str | None) -> bool:
+    if _user_has_global_demo_permission("CREATE_DEMO"):
+        return True
+    org_scopes = [
+        scope
+        for scope in getattr(current_user, "_perm_in", lambda _permission: [])("CREATE_DEMO")
+        if str(scope) != "global"
+    ]
+    if org_scopes:
+        return True
+    city_key = normalize_city_key(city)
+    return bool(
+        city_key
+        and hasattr(current_user, "has_scoped_permission")
+        and current_user.has_scoped_permission(
+            "CREATE_DEMO",
+            scope_type="city",
+            scope_key=city_key,
+        )
+    )
+
+
 def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
     """Handle form submission for creating or editing a demonstration.
 
@@ -2999,6 +3072,12 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
         if is_edit and demo_id:
             prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if prev_demo:
+                _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
+                previous_city_key = prev_demo.get("city_key") or normalize_city_key(prev_demo.get("city"))
+                incoming_city_key = demonstration_data.get("city_key") or normalize_city_key(demonstration_data.get("city"))
+                if incoming_city_key != previous_city_key and not _user_can_create_demo_in_city(demonstration_data.get("city")):
+                    flash_message(_("Sinulla ei ole oikeutta siirtää mielenosoitusta valittuun paikkakuntaan."), "error")
+                    abort(403)
                 merged_data = _deep_merge(prev_demo, demonstration_data)
                 demo = Demonstration.from_dict(merged_data)
                 demo.save()
@@ -3017,7 +3096,7 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
                     case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
                     
                     case._add_history_entry({
-                        "timestamp": datetime.utcnow(),
+                        "timestamp": utcnow(),
                         "action": "Muokattu mielenosoitusta",
                         "user": current_user.username,
                         "mech_action": "edit_demo",
@@ -3029,6 +3108,9 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
                     })
             flash_message("Mielenosoitus päivitetty onnistuneesti.", "success")
         else:
+            if not _user_can_create_demo_in_city(demonstration_data.get("city")):
+                flash_message(_("Sinulla ei ole oikeutta luoda mielenosoitusta valittuun paikkakuntaan."), "error")
+                abort(403)
             # Insert a new demonstration
             insert_result = mongo.demonstrations.insert_one(demonstration_data)
             try:
@@ -3365,6 +3447,7 @@ def collect_demo_data(request):
     end_time = request.form.get("end_time")
     facebook = request.form.get("facebook")
     city = request.form.get("city")
+    city_key = normalize_city_key(city)
     address = request.form.get("address")
     event_type = request.form.get("type")
     # Handle route as a list (route[] in form-data)
@@ -3426,6 +3509,7 @@ def collect_demo_data(request):
         "end_time": end_time,
         "facebook": facebook,
         "city": city,
+        "city_key": city_key,
         "address": address,
         "type": event_type,
         "route": route,
@@ -3645,6 +3729,7 @@ def delete_demo():
         else:
             flash_message(error_message)
             return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
     record_demo_change(
         demo_id,
@@ -3668,7 +3753,7 @@ def delete_demo():
 @admin_demo_bp.route("/confirm_delete_demo/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("DELETE_DEMO")
+@permission_required("DELETE_DEMO", _type="DEMONSTRATION")
 def confirm_delete_demo(demo_id):
     """Render a confirmation page before deleting a demonstration.
 
@@ -3688,6 +3773,7 @@ def confirm_delete_demo(demo_id):
     if not demo_data:
         flash_message("Mielenosoitusta ei löytynyt.")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo_data["_id"], "DELETE_DEMO")
 
     # Create a Demonstration instance from the fetched data
     demonstration = Demonstration.from_dict(demo_data)
@@ -3701,12 +3787,13 @@ def confirm_delete_demo(demo_id):
 @admin_demo_bp.route("/<demo_id>/audit_log", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def view_demo_audit_log(demo_id):
     demo = _find_demo_with_alias_support(demo_id)
     if not demo:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_control"))
+    _abort_if_demo_forbidden(demo["_id"], "VIEW_DEMO")
 
     entries = list(
         mongo.demo_audit_logs.find({"demo_id": str(demo["_id"])}).sort("timestamp", -1)
@@ -3964,7 +4051,7 @@ def view_super_audit_logs():
 @admin_demo_bp.route("/accept_demo/<demo_id>", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("ACCEPT_DEMO")
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def accept_demo(demo_id):
     """Accept an existing demonstration by updating its status.
 
@@ -3997,6 +4084,7 @@ def accept_demo(demo_id):
     if not demo_data:
         error_msg = _("Demonstration not found.")
         return jsonify({"status": "ERROR", "message": error_msg}), 404
+    _abort_if_demo_forbidden(demo_data["_id"], "ACCEPT_DEMO")
 
     demo = Demonstration.from_dict(demo_data)
 
@@ -4027,7 +4115,7 @@ def accept_demo(demo_id):
 @admin_demo_bp.route("/get_submitter_info/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def get_submitter_info(demo_id):
     """
     Get submitter information for a demonstration.
@@ -4226,10 +4314,14 @@ def geocode_address():
         return jsonify({"error": str(e)}), 500
 
 @admin_demo_api_bp.route("/<demo_id>/approve", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def approve_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:
         return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+    _abort_if_demo_forbidden(demo["_id"], "ACCEPT_DEMO")
 
     if demo.get("approved"):
         return jsonify({"success": False, "message": "Mielenosoitus on jo hyväksytty"}), 200
@@ -4274,10 +4366,14 @@ def approve_demo(demo_id):
     return jsonify({"success": True, "message": "Mielenosoitus hyväksyttiin!"})
 
 @admin_demo_api_bp.route("/<demo_id>/deny", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("ACCEPT_DEMO", _type="DEMONSTRATION")
 def reject_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": _require_valid_objectid(demo_id)})
     if not demo:
         return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+    _abort_if_demo_forbidden(demo["_id"], "ACCEPT_DEMO")
 
     if demo.get("approved") is False and demo.get("rejected") is True:
         return jsonify({"success": False, "message": "Mielenosoitus on jo hylätty"}), 200
@@ -4334,6 +4430,7 @@ def admin_cancel_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": demo_oid})
     if not demo:
         return jsonify({"success": False, "error": "Mielenosoitus ei löytynyt"}), 404
+    _abort_if_demo_forbidden(demo["_id"], "EDIT_DEMO")
 
     reason = None
     if request.is_json:
@@ -4396,6 +4493,11 @@ def bulk_cancel_demos():
         if not demo:
             entry["status"] = "not_found"
             entry["message"] = _(u"Mielenosoitusta ei löytynyt.")
+            results.append(entry)
+            continue
+        if not _user_can_access_demo(demo["_id"], "EDIT_DEMO"):
+            entry["status"] = "forbidden"
+            entry["message"] = _(u"Ei oikeutta käsitellä tätä mielenosoitusta.")
             results.append(entry)
             continue
 

@@ -6,6 +6,11 @@
   const guideSteps = Array.from(document.querySelectorAll("[data-guide-step]"));
   const replayButton = document.getElementById("replay-markdown-guide");
   const guideStatus = document.getElementById("markdown-guide-status");
+  const guide = document.getElementById("markdown-guide");
+  const editor = document.getElementById("translation-editor");
+  const accessibilityToggle = document.getElementById("translation-accessibility-mode");
+  const accessibilityStatus = document.getElementById("accessibility-mode-status");
+  const accessibilityStorageKey = "translation-editor-accessibility-mode";
   let guideTimers = [];
 
   function appendInlineMarkdown(container, text) {
@@ -100,6 +105,7 @@
   function replayGuide() {
     guideTimers.forEach(window.clearTimeout);
     guideTimers = [];
+    if (guide) guide.classList.add("is-replaying");
     guideSteps.forEach((step) => step.classList.remove("is-active", "is-complete"));
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -110,6 +116,9 @@
           other.classList.toggle("is-complete", otherIndex < index);
         });
         if (guideStatus) guideStatus.textContent = `${index + 1} / ${guideSteps.length}`;
+        if (index === guideSteps.length - 1 && guide) {
+          guideTimers.push(window.setTimeout(() => guide.classList.remove("is-replaying"), 1200));
+        }
       };
       if (reducedMotion) {
         step.classList.add("is-complete");
@@ -123,6 +132,35 @@
     }
   }
 
+  function storedAccessibilityMode() {
+    try {
+      return window.localStorage.getItem(accessibilityStorageKey) !== "false";
+    } catch (error) {
+      return true;
+    }
+  }
+
+  function setAccessibilityMode(enabled, announce) {
+    if (!editor || !accessibilityToggle) return;
+    editor.classList.toggle("accessibility-mode", enabled);
+    accessibilityToggle.checked = enabled;
+    if (!enabled) {
+      guideTimers.forEach(window.clearTimeout);
+      guideTimers = [];
+      if (guide) guide.classList.remove("is-replaying");
+    }
+    if (announce && accessibilityStatus) {
+      accessibilityStatus.textContent = enabled
+        ? accessibilityToggle.dataset.enabledMessage
+        : accessibilityToggle.dataset.disabledMessage;
+    }
+    try {
+      window.localStorage.setItem(accessibilityStorageKey, String(enabled));
+    } catch (error) {
+      // The mode still works when browser storage is unavailable.
+    }
+  }
+
   document.querySelectorAll("[data-markdown-before], [data-markdown-line]").forEach(function (button) {
     button.addEventListener("click", function () {
       applyMarkdown(button);
@@ -130,7 +168,15 @@
   });
   if (textarea) textarea.addEventListener("input", renderMarkdown);
   if (replayButton) replayButton.addEventListener("click", replayGuide);
+  if (accessibilityToggle) {
+    accessibilityToggle.addEventListener("change", function () {
+      setAccessibilityMode(accessibilityToggle.checked, true);
+      if (accessibilityToggle.checked) replayGuide();
+    });
+  }
 
+  const accessibilityModeEnabled = storedAccessibilityMode();
+  setAccessibilityMode(accessibilityModeEnabled, false);
   renderMarkdown();
-  replayGuide();
+  if (accessibilityModeEnabled) replayGuide();
 })();

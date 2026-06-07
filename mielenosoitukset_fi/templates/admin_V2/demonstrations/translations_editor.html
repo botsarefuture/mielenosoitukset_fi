@@ -166,6 +166,67 @@
     font-size: 1.05rem;
   }
 
+  .accessibility-mode-control {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    border: 2px solid rgba(79, 70, 229, 0.3);
+    border-radius: 0.85rem;
+    background: var(--bs-body-bg);
+  }
+
+  .accessibility-mode-control .form-check-input {
+    width: 3rem;
+    height: 1.55rem;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .translation-editor:not(.accessibility-mode) .introduction,
+  .translation-editor:not(.accessibility-mode) .dashboard-panel {
+    padding: 1rem;
+  }
+
+  .translation-editor:not(.accessibility-mode) .translation-step {
+    border-left-width: 0.2rem;
+  }
+
+  .translation-editor:not(.accessibility-mode) .translation-step-number {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-basis: 1.8rem;
+    font-size: 0.9rem;
+  }
+
+  .translation-editor:not(.accessibility-mode) .translation-step-heading p,
+  .translation-editor:not(.accessibility-mode) .translation-editor-summary {
+    display: none;
+  }
+
+  .translation-editor:not(.accessibility-mode) .markdown-guide {
+    padding: 0.8rem;
+  }
+
+  .translation-editor:not(.accessibility-mode) .markdown-guide-steps {
+    display: none;
+  }
+
+  .translation-editor:not(.accessibility-mode) .markdown-guide.is-replaying .markdown-guide-steps {
+    display: grid;
+  }
+
+  .translation-editor:not(.accessibility-mode) .form-control {
+    min-height: 2.4rem;
+    font-size: 1rem;
+  }
+
+  .translation-editor:not(.accessibility-mode) .markdown-toolbar .btn {
+    min-height: 2.25rem;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+  }
+
   @media (max-width: 900px) {
     .translation-description-grid {
       grid-template-columns: 1fr;
@@ -181,13 +242,23 @@
   }
 </style>
 
-<section class="dashboard-container translation-editor">
+<section class="dashboard-container translation-editor accessibility-mode" id="translation-editor">
   <div class="introduction">
     <div class="translation-eyebrow mb-2">{{ _('Käännöstyötila') }}</div>
     <h1 class="text-3xl font-bold">{{ _('Käännökset') }}: {{ demo.title or _('Nimetön mielenosoitus') }}</h1>
     <p class="text-muted max-w-xl">
       {{ _('Tee käännösehdotus valitulle kielelle. Ehdotus ei julkaise sisältöä suoraan, vaan jää tarkistettavaksi.') }}
     </p>
+    <div class="accessibility-mode-control mt-3">
+      <input class="form-check-input" id="translation-accessibility-mode" type="checkbox" role="switch"
+             data-enabled-message="{{ _('Helppokäyttötila käytössä.') }}"
+             data-disabled-message="{{ _('Tiivis näkymä käytössä.') }}" checked>
+      <label for="translation-accessibility-mode">
+        <strong class="d-block">{{ _('Helppokäyttötila') }}</strong>
+        <span class="text-muted">{{ _('Suuremmat painikkeet, väljempi näkymä ja automaattinen opastus. Valinta muistetaan tällä laitteella.') }}</span>
+      </label>
+    </div>
+    <p class="visually-hidden" id="accessibility-mode-status" aria-live="polite"></p>
     <div class="d-flex gap-2 mt-3">
       <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">{{ _('Takaisin työjonoon') }}</a>
       {% if current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_DEMO') %}
@@ -241,7 +312,7 @@
   <section class="dashboard-panel">
     <div class="translation-eyebrow mb-2">{{ _('Käännösehdotus') }}</div>
     <h2 class="text-xl font-semibold mb-2">{{ _('Tee käännös kolmessa helpossa vaiheessa') }}</h2>
-    <p class="text-muted mb-4">{{ _('Valitse kieli, kirjoita käännös ja lähetä se tarkistettavaksi.') }}</p>
+    <p class="text-muted mb-4 translation-editor-summary">{{ _('Valitse kieli, kirjoita käännös ja lähetä se tarkistettavaksi.') }}</p>
     {% if translation_locales %}
     <div class="translation-step-heading mb-3">
       <span class="translation-step-number" aria-hidden="true">1</span>
@@ -261,7 +332,7 @@
     </nav>
 
     {% if can_translate_demos and selected_language %}
-    <aside class="markdown-guide mb-4" aria-labelledby="markdown-guide-title">
+    <aside class="markdown-guide mb-4" id="markdown-guide" aria-labelledby="markdown-guide-title">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
           <h3 class="h4 mb-1" id="markdown-guide-title">{{ _('Näin muotoilet tekstiä') }}</h3>

@@ -92,6 +92,8 @@ def test_translator_can_open_translation_editor(translator_client, seeded_data):
     assert "Näytä opastus uudelleen" in body
     assert "translation-description-preview" in body
     assert "translation-editor.js" in body
+    assert "translation-accessibility-mode" in body
+    assert "Helppokäyttötila" in body
 
 
 def test_translation_editor_displays_descriptions_as_markdown(translator_client, db, seeded_data):

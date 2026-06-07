@@ -104,7 +104,7 @@ def test_translator_can_generate_cached_deepl_suggestion(translator_client, db, 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "DeepL English title" in body
-    assert "Käytä ehdotusta lomakkeessa" in body
+    assert "Luo DeepL-ehdotus" not in body
 
 
 def test_translator_can_submit_demo_translation_proposal(translator_client, db, seeded_data):

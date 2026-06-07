@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+### Changed
+* Language controls now use a compact accessible switcher that keeps visitors on the current page, and the demonstration translation workspace has a clearer status and editing layout without the DeepL generation button.
+
 ### Fixed
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.

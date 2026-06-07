@@ -6,7 +6,7 @@ def _set_demo_translation(db, demo_id):
         {"_id": demo_id},
         {
             "$set": {
-                "date": "2026-05-20",
+                "date": "2099-05-20",
                 "default_language": "fi",
                 "translations": {
                     "en": {
@@ -207,7 +207,7 @@ def test_calendar_month_view_renders_translated_demo_titles(client, db, seeded_d
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
-    response = client.get("/calendar/2026/5/")
+    response = client.get("/calendar/2099/5/")
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
@@ -228,3 +228,12 @@ def test_set_language_redirects_back_to_safe_next_path(client):
 
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/demonstrations?search=climate")
+
+
+def test_language_switcher_keeps_current_page_and_query_string(client):
+    response = client.get("/demonstrations?search=climate")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert 'href="/set_language/en?next=/demonstrations?search%3Dclimate"' in body
+    assert 'onclick="location.href=' not in body

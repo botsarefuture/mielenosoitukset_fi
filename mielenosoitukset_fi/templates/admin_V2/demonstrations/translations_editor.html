@@ -1,8 +1,73 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<section class="dashboard-container">
+<style>
+  .translation-editor {
+    --translation-accent: #4f46e5;
+  }
+
+  .translation-editor .introduction {
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.16), rgba(14, 165, 233, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.24);
+  }
+
+  .translation-eyebrow {
+    color: var(--translation-accent);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .translation-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .translation-status-card {
+    padding: 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.85rem;
+    background: var(--bs-body-bg);
+  }
+
+  .translation-language-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .translation-language-tab {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 999px;
+    color: var(--bs-body-color);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .translation-language-tab:hover,
+  .translation-language-tab.is-active {
+    border-color: var(--translation-accent);
+    background: var(--translation-accent);
+    color: #fff;
+  }
+
+  .translation-source-field {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    background: rgba(148, 163, 184, 0.08);
+    white-space: pre-wrap;
+  }
+</style>
+
+<section class="dashboard-container translation-editor">
   <div class="introduction">
+    <div class="translation-eyebrow mb-2">{{ _('Käännöstyötila') }}</div>
     <h1 class="text-3xl font-bold">{{ _('Käännökset') }}: {{ demo.title or _('Nimetön mielenosoitus') }}</h1>
     <p class="text-muted max-w-xl">
       {{ _('Tee käännösehdotus valitulle kielelle. Ehdotus ei julkaise sisältöä suoraan, vaan jää tarkistettavaksi.') }}
@@ -17,119 +82,59 @@
 
   <section class="dashboard-panel mb-4">
     <h2 class="text-xl font-semibold mb-3">{{ _('Käännöstilanne') }}</h2>
-    <div class="table-responsive">
-      <table class="table align-middle">
-        <thead>
-          <tr>
-            <th>{{ _('Kieli') }}</th>
-            <th>{{ _('Hyväksytty sisältö') }}</th>
-            <th>{{ _('Ehdotuksen tila') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in translation_rows %}
-          <tr>
-            <td>{{ row.label }}</td>
-            <td>
-              {% if row.approved %}
-              <span class="badge bg-success">{{ _('Hyväksytty') }}</span>
-              {% else %}
-              <span class="badge bg-secondary">{{ _('Ei julkaistua käännöstä') }}</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if row.proposal_status == 'pending' %}
-              <span class="badge bg-warning text-dark">{{ _('Odottaa tarkistusta') }}</span>
-              {% elif row.proposal_status == 'approved' %}
-              <span class="badge bg-success">{{ _('Hyväksytty') }}</span>
-              {% elif row.proposal_status == 'rejected' %}
-              <span class="badge bg-danger">{{ _('Hylätty') }}</span>
-              {% else %}
-              <span class="badge bg-secondary">{{ _('Ei ehdotusta') }}</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="translation-status-grid">
+      {% for row in translation_rows %}
+      <div class="translation-status-card">
+        <div class="fw-bold mb-2">{{ row.label }}</div>
+        {% if row.proposal_status == 'pending' %}
+        <span class="badge bg-warning text-dark">{{ _('Odottaa tarkistusta') }}</span>
+        {% elif row.approved %}
+        <span class="badge bg-success">{{ _('Julkaistu') }}</span>
+        {% elif row.proposal_status == 'rejected' %}
+        <span class="badge bg-danger">{{ _('Hylätty') }}</span>
+        {% else %}
+        <span class="badge bg-secondary">{{ _('Ei käännöstä') }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
     </div>
   </section>
 
   <section class="dashboard-panel mb-4">
-    <h2 class="text-xl font-semibold mb-3">{{ _('Lähdesisältö') }}</h2>
-    <p class="text-muted">{{ _('Lähdekieli') }}: {{ translation_language_names.get(source_language, source_language) }}</p>
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+      <div>
+        <h2 class="text-xl font-semibold mb-1">{{ _('Lähdesisältö') }}</h2>
+        <p class="text-muted mb-0">{{ _('Lähdekieli') }}: {{ translation_language_names.get(source_language, source_language) }}</p>
+      </div>
+      <span class="badge bg-secondary">{{ _('Vain luku') }}</span>
+    </div>
     <div class="mb-3">
       <label class="form-label">{{ _('Otsikko') }}</label>
-      <div class="form-control" readonly>{{ demo.title or '' }}</div>
+      <div class="translation-source-field">{{ demo.title or '' }}</div>
     </div>
     <div class="mb-3">
       <label class="form-label">{{ _('Kuvaus') }}</label>
-      <div class="form-control" style="min-height: 8rem;" readonly>{{ demo.description or '' }}</div>
+      <div class="translation-source-field" style="min-height: 8rem;">{{ demo.description or '' }}</div>
     </div>
     <div class="mb-0">
       <label class="form-label">{{ _('Tunnisteet') }}</label>
-      <div class="form-control" readonly>{{ (demo.tags or [])|join(', ') }}</div>
+      <div class="translation-source-field">{{ (demo.tags or [])|join(', ') }}</div>
     </div>
   </section>
 
-  <section class="dashboard-panel mb-4">
-    <h2 class="text-xl font-semibold mb-3">{{ _('Automaattinen ehdotus') }}</h2>
-    {% if is_translation_candidate %}
-      <p class="text-muted">
-        {{ _('DeepL voi luoda luonnosehdotuksen tämän demon lähdesisällöstä. Ehdotus ei julkaise mitään suoraan, vaan toimii kääntäjän pohjana.') }}
-      </p>
-      {% if selected_language %}
-      <form method="POST" action="{{ url_for('admin_demo.generate_demo_translation_suggestion', demo_id=demo._id, language=selected_language) }}" class="d-flex gap-2 flex-wrap mb-3">
-        <button class="btn btn-outline-primary" type="submit">
-          <i class="fas fa-wand-magic-sparkles me-1"></i>{{ _('Luo DeepL-ehdotus') }}
-        </button>
-        {% if deepl_suggestion %}
-        <button class="btn btn-outline-secondary" type="submit" name="force_refresh" value="true">
-          {{ _('Päivitä ehdotus lähdesisällöstä') }}
-        </button>
-        {% endif %}
-      </form>
-      {% endif %}
-
-      {% if deepl_suggestion %}
-      <div class="border rounded p-3">
-        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-          <div>
-            <h3 class="h5 mb-1">{{ _('Tallennettu DeepL-ehdotus') }}</h3>
-            <div class="text-muted small">
-              {{ _('Tämä ehdotus on generoitu backendissä ja välimuistitetty lähdesisällön nykyiselle versiolle.') }}
-            </div>
-          </div>
-          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id, language=selected_language, prefill='deepl') }}">
-            {{ _('Käytä ehdotusta lomakkeessa') }}
-          </a>
-        </div>
-        <div class="mb-2"><strong>{{ _('Otsikko') }}:</strong> {{ deepl_suggestion.title or '' }}</div>
-        <div class="mb-2"><strong>{{ _('Kuvaus') }}:</strong> {{ deepl_suggestion.description or '' }}</div>
-        <div class="mb-0"><strong>{{ _('Tunnisteet') }}:</strong> {{ (deepl_suggestion.tags or [])|join(', ') }}</div>
-      </div>
-      {% endif %}
-    {% else %}
-      <div class="alert alert-secondary mb-0">
-        {{ _('Menneille mielenosoituksille ei luoda automaattisia käännösehdotuksia oletuksena.') }}
-      </div>
-    {% endif %}
-  </section>
-
   <section class="dashboard-panel">
-    <h2 class="text-xl font-semibold mb-3">{{ _('Käännösehdotus') }}</h2>
+    <h2 class="text-xl font-semibold mb-2">{{ _('Käännösehdotus') }}</h2>
+    <p class="text-muted mb-3">{{ _('Valitse kohdekieli ja viimeistele julkaistavaksi ehdotettava sisältö.') }}</p>
     {% if translation_locales %}
-    <form method="GET" class="mb-4">
-      <label for="language" class="form-label">{{ _('Kohdekieli') }}</label>
-      <div class="d-flex gap-2">
-        <select id="language" name="language" class="form-control">
-          {% for locale in translation_locales %}
-          <option value="{{ locale }}" {% if locale == selected_language %}selected{% endif %}>{{ translation_language_names.get(locale, locale) }}</option>
-          {% endfor %}
-        </select>
-        <button class="btn btn-outline-primary" type="submit">{{ _('Vaihda kieli') }}</button>
-      </div>
-    </form>
+    <nav class="translation-language-tabs mb-4" aria-label="{{ _('Kohdekieli') }}">
+      {% for locale in translation_locales %}
+      <a class="translation-language-tab{% if locale == selected_language %} is-active{% endif %}"
+         href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id, language=locale) }}"
+         {% if locale == selected_language %}aria-current="page"{% endif %}>
+        {{ translation_language_names.get(locale, locale) }}
+      </a>
+      {% endfor %}
+    </nav>
 
     {% if can_translate_demos and selected_language %}
     <form method="POST" class="mb-4">

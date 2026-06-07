@@ -88,8 +88,14 @@ login_logs = mongo["login_logs"]
 
 token_access_requests = mongo["api_token_requests"]
 
+
+def _get_mongo():
+    """Return the active database handle."""
+    return DatabaseManager.get_instance().get_db()
+
+
 def _fresh_user_doc():
-    return mongo.users.find_one({"_id": current_user._id}) or {}
+    return _get_mongo().users.find_one({"_id": current_user._id}) or {}
 
 
 def _notify_admin(subject, body, to=None):
@@ -829,7 +835,7 @@ def settings_api():
 
     if changed_fields:
         # Update the user's document in the database
-        mongo.users.update_one({"_id": user._id}, {"$set": user_data})
+        _get_mongo().users.update_one({"_id": user._id}, {"$set": user_data})
 
         # Send an email notification about the changes
         try:

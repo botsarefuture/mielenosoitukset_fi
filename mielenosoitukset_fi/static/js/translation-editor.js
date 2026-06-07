@@ -75,7 +75,7 @@
     if (!preview.hasChildNodes()) {
       const hint = document.createElement("p");
       hint.className = "text-muted";
-      hint.textContent = "Esikatselu ilmestyy tähän kirjoittaessasi.";
+      hint.textContent = preview.dataset.emptyMessage || "";
       preview.append(hint);
     }
   }
@@ -84,7 +84,7 @@
     if (!textarea) return;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const selected = textarea.value.slice(start, end) || "teksti";
+    const selected = textarea.value.slice(start, end) || button.dataset.markdownPlaceholder || "";
     const before = button.dataset.markdownBefore || "";
     const after = button.dataset.markdownAfter || "";
     const linePrefix = button.dataset.markdownLine || "";

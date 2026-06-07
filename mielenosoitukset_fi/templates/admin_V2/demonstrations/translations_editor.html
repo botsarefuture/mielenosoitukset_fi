@@ -309,10 +309,10 @@
       <div class="mb-3">
         <label for="translated_description" class="form-label">{{ _('Käännetty kuvaus') }}</label>
         <div class="markdown-toolbar" aria-label="{{ _('Tekstin muotoilupainikkeet') }}">
-          <button class="btn btn-outline-secondary" type="button" data-markdown-before="**" data-markdown-after="**">{{ _('Lihavoi') }}</button>
-          <button class="btn btn-outline-secondary" type="button" data-markdown-line="## ">{{ _('Väliotsikko') }}</button>
-          <button class="btn btn-outline-secondary" type="button" data-markdown-line="- ">{{ _('Lista') }}</button>
-          <button class="btn btn-outline-secondary" type="button" data-markdown-before="[" data-markdown-after="](https://)">{{ _('Linkki') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-before="**" data-markdown-after="**" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lihavoi') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-line="## " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Väliotsikko') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-line="- " data-markdown-placeholder="{{ _('teksti') }}">{{ _('Lista') }}</button>
+          <button class="btn btn-outline-secondary" type="button" data-markdown-before="[" data-markdown-after="](https://)" data-markdown-placeholder="{{ _('teksti') }}">{{ _('Linkki') }}</button>
         </div>
         <div class="translation-description-grid">
           <div>
@@ -321,7 +321,7 @@
           </div>
           <div>
             <div class="form-label" id="translation-preview-label">{{ _('Valmiin kuvauksen esikatselu') }}</div>
-            <div class="translation-preview" id="translation-description-preview" aria-labelledby="translation-preview-label" aria-live="polite"></div>
+            <div class="translation-preview" id="translation-description-preview" data-empty-message="{{ _('Esikatselu ilmestyy tähän kirjoittaessasi.') }}" aria-labelledby="translation-preview-label" aria-live="polite"></div>
           </div>
         </div>
       </div>

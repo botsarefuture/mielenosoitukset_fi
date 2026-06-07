@@ -38,12 +38,6 @@
         <input id="search" name="search" class="form-control" value="{{ search_query }}" placeholder="{{ _('Hae otsikolla') }}">
         <button class="btn btn-primary" type="submit">{{ _('Hae') }}</button>
       </div>
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="true" id="include_past" name="include_past" {% if include_past %}checked{% endif %}>
-        <label class="form-check-label" for="include_past">
-          {{ _('Näytä myös menneet mielenosoitukset') }}
-        </label>
-      </div>
     </form>
 
     <div class="table-responsive">

@@ -249,6 +249,42 @@ def _can_review_demo_translations(user):
     return user.has_permission("REVIEW_DEMO_TRANSLATIONS")
 
 
+def _filter_redundant_recurring_children(demos):
+    parent_ids = {
+        parent_id
+        for demo in demos
+        if (parent_id := _normalize_objectid(demo.get("parent")))
+    }
+    if not parent_ids:
+        return demos
+
+    projection = {"description": 1}
+    parent_docs = list(mongo.recu_demos.find({"_id": {"$in": list(parent_ids)}}, projection))
+    found_parent_ids = {doc["_id"] for doc in parent_docs}
+    missing_parent_ids = parent_ids - found_parent_ids
+    if missing_parent_ids:
+        parent_docs.extend(
+            mongo.demonstrations.find(
+                {"_id": {"$in": list(missing_parent_ids)}},
+                projection,
+            )
+        )
+    parent_descriptions = {
+        doc["_id"]: html_to_markdown(doc.get("description"))
+        for doc in parent_docs
+    }
+
+    return [
+        demo
+        for demo in demos
+        if not (
+            (parent_id := _normalize_objectid(demo.get("parent")))
+            and parent_id in parent_descriptions
+            and html_to_markdown(demo.get("description")) == parent_descriptions[parent_id]
+        )
+    ]
+
+
 def _collect_translation_proposal_form(language):
     tags_raw = request.form.get("translated_tags", "")
     tags = [tag.strip() for tag in tags_raw.split(",") if tag.strip()]
@@ -1646,21 +1682,27 @@ def demo_translation_dashboard():
         abort(403)
 
     search_query = (request.args.get("search") or "").strip()
-    include_past = (request.args.get("include_past") or "").strip().lower() == "true"
-    query = {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]}
-    if not include_past:
-        query["date"] = {"$gte": date.today().strftime("%Y-%m-%d")}
+    query = {
+        "$or": [{"rejected": {"$exists": False}}, {"rejected": False}],
+        "date": {"$gte": date.today().strftime("%Y-%m-%d")},
+    }
     if search_query:
         query["title"] = {"$regex": re.escape(search_query), "$options": "i"}
 
-    demos = list(
+    demos = _filter_redundant_recurring_children(list(
         mongo.demonstrations.find(
             query,
-            {"title": 1, "default_language": 1, "translations": 1, "translation_proposals": 1},
+            {
+                "title": 1,
+                "description": 1,
+                "parent": 1,
+                "default_language": 1,
+                "translations": 1,
+                "translation_proposals": 1,
+            },
         )
         .sort([("date", 1), ("_id", 1)])
-        .limit(100)
-    )
+    ))[:100]
 
     pending_items = []
     if _can_review_demo_translations(current_user):
@@ -1685,7 +1727,6 @@ def demo_translation_dashboard():
         demos=demos,
         pending_items=pending_items,
         search_query=search_query,
-        include_past=include_past,
         can_review_demo_translations=_can_review_demo_translations(current_user),
         can_translate_demos=_can_translate_demos(current_user),
         translation_language_names=_translation_language_names(),

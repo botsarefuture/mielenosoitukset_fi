@@ -18,7 +18,7 @@ def test_translation_dashboard_hides_past_demos_by_default(translator_client, db
     assert "Past Translation Demo" not in body
 
 
-def test_translation_dashboard_can_include_past_demos(translator_client, db, seeded_data):
+def test_translation_dashboard_never_includes_past_demos(translator_client, db, seeded_data):
     db.demonstrations.update_one(
         {"_id": seeded_data["demo_id"]},
         {"$set": {"date": "2020-01-01", "title": "Past Translation Demo"}},
@@ -28,7 +28,59 @@ def test_translation_dashboard_can_include_past_demos(translator_client, db, see
 
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert "Past Translation Demo" in body
+    assert "Past Translation Demo" not in body
+    assert "Näytä myös menneet mielenosoitukset" not in body
+
+
+def test_translation_dashboard_hides_unchanged_recurring_children(
+    translator_client, db, seeded_data
+):
+    db.recu_demos.update_one(
+        {"_id": seeded_data["recu_demo_id"]},
+        {"$set": {"description": "<p>Shared description</p>"}},
+    )
+    db.demonstrations.update_one(
+        {"_id": seeded_data["child_demo_id"]},
+        {
+            "$set": {
+                "date": "2099-05-02",
+                "title": "Unchanged Recurring Child",
+                "description": "Shared description",
+                "parent": seeded_data["recu_demo_id"],
+            }
+        },
+    )
+
+    response = translator_client.get("/admin/demo/translations")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Unchanged Recurring Child" not in body
+
+
+def test_translation_dashboard_shows_changed_recurring_children(
+    translator_client, db, seeded_data
+):
+    db.recu_demos.update_one(
+        {"_id": seeded_data["recu_demo_id"]},
+        {"$set": {"description": "Parent description"}},
+    )
+    db.demonstrations.update_one(
+        {"_id": seeded_data["child_demo_id"]},
+        {
+            "$set": {
+                "date": "2099-05-02",
+                "title": "Changed Recurring Child",
+                "description": "Child-specific description",
+                "parent": seeded_data["recu_demo_id"],
+            }
+        },
+    )
+
+    response = translator_client.get("/admin/demo/translations")
+
+    assert response.status_code == 200
+    assert "Changed Recurring Child" in response.get_data(as_text=True)
 
 
 def test_translator_can_open_translation_editor(translator_client, seeded_data):

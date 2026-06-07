@@ -107,9 +107,47 @@ class Config:
         cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
         cls.BABEL_SUPPORTED_LOCALES = cls.BABEL_CONFIG.get(
             "SUPPORTED_LOCALES",
-            ["en"],
+            ["fi", "en"],
         )
-        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get("LANGUAGES", {"en": "English"})
+        cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get(
+            "LANGUAGES",
+            {"fi": "Suomi", "en": "English"},
+        )
+        cls.DEEPL_API_KEY = config.get("DEEPL_API_KEY", "")
+        cls.DEEPL_API_URL = config.get(
+            "DEEPL_API_URL",
+            "https://api-free.deepl.com/v2/translate",
+        )
+        cls.UI_TRANSLATION_SYNC_ENABLED = config.get("UI_TRANSLATION_SYNC_ENABLED", False)
+        cls.UI_TRANSLATION_SYNC_REPO_PATH = config.get("UI_TRANSLATION_SYNC_REPO_PATH", "")
+        cls.UI_TRANSLATION_SYNC_BASE_BRANCH = config.get("UI_TRANSLATION_SYNC_BASE_BRANCH", "main")
+        cls.UI_TRANSLATION_SYNC_BRANCH_PREFIX = config.get(
+            "UI_TRANSLATION_SYNC_BRANCH_PREFIX",
+            "ui-translation",
+        )
+        cls.UI_TRANSLATION_SYNC_REMOTE = config.get("UI_TRANSLATION_SYNC_REMOTE", "origin")
+        cls.UI_TRANSLATION_SYNC_GIT_AUTHOR_NAME = config.get(
+            "UI_TRANSLATION_SYNC_GIT_AUTHOR_NAME",
+            "Mielenosoitukset UI Translation Bot",
+        )
+        cls.UI_TRANSLATION_SYNC_GIT_AUTHOR_EMAIL = config.get(
+            "UI_TRANSLATION_SYNC_GIT_AUTHOR_EMAIL",
+            "translations@mielenosoitukset.fi",
+        )
+        cls.UI_TRANSLATION_GITHUB_REPO = config.get("UI_TRANSLATION_GITHUB_REPO", "")
+        cls.UI_TRANSLATION_GITHUB_TOKEN = config.get("UI_TRANSLATION_GITHUB_TOKEN", "")
+        cls.UI_TRANSLATION_GITHUB_API_URL = config.get(
+            "UI_TRANSLATION_GITHUB_API_URL",
+            "https://api.github.com",
+        )
+        cls.UI_TRANSLATION_GITHUB_AUTO_MERGE = config.get(
+            "UI_TRANSLATION_GITHUB_AUTO_MERGE",
+            False,
+        )
+        cls.UI_TRANSLATION_GITHUB_MERGE_METHOD = config.get(
+            "UI_TRANSLATION_GITHUB_MERGE_METHOD",
+            "squash",
+        )
 
         cls.SECRET_KEY = config.get("SECRET_KEY", "secret_key")
         cls.PORT = config.get("PORT", 8000)

@@ -40,6 +40,11 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
         submit_button_text=submit_button_text,
         city_list=CITY_LIST,
         all_organizations=list(mongo.organizations.find()),
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=(
+            getattr(demo, "default_language", None) or "fi"
+        ),
     )
 
 
@@ -230,6 +235,10 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     # Basic info
     title = request.form.get("title")
     description = request.form.get("description")
+    default_language = (
+        request.form.get("default_language")
+        or "fi"
+    )
     date = request.form.get("date")
     start_time = request.form.get("start_time")
     end_time = request.form.get("end_time")
@@ -241,6 +250,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     approved = request.form.get("approved") == "on"
 
     tags = collect_tags(request)
+    translations = collect_demo_translations(request, default_language)
     cover_picture = request.form.get("cover_picture")
     gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
 
@@ -288,6 +298,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     demonstration_data = {
         "title": title,
         "description": description,
+        "default_language": default_language,
+        "translations": translations,
         "date": date,
         "start_time": start_time,
         "end_time": end_time,
@@ -339,6 +351,47 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
                 demo_id=demo_id,
             )
         )
+
+
+def _supported_demo_translation_locales():
+    from flask import current_app
+
+    return list(current_app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+
+
+def _translation_language_names():
+    from flask import current_app
+
+    return dict(current_app.config.get("BABEL_LANGUAGES") or {})
+
+
+def collect_demo_translations(request, default_language):
+    supported_locales = _supported_demo_translation_locales()
+    normalized_default = (default_language or "fi").strip().lower()
+    translations = {}
+
+    for language in supported_locales:
+        normalized_language = (language or "").strip().lower()
+        if not normalized_language or normalized_language == normalized_default:
+            continue
+
+        title = (request.form.get(f"translation_{normalized_language}_title") or "").strip()
+        description = (request.form.get(f"translation_{normalized_language}_description") or "").strip()
+        raw_tags = (request.form.get(f"translation_{normalized_language}_tags") or "").strip()
+        tags = [tag.strip().lstrip("#") for tag in raw_tags.split(",") if tag.strip()]
+
+        entry = {}
+        if title:
+            entry["title"] = title
+        if description:
+            entry["description"] = description
+        if tags:
+            entry["tags"] = tags
+
+        if entry:
+            translations[normalized_language] = entry
+
+    return translations
 
 
 def parse_gallery_images_field(raw_value):

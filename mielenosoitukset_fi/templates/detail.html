@@ -323,6 +323,53 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     margin-bottom: 2rem;
   }
 
+  .demo-language-panel {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 14px;
+    background: light-dark(rgba(255, 255, 255, 0.16), rgba(15, 23, 42, 0.42));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .demo-language-copy {
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.95rem;
+    flex: 1 1 260px;
+  }
+
+  .demo-language-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .demo-language-chip {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.5rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .demo-language-chip:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+
+  .demo-language-chip.is-active {
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--color-primary);
+    border-color: rgba(255, 255, 255, 0.94);
+  }
   /* Gallery */
   .demo-gallery {
     margin-bottom: 3rem;
@@ -1410,6 +1457,26 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         <i class="fa-solid fa-location-dot"></i>
         {{ demo['address'] }}, {{ demo['city'] }}
       </div>
+      {% if available_demo_languages and available_demo_languages|length > 1 %}
+      <div class="demo-language-panel">
+        <div class="demo-language-copy">
+          {% if current_demo_language == default_demo_language %}
+            {{ _('Näytät tapahtuman oletuskielellä %(language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper()) }}
+          {% else %}
+            {{ _('Näytät tapahtuman kielellä %(language)s. Oletuskieli on %(default_language)s.', language=get_lang_name(current_demo_language) or current_demo_language.upper(), default_language=get_lang_name(default_demo_language) or default_demo_language.upper()) }}
+          {% endif %}
+        </div>
+        <div class="demo-language-chips" aria-label="{{ _('Saatavilla olevat kielet') }}">
+          {% for language_code in available_demo_languages %}
+          <a href="{{ url_for('set_language', lang=language_code, next=request.full_path if request.query_string else request.path) }}"
+             class="demo-language-chip{% if language_code == current_demo_language %} is-active{% endif %}"
+             {% if language_code == current_demo_language %}aria-current="true"{% endif %}>
+            {{ (get_lang_name(language_code) or language_code)|upper if language_code|length <= 3 else (get_lang_name(language_code) or language_code) }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
   </section>
 

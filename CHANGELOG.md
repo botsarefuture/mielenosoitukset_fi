@@ -4,6 +4,13 @@
 
 ## UNRELEASED
 
+### Changed
+* Language controls now use a compact accessible switcher that keeps visitors on the current page, and the demonstration translation workspace has a clearer status and editing layout without the DeepL generation button.
+* Demonstration descriptions in the translation workspace are now displayed and edited as Markdown while approved content remains stored as safe formatted HTML.
+* The demonstration translation queue now excludes past demonstrations and collapses recurring instances whose descriptions match their parent.
+* The demonstration translation editor now uses a clear three-step workflow, replayable animated Markdown guidance, formatting buttons, a safe live visual preview, and a remembered accessibility mode that defaults to a spacious guided layout but can be switched to a compact workspace.
+* Translators now see the source and target languages plus each original and translated field side by side while working.
+
 ### Fixed
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
@@ -15,6 +22,27 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Added the first multilingual demonstration data-model foundation: `Demonstration` now supports `default_language`, a `translations` map, and helper methods for localized title/description/tag access without breaking existing base fields.
+* Added shared demo-localization helpers so multilingual title, description, and tag resolution can be reused consistently from both `Demonstration` objects and plain demonstration dictionaries.
+* `Demonstration` now exposes translations-first serialization helpers for localized payloads and available-language discovery, so API and UI code can consume one consistent multilingual model instead of rebuilding locale resolution ad hoc.
+* Public demonstration APIs and filtering now understand multilingual demonstration content: localized API payloads expose resolved and available languages, and search/tag filters can match translated titles, descriptions, and tags instead of only the base language fields.
+* Added a DeepL-backed translation suggestion service for demonstration content, so translator workflows can request machine-generated title/description/tag proposals with provenance metadata while still keeping human review in control.
+* DeepL suggestions can now be cached backend-side by demo source content hash, so translator UIs can show ready-made proposal drafts without re-translating unchanged content on every view.
+* DeepL suggestion generation now skips past demonstrations by default, so translator workflows can keep old events hidden unless someone explicitly opts into backfilling them.
+* Public demo rendering now uses locale-aware demonstration title, description, and tag values on detail pages, calendar views, and API/card payloads while still falling back to legacy base fields when translations are missing.
+* Admin demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, so demonstration translations can be managed from the existing moderation UI.
+* Recurring demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, extending the same translation model to recurring-event administration.
+* Public submit flow now records the authored language of the base demonstration fields through a `default_language` selector, so multilingual data starts with the correct source language even before public translation inputs exist.
+* Repository and preview runtime config defaults now expose both Finnish and English as supported UI languages, so multilinguality previews show `fi` and `en` selectors without requiring separate server-side config edits.
+* Adminiin lisättiin ensimmäinen demojen käännöstyöjono: uusi `translator`-rooli voi tehdä käännösehdotuksia demojen otsikoille, kuvauksille ja tunnisteille, ja admin hyväksyy tai hylkää ne ennen julkaisua.
+* Demojen detail-sivu näyttää nyt hyväksytyt käännökset aktiivisen kielen mukaan, lokalisoi samankaltaisten tapahtumien otsikot, ja kertoo suoraan millä kielellä tapahtumaa katsotaan.
+* Käännöstyökalu osaa nyt pyytää backendissä välimuistitetyn DeepL-ehdotuksen demolle, jotta kääntäjät voivat käyttää automaattista luonnosta ilman että sama käännös generoidaan selaimessa joka näkymässä uudelleen.
+* Adminiin lisättiin ensimmäinen käyttöliittymäkäännösten workflow: translator/admin voivat avata gettext-rivejä, lähettää käännösehdotuksia ja hyväksyä ne suoraan `.po`/`.mo`-katalogeihin.
+* Hyväksytyt käyttöliittymäkäännökset voidaan nyt jonottaa taustalla Git-branch/PR-synkkiin näkyvällä statuksella, jotta admin-review ja GitHub-lähdekoodisynkki pysyvät samassa workflow’ssa ilman että live checkout likaantuu.
+* UI-käännösten GitHub-synkki näyttää nyt erikseen PR- ja merge-tilan, ja voi haluttaessa yrittää automergeä hyväksytylle käännös-PR:lle konfiguraation perusteella.
+* Adminiin lisättiin erillinen käyttöliittymäkäännösten GitHub-sync-dashboard suodatuksilla ja bulk-retryllä, jotta epäonnistuneet branch/PR-syncit voidaan hallita yhdestä näkymästä.
+* UI-käännösten approve/reject/requeue action-URL:t ohjaavat nyt turvallisesti takaisin editoriin tai listaan, jos niitä avataan selaimessa GET-linkkinä, joten preview ei enää kaadu 500-sivulle vahingossa avatusta toimintalinkistä.
+* UI-käännöseditori käsittelee nyt puuttuvat tai erikoisesti enkoodatut gettext-avaimet turvallisesti ja avaa annetun oikean catalog-rivin myös suoraan querystring-URL:sta ilman previewssa nähtyä 500-virhettä.
 * Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
 * Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
 * Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
@@ -76,6 +104,9 @@
 * Docker Compose development now uses Mailpit for local SMTP testing and exposes Redis alongside the app dependencies, making the dev stack closer to the test stack.
 
 ### Fixed
+* Demojen käännöstyöjono piilottaa menneet mielenosoitukset oletuksena ja näyttää ne vain erikseen pyydettäessä, jotta kääntäjien näkymä pysyy keskittyneenä aktiivisiin tapahtumiin.
+* UI-käännösehdotusten lähetys torjuu nyt virheelliset locale-polut siististi 404:llä FileNotFound-virheen sijaan, joten admin-route smoke- ja oikeat virhepolut eivät enää kaadu palvelinvirheeseen.
+* Mielenosoituksen detail-sivun HTML-cache käyttää nyt samaa resolved localea kuin itse renderöinti, jotta eri kieliversiot eivät vuoda toistensa yli vaikka hakulistaus näyttäisi oikean kielen.
 * City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.
 * Runtime models and user/profile helpers now resolve the active MongoDB database per operation, preventing stale database handles after app/test database resets.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.

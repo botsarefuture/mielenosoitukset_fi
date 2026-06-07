@@ -36,4 +36,7 @@ BABEL:
   SUPPORTED_LOCALES:
     - "fi"
     - "en"
-  
+
+  LANGUAGES:
+    fi: "Suomi"
+    en: "English"

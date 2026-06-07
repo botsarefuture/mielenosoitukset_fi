@@ -82,7 +82,16 @@ def user_control():
     )
 
 
-USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "user": 1}
+USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "translator": 1, "user": 1}
+ROLE_IMPLIED_GLOBAL_PERMISSIONS = {
+    "translator": {"TRANSLATE_DEMO", "TRANSLATE_UI"},
+}
+
+
+def _normalize_role_permissions(role, selected_permissions):
+    permissions = set(selected_permissions or [])
+    permissions.update(ROLE_IMPLIED_GLOBAL_PERMISSIONS.get(role, set()))
+    return sorted(permissions)
 
 CITY_ADMIN_PERMISSIONS = [
     "LIST_DEMOS",
@@ -233,8 +242,10 @@ def edit_user(user_id):
             "email":     request.form.get("email", "").strip(),
             "role":      request.form.get("role") or user.role,
             "confirmed": request.form.get("confirmed") == "on",
-            "global_permissions": request.form.getlist("permissions[global][]")
-                                   or current["global_permissions"],
+            "global_permissions": _normalize_role_permissions(
+                request.form.get("role") or user.role,
+                request.form.getlist("permissions[global][]") or current["global_permissions"],
+            ),
         }
 
         # ─── validoinnit ────────────────────────────────────────────────────────
@@ -359,7 +370,7 @@ def save_user(user_id):
     email = request.form.get("email")
     role = request.form.get("role")
     confirmed = request.form.get("confirmed") == "on"
-    global_permissions = request.form.getlist("permissions[global][]")  # ← 🔥 this line
+    global_permissions = _normalize_role_permissions(role, request.form.getlist("permissions[global][]"))
 
     # Prevent role escalation
     if current_user._id == user_id and role != current_user.role:
@@ -390,7 +401,7 @@ def save_user(user_id):
     user.email = email
     user.role = role
     user.confirmed = confirmed
-    user.global_permissions = global_permissions  # ← 🔥 this line
+    user.global_permissions = global_permissions
 
 
     user.save()

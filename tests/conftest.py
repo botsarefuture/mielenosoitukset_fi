@@ -127,6 +127,10 @@ ALL_PERMISSIONS = sorted(
         "LIST_USERS",
         "MANAGE_BACKGROUND_JOBS",
         "MANAGE_CLEARANCE",
+        "REVIEW_DEMO_TRANSLATIONS",
+        "REVIEW_UI_TRANSLATIONS",
+        "TRANSLATE_DEMO",
+        "TRANSLATE_UI",
         "VIEW_ANALYTICS",
         "VIEW_BACKGROUND_JOBS",
         "VIEW_CLEARANCE_AUDIT",
@@ -252,6 +256,7 @@ def _seed_database(app, db):
     user_id = ObjectId()
     friend_id = ObjectId()
     developer_id = ObjectId()
+    translator_id = ObjectId()
     org_id = ObjectId()
     second_org_id = ObjectId()
     demo_id = ObjectId()
@@ -306,13 +311,22 @@ def _seed_database(app, db):
         displayname="Developer User",
         api_tokens_enabled=True,
     )
+    translator_doc = _user_doc(
+        "translator",
+        "translator@example.test",
+        "TranslatorPass1!",
+        _id=translator_id,
+        displayname="Translator User",
+        role="translator",
+        global_permissions=["TRANSLATE_DEMO"],
+    )
 
     friendship = {"user_id": friend_id, "last_updated": now}
     reverse_friendship = {"user_id": user_id, "last_updated": now}
     user_doc["friends"] = [friendship]
     friend_doc["friends"] = [reverse_friendship]
 
-    db.users.insert_many([admin_doc, user_doc, friend_doc, developer_doc])
+    db.users.insert_many([admin_doc, user_doc, friend_doc, developer_doc, translator_doc])
 
     db.memberships.insert_many(
         [
@@ -668,6 +682,7 @@ def _seed_database(app, db):
         "user_id": user_id,
         "friend_id": friend_id,
         "developer_id": developer_id,
+        "translator_id": translator_id,
         "org_id": org_id,
         "demo_id": demo_id,
         "pending_demo_id": pending_demo_id,
@@ -892,6 +907,11 @@ def admin_client(app, seeded_data):
 @pytest.fixture
 def developer_client(app, seeded_data):
     return _client_for_user(app, seeded_data["developer_id"])
+
+
+@pytest.fixture
+def translator_client(app, seeded_data):
+    return _client_for_user(app, seeded_data["translator_id"])
 
 
 @pytest.fixture

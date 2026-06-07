@@ -1700,6 +1700,23 @@
         </div>
 
         <div class="form-group">
+          <label for="default_language">
+            {{ _('Sisällön kieli') }}<span class="required-asterisk">*</span>
+          </label>
+          <select id="default_language" name="default_language" required>
+            {% for locale in translation_locales %}
+            <option value="{{ locale }}" {% if default_demo_language == locale %}selected{% endif %}>
+              {{ translation_language_names.get(locale, locale|upper) }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="helper-text">
+            <i class="fa-solid fa-language"></i>
+            {{ _('Valitse millä kielellä kirjoitat otsikon, tagit ja kuvauksen. Varsinaiset käännökset voi lisätä myöhemmin.') }}
+          </div>
+        </div>
+
+        <div class="form-group">
           <label for="description">{{ _('Kuvausteksti') }}</label>
           <div class="editor-container">
             <div id="editor"></div>

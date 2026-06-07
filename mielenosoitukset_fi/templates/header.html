@@ -143,36 +143,45 @@ time (datetime) | iso string, read (bool)
     border-radius: 4px;
   }
 
-  /* Language Buttons */
+  /* Language Switcher */
   .language-buttons {
     display: flex;
-    gap: 0.5rem;
     align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
   }
 
-  .language-buttons::before {
-    content: '🌐';
-    font-size: 1.25rem;
-    margin-right: 0.5rem;
+  .language-buttons .fa-globe {
+    margin: 0 0.4rem 0 0.55rem;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
   }
 
   .language-button {
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.8rem;
+    background: transparent;
+    border: 1px solid transparent;
     color: white;
-    padding: 0.5rem 1rem;
+    padding: 0.42rem 0.7rem;
     border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-decoration: none;
     transition: var(--transition);
-    font-family: inherit;
   }
 
   .language-button:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
   }
 
   .language-button:focus {
@@ -183,12 +192,13 @@ time (datetime) | iso string, read (bool)
   .language-button.active {
     background: white;
     color: var(--color-primary);
-    border-color: white;
+    border-color: rgba(255, 255, 255, 0.9);
     font-weight: 700;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.18);
   }
 
   .language-button.active:hover {
-    transform: translateY(-2px);
+    color: var(--color-primary);
   }
 
   /* Main Navigation */
@@ -479,6 +489,7 @@ time (datetime) | iso string, read (bool)
 
     .language-buttons {
       justify-content: center;
+      width: fit-content;
     }
 
     .mobile-menu-toggle {
@@ -737,13 +748,15 @@ time (datetime) | iso string, read (bool)
     </div>
 
     <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">
+      <i class="fa-solid fa-globe" aria-hidden="true"></i>
       {% for lang_code in get_supported_locales() %}
-      <button class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
-              onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'"
-              aria-label="{{ _('Vaihda kieleksi') }} {{ lang_code.upper() }}"
-              {% if session.get('locale', 'fi') == lang_code %}aria-current="true"{% endif %}>
+      <a class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
+         href="{{ url_for('set_language', lang=lang_code, next=request.full_path if request.query_string else request.path) }}"
+         title="{{ get_lang_name(lang_code) or lang_code.upper() }}"
+         aria-label="{{ _('Vaihda kieleksi') }} {{ get_lang_name(lang_code) or lang_code.upper() }}"
+         {% if session.get('locale', 'fi') == lang_code %}aria-current="page"{% endif %}>
         {{ lang_code.upper() }}
-      </button>
+      </a>
       {% endfor %}
     </nav>
   </div>

@@ -188,6 +188,8 @@ class RecurringDemonstration(Demonstration):
 
         _data = copy.deepcopy(data)
         data = _data # now we wont modify the original data
+        # city_key is persisted for scoped queries but derived from city by Demonstration.
+        data.pop("city_key", None)
 
         created_until = (
             datetime.fromisoformat(data["created_until"])

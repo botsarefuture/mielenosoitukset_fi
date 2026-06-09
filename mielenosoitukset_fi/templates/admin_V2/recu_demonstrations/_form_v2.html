@@ -130,11 +130,17 @@
 <div class="dashboard-container">
 
     <!-- Page intro -->
-    <section class="introduction">
+    <section class="introduction editor-hero">
         <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-        <p class="text-muted max-w-xl">{{ _('Täältä voit lisätä tai muokata mielenosoituksia helposti.') }}<br>
-            {{ _('Muistathan tallentaa tekemäsi muutokset lomakkeen lopussa.') }}
+        <p class="text-muted max-w-xl">{{ _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.') }}
         </p>
+        <nav class="editor-section-nav" aria-label="{{ _('Lomakkeen osiot') }}">
+            <a href="#basic-info">{{ _('Perustiedot') }}</a>
+            <a href="#recurrence-settings">{{ _('Toistuvuus') }}</a>
+            <a href="#location-info">{{ _('Sijainti') }}</a>
+            <a href="#organizer-info">{{ _('Järjestäjät') }}</a>
+            {% if demo and demo._id %}<a href="#child-demos">{{ _('Lapsimielenosoitukset') }}</a>{% endif %}
+        </nav>
     </section>
 
     {% if edit_demo_with_token %}
@@ -150,10 +156,10 @@
     </section>
     {% endif %}
 
-    <form method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
+    <form id="recu-demo-form" class="admin-editor-form" method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
 
         <!-- Basic Info Section -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="basic-info" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Perustiedot') }}</h2>
 
             <div class="form-group">
@@ -247,7 +253,7 @@
                         </div>
                     </div>
                 </div>
-                <input type="hidden" id="description" name="description" value="{{ demo.description if demo else '' }}">
+                <input type="hidden" id="description" name="description" value="{{ demo.description|default('', true) if demo else '' }}">
             </div>
 
             <div style="height: 2rem;"></div>
@@ -266,24 +272,31 @@
                 initClassicEditor('#editor', 'description');
             </script>
         </section>
-        <section class="form-section dashboard-panel mb-8">
+        <section id="recurrence-settings" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">Toistuvuusasetukset</h2>
+            {% if demo and demo.repeat_schedule %}
+            <p class="current-schedule-summary">
+                <strong>{{ _('Nykyinen tallennettu toistuvuus:') }}</strong>
+                {{ demo.repeat_schedule.as_string() }}
+            </p>
+            {% endif %}
 
             <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="frequency_type" class="block font-medium mb-1">Toistuvuustyyppi</label>
                     <select id="frequency_type" name="frequency_type" class="form-control w-full">
-                        <option value="none" selected>Ei toistu</option>
-                        <option value="daily">Päivittäin</option>
-                        <option value="weekly">Viikoittain</option>
-                        <option value="monthly">Kuukausittain</option>
-                        <option value="yearly">Vuosittain</option>
+                        {% set frequency = demo.repeat_schedule.frequency if demo and demo.repeat_schedule else 'none' %}
+                        <option value="none" {% if frequency == 'none' %}selected{% endif %}>Ei toistu</option>
+                        <option value="daily" {% if frequency == 'daily' %}selected{% endif %}>Päivittäin</option>
+                        <option value="weekly" {% if frequency == 'weekly' %}selected{% endif %}>Viikoittain</option>
+                        <option value="monthly" {% if frequency == 'monthly' %}selected{% endif %}>Kuukausittain</option>
+                        <option value="yearly" {% if frequency == 'yearly' %}selected{% endif %}>Vuosittain</option>
                     </select>
                 </div>
                 <div>
                     <label for="frequency_interval" class="block font-medium mb-1">Toistuvuusväli</label>
                     <input type="number" id="frequency_interval" name="frequency_interval" min="1"
-                        class="form-control w-32" value="1">
+                        class="form-control w-32" value="{{ demo.repeat_schedule.interval if demo and demo.repeat_schedule and demo.repeat_schedule.interval else 1 }}">
                     <small class="text-muted">Kuinka monta kertaa toisto tapahtuu (esim. joka 2. viikko)</small>
                 </div>
             </div>
@@ -292,13 +305,10 @@
             <div id="weekly-options" class="form-group mt-4" style="display: none">
                 <label class="block font-medium mb-1">Valitse viikonpäivä</label>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <label><input type="radio" name="weekday" value="monday"> Ma</label>
-                    <label><input type="radio" name="weekday" value="tueday"> Ti</label>
-                    <label><input type="radio" name="weekday" value="wednesday"> Ke</label>
-                    <label><input type="radio" name="weekday" value="thursday"> To</label>
-                    <label><input type="radio" name="weekday" value="friday"> Pe</label>
-                    <label><input type="radio" name="weekday" value="saturday"> La</label>
-                    <label><input type="radio" name="weekday" value="sunday"> Su</label>
+                    {% set selected_weekday = demo.repeat_schedule.weekday if demo and demo.repeat_schedule else none %}
+                    {% for value, label in [('monday', 'Ma'), ('tuesday', 'Ti'), ('wednesday', 'Ke'), ('thursday', 'To'), ('friday', 'Pe'), ('saturday', 'La'), ('sunday', 'Su')] %}
+                    <label><input type="radio" name="weekday" value="{{ value }}" {% if selected_weekday == value %}checked{% endif %}> {{ label }}</label>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -306,38 +316,36 @@
             <div id="monthly-options" class="form-group mt-4" style="display: none">
                 <label class="block font-medium mb-1">Kuukauden vaihtoehto</label>
                 <select id="monthly_option" name="monthly_option" class="form-control w-full">
-                    <option value="day_of_month" selected>Päivä kuukaudessa</option>
-                    <option value="nth_weekday">nth viikonpäivä</option>
+                    {% set monthly_option = demo.repeat_schedule.monthly_option if demo and demo.repeat_schedule else 'day_of_month' %}
+                    <option value="day_of_month" {% if monthly_option == 'day_of_month' %}selected{% endif %}>Päivä kuukaudessa</option>
+                    <option value="nth_weekday" {% if monthly_option == 'nth_weekday' %}selected{% endif %}>nth viikonpäivä</option>
                 </select>
                 <div class="mt-2">
                     <input type="number" id="day_of_month" name="day_of_month" min="1" max="31"
-                        class="form-control w-32" placeholder="Päivä">
+                        class="form-control w-32" placeholder="Päivä"
+                        value="{{ demo.repeat_schedule.day_of_month|default('', true) if demo and demo.repeat_schedule else '' }}">
                 </div>
                 <div class="mt-2">
                     <select id="nth_weekday" name="nth_weekday" class="form-control w-32">
                         <option value="">--</option>
-                        <option value="first">1.</option>
-                        <option value="second">2.</option>
-                        <option value="third">3.</option>
-                        <option value="fourth">4.</option>
-                        <option value="last">viimeinen</option>
+                        {% set selected_nth = demo.repeat_schedule.nth_weekday if demo and demo.repeat_schedule else none %}
+                        {% for value, label in [('first', '1.'), ('second', '2.'), ('third', '3.'), ('fourth', '4.'), ('last', 'viimeinen')] %}
+                        <option value="{{ value }}" {% if selected_nth == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
                     <select id="weekday_of_month" name="weekday_of_month" class="form-control w-32">
-<option value="mon">Ma</option>
-<option value="tue">Ti</option>
-<option value="wed">Ke</option>
-<option value="thu">To</option>
-<option value="friday">Pe</option>
-<option value="sat">La</option>
-<option value="sun">Su</option>
-
+                        {% set selected_month_weekday = demo.repeat_schedule.weekday_of_month if demo and demo.repeat_schedule else none %}
+                        {% for value, label in [('monday', 'Ma'), ('tuesday', 'Ti'), ('wednesday', 'Ke'), ('thursday', 'To'), ('friday', 'Pe'), ('saturday', 'La'), ('sunday', 'Su')] %}
+                        <option value="{{ value }}" {% if selected_month_weekday == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
 
             <div class="form-group mt-4">
                 <label for="end_date" class="block font-medium mb-1">Toistuvuuden loppupäivä</label>
-                <input type="date" id="end_date" name="end_date" class="form-control w-full" autocomplete="off">
+                <input type="date" id="end_date" name="end_date" class="form-control w-full" autocomplete="off"
+                    value="{{ demo.repeat_schedule.end_date|default('', true) if demo and demo.repeat_schedule else '' }}">
             </div>
 
             <script>
@@ -345,16 +353,18 @@
                 const weeklyOptions = document.getElementById('weekly-options');
                 const monthlyOptions = document.getElementById('monthly-options');
 
-                freqSelect.addEventListener('change', () => {
+                const updateRecurrenceOptions = () => {
                     weeklyOptions.style.display = freqSelect.value === 'weekly' ? 'block' : 'none';
                     monthlyOptions.style.display = freqSelect.value === 'monthly' ? 'block' : 'none';
-                });
+                };
+                freqSelect.addEventListener('change', updateRecurrenceOptions);
+                updateRecurrenceOptions();
             </script>
         </section>
 
 
 
-        <section class="form-section dashboard-panel">
+        <section id="seo-info" class="form-section dashboard-panel">
             <h2>{{ _('SEO / tagit') }}</h2>
             <div class="form-group">
                 <label for="tag-input">{{ _('Tägit') }}</label>
@@ -455,19 +465,19 @@
 
 
         <!-- Social & Cover Picture -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="misc-info" class="form-section dashboard-panel mb-8">
             <h2>Sekalaiset</h2>
             <div class="form-group">
                 <label for="facebook">{{ _('Facebook linkki') }}</label>
                 <input type="url" id="facebook" name="facebook" class="form-control"
-                    value="{{ demo.facebook if demo else '' }}">
+                    value="{{ demo.facebook|default('', true) if demo else '' }}">
             </div>
 
             <div class="form-group">
                 <label for="cover_picture">{{ _('Kansikuva') }}</label>
                 <input type="text" id="cover_picture" name="cover_picture" class="form-control"
                     placeholder="{{ _('Syötä kuvan URL tai lataa alla') }}"
-                    value="{{ demo.cover_picture if demo else '' }}">
+                    value="{{ demo.cover_picture|default('', true) if demo else '' }}">
                 <input type="file" id="cover_picture_file" name="cover_picture_file" class="form-control mt-2"
                     accept="image/*">
                 {% if demo and demo.cover_picture %}
@@ -486,7 +496,7 @@
         </section>
 
         <!-- Location Section -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="location-info" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Sijaintiedot') }}</h2>
 
             {% include "paikkakunta-dropdown.html" %}
@@ -495,7 +505,7 @@
                 <label for="address" class="block font-medium mb-1">{{ _('Osoite') }} <span
                         class="text-red-500">*</span></label>
                 <input type="text" id="address" name="address" class="form-control w-full"
-                    value="{{ demo.address if demo else '' }}" required>
+                    value="{{ demo.address|default('', true) if demo else '' }}" required>
             </div>
 
             <div class="form-group grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -503,14 +513,14 @@
                     <label for="latitude" class="block font-medium mb-1">{{ _('Leveysaste') }}</label>
                     <input type="text" id="latitude" name="latitude"
                         class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
-                        value="{{ demo.latitude if demo else '' }}" {% if not current_user.is_authenticated %}readonly{%
+                        value="{{ demo.latitude|default('', true) if demo else '' }}" {% if not current_user.is_authenticated %}readonly{%
                         endif %}>
                 </div>
                 <div>
                     <label for="longitude" class="block font-medium mb-1">{{ _('Pituusaste') }}</label>
                     <input type="text" id="longitude" name="longitude"
                         class="form-control w-full {% if not current_user.is_authenticated %}bg-gray-100 text-gray-500 cursor-not-allowed{% endif %}"
-                        value="{{ demo.longitude if demo else '' }}" {% if not current_user.is_authenticated
+                        value="{{ demo.longitude|default('', true) if demo else '' }}" {% if not current_user.is_authenticated
                         %}readonly{% endif %}>
                 </div>
             </div>
@@ -616,7 +626,7 @@
         </section>
 
         <!-- Organizers Section -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="organizer-info" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="required">*</span>
             </h2>
 
@@ -628,12 +638,13 @@
                             class="required">*</span></label>
                     <input type="text" id="organizer_name_{{ loop.index }}" name="organizer_name_{{ loop.index }}"
                         class="form-control" value="{{ organizer.name }}" required>
+                    <input type="hidden" name="organizer_record_id_{{ loop.index }}" value="{{ organizer._id }}">
                     <label for="organizer_website_{{ loop.index }}">{{ _('Nettisivu') }}</label>
                     <input type="url" id="organizer_website_{{ loop.index }}" name="organizer_website_{{ loop.index }}"
-                        class="form-control" value="{{ organizer.website }}">
+                        class="form-control" value="{{ organizer.website|default('', true) }}">
                     <label for="organizer_email_{{ loop.index }}">{{ _('Sähköposti') }}</label>
                     <input type="email" id="organizer_email_{{ loop.index }}" name="organizer_email_{{ loop.index }}"
-                        class="form-control" value="{{ organizer.email }}">
+                        class="form-control" value="{{ organizer.email|default('', true) }}">
                     <div class="organizer-privacy">
                         <label class="d-flex align-items-center gap-2">
                             <input type="checkbox" name="organizer_is_private_{{ loop.index }}"
@@ -734,7 +745,7 @@
 
         <!-- Approval Section -->
         {% if current_user.is_authenticated %}
-        <section class="form-section dashboard-panel mb-8">
+        <section id="approval-info" class="form-section dashboard-panel mb-8">
             <div class="form-group" id="approval-container">
                 <label for="approved">{{ _('Hyväksytty') }}</label>
                 <div>
@@ -751,10 +762,87 @@
         {% endif %}
 
         <!-- Submit Section -->
-        <section class="form-section text-center mb-12">
-            <button type="submit" class="btn btn-submit mt-3">{{ submit_button_text }}</button>
+        <section class="editor-save-bar">
+            <span>{{ _('Tallenna sarjan tiedot ennen kuin kopioit niitä lapsimielenosoituksiin.') }}</span>
+            <button type="submit" class="btn btn-submit">{{ submit_button_text }}</button>
         </section>
     </form>
+
+    {% if demo and demo._id %}
+    <section id="child-demos" class="form-section dashboard-panel child-bulk-panel">
+        <div class="section-heading-row">
+            <div>
+                <p class="section-kicker">{{ _('Sarjan hallinta') }}</p>
+                <h2>{{ _('Päivitä lapsimielenosoituksia') }}</h2>
+                <p class="text-muted">{{ _('Valitse lapset ja kentät, jotka kopioidaan yllä tallennetuista sarjan tiedoista. Päivämäärät eivät muutu.') }}</p>
+            </div>
+            <span class="count-badge">{{ child_counts.future }} {{ _('tulevaa') }} / {{ child_counts.total }} {{ _('yhteensä') }}</span>
+        </div>
+
+        {% if child_demos %}
+        <form method="POST" action="{{ url_for('admin_recu_demo.bulk_update_children', demo_id=demo._id) }}" id="child-bulk-form">
+            <fieldset class="bulk-scope-picker">
+                <legend>{{ _('Päivityksen kohde') }}</legend>
+                <label><input type="radio" name="child_scope" value="selected" checked> {{ _('Alla valitut lapset') }}</label>
+                <label><input type="radio" name="child_scope" value="all_future"> {{ _('Kaikki tulevat lapset') }} ({{ child_counts.future }})</label>
+                {% if child_counts.future > child_counts.shown %}
+                <p class="text-muted">{{ _('Lista näyttää suorituskyvyn vuoksi seuraavat %(count)s tulevaa lasta.', count=child_counts.shown) }}</p>
+                {% endif %}
+            </fieldset>
+
+            <div class="bulk-toolbar">
+                <button type="button" class="btn btn-secondary btn-sm" data-select-children="all">{{ _('Valitse kaikki') }}</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-select-children="none">{{ _('Tyhjennä valinta') }}</button>
+                <strong id="selected-child-count">0 {{ _('valittu') }}</strong>
+            </div>
+
+            <div class="child-demo-list">
+                {% for child in child_demos %}
+                <label class="child-demo-row">
+                    <input type="checkbox" name="child_ids" value="{{ child._id }}" data-date="{{ child.date or '' }}">
+                    <span>
+                        <strong>{{ child.title or demo.title }}</strong>
+                        <small>{{ child.date or '–' }} · {{ child.start_time or '–' }} · {{ child.city or '–' }}</small>
+                    </span>
+                    {% if child.is_frozen %}<span class="status-chip frozen">{{ _('Jäädytetty') }}</span>{% endif %}
+                    {% if child.approved %}<span class="status-chip approved">{{ _('Hyväksytty') }}</span>{% endif %}
+                    <a href="{{ url_for('admin_demo.edit_demo', demo_id=child._id) }}" class="btn btn-secondary btn-sm" target="_blank">{{ _('Avaa') }}</a>
+                </label>
+                {% endfor %}
+            </div>
+
+            <fieldset class="bulk-field-picker">
+                <legend>{{ _('Kopioitavat kentät') }}</legend>
+                {% for value, label in [
+                    ('title', _('Otsikko')),
+                    ('description', _('Kuvaus')),
+                    ('times', _('Kellonajat')),
+                    ('location', _('Kaupunki ja osoite')),
+                    ('type', _('Tyyppi')),
+                    ('route', _('Reitti')),
+                    ('organizers', _('Järjestäjät')),
+                    ('tags', _('Tagit')),
+                    ('links_and_images', _('Linkit ja kuvat')),
+                    ('approved', _('Hyväksyntä'))
+                ] %}
+                <label><input type="checkbox" name="fields" value="{{ value }}"> {{ label }}</label>
+                {% endfor %}
+            </fieldset>
+
+            <label class="freeze-option">
+                <input type="checkbox" name="freeze_after_update">
+                <span><strong>{{ _('Jäädytä päivitetyt lapset') }}</strong><small>{{ _('Estää toistuvuusajon korvaamasta näitä käsin päivitettyjä tietoja.') }}</small></span>
+            </label>
+
+            <div class="bulk-submit-row">
+                <button type="submit" class="btn btn-primary">{{ _('Päivitä valitut lapset') }}</button>
+            </div>
+        </form>
+        {% else %}
+        <p class="empty-state">{{ _('Sarjalle ei ole vielä luotu lapsimielenosoituksia.') }}</p>
+        {% endif %}
+    </section>
+    {% endif %}
 </div>
 
 
@@ -864,6 +952,44 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 </div>
 {% endif %}
+
+<script>
+    const recuDemoForm = document.getElementById('recu-demo-form');
+    if (recuDemoForm) {
+        const submitButton = recuDemoForm.querySelector("button[type='submit']");
+        recuDemoForm.addEventListener('submit', () => {
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = "{{ _('Tallennetaan...') }}";
+            }
+        });
+    }
+
+    const childBulkForm = document.getElementById('child-bulk-form');
+    if (childBulkForm) {
+        const childCheckboxes = Array.from(childBulkForm.querySelectorAll('input[name="child_ids"]'));
+        const selectedCount = document.getElementById('selected-child-count');
+        const today = "{{ today }}";
+
+        const updateSelectedCount = () => {
+            const count = childCheckboxes.filter(checkbox => checkbox.checked).length;
+            selectedCount.textContent = `${count} {{ _('valittu') }}`;
+        };
+
+        document.querySelectorAll('[data-select-children]').forEach(button => {
+            button.addEventListener('click', () => {
+                const mode = button.dataset.selectChildren;
+                childCheckboxes.forEach(checkbox => {
+                    checkbox.checked = mode === 'all';
+                });
+                updateSelectedCount();
+            });
+        });
+
+        childCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updateSelectedCount));
+        updateSelectedCount();
+    }
+</script>
 
 <script src="{{ url_for('static', filename='js/date.js') }}"></script>
 

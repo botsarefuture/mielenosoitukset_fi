@@ -7,7 +7,7 @@
 ### Fixed
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
-* Recurring demonstration admin views now show records after the city-key migration instead of silently dropping every migrated series.
+* Recurring demonstration admin views now show migrated records containing `city_key`; edit forms preserve stored recurrence data during unchanged saves; and child bulk updates now copy event types and freeze children reliably.
 * Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
 * Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
 * The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.
@@ -16,6 +16,8 @@
 
 ### Added
 * Expanded the public privacy notice to disclose the service's actual personal-data categories, processing purposes and legal bases, cookies and analytics, recipients, current retention limitations, and data-subject rights.
+* Recurring demonstration editors can now bulk-copy selected series fields to selected generated children, with future/all selection shortcuts, per-child audit history, and optional freezing after updates.
+* Regular and recurring admin demonstration editors now use clearer section navigation, improved panel hierarchy, and a responsive sticky save bar.
 * Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
 * Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
 * Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.

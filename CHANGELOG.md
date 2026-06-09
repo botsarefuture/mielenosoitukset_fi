@@ -15,6 +15,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Expanded the public privacy notice to disclose the service's actual personal-data categories, processing purposes and legal bases, cookies and analytics, recipients, current retention limitations, and data-subject rights.
 * Recurring demonstration editors can now bulk-copy selected series fields to selected generated children, with future/all selection shortcuts, per-child audit history, and optional freezing after updates.
 * Regular and recurring admin demonstration editors now use clearer section navigation, improved panel hierarchy, and a responsive sticky save bar.
 * Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.

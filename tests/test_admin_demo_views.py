@@ -15,3 +15,5 @@ def test_edit_demo_shows_edit_only_controls(admin_client, seeded_data):
     page = response.get_data(as_text=True)
     assert "Luo muokkauslinkki" in page
     assert "Luo kopio mielenosoituksesta" in page
+    assert 'class="editor-save-bar"' in page
+    assert 'class="editor-section-nav"' in page

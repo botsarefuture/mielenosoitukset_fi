@@ -118,6 +118,11 @@ runtime_actions = []
 stats_collection = db["recu_stats"]
 
 
+def _frozen_child_ids(parent_demo: dict) -> set[str]:
+    """Return frozen child IDs in the canonical comparison format."""
+    return {str(child_id) for child_id in parent_demo.get("freezed_children", [])}
+
+
 
 def _get_runtime_id():
     """
@@ -271,7 +276,7 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
     # Ensure valid_dates are date objects (they may have been produced by calculate_next_dates)
     valid_date_strings = {d.strftime("%Y-%m-%d") for d in valid_dates}
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
-    freezed_children = set(parent_demo.get("freezed_children", []))
+    freezed_children = _frozen_child_ids(parent_demo)
 
     for demo in child_demos:
         if str(demo["_id"]) in freezed_children:
@@ -355,7 +360,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
         if FORCE_RECHECK:
             child_demos = list(demonstrations_collection.find({"parent": demo["_id"]}))
             for child in child_demos:
-                if str(child["_id"]) in set(demo.get("freezed_children", [])):
+                if str(child["_id"]) in _frozen_child_ids(demo):
                     continue
                 try:
                     child_date = datetime.strptime(child["date"], "%Y-%m-%d").date()
@@ -419,7 +424,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
         remove_invalid_child_demonstrations(demo, next_dates, created_until_date)
 
         bulk_ops = []
-        freezed_children = set(demo.get("freezed_children", []))
+        freezed_children = _frozen_child_ids(demo)
 
         for next_date in next_dates:
             if created_until and next_date <= created_until_date:
@@ -429,7 +434,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
             next_date_str = next_date.strftime("%Y-%m-%d")
             existing_demo = demonstrations_collection.find_one({"date": next_date_str, "parent": demo["_id"]})
 
-            if existing_demo and existing_demo["_id"] in freezed_children:
+            if existing_demo and str(existing_demo["_id"]) in freezed_children:
                 runtime_actions.append({"action":"frozen_skip","document":existing_demo,"reason":"frozen","timestamp":datetime.now(),"executed_by":"system"})
                 continue
 

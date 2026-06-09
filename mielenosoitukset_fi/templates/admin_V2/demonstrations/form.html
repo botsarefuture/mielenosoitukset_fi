@@ -151,11 +151,16 @@
 <div class="dashboard-container">
 
     <!-- Page intro -->
-    <section class="introduction">
+    <section class="introduction editor-hero">
         <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-        <p class="text-muted max-w-xl">{{ _('Täältä voit lisätä tai muokata mielenosoituksia helposti.') }}<br>
-            {{ _('Muistathan tallentaa tekemäsi muutokset lomakkeen lopussa.') }}
+        <p class="text-muted max-w-xl">{{ _('Muokkaa mielenosoituksen tietoja osio kerrallaan. Tallennuspainike pysyy saatavilla sivua selatessa.') }}
         </p>
+        <nav class="editor-section-nav" aria-label="{{ _('Lomakkeen osiot') }}">
+            <a href="#basic-info">{{ _('Perustiedot') }}</a>
+            <a href="#location-info">{{ _('Sijainti') }}</a>
+            <a href="#organizer-info">{{ _('Järjestäjät') }}</a>
+            <a href="#approval-info">{{ _('Hyväksyntä') }}</a>
+        </nav>
     </section>
 
     {% if edit_demo_with_token %}
@@ -171,10 +176,10 @@
     </section>
     {% endif %}
 
-    <form id="demo-form" method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
+    <form id="demo-form" class="admin-editor-form" method="POST" action="{{ form_action }}" novalidate enctype="multipart/form-data">
 
         <!-- Basic Info Section -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="basic-info" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Perustiedot') }}</h2>
 
             <div class="form-group">
@@ -288,7 +293,7 @@
             </script>
         </section>
 
-        <section class="form-section dashboard-panel">
+        <section id="seo-info" class="form-section dashboard-panel">
             <h2>{{ _('SEO / tagit') }}</h2>
             <div class="form-group">
                 <label for="tag-input">{{ _('Tägit') }}</label>
@@ -389,7 +394,7 @@
 
 
         <!-- Social & Cover Picture -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="misc-info" class="form-section dashboard-panel mb-8">
             <h2>Sekalaiset</h2>
             <div class="form-group">
                 <label for="facebook">{{ _('Facebook linkki') }}</label>
@@ -420,7 +425,7 @@
         </section>
 
         <!-- Location Section -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="location-info" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Sijaintiedot') }}</h2>
 
             {% include "paikkakunta-dropdown.html" %}
@@ -608,7 +613,7 @@
         </section>
 
         <!-- Organizers Section -->
-        <section class="form-section dashboard-panel mb-8">
+        <section id="organizer-info" class="form-section dashboard-panel mb-8">
             <h2 class="text-xl font-semibold mb-4">{{ _('Järjestäjätahojen tiedot') }} <span class="required">*</span>
             </h2>
 
@@ -727,7 +732,7 @@
 
         <!-- Approval Section -->
         {% if current_user.is_authenticated %}
-        <section class="form-section dashboard-panel mb-8">
+        <section id="approval-info" class="form-section dashboard-panel mb-8">
             <div class="form-group" id="approval-container">
                 <label for="approved">{{ _('Hyväksytty') }}</label>
                 <div>
@@ -744,8 +749,9 @@
         {% endif %}
 
         <!-- Submit Section -->
-        <section class="form-section text-center mb-12">
-            <button type="submit" class="btn btn-submit mt-3">{{ submit_button_text }}</button>
+        <section class="editor-save-bar">
+            <span>{{ _('Tallentaminen päivittää tämän mielenosoituksen tiedot.') }}</span>
+            <button type="submit" class="btn btn-submit">{{ submit_button_text }}</button>
         </section>
     </form>
 </div>

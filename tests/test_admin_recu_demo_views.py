@@ -19,6 +19,10 @@ def test_edit_recu_demo_renders_shared_admin_form_with_org_selector(admin_client
     page = response.get_data(as_text=True)
     assert 'id="organization"' in page
     assert "Luo muokkauslinkki" in page
+    assert 'id="child-demos"' in page
+    assert "Päivitä lapsimielenosoituksia" in page
+    assert 'class="editor-save-bar"' in page
+    assert '<option value="weekly" selected>' in page
 
 
 def test_recu_demo_dashboard_lists_demos_with_migrated_city_key(

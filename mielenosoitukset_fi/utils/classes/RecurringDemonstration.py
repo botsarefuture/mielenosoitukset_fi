@@ -267,6 +267,7 @@ class RecurringDemonstration(Demonstration):
                     
         data.pop("freezed_children", None)
         data.pop("created_until", None)
+        data.pop("city_key", None)
 
         return cls(
             **data,

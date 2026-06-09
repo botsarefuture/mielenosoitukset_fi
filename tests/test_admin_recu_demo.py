@@ -2,6 +2,16 @@ from bson import ObjectId
 from mielenosoitukset_fi.utils.classes import RecurringDemonstration
 
 
+def test_recurring_runner_normalizes_frozen_child_ids():
+    from mielenosoitukset_fi.scripts.repeat_v2 import _frozen_child_ids
+
+    object_id = ObjectId()
+
+    assert _frozen_child_ids({"freezed_children": [object_id, str(object_id)]}) == {
+        str(object_id)
+    }
+
+
 def test_recurring_demo_from_dict_accepts_city_key(seeded_data, db):
     recu_demo = db.recu_demos.find_one({"_id": seeded_data["recu_demo_id"]})
     recu_demo["city_key"] = "helsinki"
@@ -79,6 +89,10 @@ def test_admin_can_create_recurring_demo_with_sparse_organizer_indexes(admin_cli
 
 def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, seeded_data):
     parent_id = seeded_data["recu_demo_id"]
+    db.recu_demos.update_one(
+        {"_id": parent_id},
+        {"$set": {"event_type": "STAY_STILL"}},
+    )
     selected_id = ObjectId()
     untouched_id = ObjectId()
     outsider_id = ObjectId()
@@ -95,6 +109,7 @@ def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, see
                 "city_key": "espoo",
                 "address": "Old address",
                 "tags": ["old"],
+                "event_type": "MARCH",
             },
             {
                 "_id": untouched_id,
@@ -119,7 +134,7 @@ def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, see
         f"/admin/recu_demo/{parent_id}/bulk-update-children",
         data={
             "child_ids": [str(selected_id), str(outsider_id)],
-            "fields": ["title", "location", "tags"],
+            "fields": ["title", "location", "tags", "type"],
             "freeze_after_update": "on",
         },
         follow_redirects=False,
@@ -135,6 +150,8 @@ def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, see
     assert selected["city"] == "Helsinki"
     assert selected["address"] == "Kaivokatu 1, Helsinki"
     assert selected["tags"] == ["test-tag"]
+    assert selected["event_type"] == "STAY_STILL"
+    assert "type" not in selected
     assert untouched["title"] == "Untouched child"
     assert outsider["title"] == "Outsider child"
     assert str(selected_id) in parent["freezed_children"]

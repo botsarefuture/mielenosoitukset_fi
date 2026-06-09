@@ -25,7 +25,7 @@ CHILD_BULK_FIELD_MAP = {
     "description": ("description",),
     "times": ("start_time", "end_time"),
     "location": ("city", "city_key", "address"),
-    "type": ("type",),
+    "type": ("event_type",),
     "route": ("route",),
     "organizers": ("organizers",),
     "tags": ("tags",),
@@ -507,7 +507,7 @@ def bulk_update_children(demo_id):
     update_fields = {}
     for field_group in requested_fields:
         for child_field in CHILD_BULK_FIELD_MAP[field_group]:
-            if child_field == "type":
+            if child_field == "event_type":
                 value = parent.get("event_type") or parent.get("type")
             elif child_field == "city_key":
                 value = parent.get("city_key") or normalize_city_key(parent.get("city"))

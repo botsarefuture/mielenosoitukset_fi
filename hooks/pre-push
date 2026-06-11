@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+./scripts/ensure_agent_handoff.sh --check
+printf 'Handoff note: %s\n' "$(./scripts/ensure_agent_handoff.sh --path)"

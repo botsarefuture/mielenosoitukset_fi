@@ -27,12 +27,14 @@ def _resolve(db):
                 {"approved": 1, "accepted": 1, "rejected": 1, "cancelled": 1},
             )
             if demo_doc:
-                if demo_doc.get("approved") or demo_doc.get("accepted"):
-                    reason = "Demo hyväksytty"
-                elif demo_doc.get("rejected"):
-                    reason = "Demo hylätty"
-                elif demo_doc.get("cancelled"):
-                    reason = "Demo peruttu"
+                if case.case_type == "new_demo":
+                    if demo_doc.get("approved") or demo_doc.get("accepted"):
+                        reason = "Demo hyväksytty"
+                    elif demo_doc.get("rejected"):
+                        reason = "Demo hylätty"
+                elif case.case_type in {"demo_cancellation_request", "demo_cancelled"}:
+                    if demo_doc.get("cancelled"):
+                        reason = "Demo peruttu"
 
         if not reason and case.case_type == "organization_edit_suggestion" and case.organization_id:
             org_doc = mongo.organizations.find_one({"_id": ObjectId(case.organization_id)})

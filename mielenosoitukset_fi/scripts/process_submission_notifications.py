@@ -54,7 +54,7 @@ def _pending_admin_job_exists(queue, demo_id: ObjectId) -> bool:
             {
                 "demo_id": demo_id,
                 "marks_admin_contact": True,
-                "status": {"$in": ["pending", "processing"]},
+                "status": {"$in": ["pending", "processing", "completed"]},
             }
         )
     )

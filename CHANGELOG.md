@@ -4,7 +4,11 @@
 
 ## UNRELEASED
 
+### Changed
+* Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
+
 ### Fixed
+* Demo approval and rejection now close linked support cases consistently across direct admin actions, token links, and the auto-close background job; de-escalation also writes back to the correct `case_history` field.
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
 * Recurring demonstration admin views now show migrated records containing `city_key`; edit forms preserve stored recurrence data during unchanged saves; and child bulk updates now copy event types and freeze children reliably.

@@ -35,6 +35,26 @@
     .badge-chip { padding: .3rem .7rem; border-radius: 999px; border:1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #e9f1ff; }
     .stat-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 0.9rem; }
     .stat-card { background: #0f162b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 0.9rem; color: #e9f1ff; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .stat-filter {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .stat-filter:hover {
+      transform: translateY(-2px);
+      border-color: rgba(96,165,250,.45);
+      box-shadow: 0 16px 42px rgba(37,99,235,0.16);
+    }
+    .stat-filter.active {
+      border-color: rgba(96,165,250,.7);
+      box-shadow: 0 0 0 2px rgba(96,165,250,.18), 0 16px 42px rgba(37,99,235,0.2);
+      background: linear-gradient(145deg, rgba(37,99,235,0.28), rgba(14,24,54,.96));
+    }
+    .stat-filter:focus-visible {
+      outline: 2px solid rgba(147,197,253,.95);
+      outline-offset: 2px;
+    }
     .stat-card .label { text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; color: #9fb2d8; margin: 0; }
     .stat-card .value { font-size: 1.7rem; font-weight: 800; margin: .15rem 0 0; }
     .stat-card .hint { margin: 0; color: #8fa3cc; font-size: .9rem; }
@@ -87,76 +107,59 @@
   </div>
 
   <div class="stat-grid">
-    <div class="stat-card emphasis">
+    <button type="button" class="stat-card stat-filter emphasis" data-filter="open">
       <p class="label">{{ _('Avoimet tapaukset') }}</p>
       <p class="value">{{ open_count }}</p>
       <p class="hint">{{ _('Keskity näihin ensin') }}</p>
-    </div>
-    <div class="stat-card">
+    </button>
+    <button type="button" class="stat-card stat-filter" data-filter="closed">
       <p class="label">{{ _('Suljetut') }}</p>
       <p class="value">{{ closed_count }}</p>
       <p class="hint">{{ _('Viimeisin automaattinen sulku') }}: {{ auto_closed }}</p>
-    </div>
-    <div class="stat-card">
+    </button>
+    <button type="button" class="stat-card stat-filter" data-filter="escalated">
       <p aclass="label">{{ _('Eskaloinnit') }}</p>
       <p class="value">{{ escalated_count }}</p>
       <p class="hint">{{ _('Vaatii seniorin') }}</p>
-    </div>
-    <div class="stat-card">
+    </button>
+    <button type="button" class="stat-card stat-filter" data-filter="all">
       <p class="label">{{ _('Kaikki tapaukset') }}</p>
-      <p class="value">{{ all_cases|length }}</p>
-      <p class="hint">{{ _('Päivitetty') }}: {{ (all_cases[0].created_at if all_cases else none)|datetimeformat("%d.%m.%Y") }}</p>
-    </div>
+      <p class="value">{{ case_rows|length }}</p>
+      <p class="hint">{{ _('Päivitetty') }}: {{ (case_rows[0].created_at if case_rows else none)|datetimeformat("%d.%m.%Y") }}</p>
+    </button>
   </div>
 
-  {% if all_cases %}
+  {% if case_rows %}
     <div class="case-list" id="case-list">
-      {% for case in all_cases %}
-        {% set urg = case.meta.urgency if case.meta else None %}
-        {% set closed = case.meta.closed if case.meta else False %}
-        {% set escalated = case.meta.superior_needed if case.meta else False %}
-        {% set description %}
-            {% if case.case_type == 'new_demo' and case.demo %}
-                {{ case.demo.title or case.demo.name or case.description or _('Ei kuvausta') }}
-            {% elif case.case_type == 'demo_error_report' %}
-                {{ case.error_report.summary or case.error_report.message or case.description or _('Ei kuvausta') }}
-            {% elif case.case_type == 'organization_edit_suggestion' %}
-                {{ case.suggestion.title or case.suggestion.summary or case.description or _('Ei kuvausta') }}
-            {% else %}
-                {{ case.description or _('Ei kuvausta') }}
-            {% endif %}
-        {% endset %}
+      {% for case in case_rows %}
         <div class="case-card"
-             data-status="{{ 'closed' if closed else 'open' }}"
-             data-urgency="{{ urg or 'none' }}"
-             data-escalated="{{ '1' if escalated else '0' }}"
-             onclick="window.location='{{ url_for('admin_case.single_case', case_id=case._id) }}'">
+             data-status="{{ 'closed' if case.closed else 'open' }}"
+             data-urgency="{{ case.urgency or 'none' }}"
+             data-escalated="{{ '1' if case.escalated else '0' }}"
+             onclick="window.location='{{ url_for('admin_case.single_case', case_id=case.id) }}'">
           <div>
             <div class="case-meta">
-              <span class="pill type">{{ case.case_type|replace("_"," ")|capitalize }}</span>
-              {% if urg %}
-                <span class="pill {% if urg=='high' %}urg-high{% elif urg=='medium' %}urg-medium{% else %}urg-low{% endif %}">{{ _(urg|capitalize) }}</span>
+              <span class="pill type">{{ case.type_label }}</span>
+              {% if case.urgency %}
+                <span class="pill {% if case.urgency == 'high' %}urg-high{% elif case.urgency == 'medium' %}urg-medium{% else %}urg-low{% endif %}">{{ _(case.urgency|capitalize) }}</span>
               {% endif %}
-              {% if closed %}
+              {% if case.closed %}
                 <span class="pill status-closed">{{ _('Suljettu') }}</span>
               {% else %}
                 <span class="pill status-open">{{ _('Avoin') }}</span>
               {% endif %}
-              {% if escalated %}
+              {% if case.escalated %}
                 <span class="pill status-esc">{{ _('Eskalointi') }}</span>
               {% endif %}
             </div>
-            <p class="case-title">{{ description|striptags }}</p>
-            <p class="case-desc">
-              {% if case.case_type == "new_demo" and case.demo %}
-                {{ case.demo.city }} · {{ case.demo.date }}
-              {% else %}
-                {{ case.description or _('Lisätietoja avaa kortti') }}
-              {% endif %}
-            </p>
+            <p class="case-title">{{ case.title }}</p>
+            <p class="case-desc">{{ case.description }}</p>
             <div class="case-footer">
               <span><i class="far fa-clock me-1"></i>{{ case.created_at|datetimeformat("%d.%m.%Y %H:%M") }}</span>
-              <span><i class="far fa-user me-1"></i>{{ case.submitter.submitter_name or _('Ei tiedossa') }}</span>
+              {% if case.meta_line %}
+              <span><i class="far fa-map me-1"></i>{{ case.meta_line }}</span>
+              {% endif %}
+              <span><i class="far fa-user me-1"></i>{{ case.submitter_label }}</span>
             </div>
           </div>
           <div>
@@ -174,24 +177,34 @@
 {% block scripts %}
   <script>
     const chips = document.querySelectorAll('.filter-chip');
+    const statFilters = document.querySelectorAll('.stat-filter');
     const cards = document.querySelectorAll('.case-card');
-    chips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        chips.forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        const filter = chip.dataset.filter;
-        cards.forEach(card => {
-          const isClosed = card.dataset.status === 'closed';
-          const urgency = card.dataset.urgency;
-          const isEsc = card.dataset.escalated === '1';
-          let visible = true;
-          if (filter === 'open') visible = !isClosed;
-          if (filter === 'closed') visible = isClosed;
-          if (filter === 'high') visible = urgency === 'high';
-          if (filter === 'escalated') visible = isEsc;
-          card.style.display = visible ? '' : 'none';
-        });
+
+    function applyFilter(filter) {
+      chips.forEach(chip => chip.classList.toggle('active', chip.dataset.filter === filter));
+      statFilters.forEach(card => card.classList.toggle('active', card.dataset.filter === filter));
+
+      cards.forEach(card => {
+        const isClosed = card.dataset.status === 'closed';
+        const urgency = card.dataset.urgency;
+        const isEsc = card.dataset.escalated === '1';
+        let visible = true;
+        if (filter === 'open') visible = !isClosed;
+        if (filter === 'closed') visible = isClosed;
+        if (filter === 'high') visible = urgency === 'high';
+        if (filter === 'escalated') visible = isEsc;
+        card.style.display = visible ? '' : 'none';
       });
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => applyFilter(chip.dataset.filter));
     });
+
+    statFilters.forEach(card => {
+      card.addEventListener('click', () => applyFilter(card.dataset.filter));
+    });
+
+    applyFilter('all');
   </script>
 {% endblock %}

@@ -578,6 +578,26 @@ def mfa_check():
 
 from urllib.parse import urlparse
 
+
+def _normalize_post_login_target(target: str | None) -> str:
+    candidate = (target or "").replace("\\", "")
+    if not candidate:
+        return url_for("index")
+
+    parsed = urlparse(candidate)
+    if parsed.netloc or parsed.scheme:
+        return url_for("index")
+
+    if candidate == url_for("users.auth.login"):
+        return url_for("index")
+
+    # Post-login redirects should land on human-facing pages, not raw APIs.
+    if candidate.startswith("/api/") or candidate.startswith("/users/auth/api/"):
+        return url_for("index")
+
+    return candidate
+
+
 def _check(safe_next_page, request):
     
     # Check if this is a popup login request
@@ -601,20 +621,7 @@ def _check(safe_next_page, request):
 def login():
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
-
-    # Sanitize next_page: remove backslashes etc.
-    next_page = next_page.replace("\\", "")
-
-    # Check if next_page is a safe internal URL (no netloc, no scheme)
-    if next_page and (urlparse(next_page).netloc == "" and urlparse(next_page).scheme == ""):
-        safe_next_page = next_page
-    else:
-        # fallback default redirect page after login
-        safe_next_page = url_for("index")
-
-    # Prevent redirect back to login page itself to avoid loops
-    if safe_next_page == url_for("users.auth.login"):
-        safe_next_page = url_for("index")
+    safe_next_page = _normalize_post_login_target(next_page)
 
     # Save the safe next page to session in case of POST failures
     session["next_page"] = safe_next_page

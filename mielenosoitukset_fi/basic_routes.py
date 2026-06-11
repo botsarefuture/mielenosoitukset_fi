@@ -1,4 +1,5 @@
 import copy
+import ast
 import os
 import re
 import threading
@@ -43,6 +44,7 @@ from mielenosoitukset_fi.utils.cache import (
     skip_cache_public_only,
 )
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -101,6 +103,27 @@ def _normalize_tag_list(raw_tags):
         if cleaned:
             normalized.append(cleaned)
     return normalized
+
+
+def _normalize_route_points(raw_route):
+    if raw_route is None:
+        return []
+
+    if isinstance(raw_route, list):
+        return [str(point).strip() for point in raw_route if str(point).strip()]
+
+    text = str(raw_route).strip()
+    if not text:
+        return []
+
+    try:
+        parsed = ast.literal_eval(text)
+        if isinstance(parsed, list):
+            return [str(point).strip() for point in parsed if str(point).strip()]
+    except Exception:
+        pass
+
+    return [point.strip() for point in re.split(r"[\n,]+", text) if point.strip()]
 
 
 def _load_panic():
@@ -2088,7 +2111,6 @@ def init_routes(app):
                 'city',
                 'address',
                 'facebook',
-                'description',
                 'tags',
                 'route',
             ]
@@ -2100,18 +2122,22 @@ def init_routes(app):
                 # normalize tags as list if provided
                 if f == 'tags' and val:
                     val = _normalize_tag_list(val.split(','))
+                elif f == 'route' and val:
+                    val = _normalize_route_points(val)
 
                 # compare to the stored demo_doc values and only store differences
                 orig = demo_doc.get(f)
                 # normalize original tags to list for comparison
                 if f == 'tags' and isinstance(orig, list):
                     orig_comp = _normalize_tag_list(orig)
+                elif f == 'route':
+                    orig_comp = _normalize_route_points(orig)
                 else:
                     orig_comp = (orig or '').strip() if orig is not None else ''
 
-                # For comparison, when tags -> convert to list
+                # For comparison, when tags / route -> convert to normalized lists
                 changed = False
-                if f == 'tags':
+                if f in {'tags', 'route'}:
                     if val and isinstance(val, list) and val != orig_comp:
                         changed = True
                 else:
@@ -2121,6 +2147,14 @@ def init_routes(app):
                 if changed:
                     suggested_fields[f] = val
                     original_values[f] = orig
+
+            description_markdown = (request.form.get('description_markdown') or '').strip()
+            if description_markdown:
+                suggested_description = markdown_to_html(description_markdown)
+                original_description = demo_doc.get('description') or ''
+                if suggested_description and suggested_description != original_description:
+                    suggested_fields['description'] = suggested_description
+                    original_values['description'] = demo_doc.get('description')
 
             reporter_email = (request.form.get('reporter_email') or '').strip() or None
             reporter_comment = (request.form.get('reporter_comment') or '').strip() or None
@@ -2162,7 +2196,13 @@ def init_routes(app):
 
         # GET — render form with per-field inputs
         demo = Demonstration.from_dict(demo_doc)
-        return render_template('suggest_change.html', demo=demo)
+        return render_template(
+            'suggest_change.html',
+            demo=demo,
+            description_markdown=html_to_markdown(demo_doc.get('description')),
+            route_input_value=", ".join(_normalize_route_points(demo_doc.get('route'))),
+            tag_input_value=", ".join(_normalize_tag_list(demo_doc.get('tags') or [])),
+        )
 
     @app.route("/cancel_demonstration/<token>", methods=["GET", "POST"])
     def cancel_demo_with_token(token):

@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+### Changed
+* Public demo change suggestions now use a guided normal-user form with clearer sectioning, plain-text/Markdown description editing plus live preview, and cleaner route/tag helpers so contributors never need to deal with raw HTML or Python-style list formatting; route points and tags can now also be edited directly by double-clicking their pills.
+* Public cancellation and error-reporting flows now explain more clearly whether an action cancels a demo immediately or only creates an admin-reviewed request, and organizer cancellation emails now spell out the verified-official-contact shortcut versus the normal approval path.
 ### Fixed
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.

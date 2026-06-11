@@ -4,366 +4,509 @@
 
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/buttons.css') }}" />
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <style>
   .suggestion-container {
-    max-width: 900px;
-    margin: 2rem auto;
-    padding: 0 2rem;
+    max-width: 1040px;
+    margin: 2rem auto 3rem;
+    padding: 0 1.25rem;
   }
 
-  .suggestion-card {
+  .suggestion-shell {
     background: var(--color-card-bg);
-    border-radius: 16px;
-    box-shadow: var(--color-shadow);
     border: 1px solid var(--color-border);
+    border-radius: 24px;
     overflow: hidden;
+    box-shadow: var(--color-shadow);
   }
 
-  .suggestion-header {
-    background: var(--color-gradient-primary);
-    color: white;
-    padding: 2.5rem 2rem;
-    position: relative;
-    overflow: hidden;
+  .suggestion-hero {
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.18), transparent 42%),
+      linear-gradient(135deg, #0b5bd3, #2d7df6 60%, #71a7ff);
+    color: #fff;
+    padding: 2.5rem 2rem 2rem;
   }
 
-  .suggestion-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
-    pointer-events: none;
+  .suggestion-hero h1 {
+    margin: 0 0 0.75rem;
+    color: #fff;
+    font-size: clamp(1.8rem, 3vw, 2.35rem);
+    line-height: 1.08;
   }
 
-  .suggestion-header-content {
-    position: relative;
-    z-index: 2;
-  }
-
-  .suggestion-header h2 {
-    color: white;
-    margin: 0 0 0.5rem 0;
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .suggestion-header p {
-    color: rgba(255, 255, 255, 0.95);
+  .suggestion-hero p {
     margin: 0;
-    font-size: 0.95rem;
+    max-width: 54rem;
+    color: rgba(255, 255, 255, 0.96);
+    font-size: 1rem;
     line-height: 1.6;
   }
 
-  .demo-preview {
+  .hero-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+    margin-top: 1.5rem;
+  }
+
+  .hero-step {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-step strong,
+  .hero-step span {
+    display: block;
+  }
+
+  .hero-step strong {
+    font-size: 0.92rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .hero-step span {
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .suggestion-body {
+    padding: 1.5rem;
+  }
+
+  .demo-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.85fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .summary-card,
+  .guidance-card,
+  .form-section {
     background: var(--color-card-bg);
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--color-border);
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
   }
 
-  .demo-preview-title {
-    font-size: 1.25rem;
-    font-weight: 600;
+  .summary-card,
+  .guidance-card {
+    padding: 1.25rem 1.3rem;
+  }
+
+  .summary-card h2,
+  .guidance-card h2 {
+    margin: 0 0 0.7rem;
+    font-size: 1.08rem;
     color: var(--color-text);
-    margin: 0 0 0.3rem 0;
   }
 
-  .demo-preview-meta {
+  .summary-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 0.5rem;
+  }
+
+  .summary-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .summary-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-card-bg) 82%, var(--color-title-accent) 18%);
     font-size: 0.9rem;
+    color: var(--color-text);
+  }
+
+  .summary-note,
+  .guidance-list li,
+  .field-help,
+  .field-meta,
+  .preview-empty {
     color: var(--color-text-secondary);
+  }
+
+  .summary-note {
+    font-size: 0.92rem;
+    line-height: 1.5;
     margin: 0;
   }
 
+  .guidance-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.55rem;
+  }
+
   .suggestion-form {
-    padding: 2rem;
+    display: grid;
+    gap: 1rem;
   }
 
   .form-section {
-    margin-bottom: 2rem;
+    padding: 1.25rem;
   }
 
-  .form-section:last-child {
-    margin-bottom: 0;
+  .section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .form-section-title {
-    font-size: 1rem;
-    font-weight: 600;
+  .section-heading h3 {
+    margin: 0;
+    font-size: 1.05rem;
     color: var(--color-primary);
-    margin: 0 0 1rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--color-border);
+  }
+
+  .section-heading p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-text-secondary);
   }
 
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
   }
 
-  .form-group {
+  .form-grid.single-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .field-group {
     display: flex;
     flex-direction: column;
+    gap: 0.42rem;
   }
 
-  .form-group label {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-text);
-    margin-bottom: 0.4rem;
-  }
-
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    padding: 0.75rem;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    transition: var(--transition);
-    background: var(--color-card-bg);
-    color: var(--color-text);
-  }
-
-  .form-group input::placeholder,
-  .form-group textarea::placeholder {
-    color: var(--color-text-secondary);
-  }
-
-  .form-group input:focus,
-  .form-group textarea:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    background: var(--color-card-bg);
-    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .form-group input:focus,
-    .form-group textarea:focus,
-    .form-group select:focus {
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-  }
-
-  .form-group textarea {
-    min-height: 120px;
-    resize: vertical;
-  }
-
-  .editor-container {
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--color-card-bg);
-    transition: var(--transition);
-  }
-
-  .editor-container:focus-within {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
-  }
-
-  .ql-toolbar.ql-snow {
-    border: none;
-    border-bottom: 1px solid var(--color-border);
-    background: color-mix(in srgb, var(--color-card-bg) 88%, white 12%);
-  }
-
-  .ql-container.ql-snow {
-    border: none;
-  }
-
-  .ql-editor {
-    min-height: 180px;
-    font-size: 0.95rem;
-    color: var(--color-text);
-  }
-
-  .full-width {
+  .field-group.full-width {
     grid-column: 1 / -1;
   }
 
-  .form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
-    margin-top: 2rem;
-  }
-
-  .btn-suggestion {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    text-decoration: none;
-    display: inline-block;
-    text-align: center;
-  }
-
-  .btn-cancel {
-    background: var(--color-border);
+  .field-group label {
+    font-size: 0.93rem;
+    font-weight: 700;
     color: var(--color-text);
   }
 
-  .btn-cancel:hover {
-    background: var(--hover_bg_color);
-    transform: translateY(-2px);
+  .field-group input,
+  .field-group textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    padding: 0.8rem 0.9rem;
+    font: inherit;
+    transition: var(--transition);
   }
 
-  .btn-submit {
-    background: var(--color-gradient-primary);
-    color: white;
+  .field-group textarea {
+    min-height: 130px;
+    resize: vertical;
   }
 
-  .btn-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--color-shadow-lg);
+  .field-group input:focus,
+  .field-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(11, 91, 211, 0.12);
   }
 
-  .route-editor {
+  .field-help,
+  .field-meta {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .field-meta strong {
+    color: var(--color-text);
+  }
+
+  .input-with-action {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.6rem;
+    align-items: stretch;
   }
 
-  .route-input-row {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .route-input-row input {
+  .input-with-action input {
     flex: 1;
   }
 
-  .route-add-btn {
-    background: var(--color-primary);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0.65rem 1rem;
-    font-weight: 600;
+  .inline-add-btn,
+  .format-btn {
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-card-bg) 85%, var(--color-title-accent) 15%);
+    color: var(--color-text);
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
   }
 
-  .route-add-btn:hover {
-    background: var(--color-primary-hover, var(--color-primary));
+  .inline-add-btn {
+    min-width: 3rem;
+    padding: 0 0.95rem;
   }
 
-  .route-pill-list {
+  .inline-add-btn:hover,
+  .format-btn:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-primary);
+  }
+
+  .pill-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    min-height: 36px;
+    gap: 0.55rem;
+    min-height: 2.4rem;
   }
 
-  .pill-editor {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .pill-input-row {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .pill-input-row input {
-    flex: 1;
-  }
-
-  .pill-add-btn {
-    background: var(--color-primary);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0.65rem 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-  }
-
-  .pill-add-btn:hover {
-    background: var(--color-primary-hover, var(--color-primary));
-  }
-
-  .route-pill {
+  .pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    background: var(--color-title-accent);
-    color: var(--color-text);
-    padding: 0.45rem 0.7rem;
+    gap: 0.45rem;
+    padding: 0.48rem 0.75rem;
     border-radius: 999px;
-    font-size: 0.9rem;
     border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-card-bg) 82%, var(--color-title-accent) 18%);
+    color: var(--color-text);
+    font-size: 0.92rem;
   }
 
-  .route-pill button {
-    background: none;
-    border: none;
-    color: inherit;
+  .pill.is-editable {
     cursor: pointer;
-    padding: 0 0.25rem;
+  }
+
+  .pill.is-editing {
+    padding: 0.3rem 0.4rem;
+    background: var(--color-card-bg);
+    border-color: var(--color-primary);
+  }
+
+  .pill-edit-input {
+    min-width: 8rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    padding: 0.15rem 0.3rem;
+  }
+
+  .pill-edit-input:focus {
+    outline: none;
+  }
+
+  .pill button {
+    border: none;
+    background: none;
+    color: inherit;
+    padding: 0;
+    cursor: pointer;
     font-size: 1rem;
     line-height: 1;
   }
 
-  .route-pill-empty {
+  .pill-empty {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
     color: var(--color-text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
-  .tag-pill-empty {
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
+  .description-composer {
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--color-card-bg);
   }
 
-  .hint-text {
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    margin-top: 0.3rem;
-    font-style: italic;
+  .format-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border-bottom: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-card-bg) 87%, white 13%);
   }
 
-  @media (max-width: 768px) {
+  .format-btn {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.88rem;
+  }
+
+  .format-btn[data-format="bold"],
+  .format-btn[data-format="italic"] {
+    font-family: Georgia, serif;
+    min-width: 2.4rem;
+  }
+
+  .description-textarea {
+    min-height: 220px;
+    border: none;
+    border-radius: 0;
+  }
+
+  .description-textarea:focus {
+    box-shadow: none;
+  }
+
+  .preview-card {
+    margin-top: 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-card-bg) 86%, var(--color-title-accent) 14%);
+    overflow: hidden;
+  }
+
+  .preview-header {
+    padding: 0.8rem 0.95rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .preview-body {
+    padding: 1rem;
+    color: var(--color-text);
+    line-height: 1.7;
+  }
+
+  .preview-body p,
+  .preview-body ul,
+  .preview-body ol,
+  .preview-body blockquote,
+  .preview-body h1,
+  .preview-body h2,
+  .preview-body h3,
+  .preview-body h4,
+  .preview-body h5,
+  .preview-body h6 {
+    margin-top: 0;
+    margin-bottom: 0.85rem;
+  }
+
+  .preview-body blockquote {
+    border-left: 4px solid var(--color-primary);
+    padding-left: 0.85rem;
+    color: var(--color-text-secondary);
+  }
+
+  .preview-body a {
+    color: var(--color-primary);
+    word-break: break-word;
+  }
+
+  .preview-body pre,
+  .preview-body code {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+  }
+
+  .preview-body pre {
+    padding: 0.7rem 0.85rem;
+    overflow-x: auto;
+  }
+
+  .preview-body code {
+    padding: 0.15rem 0.35rem;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn-suggestion {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 3rem;
+    padding: 0.8rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .btn-secondary {
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-card-bg) 80%, var(--color-border) 20%);
+    border-color: var(--color-border);
+  }
+
+  .btn-primary {
+    color: #fff;
+    background: var(--color-gradient-primary);
+  }
+
+  .btn-suggestion:hover {
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 920px) {
+    .demo-summary,
+    .hero-steps,
+    .form-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .section-heading {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 700px) {
     .suggestion-container {
-      padding: 0 1rem;
-      margin: 1rem auto;
+      margin-top: 1rem;
+      padding: 0 0.85rem 2rem;
     }
 
-    .suggestion-header {
-      padding: 2rem 1rem;
+    .suggestion-hero,
+    .suggestion-body,
+    .form-section {
+      padding-left: 1rem;
+      padding-right: 1rem;
     }
 
-    .demo-preview {
-      padding: 1rem;
+    .suggestion-body {
+      padding-top: 1rem;
     }
 
-    .suggestion-form {
-      padding: 1.5rem;
-    }
-
+    .input-with-action,
     .form-actions {
-      flex-direction: column-reverse;
-      gap: 0.5rem;
+      flex-direction: column;
     }
 
+    .inline-add-btn,
     .btn-suggestion {
       width: 100%;
     }
@@ -374,188 +517,221 @@
 {% block content %}
 {% set preview_date = demo.formatted_date or demo.date %}
 <div class="suggestion-container">
-  <div class="suggestion-card">
-    <div class="suggestion-header">
-      <div class="suggestion-header-content">
-        <h2>✏️ {{ _('Ehdota muutosta') }}</h2>
-        <p>{{ _('Auta parantamaan tätä mielenosoitusta ehdottamalla muutoksia. Jätä tyhjäksi ne kentät, joita et halua muuttaa.') }}</p>
-      </div>
-    </div>
-
-    <div class="demo-preview">
-      <p class="demo-preview-title">{{ demo.title }}</p>
-      <p class="demo-preview-meta">📅 {{ preview_date }} • 📍 {{ demo.city }} • 📮 {{ demo.address }}</p>
-    </div>
-
-    <form method="POST" action="" id="suggestForm" class="suggestion-form">
-      <!-- Basic Details Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">📝 {{ _('Perustiedot') }}</h3>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="title">{{ _('Otsikko') }}</label>
-            <input type="text" id="title" name="title" value="{{ demo.title }}" />
-            <span class="hint-text">{{ _('Mielenosoituksen otsikko') }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="date">{{ _('Päivämäärä') }}</label>
-            <input type="text" id="date" name="date" value="{{ demo.date }}" placeholder="vvvv-kk-pp" />
-            <span class="hint-text">{{ _('Muoto: vvvv-kk-pp') }}</span>
-          </div>
+  <div class="suggestion-shell">
+    <section class="suggestion-hero">
+      <h1>{{ _('Ehdota muutosta mielenosoitukseen') }}</h1>
+      <p>{{ _('Tällä lomakkeella voit korjata tietoja tai täydentää puuttuvia yksityiskohtia. Kirjoita vain ne asiat, jotka pitäisi muuttaa. HTML-koodia ei tarvitse käyttää missään kohdassa.') }}</p>
+      <div class="hero-steps">
+        <div class="hero-step">
+          <strong>{{ _('1. Muokkaa vain tarvittavat kohdat') }}</strong>
+          <span>{{ _('Voit kirjoittaa suoraan kenttiin. Jätämme ennalleen kaiken, mitä et muuta.') }}</span>
+        </div>
+        <div class="hero-step">
+          <strong>{{ _('2. Kuvaus kirjoitetaan normaalina tekstinä') }}</strong>
+          <span>{{ _('Voit käyttää halutessasi yksinkertaista muotoilua, kuten lihavointia, listoja ja linkkejä.') }}</span>
+        </div>
+        <div class="hero-step">
+          <strong>{{ _('3. Lähetä ehdotus tarkistettavaksi') }}</strong>
+          <span>{{ _('Ylläpito käy ehdotuksen läpi ennen kuin muutos näkyy kaikille.') }}</span>
         </div>
       </div>
+    </section>
 
-      <!-- Time & Location Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">⏰ {{ _('Aika ja paikka') }}</h3>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="start_time">{{ _('Alkamisaika') }}</label>
-            <input type="text" id="start_time" name="start_time" value="{{ demo.start_time }}" placeholder="HH:MM" />
-            <span class="hint-text">{{ _('Esim. 10:00') }}</span>
+    <div class="suggestion-body">
+      <div class="demo-summary">
+        <section class="summary-card">
+          <h2>{{ _('Mielenosoitus, jota olet päivittämässä') }}</h2>
+          <p class="summary-title">{{ demo.title }}</p>
+          <div class="summary-meta">
+            <span class="summary-pill">📅 {{ preview_date }}</span>
+            <span class="summary-pill">⏰ {{ demo.start_time }}{% if demo.end_time %}–{{ demo.end_time }}{% endif %}</span>
+            <span class="summary-pill">📍 {{ demo.city }}</span>
           </div>
+          <p class="summary-note">{{ _('Jos esimerkiksi paikka, aika, kuvaus tai marssin reitti on väärin tai puutteellinen, voit korjata sen tässä.') }}</p>
+        </section>
 
-          <div class="form-group">
-            <label for="end_time">{{ _('Päättymisaika') }}</label>
-            <input type="text" id="end_time" name="end_time" value="{{ demo.end_time }}" placeholder="HH:MM" />
-            <span class="hint-text">{{ _('Valinnainen') }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="city">{{ _('Kaupunki') }}</label>
-            <input type="text" id="city" name="city" value="{{ demo.city }}" />
-          </div>
-
-          <div class="form-group">
-            <label for="address">{{ _('Osoite') }}</label>
-            <input type="text" id="address" name="address" value="{{ demo.address }}" />
-          </div>
-        </div>
+        <aside class="guidance-card">
+          <h2>{{ _('Hyvä tietää') }}</h2>
+          <ul class="guidance-list">
+            <li>{{ _('Kuvauskenttä näyttää esikatselun, joten sinun ei tarvitse arvioida lopputulosta koodin perusteella.') }}</li>
+            <li>{{ _('Reittipisteet ja aihetunnisteet lisätään yksi kerrallaan, jotta listasta tulee siisti.') }}</li>
+            <li>{{ _('Jos et ole varma jostain tiedosta, voit selittää asian “Viesti ylläpidolle” -kentässä.') }}</li>
+          </ul>
+        </aside>
       </div>
 
-      <!-- Event Details Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">🔗 {{ _('Tapahtuman tiedot') }}</h3>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="facebook">{{ _('Facebook-tapahtuman URL') }}</label>
-            <input type="text" id="facebook" name="facebook" value="{{ demo.facebook }}" placeholder="https://facebook.com/events/..." />
-            <span class="hint-text">{{ _('Valinnainen') }}</span>
+      <form method="POST" action="" id="suggestForm" class="suggestion-form">
+        <section class="form-section">
+          <div class="section-heading">
+            <h3>📝 {{ _('Perustiedot') }}</h3>
+            <p>{{ _('Tarkista otsikko, päivä ja kellonajat.') }}</p>
           </div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="title">{{ _('Otsikko') }}</label>
+              <input type="text" id="title" name="title" value="{{ demo.title }}" />
+              <span class="field-help">{{ _('Esimerkiksi tapahtuman virallinen nimi.') }}</span>
+            </div>
 
-          <div class="form-group">
-            <label for="route">{{ _('Reitti (marsseille)') }}</label>
-            <div class="route-editor">
-              <div class="route-input-row">
+            <div class="field-group">
+              <label for="date">{{ _('Päivämäärä') }}</label>
+              <input type="text" id="date" name="date" value="{{ demo.date }}" placeholder="vvvv-kk-pp" />
+              <span class="field-help">{{ _('Muoto: vvvv-kk-pp') }}</span>
+            </div>
+
+            <div class="field-group">
+              <label for="start_time">{{ _('Alkamisaika') }}</label>
+              <input type="text" id="start_time" name="start_time" value="{{ demo.start_time }}" placeholder="14:00" />
+              <span class="field-help">{{ _('Esimerkiksi 14:00') }}</span>
+            </div>
+
+            <div class="field-group">
+              <label for="end_time">{{ _('Päättymisaika') }}</label>
+              <input type="text" id="end_time" name="end_time" value="{{ demo.end_time }}" placeholder="15:30" />
+              <span class="field-help">{{ _('Valinnainen, jos tapahtuman loppuaika tiedetään.') }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-heading">
+            <h3>📍 {{ _('Paikka ja linkit') }}</h3>
+            <p>{{ _('Kerro missä tapahtuma järjestetään ja mistä löytyy lisätietoa.') }}</p>
+          </div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="city">{{ _('Kaupunki') }}</label>
+              <input type="text" id="city" name="city" value="{{ demo.city }}" />
+            </div>
+
+            <div class="field-group">
+              <label for="address">{{ _('Osoite') }}</label>
+              <input type="text" id="address" name="address" value="{{ demo.address }}" />
+              <span class="field-help">{{ _('Voit kirjoittaa esimerkiksi torin, puiston tai kokoontumispaikan osoitteen.') }}</span>
+            </div>
+
+            <div class="field-group full-width">
+              <label for="facebook">{{ _('Facebook-tapahtuman URL') }}</label>
+              <input type="text" id="facebook" name="facebook" value="{{ demo.facebook }}" placeholder="https://facebook.com/events/..." />
+              <span class="field-help">{{ _('Valinnainen linkki tapahtumasivulle tai lisätietoihin.') }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-heading">
+            <h3>🗺️ {{ _('Reitti ja aihetunnisteet') }}</h3>
+            <p>{{ _('Lisää reittipisteet ja tagit selkeinä listoina.') }}</p>
+          </div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="route-input">{{ _('Reitti (marsseille)') }}</label>
+              <div class="input-with-action">
                 <input type="text" id="route-input" placeholder="{{ _('Kirjoita reittipiste ja paina Enter') }}" aria-describedby="route-help-text" />
-                <button type="button" class="route-add-btn" id="route-add-btn">+</button>
+                <button type="button" class="inline-add-btn" id="route-add-btn">{{ _('Lisää') }}</button>
               </div>
-              <div class="route-pill-list" id="route-pill-list" aria-live="polite"></div>
-              <input type="hidden" id="route" name="route" value="{{ demo.route or '' }}">
-              <span class="hint-text" id="route-help-text">
-                {{ _('Lisää marssin reittipisteet yksi kerrallaan oikeassa järjestyksessä. Tallennamme ne pilkulla eroteltuna.') }}
-              </span>
+              <div class="pill-list" id="route-pill-list" aria-live="polite"></div>
+              <input type="hidden" id="route" name="route" value="{{ route_input_value }}" />
+              <span class="field-help" id="route-help-text">{{ _('Lisää marssin pysähdykset tai kadut oikeassa järjestyksessä. Sama katu voi esiintyä useamman kerran.') }}</span>
+              <span class="field-help">{{ _('Vinkki: kaksoisnapsauta reittipistettä muokataksesi sitä suoraan.') }}</span>
+              <span class="field-meta"><strong>{{ _('Nykyinen tallennustapa:') }}</strong> {{ _('näytämme pisteet siisteinä lappuina emmekä teknisenä listana.') }}</span>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Content Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">📄 {{ _('Sisältö') }}</h3>
-        <div class="form-grid full-width">
-          <div class="form-group full-width">
-            <label for="description">{{ _('Kuvaus') }}</label>
-            <div class="editor-container">
-              <div id="description-editor"></div>
-            </div>
-            <input type="hidden" id="description" name="description" value="{{ demo.description or '' }}">
-            <span class="hint-text">{{ _('Yksityiskohdat mielenosoituksesta. Voit käyttää lihavointia, listoja ja linkkejä.') }}</span>
-          </div>
-
-          <div class="form-group full-width">
-            <label for="tags">{{ _('Aihetunnisteet') }}</label>
-            <div class="pill-editor">
-              <div class="pill-input-row">
+            <div class="field-group">
+              <label for="tag-input">{{ _('Aihetunnisteet') }}</label>
+              <div class="input-with-action">
                 <input type="text" id="tag-input" placeholder="{{ _('Kirjoita tagi ja paina Enter') }}" aria-describedby="tag-help-text" />
-                <button type="button" class="pill-add-btn" id="tag-add-btn">+</button>
+                <button type="button" class="inline-add-btn" id="tag-add-btn">{{ _('Lisää') }}</button>
               </div>
-              <div class="route-pill-list" id="tag-pill-list" aria-live="polite"></div>
-              <input type="hidden" id="tags" name="tags" value="{{ demo.tags | join(', ') if demo.tags else '' }}" />
-              <span class="hint-text" id="tag-help-text">
-                {{ _('Lisää tagit ilman #-merkkiä. Jos kirjoitat sen, poistamme sen automaattisesti.') }}
-              </span>
+              <div class="pill-list" id="tag-pill-list" aria-live="polite"></div>
+              <input type="hidden" id="tags" name="tags" value="{{ tag_input_value }}" />
+              <span class="field-help" id="tag-help-text">{{ _('Kirjoita tagit ilman #-merkkiä. Jos lisäät sen, poistamme sen automaattisesti.') }}</span>
+              <span class="field-help">{{ _('Voit myös kaksoisnapsauttaa tagia muokataksesi sitä.') }}</span>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- Comments Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">💬 {{ _('Huomautukset') }}</h3>
-        <div class="form-grid full-width">
-          <div class="form-group full-width">
-            <label for="reporter_comment">{{ _('Viesti ylläpidolle') }}</label>
-            <textarea id="reporter_comment" name="reporter_comment" placeholder="{{ _('Esim. miksi nämä muutokset olisivat hyödyllisiä?') }}"></textarea>
-            <span class="hint-text">{{ _('Valinnainen - auta meitä ymmärtämään ehdotuksesi') }}</span>
+        <section class="form-section">
+          <div class="section-heading">
+            <h3>📄 {{ _('Kuvaus') }}</h3>
+            <p>{{ _('Kirjoita tavallisena tekstinä. HTML-koodia ei tarvitse eikä pidä käyttää.') }}</p>
           </div>
-        </div>
-      </div>
+          <div class="field-group full-width">
+            <label for="description-markdown">{{ _('Kuvausteksti') }}</label>
+            <div class="description-composer">
+              <div class="format-toolbar">
+                <button type="button" class="format-btn" data-format="bold" data-prefix="**" data-suffix="**">{{ _('Lihavointi') }}</button>
+                <button type="button" class="format-btn" data-format="italic" data-prefix="*" data-suffix="*">{{ _('Kursiivi') }}</button>
+                <button type="button" class="format-btn" data-format="list" data-prefix="- " data-line-prefix="- ">{{ _('Lista') }}</button>
+                <button type="button" class="format-btn" data-format="quote" data-prefix="> " data-line-prefix="> ">{{ _('Nosto') }}</button>
+                <button type="button" class="format-btn" data-format="link" data-template="[{{ _('linkin teksti') }}](https://example.com)">{{ _('Linkki') }}</button>
+              </div>
+              <textarea
+                id="description-markdown"
+                name="description_markdown"
+                class="description-textarea"
+                placeholder="{{ _('Kerro esimerkiksi kenelle tapahtuma on tarkoitettu, mikä on teema, mistä kulkue lähtee ja mitä osallistujien kannattaa tietää.') }}"
+              >{{ description_markdown }}</textarea>
+            </div>
+            <span class="field-help">{{ _('Voit kirjoittaa pelkkää tavallista tekstiä. Halutessasi voit käyttää myös yksinkertaista muotoilua, kuten **lihavointia**, listoja ja linkkejä.') }}</span>
 
-      <!-- Contact Section -->
-      <div class="form-section">
-        <h3 class="form-section-title">📧 {{ _('Yhteystiedot') }}</h3>
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="reporter_email">{{ _('Sähköpostiosoitteesi') }}</label>
-            <input type="email" id="reporter_email" name="reporter_email" placeholder="email@example.com" />
-            <span class="hint-text">{{ _('Valinnainen - jotta voimme ottaa sinuun yhteyttä') }}</span>
+            <div class="preview-card">
+              <div class="preview-header">{{ _('Esikatselu') }}</div>
+              <div class="preview-body" id="description-preview">
+                <p class="preview-empty">{{ _('Kirjoita kuvaus, niin näet sen tässä.') }}</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- Action Buttons -->
-      <div class="form-actions">
-        <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="btn-suggestion btn-cancel">{{ _('Peruuta') }}</a>
-        <button type="submit" class="btn-suggestion btn-submit">✓ {{ _('Lähetä ehdotus') }}</button>
-      </div>
-    </form>
+        <section class="form-section">
+          <div class="section-heading">
+            <h3>💬 {{ _('Viesti ylläpidolle') }}</h3>
+            <p>{{ _('Tähän voit kertoa taustatietoa muutoksesta.') }}</p>
+          </div>
+          <div class="form-grid single-column">
+            <div class="field-group full-width">
+              <label for="reporter_comment">{{ _('Miksi tämä muutos olisi hyvä tehdä?') }}</label>
+              <textarea id="reporter_comment" name="reporter_comment" placeholder="{{ _('Esimerkiksi: aika on muuttunut, osoite tarkentui tai kuvaus kaipaa lisätietoja.') }}"></textarea>
+              <span class="field-help">{{ _('Valinnainen, mutta usein hyödyllinen ylläpidolle.') }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-heading">
+            <h3>📧 {{ _('Yhteystiedot') }}</h3>
+            <p>{{ _('Voit jättää sähköpostin, jos haluat että voimme kysyä tarkennuksia.') }}</p>
+          </div>
+          <div class="form-grid single-column">
+            <div class="field-group">
+              <label for="reporter_email">{{ _('Sähköpostiosoitteesi') }}</label>
+              <input type="email" id="reporter_email" name="reporter_email" placeholder="email@example.com" />
+              <span class="field-help">{{ _('Valinnainen. Käytämme tätä vain ehdotukseen liittyvään viestintään.') }}</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="form-actions">
+          <a href="{{ url_for('demonstration_detail', demo_id=demo._id) }}" class="btn-suggestion btn-secondary">{{ _('Peruuta') }}</a>
+          <button type="submit" class="btn-suggestion btn-primary">✓ {{ _('Lähetä ehdotus') }}</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
   (() => {
-    const descriptionInput = document.getElementById('description');
-    const descriptionEditorRoot = document.getElementById('description-editor');
-
-    if (descriptionInput && descriptionEditorRoot && window.Quill) {
-      const quill = new Quill(descriptionEditorRoot, {
-        modules: {
-          toolbar: [
-            ['bold', 'italic'],
-            ['link', 'blockquote'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-          ],
-        },
-        theme: 'snow',
-      });
-
-      quill.root.innerHTML = descriptionInput.value || '';
-
-      const form = document.getElementById('suggestForm');
-      if (form) {
-        form.addEventListener('submit', () => {
-          descriptionInput.value = quill.root.innerHTML;
-        });
-      }
-    }
-
     const normalizeTag = (value) => (value || '').trim().replace(/^#+/, '').trim();
     const splitTags = (value) => (value || '')
       .split(/[,\n]+/)
       .map((tag) => normalizeTag(tag))
+      .filter(Boolean);
+
+    const splitPoints = (value) => (value || '')
+      .split(/[,\n]+/)
+      .map((point) => point.trim())
       .filter(Boolean);
 
     const initializePillEditor = ({
@@ -563,12 +739,11 @@
       textInputId,
       addButtonId,
       listId,
-      emptyClassName,
       emptyText,
       removeAriaLabel,
+      splitValue,
+      syncValue,
       normalizeValue = (value) => (value || '').trim(),
-      splitValue = (value) => (value || '').split(/[,\n]+/).map((item) => normalizeValue(item)).filter(Boolean),
-      syncValue = (items) => items.join(', '),
       allowDuplicates = false,
     }) => {
       const hiddenInput = document.getElementById(hiddenInputId);
@@ -576,7 +751,7 @@
       const addButton = document.getElementById(addButtonId);
       const list = document.getElementById(listId);
 
-      if (!hiddenInput || !textInput || !addButton || !list) return null;
+      if (!hiddenInput || !textInput || !addButton || !list) return;
 
       let items = splitValue(hiddenInput.value);
 
@@ -585,7 +760,7 @@
 
         if (!items.length) {
           const empty = document.createElement('div');
-          empty.className = emptyClassName;
+          empty.className = 'pill-empty';
           empty.textContent = emptyText;
           list.appendChild(empty);
           hiddenInput.value = syncValue(items);
@@ -594,8 +769,10 @@
 
         items.forEach((item, idx) => {
           const pill = document.createElement('span');
-          pill.className = 'route-pill';
-          pill.textContent = item;
+          pill.className = 'pill';
+          pill.classList.add('is-editable');
+          pill.title = "{{ _('Kaksoisnapsauta muokataksesi') }}";
+          pill.appendChild(document.createTextNode(item));
 
           const removeButton = document.createElement('button');
           removeButton.type = 'button';
@@ -608,50 +785,104 @@
 
           pill.appendChild(removeButton);
           list.appendChild(pill);
+
+          pill.addEventListener('dblclick', (event) => {
+            if (event.target === removeButton) return;
+            startEditing(pill, idx, item);
+          });
         });
 
         hiddenInput.value = syncValue(items);
       };
 
-      const addItems = (value) => {
-        const candidates = splitValue(value);
+      const commitEdit = (index, nextValue) => {
+        const normalized = normalizeValue(nextValue);
+        if (!normalized) {
+          items.splice(index, 1);
+          render();
+          return;
+        }
+
+        if (!allowDuplicates && items.some((item, itemIndex) => item === normalized && itemIndex !== index)) {
+          items.splice(index, 1);
+          render();
+          return;
+        }
+
+        items[index] = normalized;
+        render();
+      };
+
+      const startEditing = (pill, index, currentValue) => {
+        if (!pill || pill.classList.contains('is-editing')) return;
+
+        pill.classList.add('is-editing');
+        pill.innerHTML = '';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = currentValue;
+        input.className = 'pill-edit-input';
+        input.setAttribute('aria-label', `${removeAriaLabel} ${currentValue}`);
+        pill.appendChild(input);
+
+        const finish = (shouldSave) => {
+          if (shouldSave) {
+            commitEdit(index, input.value);
+          } else {
+            render();
+          }
+        };
+
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            finish(true);
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            finish(false);
+          }
+        });
+
+        input.addEventListener('blur', () => finish(true));
+        input.focus();
+        input.select();
+      };
+
+      const addItems = (rawValue) => {
+        const candidates = splitValue(rawValue);
         let changed = false;
 
         candidates.forEach((candidate) => {
-          if (allowDuplicates || !items.includes(candidate)) {
-            items.push(candidate);
+          const normalized = normalizeValue(candidate);
+          if (!normalized) return;
+          if (allowDuplicates || !items.includes(normalized)) {
+            items.push(normalized);
             changed = true;
           }
         });
 
         textInput.value = '';
-
-        if (changed) {
-          render();
-        }
+        if (changed) render();
       };
 
       addButton.addEventListener('click', () => addItems(textInput.value));
-
-      textInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-          e.preventDefault();
+      textInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ',') {
+          event.preventDefault();
           addItems(textInput.value);
         }
       });
-
       textInput.addEventListener('blur', () => addItems(textInput.value));
-
-      textInput.addEventListener('paste', (e) => {
-        const pasted = (e.clipboardData || window.clipboardData)?.getData('text');
+      textInput.addEventListener('paste', (event) => {
+        const pasted = (event.clipboardData || window.clipboardData)?.getData('text');
         if (pasted && (pasted.includes(',') || pasted.includes('\n'))) {
-          e.preventDefault();
+          event.preventDefault();
           addItems(pasted);
         }
       });
 
       render();
-      return { addItems };
     };
 
     initializePillEditor({
@@ -659,31 +890,163 @@
       textInputId: 'tag-input',
       addButtonId: 'tag-add-btn',
       listId: 'tag-pill-list',
-      emptyClassName: 'tag-pill-empty',
       emptyText: "{{ _('Ei tageja vielä lisätty.') }}",
       removeAriaLabel: "{{ _('Poista tagi') }}",
-      normalizeValue: normalizeTag,
       splitValue: splitTags,
       syncValue: (items) => items.join(', '),
+      normalizeValue: normalizeTag,
     });
-
-    const splitPoints = (value) => (value || '')
-      .split(/[,\\n]+/)
-      .map((p) => p.trim())
-      .filter(Boolean);
 
     initializePillEditor({
       hiddenInputId: 'route',
       textInputId: 'route-input',
       addButtonId: 'route-add-btn',
       listId: 'route-pill-list',
-      emptyClassName: 'route-pill-empty',
       emptyText: "{{ _('Ei reittipisteitä vielä lisätty.') }}",
       removeAriaLabel: "{{ _('Poista reittipiste') }}",
       splitValue: splitPoints,
       syncValue: (items) => items.join(', '),
       allowDuplicates: true,
     });
+
+    const textarea = document.getElementById('description-markdown');
+    const preview = document.getElementById('description-preview');
+
+    const escapeHtml = (value) => (value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    const renderInlineMarkdown = (value) => {
+      let html = escapeHtml(value);
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      html = html.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+      return html;
+    };
+
+    const renderMarkdownPreview = (value) => {
+      const text = (value || '').trim();
+      if (!text) {
+        preview.innerHTML = '<p class="preview-empty">{{ _("Kirjoita kuvaus, niin näet sen tässä.") }}</p>';
+        return;
+      }
+
+      const lines = text.split(/\r?\n/);
+      const parts = [];
+      let index = 0;
+
+      const flushParagraph = (buffer) => {
+        if (!buffer.length) return;
+        parts.push(`<p>${renderInlineMarkdown(buffer.join('<br>'))}</p>`);
+        buffer.length = 0;
+      };
+
+      while (index < lines.length) {
+        const line = lines[index];
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          index += 1;
+          continue;
+        }
+
+        const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)$/);
+        if (headingMatch) {
+          parts.push(`<h${headingMatch[1].length}>${renderInlineMarkdown(headingMatch[2])}</h${headingMatch[1].length}>`);
+          index += 1;
+          continue;
+        }
+
+        if (/^>\s+/.test(trimmed)) {
+          const quotes = [];
+          while (index < lines.length && /^>\s+/.test(lines[index].trim())) {
+            quotes.push(lines[index].trim().replace(/^>\s+/, ''));
+            index += 1;
+          }
+          parts.push(`<blockquote>${renderInlineMarkdown(quotes.join('<br>'))}</blockquote>`);
+          continue;
+        }
+
+        if (/^-\s+/.test(trimmed)) {
+          const items = [];
+          while (index < lines.length && /^-\s+/.test(lines[index].trim())) {
+            items.push(`<li>${renderInlineMarkdown(lines[index].trim().replace(/^-\s+/, ''))}</li>`);
+            index += 1;
+          }
+          parts.push(`<ul>${items.join('')}</ul>`);
+          continue;
+        }
+
+        if (/^\d+\.\s+/.test(trimmed)) {
+          const items = [];
+          while (index < lines.length && /^\d+\.\s+/.test(lines[index].trim())) {
+            items.push(`<li>${renderInlineMarkdown(lines[index].trim().replace(/^\d+\.\s+/, ''))}</li>`);
+            index += 1;
+          }
+          parts.push(`<ol>${items.join('')}</ol>`);
+          continue;
+        }
+
+        const paragraph = [];
+        while (index < lines.length) {
+          const current = lines[index].trim();
+          if (!current || /^(#{1,6})\s+/.test(current) || /^>\s+/.test(current) || /^-\s+/.test(current) || /^\d+\.\s+/.test(current)) {
+            break;
+          }
+          paragraph.push(lines[index].trim());
+          index += 1;
+        }
+        flushParagraph(paragraph);
+      }
+
+      preview.innerHTML = parts.join('');
+    };
+
+    if (textarea && preview) {
+      const toolbarButtons = document.querySelectorAll('.format-btn');
+
+      const wrapSelection = ({ prefix = '', suffix = '', template = '', linePrefix = '' }) => {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.slice(start, end);
+        let replacement = '';
+
+        if (template) {
+          replacement = template;
+        } else if (linePrefix) {
+          const source = selected || textarea.value.slice(start);
+          const lines = source.split(/\r?\n/).filter(Boolean);
+          replacement = lines.length
+            ? lines.map((line) => `${linePrefix}${line}`).join('\n')
+            : `${linePrefix}`;
+        } else {
+          replacement = `${prefix}${selected || ''}${suffix}`;
+        }
+
+        textarea.setRangeText(replacement, start, end, 'end');
+        textarea.focus();
+        renderMarkdownPreview(textarea.value);
+      };
+
+      toolbarButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          wrapSelection({
+            prefix: button.dataset.prefix || '',
+            suffix: button.dataset.suffix || '',
+            template: button.dataset.template || '',
+            linePrefix: button.dataset.linePrefix || '',
+          });
+        });
+      });
+
+      textarea.addEventListener('input', () => renderMarkdownPreview(textarea.value));
+      renderMarkdownPreview(textarea.value);
+    }
   })();
 </script>
 {% endblock %}

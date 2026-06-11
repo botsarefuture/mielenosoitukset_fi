@@ -602,6 +602,10 @@
             <strong>{{ _('Milloin tätä kannattaa käyttää?') }}</strong>
             {{ _('Valitse tämä vaihtoehto etenkin silloin, kun kyse on peruutuksesta, teknisestä ongelmasta tai muusta havainnosta, jota ei tarvitse täyttää kenttäkohtaisena muokkausehdotuksena.') }}
           </div>
+          <div class="report-form-note">
+            <strong>{{ _('Mitä tapahtuu jos ilmoitat peruutuksesta?') }}</strong>
+            {{ _('Jos rastitat että mielenosoitus on peruttu, tieto lähtee ylläpidolle tarkistettavaksi. Pelkkä virheilmoitus ei vielä peru tapahtumaa automaattisesti.') }}
+          </div>
         </div>
         <form id="report-error-form" action="/report" method="POST" autocomplete="off">
           <div class="mb-3">
@@ -614,6 +618,9 @@
               <label class="form-check-label" for="mark-cancelled">
                 {{ _('Tämä mielenosoitus on peruttu') }}
               </label>
+            </div>
+            <div class="small text-muted mt-2">
+              {{ _('Kun valitset tämän, lähetämme peruutushavainnon Mielenosoitukset.fi:n ylläpidolle tarkistettavaksi.') }}
             </div>
           </div>
           <div class="mb-3">
@@ -780,10 +787,16 @@
   function displaySuccessMessage() {
     if (!elements.resultBox) return;
 
+    const reportedCancelled = Boolean(document.getElementById('mark-cancelled')?.checked);
     let seconds = CONFIG.COUNTDOWN_SECONDS;
     elements.resultBox.innerHTML = `
       <div class="report-result-alert report-result-alert-success">
-        <span><i class="fa-solid fa-check-circle me-2"></i>{{ _("Ilmoitus onnistui!") }} {{ _("Kiitos ilmoituksesta!") }}</span>
+        <span>
+          <i class="fa-solid fa-check-circle me-2"></i>
+          ${reportedCancelled
+            ? '{{ _("Peruutushavainto lähetettiin ylläpidolle tarkistettavaksi.") }}'
+            : '{{ _("Ilmoitus onnistui! Kiitos ilmoituksesta!") }}'}
+        </span>
         <span id="report-close-countdown" class="fw-bold">${seconds}</span>
       </div>
     `;

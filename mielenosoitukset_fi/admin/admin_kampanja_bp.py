@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
@@ -61,7 +62,7 @@ def update_volunteer(vol_id):
         "city": data.get("city", "").strip(),
         "notes": data.get("notes", "").strip(),
         "confirmed": bool(data.get("confirmed", False)),
-        "updated_at": datetime.utcnow(),
+        "updated_at": utcnow(),
     }
 
     mongo.volunteers.update_one({"_id": ObjectId(vol_id)}, {"$set": update})
@@ -85,7 +86,7 @@ def confirm_volunteer(vol_id):
     """Mark volunteer as confirmed."""
     mongo.volunteers.update_one(
         {"_id": ObjectId(vol_id)},
-        {"$set": {"confirmed": True, "updated_at": datetime.utcnow()}}
+        {"$set": {"confirmed": True, "updated_at": utcnow()}}
     )
     return jsonify({"status": "ok"})
 
@@ -98,7 +99,7 @@ def confirm_all_volunteers():
     """Confirm all volunteers that are still pending."""
     mongo.volunteers.update_many(
         {"confirmed": {"$ne": True}},
-        {"$set": {"confirmed": True, "updated_at": datetime.utcnow()}}
+        {"$set": {"confirmed": True, "updated_at": utcnow()}}
     )
     return jsonify({"status": "ok"})
 

@@ -1,4 +1,5 @@
 import copy
+import ast
 import os
 import re
 import threading
@@ -6,6 +7,7 @@ import time
 import uuid
 import hashlib
 import requests
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta
 from flask_babel import _, format_date
 from flask import (
@@ -42,6 +44,7 @@ from mielenosoitukset_fi.utils.cache import (
     skip_cache_public_only,
 )
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -84,7 +87,7 @@ SUBMIT_ERROR_CODES = {
     "duplicate_conflict": "SUBMIT_DUPLICATE_CONFLICT",
 }
 
-PANIC_MODE = False
+PANIC_MODE = False  # Forced maintenance mode for security remediation
 
 
 def _normalize_tag_value(tag):
@@ -100,6 +103,27 @@ def _normalize_tag_list(raw_tags):
         if cleaned:
             normalized.append(cleaned)
     return normalized
+
+
+def _normalize_route_points(raw_route):
+    if raw_route is None:
+        return []
+
+    if isinstance(raw_route, list):
+        return [str(point).strip() for point in raw_route if str(point).strip()]
+
+    text = str(raw_route).strip()
+    if not text:
+        return []
+
+    try:
+        parsed = ast.literal_eval(text)
+        if isinstance(parsed, list):
+            return [str(point).strip() for point in parsed if str(point).strip()]
+    except Exception:
+        pass
+
+    return [point.strip() for point in re.split(r"[\n,]+", text) if point.strip()]
 
 
 def _load_panic():
@@ -223,7 +247,7 @@ def _log_submit_error(message, code, status=400, extra=None):
             form_snapshot[key] = values if len(values) > 1 else values[0]
         submission_errors_collection.insert_one(
             {
-                "created_at": datetime.utcnow(),
+                "created_at": utcnow(),
                 "message": message,
                 "error_code": code,
                 "status": status,
@@ -1121,7 +1145,7 @@ def init_routes(app):
 
 
             # --- Submission idempotency guard ---
-            now = datetime.utcnow()
+            now = utcnow()
             duplicate_doc = submission_tokens_collection.find_one(
                 {
                     "fingerprint": submission_fingerprint,
@@ -1334,7 +1358,7 @@ def init_routes(app):
                         "$set": {
                             "status": "completed",
                             "demo_id": demo_id,
-                            "completed_at": datetime.utcnow(),
+                            "completed_at": utcnow(),
                             "fingerprint": submission_fingerprint,
                         }
                     },
@@ -1346,7 +1370,7 @@ def init_routes(app):
                     {
                         "$set": {
                             "status": "failed",
-                            "failed_at": datetime.utcnow(),
+                            "failed_at": utcnow(),
                             "error": str(e),
                         }
                     },
@@ -1366,7 +1390,7 @@ def init_routes(app):
                     "submitter_email": submitter_email,
                     "submitter_name": submitter_name,
                     "accept_terms": bool(accept_terms),
-                    "submitted_at": datetime.utcnow(),
+                    "submitted_at": utcnow(),
                 }
                 
                 mongo.submitters.insert_one(submitter_doc)
@@ -1450,7 +1474,7 @@ def init_routes(app):
                         {
                             "demo_id": demo_id,
                             "status": "pending",
-                            "created_at": datetime.utcnow(),
+                            "created_at": utcnow(),
                             "notification_type": "initial_submission",
                             "marks_admin_contact": True,
                             "messages": notification_messages,
@@ -2087,7 +2111,6 @@ def init_routes(app):
                 'city',
                 'address',
                 'facebook',
-                'description',
                 'tags',
                 'route',
             ]
@@ -2099,18 +2122,22 @@ def init_routes(app):
                 # normalize tags as list if provided
                 if f == 'tags' and val:
                     val = _normalize_tag_list(val.split(','))
+                elif f == 'route' and val:
+                    val = _normalize_route_points(val)
 
                 # compare to the stored demo_doc values and only store differences
                 orig = demo_doc.get(f)
                 # normalize original tags to list for comparison
                 if f == 'tags' and isinstance(orig, list):
                     orig_comp = _normalize_tag_list(orig)
+                elif f == 'route':
+                    orig_comp = _normalize_route_points(orig)
                 else:
                     orig_comp = (orig or '').strip() if orig is not None else ''
 
-                # For comparison, when tags -> convert to list
+                # For comparison, when tags / route -> convert to normalized lists
                 changed = False
-                if f == 'tags':
+                if f in {'tags', 'route'}:
                     if val and isinstance(val, list) and val != orig_comp:
                         changed = True
                 else:
@@ -2120,6 +2147,15 @@ def init_routes(app):
                 if changed:
                     suggested_fields[f] = val
                     original_values[f] = orig
+
+            description_markdown = (request.form.get('description_markdown') or '').strip()
+            original_description = demo_doc.get('description') or ''
+            original_description_markdown = html_to_markdown(original_description).strip()
+            if description_markdown and description_markdown != original_description_markdown:
+                suggested_description = markdown_to_html(description_markdown)
+                if suggested_description and suggested_description != original_description:
+                    suggested_fields['description'] = suggested_description
+                    original_values['description'] = demo_doc.get('description')
 
             reporter_email = (request.form.get('reporter_email') or '').strip() or None
             reporter_comment = (request.form.get('reporter_comment') or '').strip() or None
@@ -2134,7 +2170,7 @@ def init_routes(app):
                 'original_values': original_values,
                 'reporter_comment': reporter_comment,
                 'reporter_email': reporter_email,
-                'created_at': datetime.utcnow(),
+                'created_at': utcnow(),
                 'ip': request.remote_addr,
                 'user_agent': request.headers.get('User-Agent'),
                 'status': 'new',
@@ -2161,7 +2197,13 @@ def init_routes(app):
 
         # GET — render form with per-field inputs
         demo = Demonstration.from_dict(demo_doc)
-        return render_template('suggest_change.html', demo=demo)
+        return render_template(
+            'suggest_change.html',
+            demo=demo,
+            description_markdown=html_to_markdown(demo_doc.get('description')),
+            route_input_value=", ".join(_normalize_route_points(demo_doc.get('route'))),
+            tag_input_value=", ".join(_normalize_tag_list(demo_doc.get('tags') or [])),
+        )
 
     @app.route("/cancel_demonstration/<token>", methods=["GET", "POST"])
     def cancel_demo_with_token(token):
@@ -2175,7 +2217,7 @@ def init_routes(app):
             token_error = _("Peruutuslinkkiä ei tunnistettu.")
         else:
             expires_at = token_doc.get("expires_at")
-            if expires_at and expires_at < datetime.utcnow():
+            if expires_at and expires_at < utcnow():
                 token_error = _("Peruutuslinkki on vanhentunut.")
 
             if token_doc.get("used_at"):
@@ -2422,8 +2464,8 @@ def init_routes(app):
 
         suggestion = {
             "organization_id": ObjectId(org_id),
-            "timestamp": datetime.utcnow(),
-            "created_at": datetime.utcnow(),
+            "timestamp": utcnow(),
+            "created_at": utcnow(),
             "fields": {},
             "meta": {
                 "ip": request.remote_addr,
@@ -2432,14 +2474,14 @@ def init_routes(app):
             },
             "status": {
                 "state": "pending",
-                "updated_at": datetime.utcnow(),
+                "updated_at": utcnow(),
                 "updated_by": None,
                 "notes": None
             },
             "audit_log": [
                 {
                     "action": "created",
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": utcnow(),
                     "user": None
                 }
             ]
@@ -2668,7 +2710,7 @@ def init_routes(app):
             return jsonify({"status": "OK", "message": "Olet jo tilannut muistutuksen tälle mielenosoitukselle."})
 
         # Rate limit by IP (max 5 per hour)
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = utcnow() - timedelta(hours=1)
         recent_requests = reminders_collection.count_documents({
             "user_ip": user_ip,
             "created_at": {"$gte": one_hour_ago}
@@ -2689,7 +2731,7 @@ def init_routes(app):
             "user_email": user_email,
             "user_ip": user_ip,
             "user_agent": user_agent,
-            "created_at": datetime.utcnow(),
+            "created_at": utcnow(),
         })
 
         return jsonify({"status": "OK", "message": "Muistutus tilattu onnistuneesti!"})
@@ -2809,7 +2851,7 @@ def init_routes(app):
         ET.SubElement(channel, "description").text = "Viimeisimmät mielenosoitukset."
         ET.SubElement(channel, "language").text = "fi-fi"
 
-        now = datetime.utcnow()
+        now = utcnow()
         ET.SubElement(channel, "pubDate").text = format_datetime(now)
         ET.SubElement(channel, "lastBuildDate").text = format_datetime(now)
         ET.SubElement(channel, "copyright").text = "© 2025 Mielenosoitukset.fi"
@@ -2863,7 +2905,7 @@ def init_routes(app):
 
         # Create ETag for conditional GET
         etag = hashlib.md5(feed_xml).hexdigest()
-        last_modified = datetime.utcnow()
+        last_modified = utcnow()
 
         # Check if client already has this version
         if request.headers.get("If-None-Match") == etag:
@@ -3031,7 +3073,7 @@ def init_routes(app):
             "user_email": user_email,
             "demo_id": demo_id if isinstance(demo_id, str) else str(demo_id) if demo_id else None,
             "user_agent": user_agent,
-            "reported_at": datetime.utcnow(),
+            "reported_at": utcnow(),
         }
         malicious_reports_collection.insert_one(doc)
 

@@ -562,6 +562,7 @@ class TwoFAToken:
 
 from typing import List, Dict
 import pyotp
+from mielenosoitukset_fi.utils.time_utils import utcnow
 import datetime
 from bson import ObjectId
 
@@ -576,7 +577,7 @@ class PendingMFA:
         _get_mongo()[PendingMFA.COLLECTION].insert_one({
             "user_id": user_id,
             "secret": secret,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": utcnow()
         })
         return secret
 
@@ -642,7 +643,7 @@ class UserMFA:
             "user_id": self.user_id,
             "secret": secret,
             "device_name": device_name,
-            "created_at": datetime.datetime.utcnow()
+            "created_at": utcnow()
         })
         return secret
 

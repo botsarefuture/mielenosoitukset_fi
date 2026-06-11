@@ -15,8 +15,15 @@ SHORT_HOURS = 48  # short-lived user/app tokens
 LONG_DAYS = 90    # long-lived tokens
 SESSION_HOURS = 168  # session tokens (7 days)
 
-# Supported scopes (reference)
-SUPPORTED_SCOPES = {"read", "write", "admin", "submit_demonstrations"}
+# Supported scopes
+SUPPORTED_SCOPES = {
+    "read",
+    "write",
+    "admin",
+    "mcp.admin",
+    "submit_demonstrations",
+}
+PRIVILEGED_SCOPES = {"admin", "mcp.admin"}
 
 
 def _hash_token(token: str) -> str:
@@ -51,6 +58,19 @@ def create_token(
     Categories: user, app, system, session.
     token_type: short (48h), long (90d), session (7d). Long is typically created via exchange.
     """
+    if scopes is not None and (
+        not isinstance(scopes, (list, tuple, set))
+        or not all(isinstance(scope, str) for scope in scopes)
+    ):
+        raise ValueError("Token scopes must be a list of strings")
+
+    scopes = list(dict.fromkeys(scopes or ["read"]))
+    unsupported_scopes = set(scopes) - SUPPORTED_SCOPES
+    if unsupported_scopes:
+        raise ValueError(
+            f"Unsupported token scopes: {', '.join(sorted(unsupported_scopes))}"
+        )
+
     token = secrets.token_urlsafe(32)
     expires_at = _expiry_for_type(token_type)
 
@@ -61,7 +81,7 @@ def create_token(
         "token": _hash_token(token),
         "type": token_type,
         "category": category,
-        "scopes": scopes or ["read"],
+        "scopes": scopes,
         "rate_limit": None if system else "100/minute",
         "system": system,
         "expires_at": expires_at,

@@ -3,6 +3,7 @@ import json
 import pytz
 from collections import defaultdict
 from typing import Any, Dict
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta, timezone, date
 import requests
 
@@ -322,7 +323,7 @@ def _serialize_login_log(doc: dict) -> dict:
     timestamp = doc.get("timestamp")
     if isinstance(timestamp, datetime):
         timestamp_str = timestamp.replace(tzinfo=timezone.utc).isoformat()
-        time_ago = datetime.utcnow() - timestamp
+        time_ago = utcnow() - timestamp
         minutes_ago = max(int(time_ago.total_seconds() // 60), 0)
     else:
         timestamp_str = ""
@@ -344,7 +345,7 @@ def _serialize_login_log(doc: dict) -> dict:
 
 def _calculate_dashboard_snapshot() -> dict:
     """Aggregate lightweight metrics for the dashboard."""
-    now = datetime.utcnow()
+    now = utcnow()
     last_hour = now - timedelta(hours=1)
     last_day = now - timedelta(days=1)
 
@@ -682,7 +683,7 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(timestamp, datetime):
         timestamp_display = timestamp.strftime("%Y-%m-%d %H:%M:%S")
         timestamp_iso = timestamp.replace(tzinfo=timezone.utc).isoformat()
-        rel_minutes = max(int((datetime.utcnow() - timestamp).total_seconds() // 60), 0)
+        rel_minutes = max(int((utcnow() - timestamp).total_seconds() // 60), 0)
     else:
         timestamp_display = str(timestamp) if timestamp else "—"
         timestamp_iso = timestamp_display
@@ -807,7 +808,7 @@ def _parse_demo_date(value):
 
 
 def _future_demo_ids() -> set[ObjectId]:
-    today = datetime.utcnow().date()
+    today = utcnow().date()
     ids: set[ObjectId] = set()
     cursor = mongo.demonstrations.find(
         {"date": {"$exists": True}},
@@ -900,7 +901,7 @@ def stats_summary_api():
                 "total_demos_future": future_demo_count,
                 "total_views": total_views,
                 "avg_views": avg_views,
-                "last_updated": datetime.utcnow().isoformat() + "Z",
+                "last_updated": utcnow().isoformat() + "Z",
             },
             "analytics": {
                 "rows": rows,

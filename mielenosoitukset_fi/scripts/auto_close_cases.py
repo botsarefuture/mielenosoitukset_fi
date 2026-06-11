@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from bson import ObjectId
@@ -9,7 +10,7 @@ from mielenosoitukset_fi.utils.logger import logger
 
 def _resolve(db):
     mongo = db
-    now = datetime.utcnow()
+    now = utcnow()
     closed = 0
     checked = 0
 
@@ -23,10 +24,10 @@ def _resolve(db):
         if case.case_type in {"new_demo", "demo_cancellation_request", "demo_cancelled"} and case.demo_id:
             demo_doc = mongo.demonstrations.find_one(
                 {"_id": ObjectId(case.demo_id)},
-                {"accepted": 1, "rejected": 1, "cancelled": 1},
+                {"approved": 1, "accepted": 1, "rejected": 1, "cancelled": 1},
             )
             if demo_doc:
-                if demo_doc.get("accepted"):
+                if demo_doc.get("approved") or demo_doc.get("accepted"):
                     reason = "Demo hyväksytty"
                 elif demo_doc.get("rejected"):
                     reason = "Demo hylätty"

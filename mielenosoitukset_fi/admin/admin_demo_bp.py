@@ -5,6 +5,7 @@ from flask import abort, current_app
 import requests
 from copy import deepcopy
 
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import date, datetime, timedelta
 from bson.objectid import ObjectId
 import logging
@@ -175,7 +176,7 @@ def _add_case_log(case_doc, action_type, note=None, close_case=False, new_demo_i
     if not case_doc:
         return
     case_id = case_doc["_id"] if isinstance(case_doc, dict) else case_doc
-    now = datetime.utcnow()
+    now = utcnow()
     log_entry = {
         "timestamp": now,
         "admin": _case_admin_username(),
@@ -219,7 +220,7 @@ def _handle_cases_after_merge(primary_id, secondary_ids, doc_map):
         return
 
     def _case_sort_key(doc):
-        return doc.get("created_at") or getattr(doc.get("_id"), "generation_time", datetime.utcnow())
+        return doc.get("created_at") or getattr(doc.get("_id"), "generation_time", utcnow())
 
     open_cases = [doc for doc in case_docs if not ((doc.get("meta") or {}).get("closed"))]
     keep_case = min(open_cases, key=_case_sort_key) if open_cases else min(case_docs, key=_case_sort_key)
@@ -405,7 +406,7 @@ def recommend_demo(demo_id):
     annotated_demo["_audit_note"] = {
         "action": "recommend_demo",
         "recommend_till": recommend_till,
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "user": _get_actor_label(),
     }
     hist_id = save_demo_history(
@@ -441,7 +442,7 @@ def unrecommend_demo(demo_id):
     annotated_demo = deepcopy(demo_data)
     annotated_demo["_audit_note"] = {
         "action": "unrecommend_demo",
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
         "user": _get_actor_label(),
     }
     hist_id = save_demo_history(str(demo_id), demo_data, annotated_demo)
@@ -573,7 +574,7 @@ def suggestion_apply(suggestion_id):
         mongo.demo_edit_history.insert_one({
             'demo_id': demo_id,
             'edited_by': str(getattr(current_user, '_id', 'unknown')),
-            'edited_at': datetime.utcnow(),
+            'edited_at': utcnow(),
             'old_demo': demo_doc,
             'new_demo': {**demo_doc, **update},
         })
@@ -583,7 +584,7 @@ def suggestion_apply(suggestion_id):
     # Apply update
     try:
         mongo.demonstrations.update_one({'_id': ObjectId(demo_id)}, {'$set': update})
-        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': datetime.utcnow()}})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': 'applied', 'applied_fields': selected, 'applied_by': str(getattr(current_user, '_id', 'unknown')), 'applied_at': utcnow()}})
         flash_message('Ehdotuksen valitut kentät on päivitetty.', 'success')
     except Exception:
         logger.exception('Failed to apply suggestion to demo')
@@ -605,7 +606,7 @@ def suggestion_status_update(suggestion_id):
         flash_message('Tuntematon tila.', 'error')
         return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
     try:
-        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': datetime.utcnow()}})
+        mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': utcnow()}})
         flash_message('Ehdotuksen tila päivitetty.', 'success')
     except Exception:
         logger.exception('Failed to update suggestion status')
@@ -758,7 +759,7 @@ def rollback_demo(history_id):
     mongo.demo_edit_history.insert_one({
         "demo_id": demo_id,
         "edited_by": str(getattr(current_user, "_id", "unknown")),
-        "edited_at": datetime.utcnow(),
+        "edited_at": utcnow(),
         "old_demo": current_demo,
         "new_demo": old_data,
         "diff": None,  # can compute later
@@ -1209,7 +1210,7 @@ def approve_demo_with_token(token):
     try:
         result = mongo.demonstrations.update_one(
             {"_id": _require_valid_objectid(demo_id)},
-            {"$set": {"approved": True, "rejected": False, "last_modified": datetime.utcnow()}}
+            {"$set": {"approved": True, "rejected": False, "last_modified": utcnow()}}
         )
     except Exception:
         logger.exception("Failed to approve demo %s via token %s", demo_id, doc.get("_id"))
@@ -1266,6 +1267,7 @@ def approve_demo_with_token(token):
             },
         )
 
+    _log_case_decision(demo_id, refreshed_demo.get("title"), "approve_demo", close_reason="demo_approved")
     _mark_used(doc["_id"])
     flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
     
@@ -1300,7 +1302,7 @@ def reject_demo_with_token(token):
     try:
         result = mongo.demonstrations.update_one(
             {"_id": _require_valid_objectid(demo_id)},
-            {"$set": {"approved": False, "rejected": True, "last_modified": datetime.utcnow()}}
+            {"$set": {"approved": False, "rejected": True, "last_modified": utcnow()}}
         )
     except Exception:
         logger.exception("Failed to reject demo %s via token %s", demo_id, doc.get("_id"))
@@ -1331,6 +1333,8 @@ def reject_demo_with_token(token):
         message=_("Kertakäyttölinkillä hylättiin mielenosoitus"),
         extra_details={"source": "token", "token_id": str(doc.get("_id"))},
     )
+
+    _log_case_decision(demo_id, refreshed_demo.get("title"), "reject_demo", close_reason="demo_rejected")
 
     _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 
@@ -1553,7 +1557,7 @@ def duplicate_demo(demo_id):
     demo_data["approved"] = False
     demo_data["title"] = f"{demo_data['title']} (Kopio)"
     # Set created_datetime to current time for the new demo
-    demo_data["created_datetime"] = datetime.utcnow()
+    demo_data["created_datetime"] = utcnow()
 
         
     # If it was a recurring demo, turn it into a non-recurring one
@@ -1782,7 +1786,7 @@ def merge_demos():
     alias_values = _build_merged_aliases(doc_map, primary_id)
     merged_doc["aliases"] = alias_values
     merged_doc["merged_into"] = None
-    merged_doc["last_modified"] = datetime.utcnow()
+    merged_doc["last_modified"] = utcnow()
 
     mongo.demonstrations.replace_one({"_id": primary_doc["_id"]}, merged_doc)
 
@@ -1793,7 +1797,7 @@ def merge_demos():
         "primary_demo_id": primary_id,
         "secondary_demo_ids": secondary_ids,
         "selected_demo_ids": selected_ids,
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "actor": {
             "user_id": str(getattr(current_user, "id", "")),
             "username": getattr(current_user, "username", None),
@@ -1987,7 +1991,7 @@ def _summarize_analytics_doc(analytics_doc: dict | None) -> dict:
     if not isinstance(analytics_map, dict):
         return summary
 
-    now = datetime.utcnow()
+    now = utcnow()
     for day_str, hours in analytics_map.items():
         if not isinstance(hours, dict):
             continue
@@ -2684,7 +2688,7 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
                     case.add_action("edit_demo", current_user.username, note=f"More information can be found on history page: <a href='{url_for('admin_demo.view_demo_diff', history_id=hist_id)}'>link</a>")
                     
                     case._add_history_entry({
-                        "timestamp": datetime.utcnow(),
+                        "timestamp": utcnow(),
                         "action": "Muokattu mielenosoitusta",
                         "user": current_user.username,
                         "mech_action": "edit_demo",
@@ -3649,6 +3653,8 @@ def accept_demo(demo_id):
                     "address": demo.address,
                 },
             )
+
+        _log_case_decision(demo_id, demo.title, "approve_demo", close_reason="demo_approved")
 
         return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
     except Exception as e:

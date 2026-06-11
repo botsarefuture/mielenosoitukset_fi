@@ -6,6 +6,7 @@ import socket
 import threading
 import traceback
 import uuid
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -73,7 +74,7 @@ class BackgroundJobLeadership:
         self._release()
 
     def _claim(self) -> bool:
-        now = datetime.utcnow()
+        now = utcnow()
         expires_at = now + timedelta(seconds=self.ttl_seconds)
         try:
             doc = self._collection.find_one_and_update(
@@ -267,7 +268,7 @@ class BackgroundJobManager:
         self._require_job(job_key)
         self._db.background_jobs.update_one(
             {"_id": job_key},
-            {"$set": {"enabled": enabled, "updated_at": datetime.utcnow()}},
+            {"$set": {"enabled": enabled, "updated_at": utcnow()}},
         )
         if enabled:
             self.reload_job(job_key)
@@ -292,7 +293,7 @@ class BackgroundJobManager:
                 "$set": {
                     "trigger": "interval",
                     "trigger_args": trigger_args,
-                    "updated_at": datetime.utcnow(),
+                    "updated_at": utcnow(),
                 }
             },
             return_document=ReturnDocument.AFTER,
@@ -315,7 +316,7 @@ class BackgroundJobManager:
     # ------------------------------------------------------------------ #
     def _execute_job(self, job_key: str, triggered_by: str = "scheduler", metadata: Optional[Dict[str, Any]] = None):
         job_def = self._require_job(job_key)
-        now = datetime.utcnow()
+        now = utcnow()
         run_doc = {
             "job_key": job_key,
             "job_name": job_def.name,
@@ -342,7 +343,7 @@ class BackgroundJobManager:
             tb_text = traceback.format_exc()
             logger.exception("Background job %s failed.", job_key)
         finally:
-            finished_at = datetime.utcnow()
+            finished_at = utcnow()
             duration_seconds = (finished_at - now).total_seconds()
             update_fields: Dict[str, Any] = {
                 "finished_at": finished_at,
@@ -395,7 +396,7 @@ class BackgroundJobManager:
                     next_run = None
         if not next_run and hasattr(job, "trigger"):
             try:
-                next_run = job.trigger.get_next_fire_time(None, datetime.utcnow())
+                next_run = job.trigger.get_next_fire_time(None, utcnow())
             except Exception:
                 next_run = None
         return next_run
@@ -414,8 +415,8 @@ class BackgroundJobManager:
                         "trigger": definition.default_trigger.get("trigger", "interval"),
                         "trigger_args": definition.default_trigger.get("trigger_args", {}),
                         "enabled": True,
-                        "created_at": datetime.utcnow(),
-                        "updated_at": datetime.utcnow(),
+                        "created_at": utcnow(),
+                        "updated_at": utcnow(),
                     },
                     "$set": {
                         "name": definition.name,

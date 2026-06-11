@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 
 from mielenosoitukset_fi.utils.logger import logger
@@ -29,7 +30,7 @@ def run_auto_migrations(db) -> None:
             {
                 "id": migration_id,
                 "description": migration["description"],
-                "applied_at": datetime.utcnow(),
+                "applied_at": utcnow(),
                 "result": result or {},
             }
         )

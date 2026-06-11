@@ -1,4 +1,5 @@
 import json
+import re
 from flask import (
     Blueprint,
     g,
@@ -21,11 +22,13 @@ from mielenosoitukset_fi.utils.auth import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
+from mielenosoitukset_fi.utils.validators import normalize_username, validate_username
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
 import importlib
+from mielenosoitukset_fi.utils.time_utils import utcnow
 import datetime
 import smtplib
 from email.mime.text import MIMEText
@@ -36,7 +39,13 @@ import base64
 from io import BytesIO
 from flask import jsonify
 
-from mielenosoitukset_fi.utils.tokens import TOKEN_USAGE_LOGS, TOKENS_COLLECTION, create_token
+from mielenosoitukset_fi.utils.tokens import (
+    PRIVILEGED_SCOPES,
+    SUPPORTED_SCOPES,
+    TOKEN_USAGE_LOGS,
+    TOKENS_COLLECTION,
+    create_token,
+)
 
 
 def generate_qr(url: str) -> str:
@@ -81,8 +90,37 @@ login_logs = mongo["login_logs"]
 
 token_access_requests = mongo["api_token_requests"]
 
+
+def _get_mongo():
+    """Return the active database handle."""
+    return DatabaseManager.get_instance().get_db()
+
+
+def _find_user_by_username(username: str):
+    """Find a user by canonical username, falling back to legacy casing."""
+    username = normalize_username(username)
+    if not username:
+        return None
+
+    users = _get_mongo().users
+    user = users.find_one({"username_canonical": username})
+    if user:
+        return user
+
+    case_insensitive_username = {
+        "$regex": f"^{re.escape(username)}$",
+        "$options": "i",
+    }
+    return users.find_one({"username": case_insensitive_username})
+
+
+def _username_exists(username: str) -> bool:
+    """Check canonical usernames while remaining compatible with older user documents."""
+    return _find_user_by_username(username) is not None
+
+
 def _fresh_user_doc():
-    return mongo.users.find_one({"_id": current_user._id}) or {}
+    return _get_mongo().users.find_one({"_id": current_user._id}) or {}
 
 
 def _notify_admin(subject, body, to=None):
@@ -124,7 +162,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
             if user:
                 mongo.users.update_one(
                     {"_id": ObjectId(user["_id"])},
-                    {"$set": {"last_login": datetime.utcnow()}}
+                    {"$set": {"last_login": utcnow()}}
                 )
                 
         except Exception as e:
@@ -138,7 +176,7 @@ def log_login_attempt(username, success, ip, user_agent=None, reason=None, user_
         "ip": ip,
         "user_agent": user_agent,
         "reason": reason,
-        "timestamp": datetime.utcnow(),
+        "timestamp": utcnow(),
     })
 
 
@@ -171,21 +209,27 @@ def verify_emailer(email, username):
 def register():
     """ """
     if request.method == "POST":
-        username = request.form.get("username")
+        username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
         email = request.form.get("email")
 
-        if not username or not password or len(username) < 3 or not is_strong_password(password):
+        username_valid, username_error = validate_username(username)
+        if not username_valid:
+            flash_message(username_error, "error")
+            return redirect(url_for("users.auth.register"))
+
+        if not password or not is_strong_password(password):
             flash_message(
-                "Virheellinen syöte. Käyttäjänimen tulee olla vähintään 3 merkkiä pitkä ja salasanan vähintään 6 merkkiä pitkä.",
+                "Virheellinen salasana.",
                 "error",
             )
             return redirect(url_for("users.auth.register"))
 
-        if mongo.users.find_one({"username": username}):
+        if _username_exists(username):
             flash_message("Käyttäjänimi on jo käytössä.", "warning")
             return redirect(url_for("users.auth.register"))
 
+        mongo = _get_mongo()
         if mongo.users.find_one({"email": email}):
             flash_message(
                 "Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.",
@@ -194,6 +238,7 @@ def register():
             return redirect(url_for("users.auth.login"))
 
         user_data = User.create_user(username, password, email)
+        user_data["username_canonical"] = username
         mongo.users.insert_one(user_data)
 
         try:
@@ -227,7 +272,16 @@ def register_next_steps():
 def generate_api_token():
     data = request.get_json() or {}
     token_type = data.get("type", "short")
-    scopes = data.get("scopes", ["read"])
+    requested_scopes = data.get("scopes", ["read"])
+    if (
+        not isinstance(requested_scopes, list)
+        or not all(isinstance(scope, str) for scope in requested_scopes)
+    ):
+        return jsonify({
+            "status": "error",
+            "error": "Token scopes must be a list of strings.",
+        }), 400
+    scopes = list(dict.fromkeys(requested_scopes))
 
     # Require admin approval for API token usage
     user_doc = _fresh_user_doc()
@@ -237,18 +291,32 @@ def generate_api_token():
             "error": "API token access is locked. Request access from an admin first."
         }), 403
 
-    # Admin scope check
-    if "admin" in scopes and not (current_user.global_admin or current_user.role in ["admin", "superuser"]):
-        scopes.remove("admin")
+    unsupported_scopes = set(scopes) - SUPPORTED_SCOPES
+    if unsupported_scopes:
+        return jsonify({
+            "status": "error",
+            "error": f"Unsupported token scopes: {', '.join(sorted(unsupported_scopes))}",
+        }), 400
+
+    requested_privileged_scopes = set(scopes) & PRIVILEGED_SCOPES
+    can_issue_privileged_scopes = bool(
+        current_user.global_admin
+        or current_user.role in ["global_admin", "admin", "superuser", "god"]
+    )
+    if requested_privileged_scopes and not can_issue_privileged_scopes:
         TOKEN_USAGE_LOGS.insert_one({
             "user_id": current_user._id,
             "username": current_user.username,
-            "action": "attempted admin scope request",
+            "action": "attempted privileged scope request",
             "requested_scopes": data.get("scopes", []),
-            "allowed_scopes": scopes,
+            "denied_scopes": sorted(requested_privileged_scopes),
             "ip_address": request.remote_addr,
             "timestamp": datetime.now()
         })
+        return jsonify({
+            "status": "error",
+            "error": "Privileged token scopes require a global administrator.",
+        }), 403
 
     try:
         token, expires_at = create_token(
@@ -331,7 +399,7 @@ def request_api_token_access():
 
     reason = (request.get_json() or {}).get("reason") or ""
     reason = reason.strip()
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = utcnow().isoformat()
     try:
         mongo.users.update_one(
             {"_id": current_user._id},
@@ -364,11 +432,12 @@ def tokens_ui():
 
 @auth_bp.route("/api/username_free", methods=["GET"])
 def api_username_free():
-    username = request.args.get("username", "").strip()
-    if not username:
-        return jsonify({"available": False, "error": "Username is required."}), 400
+    username = normalize_username(request.args.get("username"))
+    username_valid, username_error = validate_username(username)
+    if not username_valid:
+        return jsonify({"available": False, "error": username_error}), 400
 
-    is_taken = mongo.users.find_one({"username": username}) is not None
+    is_taken = _username_exists(username)
     return jsonify({"available": not is_taken})
 
 @auth_bp.route("/confirm_email/<token>")
@@ -489,7 +558,8 @@ def mfa_check():
     """
 
     try:
-        user = mongo.users.find_one({"username": request.form.get("username")})
+        username = normalize_username(request.form.get("username"))
+        user = _find_user_by_username(username)
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
@@ -507,6 +577,26 @@ def mfa_check():
         return jsonify({"enabled": False, "valid": False})
 
 from urllib.parse import urlparse
+
+
+def _normalize_post_login_target(target: str | None) -> str:
+    candidate = (target or "").replace("\\", "")
+    if not candidate:
+        return url_for("index")
+
+    parsed = urlparse(candidate)
+    if parsed.netloc or parsed.scheme:
+        return url_for("index")
+
+    if candidate == url_for("users.auth.login"):
+        return url_for("index")
+
+    # Post-login redirects should land on human-facing pages, not raw APIs.
+    if candidate.startswith("/api/") or candidate.startswith("/users/auth/api/"):
+        return url_for("index")
+
+    return candidate
+
 
 def _check(safe_next_page, request):
     
@@ -531,20 +621,7 @@ def _check(safe_next_page, request):
 def login():
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
-
-    # Sanitize next_page: remove backslashes etc.
-    next_page = next_page.replace("\\", "")
-
-    # Check if next_page is a safe internal URL (no netloc, no scheme)
-    if next_page and (urlparse(next_page).netloc == "" and urlparse(next_page).scheme == ""):
-        safe_next_page = next_page
-    else:
-        # fallback default redirect page after login
-        safe_next_page = url_for("index")
-
-    # Prevent redirect back to login page itself to avoid loops
-    if safe_next_page == url_for("users.auth.login"):
-        safe_next_page = url_for("index")
+    safe_next_page = _normalize_post_login_target(next_page)
 
     # Save the safe next page to session in case of POST failures
     session["next_page"] = safe_next_page
@@ -554,14 +631,14 @@ def login():
         return redirect(safe_next_page)
 
     if request.method == "POST":
-        username = request.form.get("username")
+        username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
 
         if not username or not password:
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user_doc = mongo.users.find_one({"username": username})
+        user_doc = _find_user_by_username(username)
         
         user_ip = request.remote_addr
         user_agent = request.headers.get("User-Agent", "")
@@ -629,7 +706,7 @@ def forced_pwd_reset():
 
     log_entry = {
         "user_id": str(current_user.id),
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": ip,
         "user_agent": user_agent,
         "visit": True,
@@ -767,30 +844,39 @@ def settings_api():
         A JSON response indicating whether settings were updated.
     """
     user = current_user
-    user_data = request.form.to_dict()
+    allowed_fields = {"city", "dark_mode", "language"}
+    submitted_data = request.form.to_dict()
+    rejected_fields = sorted(set(submitted_data) - allowed_fields)
+    if rejected_fields:
+        return jsonify({
+            "status": "error",
+            "message": "Asetus sisältää kenttiä, joita ei voi muuttaa tällä rajapinnalla.",
+            "rejected_fields": rejected_fields,
+        }), 400
+
+    user_data = {
+        field: value
+        for field, value in submitted_data.items()
+        if field in allowed_fields
+    }
     changed_fields = {}
 
     # Build current_user_data from attributes (use underscore field names)
     current_user_data = {
-        "username": getattr(user, "username", None),
-        "email": getattr(user, "email", None),
-        "mfa_enabled": getattr(user, "mfa_enabled", None),
         "language": getattr(user, "language", None),
         "dark_mode": getattr(user, "dark_mode", None),
         "city": getattr(user, "city", None),
-        # add other fields as needed
     }
 
     for field, new_value in user_data.items():
         current_value = current_user_data.get(field)
         if current_value is None or str(current_value) != str(new_value):
-            print(field)
             changed_fields[field] = {"old": current_value, "new": new_value}
             setattr(user, field, new_value)
 
     if changed_fields:
         # Update the user's document in the database
-        mongo.users.update_one({"_id": user._id}, {"$set": user_data})
+        _get_mongo().users.update_one({"_id": user._id}, {"$set": user_data})
 
         # Send an email notification about the changes
         try:
@@ -986,7 +1072,7 @@ def mfa_setup_api():
                 "user_id": user._id,
                 "secret": secret,
                 "device_name": device_name,
-                "created_at": datetime.datetime.utcnow()
+                "created_at": utcnow()
             })
             PendingMFA.delete(user._id, secret)
             user.mfa_enabled = True
@@ -1184,7 +1270,7 @@ def password_reset(token):
     log_entry = {
         "token": token,
         "email": email or None,
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": ip,
         "user_agent": user_agent,
         "visit": True,
@@ -1234,7 +1320,7 @@ def password_reset(token):
             mongo.used_password_change_tokens.insert_one({
                 "token": token,
                 "email": email,
-                "used_at": datetime.utcnow(),
+                "used_at": utcnow(),
                 "ip": ip,
                 "user_agent": user_agent,
                 "password_change_success": True
@@ -1371,7 +1457,7 @@ def api_change_password():
     current_user._change_password(new)
     mongo.password_changes.insert_one({
         "user_id": current_user._id,
-        "datetime": datetime.utcnow(),
+        "datetime": utcnow(),
         "ip": request.remote_addr,
         "user_agent": request.headers.get("User-Agent", ""),
         "method": "settings_page",

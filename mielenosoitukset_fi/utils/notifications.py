@@ -1,4 +1,5 @@
 # utils/notifications.py
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
 from bson import ObjectId
 
@@ -18,7 +19,7 @@ def create_notification(user_id: str | ObjectId, n_type: str, payload: dict, lin
         "type": n_type,
         "payload": payload or {},
         "link": link,
-        "created_at": datetime.utcnow(),
+        "created_at": utcnow(),
         "read": False,
     }
     mongo.notifications.insert_one(doc)
@@ -82,7 +83,7 @@ def serialize_notification(doc: dict) -> dict:
         message = doc.get("message", "")
         icon = "fa-solid fa-info-circle"
 
-    created_at = doc.get("created_at") or datetime.utcnow()
+    created_at = doc.get("created_at") or utcnow()
 
     return {
         "id": str(doc["_id"]),

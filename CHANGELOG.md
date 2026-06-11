@@ -4,7 +4,29 @@
 
 ## UNRELEASED
 
+### Changed
+* Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
+
+### Fixed
+* Demo approval and rejection now close linked support cases consistently across direct admin actions, token links, and the auto-close background job; de-escalation also writes back to the correct `case_history` field.
+* Public demo change suggestions now use a guided normal-user form with clearer sectioning, plain-text/Markdown description editing plus live preview, and cleaner route/tag helpers so contributors never need to deal with raw HTML or Python-style list formatting; route points and tags can now also be edited directly by double-clicking their pills.
+* Public cancellation and error-reporting flows now explain more clearly whether an action cancels a demo immediately or only creates an admin-reviewed request, and organizer cancellation emails now spell out the verified-official-contact shortcut versus the normal approval path.
+### Fixed
+* Public demo suggestion submissions no longer smuggle in destructive description rewrites when the existing rich text cannot be losslessly round-tripped through the plain-text editor, and the live Markdown preview now renders paragraph line breaks the same way as the saved result.
+* Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
+* Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
+* Recurring demonstration admin views now show migrated records containing `city_key`; edit forms preserve stored recurrence data during unchanged saves; and child bulk updates now copy event types and freeze children reliably.
+* Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
+* Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
+* The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.
+* Demonstration detail galleries now avoid aggressively upscaling undersized event photos, presenting them sharply over a softened backdrop instead; new uploads keep more JPEG detail and respect camera orientation, and public image guidance now recommends dimensions that match the wide gallery layout.
+* Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
+
 ### Added
+* Expanded the public privacy notice to disclose the service's actual personal-data categories, processing purposes and legal bases, cookies and analytics, recipients, current retention limitations, and data-subject rights.
+* Recurring demonstration editors can now bulk-copy selected series fields to selected generated children, with future/all selection shortcuts, per-child audit history, and optional freezing after updates.
+* Regular and recurring admin demonstration editors now use clearer section navigation, improved panel hierarchy, and a responsive sticky save bar.
+* Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
 * Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
 * Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
 * Pinned the Docker Compose development LocalStack image to a community release so local S3 startup no longer depends on a floating image that may require a commercial auth token.
@@ -63,6 +85,7 @@
 * Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
 * `Config.reload()` now accepts an explicit config path, making test and runtime config reloads less dependent on environment mutation.
+* Docker Compose development now uses Mailpit for local SMTP testing and exposes Redis alongside the app dependencies, making the dev stack closer to the test stack.
 
 ### Fixed
 * City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.
@@ -140,6 +163,7 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Redesigned `/ohjeet` into a clearer documentation-style guide with blue and orange site branding, a scannable table of contents, step-by-step submission help, improved troubleshooting, and mobile-friendly sections.
 * Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
 
 * Recurring demonstration create and edit now use the same admin form path, reducing duplicate UI behavior and making the recurring-demo admin clearer to maintain.

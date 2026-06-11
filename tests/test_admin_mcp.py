@@ -207,7 +207,7 @@ def test_admin_mcp_accepts_existing_api_tokens(app_factory, seeded_data):
     token, _ = create_token(
         user_id=seeded_data["admin_id"],
         token_type="short",
-        scopes=["read", "write", "admin"],
+        scopes=["read", "write", "mcp.admin"],
         category="user",
     )
     app = app_factory(
@@ -222,6 +222,26 @@ def test_admin_mcp_accepts_existing_api_tokens(app_factory, seeded_data):
     assert response.status_code == 200
     tool_names = {tool["name"] for tool in response.get_json()["result"]["tools"]}
     assert "list_cases" in tool_names
+
+
+def test_admin_mcp_rejects_ordinary_api_token(app_factory, seeded_data):
+    token, _ = create_token(
+        user_id=seeded_data["user_id"],
+        token_type="short",
+        scopes=["read", "write"],
+        category="user",
+    )
+    app = app_factory(ADMIN_MCP={"ENABLED": True})
+    client = app.test_client()
+
+    response = client.post(
+        "/api/admin/mcp",
+        json=_rpc("tools/list"),
+        headers=_mcp_headers(token),
+    )
+
+    assert response.status_code == 403
+    assert response.get_json()["error"]["message"] == "API token missing required scope: mcp.admin"
 
 
 def test_admin_mcp_can_search_demos(app_factory, seeded_data):

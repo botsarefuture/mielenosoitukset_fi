@@ -1,3 +1,4 @@
+from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, time
 import time as process_time
 from flask import Flask, redirect, request, session, g, url_for
@@ -173,8 +174,7 @@ def create_app(config_overrides=None) -> Flask:
     app.register_blueprint(notif_bp)
     from flask_babel import format_timedelta, get_locale
     def timeago(dt):
-        from datetime import datetime
-        return format_timedelta(datetime.utcnow() - dt,
+        return format_timedelta(utcnow() - dt,
                                 locale=str(get_locale()),
                                 granularity='minute')
     app.jinja_env.filters["timeago"] = timeago

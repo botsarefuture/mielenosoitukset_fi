@@ -175,6 +175,22 @@ create_network() {
   fi
 }
 
+remove_preview_dir() {
+  local preview_dir="$1"
+
+  if [[ ! -d "$preview_dir" ]]; then
+    return
+  fi
+
+  # MongoDB writes files as its container user, so remove mounted contents as
+  # container root before deleting the preview-owned directory itself.
+  docker run --rm \
+    -v "${preview_dir}:/preview" \
+    mongo:8 \
+    find /preview -mindepth 1 -depth -delete
+  rmdir "$preview_dir"
+}
+
 deploy_preview() {
   local pr_number="$1"
   local image_tag="$2"
@@ -290,8 +306,8 @@ destroy_preview() {
   docker rm -f "$mongo_container" >/dev/null 2>&1 || true
   docker rm -f "$mail_container" >/dev/null 2>&1 || true
   rm -f "$snippet_file"
-  rm -rf "$preview_dir"
   docker network rm "$network_name" >/dev/null 2>&1 || true
+  remove_preview_dir "$preview_dir"
 
   eval "$reload_cmd"
 }

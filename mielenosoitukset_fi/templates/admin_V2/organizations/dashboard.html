@@ -1,192 +1,343 @@
 {% extends 'admin_base.html' %}
 
+{% block styles %}
+<style>
+  .orgs-page {
+    --orgs-blue: light-dark(#0033a0, #8bb1ff);
+    --orgs-blue-dark: light-dark(#00267a, #b9ceff);
+    --orgs-blue-soft: light-dark(#edf4ff, #17233b);
+    --orgs-orange: #ff6600;
+    --orgs-orange-soft: light-dark(#fff2e8, #3a2418);
+    --orgs-surface: light-dark(#ffffff, #20252d);
+    --orgs-surface-muted: light-dark(#f6f8fb, #292f39);
+    --orgs-border: light-dark(#dce3ec, #424b59);
+    --orgs-text: light-dark(#172033, #f2f5fa);
+    --orgs-muted: light-dark(#647083, #b7c0ce);
+    --orgs-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+    display: grid;
+    gap: 1rem;
+    max-width: 1450px;
+    margin: 0 auto;
+    color: var(--orgs-text);
+  }
 
-{% block main_content %}
-<section class="dashboard-container">
-    <!-- Intro card -->
-    <div class="introduction">
-        <h1 id="tabletitle">{{ _('Organisaatiot') }}</h1>
-        <p class="muted">
-            {{ _('Täältä voit hallita organisaatioita, joihin sinulla on käyttöoikeus.') }}<br>
-            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.1: Organisaatioiden
-            hallintapaneeli, etusivu.') }}
-        </p>
-    </div>
+  .orgs-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+  }
 
-    <!-- Action panel -->
-    <div class="dashboard-panel">
+  .orgs-kicker {
+    margin: 0;
+    color: #ffd6bc;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
 
-        <div class="flex justify-center mb-4">
-            {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
-            <a href="{{ url_for('admin_org.create_organization') }}" class="btn new-item">
-                <i class="fas fa-plus"></i>{{ _('Luo uusi organisaatio') }}
-            </a>
-            {% else %}
-            <a class="non-suffperm" data-tooltip="Ei käyttöoikeutta"><i class="fas fa-ban"></i> {{ _('Luo uusi
-                organisaatio') }}</a>
-            {% endif %}
-        </div>
+  .orgs-hero h1 {
+    margin: .25rem 0 .5rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    letter-spacing: -.035em;
+  }
 
-        <form class="search-bar" method="get" action="{{ url_for('admin_org.organization_control') }}">
-            <label for="search" class="sr-only">{{ _('Hae organisaatioita:') }}</label>
-            <input type="search" id="search" name="search" class="search-input"
-                placeholder="{{ _('Hae organisaatioita...') }}" aria-label="{{ _('Hae organisaatioita') }}"
-                value="{{ search_query }}">
-            <input type="hidden" name="per_page" value="{{ per_page }}">
-            <button type="submit" class="search-button">
-                <i class="fas fa-search"></i>{{ _('Hae') }}
-            </button>
-        </form>
-    </div>
+  .orgs-hero p:last-child {
+    max-width: 680px;
+    margin: 0;
+    color: rgba(255,255,255,.8);
+    line-height: 1.65;
+  }
 
-    <!-- Table of organisations -->
-    {% if organizations %}
-    <div class="table-container" style="background:none;">
-        <table id="org-table">
-            <thead>
-                <tr>
-                    <th class="cbox-cell"><input type="checkbox" id="select-all" /></th>
-                    <th>{{ _('Nimi') }}</th>
-                    <th>{{ _('Kuvaus') }}</th>
-                    <th>{{ _('Sähköpostiosoite') }}</th>
-                    <th>{{ _('Verkkosivu') }}</th>
-                    <th class="actions-cell-header">{{ _('Toiminnot') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for org in organizations %}
-                <tr>
-                    <td class="cbox-cell"><input type="checkbox" name="selected_orgs" value="{{ org._id }}"></td>
-                    <td>{{ org.name }}</td>
-                    <td>{{ org.description }}</td>
-                    <td>{{ org.email }}</td>
-                    <td><a href="{{ org.website }}" target="_blank" class="link">{{ org.website }}</a></td>
-                    <td class="actions-cell">
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                                id="actionsDropdown-{{ org._id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ org._id }}">
-                                {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}
-                                <li>
-                                    <a class="dropdown-item"
-                                        href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}">
-                                        <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
-                                        <i class="fas fa-ban me-2"></i>{{ _('Muokkaa') }}
-                                    </span>
-                                </li>
-                                {% endif %}
+  .orgs-hero-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 
-                                {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}
-                                <li>
-                                    <a class="dropdown-item text-danger"
-                                        href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}">
-                                        <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
-                                        <i class="fas fa-ban me-2"></i>{{ _('Poista') }}
-                                    </span>
-                                </li>
-                                {% endif %}
+  .orgs-hero-action {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    min-height: 2.65rem;
+    padding: .62rem .85rem;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: .75rem;
+    color: #fff;
+    background: rgba(255,255,255,.1);
+    font-size: .84rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
 
-                                {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}
-                                <li>
-                                    <a class="dropdown-item"
-                                        href="{{ url_for('admin_org.view_organization', org_id=org._id) }}">
-                                        <i class="fa-solid fa-eye me-2"></i>{{ _('Yhteenveto') }}
-                                    </a>
-                                </li>
-                                {% else %}
-                                <li>
-                                    <span class="dropdown-item disabled" data-tooltip="Ei käyttöoikeutta">
-                                        <i class="fas fa-ban me-2"></i>{{ _('Yhteenveto') }}
-                                    </span>
-                                </li>
-                                {% endif %}
+  .orgs-hero-action:hover { color: #fff; background: rgba(255,255,255,.18); }
 
-                                <!-- Always visible link to public org page -->
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('org', org_id=org._id) }}">
-                                        <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </td>
+  .orgs-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .8rem;
+  }
 
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  .orgs-summary-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .8rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--orgs-border);
+    border-radius: 1rem;
+    background: var(--orgs-surface);
+    box-shadow: var(--orgs-shadow);
+  }
 
-    <div class="pagination-container d-flex justify-content-between align-items-center mt-3">
-        <div class="pagination-info">
-            {{ _('Sivu') }} {{ current_page }} / {{ total_pages }}
-        </div>
-        <div class="pagination-controls">
-            <ul class="pagination mb-0">
-                <li class="page-item {% if not prev_page %}disabled{% endif %}">
-                    <a class="page-link" href="{{ prev_page_url or '#' }}"
-                        aria-label="{{ _('Edellinen sivu') }}">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item disabled"><span class="page-link">{{ current_page }}</span></li>
-                <li class="page-item {% if not next_page %}disabled{% endif %}">
-                    <a class="page-link" href="{{ next_page_url or '#' }}"
-                        aria-label="{{ _('Seuraava sivu') }}">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
-    {% else %}
-    <div class="no-orgs">
-        <p>{{ _('Organisaatioita ei löytynyt.') }}</p>
-    </div>
-    {% endif %}
-</section>
+  .orgs-summary-icon {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: .75rem;
+    color: var(--orgs-blue);
+    background: var(--orgs-blue-soft);
+  }
+
+  .orgs-summary-card:last-child .orgs-summary-icon { color: var(--orgs-orange); background: var(--orgs-orange-soft); }
+  .orgs-summary-card div span, .orgs-summary-card strong { display: block; }
+  .orgs-summary-card div span { color: var(--orgs-muted); font-size: .72rem; font-weight: 800; }
+  .orgs-summary-card strong { color: var(--orgs-text); font-size: 1.55rem; line-height: 1.1; }
+
+  .orgs-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .9rem;
+    border: 1px solid var(--orgs-border);
+    border-radius: 1rem;
+    background: var(--orgs-surface);
+  }
+
+  .orgs-search {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: .65rem;
+    align-items: center;
+    flex: 1;
+    max-width: 720px;
+  }
+
+  .orgs-search i { color: var(--orgs-blue); }
+  .orgs-search input {
+    width: 100%;
+    min-width: 0;
+    padding: .7rem .8rem;
+    border: 1px solid var(--orgs-border);
+    border-radius: .7rem;
+    color: var(--orgs-text);
+    background: var(--orgs-surface-muted);
+    outline: none;
+  }
+
+  .orgs-search input:focus { border-color: var(--orgs-blue); box-shadow: 0 0 0 3px light-dark(rgba(0,51,160,.1), rgba(139,177,255,.12)); }
+
+  .orgs-search-button,
+  .orgs-create {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.65rem;
+    padding: .62rem .85rem;
+    border: 1px solid var(--orgs-blue);
+    border-radius: .72rem;
+    color: #fff !important;
+    background: light-dark(#0033a0, #315ea8);
+    font-size: .82rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .orgs-table-shell {
+    overflow: visible;
+    border: 1px solid var(--orgs-border);
+    border-radius: 1.1rem;
+    background: var(--orgs-surface);
+    box-shadow: var(--orgs-shadow);
+  }
+
+  .orgs-results-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1.1rem;
+    border-bottom: 1px solid var(--orgs-border);
+    color: var(--orgs-muted);
+    background: var(--orgs-surface-muted);
+    font-size: .8rem;
+    font-weight: 700;
+  }
+
+  .orgs-results-heading strong { color: var(--orgs-text); }
+  .orgs-table-scroll { overflow: visible; }
+  .orgs-table { width: 100%; min-width: 980px; border-collapse: collapse; }
+  .orgs-table th, .orgs-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--orgs-border); color: var(--orgs-text); vertical-align: middle; }
+  .orgs-table th { color: var(--orgs-muted); background: var(--orgs-surface); font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .orgs-table tbody tr:hover { background: var(--orgs-blue-soft); }
+  .orgs-table tbody tr:last-child td { border-bottom: 0; }
+
+  .org-identity { display: flex; gap: .7rem; align-items: center; min-width: 210px; }
+  .org-avatar { display: grid; flex: 0 0 auto; width: 2.45rem; height: 2.45rem; place-items: center; border-radius: .75rem; color: var(--orgs-blue); background: var(--orgs-blue-soft); font-weight: 900; line-height: 1; text-transform: uppercase; }
+  .org-identity strong, .org-identity div span { display: block; }
+  .org-identity strong { color: var(--orgs-text); font-size: .9rem; }
+  .org-identity div span { margin-top: .18rem; color: var(--orgs-muted); font-size: .7rem; }
+  .org-description { max-width: 340px; color: var(--orgs-muted); font-size: .8rem; line-height: 1.45; }
+  .org-contact { color: var(--orgs-muted); font-size: .8rem; overflow-wrap: anywhere; }
+  .org-contact a { color: var(--orgs-blue-dark); }
+  .org-status { display: inline-flex; gap: .35rem; align-items: center; padding: .24rem .5rem; border-radius: 999px; color: var(--orgs-muted); background: var(--orgs-surface-muted); font-size: .68rem; font-weight: 800; }
+  .org-status.verified { color: light-dark(#087f5b, #65d6ac); background: light-dark(#eaf8f2, #17382e); }
+  .org-select { width: 1rem; height: 1rem; accent-color: var(--orgs-blue); }
+
+  .org-action-button { display: inline-flex; gap: .4rem; align-items: center; padding: .45rem .65rem; border: 1px solid var(--orgs-border); border-radius: .65rem; color: var(--orgs-text); background: var(--orgs-surface-muted); font-size: .78rem; font-weight: 800; }
+  .orgs-table .dropdown-menu { z-index: 1080; min-width: 13rem; border-color: var(--orgs-border); border-radius: .75rem; color: var(--orgs-text); background: var(--orgs-surface); box-shadow: 0 14px 38px light-dark(rgba(28,48,82,.16), rgba(0,0,0,.36)); }
+  .orgs-table .dropdown-item { color: var(--orgs-text); font-size: .82rem; }
+  .orgs-table .dropdown-item:hover { color: var(--orgs-blue-dark); background: var(--orgs-blue-soft); }
+
+  .org-pagination { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: .8rem 1rem; border-top: 1px solid var(--orgs-border); background: var(--orgs-surface); }
+  .org-pagination-info { color: var(--orgs-muted); font-size: .8rem; font-weight: 700; }
+  .org-pagination .pagination { display: flex; gap: .3rem; flex-wrap: wrap; margin: 0; }
+  .org-pagination .page-link { display: inline-flex; min-width: 2.3rem; min-height: 2.3rem; align-items: center; justify-content: center; gap: .35rem; padding: .42rem .65rem; border: 1px solid var(--orgs-border); border-radius: .62rem !important; color: var(--orgs-blue-dark); background: var(--orgs-surface-muted); font-size: .78rem; font-weight: 800; }
+  .org-pagination .page-item.active .page-link { border-color: var(--orgs-blue); color: #fff; background: var(--orgs-blue); }
+  .org-pagination .page-item.disabled .page-link { opacity: .45; pointer-events: none; }
+  .org-pagination-ellipsis { display: inline-grid; min-width: 1.8rem; min-height: 2.3rem; place-items: center; color: var(--orgs-muted); }
+  .orgs-empty { padding: 3rem 1.5rem; color: var(--orgs-muted); text-align: center; }
+
+  @media (max-width: 1050px) { .orgs-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) {
+    .orgs-hero { grid-template-columns: 1fr; }
+    .orgs-hero-actions { justify-content: flex-start; }
+    .orgs-toolbar { align-items: stretch; flex-direction: column; }
+    .orgs-search { max-width: none; }
+    .orgs-create { width: 100%; }
+    .orgs-table-scroll { overflow-x: auto; }
+    .orgs-table .dropdown-menu.show { position: static !important; transform: none !important; margin-top: .4rem !important; }
+    .org-pagination { align-items: stretch; flex-direction: column; }
+    .org-pagination .pagination { justify-content: center; }
+    .org-pagination-label { display: none; }
+  }
+  @media (max-width: 520px) { .orgs-summary { grid-template-columns: 1fr; } .orgs-hero-action { width: 100%; justify-content: center; } .orgs-search { grid-template-columns: auto minmax(0,1fr); } .orgs-search-button { grid-column: 1 / -1; } }
+</style>
 {% endblock %}
 
+{% block main_content %}
+<div class="orgs-page">
+  <header class="orgs-hero">
+    <div>
+      <p class="orgs-kicker">{{ _('Organisaatiohallinta') }}</p>
+      <h1>{{ _('Organisaatiot') }}</h1>
+      <p>{{ _('Etsi organisaatioita, tarkista profiilien tiedot ja hoida jäsenyyksien tärkeimmät ylläpitotoimet.') }}</p>
+    </div>
+    <div class="orgs-hero-actions">
+      {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
+        <a href="{{ url_for('admin_org.create_organization') }}" class="orgs-hero-action"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Luo uusi organisaatio') }}</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="orgs-summary" aria-label="{{ _('Organisaatioiden yhteenveto') }}">
+    <article class="orgs-summary-card"><span class="orgs-summary-icon"><i class="fas fa-building" aria-hidden="true"></i></span><div><span>{{ _('Kaikki organisaatiot') }}</span><strong>{{ organization_summary.all }}</strong></div></article>
+    <article class="orgs-summary-card"><span class="orgs-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span><div><span>{{ _('Vahvistetut profiilit') }}</span><strong>{{ organization_summary.verified }}</strong></div></article>
+    <article class="orgs-summary-card"><span class="orgs-summary-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span><div><span>{{ _('Jäsenyyksiä') }}</span><strong>{{ organization_summary.memberships }}</strong></div></article>
+    <article class="orgs-summary-card"><span class="orgs-summary-icon"><i class="fas fa-link-slash" aria-hidden="true"></i></span><div><span>{{ _('Verkkosivu puuttuu') }}</span><strong>{{ organization_summary.missing_website }}</strong></div></article>
+  </section>
+
+  <section class="orgs-toolbar">
+    <form class="orgs-search" method="get" action="{{ url_for('admin_org.organization_control') }}">
+      <i class="fas fa-search" aria-hidden="true"></i>
+      <input type="search" id="search" name="search" placeholder="{{ _('Hae organisaatioita...') }}" aria-label="{{ _('Hae organisaatioita') }}" value="{{ search_query }}">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <button type="submit" class="orgs-search-button">{{ _('Hae') }}</button>
+    </form>
+    {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
+      <a href="{{ url_for('admin_org.create_organization') }}" class="orgs-create"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Luo uusi organisaatio') }}</a>
+    {% endif %}
+  </section>
+
+  <section class="orgs-table-shell">
+    <div class="orgs-results-heading">
+      <span><strong>{{ total_count }}</strong> {{ _('organisaatiota löytyi') }}</span>
+      {% if search_query %}<span>{{ _('Haku') }}: “{{ search_query }}”</span>{% endif %}
+    </div>
+    {% if organizations %}
+    <div class="orgs-table-scroll">
+      <table class="orgs-table" id="org-table">
+        <thead><tr><th><input class="org-select" type="checkbox" id="select-all" aria-label="{{ _('Valitse kaikki') }}"></th><th>{{ _('Organisaatio') }}</th><th>{{ _('Kuvaus') }}</th><th>{{ _('Yhteystiedot') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Toiminnot') }}</th></tr></thead>
+        <tbody>
+          {% for org in organizations %}
+          <tr>
+            <td><input class="org-select" type="checkbox" name="selected_orgs" value="{{ org._id }}" aria-label="{{ _('Valitse organisaatio') }} {{ org.name }}"></td>
+            <td><div class="org-identity"><span class="org-avatar">{{ (org.name or '?')[:1] }}</span><div><strong>{{ org.name }}</strong><span>{{ org.email or _('Ei sähköpostia') }}</span></div></div></td>
+            <td><div class="org-description">{{ org.description or _('Ei kuvausta.') }}</div></td>
+            <td><div class="org-contact">{% if org.website %}<a href="{{ org.website }}" target="_blank">{{ org.website }}</a>{% else %}{{ _('Ei verkkosivua') }}{% endif %}</div></td>
+            <td>{% if org.verified %}<span class="org-status verified"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Vahvistettu') }}</span>{% else %}<span class="org-status"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Vahvistamaton') }}</span>{% endif %}</td>
+            <td>
+              <div class="dropdown">
+                <button class="org-action-button dropdown-toggle" type="button" id="actionsDropdown-{{ org._id }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i>{{ _('Toiminnot') }}</button>
+                <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ org._id }}">
+                  {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}<li><a class="dropdown-item" href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>{% endif %}
+                  {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}<li><a class="dropdown-item" href="{{ url_for('admin_org.view_organization', org_id=org._id) }}"><i class="fa-solid fa-chart-simple me-2"></i>{{ _('Yhteenveto') }}</a></li>{% endif %}
+                  <li><a class="dropdown-item" href="{{ url_for('org', org_id=org._id) }}"><i class="fa-solid fa-arrow-up-right-from-square me-2"></i>{{ _('Julkinen sivu') }}</a></li>
+                  {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}<li><a class="dropdown-item text-danger" href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}"><i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</a></li>{% endif %}
+                </ul>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <nav class="org-pagination" aria-label="{{ _('Organisaatioiden sivutus') }}">
+      <div class="org-pagination-info">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</div>
+      <ul class="pagination">
+        <li class="page-item {% if not prev_page %}disabled{% endif %}"><a class="page-link" href="{{ prev_page_url or '#' }}"><i class="fas fa-angle-left" aria-hidden="true"></i><span class="org-pagination-label">{{ _('Edellinen') }}</span></a></li>
+        {% if visible_pages and visible_pages[0].number > 1 %}<li class="page-item"><a class="page-link" href="{{ first_page_url }}">1</a></li>{% if visible_pages[0].number > 2 %}<li class="page-item disabled"><span class="org-pagination-ellipsis">…</span></li>{% endif %}{% endif %}
+        {% for pagination_page in visible_pages %}<li class="page-item {% if pagination_page.number == current_page %}active{% endif %}"><a class="page-link" href="{{ pagination_page.url }}" {% if pagination_page.number == current_page %}aria-current="page"{% endif %}>{{ pagination_page.number }}</a></li>{% endfor %}
+        {% if visible_pages and visible_pages[-1].number < total_pages %}{% if visible_pages[-1].number < total_pages - 1 %}<li class="page-item disabled"><span class="org-pagination-ellipsis">…</span></li>{% endif %}<li class="page-item"><a class="page-link" href="{{ last_page_url }}">{{ total_pages }}</a></li>{% endif %}
+        <li class="page-item {% if not next_page %}disabled{% endif %}"><a class="page-link" href="{{ next_page_url or '#' }}"><span class="org-pagination-label">{{ _('Seuraava') }}</span><i class="fas fa-angle-right" aria-hidden="true"></i></a></li>
+      </ul>
+    </nav>
+    {% else %}
+    <div class="orgs-empty"><i class="fas fa-building-circle-xmark fs-2 mb-3" aria-hidden="true"></i><h3>{{ _('Organisaatioita ei löytynyt.') }}</h3><p class="mb-0">{{ _('Kokeile toista hakusanaa.') }}</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const selectAll = document.getElementById('select-all');
-        const checkBoxes = document.querySelectorAll("input[name='selected_orgs']");
-
-        selectAll?.addEventListener('change', () => {
-            checkBoxes.forEach(cb => {
-                cb.checked = selectAll.checked;
-                cb.closest('tr').classList.toggle('selected', cb.checked);
-            });
-        });
-
-        checkBoxes.forEach(cb => {
-            cb.addEventListener('change', () => {
-                cb.closest('tr').classList.toggle('selected', cb.checked);
-            });
-        });
+  document.addEventListener('DOMContentLoaded', () => {
+    const selectAll = document.getElementById('select-all');
+    const checkBoxes = document.querySelectorAll("input[name='selected_orgs']");
+    selectAll?.addEventListener('change', () => {
+      checkBoxes.forEach((checkbox) => {
+        checkbox.checked = selectAll.checked;
+        checkbox.closest('tr').classList.toggle('selected', checkbox.checked);
+      });
     });
+    checkBoxes.forEach((checkbox) => checkbox.addEventListener('change', () => checkbox.closest('tr').classList.toggle('selected', checkbox.checked)));
+  });
 </script>
-{% endblock %}
-
-{% block extra_buttons %}
-<div class="extra-buttons">
-    <a href="{{ url_for('admin_org.invite_to_organization') }}" class="button invite-button"><i
-            class="fas fa-user-plus"></i>{{ _('Kutsu henkilö') }}</a>
-    <a href="{{ url_for('admin_org.manage_roles') }}" class="button manage-roles-button"><i
-            class="fas fa-user-cog"></i>{{ _('Hallitse rooleja') }}</a>
-</div>
 {% endblock %}

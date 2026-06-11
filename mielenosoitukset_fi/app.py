@@ -40,7 +40,7 @@ babel = Babel()
 
 
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 
 def _configure_timezone(app):
@@ -73,7 +73,7 @@ def create_app(config_overrides=None) -> Flask:
     
     if app.config.get("ENFORCE_RATELIMIT", True):
         Limiter(
-            get_remote_address,
+            get_client_ip,
             app=app,
             default_limits=rate_limit_defaults,
             storage_uri=app.config["MONGO_URI"],

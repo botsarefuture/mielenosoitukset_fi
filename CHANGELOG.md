@@ -5,6 +5,10 @@
 ## UNRELEASED
 
 ### Changed
+* Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
+
+### Fixed
+* Demo approval and rejection now close linked support cases consistently across direct admin actions, token links, and the auto-close background job; de-escalation also writes back to the correct `case_history` field.
 * Public demo change suggestions now use a guided normal-user form with clearer sectioning, plain-text/Markdown description editing plus live preview, and cleaner route/tag helpers so contributors never need to deal with raw HTML or Python-style list formatting; route points and tags can now also be edited directly by double-clicking their pills.
 * Public cancellation and error-reporting flows now explain more clearly whether an action cancels a demo immediately or only creates an admin-reviewed request, and organizer cancellation emails now spell out the verified-official-contact shortcut versus the normal approval path.
 ### Fixed

@@ -1267,6 +1267,7 @@ def approve_demo_with_token(token):
             },
         )
 
+    _log_case_decision(demo_id, refreshed_demo.get("title"), "approve_demo", close_reason="demo_approved")
     _mark_used(doc["_id"])
     flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
     
@@ -1332,6 +1333,8 @@ def reject_demo_with_token(token):
         message=_("Kertakäyttölinkillä hylättiin mielenosoitus"),
         extra_details={"source": "token", "token_id": str(doc.get("_id"))},
     )
+
+    _log_case_decision(demo_id, refreshed_demo.get("title"), "reject_demo", close_reason="demo_rejected")
 
     _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 
@@ -3650,6 +3653,8 @@ def accept_demo(demo_id):
                     "address": demo.address,
                 },
             )
+
+        _log_case_decision(demo_id, demo.title, "approve_demo", close_reason="demo_approved")
 
         return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
     except Exception as e:

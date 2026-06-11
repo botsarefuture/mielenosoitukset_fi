@@ -926,6 +926,7 @@
       html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
       html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
       html = html.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+      html = html.replace(/\n/g, '<br>');
       return html;
     };
 
@@ -942,7 +943,7 @@
 
       const flushParagraph = (buffer) => {
         if (!buffer.length) return;
-        parts.push(`<p>${renderInlineMarkdown(buffer.join('<br>'))}</p>`);
+        parts.push(`<p>${renderInlineMarkdown(buffer.join('\n'))}</p>`);
         buffer.length = 0;
       };
 
@@ -968,7 +969,7 @@
             quotes.push(lines[index].trim().replace(/^>\s+/, ''));
             index += 1;
           }
-          parts.push(`<blockquote>${renderInlineMarkdown(quotes.join('<br>'))}</blockquote>`);
+          parts.push(`<blockquote>${renderInlineMarkdown(quotes.join('\n'))}</blockquote>`);
           continue;
         }
 

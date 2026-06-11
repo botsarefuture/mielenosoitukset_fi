@@ -2149,9 +2149,10 @@ def init_routes(app):
                     original_values[f] = orig
 
             description_markdown = (request.form.get('description_markdown') or '').strip()
-            if description_markdown:
+            original_description = demo_doc.get('description') or ''
+            original_description_markdown = html_to_markdown(original_description).strip()
+            if description_markdown and description_markdown != original_description_markdown:
                 suggested_description = markdown_to_html(description_markdown)
-                original_description = demo_doc.get('description') or ''
                 if suggested_description and suggested_description != original_description:
                     suggested_fields['description'] = suggested_description
                     original_values['description'] = demo_doc.get('description')

@@ -55,3 +55,44 @@ def test_suggest_change_post_converts_markdown_and_normalizes_route(client, db, 
     assert "<ul>" in suggestion["suggested_fields"]["description"]
     assert "<li>Ensimmainen kohta</li>" in suggestion["suggested_fields"]["description"]
     assert "<li>Toinen kohta</li>" in suggestion["suggested_fields"]["description"]
+
+
+def test_suggest_change_post_does_not_add_lossy_description_when_only_other_fields_change(client, db, seeded_data):
+    demo_id = seeded_data["demo_id"]
+    db.demonstrations.update_one(
+        {"_id": demo_id},
+        {
+            "$set": {
+                "description": "<blockquote>Pidetaan suunta rauhallisena.</blockquote><p>Nykyinen kuvaus.</p>",
+                "route": ["Keskustori"],
+            }
+        },
+    )
+
+    response = client.post(
+        f"/suggest_change/{demo_id}",
+        data={
+            "title": "Climate March Helsinki",
+            "date": "2026-06-01",
+            "start_time": "12:00",
+            "end_time": "14:00",
+            "city": "Helsinki",
+            "address": "Uusi osoite 5",
+            "facebook": "",
+            "route": "Keskustori",
+            "tags": "",
+            "description_markdown": "Pidetaan suunta rauhallisena.\n\nNykyinen kuvaus.",
+            "reporter_comment": "Paivitin vain osoitteen.",
+            "reporter_email": "editor@example.test",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    suggestion = db.demo_suggestions.find_one(
+        {"demo_id": str(demo_id), "reporter_email": "editor@example.test"}
+    )
+    assert suggestion is not None
+    assert suggestion["suggested_fields"]["address"] == "Uusi osoite 5"
+    assert "description" not in suggestion["suggested_fields"]

@@ -137,6 +137,26 @@ def organization_control():
     query = construct_query(search_query, org_limiter)
 
     total_count = mongo.organizations.count_documents(query)
+    summary_query = construct_query("", org_limiter)
+    organization_summary = {
+        "all": mongo.organizations.count_documents(summary_query),
+        "verified": mongo.organizations.count_documents(
+            {**summary_query, "verified": True}
+        ),
+        "missing_website": mongo.organizations.count_documents(
+            {
+                **summary_query,
+                "$or": [
+                    {"website": {"$exists": False}},
+                    {"website": None},
+                    {"website": ""},
+                ],
+            }
+        ),
+        "memberships": mongo.memberships.count_documents(
+            {"organization_id": {"$in": org_limiter}} if org_limiter is not None else {}
+        ),
+    }
     total_pages = (total_count + per_page - 1) // per_page if total_count else 1
     if page > total_pages:
         page = total_pages
@@ -162,6 +182,12 @@ def organization_control():
 
     prev_page_url = build_page_url(prev_page) if prev_page else None
     next_page_url = build_page_url(next_page) if next_page else None
+    page_window_start = max(1, page - 2)
+    page_window_end = min(total_pages, page + 2)
+    visible_pages = [
+        {"number": page_number, "url": build_page_url(page_number)}
+        for page_number in range(page_window_start, page_window_end + 1)
+    ]
 
     _log_org_event(
         "organization_dashboard_view",
@@ -181,6 +207,11 @@ def organization_control():
         next_page=next_page,
         prev_page_url=prev_page_url,
         next_page_url=next_page_url,
+        visible_pages=visible_pages,
+        first_page_url=build_page_url(1),
+        last_page_url=build_page_url(total_pages),
+        total_count=total_count,
+        organization_summary=organization_summary,
     )
 
 
@@ -209,7 +240,7 @@ def construct_query(search_query, org_limiter):
             ]
         }
 
-    if org_limiter:
+    if org_limiter is not None:
         query["_id"] = {"$in": org_limiter}
 
     return query

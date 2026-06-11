@@ -12,6 +12,7 @@ from flask_login import current_user
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.classes import Organization
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.demonstrations.audit import log_super_audit
 
 db_manager = DatabaseManager().get_instance()
@@ -177,8 +178,8 @@ def capture_request_context() -> dict | None:
         return {
             "path": request.path,
             "method": request.method,
-            "remote_addr": request.headers.get("X-Forwarded-For", request.remote_addr),
-            "ip": request.remote_addr,
+            "remote_addr": get_client_ip(),
+            "ip": get_client_ip(),
             "args": request.args.to_dict(flat=False),
             "form_keys": list(request.form.keys()),
             "json_keys": list((request.get_json(silent=True) or {}).keys()),

@@ -10,6 +10,7 @@ from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 def _get_mongo():
     """Return the current database handle."""
@@ -263,7 +264,7 @@ def send_friend_request():
     other.friend_requests.append({
         "sent_by": current_user._id,
         "sent_at": utcnow(),
-        "sent_ip": request.remote_addr
+        "sent_ip": get_client_ip()
     })
     other.save()
     return {"success": True, "status": "request_sent"}, 200

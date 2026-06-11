@@ -1,9 +1,219 @@
 {% extends 'admin_base.html' %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/users.css') }}">
 <style>
-  /* Toasts */
+  .users-page {
+    --users-blue: light-dark(#0033a0, #8bb1ff);
+    --users-blue-dark: light-dark(#00267a, #b9ceff);
+    --users-blue-soft: light-dark(#edf4ff, #17233b);
+    --users-orange: #ff6600;
+    --users-orange-soft: light-dark(#fff2e8, #3a2418);
+    --users-surface: light-dark(#ffffff, #20252d);
+    --users-surface-muted: light-dark(#f6f8fb, #292f39);
+    --users-border: light-dark(#dce3ec, #424b59);
+    --users-text: light-dark(#172033, #f2f5fa);
+    --users-muted: light-dark(#647083, #b7c0ce);
+    --users-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+    display: grid;
+    gap: 1rem;
+    max-width: 1450px;
+    margin: 0 auto;
+    color: var(--users-text);
+  }
+
+  .users-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+  }
+
+  .users-kicker {
+    margin: 0;
+    color: #ffd6bc;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .users-hero h1 {
+    margin: .25rem 0 .5rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    letter-spacing: -.035em;
+  }
+
+  .users-hero p:last-child {
+    max-width: 680px;
+    margin: 0;
+    color: rgba(255,255,255,.8);
+    line-height: 1.65;
+  }
+
+  .users-hero-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .users-hero-action {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    min-height: 2.65rem;
+    padding: .62rem .85rem;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: .75rem;
+    color: #fff;
+    background: rgba(255,255,255,.1);
+    font-size: .84rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .users-hero-action:hover {
+    color: #fff;
+    background: rgba(255,255,255,.18);
+  }
+
+  .users-request-count {
+    display: inline-grid;
+    min-width: 1.45rem;
+    height: 1.45rem;
+    place-items: center;
+    border-radius: 999px;
+    color: #9a3412;
+    background: #ffdbc2;
+    font-size: .72rem;
+  }
+
+  .users-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .8rem;
+  }
+
+  .users-summary-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .8rem;
+    align-items: center;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--users-border);
+    border-radius: 1rem;
+    background: var(--users-surface);
+    box-shadow: var(--users-shadow);
+  }
+
+  .users-summary-icon {
+    display: inline-grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: .75rem;
+    color: var(--users-blue);
+    background: var(--users-blue-soft);
+  }
+
+  .users-summary-card:last-child .users-summary-icon {
+    color: var(--users-orange);
+    background: var(--users-orange-soft);
+  }
+
+  .users-summary-card div span,
+  .users-summary-card strong {
+    display: block;
+  }
+
+  .users-summary-card div span {
+    color: var(--users-muted);
+    font-size: .72rem;
+    font-weight: 800;
+  }
+
+  .users-summary-card strong {
+    color: var(--users-text);
+    font-size: 1.55rem;
+    line-height: 1.1;
+  }
+
+  .users-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .9rem;
+    border: 1px solid var(--users-border);
+    border-radius: 1rem;
+    background: var(--users-surface);
+  }
+
+  .users-search {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .65rem;
+    align-items: center;
+    flex: 1;
+    max-width: 680px;
+  }
+
+  .users-search-icon {
+    color: var(--users-blue);
+  }
+
+  .users-search input {
+    width: 100%;
+    min-width: 0;
+    padding: .7rem .8rem;
+    border: 1px solid var(--users-border);
+    border-radius: .7rem;
+    color: var(--users-text);
+    background: var(--users-surface-muted);
+    outline: none;
+  }
+
+  .users-search input:focus {
+    border-color: var(--users-blue);
+    box-shadow: 0 0 0 3px light-dark(rgba(0,51,160,.1), rgba(139,177,255,.12));
+  }
+
+  .users-create {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: center;
+    min-height: 2.65rem;
+    padding: .62rem .9rem;
+    border: 1px solid var(--users-blue);
+    border-radius: .75rem;
+    color: #fff;
+    background: var(--users-blue);
+    font-size: .84rem;
+    font-weight: 800;
+  }
+
+  .users-table-shell {
+    overflow: visible;
+    border: 1px solid var(--users-border);
+    border-radius: 1.1rem;
+    background: var(--users-surface);
+    box-shadow: var(--users-shadow);
+  }
+
   #toast-container {
     position: fixed;
     top: 1rem;
@@ -11,107 +221,446 @@
     z-index: 1055;
   }
 
-  .toast {
-    min-width: 250px;
+  .toast { min-width: 250px; }
+
+  #createUserModal {
+    --create-surface: light-dark(#ffffff, #20252d);
+    --create-surface-muted: light-dark(#f6f8fb, #292f39);
+    --create-border: light-dark(#dce3ec, #424b59);
+    --create-text: light-dark(#172033, #f2f5fa);
+    --create-muted: light-dark(#647083, #b7c0ce);
   }
 
-  /* Table enhancements */
-  .table-hover tbody tr:hover {
-    background-color: #f1f3f5;
-    cursor: pointer;
+  #createUserModal .modal-content {
+    overflow: hidden;
+    border: 1px solid var(--create-border);
+    border-radius: 1.2rem;
+    color: var(--create-text);
+    background: var(--create-surface);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
   }
 
-  .badge-role {
-    text-transform: capitalize;
+  #createUserModal .modal-header {
+    align-items: flex-start;
+    padding: 1.25rem 1.35rem;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    color: #fff;
+    background:
+      radial-gradient(circle at 92% 5%, rgba(255, 102, 0, .4), transparent 12rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
   }
 
-  /* Sortable column indicators */
-  th.sortable {
-    cursor: pointer;
-    position: relative;
+  #createUserModal .modal-title { color: #fff; font-size: 1.35rem; }
+  #createUserModal .modal-header p { margin: .3rem 0 0; color: rgba(255,255,255,.76); font-size: .84rem; }
+  #createUserModal .btn-close { filter: invert(1) grayscale(1) brightness(2); }
+  #createUserModal .modal-body { padding: 1.25rem 1.35rem; color: var(--create-text); }
+
+  .create-user-note {
+    display: flex;
+    gap: .8rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: .9rem 1rem;
+    border: 1px solid light-dark(#f4d6bd, #68452e);
+    border-radius: .85rem;
+    color: var(--create-text);
+    background: var(--users-orange-soft);
+    font-size: .82rem;
+    line-height: 1.55;
   }
 
-  th.sortable::after {
-    content: '⬍';
-    font-size: 0.7em;
-    position: absolute;
-    right: 8px;
-    color: #888;
+  .create-user-note i { margin-top: .15rem; color: var(--users-orange); }
+  .create-user-note a { color: var(--users-blue-dark); font-weight: 800; }
+
+  .create-user-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .9rem;
   }
 
-  th.sortable.asc::after {
-    content: '⬆';
+  .create-user-field { min-width: 0; }
+  .create-user-field-wide { grid-column: 1 / -1; }
+
+  .create-user-field label {
+    display: block;
+    margin-bottom: .35rem;
+    color: var(--create-text);
+    font-size: .78rem;
+    font-weight: 800;
   }
 
-  th.sortable.desc::after {
-    content: '⬇';
+  .create-user-field small {
+    display: block;
+    margin-top: .3rem;
+    color: var(--create-muted);
+    font-size: .72rem;
+  }
+
+  #createUserModal .form-control,
+  #createUserModal .form-select {
+    border-color: var(--create-border);
+    border-radius: .7rem;
+    color: var(--create-text);
+    background-color: var(--create-surface-muted);
+  }
+
+  #createUserModal .form-control:focus,
+  #createUserModal .form-select:focus {
+    border-color: var(--users-blue);
+    box-shadow: 0 0 0 3px light-dark(rgba(0,51,160,.1), rgba(139,177,255,.12));
+  }
+
+  #createUserModal .is-invalid {
+    border-color: light-dark(#c92a2a, #ff8787);
+  }
+
+  .create-user-status {
+    min-height: 1.25rem;
+    margin-top: .8rem;
+    color: var(--create-muted);
+    font-size: .78rem;
+  }
+
+  .create-user-status.error { color: light-dark(#c92a2a, #ff8787); }
+
+  #createUserModal .modal-footer {
+    gap: .6rem;
+    margin-top: 1rem;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--create-border);
+  }
+
+  .create-user-cancel,
+  .create-user-submit {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.6rem;
+    padding: .6rem .85rem;
+    border-radius: .7rem;
+    font-size: .82rem;
+    font-weight: 800;
+  }
+
+  .create-user-cancel {
+    border: 1px solid var(--create-border);
+    color: var(--create-text);
+    background: var(--create-surface-muted);
+  }
+
+  .create-user-submit {
+    border: 1px solid var(--users-blue);
+    color: #fff !important;
+    background: light-dark(#0033a0, #315ea8);
+  }
+
+  .create-user-submit:hover,
+  .create-user-submit:focus {
+    border-color: light-dark(#00267a, #8bb1ff);
+    color: #fff !important;
+    background: light-dark(#00267a, #416fbd);
+  }
+
+  .create-user-submit i { color: inherit; }
+  .create-user-submit:disabled { opacity: .65; cursor: wait; }
+
+  .user-workflow-modal {
+    --workflow-surface: light-dark(#ffffff, #20252d);
+    --workflow-surface-muted: light-dark(#f6f8fb, #292f39);
+    --workflow-border: light-dark(#dce3ec, #424b59);
+    --workflow-text: light-dark(#172033, #f2f5fa);
+    --workflow-muted: light-dark(#647083, #b7c0ce);
+    --workflow-danger: light-dark(#b42318, #ff9b93);
+    --workflow-danger-soft: light-dark(#fff1f0, #3c2022);
+    --workflow-warning: light-dark(#9a4d00, #ffd098);
+    --workflow-warning-soft: light-dark(#fff4e6, #3d2b1c);
+  }
+
+  .user-workflow-modal .modal-content {
+    overflow: hidden;
+    border: 1px solid var(--workflow-border);
+    border-radius: 1.15rem;
+    color: var(--workflow-text);
+    background: var(--workflow-surface);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+  }
+
+  .user-workflow-modal .modal-header,
+  .user-workflow-modal .modal-body,
+  .user-workflow-modal .modal-footer {
+    color: var(--workflow-text);
+    background: var(--workflow-surface);
+    border-color: var(--workflow-border);
+  }
+
+  .user-workflow-modal .modal-header {
+    align-items: flex-start;
+    padding: 1.15rem 1.25rem;
+  }
+
+  .workflow-heading {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+  }
+
+  .workflow-heading-icon {
+    display: inline-grid;
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: .75rem;
+    color: var(--users-blue);
+    background: var(--users-blue-soft);
+  }
+
+  .workflow-heading-icon.warning {
+    color: var(--workflow-warning);
+    background: var(--workflow-warning-soft);
+  }
+
+  .workflow-heading-icon.danger {
+    color: var(--workflow-danger);
+    background: var(--workflow-danger-soft);
+  }
+
+  .workflow-heading h5 { margin: 0; color: var(--workflow-text); font-size: 1.08rem; }
+  .workflow-heading p { margin: .25rem 0 0; color: var(--workflow-muted); font-size: .78rem; line-height: 1.5; }
+  .user-workflow-modal .btn-close { filter: light-dark(none, invert(1) grayscale(1) brightness(2)); }
+  .user-workflow-modal .modal-body { padding: 1.2rem 1.25rem; }
+  .user-workflow-modal .modal-footer { gap: .55rem; padding: .9rem 1.25rem; }
+
+  .workflow-note {
+    padding: .85rem .95rem;
+    border: 1px solid var(--workflow-border);
+    border-radius: .8rem;
+    color: var(--workflow-text);
+    background: var(--workflow-surface-muted);
+    font-size: .84rem;
+    line-height: 1.6;
+  }
+
+  .workflow-note.warning {
+    border-color: light-dark(#f4d6bd, #68452e);
+    background: var(--workflow-warning-soft);
+  }
+
+  .workflow-confirm-label {
+    display: block;
+    margin: 1rem 0 .35rem;
+    color: var(--workflow-text);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+
+  .user-workflow-modal .form-control {
+    border-color: var(--workflow-border);
+    border-radius: .7rem;
+    color: var(--workflow-text);
+    background: var(--workflow-surface-muted);
+  }
+
+  .user-workflow-modal .form-control:focus {
+    border-color: var(--users-blue);
+    box-shadow: 0 0 0 3px light-dark(rgba(0,51,160,.1), rgba(139,177,255,.12));
+  }
+
+  .workflow-status {
+    min-height: 1.25rem;
+    margin-top: .7rem;
+    color: var(--workflow-muted);
+    font-size: .78rem;
+  }
+
+  .workflow-status.warning { color: var(--workflow-warning); }
+  .workflow-status.danger { color: var(--workflow-danger); }
+
+  .workflow-button {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: .58rem .82rem;
+    border: 1px solid var(--workflow-border);
+    border-radius: .68rem;
+    color: var(--workflow-text);
+    background: var(--workflow-surface-muted);
+    font-size: .8rem;
+    font-weight: 800;
+  }
+
+  .workflow-button-primary {
+    border-color: var(--users-blue);
+    color: #fff !important;
+    background: light-dark(#0033a0, #315ea8);
+  }
+
+  .workflow-button-warning {
+    border-color: var(--workflow-warning);
+    color: light-dark(#fff, #201306);
+    background: light-dark(#b85c00, #ffd098);
+  }
+
+  .workflow-button-danger {
+    border-color: var(--workflow-danger);
+    color: #fff;
+    background: light-dark(#b42318, #9f342d);
+  }
+
+  .workflow-button:disabled { opacity: .55; cursor: not-allowed; }
+
+  .login-history-status {
+    padding: 2rem 1rem;
+    color: var(--workflow-muted);
+    text-align: center;
+  }
+
+  .login-history-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .login-history-table th,
+  .login-history-table td {
+    padding: .75rem;
+    border-bottom: 1px solid var(--workflow-border);
+    color: var(--workflow-text);
+    font-size: .8rem;
+    vertical-align: top;
+  }
+
+  .login-history-table th {
+    color: var(--workflow-muted);
+    background: var(--workflow-surface-muted);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .login-history-result {
+    display: inline-flex;
+    gap: .35rem;
+    align-items: center;
+    padding: .22rem .48rem;
+    border-radius: 999px;
+    font-size: .68rem;
+    font-weight: 800;
+  }
+
+  .login-history-result.success {
+    color: light-dark(#087f5b, #65d6ac);
+    background: light-dark(#eaf8f2, #17382e);
+  }
+
+  .login-history-result.failed {
+    color: var(--workflow-danger);
+    background: var(--workflow-danger-soft);
+  }
+
+  .login-history-agent {
+    margin-top: .25rem;
+    color: var(--workflow-muted);
+    font-size: .68rem;
+  }
+
+  @media (max-width: 1050px) {
+    .users-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 760px) {
+    .users-hero { grid-template-columns: 1fr; }
+    .users-hero-actions { justify-content: flex-start; }
+    .users-toolbar { align-items: stretch; flex-direction: column; }
+    .users-search { grid-template-columns: auto 1fr; }
+    .users-search { max-width: none; }
+    .users-create { justify-content: center; width: 100%; }
+  }
+
+  @media (max-width: 520px) {
+    .users-summary { grid-template-columns: 1fr; }
+    .users-hero-action { width: 100%; justify-content: center; }
+    .create-user-grid { grid-template-columns: 1fr; }
+    .create-user-field-wide { grid-column: auto; }
+    .user-workflow-modal .modal-footer { align-items: stretch; flex-direction: column-reverse; }
+    .workflow-button { width: 100%; }
   }
 </style>
 {% endblock %}
 
 {% block main_content %}
-<div class="container-fluid">
-  <h2 class="mb-4">{{ _('Käyttäjät') }}</h2>
+<div class="users-page">
+  <header class="users-hero">
+    <div>
+      <p class="users-kicker">{{ _('Käyttäjähallinta') }}</p>
+      <h1>{{ _('Käyttäjät') }}</h1>
+      <p>{{ _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.') }}</p>
+    </div>
+    <div class="users-hero-actions">
+      <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="users-hero-action">
+        <i class="fa-solid fa-book-open" aria-hidden="true"></i>{{ _('Käyttöohje') }}
+      </a>
+      <a href="{{ url_for('admin_dev.list_requests') }}" class="users-hero-action">
+        <i class="fa-solid fa-key" aria-hidden="true"></i>{{ _('API-avainpyynnöt') }}
+        {% if pending_token_requests %}<span class="users-request-count">{{ pending_token_requests }}</span>{% endif %}
+      </a>
+    </div>
+  </header>
 
-  <!-- User Manual Link -->
-  <div class="mb-3">
-    <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="btn btn-info">
-      <i class="fa-solid fa-book me-1"></i> Käyttöohje
-    </a>
-    <a href="{{ url_for('admin_dev.list_requests') }}" class="btn btn-outline-primary ms-2">
-      <i class="fa-solid fa-key me-1"></i> API-avainten pyynnöt
-      {% if pending_token_requests %}
-      <span class="badge bg-danger">{{ pending_token_requests }}</span>
-      {% endif %}
-    </a>
-  </div>
+  <section class="users-summary" aria-label="{{ _('Käyttäjätilien yhteenveto') }}">
+    <article class="users-summary-card">
+      <span class="users-summary-icon"><i class="fas fa-users" aria-hidden="true"></i></span>
+      <div><span>{{ _('Kaikki käyttäjät') }}</span><strong>{{ user_summary.all }}</strong></div>
+    </article>
+    <article class="users-summary-card">
+      <span class="users-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+      <div><span>{{ _('Vahvistetut tilit') }}</span><strong>{{ user_summary.confirmed }}</strong></div>
+    </article>
+    <article class="users-summary-card">
+      <span class="users-summary-icon"><i class="fas fa-shield-halved" aria-hidden="true"></i></span>
+      <div><span>{{ _('Ylläpitäjät') }}</span><strong>{{ user_summary.admins }}</strong></div>
+    </article>
+    <article class="users-summary-card">
+      <span class="users-summary-icon"><i class="fas fa-door-open" aria-hidden="true"></i></span>
+      <div><span>{{ _('Ei vielä kirjautunut') }}</span><strong>{{ user_summary.never_logged_in }}</strong></div>
+    </article>
+  </section>
 
-
-  <!-- Search + Create -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <input type="text" id="userSearch" class="form-control me-2" placeholder="{{ _('Hae käyttäjiä...') }}"
-      value="{{ search_query }}">
-
+  <section class="users-toolbar">
+    <label class="users-search" for="userSearch">
+      <i class="fas fa-search users-search-icon" aria-hidden="true"></i>
+      <input type="search" id="userSearch" placeholder="{{ _('Hae nimellä, käyttäjänimellä tai sähköpostilla...') }}" value="{{ search_query }}">
+    </label>
     {% if current_user.has_permission("CREATE_USER") %}
-    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">
-      <i class="fas fa-user-plus me-1"></i>{{ _('Luo uusi käyttäjä') }}
-    </button>
+      <button type="button" class="users-create" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        <i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Luo uusi käyttäjä') }}
+      </button>
     {% endif %}
-  </div>
+  </section>
 
-  <div id="usersTableContainer">
+  <div id="usersTableContainer" class="users-table-shell">
     {% include 'admin_V2/_users_table.html' %}
   </div>
 </div>
 
-<!-- Toasts -->
 <div id="toast-container"></div>
-
-<!-- Include Modals -->
 {% include 'admin_V2/_modals_users.html' %}
 {% endblock %}
 
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
 <script>
-  // ======== Toast Helper ========
   function showToast(message, type = 'success') {
     const toastContainer = $('#toast-container');
-    const toastEl = $(`
-      <div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-          <div class="toast-body">${message}</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-      </div>`);
+    const toastEl = $(`<div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`);
     toastContainer.append(toastEl);
     const toast = new bootstrap.Toast(toastEl[0], { delay: 4000 });
     toast.show();
     toastEl.on('hidden.bs.toast', () => toastEl.remove());
   }
 
-  // ======== Live Search ========
   function loadUserTable(url) {
     $.get(url, function (html) {
       const newTable = $(html).find('#usersTableContainer').html();
@@ -142,31 +691,82 @@
 
   initUserTableEnhancements();
 
-  // ======== Sortable Table Columns ========
   $(document).on('click', 'th.sortable', function () {
     const table = $(this).closest('table');
     const tbody = table.find('tbody');
     const index = $(this).index();
     const asc = !$(this).hasClass('asc');
-
-    // Reset classes
     table.find('th.sortable').removeClass('asc desc');
     $(this).addClass(asc ? 'asc' : 'desc');
-
     const rows = tbody.find('tr').get();
     rows.sort((a, b) => {
-      const A = $(a).children('td').eq(index).text().toUpperCase();
-      const B = $(b).children('td').eq(index).text().toUpperCase();
-      if ($.isNumeric(A) && $.isNumeric(B)) {
-        return asc ? A - B : B - A;
-      } else {
-        return asc ? A.localeCompare(B) : B.localeCompare(A);
-      }
+      const A = $(a).children('td').eq(index).text().trim().toUpperCase();
+      const B = $(b).children('td').eq(index).text().trim().toUpperCase();
+      return asc ? A.localeCompare(B) : B.localeCompare(A);
     });
     $.each(rows, (_, row) => tbody.append(row));
   });
+
+  const createUserForm = document.getElementById('createUserForm');
+  const createUserModal = document.getElementById('createUserModal');
+  const createUserEmail = document.getElementById('create-user-email');
+  const createUserUsername = document.getElementById('create-user-username');
+  const createUserDisplayname = document.getElementById('create-user-displayname');
+  const createUserRole = document.getElementById('create-user-role');
+  const createUserRoleHelp = document.getElementById('create-user-role-help');
+  const createUserStatus = document.getElementById('create-user-status');
+  const createUserSubmit = document.getElementById('create-user-submit');
+  let usernameWasEdited = false;
+  let displaynameWasEdited = false;
+
+  function suggestUsername(email) {
+    return (email.split('@')[0] || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '')
+      .toLowerCase();
+  }
+
+  createUserUsername?.addEventListener('input', () => { usernameWasEdited = true; });
+  createUserDisplayname?.addEventListener('input', () => { displaynameWasEdited = true; });
+
+  createUserEmail?.addEventListener('input', () => {
+    const suggested = suggestUsername(createUserEmail.value);
+    if (!usernameWasEdited) createUserUsername.value = suggested;
+    if (!displaynameWasEdited) createUserDisplayname.value = suggested;
+  });
+
+  createUserRole?.addEventListener('change', () => {
+    createUserRoleHelp.textContent = createUserRole.value === 'admin'
+      ? "{{ _('Admin voi käyttää ylläpitotoimintoja myönnettyjen oikeuksien mukaan.') }}"
+      : "{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}";
+  });
+
+  createUserForm?.addEventListener('submit', (event) => {
+    const requiredFields = [createUserEmail, createUserUsername, createUserRole];
+    requiredFields.forEach((field) => field?.classList.toggle('is-invalid', !field.value.trim()));
+    if (!createUserForm.checkValidity()) {
+      event.preventDefault();
+      createUserStatus.textContent = "{{ _('Tarkista puuttuvat tai virheelliset tiedot.') }}";
+      createUserStatus.classList.add('error');
+      createUserForm.reportValidity();
+      return;
+    }
+    createUserStatus.textContent = "{{ _('Luodaan käyttäjää ja valmistellaan tunnusviestiä...') }}";
+    createUserStatus.classList.remove('error');
+    createUserSubmit.disabled = true;
+    createUserSubmit.innerHTML = '<i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i>{{ _("Luodaan...") }}';
+  });
+
+  createUserModal?.addEventListener('hidden.bs.modal', () => {
+    createUserForm.reset();
+    createUserForm.querySelectorAll('.is-invalid').forEach((field) => field.classList.remove('is-invalid'));
+    createUserStatus.textContent = '';
+    createUserStatus.classList.remove('error');
+    createUserSubmit.disabled = false;
+    createUserSubmit.innerHTML = '<i class="fas fa-user-plus" aria-hidden="true"></i>{{ _("Luo käyttäjä") }}';
+    usernameWasEdited = false;
+    displaynameWasEdited = false;
+  });
 </script>
-
-
-<script src="{{ url_for('static', filename='js/admin/users_modals.js') }}"></script>
 {% endblock %}

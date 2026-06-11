@@ -1706,7 +1706,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         <div class="organizer-card-header">
           <div class="organizer-logo {% if not org.logo %}placeholder{% endif %}">
             {% if org.logo %}
-            <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async">
+            <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
             {% else %}
             <i class="fa-solid fa-building"></i>
             {% endif %}

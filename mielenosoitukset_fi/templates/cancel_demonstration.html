@@ -18,6 +18,16 @@
       </div>
     </div>
 
+    <div class="alert alert-light border shadow-sm" role="note">
+      {% if can_cancel_directly %}
+        <strong>{{ _('Tämä on virallinen järjestäjälinkki.') }}</strong>
+        {{ _('Koska yhteystieto kuuluu Mielenosoitukset.fi:ssä vahvistetulle organisaatiolle, tällä linkillä tehty peruminen tulee voimaan heti.') }}
+      {% else %}
+        <strong>{{ _('Tämä linkki lähettää pyynnön ylläpidolle.') }}</strong>
+        {{ _('Mielenosoitus ei peruunnu vielä tämän lomakkeen lähettämisellä, vaan vasta jos Mielenosoitukset.fi:n ylläpito hyväksyy pyynnön.') }}
+      {% endif %}
+    </div>
+
     {% if demo.cancelled %}
       <div class="alert alert-warning" role="alert">
         <i class="fa-solid fa-ban me-2"></i>{{ _('Mielenosoitus on jo merkitty perutuksi.') }}
@@ -25,13 +35,14 @@
     {% elif cancellation_pending %}
       <div class="alert alert-info" role="alert">
         <i class="fa-solid fa-hourglass-half me-2"></i>{{ _('Peruutuspyyntö on jo lähetetty ylläpidolle.') }}
+        <div class="mt-2 small">{{ _('Peruminen tulee voimaan vasta hyväksynnän jälkeen.') }}</div>
       </div>
     {% else %}
       <div class="alert {{ 'alert-danger' if can_cancel_directly else 'alert-secondary' }}" role="alert">
         {% if can_cancel_directly %}
-          <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ _('Vahvista, että haluat perua mielenosoituksen välittömästi.') }}
+          <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ _('Vahvista, että haluat perua mielenosoituksen heti.') }}
         {% else %}
-          <i class="fa-solid fa-envelope me-2"></i>{{ _('Tämä lomake lähettää peruutuspyynnön ylläpidolle käsiteltäväksi.') }}
+          <i class="fa-solid fa-envelope me-2"></i>{{ _('Tämä lomake lähettää peruutuspyynnön ylläpidolle käsiteltäväksi. Demo näkyy normaalisti siihen asti, että pyyntö hyväksytään.') }}
         {% endif %}
       </div>
 

@@ -56,11 +56,6 @@ class Config:
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
 
-    @classmethod
-    def _config_path(cls) -> str:
-        """Return the active configuration file path."""
-        return os.environ.get("CONFIG_YAML_PATH", "config.yaml")
-
     @staticmethod
     def load_yaml(file_path: str) -> Dict[str, Any]:
         """Load configuration from a YAML file.
@@ -156,9 +151,9 @@ class Config:
         )
 
     @classmethod
-    def reload(cls) -> None:
+    def reload(cls, path="config.yaml") -> None:
         """Reload configuration from the active config file."""
-        cls._apply_config(cls.load_yaml(cls._config_path()))
+        cls._apply_config(cls.load_yaml(path))
     
     @classmethod
     def init_config(cls) -> None:
@@ -190,5 +185,5 @@ class Config:
 
 
 # Initialize the configuration
-Config.reload()
+Config.reload(os.environ.get("CONFIG_YAML_PATH", "config.yaml"))
 Config.init_config()  # This will log warnings if essential configuration variables are not set or use default values.

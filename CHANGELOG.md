@@ -81,6 +81,7 @@
 * Pride-kortit näyttävät oikein tyylitettyinä (tagit, ikonit, värit) lisäämällä puuttuvan `css/demo.css`-tyylin kampanjasivulle.
 * Pride-kartan merkinnät ja legendan värit vastaavat toisiaan (yhtenäinen violetin/rubiinin sävy) selkeyttääkseen mitä pisteet kuvaavat.
 * Pride-kampanjasivun tapahtumakortit on sovitettu lähemmäs peruslistan ulkoasua (värit, tagit, ikonit), säilyttäen Pride-teeman.
+* Email sending now respects `MAIL.USE_TLS: false`, allowing local or non-TLS SMTP servers to work correctly
 * Docker Compose development now uses Mailpit for local SMTP testing and exposes Redis alongside the app dependencies, making the dev stack closer to the test stack.
 
 ### Fixed

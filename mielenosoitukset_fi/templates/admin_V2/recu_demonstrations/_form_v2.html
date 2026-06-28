@@ -348,6 +348,23 @@
                     value="{{ demo.repeat_schedule.end_date|default('', true) if demo and demo.repeat_schedule else '' }}">
             </div>
 
+            <div class="form-group mt-4" id="recurring-break-dates">
+                <label class="block font-medium mb-1">{{ _('Taukopäivät') }}</label>
+                <p class="text-muted">{{ _('Taukopäivälle osuvat jo luodut lapsimielenosoitukset merkitään perutuiksi, eikä uusia luoda kyseiselle päivälle.') }}</p>
+                <div id="break-date-list" class="child-demo-list">
+                    {% if demo and demo.break_dates %}
+                    {% for break_date in demo.break_dates %}
+                    <label class="child-demo-row">
+                        <input type="date" name="break_dates" value="{{ break_date }}" class="form-control">
+                        <span><strong>{{ break_date }}</strong><small>{{ _('Sarjan taukopäivä') }}</small></span>
+                        <button type="button" class="btn btn-secondary btn-sm" data-remove-break-date>{{ _('Poista') }}</button>
+                    </label>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-break-date">{{ _('Lisää taukopäivä') }}</button>
+            </div>
+
             <script>
                 const freqSelect = document.getElementById('frequency_type');
                 const weeklyOptions = document.getElementById('weekly-options');
@@ -359,6 +376,26 @@
                 };
                 freqSelect.addEventListener('change', updateRecurrenceOptions);
                 updateRecurrenceOptions();
+
+                const breakDateList = document.getElementById('break-date-list');
+                const addBreakDateButton = document.getElementById('add-break-date');
+                const bindBreakDateRemove = (button) => {
+                    button.addEventListener('click', () => {
+                        button.closest('.child-demo-row')?.remove();
+                    });
+                };
+                document.querySelectorAll('[data-remove-break-date]').forEach(bindBreakDateRemove);
+                addBreakDateButton?.addEventListener('click', () => {
+                    const row = document.createElement('label');
+                    row.className = 'child-demo-row';
+                    row.innerHTML = `
+                        <input type="date" name="break_dates" class="form-control">
+                        <span><strong>{{ _('Uusi taukopäivä') }}</strong><small>{{ _('Sarjan taukopäivä') }}</small></span>
+                        <button type="button" class="btn btn-secondary btn-sm" data-remove-break-date>{{ _('Poista') }}</button>
+                    `;
+                    breakDateList.appendChild(row);
+                    bindBreakDateRemove(row.querySelector('[data-remove-break-date]'));
+                });
             </script>
         </section>
 
@@ -805,7 +842,9 @@
                         <small>{{ child.date or '–' }} · {{ child.start_time or '–' }} · {{ child.city or '–' }}</small>
                     </span>
                     {% if child.is_frozen %}<span class="status-chip frozen">{{ _('Jäädytetty') }}</span>{% endif %}
+                    {% if child.is_break %}<span class="status-chip frozen">{{ _('Taukopäivä') }}</span>{% endif %}
                     {% if child.approved %}<span class="status-chip approved">{{ _('Hyväksytty') }}</span>{% endif %}
+                    {% if child.cancelled %}<span class="status-chip cancelled">{{ _('Peruttu') }}</span>{% endif %}
                     <a href="{{ url_for('admin_demo.edit_demo', demo_id=child._id) }}" class="btn btn-secondary btn-sm" target="_blank">{{ _('Avaa') }}</a>
                 </label>
                 {% endfor %}
@@ -836,6 +875,11 @@
 
             <div class="bulk-submit-row">
                 <button type="submit" class="btn btn-primary">{{ _('Päivitä valitut lapset') }}</button>
+                <input type="text" name="cancellation_reason" class="form-control" placeholder="{{ _('Perumisen syy') }}" aria-label="{{ _('Perumisen syy') }}">
+                <button type="submit" class="btn btn-danger"
+                    formaction="{{ url_for('admin_recu_demo.bulk_cancel_children', demo_id=demo._id) }}"
+                    formmethod="POST"
+                    formnovalidate>{{ _('Merkitse perutuiksi') }}</button>
             </div>
         </form>
         {% else %}

@@ -13,6 +13,7 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
+from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
 from mielenosoitukset_fi.demonstrations.audit import record_demo_change
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
@@ -67,6 +68,8 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
                     "start_time": 1,
                     "city": 1,
                     "approved": 1,
+                    "cancelled": 1,
+                    "cancellation_reason": 1,
                 },
             )
             .sort("date", 1)
@@ -75,6 +78,7 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
         child_counts["shown"] = len(child_demos)
         for child in child_demos:
             child["is_frozen"] = str(child["_id"]) in frozen_child_ids
+            child["is_break"] = child.get("date") in (demo.break_dates or [])
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
@@ -138,6 +142,74 @@ def _get_route_points(form):
         return []
 
     return [point.strip() for point in legacy_route.split(",") if point.strip()]
+
+
+def _collect_break_dates(form):
+    """Collect unique recurring-series break dates from repeated date inputs."""
+    dates = []
+    seen = set()
+    for raw_date in form.getlist("break_dates"):
+        value = (raw_date or "").strip()
+        if not value:
+            continue
+        try:
+            normalized = datetime.strptime(value, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            continue
+        if normalized not in seen:
+            dates.append(normalized)
+            seen.add(normalized)
+    return sorted(dates)
+
+
+def _current_admin_actor(source):
+    return {
+        "user_id": str(current_user.id),
+        "source": source,
+        "username": getattr(current_user, "username", None),
+    }
+
+
+def _cancel_recurring_children(parent_id, child_query, reason, action, message):
+    """Cancel children scoped to a recurring parent and record per-child audit history."""
+    cancelled_count = 0
+    matched_count = 0
+    for child in mongo.demonstrations.find(child_query):
+        matched_count += 1
+        old_child = deepcopy(child)
+        cancelled = cancel_demo(
+            child,
+            cancelled_by=_current_admin_actor("admin_recurring"),
+            reason=reason,
+        )
+        updated_child = mongo.demonstrations.find_one({"_id": child["_id"]}) or child
+        if cancelled:
+            cancelled_count += 1
+            record_demo_change(
+                child["_id"],
+                old_child,
+                updated_child,
+                action=action,
+                message=message,
+                extra_details={
+                    "parent_id": str(parent_id),
+                    "reason": reason,
+                },
+            )
+    return matched_count, cancelled_count
+
+
+def _cancel_children_for_break_dates(parent_id, break_dates):
+    """Mark already-created children on break dates as cancelled."""
+    if not break_dates:
+        return 0, 0
+    return _cancel_recurring_children(
+        parent_id,
+        {"parent": parent_id, "date": {"$in": break_dates}},
+        "Toistuvan mielenosoituksen taukopäivä",
+        "cancel_recurring_child_break",
+        "Lapsimielenosoitus peruttiin sarjan taukopäivän vuoksi",
+    )
 
 
 def _collect_organizers(form, existing_organizers=None):
@@ -373,6 +445,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         weekday_of_month=weekday_of_month,
         end_date=end_date,
     ).to_dict()
+    break_dates = _collect_break_dates(request.form)
 
     if existing_demo:
         for field_name, submitted_value in (
@@ -425,6 +498,7 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "cover_picture": cover_picture,
         "gallery_images": gallery_images,
         "repeat_schedule": repeat_schedule,
+        "break_dates": break_dates,
         "recurs": freq != "none",
         "organizers": organizers,
     }
@@ -442,7 +516,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             mongo.recu_demos.update_one(
                 {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
-            flash_message("Toistuva mielenosoitus päivitetty onnistuneesti.")
+            _, cancelled_count = _cancel_children_for_break_dates(
+                ObjectId(demo_id), break_dates
+            )
+            message = "Toistuva mielenosoitus päivitetty onnistuneesti."
+            if cancelled_count:
+                message += f" Peruttiin {cancelled_count} taukopäivälle osuvaa lapsimielenosoitusta."
+            flash_message(message)
         else:
             mongo.recu_demos.insert_one(demonstration_data)
             flash_message("Toistuva mielenosoitus luotu onnistuneesti.")
@@ -548,6 +628,62 @@ def bulk_update_children(demo_id):
         f"Päivitettiin {updated_count} lapsimielenosoitusta.",
         "success",
     )
+    return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+
+@admin_recu_demo_bp.route("/<demo_id>/bulk-cancel-children", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_RECURRING_DEMO")
+@permission_required("EDIT_DEMO")
+def bulk_cancel_children(demo_id):
+    """Mark selected or all future generated children from a recurring parent cancelled."""
+    try:
+        parent_id = ObjectId(demo_id)
+    except Exception:
+        flash_message("Virheellinen toistuvan mielenosoituksen tunniste.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    parent = mongo.recu_demos.find_one({"_id": parent_id})
+    if not parent:
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    child_scope = request.form.get("child_scope", "selected")
+    requested_child_ids = set(request.form.getlist("child_ids"))
+    if child_scope == "selected" and not requested_child_ids:
+        flash_message("Valitse vähintään yksi peruttava lapsimielenosoitus.", "error")
+        return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+    child_query = {"parent": parent_id}
+    if child_scope == "all_future":
+        child_query["date"] = {"$gte": date.today().isoformat()}
+    else:
+        child_ids = []
+        for child_id in requested_child_ids:
+            try:
+                child_ids.append(ObjectId(child_id))
+            except Exception:
+                continue
+        child_query["_id"] = {"$in": child_ids}
+
+    reason = (
+        request.form.get("cancellation_reason")
+        or "Peruttu toistuvan mielenosoituksen sarjahallinnasta"
+    )
+    matched_count, cancelled_count = _cancel_recurring_children(
+        parent_id,
+        child_query,
+        reason,
+        "bulk_cancel_recurring_child",
+        "Lapsimielenosoitus peruttiin toistuvan sarjan hallinnasta",
+    )
+    if matched_count == 0:
+        flash_message("Valittuja lapsimielenosoituksia ei löytynyt.", "error")
+    elif cancelled_count == 0:
+        flash_message("Valitut lapsimielenosoitukset olivat jo peruttuja.", "info")
+    else:
+        flash_message(f"Peruttiin {cancelled_count} lapsimielenosoitusta.", "success")
     return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
 
 

@@ -37,7 +37,7 @@
 * Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
 * Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.
 * Recurring demonstration editors can now recalculate parent coordinates from the saved address/city and bulk-copy latitude/longitude to generated child demonstrations with the location fields.
-* Recurring demonstration admins can now add break dates and bulk-cancel generated child demonstrations from the parent editor; existing child demos on break dates are marked cancelled instead of silently recreated.
+* Recurring demonstration admins can now add break ranges and bulk-cancel generated child demonstrations from the parent editor; existing child demos during breaks are marked cancelled instead of silently recreated.
 * Expanded the public privacy notice to disclose the service's actual personal-data categories, processing purposes and legal bases, cookies and analytics, recipients, current retention limitations, and data-subject rights.
 * Recurring demonstration editors can now bulk-copy selected series fields to selected generated children, with future/all selection shortcuts, per-child audit history, and optional freezing after updates.
 * Regular and recurring admin demonstration editors now use clearer section navigation, improved panel hierarchy, and a responsive sticky save bar.

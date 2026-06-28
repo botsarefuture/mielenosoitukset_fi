@@ -12,6 +12,43 @@ from .Organizer import Organizer
 
 from mielenosoitukset_fi.utils.logger import logger
 
+
+def _normalize_break_ranges(break_ranges=None, break_dates=None):
+    """Normalize range records, accepting legacy single-day break dates."""
+    normalized = []
+    seen = set()
+
+    def add_range(start_value, end_value=None):
+        start_value = str(start_value or "").strip()
+        end_value = str(end_value or start_value or "").strip()
+        if not start_value:
+            return
+        try:
+            start_date = datetime.strptime(start_value, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_value, "%Y-%m-%d").date()
+        except ValueError:
+            logger.warning("Skipping invalid recurring break range: %r - %r", start_value, end_value)
+            return
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+        key = (start_date.isoformat(), end_date.isoformat())
+        if key in seen:
+            return
+        normalized.append({"start_date": key[0], "end_date": key[1]})
+        seen.add(key)
+
+    for break_range in break_ranges or []:
+        if isinstance(break_range, dict):
+            add_range(break_range.get("start_date"), break_range.get("end_date"))
+        else:
+            add_range(break_range)
+
+    for break_date in break_dates or []:
+        add_range(break_date)
+
+    return sorted(normalized, key=lambda item: (item["start_date"], item["end_date"]))
+
+
 class RecurringDemonstration(Demonstration):
     """
     A demonstration event that repeats over time.
@@ -49,6 +86,7 @@ class RecurringDemonstration(Demonstration):
         created_until: Optional[datetime] = None,
         freezed_children: Optional[list] = None,
         break_dates: Optional[list] = None,
+        break_ranges: Optional[list] = None,
         **kwargs,
     ):
         kwargs["recurs"] = True  # force recurring=True
@@ -63,6 +101,7 @@ class RecurringDemonstration(Demonstration):
         )
         self.created_until = created_until or datetime.now()
         self.freezed_children = freezed_children or []
+        self.break_ranges = _normalize_break_ranges(break_ranges, break_dates)
         self.break_dates = break_dates or []
 
         super().__init__(*args, **kwargs)
@@ -169,7 +208,8 @@ class RecurringDemonstration(Demonstration):
             
         else:
             data["freezed_children"] = self.freezed_children
-        data["break_dates"] = self.break_dates
+        data["break_ranges"] = self.break_ranges
+        data["break_dates"] = []
 
         return data
 
@@ -270,6 +310,7 @@ class RecurringDemonstration(Demonstration):
                     
         data.pop("freezed_children", None)
         break_dates = data.pop("break_dates", []) or []
+        break_ranges = data.pop("break_ranges", []) or []
         data.pop("created_until", None)
         data.pop("city_key", None)
 
@@ -279,6 +320,7 @@ class RecurringDemonstration(Demonstration):
             created_until=created_until,
             freezed_children=_freezed_children,
             break_dates=break_dates,
+            break_ranges=break_ranges,
         )
 
     def __repr__(self) -> str:

@@ -211,7 +211,7 @@ def test_admin_can_bulk_cancel_selected_recurring_children(admin_client, db, see
     assert db.demo_edit_history.count_documents({"demo_id": str(selected_id)}) == 1
 
 
-def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, seeded_data):
+def test_admin_recurring_break_range_cancels_existing_child(admin_client, db, seeded_data):
     parent_id = seeded_data["recu_demo_id"]
     child_id = ObjectId()
     db.demonstrations.insert_one(
@@ -243,7 +243,8 @@ def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, see
             "approved": "on",
             "frequency_type": "weekly",
             "frequency_interval": "1",
-            "break_dates": ["2026-07-01"],
+            "break_start_dates": ["2026-07-01"],
+            "break_end_dates": ["2026-07-07"],
             "organizer_name_1": "Test Organization",
             "organizer_email_1": "bob@example.test",
             "organizer_id_1": str(ObjectId()),
@@ -254,12 +255,15 @@ def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, see
     assert response.status_code == 302
     parent = db.recu_demos.find_one({"_id": parent_id})
     child = db.demonstrations.find_one({"_id": child_id})
-    assert parent["break_dates"] == ["2026-07-01"]
+    assert parent["break_ranges"] == [
+        {"start_date": "2026-07-01", "end_date": "2026-07-07"}
+    ]
+    assert parent["break_dates"] == []
     assert child["cancelled"] is True
     assert child["cancellation_reason"] == "Toistuvan mielenosoituksen taukopäivä"
 
 
-def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
+def test_recurring_runner_skips_break_ranges_and_cancels_existing_children(
     monkeypatch, db
 ):
     from mielenosoitukset_fi.scripts import repeat_v2
@@ -288,7 +292,7 @@ def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
         },
         "created_until": "2026-06-30T00:00:00",
         "freezed_children": [],
-        "break_dates": ["2026-07-01"],
+        "break_ranges": [{"start_date": "2026-07-01", "end_date": "2026-07-07"}],
         "organizers": [],
     }
     db.recu_demos.insert_one(parent)

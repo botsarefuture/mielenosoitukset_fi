@@ -349,20 +349,22 @@
             </div>
 
             <div class="form-group mt-4" id="recurring-break-dates">
-                <label class="block font-medium mb-1">{{ _('Taukopäivät') }}</label>
-                <p class="text-muted">{{ _('Taukopäivälle osuvat jo luodut lapsimielenosoitukset merkitään perutuiksi, eikä uusia luoda kyseiselle päivälle.') }}</p>
+                <label class="block font-medium mb-1">{{ _('Taukojaksot') }}</label>
+                <p class="text-muted">{{ _('Taukojaksolle osuvat jo luodut lapsimielenosoitukset merkitään perutuiksi, eikä uusia luoda kyseisille päiville.') }}</p>
                 <div id="break-date-list" class="child-demo-list">
-                    {% if demo and demo.break_dates %}
-                    {% for break_date in demo.break_dates %}
+                    {% if demo and demo.break_ranges %}
+                    {% for break_range in demo.break_ranges %}
                     <label class="child-demo-row">
-                        <input type="date" name="break_dates" value="{{ break_date }}" class="form-control">
-                        <span><strong>{{ break_date }}</strong><small>{{ _('Sarjan taukopäivä') }}</small></span>
+                        <input type="date" name="break_start_dates" value="{{ break_range.start_date }}" class="form-control">
+                        <span><strong>-</strong><small>{{ _('Alku - loppu') }}</small></span>
+                        <input type="date" name="break_end_dates" value="{{ break_range.end_date }}" class="form-control">
+                        <span><strong>{{ break_range.start_date }} - {{ break_range.end_date }}</strong><small>{{ _('Sarjan taukojakso') }}</small></span>
                         <button type="button" class="btn btn-secondary btn-sm" data-remove-break-date>{{ _('Poista') }}</button>
                     </label>
                     {% endfor %}
                     {% endif %}
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-break-date">{{ _('Lisää taukopäivä') }}</button>
+                <button type="button" class="btn btn-secondary btn-sm mt-2" id="add-break-date">{{ _('Lisää taukojakso') }}</button>
             </div>
 
             <script>
@@ -389,8 +391,10 @@
                     const row = document.createElement('label');
                     row.className = 'child-demo-row';
                     row.innerHTML = `
-                        <input type="date" name="break_dates" class="form-control">
-                        <span><strong>{{ _('Uusi taukopäivä') }}</strong><small>{{ _('Sarjan taukopäivä') }}</small></span>
+                        <input type="date" name="break_start_dates" class="form-control">
+                        <span><strong>-</strong><small>{{ _('Alku - loppu') }}</small></span>
+                        <input type="date" name="break_end_dates" class="form-control">
+                        <span><strong>{{ _('Uusi taukojakso') }}</strong><small>{{ _('Sarjan taukojakso') }}</small></span>
                         <button type="button" class="btn btn-secondary btn-sm" data-remove-break-date>{{ _('Poista') }}</button>
                     `;
                     breakDateList.appendChild(row);
@@ -842,7 +846,7 @@
                         <small>{{ child.date or '–' }} · {{ child.start_time or '–' }} · {{ child.city or '–' }}</small>
                     </span>
                     {% if child.is_frozen %}<span class="status-chip frozen">{{ _('Jäädytetty') }}</span>{% endif %}
-                    {% if child.is_break %}<span class="status-chip frozen">{{ _('Taukopäivä') }}</span>{% endif %}
+                    {% if child.is_break %}<span class="status-chip frozen">{{ _('Taukojakso') }}</span>{% endif %}
                     {% if child.approved %}<span class="status-chip approved">{{ _('Hyväksytty') }}</span>{% endif %}
                     {% if child.cancelled %}<span class="status-chip cancelled">{{ _('Peruttu') }}</span>{% endif %}
                     <a href="{{ url_for('admin_demo.edit_demo', demo_id=child._id) }}" class="btn btn-secondary btn-sm" target="_blank">{{ _('Avaa') }}</a>

@@ -76,9 +76,10 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
             .limit(200)
         )
         child_counts["shown"] = len(child_demos)
+        break_dates = _break_dates_from_ranges(demo.break_ranges)
         for child in child_demos:
             child["is_frozen"] = str(child["_id"]) in frozen_child_ids
-            child["is_break"] = child.get("date") in (demo.break_dates or [])
+            child["is_break"] = child.get("date") in break_dates
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
@@ -144,22 +145,72 @@ def _get_route_points(form):
     return [point.strip() for point in legacy_route.split(",") if point.strip()]
 
 
-def _collect_break_dates(form):
-    """Collect unique recurring-series break dates from repeated date inputs."""
-    dates = []
+def _normalize_break_range(start_value, end_value=None):
+    """Return a normalized inclusive break range, or None for invalid input."""
+    start_value = (start_value or "").strip()
+    end_value = (end_value or start_value or "").strip()
+    if not start_value:
+        return None
+    try:
+        start_date = datetime.strptime(start_value, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_value, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+    return {
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+    }
+
+
+def _collect_break_ranges(form):
+    """Collect unique recurring-series break ranges from paired date inputs."""
+    ranges = []
     seen = set()
+    starts = form.getlist("break_start_dates")
+    ends = form.getlist("break_end_dates")
+    for index, start in enumerate(starts):
+        break_range = _normalize_break_range(
+            start,
+            ends[index] if index < len(ends) else start,
+        )
+        if not break_range:
+            continue
+        key = (break_range["start_date"], break_range["end_date"])
+        if key not in seen:
+            ranges.append(break_range)
+            seen.add(key)
+
     for raw_date in form.getlist("break_dates"):
-        value = (raw_date or "").strip()
-        if not value:
+        break_range = _normalize_break_range(raw_date)
+        if not break_range:
             continue
-        try:
-            normalized = datetime.strptime(value, "%Y-%m-%d").date().isoformat()
-        except ValueError:
+        key = (break_range["start_date"], break_range["end_date"])
+        if key not in seen:
+            ranges.append(break_range)
+            seen.add(key)
+
+    return sorted(ranges, key=lambda item: (item["start_date"], item["end_date"]))
+
+
+def _break_dates_from_ranges(break_ranges):
+    """Expand inclusive break ranges into ISO date strings."""
+    dates = set()
+    for break_range in break_ranges or []:
+        normalized = _normalize_break_range(
+            break_range.get("start_date"),
+            break_range.get("end_date"),
+        )
+        if not normalized:
             continue
-        if normalized not in seen:
-            dates.append(normalized)
-            seen.add(normalized)
-    return sorted(dates)
+        start_date = datetime.strptime(normalized["start_date"], "%Y-%m-%d").date()
+        end_date = datetime.strptime(normalized["end_date"], "%Y-%m-%d").date()
+        current = start_date
+        while current <= end_date:
+            dates.add(current.isoformat())
+            current = date.fromordinal(current.toordinal() + 1)
+    return dates
 
 
 def _current_admin_actor(source):
@@ -205,7 +256,7 @@ def _cancel_children_for_break_dates(parent_id, break_dates):
         return 0, 0
     return _cancel_recurring_children(
         parent_id,
-        {"parent": parent_id, "date": {"$in": break_dates}},
+        {"parent": parent_id, "date": {"$in": sorted(break_dates)}},
         "Toistuvan mielenosoituksen taukopäivä",
         "cancel_recurring_child_break",
         "Lapsimielenosoitus peruttiin sarjan taukopäivän vuoksi",
@@ -445,7 +496,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         weekday_of_month=weekday_of_month,
         end_date=end_date,
     ).to_dict()
-    break_dates = _collect_break_dates(request.form)
+    break_ranges = _collect_break_ranges(request.form)
+    break_dates = _break_dates_from_ranges(break_ranges)
 
     if existing_demo:
         for field_name, submitted_value in (
@@ -498,7 +550,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "cover_picture": cover_picture,
         "gallery_images": gallery_images,
         "repeat_schedule": repeat_schedule,
-        "break_dates": break_dates,
+        "break_ranges": break_ranges,
+        "break_dates": [],
         "recurs": freq != "none",
         "organizers": organizers,
     }

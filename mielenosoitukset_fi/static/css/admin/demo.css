@@ -305,6 +305,11 @@ input[readonly] {
     background: light-dark(#d1fae5, rgba(5, 150, 105, 0.2));
 }
 
+.status-chip.cancelled {
+    color: light-dark(#b91c1c, #fecaca);
+    background: light-dark(#fee2e2, rgba(220, 38, 38, 0.18));
+}
+
 .bulk-field-picker {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

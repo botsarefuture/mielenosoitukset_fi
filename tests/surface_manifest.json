@@ -57,8 +57,8 @@
       ]
     },
     "mielenosoitukset_fi/admin/admin_recu_demo_bp.py": {
-      "count": 6,
-      "sha256": "1d74d2b609954def4a60b98138ac8fd65495a4e92597f297655b4d3900aa1a3e",
+      "count": 7,
+      "sha256": "a47968928482fa0a5677d53a4cf8be7b76b82cdcebff43528d69dc1cf628f5bc",
       "coverage": [
         "integration",
         "e2e-admin"

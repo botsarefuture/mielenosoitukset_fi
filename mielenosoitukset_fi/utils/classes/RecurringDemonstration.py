@@ -48,6 +48,7 @@ class RecurringDemonstration(Demonstration):
         repeat_schedule: Optional[RepeatSchedule] = None,
         created_until: Optional[datetime] = None,
         freezed_children: Optional[list] = None,
+        break_dates: Optional[list] = None,
         **kwargs,
     ):
         kwargs["recurs"] = True  # force recurring=True
@@ -62,6 +63,7 @@ class RecurringDemonstration(Demonstration):
         )
         self.created_until = created_until or datetime.now()
         self.freezed_children = freezed_children or []
+        self.break_dates = break_dates or []
 
         super().__init__(*args, **kwargs)
 
@@ -167,6 +169,7 @@ class RecurringDemonstration(Demonstration):
             
         else:
             data["freezed_children"] = self.freezed_children
+        data["break_dates"] = self.break_dates
 
         return data
 
@@ -266,6 +269,7 @@ class RecurringDemonstration(Demonstration):
                     logger.warning(f"Skipping invalid ObjectId: {freezed_children}")
                     
         data.pop("freezed_children", None)
+        break_dates = data.pop("break_dates", []) or []
         data.pop("created_until", None)
         data.pop("city_key", None)
 
@@ -273,7 +277,8 @@ class RecurringDemonstration(Demonstration):
             **data,
             repeat_schedule=repeat_schedule,
             created_until=created_until,
-            freezed_children=_freezed_children
+            freezed_children=_freezed_children,
+            break_dates=break_dates,
         )
 
     def __repr__(self) -> str:

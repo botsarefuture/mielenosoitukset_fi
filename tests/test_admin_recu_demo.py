@@ -158,6 +158,176 @@ def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, see
     assert db.demo_edit_history.count_documents({"demo_id": str(selected_id)}) == 1
 
 
+def test_admin_can_bulk_cancel_selected_recurring_children(admin_client, db, seeded_data):
+    parent_id = seeded_data["recu_demo_id"]
+    selected_id = ObjectId()
+    untouched_id = ObjectId()
+    db.demonstrations.insert_many(
+        [
+            {
+                "_id": selected_id,
+                "parent": parent_id,
+                "title": "Cancel this child",
+                "date": "2026-07-01",
+                "start_time": "10:00",
+                "end_time": "11:00",
+                "city": "Helsinki",
+                "address": "Testikatu 1",
+                "event_type": "STAY_STILL",
+                "cancelled": False,
+            },
+            {
+                "_id": untouched_id,
+                "parent": parent_id,
+                "title": "Keep this child",
+                "date": "2026-07-08",
+                "start_time": "10:00",
+                "end_time": "11:00",
+                "city": "Helsinki",
+                "address": "Testikatu 1",
+                "event_type": "STAY_STILL",
+                "cancelled": False,
+            },
+        ]
+    )
+
+    response = admin_client.post(
+        f"/admin/recu_demo/{parent_id}/bulk-cancel-children",
+        data={
+            "child_scope": "selected",
+            "child_ids": [str(selected_id)],
+            "cancellation_reason": "Organizer requested a summer break.",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    selected = db.demonstrations.find_one({"_id": selected_id})
+    untouched = db.demonstrations.find_one({"_id": untouched_id})
+    assert selected["cancelled"] is True
+    assert selected["cancellation_reason"] == "Organizer requested a summer break."
+    assert selected["cancelled_by"]["source"] == "admin_recurring"
+    assert untouched["cancelled"] is False
+    assert db.demo_edit_history.count_documents({"demo_id": str(selected_id)}) == 1
+
+
+def test_admin_recurring_break_date_cancels_existing_child(admin_client, db, seeded_data):
+    parent_id = seeded_data["recu_demo_id"]
+    child_id = ObjectId()
+    db.demonstrations.insert_one(
+        {
+            "_id": child_id,
+            "parent": parent_id,
+            "title": "Break date child",
+            "date": "2026-07-01",
+            "start_time": "18:00",
+            "end_time": "20:00",
+            "city": "Helsinki",
+            "address": "Kaivokatu 1, Helsinki",
+            "event_type": "STAY_STILL",
+            "cancelled": False,
+        }
+    )
+
+    response = admin_client.post(
+        f"/admin/recu_demo/edit_recu_demo/{parent_id}",
+        data={
+            "title": "Recurring Test Series",
+            "description": "Series used in smoke tests.",
+            "date": "2026-05-08",
+            "start_time": "18:00",
+            "end_time": "20:00",
+            "city": "Helsinki",
+            "address": "Kaivokatu 1, Helsinki",
+            "type": "STAY_STILL",
+            "approved": "on",
+            "frequency_type": "weekly",
+            "frequency_interval": "1",
+            "break_dates": ["2026-07-01"],
+            "organizer_name_1": "Test Organization",
+            "organizer_email_1": "bob@example.test",
+            "organizer_id_1": str(ObjectId()),
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    parent = db.recu_demos.find_one({"_id": parent_id})
+    child = db.demonstrations.find_one({"_id": child_id})
+    assert parent["break_dates"] == ["2026-07-01"]
+    assert child["cancelled"] is True
+    assert child["cancellation_reason"] == "Toistuvan mielenosoituksen taukopäivä"
+
+
+def test_recurring_runner_skips_break_dates_and_cancels_existing_children(
+    monkeypatch, db
+):
+    from mielenosoitukset_fi.scripts import repeat_v2
+
+    parent_id = ObjectId()
+    break_child_id = ObjectId()
+    parent = {
+        "_id": parent_id,
+        "title": "Runner break series",
+        "description": "Created by recurring runner test.",
+        "date": "2026-06-24",
+        "start_time": "12:00",
+        "end_time": "13:00",
+        "city": "Helsinki",
+        "address": "Testikatu 1",
+        "approved": True,
+        "hide": False,
+        "event_type": "STAY_STILL",
+        "tags": [],
+        "route": [],
+        "repeat_schedule": {
+            "frequency": "weekly",
+            "interval": 1,
+            "weekday": "wednesday",
+            "end_date": "2026-07-15",
+        },
+        "created_until": "2026-06-30T00:00:00",
+        "freezed_children": [],
+        "break_dates": ["2026-07-01"],
+        "organizers": [],
+    }
+    db.recu_demos.insert_one(parent)
+    db.demonstrations.insert_one(
+        {
+            "_id": break_child_id,
+            "parent": parent_id,
+            "title": "Existing break child",
+            "date": "2026-07-01",
+            "start_time": "12:00",
+            "end_time": "13:00",
+            "city": "Helsinki",
+            "address": "Testikatu 1",
+            "event_type": "STAY_STILL",
+            "cancelled": False,
+            "hide": False,
+        }
+    )
+    monkeypatch.setattr(repeat_v2, "demonstrations_collection", db.demonstrations)
+    monkeypatch.setattr(repeat_v2, "recu_demos_collection", db.recu_demos)
+    monkeypatch.setattr(repeat_v2, "stats_collection", db.recu_stats)
+    monkeypatch.setattr(repeat_v2, "DRY_RUN", False)
+    repeat_v2.runtime_actions.clear()
+
+    repeat_v2.process_demo(parent)
+
+    break_child = db.demonstrations.find_one({"_id": break_child_id})
+    created_dates = {
+        doc["date"]
+        for doc in db.demonstrations.find({"parent": parent_id}, {"date": 1})
+    }
+    saved_parent = db.recu_demos.find_one({"_id": parent_id})
+    assert break_child["cancelled"] is True
+    assert "2026-07-01" in created_dates
+    assert "2026-07-08" in created_dates
+    assert "2026-07-15" in created_dates
+    assert saved_parent["created_until"].startswith("2026-07-15")
+
+
 def test_recurring_demo_no_change_save_preserves_schedule_and_nullable_values(
     admin_client, db, seeded_data
 ):

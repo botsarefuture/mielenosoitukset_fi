@@ -24,6 +24,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
 from mielenosoitukset_fi.utils.validators import normalize_username, validate_username
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
@@ -310,7 +311,7 @@ def generate_api_token():
             "action": "attempted privileged scope request",
             "requested_scopes": data.get("scopes", []),
             "denied_scopes": sorted(requested_privileged_scopes),
-            "ip_address": request.remote_addr,
+            "ip_address": get_client_ip(),
             "timestamp": datetime.now()
         })
         return jsonify({
@@ -640,7 +641,7 @@ def login():
 
         user_doc = _find_user_by_username(username)
         
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
         if not user_doc:
@@ -701,7 +702,7 @@ from datetime import datetime
 @auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
 @login_required
 def forced_pwd_reset():
-    ip = request.remote_addr
+    ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
 
     log_entry = {
@@ -1255,7 +1256,7 @@ def password_reset(token):
     """
     Handle password reset using a token, with full logging and single-use token enforcement.
     """
-    ip = request.remote_addr
+    ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
     
     # Check if token has already been used
@@ -1458,7 +1459,7 @@ def api_change_password():
     mongo.password_changes.insert_one({
         "user_id": current_user._id,
         "datetime": utcnow(),
-        "ip": request.remote_addr,
+        "ip": get_client_ip(),
         "user_agent": request.headers.get("User-Agent", ""),
         "method": "settings_page",
         "changed": True

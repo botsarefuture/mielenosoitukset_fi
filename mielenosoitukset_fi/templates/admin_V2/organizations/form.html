@@ -1,432 +1,351 @@
 {% extends 'admin_base.html' %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
-
 <style>
-    /* ---------- Card wrapper ---------- */
-    .container {
-        /* background-color and color vars are covered in .dashboard-container */
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
-        max-width: 1000px;
-        margin: 2rem auto;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
+  .org-form-page {
+    --form-blue: light-dark(#0033a0, #8bb1ff);
+    --form-blue-dark: light-dark(#00267a, #c5d6ff);
+    --form-blue-soft: light-dark(#edf4ff, #17233b);
+    --form-orange: #ff6600;
+    --form-orange-soft: light-dark(#fff2e8, #3a2418);
+    --form-surface: light-dark(#ffffff, #20252d);
+    --form-surface-muted: light-dark(#f6f8fb, #292f39);
+    --form-border: light-dark(#dce3ec, #424b59);
+    --form-text: light-dark(#172033, #f2f5fa);
+    --form-muted: light-dark(#647083, #b7c0ce);
+    --form-danger: light-dark(#b42318, #ff9b91);
+    --form-danger-soft: light-dark(#fff0ee, #3b2021);
+    --form-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+    display: grid;
+    gap: 1rem;
+    max-width: 1320px;
+    margin: 0 auto;
+    color: var(--form-text);
+  }
 
-    .form-title {
-        font-size: 2rem;
-        font-weight: 700;
-        /* color var already defined for primary */
-        text-shadow: 0 1px 3px rgba(0, 0, 0, .05);
-        margin-bottom: 1.5rem;
-    }
+  .org-form-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+  }
+  .org-form-kicker { margin: 0; color: #ffd6bc; font-size: .76rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .org-form-hero h1 { margin: .25rem 0 .5rem; color: #fff; font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: -.035em; }
+  .org-form-hero p:last-child { max-width: 720px; margin: 0; color: rgba(255, 255, 255, .8); line-height: 1.65; }
+  .org-form-hero-actions { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: flex-end; }
 
-    /* ---------- Generic form controls ---------- */
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: .5rem;
-    }
+  .org-form-button {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.65rem;
+    padding: .62rem .85rem;
+    border: 1px solid var(--form-border);
+    border-radius: .72rem;
+    color: var(--form-text) !important;
+    background: var(--form-surface-muted);
+    font-size: .82rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .org-form-button:hover { border-color: var(--form-blue); color: var(--form-blue-dark) !important; }
+  .org-form-button.hero { border-color: rgba(255, 255, 255, .22); color: #fff !important; background: rgba(255, 255, 255, .1); }
+  .org-form-button.hero:hover { color: #fff !important; background: rgba(255, 255, 255, .18); }
+  .org-form-button.primary { border-color: var(--form-blue); color: #fff !important; background: light-dark(#0033a0, #315ea8); }
+  .org-form-button.orange { border-color: transparent; color: light-dark(#a74400, #ffad75) !important; background: var(--form-orange-soft); }
+  .org-form-button.danger { border-color: transparent; color: var(--form-danger) !important; background: var(--form-danger-soft); }
 
-    .form-group label {
-        font-weight: 600;
-        /* color var for text already defined */
-    }
+  .org-form-layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr); gap: 1rem; align-items: start; }
+  .org-form-stack { display: grid; gap: 1rem; }
+  .org-form-card { overflow: hidden; border: 1px solid var(--form-border); border-radius: 1.1rem; background: var(--form-surface); box-shadow: var(--form-shadow); }
+  .org-form-card-header { display: flex; gap: .8rem; align-items: center; padding: 1rem 1.1rem; border-bottom: 1px solid var(--form-border); background: var(--form-surface-muted); }
+  .org-form-card-icon { display: grid; flex: 0 0 auto; width: 2.35rem; height: 2.35rem; place-items: center; border-radius: .7rem; color: var(--form-blue); background: var(--form-blue-soft); }
+  .org-form-card-header h2, .org-form-card-header p { margin: 0; }
+  .org-form-card-header h2 { color: var(--form-text); font-size: 1rem; font-weight: 850; }
+  .org-form-card-header p { margin-top: .15rem; color: var(--form-muted); font-size: .72rem; }
+  .org-form-card-body { display: grid; gap: 1rem; padding: 1.1rem; }
+  .org-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .org-form-field { display: grid; gap: .42rem; min-width: 0; }
+  .org-form-field.full { grid-column: 1 / -1; }
+  .org-form-label { color: var(--form-text); font-size: .78rem; font-weight: 800; }
+  .org-form-required { color: var(--form-orange); }
+  .org-form-help { margin: 0; color: var(--form-muted); font-size: .7rem; line-height: 1.5; }
+  .org-form-control {
+    width: 100%;
+    min-width: 0;
+    padding: .72rem .8rem;
+    border: 1px solid var(--form-border);
+    border-radius: .72rem;
+    color: var(--form-text);
+    background: var(--form-surface-muted);
+    font-size: .85rem;
+    outline: none;
+  }
+  textarea.org-form-control { min-height: 9rem; resize: vertical; line-height: 1.6; }
+  .org-form-control:focus { border-color: var(--form-blue); box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12)); }
+  .org-form-control::file-selector-button { margin: -.35rem .65rem -.35rem -.35rem; padding: .45rem .65rem; border: 0; border-radius: .5rem; color: #fff; background: light-dark(#0033a0, #315ea8); font-weight: 750; }
 
-    .form-control {
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: .6rem 1rem;
-        font-size: .95rem;
-        width: 100%;
-    }
+  .org-form-switch { display: flex; gap: .75rem; align-items: center; padding: .8rem; border: 1px solid var(--form-border); border-radius: .8rem; background: var(--form-surface-muted); }
+  .org-form-switch input { width: 2.6rem; height: 1.35rem; accent-color: var(--form-blue); }
+  .org-form-switch strong, .org-form-switch span { display: block; }
+  .org-form-switch strong { color: var(--form-text); font-size: .8rem; }
+  .org-form-switch span { margin-top: .1rem; color: var(--form-muted); font-size: .68rem; }
 
-    input.form-control::placeholder {
-        color: light-dark(#1a1a1a, #ccc);
-    }
+  .logo-preview { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: .85rem; align-items: center; padding: .8rem; border: 1px solid var(--form-border); border-radius: .85rem; background: var(--form-surface-muted); }
+  .logo-preview img { width: 5.5rem; height: 5.5rem; object-fit: contain; border: 1px solid var(--form-border); border-radius: .75rem; background: var(--form-surface); padding: .45rem; }
+  .logo-preview strong, .logo-preview span { display: block; }
+  .logo-preview strong { font-size: .8rem; }
+  .logo-preview span { margin: .18rem 0 .55rem; color: var(--form-muted); font-size: .68rem; }
+  .logo-preview-actions { display: flex; gap: .45rem; flex-wrap: wrap; }
+  .remove-logo-toggle { display: inline-flex; gap: .35rem; align-items: center; color: var(--form-danger); font-size: .72rem; font-weight: 800; }
+  .remove-logo-toggle input { accent-color: var(--form-danger); }
 
-    /* ---------- Social media section ---------- */
-    .social-media-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
-        flex-wrap: wrap;
-        flex: 1;
-    }
+  #social-media-list { display: grid; gap: .65rem; }
+  .social-media-row { display: grid; grid-template-columns: minmax(145px, .35fr) minmax(0, 1fr) auto; gap: .55rem; align-items: center; padding: .65rem; border: 1px solid var(--form-border); border-radius: .8rem; background: var(--form-surface-muted); }
+  .social-media-row .org-form-control { background: var(--form-surface); }
+  .social-remove { width: 2.55rem; min-width: 2.55rem; padding: 0; }
+  .social-empty { padding: 1.5rem 1rem; border: 1px dashed var(--form-border); border-radius: .8rem; color: var(--form-muted); background: var(--form-surface-muted); text-align: center; }
+  .social-empty i { display: block; margin-bottom: .5rem; color: var(--form-blue); font-size: 1.4rem; }
+  .social-empty strong { display: block; margin-bottom: .2rem; color: var(--form-text); font-size: .82rem; }
+  .social-empty span { font-size: .7rem; }
 
-    .custom-dropdown {
-        position: relative;
-        flex: 0 0 auto;
-        min-width: 160px;
-        max-width: 200px;
-    }
+  .org-form-tips { display: grid; gap: .65rem; }
+  .org-form-tip { display: grid; grid-template-columns: 2.15rem minmax(0, 1fr); gap: .65rem; align-items: start; padding: .72rem; border-radius: .8rem; background: var(--form-surface-muted); }
+  .org-form-tip-icon { display: grid; width: 2.15rem; height: 2.15rem; place-items: center; border-radius: .65rem; color: var(--form-blue); background: var(--form-blue-soft); }
+  .org-form-tip:last-child .org-form-tip-icon { color: var(--form-orange); background: var(--form-orange-soft); }
+  .org-form-tip > div > strong, .org-form-tip > div > span { display: block; }
+  .org-form-tip > div > strong { font-size: .78rem; }
+  .org-form-tip > div > span { margin-top: .15rem; color: var(--form-muted); font-size: .68rem; line-height: 1.45; }
 
-    .dropdown-selected {
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
+  .org-form-savebar { position: sticky; z-index: 10; bottom: .75rem; display: flex; gap: .65rem; align-items: center; justify-content: space-between; padding: .8rem; border: 1px solid var(--form-border); border-radius: 1rem; background: light-dark(rgba(255, 255, 255, .94), rgba(32, 37, 45, .94)); box-shadow: 0 18px 45px rgba(0, 0, 0, .16); backdrop-filter: blur(12px); }
+  .org-form-savebar-copy strong, .org-form-savebar-copy span { display: block; }
+  .org-form-savebar-copy strong { font-size: .8rem; }
+  .org-form-savebar-copy span { margin-top: .1rem; color: var(--form-muted); font-size: .68rem; }
+  .org-form-savebar-actions { display: flex; gap: .5rem; }
 
-    .dropdown-selected i {
-        margin-left: 0.5rem;
-    }
+  .org-form-page .modal-content { border: 1px solid var(--form-border) !important; border-radius: 1.1rem !important; color: var(--form-text); background: var(--form-surface); box-shadow: 0 24px 70px rgba(0, 0, 0, .25); }
+  .org-form-page .modal-header, .org-form-page .modal-footer { border-color: var(--form-border); }
+  .org-form-page .modal-title { color: var(--form-text); font-weight: 850; }
+  .org-form-page .btn-close { filter: light-dark(none, invert(1)); }
 
-    .dropdown-list {
-        display: none;
-        position: absolute;
-        top: calc(100% + 0.2rem);
-        left: 0;
-        width: 100%;
-        background-color: var(--input-bg);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-        overflow: hidden;
-    }
-
-    .dropdown-list div {
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        font-size: 0.9rem;
-        gap: 0.5rem;
-        transition: background-color 0.2s;
-    }
-
-    .dropdown-list div:hover {
-        background-color: var(--row-hover);
-    }
-
-    .social-media-container input[type="url"] {
-        flex-grow: 1;
-        min-width: 150px;
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.9rem;
-    }
-
-    .remove-btn {
-        color: var(--danger);
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.4rem;
-        transition: color 0.2s ease;
-    }
-
-    .remove-btn:hover {
-        color: var(--primary-hover);
-    }
-
-    /* Button inside social media group */
-    #add-social-media {
-        margin-top: 0.5rem;
-        background-color: var(--primary);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 500;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out;
-    }
-
-    #add-social-media:hover {
-        background-color: var(--primary-hover);
-    }
-
-    /* Remove button top right corner in dashboard-panel */
-    .dashboard-panel .remove-btn {
-        position: relative;
-        top: 8px;
-        left: 8px;
-        background: transparent;
-        border-radius: 50%;
-        transition: color 0.2s ease;
-        z-index: 5;
-        user-select: none;
-    }
-
-    .dashboard-panel .remove-btn:hover {
-        color: var(--danger-dark, #a00);
-        background-color: rgba(255, 0, 0, 0.1);
-    }
-
-    #social-media-list {
-        display: flex;
-        gap: 0.5em;
-        /*! flex-basis: max-content; */
-        flex-flow: row;
-        flex-wrap: wrap;
-    }
+  @media (max-width: 1000px) { .org-form-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    .org-form-hero { grid-template-columns: 1fr; }
+    .org-form-hero-actions { justify-content: flex-start; }
+    .org-form-fields { grid-template-columns: 1fr; }
+    .org-form-field.full { grid-column: auto; }
+    .social-media-row { grid-template-columns: 1fr auto; }
+    .social-media-row input[type="url"] { grid-column: 1 / -1; grid-row: 2; }
+    .org-form-savebar { align-items: stretch; flex-direction: column; }
+    .org-form-savebar-actions { width: 100%; }
+    .org-form-savebar-actions .org-form-button { flex: 1; }
+  }
+  @media (max-width: 520px) {
+    .org-form-button.hero { width: 100%; }
+    .logo-preview { grid-template-columns: 1fr; }
+    .logo-preview img { width: 100%; height: 8rem; }
+  }
 </style>
+{% endblock %}
+
+{% block main_content %}
+<div class="org-form-page">
+  <header class="org-form-hero">
+    <div>
+      <p class="org-form-kicker">{{ _('Organisaatiohallinta') }}</p>
+      <h1>{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h1>
+      <p>{% if organization %}{{ _('Pidä organisaation profiili selkeänä, ajantasaisena ja helposti tunnistettavana.') }}{% else %}{{ _('Luo organisaatiolle selkeä profiili, jonka tiedot ovat valmiina julkaisemista ja jäsenhallintaa varten.') }}{% endif %}</p>
+    </div>
+    <div class="org-form-hero-actions">
+      {% if organization %}<a class="org-form-button hero" href="{{ url_for('admin_org.view_organization', org_id=organization._id) }}"><i class="fas fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}</a>{% endif %}
+      <a class="org-form-button hero" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
+      {% if organization %}<button class="org-form-button hero" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>{% endif %}
+    </div>
+  </header>
+
+  <form id="organization-form" method="POST" enctype="multipart/form-data" action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
+    <div class="org-form-layout">
+      <div class="org-form-stack">
+        <section class="org-form-card">
+          <div class="org-form-card-header"><span class="org-form-card-icon"><i class="fas fa-building" aria-hidden="true"></i></span><div><h2>{{ _('Perustiedot') }}</h2><p>{{ _('Nämä tiedot näkyvät organisaation profiilissa.') }}</p></div></div>
+          <div class="org-form-card-body">
+            <div class="org-form-fields">
+              <div class="org-form-field full">
+                <label class="org-form-label" for="name">{{ _('Nimi') }} <span class="org-form-required">*</span></label>
+                <input id="name" name="name" class="org-form-control" required autocomplete="organization" value="{{ organization.name if organization else '' }}" placeholder="{{ _('Organisaation nimi') }}">
+              </div>
+              <div class="org-form-field full">
+                <label class="org-form-label" for="description">{{ _('Kuvaus') }} <span class="org-form-required">*</span></label>
+                <textarea id="description" name="description" class="org-form-control" required placeholder="{{ _('Kerro lyhyesti organisaation toiminnasta ja tavoitteista.') }}">{{ organization.description if organization else '' }}</textarea>
+                <p class="org-form-help">{{ _('Selkeä, lyhyt kuvaus auttaa ylläpitäjiä ja kävijöitä tunnistamaan organisaation.') }}</p>
+              </div>
+              <div class="org-form-field">
+                <label class="org-form-label" for="email">{{ _('Sähköpostiosoite') }} <span class="org-form-required">*</span></label>
+                <input type="email" id="email" name="email" class="org-form-control" required autocomplete="email" value="{{ organization.email if organization else '' }}" placeholder="yhteys@example.fi">
+              </div>
+              <div class="org-form-field">
+                <label class="org-form-label" for="website">{{ _('Verkkosivu') }}</label>
+                <input type="url" id="website" name="website" class="org-form-control" value="{{ organization.website if organization else '' }}" placeholder="https://example.fi">
+              </div>
+              {% if organization %}
+              <div class="org-form-field full">
+                <label class="org-form-switch" for="verified"><input type="checkbox" id="verified" name="verified" {% if organization.verified %}checked{% endif %}><span><strong>{{ _('Vahvistettu organisaatio') }}</strong><span>{{ _('Vahvistettu tila näkyy organisaation yhteydessä ylläpidossa.') }}</span></span></label>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="org-form-card">
+          <div class="org-form-card-header"><span class="org-form-card-icon"><i class="fas fa-image" aria-hidden="true"></i></span><div><h2>{{ _('Logo') }}</h2><p>{{ _('Lisää tunnistettava logo kuvalinkillä tai lataamalla tiedosto.') }}</p></div></div>
+          <div class="org-form-card-body">
+            <div class="org-form-fields">
+              <div class="org-form-field">
+                <label class="org-form-label" for="logo_url">{{ _('Logon URL') }}</label>
+                <input type="url" id="logo_url" name="logo_url" class="org-form-control" placeholder="https://example.fi/logo.png" value="{{ organization.logo if organization and organization.logo else '' }}">
+                <p class="org-form-help">{{ _('Käytä tätä, jos logo on jo verkossa.') }}</p>
+              </div>
+              <div class="org-form-field">
+                <label class="org-form-label" for="logo_file">{{ _('Lataa logo tiedostona') }}</label>
+                <input type="file" id="logo_file" name="logo_file" class="org-form-control" accept="image/*">
+                <p class="org-form-help">{{ _('Ladattu tiedosto korvaa URL-osoitteen tallennettaessa.') }}</p>
+              </div>
+              {% if organization and organization.logo %}
+              <div class="org-form-field full">
+                <div class="logo-preview">
+                  <img src="{{ organization.logo }}" alt="{{ _('Nykyinen logo: %(name)s', name=organization.name) }}" loading="lazy" referrerpolicy="no-referrer">
+                  <div><strong>{{ _('Nykyinen logo') }}</strong><span>{{ _('Voit vaihtaa logon yllä olevilla kentillä tai poistaa sen tallennuksen yhteydessä.') }}</span><div class="logo-preview-actions"><a class="org-form-button" href="{{ organization.logo }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Avaa logo') }}</a><label class="remove-logo-toggle"><input type="checkbox" name="remove_logo">{{ _('Poista tallennettaessa') }}</label></div></div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="org-form-card">
+          <div class="org-form-card-header"><span class="org-form-card-icon"><i class="fas fa-hashtag" aria-hidden="true"></i></span><div><h2>{{ _('Sosiaalinen media') }}</h2><p>{{ _('Lisää vain profiilit, joita organisaatio käyttää aktiivisesti.') }}</p></div></div>
+          <div class="org-form-card-body">
+            <div id="social-media-list"></div>
+            <button type="button" id="add-social-media" class="org-form-button"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Lisää some-linkki') }}</button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="org-form-stack">
+        <section class="org-form-card">
+          <div class="org-form-card-header"><span class="org-form-card-icon"><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i></span><div><h2>{{ _('Ennen julkaisua') if not organization else _('Hyvä profiili') }}</h2><p>{{ _('Luo hyvä pohja heti ensimmäisellä tallennuksella.') if not organization else _('Pieni tarkistus ennen tallentamista.') }}</p></div></div>
+          <div class="org-form-card-body org-form-tips">
+            {% if not organization %}<div class="org-form-tip"><span class="org-form-tip-icon"><i class="fas fa-seedling" aria-hidden="true"></i></span><div><strong>{{ _('Aloita perustiedoista') }}</strong><span>{{ _('Nimi, kuvaus ja sähköposti riittävät uuden organisaation luomiseen. Loput voi täydentää myöhemmin.') }}</span></div></div>{% endif %}
+            <div class="org-form-tip"><span class="org-form-tip-icon"><i class="fas fa-align-left" aria-hidden="true"></i></span><div><strong>{{ _('Kerro olennainen') }}</strong><span>{{ _('Kuvaa toiminta ymmärrettävästi ilman pitkää esittelytekstiä.') }}</span></div></div>
+            <div class="org-form-tip"><span class="org-form-tip-icon"><i class="fas fa-link" aria-hidden="true"></i></span><div><strong>{{ _('Tarkista linkit') }}</strong><span>{{ _('Käytä kokonaisia https-osoitteita verkkosivulle, logolle ja some-profiileille.') }}</span></div></div>
+            <div class="org-form-tip"><span class="org-form-tip-icon"><i class="fas fa-envelope" aria-hidden="true"></i></span><div><strong>{{ _('Pidä yhteystieto ajan tasalla') }}</strong><span>{{ _('Yhteyssähköpostin tulisi tavoittaa organisaation aktiivinen ylläpitäjä.') }}</span></div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <div class="org-form-savebar">
+      <div class="org-form-savebar-copy"><strong>{{ _('Valmis luomaan organisaation?') if not organization else _('Valmis tallentamaan?') }}</strong><span>{{ _('Pakolliset kentät on merkitty oranssilla tähdellä.') }}</span></div>
+      <div class="org-form-savebar-actions"><a href="{{ url_for('admin_org.view_organization', org_id=organization._id) if organization else url_for('admin_org.organization_control') }}" class="org-form-button">{{ _('Peruuta') }}</a><button type="submit" class="org-form-button primary"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Tallenna muutokset') if organization else _('Luo organisaatio') }}</button></div>
+    </div>
+  </form>
+
+  {% if organization %}
+  <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('admin_org.invite') }}">
+          <div class="modal-header"><div><p class="org-form-kicker mb-1">{{ _('Uusi jäsen') }}</p><h2 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjä') }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+          <div class="modal-body"><p class="org-form-help mb-3">{{ _('Lähetämme käyttäjälle sähköpostitse linkin, jolla hän voi liittyä organisaatioon.') }}</p><label for="invitee_email" class="org-form-label">{{ _('Kutsuttavan sähköpostiosoite') }}</label><input type="email" id="invitee_email" name="invitee_email" class="org-form-control mt-2" required autocomplete="email" placeholder="nimi@example.fi"><input type="hidden" name="organization_id" value="{{ organization._id }}"></div>
+          <div class="modal-footer"><button type="button" class="org-form-button" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="submit" class="org-form-button primary"><i class="fas fa-paper-plane" aria-hidden="true"></i>{{ _('Lähetä kutsu') }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // ---------- Dropdown helpers ----------
-    function toggleDropdown(sel) {
-        const list = sel.nextElementSibling;
-        list.style.display = list.style.display === 'block' ? 'none' : 'block';
+  document.addEventListener('DOMContentLoaded', () => {
+    const list = document.getElementById('social-media-list');
+    const platforms = [
+      ['facebook', 'Facebook'], ['twitter', 'Twitter'], ['mastodon', 'Mastodon'],
+      ['instagram', 'Instagram'], ['linkedin', 'LinkedIn'], ['tiktok', 'TikTok'],
+      ['youtube', 'YouTube'], ['snapchat', 'Snapchat']
+    ];
+
+    function updateEmptyState() {
+      const empty = list.querySelector('.social-empty');
+      const hasRows = Boolean(list.querySelector('.social-media-row'));
+      if (hasRows && empty) empty.remove();
+      if (!hasRows && !empty) {
+        const element = document.createElement('div');
+        element.className = 'social-empty';
+        element.innerHTML = '<i class="fas fa-link" aria-hidden="true"></i><strong>{{ _("Ei vielä some-linkkejä") }}</strong><span>{{ _("Lisää ensimmäinen profiili alla olevasta painikkeesta.") }}</span>';
+        list.appendChild(element);
+      }
     }
 
-    document.addEventListener('click', e => {
-        const opt = e.target.closest('.dropdown-list div');
-        if (opt) {
-            const value = opt.dataset.value;
-            const text = opt.innerHTML;
-            const dropdown = opt.closest('.custom-dropdown');
-            dropdown.querySelector('.dropdown-selected').innerHTML = text + ' <i class="fas fa-caret-down"></i>';
-            dropdown.querySelector('input[type="hidden"]').value = value;
-            dropdown.querySelector('.dropdown-list').style.display = 'none';
-        }
-        if (!e.target.closest('.custom-dropdown')) {
-            document.querySelectorAll('.dropdown-list').forEach(dl => dl.style.display = 'none');
-        }
-    });
-
-    // ---------- Social media entry factory ----------
     function createSocial(platform = '', url = '') {
-        const list = document.getElementById('social-media-list');
-        const panel = document.createElement('div');
-        panel.className = 'dashboard-panel';
+      const row = document.createElement('div');
+      row.className = 'social-media-row';
 
-        const wrap = document.createElement('div');
-        wrap.className = 'social-media-container';
+      const select = document.createElement('select');
+      select.className = 'org-form-control';
+      select.name = 'social_media_platform[]';
+      select.setAttribute('aria-label', '{{ _("Sosiaalisen median alusta") }}');
+      platforms.forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        option.selected = value === platform;
+        select.appendChild(option);
+      });
 
-        wrap.innerHTML = `
-  <div class="custom-dropdown">
-    <div class="dropdown-selected" onclick="toggleDropdown(this)">{{ _('Valitse alusta') }} <i class="fas fa-caret-down"></i></div>
-    <div class="dropdown-list">
-      <div data-value="facebook"><i class="fab fa-facebook"></i> Facebook</div>
-      <div data-value="twitter"><i class="fab fa-twitter"></i> Twitter</div>
-        <div data-value="mastodon"><i class="fab fa-mastodon"></i> Mastodon</div>
+      const input = document.createElement('input');
+      input.className = 'org-form-control';
+      input.type = 'url';
+      input.name = 'social_media_url[]';
+      input.placeholder = 'https://...';
+      input.value = url;
+      input.required = true;
+      input.setAttribute('aria-label', '{{ _("Sosiaalisen median URL") }}');
 
-      <div data-value="instagram"><i class="fab fa-instagram"></i> Instagram</div>
-      <div data-value="linkedin"><i class="fab fa-linkedin"></i> LinkedIn</div>
-      <div data-value="tiktok"><i class="fab fa-tiktok"></i> TikTok</div>
-      <div data-value="youtube"><i class="fab fa-youtube"></i> YouTube</div>
-      <div data-value="snapchat"><i class="fab fa-snapchat"></i> Snapchat</div>
-    </div>
-    <input type="hidden" name="social_media_platform[]">
-  </div>
-  <input type="url" name="social_media_url[]" placeholder="{{ _('Syötä URL') }}" class="form-control flex-grow" />
-`;
+      const remove = document.createElement('button');
+      remove.className = 'org-form-button danger social-remove';
+      remove.type = 'button';
+      remove.title = '{{ _("Poista") }}';
+      remove.setAttribute('aria-label', '{{ _("Poista some-linkki") }}');
+      remove.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i>';
+      remove.addEventListener('click', () => {
+        row.remove();
+        updateEmptyState();
+      });
 
-        const removeBtn = document.createElement('span');
-        removeBtn.className = 'remove-btn';
-        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-        removeBtn.title = "{{ _('Poista') }}";
-        removeBtn.onclick = () => panel.remove();
-
-        panel.appendChild(removeBtn);
-        panel.appendChild(wrap);
-        list.appendChild(panel);
-
-        // Set initial values if given
-        if (platform) {
-            wrap.querySelector('input[type="hidden"]').value = platform;
-            wrap.querySelector('.dropdown-selected').innerHTML = `<i class="fab fa-${platform}"></i> ${platform.charAt(0).toUpperCase() + platform.slice(1)} <i class="fas fa-caret-down"></i>`;
-        }
-        if (url) {
-            wrap.querySelector('input[type="url"]').value = url;
-        }
-
+      row.append(select, input, remove);
+      list.appendChild(row);
+      updateEmptyState();
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('add-social-media').addEventListener('click', () => createSocial());
-        {% if organization %}
-        {% for p, u in organization.get('social_media_links', {}).items() %} createSocial('{{p}}', '{{u}}'); {% endfor %}
-        {% endif %}
-    });
+    document.getElementById('add-social-media').addEventListener('click', () => createSocial());
+    {% if organization %}
+    {% for platform, url in organization.get('social_media_links', {}).items() %}
+    createSocial({{ platform|tojson }}, {{ url|tojson }});
+    {% endfor %}
+    {% endif %}
+    updateEmptyState();
+  });
 </script>
 {% endblock %}
-
-{% block main_content %}
-<div class="dashboard-container" id="org-form">
-    <!-- Intro card -->
-    <div class="introduction">
-        <h1 id="tabletitle">{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h1>
-        <p class="muted">
-            {{ _('Tällä lomakkeella voit luoda tai muokata organisaatioita, joihin sinulla on käyttöoikeus.') }}<br>
-            {% if organization %}
-            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.3: Organisaation
-            muokkaaminen.') }}
-            {% else %}
-            {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 2.2: Uuden organisaation
-            luominen.') }}
-            {% endif %}
-        </p>
-    </div>
-
-
-    <form method="POST" enctype="multipart/form-data"
-        action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
-
-        <div class="form-group">
-            <label for="name">{{ _('Nimi') }} <span class="required">*</span></label>
-            <input id="name" name="name" class="form-control" required
-                value="{{ organization.name if organization else '' }}">
-        </div>
-
-        <div class="form-group">
-            <label for="description">{{ _('Kuvaus') }} <span class="required">*</span></label>
-            <textarea id="description" name="description" class="form-control"
-                required>{{ organization.description if organization else '' }}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="email">{{ _('Sähköpostiosoite') }} <span class="required">*</span></label>
-            <input type="email" id="email" name="email" class="form-control" required
-                value="{{ organization.email if organization else '' }}">
-        </div>
-
-        <div class="form-group">
-            <label for="website">{{ _('Verkkosivu') }}</label>
-            <input type="url" id="website" name="website" class="form-control"
-                value="{{ organization.website if organization else '' }}">
-        </div>
-
-        <div class="form-group">
-            <label for="logo_url">{{ _('Logon URL') }}</label>
-            <input type="url" id="logo_url" name="logo_url" class="form-control"
-                placeholder="https://example.com/logo.png"
-                value="{{ organization.logo if organization and organization.logo else '' }}">
-            <small class="muted">{{ _('Voit käyttää olemassa olevaa kuvalinkkiä, jos logo on jo verkossa.') }}</small>
-        </div>
-
-        <div class="form-group">
-            <label for="logo_file">{{ _('Lataa logo tiedostona') }}</label>
-            <input type="file" id="logo_file" name="logo_file" class="form-control" accept="image/*">
-            <small class="muted">{{ _('Ladattu tiedosto tallennetaan ja korvaa yllä olevan URL-osoitteen arvon.') }}</small>
-
-            {% if organization and organization.logo %}
-            <div class="logo-preview">
-                <img src="{{ organization.logo }}" alt="{{ _('Nykyinen logo: %(name)s', name=organization.name) }}"
-                    loading="lazy">
-                <div class="logo-actions">
-                    <a href="{{ organization.logo }}" target="_blank" rel="noopener">
-                        {{ _('Avaa nykyinen logo') }}
-                    </a>
-                    <label class="remove-logo-toggle">
-                        <input type="checkbox" name="remove_logo">
-                        {{ _('Poista logo tallennettaessa') }}
-                    </label>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if organization %}
-        <div class="form-group">
-            <label for="verified">{{ _('Onko organisaatio vahvistettu?') }}</label>
-            <input type="checkbox" id="verified" name="verified" {% if organization.verified %}checked{% endif %}>
-        </div>
-        {% endif %}
-
-        <div class="form-group">
-            <label>{{ _('Sosiaalinen media') }}</label>
-            <div id="social-media-list"></div>
-            <button type="button" id="add-social-media" class="button">{{ _('Lisää sosiaalisen median alusta')
-                }}</button>
-        </div>
-
-        <div class="form-buttons">
-            <button type="submit" class="button save-button">{% if organization %}{{ _('Tallenna muutokset') }}{% else %}{{
-                _('Luo') }}{% endif %}</button>
-            <a href="{{ url_for('admin_org.organization_control') }}" class="button cancel-button">{{ _('Peruuta') }}</a>
-        </div>
-    </form>
-
-    {% if organization %}
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
-        {{ _('Kutsu käyttäjiä') }}
-    </button>
-    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm"> {# You can use modal-md or modal-lg if needed #}
-            <div class="modal-content shadow rounded-4 border-0"
-                style="background-color: var(--container-bg); color: var(--text);">
-
-                <form method="POST"
-                    action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjiä') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="{{ _('Sulje') }}"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group mb-3">
-                            <label for="invitee_email" class="form-label">
-                                {{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span>
-                            </label>
-                            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required
-                                placeholder="sähköposti@domain.fi">
-                        </div>
-                        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
-                    </div>
-
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta')
-                            }}</button>
-                        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-    {% endif %}
-</div>
-{% endblock %}
-    .logo-preview {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-top: 0.75rem;
-        flex-wrap: wrap;
-    }
-
-    .logo-preview img {
-        width: 96px;
-        height: 96px;
-        object-fit: contain;
-        border-radius: 18px;
-        border: 1px solid var(--input-border);
-        background-color: var(--input-bg);
-        padding: 0.5rem;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, .08);
-    }
-
-    .logo-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .remove-logo-toggle {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 500;
-    }

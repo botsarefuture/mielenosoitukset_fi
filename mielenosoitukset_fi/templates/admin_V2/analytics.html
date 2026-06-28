@@ -3,86 +3,249 @@
 {% block title %}{{ _('Mielenosoitusanalytiikka') }}{% endblock %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}">
-
 <style>
-  .no-data {
-    color: var(--text_error);
-    font-weight: bold;
-    background: var(--background_alert);
-    padding: 1.5rem;
-    border: 1px dashed var(--border_alert);
-    border-radius: 8px;
+  .analytics-page {
+    --analytics-blue: light-dark(#0033a0, #8bb1ff);
+    --analytics-blue-dark: light-dark(#00267a, #b9ceff);
+    --analytics-blue-soft: light-dark(#edf4ff, #17233b);
+    --analytics-orange: #ff6600;
+    --analytics-surface: light-dark(#ffffff, #20252d);
+    --analytics-surface-muted: light-dark(#f6f8fb, #292f39);
+    --analytics-border: light-dark(#dce3ec, #424b59);
+    --analytics-text: light-dark(#172033, #f2f5fa);
+    --analytics-muted: light-dark(#647083, #b7c0ce);
+    max-width: 1300px;
+    margin: 0 auto;
+    color: var(--analytics-text);
+  }
+
+  .analytics-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    margin-bottom: 1.25rem;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .4), transparent 17rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+  }
+
+  .analytics-kicker {
+    margin: 0;
+    color: #ffd6bc;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .analytics-hero h1 {
+    margin: .25rem 0 .5rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -.035em;
+  }
+
+  .analytics-hero p:last-child {
+    max-width: 650px;
+    margin: 0;
+    color: rgba(255,255,255,.8);
+    line-height: 1.65;
+  }
+
+  .analytics-summary {
+    position: relative;
+    z-index: 1;
+    min-width: 150px;
+    padding: .9rem 1rem;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 1rem;
+    background: rgba(255,255,255,.1);
     text-align: center;
-    margin: 2rem 0;
   }
 
-  .analytics-table td,
-  .analytics-table th {
-    text-align: left;
-    padding: 1rem;
+  .analytics-summary strong,
+  .analytics-summary span {
+    display: block;
   }
 
-  .analytics-table thead {
-    background-color: var(--table_header_bg);
+  .analytics-summary strong {
+    color: #fff;
+    font-size: 1.7rem;
+    line-height: 1;
   }
 
-  .analytics-table tr:hover {
-    background-color: var(--table_row_hover);
+  .analytics-summary span {
+    margin-top: .3rem;
+    color: rgba(255,255,255,.72);
+    font-size: .78rem;
+  }
+
+  .no-data {
+    color: var(--analytics-muted);
+    background: var(--analytics-surface);
+    padding: 3rem 1.5rem;
+    border: 1px dashed var(--analytics-border);
+    border-radius: 1rem;
+    text-align: center;
+  }
+
+  .analytics-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(300px, .55fr);
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .analytics-panel {
+    overflow: hidden;
+    border: 1px solid var(--analytics-border);
+    border-radius: 1.1rem;
+    background: var(--analytics-surface);
+    box-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+  }
+
+  .analytics-panel-heading {
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--analytics-border);
+  }
+
+  .analytics-panel-heading h2 {
+    margin: 0;
+    color: var(--analytics-text);
+    font-size: 1.05rem;
+  }
+
+  .analytics-panel-heading p {
+    margin: .25rem 0 0;
+    color: var(--analytics-muted);
+    font-size: .84rem;
   }
 
   .chart-container {
-    background: var(--container_background);
-    padding: 1rem;
-    border-radius: 12px;
-    border: 1px solid var(--border_color);
-    margin-bottom: 2rem;
-    height: 400px;
+    height: 430px;
+    padding: 1.25rem;
+  }
+
+  .analytics-table-wrap {
+    max-height: 500px;
+    overflow: auto;
+  }
+
+  .analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .analytics-table th,
+  .analytics-table td {
+    padding: .85rem 1.1rem;
+    border-bottom: 1px solid var(--analytics-border);
+    color: var(--analytics-text);
+    text-align: left;
+  }
+
+  .analytics-table th {
+    position: sticky;
+    top: 0;
+    color: var(--analytics-muted);
+    background: var(--analytics-surface-muted);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .analytics-table tbody tr:hover {
+    background: var(--analytics-blue-soft);
+  }
+
+  .analytics-table td:last-child {
+    color: var(--analytics-blue-dark);
+    font-weight: 800;
+  }
+
+  @media (max-width: 1000px) {
+    .analytics-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .analytics-hero {
+      grid-template-columns: 1fr;
+    }
+
+    .analytics-summary {
+      min-width: 0;
+    }
   }
 </style>
 {% endblock %}
 
 {% block main_content %}
-<section class="dashboard-container">
-  <!-- Header -->
-  <div class="introduction">
-    <h1 id="tabletitle">{{ _('Mielenosoitusanalytiikka') }}</h1>
-    <p class="muted">
+<section class="analytics-page">
+  <header class="analytics-hero">
+    <div>
+      <p class="analytics-kicker">{{ _('Analytiikka') }}</p>
+      <h1 id="tabletitle">{{ _('Mielenosoitusanalytiikka') }}</h1>
+      <p>
       {{ _('Täältä näet mielenosoitusten katselukerrat järjestyksessä.') }}
-    </p>
-  </div>
+      </p>
+    </div>
+    <div class="analytics-summary">
+      <strong>{{ data|length }}</strong>
+      <span>{{ _('mielenosoitusta') }}</span>
+    </div>
+  </header>
 
   {% if data %}
-  <!-- Chart -->
-  <div class="chart-container">
-    <canvas id="viewsChart"></canvas>
-  </div>
+  <div class="analytics-grid">
+    <div class="analytics-panel">
+      <div class="analytics-panel-heading">
+        <h2>{{ _('Katselukerrat vertailussa') }}</h2>
+        <p>{{ _('Palkit näyttävät suosituimmat mielenosoitukset nopeasti.') }}</p>
+      </div>
+      <div class="chart-container">
+        <canvas id="viewsChart"></canvas>
+      </div>
+    </div>
 
-  <!-- Table -->
-  <div class="table-container" style="background: none;">
-    <table class="analytics-table">
-      <thead>
-        <tr>
-          <th>{{ _('Mielenosoituksen ID') }}</th>
-          <th>{{ _('Katselukerrat') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for demo in data %}
-        <tr>
-          <td>{{ demo.id }}</td>
-          <td>{{ demo.views }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="analytics-panel">
+      <div class="analytics-panel-heading">
+        <h2>{{ _('Kaikki luvut') }}</h2>
+        <p>{{ _('Tarkat katselukerrat mielenosoituksittain.') }}</p>
+      </div>
+      <div class="analytics-table-wrap">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>{{ _('Mielenosoituksen ID') }}</th>
+              <th>{{ _('Katselukerrat') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for demo in data %}
+            <tr>
+              <td>{{ demo.id }}</td>
+              <td>{{ demo.views }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   {% else %}
   <div class="no-data">
-    <i class="fa-solid fa-circle-exclamation"></i> {{ _('Ei tietoja saatavilla.') }}
+    <i class="fa-solid fa-chart-column mb-2"></i>
+    <p class="mb-0">{{ _('Ei tietoja saatavilla.') }}</p>
   </div>
   {% endif %}
 </section>
@@ -96,64 +259,67 @@
   const demoLabels = {{ data | map(attribute='id') | list | tojson }};
   const demoViews = {{ data | map(attribute='views') | list | tojson }};
 
-  const ctx = document.getElementById('viewsChart').getContext('2d');
+  const chartElement = document.getElementById('viewsChart');
 
-  const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+  if (chartElement) {
+    const ctx = chartElement.getContext('2d');
+    const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
 
-  const chartColors = {
-    text: isDark ? '#eee' : '#222',
-    grid: isDark ? '#444' : '#ccc',
-    background: isDark ? '#1e1e2f' : '#fff',
-    bars: isDark ? '#64b5f6' : '#1976d2',
-  };
+    const chartColors = {
+      text: isDark ? '#d9e0ea' : '#647083',
+      grid: isDark ? 'rgba(255,255,255,.08)' : 'rgba(28,48,82,.1)',
+      background: isDark ? '#20252d' : '#fff',
+      bars: isDark ? '#8bb1ff' : '#0033a0',
+    };
 
-  const viewsChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: demoLabels,
-      datasets: [{
-        label: '{{ _("Katselukerrat") }}',
-        data: demoViews,
-        backgroundColor: chartColors.bars,
-        borderRadius: 4,
-        barPercentage: 0.6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          ticks: {
-            color: chartColors.text
-          },
-          grid: {
-            color: chartColors.grid
-          }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: chartColors.text
-          },
-          grid: {
-            color: chartColors.grid
-          }
-        }
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: demoLabels,
+        datasets: [{
+          label: '{{ _("Katselukerrat") }}',
+          data: demoViews,
+          backgroundColor: chartColors.bars,
+          borderRadius: 7,
+          barPercentage: 0.65
+        }]
       },
-      plugins: {
-        legend: {
-          labels: {
-            color: chartColors.text
-          }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: {
+              color: chartColors.text
+            },
+            grid: {
+              display: false
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: chartColors.text
+            },
+            grid: {
+              color: chartColors.grid
+            }
+          },
         },
-        tooltip: {
-          backgroundColor: chartColors.background,
-          titleColor: chartColors.text,
-          bodyColor: chartColors.text,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: chartColors.background,
+            titleColor: chartColors.text,
+            bodyColor: chartColors.text,
+            borderColor: chartColors.grid,
+            borderWidth: 1
+          }
         }
       }
-    }
-  });
+    });
+  }
 </script>
 {% endblock %}

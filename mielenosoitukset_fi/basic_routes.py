@@ -34,6 +34,7 @@ from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
@@ -255,7 +256,7 @@ def _log_submit_error(message, code, status=400, extra=None):
                 "request_path": request.path,
                 "request_method": request.method,
                 "query_args": request.args.to_dict(flat=False),
-                "ip": request.remote_addr,
+                "ip": get_client_ip(),
                 "user_agent": request.headers.get("User-Agent"),
                 "referer": request.headers.get("Referer"),
                 "form_snapshot": form_snapshot,
@@ -1196,7 +1197,7 @@ def init_routes(app):
                     "status": "processing",
                     "created_at": now,
                     "fingerprint": submission_fingerprint,
-                    "ip": request.remote_addr,
+                    "ip": get_client_ip(),
                 }
                 
                 try:
@@ -1239,7 +1240,7 @@ def init_routes(app):
                         "$set": {
                             "fingerprint": submission_fingerprint,
                             "updated_at": now,
-                            "ip": request.remote_addr,
+                            "ip": get_client_ip(),
                         }
                     },
                 )
@@ -1565,7 +1566,7 @@ def init_routes(app):
                         if current_user.is_authenticated
                         else None
                     ),
-                    "ip": request.remote_addr,
+                    "ip": get_client_ip(),
                 }
                 if mark_cancelled:
                     report_doc["cancelled_reported"] = True
@@ -1595,7 +1596,7 @@ def init_routes(app):
                             if current_user.is_authenticated
                             else None
                         ),
-                        "ip": request.remote_addr,
+                        "ip": get_client_ip(),
                         "reported_cancelled": mark_cancelled,
                         "reporter_email": reporter_email,
                     }
@@ -1620,7 +1621,7 @@ def init_routes(app):
                     "error": error,
                     "date": datetime.now(),
                     "user": current_user._id if current_user.is_authenticated else None,
-                    "ip": request.remote_addr,
+                    "ip": get_client_ip(),
                     "reported_cancelled": mark_cancelled,
                     "reporter_email": reporter_email,
                 }
@@ -2171,7 +2172,7 @@ def init_routes(app):
                 'reporter_comment': reporter_comment,
                 'reporter_email': reporter_email,
                 'created_at': utcnow(),
-                'ip': request.remote_addr,
+                'ip': get_client_ip(),
                 'user_agent': request.headers.get('User-Agent'),
                 'status': 'new',
             }
@@ -2468,7 +2469,7 @@ def init_routes(app):
             "created_at": utcnow(),
             "fields": {},
             "meta": {
-                "ip": request.remote_addr,
+                "ip": get_client_ip(),
                 "user_agent": request.headers.get("User-Agent"),
                 "submitter_email": request.form.get("email")
             },
@@ -2683,7 +2684,7 @@ def init_routes(app):
     @app.route("/subscribe_reminder/<demo_id>", methods=["POST"])
     def subscribe_reminder(demo_id):
         user_email = request.form.get("user_email")
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
         if not user_email:

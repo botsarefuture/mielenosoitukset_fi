@@ -872,16 +872,10 @@ def _log_token_event(
         )
 
 def _client_ip() -> str:
-    """
-    Get the best-effort client IP.
-    If behind a trusted proxy, prefer X-Forwarded-For first value.
-    """
-    # If you terminate TLS behind a proxy/load balancer, make sure you trust only known proxies
-    xff = request.headers.get("X-Forwarded-For")
-    if xff:
-        # XFF may be a list "client, proxy1, proxy2"
-        return xff.split(",")[0].strip()
-    return request.remote_addr or "0.0.0.0"
+    """Return the trusted real-client IP for token auditing."""
+    from mielenosoitukset_fi.utils.request_ip import get_client_ip
+
+    return get_client_ip("0.0.0.0")
 
 def _user_agent() -> str:
     return request.headers.get("User-Agent", "")[:512]

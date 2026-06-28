@@ -25,6 +25,7 @@ from mielenosoitukset_fi.utils.tokens import (
 )
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
 from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
@@ -82,7 +83,7 @@ def token_required(required_scopes=None, auto_renew=True):
                 "timestamp": datetime.now(),
                 "endpoint": request.path,
                 "method": request.method,
-                "ip": request.remote_addr
+                "ip": get_client_ip()
             })
 
             # Attach token record to request

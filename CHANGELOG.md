@@ -8,6 +8,8 @@
 * Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
 
 ### Fixed
+* Organization logos served through the production CDN now omit local and preview-page referrers when embedded or opened, preventing Cloudflare Hotlink Protection from rejecting valid lc-main assets during development and previews.
+* Request logging and rate limiting now restore the real visitor IP from `CF-Connecting-IP` only when the forwarding address belongs to Cloudflare, avoiding Cloudflare-edge IPs without trusting spoofed headers.
 * Admin notification job no longer repeatedly regenerates and logs approval/rejection/preview links for the same pending demonstrations every 5 minutes; completed notification jobs are now properly recognized to prevent duplicate link generation.
 * Demo approval and rejection now close linked support cases consistently across direct admin actions, token links, and the auto-close background job; de-escalation also writes back to the correct `case_history` field.
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
@@ -159,6 +161,19 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Admin suggestion queue, suggestion review, and analytics views now use a calmer blue-and-orange visual style inspired by `/ohjeet`, replacing dense and neon treatments with clearer comparisons, cards, controls, and table hierarchy.
+* Organization management now has a clearer responsive page-number menu with nearby pages, first/last shortcuts, and readable previous/next controls.
+* User management was redesigned into a clearer workspace with account summaries, improved live search, recognizable user identity rows, status and role indicators, responsive pagination, and cleaner actions.
+* User management search, avatar, and summary-card icon alignment were corrected so controls and icon tiles remain centered.
+* The create-user modal now supports dark mode, matches the redesigned user-management workspace, suggests account names from email, explains roles clearly, and shows consistent validation and submission feedback.
+* Login history, forced-password-change, and delete-user modals now share the user-management dark-mode styling and provide clearer loading, confirmation, countdown, success, and error states.
+* Create-user and workflow confirmation buttons now keep readable foreground contrast in the admin light theme.
+* User action dropdowns now remain fully visible above the table footer instead of being clipped by the user-list card.
+* Organization management now matches the redesigned user workspace with profile summaries, clearer search and creation controls, recognizable organization rows, status indicators, themed actions, and responsive pagination.
+* Organization detail pages now use the refreshed admin visual system with a clearer profile summary, member and invitation workspaces, responsive tables, themed confirmations, and inline feedback; the visual system is also documented for future admin views.
+* Organization detail summary, fact, and member icons now remain properly centered instead of inheriting text-layout rules.
+* Organization create and edit forms now match the refreshed admin visual system with focused profile, logo, and social-link sections, clearer guidance, a responsive sticky save bar, and a dark-mode invitation modal.
+* Organization create-form guidance now reflects the first-time setup flow, and its profile-tip icons remain properly centered.
 * Redesigned `/ohjeet` into a clearer documentation-style guide with blue and orange site branding, a scannable table of contents, step-by-step submission help, improved troubleshooting, and mobile-friendly sections.
 * Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
 

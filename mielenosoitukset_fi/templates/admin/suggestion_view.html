@@ -2,391 +2,502 @@
 
 {% block styles %}
 <style>
-  :root {
-    --color-text: light-dark(#1e293b, #e2e8f0);
-    --color-text-secondary: light-dark(#64748b, #94a3b8);
-    --color-primary: light-dark(#0033a0, #4d79cc);
-    --color-card-bg: light-dark(#ffffff, #1e1e2e);
-    --color-border: light-dark(#e2e8f0, #404050);
-    --color-shadow: light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.2));
-    --color-success: light-dark(#10b981, #10b981);
-    --color-success-bg: light-dark(rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
-    --color-danger: light-dark(#ef4444, #f87171);
-    --color-danger-hover: light-dark(#dc2626, #fca5a5);
+  .suggestion-review {
+    --review-blue: light-dark(#0033a0, #8bb1ff);
+    --review-blue-dark: light-dark(#00267a, #b9ceff);
+    --review-blue-soft: light-dark(#edf4ff, #17233b);
+    --review-orange: #ff6600;
+    --review-orange-soft: light-dark(#fff2e8, #3a2418);
+    --review-surface: light-dark(#ffffff, #20252d);
+    --review-surface-muted: light-dark(#f6f8fb, #292f39);
+    --review-border: light-dark(#dce3ec, #424b59);
+    --review-text: light-dark(#172033, #f2f5fa);
+    --review-muted: light-dark(#647083, #b7c0ce);
+    --review-success: light-dark(#087f5b, #65d6ac);
+    --review-success-soft: light-dark(#eaf8f2, #17382e);
+    --review-danger: light-dark(#b42318, #ff9b93);
+    --review-danger-soft: light-dark(#fff1f0, #3c2022);
+    max-width: 1200px;
+    margin: 0 auto;
+    color: var(--review-text);
   }
 
-  .view-header {
-    display: flex;
-    justify-content: space-between;
+  .review-back {
+    display: inline-flex;
+    gap: .45rem;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 2px solid var(--color-border);
+    margin-bottom: .85rem;
+    color: var(--review-blue-dark);
+    font-size: .88rem;
+    font-weight: 700;
+    text-decoration: none;
   }
 
-  .view-header h1 {
+  .review-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem;
+    align-items: end;
+    margin-bottom: 1rem;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .4), transparent 17rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+  }
+
+  .review-kicker {
     margin: 0;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-text);
+    color: #ffd6bc;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .review-hero h1 {
+    margin: .25rem 0 .55rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -.035em;
+  }
+
+  .review-hero p:last-child {
+    max-width: 650px;
+    margin: 0;
+    color: rgba(255,255,255,.8);
+    line-height: 1.65;
   }
 
   .status-badge {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    padding: .55rem .85rem;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255,255,255,.12);
+    font-size: .84rem;
+    font-weight: 800;
   }
 
-  .status-badge.new {
-    background: light-dark(#dcfce7, #1f3a3a);
-    color: light-dark(#166534, #86efac);
-  }
-
-  .status-badge.applied {
-    background: light-dark(#dbeafe, #1e3a5f);
-    color: light-dark(#1e40af, #93c5fd);
-  }
-
-  .status-badge.rejected {
-    background: light-dark(#fee2e2, #3a1f1f);
-    color: light-dark(#991b1b, #fca5a5);
-  }
-
-  .info-panel {
-    background: var(--color-card-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .info-grid {
+  .review-info {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .75rem;
+    margin-bottom: 1.5rem;
   }
 
   .info-item {
-    display: flex;
-    flex-direction: column;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid var(--review-border);
+    border-radius: .9rem;
+    background: var(--review-surface);
+  }
+
+  .info-label,
+  .info-value {
+    display: block;
   }
 
   .info-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-text-secondary);
+    margin-bottom: .35rem;
+    color: var(--review-muted);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .07em;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
   }
 
   .info-value {
-    font-size: 1rem;
-    color: var(--color-text);
-    word-break: break-all;
+    overflow-wrap: anywhere;
+    color: var(--review-text);
+    font-size: .88rem;
+    font-weight: 650;
   }
 
-  .section-title {
+  .info-value a {
+    color: var(--review-blue-dark);
+  }
+
+  .review-section {
+    margin-top: 1.5rem;
+  }
+
+  .section-heading {
+    display: flex;
+    gap: .8rem;
+    align-items: flex-start;
+    margin-bottom: .9rem;
+  }
+
+  .section-icon {
+    display: inline-grid;
+    flex: 0 0 auto;
+    width: 2.4rem;
+    height: 2.4rem;
+    place-items: center;
+    border-radius: .75rem;
+    color: var(--review-blue);
+    background: var(--review-blue-soft);
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    color: var(--review-text);
     font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 2rem 0 1rem 0;
-    padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--color-border);
   }
 
-  .changes-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--color-card-bg);
-    border-radius: 12px;
+  .section-heading p {
+    margin: .2rem 0 0;
+    color: var(--review-muted);
+    font-size: .88rem;
+  }
+
+  .change-list {
+    display: grid;
+    gap: .85rem;
+  }
+
+  .change-card {
     overflow: hidden;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--review-border);
+    border-radius: 1rem;
+    background: var(--review-surface);
+    box-shadow: 0 10px 28px light-dark(rgba(28, 48, 82, .06), rgba(0, 0, 0, .14));
   }
 
-  .changes-table thead {
-    background: var(--color-shadow);
+  .change-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .8rem 1rem;
+    border-bottom: 1px solid var(--review-border);
+    background: var(--review-surface-muted);
   }
 
-  .changes-table th {
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    color: var(--color-text);
-    border-bottom: 1px solid var(--color-border);
+  .field-name {
+    color: var(--review-text);
+    font-weight: 800;
   }
 
-  .changes-table td {
-    padding: 1rem;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text);
-  }
-
-  .changes-table tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  .changes-table input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+  .apply-toggle {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: center;
+    margin: 0;
+    color: var(--review-blue-dark);
+    font-size: .82rem;
+    font-weight: 800;
     cursor: pointer;
-    accent-color: var(--color-primary);
   }
 
-  .original-value {
-    background: var(--color-shadow);
-    padding: 0.75rem;
-    border-radius: 6px;
-    font-family: monospace;
-    font-size: 0.9rem;
-    max-height: 200px;
-    overflow-y: auto;
-    color: var(--color-text);
+  .apply-toggle input {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--review-blue);
   }
 
-  .suggested-value {
-    background: var(--color-success-bg);
-    padding: 0.75rem;
-    border-radius: 6px;
-    border-left: 3px solid var(--color-success);
-    font-family: monospace;
-    font-size: 0.9rem;
-    max-height: 200px;
-    overflow-y: auto;
-    color: var(--color-text);
+  .change-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .change-value {
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .change-value + .change-value {
+    border-left: 1px solid var(--review-border);
+  }
+
+  .change-value-label {
+    display: block;
+    margin-bottom: .55rem;
+    color: var(--review-muted);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+
+  .change-value-content {
+    min-height: 3.25rem;
+    max-height: 260px;
+    overflow: auto;
+    overflow-wrap: anywhere;
+    padding: .8rem;
+    border-radius: .7rem;
+    color: var(--review-text);
+    background: var(--review-surface-muted);
+    font-size: .9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .change-value-proposed .change-value-label {
+    color: var(--review-success);
+  }
+
+  .change-value-proposed .change-value-content {
+    border-left: 3px solid var(--review-success);
+    background: var(--review-success-soft);
   }
 
   .comment-box {
-    background: var(--color-card-bg);
-    border-left: 4px solid var(--color-primary);
-    padding: 1.25rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
+    padding: 1.1rem 1.2rem;
+    border: 1px solid var(--review-border);
+    border-left: 4px solid var(--review-orange);
+    border-radius: .85rem;
+    color: var(--review-text);
+    background: var(--review-surface);
+    line-height: 1.7;
   }
 
   .actions-panel {
     display: flex;
-    gap: 1rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
-    margin-top: 2rem;
-  }
-
-  .btn-apply {
-    background: var(--color-success);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .btn-apply:hover {
-    background: light-dark(#059669, #059669);
-    transform: translateY(-2px);
-  }
-
-  .btn-reject {
-    background: var(--color-danger);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .btn-reject:hover {
-    background: var(--color-danger-hover);
-    transform: translateY(-2px);
-  }
-
-  .btn-back {
-    color: var(--color-primary);
-    text-decoration: none;
-    display: inline-flex;
+    gap: .75rem;
     align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    margin-top: 1rem;
   }
 
-  .btn-back:hover {
-    transform: translateX(-2px);
+  .review-button {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.7rem;
+    padding: .65rem 1rem;
+    border: 1px solid transparent;
+    border-radius: .75rem;
+    font-size: .88rem;
+    font-weight: 800;
+    cursor: pointer;
   }
 
-  @media (max-width: 768px) {
-    .view-header {
-      flex-direction: column;
-      align-items: flex-start;
+  .review-button-apply {
+    color: #fff;
+    background: var(--review-blue);
+  }
+
+  .review-button-apply:hover {
+    background: var(--review-blue-dark);
+  }
+
+  .danger-zone {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 2rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid light-dark(#f1c7c3, #684045);
+    border-radius: 1rem;
+    background: var(--review-danger-soft);
+  }
+
+  .danger-zone strong,
+  .danger-zone span {
+    display: block;
+  }
+
+  .danger-zone strong {
+    color: var(--review-danger);
+  }
+
+  .danger-zone span {
+    margin-top: .2rem;
+    color: var(--review-muted);
+    font-size: .84rem;
+  }
+
+  .review-button-reject {
+    flex: 0 0 auto;
+    border-color: var(--review-danger);
+    color: var(--review-danger);
+    background: transparent;
+  }
+
+  .not-found {
+    padding: 3rem 1.5rem;
+    border: 1px dashed var(--review-border);
+    border-radius: 1rem;
+    background: var(--review-surface);
+    text-align: center;
+  }
+
+  @media (max-width: 1000px) {
+    .review-info {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
 
-    .info-grid {
+  @media (max-width: 700px) {
+    .review-hero,
+    .change-comparison {
       grid-template-columns: 1fr;
     }
 
-    .actions-panel {
+    .review-info {
+      grid-template-columns: 1fr;
+    }
+
+    .change-value + .change-value {
+      border-top: 1px solid var(--review-border);
+      border-left: 0;
+    }
+
+    .danger-zone {
+      align-items: stretch;
       flex-direction: column;
     }
 
-    .actions-panel button,
-    .actions-panel a {
+    .review-button {
       width: 100%;
-    }
-
-    .changes-table {
-      font-size: 0.9rem;
-    }
-
-    .changes-table th,
-    .changes-table td {
-      padding: 0.75rem;
     }
   }
 </style>
 {% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<div class="admin-page suggestion-review">
   {% if suggestion %}
-    <div class="view-header">
+    <a href="{{ url_for('admin_demo.suggestions_list') }}" class="review-back">
+      <i class="fas fa-arrow-left" aria-hidden="true"></i> {{ _('Takaisin ehdotuksiin') }}
+    </a>
+
+    <header class="review-hero">
       <div>
-        <a href="{{ url_for('admin_demo.suggestions_list') }}" class="btn-back">
-          <i class="fas fa-arrow-left"></i> {{ _('Takaisin') }}
-        </a>
-        <h1 style="margin-top: 1rem;">💬 {{ _('Ehdotuksen tarkastelu') }}</h1>
+        <p class="review-kicker">{{ _('Ehdotuksen tarkastelu') }}</p>
+        <h1>{{ suggestion.original_values.get('title', _('Mielenosoituksen muutosehdotus')) }}</h1>
+        <p>{{ _('Vertaa tietoja rauhassa ja valitse vain ne muutokset, jotka haluat julkaista.') }}</p>
       </div>
       <span class="status-badge {{ suggestion.status }}">
         {% if suggestion.status == 'new' %}
-          <i class="fas fa-star me-1"></i>{{ _('Uusi') }}
+          <i class="fas fa-star" aria-hidden="true"></i>{{ _('Uusi') }}
         {% elif suggestion.status == 'applied' %}
-          <i class="fas fa-check me-1"></i>{{ _('Hyväksytty') }}
+          <i class="fas fa-check" aria-hidden="true"></i>{{ _('Hyväksytty') }}
         {% elif suggestion.status == 'rejected' %}
-          <i class="fas fa-times me-1"></i>{{ _('Hylätty') }}
+          <i class="fas fa-times" aria-hidden="true"></i>{{ _('Hylätty') }}
         {% else %}
           {{ suggestion.status }}
         {% endif %}
       </span>
-    </div>
+    </header>
 
-    <!-- Info Panel -->
-    <div class="info-panel">
-      <div class="info-grid">
-        <div class="info-item">
-          <span class="info-label">{{ _('Mielenosoitus') }}</span>
-          <span class="info-value">
-            <a href="{{ url_for('demonstration_detail', demo_id=suggestion.demo_id) }}" target="_blank" style="color: var(--color-primary);">
-              {{ suggestion.demo_id[:12] }}...
-              <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8rem;"></i>
-            </a>
-          </span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">{{ _('Lähettäjä') }}</span>
-          <span class="info-value">{{ suggestion.reporter_email or _('Tuntematon') }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">{{ _('Luontiaika') }}</span>
-          <span class="info-value">{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M:%S') if suggestion.created_at else '—' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">{{ _('IP-osoite') }}</span>
-          <span class="info-value">{{ suggestion.ip or '—' }}</span>
-        </div>
+    <section class="review-info" aria-label="{{ _('Ehdotuksen tiedot') }}">
+      <div class="info-item">
+        <span class="info-label">{{ _('Mielenosoitus') }}</span>
+        <span class="info-value">
+          <a href="{{ url_for('demonstration_detail', demo_id=suggestion.demo_id) }}" target="_blank">
+            {{ suggestion.demo_id[:12] }}... <i class="fas fa-external-link-alt ms-1" aria-hidden="true"></i>
+          </a>
+        </span>
       </div>
-    </div>
+      <div class="info-item">
+        <span class="info-label">{{ _('Lähettäjä') }}</span>
+        <span class="info-value">{{ suggestion.reporter_email or _('Tuntematon') }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">{{ _('Luontiaika') }}</span>
+        <span class="info-value">{{ suggestion.created_at.strftime('%d.%m.%Y %H:%M:%S') if suggestion.created_at else '—' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">{{ _('IP-osoite') }}</span>
+        <span class="info-value">{{ suggestion.ip or '—' }}</span>
+      </div>
+    </section>
 
-    <!-- Suggested Changes -->
     {% if suggestion.suggested_fields %}
-      <h2 class="section-title">📝 {{ _('Ehdotetut muutokset') }}</h2>
-      <form method="POST" action="{{ url_for('admin_demo.suggestion_apply', suggestion_id=suggestion._id) }}">
-        <div style="overflow-x: auto; margin-bottom: 1.5rem;">
-          <table class="changes-table">
-            <thead>
-              <tr>
-                <th style="width: 50px;">{{ _('Valitse') }}</th>
-                <th style="width: 120px;">{{ _('Kenttä') }}</th>
-                <th>{{ _('Nykyinen arvo') }}</th>
-                <th>{{ _('Ehdotettu arvo') }}</th>
-              </tr>
-            </thead>
-            <tbody>
+      <section class="review-section">
+        <div class="section-heading">
+          <span class="section-icon"><i class="fas fa-code-compare" aria-hidden="true"></i></span>
+          <div>
+            <h2>{{ _('Ehdotetut muutokset') }}</h2>
+            <p>{{ _('Valitut muutokset päivitetään mielenosoitukseen yhdellä kertaa.') }}</p>
+          </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_demo.suggestion_apply', suggestion_id=suggestion._id) }}">
+          <div class="change-list">
             {% for k, v in suggestion.suggested_fields.items() %}
-              <tr>
-                <td style="text-align: center;">
-                  <input type="checkbox" name="apply_field" value="{{ k }}" checked>
-                </td>
-                <td style="font-weight: 600; color: var(--color-primary);">{{ k }}</td>
-                <td>
-                  <div class="original-value">
-                    {% if k == 'tags' and suggestion.original_values.get(k) is iterable and suggestion.original_values.get(k) is not string %}
-                      {{ suggestion.original_values.get(k, '') | join(', ') }}
-                    {% else %}
-                      {{ suggestion.original_values.get(k, '') }}
-                    {% endif %}
+              <article class="change-card">
+                <div class="change-card-header">
+                  <span class="field-name">{{ k }}</span>
+                  <label class="apply-toggle">
+                    <input type="checkbox" name="apply_field" value="{{ k }}" checked>
+                    {{ _('Ota tämä muutos käyttöön') }}
+                  </label>
+                </div>
+                <div class="change-comparison">
+                  <div class="change-value">
+                    <span class="change-value-label">{{ _('Nykyinen arvo') }}</span>
+                    <div class="change-value-content">{% if k == 'tags' and suggestion.original_values.get(k) is iterable and suggestion.original_values.get(k) is not string %}{{ suggestion.original_values.get(k, '') | join(', ') }}{% else %}{{ suggestion.original_values.get(k, '') }}{% endif %}</div>
                   </div>
-                </td>
-                <td>
-                  <div class="suggested-value">
-                    {% if k == 'tags' and v is iterable and v is not string %}
-                      {{ v | join(', ') }}
-                    {% else %}
-                      {{ v }}
-                    {% endif %}
+                  <div class="change-value change-value-proposed">
+                    <span class="change-value-label">{{ _('Ehdotettu arvo') }}</span>
+                    <div class="change-value-content">{% if k == 'tags' and v is iterable and v is not string %}{{ v | join(', ') }}{% else %}{{ v }}{% endif %}</div>
                   </div>
-                </td>
-              </tr>
+                </div>
+              </article>
             {% endfor %}
-            </tbody>
-          </table>
-        </div>
+          </div>
 
-        <div class="actions-panel">
-          <button type="submit" class="btn-apply">
-            <i class="fas fa-check me-2"></i>{{ _('Päivitä valitut kentät') }}
-          </button>
-        </div>
-      </form>
+          <div class="actions-panel">
+            <button type="submit" class="review-button review-button-apply">
+              <i class="fas fa-check" aria-hidden="true"></i>{{ _('Päivitä valitut kentät') }}
+            </button>
+          </div>
+        </form>
+      </section>
     {% else %}
-      <div class="comment-box">
-        <i class="fas fa-info-circle me-2"></i>
-        {{ suggestion.suggestion or _('Ei strukturoituja ehdotuksia.') }}
-      </div>
+      <section class="review-section">
+        <div class="section-heading">
+          <span class="section-icon"><i class="fas fa-message" aria-hidden="true"></i></span>
+          <div><h2>{{ _('Ehdotus') }}</h2></div>
+        </div>
+        <div class="comment-box">{{ suggestion.suggestion or _('Ei strukturoituja ehdotuksia.') }}</div>
+      </section>
     {% endif %}
 
-    <!-- Reporter Comment -->
     {% if suggestion.reporter_comment %}
-      <h2 class="section-title">💬 {{ _('Lähettäjän kommentti') }}</h2>
-      <div class="comment-box" style="border-left-color: #f59e0b;">
-        {{ suggestion.reporter_comment }}
-      </div>
+      <section class="review-section">
+        <div class="section-heading">
+          <span class="section-icon"><i class="fas fa-comment" aria-hidden="true"></i></span>
+          <div><h2>{{ _('Lähettäjän kommentti') }}</h2></div>
+        </div>
+        <div class="comment-box">{{ suggestion.reporter_comment }}</div>
+      </section>
     {% endif %}
 
-    <!-- Reject Action -->
-    <div style="margin-top: 2rem;">
-      <h2 class="section-title">⚙️ {{ _('Muut toiminnot') }}</h2>
+    <section class="danger-zone">
+      <div>
+        <strong>{{ _('Hylkää ehdotus') }}</strong>
+        <span>{{ _('Ehdotettuja muutoksia ei julkaista.') }}</span>
+      </div>
       <form method="POST" action="{{ url_for('admin_demo.suggestion_status_update', suggestion_id=suggestion._id) }}">
-        <input type="hidden" name="status" value="rejected" />
-        <button type="submit" class="btn-reject" onclick="return confirm('{{ _('Oletko varma että haluat hylätä tämän ehdotuksen?') }}')">
-          <i class="fas fa-ban me-2"></i>{{ _('Hylkää ehdotus') }}
+        <input type="hidden" name="status" value="rejected">
+        <button type="submit" class="review-button review-button-reject" onclick="return confirm('{{ _('Oletko varma että haluat hylätä tämän ehdotuksen?') }}')">
+          <i class="fas fa-ban" aria-hidden="true"></i>{{ _('Hylkää ehdotus') }}
         </button>
       </form>
-    </div>
-
+    </section>
   {% else %}
-    <div style="text-align: center; padding: 3rem;">
-      <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ef4444; margin-bottom: 1rem;"></i>
+    <div class="not-found">
+      <i class="fas fa-exclamation-triangle fs-2 mb-3 text-danger" aria-hidden="true"></i>
       <h2>{{ _('Ehdotusta ei löytynyt') }}</h2>
       <p class="text-muted">{{ _('Pyydetty ehdotus ei ole olemassa tai se on poistettu.') }}</p>
-      <a href="{{ url_for('admin_demo.suggestions_list') }}" class="btn btn-primary mt-3">
-        {{ _('Takaisin ehdotuksiin') }}
-      </a>
+      <a href="{{ url_for('admin_demo.suggestions_list') }}" class="btn btn-primary mt-2">{{ _('Takaisin ehdotuksiin') }}</a>
     </div>
   {% endif %}
 </div>

@@ -61,6 +61,16 @@ email_sender = EmailSender()
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
+demonstrations_collection.create_index(
+    [
+        ("approved", ASCENDING),
+        ("date", ASCENDING),
+        ("cancelled", ASCENDING),
+        ("hide", ASCENDING),
+        ("rejected", ASCENDING),
+    ],
+    background=True,
+)
 submitters_collection = mongo["submitters"]  # <-- Add this line
 malicious_reports_collection = mongo["malicious_reports"]
 submission_tokens_collection = mongo["demo_submission_tokens"]
@@ -431,6 +441,61 @@ def filter_demonstrations_api(
     return filtered
 
 
+def _case_insensitive_contains(value):
+    return {"$regex": re.escape(value), "$options": "i"}
+
+
+def _case_insensitive_exact(value):
+    return {"$regex": f"^{re.escape(value)}$", "$options": "i"}
+
+
+def _case_insensitive_contains_pattern(value):
+    return re.compile(re.escape(value), re.IGNORECASE)
+
+
+def _build_public_demo_query(
+    today,
+    search_query="",
+    city_query="",
+    location_query="",
+    date_start=None,
+    date_end=None,
+    tag_query=None,
+):
+    query = copy.deepcopy(DEMO_FILTER)
+    today_iso = today.isoformat()
+    date_query = {"$gte": today_iso}
+
+    if date_start and date_start > today_iso:
+        date_query["$gte"] = date_start
+    if date_end:
+        date_query["$lte"] = date_end
+
+    query["date"] = date_query
+
+    if search_query:
+        query["$or"] = [
+            {"title": _case_insensitive_contains(search_query)},
+            {"address": _case_insensitive_contains(search_query)},
+        ]
+
+    if city_query:
+        if isinstance(city_query, list):
+            query["city"] = {
+                "$in": [_case_insensitive_contains_pattern(city) for city in city_query]
+            }
+        else:
+            query["city"] = _case_insensitive_contains(city_query)
+
+    if location_query:
+        query["address"] = _case_insensitive_contains(location_query)
+
+    if tag_query:
+        query["tags"] = _case_insensitive_exact(tag_query)
+
+    return query
+
+
 def parse_city_query(city_query):
     """
     Parse the city query string into a list if needed.
@@ -536,9 +601,7 @@ def add_api_routes(app):
         """
         args = get_api_pagination_args()
         today = date.today()
-        demos_cursor = demonstrations_collection.find(DEMO_FILTER)
-        filtered = filter_demonstrations_api(
-            demos_cursor,
+        query = _build_public_demo_query(
             today,
             args["search_query"],
             args["city_query"],
@@ -547,9 +610,17 @@ def add_api_routes(app):
             args["date_end"],
             args.get("tag_query"),
         )
-        filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
-        paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
-        result = [format_demo_for_api(demo) for demo in paginated]
+        page = max(args["page"], 1)
+        per_page = max(args["per_page"], 1)
+        total = demonstrations_collection.count_documents(query)
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        demos_cursor = (
+            demonstrations_collection.find(query)
+            .sort("date", ASCENDING)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+        result = [format_demo_for_api(demo) for demo in demos_cursor]
         return jsonify(demonstrations=result, total_pages=total_pages)
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
@@ -971,15 +1042,12 @@ def init_routes(app):
                 cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
 
         # --- Featured / other demos ---
-        demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = [
-            demo
-            for demo in demonstrations
-            if not demo.get("cancelled")
-            if datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today
-        ]
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
+        filtered_demonstrations = list(
+            demonstrations_collection.find(
+                _build_public_demo_query(today),
+            )
+            .sort("date", ASCENDING)
+            .limit(6)
         )
 
         return render_template(

@@ -1,8 +1,9 @@
 from copy import deepcopy
+import re
 from flask import current_app, jsonify, redirect, request, Blueprint, url_for
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_caching import Cache
 from flask_cors import CORS
 from functools import wraps
@@ -141,6 +142,18 @@ def make_cache_key():
     return "demonstrations:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
 
 
+def _case_insensitive_contains(value):
+    return {"$regex": re.escape(value), "$options": "i"}
+
+
+def _case_insensitive_exact(value):
+    return {"$regex": f"^{re.escape(value)}$", "$options": "i"}
+
+
+def _case_insensitive_exact_pattern(value):
+    return re.compile(f"^{re.escape(value)}$", re.IGNORECASE)
+
+
 @api_bp.route("/demonstrations", methods=["GET"])
 # @token_required(required_scopes=["read"])
 def list_demonstrations():
@@ -212,7 +225,6 @@ def list_demonstrations():
     cached_response = cache.get(cache_key) if use_cache else None
 
     if cached_response:
-        from copy import deepcopy
         response_to_return = deepcopy(cached_response)
         return jsonify(response_to_return), 200
 
@@ -257,13 +269,12 @@ def list_demonstrations():
         page, per_page = 1, 20
 
     # --- Prepare date ranges ---
-    from datetime import timedelta
     today = datetime.now().date()
     max_date = today + timedelta(days=max_days) if max_days else None
 
     # --- Base query ---
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
-    query = dict(DEMO_FILTER)  # clone to avoid side effects
+    query = deepcopy(DEMO_FILTER)
     include_cancelled_param = request.args.get("include_cancelled", "").strip().lower() == "true"
     include_cancelled = include_cancelled_param or bool(_org_id or _parent_id)
     if include_cancelled:
@@ -274,45 +285,38 @@ def list_demonstrations():
     if _org_id:
         query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}
 
-    # --- Fetch from DB ---
-    demos_cursor = mongo.demonstrations.find(query)
-    filtered = []
+    date_filter = {}
+    if in_past != "true":
+        date_filter["$gte"] = today.isoformat()
+    if max_date:
+        date_filter["$lte"] = max_date.isoformat()
+    if date_filter:
+        query["date"] = date_filter
 
-    for demo in demos_cursor:
-        try:
-            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
-        except Exception:
-            continue  # skip invalid date formats
-
-        # Skip past demos unless explicitly requested
-        if demo_date < today and in_past != "true":
-            continue
-
-        # Skip demos beyond max_days limit
-        if max_date and demo_date > max_date:
-            continue
-
-        demo_obj = stringify_object_ids(demo)
-        title_text = demo_obj.get("title", "").casefold()
-        city_text = demo_obj.get("city", "").casefold()
-        tags_text = [t.casefold() for t in demo_obj.get("tags", [])]
-
-        if (
-            (not search or search in title_text)
-            and (not city_list or city_text in city_list)
-            and (not title or title in title_text)
-            and (not tag or tag in tags_text)
-        ):
-            filtered.append(demo_obj)
-
-    # --- Sort chronologically ---
-    filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
+    extra_filters = []
+    if search:
+        extra_filters.append({"title": _case_insensitive_contains(search)})
+    if title:
+        extra_filters.append({"title": _case_insensitive_contains(title)})
+    if city_list:
+        extra_filters.append({"city": {"$in": [_case_insensitive_exact_pattern(city) for city in city_list]}})
+    if tag:
+        extra_filters.append({"tags": _case_insensitive_exact(tag)})
+    if extra_filters:
+        query["$and"] = query.get("$and", []) + extra_filters
 
     # --- Pagination slicing ---
-    total = len(filtered)
+    total = mongo.demonstrations.count_documents(query)
     total_pages = max((total + per_page - 1) // per_page, 1)
-    start, end = (page - 1) * per_page, page * per_page
-    paginated = filtered[start:end]
+    paginated = [
+        stringify_object_ids(demo)
+        for demo in (
+            mongo.demonstrations.find(query)
+            .sort("date", 1)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+    ]
 
     # --- Navigation URLs ---
     from urllib.parse import urlencode
@@ -324,8 +328,6 @@ def list_demonstrations():
 
     next_url = build_url(page + 1) if page < total_pages else None
     prev_url = build_url(page - 1) if page > 1 else None
-
-    from copy import deepcopy
 
     # --- Response object to cache ---
     response_data = {

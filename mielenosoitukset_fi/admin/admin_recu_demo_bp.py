@@ -25,7 +25,7 @@ CHILD_BULK_FIELD_MAP = {
     "title": ("title",),
     "description": ("description",),
     "times": ("start_time", "end_time"),
-    "location": ("city", "city_key", "address"),
+    "location": ("city", "city_key", "address", "latitude", "longitude"),
     "type": ("event_type",),
     "route": ("route",),
     "organizers": ("organizers",),
@@ -160,6 +160,22 @@ def _collect_break_dates(form):
             dates.append(normalized)
             seen.add(normalized)
     return sorted(dates)
+
+
+def _is_valid_latitude(value):
+    try:
+        latitude = float(value)
+        return -90 <= latitude <= 90
+    except (TypeError, ValueError):
+        return False
+
+
+def _is_valid_longitude(value):
+    try:
+        longitude = float(value)
+        return -180 <= longitude <= 180
+    except (TypeError, ValueError):
+        return False
 
 
 def _current_admin_actor(source):
@@ -395,6 +411,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     facebook = request.form.get("facebook")
     city = request.form.get("city") or ""
     address = request.form.get("address")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
     event_type = request.form.get("type")
     route = _get_route_points(request.form)
     approved = request.form.get("approved") == "on"
@@ -480,6 +498,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
                 else:
                     cover_picture = None
 
+    if latitude and not _is_valid_latitude(latitude):
+        latitude = None
+        flash_message("Virheellinen leveysaste. Asetetaan leveysasteeksi: None.")
+    if longitude and not _is_valid_longitude(longitude):
+        longitude = None
+        flash_message("Virheellinen pituusaste. Asetetaan pituusasteeksi: None.")
+
     # Assemble demonstration data
     demonstration_data = {
         "title": title,
@@ -492,6 +517,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "city": city,
         "city_key": normalize_city_key(city),
         "address": address,
+        "latitude": latitude,
+        "longitude": longitude,
         "event_type": event_type,
         "route": route,
         "approved": approved,

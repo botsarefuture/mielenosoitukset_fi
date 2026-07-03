@@ -561,6 +561,65 @@
                         %}readonly{% endif %}>
                 </div>
             </div>
+
+            {% if current_user.is_authenticated %}
+            <div class="form-group text-end">
+                <button type="button" id="recalculate-coords-btn" class="btn btn-secondary">
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i> {{ _('Laske koordinaatit uudelleen') }}
+                </button>
+            </div>
+            {% endif %}
+
+            <script>
+                (() => {
+                    const recalculateButton = document.getElementById('recalculate-coords-btn');
+                    if (!recalculateButton) return;
+
+                    async function getCoordinates(address, city) {
+                        try {
+                            const response = await fetch('/api/admin/demo/geocode', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ address, city })
+                            });
+
+                            const data = await response.json();
+                            if (!response.ok) {
+                                throw new Error(data.error || 'Unknown error');
+                            }
+                            return data;
+                        } catch (err) {
+                            console.error('Failed to fetch coordinates:', err.message);
+                            return null;
+                        }
+                    }
+
+                    recalculateButton.addEventListener('click', async () => {
+                        const address = document.getElementById('address').value;
+                        const city = document.getElementById('selected-city').value;
+
+                        if (!address) {
+                            alert("{{ _('Syötä ensin osoite.') }}");
+                            return;
+                        }
+                        if (!city) {
+                            alert("{{ _('Valitse ensin paikkakunta.') }}");
+                            return;
+                        }
+
+                        const coords = await getCoordinates(address, city);
+                        if (coords) {
+                            document.getElementById('latitude').value = coords.latitude;
+                            document.getElementById('longitude').value = coords.longitude;
+                        } else {
+                            alert("{{ _('Koordinaattien hakeminen epäonnistui. Tarkista osoite ja yritä uudelleen.') }}");
+                        }
+                    });
+                })();
+            </script>
+
             <div id="march-route-container" class="form-group"
                 style="{% if not demo or demo.event_type != 'MARCH' %}display:none;{% endif %}">
                 <label>{{ _('Reitti (marssin)') }}</label>

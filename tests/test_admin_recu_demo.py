@@ -32,6 +32,8 @@ def test_admin_can_create_recurring_demo_with_create_form_fields(admin_client, d
             "end_time": "13:00",
             "city": "Helsinki",
             "address": "Testikatu 1",
+            "latitude": "60.192059",
+            "longitude": "24.945831",
             "type": "MARCH",
             "approved": "on",
             "organizer_name_1": "Test Org",
@@ -50,6 +52,8 @@ def test_admin_can_create_recurring_demo_with_create_form_fields(admin_client, d
     created = db.recu_demos.find_one({"title": "Weekly recurring demo"})
     assert created is not None
     assert created["city"] == "Helsinki"
+    assert created["latitude"] == "60.192059"
+    assert created["longitude"] == "24.945831"
     assert created["route"] == ["Senate Square", "Railway Station", "Senate Square"]
     assert created["recurs"] is True
     assert created["repeat_schedule"]["frequency"] == "weekly"
@@ -91,7 +95,13 @@ def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, see
     parent_id = seeded_data["recu_demo_id"]
     db.recu_demos.update_one(
         {"_id": parent_id},
-        {"$set": {"event_type": "STAY_STILL"}},
+        {
+            "$set": {
+                "event_type": "STAY_STILL",
+                "latitude": "60.171944",
+                "longitude": "24.941389",
+            }
+        },
     )
     selected_id = ObjectId()
     untouched_id = ObjectId()
@@ -149,6 +159,8 @@ def test_admin_can_bulk_update_selected_recurring_children(admin_client, db, see
     assert selected["title"] == "Recurring Test Series"
     assert selected["city"] == "Helsinki"
     assert selected["address"] == "Kaivokatu 1, Helsinki"
+    assert selected["latitude"] == "60.171944"
+    assert selected["longitude"] == "24.941389"
     assert selected["tags"] == ["test-tag"]
     assert selected["event_type"] == "STAY_STILL"
     assert "type" not in selected

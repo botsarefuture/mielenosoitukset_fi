@@ -543,28 +543,65 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   }
 
   .btn-social.mastodon {
-    background: #6364ff;
+    background: linear-gradient(135deg, #6364ff 0%, #858afa 100%);
     color: white;
   }
 
   .share-dropdown {
     position: relative;
+    display: inline-flex;
+    isolation: isolate;
+    filter: drop-shadow(0 10px 20px rgba(99, 100, 255, 0.18));
+  }
+
+  .share-dropdown .share-primary {
+    border-radius: 50px 0 0 50px;
+    border-right: 0;
+    padding-right: 1.1rem;
   }
 
   .share-dropdown .share-menu-toggle {
-    border-left-color: rgba(255, 255, 255, 0.35);
-    min-width: 2.75rem;
+    border-radius: 0 50px 50px 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.28);
+    min-width: 3rem;
+    padding-left: 0.85rem;
+    padding-right: 0.95rem;
+  }
+
+  .share-dropdown .share-menu-toggle i {
+    font-size: 0.85rem;
+    transition: transform 0.18s ease;
+  }
+
+  .share-dropdown .share-menu-toggle[aria-expanded="true"] i {
+    transform: rotate(180deg);
   }
 
   .share-dropdown .dropdown-menu {
     border: 1px solid var(--color-border);
     background: var(--color-card-bg);
-    box-shadow: var(--color-shadow);
-    min-width: 13rem;
+    border-radius: 1rem;
+    box-shadow: var(--color-shadow-lg);
+    margin-top: 0.55rem;
+    min-width: 14rem;
+    padding: 0.45rem;
+  }
+
+  .share-dropdown .dropdown-header {
+    color: var(--color-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    padding: 0.45rem 0.75rem 0.25rem;
   }
 
   .share-dropdown .dropdown-item {
+    align-items: center;
+    border-radius: 0.75rem;
     color: var(--color-text);
+    display: flex;
+    gap: 0.65rem;
+    padding: 0.7rem 0.8rem;
   }
 
   .share-dropdown .dropdown-item:hover,
@@ -1552,7 +1589,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       {{ _('Jaa Facebookissa') }}
     </a>
     <div class="btn-group share-dropdown" data-share-dropdown>
-      <a class="btn btn-social mastodon" href="https://mastodon.social/share?text={{ share_text|urlencode }}"
+      <a class="btn btn-social mastodon share-primary" href="https://mastodon.social/share?text={{ share_text|urlencode }}"
         target="_blank" rel="noopener">
         <i class="fa-brands fa-mastodon"></i>
         {{ _('Jaa Mastodonissa') }}
@@ -1562,6 +1599,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
       </button>
       <ul class="dropdown-menu">
+        <li class="dropdown-header">{{ _('Jaa myös') }}</li>
         <li>
           <a class="dropdown-item" href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
             target="_blank" rel="noopener">

@@ -9,6 +9,7 @@
 * Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
 
 ### Fixed
+* Demonstration detail Mastodon/X share dropdown now works as a split button: the Mastodon side opens Mastodon sharing and the arrow opens the X option.
 * Organization logos served through the production CDN now omit local and preview-page referrers when embedded or opened, preventing Cloudflare Hotlink Protection from rejecting valid lc-main assets during development and previews.
 * Request logging and rate limiting now restore the real visitor IP from `CF-Connecting-IP` only when the forwarding address belongs to Cloudflare, avoiding Cloudflare-edge IPs without trusting spoofed headers.
 * Admin notification job no longer repeatedly regenerates and logs approval/rejection/preview links for the same pending demonstrations every 5 minutes; completed notification jobs are now properly recognized to prevent duplicate link generation.

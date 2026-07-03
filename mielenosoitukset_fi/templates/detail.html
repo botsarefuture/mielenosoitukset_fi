@@ -547,10 +547,20 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     color: white;
   }
 
+  .share-dropdown {
+    position: relative;
+  }
+
+  .share-dropdown .share-menu-toggle {
+    border-left-color: rgba(255, 255, 255, 0.35);
+    min-width: 2.75rem;
+  }
+
   .share-dropdown .dropdown-menu {
     border: 1px solid var(--color-border);
     background: var(--color-card-bg);
     box-shadow: var(--color-shadow);
+    min-width: 13rem;
   }
 
   .share-dropdown .dropdown-item {
@@ -1541,20 +1551,17 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
       <i class="fa-brands fa-facebook-f"></i>
       {{ _('Jaa Facebookissa') }}
     </a>
-    <div class="btn-group share-dropdown">
-      <button type="button" class="btn btn-social mastodon dropdown-toggle" data-bs-toggle="dropdown"
-        aria-expanded="false">
+    <div class="btn-group share-dropdown" data-share-dropdown>
+      <a class="btn btn-social mastodon" href="https://mastodon.social/share?text={{ share_text|urlencode }}"
+        target="_blank" rel="noopener">
         <i class="fa-brands fa-mastodon"></i>
         {{ _('Jaa Mastodonissa') }}
+      </a>
+      <button type="button" class="btn btn-social mastodon share-menu-toggle"
+        aria-label="{{ _('Valitse jakopalvelu') }}" aria-expanded="false" data-share-menu-toggle>
+        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
       </button>
       <ul class="dropdown-menu">
-        <li>
-          <a class="dropdown-item" href="https://mastodon.social/share?text={{ share_text|urlencode }}"
-            target="_blank" rel="noopener">
-            <i class="fa-brands fa-mastodon"></i>
-            {{ _('Jaa Mastodonissa') }}
-          </a>
-        </li>
         <li>
           <a class="dropdown-item" href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
             target="_blank" rel="noopener">
@@ -1564,6 +1571,44 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         </li>
       </ul>
     </div>
+    <script>
+      (() => {
+        const shareDropdown = document.querySelector('[data-share-dropdown]');
+        if (!shareDropdown) return;
+
+        const toggle = shareDropdown.querySelector('[data-share-menu-toggle]');
+        const menu = shareDropdown.querySelector('.dropdown-menu');
+        if (!toggle || !menu) return;
+
+        const closeMenu = () => {
+          menu.classList.remove('show');
+          toggle.setAttribute('aria-expanded', 'false');
+        };
+
+        toggle.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const shouldOpen = !menu.classList.contains('show');
+          document.querySelectorAll('.dropdown-menu.show').forEach((openMenu) => {
+            openMenu.classList.remove('show');
+          });
+          menu.classList.toggle('show', shouldOpen);
+          toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        });
+
+        document.addEventListener('click', (event) => {
+          if (!shareDropdown.contains(event.target)) {
+            closeMenu();
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape') {
+            closeMenu();
+          }
+        });
+      })();
+    </script>
     <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
       target="_blank" class="btn btn-social linkedin">
       <i class="fa-brands fa-linkedin-in"></i>

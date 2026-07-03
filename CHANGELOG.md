@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Demonstration detail pages now combine Mastodon and X sharing into one Mastodon-led dropdown, keeping X available without a separate standalone button.
 * Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
 
 ### Fixed

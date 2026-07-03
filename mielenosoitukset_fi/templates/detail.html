@@ -561,11 +561,26 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
   }
 
   .share-dropdown .share-menu-toggle {
+    align-items: center;
     border-radius: 0 50px 50px 0;
     border-left: 1px solid rgba(255, 255, 255, 0.28);
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    list-style: none;
     min-width: 3rem;
     padding-left: 0.85rem;
     padding-right: 0.95rem;
+    user-select: none;
+  }
+
+  .share-dropdown .share-options {
+    display: inline-flex;
+    position: relative;
+  }
+
+  .share-dropdown .share-menu-toggle::-webkit-details-marker {
+    display: none;
   }
 
   .share-dropdown .share-menu-toggle i {
@@ -573,7 +588,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     transition: transform 0.18s ease;
   }
 
-  .share-dropdown .share-menu-toggle[aria-expanded="true"] i {
+  .share-dropdown .share-options[open] .share-menu-toggle i {
     transform: rotate(180deg);
   }
 
@@ -582,9 +597,19 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     background: var(--color-card-bg);
     border-radius: 1rem;
     box-shadow: var(--color-shadow-lg);
+    display: none;
+    left: auto;
     margin-top: 0.55rem;
     min-width: 14rem;
     padding: 0.45rem;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 1050;
+  }
+
+  .share-dropdown .share-options[open] .dropdown-menu {
+    display: block;
   }
 
   .share-dropdown .dropdown-header {
@@ -1594,59 +1619,23 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         <i class="fa-brands fa-mastodon"></i>
         {{ _('Jaa Mastodonissa') }}
       </a>
-      <button type="button" class="btn btn-social mastodon share-menu-toggle"
-        aria-label="{{ _('Valitse jakopalvelu') }}" aria-expanded="false" data-share-menu-toggle>
-        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-      </button>
-      <ul class="dropdown-menu">
-        <li class="dropdown-header">{{ _('Jaa myös') }}</li>
-        <li>
-          <a class="dropdown-item" href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
-            target="_blank" rel="noopener">
-            <i class="fa-brands fa-x-twitter"></i>
-            {{ _('Jaa X:ssä') }}
-          </a>
-        </li>
-      </ul>
+      <details class="share-options">
+        <summary class="btn btn-social mastodon share-menu-toggle"
+          aria-label="{{ _('Valitse jakopalvelu') }}">
+          <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </summary>
+        <ul class="dropdown-menu">
+          <li class="dropdown-header">{{ _('Jaa myös') }}</li>
+          <li>
+            <a class="dropdown-item" href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
+              target="_blank" rel="noopener">
+              <i class="fa-brands fa-x-twitter"></i>
+              {{ _('Jaa X:ssä') }}
+            </a>
+          </li>
+        </ul>
+      </details>
     </div>
-    <script>
-      (() => {
-        const shareDropdown = document.querySelector('[data-share-dropdown]');
-        if (!shareDropdown) return;
-
-        const toggle = shareDropdown.querySelector('[data-share-menu-toggle]');
-        const menu = shareDropdown.querySelector('.dropdown-menu');
-        if (!toggle || !menu) return;
-
-        const closeMenu = () => {
-          menu.classList.remove('show');
-          toggle.setAttribute('aria-expanded', 'false');
-        };
-
-        toggle.addEventListener('click', (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          const shouldOpen = !menu.classList.contains('show');
-          document.querySelectorAll('.dropdown-menu.show').forEach((openMenu) => {
-            openMenu.classList.remove('show');
-          });
-          menu.classList.toggle('show', shouldOpen);
-          toggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
-        });
-
-        document.addEventListener('click', (event) => {
-          if (!shareDropdown.contains(event.target)) {
-            closeMenu();
-          }
-        });
-
-        document.addEventListener('keydown', (event) => {
-          if (event.key === 'Escape') {
-            closeMenu();
-          }
-        });
-      })();
-    </script>
     <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
       target="_blank" class="btn btn-social linkedin">
       <i class="fa-brands fa-linkedin-in"></i>

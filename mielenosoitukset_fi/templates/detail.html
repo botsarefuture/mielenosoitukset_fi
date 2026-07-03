@@ -574,12 +574,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     user-select: none;
   }
 
-  .share-dropdown .share-options {
-    display: inline-flex;
-    position: relative;
-  }
-
-  .share-dropdown .share-menu-toggle::-webkit-details-marker {
+  .share-dropdown .dropdown-toggle::after {
     display: none;
   }
 
@@ -588,7 +583,9 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     transition: transform 0.18s ease;
   }
 
-  .share-dropdown .share-options[open] .share-menu-toggle i {
+  .share-dropdown .share-menu-toggle[aria-expanded="true"] i,
+  .share-dropdown:focus-within .share-menu-toggle i,
+  .share-dropdown:hover .share-menu-toggle i {
     transform: rotate(180deg);
   }
 
@@ -608,7 +605,9 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     z-index: 1050;
   }
 
-  .share-dropdown .share-options[open] .dropdown-menu {
+  .share-dropdown .dropdown-menu.show,
+  .share-dropdown:focus-within .dropdown-menu,
+  .share-dropdown:hover .dropdown-menu {
     display: block;
   }
 
@@ -1619,22 +1618,20 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         <i class="fa-brands fa-mastodon"></i>
         {{ _('Jaa Mastodonissa') }}
       </a>
-      <details class="share-options">
-        <summary class="btn btn-social mastodon share-menu-toggle"
-          aria-label="{{ _('Valitse jakopalvelu') }}">
-          <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
-        </summary>
-        <ul class="dropdown-menu">
-          <li class="dropdown-header">{{ _('Jaa myös') }}</li>
-          <li>
-            <a class="dropdown-item" href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
-              target="_blank" rel="noopener">
-              <i class="fa-brands fa-x-twitter"></i>
-              {{ _('Jaa X:ssä') }}
-            </a>
-          </li>
-        </ul>
-      </details>
+      <button type="button" class="btn btn-social mastodon dropdown-toggle share-menu-toggle"
+        data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Valitse jakopalvelu') }}">
+        <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li class="dropdown-header">{{ _('Jaa myös') }}</li>
+        <li>
+          <a class="dropdown-item" href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
+            target="_blank" rel="noopener">
+            <i class="fa-brands fa-x-twitter"></i>
+            {{ _('Jaa X:ssä') }}
+          </a>
+        </li>
+      </ul>
     </div>
     <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&title={{ demo['title'] }}"
       target="_blank" class="btn btn-social linkedin">

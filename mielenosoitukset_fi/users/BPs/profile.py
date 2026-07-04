@@ -16,6 +16,42 @@ def _get_mongo():
     """Return the current database handle."""
     return DatabaseManager().get_instance().get_db()
 
+
+def _profile_user_summaries(mongo, user_ids):
+    """Return public profile details for a list of followed/follower IDs."""
+    object_ids = []
+    for user_id in user_ids or []:
+        try:
+            object_ids.append(ObjectId(user_id))
+        except Exception:
+            continue
+
+    if not object_ids:
+        return []
+
+    users_by_id = {
+        doc["_id"]: doc
+        for doc in mongo.users.find(
+            {"_id": {"$in": object_ids}},
+            {"username": 1, "displayname": 1, "profile_picture": 1},
+        )
+    }
+
+    summaries = []
+    for object_id in object_ids:
+        doc = users_by_id.get(object_id)
+        if not doc or not doc.get("username"):
+            continue
+        summaries.append(
+            {
+                "username": doc["username"],
+                "displayname": doc.get("displayname") or doc["username"],
+                "profile_picture": doc.get("profile_picture"),
+                "url": url_for("users.profile.profile", username=doc["username"]),
+            }
+        )
+    return summaries
+
 profile_bp = Blueprint(
     "profile", __name__, template_folder="/users/profile/", url_prefix="/profile"
 )
@@ -49,6 +85,8 @@ def profile(username=None):
         user_obj = User.from_db(user_data)
         user_obj.followers_count = len(user_obj.followers)
         user_obj.following_count = len(user_obj.following)
+        followers = _profile_user_summaries(mongo, user_obj.followers)
+        following = _profile_user_summaries(mongo, user_obj.following)
 
         followed_orgs = []
         followed_recurring = []
@@ -79,6 +117,8 @@ def profile(username=None):
         return render_template(
             "users/profile/profile.html",
             user=user_obj,
+            followers=followers,
+            following=following,
             followed_orgs=followed_orgs,
             followed_recurring=followed_recurring,
         )

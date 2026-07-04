@@ -8,6 +8,7 @@ def test_organization_fill_page_uses_public_org_visual_shell(client, seeded_data
     assert "Nykyiset tiedot" in html
     assert "Täydennä järjestön tietoja" in html
     assert 'name="logo"' in html
+    assert 'value="None"' not in html
     assert "Test Organization" in html
 
 

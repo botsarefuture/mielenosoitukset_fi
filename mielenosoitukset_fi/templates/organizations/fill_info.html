@@ -581,28 +581,28 @@
           <div class="form-grid">
             <div class="form-group">
               <label for="name"><i class="fa-solid fa-building"></i> {{ _('Järjestön nimi') }}</label>
-              <input type="text" id="name" name="name" value="{{ organization.name }}" required>
+              <input type="text" id="name" name="name" value="{{ organization.name or '' }}" required>
             </div>
 
             <div class="form-group">
               <label for="website"><i class="fa-solid fa-globe"></i> {{ _('Verkkosivusto') }}</label>
-              <input type="url" id="website" name="website" placeholder="https://esimerkki.fi" value="{{ organization.website }}">
+              <input type="url" id="website" name="website" placeholder="https://esimerkki.fi" value="{{ organization.website or '' }}">
             </div>
 
             <div class="form-group">
               <label for="logo"><i class="fa-solid fa-image"></i> {{ _('Logo URL') }}</label>
-              <input type="url" id="logo" name="logo" placeholder="https://esimerkki.fi/logo.png" value="{{ organization.logo }}">
+              <input type="url" id="logo" name="logo" placeholder="https://esimerkki.fi/logo.png" value="{{ organization.logo or '' }}">
             </div>
 
             <div class="form-group full-width">
               <label for="description"><i class="fa-solid fa-align-left"></i> {{ _('Kuvaus') }}</label>
               <textarea id="description" name="description" rows="5"
-                placeholder="{{ _('Kuvaile järjestön toimintaa, tavoitteita ja arvoja...') }}">{{ organization.description }}</textarea>
+                placeholder="{{ _('Kuvaile järjestön toimintaa, tavoitteita ja arvoja...') }}">{{ organization.description or '' }}</textarea>
             </div>
 
             <div class="form-group full-width">
               <label for="email"><i class="fa-solid fa-envelope"></i> {{ _('Sähköposti') }}</label>
-              <input type="email" id="email" name="email" placeholder="info@esimerkki.fi" value="{{ organization.email }}">
+              <input type="email" id="email" name="email" placeholder="info@esimerkki.fi" value="{{ organization.email or '' }}">
             </div>
           </div>
         </div>

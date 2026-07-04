@@ -48,13 +48,23 @@ def _send_messages(messages: List[Dict[str, Any]]) -> int:
     return sent
 
 
-def _pending_admin_job_exists(queue, demo_id: ObjectId) -> bool:
+def _pending_admin_job_exists(queue, demo_id: ObjectId, cutoff: datetime) -> bool:
     return bool(
         queue.find_one(
             {
                 "demo_id": demo_id,
                 "marks_admin_contact": True,
-                "status": {"$in": ["pending", "processing", "completed"]},
+                "$or": [
+                    {"status": {"$in": ["pending", "processing"]}},
+                    {
+                        "status": "completed",
+                        "$or": [
+                            {"processed_at": {"$gte": cutoff}},
+                            {"updated_at": {"$gte": cutoff}},
+                            {"created_at": {"$gte": cutoff}},
+                        ],
+                    },
+                ],
             }
         )
     )
@@ -96,7 +106,7 @@ def _enqueue_admin_reminders(db, max_to_enqueue: int = 50):
     created = 0
     for demo in candidates:
         demo_id = demo["_id"]
-        if _pending_admin_job_exists(queue, demo_id):
+        if _pending_admin_job_exists(queue, demo_id, cutoff):
             continue
 
         if demo.get("rejected"):

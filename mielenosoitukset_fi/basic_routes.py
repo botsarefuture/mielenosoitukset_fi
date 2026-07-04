@@ -2558,7 +2558,7 @@ def init_routes(app):
 
 
         # Normal fields
-        for field in ["name", "description", "website", "email"]:
+        for field in ["name", "description", "website", "email", "logo"]:
             val = request.form.get(field)
             if val and val.strip():
                 suggestion["fields"][field] = val.strip()

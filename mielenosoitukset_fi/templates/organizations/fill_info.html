@@ -214,6 +214,50 @@
     font-weight: 600;
   }
 
+  .org-logo-current {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .org-logo-current-preview {
+    align-items: center;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: 76px minmax(0, 1fr);
+    padding: 0.85rem;
+  }
+
+  .org-logo-current-preview img {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 0.85rem;
+    height: 76px;
+    object-fit: contain;
+    padding: 0.5rem;
+    width: 76px;
+  }
+
+  .org-logo-current-preview strong,
+  .org-logo-current-preview span {
+    display: block;
+  }
+
+  .org-logo-current-preview strong {
+    color: var(--color-text);
+    font-size: 0.95rem;
+  }
+
+  .org-logo-current-preview span {
+    color: var(--color-text-secondary);
+    font-size: 0.88rem;
+    margin-top: 0.15rem;
+    overflow-wrap: anywhere;
+  }
+
   .edit-form {
     display: grid;
     gap: 1.5rem;
@@ -411,6 +455,15 @@
       width: 92px;
     }
 
+    .org-logo-current-preview {
+      grid-template-columns: 1fr;
+    }
+
+    .org-logo-current-preview img {
+      height: 120px;
+      width: 100%;
+    }
+
     .section-card {
       padding: 1.25rem;
     }
@@ -479,6 +532,10 @@
           <i class="fa-solid fa-envelope"></i>
           <span>{{ organization.email or _('Sähköposti puuttuu') }}</span>
         </div>
+        <div class="org-field-pill {% if not organization.logo %}is-missing{% endif %}">
+          <i class="fa-solid fa-image"></i>
+          <span>{{ _('Logo lisätty') if organization.logo else _('Logo puuttuu') }}</span>
+        </div>
         <div class="org-field-pill {% if not organization.social_media_links %}is-missing{% endif %}">
           <i class="fa-solid fa-share-nodes"></i>
           <span>
@@ -490,6 +547,18 @@
           </span>
         </div>
       </div>
+
+      {% if organization.logo %}
+      <div class="org-logo-current">
+        <div class="org-logo-current-preview">
+          <img src="{{ organization.logo }}" alt="{{ _('Nykyinen logo: %(name)s', name=organization.name) }}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+          <div>
+            <strong>{{ _('Nykyinen logo') }}</strong>
+            <span>{{ organization.logo }}</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </aside>
 
     <section class="section-card animate-fade-in-up">
@@ -518,6 +587,11 @@
             <div class="form-group">
               <label for="website"><i class="fa-solid fa-globe"></i> {{ _('Verkkosivusto') }}</label>
               <input type="url" id="website" name="website" placeholder="https://esimerkki.fi" value="{{ organization.website }}">
+            </div>
+
+            <div class="form-group">
+              <label for="logo"><i class="fa-solid fa-image"></i> {{ _('Logo URL') }}</label>
+              <input type="url" id="logo" name="logo" placeholder="https://esimerkki.fi/logo.png" value="{{ organization.logo }}">
             </div>
 
             <div class="form-group full-width">

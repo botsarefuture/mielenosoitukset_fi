@@ -29,6 +29,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
 * Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.
 * Recurring demonstration editors can now recalculate parent coordinates from the saved address/city and bulk-copy latitude/longitude to generated child demonstrations with the location fields.
 * Recurring demonstration admins can now add break dates and bulk-cancel generated child demonstrations from the parent editor; existing child demos on break dates are marked cancelled instead of silently recreated.

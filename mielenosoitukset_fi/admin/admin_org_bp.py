@@ -93,7 +93,7 @@ def _normalized_suggestion_fields(suggestion):
 
     # Legacy suggestion documents stored edited values at the top level.
     legacy_fields = {}
-    for key in ["name", "description", "website", "email", "social_media_links"]:
+    for key in ["name", "description", "website", "email", "logo", "social_media_links"]:
         value = suggestion.get(key)
         if value not in (None, "", []):
             legacy_fields[key] = value

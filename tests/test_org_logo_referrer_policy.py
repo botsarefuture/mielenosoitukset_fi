@@ -5,6 +5,7 @@ TEMPLATE_ROOT = Path("mielenosoitukset_fi/templates")
 ORGANIZATION_LOGO_TEMPLATES = (
     "admin_V2/organizations/form.html",
     "detail.html",
+    "organizations/fill_info.html",
     "organizations/details.html",
     "users/profile/profile.html",
     "users/profile/profile copy.html",

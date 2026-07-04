@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Organization information suggestion pages now match the public organization detail page styling more closely, with a branded hero, current-info panel, and cleaner form layout.
 * Demonstration detail share controls now show Mastodon and X as separate buttons instead of a dropdown menu.
 * Demonstration detail share controls now present the Mastodon/X split button with a more polished dropdown treatment.
 * Demonstration detail pages now combine Mastodon and X sharing into one Mastodon-led dropdown, keeping X available without a separate standalone button.

@@ -12,6 +12,8 @@
 * Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
 
 ### Fixed
+* Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.
+* Recurring demonstration generation now preserves cancelled break-date child demos instead of deleting them as invalid generated children.
 * Demonstration detail Mastodon/X share menu now uses Bootstrap dropdown markup with hover and focus fallbacks so the X option can open across browsers.
 * Demonstration detail Mastodon/X share menu now uses a native dropdown control so the X option opens reliably without custom page JavaScript.
 * Demonstration detail Mastodon/X share dropdown now works as a split button: the Mastodon side opens Mastodon sharing and the arrow opens the X option.
@@ -29,6 +31,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.
 * Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
 * Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.
 * Recurring demonstration editors can now recalculate parent coordinates from the saved address/city and bulk-copy latitude/longitude to generated child demonstrations with the location fields.

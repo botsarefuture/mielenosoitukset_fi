@@ -13,6 +13,7 @@
 
 ### Fixed
 * Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.
+* Recurring demonstration generation now preserves cancelled break-date child demos instead of deleting them as invalid generated children.
 * Demonstration detail Mastodon/X share menu now uses Bootstrap dropdown markup with hover and focus fallbacks so the X option can open across browsers.
 * Demonstration detail Mastodon/X share menu now uses a native dropdown control so the X option opens reliably without custom page JavaScript.
 * Demonstration detail Mastodon/X share dropdown now works as a split button: the Mastodon side opens Mastodon sharing and the arrow opens the X option.

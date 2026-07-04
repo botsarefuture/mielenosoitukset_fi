@@ -330,6 +330,7 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
     """
     # Ensure valid_dates are date objects (they may have been produced by calculate_next_dates)
     valid_date_strings = {d.strftime("%Y-%m-%d") for d in valid_dates}
+    break_date_strings = _break_date_strings(parent_demo)
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
     freezed_children = _frozen_child_ids(parent_demo)
 
@@ -349,6 +350,16 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
             demo_date_dt = datetime.strptime(demo["date"], "%Y-%m-%d").date()
         except Exception:
             logger.warning(f"Invalid date format for child demo {demo['_id']}: {demo['date']}")
+            continue
+
+        if demo["date"] in break_date_strings and demo.get("cancelled") is True:
+            runtime_actions.append({
+                "action": "break_skip",
+                "document": demo,
+                "reason": "recurring break date",
+                "timestamp": datetime.now(),
+                "executed_by": "system"
+            })
             continue
 
         # Normalize _created_until to date if datetime passed

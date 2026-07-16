@@ -1,71 +1,258 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ _('Kaupungit') }} – Mielenosoitukset.fi{% endblock %}
+{% block title %}{{ _('Kaupungit') }} - Mielenosoitukset.fi{% endblock %}
+
+{% block meta %}
+<meta name="description" content="{{ _('Selaa mielenosoituksia kaupungeittain ja katso missä järjestetään mielenosoituksia tänään.') }}" />
+<meta name="robots" content="index, follow" />
+{% endblock %}
 
 {% block styles %}
 <style>
   .cities-page {
+    color: var(--color-text);
+  }
+
+  .cities-hero {
+    background: linear-gradient(135deg, #f7fbff 0%, #ffffff 48%, #eef7f1 100%);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .cities-shell {
     max-width: 1120px;
     margin: 0 auto;
     padding: 3rem 1rem;
   }
 
-  .cities-hero {
-    margin-bottom: 2rem;
-  }
-
-  .cities-hero h1 {
-    font-size: clamp(2rem, 5vw, 3.5rem);
+  .cities-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--color-primary);
+    font-weight: 750;
     margin-bottom: 1rem;
   }
 
+  .cities-hero h1 {
+    max-width: 780px;
+    font-size: clamp(2rem, 4.8vw, 4.25rem);
+    line-height: 1.02;
+    margin: 0 0 1rem;
+  }
+
   .cities-hero p {
-    max-width: 760px;
+    max-width: 720px;
     color: var(--color-text-secondary);
+    font-size: 1.08rem;
     line-height: 1.7;
+  }
+
+  .cities-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .cities-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .cities-button.primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
+
+  .cities-button:hover,
+  .cities-button:focus {
+    transform: translateY(-1px);
+    color: var(--color-primary);
+  }
+
+  .cities-button.primary:hover,
+  .cities-button.primary:focus {
+    color: #fff;
+    filter: brightness(0.96);
+  }
+
+  .cities-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin-top: -1.5rem;
+  }
+
+  .cities-stat {
+    border: 1px solid var(--color-border);
+    background: var(--color-card-bg);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.05);
+  }
+
+  .cities-stat strong {
+    display: block;
+    font-size: 1.7rem;
+    line-height: 1;
+    margin-bottom: 0.35rem;
+  }
+
+  .cities-stat span {
+    color: var(--color-text-secondary);
+  }
+
+  .city-grid-section {
+    padding-top: 2rem;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-size: clamp(1.45rem, 3vw, 2.1rem);
+  }
+
+  .section-heading p {
+    max-width: 520px;
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
   }
 
   .city-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 0.75rem;
-    margin: 2rem 0;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 0.9rem;
   }
 
-  .city-link {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
+  .city-card {
+    display: grid;
+    gap: 0.95rem;
+    min-height: 190px;
+    padding: 1rem;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    color: var(--color-text);
     background: var(--color-card-bg);
+    color: var(--color-text);
     text-decoration: none;
-    font-weight: 650;
   }
 
-  .city-link:hover,
-  .city-link:focus {
-    color: var(--color-primary);
+  .city-card:hover,
+  .city-card:focus-within {
     border-color: var(--color-primary);
+    box-shadow: 0 12px 34px rgba(0, 86, 179, 0.1);
   }
 
-  .city-link small {
+  .city-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .city-card h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .city-today-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 30px;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: #eaf6ef;
+    color: #17633a;
+    font-size: 0.9rem;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+
+  .city-card p {
+    margin: 0;
     color: var(--color-text-secondary);
-    font-weight: 500;
+    line-height: 1.55;
+  }
+
+  .city-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-self: end;
+  }
+
+  .city-card-actions a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 38px;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .city-card-actions a:hover,
+  .city-card-actions a:focus {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   .city-system {
-    border-top: 1px solid var(--color-border);
+    margin-top: 2.5rem;
     padding-top: 2rem;
-    color: var(--color-text);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .city-system h2 {
+    margin-top: 0;
   }
 
   .city-system ol {
+    display: grid;
+    gap: 0.75rem;
     padding-left: 1.25rem;
-    line-height: 1.8;
+    line-height: 1.7;
+  }
+
+  .city-system p {
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 720px) {
+    .cities-shell {
+      padding: 2rem 1rem;
+    }
+
+    .section-heading {
+      display: block;
+    }
+
+    .section-heading p {
+      margin-top: 0.5rem;
+    }
   }
 </style>
 {% endblock %}
@@ -73,31 +260,90 @@
 {% block content %}
 <main class="cities-page">
   <section class="cities-hero">
-    <h1>{{ _('Kaupungit') }}</h1>
-    <p>
-      {{ _('Tältä sivulta löytyvät kaupungit, joissa on jo ilmoitettu mielenosoituksia tai joihin on löydetty paikallinen yhteyshenkilö. Kaupunkisivuilla näkyvät kyseisen paikkakunnan tulevat mielenosoitukset.') }}
-    </p>
+    <div class="cities-shell">
+      <div class="cities-kicker">
+        <i class="fa-solid fa-location-dot"></i>
+        {{ _('Paikalliset mielenosoitukset') }}
+      </div>
+      <h1>{{ _('Mielenosoitukset kaupungeittain') }}</h1>
+      <p>
+        {{ _('Löydä nopeasti missä kaupungeissa on mielenosoituksia, katso päivän tapahtumat ja avaa kaupunkikohtainen näkymä tuleville mielenosoituksille.') }}
+      </p>
+      <div class="cities-actions">
+        <a class="cities-button primary" href="{{ url_for('today_demos') }}">
+          <i class="fa-solid fa-calendar-day"></i>
+          {{ _('Mielenosoitukset Suomessa tänään') }}
+        </a>
+        <a class="cities-button" href="{{ url_for('demonstrations') }}">
+          <i class="fa-solid fa-list"></i>
+          {{ _('Kaikki tulevat mielenosoitukset') }}
+        </a>
+      </div>
+    </div>
   </section>
 
-  <section class="city-grid" aria-label="{{ _('Kaupunkilista') }}">
-    {% for city in cities %}
-    <a class="city-link" href="{{ url_for('city_demos', city=city.name|lower) }}">
-      <span><i class="fa-solid fa-location-dot me-2"></i>{{ city.name }}</span>
-      <small>{{ city.demo_count }}</small>
-    </a>
-    {% endfor %}
-  </section>
+  <div class="cities-shell">
+    <section class="cities-summary" aria-label="{{ _('Yhteenveto') }}">
+      <div class="cities-stat">
+        <strong>{{ cities|length }}</strong>
+        <span>{{ _('kaupunkia listalla') }}</span>
+      </div>
+      <div class="cities-stat">
+        <strong>{{ cities|sum(attribute='demo_count') }}</strong>
+        <span>{{ _('tulevaa mielenosoitusta kaupunkisivuilla') }}</span>
+      </div>
+      <div class="cities-stat">
+        <strong>{{ cities|sum(attribute='today_count') }}</strong>
+        <span>{{ _('mielenosoitusta tänään') }}</span>
+      </div>
+    </section>
 
-  <section class="city-system">
-    <h2>{{ _('Miten kaupunki lisätään?') }}</h2>
-    <ol>
-      <li>{{ _('Etsitään kaupungista yhteyshenkilö tai paikallinen tiimi.') }}</li>
-      <li>{{ _('Kaupunki otetaan käyttöön ylläpidon kaupunkihallinnassa.') }}</li>
-      <li>{{ _('Yhteyshenkilöille annetaan kaupungin mielenosoitusten käsittelyyn tarvittavat oikeudet.') }}</li>
-    </ol>
-    <p>
-      {{ _('Jos haluat auttaa kaupungissa, jota ei vielä näy listalla, ota yhteyttä ylläpitoon ja kerro paikkakunta sekä miten haluaisit osallistua.') }}
-    </p>
-  </section>
+    <section class="city-grid-section">
+      <div class="section-heading">
+        <h2>{{ _('Kaupunkisivut') }}</h2>
+        <p>{{ _('Jokaisesta kaupungista löytyy oma päivänäkymä sekä laajempi lista tulevista mielenosoituksista.') }}</p>
+      </div>
+
+      <div class="city-grid" aria-label="{{ _('Kaupunkilista') }}">
+        {% for city in cities %}
+        <article class="city-card">
+          <div class="city-card-head">
+            <h3>{{ city.name }}</h3>
+            <span class="city-today-badge">
+              <i class="fa-solid fa-calendar-day"></i>
+              {{ city.today_count }} {{ _('tänään') }}
+            </span>
+          </div>
+          <p>
+            {{ _('Mielenosoitukset') }} {{ city.phrase }}:
+            {{ city.demo_count }} {{ _('tulevaa tapahtumaa') }}.
+          </p>
+          <div class="city-card-actions">
+            <a href="{{ url_for('today_city_demos', city=city.name|lower) }}">
+              <i class="fa-solid fa-calendar-day"></i>
+              {{ _('Tänään') }}
+            </a>
+            <a href="{{ url_for('city_demos', city=city.name|lower) }}">
+              <i class="fa-solid fa-arrow-right"></i>
+              {{ _('Kaikki') }}
+            </a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="city-system">
+      <h2>{{ _('Miten kaupunki lisätään?') }}</h2>
+      <ol>
+        <li>{{ _('Etsitään kaupungista yhteyshenkilö tai paikallinen tiimi.') }}</li>
+        <li>{{ _('Kaupunki otetaan käyttöön ylläpidon kaupunkihallinnassa.') }}</li>
+        <li>{{ _('Yhteyshenkilöille annetaan kaupungin mielenosoitusten käsittelyyn tarvittavat oikeudet.') }}</li>
+      </ol>
+      <p>
+        {{ _('Jos haluat auttaa kaupungissa, jota ei vielä näy listalla, ota yhteyttä ylläpitoon ja kerro paikkakunta sekä miten haluaisit osallistua.') }}
+      </p>
+    </section>
+  </div>
 </main>
 {% endblock %}

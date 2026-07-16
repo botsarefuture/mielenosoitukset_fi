@@ -11,6 +11,7 @@ from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime, date, timedelta
 from flask_babel import _, format_date
 from flask import (
+    Response,
     redirect,
     render_template,
     send_file,
@@ -104,6 +105,33 @@ SUBMIT_ERROR_CODES = {
 
 PANIC_MODE = False  # Forced maintenance mode for security remediation
 
+CITY_INESSIVE_OVERRIDES = {
+    "helsinki": "Helsingissä",
+    "tampere": "Tampereella",
+    "turku": "Turussa",
+    "kokkola": "Kokkolassa",
+    "porvoo": "Porvoossa",
+    "kuopio": "Kuopiossa",
+    "pieksamaki": "Pieksämäellä",
+    "jyvaskyla": "Jyväskylässä",
+    "pietarsaari": "Pietarsaaressa",
+    "vaasa": "Vaasassa",
+    "seinajoki": "Seinäjoella",
+    "lappeenranta": "Lappeenrannassa",
+    "sastamala": "Sastamalassa",
+    "savonlinna": "Savonlinnassa",
+    "oulu": "Oulussa",
+    "rovaniemi": "Rovaniemellä",
+    "joensuu": "Joensuussa",
+    "varkaus": "Varkaudessa",
+    "kotka": "Kotkassa",
+    "pori": "Porissa",
+    "kemi": "Kemissä",
+    "hamina": "Haminassa",
+    "kajaani": "Kajaanissa",
+    "raasepori": "Raaseporissa",
+}
+
 
 def _normalize_tag_value(tag):
     if tag is None:
@@ -118,6 +146,32 @@ def _normalize_tag_list(raw_tags):
         if cleaned:
             normalized.append(cleaned)
     return normalized
+
+
+def _city_display_name(raw_city):
+    city_key = normalize_city_key(raw_city)
+    return CITY_KEY_TO_NAME.get(city_key) or str(raw_city or "").strip()
+
+
+def _city_inessive_phrase(city_name):
+    city_key = normalize_city_key(city_name)
+    return CITY_INESSIVE_OVERRIDES.get(city_key) or f"kaupungissa {city_name}"
+
+
+def _demo_detail_identifier(demo):
+    return demo.get("slug") or demo.get("running_number") or str(demo.get("_id"))
+
+
+def _today_demo_query(city_name=None):
+    query = {**DEMO_FILTER, "date": date.today().isoformat()}
+    if city_name:
+        city_display = _city_display_name(city_name)
+        city_key = normalize_city_key(city_display)
+        query["$or"] = [
+            {"city_key": city_key},
+            {"city": {"$regex": f"^{re.escape(city_display)}$", "$options": "i"}},
+        ]
+    return query
 
 
 def _normalize_route_points(raw_route):
@@ -758,9 +812,6 @@ def init_routes(app):
         return send_from_directory(api_dir, "api.yaml", mimetype="application/yaml")
 
         
-    from flask import Response, url_for
-    import xml.etree.ElementTree as ET
-    from flask import Flask, Response, url_for
     import xml.etree.ElementTree as ET
 
     @app.route("/sitemap.xml", methods=["GET"])
@@ -800,17 +851,27 @@ def init_routes(app):
                 {"loc": "index"},
                 {"loc": "submit"},
                 {"loc": "demonstrations"},
+                {"loc": "today_demos"},
+                {"loc": "cities"},
+                {"loc": "calendar_month_view"},
+                {"loc": "calendar_year_view", "values": {"year": date.today().year}},
+                {"loc": "public_guides"},
                 {"loc": "info"},
+                {"loc": "terms"},
                 {"loc": "privacy"},
                 {"loc": "contact"},
+                {"loc": "api_docs"},
+                {"loc": "pride_nakyvaksi"},
                 {"loc": "campaign.index"},
             ]
 
             # Helper to add url + optional alternate links
-            def _add_url_with_alternates(parent, endpoint, **values):
+            def _add_url_with_alternates(parent, endpoint, lastmod=None, **values):
                 url_el = ET.SubElement(parent, "url")
                 loc_el = ET.SubElement(url_el, "loc")
                 loc_el.text = url_for(endpoint, _external=True, **values)
+                if lastmod:
+                    ET.SubElement(url_el, "lastmod").text = lastmod
                 if include_alternates:
                     for lang in locales:
                         ET.SubElement(
@@ -827,7 +888,7 @@ def init_routes(app):
 
             # Add static routes
             for r in static_routes:
-                _add_url_with_alternates(urlset, r["loc"])
+                _add_url_with_alternates(urlset, r["loc"], **r.get("values", {}))
 
             # Demonstration URLs: limit to demos in reasonable date window
             query_filter = DEMO_FILTER.copy()
@@ -835,20 +896,20 @@ def init_routes(app):
             end_date = (date.today() + timedelta(days=365 * 2)).strftime("%Y-%m-%d")
             query_filter["date"] = {"$gte": start_date, "$lte": end_date}
 
-            def _format_lastmod_for_demo(demo):
+            def _format_lastmod_for_doc(doc):
                 """
-                Determine a suitable lastmod value for a demo.
+                Determine a suitable lastmod value for a Mongo-style document.
 
                 The function prefers explicit timestamp fields (updated_at, modified_at, ...)
-                and falls back to the demo.date field. When an explicit timestamp is found
+                and falls back to the document date field. When an explicit timestamp is found
                 it is normalized to a date string in "YYYY-MM-DD" form. If only a date
                 string is available, it is returned as-is. Returns None if no sensible
                 value is found.
 
                 Parameters
                 ----------
-                demo : dict
-                    Demonstration document.
+                doc : dict
+                    Mongo-style document.
 
                 Returns
                 -------
@@ -911,15 +972,15 @@ def init_routes(app):
 
                 # Prefer explicit timestamp-like fields and always normalize to YYYY-MM-DD when possible
                 for key in candidates:
-                    v = demo.get(key)
+                    v = doc.get(key)
                     if not v:
                         continue
                     date_str = _to_date_str(v)
                     if date_str:
                         return date_str
 
-                # Fallback to demo['date']
-                v = demo.get("date")
+                # Fallback to doc['date']
+                v = doc.get("date")
                 if v:
                     date_str = _to_date_str(v)
                     if date_str:
@@ -928,6 +989,58 @@ def init_routes(app):
                     if isinstance(v, str) and v.strip():
                         return v
                 return None
+
+            demo_city_keys = set()
+            for row in demonstrations_collection.aggregate(
+                [
+                    {"$match": {**DEMO_FILTER, "city": {"$exists": True, "$ne": ""}}},
+                    {"$group": {"_id": {"city_key": "$city_key", "city": "$city"}}},
+                ]
+            ):
+                raw = row.get("_id") or {}
+                city_key = raw.get("city_key") or normalize_city_key(raw.get("city"))
+                if city_key in CITY_KEY_TO_NAME:
+                    demo_city_keys.add(city_key)
+
+            enabled_city_keys_for_sitemap = {
+                normalize_city_key(city)
+                for city in enabled_city_names(mongo)
+                if normalize_city_key(city) in CITY_KEY_TO_NAME
+            }
+            for city_key in sorted(
+                enabled_city_keys_for_sitemap | demo_city_keys,
+                key=lambda key: CITY_KEY_TO_NAME[key],
+            ):
+                _add_url_with_alternates(
+                    urlset,
+                    "city_demos",
+                    city=CITY_KEY_TO_NAME[city_key].lower(),
+                )
+                _add_url_with_alternates(
+                    urlset,
+                    "today_city_demos",
+                    city=CITY_KEY_TO_NAME[city_key].lower(),
+                )
+
+            for org_doc in mongo.organizations.find({}).sort("name", 1):
+                _add_url_with_alternates(
+                    urlset,
+                    "org",
+                    lastmod=_format_lastmod_for_doc(org_doc),
+                    org_id=str(org_doc["_id"]),
+                )
+
+            tag_pipeline = [
+                {"$match": DEMO_FILTER},
+                {"$unwind": "$tags"},
+                {"$match": {"tags": {"$type": "string", "$ne": ""}}},
+                {"$group": {"_id": "$tags"}},
+                {"$sort": {"_id": 1}},
+            ]
+            for row in demonstrations_collection.aggregate(tag_pipeline):
+                tag_name = str(row.get("_id") or "").strip().lstrip("#")
+                if tag_name:
+                    _add_url_with_alternates(urlset, "tag_detail", tag_name=tag_name)
 
             for demo in demonstrations_collection.find(query_filter):
                 demo_identifier = (
@@ -942,7 +1055,7 @@ def init_routes(app):
                 )
 
                 # lastmod for the demonstration if available
-                lastmod_val = _format_lastmod_for_demo(demo)
+                lastmod_val = _format_lastmod_for_doc(demo)
                 if lastmod_val:
                     ET.SubElement(url_el, "lastmod").text = lastmod_val
 
@@ -1740,7 +1853,7 @@ def init_routes(app):
         demo_city_keys = set()
         for row in demonstrations_collection.aggregate(
             [
-                {"$match": {"city": {"$exists": True, "$ne": ""}}},
+                {"$match": {**DEMO_FILTER, "city": {"$exists": True, "$ne": ""}}},
                 {"$group": {"_id": {"city_key": "$city_key", "city": "$city"}}},
             ]
         ):
@@ -1766,9 +1879,61 @@ def init_routes(app):
                     ],
                 }
             )
-            city_rows.append({"key": city_key, "name": city_name, "demo_count": demo_count})
+            today_count = demonstrations_collection.count_documents(_today_demo_query(city_name))
+            city_rows.append(
+                {
+                    "key": city_key,
+                    "name": city_name,
+                    "phrase": _city_inessive_phrase(city_name),
+                    "demo_count": demo_count,
+                    "today_count": today_count,
+                }
+            )
 
         return render_template("cities.html", cities=city_rows)
+
+    def _render_today_demonstrations(city=None):
+        city_name = _city_display_name(city) if city else None
+        if city is not None and not city_name:
+            abort(404)
+
+        query = _today_demo_query(city_name)
+        demos = list(demonstrations_collection.find(query).sort("start_time", ASCENDING))
+        for demo in demos:
+            demo["detail_identifier"] = _demo_detail_identifier(demo)
+
+        today_value = date.today()
+        if city_name:
+            title = f"Mielenosoitukset {_city_inessive_phrase(city_name)} tänään"
+            description = (
+                f"Tänään järjestettävät mielenosoitukset {_city_inessive_phrase(city_name)}. "
+                "Katso ajat, paikat ja aiheet yhdestä näkymästä."
+            )
+        else:
+            title = "Mielenosoitukset Suomessa tänään"
+            description = (
+                "Tänään järjestettävät mielenosoitukset Suomessa. "
+                "Katso päivän tapahtumat, kaupungit, ajat ja aiheet yhdestä näkymästä."
+            )
+
+        return render_template(
+            "today_demos.html",
+            city_name=city_name,
+            city_phrase=_city_inessive_phrase(city_name) if city_name else None,
+            date_value=today_value,
+            date_label=format_date(today_value, format="long"),
+            demonstrations=demos,
+            page_title=title,
+            page_description=description,
+        )
+
+    @app.route("/mielenosoitukset-tanaan")
+    def today_demos():
+        return _render_today_demonstrations()
+
+    @app.route("/city/<city>/tanaan")
+    def today_city_demos(city):
+        return _render_today_demonstrations(city=city)
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too

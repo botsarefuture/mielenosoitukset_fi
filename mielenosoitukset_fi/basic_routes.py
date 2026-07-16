@@ -47,6 +47,7 @@ from mielenosoitukset_fi.utils.cache import (
     should_skip_cache,
     skip_cache_public_only,
 )
+from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.classes import Case
@@ -994,6 +995,13 @@ def init_routes(app):
         Inject the city list into the template context.
         """
         return dict(city_list=CITY_LIST, enabled_city_list=enabled_city_names(mongo))
+
+    @app.context_processor
+    def inject_app_version():
+        """
+        Inject the running app version into templates.
+        """
+        return dict(app_version=VERSION)
 
     
     @app.route("/")

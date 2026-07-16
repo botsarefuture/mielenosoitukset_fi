@@ -1,143 +1,340 @@
-<table class="table table-hover align-middle">
-  <thead class="table-light">
-    <tr>
-      <th class="sortable" data-sort-key="username">{{ _('Nimi') }}</th>
-      <th class="sortable" data-sort-key="username">{{ _('Käyttäjänimi') }}</th>
-      <th class="sortable" data-sort-key="email">{{ _('Sähköpostiosoite') }}</th>
-      <th class="sortable" data-sort-key="role">{{ _('Rooli') }}</th>
-      <th>{{ _('Viimeksi kirjautunut') }}</th>
-      <th>{{ _('Toiminnot') }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for user in users %}
-    <tr id="user-{{ user._id }}">
-      <td>{{ user.displayname or user.username }}</td>
-      <td>{{ user.username }}</td>
-      <td>{{ user.email }}</td>
+<style>
+  .users-results-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .9rem 1.1rem;
+    border-bottom: 1px solid var(--users-border);
+    color: var(--users-muted);
+    background: var(--users-surface-muted);
+    font-size: .8rem;
+    font-weight: 700;
+  }
 
-      <!-- Role badge -->
-      <td>
-        {% if user.role == 'admin' %}
-          <span class="badge bg-warning text-dark">{{ _('Admin') }}</span>
-        {% elif user.role == 'global_admin' %}
-          <span class="badge bg-danger">{{ _('Superkäyttäjä') }}</span>
-        {% else %}
-          <span class="badge bg-secondary">{{ _('Käyttäjä') }}</span>
-        {% endif %}
-      </td>
+  .users-results-heading strong { color: var(--users-text); }
+  .users-table-scroll { overflow: visible; }
 
+  .users-table {
+    width: 100%;
+    min-width: 920px;
+    border-collapse: collapse;
+  }
 
+  .users-table th,
+  .users-table td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--users-border);
+    color: var(--users-text);
+    text-align: left;
+    vertical-align: middle;
+  }
 
-      <!-- Last login -->
-    <td>
-    {% if user.last_login %}
-        {{ user.last_login.strftime('%d.%m.%Y %H:%M') }}
-    {% else %}
-        {{ _('Ei kirjautunut') }}
-    {% endif %}
-    </td>
+  .users-table th {
+    color: var(--users-muted);
+    background: var(--users-surface);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
 
-      <!-- Actions -->
-      <td>
-        {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") or current_user.has_permission("FORCE_PASSWORD_CHANGE") or current_user.has_permission("VIEW_USER") %}
-        <div class="dropdown">
-          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                  id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-ellipsis-vertical"></i> {{ _('Toiminnot') }}
-          </button>
-          <ul class="dropdown-menu" aria-labelledby="userActions-{{ user._id }}">
-            
-            {% if current_user.has_permission("EDIT_USER") %}
-            <li>
-              <a class="dropdown-item" href="{{ url_for('admin_user.edit_user', user_id=user._id) }}"
-                 data-bs-toggle="tooltip" title="{{ _('Muokkaa käyttäjää') }}">
-                <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
-              </a>
-            </li>
-            {% endif %}
-            
-            {% if current_user.has_permission("FORCE_PASSWORD_CHANGE") %}
-            <li>
-              <button class="dropdown-item text-warning" type="button"
-                      onclick="openForcePwdModal('{{ user.displayname or user.username }}', '{{ user._id }}')"
-                      data-bs-toggle="tooltip" title="{{ _('Pakota käyttäjä vaihtamaan salasanan seuraavan kirjautumisen yhteydessä') }}">
-                <i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}
-              </button>
-            </li>
-            {% endif %}
+  .users-table tbody tr:hover { background: var(--users-blue-soft); }
+  .users-table tbody tr:last-child td { border-bottom: 0; }
 
-            {% if current_user.has_permission("VIEW_USER") %}
-            <li>
-              <button class="dropdown-item" type="button"
-                      onclick='openLoginHistoryModal("{{ user._id }}", {{ (user.displayname or user.username)|tojson|e }}, {{ user.username|tojson|e }})'
-                      data-bs-toggle="tooltip" title="{{ _('Näytä käyttäjän kirjautumishistoria') }}">
-                <i class="fas fa-clock-rotate-left me-2"></i>{{ _('Kirjautumishistoria') }}
-              </button>
-            </li>
-            {% endif %}
+  .users-table th.sortable {
+    position: relative;
+    cursor: pointer;
+  }
 
-            {% if current_user.has_permission("DELETE_USER") %}
-            <li>
-              <button class="dropdown-item text-danger" type="button"
-                      onclick="openDeleteModal(event, '{{ user.displayname or user.username }}', '{{ user._id }}', 'user')"
-                      data-bs-toggle="tooltip" title="{{ _('Poista käyttäjä') }}">
-                <i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}
-              </button>
-            </li>
-            {% endif %}
+  .users-table th.sortable::after {
+    content: "\f0dc";
+    margin-left: .45rem;
+    color: var(--users-muted);
+    font-family: "Font Awesome 6 Free";
+    font-size: .68rem;
+    font-weight: 900;
+  }
 
-          </ul>
-        </div>
-        {% else %}
-        <span class="text-muted">{{ _('Ei riittäviä oikeuksia.') }}</span>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+  .users-table th.sortable.asc::after { content: "\f0de"; }
+  .users-table th.sortable.desc::after { content: "\f0dd"; }
+
+  .user-identity {
+    display: flex;
+    gap: .7rem;
+    align-items: center;
+    min-width: 210px;
+  }
+
+  .user-avatar {
+    display: grid;
+    flex: 0 0 auto;
+    width: 2.45rem;
+    height: 2.45rem;
+    place-items: center;
+    border-radius: .75rem;
+    color: var(--users-blue);
+    background: var(--users-blue-soft);
+    font-weight: 900;
+    line-height: 1;
+    overflow: hidden;
+    text-transform: uppercase;
+  }
+
+  .user-identity strong,
+  .user-identity div span {
+    display: block;
+  }
+
+  .user-identity strong { color: var(--users-text); font-size: .9rem; }
+  .user-identity div span { color: var(--users-muted); font-size: .76rem; }
+
+  .user-email {
+    color: var(--users-muted);
+    font-size: .84rem;
+  }
+
+  .user-status {
+    display: inline-flex;
+    gap: .35rem;
+    align-items: center;
+    margin-top: .25rem;
+    color: var(--users-muted);
+    font-size: .7rem;
+  }
+
+  .user-status.confirmed { color: light-dark(#087f5b, #65d6ac); }
+
+  .user-role {
+    display: inline-flex;
+    gap: .35rem;
+    align-items: center;
+    padding: .28rem .58rem;
+    border-radius: 999px;
+    color: var(--users-muted);
+    background: var(--users-surface-muted);
+    font-size: .72rem;
+    font-weight: 800;
+  }
+
+  .user-role.admin { color: light-dark(#9a4d00, #ffd098); background: var(--users-orange-soft); }
+  .user-role.global-admin { color: var(--users-blue-dark); background: var(--users-blue-soft); }
+
+  .user-login {
+    color: var(--users-text);
+    font-size: .82rem;
+  }
+
+  .user-login.never { color: var(--users-muted); }
+
+  .user-actions-button {
+    display: inline-flex;
+    gap: .4rem;
+    align-items: center;
+    padding: .45rem .65rem;
+    border: 1px solid var(--users-border);
+    border-radius: .65rem;
+    color: var(--users-text);
+    background: var(--users-surface-muted);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+
+  .users-table .dropdown-menu {
+    z-index: 1080;
+    min-width: 14rem;
+    border-color: var(--users-border);
+    border-radius: .75rem;
+    color: var(--users-text);
+    background: var(--users-surface);
+    box-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .16), rgba(0, 0, 0, .36));
+  }
+
+  .users-table .dropdown-item {
+    color: var(--users-text);
+    font-size: .82rem;
+  }
+
+  .users-table .dropdown-item:hover,
+  .users-table .dropdown-item:focus {
+    color: var(--users-blue-dark);
+    background: var(--users-blue-soft);
+  }
+
+  .users-pagination {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .8rem 1rem;
+    border-top: 1px solid var(--users-border);
+    background: var(--users-surface);
+  }
+
+  .users-pagination-info {
+    color: var(--users-muted);
+    font-size: .8rem;
+    font-weight: 700;
+  }
+
+  .users-pagination .pagination {
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .users-pagination .page-link {
+    display: inline-flex;
+    min-width: 2.3rem;
+    min-height: 2.3rem;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    padding: .42rem .65rem;
+    border: 1px solid var(--users-border);
+    border-radius: .62rem !important;
+    color: var(--users-blue-dark);
+    background: var(--users-surface-muted);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+
+  .users-pagination .page-item.active .page-link {
+    border-color: var(--users-blue);
+    color: #fff;
+    background: var(--users-blue);
+  }
+
+  .users-pagination .page-item.disabled .page-link { opacity: .45; pointer-events: none; }
+
+  .users-empty {
+    padding: 3rem 1.5rem;
+    color: var(--users-muted);
+    text-align: center;
+  }
+
+  @media (max-width: 760px) {
+    .users-table-scroll { overflow-x: auto; }
+    .users-table .dropdown-menu.show {
+      position: static !important;
+      transform: none !important;
+      margin-top: .4rem !important;
+    }
+    .users-pagination { align-items: stretch; flex-direction: column; }
+    .users-pagination .pagination { justify-content: center; }
+    .users-pagination-label { display: none; }
+  }
+</style>
+
+<div class="users-results-heading">
+  <span><strong>{{ total_users }}</strong> {{ _('käyttäjää löytyi') }}</span>
+  {% if search_query %}<span>{{ _('Haku') }}: “{{ search_query }}”</span>{% endif %}
+</div>
 
 {% if users %}
-<nav aria-label="User pagination">
-  <ul class="pagination justify-content-center mt-3">
-    {% if prev_page %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
-          <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
-        </a>
+<div class="users-table-scroll">
+  <table class="users-table">
+    <thead>
+      <tr>
+        <th class="sortable">{{ _('Käyttäjä') }}</th>
+        <th class="sortable">{{ _('Sähköpostiosoite') }}</th>
+        <th class="sortable">{{ _('Rooli') }}</th>
+        <th class="sortable">{{ _('Viimeksi kirjautunut') }}</th>
+        <th>{{ _('Toiminnot') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr id="user-{{ user._id }}">
+        <td>
+          <div class="user-identity">
+            <span class="user-avatar">{{ (user.displayname or user.username or '?')[:1] }}</span>
+            <div>
+              <strong>{{ user.displayname or user.username }}</strong>
+              <span>@{{ user.username }}</span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="user-email">{{ user.email }}</div>
+          {% if user.confirmed %}
+            <span class="user-status confirmed"><i class="fas fa-circle-check" aria-hidden="true"></i>{{ _('Vahvistettu') }}</span>
+          {% else %}
+            <span class="user-status"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Vahvistamaton') }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if user.role == 'admin' %}
+            <span class="user-role admin"><i class="fas fa-shield" aria-hidden="true"></i>{{ _('Admin') }}</span>
+          {% elif user.role in ['global_admin', 'god'] %}
+            <span class="user-role global-admin"><i class="fas fa-shield-halved" aria-hidden="true"></i>{{ _('Superkäyttäjä') }}</span>
+          {% else %}
+            <span class="user-role"><i class="fas fa-user" aria-hidden="true"></i>{{ _('Käyttäjä') }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if user.last_login %}
+            <span class="user-login">{{ user.last_login.strftime('%d.%m.%Y %H:%M') }}</span>
+          {% else %}
+            <span class="user-login never">{{ _('Ei kirjautunut') }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if current_user.has_permission("EDIT_USER") or current_user.has_permission("DELETE_USER") or current_user.has_permission("FORCE_PASSWORD_CHANGE") or current_user.has_permission("VIEW_USER") %}
+          <div class="dropdown">
+            <button class="user-actions-button dropdown-toggle" type="button" id="userActions-{{ user._id }}" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>{{ _('Toiminnot') }}
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="userActions-{{ user._id }}">
+              {% if current_user.has_permission("EDIT_USER") %}
+              <li><a class="dropdown-item" href="{{ url_for('admin_user.edit_user', user_id=user._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>
+              {% endif %}
+              {% if current_user.has_permission("FORCE_PASSWORD_CHANGE") %}
+              <li><button class="dropdown-item text-warning" type="button" onclick="openForcePwdModal('{{ user.displayname or user.username }}', '{{ user._id }}')"><i class="fas fa-key me-2"></i>{{ _('Pakota salasananvaihto') }}</button></li>
+              {% endif %}
+              {% if current_user.has_permission("VIEW_USER") %}
+              <li><button class="dropdown-item" type="button" onclick='openLoginHistoryModal("{{ user._id }}", {{ (user.displayname or user.username)|tojson|e }}, {{ user.username|tojson|e }})'><i class="fas fa-clock-rotate-left me-2"></i>{{ _('Kirjautumishistoria') }}</button></li>
+              {% endif %}
+              {% if current_user.has_permission("DELETE_USER") %}
+              <li><button class="dropdown-item text-danger" type="button" onclick="openDeleteModal(event, '{{ user.displayname or user.username }}', '{{ user._id }}', 'user')"><i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</button></li>
+              {% endif %}
+            </ul>
+          </div>
+          {% else %}
+            <span class="user-status">{{ _('Ei riittäviä oikeuksia.') }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<nav class="users-pagination" aria-label="{{ _('Käyttäjien sivutus') }}">
+  <div class="users-pagination-info">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</div>
+  <ul class="pagination">
+    <li class="page-item {% if not prev_page %}disabled{% endif %}">
+      <a class="page-link" href="?page={{ prev_page or 1 }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
+        <i class="fas fa-angle-left" aria-hidden="true"></i><span class="users-pagination-label">{{ _('Edellinen') }}</span>
+      </a>
+    </li>
+    {% for page_number in visible_pages %}
+      <li class="page-item {% if page_number == current_page %}active{% endif %}">
+        <a class="page-link" href="?page={{ page_number }}&per_page={{ per_page }}&search={{ search_query|urlencode }}" {% if page_number == current_page %}aria-current="page"{% endif %}>{{ page_number }}</a>
       </li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i> {{ _('Edellinen') }}</span></li>
-    {% endif %}
-    <li class="page-item disabled"><span class="page-link">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</span></li>
-    {% if next_page %}
-      <li class="page-item">
-        <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
-          {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
-        </a>
-      </li>
-    {% else %}
-      <li class="page-item disabled"><span class="page-link">{{ _('Seuraava') }} <i class="fas fa-angle-right"></i></span></li>
-    {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not next_page %}disabled{% endif %}">
+      <a class="page-link" href="?page={{ next_page or total_pages }}&per_page={{ per_page }}&search={{ search_query|urlencode }}">
+        <span class="users-pagination-label">{{ _('Seuraava') }}</span><i class="fas fa-angle-right" aria-hidden="true"></i>
+      </a>
+    </li>
   </ul>
 </nav>
 {% else %}
-<div class="alert alert-light border mt-3 mb-0">
-  {{ _('Ei käyttäjiä tällä haulla.') }}
+<div class="users-empty">
+  <i class="fas fa-user-slash fs-2 mb-3" aria-hidden="true"></i>
+  <h3>{{ _('Ei käyttäjiä tällä haulla.') }}</h3>
+  <p class="mb-0">{{ _('Kokeile käyttäjänimeä, näyttönimeä tai sähköpostiosoitetta.') }}</p>
 </div>
 {% endif %}
-
-<style>
-/* Hover effect + pointer */
-.table-hover tbody tr:hover {
-  background-color: #f1f3f5;
-  cursor: pointer;
-}
-
-/* Optional: role badges spacing */
-.badge-role {
-  font-size: 0.85rem;
-  padding: 0.35em 0.65em;
-}
-</style>

@@ -156,6 +156,32 @@
     font-weight: 500;
   }
 
+  .suggested-logo-preview {
+    display: grid;
+    gap: 0.65rem;
+    max-width: 260px;
+  }
+
+  .suggested-logo-preview img {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    height: 96px;
+    object-fit: contain;
+    padding: 0.6rem;
+    width: 96px;
+  }
+
+  .suggested-logo-preview a,
+  .suggested-dict-value a {
+    overflow-wrap: anywhere;
+  }
+
+  .suggested-dict-value {
+    display: grid;
+    gap: 0.35rem;
+  }
+
   .value-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -360,18 +386,47 @@
           </tr>
         </thead>
         <tbody>
+          {% set field_labels = {
+            "name": _("Nimi"),
+            "description": _("Kuvaus"),
+            "website": _("Verkkosivusto"),
+            "email": _("Sähköposti"),
+            "logo": _("Logo"),
+            "social_media_links": _("Sosiaalinen media")
+          } %}
+          {% set field_icons = {
+            "name": "fa-building",
+            "description": "fa-align-left",
+            "website": "fa-globe",
+            "email": "fa-envelope",
+            "logo": "fa-image",
+            "social_media_links": "fa-share-nodes"
+          } %}
           {% for key, new_value in suggestion.fields.items() %}
           <tr>
             <td>
               <div class="field-name">
-                <i class="fa-solid fa-tag"></i>
-                {{ key }}
+                <i class="fa-solid {{ field_icons.get(key, 'fa-tag') }}"></i>
+                {{ field_labels.get(key, key) }}
               </div>
             </td>
             <td>
               <div class="field-value {% if not org.to_dict().get(key) %}empty{% endif %}">
                 {% if org.to_dict().get(key) %}
-                  <span class="value-badge has-value">{{ org.to_dict().get(key) }}</span>
+                  {% if key == "logo" %}
+                    <div class="suggested-logo-preview">
+                      <img src="{{ org.to_dict().get(key) }}" alt="{{ _('Nykyinen logo') }}" loading="lazy" referrerpolicy="no-referrer">
+                      <a href="{{ org.to_dict().get(key) }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ org.to_dict().get(key) }}</a>
+                    </div>
+                  {% elif key == "social_media_links" and org.to_dict().get(key) is mapping %}
+                    <div class="suggested-dict-value">
+                      {% for platform, url in org.to_dict().get(key).items() %}
+                        <span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <span class="value-badge has-value">{{ org.to_dict().get(key) }}</span>
+                  {% endif %}
                 {% else %}
                   <span class="value-badge empty">{{ _('Ei asetettu') }}</span>
                 {% endif %}
@@ -379,7 +434,20 @@
             </td>
             <td>
               <div class="field-value new">
-                <span class="value-badge new-value">{{ new_value }}</span>
+                {% if key == "logo" %}
+                  <div class="suggested-logo-preview">
+                    <img src="{{ new_value }}" alt="{{ _('Ehdotettu logo') }}" loading="lazy" referrerpolicy="no-referrer">
+                    <a href="{{ new_value }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ new_value }}</a>
+                  </div>
+                {% elif key == "social_media_links" and new_value is mapping %}
+                  <div class="suggested-dict-value">
+                    {% for platform, url in new_value.items() %}
+                      <span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <span class="value-badge new-value">{{ new_value }}</span>
+                {% endif %}
               </div>
             </td>
             <td class="checkbox-cell">

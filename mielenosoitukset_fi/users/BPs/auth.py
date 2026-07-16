@@ -24,6 +24,7 @@ from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
 from mielenosoitukset_fi.utils.validators import normalize_username, validate_username
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
 from werkzeug.utils import secure_filename
@@ -96,21 +97,27 @@ def _get_mongo():
     return DatabaseManager.get_instance().get_db()
 
 
-def _username_exists(username: str) -> bool:
-    """Check canonical usernames while remaining compatible with older user documents."""
+def _find_user_by_username(username: str):
+    """Find a user by canonical username, falling back to legacy casing."""
+    username = normalize_username(username)
+    if not username:
+        return None
+
+    users = _get_mongo().users
+    user = users.find_one({"username_canonical": username})
+    if user:
+        return user
+
     case_insensitive_username = {
         "$regex": f"^{re.escape(username)}$",
         "$options": "i",
     }
-    return _get_mongo().users.find_one(
-        {
-            "$or": [
-                {"username_canonical": username},
-                {"username": case_insensitive_username},
-            ]
-        },
-        {"_id": 1},
-    ) is not None
+    return users.find_one({"username": case_insensitive_username})
+
+
+def _username_exists(username: str) -> bool:
+    """Check canonical usernames while remaining compatible with older user documents."""
+    return _find_user_by_username(username) is not None
 
 
 def _fresh_user_doc():
@@ -304,7 +311,7 @@ def generate_api_token():
             "action": "attempted privileged scope request",
             "requested_scopes": data.get("scopes", []),
             "denied_scopes": sorted(requested_privileged_scopes),
-            "ip_address": request.remote_addr,
+            "ip_address": get_client_ip(),
             "timestamp": datetime.now()
         })
         return jsonify({
@@ -553,7 +560,7 @@ def mfa_check():
 
     try:
         username = normalize_username(request.form.get("username"))
-        user = _get_mongo().users.find_one({"username": username})
+        user = _find_user_by_username(username)
         user = User.from_db(user)
         if not user.check_password(request.form.get("password")):
             return jsonify({"enabled": False, "valid": False})
@@ -571,6 +578,26 @@ def mfa_check():
         return jsonify({"enabled": False, "valid": False})
 
 from urllib.parse import urlparse
+
+
+def _normalize_post_login_target(target: str | None) -> str:
+    candidate = (target or "").replace("\\", "")
+    if not candidate:
+        return url_for("index")
+
+    parsed = urlparse(candidate)
+    if parsed.netloc or parsed.scheme:
+        return url_for("index")
+
+    if candidate == url_for("users.auth.login"):
+        return url_for("index")
+
+    # Post-login redirects should land on human-facing pages, not raw APIs.
+    if candidate.startswith("/api/") or candidate.startswith("/users/auth/api/"):
+        return url_for("index")
+
+    return candidate
+
 
 def _check(safe_next_page, request):
     
@@ -595,20 +622,7 @@ def _check(safe_next_page, request):
 def login():
     # Get the next page from GET param or from session fallback
     next_page = request.args.get("next") or session.get("next_page") or ""
-
-    # Sanitize next_page: remove backslashes etc.
-    next_page = next_page.replace("\\", "")
-
-    # Check if next_page is a safe internal URL (no netloc, no scheme)
-    if next_page and (urlparse(next_page).netloc == "" and urlparse(next_page).scheme == ""):
-        safe_next_page = next_page
-    else:
-        # fallback default redirect page after login
-        safe_next_page = url_for("index")
-
-    # Prevent redirect back to login page itself to avoid loops
-    if safe_next_page == url_for("users.auth.login"):
-        safe_next_page = url_for("index")
+    safe_next_page = _normalize_post_login_target(next_page)
 
     # Save the safe next page to session in case of POST failures
     session["next_page"] = safe_next_page
@@ -625,9 +639,9 @@ def login():
             flash_message("Anna sekä käyttäjänimi että salasana.", "warning")
             return redirect(url_for("users.auth.login", next=safe_next_page))
 
-        user_doc = _get_mongo().users.find_one({"username": username})
+        user_doc = _find_user_by_username(username)
         
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
         if not user_doc:
@@ -688,7 +702,7 @@ from datetime import datetime
 @auth_bp.route("/forced_pwd_reset/", methods=["GET", "POST"])
 @login_required
 def forced_pwd_reset():
-    ip = request.remote_addr
+    ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
 
     log_entry = {
@@ -1242,7 +1256,7 @@ def password_reset(token):
     """
     Handle password reset using a token, with full logging and single-use token enforcement.
     """
-    ip = request.remote_addr
+    ip = get_client_ip()
     user_agent = request.headers.get("User-Agent", "")
     
     # Check if token has already been used
@@ -1445,7 +1459,7 @@ def api_change_password():
     mongo.password_changes.insert_one({
         "user_id": current_user._id,
         "datetime": utcnow(),
-        "ip": request.remote_addr,
+        "ip": get_client_ip(),
         "user_agent": request.headers.get("User-Agent", ""),
         "method": "settings_page",
         "changed": True

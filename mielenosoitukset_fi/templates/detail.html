@@ -542,6 +542,11 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
     color: white;
   }
 
+  .btn-social.mastodon {
+    background: linear-gradient(135deg, #6364ff 0%, #858afa 100%);
+    color: white;
+  }
+
   .btn-social.linkedin {
     background: #0077b5;
     color: white;
@@ -1513,13 +1518,20 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
 
   <!-- Social Share -->
   <div class="action-buttons animate-fade-in-up">
+    {% set demo_url = url_for('demonstration_detail', demo_id=demo['_id'], _external=True) %}
+    {% set share_text = demo['title'] ~ ' ' ~ demo_url %}
     <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}"
       target="_blank" class="btn btn-social facebook">
       <i class="fa-brands fa-facebook-f"></i>
       {{ _('Jaa Facebookissa') }}
     </a>
-    <a href="https://twitter.com/intent/tweet?url={{ url_for('demonstration_detail', demo_id=demo['_id'], _external=True) }}&text={{ demo['title'] }}"
-      target="_blank" class="btn btn-social twitter">
+    <a class="btn btn-social mastodon" href="https://mastodon.social/share?text={{ share_text|urlencode }}"
+      target="_blank" rel="noopener">
+      <i class="fa-brands fa-mastodon"></i>
+      {{ _('Jaa Mastodonissa') }}
+    </a>
+    <a href="https://twitter.com/intent/tweet?url={{ demo_url|urlencode }}&text={{ demo['title']|urlencode }}"
+      target="_blank" rel="noopener" class="btn btn-social twitter">
       <i class="fa-brands fa-x-twitter"></i>
       {{ _('Jaa X:ssä') }}
     </a>
@@ -1706,7 +1718,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
         <div class="organizer-card-header">
           <div class="organizer-logo {% if not org.logo %}placeholder{% endif %}">
             {% if org.logo %}
-            <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async">
+            <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
             {% else %}
             <i class="fa-solid fa-building"></i>
             {% endif %}

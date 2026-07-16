@@ -1,3 +1,4 @@
+import ast
 import copy
 import string
 
@@ -305,12 +306,19 @@ class Demonstration(BaseModel):
             raise ValueError(f"Invalid event type: {self.event_type}")
 
         self.route = route  # If the demonstration is a march, this handles the route
-        
+
         if self.route is not None and not isinstance(self.route, list):
             try:
-                self.route = [x.strip() for x in self.route.split(",") if x.strip()]
+                parsed_route = ast.literal_eval(self.route) if isinstance(self.route, str) else self.route
+                if isinstance(parsed_route, list):
+                    self.route = [str(x).strip() for x in parsed_route if str(x).strip()]
+                else:
+                    self.route = [x.strip() for x in str(self.route).split(",") if x.strip()]
             except Exception:
-                pass
+                try:
+                    self.route = [x.strip() for x in str(self.route).split(",") if x.strip()]
+                except Exception:
+                    pass
         
 
 

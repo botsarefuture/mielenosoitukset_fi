@@ -345,6 +345,33 @@ def _deduplicate_demos(demo_list):
     return unique
 
 
+def _split_admin_filter_tokens(raw_value: str) -> list[str]:
+    tokens = []
+    for part in re.split(r"[,\s]+", raw_value or ""):
+        token = part.strip().lstrip("#")
+        if token:
+            tokens.append(token)
+    return tokens
+
+
+def _tag_exact_filter(tag: str):
+    return {"$regex": rf"^#?{re.escape(tag)}$", "$options": "i"}
+
+
+def _demo_text_search_clause(search_query: str):
+    escaped_query = re.escape(search_query)
+    regex_filter = {"$regex": escaped_query, "$options": "i"}
+    return {
+        "$or": [
+            {"title": regex_filter},
+            {"city": regex_filter},
+            {"address": regex_filter},
+            {"description": regex_filter},
+            {"tags": regex_filter},
+        ]
+    }
+
+
 def _json_safe(value):
     if isinstance(value, dict):
         return {k: _json_safe(v) for k, v in value.items()}
@@ -872,16 +899,10 @@ def _log_token_event(
         )
 
 def _client_ip() -> str:
-    """
-    Get the best-effort client IP.
-    If behind a trusted proxy, prefer X-Forwarded-For first value.
-    """
-    # If you terminate TLS behind a proxy/load balancer, make sure you trust only known proxies
-    xff = request.headers.get("X-Forwarded-For")
-    if xff:
-        # XFF may be a list "client, proxy1, proxy2"
-        return xff.split(",")[0].strip()
-    return request.remote_addr or "0.0.0.0"
+    """Return the trusted real-client IP for token auditing."""
+    from mielenosoitukset_fi.utils.request_ip import get_client_ip
+
+    return get_client_ip("0.0.0.0")
 
 def _user_agent() -> str:
     return request.headers.get("User-Agent", "")[:512]
@@ -1267,6 +1288,7 @@ def approve_demo_with_token(token):
             },
         )
 
+    _log_case_decision(demo_id, refreshed_demo.get("title"), "approve_demo", close_reason="demo_approved")
     _mark_used(doc["_id"])
     flash_message("Mielenosoitus hyväksyttiin onnistuneesti!", "success")
     
@@ -1333,6 +1355,8 @@ def reject_demo_with_token(token):
         extra_details={"source": "token", "token_id": str(doc.get("_id"))},
     )
 
+    _log_case_decision(demo_id, refreshed_demo.get("title"), "reject_demo", close_reason="demo_rejected")
+
     _revoke_tokens_for_demo(demo_id, ["approve", "edit"])
 
     # Notify submitter
@@ -1383,6 +1407,9 @@ from bson.objectid import ObjectId as BsonObjectId
 def demo_control():
     # --- Query parameters ---
     search_query = (request.args.get("search") or "").strip()
+    year_filter = (request.args.get("year") or "").strip()
+    tag_filter = (request.args.get("tag") or "").strip()
+    missing_tag_filter = (request.args.get("missing_tag") or "").strip()
     approved_only = (request.args.get("approved") or "false").lower() == "true"
     show_hidden = (request.args.get("show_hidden") or "false").lower() == "true"
     show_past_param = (request.args.get("show_past") or "all").lower()
@@ -1414,7 +1441,22 @@ def demo_control():
         filter_clauses.append({"approved": True})
 
     if search_query:
-        filter_clauses.append({"title": {"$regex": search_query, "$options": "i"}})
+        filter_clauses.append(_demo_text_search_clause(search_query))
+
+    if year_filter:
+        if year_filter.isdigit() and len(year_filter) == 4:
+            filter_clauses.append({"date": {"$regex": f"^{re.escape(year_filter)}-"}})
+        else:
+            flash_message(_("Vuosisuodatin jätettiin huomiotta, koska sen pitää olla muodossa VVVV."), "warning")
+            year_filter = ""
+
+    for required_tag in _split_admin_filter_tokens(tag_filter):
+        filter_clauses.append({"tags": {"$elemMatch": _tag_exact_filter(required_tag)}})
+
+    for excluded_tag in _split_admin_filter_tokens(missing_tag_filter):
+        filter_clauses.append(
+            {"tags": {"$not": {"$elemMatch": _tag_exact_filter(excluded_tag)}}}
+        )
 
     # Permissions
     if not current_user.global_admin:
@@ -1515,6 +1557,9 @@ def demo_control():
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
         search_query=search_query,
+        year_filter=year_filter,
+        tag_filter=tag_filter,
+        missing_tag_filter=missing_tag_filter,
         approved_status=approved_only,
         show_hidden=show_hidden,
         show_cancelled=show_cancelled,
@@ -3650,6 +3695,8 @@ def accept_demo(demo_id):
                     "address": demo.address,
                 },
             )
+
+        _log_case_decision(demo_id, demo.title, "approve_demo", close_reason="demo_approved")
 
         return jsonify({"status": "OK", "message": "Demonstration accepted successfully."}), 200
     except Exception as e:

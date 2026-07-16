@@ -1,4 +1,5 @@
 import copy
+import ast
 import os
 import re
 import threading
@@ -33,6 +34,7 @@ from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
 from mielenosoitukset_fi.utils.wrappers import permission_required, depracated_endpoint
 from mielenosoitukset_fi.utils.media_helpers import get_demo_cover_image
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.a import generate_demo_sentence
 from pymongo.errors import DuplicateKeyError
 from pymongo import ASCENDING, DESCENDING
@@ -43,6 +45,7 @@ from mielenosoitukset_fi.utils.cache import (
     skip_cache_public_only,
 )
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.classes import Case
 from mielenosoitukset_fi.utils.demo_cancellation import (
     cancel_demo,
@@ -58,6 +61,16 @@ email_sender = EmailSender()
 db_manager = DatabaseManager().get_instance()
 mongo = db_manager.get_db()
 demonstrations_collection = mongo["demonstrations"]
+demonstrations_collection.create_index(
+    [
+        ("approved", ASCENDING),
+        ("date", ASCENDING),
+        ("cancelled", ASCENDING),
+        ("hide", ASCENDING),
+        ("rejected", ASCENDING),
+    ],
+    background=True,
+)
 submitters_collection = mongo["submitters"]  # <-- Add this line
 malicious_reports_collection = mongo["malicious_reports"]
 submission_tokens_collection = mongo["demo_submission_tokens"]
@@ -101,6 +114,27 @@ def _normalize_tag_list(raw_tags):
         if cleaned:
             normalized.append(cleaned)
     return normalized
+
+
+def _normalize_route_points(raw_route):
+    if raw_route is None:
+        return []
+
+    if isinstance(raw_route, list):
+        return [str(point).strip() for point in raw_route if str(point).strip()]
+
+    text = str(raw_route).strip()
+    if not text:
+        return []
+
+    try:
+        parsed = ast.literal_eval(text)
+        if isinstance(parsed, list):
+            return [str(point).strip() for point in parsed if str(point).strip()]
+    except Exception:
+        pass
+
+    return [point.strip() for point in re.split(r"[\n,]+", text) if point.strip()]
 
 
 def _load_panic():
@@ -232,7 +266,7 @@ def _log_submit_error(message, code, status=400, extra=None):
                 "request_path": request.path,
                 "request_method": request.method,
                 "query_args": request.args.to_dict(flat=False),
-                "ip": request.remote_addr,
+                "ip": get_client_ip(),
                 "user_agent": request.headers.get("User-Agent"),
                 "referer": request.headers.get("Referer"),
                 "form_snapshot": form_snapshot,
@@ -407,6 +441,61 @@ def filter_demonstrations_api(
     return filtered
 
 
+def _case_insensitive_contains(value):
+    return {"$regex": re.escape(value), "$options": "i"}
+
+
+def _case_insensitive_exact(value):
+    return {"$regex": f"^{re.escape(value)}$", "$options": "i"}
+
+
+def _case_insensitive_contains_pattern(value):
+    return re.compile(re.escape(value), re.IGNORECASE)
+
+
+def _build_public_demo_query(
+    today,
+    search_query="",
+    city_query="",
+    location_query="",
+    date_start=None,
+    date_end=None,
+    tag_query=None,
+):
+    query = copy.deepcopy(DEMO_FILTER)
+    today_iso = today.isoformat()
+    date_query = {"$gte": today_iso}
+
+    if date_start and date_start > today_iso:
+        date_query["$gte"] = date_start
+    if date_end:
+        date_query["$lte"] = date_end
+
+    query["date"] = date_query
+
+    if search_query:
+        query["$or"] = [
+            {"title": _case_insensitive_contains(search_query)},
+            {"address": _case_insensitive_contains(search_query)},
+        ]
+
+    if city_query:
+        if isinstance(city_query, list):
+            query["city"] = {
+                "$in": [_case_insensitive_contains_pattern(city) for city in city_query]
+            }
+        else:
+            query["city"] = _case_insensitive_contains(city_query)
+
+    if location_query:
+        query["address"] = _case_insensitive_contains(location_query)
+
+    if tag_query:
+        query["tags"] = _case_insensitive_exact(tag_query)
+
+    return query
+
+
 def parse_city_query(city_query):
     """
     Parse the city query string into a list if needed.
@@ -512,9 +601,7 @@ def add_api_routes(app):
         """
         args = get_api_pagination_args()
         today = date.today()
-        demos_cursor = demonstrations_collection.find(DEMO_FILTER)
-        filtered = filter_demonstrations_api(
-            demos_cursor,
+        query = _build_public_demo_query(
             today,
             args["search_query"],
             args["city_query"],
@@ -523,9 +610,17 @@ def add_api_routes(app):
             args["date_end"],
             args.get("tag_query"),
         )
-        filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date())
-        paginated, total_pages = paginate_list(filtered, args["page"], args["per_page"])
-        result = [format_demo_for_api(demo) for demo in paginated]
+        page = max(args["page"], 1)
+        per_page = max(args["per_page"], 1)
+        total = demonstrations_collection.count_documents(query)
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        demos_cursor = (
+            demonstrations_collection.find(query)
+            .sort("date", ASCENDING)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+        result = [format_demo_for_api(demo) for demo in demos_cursor]
         return jsonify(demonstrations=result, total_pages=total_pages)
 
     @app.route("/api/v1/check_demo_conflict", methods=["GET"])
@@ -947,15 +1042,12 @@ def init_routes(app):
                 cache.set(cache_key, recommended_demos, timeout=60 * 10)  # Cache 10 min
 
         # --- Featured / other demos ---
-        demonstrations = demonstrations_collection.find(DEMO_FILTER)
-        filtered_demonstrations = [
-            demo
-            for demo in demonstrations
-            if not demo.get("cancelled")
-            if datetime.strptime(demo["date"], "%Y-%m-%d").date() >= today
-        ]
-        filtered_demonstrations.sort(
-            key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d").date()
+        filtered_demonstrations = list(
+            demonstrations_collection.find(
+                _build_public_demo_query(today),
+            )
+            .sort("date", ASCENDING)
+            .limit(6)
         )
 
         return render_template(
@@ -1173,7 +1265,7 @@ def init_routes(app):
                     "status": "processing",
                     "created_at": now,
                     "fingerprint": submission_fingerprint,
-                    "ip": request.remote_addr,
+                    "ip": get_client_ip(),
                 }
                 
                 try:
@@ -1216,7 +1308,7 @@ def init_routes(app):
                         "$set": {
                             "fingerprint": submission_fingerprint,
                             "updated_at": now,
-                            "ip": request.remote_addr,
+                            "ip": get_client_ip(),
                         }
                     },
                 )
@@ -1542,7 +1634,7 @@ def init_routes(app):
                         if current_user.is_authenticated
                         else None
                     ),
-                    "ip": request.remote_addr,
+                    "ip": get_client_ip(),
                 }
                 if mark_cancelled:
                     report_doc["cancelled_reported"] = True
@@ -1572,7 +1664,7 @@ def init_routes(app):
                             if current_user.is_authenticated
                             else None
                         ),
-                        "ip": request.remote_addr,
+                        "ip": get_client_ip(),
                         "reported_cancelled": mark_cancelled,
                         "reporter_email": reporter_email,
                     }
@@ -1597,7 +1689,7 @@ def init_routes(app):
                     "error": error,
                     "date": datetime.now(),
                     "user": current_user._id if current_user.is_authenticated else None,
-                    "ip": request.remote_addr,
+                    "ip": get_client_ip(),
                     "reported_cancelled": mark_cancelled,
                     "reporter_email": reporter_email,
                 }
@@ -2088,7 +2180,6 @@ def init_routes(app):
                 'city',
                 'address',
                 'facebook',
-                'description',
                 'tags',
                 'route',
             ]
@@ -2100,18 +2191,22 @@ def init_routes(app):
                 # normalize tags as list if provided
                 if f == 'tags' and val:
                     val = _normalize_tag_list(val.split(','))
+                elif f == 'route' and val:
+                    val = _normalize_route_points(val)
 
                 # compare to the stored demo_doc values and only store differences
                 orig = demo_doc.get(f)
                 # normalize original tags to list for comparison
                 if f == 'tags' and isinstance(orig, list):
                     orig_comp = _normalize_tag_list(orig)
+                elif f == 'route':
+                    orig_comp = _normalize_route_points(orig)
                 else:
                     orig_comp = (orig or '').strip() if orig is not None else ''
 
-                # For comparison, when tags -> convert to list
+                # For comparison, when tags / route -> convert to normalized lists
                 changed = False
-                if f == 'tags':
+                if f in {'tags', 'route'}:
                     if val and isinstance(val, list) and val != orig_comp:
                         changed = True
                 else:
@@ -2121,6 +2216,15 @@ def init_routes(app):
                 if changed:
                     suggested_fields[f] = val
                     original_values[f] = orig
+
+            description_markdown = (request.form.get('description_markdown') or '').strip()
+            original_description = demo_doc.get('description') or ''
+            original_description_markdown = html_to_markdown(original_description).strip()
+            if description_markdown and description_markdown != original_description_markdown:
+                suggested_description = markdown_to_html(description_markdown)
+                if suggested_description and suggested_description != original_description:
+                    suggested_fields['description'] = suggested_description
+                    original_values['description'] = demo_doc.get('description')
 
             reporter_email = (request.form.get('reporter_email') or '').strip() or None
             reporter_comment = (request.form.get('reporter_comment') or '').strip() or None
@@ -2136,7 +2240,7 @@ def init_routes(app):
                 'reporter_comment': reporter_comment,
                 'reporter_email': reporter_email,
                 'created_at': utcnow(),
-                'ip': request.remote_addr,
+                'ip': get_client_ip(),
                 'user_agent': request.headers.get('User-Agent'),
                 'status': 'new',
             }
@@ -2162,7 +2266,13 @@ def init_routes(app):
 
         # GET — render form with per-field inputs
         demo = Demonstration.from_dict(demo_doc)
-        return render_template('suggest_change.html', demo=demo)
+        return render_template(
+            'suggest_change.html',
+            demo=demo,
+            description_markdown=html_to_markdown(demo_doc.get('description')),
+            route_input_value=", ".join(_normalize_route_points(demo_doc.get('route'))),
+            tag_input_value=", ".join(_normalize_tag_list(demo_doc.get('tags') or [])),
+        )
 
     @app.route("/cancel_demonstration/<token>", methods=["GET", "POST"])
     def cancel_demo_with_token(token):
@@ -2427,7 +2537,7 @@ def init_routes(app):
             "created_at": utcnow(),
             "fields": {},
             "meta": {
-                "ip": request.remote_addr,
+                "ip": get_client_ip(),
                 "user_agent": request.headers.get("User-Agent"),
                 "submitter_email": request.form.get("email")
             },
@@ -2448,7 +2558,7 @@ def init_routes(app):
 
 
         # Normal fields
-        for field in ["name", "description", "website", "email"]:
+        for field in ["name", "description", "website", "email", "logo"]:
             val = request.form.get(field)
             if val and val.strip():
                 suggestion["fields"][field] = val.strip()
@@ -2642,7 +2752,7 @@ def init_routes(app):
     @app.route("/subscribe_reminder/<demo_id>", methods=["POST"])
     def subscribe_reminder(demo_id):
         user_email = request.form.get("user_email")
-        user_ip = request.remote_addr
+        user_ip = get_client_ip()
         user_agent = request.headers.get("User-Agent", "")
 
         if not user_email:

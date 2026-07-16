@@ -4,8 +4,26 @@
 
 ## UNRELEASED
 
+### Changed
+* Organization information suggestion pages now match the public organization detail page styling more closely, with a branded hero, current-info panel, and cleaner form layout.
+* Demonstration detail share controls now show Mastodon and X as separate buttons instead of a dropdown menu.
+* Demonstration detail share controls now present the Mastodon/X split button with a more polished dropdown treatment.
+* Demonstration detail pages now combine Mastodon and X sharing into one Mastodon-led dropdown, keeping X available without a separate standalone button.
+* Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
+
 ### Fixed
+* Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.
+* Recurring demonstration generation now preserves cancelled break-date child demos instead of deleting them as invalid generated children.
+* Demonstration detail Mastodon/X share menu now uses Bootstrap dropdown markup with hover and focus fallbacks so the X option can open across browsers.
+* Demonstration detail Mastodon/X share menu now uses a native dropdown control so the X option opens reliably without custom page JavaScript.
+* Demonstration detail Mastodon/X share dropdown now works as a split button: the Mastodon side opens Mastodon sharing and the arrow opens the X option.
+* Organization logos served through the production CDN now omit local and preview-page referrers when embedded or opened, preventing Cloudflare Hotlink Protection from rejecting valid lc-main assets during development and previews.
+* Request logging and rate limiting now restore the real visitor IP from `CF-Connecting-IP` only when the forwarding address belongs to Cloudflare, avoiding Cloudflare-edge IPs without trusting spoofed headers.
+* Admin notification job no longer repeatedly regenerates and logs approval/rejection/preview links for the same pending demonstrations every 5 minutes; completed notification jobs are now properly recognized to prevent duplicate link generation.
+* Demo approval and rejection now close linked support cases consistently across direct admin actions, token links, and the auto-close background job; de-escalation also writes back to the correct `case_history` field.
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
+* Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
+* Recurring demonstration admin views now show migrated records containing `city_key`; edit forms preserve stored recurrence data during unchanged saves; and child bulk updates now copy event types and freeze children reliably.
 * Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
 * Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
 * The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.
@@ -13,6 +31,14 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.
+* Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
+* Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.
+* Recurring demonstration editors can now recalculate parent coordinates from the saved address/city and bulk-copy latitude/longitude to generated child demonstrations with the location fields.
+* Recurring demonstration admins can now add break dates and bulk-cancel generated child demonstrations from the parent editor; existing child demos on break dates are marked cancelled instead of silently recreated.
+* Expanded the public privacy notice to disclose the service's actual personal-data categories, processing purposes and legal bases, cookies and analytics, recipients, current retention limitations, and data-subject rights.
+* Recurring demonstration editors can now bulk-copy selected series fields to selected generated children, with future/all selection shortcuts, per-child audit history, and optional freezing after updates.
+* Regular and recurring admin demonstration editors now use clearer section navigation, improved panel hierarchy, and a responsive sticky save bar.
 * Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
 * Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
 * Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
@@ -150,6 +176,19 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Admin suggestion queue, suggestion review, and analytics views now use a calmer blue-and-orange visual style inspired by `/ohjeet`, replacing dense and neon treatments with clearer comparisons, cards, controls, and table hierarchy.
+* Organization management now has a clearer responsive page-number menu with nearby pages, first/last shortcuts, and readable previous/next controls.
+* User management was redesigned into a clearer workspace with account summaries, improved live search, recognizable user identity rows, status and role indicators, responsive pagination, and cleaner actions.
+* User management search, avatar, and summary-card icon alignment were corrected so controls and icon tiles remain centered.
+* The create-user modal now supports dark mode, matches the redesigned user-management workspace, suggests account names from email, explains roles clearly, and shows consistent validation and submission feedback.
+* Login history, forced-password-change, and delete-user modals now share the user-management dark-mode styling and provide clearer loading, confirmation, countdown, success, and error states.
+* Create-user and workflow confirmation buttons now keep readable foreground contrast in the admin light theme.
+* User action dropdowns now remain fully visible above the table footer instead of being clipped by the user-list card.
+* Organization management now matches the redesigned user workspace with profile summaries, clearer search and creation controls, recognizable organization rows, status indicators, themed actions, and responsive pagination.
+* Organization detail pages now use the refreshed admin visual system with a clearer profile summary, member and invitation workspaces, responsive tables, themed confirmations, and inline feedback; the visual system is also documented for future admin views.
+* Organization detail summary, fact, and member icons now remain properly centered instead of inheriting text-layout rules.
+* Organization create and edit forms now match the refreshed admin visual system with focused profile, logo, and social-link sections, clearer guidance, a responsive sticky save bar, and a dark-mode invitation modal.
+* Organization create-form guidance now reflects the first-time setup flow, and its profile-tip icons remain properly centered.
 * Redesigned `/ohjeet` into a clearer documentation-style guide with blue and orange site branding, a scannable table of contents, step-by-step submission help, improved troubleshooting, and mobile-friendly sections.
 * Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
 

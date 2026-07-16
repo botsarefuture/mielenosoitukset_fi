@@ -13,10 +13,11 @@
 
     <p>Jos tapahtuma täytyy perua, voit tehdä sen turvallisesti alla olevasta linkistä.</p>
     {% if official_contact %}
-      <p><strong>Huom!</strong> Organisaatiosi on merkitty vahvistetuksi, joten linkkiä käyttämällä
-      mielenosoitus merkitään välittömästi perutuksi.</p>
+      <p><strong>Huom!</strong> Organisaatiosi on vahvistettu Mielenosoitukset.fi:ssä ja tämä sähköposti vastaa organisaation virallista yhteysosoitetta.</p>
+      <p>Siksi tämän linkin kautta tehty peruminen tulee voimaan heti.</p>
     {% else %}
-      <p>Linkin kautta lähetetty pyyntö ohjautuu ylläpidon käsiteltäväksi.</p>
+      <p>Linkin kautta lähetetty pyyntö ohjautuu ensin Mielenosoitukset.fi:n ylläpidon käsiteltäväksi.</p>
+      <p>Mielenosoitus peruuntuu vasta sen jälkeen, jos ylläpito hyväksyy pyynnön.</p>
     {% endif %}
 
     <p style="margin: 20px 0;">
@@ -24,6 +25,8 @@
             Avaa perutuslinkki
         </a>
     </p>
+
+    <p style="color:#555;">Jos et tarkoittanut perua tapahtumaa, voit jättää tämän viestin huomiotta.</p>
 
     <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi</p>
 </body>

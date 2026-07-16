@@ -1,490 +1,526 @@
 {% extends 'admin_base.html' %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/recu_dash.css') }}">
-
 <style>
-    :root {
-        --input-bg: light-dark(#fff, #1a1a1a);
-        --input-border: light-dark(#ccc, #444);
-        --input-text: light-dark(#111, #eee);
-    }
+  .org-detail {
+    --org-blue: light-dark(#0033a0, #8bb1ff);
+    --org-blue-dark: light-dark(#00267a, #c5d6ff);
+    --org-blue-soft: light-dark(#edf4ff, #17233b);
+    --org-orange: #ff6600;
+    --org-orange-soft: light-dark(#fff2e8, #3a2418);
+    --org-surface: light-dark(#ffffff, #20252d);
+    --org-surface-muted: light-dark(#f6f8fb, #292f39);
+    --org-border: light-dark(#dce3ec, #424b59);
+    --org-text: light-dark(#172033, #f2f5fa);
+    --org-muted: light-dark(#647083, #b7c0ce);
+    --org-danger: light-dark(#b42318, #ff9b91);
+    --org-danger-soft: light-dark(#fff0ee, #3b2021);
+    --org-success: light-dark(#087f5b, #65d6ac);
+    --org-success-soft: light-dark(#eaf8f2, #17382e);
+    --org-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+    display: grid;
+    gap: 1rem;
+    max-width: 1450px;
+    margin: 0 auto;
+    color: var(--org-text);
+  }
 
-    .container {
-        background-color: var(--container-bg);
-        color: var(--text);
-        border-radius: 16px;
-        padding: 2rem 2.5rem;
-        max-width: 1000px;
-        margin: 2rem auto;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
+  .org-detail-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: end;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .42), transparent 18rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
+  }
 
-    .form-title {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--primary);
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        margin-bottom: 1.5rem;
-    }
+  .org-detail-kicker {
+    margin: 0;
+    color: #ffd6bc;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
 
-    .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+  .org-detail-hero h1 {
+    margin: .25rem 0 .5rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    letter-spacing: -.035em;
+  }
 
-    .form-group label {
-        font-weight: 600;
-        color: var(--text);
-    }
+  .org-detail-hero-copy {
+    max-width: 720px;
+    margin: 0;
+    color: rgba(255, 255, 255, .8);
+    line-height: 1.65;
+  }
 
-    .form-control {
-        background-color: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px;
-        padding: 0.6rem 1rem;
-        width: 100%;
-        font-size: 0.95rem;
-    }
+  .org-detail-actions { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: flex-end; }
+  .org-detail-action {
+    display: inline-flex;
+    gap: .45rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.65rem;
+    padding: .62rem .85rem;
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: .75rem;
+    color: #fff !important;
+    background: rgba(255, 255, 255, .1);
+    font-size: .84rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .org-detail-action:hover { background: rgba(255, 255, 255, .18); }
+  .org-detail-action.primary { border-color: #fff; background: #fff; color: #0033a0 !important; }
 
-    input.form-control::placeholder {
-        color: light-dark(#1a1a1a, #ccc);
-    }
+  .org-detail-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; }
+  .org-detail-summary-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .8rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid var(--org-border);
+    border-radius: 1rem;
+    background: var(--org-surface);
+    box-shadow: var(--org-shadow);
+  }
+  .org-detail-summary-icon {
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: .75rem;
+    color: var(--org-blue);
+    background: var(--org-blue-soft);
+  }
+  .org-detail-summary-card:last-child .org-detail-summary-icon { color: var(--org-orange); background: var(--org-orange-soft); }
+  .org-detail-summary-card div > span, .org-detail-summary-card div > strong { display: block; }
+  .org-detail-summary-card div > span { color: var(--org-muted); font-size: .72rem; font-weight: 800; }
+  .org-detail-summary-card div > strong { overflow: hidden; color: var(--org-text); font-size: 1.05rem; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+  .org-detail-summary-card strong.metric { font-size: 1.55rem; line-height: 1.1; }
 
-    select.form-control {
-        appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg width='14' height='10' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 0.75rem center;
-        background-size: 1rem;
-    }
+  .org-detail-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr); gap: 1rem; align-items: start; }
+  .org-detail-stack { display: grid; gap: 1rem; }
+  .org-detail-card {
+    overflow: hidden;
+    border: 1px solid var(--org-border);
+    border-radius: 1.1rem;
+    background: var(--org-surface);
+    box-shadow: var(--org-shadow);
+  }
+  .org-detail-card-header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--org-border);
+    background: var(--org-surface-muted);
+  }
+  .org-detail-card-title { display: flex; gap: .7rem; align-items: center; }
+  .org-detail-card-title i { color: var(--org-blue); }
+  .org-detail-card h2 { margin: 0; color: var(--org-text); font-size: 1rem; font-weight: 850; }
+  .org-detail-card-count { padding: .25rem .55rem; border-radius: 999px; color: var(--org-blue-dark); background: var(--org-blue-soft); font-size: .7rem; font-weight: 850; }
+  .org-detail-card-body { padding: 1.1rem; }
 
-    .table {
-        width: 100%;
-        border-spacing: 0 0.5rem;
-        color: var(--text);
-    }
+  .org-profile { display: grid; gap: 1rem; }
+  .org-profile-description { margin: 0; color: var(--org-text); line-height: 1.7; white-space: pre-line; }
+  .org-profile-description.muted { color: var(--org-muted); font-style: italic; }
+  .org-facts { display: grid; gap: .65rem; }
+  .org-fact { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: .7rem; align-items: center; padding: .75rem; border-radius: .8rem; background: var(--org-surface-muted); }
+  .org-fact-icon { display: grid; width: 2.25rem; height: 2.25rem; place-items: center; border-radius: .65rem; color: var(--org-blue); background: var(--org-blue-soft); }
+  .org-fact > div > span, .org-fact > div > strong, .org-fact > div > a { display: block; overflow-wrap: anywhere; }
+  .org-fact > div > span { color: var(--org-muted); font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+  .org-fact > div > strong, .org-fact > div > a { color: var(--org-text); font-size: .82rem; font-weight: 750; text-decoration: none; }
+  .org-fact a:hover { color: var(--org-blue-dark); text-decoration: underline; }
+  .org-status { display: inline-flex; gap: .35rem; align-items: center; width: fit-content; padding: .3rem .55rem; border-radius: 999px; color: var(--org-muted); background: var(--org-surface-muted); font-size: .7rem; font-weight: 850; }
+  .org-status.verified { color: var(--org-success); background: var(--org-success-soft); }
+  .org-status.pending { color: var(--org-orange); background: var(--org-orange-soft); }
 
-    thead th {
-        text-align: left;
-        padding: 0.75rem 1rem;
-        font-weight: 600;
-        border-bottom: 2px solid var(--border-color);
-    }
+  .org-social-list { display: grid; gap: .55rem; }
+  .org-social-link { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: .65rem; align-items: center; padding: .7rem; border: 1px solid var(--org-border); border-radius: .8rem; color: var(--org-text); background: var(--org-surface-muted); text-decoration: none; }
+  .org-social-link:hover { border-color: var(--org-blue); color: var(--org-blue-dark); }
+  .org-social-link > i:first-child { display: grid; width: 2.2rem; height: 2.2rem; place-items: center; border-radius: .65rem; color: var(--org-blue); background: var(--org-blue-soft); }
+  .org-social-link span { overflow: hidden; font-size: .78rem; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 
-    tbody td {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid var(--border-color);
-    }
+  .org-table-scroll { overflow-x: auto; }
+  .org-detail-table { width: 100%; min-width: 760px; border-collapse: collapse; }
+  .org-detail-table th, .org-detail-table td { padding: .85rem 1rem; border-bottom: 1px solid var(--org-border); color: var(--org-text); vertical-align: middle; }
+  .org-detail-table th { color: var(--org-muted); background: var(--org-surface); font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .org-detail-table tbody tr:hover { background: var(--org-blue-soft); }
+  .org-detail-table tbody tr:last-child td { border-bottom: 0; }
+  .org-member { display: flex; gap: .7rem; align-items: center; min-width: 190px; }
+  .org-member-avatar { display: grid; flex: 0 0 auto; width: 2.45rem; height: 2.45rem; place-items: center; border-radius: .75rem; color: var(--org-blue); background: var(--org-blue-soft); font-weight: 900; text-transform: uppercase; }
+  .org-member > div > strong, .org-member > div > span { display: block; }
+  .org-member > div > strong { font-size: .86rem; }
+  .org-member > div > span { margin-top: .12rem; color: var(--org-muted); font-size: .7rem; }
+  .org-role-select {
+    min-width: 8.5rem;
+    padding: .5rem 2rem .5rem .65rem;
+    border: 1px solid var(--org-border);
+    border-radius: .65rem;
+    color: var(--org-text);
+    background-color: var(--org-surface-muted);
+  }
+  .org-row-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .org-button {
+    display: inline-flex;
+    gap: .4rem;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.35rem;
+    padding: .5rem .7rem;
+    border: 1px solid var(--org-border);
+    border-radius: .65rem;
+    color: var(--org-text) !important;
+    background: var(--org-surface-muted);
+    font-size: .76rem;
+    font-weight: 850;
+    text-decoration: none;
+  }
+  .org-button:hover { border-color: var(--org-blue); color: var(--org-blue-dark) !important; }
+  .org-button.primary { border-color: var(--org-blue); color: #fff !important; background: light-dark(#0033a0, #315ea8); }
+  .org-button.danger { color: var(--org-danger) !important; background: var(--org-danger-soft); }
+  .org-button.orange { color: light-dark(#a74400, #ffad75) !important; background: var(--org-orange-soft); }
+  .org-button[disabled] { cursor: wait; opacity: .55; }
 
-    tbody tr {
-        background-color: light-dark(#fff, #1e1e1e);
-        transition: background 0.2s;
-    }
+  .org-empty { padding: 2.5rem 1.25rem; color: var(--org-muted); text-align: center; }
+  .org-empty i { display: block; margin-bottom: .65rem; color: var(--org-blue); font-size: 1.8rem; }
+  .org-empty strong { display: block; margin-bottom: .25rem; color: var(--org-text); }
 
-    tbody tr:hover {
-        background-color: var(--row-hover);
-    }
+  .org-detail .modal-content { border: 1px solid var(--org-border) !important; border-radius: 1.1rem !important; color: var(--org-text); background: var(--org-surface); box-shadow: 0 24px 70px rgba(0, 0, 0, .25); }
+  .org-detail .modal-header, .org-detail .modal-footer { border-color: var(--org-border); }
+  .org-detail .modal-title { color: var(--org-text); font-weight: 850; }
+  .org-detail .form-label { color: var(--org-text); font-size: .8rem; font-weight: 800; }
+  .org-detail .form-control { border-color: var(--org-border); color: var(--org-text); background: var(--org-surface-muted); }
+  .org-detail .form-control:focus { border-color: var(--org-blue); box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12)); }
+  .org-detail .btn-close { filter: light-dark(none, invert(1)); }
+  .org-confirm-copy { margin: 0; color: var(--org-muted); line-height: 1.6; }
 
-    .button,
-    .btn-primary {
-        background-color: var(--primary);
-        color: white;
-        padding: 0.5rem 1.25rem;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out;
-        font-weight: 500;
-        margin: 0.2rem;
-    }
+  .org-toast {
+    position: fixed;
+    z-index: 1100;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: .7rem;
+    align-items: center;
+    width: min(390px, calc(100vw - 2rem));
+    padding: .85rem;
+    border: 1px solid var(--org-border);
+    border-radius: .9rem;
+    color: var(--org-text);
+    background: var(--org-surface);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .2);
+    transform: translateY(130%);
+    transition: transform .2s ease;
+  }
+  .org-toast.show { transform: translateY(0); }
+  .org-toast-icon { display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: .6rem; color: var(--org-success); background: var(--org-success-soft); }
+  .org-toast.error .org-toast-icon { color: var(--org-danger); background: var(--org-danger-soft); }
+  .org-toast-message { font-size: .78rem; font-weight: 750; }
+  .org-toast-close { border: 0; color: var(--org-muted); background: transparent; }
 
-    .button:hover,
-    .btn-primary:hover {
-        background-color: var(--primary-hover);
-    }
-
-    .no-users {
-        margin-top: 1rem;
-        background-color: var(--alert-warning-bg);
-        color: var(--alert-warning-text);
-        padding: 0.75rem 1.25rem;
-        border-radius: 8px;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    /* Social dropdown styling */
-    .social-media-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.75rem;
-    }
-
-    .dropdown-selected {
-        background: var(--input-bg);
-        color: var(--input-text);
-        border: 1px solid var(--input-border);
-        border-radius: 8px 0 0 8px;
-        padding: 0.6rem 1rem;
-        font-weight: 500;
-        width: 160px;
-    }
-
-    #social-media-list .form-control {
-        border-radius: 0 8px 8px 0;
-        border-left: none;
-    }
-
-    .social-media-container p.form-control {
-        margin-bottom: 0;
-        height: 45.2px;
-    }
+  @media (max-width: 1100px) {
+    .org-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .org-detail-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .org-detail-hero { grid-template-columns: 1fr; }
+    .org-detail-actions { justify-content: flex-start; }
+    .org-detail-card-header { align-items: flex-start; flex-direction: column; }
+  }
+  @media (max-width: 520px) {
+    .org-detail-summary { grid-template-columns: 1fr; }
+    .org-detail-action, .org-button.primary.invite { width: 100%; }
+  }
 </style>
-
-{% endblock %}
-
-{% block scripts %}
-<!--<script src="{{ url_for('static', filename='js/modal.js') }}"></script>-->
-<script>
-    // TODO: Add functionality to handle dropdown selection
-    // TODO: Add form validation for invitee email
-
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const saveButtons = document.querySelectorAll(".save-role-btn");
-
-        saveButtons.forEach(btn => {
-            btn.addEventListener("click", async () => {
-                const userId = btn.dataset.userId;
-                const orgId = btn.dataset.orgId;
-                const select = btn.closest("tr").querySelector(".role-select");
-                const newRole = select.value;
-
-                const payload = {
-                    user_id: userId,
-                    organization_id: orgId,
-                    role: newRole
-                };
-
-                try {
-                    const res = await fetch("/admin/organization/api/change_access_level/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await res.json();
-                    if (res.ok) {
-                        alert("Käyttäjän rooli päivitetty onnistuneesti!");
-                    } else {
-                        alert(result.error || "Päivitys epäonnistui.");
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("Virhe palvelinyhteydessä.");
-                }
-            });
-        });
-        const deleteButtons = document.querySelectorAll(".delete-role-btn");
-
-        deleteButtons.forEach(btn => {
-            btn.addEventListener("click", async () => {
-                const shipId = btn.dataset.shipId;
-                if (!confirm("Haluatko varmasti poistaa tämän käyttäjän?")) return;
-
-                try {
-                    const res = await fetch("/admin/organization/api/delete_membership/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ membership_id: shipId })
-                    });
-
-                    const result = await res.json();
-                    if (res.ok) {
-                        alert(result.message || "Käyttäjä poistettu");
-                        btn.closest("tr").remove(); // remove row from table
-                    } else {
-                        alert(result.error || "Poisto epäonnistui.");
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert("Virhe palvelinyhteydessä.");
-                }
-            });
-        });
-
-    });
-</script>
-
 {% endblock %}
 
 {% block main_content %}
-<div class="dashboard-container mt-4" id="view">
-    <div class="dashboard-actions">
-        <a class="button-edit" href="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}">
-            <i class="fa fa-pen"></i> {{ _('Muokkaa') }}
-        </a>
-        
+<div class="org-detail">
+  <header class="org-detail-hero">
+    <div>
+      <p class="org-detail-kicker">{{ _('Organisaation yhteenveto') }}</p>
+      <h1>{{ organization.name }}</h1>
+      <p class="org-detail-hero-copy">{{ _('Tarkista profiilin tiedot, pidä jäsenroolit ajan tasalla ja hoida avoimet kutsut yhdessä paikassa.') }}</p>
     </div>
-    
-    <!-- Intro card -->
-    <div class="introduction">
-        <h1 id="tabletitle">{{ _('Organisaation tiedot') }}</h1>
-        <p class="muted">
-            Tällä sivulla näet valitsemasi organisaation keskeiset tiedot ja käyttäjähallinnan. <br>
-            Voit tarkastella organisaation nimeä, kuvausta, yhteystietoja ja sosiaalisen median linkkejä. <br>
-            Lisäksi voit hallita organisaation jäsenten rooleja, poistaa käyttäjiä ja tarkastella tai peruuttaa
-            lähetettyjä kutsuja. <br>
-            Lisätietoa löydät hallinnoijan käsikirjan kohdasta 2.2: <strong>Organisaation yhteenveto</strong>.
-        </p>
+    <div class="org-detail-actions">
+      <a class="org-detail-action" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
+      <a class="org-detail-action" href="{{ url_for('org', org_id=organization._id) }}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Julkinen sivu') }}</a>
+      {% if current_user.has_permission("EDIT_ORGANIZATION", organization._id) %}
+      <a class="org-detail-action primary" href="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}"><i class="fas fa-pen" aria-hidden="true"></i>{{ _('Muokkaa') }}</a>
+      {% endif %}
     </div>
+  </header>
 
-    <div class="form-group">
-        <label>{{ _('Nimi') }}</label>
-        <p class="form-control">{{ organization.name }}</p>
-    </div>
+  <section class="org-detail-summary" aria-label="{{ _('Organisaation yhteenveto') }}">
+    <article class="org-detail-summary-card"><span class="org-detail-summary-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span><div><span>{{ _('Jäseniä') }}</span><strong class="metric" id="member-count">{{ memberships|length }}</strong></div></article>
+    <article class="org-detail-summary-card"><span class="org-detail-summary-icon"><i class="fas fa-envelope-open-text" aria-hidden="true"></i></span><div><span>{{ _('Avoimia kutsuja') }}</span><strong class="metric" id="invite-count">{{ invited_users|length }}</strong></div></article>
+    <article class="org-detail-summary-card"><span class="org-detail-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span><div><span>{{ _('Profiilin tila') }}</span><strong>{{ _('Vahvistettu') if organization.verified else _('Vahvistamaton') }}</strong></div></article>
+    <article class="org-detail-summary-card"><span class="org-detail-summary-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><div><span>{{ _('Verkkosivu') }}</span><strong>{{ _('Lisätty') if organization.website else _('Puuttuu') }}</strong></div></article>
+  </section>
 
-    <div class="form-group">
-        <label>{{ _('Kuvaus') }}</label>
-        <p class="form-control">{{ organization.description }}</p>
-    </div>
-
-    <div class="form-group">
-        <label>{{ _('Sähköpostiosoite') }}</label>
-        <p class="form-control">{{ organization.email }}</p>
-    </div>
-
-    <div class="form-group">
-        <label>{{ _('Verkkosivu') }}</label>
-        <p class="form-control">{{ organization.website }}</p>
-    </div>
-
-    {% if organization %}
-    <div class="form-group">
-        <label>{{ _('Onko organisaatio vahvistettu?') }}</label>
-        <p class="form-control">{% if organization.verified %} <i class="fa fa-check"></i> {{ _('Kyllä') }} {% else %}
-            <i class="fa fa-ban"></i> {{ _('Ei') }}{% endif %}
-        </p>
-    </div>
-    {% endif %}
-
-    <div class="form-group">
-        <label>{{ _('Sosiaalinen media') }}</label>
-
-        <div id="social-media-list">
-            {% for platform, url in organization.social_media_links.items() %}
-            <div class="social-media-container">
-                <div class="custom-dropdown">
-                    <div class="dropdown-selected"><i class="fab fa-{{ platform }}"></i> {{ platform.capitalize() }}:
-                    </div>
-                </div>
-                <p class="form-control">{{ url }}</p>
-            </div>
-            {% endfor %}
+  <div class="org-detail-grid">
+    <div class="org-detail-stack">
+      <section class="org-detail-card">
+        <div class="org-detail-card-header">
+          <div class="org-detail-card-title"><i class="fas fa-users" aria-hidden="true"></i><h2>{{ _('Jäsenet') }}</h2><span class="org-detail-card-count" id="member-card-count">{{ memberships|length }}</span></div>
+          <button class="org-button primary invite" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>
         </div>
-    </div>
-
-    <div class="form-group">
-        <label>{{ _('Käyttäjät') }}</label>
-        <table class="table">
-            {% if organization.members %}
-            <thead>
-                <tr>
-                    <th>{{ _('Nimi') }}</th>
-                    <th>{{ _('Sähköpostiosoite') }}</th>
-                    <th>{{ _('Pääsytaso') }}</th>
-                    <th>{{ _('Toiminnot') }}</th>
-                </tr>
-            </thead>
-            {% endif %}
-            <tbody>
-                {% for user in memberships %}
-                <tr>
-                    <td>{{ user.displayname or user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>
-                        <select class="form-control role-select">
-                            <option value="owner" {% if user.role=='owner' %}selected{% endif %}>{{ _('Omistaja') }}
-                            </option>
-                            <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Admin') }}
-                            </option>
-                            <option value="member" {% if user.role=='member' %}selected{% endif %}>{{ _('Jäsen') }}
-                            </option>
-                        </select>
-                    </td>
-                    <td>
-                        <button class="btn-primary save-role-btn" data-user-id="{{ user._id }}"
-                            data-org-id="{{ organization._id }}">
-                            {{ _('Tallenna') }}
-                        </button>
-                        <button data-ship-id="{{ user._ship_id }}" class="button delete-role-btn">{{ _('Poista')
-                            }}</button>
-                    </td>
-                </tr>
-                {% else %}
-                <div class="no-users">
-                    <p>{{ _('Ei käyttäjiä') }}</p>
-                </div>
-                {% endfor %}
+        {% if memberships %}
+        <div class="org-table-scroll">
+          <table class="org-detail-table">
+            <thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Sähköpostiosoite') }}</th><th>{{ _('Pääsytaso') }}</th><th>{{ _('Toiminnot') }}</th></tr></thead>
+            <tbody id="member-table-body">
+              {% for user in memberships %}
+              <tr>
+                <td><div class="org-member"><span class="org-member-avatar">{{ (user.displayname or user.username or '?')[:1] }}</span><div><strong>{{ user.displayname or user.username }}</strong><span>@{{ user.username }}</span></div></div></td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <select class="org-role-select role-select" aria-label="{{ _('Pääsytaso') }}">
+                    <option value="owner" {% if user.role == 'owner' %}selected{% endif %}>{{ _('Omistaja') }}</option>
+                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ _('Admin') }}</option>
+                    <option value="member" {% if user.role == 'member' %}selected{% endif %}>{{ _('Jäsen') }}</option>
+                  </select>
+                </td>
+                <td><div class="org-row-actions">
+                  <button class="org-button save-role-btn" type="button" data-user-id="{{ user._id }}" data-org-id="{{ organization._id }}"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Tallenna') }}</button>
+                  <button class="org-button danger confirm-action-btn" type="button" data-action="delete-member" data-ship-id="{{ user._ship_id }}" data-label="{{ user.displayname or user.username }}"><i class="fas fa-user-minus" aria-hidden="true"></i>{{ _('Poista') }}</button>
+                </div></td>
+              </tr>
+              {% endfor %}
             </tbody>
-        </table>
-
-        <div class="form-group">
-            <label>{{ _('Kutsutut käyttäjät') }}</label>
-            <table class="table">
-                {% if invited_users and invited_users|length > 0 %}
-                <thead>
-                    <tr>
-                        <th>{{ _('Sähköpostiosoite') }}</th>
-                        <th>{{ _('Kutsun tila') }}</th>
-                        <th>{{ _('Rooli') }}</th>
-                        <th>{{ _('Toiminnot') }}</th>
-                    </tr>
-                </thead>
-                {% endif %}
-                <tbody>
-                    {% for invite in invited_users %}
-                    <tr>
-                        <td>{{ invite.email }}</td>
-                        <td>{{ _('Odottaa hyväksyntää') }}</td>
-                        <td>
-                            <select class="form-control invited-role-select" data-invite-email="{{ invite.email }}">
-                                <option value="owner" {% if invite.role=='owner' %}selected{% endif %}>{{ _('Omistaja') }}</option>
-                                <option value="admin" {% if invite.role=='admin' %}selected{% endif %}>{{ _('Admin') }}</option>
-                                <option value="member" {% if invite.role=='member' or not invite.role %}selected{% endif %}>{{ _('Jäsen') }}</option>
-                            </select>
-                        </td>
-                        <td>
-                            <button class="button cancel-invite-btn" data-invite-email="{{ invite.email }}">{{ _('Peruuta kutsu') }}</button>
-                            {% if current_user.global_admin %}
-                            <button class="button force-accept-invite-btn" data-invite-email="{{ invite.email }}">{{ _('Hyväksy puolesta') }}</button>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <div class="no-users">
-                        <p>{{ _('Ei kutsuttuja käyttäjiä') }}</p>
-                    </div>
-                    {% endfor %}
-                </tbody>
-            </table>
+          </table>
         </div>
-        <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll('.invited-role-select').forEach(function(select) {
-                select.addEventListener('change', function() {
-                    const email = this.getAttribute('data-invite-email');
-                    const role = this.value;
-                    const orgId = '{{ organization._id }}';
-                    fetch('/admin/organization/api/set_invite_role/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email, organization_id: orgId, role: role })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status !== 'OK') {
-                            alert(data.error || 'Roolin tallennus epäonnistui.');
-                        }
-                    })
-                    .catch(() => alert('Virhe palvelinyhteydessä.'));
-                });
-            });
+        {% else %}
+        <div class="org-empty" id="members-empty"><i class="fas fa-user-group" aria-hidden="true"></i><strong>{{ _('Ei vielä jäseniä') }}</strong><span>{{ _('Kutsu ensimmäinen käyttäjä mukaan organisaatioon.') }}</span></div>
+        {% endif %}
+      </section>
 
-            document.querySelectorAll('.cancel-invite-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    if (!confirm('Haluatko varmasti peruuttaa kutsun?')) return;
-                    const email = this.getAttribute('data-invite-email');
-                    const orgId = '{{ organization._id }}';
-                    fetch('/admin/organization/api/cancel_invite/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email, organization_id: orgId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'OK') {
-                            // Remove the row from the table
-                            this.closest('tr').remove();
-                        } else {
-                            alert(data.error || 'Kutsun peruutus epäonnistui.');
-                        }
-                    })
-                    .catch(() => alert('Virhe palvelinyhteydessä.'));
-                });
-            });
-            document.querySelectorAll('.force-accept-invite-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    if (!confirm('Hyväksytäänkö kutsu tämän käyttäjän puolesta?')) return;
-                    const email = this.getAttribute('data-invite-email');
-                    const orgId = '{{ organization._id }}';
-                    fetch('/admin/organization/api/force_accept_invite/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email, organization_id: orgId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'OK') {
-                            // Remove the row from the table
-                            this.closest('tr').remove();
-                        } else {
-                            alert(data.error || 'Kutsun hyväksyntä epäonnistui.');
-                        }
-                    })
-                    .catch(() => alert('Virhe palvelinyhteydessä.'));
-                });
-            });
-        });
-        </script>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inviteModal">
-            {{ _('Kutsu käyttäjiä') }}
-        </button>
-    </div>
-    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm"> {# You can use modal-md or modal-lg if needed #}
-            <div class="modal-content shadow rounded-4 border-0"
-                style="background-color: var(--container-bg); color: var(--text);">
-
-                <form method="POST"
-                    action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
-                    <div class="modal-header border-0 pb-0">
-                        <h5 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjiä') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="{{ _('Sulje') }}"></button>
-                    </div>
-
-                    <div class="modal-body">
-                        <div class="form-group mb-3">
-                            <label for="invitee_email" class="form-label">
-                                {{ _('Kutsuttavan sähköpostiosoite') }} <span class="required">*</span>
-                            </label>
-                            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required
-                                placeholder="sähköposti@domain.fi">
-                        </div>
-                        <input type="hidden" id="organization_id" name="organization_id" value="{{ organization._id }}">
-                    </div>
-
-                    <div class="modal-footer border-0 pt-0">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Peruuta')
-                            }}</button>
-                        <button type="submit" class="btn btn-primary">{{ _('Lähetä kutsu') }}</button>
-                    </div>
-                </form>
-
-            </div>
+      <section class="org-detail-card">
+        <div class="org-detail-card-header">
+          <div class="org-detail-card-title"><i class="fas fa-paper-plane" aria-hidden="true"></i><h2>{{ _('Avoimet kutsut') }}</h2><span class="org-detail-card-count" id="invite-card-count">{{ invited_users|length }}</span></div>
         </div>
+        {% if invited_users %}
+        <div class="org-table-scroll" id="invites-table-wrap">
+          <table class="org-detail-table">
+            <thead><tr><th>{{ _('Sähköpostiosoite') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Rooli') }}</th><th>{{ _('Toiminnot') }}</th></tr></thead>
+            <tbody id="invite-table-body">
+              {% for invite in invited_users %}
+              <tr>
+                <td><div class="org-member"><span class="org-member-avatar"><i class="fas fa-envelope" aria-hidden="true"></i></span><div><strong>{{ invite.email }}</strong><span>{{ _('Kutsu lähetetty') }}</span></div></div></td>
+                <td><span class="org-status pending"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Odottaa hyväksyntää') }}</span></td>
+                <td>
+                  <select class="org-role-select invited-role-select" data-invite-email="{{ invite.email }}" aria-label="{{ _('Kutsutun rooli') }}">
+                    <option value="owner" {% if invite.role == 'owner' %}selected{% endif %}>{{ _('Omistaja') }}</option>
+                    <option value="admin" {% if invite.role == 'admin' %}selected{% endif %}>{{ _('Admin') }}</option>
+                    <option value="member" {% if invite.role == 'member' or not invite.role %}selected{% endif %}>{{ _('Jäsen') }}</option>
+                  </select>
+                </td>
+                <td><div class="org-row-actions">
+                  {% if current_user.global_admin %}<button class="org-button orange confirm-action-btn" type="button" data-action="accept-invite" data-invite-email="{{ invite.email }}" data-label="{{ invite.email }}"><i class="fas fa-user-check" aria-hidden="true"></i>{{ _('Hyväksy puolesta') }}</button>{% endif %}
+                  <button class="org-button danger confirm-action-btn" type="button" data-action="cancel-invite" data-invite-email="{{ invite.email }}" data-label="{{ invite.email }}"><i class="fas fa-xmark" aria-hidden="true"></i>{{ _('Peruuta') }}</button>
+                </div></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="org-empty" id="invites-empty"><i class="fas fa-inbox" aria-hidden="true"></i><strong>{{ _('Ei avoimia kutsuja') }}</strong><span>{{ _('Kaikki lähetetyt kutsut on käsitelty.') }}</span></div>
+        {% endif %}
+      </section>
     </div>
+
+    <aside class="org-detail-stack">
+      <section class="org-detail-card">
+        <div class="org-detail-card-header"><div class="org-detail-card-title"><i class="fas fa-address-card" aria-hidden="true"></i><h2>{{ _('Profiilin tiedot') }}</h2></div></div>
+        <div class="org-detail-card-body org-profile">
+          <p class="org-profile-description {% if not organization.description %}muted{% endif %}">{{ organization.description or _('Organisaatiolla ei ole vielä kuvausta.') }}</p>
+          <div class="org-facts">
+            <div class="org-fact"><span class="org-fact-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span><div><span>{{ _('Tila') }}</span>{% if organization.verified %}<strong class="org-status verified"><i class="fas fa-check" aria-hidden="true"></i>{{ _('Vahvistettu') }}</strong>{% else %}<strong class="org-status"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Vahvistamaton') }}</strong>{% endif %}</div></div>
+            <div class="org-fact"><span class="org-fact-icon"><i class="fas fa-envelope" aria-hidden="true"></i></span><div><span>{{ _('Sähköposti') }}</span>{% if organization.email %}<a href="mailto:{{ organization.email }}">{{ organization.email }}</a>{% else %}<strong>{{ _('Ei sähköpostia') }}</strong>{% endif %}</div></div>
+            <div class="org-fact"><span class="org-fact-icon"><i class="fas fa-globe" aria-hidden="true"></i></span><div><span>{{ _('Verkkosivu') }}</span>{% if organization.website %}<a href="{{ organization.website }}" target="_blank" rel="noopener noreferrer">{{ organization.website }}</a>{% else %}<strong>{{ _('Ei verkkosivua') }}</strong>{% endif %}</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="org-detail-card">
+        <div class="org-detail-card-header"><div class="org-detail-card-title"><i class="fas fa-hashtag" aria-hidden="true"></i><h2>{{ _('Sosiaalinen media') }}</h2></div></div>
+        <div class="org-detail-card-body">
+          {% if organization.social_media_links %}
+          <div class="org-social-list">
+            {% for platform, url in organization.social_media_links.items() %}
+            <a class="org-social-link" href="{{ url }}" target="_blank" rel="noopener noreferrer"><i class="fab fa-{{ platform }}" aria-hidden="true"></i><span>{{ platform|capitalize }}</span><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="org-empty"><i class="fas fa-link-slash" aria-hidden="true"></i><strong>{{ _('Ei some-linkkejä') }}</strong><span>{{ _('Linkkejä voi lisätä muokkausnäkymässä.') }}</span></div>
+          {% endif %}
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST" action="{{ url_for('admin_org.invite') }}">
+          <div class="modal-header"><div><p class="org-detail-kicker mb-1">{{ _('Uusi jäsen') }}</p><h2 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjä') }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+          <div class="modal-body">
+            <p class="org-confirm-copy mb-3">{{ _('Lähetämme käyttäjälle sähköpostitse linkin, jolla hän voi liittyä organisaatioon.') }}</p>
+            <label for="invitee_email" class="form-label">{{ _('Kutsuttavan sähköpostiosoite') }}</label>
+            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required autocomplete="email" placeholder="nimi@example.fi">
+            <input type="hidden" name="organization_id" value="{{ organization._id }}">
+          </div>
+          <div class="modal-footer"><button type="button" class="org-button" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="submit" class="org-button primary"><i class="fas fa-paper-plane" aria-hidden="true"></i>{{ _('Lähetä kutsu') }}</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header"><h2 class="modal-title" id="confirmActionTitle">{{ _('Vahvista toiminto') }}</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
+        <div class="modal-body"><p class="org-confirm-copy" id="confirmActionCopy"></p></div>
+        <div class="modal-footer"><button type="button" class="org-button" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="button" class="org-button danger" id="confirmActionButton">{{ _('Vahvista') }}</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="org-toast" id="orgToast" role="status" aria-live="polite"><span class="org-toast-icon"><i class="fas fa-check" aria-hidden="true"></i></span><span class="org-toast-message"></span><button class="org-toast-close" type="button" aria-label="{{ _('Sulje') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const orgId = '{{ organization._id }}';
+    const toast = document.getElementById('orgToast');
+    const toastMessage = toast.querySelector('.org-toast-message');
+    const toastIcon = toast.querySelector('.org-toast-icon i');
+    let toastTimer;
+    let pendingAction = null;
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmActionModal'));
+    const confirmCopy = document.getElementById('confirmActionCopy');
+    const confirmButton = document.getElementById('confirmActionButton');
+
+    function showNotice(message, isError = false) {
+      clearTimeout(toastTimer);
+      toast.classList.toggle('error', isError);
+      toastIcon.className = isError ? 'fas fa-triangle-exclamation' : 'fas fa-check';
+      toastMessage.textContent = message;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 4200);
+    }
+
+    async function postJson(url, payload) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok || data.status && data.status !== 'OK') throw new Error(data.error || data.message || '{{ _("Toiminto epäonnistui.") }}');
+      return data;
+    }
+
+    function reduceCount(id) {
+      const element = document.getElementById(id);
+      if (element) element.textContent = Math.max(0, Number(element.textContent) - 1);
+    }
+
+    document.querySelector('.org-toast-close').addEventListener('click', () => toast.classList.remove('show'));
+
+    document.querySelectorAll('.save-role-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          const role = button.closest('tr').querySelector('.role-select').value;
+          await postJson('/admin/organization/api/change_access_level/', { user_id: button.dataset.userId, organization_id: orgId, role });
+          showNotice('{{ _("Käyttäjän rooli päivitettiin.") }}');
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+
+    document.querySelectorAll('.invited-role-select').forEach((select) => {
+      select.addEventListener('change', async () => {
+        select.disabled = true;
+        try {
+          await postJson('/admin/organization/api/set_invite_role/', { email: select.dataset.inviteEmail, organization_id: orgId, role: select.value });
+          showNotice('{{ _("Kutsun rooli päivitettiin.") }}');
+        } catch (error) {
+          showNotice(error.message, true);
+        } finally {
+          select.disabled = false;
+        }
+      });
+    });
+
+    document.querySelectorAll('.confirm-action-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        pendingAction = button;
+        const label = button.dataset.label;
+        const messages = {
+          'delete-member': `{{ _("Poistetaanko käyttäjä organisaatiosta?") }} ${label}`,
+          'cancel-invite': `{{ _("Peruutetaanko käyttäjälle lähetetty kutsu?") }} ${label}`,
+          'accept-invite': `{{ _("Hyväksytäänkö kutsu käyttäjän puolesta?") }} ${label}`
+        };
+        confirmCopy.textContent = messages[button.dataset.action];
+        confirmButton.classList.toggle('danger', button.dataset.action !== 'accept-invite');
+        confirmButton.classList.toggle('orange', button.dataset.action === 'accept-invite');
+        confirmModal.show();
+      });
+    });
+
+    confirmButton.addEventListener('click', async () => {
+      if (!pendingAction) return;
+      confirmButton.disabled = true;
+      try {
+        const action = pendingAction.dataset.action;
+        if (action === 'delete-member') {
+          await postJson('/admin/organization/api/delete_membership/', { membership_id: pendingAction.dataset.shipId });
+          reduceCount('member-count');
+          reduceCount('member-card-count');
+          showNotice('{{ _("Käyttäjä poistettiin organisaatiosta.") }}');
+        } else if (action === 'cancel-invite') {
+          await postJson('/admin/organization/api/cancel_invite/', { email: pendingAction.dataset.inviteEmail, organization_id: orgId });
+          reduceCount('invite-count');
+          reduceCount('invite-card-count');
+          showNotice('{{ _("Kutsu peruutettiin.") }}');
+        } else {
+          await postJson('/admin/organization/api/force_accept_invite/', { email: pendingAction.dataset.inviteEmail, organization_id: orgId });
+          reduceCount('invite-count');
+          reduceCount('invite-card-count');
+          showNotice('{{ _("Kutsu hyväksyttiin käyttäjän puolesta.") }}');
+        }
+        pendingAction.closest('tr').remove();
+        confirmModal.hide();
+      } catch (error) {
+        showNotice(error.message, true);
+      } finally {
+        confirmButton.disabled = false;
+        pendingAction = null;
+      }
+    });
+  });
+</script>
 {% endblock %}

@@ -119,8 +119,8 @@
       ]
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 47,
-      "sha256": "89084643b12a6f5557a6da6fa3e4f78a18099a858ef9e86599f5175c22ac91b0",
+      "count": 49,
+      "sha256": "47426cbe1018d9777f6ca6107552c8be27e547958fee44078fdafe2a596bd1b5",
       "coverage": [
         "integration",
         "e2e-public"

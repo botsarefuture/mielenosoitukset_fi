@@ -31,6 +31,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Added public and admin city management so enabled contact-person cities appear from the top navigation, can be toggled in admin, and remain ready for city-scoped user permissions.
 * Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.
 * Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
 * Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.

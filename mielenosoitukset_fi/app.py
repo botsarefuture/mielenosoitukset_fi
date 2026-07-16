@@ -145,6 +145,7 @@ def create_app(config_overrides=None) -> Flask:
         audit_bp,
         admin_kampanja_bp,
         admin_dev_bp,
+        admin_city_bp,
     )
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
@@ -162,6 +163,7 @@ def create_app(config_overrides=None) -> Flask:
     app.register_blueprint(admin_kampanja_bp)
     app.register_blueprint(admin_case_bp)
     app.register_blueprint(admin_dev_bp)
+    app.register_blueprint(admin_city_bp)
     #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")

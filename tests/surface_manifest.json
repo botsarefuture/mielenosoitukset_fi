@@ -64,6 +64,13 @@
         "e2e-admin"
       ]
     },
+    "mielenosoitukset_fi/admin/admin_city_bp.py": {
+      "count": 1,
+      "sha256": "651daec4ff338a32e0ee863fb56c268fe26cafac872b016a53066275b7490b46",
+      "coverage": [
+        "integration"
+      ]
+    },
     "mielenosoitukset_fi/admin/admin_user_bp.py": {
       "count": 8,
       "sha256": "df393544e63f55eebd24b19860edc017182a07831612299decd842d54b59954e",
@@ -112,8 +119,8 @@
       ]
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 46,
-      "sha256": "39187ea8f2cfb15048ab8e95c4a48ddf7e9ac8c670a867b647684ea7f18a65c7",
+      "count": 47,
+      "sha256": "89084643b12a6f5557a6da6fa3e4f78a18099a858ef9e86599f5175c22ac91b0",
       "coverage": [
         "integration",
         "e2e-public"

@@ -283,6 +283,14 @@ function confirmAction(action, taskId) {
         </li>
       {% endif %}
 
+      {% if current_user.has_permission("EDIT_USER") %}
+      <li class="nav-item">
+        <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_city.city_control') }}">
+          <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkihallinta') }}
+        </a>
+      </li>
+      {% endif %}
+
       {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_org.organization_control') }}">

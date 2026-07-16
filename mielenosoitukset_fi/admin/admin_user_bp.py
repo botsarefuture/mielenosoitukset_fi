@@ -9,6 +9,7 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.variables import CITY_LIST, PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, CITY_NAME_TO_KEY, normalize_city_key
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.validators import valid_email
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
@@ -303,6 +304,7 @@ def edit_user(user_id):
         global_permissions=user.global_permissions,
         can_manage_scope_grants=_can_manage_scope_grants(current_user),
         city_list=CITY_LIST,
+        enabled_city_list=enabled_city_names(mongo),
         city_name_to_key=CITY_NAME_TO_KEY,
         city_scope_grant=city_scope_grant,
         city_admin_permissions=CITY_ADMIN_PERMISSIONS,

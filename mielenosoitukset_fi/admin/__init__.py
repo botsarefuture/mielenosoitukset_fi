@@ -9,3 +9,4 @@ from .board_audit import audit_bp
 from .admin_kampanja_bp import admin_kampanja_bp
 from .admin_case_bp import admin_case_bp
 from .admin_dev_bp import admin_dev_bp
+from .admin_city_bp import admin_city_bp

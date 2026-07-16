@@ -283,6 +283,14 @@ function confirmAction(action, taskId) {
         </li>
       {% endif %}
 
+      {% if current_user.has_permission("EDIT_USER") %}
+      <li class="nav-item">
+        <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_city.city_control') }}">
+          <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkihallinta') }}
+        </a>
+      </li>
+      {% endif %}
+
       {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_org.organization_control') }}">
@@ -397,7 +405,7 @@ function confirmAction(action, taskId) {
     {# ==== FOOTER ==== #}
     <footer class="admin-footer text-center py-3 small mt-auto">
         &copy; 2026 Mielenosoitukset.fi — {{ _('Kaikki oikeudet pidätetään.') }}
-        <p class="version">V4.0.0-beta.1</p>
+        <p class="version">{{ app_version }}</p>
     </footer>
 
     <!-- Bootstrap bundle (+Popper) -->

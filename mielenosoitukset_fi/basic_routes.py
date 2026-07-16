@@ -12,6 +12,7 @@ from datetime import datetime, date, timedelta
 from flask_babel import _, format_date
 from flask import (
     redirect,
+    render_template,
     send_file,
     send_from_directory,
     url_for,
@@ -29,6 +30,8 @@ from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.scripts.send_demo_reminders import generate_ical_event
 from mielenosoitukset_fi.utils.variables import CITY_LIST
+from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, normalize_city_key
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.database import DEMO_FILTER
 from mielenosoitukset_fi.utils.analytics import log_demo_view
@@ -44,6 +47,7 @@ from mielenosoitukset_fi.utils.cache import (
     should_skip_cache,
     skip_cache_public_only,
 )
+from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.classes import Case
@@ -990,7 +994,14 @@ def init_routes(app):
         """
         Inject the city list into the template context.
         """
-        return dict(city_list=CITY_LIST)
+        return dict(city_list=CITY_LIST, enabled_city_list=enabled_city_names(mongo))
+
+    @app.context_processor
+    def inject_app_version():
+        """
+        Inject the running app version into templates.
+        """
+        return dict(app_version=VERSION)
 
     
     @app.route("/")
@@ -1720,6 +1731,44 @@ def init_routes(app):
             container for dynamic demonstration listings.
         """
         return render_template("list copy.html")
+
+    @app.route("/cities")
+    def cities():
+        """
+        Render a public city index from enabled cities and cities with demonstrations.
+        """
+        demo_city_keys = set()
+        for row in demonstrations_collection.aggregate(
+            [
+                {"$match": {"city": {"$exists": True, "$ne": ""}}},
+                {"$group": {"_id": {"city_key": "$city_key", "city": "$city"}}},
+            ]
+        ):
+            raw = row.get("_id") or {}
+            city_key = raw.get("city_key") or normalize_city_key(raw.get("city"))
+            if city_key in CITY_KEY_TO_NAME:
+                demo_city_keys.add(city_key)
+
+        enabled_keys = {
+            normalize_city_key(name)
+            for name in enabled_city_names(mongo)
+            if normalize_city_key(name) in CITY_KEY_TO_NAME
+        }
+        city_rows = []
+        for city_key in sorted(enabled_keys | demo_city_keys, key=lambda key: CITY_KEY_TO_NAME[key]):
+            city_name = CITY_KEY_TO_NAME[city_key]
+            demo_count = demonstrations_collection.count_documents(
+                {
+                    **DEMO_FILTER,
+                    "$or": [
+                        {"city_key": city_key},
+                        {"city": {"$regex": f"^{re.escape(city_name)}$", "$options": "i"}},
+                    ],
+                }
+            )
+            city_rows.append({"key": city_key, "name": city_name, "demo_count": demo_count})
+
+        return render_template("cities.html", cities=city_rows)
 
 
     @app.route("/city/<city>") # TODO: lets make this use the api too

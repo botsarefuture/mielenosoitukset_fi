@@ -12,6 +12,7 @@
 * Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
 
 ### Fixed
+* Admin footer now reads the running application version instead of showing a stale hardcoded beta label.
 * Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.
 * Recurring demonstration generation now preserves cancelled break-date child demos instead of deleting them as invalid generated children.
 * Demonstration detail Mastodon/X share menu now uses Bootstrap dropdown markup with hover and focus fallbacks so the X option can open across browsers.
@@ -31,6 +32,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Added public and admin city management so enabled contact-person cities appear from the top navigation, can be toggled in admin, and remain ready for city-scoped user permissions.
 * Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.
 * Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
 * Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.

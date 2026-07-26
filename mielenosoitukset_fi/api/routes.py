@@ -154,6 +154,30 @@ def _case_insensitive_exact_pattern(value):
     return re.compile(f"^{re.escape(value)}$", re.IGNORECASE)
 
 
+PUBLIC_DEMONSTRATION_LIST_PROJECTION = {
+    "_id": 1,
+    "title": 1,
+    "date": 1,
+    "formatted_date": 1,
+    "start_time": 1,
+    "end_time": 1,
+    "city": 1,
+    "address": 1,
+    "tags": 1,
+    "cancelled": 1,
+    "cover_picture": 1,
+    "cover_image": 1,
+    "preview_image": 1,
+    "img": 1,
+    "slug": 1,
+    "running_number": 1,
+    "latitude": 1,
+    "longitude": 1,
+    "type": 1,
+    "event_type": 1,
+}
+
+
 @api_bp.route("/demonstrations", methods=["GET"])
 # @token_required(required_scopes=["read"])
 def list_demonstrations():
@@ -311,7 +335,7 @@ def list_demonstrations():
     paginated = [
         stringify_object_ids(demo)
         for demo in (
-            mongo.demonstrations.find(query)
+            mongo.demonstrations.find(query, PUBLIC_DEMONSTRATION_LIST_PROJECTION)
             .sort("date", 1)
             .skip((page - 1) * per_page)
             .limit(per_page)

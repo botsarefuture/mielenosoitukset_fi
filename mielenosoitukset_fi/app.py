@@ -310,67 +310,78 @@ def create_app(config_overrides=None) -> Flask:
     from datetime import datetime, timedelta
     from bson import ObjectId
 
-    @app.context_processor
-    def utility_processor():
-        def get_admin_tasks():
-            tasks = []
+    # --- Cached admin tasks (avoid re-running heavy queries on every template render) ---
+    _admin_tasks_cache = {"tasks": None, "timestamp": 0}
+    _ADMIN_TASKS_CACHE_TTL = 30  # seconds
 
-            # --- DEMONSTRATION approval tasks ---
-            waiting_demos = list(
-                mongo.demonstrations.find({
-                    "approved": False,
-                    "hide": False,
-                    "$or": [
-                        {"rejected": False},
-                        {"rejected": {"$exists": False}}
-                    ]
-                }).sort("created_at", -1)
-            )
-            for demo in waiting_demos:
-                if not getattr(current_user, "global_admin", False) and not has_demo_permission(
-                    current_user,
-                    demo["_id"],
-                    "LIST_DEMOS",
-                ):
-                    continue
-                tasks.append({
-                    "type": "demo",
-                    "id": str(demo["_id"]),
-                    "title": demo.get("title", "Nimetön mielenosoitus"),
-                    "created_at": demo.get("created_datetime", datetime.now()) or datetime.now(),
-                    "status": "waiting_approval",
-                    "link": url_for("admin_demo.edit_demo", demo_id=demo["_id"]),
-                })
+    def _get_admin_tasks_cached():
+        import time as _time
+        now = _time.monotonic()
+        cached = _admin_tasks_cache["tasks"]
+        if cached is not None and (now - _admin_tasks_cache["timestamp"]) < _ADMIN_TASKS_CACHE_TTL:
+            return cached
 
-            # --- ORG SUGGESTIONS tasks ---
-            org_suggestions = list(
-                mongo.org_edit_suggestions.find({
+        tasks = []
+
+        # --- DEMONSTRATION approval tasks ---
+        waiting_demos = list(
+            mongo.demonstrations.find({
+                "approved": False,
+                "hide": False,
+                "$or": [
+                    {"rejected": False},
+                    {"rejected": {"$exists": False}}
+                ]
+            }).sort("created_at", -1)
+        )
+        for demo in waiting_demos:
+            if not getattr(current_user, "global_admin", False) and not has_demo_permission(
+                current_user,
+                demo["_id"],
+                "LIST_DEMOS",
+            ):
+                continue
+            tasks.append({
+                "type": "demo",
+                "id": str(demo["_id"]),
+                "title": demo.get("title", "Nimetön mielenosoitus"),
+                "created_at": demo.get("created_datetime", datetime.now()) or datetime.now(),
+                "status": "waiting_approval",
+                "link": url_for("admin_demo.edit_demo", demo_id=demo["_id"]),
+            })
+
+        # --- ORG SUGGESTIONS tasks ---
+        org_suggestions = list(
+            mongo.org_edit_suggestions.find({
         "status.state": {"$nin": ["partially_applied", "applied", "rejected", "cancelled"]}
         }).sort("created_at", -1)
-            )
-            for s in org_suggestions:
-                if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
-                    "EDIT_ORGANIZATION",
-                    s["organization_id"],
-                ):
-                    continue
-                org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
-                org_name = org["name"] if org else "Tuntematon organisaatio"
-                tasks.append({
-                    "type": "org_suggestion",
-                    "id": str(s["_id"]),
-                    "title": f"Organisaation päivitysehdotus: {org_name}",
-                    "created_at": s.get("created_at", datetime.now()),
-                    "status": (s.get("status") or {}).get("state"),
-                    "link": url_for("admin_org.review_suggestion", org_id=s["organization_id"], suggestion_id=s["_id"]),
-                })
+        )
+        for s in org_suggestions:
+            if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
+                "EDIT_ORGANIZATION",
+                s["organization_id"],
+            ):
+                continue
+            org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
+            org_name = org["name"] if org else "Tuntematon organisaatio"
+            tasks.append({
+                "type": "org_suggestion",
+                "id": str(s["_id"]),
+                "title": f"Organisaation päivitysehdotus: {org_name}",
+                "created_at": s.get("created_at", datetime.now()),
+                "status": (s.get("status") or {}).get("state"),
+                "link": url_for("admin_org.review_suggestion", org_id=s["organization_id"], suggestion_id=s["_id"]),
+            })
 
-            # sort by creation time descending
-            tasks.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        # sort by creation time descending
+        tasks.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
 
-            return tasks
+        _admin_tasks_cache["tasks"] = tasks
+        _admin_tasks_cache["timestamp"] = now
+        return tasks
 
-
+    @app.context_processor
+    def utility_processor():
         def get_org_name(org_id):
             org = mongo.organizations.find_one({"_id": ObjectId(org_id)}, {"name": 1})
             return org.get("name") if org else "Tuntematon"
@@ -402,8 +413,8 @@ def create_app(config_overrides=None) -> Flask:
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
-        # Get all tasks
-        tasks = get_admin_tasks()
+        # Get all tasks (uses 30s in-memory cache)
+        tasks = _get_admin_tasks_cached()
         tasks_amount_total = len(tasks)
 
         # Demonstrations done

@@ -94,6 +94,25 @@ submission_errors_collection = mongo["demo_submission_errors"]
 submission_errors_collection.create_index("created_at", background=True)
 submission_errors_collection.create_index("error_code", background=True)
 
+# --- Performance indexes (added for admin & audit query speed) ---
+mongo["demo_audit_logs"].create_index([("demo_id", ASCENDING), ("timestamp", DESCENDING)], background=True)
+mongo["demo_edit_history"].create_index([("demo_id", ASCENDING), ("edited_at", DESCENDING)], background=True)
+mongo["demo_suggestions"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
+mongo["admin_logs"].create_index("timestamp", background=True)
+mongo["super_audit_logs"].create_index("timestamp", background=True)
+mongo["magic_links"].create_index("token_hash", unique=True, background=True)
+mongo["magic_links"].create_index("demo_id", background=True)
+mongo["cases"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
+mongo["demo_attending"].create_index("demo_id", background=True)
+mongo["demo_invites"].create_index("demo_id", background=True)
+mongo["demo_reminders"].create_index("demonstration_id", background=True)
+mongo["recommended_demos"].create_index("demo_id", unique=True, background=True)
+mongo["posted_events"].create_index([("demo_id", ASCENDING), ("created_at", DESCENDING)], background=True)
+mongo["demonstrations"].create_index("slug", background=True)
+mongo["demonstrations"].create_index("parent", background=True)
+mongo["city_settings"].create_index("city_key", background=True)
+# --- End performance indexes ---
+
 SUBMISSION_DUPLICATE_WINDOW = timedelta(hours=12)
 SUBMIT_ERROR_CODES = {
     "missing_required": "SUBMIT_MISSING_FIELDS",
@@ -1101,13 +1120,23 @@ def init_routes(app):
         else:
             return dict(alternate_urls={})
         
-    # inject city list to the template context
+    # inject city list to the template context (cached to avoid per-request DB hits)
+    _city_names_cache = {"names": None, "timestamp": 0}
+    _CITY_NAMES_CACHE_TTL = 60  # seconds
+
     @app.context_processor
     def inject_city_list():
         """
         Inject the city list into the template context.
         """
-        return dict(city_list=CITY_LIST, enabled_city_list=enabled_city_names(mongo))
+        import time as _time
+        now = _time.monotonic()
+        cached_names = _city_names_cache["names"]
+        if cached_names is None or (now - _city_names_cache["timestamp"]) >= _CITY_NAMES_CACHE_TTL:
+            cached_names = enabled_city_names(mongo)
+            _city_names_cache["names"] = cached_names
+            _city_names_cache["timestamp"] = now
+        return dict(city_list=CITY_LIST, enabled_city_list=cached_names)
 
     @app.context_processor
     def inject_app_version():

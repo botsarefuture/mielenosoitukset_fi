@@ -385,10 +385,18 @@ def _json_safe(value):
 
 @admin_demo_bp.before_request
 def log_request_info():
-    """Log request information before handling it."""
-    log_admin_action_V2(
-        AdminActParser().log_request_info(request.__dict__, current_user)
-    )
+    """Log request information before handling it (non-blocking)."""
+    import threading
+
+    def _log_async():
+        try:
+            log_admin_action_V2(
+                AdminActParser().log_request_info(request.__dict__, current_user)
+            )
+        except Exception:
+            pass
+
+    threading.Thread(target=_log_async, daemon=True).start()
     g.audit_timeline_url = url_for("admin_demo.audit_timeline")
 
 @admin_demo_bp.route("/recommend_demo/<demo_id>", methods=["POST"])
@@ -1510,30 +1518,28 @@ def demo_control():
     # --- Fetch current page ---
     skip_count = (page - 1) * per_page
 
-    #cursor = mongo.demonstrations.find(filter_query)
-    if page == 1 and not approved_only:
-        unapproved = list(mongo.demonstrations.find(
-            build_query({"approved": False, "hide": False})
-        ).sort([("date", 1), ("_id", 1)]))
+    # Use aggregation to sort unapproved demos first, then approved, all within MongoDB
+    # (avoids loading entire collection into Python memory)
+    sort_key_stage = {
+        "$addFields": {
+            "_sort_priority": {
+                "$cond": [{"$eq": ["$approved", False]}, 0, 1]
+            }
+        }
+    }
+    sort_stage = {"$sort": {"_sort_priority": 1, "date": 1, "_id": 1}}
+    project_stage = {"$project": {"_sort_priority": 0}}
 
-        approved = list(mongo.demonstrations.find(
-            build_query({"approved": True})
-        ).sort([("date", 1), ("_id", 1)]))
+    pipeline = [
+        {"$match": filter_query},
+        sort_key_stage,
+        sort_stage,
+        {"$skip": skip_count},
+        {"$limit": per_page},
+        project_stage,
+    ]
 
-        combined = _deduplicate_demos(unapproved + approved)
-        total_count = len(combined)
-        total_pages = max((total_count + per_page - 1) // per_page, 1)
-
-        start = 0
-        end = per_page
-        demos = combined[start:end]
-
-    else:
-        # normal paging
-        skip_count = (page - 1) * per_page
-        demos_cursor = mongo.demonstrations.find(filter_query).sort([("date", 1), ("_id", 1)]) \
-                                        .skip(skip_count).limit(per_page)
-        demos = _deduplicate_demos(list(demos_cursor))
+    demos = list(mongo.demonstrations.aggregate(pipeline))
 
     if not current_user.global_admin:
         demos = [

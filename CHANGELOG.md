@@ -10,8 +10,14 @@
 * Demonstration detail share controls now present the Mastodon/X split button with a more polished dropdown treatment.
 * Demonstration detail pages now combine Mastodon and X sharing into one Mastodon-led dropdown, keeping X available without a separate standalone button.
 * Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
+* Admin context processor tasks now use a 30-second in-memory cache to avoid repeated MongoDB queries on every template render.
+* City list context processor now uses a 60-second in-memory cache to avoid per-request MongoDB lookups for enabled city names.
+* Admin `before_request` audit logging now runs in a background thread so request handling is not blocked by audit writes.
+* `has_demo_permission` now caches demo document lookups per-request, eliminating redundant MongoDB queries in loops.
+* Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Added missing MongoDB indexes for `demo_audit_logs`, `demo_edit_history`, `demo_suggestions`, `admin_logs`, `super_audit_logs`, `magic_links`, `cases`, `demo_attending`, `demo_invites`, `demo_reminders`, `recommended_demos`, `posted_events`, `demonstrations(slug/parent)`, and `city_settings(city_key)`, dramatically improving query speed on admin and audit routes.
 * Admin footer now reads the running application version instead of showing a stale hardcoded beta label.
 * Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.
 * Recurring demonstration generation now preserves cancelled break-date child demos instead of deleting them as invalid generated children.

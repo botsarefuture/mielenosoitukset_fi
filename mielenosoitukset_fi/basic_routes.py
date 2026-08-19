@@ -8,7 +8,7 @@ import uuid
 import hashlib
 import requests
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from flask_babel import _, format_date
 from flask import (
     Response,
@@ -769,6 +769,56 @@ def init_routes(app):
     @app.route("/health")
     def health_check():
         return jsonify(status="ok"), 200
+
+    @app.route("/status")
+    def status_page():
+        from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
+        import time as _time
+
+        start = _time.monotonic()
+
+        services = []
+        all_ok = True
+
+        # --- MongoDB ---
+        try:
+            from mielenosoitukset_fi.database_manager import DatabaseManager
+            _db = DatabaseManager().get_instance().get_db()
+            _db.command("ping")
+            services.append({"name": "Tietokanta", "status": "ok", "message": "Yhteys kunnossa"})
+        except Exception:
+            all_ok = False
+            services.append({"name": "Tietokanta", "status": "err", "message": "Ei vastaa"})
+
+        # --- Redis / Cache ---
+        try:
+            from mielenosoitukset_fi.utils.cache import cache
+            cache.set("_status_ping", True, timeout=5)
+            services.append({"name": "Välimuisti", "status": "ok", "message": "Yhteys kunnossa"})
+        except Exception:
+            all_ok = False
+            services.append({"name": "Välimuisti", "status": "err", "message": "Ei vastaa"})
+
+        # --- S3 ---
+        try:
+            from mielenosoitukset_fi.utils.s3 import _s3_client
+            from config import Config as _Cfg
+            _s3_client.head_bucket(Bucket=_Cfg.S3_BUCKET)
+            services.append({"name": "Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
+        except Exception:
+            all_ok = False
+            services.append({"name": "Tiedostovarasto", "status": "err", "message": "Ei vastaa"})
+
+        latency_ms = round((_time.monotonic() - start) * 1000)
+        now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
+
+        return render_template(
+            "status.html",
+            overall_ok=all_ok,
+            services=services,
+            updated_at=now,
+            latency_ms=latency_ms,
+        )
 
     @app.route("/robots.txt")
     def robots_txt():

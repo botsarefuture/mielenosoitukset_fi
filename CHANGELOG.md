@@ -6,6 +6,8 @@
 
 ### Changed
 * Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).
+* Added public `/status` page showing live health checks for MongoDB, Redis, and S3 with response latency.
+* Added admin `/admin/status` dashboard with infrastructure health, server stats (uptime, memory, disk, Gunicorn workers), collection counts, and recent error log feed.
 * UptimeRobot monitoring IPs are now exempt from rate limiting via an auto-refreshing IP allowlist fetched from UptimeRobot's official CDN every 24 hours, with a hardcoded fallback for immediate availability.
 * Organization information suggestion pages now match the public organization detail page styling more closely, with a branded hero, current-info panel, and cleaner form layout.
 * Demonstration detail share controls now show Mastodon and X as separate buttons instead of a dropdown menu.

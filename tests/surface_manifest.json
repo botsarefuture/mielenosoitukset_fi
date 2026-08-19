@@ -127,7 +127,7 @@
   },
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {
-      "count": 25,
+      "count": 26,
       "coverage": [
         "integration",
         "e2e-admin"
@@ -245,7 +245,7 @@
       "sha256": "cd9c57924f5816feb8357cbf18c57d329adfbc411002a38a2ca96cdbcbc525b0"
     },
     "mielenosoitukset_fi/basic_routes.py": {
-      "count": 50,
+      "count": 51,
       "coverage": [
         "integration",
         "e2e-public"

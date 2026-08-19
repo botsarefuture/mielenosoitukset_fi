@@ -994,8 +994,9 @@ def _collect_infra_health() -> dict:
     # S3
     try:
         from mielenosoitukset_fi.utils.s3 import _s3_client
-        from config import Config as _Cfg
-        _s3_client.head_bucket(Bucket=_Cfg.S3_BUCKET)
+        if _s3_client is None:
+            raise RuntimeError("S3 client not initialised")
+        _s3_client.list_buckets()
         services.append({"name": "S3 / Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
     except Exception as exc:
         services.append({"name": "S3 / Tiedostovarasto", "status": "err", "message": str(exc)})

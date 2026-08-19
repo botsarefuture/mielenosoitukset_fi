@@ -770,13 +770,10 @@ def init_routes(app):
     def health_check():
         return jsonify(status="ok"), 200
 
-    @app.route("/status")
-    def status_page():
-        from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
-        import time as _time
+    _status_cache = {"data": None, "ts": 0}
+    _STATUS_TTL = 60  # seconds
 
-        start = _time.monotonic()
-
+    def _run_health_checks():
         services = []
         all_ok = True
 
@@ -802,14 +799,30 @@ def init_routes(app):
         # --- S3 ---
         try:
             from mielenosoitukset_fi.utils.s3 import _s3_client
-            from config import Config as _Cfg
-            _s3_client.head_bucket(Bucket=_Cfg.S3_BUCKET)
+            if _s3_client is None:
+                raise RuntimeError("S3 client not initialised")
+            _s3_client.list_buckets()
             services.append({"name": "Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
         except Exception:
             all_ok = False
             services.append({"name": "Tiedostovarasto", "status": "err", "message": "Ei vastaa"})
 
-        latency_ms = round((_time.monotonic() - start) * 1000)
+        return services, all_ok
+
+    @app.route("/status")
+    def status_page():
+        from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
+        import time as _time
+
+        now_mono = _time.monotonic()
+        if _status_cache["data"] is None or (now_mono - _status_cache["ts"]) > _STATUS_TTL:
+            services, all_ok = _run_health_checks()
+            _status_cache["data"] = (services, all_ok)
+            _status_cache["ts"] = now_mono
+        else:
+            services, all_ok = _status_cache["data"]
+
+        latency_ms = round((_time.monotonic() - now_mono) * 1000)
         now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
 
         return render_template(

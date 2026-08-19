@@ -125,8 +125,24 @@ def _frozen_child_ids(parent_demo: dict) -> set[str]:
 
 
 def _break_date_strings(parent_demo: dict) -> set[str]:
-    """Return recurring break dates in ISO date-string form."""
+    """Return recurring break dates in ISO date-string form, expanding ranges."""
     dates = set()
+    for break_range in parent_demo.get("break_ranges", []) or []:
+        if not isinstance(break_range, dict):
+            continue
+        try:
+            start_date = datetime.strptime(str(break_range.get("start_date")), "%Y-%m-%d").date()
+            end_date = datetime.strptime(str(break_range.get("end_date") or break_range.get("start_date")), "%Y-%m-%d").date()
+        except Exception:
+            logger.warning("Skipping invalid recurring break range %r", break_range)
+            continue
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+        current = start_date
+        while current <= end_date:
+            dates.add(current.isoformat())
+            current = date.fromordinal(current.toordinal() + 1)
+
     for raw_date in parent_demo.get("break_dates", []) or []:
         if isinstance(raw_date, datetime):
             dates.add(raw_date.date().isoformat())

@@ -72,12 +72,18 @@ def create_app(config_overrides=None) -> Flask:
     app.config["RATE_LIMIT_DEFAULTS"] = rate_limit_defaults
     
     if app.config.get("ENFORCE_RATELIMIT", True):
-        Limiter(
+        limiter = Limiter(
             get_client_ip,
             app=app,
             default_limits=rate_limit_defaults,
             storage_uri=app.config["MONGO_URI"],
         )
+
+        from mielenosoitukset_fi.utils.uptimerobot_ips import is_uptimerobot_ip
+
+        @limiter.request_filter
+        def _exempt_uptimerobot():
+            return is_uptimerobot_ip(get_client_ip())
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching

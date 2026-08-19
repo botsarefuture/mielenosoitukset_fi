@@ -5,6 +5,8 @@
 ## UNRELEASED
 
 ### Changed
+* Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).
+* UptimeRobot monitoring IPs are now exempt from rate limiting via an auto-refreshing IP allowlist fetched from UptimeRobot's official CDN every 24 hours, with a hardcoded fallback for immediate availability.
 * Organization information suggestion pages now match the public organization detail page styling more closely, with a branded hero, current-info panel, and cleaner form layout.
 * Demonstration detail share controls now show Mastodon and X as separate buttons instead of a dropdown menu.
 * Demonstration detail share controls now present the Mastodon/X split button with a more polished dropdown treatment.

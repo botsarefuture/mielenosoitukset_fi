@@ -766,6 +766,10 @@ def init_routes(app):
 
     from flask import Response
 
+    @app.route("/health")
+    def health_check():
+        return jsonify(status="ok"), 200
+
     @app.route("/robots.txt")
     def robots_txt():
         txt = """User-agent: *

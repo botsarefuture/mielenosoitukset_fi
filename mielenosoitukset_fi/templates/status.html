@@ -126,7 +126,7 @@
   </div>
 
   <div class="status-overall {{ 'ok' if overall_ok else 'err' }}">
-    <span class="icon">{{ '&#10003;' if overall_ok else '&#10007;' | safe }}</span>
+    <span class="icon">{{ '✓' if overall_ok else '✗' }}</span>
     <span>{{ 'Kaikki palvelut toimivat' if overall_ok else 'Jokin palvelu ei vastaa' }}</span>
   </div>
 

@@ -213,7 +213,7 @@
 
   <!-- Overall banner -->
   <div class="status-banner {{ 'ok' if infra.all_ok else 'err' }}">
-    <span class="icon">{{ '&#10003;' if infra.all_ok else '&#10007;' | safe }}</span>
+    <span class="icon">{{ '✓' if infra.all_ok else '✗' }}</span>
     <span>{{ 'Kaikki järjestelmät toimivat' if infra.all_ok else 'Jokin järjestelmä ei vastaa' }}</span>
     <span style="margin-left:auto">
       <a href="{{ url_for('admin.admin_status') }}" class="refresh-btn">

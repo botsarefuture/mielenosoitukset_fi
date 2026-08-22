@@ -20,6 +20,9 @@ def test_status_shows_overall_banner(app, seeded_data):
     resp = app.test_client().get("/status")
     html = resp.get_data(as_text=True)
     assert "Kaikki palvelut toimivat" in html or "Jokin palvelu ei vastaa" in html
+    assert "&#10003;" not in html
+    assert "&#10007;" not in html
+    assert "✓" in html or "✗" in html
 
 
 def test_status_shows_db_service(app, seeded_data):
@@ -79,6 +82,9 @@ def test_admin_status_contains_heading(app, seeded_data, admin_client):
     resp = admin_client.get("/admin/status")
     html = resp.get_data(as_text=True)
     assert "Infrastruktuuri" in html
+    assert "&#10003;" not in html
+    assert "&#10007;" not in html
+    assert "✓" in html or "✗" in html
 
 
 def test_admin_status_shows_mongodb(app, seeded_data, admin_client):

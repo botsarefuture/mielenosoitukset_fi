@@ -21,6 +21,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Public and admin status banners now render their check/cross icons instead of displaying escaped HTML entity text.
 * Added missing MongoDB indexes for `demo_audit_logs`, `demo_edit_history`, `demo_suggestions`, `admin_logs`, `super_audit_logs`, `magic_links`, `cases`, `demo_attending`, `demo_invites`, `demo_reminders`, `recommended_demos`, `posted_events`, `demonstrations(slug/parent)`, and `city_settings(city_key)`, dramatically improving query speed on admin and audit routes.
 * Admin footer now reads the running application version instead of showing a stale hardcoded beta label.
 * Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.

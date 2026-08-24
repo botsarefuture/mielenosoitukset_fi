@@ -300,6 +300,208 @@ main.flex-grow-1 {
   text-align: center;
 }
 
+/* City management is deliberately calmer and more centered than the dense
+   data views: the three key figures lead, while controls stay in one row. */
+.city-admin-shell .city-admin-overview {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 10.5rem;
+  padding: 1.4rem 1rem 1.25rem;
+  overflow: hidden;
+  text-align: center;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: .22rem;
+  background: var(--admin-workspace-blue);
+  content: "";
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-card:nth-child(2)::before {
+  background: #16834f;
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-card:nth-child(3)::before {
+  background: var(--admin-workspace-orange);
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-card:hover {
+  border-color: light-dark(#c4d2e6, #586477);
+  box-shadow: 0 18px 42px light-dark(rgba(28, 48, 82, .12), rgba(0, 0, 0, .25));
+  transform: translateY(-2px);
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto;
+  place-items: center;
+  border-radius: 1rem;
+  font-size: 1.25rem;
+}
+
+.city-admin-shell .city-admin-overview .admin-workspace-summary-card:nth-child(2) .admin-workspace-summary-icon {
+  color: light-dark(#08733f, #79d5a7);
+  background: light-dark(#e9f8f0, #17372a);
+}
+
+.city-admin-shell .city-admin-summary-copy {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  align-items: center;
+  text-align: center;
+}
+
+.city-admin-shell .city-admin-summary-copy strong {
+  order: -1;
+  font-size: 1.9rem;
+}
+
+.city-admin-shell .city-admin-summary-copy > span {
+  max-width: 18rem;
+  color: var(--admin-workspace-muted);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.city-admin-shell .city-admin-card {
+  padding: 1.1rem;
+}
+
+.city-admin-shell .city-admin-tools {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1.4fr) minmax(13rem, 1fr) minmax(9rem, auto) auto;
+  gap: .8rem;
+  align-items: end;
+  margin: 0 0 1rem;
+}
+
+.city-admin-shell .city-admin-filter-field {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.city-admin-shell .city-admin-filter-field > label {
+  color: var(--admin-workspace-muted);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .025em;
+}
+
+.city-admin-shell .city-admin-input-with-icon {
+  position: relative;
+}
+
+.city-admin-shell .city-admin-input-with-icon > i {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: .9rem;
+  width: 1rem;
+  color: var(--admin-workspace-muted);
+  text-align: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.city-admin-shell .city-admin-input-with-icon .form-control {
+  width: 100%;
+  padding-left: 2.55rem;
+}
+
+.city-admin-shell .city-admin-result-state {
+  display: flex;
+  min-height: 2.65rem;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.25;
+}
+
+.city-admin-shell .city-admin-bulk-actions {
+  grid-column: 1 / -2;
+}
+
+.city-admin-shell .city-admin-bulk-actions .btn,
+.city-admin-shell .city-admin-save-button {
+  display: inline-flex;
+  gap: .4rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  border-radius: .7rem;
+  font-weight: 750;
+}
+
+.city-admin-shell .city-admin-save-button {
+  min-width: 8.5rem;
+}
+
+.city-admin-shell .admin-workspace-table {
+  box-shadow: none;
+}
+
+.city-admin-shell .city-admin-toggle-column,
+.city-admin-shell .city-admin-metric-column {
+  width: 8.5rem;
+  text-align: center;
+}
+
+.city-admin-shell .city-admin-toggle-column .form-check-input {
+  display: block;
+  float: none;
+  margin: 0 auto;
+}
+
+.city-admin-shell .city-admin-city-identity {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
+
+.city-admin-shell .city-admin-row-icon {
+  display: grid;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: .7rem;
+  color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+}
+
+.city-admin-shell .city-admin-metric {
+  display: inline-grid;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: .35rem .55rem;
+  place-items: center;
+  border-radius: .65rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.city-admin-shell a.city-admin-metric:hover {
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+}
+
 /* Legacy pages with their own visual vocabulary inherit the same workspace
    surfaces without changing their domain-specific layout. */
 .jobs-container,
@@ -401,6 +603,10 @@ main.flex-grow-1 {
 
 @media (max-width: 1050px) {
   .admin-workspace-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .city-admin-shell .city-admin-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .city-admin-shell .city-admin-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .city-admin-shell .city-admin-result-state { align-items: flex-end; text-align: right; }
+  .city-admin-shell .city-admin-bulk-actions { grid-column: 1 / 2; }
 }
 
 @media (max-width: 760px) {
@@ -415,6 +621,21 @@ main.flex-grow-1 {
 
   .admin-workspace-hero-actions { justify-content: flex-start; }
   .dashboard-container { margin: 0; padding: 0; }
+
+  .city-admin-shell .city-admin-overview { grid-template-columns: 1fr; }
+  .city-admin-shell .city-admin-overview .admin-workspace-summary-card {
+    min-height: 8.75rem;
+    padding: 1.1rem 1rem 1rem;
+  }
+  .city-admin-shell .city-admin-overview .admin-workspace-summary-icon {
+    width: 3.15rem;
+    height: 3.15rem;
+  }
+  .city-admin-shell .city-admin-tools { grid-template-columns: 1fr; }
+  .city-admin-shell .city-admin-result-state { align-items: flex-start; text-align: left; }
+  .city-admin-shell .city-admin-bulk-actions { grid-column: auto; }
+  .city-admin-shell .city-admin-bulk-actions .btn,
+  .city-admin-shell .city-admin-save-button { width: 100%; }
 
   .admin-workspace :is(.form-control, .form-select),
   .dashboard-container :is(.form-control, .form-select, .filter-input, .filter-select, .search-input),

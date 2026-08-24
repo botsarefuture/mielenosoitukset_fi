@@ -23,6 +23,14 @@ VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
 
 class User(UserMixin):
+    def has_full_permissions(self) -> bool:
+        """Return whether this account bypasses individual permission grants."""
+        return bool(self.global_admin) or self.role in {
+            "global_admin",
+            "god",
+            "superuser",
+        }
+
     def _perm_in(self, permission: str) -> List[Union[str, ObjectId]]:
         """
         Return a list of scopes (organization IDs or the literal string "global")
@@ -39,6 +47,9 @@ class User(UserMixin):
             List of organization IDs or "global" where the user has the permission.
         """
         
+        if self.has_full_permissions():
+            return ["global"]
+
         scopes = []
         if permission in self.global_permissions:
             scopes.append("global")
@@ -200,7 +211,8 @@ class User(UserMixin):
             following       = doc.get("following", []),
             followed_organizations = doc.get("followed_organizations", []),
             followed_recurring_demos = doc.get("followed_recurring_demos", []),
-            global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
+            global_admin    = doc.get("global_admin", False)
+                              or doc.get("role") in {"global_admin", "god", "superuser"},
             confirmed       = doc.get("confirmed", False),
             global_permissions = doc.get("global_permissions", []),
             role            = doc.get("role", DEFAULT_ROLE),
@@ -283,6 +295,8 @@ class User(UserMixin):
         scope_type: str,
         scope_key: str,
     ) -> bool:
+        if self.has_full_permissions():
+            return True
         if permission in self.global_permissions:
             return True
         if scope_type != "city":
@@ -329,6 +343,9 @@ class User(UserMixin):
           the organization_id of that membership is included.
         The list is deduplicated and keeps a predictable order.
         """
+        if self.has_full_permissions():
+            return ["global"]
+
         scopes: List[Union[str, ObjectId]] = []
 
         # 1️⃣ global scope
@@ -420,6 +437,8 @@ class User(UserMixin):
         return list(perms)
 
     def has_permission(self, perm: str, organization_id: Optional[Union[str, ObjectId]]=None, strict=False) -> bool:
+        if self.has_full_permissions():
+            return True
         if perm in self.global_permissions:
             return True
         

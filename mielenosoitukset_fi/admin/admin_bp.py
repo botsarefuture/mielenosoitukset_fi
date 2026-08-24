@@ -313,7 +313,7 @@ def ui_translation_dashboard():
         selected_locale = locales[0]
 
     search_query = (request.args.get("search") or "").strip()
-    default_state = "pending" if _can_review_ui_translations(current_user) else "untranslated"
+    default_state = "untranslated"
     state_filter = (request.args.get("state") or default_state).strip().lower()
     if state_filter not in {"pending", "untranslated", "fuzzy", "translated", "all"}:
         state_filter = "pending"

@@ -23,6 +23,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Admin UI translations now open with untranslated strings visible by default instead of an empty pending-review filter when no proposals exist yet.
 * Super admins now automatically pass every centralized global, organization, and city-scoped permission check without requiring duplicated permission grants on their account; the top-level `god` role also satisfies legacy global-admin checks.
 * Public and admin status banners now render their check/cross icons instead of displaying escaped HTML entity text.
 * Added missing MongoDB indexes for `demo_audit_logs`, `demo_edit_history`, `demo_suggestions`, `admin_logs`, `super_audit_logs`, `magic_links`, `cases`, `demo_attending`, `demo_invites`, `demo_reminders`, `recommended_demos`, `posted_events`, `demonstrations(slug/parent)`, and `city_settings(city_key)`, dramatically improving query speed on admin and audit routes.

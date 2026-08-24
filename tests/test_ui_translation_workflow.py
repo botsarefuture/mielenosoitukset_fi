@@ -46,6 +46,16 @@ def test_translator_can_access_ui_translation_dashboard(translator_client, app, 
     assert "Käyttöliittymäkäännökset" in body
 
 
+def test_admin_dashboard_shows_untranslated_rows_by_default(admin_client, app, tmp_path):
+    _seed_translation_catalogs(app, tmp_path)
+
+    response = admin_client.get("/admin/ui-translations")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Submit demonstration" in body
+
+
 def test_admin_can_access_ui_translation_sync_dashboard(admin_client, app, db):
     app.config["UI_TRANSLATION_SYNC_ENABLED"] = True
     db.ui_translation_proposals.insert_one(

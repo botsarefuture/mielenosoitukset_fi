@@ -1,0 +1,155 @@
+{% extends "admin_base.html" %}
+
+{% block title %}{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}</h1>
+      <p class="text-muted mb-0">{{ _('Seuraa hyväksyttyjen UI-käännösten branch-, PR- ja merge-tilaa sekä jonota epäonnistuneet synkit uudelleen.') }}</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Takaisin käyttöliittymäkäännöksiin') }}</a>
+  </div>
+
+  <form method="GET" class="row g-3 align-items-end mb-4">
+    <div class="col-md-3">
+      <label class="form-label" for="locale">{{ _('Kieli') }}</label>
+      <select class="form-select" id="locale" name="locale">
+        <option value="">{{ _('Kaikki kielet') }}</option>
+        {% for locale in locales %}
+        <option value="{{ locale }}" {% if selected_locale == locale %}selected{% endif %}>{{ language_names.get(locale, locale) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="sync_status">{{ _('Sync-tila') }}</label>
+      <select class="form-select" id="sync_status" name="sync_status">
+        {% for value, label in [('all', _('Kaikki')), ('queued', _('Jonossa')), ('running', _('Käynnissä')), ('retry', _('Epäonnistui')), ('branch_pushed', _('Branch pushattu')), ('pr_opened', _('PR avattu')), ('committed_local_branch', _('Commit tehty, push puuttuu')), ('noop', _('Ei muutosta'))] %}
+        <option value="{{ value }}" {% if sync_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="merge_status">{{ _('Merge-tila') }}</label>
+      <select class="form-select" id="merge_status" name="merge_status">
+        {% for value, label in [('all', _('Kaikki')), ('merged', _('Mergetty')), ('merge_blocked', _('Merge blokattu')), ('not_configured', _('Automerge ei käytössä')), ('merge_unknown', _('Tuntematon'))] %}
+        <option value="{{ value }}" {% if merge_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="search">{{ _('Haku') }}</label>
+      <input class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="{{ _('Hae msgid:llä, branchilla tai tekstillä') }}">
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">{{ _('Suodata') }}</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Tyhjennä') }}</a>
+    </div>
+  </form>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="d-flex flex-wrap gap-3 small text-muted">
+        <span>{{ _('Yhteensä') }}: {{ sync_counts.total }}</span>
+        <span>{{ _('Retryttävät') }}: {{ sync_counts.retryable }}</span>
+        <span>{{ _('Jonossa') }}: {{ sync_counts.queued }}</span>
+        <span>{{ _('Käynnissä') }}: {{ sync_counts.running }}</span>
+        <span>{{ _('Epäonnistui') }}: {{ sync_counts.retry }}</span>
+        <span>{{ _('PR avattu') }}: {{ sync_counts.pr_opened }}</span>
+      </div>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('admin.bulk_requeue_ui_translation_sync') }}">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <h2 class="h5 mb-0">{{ _('GitHub-synkit') }}</h2>
+          <button class="btn btn-outline-primary btn-sm" type="submit">{{ _('Jonota valitut uudelleen') }}</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th style="width: 1%;"><input type="checkbox" id="select-all-sync-rows"></th>
+                <th>{{ _('Kieli / avainteksti') }}</th>
+                <th>{{ _('Sync') }}</th>
+                <th>{{ _('Merge') }}</th>
+                <th>{{ _('PR / branch') }}</th>
+                <th>{{ _('Toiminnot') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in sync_rows %}
+              {% set sync = row.github_sync or {} %}
+              {% set retryable = row.status == 'approved' and sync.status in ['retry', 'committed_local_branch'] %}
+              <tr>
+                <td>
+                  {% if retryable %}
+                  <input type="checkbox" name="proposal_ids" value="{{ row._id }}">
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="fw-semibold">{{ language_names.get(row.locale, row.locale) }}</div>
+                  <div>{{ row.msgid }}</div>
+                  {% if row.proposed_text %}
+                  <div class="small text-muted">{{ row.proposed_text }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-secondary">{{ sync.status or '—' }}</span>
+                  {% if sync.last_error %}
+                  <div class="small text-danger mt-2">{{ sync.last_error }}</div>
+                  {% elif sync.message %}
+                  <div class="small text-muted mt-2">{{ sync.message }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if sync.merge_status %}
+                  <span class="badge bg-light text-dark border">{{ sync.merge_status }}</span>
+                  {% else %}
+                  —
+                  {% endif %}
+                  {% if sync.merge_message %}
+                  <div class="small text-muted mt-2">{{ sync.merge_message }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if sync.pr_url %}
+                  <div><a href="{{ sync.pr_url }}" target="_blank" rel="noopener">{{ _('Avaa PR') }}</a></div>
+                  {% endif %}
+                  {% if sync.branch_name %}
+                  <div class="small text-muted"><code>{{ sync.branch_name }}</code></div>
+                  {% endif %}
+                </td>
+                <td>
+                  <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.ui_translation_editor', locale=row.locale, msgid=row.msgid) }}">{{ _('Avaa') }}</a>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="text-muted">{{ _('Ei synkkejä valituilla suodattimilla.') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const toggle = document.getElementById('select-all-sync-rows');
+  if (!toggle) return;
+  toggle.addEventListener('change', function () {
+    document.querySelectorAll('input[name="proposal_ids"]').forEach(function (checkbox) {
+      checkbox.checked = toggle.checked;
+    });
+  });
+});
+</script>
+{% endblock %}

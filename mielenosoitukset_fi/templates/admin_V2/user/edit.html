@@ -164,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <label for="role">{{ _('Rooli') }}</label>
             <select id="role" name="role" class="form-control" required>
                 <option value="user" {% if user.role=='user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
+                <option value="translator" {% if user.role=='translator' %}selected{% endif %}>{{ _('Kääntäjä') }}</option>
                 <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}
                 </option>
                 <option value="global_admin" id="role_global_admin" {% if user.role=='global_admin' %}selected{% endif
@@ -173,6 +174,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </select>
             <small class="muted" id="globalAdminNotice">
                 {{ _('Superkäyttäjärooli voidaan valita vain, jos hallitus on antanut hyväksynnän.') }}
+            </small>
+            <small class="muted d-block mt-2">
+                {{ _('Kääntäjärooli lisää automaattisesti oikeuden tehdä käännösehdotuksia, mutta ei julkaista niitä ilman tarkistusta.') }}
             </small>
 <div id="clearanceInfo" style="margin-top:0.5rem; display:none; padding:0.5rem; background-color:var(--input-bg); border-radius:8px;">
     <!-- Filled dynamically by JS -->

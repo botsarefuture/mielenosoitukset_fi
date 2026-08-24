@@ -24,6 +24,8 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Admin UI translations now open with untranslated strings visible by default instead of an empty pending-review filter when no proposals exist yet.
+* Super admins now automatically pass every centralized global, organization, and city-scoped permission check without requiring duplicated permission grants on their account; the top-level `god` role also satisfies legacy global-admin checks.
 * Public and admin status banners now render their check/cross icons instead of displaying escaped HTML entity text.
 * Added missing MongoDB indexes for `demo_audit_logs`, `demo_edit_history`, `demo_suggestions`, `admin_logs`, `super_audit_logs`, `magic_links`, `cases`, `demo_attending`, `demo_invites`, `demo_reminders`, `recommended_demos`, `posted_events`, `demonstrations(slug/parent)`, and `city_settings(city_key)`, dramatically improving query speed on admin and audit routes.
 * Admin footer now reads the running application version instead of showing a stale hardcoded beta label.
@@ -46,6 +48,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Added admin workflows for translating UI strings and demonstration content, including translator permissions, proposal review, DeepL-assisted drafts, catalog compilation, and optional GitHub synchronization while unpublished languages remain hidden from public users.
 * Added polished public city and today views so visitors can browse demonstrations by city, see Finland-wide demonstrations today, and open city-specific today pages from the city hub and sitemap.
 * Added public and admin city management so enabled contact-person cities appear from the top navigation, can be toggled in admin, and remain ready for city-scoped user permissions.
 * Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.

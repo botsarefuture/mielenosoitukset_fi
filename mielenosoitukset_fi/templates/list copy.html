@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadDemosWrapper(page = 1, append = false) {
     if (!append) {
-      grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>Ladataan mielenosoituksia...</p></div>`;
+      grid.innerHTML = `<div class="loading-container"><div class="spinner"></div><p>${window.demoCardI18n.loading}</p></div>`;
     } else {
       loadMoreBtn.classList.add('loading');
       loadMoreBtn.disabled = true;
@@ -148,6 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="{{ url_for('static', filename='js/jQuery/jq.min.js') }}"></script>
 <script>
 const cityList = {{ city_list | tojson }};
+window.currentLocale = {{ current_locale | tojson }};
+window.demoCardI18n = {
+  loading: {{ _('Ladataan mielenosoituksia...') | tojson }},
+  loadMore: {{ _('Lataa lisää') | tojson }},
+  cancelled: {{ _('Peruttu') | tojson }},
+  today: {{ _('Tänään') | tojson }},
+  startingFrom: {{ _('alkaen') | tojson }},
+  loginPrompt: {{ _('Kirjaudu sisään käyttääksesi sosiaalisia toimintoja') | tojson }},
+  attendingSuffix: {{ _('osallistuu') | tojson }},
+};
 </script>
 <script>
 /**

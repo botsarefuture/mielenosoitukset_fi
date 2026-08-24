@@ -391,22 +391,19 @@
 
 
 
-<section class="dashboard-container">
-  <!-- Intro card -->
-  <div class="introduction">
-    <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
-    <p class="muted">
-      {{ _('Täältä voit hallita mielenosoituksia, joihin sinulla on käyttöoikeus.') }}<br>
-      {{ _('Lisätietoja hallinnoimisesta löydät hallinnoijan käsikirjasta, kappaleesta 3.1: Mielenosoitusten
-      hallintapaneeli, etusivu.') }}
-    </p>
-  </div>
-
-  <div class="dashboard-panel">
-
-    <div class="flex justify-center mb-4">
+{% set visible_pending = demonstrations|selectattr('approved', 'equalto', False)|list %}
+{% set visible_approved = demonstrations|selectattr('approved', 'equalto', True)|list %}
+{% set visible_recurring = demonstrations|selectattr('recurs')|list %}
+<section class="dashboard-container admin-workspace demo-management-page">
+  <header class="admin-workspace-hero">
+    <div>
+      <p class="admin-workspace-kicker">{{ _('Sisällönhallinta') }}</p>
+      <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
+      <p>{{ _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.') }}</p>
+    </div>
+    <div class="admin-workspace-hero-actions">
       {% if current_user.has_permission("CREATE_DEMO") %}
-      <a href="{{ url_for('admin_demo.create_demo') }}" class="btn new-item">
+      <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action">
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
       {% else %}
@@ -416,7 +413,7 @@
       {% endif %}
 
       {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
-      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="btn new-item">
+      <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-workspace-hero-action">
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>
       {% else %}
@@ -426,13 +423,33 @@
       {% endif %}
 
       {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission('TRANSLATE_DEMO') or current_user.has_permission('REVIEW_DEMO_TRANSLATIONS') %}
-      <a href="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="btn new-item">
+      <a href="{{ url_for('admin_demo.demo_translation_dashboard') }}" class="admin-workspace-hero-action">
         <i class="fas fa-language"></i>{{ _('Käännöstyöjono') }}
       </a>
       {% endif %}
     </div>
+  </header>
 
+  <section class="admin-workspace-summary" aria-label="{{ _('Näkyvien mielenosoitusten yhteenveto') }}">
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
+      <div><span>{{ _('Näkyvissä') }}</span><strong>{{ demonstrations|length }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></span>
+      <div><span>{{ _('Odottaa hyväksyntää') }}</span><strong>{{ visible_pending|length }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+      <div><span>{{ _('Hyväksytyt') }}</span><strong>{{ visible_approved|length }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fas fa-rotate" aria-hidden="true"></i></span>
+      <div><span>{{ _('Toistuvat') }}</span><strong>{{ visible_recurring|length }}</strong></div>
+    </article>
+  </section>
 
+  <div class="dashboard-panel admin-workspace-toolbar">
     <div class="search-and-filter">
       <!-- Client-side search bar -->
       <div class="search-bar">
@@ -599,7 +616,7 @@
   {% set column_count = 6
       + (1 if current_user.has_permission("EDIT_DEMO") else 0)
       + (1 if show_cancelled else 0) %}
-  <div class="table-container" style="background:none;">
+  <div class="table-container admin-workspace-table">
     <table>
       <thead>
         <tr>

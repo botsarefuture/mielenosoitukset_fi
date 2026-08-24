@@ -94,41 +94,42 @@
 {% endblock %}
 
 {% block main_content %}
-<section class="city-admin-shell">
-  <div class="city-admin-header">
+<section class="city-admin-shell admin-workspace">
+  <header class="city-admin-header admin-workspace-hero">
     <div>
+      <p class="admin-workspace-kicker">{{ _('Hallinto') }}</p>
       <h1>{{ _('Kaupunkihallinta') }}</h1>
-      <p class="text-body-secondary mb-0">
+      <p>
         {{ _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.') }}
       </p>
     </div>
-    <div class="d-flex gap-2 align-items-center flex-wrap">
-      <span class="badge text-bg-primary">{{ active_count }} {{ _('käytössä') }}</span>
+    <div class="admin-workspace-hero-actions">
       {% if current_user.global_admin or current_user.has_permission('LIST_USERS') %}
-      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_user.user_control') }}">
+      <a class="admin-workspace-hero-action" href="{{ url_for('admin_user.user_control') }}">
         <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ _('Hallinnoi kaupunkioikeuksia') }}
       </a>
       {% endif %}
     </div>
-  </div>
+  </header>
 
   {% include 'admin_V2/governance/_tabs.html' %}
 
-  <form method="post" class="city-admin-card" id="city-admin-form">
-    <div class="city-admin-summary" aria-label="{{ _('Kaupunkihallinnan yhteenveto') }}">
-      <div class="city-admin-summary-item">
-        <span class="city-admin-summary-value">{{ active_count }}</span>
-        <span class="text-body-secondary">{{ _('kaupunkia käytössä') }}</span>
-      </div>
-      <div class="city-admin-summary-item">
-        <span class="city-admin-summary-value">{{ demo_count }}</span>
-        <span class="text-body-secondary">{{ _('ilmoitusta kaupungeissa') }}</span>
-      </div>
-      <div class="city-admin-summary-item">
-        <span class="city-admin-summary-value">{{ grant_count }}</span>
-        <span class="text-body-secondary">{{ _('voimassa olevaa kaupunkioikeutta') }}</span>
-      </div>
-    </div>
+  <section class="admin-workspace-summary" aria-label="{{ _('Kaupunkihallinnan yhteenveto') }}">
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-city" aria-hidden="true"></i></span>
+      <div><span>{{ _('Kaupunkeja käytössä') }}</span><strong>{{ active_count }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span>
+      <div><span>{{ _('Ilmoituksia kaupungeissa') }}</span><strong>{{ demo_count }}</strong></div>
+    </article>
+    <article class="admin-workspace-summary-card">
+      <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></span>
+      <div><span>{{ _('Voimassa olevia kaupunkioikeuksia') }}</span><strong>{{ grant_count }}</strong></div>
+    </article>
+  </section>
+
+  <form method="post" class="city-admin-card admin-workspace-toolbar" id="city-admin-form">
 
     <div class="city-admin-tools">
       <label class="visually-hidden" for="city-filter">{{ _('Hae kaupunkia') }}</label>
@@ -155,7 +156,7 @@
       <span class="city-admin-save-state" id="city-save-state" role="status" aria-live="polite"></span>
     </div>
 
-    <div class="table-responsive">
+    <div class="table-responsive admin-workspace-table">
       <table class="table table-hover city-admin-table">
         <thead>
           <tr>

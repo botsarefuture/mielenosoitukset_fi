@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <select id="role" name="role" class="form-control" required>
                 <option value="user" {% if user.role=='user' %}selected{% endif %}>{{ _('Käyttäjä') }}</option>
                 <option value="translator" {% if user.role=='translator' %}selected{% endif %}>{{ _('Kääntäjä') }}</option>
+                <option value="city_admin" {% if user.role=='city_admin' %}selected{% endif %}>{{ _('Kaupunkiadmin') }}</option>
                 <option value="admin" {% if user.role=='admin' %}selected{% endif %}>{{ _('Järjestelmänvalvoja') }}
                 </option>
                 <option value="global_admin" id="role_global_admin" {% if user.role=='global_admin' %}selected{% endif

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* City-scoped administrators now use a visible `city_admin` role, enter the admin area through their scoped demonstration view, and automatically receive limited organization listing, viewing, creation, editing, and invitation access.
 * Demonstration submission and organizer guidance pages now direct people who need translation help to `tuki@mielenosoitukset.fi`.
 * Translation catalogs are now separate from publicly enabled languages: production defaults to Finnish only, hides unpublished languages from regular and maintenance views, rejects unpublished locale selections, and omits them from SEO alternate links while English and Swedish remain available for translation work.
 * Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).
@@ -23,6 +24,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* City admins cannot change an organization's verified status or invite users to verified organizations; forged form and API requests are blocked server-side while general admins and super admins retain their broader access.
 * The demonstration translation queue now includes active recurring-series parents, while still hiding their duplicate generated occurrences, and recurring translations use the same proposal and review workflow as one-off demonstrations.
 * Admin UI translations now open with untranslated strings visible by default instead of an empty pending-review filter when no proposals exist yet.
 * Super admins now automatically pass every centralized global, organization, and city-scoped permission check without requiring duplicated permission grants on their account; the top-level `god` role also satisfies legacy global-admin checks.

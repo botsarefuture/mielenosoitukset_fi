@@ -132,7 +132,7 @@
         "integration",
         "e2e-admin"
       ],
-      "sha256": "a1b7f38e96edbb54c9ccebd305fab33d1cd90da15bda1bc803fae4e6e7b0cb62"
+      "sha256": "ffa55a16954fee0c90a54d8d4bfb3e753febdfc42e1cf719e6b4bcd9c1ebcaa1"
     },
     "mielenosoitukset_fi/admin/admin_case_bp.py": {
       "count": 12,
@@ -164,6 +164,14 @@
         "e2e-admin"
       ],
       "sha256": "719cc75a2c4725c6558926b8767ba0369ae6bd1658d0644309b90378b13a00ba"
+    },
+    "mielenosoitukset_fi/admin/admin_governance_bp.py": {
+      "count": 3,
+      "coverage": [
+        "integration",
+        "e2e-admin"
+      ],
+      "sha256": "94de410e4e8ebb65c21e395cc20c78d24e9ed7456ead73d10e18da4818ed274b"
     },
     "mielenosoitukset_fi/admin/admin_kampanja_bp.py": {
       "count": 6,
@@ -250,7 +258,7 @@
         "integration",
         "e2e-public"
       ],
-      "sha256": "3d8fe08ddd327609b9cb394757ec9accf0f10133c0ca230deb557aa27db0e3ae"
+      "sha256": "763f92e9ad9e1c2dd5985b0656bbcc0bed005f12b51075c86551c996120f12c3"
     },
     "mielenosoitukset_fi/developer_bp.py": {
       "count": 9,

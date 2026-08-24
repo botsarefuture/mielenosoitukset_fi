@@ -1,0 +1,68 @@
+{% extends 'admin_base.html' %}
+{% set governance_tab = 'overview' %}
+
+{% block title %}{{ _('Hallinto') }} – Mielenosoitukset.fi{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">
+{% endblock %}
+
+{% block main_content %}
+<section class="governance-shell">
+  <header class="governance-hero">
+    <p class="governance-eyebrow mb-2">{{ _('Admin-paneeli') }}</p>
+    <h1 class="h2 mb-2">{{ _('Hallinto ja käyttöoikeudet') }}</h1>
+    <p class="text-body-secondary mb-0">{{ _('Hallitse luottamuspäätöksiä, niiden tapahtumalokia sekä kaupunkien julkaisu- ja ylläpitoasetuksia yhdestä paikasta.') }}</p>
+  </header>
+
+  {% include 'admin_V2/governance/_tabs.html' %}
+
+  <div class="governance-grid mb-4">
+    {% if permissions.clearances %}
+    <article class="governance-card">
+      <span class="governance-card-icon"><i class="fa-solid fa-user-shield"></i></span>
+      <h2 class="h5">{{ _('Hallituksen hyväksynnät') }}</h2>
+      <strong class="governance-metric">{{ clearance_count }}</strong>
+      <p class="text-body-secondary">{{ _('voimassa olevaa hyväksyntää') }}</p>
+      <a class="btn btn-outline-primary" href="{{ url_for('admin_governance.clearances') }}">{{ _('Avaa hyväksynnät') }}</a>
+    </article>
+    {% endif %}
+
+    {% if permissions.cities %}
+    <article class="governance-card">
+      <span class="governance-card-icon"><i class="fa-solid fa-location-dot"></i></span>
+      <h2 class="h5">{{ _('Kaupunkihallinta') }}</h2>
+      <strong class="governance-metric">{{ active_city_count }}</strong>
+      <p class="text-body-secondary">{{ _('kaupunkia julkisessa näkymässä') }}</p>
+      <a class="btn btn-outline-primary" href="{{ url_for('admin_city.city_control') }}">{{ _('Hallinnoi kaupunkeja') }}</a>
+    </article>
+    {% endif %}
+
+    {% if permissions.audit %}
+    <article class="governance-card">
+      <span class="governance-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+      <h2 class="h5">{{ _('Tapahtumaloki') }}</h2>
+      <strong class="governance-metric">{{ recent_events|length }}</strong>
+      <p class="text-body-secondary">{{ _('viimeisintä hallintotapahtumaa') }}</p>
+      <a class="btn btn-outline-primary" href="{{ url_for('admin_governance.audit_log') }}">{{ _('Tarkastele lokia') }}</a>
+    </article>
+    {% endif %}
+  </div>
+
+  {% if permissions.audit and recent_events %}
+  <section class="governance-card">
+    <h2 class="h5 mb-3">{{ _('Viimeisimmät hallintotapahtumat') }}</h2>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Toiminto') }}</th><th>{{ _('Tekijä') }}</th><th>{{ _('Aika') }}</th></tr></thead>
+        <tbody>
+          {% for event in recent_events %}
+          <tr><td>{{ event.username }}</td><td>{{ event.action }}</td><td>{{ event.granted_by }}</td><td>{{ event.timestamp|datetimeformat('%d.%m.%Y %H:%M') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

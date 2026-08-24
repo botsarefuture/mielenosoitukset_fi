@@ -18,7 +18,7 @@ admin_city_bp = Blueprint("admin_city", __name__, url_prefix="/admin/cities")
 @admin_city_bp.route("/", methods=["GET", "POST"])
 @login_required
 @admin_required
-@permission_required("EDIT_USER")
+@permission_required("MANAGE_CITIES")
 def city_control():
     if request.method == "POST":
         selected_keys = {

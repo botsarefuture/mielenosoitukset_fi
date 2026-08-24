@@ -1,20 +1,53 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime
-
-from mielenosoitukset_fi.users.models import User
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
-from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import mongo
 from .board_audit import log_board_action
 
 board_bp = Blueprint("board_compliance", __name__, url_prefix="/board")
 
-# In-memory storage for simplicity; can be a separate Mongo collection
-BOARD_CLEARANCES = {}  # user_id -> {"approved": bool, "granted_by": str, "timestamp": datetime}
+
+def _serialize_clearance(clearance, iso_timestamp=True):
+    if not clearance:
+        return {"approved": False}
+    timestamp = clearance.get("timestamp")
+    return {
+        "approved": bool(clearance.get("approved")),
+        "granted_by": clearance.get("granted_by"),
+        "timestamp": (
+            timestamp.isoformat()
+            if iso_timestamp and hasattr(timestamp, "isoformat")
+            else timestamp
+        ),
+    }
+
+
+def clearance_rows():
+    """Return all users joined with their persistent board-clearance state."""
+    clearances = {
+        doc["user_id"]: doc
+        for doc in mongo.board_clearances.find({}, {"_id": 0})
+        if doc.get("user_id")
+    }
+    rows = []
+    for user_doc in mongo.users.find().sort("username", 1):
+        user_id = str(user_doc["_id"])
+        clearance = _serialize_clearance(
+            clearances.get(user_id),
+            iso_timestamp=False,
+        )
+        rows.append(
+            {
+                "id": user_id,
+                "username": user_doc.get("username"),
+                "role": user_doc.get("role"),
+                **clearance,
+            }
+        )
+    return rows
 
 
 # ────────────── GET CLEARANCE STATUS ──────────────
@@ -26,8 +59,8 @@ def get_clearance(user_id):
     """
     Get the board clearance status for a user.
     """
-    clearance = BOARD_CLEARANCES.get(user_id, {"approved": False})
-    return jsonify(clearance)
+    clearance = mongo.board_clearances.find_one({"user_id": user_id})
+    return jsonify(_serialize_clearance(clearance))
 
 # ────────────── SET CLEARANCE ──────────────
 @board_bp.route("/api/clearance/<user_id>", methods=["POST"])
@@ -40,31 +73,44 @@ def set_clearance(user_id):
     Expects JSON:
         { "approved": true/false }
     """
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     approved = bool(data.get("approved", False))
+
+    if not ObjectId.is_valid(user_id):
+        return jsonify({"status": "ERROR", "message": "Virheellinen käyttäjätunniste."}), 400
 
     user_doc = mongo.users.find_one({"_id": ObjectId(user_id)})
     if not user_doc:
         return jsonify({"status": "ERROR", "message": "Käyttäjää ei löytynyt."}), 404
 
-    user = User.from_db(user_doc)
-
-    # Only allow board to approve users who aren't already global_admin
-    #if user.role == "global_admin" and approved:
-    #    return jsonify({"status": "ERROR", "message": "Käyttäjä on jo superkäyttäjä."}), 400
-
-    BOARD_CLEARANCES[user_id] = {
-        "approved": approved,
-        "granted_by": current_user.username,
-        "timestamp": utcnow().isoformat(),
-    }
+    timestamp = utcnow()
+    mongo.board_clearances.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "approved": approved,
+                "granted_by": current_user.username,
+                "granted_by_id": str(current_user.id),
+                "timestamp": timestamp,
+            },
+            "$setOnInsert": {"created_at": timestamp},
+        },
+        upsert=True,
+    )
 
     action = "myönnetty" if approved else "peruttu"
 
-    # 🔥 Log the action in the audit log
     log_board_action(user_id, action, current_user.username)
 
-    return jsonify({"status": "OK", "message": f"Board clearance {action} käyttäjälle {user.username}."})
+    return jsonify(
+        {
+            "status": "OK",
+            "message": (
+                f"Hallinnollinen hyväksyntä {action} käyttäjälle "
+                f"{user_doc.get('username')}."
+            ),
+        }
+    )
 
 
 # ────────────── LIST ALL CLEARANCES ──────────────
@@ -76,47 +122,35 @@ def list_clearances():
     """
     List all users with board clearance info.
     """
-    result = []
-    for uid, info in BOARD_CLEARANCES.items():
-        user_doc = mongo.users.find_one({"_id": ObjectId(uid)})
-        if user_doc:
-            result.append({
-                "user_id": uid,
-                "username": user_doc.get("username"),
-                "approved": info["approved"],
-                "granted_by": info["granted_by"],
-                "timestamp": info["timestamp"],
-            })
-    return jsonify(result)
+    return jsonify(
+        [
+            {
+                **row,
+                "timestamp": (
+                    row["timestamp"].isoformat()
+                    if hasattr(row.get("timestamp"), "isoformat")
+                    else row.get("timestamp")
+                ),
+            }
+            for row in clearance_rows()
+        ]
+    )
 
 
 # ────────────── FRONTEND UTILITY ──────────────
 def has_board_clearance(user_id):
     """Check if a user has board clearance."""
-    clearance = BOARD_CLEARANCES.get(str(user_id))
-    return clearance and clearance.get("approved", False)
+    clearance = mongo.board_clearances.find_one(
+        {"user_id": str(user_id)},
+        {"approved": 1},
+    )
+    return bool(clearance and clearance.get("approved"))
+
 
 @board_bp.route("/ui")
 @login_required
 @admin_required
 @permission_required("MANAGE_CLEARANCE")
 def clearance_ui():
-    """
-    Render the board clearance management UI.
-    """
-    # Fetch all users for the table
-    users_cursor = mongo.users.find()
-    users = []
-    for user_doc in users_cursor:
-        uid = str(user_doc["_id"])
-        clearance = BOARD_CLEARANCES.get(uid, {"approved": False, "granted_by": None, "timestamp": None})
-        users.append({
-            "id": uid,
-            "username": user_doc.get("username"),
-            "role": user_doc.get("role"),
-            "approved": clearance["approved"],
-            "granted_by": clearance.get("granted_by"),
-            "timestamp": clearance.get("timestamp"),
-        })
-
-    return render_template("board/clearances.html", users=users)
+    """Redirect the legacy board UI into the unified admin panel."""
+    return redirect(url_for("admin_governance.clearances"))

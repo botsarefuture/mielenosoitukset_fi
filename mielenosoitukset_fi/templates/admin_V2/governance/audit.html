@@ -1,0 +1,27 @@
+{% extends 'admin_base.html' %}
+{% set governance_tab = 'audit' %}
+
+{% block title %}{{ _('Hallinnon tapahtumaloki') }} – Mielenosoitukset.fi{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">{% endblock %}
+
+{% block main_content %}
+<section class="governance-shell">
+  <header class="governance-hero"><p class="governance-eyebrow mb-2">{{ _('Hallinto') }}</p><h1 class="h2 mb-2">{{ _('Hyväksyntöjen tapahtumaloki') }}</h1><p class="text-body-secondary mb-0">{{ _('Tarkastele kuka myönsi tai perui hallinnollisen hyväksynnän ja milloin muutos tehtiin.') }}</p></header>
+  {% include 'admin_V2/governance/_tabs.html' %}
+  <section class="governance-card">
+    <div class="governance-toolbar"><input class="form-control" id="audit-search" type="search" placeholder="{{ _('Hae käyttäjää, toimintoa tai tekijää') }}"><span class="text-body-secondary">{{ audit_events|length }} {{ _('tapahtumaa') }}</span></div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0"><thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Toiminto') }}</th><th>{{ _('Tekijä') }}</th><th>{{ _('Aika') }}</th></tr></thead>
+        <tbody>{% for event in audit_events %}<tr data-audit-row data-search="{{ (event.username ~ ' ' ~ event.action ~ ' ' ~ event.granted_by)|lower }}"><td class="fw-semibold">{{ event.username }}</td><td>{{ event.action }}</td><td>{{ event.granted_by }}</td><td>{{ event.timestamp|datetimeformat('%d.%m.%Y %H:%M') }}</td></tr>{% else %}<tr><td colspan="4" class="text-center text-body-secondary py-4">{{ _('Tapahtumia ei ole vielä kirjattu.') }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+</section>
+<script>
+const auditSearch = document.getElementById('audit-search');
+auditSearch.addEventListener('input', () => {
+  const query = auditSearch.value.trim().toLowerCase();
+  document.querySelectorAll('[data-audit-row]').forEach((row) => { row.hidden = !row.dataset.search.includes(query); });
+});
+</script>
+{% endblock %}

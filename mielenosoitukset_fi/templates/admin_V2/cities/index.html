@@ -1,8 +1,10 @@
 {% extends 'admin_base.html' %}
+{% set governance_tab = 'cities' %}
 
 {% block title %}{{ _('Kaupunkihallinta') }} – Mielenosoitukset.fi{% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">
 <style>
   .city-admin-shell {
     max-width: 1120px;
@@ -37,6 +39,11 @@
     flex-wrap: wrap;
   }
 
+  .city-admin-save-state {
+    color: var(--bs-warning-text-emphasis);
+    font-weight: 700;
+  }
+
   .city-admin-search {
     min-width: 260px;
     max-width: 420px;
@@ -67,12 +74,20 @@
     <span class="badge text-bg-primary">{{ active_count }} {{ _('käytössä') }}</span>
   </div>
 
-  <form method="post" class="city-admin-card">
+  {% include 'admin_V2/governance/_tabs.html' %}
+
+  <form method="post" class="city-admin-card" id="city-admin-form">
     <div class="city-admin-tools">
       <input class="form-control city-admin-search" type="search" id="city-filter" placeholder="{{ _('Suodata kaupunkeja') }}">
+      <select class="form-select w-auto" id="city-status-filter" aria-label="{{ _('Suodata tilan mukaan') }}">
+        <option value="all">{{ _('Kaikki kaupungit') }}</option>
+        <option value="enabled">{{ _('Vain käytössä olevat') }}</option>
+        <option value="disabled">{{ _('Vain pois käytöstä olevat') }}</option>
+      </select>
       <button class="btn btn-primary" type="submit">
         <i class="fa-solid fa-floppy-disk me-2"></i>{{ _('Tallenna') }}
       </button>
+      <span class="city-admin-save-state" id="city-save-state" role="status" aria-live="polite"></span>
     </div>
 
     <div class="table-responsive">
@@ -87,15 +102,15 @@
         </thead>
         <tbody>
           {% for row in city_rows %}
-          <tr data-city-row data-city-name="{{ row.name|lower }}">
+          <tr data-city-row data-city-name="{{ row.name|lower }}" data-enabled="{{ 'true' if row.enabled else 'false' }}">
             <td>
-              <input class="form-check-input" type="checkbox" name="enabled_cities[]" value="{{ row.key }}" id="city_{{ row.key }}" {% if row.enabled %}checked{% endif %}>
+              <input class="form-check-input" type="checkbox" name="enabled_cities[]" value="{{ row.key }}" id="city_{{ row.key }}" data-city-toggle data-initial="{{ 'true' if row.enabled else 'false' }}" data-city-name="{{ row.name }}" data-demo-count="{{ row.demo_count }}" data-grant-count="{{ row.grant_count }}" {% if row.enabled %}checked{% endif %}>
             </td>
             <td>
               <label class="fw-semibold" for="city_{{ row.key }}">{{ row.name }}</label>
               <div class="small text-body-secondary">{{ row.key }}</div>
             </td>
-            <td>{{ row.demo_count }}</td>
+            <td><a href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
             <td>{{ row.grant_count }}</td>
           </tr>
           {% endfor %}
@@ -106,11 +121,46 @@
 </section>
 
 <script>
-document.getElementById('city-filter').addEventListener('input', (event) => {
-  const query = event.target.value.trim().toLowerCase();
+const cityForm = document.getElementById('city-admin-form');
+const citySearch = document.getElementById('city-filter');
+const cityStatus = document.getElementById('city-status-filter');
+const saveState = document.getElementById('city-save-state');
+const cityToggles = [...document.querySelectorAll('[data-city-toggle]')];
+
+function filterCities() {
+  const query = citySearch.value.trim().toLowerCase();
+  const status = cityStatus.value;
   document.querySelectorAll('[data-city-row]').forEach((row) => {
-    row.style.display = row.dataset.cityName.includes(query) ? '' : 'none';
+    const matchesName = row.dataset.cityName.includes(query);
+    const matchesStatus = status === 'all' || (status === 'enabled') === (row.dataset.enabled === 'true');
+    row.hidden = !(matchesName && matchesStatus);
   });
+}
+
+function updateSaveState() {
+  const changed = cityToggles.some((toggle) => toggle.checked !== (toggle.dataset.initial === 'true'));
+  saveState.textContent = changed ? '{{ _('Tallentamattomia muutoksia') }}' : '';
+}
+
+citySearch.addEventListener('input', filterCities);
+cityStatus.addEventListener('change', filterCities);
+cityToggles.forEach((toggle) => toggle.addEventListener('change', updateSaveState));
+
+cityForm.addEventListener('submit', (event) => {
+  const risky = cityToggles.filter((toggle) =>
+    toggle.dataset.initial === 'true' && !toggle.checked &&
+    (Number(toggle.dataset.demoCount) > 0 || Number(toggle.dataset.grantCount) > 0)
+  );
+  if (!risky.length) return;
+  const names = risky.map((toggle) => `${toggle.dataset.cityName} (${toggle.dataset.demoCount} {{ _('ilmoitusta') }}, ${toggle.dataset.grantCount} {{ _('kaupunkioikeutta') }})`).join('\n');
+  if (!window.confirm(`{{ _('Olet poistamassa käytöstä kaupunkeja, joihin liittyy sisältöä tai oikeuksia:') }}\n\n${names}\n\n{{ _('Haluatko jatkaa?') }}`)) {
+    event.preventDefault();
+  }
+});
+
+window.addEventListener('beforeunload', (event) => {
+  if (!saveState.textContent) return;
+  event.preventDefault();
 });
 </script>
 {% endblock %}

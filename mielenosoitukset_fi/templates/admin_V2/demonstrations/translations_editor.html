@@ -326,7 +326,9 @@
     <p class="visually-hidden" id="accessibility-mode-status" aria-live="polite"></p>
     <div class="d-flex gap-2 mt-3">
       <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">{{ _('Takaisin työjonoon') }}</a>
-      {% if current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_DEMO') %}
+      {% if is_recurring_source and (current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_RECURRING_DEMO')) %}
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}">{{ _('Avaa toistuvan demon editori') }}</a>
+      {% elif current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_DEMO') %}
       <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">{{ _('Avaa demo-editori') }}</a>
       {% endif %}
     </div>

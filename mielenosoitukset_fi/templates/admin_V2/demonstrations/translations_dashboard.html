@@ -53,7 +53,12 @@
         <tbody>
           {% for demo in demos %}
           <tr>
-            <td>{{ demo.title or _('Nimetön mielenosoitus') }}</td>
+            <td>
+              {{ demo.title or _('Nimetön mielenosoitus') }}
+              {% if demo.is_recurring_translation_source %}
+              <span class="badge bg-info text-dark ms-2">{{ _('Toistuva') }}</span>
+              {% endif %}
+            </td>
             <td>{{ translation_language_names.get(demo.default_language or 'fi', demo.default_language or 'fi') }}</td>
             <td>
               {% set pending_count = ((demo.translation_proposals or {}).values() | selectattr('status', 'equalto', 'pending') | list | length) %}

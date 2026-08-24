@@ -51,7 +51,7 @@ def user_control():
         "all": mongo.users.count_documents({}),
         "confirmed": mongo.users.count_documents({"confirmed": True}),
         "admins": mongo.users.count_documents(
-            {"role": {"$in": ["admin", "global_admin", "god"]}}
+            {"role": {"$in": ["city_admin", "admin", "global_admin", "god"]}}
         ),
         "never_logged_in": mongo.users.count_documents(
             {"$or": [{"last_login": {"$exists": False}}, {"last_login": None}]}
@@ -98,7 +98,14 @@ def user_control():
     )
 
 
-USER_ACCESS_LEVELS = {"god": 4, "global_admin": 3, "admin": 2, "translator": 1, "user": 1}
+USER_ACCESS_LEVELS = {
+    "god": 5,
+    "global_admin": 4,
+    "admin": 3,
+    "city_admin": 2,
+    "translator": 1,
+    "user": 1,
+}
 ROLE_IMPLIED_GLOBAL_PERMISSIONS = {
     "translator": {"TRANSLATE_DEMO", "TRANSLATE_UI"},
 }
@@ -150,6 +157,8 @@ def _city_scope_grant_for_user(user_id: ObjectId) -> dict:
 def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions: list[str]) -> None:
     city_keys = sorted({normalize_city_key(key) for key in city_keys if normalize_city_key(key) in CITY_KEY_TO_NAME})
     permissions = sorted({permission for permission in permissions if permission in CITY_ADMIN_PERMISSIONS})
+    if city_keys and permissions:
+        permissions = sorted(set(permissions) | {"LIST_DEMOS", "VIEW_DEMO"})
 
     query = {
         "user_id": {"$in": [user_id, str(user_id)]},
@@ -161,6 +170,10 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         mongo.admin_scope_grants.update_many(
             query,
             {"$set": {"revoked_at": utcnow(), "revoked_by": str(current_user._id)}},
+        )
+        mongo.users.update_one(
+            {"_id": user_id, "role": "city_admin"},
+            {"$set": {"role": "user"}},
         )
         return
 
@@ -181,6 +194,10 @@ def _sync_city_scope_grant(user_id: ObjectId, city_keys: list[str], permissions:
         payload["created_at"] = utcnow()
         payload["granted_by"] = str(current_user._id)
         mongo.admin_scope_grants.insert_one(payload)
+    mongo.users.update_one(
+        {"_id": user_id, "role": {"$nin": ["admin", "global_admin", "god"]}},
+        {"$set": {"role": "city_admin"}},
+    )
 
 
 def compare_user_levels(user1, user2):  # Check if the user1 is higher than user2
@@ -341,7 +358,9 @@ class UserOrg:
         return {
             "org_id": ObjectId(self.org_id),
             "role": (
-                self.role if self.role in ["global_admin", "admin", "user"] else "user"
+                self.role
+                if self.role in ["global_admin", "admin", "city_admin", "user"]
+                else "user"
             ),
             "permissions": self.permissions,
         }
@@ -601,7 +620,7 @@ def create_user():
     role = data.get("role") or "user"
 
     # Basic validation
-    if role not in ["user", "admin", "global_admin"]:
+    if role not in ["user", "city_admin", "admin", "global_admin"]:
         flash_message("Rooli ei ole kelvollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
 

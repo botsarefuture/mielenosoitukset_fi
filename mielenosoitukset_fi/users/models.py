@@ -21,6 +21,13 @@ def _get_mongo():
 
 VALID_WINDOW = 5          # TODO → move to config
 DEFAULT_ROLE = "user"
+CITY_ADMIN_ORGANIZATION_PERMISSIONS = {
+    "LIST_ORGANIZATIONS",
+    "VIEW_ORGANIZATION",
+    "CREATE_ORGANIZATION",
+    "EDIT_ORGANIZATION",
+    "INVITE_TO_ORGANIZATION",
+}
 
 class User(UserMixin):
     def has_full_permissions(self) -> bool:
@@ -266,6 +273,15 @@ class User(UserMixin):
     def has_admin_scope_grants(self) -> bool:
         return bool(self.admin_scope_grants)
 
+    def has_city_admin_scope_grants(self) -> bool:
+        """Return whether the user has an active, usable city-admin grant."""
+        return any(
+            grant.get("scope_type") == "city"
+            and bool(grant.get("scope_keys") or grant.get("scope_key"))
+            and bool(grant.get("permissions"))
+            for grant in self.admin_scope_grants
+        )
+
     def scoped_city_keys_for(self, permission: str) -> List[str]:
         """Return normalized city keys where this user has a scoped permission."""
         keys: list[str] = []
@@ -448,9 +464,19 @@ class User(UserMixin):
                 print(ms.permissions)
                 print(ms.organization_id)
             
-            return bool(ms and perm in ms.permissions)
+            if ms and perm in ms.permissions:
+                return True
+            return (
+                perm in CITY_ADMIN_ORGANIZATION_PERMISSIONS
+                and self.has_city_admin_scope_grants()
+            )
         # if org not specified, check all org memberships
-        return any(perm in m.permissions for m in self.memberships)
+        if any(perm in m.permissions for m in self.memberships):
+            return True
+        return (
+            perm in CITY_ADMIN_ORGANIZATION_PERMISSIONS
+            and self.has_city_admin_scope_grants()
+        )
 
     # ---------- FOLLOW / BAN / MFA ----------------------------------------------
 

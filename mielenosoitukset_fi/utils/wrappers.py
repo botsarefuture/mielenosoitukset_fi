@@ -17,6 +17,11 @@ def has_admin_access(user) -> bool:
         return True
     if getattr(user, "global_admin", False):
         return True
+    if (
+        hasattr(user, "has_city_admin_scope_grants")
+        and user.has_city_admin_scope_grants()
+    ):
+        return True
     if hasattr(user, "has_admin_scope_grants") and user.has_admin_scope_grants():
         return True
     return False

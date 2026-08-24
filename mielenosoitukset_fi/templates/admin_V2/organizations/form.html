@@ -197,7 +197,7 @@
                 <label class="org-form-label" for="website">{{ _('Verkkosivu') }}</label>
                 <input type="url" id="website" name="website" class="org-form-control" value="{{ organization.website if organization else '' }}" placeholder="https://example.fi">
               </div>
-              {% if organization %}
+              {% if organization and can_verify_organization %}
               <div class="org-form-field full">
                 <label class="org-form-switch" for="verified"><input type="checkbox" id="verified" name="verified" {% if organization.verified %}checked{% endif %}><span><strong>{{ _('Vahvistettu organisaatio') }}</strong><span>{{ _('Vahvistettu tila näkyy organisaation yhteydessä ylläpidossa.') }}</span></span></label>
               </div>

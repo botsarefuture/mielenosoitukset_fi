@@ -268,6 +268,8 @@
         <td>
           {% if user.role == 'admin' %}
             <span class="user-role admin"><i class="fas fa-shield" aria-hidden="true"></i>{{ _('Admin') }}</span>
+          {% elif user.role == 'city_admin' %}
+            <span class="user-role admin"><i class="fas fa-location-dot" aria-hidden="true"></i>{{ _('Kaupunkiadmin') }}</span>
           {% elif user.role == 'translator' %}
             <span class="user-role translator"><i class="fas fa-language" aria-hidden="true"></i>{{ _('Kääntäjä') }}</span>
           {% elif user.role in ['global_admin', 'god'] %}

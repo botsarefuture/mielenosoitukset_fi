@@ -273,6 +273,12 @@ function confirmAction(action, taskId) {
             <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}
           </a>
         </li>
+      {% elif current_user.has_city_admin_scope_grants() %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
+            <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkiadminin näkymä') }}
+          </a>
+        </li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_USERS") %}

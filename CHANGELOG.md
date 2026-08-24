@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* City-scoped administrators now use a visible `city_admin` role, enter the admin area through their scoped demonstration view, and automatically receive limited organization listing, viewing, creation, editing, and invitation access.
 * Demonstration submission and organizer guidance pages now direct people who need translation help to `tuki@mielenosoitukset.fi`.
 * Translation catalogs are now separate from publicly enabled languages: production defaults to Finnish only, hides unpublished languages from regular and maintenance views, rejects unpublished locale selections, and omits them from SEO alternate links while English and Swedish remain available for translation work.
 * Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).
@@ -23,6 +24,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* City admins cannot change an organization's verified status or invite users to verified organizations; forged form and API requests are blocked server-side while general admins and super admins retain their broader access.
 * Super admins now automatically pass every centralized global, organization, and city-scoped permission check without requiring duplicated permission grants on their account; the top-level `god` role also satisfies legacy global-admin checks.
 * Public and admin status banners now render their check/cross icons instead of displaying escaped HTML entity text.
 * Added missing MongoDB indexes for `demo_audit_logs`, `demo_edit_history`, `demo_suggestions`, `admin_logs`, `super_audit_logs`, `magic_links`, `cases`, `demo_attending`, `demo_invites`, `demo_reminders`, `recommended_demos`, `posted_events`, `demonstrations(slug/parent)`, and `city_settings(city_key)`, dramatically improving query speed on admin and audit routes.

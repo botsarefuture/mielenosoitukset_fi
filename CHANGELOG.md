@@ -5,6 +5,8 @@
 ## UNRELEASED
 
 ### Changed
+* Demonstration submission and organizer guidance pages now direct people who need translation help to `tuki@mielenosoitukset.fi`.
+* Translation catalogs are now separate from publicly enabled languages: production defaults to Finnish only, hides unpublished languages from regular and maintenance views, rejects unpublished locale selections, and omits them from SEO alternate links while English and Swedish remain available for translation work.
 * Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).
 * Added public `/status` page showing live health checks for MongoDB, Redis, and S3 with response latency.
 * Added admin `/admin/status` dashboard with infrastructure health, server stats (uptime, memory, disk, Gunicorn workers), collection counts, and recent error log feed.

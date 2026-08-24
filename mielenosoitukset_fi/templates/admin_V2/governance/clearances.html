@@ -17,11 +17,13 @@
 
   <section class="governance-card">
     <div class="governance-toolbar">
+      <label class="visually-hidden" for="clearance-search">{{ _('Hae käyttäjänimellä tai roolilla') }}</label>
       <input class="form-control" id="clearance-search" type="search" placeholder="{{ _('Hae käyttäjänimellä tai roolilla') }}">
       <div id="clearance-status" class="governance-status text-body-secondary" role="status" aria-live="polite"></div>
     </div>
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0" id="clearance-table">
+        <caption class="visually-hidden">{{ _('Käyttäjien superkäyttäjäroolin hallitushyväksynnät') }}</caption>
         <thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Rooli') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Myöntäjä') }}</th><th>{{ _('Päivitetty') }}</th><th class="text-end">{{ _('Toiminnot') }}</th></tr></thead>
         <tbody>
           {% for user in users %}

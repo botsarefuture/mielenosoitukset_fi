@@ -65,5 +65,5 @@ def clearances():
 def audit_log():
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}governance/audit.html",
-        audit_events=audit_rows(),
+        audit_events=audit_rows(limit=500),
     )

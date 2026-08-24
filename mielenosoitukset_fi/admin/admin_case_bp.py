@@ -38,71 +38,196 @@ def log_request_info():
 
 from mielenosoitukset_fi.utils.classes import Case
 
+
+def _safe_objectid(value):
+    try:
+        return ObjectId(value) if value else None
+    except Exception:
+        return None
+
+
+def _demo_is_approved(demo_doc):
+    return bool((demo_doc or {}).get("approved") or (demo_doc or {}).get("accepted"))
+
+
+def _demo_status_payload(demo_doc):
+    demo_doc = demo_doc or {}
+    approved = _demo_is_approved(demo_doc)
+    rejected = bool(demo_doc.get("rejected"))
+    cancelled = bool(demo_doc.get("cancelled"))
+
+    if cancelled:
+        return {"key": "cancelled", "label": _("Peruttu"), "tone": "warning"}
+    if approved:
+        return {"key": "approved", "label": _("Hyväksytty"), "tone": "success"}
+    if rejected:
+        return {"key": "rejected", "label": _("Hylätty"), "tone": "danger"}
+    return {"key": "pending", "label": _("Odottaa käsittelyä"), "tone": "info"}
+
+
+def _case_type_label(case_type):
+    labels = {
+        "new_demo": _("Uusi mielenosoitus"),
+        "demo_error_report": _("Virheilmoitus"),
+        "organization_edit_suggestion": _("Organisaation muutospyyntö"),
+        "demo_cancellation_request": _("Peruutuspyyntö"),
+        "demo_cancelled": _("Peruttu mielenosoitus"),
+    }
+    return labels.get(case_type, str(case_type).replace("_", " ").capitalize())
+
+
+def _case_resolution_reason(case_obj, demo_doc=None, org_doc=None):
+    if case_obj.case_type == "new_demo" and demo_doc:
+        if _demo_is_approved(demo_doc):
+            return _("Demo hyväksytty")
+        if demo_doc.get("rejected"):
+            return _("Demo hylätty")
+        if demo_doc.get("cancelled"):
+            return _("Demo peruttu")
+
+    if case_obj.case_type in {"demo_cancellation_request", "demo_cancelled"} and demo_doc:
+        if demo_doc.get("cancelled"):
+            return _("Peruutus käsitelty")
+
+    if case_obj.case_type == "organization_edit_suggestion" and org_doc and case_obj.created_at:
+        updated_at = org_doc.get("updated_at")
+        if updated_at and updated_at >= case_obj.created_at:
+            return _("Organisaatiomuutokset tallennettu")
+
+    return None
+
+
+def _push_case_update(case_id, *, set_fields=None, history_entry=None, action_log=None):
+    update_doc = {}
+    if set_fields:
+        update_doc["$set"] = set_fields
+    if history_entry or action_log:
+        update_doc["$push"] = {}
+        if history_entry:
+            update_doc["$push"]["case_history"] = history_entry
+        if action_log:
+            update_doc["$push"]["action_logs"] = action_log
+    if update_doc:
+        mongo.cases.update_one({"_id": _safe_objectid(case_id)}, update_doc)
+
+
+def _auto_close_case(case_obj, reason, actor):
+    timestamp = utcnow()
+    _push_case_update(
+        case_obj._id,
+        set_fields={
+            "meta.closed": True,
+            "meta.closed_reason": reason,
+            "meta.closed_at": timestamp,
+            "updated_at": timestamp,
+        },
+        history_entry={
+            "timestamp": timestamp,
+            "action": "Tapaus suljettu automaattisesti",
+            "user": actor,
+            "mech_action": "auto_close",
+            "metadata": {"reason": reason},
+            "meta_schema": {"reason": "string"},
+        },
+        action_log={
+            "timestamp": timestamp,
+            "admin": actor,
+            "action_type": "auto_close",
+            "note": reason,
+        },
+    )
+
+
+def _stringify_demo(demo):
+    if not demo:
+        return {}
+    payload = stringify_object_ids(demo)
+    payload["status"] = _demo_status_payload(payload)
+    payload["approved"] = _demo_is_approved(payload)
+    return payload
+
+
+def _build_case_row(case_obj, demo_doc=None, org_doc=None):
+    submitter = case_obj.submitter or {}
+    urgency = (case_obj.meta or {}).get("urgency")
+    closed = bool((case_obj.meta or {}).get("closed"))
+    escalated = bool((case_obj.meta or {}).get("superior_needed"))
+
+    if case_obj.case_type == "new_demo":
+        title = (demo_doc or {}).get("title") or _("Uusi mielenosoitus")
+        description = (demo_doc or {}).get("address") or _("Ei lisatietoja")
+        meta_line = " · ".join(part for part in [(demo_doc or {}).get("city"), (demo_doc or {}).get("date")] if part)
+    elif case_obj.case_type in {"demo_cancellation_request", "demo_cancelled"}:
+        title = _("Peruutuspyynto")
+        description = (demo_doc or {}).get("title") or _("Liittyvaa mielenosoitusta ei loytynyt")
+        meta_line = " · ".join(
+            part
+            for part in [
+                (demo_doc or {}).get("city"),
+                (demo_doc or {}).get("date"),
+                (case_obj.meta or {}).get("source"),
+            ]
+            if part
+        )
+    elif case_obj.case_type == "demo_error_report":
+        title = _("Virheilmoitus")
+        description = (case_obj.error_report or {}).get("error") or _("Ei lisatietoja")
+        meta_line = (demo_doc or {}).get("title") or _("Demoa ei loytynyt")
+    elif case_obj.case_type == "organization_edit_suggestion":
+        title = (org_doc or {}).get("name") or _("Organisaation muutospyynto")
+        description = _("Organisaation tiedoista ehdotetaan muutoksia.")
+        meta_line = (submitter.get("submitter_name") or submitter.get("email") or _("Ei ilmoittajaa"))
+    else:
+        title = _case_type_label(case_obj.case_type)
+        description = _("Ei lisatietoja")
+        meta_line = ""
+
+    return {
+        "id": str(case_obj._id),
+        "running_num": case_obj.running_num,
+        "type_label": _case_type_label(case_obj.case_type),
+        "title": title,
+        "description": description,
+        "meta_line": meta_line,
+        "created_at": case_obj.created_at,
+        "submitter_label": submitter.get("submitter_name") or submitter.get("submitter_email") or submitter.get("email") or _("Ei tiedossa"),
+        "urgency": urgency,
+        "closed": closed,
+        "escalated": escalated,
+        "status_label": _("Suljettu") if closed else _("Avoin"),
+    }
+
 @admin_case_bp.route("/")
 @login_required
 def cases():
     """List all cases, newest first."""
-    all_cases: list[Case] = []
+    case_rows = []
     open_count = 0
     closed_count = 0
     escalated_count = 0
     auto_closed = 0
-
-    def _auto_close(case_obj: Case):
-        """Close cases that are clearly resolved (e.g., demo approved/rejected/cancelled)."""
-        reason = None
-        if case_obj.case_type == "new_demo" and case_obj.demo_id and case_obj.demo:
-            demo_doc = case_obj.demo
-            if demo_doc.get("accepted"):
-                reason = "Demo hyväksytty"
-            elif demo_doc.get("rejected"):
-                reason = "Demo hylätty"
-            elif demo_doc.get("cancelled"):
-                reason = "Demo peruttu"
-        if case_obj.case_type in {"demo_cancellation_request", "demo_cancelled"} and case_obj.demo:
-            if case_obj.demo.get("cancelled"):
-                reason = "Peruutus käsitelty"
-        if reason:
-            case_obj._add_history_entry(
-                {
-                    "timestamp": utcnow(),
-                    "action": "Tapaus suljettu automaattisesti",
-                    "user": getattr(current_user, "username", "system"),
-                    "mech_action": "auto_close",
-                    "metadata": {"reason": reason},
-                    "meta_schema": {"reason": "string"},
-                }
-            )
-            mongo.cases.update_one(
-                {"_id": ObjectId(case_obj._id)},
-                {
-                    "$set": {
-                        "meta.closed": True,
-                        "meta.closed_reason": reason,
-                        "updated_at": utcnow(),
-                    }
-                },
-            )
-            return True
-        return False
+    actor = getattr(current_user, "username", "system")
 
     for doc in mongo.cases.find({}, sort=[("created_at", -1)]):
         case = Case.from_dict(doc)
+        demo_doc = None
+        org_doc = None
 
-        # Attach related demo if this is a “new_demo” or cancellation case
-        if case.case_type in {"new_demo", "demo_cancellation_request", "demo_cancelled"} and case.demo_id:
+        if case.case_type in {"new_demo", "demo_cancellation_request", "demo_cancelled", "demo_error_report"} and case.demo_id:
             demo_doc = mongo.demonstrations.find_one(
-                {"_id": ObjectId(case.demo_id)},
-                {"accepted": 1, "rejected": 1, "cancelled": 1, "title": 1, "date": 1, "city": 1}
+                {"_id": _safe_objectid(case.demo_id)},
+                {"approved": 1, "accepted": 1, "rejected": 1, "cancelled": 1, "title": 1, "date": 1, "city": 1, "address": 1},
             )
-            case.demo = demo_doc or None
-        else:
-            case.demo = None
+        if case.case_type == "organization_edit_suggestion" and case.organization_id:
+            org_doc = mongo.organizations.find_one({"_id": _safe_objectid(case.organization_id)}, {"name": 1, "updated_at": 1})
 
-        if not (case.meta or {}).get("closed"):
-            if _auto_close(case):
+        if not bool((case.meta or {}).get("closed")):
+            reason = _case_resolution_reason(case, demo_doc=demo_doc, org_doc=org_doc)
+            if reason:
+                _auto_close_case(case, reason, actor)
                 case.meta = case.meta or {}
                 case.meta["closed"] = True
+                case.meta["closed_reason"] = reason
                 auto_closed += 1
 
         if (case.meta or {}).get("closed"):
@@ -112,11 +237,11 @@ def cases():
         if case.meta and case.meta.get("superior_needed"):
             escalated_count += 1
 
-        all_cases.append(case)
+        case_rows.append(_build_case_row(case, demo_doc=demo_doc, org_doc=org_doc))
 
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}cases/all.html",
-        all_cases=all_cases,
+        case_rows=case_rows,
         open_count=open_count,
         closed_count=closed_count,
         escalated_count=escalated_count,
@@ -130,22 +255,28 @@ def single_case(case_id):
     if not case:
         abort(404)
 
-    case_data = {}
+    case_data = {
+        "type_label": _case_type_label(case.case_type),
+        "submitter_label": (case.submitter or {}).get("submitter_name")
+        or (case.submitter or {}).get("submitter_email")
+        or (case.submitter or {}).get("email")
+        or _("Ei tiedossa"),
+    }
 
     # Handle different case types
     if case.case_type == "new_demo" and case.demo_id:
-        demo = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
-        submitter = mongo.submitters.find_one({"demonstration_id": ObjectId(case.demo_id)})
-        case_data["demo"] = stringify_object_ids(demo) if demo else {}
+        demo = mongo.demonstrations.find_one({"_id": _safe_objectid(case.demo_id)})
+        submitter = mongo.submitters.find_one({"demonstration_id": _safe_objectid(case.demo_id)})
+        case_data["demo"] = _stringify_demo(demo)
         case_data["submitter"] = stringify_object_ids(submitter) if submitter else {}
 
     elif case.case_type == "demo_error_report" and case.demo_id:
-        demo = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
-        case_data["demo"] = stringify_object_ids(demo) if demo else {}
-        case_data["error_report"] = case.error_report
+        demo = mongo.demonstrations.find_one({"_id": _safe_objectid(case.demo_id)})
+        case_data["demo"] = _stringify_demo(demo)
+        case_data["error_report"] = stringify_object_ids(case.error_report or {})
 
     elif case.case_type == "organization_edit_suggestion" and case.organization_id:
-        org = mongo.organizations.find_one({"_id": ObjectId(case.organization_id)})
+        org = mongo.organizations.find_one({"_id": _safe_objectid(case.organization_id)})
         suggestion = case.suggestion or {}
         organization = stringify_object_ids(org) if org else {}
         changes = []
@@ -164,8 +295,8 @@ def single_case(case_id):
         case_data["changes"] = changes
 
     elif case.case_type in {"demo_cancellation_request", "demo_cancelled"} and case.demo_id:
-        demo = mongo.demonstrations.find_one({"_id": ObjectId(case.demo_id)})
-        case_data["demo"] = stringify_object_ids(demo) if demo else {}
+        demo = mongo.demonstrations.find_one({"_id": _safe_objectid(case.demo_id)})
+        case_data["demo"] = _stringify_demo(demo)
         case_data["cancellation"] = {
             "reason": (case.meta or {}).get("reason")
             or (demo or {}).get("cancellation_reason"),
@@ -392,15 +523,10 @@ def demo_action(case_id):
     if not demo:
         return jsonify({"error": "Demo not found"}), 404
 
-    action_type = ""
-    action_reason = ""
     response_status = ""
 
     if data["action"] == "accept":
         approve_demo(demo_id=case.demo_id)
-        
-        action_type = "accept_demo"
-        action_reason = "Mielenosoitus hyväksytty"
         response_status = "accepted"
 
     elif data["action"] == "reject":
@@ -409,32 +535,26 @@ def demo_action(case_id):
             return jsonify({"error": "Rejection reason required"}), 400
 
         reject_demo(case.demo_id)
-        
-        action_type = "reject_demo"
-        action_reason = f"Mielenosoitus hylätty: {reason}"
         response_status = "rejected"
+
+        if reason:
+            mongo.cases.update_one(
+                {"_id": ObjectId(case_id)},
+                {
+                    "$push": {
+                        "action_logs": {
+                            "user": current_user.username,
+                            "action_type": "reject_reason",
+                            "reason": reason,
+                            "timestamp": utcnow(),
+                        }
+                    }
+                },
+            )
 
     else:
         return jsonify({"error": "Unknown action"}), 400
-
-    # Update case action logs
-    action_entry = {
-        "user": current_user.username,
-        "action_type": action_type,
-        "reason": action_reason,
-        "timestamp": utcnow()
-    }
-    mongo.cases.update_one(
-        {"_id": ObjectId(case_id)},
-        {"$push": {"action_logs": action_entry}}
-    )
-
-    # Log for internal tracking
-    #log_admin_action_V2(f"{current_user.username} suoritti '{action_type}' demolle {demo['_id']}: {action_reason}", case_id)
-
-    
-
-    flash_message(_(action_reason), "success")
+    flash_message(_("Mielenosoituksen tila paivitettiin."), "success")
     return jsonify({"success": True, "status": response_status})
 
 
@@ -517,25 +637,30 @@ def demo_escalate(case_id):
     # Reset demo status
     mongo.demonstrations.update_one(
         {"_id": ObjectId(case.demo_id)},
-        {"$set": {"accepted": False, "rejected": False}}
+        {"$set": {"approved": False, "rejected": False}}
     )
 
     # Set meta flag
+    timestamp = utcnow()
     mongo.cases.update_one(
         {"_id": ObjectId(case_id)},
-        {"$set": {"meta.superior_needed": True}}
-    )
-
-    # Log escalation
-    action_entry = {
-        "user": current_user.username,
-        "action_type": "escalate_demo",
-        "reason": "Demo status needs superior review",
-        "timestamp": utcnow()
-    }
-    mongo.cases.update_one(
-        {"_id": ObjectId(case_id)},
-        {"$push": {"action_logs": action_entry}}
+        {
+            "$set": {"meta.superior_needed": True, "updated_at": timestamp},
+            "$push": {
+                "case_history": {
+                    "timestamp": timestamp,
+                    "action": "Eskaloitu esihenkilolle",
+                    "user": current_user.username,
+                    "metadata": {},
+                },
+                "action_logs": {
+                    "user": current_user.username,
+                    "action_type": "escalate_demo",
+                    "reason": "Demo status needs superior review",
+                    "timestamp": timestamp,
+                },
+            },
+        },
     )
 
     flash_message(_("Demo status reset – requires superior review."), "warning")
@@ -558,12 +683,13 @@ def deescalate_case(case_id):
         mongo.cases.update_one(
             {"_id": ObjectId(case_id)},
             {
-                "$set": {"meta.superior_needed": False},
+                "$set": {"meta.superior_needed": False, "updated_at": timestamp},
                 "$push": {
-                    "history": {
+                    "case_history": {
                         "timestamp": timestamp,
                         "action": "Eskalointi poistettu",
-                        "user": current_user.username
+                        "user": current_user.username,
+                        "metadata": {},
                     },
                     "action_logs": {
                         "user": current_user.username,

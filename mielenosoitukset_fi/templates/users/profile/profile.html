@@ -144,6 +144,25 @@ body {
   transform: translateY(-2px);
 }
 
+.stat-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.stat-button:focus-visible {
+  border-radius: var(--border_radius);
+  outline: 3px solid var(--box_shadow_color);
+  outline-offset: 0.35rem;
+}
+
 .stat-value {
   display: block;
   font-size: 2rem;
@@ -531,6 +550,58 @@ body {
   display: block;
 }
 
+.follow-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.follow-list-item {
+  align-items: center;
+  background: var(--background_light);
+  border: 1px solid var(--border_color);
+  border-radius: var(--border_radius);
+  color: var(--primary_text_color);
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.follow-list-item:hover,
+.follow-list-item:focus {
+  background: var(--hover_bg_color);
+  border-color: var(--primary_color);
+  color: var(--primary_text_color);
+  transform: translateY(-2px);
+}
+
+.follow-list-avatar {
+  border-radius: 50%;
+  flex: 0 0 44px;
+  height: 44px;
+  object-fit: cover;
+  width: 44px;
+}
+
+.follow-list-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.follow-list-display {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.follow-list-username {
+  color: var(--secondary_text_color);
+  font-size: 0.9rem;
+}
+
 /* Toast Notification */
 .custom-toast {
   position: fixed;
@@ -646,6 +717,50 @@ Voimme myös lisätä toisemme ystäviksi!</textarea>
   </div>
 </div>
 
+{% macro follow_list_modal(modal_id, title, people, empty_text) %}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id }}Label">
+          <i class="fa-solid fa-user-group"></i> {{ title }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+      </div>
+      <div class="modal-body">
+        {% if people %}
+          <div class="follow-list">
+            {% for person in people %}
+              <a class="follow-list-item" href="{{ person.url }}">
+                <img class="follow-list-avatar"
+                  src="{{ person.profile_picture or 'https://cdn2.mielenosoitukset.fi/default-pfp.jpg' }}"
+                  alt="{{ person.displayname }}n profiilikuva"
+                  loading="lazy"
+                  onerror="this.src='https://cdn2.mielenosoitukset.fi/default-pfp.jpg'">
+                <span class="follow-list-name">
+                  <span class="follow-list-display">{{ person.displayname }}</span>
+                  <span class="follow-list-username">@{{ person.username }}</span>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fa-solid fa-user-group"></i>
+            </div>
+            <div class="empty-text">{{ empty_text }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{{ follow_list_modal("followersModal", _("Seuraajat"), followers, _("Tällä käyttäjällä ei ole vielä seuraajia.")) }}
+{{ follow_list_modal("followingModal", _("Seuratut"), following, _("Tämä käyttäjä ei seuraa vielä ketään.")) }}
+
 <div class="profile-wrapper">
   <!-- Profile Header -->
   <div class="profile-header-card">
@@ -674,12 +789,16 @@ Voimme myös lisätä toisemme ystäviksi!</textarea>
             <span class="stat-label">{{ _('Postaukset') }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">{{ user.followers_count or 0 }}</span>
-            <span class="stat-label">{{ _('Seuraajat') }}</span>
+            <button type="button" class="stat-button" data-bs-toggle="modal" data-bs-target="#followersModal">
+              <span class="stat-value">{{ user.followers_count or 0 }}</span>
+              <span class="stat-label">{{ _('Seuraajat') }}</span>
+            </button>
           </div>
           <div class="stat-item">
-            <span class="stat-value">{{ user.following_count or 0 }}</span>
-            <span class="stat-label">{{ _('Seuratut') }}</span>
+            <button type="button" class="stat-button" data-bs-toggle="modal" data-bs-target="#followingModal">
+              <span class="stat-value">{{ user.following_count or 0 }}</span>
+              <span class="stat-label">{{ _('Seuratut') }}</span>
+            </button>
           </div>
         </div>
 
@@ -736,7 +855,7 @@ Voimme myös lisätä toisemme ystäviksi!</textarea>
           <div class="org-header">
             <div class="org-avatar">
               {% if org.logo %}
-                <img src="{{ org.logo }}" alt="{{ org.name }}" loading="lazy">
+                <img src="{{ org.logo }}" alt="{{ org.name }}" loading="lazy" referrerpolicy="no-referrer">
               {% else %}
                 <i class="fa-solid fa-building"></i>
               {% endif %}

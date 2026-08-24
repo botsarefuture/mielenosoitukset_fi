@@ -104,10 +104,14 @@ class Config:
         )
 
         cls.BABEL_CONFIG = config.get("BABEL", {})
-        cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "en")
+        cls.BABEL_DEFAULT_LOCALE = cls.BABEL_CONFIG.get("DEFAULT_LOCALE", "fi")
         cls.BABEL_SUPPORTED_LOCALES = cls.BABEL_CONFIG.get(
             "SUPPORTED_LOCALES",
             ["fi", "en"],
+        )
+        cls.BABEL_PUBLIC_LOCALES = cls.BABEL_CONFIG.get(
+            "PUBLIC_LOCALES",
+            [cls.BABEL_DEFAULT_LOCALE],
         )
         cls.BABEL_LANGUAGES = cls.BABEL_CONFIG.get(
             "LANGUAGES",

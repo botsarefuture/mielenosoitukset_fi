@@ -74,6 +74,7 @@ _CONFIG_PATH.write_text(
             "BABEL": {
                 "DEFAULT_LOCALE": "fi",
                 "SUPPORTED_LOCALES": ["fi", "en", "sv"],
+                "PUBLIC_LOCALES": ["fi"],
                 "LANGUAGES": {
                     "fi": "Suomi",
                     "en": "English",

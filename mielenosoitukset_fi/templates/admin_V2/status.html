@@ -1,0 +1,315 @@
+{% extends 'admin_base.html' %}
+
+{% block styles %}
+<style>
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 800px) {
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .status-full { grid-column: 1 / -1; }
+  }
+
+  .panel {
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.75rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.07);
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    color: #212529;
+  }
+
+  .panel-title i {
+    font-size: 1.1rem;
+    color: #6c757d;
+  }
+
+  /* Overall banner */
+  .status-banner {
+    grid-column: 1 / -1;
+    border-radius: 18px;
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  .status-banner.ok   { background: #d1e7dd; color: #0f5132; }
+  .status-banner.err  { background: #f8d7da; color: #842029; }
+  .status-banner .icon { font-size: 1.6rem; }
+
+  /* Service rows */
+  .svc-row {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #f1f3f5;
+  }
+  .svc-row:last-child { border-bottom: none; }
+
+  .svc-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .svc-dot.ok  { background: #198754; box-shadow: 0 0 6px #198754; }
+  .svc-dot.err { background: #dc3545; box-shadow: 0 0 6px #dc3545; }
+
+  .svc-name { font-weight: 600; color: #212529; min-width: 100px; }
+  .svc-msg  { color: #6c757d; font-size: 0.88rem; }
+
+  /* Stat mini-cards */
+  .stat-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+
+  .stat-mini {
+    background: #f8f9fa;
+    border-radius: 14px;
+    padding: 1rem 1.15rem;
+    text-align: center;
+  }
+
+  .stat-mini .num {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+  }
+
+  .stat-mini .lbl {
+    font-size: 0.78rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.2rem;
+  }
+
+  /* Progress bars */
+  .prog-bar {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  .prog-bar .fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s ease;
+  }
+  .prog-bar .fill.green  { background: #198754; }
+  .prog-bar .fill.yellow { background: #ffc107; }
+  .prog-bar .fill.red    { background: #dc3545; }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid #f8f9fa;
+    font-size: 0.9rem;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .dl { color: #6c757d; }
+  .detail-row .dv { font-weight: 600; color: #212529; }
+
+  /* Error log */
+  .err-table {
+    width: 100%;
+    font-size: 0.85rem;
+    border-collapse: collapse;
+  }
+  .err-table th {
+    text-align: left;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+  }
+  .err-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #f1f3f5;
+    color: #495057;
+    vertical-align: top;
+  }
+  .err-table td:first-child { white-space: nowrap; color: #6c757d; }
+  .err-table tr:last-child td { border-bottom: none; }
+  .err-empty {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+    font-style: italic;
+  }
+
+  .status-footer {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.82rem;
+    padding-top: 0.5rem;
+  }
+
+  /* Refresh btn */
+  .refresh-btn {
+    background: none;
+    border: 1px solid #dee2e6;
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.82rem;
+    color: #495057;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.15s;
+  }
+  .refresh-btn:hover { background: #f1f3f5; }
+
+  @media (prefers-color-scheme: dark) {
+    .panel, .stat-mini { background: #1a1d23; }
+    .panel-title, .detail-row .dv { color: #e2e8f0; }
+    .svc-name { color: #e2e8f0; }
+    .svc-msg, .svc-dot + .svc-name, .detail-row .dl { color: #94a3b8; }
+    .stat-mini .num { color: #e2e8f0; }
+    .stat-mini .lbl, .panel-title i { color: #94a3b8; }
+    .stat-mini { background: #0f1419; }
+    .err-table td { color: #94a3b8; }
+    .err-table th { color: #6c757d; }
+    .status-banner.ok  { background: #052e16; color: #86efac; }
+    .status-banner.err { background: #450a0a; color: #fca5a5; }
+    .status-banner { color: #e2e8f0; }
+    .svc-row { border-color: #374151; }
+    .detail-row { border-color: #1f2937; }
+    .err-table td { border-color: #1f2937; }
+    .err-table th { border-color: #374151; }
+    .prog-bar { background: #374151; }
+    .refresh-btn { border-color: #374151; color: #94a3b8; }
+    .refresh-btn:hover { background: #1f2937; }
+  }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="status-grid">
+
+  <!-- Overall banner -->
+  <div class="status-banner {{ 'ok' if infra.all_ok else 'err' }}">
+    <span class="icon">{{ '✓' if infra.all_ok else '✗' }}</span>
+    <span>{{ 'Kaikki järjestelmät toimivat' if infra.all_ok else 'Jokin järjestelmä ei vastaa' }}</span>
+    <span style="margin-left:auto">
+      <a href="{{ url_for('admin.admin_status') }}" class="refresh-btn">
+        <i class="fa-solid fa-rotate"></i> Päivitä
+      </a>
+    </span>
+  </div>
+
+  <!-- Infrastructure health -->
+  <div class="panel">
+    <div class="panel-title"><i class="fa-solid fa-server"></i> Infrastruktuuri</div>
+    {% for svc in infra.services %}
+    <div class="svc-row">
+      <div class="svc-dot {{ svc.status }}"></div>
+      <span class="svc-name">{{ svc.name }}</span>
+      <span class="svc-msg">{{ svc.message }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Server details -->
+  <div class="panel">
+    <div class="panel-title"><i class="fa-solid fa-microchip"></i> Palvelin</div>
+    <div class="detail-row"><span class="dl">Käyttöaika</span><span class="dv">{{ server.uptime }}</span></div>
+    <div class="detail-row"><span class="dl">Python</span><span class="dv">{{ server.python }}</span></div>
+    <div class="detail-row"><span class="dl">Muisti (RSS)</span><span class="dv">{{ server.memory.used_mb }} MB</span></div>
+    <div class="detail-row"><span class="dl">Gunicorn työntekijät</span><span class="dv">{{ server.workers or '—' }}</span></div>
+    <div style="margin-top:1rem">
+      <div class="detail-row"><span class="dl">Levytila</span><span class="dv">{{ server.disk.free_gb }} GB / {{ server.disk.total_gb }} GB vapaa</span></div>
+      <div class="prog-bar">
+        <div class="fill {{ 'green' if server.disk.used_pct < 70 else ('yellow' if server.disk.used_pct < 90 else 'red') }}"
+             style="width:{{ server.disk.used_pct }}%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collection counts -->
+  <div class="panel">
+    <div class="panel-title"><i class="fa-solid fa-database"></i> Tietokannan kokoelmat</div>
+    <div class="stat-mini-grid">
+      {% for label, count in counts.items() %}
+      <div class="stat-mini">
+        <div class="num">{{ count }}</div>
+        <div class="lbl">{{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Dashboard quick stats -->
+  <div class="panel">
+    <div class="panel-title"><i class="fa-solid fa-chart-line"></i> Yleiskatsaus</div>
+    <div class="stat-mini-grid">
+      <div class="stat-mini">
+        <div class="num">{{ dashboard.users.total }}</div>
+        <div class="lbl">Käyttäjää</div>
+      </div>
+      <div class="stat-mini">
+        <div class="num">{{ dashboard.organizations.active }}</div>
+        <div class="lbl">Organisaatiota</div>
+      </div>
+      <div class="stat-mini">
+        <div class="num">{{ dashboard.demos.live }}</div>
+        <div class="lbl">Mielenosoitusta</div>
+      </div>
+      <div class="stat-mini">
+        <div class="num">{{ dashboard.cases.open }}</div>
+        <div class="lbl">Avointa asiaa</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent errors -->
+  <div class="panel status-full">
+    <div class="panel-title"><i class="fa-solid fa-triangle-exclamation"></i> Viimeisimmät virheet</div>
+    {% if recent_errors %}
+    <table class="err-table">
+      <thead><tr><th>Aika</th><th>Tapahtuma</th><th>Virheilmoitus</th></tr></thead>
+      <tbody>
+        {% for err in recent_errors %}
+        <tr>
+          <td>{{ err.timestamp }}</td>
+          <td>{{ err.event }}</td>
+          <td>{{ err.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="err-empty">Ei virheitä viime aikana</div>
+    {% endif %}
+  </div>
+
+  <div class="status-footer">
+    Päivitetty: {{ updated_at }} &middot; Haku {{ latency_ms }} ms
+  </div>
+
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from bson import ObjectId
 from pymongo import DeleteMany, DeleteOne, InsertOne, ReplaceOne, UpdateMany, UpdateOne
@@ -489,3 +489,134 @@ def test_process_submit_notifications_marks_job_error_when_delivery_fails(db, mo
 
     demo = db.demonstrations.find_one({"_id": demo_id})
     assert demo.get("admin_notification_last_sent_at") is None
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_admin_pending_reminder_ignores_old_completed_notifications(db, monkeypatch):
+    from mielenosoitukset_fi.scripts import process_submission_notifications as script
+
+    db.demonstrations.delete_many({})
+    db.submitters.delete_many({})
+    db.demo_notifications_queue.delete_many({})
+
+    demo_id = ObjectId()
+    old_time = utcnow() - timedelta(hours=25)
+    future_date = (utcnow().date() + timedelta(days=30)).strftime("%Y-%m-%d")
+    demo = _demo_doc(demo_id, "Still Waiting For Moderation")
+    demo.update(
+        {
+            "date": future_date,
+            "created_datetime": old_time,
+            "admin_notification_last_sent_at": old_time,
+        }
+    )
+    db.demonstrations.insert_one(demo)
+    db.submitters.insert_one(
+        {
+            "_id": ObjectId(),
+            "demonstration_id": demo_id,
+            "submitter_name": "Submitter Example",
+            "submitter_email": "submitter@example.test",
+            "submitter_role": "organizer",
+        }
+    )
+    db.demo_notifications_queue.insert_one(
+        {
+            "_id": ObjectId(),
+            "demo_id": demo_id,
+            "status": "completed",
+            "created_at": old_time,
+            "processed_at": old_time,
+            "marks_admin_contact": True,
+            "notification_type": "initial_submission",
+        }
+    )
+
+    monkeypatch.setattr(
+        script,
+        "generate_demo_approve_link",
+        lambda demo_id: f"https://example.test/{demo_id}/approve",
+    )
+    monkeypatch.setattr(
+        script,
+        "generate_demo_preview_link",
+        lambda demo_id: f"https://example.test/{demo_id}/preview",
+    )
+    monkeypatch.setattr(
+        script,
+        "generate_demo_reject_link",
+        lambda demo_id: f"https://example.test/{demo_id}/reject",
+    )
+
+    script._enqueue_admin_reminders(db)
+
+    reminder = db.demo_notifications_queue.find_one(
+        {"demo_id": demo_id, "notification_type": "admin_pending_reminder"}
+    )
+    assert reminder is not None
+    assert reminder["status"] == "pending"
+    assert (
+        reminder["messages"][0]["subject"]
+        == "Muistutus: Still Waiting For Moderation odottaa hyväksyntää"
+    )
+
+
+@pytest.mark.integration
+@pytest.mark.jobs
+def test_admin_pending_reminder_keeps_recent_completed_notifications_as_blockers(db, monkeypatch):
+    from mielenosoitukset_fi.scripts import process_submission_notifications as script
+
+    db.demonstrations.delete_many({})
+    db.submitters.delete_many({})
+    db.demo_notifications_queue.delete_many({})
+
+    demo_id = ObjectId()
+    recent_time = utcnow() - timedelta(hours=2)
+    old_time = utcnow() - timedelta(hours=25)
+    future_date = (utcnow().date() + timedelta(days=30)).strftime("%Y-%m-%d")
+    demo = _demo_doc(demo_id, "Recently Notified Moderation Demo")
+    demo.update(
+        {
+            "date": future_date,
+            "created_datetime": old_time,
+            "admin_notification_last_sent_at": old_time,
+        }
+    )
+    db.demonstrations.insert_one(demo)
+    db.demo_notifications_queue.insert_one(
+        {
+            "_id": ObjectId(),
+            "demo_id": demo_id,
+            "status": "completed",
+            "created_at": recent_time,
+            "processed_at": recent_time,
+            "marks_admin_contact": True,
+            "notification_type": "admin_pending_reminder",
+        }
+    )
+
+    monkeypatch.setattr(
+        script,
+        "generate_demo_approve_link",
+        lambda demo_id: f"https://example.test/{demo_id}/approve",
+    )
+    monkeypatch.setattr(
+        script,
+        "generate_demo_preview_link",
+        lambda demo_id: f"https://example.test/{demo_id}/preview",
+    )
+    monkeypatch.setattr(
+        script,
+        "generate_demo_reject_link",
+        lambda demo_id: f"https://example.test/{demo_id}/reject",
+    )
+
+    script._enqueue_admin_reminders(db)
+
+    assert (
+        db.demo_notifications_queue.count_documents(
+            {"demo_id": demo_id, "notification_type": "admin_pending_reminder"}
+        )
+        == 1
+    )

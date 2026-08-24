@@ -299,6 +299,7 @@
 </head>
 
 <body>
+    {% set english_published = 'en' in get_supported_locales() %}
     <header>
         <div class="nav-shell">
             <a href="/" class="brand">
@@ -373,13 +374,16 @@
                     </div>
                 </div>
 
+                {% if english_published %}
                 <div class="lang-toggle">
                     <a href="#" onclick="switchLang('en'); return false;">
                         <i class="fa-solid fa-globe"></i> Switch to English
                     </a>
                 </div>
+                {% endif %}
             </section>
 
+            {% if english_published %}
             <section class="notice-card lang en" style="display:none;">
                 <span class="status-chip">
                     <i class="fa-solid fa-circle-exclamation"></i>
@@ -449,6 +453,7 @@
                     </a>
                 </div>
             </section>
+            {% endif %}
         </div>
     </main>
 
@@ -459,16 +464,25 @@
     <script>
         const sections = {
             fi: document.querySelector(".lang.fi"),
+            {% if english_published %}
             en: document.querySelector(".lang.en"),
+            {% endif %}
         };
 
         function switchLang(lang) {
-            sections.fi.style.display = lang === "fi" ? "block" : "none";
-            sections.en.style.display = lang === "en" ? "block" : "none";
-            document.documentElement.lang = lang;
+            const selected = lang === "en" && sections.en ? "en" : "fi";
+            sections.fi.style.display = selected === "fi" ? "block" : "none";
+            if (sections.en) {
+                sections.en.style.display = selected === "en" ? "block" : "none";
+            }
+            document.documentElement.lang = selected;
         }
 
+        {% if english_published %}
         const preferred = (navigator.language || "").toLowerCase().startsWith("en") ? "en" : "fi";
+        {% else %}
+        const preferred = "fi";
+        {% endif %}
         switchLang(preferred);
     </script>
 </body>

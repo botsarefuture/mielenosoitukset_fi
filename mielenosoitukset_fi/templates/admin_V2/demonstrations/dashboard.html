@@ -75,7 +75,8 @@
     box-shadow: 0 18px 28px rgba(37, 99, 235, 0.45);
   }
 
-  .filter-select {
+  .filter-select,
+  .filter-input {
     border-radius: 12px;
     border: 1px solid light-dark(#d2d8e5, rgba(255,255,255,0.12));
     background: light-dark(#ffffff, #1d2533);
@@ -86,7 +87,8 @@
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   }
 
-  .filter-select:focus {
+  .filter-select:focus,
+  .filter-input:focus {
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 12px 26px rgba(37, 99, 235, 0.18);
@@ -111,6 +113,17 @@
   .filter-field label {
     font-weight: 500;
     color: light-dark(#1f2937, #e5e7f4);
+  }
+
+  .filter-apply-button {
+    border: none;
+    border-radius: 12px;
+    padding: 0.58rem 1rem;
+    background: light-dark(#111827, #edf2ff);
+    color: light-dark(#ffffff, #111827);
+    font-weight: 600;
+    min-height: 42px;
+    align-self: end;
   }
 
   .actions-cell {
@@ -437,6 +450,22 @@
       <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="filter-form" id="dashboard-filter-form">
         <input type="hidden" name="search" id="filter-search-hidden" value="{{ search_query }}">
         <div class="filter-field">
+          <label for="year">{{ _('Vuosi') }}</label>
+          <input type="text" inputmode="numeric" pattern="[0-9]{4}" name="year" id="year" class="filter-input"
+            placeholder="2026" value="{{ year_filter }}">
+        </div>
+
+        <div class="filter-field">
+          <label for="tag">{{ _('Sisältää tunnisteen') }}</label>
+          <input type="text" name="tag" id="tag" class="filter-input" placeholder="#pride" value="{{ tag_filter }}">
+        </div>
+
+        <div class="filter-field">
+          <label for="missing_tag">{{ _('Puuttuva tunniste') }}</label>
+          <input type="text" name="missing_tag" id="missing_tag" class="filter-input" placeholder="#pride" value="{{ missing_tag_filter }}">
+        </div>
+
+        <div class="filter-field">
           <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
           <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
             <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
@@ -468,6 +497,8 @@
             <option value="true" {% if show_cancelled %}selected{% endif %}>{{ _('Kyllä') }}</option>
           </select>
         </div>
+
+        <button type="submit" class="filter-apply-button">{{ _('Suodata') }}</button>
       </form>
     </div>
     <script>
@@ -520,6 +551,7 @@
           } else {
             url.searchParams.delete('search');
           }
+          url.searchParams.delete('page');
           window.location.href = url.toString();
         };
 
@@ -602,7 +634,7 @@
 </tr>
 
 {% for demo in pending %}
-<tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or ''))|lower }}">
+<tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
     {% if current_user.has_permission("EDIT_DEMO") %}
     <td class="select-col">
@@ -762,7 +794,7 @@
 </tr>
 
 {% for demo in approved %}
-<tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or ''))|lower }}">
+<tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
     {% if current_user.has_permission("EDIT_DEMO") %}
     <td class="select-col">
@@ -907,7 +939,7 @@
         {# Previous button #}
         {% if prev_page %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}"
+          <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}&year={{ year_filter|urlencode }}&tag={{ tag_filter|urlencode }}&missing_tag={{ missing_tag_filter|urlencode }}&approved={{ 'true' if approved_status else 'false' }}&show_past={{ show_past_filter }}&show_hidden={{ 'true' if show_hidden else 'false' }}&show_cancelled={{ 'true' if show_cancelled else 'false' }}"
             aria-label="Previous">
             <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
           </a>
@@ -926,7 +958,7 @@
         {# Next button #}
         {% if next_page %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}"
+          <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}&year={{ year_filter|urlencode }}&tag={{ tag_filter|urlencode }}&missing_tag={{ missing_tag_filter|urlencode }}&approved={{ 'true' if approved_status else 'false' }}&show_past={{ show_past_filter }}&show_hidden={{ 'true' if show_hidden else 'false' }}&show_cancelled={{ 'true' if show_cancelled else 'false' }}"
             aria-label="Next">
             {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
           </a>

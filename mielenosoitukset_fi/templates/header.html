@@ -747,9 +747,11 @@ time (datetime) | iso string, read (bool)
       </a>
     </div>
 
+    {% set public_locales = get_supported_locales() %}
+    {% if public_locales|length > 1 %}
     <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">
       <i class="fa-solid fa-globe" aria-hidden="true"></i>
-      {% for lang_code in get_supported_locales() %}
+      {% for lang_code in public_locales %}
       <a class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
          href="{{ url_for('set_language', lang=lang_code, next=request.full_path if request.query_string else request.path) }}"
          title="{{ get_lang_name(lang_code) or lang_code.upper() }}"
@@ -759,6 +761,7 @@ time (datetime) | iso string, read (bool)
       </a>
       {% endfor %}
     </nav>
+    {% endif %}
   </div>
 </header>
 
@@ -794,6 +797,13 @@ time (datetime) | iso string, read (bool)
         <a href="{{ url_for('demonstrations') }}" class="nav-link" aria-label="{{ _('Mielenosoitukset') }}">
           <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
           <span>{{ _('Mielenosoitukset') }}</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="{{ url_for('cities') }}" class="nav-link" aria-label="{{ _('Kaupungit') }}">
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+          <span>{{ _('Kaupungit') }}</span>
         </a>
       </li>
 

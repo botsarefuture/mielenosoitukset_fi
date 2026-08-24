@@ -10,89 +10,72 @@
     position: relative;
   }
   th.sortable::after {
-    content: "⬍";
-    font-size: 0.75em;
-    color: var(--text_muted, #888);
+    content: "\f0dc";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.7em;
+    color: var(--stats-muted);
     position: absolute;
     right: 0.75rem;
   }
-  th.sortable.asc::after { content: "⬆"; }
-  th.sortable.desc::after { content: "⬇"; }
+  th.sortable.asc::after { content: "\f0de"; }
+  th.sortable.desc::after { content: "\f0dd"; }
 </style>
 {% endblock %}
 
 {% block main_content %}
 <div class="stats-shell">
-  <section class="holo-hero">
-    <div class="holo-grid">
-      <div class="beam"></div><div class="beam"></div><div class="beam"></div>
-    </div>
-    <div class="hero-copy">
-      <p class="eyebrow">{{ _('Reaaliaikainen tilannekuva') }}</p>
-      <h1>{{ _('Tilastot & telemetria') }}</h1>
-      <p class="lede">
-        {{ _('Näe, miten yhteisö sykkii juuri nyt. Kaikki luvut päivittyvät live-datasta, Matomo-telemetriasta ja taustajobeista.') }}
+  <section class="stats-hero">
+    <div class="stats-hero-copy">
+      <p class="stats-kicker">{{ _('Tilastot') }}</p>
+      <h1>{{ _('Miten palvelulla menee?') }}</h1>
+      <p class="stats-lede">
+        {{ _('Täältä näet palvelun tärkeimmät luvut ja mielenosoitusten katselukerrat yhdessä paikassa.') }}
       </p>
-      <div class="hero-badges">
-        <span class="badge badge-pill badge-signal"><i class="fas fa-wave-square"></i> {{ _('Matomo live') }}</span>
-        <span class="badge badge-pill badge-fresh" id="last-updated">{{ _('Päivitetään...') }}</span>
-      </div>
     </div>
-    <div class="hero-panels">
-      <div class="pulse-card">
-        <span class="label">{{ _('Katselut / demo (ka.)') }}</span>
-        <span class="value" id="avg-views">–</span>
-        <div class="pulse-bar"><span style="width: 64%"></span></div>
-      </div>
-      <div class="pulse-card">
-        <span class="label">{{ _('Vahvistetut käyttäjät') }}</span>
-        <span class="value" id="active-users">–</span>
-        <div class="pulse-bar alt"><span style="width: 78%"></span></div>
-      </div>
+    <div class="stats-hero-note">
+      <span>{{ _('Viimeisin päivitys') }}</span>
+      <strong id="last-updated">{{ _('Päivitetään...') }}</strong>
     </div>
   </section>
 
   <section class="stat-grid">
     <div class="stat-card">
-      <p class="stat-label">{{ _('Käyttäjiä') }}</p>
-      <p class="stat-value" id="total-users">–</p>
-      <p class="stat-sub">{{ _('Kaikki tilit') }}</p>
+      <span class="stat-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span>
+      <div><p class="stat-label">{{ _('Käyttäjiä') }}</p><p class="stat-value" id="total-users">–</p><p class="stat-sub">{{ _('Kaikki tilit') }}</p></div>
     </div>
     <div class="stat-card">
-      <p class="stat-label">{{ _('Organisaatioita') }}</p>
-      <p class="stat-value" id="total-orgs">–</p>
-      <p class="stat-sub">{{ _('Yhteisöä ja ryhmää') }}</p>
+      <span class="stat-icon"><i class="fas fa-building" aria-hidden="true"></i></span>
+      <div><p class="stat-label">{{ _('Organisaatioita') }}</p><p class="stat-value" id="total-orgs">–</p><p class="stat-sub">{{ _('Yhteisöä ja ryhmää') }}</p></div>
     </div>
     <div class="stat-card">
-      <p class="stat-label">{{ _('Mielenosoituksia') }}</p>
-      <p class="stat-value" id="total-demos">–</p>
-      <p class="stat-sub">{{ _('Julkaistut tapahtumat') }}</p>
+      <span class="stat-icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
+      <div><p class="stat-label">{{ _('Mielenosoituksia') }}</p><p class="stat-value" id="total-demos">–</p><p class="stat-sub">{{ _('Julkaistut tapahtumat') }}</p></div>
     </div>
     <div class="stat-card highlight">
-      <p class="stat-label">{{ _('Katselukerrat') }}</p>
-      <p class="stat-value" id="total-views">–</p>
-      <p class="stat-sub">{{ _('Kaikki demot yhteensä') }}</p>
+      <span class="stat-icon"><i class="fas fa-eye" aria-hidden="true"></i></span>
+      <div><p class="stat-label">{{ _('Katselukerrat') }}</p><p class="stat-value" id="total-views">–</p><p class="stat-sub">{{ _('Keskimäärin') }} <span id="avg-views">–</span> / {{ _('mielenosoitus') }}</p></div>
     </div>
   </section>
 
   <section class="analytics-panel">
     <header class="panel-header">
       <div>
-        <p class="eyebrow">{{ _('Analytiikka') }}</p>
+        <p class="stats-kicker">{{ _('Analytiikka') }}</p>
         <h2>{{ _('Mielenosoitusnäkymät') }}</h2>
-        <p class="lede small">
-          {{ _('Järjestä ja poraa alas – sorttaus on client-pohjaista, tarkemmat luvut aukeavat demo-analytics-sivulle.') }}
+        <p class="stats-description">
+          {{ _('Järjestä lista otsikoista ja avaa mielenosoitus nähdäksesi tarkemmat luvut.') }}
         </p>
       </div>
       <div class="cta-group">
-        <label class="ghost-link" style="gap:0.5rem; cursor:pointer;">
-          <input type="checkbox" id="toggle-past" style="accent-color: var(--holo-highlight);"> {{ _('Näytä menneet') }}
+        <label class="stats-control">
+          <input type="checkbox" id="toggle-past"> {{ _('Näytä menneet') }}
         </label>
-        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="btn btn-light futuristic">
+        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="stats-action stats-action-primary">
           <i class="fas fa-clock"></i> {{ _('Viimeiset 24 h') }}
         </a>
-        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="ghost-link" id="matomo-link">
-          <i class="fas fa-bolt"></i> {{ _('Matomo live pulse') }}
+        <a href="{{ url_for('admin.analytics_overall_24h') }}" class="stats-action" id="matomo-link">
+          <i class="fas fa-chart-line"></i> {{ _('Matomo') }}
         </a>
       </div>
     </header>
@@ -209,7 +192,7 @@
       return `
         <tr>
           <td><a class="demo-link" href="${href}">${row.title || row.id}</a></td>
-          <td class="views-cell"><span class="chip neon">${row.views}</span></td>
+          <td class="views-cell"><span class="view-count">${row.views}</span></td>
         </tr>
       `;
     }).join("");
@@ -230,7 +213,7 @@
       setText("total-demos", includePast ? summary.total_demos : summary.total_demos_future);
       setText("total-views", summary.total_views);
       setText("avg-views", summary.avg_views);
-      setText("last-updated", `${"{{ _('Päivitetty') }}"}: ${summary.last_updated}`);
+      setText("last-updated", summary.last_updated);
 
       renderRows(analytics.rows);
       buildPagination(analytics);
@@ -249,7 +232,7 @@
         link.innerHTML = `<i class="fas fa-bolt-slash"></i> {{ _('Matomo ei saatavilla') }}`;
         return;
       }
-      link.innerHTML = `<i class="fas fa-bolt"></i> {{ _('Matomo live') }} · ${payload.visits.length} {{ _('kävijää') }}`;
+      link.innerHTML = `<i class="fas fa-chart-line"></i> {{ _('Matomo') }} · ${payload.visits.length} {{ _('kävijää') }}`;
     } catch (e) {
       link.innerHTML = `<i class="fas fa-bolt-slash"></i> {{ _('Matomo ei saatavilla') }}`;
     }

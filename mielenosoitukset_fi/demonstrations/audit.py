@@ -12,6 +12,7 @@ from flask_login import current_user
 
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 mongo = DatabaseManager().get_instance().get_db()
 
@@ -86,7 +87,7 @@ def log_demo_audit_entry(
     ip = ip_address
     if ip is None and has_request_context():
         try:
-            ip = request.remote_addr
+            ip = get_client_ip()
         except RuntimeError:
             ip = None
 
@@ -191,7 +192,7 @@ def log_super_audit(
                 "method": request.method,
                 "args": request.args.to_dict(flat=False),
                 "form_keys": list(request.form.keys()),
-                "remote_addr": request.remote_addr,
+                "remote_addr": get_client_ip(),
                 "user_agent": getattr(request.user_agent, "string", str(request.user_agent)),
             }
         except Exception:

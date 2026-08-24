@@ -1524,6 +1524,176 @@ def stats_matomo_live():
         logger.exception("Matomo live fetch failed")
         return jsonify({"enabled": False, "reason": str(exc)})
 
+
+# ── Admin status dashboard ────────────────────────────────────────────────────
+
+def _collect_infra_health() -> dict:
+    """Collect infrastructure health checks."""
+    services = []
+
+    # MongoDB
+    try:
+        _t0 = __import__("time").monotonic()
+        mongo.command("ping")
+        ms = round((__import__("time").monotonic() - _t0) * 1000)
+        db_stats = mongo.command("dbStats")
+        services.append({
+            "name": "MongoDB",
+            "status": "ok",
+            "message": f"Ping {ms} ms · {db_stats.get('collections', '?')} kokoelmat · {round(db_stats.get('dataSize', 0) / 1048576, 1)} MB",
+        })
+    except Exception as exc:
+        services.append({"name": "MongoDB", "status": "err", "message": str(exc)})
+
+    # Redis / cache
+    try:
+        _t0 = __import__("time").monotonic()
+        cache.set("_admin_status_ping", True, timeout=5)
+        ms = round((__import__("time").monotonic() - _t0) * 1000)
+        services.append({"name": "Redis", "status": "ok", "message": f"Ping {ms} ms"})
+    except Exception as exc:
+        services.append({"name": "Redis", "status": "err", "message": str(exc)})
+
+    # S3
+    try:
+        from mielenosoitukset_fi.utils.s3 import _s3_client
+        if _s3_client is None:
+            raise RuntimeError("S3 client not initialised")
+        _s3_client.list_buckets()
+        services.append({"name": "S3 / Tiedostovarasto", "status": "ok", "message": "Saavutettavissa"})
+    except Exception as exc:
+        services.append({"name": "S3 / Tiedostovarasto", "status": "err", "message": str(exc)})
+
+    return {"services": services, "all_ok": all(s["status"] == "ok" for s in services)}
+
+
+def _collect_server_stats() -> dict:
+    """Collect OS-level and process stats."""
+    import os, time as _time
+
+    # Uptime
+    try:
+        uptime_s = _time.monotonic()
+        days = int(uptime_s // 86400)
+        hours = int((uptime_s % 86400) // 3600)
+        mins = int((uptime_s % 3600) // 60)
+        uptime_str = f"{days}d {hours}h {mins}m" if days else f"{hours}h {mins}m"
+    except Exception:
+        uptime_str = "—"
+
+    # Memory (from /proc if available)
+    mem = {"used_mb": 0, "total_mb": 0, "pct": 0}
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    mem["used_mb"] = round(int(line.split()[1]) / 1024)
+    except Exception:
+        pass
+
+    # Disk
+    try:
+        st = os.statvfs("/var/www/mielenosoitukset_fi")
+        total_gb = round((st.f_blocks * st.f_frsize) / (1024 ** 3), 1)
+        free_gb  = round((st.f_bavail * st.f_frsize) / (1024 ** 3), 1)
+        used_pct = round(((st.f_blocks - st.f_bavail) / st.f_blocks) * 100)
+    except Exception:
+        total_gb, free_gb, used_pct = 0, 0, 0
+
+    # Gunicorn workers (count from filesystem)
+    workers = 0
+    try:
+        import glob as _glob
+        workers = len(_glob.glob("/tmp/gunicorn_*.pid"))
+    except Exception:
+        pass
+
+    return {
+        "uptime": uptime_str,
+        "memory": mem,
+        "disk": {"total_gb": total_gb, "free_gb": free_gb, "used_pct": used_pct},
+        "workers": workers,
+        "python": __import__("sys").version.split()[0],
+    }
+
+
+def _collect_collection_counts() -> dict:
+    """Get document counts for key collections."""
+    collections = {
+        "users": "users",
+        "organizations": "organizations",
+        "demonstrations": "demonstrations",
+        "cases": "cases",
+        "admin_logs": "admin_logs",
+        "login_logs": "login_logs",
+        "demo_suggestions": "demo_suggestions",
+    }
+    counts = {}
+    for label, coll_name in collections.items():
+        try:
+            counts[label] = mongo[coll_name].count_documents({})
+        except Exception:
+            counts[label] = "—"
+    return counts
+
+
+def _collect_recent_errors() -> list:
+    """Fetch recent error-level log entries."""
+    try:
+        cursor = (
+            mongo.admin_logs
+            .find({"level": "error"})
+            .sort("_id", -1)
+            .limit(10)
+        )
+        errors = []
+        for doc in cursor:
+            ts = doc.get("timestamp")
+            if hasattr(ts, "strftime"):
+                ts = ts.strftime("%d.%m %H:%M")
+            errors.append({
+                "timestamp": str(ts) if ts else "—",
+                "event": doc.get("event", "—"),
+                "message": (doc.get("details") or {}).get("error", "")[:120],
+            })
+        return errors
+    except Exception:
+        return []
+
+
+@admin_bp.route("/status")
+@login_required
+@admin_required
+def admin_status():
+    """Admin system status dashboard."""
+    from mielenosoitukset_fi.utils.time_utils import utcnow as _utcnow
+    import time as _time
+
+    start = _time.monotonic()
+
+    infra = _collect_infra_health()
+    server = _collect_server_stats()
+    counts = _collect_collection_counts()
+    recent_errors = _collect_recent_errors()
+    dashboard = _calculate_dashboard_snapshot()
+
+    latency_ms = round((_time.monotonic() - start) * 1000)
+    now = _utcnow().replace(tzinfo=timezone.utc).strftime("%d.%m.%Y %H:%M:%S UTC")
+
+    _log_admin_event("admin_status_view")
+
+    return render_template(
+        "admin_V2/status.html",
+        infra=infra,
+        server=server,
+        counts=counts,
+        recent_errors=recent_errors,
+        dashboard=dashboard,
+        updated_at=now,
+        latency_ms=latency_ms,
+    )
+
+
 @admin_bp.route("/manual/")
 def manual():
     _log_admin_event("manual_index_view")

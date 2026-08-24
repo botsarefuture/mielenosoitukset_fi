@@ -40,7 +40,7 @@ babel = Babel()
 
 
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 
 def _configure_timezone(app):
@@ -66,18 +66,45 @@ def create_app(config_overrides=None) -> Flask:
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     if config_overrides:
         app.config.update(config_overrides)
+
+    # Keep translation catalogs separate from languages that are ready to be
+    # published. This lets translators work on English and Swedish without
+    # exposing incomplete translations to visitors or search engines.
+    supported_locales = list(
+        dict.fromkeys(app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+    )
+    default_locale = app.config.get("BABEL_DEFAULT_LOCALE") or "fi"
+    if default_locale not in supported_locales:
+        supported_locales.insert(0, default_locale)
+    public_locales = [
+        locale
+        for locale in dict.fromkeys(
+            app.config.get("BABEL_PUBLIC_LOCALES") or [default_locale]
+        )
+        if locale in supported_locales
+    ]
+    if default_locale not in public_locales:
+        public_locales.insert(0, default_locale)
+    app.config["BABEL_SUPPORTED_LOCALES"] = supported_locales
+    app.config["BABEL_PUBLIC_LOCALES"] = public_locales
     _configure_timezone(app)
 
     rate_limit_defaults = ["86400 per day", "3600 per hour", "10 per second"]
     app.config["RATE_LIMIT_DEFAULTS"] = rate_limit_defaults
     
     if app.config.get("ENFORCE_RATELIMIT", True):
-        Limiter(
-            get_remote_address,
+        limiter = Limiter(
+            get_client_ip,
             app=app,
             default_limits=rate_limit_defaults,
             storage_uri=app.config["MONGO_URI"],
         )
+
+        from mielenosoitukset_fi.utils.uptimerobot_ips import is_uptimerobot_ip
+
+        @limiter.request_filter
+        def _exempt_uptimerobot():
+            return is_uptimerobot_ip(get_client_ip())
     
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1) # Fix for reverse proxy
         # Initialize Flask-Caching
@@ -88,13 +115,16 @@ def create_app(config_overrides=None) -> Flask:
 
     # Locale selector function
     def get_locale():
-        return session.get(
-            "locale",
-            request.accept_languages.best_match(
-                app.config["BABEL_SUPPORTED_LOCALES"],
-                app.config["BABEL_DEFAULT_LOCALE"],
-            ),
-        )  # Get locale from session or request headers or else use default locale
+        public_locales = app.config["BABEL_PUBLIC_LOCALES"]
+        selected_locale = session.get("locale")
+        if selected_locale in public_locales:
+            return selected_locale
+        if selected_locale is not None:
+            session.pop("locale", None)
+        return request.accept_languages.best_match(
+            public_locales,
+            app.config["BABEL_DEFAULT_LOCALE"],
+        )
 
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
@@ -145,6 +175,7 @@ def create_app(config_overrides=None) -> Flask:
         audit_bp,
         admin_kampanja_bp,
         admin_dev_bp,
+        admin_city_bp,
     )
     from users import _BLUEPRINT_ as user_bp
     from api import api_bp
@@ -162,6 +193,7 @@ def create_app(config_overrides=None) -> Flask:
     app.register_blueprint(admin_kampanja_bp)
     app.register_blueprint(admin_case_bp)
     app.register_blueprint(admin_dev_bp)
+    app.register_blueprint(admin_city_bp)
     #app.register_blueprint(admin_case_bp)
     
     app.register_blueprint(user_bp, url_prefix="/users/")
@@ -308,67 +340,78 @@ def create_app(config_overrides=None) -> Flask:
     from datetime import datetime, timedelta
     from bson import ObjectId
 
-    @app.context_processor
-    def utility_processor():
-        def get_admin_tasks():
-            tasks = []
+    # --- Cached admin tasks (avoid re-running heavy queries on every template render) ---
+    _admin_tasks_cache = {"tasks": None, "timestamp": 0}
+    _ADMIN_TASKS_CACHE_TTL = 30  # seconds
 
-            # --- DEMONSTRATION approval tasks ---
-            waiting_demos = list(
-                mongo.demonstrations.find({
-                    "approved": False,
-                    "hide": False,
-                    "$or": [
-                        {"rejected": False},
-                        {"rejected": {"$exists": False}}
-                    ]
-                }).sort("created_at", -1)
-            )
-            for demo in waiting_demos:
-                if not getattr(current_user, "global_admin", False) and not has_demo_permission(
-                    current_user,
-                    demo["_id"],
-                    "LIST_DEMOS",
-                ):
-                    continue
-                tasks.append({
-                    "type": "demo",
-                    "id": str(demo["_id"]),
-                    "title": demo.get("title", "Nimetön mielenosoitus"),
-                    "created_at": demo.get("created_datetime", datetime.now()) or datetime.now(),
-                    "status": "waiting_approval",
-                    "link": url_for("admin_demo.edit_demo", demo_id=demo["_id"]),
-                })
+    def _get_admin_tasks_cached():
+        import time as _time
+        now = _time.monotonic()
+        cached = _admin_tasks_cache["tasks"]
+        if cached is not None and (now - _admin_tasks_cache["timestamp"]) < _ADMIN_TASKS_CACHE_TTL:
+            return cached
 
-            # --- ORG SUGGESTIONS tasks ---
-            org_suggestions = list(
-                mongo.org_edit_suggestions.find({
+        tasks = []
+
+        # --- DEMONSTRATION approval tasks ---
+        waiting_demos = list(
+            mongo.demonstrations.find({
+                "approved": False,
+                "hide": False,
+                "$or": [
+                    {"rejected": False},
+                    {"rejected": {"$exists": False}}
+                ]
+            }).sort("created_at", -1)
+        )
+        for demo in waiting_demos:
+            if not getattr(current_user, "global_admin", False) and not has_demo_permission(
+                current_user,
+                demo["_id"],
+                "LIST_DEMOS",
+            ):
+                continue
+            tasks.append({
+                "type": "demo",
+                "id": str(demo["_id"]),
+                "title": demo.get("title", "Nimetön mielenosoitus"),
+                "created_at": demo.get("created_datetime", datetime.now()) or datetime.now(),
+                "status": "waiting_approval",
+                "link": url_for("admin_demo.edit_demo", demo_id=demo["_id"]),
+            })
+
+        # --- ORG SUGGESTIONS tasks ---
+        org_suggestions = list(
+            mongo.org_edit_suggestions.find({
         "status.state": {"$nin": ["partially_applied", "applied", "rejected", "cancelled"]}
         }).sort("created_at", -1)
-            )
-            for s in org_suggestions:
-                if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
-                    "EDIT_ORGANIZATION",
-                    s["organization_id"],
-                ):
-                    continue
-                org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
-                org_name = org["name"] if org else "Tuntematon organisaatio"
-                tasks.append({
-                    "type": "org_suggestion",
-                    "id": str(s["_id"]),
-                    "title": f"Organisaation päivitysehdotus: {org_name}",
-                    "created_at": s.get("created_at", datetime.now()),
-                    "status": (s.get("status") or {}).get("state"),
-                    "link": url_for("admin_org.review_suggestion", org_id=s["organization_id"], suggestion_id=s["_id"]),
-                })
+        )
+        for s in org_suggestions:
+            if not getattr(current_user, "global_admin", False) and not current_user.has_permission(
+                "EDIT_ORGANIZATION",
+                s["organization_id"],
+            ):
+                continue
+            org = mongo.organizations.find_one({"_id": ObjectId(s["organization_id"])})
+            org_name = org["name"] if org else "Tuntematon organisaatio"
+            tasks.append({
+                "type": "org_suggestion",
+                "id": str(s["_id"]),
+                "title": f"Organisaation päivitysehdotus: {org_name}",
+                "created_at": s.get("created_at", datetime.now()),
+                "status": (s.get("status") or {}).get("state"),
+                "link": url_for("admin_org.review_suggestion", org_id=s["organization_id"], suggestion_id=s["_id"]),
+            })
 
-            # sort by creation time descending
-            tasks.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+        # sort by creation time descending
+        tasks.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
 
-            return tasks
+        _admin_tasks_cache["tasks"] = tasks
+        _admin_tasks_cache["timestamp"] = now
+        return tasks
 
-
+    @app.context_processor
+    def utility_processor():
         def get_org_name(org_id):
             org = mongo.organizations.find_one({"_id": ObjectId(org_id)}, {"name": 1})
             return org.get("name") if org else "Tuntematon"
@@ -395,13 +438,13 @@ def create_app(config_overrides=None) -> Flask:
             return user_data
 
         def get_supported_locales():
-            return app.config["BABEL_SUPPORTED_LOCALES"]
+            return app.config["BABEL_PUBLIC_LOCALES"]
 
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)
 
-        # Get all tasks
-        tasks = get_admin_tasks()
+        # Get all tasks (uses 30s in-memory cache)
+        tasks = _get_admin_tasks_cached()
         tasks_amount_total = len(tasks)
 
         # Demonstrations done

@@ -3,32 +3,97 @@
 {% block styles %}
 <style>
   :root {
-    --color-text: light-dark(#1e293b, #e2e8f0);
-    --color-text-secondary: light-dark(#64748b, #94a3b8);
-    --color-primary: light-dark(#0033a0, #4d79cc);
-    --color-card-bg: light-dark(#ffffff, #1e1e2e);
-    --color-border: light-dark(#e2e8f0, #404050);
-    --color-shadow: light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+    --suggestion-text: light-dark(#172033, #f2f5fa);
+    --suggestion-muted: light-dark(#647083, #b7c0ce);
+    --suggestion-blue: light-dark(#0033a0, #8bb1ff);
+    --suggestion-blue-soft: light-dark(#edf4ff, #17233b);
+    --suggestion-orange: #ff6600;
+    --suggestion-orange-soft: light-dark(#fff2e8, #3a2418);
+    --suggestion-card-bg: light-dark(#ffffff, #20252d);
+    --suggestion-border: light-dark(#dce3ec, #424b59);
+    --suggestion-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, 0.08), rgba(0, 0, 0, 0.18));
+  }
+
+  .suggestions-page {
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .suggestions-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1.5rem;
+    align-items: end;
+    margin-bottom: 1.25rem;
+    padding: clamp(1.75rem, 4vw, 3rem);
+    border-radius: 1.5rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .4), transparent 17rem),
+      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
   }
 
   .suggestions-header h1 {
+    margin: .25rem 0 .5rem;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3rem);
+    letter-spacing: -.035em;
+  }
+
+  .suggestions-header p {
+    max-width: 620px;
+    color: rgba(255,255,255,.8) !important;
+    line-height: 1.65;
+  }
+
+  .suggestions-kicker {
     margin: 0;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-text);
+    color: #ffd6bc;
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  .suggestions-count {
+    position: relative;
+    z-index: 1;
+    min-width: 110px;
+    padding: .9rem 1rem;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 1rem;
+    background: rgba(255,255,255,.1);
+    text-align: center;
+  }
+
+  .suggestions-count strong, .suggestions-count span { display: block; }
+  .suggestions-count strong { color: #fff; font-size: 1.7rem; line-height: 1; }
+  .suggestions-count span { margin-top: .3rem; color: rgba(255,255,255,.72); font-size: .78rem; }
+
+  .suggestions-intro {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: .8rem 1rem;
+    border: 1px solid var(--suggestion-border);
+    border-radius: .9rem;
+    color: var(--suggestion-muted);
+    background: light-dark(#f8fafc, #252b35);
+    font-size: .88rem;
+  }
+
+  .suggestions-intro i {
+    color: var(--suggestion-orange);
   }
 
   .suggestion-badge {
     font-size: 0.85rem;
     padding: 0.5rem 1rem;
-    border-radius: 8px;
+    border-radius: 999px;
     font-weight: 600;
   }
 
@@ -48,17 +113,19 @@
   }
 
   .suggestion-card {
-    background: var(--color-card-bg);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
+    background: var(--suggestion-card-bg);
+    border: 1px solid var(--suggestion-border);
+    border-left: 4px solid var(--suggestion-blue);
+    border-radius: 1rem;
     padding: 1.5rem;
     margin-bottom: 1rem;
-    transition: all 0.3s ease;
+    box-shadow: var(--suggestion-shadow);
+    transition: border-color .2s ease, transform .2s ease;
   }
 
   .suggestion-card:hover {
-    box-shadow: 0 10px 25px var(--color-shadow);
-    transform: translateY(-2px);
+    border-left-color: var(--suggestion-orange);
+    transform: translateY(-1px);
   }
 
   .suggestion-card-header {
@@ -71,13 +138,13 @@
   .suggestion-card-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--suggestion-text);
     margin: 0 0 0.5rem 0;
   }
 
   .suggestion-card-meta {
     font-size: 0.9rem;
-    color: var(--color-text-secondary);
+    color: var(--suggestion-muted);
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
@@ -91,16 +158,16 @@
 
   .suggestion-changes-summary {
     font-size: 0.9rem;
-    color: var(--color-text-secondary);
+    color: var(--suggestion-muted);
     margin-top: 0.75rem;
   }
 
   .suggestion-changes-count {
     display: inline-block;
-    background: var(--color-primary);
-    color: white;
+    background: var(--suggestion-blue-soft);
+    color: var(--suggestion-blue);
     padding: 0.25rem 0.75rem;
-    border-radius: 16px;
+    border-radius: 999px;
     font-weight: 600;
     font-size: 0.8rem;
   }
@@ -120,7 +187,10 @@
   .empty-state {
     text-align: center;
     padding: 3rem 2rem;
-    color: var(--color-text-secondary);
+    border: 1px dashed var(--suggestion-border);
+    border-radius: 1rem;
+    color: var(--suggestion-muted);
+    background: var(--suggestion-card-bg);
   }
 
   .empty-state i {
@@ -131,8 +201,7 @@
 
   @media (max-width: 768px) {
     .suggestions-header {
-      flex-direction: column;
-      align-items: flex-start;
+      grid-template-columns: 1fr;
     }
 
     .suggestion-card-header {
@@ -151,20 +220,24 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="admin-page">
+<div class="admin-page suggestions-page">
   <div class="suggestions-header">
     <div>
-      <h1>💬 {{ _('Ehdotukset') }}</h1>
-      <p class="text-muted mb-0">{{ _('Käyttäjien ehdottamat muutokset mielenosoituksiin') }}</p>
+      <p class="suggestions-kicker">{{ _('Ylläpidon työjono') }}</p>
+      <h1>{{ _('Ehdotukset') }}</h1>
+      <p class="text-muted mb-0">{{ _('Tarkista käyttäjien ehdottamat korjaukset ja pidä tapahtumatiedot ajan tasalla.') }}</p>
     </div>
-    <div class="d-none d-md-block">
-      <span class="badge bg-primary" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
-        {{ suggestions|length }} {{ _('ehdotusta') }}
-      </span>
+    <div class="suggestions-count">
+      <strong>{{ suggestions|length }}</strong>
+      <span>{{ _('ehdotusta') }}</span>
     </div>
   </div>
 
   {% if suggestions %}
+    <div class="suggestions-intro">
+      <i class="fas fa-circle-info" aria-hidden="true"></i>
+      <span>{{ _('Avaa ehdotus nähdäksesi alkuperäiset ja ehdotetut tiedot rinnakkain.') }}</span>
+    </div>
     <div class="suggestions-list">
       {% for s in suggestions %}
         <div class="suggestion-card">

@@ -222,11 +222,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="form-group">
                 <label for="admin_scope_cities">{{ _('Paikkakunnat') }}</label>
                 <select id="admin_scope_cities" name="admin_scope_cities[]" class="form-control" multiple size="10">
-                    {% for city in city_list %}
+                    {% for city in enabled_city_list %}
                     {% set city_key = city_name_to_key[city] %}
                     <option value="{{ city_key }}" {% if city_key in city_scope_grant.scope_keys %}selected{% endif %}>
                         {{ city }}
                     </option>
+                    {% endfor %}
+                    {% for city in city_list %}
+                    {% if city not in enabled_city_list %}
+                    {% set city_key = city_name_to_key[city] %}
+                    <option value="{{ city_key }}" {% if city_key in city_scope_grant.scope_keys %}selected{% endif %}>
+                        {{ city }}{% if city_key not in city_scope_grant.scope_keys %} {{ _('(ei käytössä)') }}{% endif %}
+                    </option>
+                    {% endif %}
                     {% endfor %}
                 </select>
             </div>

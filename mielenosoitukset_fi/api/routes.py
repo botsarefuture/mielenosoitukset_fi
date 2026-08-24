@@ -1,8 +1,9 @@
 from copy import deepcopy
 from flask import current_app, jsonify, redirect, request, Blueprint, url_for, session
+import re
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_caching import Cache
 from flask_cors import CORS
 from functools import wraps
@@ -32,6 +33,7 @@ from mielenosoitukset_fi.utils.tokens import (
 )
 from mielenosoitukset_fi.api.exceptions import ApiException, Message
 from mielenosoitukset_fi.utils.cache import cache, should_skip_cache
+from mielenosoitukset_fi.utils.request_ip import get_client_ip
 
 mongo = DatabaseManager().get_instance().get_db()
 api_bp = Blueprint("api", __name__)
@@ -89,7 +91,7 @@ def token_required(required_scopes=None, auto_renew=True):
                 "timestamp": datetime.now(),
                 "endpoint": request.path,
                 "method": request.method,
-                "ip": request.remote_addr
+                "ip": get_client_ip()
             })
 
             # Attach token record to request
@@ -145,6 +147,45 @@ def make_cache_key():
     # sort keys to make order irrelevant
     params_str = json.dumps(params, sort_keys=True)
     return "demonstrations:" + hashlib.md5(params_str.encode("utf-8")).hexdigest()
+
+
+def _case_insensitive_contains(value):
+    return {"$regex": re.escape(value), "$options": "i"}
+
+
+def _case_insensitive_exact(value):
+    return {"$regex": f"^{re.escape(value)}$", "$options": "i"}
+
+
+def _case_insensitive_exact_pattern(value):
+    return re.compile(f"^{re.escape(value)}$", re.IGNORECASE)
+
+
+PUBLIC_DEMONSTRATION_LIST_PROJECTION = {
+    "_id": 1,
+    "title": 1,
+    "description": 1,
+    "default_language": 1,
+    "translations": 1,
+    "date": 1,
+    "formatted_date": 1,
+    "start_time": 1,
+    "end_time": 1,
+    "city": 1,
+    "address": 1,
+    "tags": 1,
+    "cancelled": 1,
+    "cover_picture": 1,
+    "cover_image": 1,
+    "preview_image": 1,
+    "img": 1,
+    "slug": 1,
+    "running_number": 1,
+    "latitude": 1,
+    "longitude": 1,
+    "type": 1,
+    "event_type": 1,
+}
 
 
 @api_bp.route("/demonstrations", methods=["GET"])
@@ -235,7 +276,6 @@ def list_demonstrations():
     cached_response = cache.get(cache_key) if use_cache else None
 
     if cached_response:
-        from copy import deepcopy
         response_to_return = deepcopy(cached_response)
         return jsonify(response_to_return), 200
 
@@ -280,13 +320,12 @@ def list_demonstrations():
         page, per_page = 1, 20
 
     # --- Prepare date ranges ---
-    from datetime import timedelta
     today = datetime.now().date()
     max_date = today + timedelta(days=max_days) if max_days else None
 
     # --- Base query ---
     from mielenosoitukset_fi.utils.database import DEMO_FILTER
-    query = dict(DEMO_FILTER)  # clone to avoid side effects
+    query = deepcopy(DEMO_FILTER)
     include_cancelled_param = request.args.get("include_cancelled", "").strip().lower() == "true"
     include_cancelled = include_cancelled_param or bool(_org_id or _parent_id)
     if include_cancelled:
@@ -297,49 +336,47 @@ def list_demonstrations():
     if _org_id:
         query["organizers"] = {"$elemMatch": {"organization_id": _org_id}}
 
-    # --- Fetch from DB ---
-    demos_cursor = mongo.demonstrations.find(query)
-    filtered = []
+    date_filter = {}
+    if in_past != "true":
+        date_filter["$gte"] = today.isoformat()
+    if max_date:
+        date_filter["$lte"] = max_date.isoformat()
+    if date_filter:
+        query["date"] = date_filter
 
-    for demo in demos_cursor:
-        try:
-            demo_date = datetime.strptime(demo["date"], "%Y-%m-%d").date()
-        except Exception:
-            continue  # skip invalid date formats
-
-        # Skip past demos unless explicitly requested
-        if demo_date < today and in_past != "true":
-            continue
-
-        # Skip demos beyond max_days limit
-        if max_date and demo_date > max_date:
-            continue
-
-        demo_obj = stringify_object_ids(demo)
-        city_text = demo_obj.get("city", "").casefold()
-
-        if (
-            (not search or demo_matches_search_query(demo_obj, search))
-            and (not city_list or city_text in city_list)
-            and (not title or demo_matches_title_query(demo_obj, title))
-            and (not tag or demo_has_tag(demo_obj, tag))
-        ):
-            filtered.append(
-                get_demo_localized_dict(
-                    demo_obj,
-                    language=requested_language,
-                    include_translations=include_translations,
-                )
-            )
-
-    # --- Sort chronologically ---
-    filtered.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"))
+    extra_filters = []
+    if search:
+        pattern = _case_insensitive_contains(search)
+        extra_filters.append(
+            {"$or": [{"title": pattern}, {"description": pattern}, {"translations.en.title": pattern}, {"translations.en.description": pattern}]}
+        )
+    if title:
+        pattern = _case_insensitive_contains(title)
+        extra_filters.append({"$or": [{"title": pattern}, {"translations.en.title": pattern}]})
+    if city_list:
+        extra_filters.append({"city": {"$in": [_case_insensitive_exact_pattern(city) for city in city_list]}})
+    if tag:
+        pattern = _case_insensitive_exact(tag)
+        extra_filters.append({"$or": [{"tags": pattern}, {"translations.en.tags": pattern}]})
+    if extra_filters:
+        query["$and"] = query.get("$and", []) + extra_filters
 
     # --- Pagination slicing ---
-    total = len(filtered)
+    total = mongo.demonstrations.count_documents(query)
     total_pages = max((total + per_page - 1) // per_page, 1)
-    start, end = (page - 1) * per_page, page * per_page
-    paginated = filtered[start:end]
+    paginated = [
+        get_demo_localized_dict(
+            stringify_object_ids(demo),
+            language=requested_language,
+            include_translations=include_translations,
+        )
+        for demo in (
+            mongo.demonstrations.find(query, PUBLIC_DEMONSTRATION_LIST_PROJECTION)
+            .sort("date", 1)
+            .skip((page - 1) * per_page)
+            .limit(per_page)
+        )
+    ]
 
     # --- Navigation URLs ---
     from urllib.parse import urlencode
@@ -351,8 +388,6 @@ def list_demonstrations():
 
     next_url = build_url(page + 1) if page < total_pages else None
     prev_url = build_url(page - 1) if page > 1 else None
-
-    from copy import deepcopy
 
     # --- Response object to cache ---
     response_data = {

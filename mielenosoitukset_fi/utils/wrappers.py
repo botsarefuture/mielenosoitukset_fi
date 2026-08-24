@@ -1,6 +1,6 @@
 from functools import wraps
 from bson import ObjectId
-from flask import redirect, url_for, abort
+from flask import g, redirect, url_for, abort
 from flask_babel import _
 from flask_login import current_user
 from mielenosoitukset_fi.database_manager import DatabaseManager
@@ -131,6 +131,8 @@ def has_demo_permission(user, _id, permission_name):
     - Grants permission when the user has the required permission in any
       organization that appears in the demonstration's organizers.
 
+    Uses a per-request cache to avoid repeated MongoDB lookups for the same demo.
+
     Parameters
     ----------
     user :
@@ -181,7 +183,22 @@ def has_demo_permission(user, _id, permission_name):
         )
         return False
 
-    demo_doc = mongo.demonstrations.find_one({"_id": demo_id})
+    # Per-request cache for demo documents (avoids N+1 DB lookups)
+    cache_key = f"demo_perm_{demo_id}"
+    demo_doc = None
+    try:
+        demo_doc = getattr(g, "_demo_perm_cache", {}).get(cache_key)
+    except Exception:
+        pass
+    if demo_doc is None:
+        demo_doc = mongo.demonstrations.find_one({"_id": demo_id})
+        if demo_doc is not None:
+            try:
+                if not hasattr(g, "_demo_perm_cache"):
+                    g._demo_perm_cache = {}
+                g._demo_perm_cache[cache_key] = demo_doc
+            except Exception:
+                pass
     if not demo_doc:
         logger.warning(
             "Demo permission denied: demonstration %s not found for '%s'.",

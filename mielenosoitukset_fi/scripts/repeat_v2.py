@@ -50,6 +50,7 @@ from mielenosoitukset_fi.utils.classes import Demonstration, RecurringDemonstrat
 from traceback import format_exc
 from mielenosoitukset_fi.utils import VERSION
 from mielenosoitukset_fi.utils.classes.RepeatSchedule import RepeatSchedule
+from mielenosoitukset_fi.utils.time_utils import utcnow
 
 # Dry-run flag (can be overridden from CLI)
 DRY_RUN = False
@@ -116,6 +117,65 @@ runtime_log_collection = db["runtime_log"]
 runtimes_collection = db["runtimes"]
 runtime_actions = []
 stats_collection = db["recu_stats"]
+
+
+def _frozen_child_ids(parent_demo: dict) -> set[str]:
+    """Return frozen child IDs in the canonical comparison format."""
+    return {str(child_id) for child_id in parent_demo.get("freezed_children", [])}
+
+
+def _break_date_strings(parent_demo: dict) -> set[str]:
+    """Return recurring break dates in ISO date-string form."""
+    dates = set()
+    for raw_date in parent_demo.get("break_dates", []) or []:
+        if isinstance(raw_date, datetime):
+            dates.add(raw_date.date().isoformat())
+        elif isinstance(raw_date, date):
+            dates.add(raw_date.isoformat())
+        elif raw_date:
+            try:
+                dates.add(datetime.strptime(str(raw_date), "%Y-%m-%d").date().isoformat())
+            except Exception:
+                logger.warning("Skipping invalid recurring break date %r", raw_date)
+    return dates
+
+
+def mark_break_children_cancelled(parent_demo: dict) -> int:
+    """Cancel existing child demos whose dates are configured as series breaks."""
+    break_dates = _break_date_strings(parent_demo)
+    if not break_dates:
+        return 0
+
+    cancelled_count = 0
+    children = demonstrations_collection.find(
+        {
+            "parent": parent_demo["_id"],
+            "date": {"$in": sorted(break_dates)},
+            "cancelled": {"$ne": True},
+        }
+    )
+    for child in children:
+        update_doc = {
+            "cancelled": True,
+            "cancelled_at": utcnow(),
+            "cancelled_by": {"source": "recurring_break", "user_id": None},
+            "cancellation_requested": False,
+            "cancellation_reason": "Toistuvan mielenosoituksen taukopäivä",
+        }
+        runtime_actions.append({
+            "action": "cancel",
+            "document": child,
+            "reason": "recurring break date",
+            "timestamp": datetime.now(),
+            "executed_by": "system",
+        })
+        if DRY_RUN:
+            logger.info("DRY RUN: would cancel child demo %s for recurring break", child["_id"])
+        else:
+            demonstrations_collection.update_one({"_id": child["_id"]}, {"$set": update_doc})
+            logger.info("Cancelled child demo %s for recurring break", child["_id"])
+        cancelled_count += 1
+    return cancelled_count
 
 
 
@@ -270,8 +330,9 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
     """
     # Ensure valid_dates are date objects (they may have been produced by calculate_next_dates)
     valid_date_strings = {d.strftime("%Y-%m-%d") for d in valid_dates}
+    break_date_strings = _break_date_strings(parent_demo)
     child_demos = demonstrations_collection.find({"parent": parent_demo["_id"]})
-    freezed_children = set(parent_demo.get("freezed_children", []))
+    freezed_children = _frozen_child_ids(parent_demo)
 
     for demo in child_demos:
         if str(demo["_id"]) in freezed_children:
@@ -289,6 +350,16 @@ def remove_invalid_child_demonstrations(parent_demo: dict, valid_dates: list[dat
             demo_date_dt = datetime.strptime(demo["date"], "%Y-%m-%d").date()
         except Exception:
             logger.warning(f"Invalid date format for child demo {demo['_id']}: {demo['date']}")
+            continue
+
+        if demo["date"] in break_date_strings and demo.get("cancelled") is True:
+            runtime_actions.append({
+                "action": "break_skip",
+                "document": demo,
+                "reason": "recurring break date",
+                "timestamp": datetime.now(),
+                "executed_by": "system"
+            })
             continue
 
         # Normalize _created_until to date if datetime passed
@@ -343,11 +414,18 @@ def process_demo(demo: dict, only_calculate: bool = False):
         # Normalize demo_date and created_until to date objects for consistent comparisons
         demo_date = datetime.strptime(_demo.date, "%Y-%m-%d").date()
         created_until_date = created_until.date() if isinstance(created_until, datetime) else created_until
-        next_dates = calculate_next_dates(demo_date, schedule, created_until_date)
+        scheduled_dates = calculate_next_dates(demo_date, schedule, created_until_date)
+        break_dates = _break_date_strings(demo)
+        next_dates = [
+            next_date
+            for next_date in scheduled_dates
+            if next_date.strftime("%Y-%m-%d") not in break_dates
+        ]
+        mark_break_children_cancelled(demo)
         
         # Only calculate stats if requested
         if only_calculate:
-            remove_invalid_child_demonstrations(demo, next_dates, created_until_date)
+            remove_invalid_child_demonstrations(demo, scheduled_dates, created_until_date)
             update_parent_stats(demo["_id"])
             return
         
@@ -355,7 +433,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
         if FORCE_RECHECK:
             child_demos = list(demonstrations_collection.find({"parent": demo["_id"]}))
             for child in child_demos:
-                if str(child["_id"]) in set(demo.get("freezed_children", [])):
+                if str(child["_id"]) in _frozen_child_ids(demo):
                     continue
                 try:
                     child_date = datetime.strptime(child["date"], "%Y-%m-%d").date()
@@ -416,10 +494,10 @@ def process_demo(demo: dict, only_calculate: bool = False):
                                 logger.warning(msg + " and cannot set that day for this month")
 
         # Continue with standard invalid child cleanup
-        remove_invalid_child_demonstrations(demo, next_dates, created_until_date)
+        remove_invalid_child_demonstrations(demo, scheduled_dates, created_until_date)
 
         bulk_ops = []
-        freezed_children = set(demo.get("freezed_children", []))
+        freezed_children = _frozen_child_ids(demo)
 
         for next_date in next_dates:
             if created_until and next_date <= created_until_date:
@@ -429,7 +507,7 @@ def process_demo(demo: dict, only_calculate: bool = False):
             next_date_str = next_date.strftime("%Y-%m-%d")
             existing_demo = demonstrations_collection.find_one({"date": next_date_str, "parent": demo["_id"]})
 
-            if existing_demo and existing_demo["_id"] in freezed_children:
+            if existing_demo and str(existing_demo["_id"]) in freezed_children:
                 runtime_actions.append({"action":"frozen_skip","document":existing_demo,"reason":"frozen","timestamp":datetime.now(),"executed_by":"system"})
                 continue
 
@@ -455,10 +533,10 @@ def process_demo(demo: dict, only_calculate: bool = False):
                 logger.info(f"Processed {result.upserted_count} demos for parent {demo['_id']}")
 
         # Update created_until
-        if next_dates:
+        if scheduled_dates:
             d = RecurringDemonstration.from_dict(demo)
             old_created_until = d.created_until
-            d.created_until = next_dates[-1]
+            d.created_until = scheduled_dates[-1]
             if DRY_RUN:
                 logger.info(f"DRY RUN: would update created_until for parent {demo['_id']} from {old_created_until} to {d.created_until}")
                 runtime_actions.append({"action":"update","document":d.to_dict(),"old_document":RecurringDemonstration.from_dict(demo).to_dict(),"reason":f"DRY_RUN created_until would be updated from {old_created_until} to {d.created_until}","timestamp":datetime.now(),"executed_by":"system"})

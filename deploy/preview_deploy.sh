@@ -73,6 +73,8 @@ BABEL:
   SUPPORTED_LOCALES:
     - "fi"
     - "en"
+  PUBLIC_LOCALES:
+    - "fi"
   LANGUAGES:
     fi: "Suomi"
     en: "English"

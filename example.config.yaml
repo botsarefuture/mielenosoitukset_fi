@@ -33,6 +33,9 @@ BABEL:
     - "fi"
     - "en"
     - "sv"
+  # Only these completed languages are visible and selectable in production.
+  PUBLIC_LOCALES:
+    - "fi"
   
   LANGUAGES:
     fi: "Suomi"

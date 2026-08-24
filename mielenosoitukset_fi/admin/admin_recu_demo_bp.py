@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from datetime import datetime, date
 
 from bson.objectid import ObjectId
@@ -6,17 +7,32 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required
 from mielenosoitukset_fi.utils.flashing import flash_message
 
-from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer
+from mielenosoitukset_fi.utils.classes import RecurringDemonstration, Organizer, RepeatSchedule
 from mielenosoitukset_fi.utils.cities import normalize_city_key
 from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.wrappers import permission_required, admin_required
 
 from mielenosoitukset_fi.utils.admin.demonstration import collect_tags
+from mielenosoitukset_fi.utils.demo_cancellation import cancel_demo
+from mielenosoitukset_fi.demonstrations.audit import record_demo_change
 from .utils import mongo, _ADMIN_TEMPLATE_FOLDER
 
 admin_recu_demo_bp = Blueprint(
     "admin_recu_demo", __name__, url_prefix="/admin/recu_demo"
 )
+
+CHILD_BULK_FIELD_MAP = {
+    "title": ("title",),
+    "description": ("description",),
+    "times": ("start_time", "end_time"),
+    "location": ("city", "city_key", "address", "latitude", "longitude"),
+    "type": ("event_type",),
+    "route": ("route",),
+    "organizers": ("organizers",),
+    "tags": ("tags",),
+    "links_and_images": ("facebook", "cover_picture", "gallery_images"),
+    "approved": ("approved",),
+}
 
 from .utils import AdminActParser, log_admin_action_V2
 from flask_login import current_user
@@ -32,6 +48,38 @@ def log_request_info():
 
 def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None):
     """Render the shared recurring-demonstration form."""
+    child_demos = []
+    child_counts = {"total": 0, "future": 0, "shown": 0}
+    frozen_child_ids = set()
+    if demo and demo._id:
+        parent_id = ObjectId(demo._id)
+        today_string = date.today().isoformat()
+        frozen_child_ids = {str(child_id) for child_id in demo.freezed_children}
+        child_counts["total"] = mongo.demonstrations.count_documents({"parent": parent_id})
+        child_counts["future"] = mongo.demonstrations.count_documents(
+            {"parent": parent_id, "date": {"$gte": today_string}}
+        )
+        child_demos = list(
+            mongo.demonstrations.find(
+                {"parent": parent_id, "date": {"$gte": today_string}},
+                {
+                    "title": 1,
+                    "date": 1,
+                    "start_time": 1,
+                    "city": 1,
+                    "approved": 1,
+                    "cancelled": 1,
+                    "cancellation_reason": 1,
+                },
+            )
+            .sort("date", 1)
+            .limit(200)
+        )
+        child_counts["shown"] = len(child_demos)
+        for child in child_demos:
+            child["is_frozen"] = str(child["_id"]) in frozen_child_ids
+            child["is_break"] = child.get("date") in (demo.break_dates or [])
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}recu_demonstrations/_form_v2.html",
         demo=demo,
@@ -45,6 +93,10 @@ def _render_recu_demo_form(*, form_action, title, submit_button_text, demo=None)
         default_demo_language=(
             getattr(demo, "default_language", None) or "fi"
         ),
+        child_demos=child_demos,
+        child_counts=child_counts,
+        frozen_child_ids=frozen_child_ids,
+        today=date.today().isoformat(),
     )
 
 
@@ -97,9 +149,103 @@ def _get_route_points(form):
     return [point.strip() for point in legacy_route.split(",") if point.strip()]
 
 
-def _collect_organizers(form):
+def _collect_break_dates(form):
+    """Collect unique recurring-series break dates from repeated date inputs."""
+    dates = []
+    seen = set()
+    for raw_date in form.getlist("break_dates"):
+        value = (raw_date or "").strip()
+        if not value:
+            continue
+        try:
+            normalized = datetime.strptime(value, "%Y-%m-%d").date().isoformat()
+        except ValueError:
+            continue
+        if normalized not in seen:
+            dates.append(normalized)
+            seen.add(normalized)
+    return sorted(dates)
+
+
+def _is_valid_latitude(value):
+    try:
+        latitude = float(value)
+        return -90 <= latitude <= 90
+    except (TypeError, ValueError):
+        return False
+
+
+def _is_valid_longitude(value):
+    try:
+        longitude = float(value)
+        return -180 <= longitude <= 180
+    except (TypeError, ValueError):
+        return False
+
+
+def _current_admin_actor(source):
+    return {
+        "user_id": str(current_user.id),
+        "source": source,
+        "username": getattr(current_user, "username", None),
+    }
+
+
+def _cancel_recurring_children(parent_id, child_query, reason, action, message):
+    """Cancel children scoped to a recurring parent and record per-child audit history."""
+    cancelled_count = 0
+    matched_count = 0
+    for child in mongo.demonstrations.find(child_query):
+        matched_count += 1
+        old_child = deepcopy(child)
+        cancelled = cancel_demo(
+            child,
+            cancelled_by=_current_admin_actor("admin_recurring"),
+            reason=reason,
+        )
+        updated_child = mongo.demonstrations.find_one({"_id": child["_id"]}) or child
+        if cancelled:
+            cancelled_count += 1
+            record_demo_change(
+                child["_id"],
+                old_child,
+                updated_child,
+                action=action,
+                message=message,
+                extra_details={
+                    "parent_id": str(parent_id),
+                    "reason": reason,
+                },
+            )
+    return matched_count, cancelled_count
+
+
+def _cancel_children_for_break_dates(parent_id, break_dates):
+    """Mark already-created children on break dates as cancelled."""
+    if not break_dates:
+        return 0, 0
+    return _cancel_recurring_children(
+        parent_id,
+        {"parent": parent_id, "date": {"$in": break_dates}},
+        "Toistuvan mielenosoituksen taukopäivä",
+        "cancel_recurring_child_break",
+        "Lapsimielenosoitus peruttiin sarjan taukopäivän vuoksi",
+    )
+
+
+def _collect_organizers(form, existing_organizers=None):
     """Collect organizer cards even if client-side indexes become sparse."""
     organizers = []
+    existing_by_organization_id = {
+        str(organizer.get("organization_id")): organizer
+        for organizer in (existing_organizers or [])
+        if organizer.get("organization_id")
+    }
+    existing_by_record_id = {
+        str(organizer.get("_id")): organizer
+        for organizer in (existing_organizers or [])
+        if organizer.get("_id")
+    }
     organizer_indexes = sorted(
         {
             int(match.group(1))
@@ -116,17 +262,41 @@ def _collect_organizers(form):
     for index in organizer_indexes:
         name = form.get(f"organizer_name_{index}")
         organization_id = form.get(f"organizer_id_{index}")
+        organizer_record_id = form.get(f"organizer_record_id_{index}")
         if not name and not organization_id:
             continue
 
-        organizers.append(
-            Organizer(
-                name=name,
-                email=form.get(f"organizer_email_{index}"),
-                website=form.get(f"organizer_website_{index}"),
-                organization_id=organization_id,
-            ).to_dict()
+        existing = deepcopy(
+            existing_by_organization_id.get(str(organization_id))
+            or existing_by_record_id.get(str(organizer_record_id))
+            or {}
         )
+        organizer = Organizer(
+            name=name,
+            email=form.get(f"organizer_email_{index}"),
+            website=form.get(f"organizer_website_{index}"),
+            organization_id=organization_id,
+            is_private=form.get(f"organizer_is_private_{index}") == "on",
+            show_name_public=form.get(f"organizer_show_name_{index}") == "on",
+            show_email_public=form.get(f"organizer_show_email_{index}") == "on",
+        )
+        organizer_data = organizer.to_dict()
+        if existing:
+            for field_name, default_value in (
+                ("is_private", False),
+                ("show_name_public", True),
+                ("show_email_public", True),
+            ):
+                if field_name not in existing and organizer_data.get(field_name) == default_value:
+                    organizer_data.pop(field_name, None)
+            for field_name in ("logo", "url"):
+                if field_name not in existing and organizer_data.get(field_name) is None:
+                    organizer_data.pop(field_name, None)
+        for metadata_field in ("_id", "url", "logo"):
+            if metadata_field in existing:
+                organizer_data[metadata_field] = existing[metadata_field]
+        existing.update(organizer_data)
+        organizers.append(existing)
 
     return organizers
 
@@ -231,6 +401,11 @@ def edit_recu_demo(demo_id):
 
 def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     """Handle form submission for creating or editing a recurring demonstration."""
+    existing_demo = (
+        mongo.recu_demos.find_one({"_id": ObjectId(demo_id)})
+        if is_edit and demo_id
+        else None
+    )
 
     # Basic info
     title = request.form.get("title")
@@ -245,6 +420,8 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     facebook = request.form.get("facebook")
     city = request.form.get("city") or ""
     address = request.form.get("address")
+    latitude = request.form.get("latitude")
+    longitude = request.form.get("longitude")
     event_type = request.form.get("type")
     route = _get_route_points(request.form)
     approved = request.form.get("approved") == "on"
@@ -254,7 +431,10 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
     cover_picture = request.form.get("cover_picture")
     gallery_images = parse_gallery_images_field(request.form.get("gallery_images"))
 
-    organizers = _collect_organizers(request.form)
+    organizers = _collect_organizers(
+        request.form,
+        existing_organizers=(existing_demo or {}).get("organizers", []),
+    )
 
     # Recurrence / repeat schedule
     freq = _get_repeat_frequency(request.form)
@@ -283,16 +463,57 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             nth_weekday = request.form.get("nth_weekday")
             weekday_of_month = request.form.get("weekday_of_month")
 
-    repeat_schedule = {
-        "frequency": freq,
-        "interval": interval,
-        "weekday": weekday,
-        "monthly_option": monthly_option,
-        "day_of_month": day_of_month,
-        "nth_weekday": nth_weekday,
-        "weekday_of_month": weekday_of_month,
-        "end_date": end_date,
-    }
+    repeat_schedule = RepeatSchedule(
+        frequency=freq,
+        interval=interval,
+        weekday=weekday,
+        monthly_option=monthly_option,
+        day_of_month=day_of_month,
+        nth_weekday=nth_weekday,
+        weekday_of_month=weekday_of_month,
+        end_date=end_date,
+    ).to_dict()
+    break_dates = _collect_break_dates(request.form)
+
+    if existing_demo:
+        for field_name, submitted_value in (
+            ("start_time", start_time),
+            ("end_time", end_time),
+        ):
+            existing_value = existing_demo.get(field_name)
+            if (
+                existing_value
+                and submitted_value
+                and str(existing_value)[:5] == str(submitted_value)[:5]
+            ):
+                if field_name == "start_time":
+                    start_time = existing_value
+                else:
+                    end_time = existing_value
+
+        if not route and existing_demo.get("route") is None:
+            route = None
+        if not gallery_images and existing_demo.get("gallery_images") is None:
+            gallery_images = None
+        for field_name, value in (
+            ("description", description),
+            ("facebook", facebook),
+            ("cover_picture", cover_picture),
+        ):
+            if value == "" and existing_demo.get(field_name) is None:
+                if field_name == "description":
+                    description = None
+                elif field_name == "facebook":
+                    facebook = None
+                else:
+                    cover_picture = None
+
+    if latitude and not _is_valid_latitude(latitude):
+        latitude = None
+        flash_message("Virheellinen leveysaste. Asetetaan leveysasteeksi: None.")
+    if longitude and not _is_valid_longitude(longitude):
+        longitude = None
+        flash_message("Virheellinen pituusaste. Asetetaan pituusasteeksi: None.")
 
     # Assemble demonstration data
     demonstration_data = {
@@ -308,12 +529,15 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
         "city": city,
         "city_key": normalize_city_key(city),
         "address": address,
+        "latitude": latitude,
+        "longitude": longitude,
         "event_type": event_type,
         "route": route,
         "approved": approved,
         "cover_picture": cover_picture,
         "gallery_images": gallery_images,
         "repeat_schedule": repeat_schedule,
+        "break_dates": break_dates,
         "recurs": freq != "none",
         "organizers": organizers,
     }
@@ -331,7 +555,13 @@ def handle_recu_demo_form(request, is_edit=False, demo_id=None):
             mongo.recu_demos.update_one(
                 {"_id": ObjectId(demo_id)}, {"$set": demonstration_data}
             )
-            flash_message("Toistuva mielenosoitus päivitetty onnistuneesti.")
+            _, cancelled_count = _cancel_children_for_break_dates(
+                ObjectId(demo_id), break_dates
+            )
+            message = "Toistuva mielenosoitus päivitetty onnistuneesti."
+            if cancelled_count:
+                message += f" Peruttiin {cancelled_count} taukopäivälle osuvaa lapsimielenosoitusta."
+            flash_message(message)
         else:
             mongo.recu_demos.insert_one(demonstration_data)
             flash_message("Toistuva mielenosoitus luotu onnistuneesti.")
@@ -392,6 +622,149 @@ def collect_demo_translations(request, default_language):
             translations[normalized_language] = entry
 
     return translations
+
+
+@admin_recu_demo_bp.route("/<demo_id>/bulk-update-children", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_RECURRING_DEMO")
+@permission_required("EDIT_DEMO")
+def bulk_update_children(demo_id):
+    """Copy selected recurring-parent fields to selected generated children."""
+    try:
+        parent_id = ObjectId(demo_id)
+    except Exception:
+        flash_message("Virheellinen toistuvan mielenosoituksen tunniste.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    parent = mongo.recu_demos.find_one({"_id": parent_id})
+    if not parent:
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    requested_fields = [
+        field for field in request.form.getlist("fields") if field in CHILD_BULK_FIELD_MAP
+    ]
+    child_scope = request.form.get("child_scope", "selected")
+    requested_child_ids = set(request.form.getlist("child_ids"))
+    if not requested_fields or (child_scope == "selected" and not requested_child_ids):
+        flash_message("Valitse vähintään yksi päivitettävä kenttä ja lapsimielenosoitus.", "error")
+        return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+    child_query = {"parent": parent_id}
+    if child_scope == "all_future":
+        child_query["date"] = {"$gte": date.today().isoformat()}
+    else:
+        child_ids = []
+        for child_id in requested_child_ids:
+            try:
+                child_ids.append(ObjectId(child_id))
+            except Exception:
+                continue
+        child_query["_id"] = {"$in": child_ids}
+
+    children = mongo.demonstrations.find(child_query)
+    update_fields = {}
+    for field_group in requested_fields:
+        for child_field in CHILD_BULK_FIELD_MAP[field_group]:
+            if child_field == "event_type":
+                value = parent.get("event_type") or parent.get("type")
+            elif child_field == "city_key":
+                value = parent.get("city_key") or normalize_city_key(parent.get("city"))
+            else:
+                value = parent.get(child_field)
+            update_fields[child_field] = deepcopy(value)
+
+    updated_ids = []
+    updated_count = 0
+    for child in children:
+        new_child = deepcopy(child)
+        new_child.update(deepcopy(update_fields))
+        mongo.demonstrations.update_one(
+            {"_id": child["_id"], "parent": parent_id},
+            {"$set": deepcopy(update_fields)},
+        )
+        record_demo_change(
+            child["_id"],
+            child,
+            new_child,
+            action="bulk_update_recurring_child",
+            message="Toistuvan mielenosoituksen tiedot kopioitiin lapsimielenosoitukseen",
+            extra_details={
+                "parent_id": demo_id,
+                "field_groups": requested_fields,
+            },
+        )
+        updated_ids.append(str(child["_id"]))
+        updated_count += 1
+
+    if request.form.get("freeze_after_update") == "on" and updated_ids:
+        mongo.recu_demos.update_one(
+            {"_id": parent_id},
+            {"$addToSet": {"freezed_children": {"$each": updated_ids}}},
+        )
+
+    flash_message(
+        f"Päivitettiin {updated_count} lapsimielenosoitusta.",
+        "success",
+    )
+    return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+
+@admin_recu_demo_bp.route("/<demo_id>/bulk-cancel-children", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("EDIT_RECURRING_DEMO")
+@permission_required("EDIT_DEMO")
+def bulk_cancel_children(demo_id):
+    """Mark selected or all future generated children from a recurring parent cancelled."""
+    try:
+        parent_id = ObjectId(demo_id)
+    except Exception:
+        flash_message("Virheellinen toistuvan mielenosoituksen tunniste.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    parent = mongo.recu_demos.find_one({"_id": parent_id})
+    if not parent:
+        flash_message("Toistuvaa mielenosoitusta ei löytynyt.", "error")
+        return redirect(url_for("admin_recu_demo.recu_demo_control"))
+
+    child_scope = request.form.get("child_scope", "selected")
+    requested_child_ids = set(request.form.getlist("child_ids"))
+    if child_scope == "selected" and not requested_child_ids:
+        flash_message("Valitse vähintään yksi peruttava lapsimielenosoitus.", "error")
+        return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
+
+    child_query = {"parent": parent_id}
+    if child_scope == "all_future":
+        child_query["date"] = {"$gte": date.today().isoformat()}
+    else:
+        child_ids = []
+        for child_id in requested_child_ids:
+            try:
+                child_ids.append(ObjectId(child_id))
+            except Exception:
+                continue
+        child_query["_id"] = {"$in": child_ids}
+
+    reason = (
+        request.form.get("cancellation_reason")
+        or "Peruttu toistuvan mielenosoituksen sarjahallinnasta"
+    )
+    matched_count, cancelled_count = _cancel_recurring_children(
+        parent_id,
+        child_query,
+        reason,
+        "bulk_cancel_recurring_child",
+        "Lapsimielenosoitus peruttiin toistuvan sarjan hallinnasta",
+    )
+    if matched_count == 0:
+        flash_message("Valittuja lapsimielenosoituksia ei löytynyt.", "error")
+    elif cancelled_count == 0:
+        flash_message("Valitut lapsimielenosoitukset olivat jo peruttuja.", "info")
+    else:
+        flash_message(f"Peruttiin {cancelled_count} lapsimielenosoitusta.", "success")
+    return redirect(url_for("admin_recu_demo.edit_recu_demo", demo_id=demo_id))
 
 
 def parse_gallery_images_field(raw_value):

@@ -746,7 +746,7 @@
     <div class="org-hero-header">
       <div class="org-logo-wrapper">
         {% if org.logo %}
-        <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async">
+        <img src="{{ org.logo }}" alt="{{ _('Logo: %(name)s', name=org.name) }}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
         {% else %}
         <div class="org-logo-placeholder">
           <i class="fa-solid fa-building"></i>

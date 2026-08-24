@@ -5,16 +5,39 @@
 ## UNRELEASED
 
 ### Changed
-* Language controls now use a compact accessible switcher that keeps visitors on the current page, and the demonstration translation workspace has a clearer status and editing layout without the DeepL generation button.
-* Demonstration descriptions in the translation workspace are now displayed and edited as Markdown while approved content remains stored as safe formatted HTML.
-* The demonstration translation queue now excludes past demonstrations and collapses recurring instances whose descriptions match their parent.
-* The demonstration translation editor now uses a clear three-step workflow, replayable animated Markdown guidance, formatting buttons, a safe live visual preview, and a remembered accessibility mode that defaults to a spacious guided layout but can be switched to a compact workspace.
-* Translators now see the source and target languages plus each original and translated field side by side while working.
+* Demonstration submission and organizer guidance pages now direct people who need translation help to `tuki@mielenosoitukset.fi`.
+* Translation catalogs are now separate from publicly enabled languages: production defaults to Finnish only, hides unpublished languages from regular and maintenance views, rejects unpublished locale selections, and omits them from SEO alternate links while English and Swedish remain available for translation work.
+* Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).
+* Added public `/status` page showing live health checks for MongoDB, Redis, and S3 with response latency.
+* Added admin `/admin/status` dashboard with infrastructure health, server stats (uptime, memory, disk, Gunicorn workers), collection counts, and recent error log feed.
+* UptimeRobot monitoring IPs are now exempt from rate limiting via an auto-refreshing IP allowlist fetched from UptimeRobot's official CDN every 24 hours, with a hardcoded fallback for immediate availability.
+* Organization information suggestion pages now match the public organization detail page styling more closely, with a branded hero, current-info panel, and cleaner form layout.
+* Demonstration detail share controls now show Mastodon and X as separate buttons instead of a dropdown menu.
+* Demonstration detail share controls now present the Mastodon/X split button with a more polished dropdown treatment.
+* Demonstration detail pages now combine Mastodon and X sharing into one Mastodon-led dropdown, keeping X available without a separate standalone button.
+* Support cases now use a cleaner admin list/detail presentation with stable status labels, real internal-note submission, clearer cancellation and error-report context, and less brittle per-case rendering.
+* Admin context processor tasks now use a 30-second in-memory cache to avoid repeated MongoDB queries on every template render.
+* City list context processor now uses a 60-second in-memory cache to avoid per-request MongoDB lookups for enabled city names.
+* Admin `before_request` audit logging now runs in a background thread so request handling is not blocked by audit writes.
+* `has_demo_permission` now caches demo document lookups per-request, eliminating redundant MongoDB queries in loops.
+* Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Public and admin status banners now render their check/cross icons instead of displaying escaped HTML entity text.
+* Added missing MongoDB indexes for `demo_audit_logs`, `demo_edit_history`, `demo_suggestions`, `admin_logs`, `super_audit_logs`, `magic_links`, `cases`, `demo_attending`, `demo_invites`, `demo_reminders`, `recommended_demos`, `posted_events`, `demonstrations(slug/parent)`, and `city_settings(city_key)`, dramatically improving query speed on admin and audit routes.
+* Admin footer now reads the running application version instead of showing a stale hardcoded beta label.
+* Pending demonstration admin reminder emails now resume after the 24-hour reminder window instead of being blocked forever by an older completed notification job.
+* Recurring demonstration generation now preserves cancelled break-date child demos instead of deleting them as invalid generated children.
+* Demonstration detail Mastodon/X share menu now uses Bootstrap dropdown markup with hover and focus fallbacks so the X option can open across browsers.
+* Demonstration detail Mastodon/X share menu now uses a native dropdown control so the X option opens reliably without custom page JavaScript.
+* Demonstration detail Mastodon/X share dropdown now works as a split button: the Mastodon side opens Mastodon sharing and the arrow opens the X option.
+* Organization logos served through the production CDN now omit local and preview-page referrers when embedded or opened, preventing Cloudflare Hotlink Protection from rejecting valid lc-main assets during development and previews.
+* Request logging and rate limiting now restore the real visitor IP from `CF-Connecting-IP` only when the forwarding address belongs to Cloudflare, avoiding Cloudflare-edge IPs without trusting spoofed headers.
+* Admin notification job no longer repeatedly regenerates and logs approval/rejection/preview links for the same pending demonstrations every 5 minutes; completed notification jobs are now properly recognized to prevent duplicate link generation.
+* Demo approval and rejection now close linked support cases consistently across direct admin actions, token links, and the auto-close background job; de-escalation also writes back to the correct `case_history` field.
 * Authentication security checks and legacy settings updates now resolve the active MongoDB database per request, preventing stale database handles from causing order-dependent authorization and settings failures.
 * Login and MFA checks now preserve access for legacy accounts whose stored usernames contain uppercase characters.
-* Recurring demonstration admin views now show records after the city-key migration instead of silently dropping every migrated series.
+* Recurring demonstration admin views now show migrated records containing `city_key`; edit forms preserve stored recurrence data during unchanged saves; and child bulk updates now copy event types and freeze children reliably.
 * Closed three high-impact authorization gaps: legacy self-service settings now reject privilege fields, API token scopes are strictly allowlisted with privileged scopes restricted to global administrators, and admin MCP rejects ordinary read/write API tokens.
 * Route smoke tests now reset shared client sessions before every request, so logout routes cannot silently reduce later authenticated coverage while the smoke suite stays fast.
 * The project now requires Python 3.12 across local metadata, CI, and Docker; deprecated `datetime.utcnow()` calls now use a shared modern UTC helper without changing the existing naive-UTC database format, and `python-dateutil` was updated to remove its Python 3.12 UTC deprecation warning.
@@ -22,27 +45,17 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
-* Added the first multilingual demonstration data-model foundation: `Demonstration` now supports `default_language`, a `translations` map, and helper methods for localized title/description/tag access without breaking existing base fields.
-* Added shared demo-localization helpers so multilingual title, description, and tag resolution can be reused consistently from both `Demonstration` objects and plain demonstration dictionaries.
-* `Demonstration` now exposes translations-first serialization helpers for localized payloads and available-language discovery, so API and UI code can consume one consistent multilingual model instead of rebuilding locale resolution ad hoc.
-* Public demonstration APIs and filtering now understand multilingual demonstration content: localized API payloads expose resolved and available languages, and search/tag filters can match translated titles, descriptions, and tags instead of only the base language fields.
-* Added a DeepL-backed translation suggestion service for demonstration content, so translator workflows can request machine-generated title/description/tag proposals with provenance metadata while still keeping human review in control.
-* DeepL suggestions can now be cached backend-side by demo source content hash, so translator UIs can show ready-made proposal drafts without re-translating unchanged content on every view.
-* DeepL suggestion generation now skips past demonstrations by default, so translator workflows can keep old events hidden unless someone explicitly opts into backfilling them.
-* Public demo rendering now uses locale-aware demonstration title, description, and tag values on detail pages, calendar views, and API/card payloads while still falling back to legacy base fields when translations are missing.
-* Admin demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, so demonstration translations can be managed from the existing moderation UI.
-* Recurring demo create/edit now supports multilingual title, description, and tag inputs plus `default_language`, extending the same translation model to recurring-event administration.
-* Public submit flow now records the authored language of the base demonstration fields through a `default_language` selector, so multilingual data starts with the correct source language even before public translation inputs exist.
-* Repository and preview runtime config defaults now expose both Finnish and English as supported UI languages, so multilinguality previews show `fi` and `en` selectors without requiring separate server-side config edits.
-* Adminiin lisättiin ensimmäinen demojen käännöstyöjono: uusi `translator`-rooli voi tehdä käännösehdotuksia demojen otsikoille, kuvauksille ja tunnisteille, ja admin hyväksyy tai hylkää ne ennen julkaisua.
-* Demojen detail-sivu näyttää nyt hyväksytyt käännökset aktiivisen kielen mukaan, lokalisoi samankaltaisten tapahtumien otsikot, ja kertoo suoraan millä kielellä tapahtumaa katsotaan.
-* Käännöstyökalu osaa nyt pyytää backendissä välimuistitetyn DeepL-ehdotuksen demolle, jotta kääntäjät voivat käyttää automaattista luonnosta ilman että sama käännös generoidaan selaimessa joka näkymässä uudelleen.
-* Adminiin lisättiin ensimmäinen käyttöliittymäkäännösten workflow: translator/admin voivat avata gettext-rivejä, lähettää käännösehdotuksia ja hyväksyä ne suoraan `.po`/`.mo`-katalogeihin.
-* Hyväksytyt käyttöliittymäkäännökset voidaan nyt jonottaa taustalla Git-branch/PR-synkkiin näkyvällä statuksella, jotta admin-review ja GitHub-lähdekoodisynkki pysyvät samassa workflow’ssa ilman että live checkout likaantuu.
-* UI-käännösten GitHub-synkki näyttää nyt erikseen PR- ja merge-tilan, ja voi haluttaessa yrittää automergeä hyväksytylle käännös-PR:lle konfiguraation perusteella.
-* Adminiin lisättiin erillinen käyttöliittymäkäännösten GitHub-sync-dashboard suodatuksilla ja bulk-retryllä, jotta epäonnistuneet branch/PR-syncit voidaan hallita yhdestä näkymästä.
-* UI-käännösten approve/reject/requeue action-URL:t ohjaavat nyt turvallisesti takaisin editoriin tai listaan, jos niitä avataan selaimessa GET-linkkinä, joten preview ei enää kaadu 500-sivulle vahingossa avatusta toimintalinkistä.
-* UI-käännöseditori käsittelee nyt puuttuvat tai erikoisesti enkoodatut gettext-avaimet turvallisesti ja avaa annetun oikean catalog-rivin myös suoraan querystring-URL:sta ilman previewssa nähtyä 500-virhettä.
+* Added admin workflows for translating UI strings and demonstration content, including translator permissions, proposal review, DeepL-assisted drafts, catalog compilation, and optional GitHub synchronization while unpublished languages remain hidden from public users.
+* Added polished public city and today views so visitors can browse demonstrations by city, see Finland-wide demonstrations today, and open city-specific today pages from the city hub and sitemap.
+* Added public and admin city management so enabled contact-person cities appear from the top navigation, can be toggled in admin, and remain ready for city-scoped user permissions.
+* Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.
+* Organization information suggestion pages now accept logo URL suggestions, and admin suggestion review shows logo previews before applying selected fields.
+* Profile follower and following counts now open user lists so visitors can view and navigate to those profiles.
+* Recurring demonstration editors can now recalculate parent coordinates from the saved address/city and bulk-copy latitude/longitude to generated child demonstrations with the location fields.
+* Recurring demonstration admins can now add break dates and bulk-cancel generated child demonstrations from the parent editor; existing child demos on break dates are marked cancelled instead of silently recreated.
+* Expanded the public privacy notice to disclose the service's actual personal-data categories, processing purposes and legal bases, cookies and analytics, recipients, current retention limitations, and data-subject rights.
+* Recurring demonstration editors can now bulk-copy selected series fields to selected generated children, with future/all selection shortcuts, per-child audit history, and optional freezing after updates.
+* Regular and recurring admin demonstration editors now use clearer section navigation, improved panel hierarchy, and a responsive sticky save bar.
 * Added shared detailed and boolean username validators, canonical username storage for new accounts, and normalized availability, login, and MFA checks for consistent, safer account handling.
 * Added paikkakunta-scoped admin grants so national admins can assign users demonstration review permissions for one or more Finnish municipalities while keeping national/global admins above local reviewers.
 * Added an automatic MongoDB migration runner and registered the city-key backfill so future app starts apply safe, tracked data migrations without manual script execution.
@@ -104,9 +117,6 @@
 * Docker Compose development now uses Mailpit for local SMTP testing and exposes Redis alongside the app dependencies, making the dev stack closer to the test stack.
 
 ### Fixed
-* Demojen käännöstyöjono piilottaa menneet mielenosoitukset oletuksena ja näyttää ne vain erikseen pyydettäessä, jotta kääntäjien näkymä pysyy keskittyneenä aktiivisiin tapahtumiin.
-* UI-käännösehdotusten lähetys torjuu nyt virheelliset locale-polut siististi 404:llä FileNotFound-virheen sijaan, joten admin-route smoke- ja oikeat virhepolut eivät enää kaadu palvelinvirheeseen.
-* Mielenosoituksen detail-sivun HTML-cache käyttää nyt samaa resolved localea kuin itse renderöinti, jotta eri kieliversiot eivät vuoda toistensa yli vaikka hakulistaus näyttäisi oikean kielen.
 * City-scoped admin grants no longer satisfy unscoped demo route permission checks, and user edits now revoke existing ObjectId-backed city grants correctly.
 * Runtime models and user/profile helpers now resolve the active MongoDB database per operation, preventing stale database handles after app/test database resets.
 * Admin and suggestion route editors now allow the same street or route point to be added multiple times, so march routes can loop through a road more than once.
@@ -182,6 +192,19 @@
 * Added `docs/roadmap_2026.md`, a project roadmap that groups the April 27, 2026 backlog into admin UX, multilinguality, reliability, and cleanup workstreams with milestones for closing the 2026 baseline issues.
 
 ### Changed
+* Admin suggestion queue, suggestion review, and analytics views now use a calmer blue-and-orange visual style inspired by `/ohjeet`, replacing dense and neon treatments with clearer comparisons, cards, controls, and table hierarchy.
+* Organization management now has a clearer responsive page-number menu with nearby pages, first/last shortcuts, and readable previous/next controls.
+* User management was redesigned into a clearer workspace with account summaries, improved live search, recognizable user identity rows, status and role indicators, responsive pagination, and cleaner actions.
+* User management search, avatar, and summary-card icon alignment were corrected so controls and icon tiles remain centered.
+* The create-user modal now supports dark mode, matches the redesigned user-management workspace, suggests account names from email, explains roles clearly, and shows consistent validation and submission feedback.
+* Login history, forced-password-change, and delete-user modals now share the user-management dark-mode styling and provide clearer loading, confirmation, countdown, success, and error states.
+* Create-user and workflow confirmation buttons now keep readable foreground contrast in the admin light theme.
+* User action dropdowns now remain fully visible above the table footer instead of being clipped by the user-list card.
+* Organization management now matches the redesigned user workspace with profile summaries, clearer search and creation controls, recognizable organization rows, status indicators, themed actions, and responsive pagination.
+* Organization detail pages now use the refreshed admin visual system with a clearer profile summary, member and invitation workspaces, responsive tables, themed confirmations, and inline feedback; the visual system is also documented for future admin views.
+* Organization detail summary, fact, and member icons now remain properly centered instead of inheriting text-layout rules.
+* Organization create and edit forms now match the refreshed admin visual system with focused profile, logo, and social-link sections, clearer guidance, a responsive sticky save bar, and a dark-mode invitation modal.
+* Organization create-form guidance now reflects the first-time setup flow, and its profile-tip icons remain properly centered.
 * Redesigned `/ohjeet` into a clearer documentation-style guide with blue and orange site branding, a scannable table of contents, step-by-step submission help, improved troubleshooting, and mobile-friendly sections.
 * Removed the in-repository Mastobot runtime and Mastobot-specific admin counters from the main repo now that standalone cutover is handled in `mielenosoitukset-fi/mastobot`.
 

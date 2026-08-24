@@ -9,6 +9,7 @@ from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 from mielenosoitukset_fi.utils.variables import CITY_LIST, PERMISSIONS_GROUPS
 from mielenosoitukset_fi.utils.cities import CITY_KEY_TO_NAME, CITY_NAME_TO_KEY, normalize_city_key
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.validators import valid_email
 from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
@@ -46,6 +47,16 @@ def user_control():
     per_page = request.args.get("per_page", default=20, type=int) or 20
     per_page = min(max(per_page, 1), 100)
     pending_token_requests = mongo.api_token_requests.count_documents({"status": "pending"})
+    user_summary = {
+        "all": mongo.users.count_documents({}),
+        "confirmed": mongo.users.count_documents({"confirmed": True}),
+        "admins": mongo.users.count_documents(
+            {"role": {"$in": ["admin", "global_admin", "god"]}}
+        ),
+        "never_logged_in": mongo.users.count_documents(
+            {"$or": [{"last_login": {"$exists": False}}, {"last_login": None}]}
+        ),
+    }
     search_filter = {}
     if search_query:
         escaped_query = re.escape(search_query)
@@ -62,6 +73,9 @@ def user_control():
     page = min(page, total_pages)
     prev_page = page - 1 if page > 1 else None
     next_page = page + 1 if page < total_pages else None
+    page_window_start = max(1, page - 2)
+    page_window_end = min(total_pages, page + 2)
+    visible_pages = list(range(page_window_start, page_window_end + 1))
     users_cursor = (
         mongo.users.find(search_filter)
         .sort("username", 1)
@@ -79,6 +93,8 @@ def user_control():
         next_page=next_page,
         pending_token_requests=pending_token_requests,
         total_users=total_users,
+        user_summary=user_summary,
+        visible_pages=visible_pages,
     )
 
 
@@ -299,6 +315,7 @@ def edit_user(user_id):
         global_permissions=user.global_permissions,
         can_manage_scope_grants=_can_manage_scope_grants(current_user),
         city_list=CITY_LIST,
+        enabled_city_list=enabled_city_names(mongo),
         city_name_to_key=CITY_NAME_TO_KEY,
         city_scope_grant=city_scope_grant,
         city_admin_permissions=CITY_ADMIN_PERMISSIONS,
@@ -571,18 +588,19 @@ def create_user():
     """
     data = request.get_json() if request.is_json else request.form
 
-    email = data.get("email")
-    username = data.get("username") or email.split("@")[0]
-    displayname = data.get("displayname") or username
-    role = data.get("role") or "user"
-
-    # Basic validation
+    email = (data.get("email") or "").strip()
     if not email:
         flash_message("Sähköposti on pakollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
     if not valid_email(email):
         flash_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    username = (data.get("username") or email.split("@")[0]).strip()
+    displayname = (data.get("displayname") or username).strip()
+    role = data.get("role") or "user"
+
+    # Basic validation
     if role not in ["user", "admin", "global_admin"]:
         flash_message("Rooli ei ole kelvollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))

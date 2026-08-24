@@ -25,6 +25,10 @@ def _set_client_locale(client, locale):
         session["locale"] = locale
 
 
+def _publish_english(app):
+    app.config["BABEL_PUBLIC_LOCALES"] = ["fi", "en"]
+
+
 def _issue_read_token(db, user_id):
     from bson import ObjectId
 
@@ -47,8 +51,9 @@ def _issue_read_token(db, user_id):
 
 
 def test_demo_detail_renders_translated_fields_and_language_switcher(
-    client, db, seeded_data
+    app, client, db, seeded_data
 ):
+    _publish_english(app)
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
@@ -72,8 +77,9 @@ def test_demo_detail_renders_translated_fields_and_language_switcher(
 
 
 def test_demo_api_returns_translated_card_fields_for_active_locale(
-    client, db, seeded_data
+    app, client, db, seeded_data
 ):
+    _publish_english(app)
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
@@ -126,7 +132,10 @@ def test_demo_api_blueprint_returns_localized_results_for_requested_language(
     assert "translations" not in matching
 
 
-def test_demo_api_blueprint_uses_session_locale_when_lang_missing(client, db, seeded_data):
+def test_demo_api_blueprint_uses_session_locale_when_lang_missing(
+    app, client, db, seeded_data
+):
+    _publish_english(app)
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
@@ -203,7 +212,10 @@ def test_demo_api_blueprint_search_and_tag_filters_match_translations(
     )
 
 
-def test_calendar_month_view_renders_translated_demo_titles(client, db, seeded_data):
+def test_calendar_month_view_renders_translated_demo_titles(
+    app, client, db, seeded_data
+):
+    _publish_english(app)
     _set_demo_translation(db, seeded_data["demo_id"])
     _set_client_locale(client, "en")
 
@@ -223,14 +235,16 @@ def test_demonstrations_list_page_renders_without_server_error(client):
     assert "search-form" in body
 
 
-def test_set_language_redirects_back_to_safe_next_path(client):
+def test_set_language_redirects_back_to_safe_next_path(app, client):
+    _publish_english(app)
     response = client.get("/set_language/en?next=/demonstrations?search=climate")
 
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/demonstrations?search=climate")
 
 
-def test_language_switcher_keeps_current_page_and_query_string(client):
+def test_language_switcher_keeps_current_page_and_query_string(app, client):
+    _publish_english(app)
     response = client.get("/demonstrations?search=climate")
 
     assert response.status_code == 200

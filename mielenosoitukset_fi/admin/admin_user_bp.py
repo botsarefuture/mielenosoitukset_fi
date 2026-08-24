@@ -82,9 +82,26 @@ def user_control():
         .skip((page - 1) * per_page)
         .limit(per_page)
     )
+    users = list(users_cursor)
+    page_user_ids = [user["_id"] for user in users]
+    scoped_user_ids = {
+        str(grant["user_id"])
+        for grant in mongo.admin_scope_grants.find(
+            {
+                "user_id": {"$in": page_user_ids + [str(user_id) for user_id in page_user_ids]},
+                "scope_type": "city",
+                "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
+            },
+            {"user_id": 1},
+        )
+    }
+    for user in users:
+        if user.get("role") in {None, "user"} and str(user["_id"]) in scoped_user_ids:
+            user["role"] = "city_admin"
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/list.html",
-        users=list(users_cursor),
+        users=users,
         search_query=search_query,
         current_page=page,
         per_page=per_page,
@@ -325,6 +342,8 @@ def edit_user(user_id):
 
     # ─── GET → lomake ──────────────────────────────────────────────────────────
     city_scope_grant = _city_scope_grant_for_user(user._id)
+    if city_scope_grant.get("scope_keys") and user.role in {None, "user"}:
+        user.role = "city_admin"
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}user/edit.html",
         user=user,

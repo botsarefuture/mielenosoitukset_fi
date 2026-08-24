@@ -131,6 +131,25 @@ def test_city_admin_gets_limited_organization_permissions(db):
     assert not user.has_permission("DELETE_ORGANIZATION", ObjectId())
 
 
+def test_legacy_scoped_user_is_displayed_as_city_admin(
+    app, admin_client, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "VIEW_DEMO"],
+    )
+    db.users.update_one({"_id": scoped_user_id}, {"$set": {"role": "user"}})
+
+    user_list = admin_client.get("/admin/user/?search=city-admin")
+    edit_page = admin_client.get(f"/admin/user/edit_user/{scoped_user_id}")
+
+    assert user_list.status_code == 200
+    assert "Kaupunkiadmin" in user_list.get_data(as_text=True)
+    assert edit_page.status_code == 200
+    assert 'value="city_admin" selected' in edit_page.get_data(as_text=True)
+
+
 def test_city_admin_can_create_and_edit_but_cannot_verify_organization(
     app, db, seeded_data
 ):

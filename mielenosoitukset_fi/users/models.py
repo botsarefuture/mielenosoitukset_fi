@@ -211,7 +211,8 @@ class User(UserMixin):
             following       = doc.get("following", []),
             followed_organizations = doc.get("followed_organizations", []),
             followed_recurring_demos = doc.get("followed_recurring_demos", []),
-            global_admin    = doc.get("global_admin", False) or doc.get("role")=="global_admin",
+            global_admin    = doc.get("global_admin", False)
+                              or doc.get("role") in {"global_admin", "god", "superuser"},
             confirmed       = doc.get("confirmed", False),
             global_permissions = doc.get("global_permissions", []),
             role            = doc.get("role", DEFAULT_ROLE),

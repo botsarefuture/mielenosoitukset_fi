@@ -32,6 +32,20 @@ def test_super_admin_roles_grant_every_permission():
         assert _user(role=role).has_permission("ANY_FUTURE_PERMISSION")
 
 
+def test_god_role_also_enables_legacy_global_admin_checks_when_loaded():
+    user = User.from_db(
+        {
+            "_id": ObjectId(),
+            "username": "god-permission-test-user",
+            "password_hash": "unused",
+            "role": "god",
+        }
+    )
+
+    assert user.global_admin is True
+    assert user.has_permission("ANY_FUTURE_PERMISSION")
+
+
 def test_regular_user_still_needs_an_explicit_permission():
     user = _user()
 

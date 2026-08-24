@@ -5,7 +5,7 @@
 ## UNRELEASED
 
 ### Changed
-* Admin governance is now gathered under a consistent `/admin/governance/` panel for board clearances, their audit trail, and city management; legacy board UI links redirect into the panel, clearances persist in MongoDB across restarts and are enforced before granting `global_admin`, and city changes provide clearer filtering, unsaved-state feedback, and risk warnings.
+* Admin governance is now gathered under a consistent `/admin/governance/` panel for board clearances, their audit trail, and city management; the sidebar is grouped into clear content, user, governance, and system sections; legacy board UI links redirect into the panel; clearances persist in MongoDB across restarts and are enforced before granting `global_admin`; and city changes provide clearer filtering, unsaved-state feedback, and risk warnings.
 * Demonstration submission and organizer guidance pages now direct people who need translation help to `tuki@mielenosoitukset.fi`.
 * Translation catalogs are now separate from publicly enabled languages: production defaults to Finnish only, hides unpublished languages from regular and maintenance views, rejects unpublished locale selections, and omits them from SEO alternate links while English and Swedish remain available for translation work.
 * Added `/health` endpoint for uptime monitoring (fast, no context processor overhead).

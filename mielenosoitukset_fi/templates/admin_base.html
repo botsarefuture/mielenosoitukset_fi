@@ -41,10 +41,21 @@
   }
 
   .admin-sidebar-link:hover,
-  .admin-sidebar-link:focus {
+  .admin-sidebar-link:focus,
+  .admin-sidebar-link.active {
     background-color: light-dark(rgba(37, 99, 235, 0.08), rgba(255, 255, 255, 0.08));
     border-radius: 0.375rem;
     color: light-dark(#0f172a, #ffffff) !important;
+  }
+
+  .admin-sidebar-heading {
+    color: light-dark(#64748b, #94a3b8);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin: 1rem 0 0.3rem;
+    padding: 0 0.75rem;
+    text-transform: uppercase;
   }
 
   .admin-sidebar-card {
@@ -265,81 +276,94 @@ function confirmAction(action, taskId) {
 
 
   <!-- Navigation -->
+  {% set admin_endpoint = request.endpoint or '' %}
   <nav id="sidebarMenu" class="flex-grow-1 collapse d-md-block">
     <ul class="nav nav-pills flex-column mb-3">
       {% if current_user.global_admin %}
+        <li class="admin-sidebar-heading">{{ _('Yleiskuva') }}</li>
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin.admin_dashboard') }}">
-            <i class="fas fa-book me-2"></i>{{ _('Superkäyttäjän käsikirja') }}
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.admin_dashboard' %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}" {% if admin_endpoint == 'admin.admin_dashboard' %}aria-current="page"{% endif %}>
+            <i class="fas fa-house me-2"></i>{{ _('Yleiskuva') }}
           </a>
         </li>
       {% endif %}
 
-      {% if current_user.has_permission("LIST_USERS") %}
-        <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_user.user_control') }}">
-            <i class="fas fa-users me-2"></i>{{ _('Käyttäjien hallinta') }}
-          </a>
-        </li>
-      {% endif %}
-
-      {% if current_user.global_admin or current_user.has_permission("MANAGE_CLEARANCE") or current_user.has_permission("VIEW_CLEARANCE_AUDIT") or current_user.has_permission("MANAGE_CITIES") %}
-      <li class="nav-item">
-        <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_governance.dashboard') }}">
-          <i class="fas fa-landmark me-2"></i>{{ _('Hallinto') }}
-        </a>
-      </li>
-      {% endif %}
-
-      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
-        <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_org.organization_control') }}">
-            <i class="fas fa-building me-2"></i>{{ _('Organisaatioiden hallinta') }}
-          </a>
-        </li>
+      {% if current_user.has_permission("LIST_DEMOS") or current_user.has_permission("LIST_RECURRING_DEMOS") or current_user.has_permission("LIST_ORGANIZATIONS") or current_user.has_permission("EDIT_DEMO") %}
+      <li class="admin-sidebar-heading">{{ _('Sisältö') }}</li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_DEMOS") %}
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
-            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitusten hallinta') }}
-          </a>
-        </li>
-      {% endif %}
-
-      {% if current_user.has_permission("EDIT_DEMO") %}
-        <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.suggestions_list') }}">
-            <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
-            <i class="fas fa-triangle-exclamation me-2"></i>{{ _('Ilmoitusvirheet') }}
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.demo_control' or admin_endpoint == 'admin_demo.demo_command_center' %}active{% endif %}" href="{{ url_for('admin_demo.demo_control') }}">
+            <i class="fas fa-bullhorn me-2"></i>{{ _('Mielenosoitukset') }}
           </a>
         </li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_RECURRING_DEMOS") %}
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
-            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvien mielenosoitusten hallinta') }}
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_recu_demo.') %}active{% endif %}" href="{{ url_for('admin_recu_demo.recu_demo_control') }}">
+            <i class="fas fa-redo-alt me-2"></i>{{ _('Toistuvat mielenosoitukset') }}
           </a>
         </li>
       {% endif %}
 
-      {# ---- New link: Tapaukset ---- #}
+      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_org.') %}active{% endif %}" href="{{ url_for('admin_org.organization_control') }}">
+            <i class="fas fa-building me-2"></i>{{ _('Organisaatiot') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("EDIT_DEMO") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.suggestions_list' %}active{% endif %}" href="{{ url_for('admin_demo.suggestions_list') }}">
+            <i class="fas fa-comment-dots me-2"></i>{{ _('Ehdotukset') }}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin_demo.submission_errors_dashboard' %}active{% endif %}" href="{{ url_for('admin_demo.submission_errors_dashboard') }}">
+            <i class="fas fa-triangle-exclamation me-2"></i>{{ _('Ilmoitusvirheet') }}
+          </a>
+        </li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_USERS") or current_user.has_permission("LIST_CASES") or current_user.global_admin or current_user.has_permission("MANAGE_CLEARANCE") or current_user.has_permission("VIEW_CLEARANCE_AUDIT") or current_user.has_permission("MANAGE_CITIES") %}
+      <li class="admin-sidebar-heading">{{ _('Käyttäjät ja hallinto') }}</li>
+      {% endif %}
+
+      {% if current_user.has_permission("LIST_USERS") %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_user.') %}active{% endif %}" href="{{ url_for('admin_user.user_control') }}">
+            <i class="fas fa-users me-2"></i>{{ _('Käyttäjät') }}
+          </a>
+        </li>
+      {% endif %}
+
       {% if current_user.has_permission("LIST_CASES") %}
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_case.cases') }}">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_case.') %}active{% endif %}" href="{{ url_for('admin_case.cases') }}">
             <i class="fas fa-briefcase me-2"></i>{{ _('Tapaukset') }}
           </a>
         </li>
       {% endif %}
 
+      {% if current_user.global_admin or current_user.has_permission("MANAGE_CLEARANCE") or current_user.has_permission("VIEW_CLEARANCE_AUDIT") or current_user.has_permission("MANAGE_CITIES") %}
+      <li class="nav-item">
+        <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_governance.') or admin_endpoint.startswith('admin_city.') %}active{% endif %}" href="{{ url_for('admin_governance.dashboard') }}">
+          <i class="fas fa-landmark me-2"></i>{{ _('Hallinto') }}
+        </a>
+      </li>
+      {% endif %}
+
+      {% if current_user.has_permission("VIEW_ANALYTICS") or current_user.has_permission("VIEW_BACKGROUND_JOBS") or current_user.has_permission("EDIT_USER") %}
+      <li class="admin-sidebar-heading">{{ _('Järjestelmä') }}</li>
+      {% endif %}
+
       {% if current_user.has_permission("VIEW_ANALYTICS") %}
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin.stats') }}">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.stats' %}active{% endif %}" href="{{ url_for('admin.stats') }}">
             <i class="fas fa-chart-line me-2"></i>{{ _('Tilastot') }}
           </a>
         </li>
@@ -347,7 +371,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("VIEW_BACKGROUND_JOBS") %}
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin.background_jobs') }}">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.background_jobs' %}active{% endif %}" href="{{ url_for('admin.background_jobs') }}">
             <i class="fas fa-gears me-2"></i>{{ _('Taustatyöt') }}
           </a>
         </li>
@@ -355,7 +379,7 @@ function confirmAction(action, taskId) {
 
       {% if current_user.has_permission("EDIT_USER") %}
         <li class="nav-item">
-          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_dev.list_requests') }}">
+          <a class="nav-link admin-sidebar-link {% if admin_endpoint.startswith('admin_dev.') %}active{% endif %}" href="{{ url_for('admin_dev.list_requests') }}">
             <i class="fas fa-key me-2"></i>{{ _('Kehittäjähallinta') }}
           </a>
         </li>

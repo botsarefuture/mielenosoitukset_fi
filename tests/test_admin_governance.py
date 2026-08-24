@@ -18,6 +18,8 @@ def test_governance_dashboard_collects_admin_tools(app, db, seeded_data):
     assert "Superkäyttäjäroolin hyväksynnät" in page
     assert "Kaupunkihallinta" in page
     assert "Tapahtumaloki" in page
+    assert 'data-bs-target="#sidebar"' in page
+    assert "Avaa admin-valikko" in page
 
 
 def test_board_clearance_is_persisted_and_audited(app, db, seeded_data):

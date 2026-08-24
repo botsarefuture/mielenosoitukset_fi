@@ -20,15 +20,26 @@
     <!-- Page-specific styles -->
     <style>
       @media screen and (max-width: 768px) {
-        aside#sidebar {
-          display: none !important;
-          width: 0px !important;
-        }
-
         main {
           margin-left: 0 !important; /*reset the margin set in the sidebar_V2.css*/
         }
+
+        .admin-sidebar {
+          width: min(88vw, 320px) !important;
+        }
       }
+
+  @media screen and (min-width: 768px) {
+    .admin-sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      width: 280px;
+    }
+  }
 
   .admin-sidebar {
     background: light-dark(#eef2f7, #111827);
@@ -158,19 +169,22 @@
   toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
 }
 </script>
+    <div class="admin-mobile-bar d-flex d-md-none align-items-center justify-content-between gap-3 p-2 sticky-top bg-body border-bottom">
+      <strong><i class="fas fa-toolbox me-2" aria-hidden="true"></i>{{ _('Admin-paneeli') }}</strong>
+      <button class="btn btn-outline-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar" aria-label="{{ _('Avaa admin-valikko') }}">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
     {# ==== SIDEBAR + CONTENT WRAPPER ==== #}
     <div class="d-flex flex-grow-1">
 
-        {# ---------- Sidebar (desktop) ---------- #}
-<aside id="sidebar" class="admin-sidebar d-flex flex-column flex-shrink-0 p-3"
-       style="width: 280px; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
-  <!-- Toggle button (mobile) -->
+        {# ---------- Responsive sidebar ---------- #}
+<aside id="sidebar" class="admin-sidebar offcanvas-md offcanvas-start flex-shrink-0 p-3" tabindex="-1" aria-labelledby="admin-sidebar-title">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h5 mb-0 text-center flex-grow-1">
+    <h2 class="h5 mb-0 text-center flex-grow-1" id="admin-sidebar-title">
       <i class="fas fa-toolbox me-2"></i>      {{ _('Työkalupakki') }}
     </h2>
-    <button class="btn admin-theme-toggle d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
-      &#9776;
+    <button class="btn-close d-md-none" type="button" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="{{ _('Sulje admin-valikko') }}">
     </button>
   </div>
 <!-- Tasks widget -->
@@ -277,7 +291,7 @@ function confirmAction(action, taskId) {
 
   <!-- Navigation -->
   {% set admin_endpoint = request.endpoint or '' %}
-  <nav id="sidebarMenu" class="flex-grow-1 collapse d-md-block">
+  <nav id="sidebarMenu" class="flex-grow-1">
     <ul class="nav nav-pills flex-column mb-3">
       {% if current_user.global_admin %}
         <li class="admin-sidebar-heading">{{ _('Yleiskuva') }}</li>

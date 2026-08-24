@@ -118,6 +118,7 @@
   }
 
   .user-role.admin { color: light-dark(#9a4d00, #ffd098); background: var(--users-orange-soft); }
+  .user-role.translator { color: light-dark(#075985, #7dd3fc); background: light-dark(#e0f2fe, rgba(14, 116, 144, .22)); }
   .user-role.global-admin { color: var(--users-blue-dark); background: var(--users-blue-soft); }
 
   .user-login {
@@ -267,6 +268,8 @@
         <td>
           {% if user.role == 'admin' %}
             <span class="user-role admin"><i class="fas fa-shield" aria-hidden="true"></i>{{ _('Admin') }}</span>
+          {% elif user.role == 'translator' %}
+            <span class="user-role translator"><i class="fas fa-language" aria-hidden="true"></i>{{ _('Kääntäjä') }}</span>
           {% elif user.role in ['global_admin', 'god'] %}
             <span class="user-role global-admin"><i class="fas fa-shield-halved" aria-hidden="true"></i>{{ _('Superkäyttäjä') }}</span>
           {% else %}

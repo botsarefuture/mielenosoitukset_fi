@@ -16,6 +16,9 @@ from mielenosoitukset_fi.scripts.send_demo_reminders import main as demo_sche
 from mielenosoitukset_fi.scripts.process_submission_notifications import (
     run as process_submit_notifications,
 )
+from mielenosoitukset_fi.scripts.process_ui_translation_sync import (
+    run as process_ui_translation_sync,
+)
 from mielenosoitukset_fi.utils.analytics import prep
 from mielenosoitukset_fi.scripts.auto_close_cases import main as auto_close_cases
 
@@ -106,6 +109,13 @@ JOB_DEFINITIONS: List[JobDefinition] = [
         description="Sends confirmation + admin notification emails for submitted demonstrations.",
         func=process_submit_notifications,
         default_trigger=_interval(minutes=5),
+    ),
+    JobDefinition(
+        key="process_ui_translation_sync",
+        name="UI translation Git sync",
+        description="Pushes approved UI translation catalog changes to the configured Git branch/PR flow.",
+        func=process_ui_translation_sync,
+        default_trigger=_interval(minutes=10),
     ),
     JobDefinition(
         key="auto_close_cases",

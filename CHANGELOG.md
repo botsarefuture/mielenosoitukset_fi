@@ -46,6 +46,7 @@
 * Streamlined `_path_value` logic in test route smoke tests and enhanced payload generation for better test coverage and maintainability.
 
 ### Added
+* Added admin workflows for translating UI strings and demonstration content, including translator permissions, proposal review, DeepL-assisted drafts, catalog compilation, and optional GitHub synchronization while unpublished languages remain hidden from public users.
 * Added polished public city and today views so visitors can browse demonstrations by city, see Finland-wide demonstrations today, and open city-specific today pages from the city hub and sitemap.
 * Added public and admin city management so enabled contact-person cities appear from the top navigation, can be toggled in admin, and remain ready for city-scoped user permissions.
 * Admin demonstration listing can now filter by event year, required hashtag, and missing hashtag while general search also matches tags and descriptions.

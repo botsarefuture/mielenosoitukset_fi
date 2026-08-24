@@ -59,6 +59,22 @@
         {
             "name": "GENERATE_EDIT_LINK",
             "description": "Generate edit link for demo."
+        },
+        {
+            "name": "TRANSLATE_DEMO",
+            "description": "Create translation proposals for demos."
+        },
+        {
+            "name": "REVIEW_DEMO_TRANSLATIONS",
+            "description": "Approve or reject demo translation proposals."
+        },
+        {
+            "name": "TRANSLATE_UI",
+            "description": "Create UI translation proposals for gettext strings."
+        },
+        {
+            "name": "REVIEW_UI_TRANSLATIONS",
+            "description": "Approve or reject UI translation proposals."
         }
     ],
     "Case Management": [

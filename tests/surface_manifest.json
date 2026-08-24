@@ -118,21 +118,21 @@
     ]
   },
   "background_jobs": {
-    "count": 9,
+    "count": 10,
     "coverage": [
       "jobs",
       "integration"
     ],
-    "sha256": "99e3be0a0c0d69e5dec9e6b79ca4ee5463a6916a4b655d730748be4224748711"
+    "sha256": "9682ed3d9025ddd0db93fe3c6ccf815faba39ade36d30bf77d305f819111ba93"
   },
   "routes": {
     "mielenosoitukset_fi/admin/admin_bp.py": {
-      "count": 26,
+      "count": 34,
       "coverage": [
         "integration",
         "e2e-admin"
       ],
-      "sha256": "a1b7f38e96edbb54c9ccebd305fab33d1cd90da15bda1bc803fae4e6e7b0cb62"
+      "sha256": "0dfb8f5d9deaa4a7dd9554635c8c5418e2af122dea7f954faf2a472d29e344bf"
     },
     "mielenosoitukset_fi/admin/admin_case_bp.py": {
       "count": 12,
@@ -150,12 +150,12 @@
       "sha256": "651daec4ff338a32e0ee863fb56c268fe26cafac872b016a53066275b7490b46"
     },
     "mielenosoitukset_fi/admin/admin_demo_bp.py": {
-      "count": 41,
+      "count": 46,
       "coverage": [
         "integration",
         "e2e-admin"
       ],
-      "sha256": "d60a35056535d103fa958399c06a6d34b713cb927fdc30838523f143c4808207"
+      "sha256": "8175e5fb53c35240dafa87601bd8073e8676c0227d53d951ae504bf2fc1a6d86"
     },
     "mielenosoitukset_fi/admin/admin_dev_bp.py": {
       "count": 6,
@@ -250,7 +250,7 @@
         "integration",
         "e2e-public"
       ],
-      "sha256": "3d8fe08ddd327609b9cb394757ec9accf0f10133c0ca230deb557aa27db0e3ae"
+      "sha256": "763f92e9ad9e1c2dd5985b0656bbcc0bed005f12b51075c86551c996120f12c3"
     },
     "mielenosoitukset_fi/developer_bp.py": {
       "count": 9,

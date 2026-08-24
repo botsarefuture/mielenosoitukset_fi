@@ -4,6 +4,13 @@ function format_time(time) {
   return `${hh}:${mm}`;
 }
 
+const demoCardI18n = window.demoCardI18n || {};
+const currentLocale = window.currentLocale || document.documentElement.lang || "fi";
+
+function t(key, fallback) {
+  return demoCardI18n[key] || fallback;
+}
+
 
 function normalizeDemoCardData(demo) {
   const tags = Array.isArray(demo.tags) ? demo.tags : [];
@@ -70,7 +77,9 @@ function renderDemoCards(demoData, options = {}) {
     const demoEndTime = normalizedDemo.endTime || null;
 
     // Combine for display
-    const timeText = demoEndTime ? `${demoStartTime} – ${demoEndTime}` : `${demoStartTime} alkaen`;
+    const timeText = demoEndTime
+      ? `${demoStartTime} – ${demoEndTime}`
+      : `${demoStartTime} ${t('startingFrom', 'alkaen')}`;
 
     // Set in card
     card.querySelector('.demo-card-time').append(timeText);
@@ -85,7 +94,7 @@ function renderDemoCards(demoData, options = {}) {
     if (normalizedDemo.cancelled) {
       const cancelledBadge = document.createElement('span');
       cancelledBadge.className = 'demo-badge cancelled-badge';
-      cancelledBadge.textContent = 'Peruttu';
+      cancelledBadge.textContent = t('cancelled', 'Peruttu');
       badgeContainer.appendChild(cancelledBadge);
     }
 
@@ -96,7 +105,7 @@ function renderDemoCards(demoData, options = {}) {
       if (demoDateObj.getTime() === todayDate.getTime()) {
         const todayBadge = document.createElement('span');
         todayBadge.className = 'demo-badge today-badge';
-        todayBadge.textContent = 'Tänään';
+        todayBadge.textContent = t('today', 'Tänään');
         badgeContainer.appendChild(todayBadge);
       }
     }
@@ -182,7 +191,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     // Show loading state
     if (loadMoreBtn) {
       loadMoreBtn.disabled = true;
-      loadMoreBtn.textContent = 'Ladataan…'; // temporary text
+      loadMoreBtn.textContent = `${t('loading', 'Ladataan mielenosoituksia...')}`; // temporary text
       loadMoreBtn.classList.add('loading');   // optional CSS spinner class
     }
     // Build query params
@@ -191,6 +200,10 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       per_page: perPage,
       ...extraParams // merge in any page-specific params
     });
+
+    if (currentLocale) {
+      params.set("lang", currentLocale);
+    }
 
     const res = await fetch(`/api/demonstrations?${params.toString()}`);
     const data = await res.json();
@@ -228,7 +241,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
       if (loadMoreBtn) {
         loadMoreBtn.style.display = "block";
         loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Lataa lisää';
+        loadMoreBtn.textContent = t('loadMore', 'Lataa lisää');
         loadMoreBtn.onclick = () => loadDemos(currentPage + 1, true, extraParams);
       }
     } else {
@@ -239,7 +252,7 @@ async function loadDemos(page = 1, append = false, extraParams = {}) {
     console.error("Failed to load demos:", err);
     if (loadMoreBtn) {
       loadMoreBtn.disabled = false;
-      loadMoreBtn.textContent = 'Lataa lisää';
+      loadMoreBtn.textContent = t('loadMore', 'Lataa lisää');
     }
   }
 
@@ -271,9 +284,9 @@ function updateDemoCardAttending(cardElement, friends) {
 
   if (friends && friends.length > 0) {
     friendsDiv.style.display = 'flex';
-    friendsDiv.innerHTML = friends.slice(0, 3).map(f => `
+      friendsDiv.innerHTML = friends.slice(0, 3).map(f => `
       <img class="friend-avatar animate-fade-in-up" src="${f.avatar}" alt="${f.name}" title="${f.name}">
-    `).join('') + `<span class="friends-text">${friends[0].name} osallistuu</span>`;
+    `).join('') + `<span class="friends-text">${friends[0].name} ${t('attendingSuffix', 'osallistuu')}</span>`;
     noFriendsDiv.style.display = 'none';
   } else {
     friendsDiv.style.display = 'none';
@@ -302,7 +315,7 @@ function getFriendsAttending(demoCards) {
       if (friendsDiv) friendsDiv.style.display = 'none';
       if (noFriendsDiv) {
         noFriendsDiv.style.display = 'flex';
-        noFriendsDiv.innerHTML = `<span class="login-prompt">Kirjaudu sisään käyttääksesi sosiaalisia toimintoja</span>`;
+        noFriendsDiv.innerHTML = `<span class="login-prompt">${t('loginPrompt', 'Kirjaudu sisään käyttääksesi sosiaalisia toimintoja')}</span>`;
       }
     });
     return;

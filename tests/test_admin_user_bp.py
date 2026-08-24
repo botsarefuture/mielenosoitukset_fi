@@ -79,3 +79,29 @@ def test_user_control_searches_display_names(admin_client, db, seeded_data):
     body = response.get_data(as_text=True)
     assert "Friendly Admin" in body
     assert "displayname-search-user" in body
+
+
+def test_edit_user_exposes_translator_role_and_auto_assigns_permission(admin_client, db, seeded_data):
+    translator_id = seeded_data["translator_id"]
+
+    response = admin_client.get(f"/admin/user/edit_user/{translator_id}")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert 'value="translator"' in body
+
+    save_response = admin_client.post(
+        f"/admin/user/save_user/{translator_id}",
+        data={
+            "username": "translator",
+            "email": "translator@example.test",
+            "role": "translator",
+            "confirmed": "on",
+        },
+        follow_redirects=False,
+    )
+    assert save_response.status_code == 302
+
+    user_doc = db.users.find_one({"_id": translator_id})
+    assert user_doc["role"] == "translator"
+    assert "TRANSLATE_DEMO" in user_doc.get("global_permissions", [])
+    assert "TRANSLATE_UI" in user_doc.get("global_permissions", [])

@@ -151,7 +151,21 @@
             "description": "Can invite users to organization."
         }
     ],
-    "Miscallanious": [
+    "Administration": [
+        {
+            "name": "MANAGE_CLEARANCE",
+            "description": "Grant and revoke board clearances."
+        },
+        {
+            "name": "VIEW_CLEARANCE_AUDIT",
+            "description": "View the board-clearance audit log."
+        },
+        {
+            "name": "MANAGE_CITIES",
+            "description": "Publish cities and manage city settings."
+        }
+    ],
+    "Miscellaneous": [
         {
             "name": "VIEW_ANALYTICS",
             "description": "View analytics"

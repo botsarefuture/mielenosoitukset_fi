@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Admin governance is now gathered under a consistent `/admin/governance/` panel for board clearances, their audit trail, and city management; the responsive sidebar is grouped into clear content, user, governance, and system sections and remains usable as an offcanvas menu on mobile; legacy board UI links redirect into the panel; clearances persist in MongoDB across restarts and are enforced before granting `global_admin`; and city management loads counts with two aggregate queries, prioritizes relevant cities, supports visible-row bulk actions, and provides clearer unsaved-state feedback and risk warnings.
 * City-scoped administrators now use a visible `city_admin` role, enter the admin area through their scoped demonstration view, and automatically receive limited organization listing, viewing, creation, editing, and invitation access.
 * Demonstration submission and organizer guidance pages now direct people who need translation help to `tuki@mielenosoitukset.fi`.
 * Translation catalogs are now separate from publicly enabled languages: production defaults to Finnish only, hides unpublished languages from regular and maintenance views, rejects unpublished locale selections, and omits them from SEO alternate links while English and Swedish remain available for translation work.
@@ -24,6 +25,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* API token creation, validation, listing, revocation, and usage logging now resolve the active MongoDB database per operation, preventing stale database handles after application or test database resets.
 * City admins cannot change an organization's verified status or invite users to verified organizations; forged form and API requests are blocked server-side while general admins and super admins retain their broader access.
 * The demonstration translation queue now includes active recurring-series parents, while still hiding their duplicate generated occurrences, and recurring translations use the same proposal and review workflow as one-off demonstrations.
 * Admin UI translations now open with untranslated strings visible by default instead of an empty pending-review filter when no proposals exist yet.

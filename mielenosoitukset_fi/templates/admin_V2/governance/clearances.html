@@ -1,0 +1,74 @@
+{% extends 'admin_base.html' %}
+{% set governance_tab = 'clearances' %}
+
+{% block title %}{{ _('Hallituksen hyväksynnät') }} – Mielenosoitukset.fi{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">{% endblock %}
+
+{% block main_content %}
+<section class="governance-shell">
+  <header class="governance-hero">
+    <p class="governance-eyebrow mb-2">{{ _('Hallinto') }}</p>
+    <div class="d-flex justify-content-between gap-3 align-items-start flex-wrap">
+      <div><h1 class="h2 mb-2">{{ _('Superkäyttäjäroolin hyväksynnät') }}</h1><p class="text-body-secondary mb-0">{{ _('Hallituksen hyväksyntä vaaditaan ennen kuin käyttäjälle voidaan myöntää global_admin-superkäyttäjärooli. Jokainen muutos kirjataan tapahtumalokiin.') }}</p></div>
+      <span class="badge text-bg-success fs-6">{{ approved_count }} {{ _('hyväksytty') }}</span>
+    </div>
+  </header>
+  {% include 'admin_V2/governance/_tabs.html' %}
+
+  <section class="governance-card">
+    <div class="governance-toolbar">
+      <label class="visually-hidden" for="clearance-search">{{ _('Hae käyttäjänimellä tai roolilla') }}</label>
+      <input class="form-control" id="clearance-search" type="search" placeholder="{{ _('Hae käyttäjänimellä tai roolilla') }}">
+      <div id="clearance-status" class="governance-status text-body-secondary" role="status" aria-live="polite"></div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="clearance-table">
+        <caption class="visually-hidden">{{ _('Käyttäjien superkäyttäjäroolin hallitushyväksynnät') }}</caption>
+        <thead><tr><th>{{ _('Käyttäjä') }}</th><th>{{ _('Rooli') }}</th><th>{{ _('Tila') }}</th><th>{{ _('Myöntäjä') }}</th><th>{{ _('Päivitetty') }}</th><th class="text-end">{{ _('Toiminnot') }}</th></tr></thead>
+        <tbody>
+          {% for user in users %}
+          <tr data-user-row data-search="{{ (user.username ~ ' ' ~ user.role)|lower }}">
+            <td class="fw-semibold">{{ user.username }}</td><td>{{ user.role or '—' }}</td>
+            <td>{% if user.approved %}<span class="badge text-bg-success">{{ _('Hyväksytty') }}</span>{% else %}<span class="badge text-bg-secondary">{{ _('Ei hyväksyntää') }}</span>{% endif %}</td>
+            <td>{{ user.granted_by or '—' }}</td><td>{{ user.timestamp|datetimeformat('%d.%m.%Y %H:%M') if user.timestamp else '—' }}</td>
+            <td class="text-end"><button class="btn btn-sm {{ 'btn-outline-danger' if user.approved else 'btn-outline-success' }}" type="button" data-clearance-action data-url="{{ url_for('board_compliance.set_clearance', user_id=user.id) }}" data-approved="{{ 'false' if user.approved else 'true' }}" data-username="{{ user.username }}">{{ _('Peru hyväksyntä') if user.approved else _('Myönnä hyväksyntä') }}</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<script>
+const clearanceSearch = document.getElementById('clearance-search');
+clearanceSearch.addEventListener('input', () => {
+  const query = clearanceSearch.value.trim().toLowerCase();
+  document.querySelectorAll('[data-user-row]').forEach((row) => {
+    row.hidden = !row.dataset.search.includes(query);
+  });
+});
+
+document.querySelectorAll('[data-clearance-action]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const approved = button.dataset.approved === 'true';
+    const verb = approved ? '{{ _('myöntää hyväksyntä käyttäjälle') }}' : '{{ _('perua käyttäjän hyväksyntä') }}';
+    if (!window.confirm(`{{ _('Haluatko varmasti') }} ${verb} ${button.dataset.username}?`)) return;
+    button.disabled = true;
+    const status = document.getElementById('clearance-status');
+    status.textContent = '{{ _('Tallennetaan…') }}';
+    try {
+      const response = await fetch(button.dataset.url, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': {{ governance_csrf_token|tojson }}}, body: JSON.stringify({approved})});
+      const result = await response.json();
+      if (!response.ok || result.status !== 'OK') throw new Error(result.message || '{{ _('Tallennus epäonnistui.') }}');
+      status.textContent = result.message;
+      window.location.reload();
+    } catch (error) {
+      status.textContent = error.message;
+      status.classList.add('text-danger');
+      button.disabled = false;
+    }
+  });
+});
+</script>
+{% endblock %}

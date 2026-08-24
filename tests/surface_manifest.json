@@ -165,6 +165,14 @@
       ],
       "sha256": "719cc75a2c4725c6558926b8767ba0369ae6bd1658d0644309b90378b13a00ba"
     },
+    "mielenosoitukset_fi/admin/admin_governance_bp.py": {
+      "count": 3,
+      "coverage": [
+        "integration",
+        "e2e-admin"
+      ],
+      "sha256": "94de410e4e8ebb65c21e395cc20c78d24e9ed7456ead73d10e18da4818ed274b"
+    },
     "mielenosoitukset_fi/admin/admin_kampanja_bp.py": {
       "count": 6,
       "coverage": [

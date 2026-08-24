@@ -24,8 +24,7 @@ from mielenosoitukset_fi.utils.demo_localization import (
     get_demo_localized_dict,
 )
 from mielenosoitukset_fi.utils.tokens import (
-    TOKENS_COLLECTION,
-    TOKEN_USAGE_LOGS,
+    token_usage_logs_collection,
     token_expired,
     token_renewal_needed,
     create_token,
@@ -86,7 +85,7 @@ def token_required(required_scopes=None, auto_renew=True):
                     raise ApiException(Message("Insufficient token scope", "token_scope"), 403)
 
             # Log usage
-            TOKEN_USAGE_LOGS.insert_one({
+            token_usage_logs_collection().insert_one({
                 "token_id": token_record["_id"],
                 "timestamp": datetime.now(),
                 "endpoint": request.path,

@@ -1,8 +1,10 @@
 {% extends 'admin_base.html' %}
+{% set governance_tab = 'cities' %}
 
 {% block title %}{{ _('Kaupunkihallinta') }} – Mielenosoitukset.fi{% endblock %}
 
 {% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">
 <style>
   .city-admin-shell {
     max-width: 1120px;
@@ -30,11 +32,43 @@
     padding: 1rem;
   }
 
+  .city-admin-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .city-admin-summary-item {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+  }
+
+  .city-admin-summary-value {
+    display: block;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
   .city-admin-tools {
     display: flex;
     gap: 0.75rem;
     margin-bottom: 1rem;
     flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .city-admin-bulk-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .city-admin-save-state {
+    color: var(--bs-warning-text-emphasis);
+    font-weight: 700;
   }
 
   .city-admin-search {
@@ -51,6 +85,10 @@
     .city-admin-header {
       flex-direction: column;
     }
+
+    .city-admin-summary {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 {% endblock %}
@@ -64,15 +102,57 @@
         {{ _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.') }}
       </p>
     </div>
-    <span class="badge text-bg-primary">{{ active_count }} {{ _('käytössä') }}</span>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <span class="badge text-bg-primary">{{ active_count }} {{ _('käytössä') }}</span>
+      {% if current_user.global_admin or current_user.has_permission('LIST_USERS') %}
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('admin_user.user_control') }}">
+        <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ _('Hallinnoi kaupunkioikeuksia') }}
+      </a>
+      {% endif %}
+    </div>
   </div>
 
-  <form method="post" class="city-admin-card">
+  {% include 'admin_V2/governance/_tabs.html' %}
+
+  <form method="post" class="city-admin-card" id="city-admin-form">
+    <div class="city-admin-summary" aria-label="{{ _('Kaupunkihallinnan yhteenveto') }}">
+      <div class="city-admin-summary-item">
+        <span class="city-admin-summary-value">{{ active_count }}</span>
+        <span class="text-body-secondary">{{ _('kaupunkia käytössä') }}</span>
+      </div>
+      <div class="city-admin-summary-item">
+        <span class="city-admin-summary-value">{{ demo_count }}</span>
+        <span class="text-body-secondary">{{ _('ilmoitusta kaupungeissa') }}</span>
+      </div>
+      <div class="city-admin-summary-item">
+        <span class="city-admin-summary-value">{{ grant_count }}</span>
+        <span class="text-body-secondary">{{ _('voimassa olevaa kaupunkioikeutta') }}</span>
+      </div>
+    </div>
+
     <div class="city-admin-tools">
+      <label class="visually-hidden" for="city-filter">{{ _('Hae kaupunkia') }}</label>
       <input class="form-control city-admin-search" type="search" id="city-filter" placeholder="{{ _('Suodata kaupunkeja') }}">
+      <label class="visually-hidden" for="city-status-filter">{{ _('Suodata tilan mukaan') }}</label>
+      <select class="form-select w-auto" id="city-status-filter" aria-label="{{ _('Suodata tilan mukaan') }}">
+        <option value="relevant" selected>{{ _('Käytössä tai sisältöä') }}</option>
+        <option value="all">{{ _('Kaikki kaupungit') }}</option>
+        <option value="enabled">{{ _('Vain käytössä olevat') }}</option>
+        <option value="disabled">{{ _('Vain pois käytöstä olevat') }}</option>
+      </select>
+      <span class="small text-body-secondary" id="city-visible-count" aria-live="polite"></span>
+      <div class="city-admin-bulk-actions" aria-label="{{ _('Näkyvien kaupunkien massatoiminnot') }}">
+        <button class="btn btn-outline-success btn-sm" type="button" data-bulk-city-state="true">
+          {{ _('Ota näkyvät käyttöön') }}
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bulk-city-state="false">
+          {{ _('Poista näkyvät käytöstä') }}
+        </button>
+      </div>
       <button class="btn btn-primary" type="submit">
         <i class="fa-solid fa-floppy-disk me-2"></i>{{ _('Tallenna') }}
       </button>
+      <span class="city-admin-save-state" id="city-save-state" role="status" aria-live="polite"></span>
     </div>
 
     <div class="table-responsive">
@@ -87,15 +167,15 @@
         </thead>
         <tbody>
           {% for row in city_rows %}
-          <tr data-city-row data-city-name="{{ row.name|lower }}">
+          <tr data-city-row data-city-name="{{ row.name|lower }}" data-enabled="{{ 'true' if row.enabled else 'false' }}" data-relevant="{{ 'true' if row.enabled or row.demo_count or row.grant_count else 'false' }}">
             <td>
-              <input class="form-check-input" type="checkbox" name="enabled_cities[]" value="{{ row.key }}" id="city_{{ row.key }}" {% if row.enabled %}checked{% endif %}>
+              <input class="form-check-input" type="checkbox" name="enabled_cities[]" value="{{ row.key }}" id="city_{{ row.key }}" data-city-toggle data-initial="{{ 'true' if row.enabled else 'false' }}" data-city-name="{{ row.name }}" data-demo-count="{{ row.demo_count }}" data-grant-count="{{ row.grant_count }}" {% if row.enabled %}checked{% endif %}>
             </td>
             <td>
               <label class="fw-semibold" for="city_{{ row.key }}">{{ row.name }}</label>
               <div class="small text-body-secondary">{{ row.key }}</div>
             </td>
-            <td>{{ row.demo_count }}</td>
+            <td><a href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
             <td>{{ row.grant_count }}</td>
           </tr>
           {% endfor %}
@@ -106,11 +186,82 @@
 </section>
 
 <script>
-document.getElementById('city-filter').addEventListener('input', (event) => {
-  const query = event.target.value.trim().toLowerCase();
-  document.querySelectorAll('[data-city-row]').forEach((row) => {
-    row.style.display = row.dataset.cityName.includes(query) ? '' : 'none';
+const cityForm = document.getElementById('city-admin-form');
+const citySearch = document.getElementById('city-filter');
+const cityStatus = document.getElementById('city-status-filter');
+const saveState = document.getElementById('city-save-state');
+const visibleCount = document.getElementById('city-visible-count');
+const cityToggles = [...document.querySelectorAll('[data-city-toggle]')];
+const cityRows = [...document.querySelectorAll('[data-city-row]')];
+let cityFormSubmitting = false;
+
+function filterCities() {
+  const query = citySearch.value.trim().toLowerCase();
+  const status = cityStatus.value;
+  let shown = 0;
+  cityRows.forEach((row) => {
+    const matchesName = row.dataset.cityName.includes(query);
+    const enabled = row.dataset.enabled === 'true';
+    const matchesStatus = status === 'all' ||
+      (status === 'relevant' && row.dataset.relevant === 'true') ||
+      (status === 'enabled' && enabled) ||
+      (status === 'disabled' && !enabled);
+    row.hidden = !(matchesName && matchesStatus);
+    if (!row.hidden) shown += 1;
+  });
+  visibleCount.textContent = `{{ _('Näytetään') }} ${shown} / ${cityRows.length}`;
+}
+
+function updateSaveState() {
+  const changed = cityToggles.some((toggle) => toggle.checked !== (toggle.dataset.initial === 'true'));
+  saveState.textContent = changed ? '{{ _('Tallentamattomia muutoksia') }}' : '';
+}
+
+citySearch.addEventListener('input', filterCities);
+cityStatus.addEventListener('change', filterCities);
+cityToggles.forEach((toggle) => toggle.addEventListener('change', () => {
+  toggle.closest('[data-city-row]').dataset.enabled = String(toggle.checked);
+  updateSaveState();
+  filterCities();
+}));
+
+document.querySelectorAll('[data-bulk-city-state]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const checked = button.dataset.bulkCityState === 'true';
+    cityRows.filter((row) => !row.hidden).forEach((row) => {
+      const toggle = row.querySelector('[data-city-toggle]');
+      toggle.checked = checked;
+      row.dataset.enabled = String(checked);
+      if (checked) row.dataset.relevant = 'true';
+    });
+    updateSaveState();
+    filterCities();
   });
 });
+
+cityForm.addEventListener('submit', (event) => {
+  const risky = cityToggles.filter((toggle) =>
+    toggle.dataset.initial === 'true' && !toggle.checked &&
+    (Number(toggle.dataset.demoCount) > 0 || Number(toggle.dataset.grantCount) > 0)
+  );
+  if (!risky.length) {
+    cityFormSubmitting = true;
+    return;
+  }
+  const names = risky.map((toggle) => `${toggle.dataset.cityName} (${toggle.dataset.demoCount} {{ _('ilmoitusta') }}, ${toggle.dataset.grantCount} {{ _('kaupunkioikeutta') }})`).join('\n');
+  if (!window.confirm(`{{ _('Olet poistamassa käytöstä kaupunkeja, joihin liittyy sisältöä tai oikeuksia:') }}\n\n${names}\n\n{{ _('Haluatko jatkaa?') }}`)) {
+    event.preventDefault();
+    return;
+  }
+  cityFormSubmitting = true;
+});
+
+window.addEventListener('beforeunload', (event) => {
+  if (cityFormSubmitting || !saveState.textContent) return;
+  event.preventDefault();
+  event.returnValue = '';
+});
+
+filterCities();
 </script>
 {% endblock %}

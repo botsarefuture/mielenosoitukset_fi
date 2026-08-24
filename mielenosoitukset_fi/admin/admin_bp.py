@@ -81,6 +81,21 @@ def _get_job_manager_or_abort():
     return job_manager
 
 
+def _is_limited_city_admin(user) -> bool:
+    """Return whether the actor must stay in city-scoped admin surfaces."""
+    if getattr(user, "role", None) in {"admin", "global_admin", "god"}:
+        return False
+    return bool(
+        hasattr(user, "has_city_admin_scope_grants")
+        and user.has_city_admin_scope_grants()
+    )
+
+
+def _require_global_admin_surface() -> None:
+    if _is_limited_city_admin(current_user):
+        abort(403)
+
+
 def _json_safe(value):
     if isinstance(value, dict):
         return {k: _json_safe(v) for k, v in value.items()}
@@ -814,6 +829,8 @@ def load_user(user_id):
 @admin_required
 def admin_dashboard():
     """Render the admin dashboard."""
+    if _is_limited_city_admin(current_user):
+        return redirect(url_for("admin_demo.demo_control"))
     # Load current panic mode
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
@@ -827,6 +844,7 @@ def admin_dashboard():
 @admin_required
 def activate_panic():
     """Activate global panic mode."""
+    _require_global_admin_surface()
     mongo.panic.update_one(
         {"name": "global"},
         {"$set": {"panic": True}},
@@ -843,6 +861,7 @@ def activate_panic():
 @admin_required
 def deactivate_panic():
     """Deactivate global panic mode."""
+    _require_global_admin_surface()
     mongo.panic.update_one(
         {"name": "global"},
         {"$set": {"panic": False}},
@@ -859,6 +878,7 @@ def deactivate_panic():
 @admin_required
 def panic_status():
     """Return current panic mode status as JSON."""
+    _require_global_admin_surface()
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
     _log_admin_event("panic_status_requested", panic_mode=panic_mode)
@@ -870,6 +890,7 @@ def panic_status():
 @admin_required
 def clear_cache():
     """Allow admins to purge the application cache from the dashboard."""
+    _require_global_admin_surface()
     try:
         cache.clear()
         _log_admin_event("cache_cleared", status="success")
@@ -962,6 +983,7 @@ def _calculate_dashboard_snapshot() -> dict:
 @admin_required
 def dashboard_data():
     """Return aggregated dashboard metrics for polling."""
+    _require_global_admin_surface()
     snapshot = _calculate_dashboard_snapshot()
     _log_admin_event("dashboard_snapshot_requested")
     return jsonify(snapshot)
@@ -972,6 +994,7 @@ def dashboard_data():
 @admin_required
 def dashboard_login_feed():
     """Return the most recent login attempts for the realtime feed."""
+    _require_global_admin_surface()
     try:
         limit = int(request.args.get("limit", 20))
     except ValueError:

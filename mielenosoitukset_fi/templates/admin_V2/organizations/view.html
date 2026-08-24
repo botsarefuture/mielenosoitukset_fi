@@ -278,7 +278,7 @@
       <section class="org-detail-card">
         <div class="org-detail-card-header">
           <div class="org-detail-card-title"><i class="fas fa-users" aria-hidden="true"></i><h2>{{ _('Jäsenet') }}</h2><span class="org-detail-card-count" id="member-card-count">{{ memberships|length }}</span></div>
-          <button class="org-button primary invite" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>
+          {% if can_invite_members %}<button class="org-button primary invite" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>{% endif %}
         </div>
         {% if memberships %}
         <div class="org-table-scroll">
@@ -324,11 +324,11 @@
                 <td><div class="org-member"><span class="org-member-avatar"><i class="fas fa-envelope" aria-hidden="true"></i></span><div><strong>{{ invite.email }}</strong><span>{{ _('Kutsu lähetetty') }}</span></div></div></td>
                 <td><span class="org-status pending"><i class="fas fa-clock" aria-hidden="true"></i>{{ _('Odottaa hyväksyntää') }}</span></td>
                 <td>
-                  <select class="org-role-select invited-role-select" data-invite-email="{{ invite.email }}" aria-label="{{ _('Kutsutun rooli') }}">
+                  {% if can_invite_members %}<select class="org-role-select invited-role-select" data-invite-email="{{ invite.email }}" aria-label="{{ _('Kutsutun rooli') }}">
                     <option value="owner" {% if invite.role == 'owner' %}selected{% endif %}>{{ _('Omistaja') }}</option>
                     <option value="admin" {% if invite.role == 'admin' %}selected{% endif %}>{{ _('Admin') }}</option>
                     <option value="member" {% if invite.role == 'member' or not invite.role %}selected{% endif %}>{{ _('Jäsen') }}</option>
-                  </select>
+                  </select>{% else %}<span>{{ invite.role or _('Jäsen') }}</span>{% endif %}
                 </td>
                 <td><div class="org-row-actions">
                   {% if current_user.global_admin %}<button class="org-button orange confirm-action-btn" type="button" data-action="accept-invite" data-invite-email="{{ invite.email }}" data-label="{{ invite.email }}"><i class="fas fa-user-check" aria-hidden="true"></i>{{ _('Hyväksy puolesta') }}</button>{% endif %}
@@ -375,7 +375,7 @@
     </aside>
   </div>
 
-  <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+  {% if can_invite_members %}<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <form method="POST" action="{{ url_for('admin_org.invite') }}">
@@ -390,7 +390,7 @@
         </form>
       </div>
     </div>
-  </div>
+  </div>{% endif %}
 
   <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">

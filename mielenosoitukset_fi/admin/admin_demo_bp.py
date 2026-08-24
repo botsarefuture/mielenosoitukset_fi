@@ -285,6 +285,33 @@ def _filter_redundant_recurring_children(demos):
     ]
 
 
+def _find_translation_source(demo_id):
+    """Return a translatable one-off or recurring parent and its collection."""
+    object_id = ObjectId(demo_id)
+    demo_doc = mongo.demonstrations.find_one({"_id": object_id})
+    if demo_doc:
+        return demo_doc, mongo.demonstrations, False
+
+    recurring_doc = mongo.recu_demos.find_one({"_id": object_id})
+    if not recurring_doc:
+        return None, None, False
+
+    # Active recurring parents can have an old series start date. Use the next
+    # generated occurrence for translation-candidate and DeepL eligibility checks.
+    recurring_doc = dict(recurring_doc)
+    next_child = mongo.demonstrations.find_one(
+        {
+            "parent": object_id,
+            "date": {"$gte": date.today().isoformat()},
+        },
+        {"date": 1},
+        sort=[("date", 1)],
+    )
+    if next_child:
+        recurring_doc["date"] = next_child.get("date")
+    return recurring_doc, mongo.recu_demos, True
+
+
 def _collect_translation_proposal_form(language):
     tags_raw = request.form.get("translated_tags", "")
     tags = [tag.strip() for tag in tags_raw.split(",") if tag.strip()]
@@ -1740,7 +1767,7 @@ def demo_translation_dashboard():
     if search_query:
         query["title"] = {"$regex": re.escape(search_query), "$options": "i"}
 
-    demos = _filter_redundant_recurring_children(list(
+    demo_docs = list(
         mongo.demonstrations.find(
             query,
             {
@@ -1753,7 +1780,36 @@ def demo_translation_dashboard():
             },
         )
         .sort([("date", 1), ("_id", 1)])
-    ))[:100]
+    )
+    recurring_parent_ids = {
+        parent_id
+        for demo in demo_docs
+        if (parent_id := _normalize_objectid(demo.get("parent")))
+    }
+    recurring_parents = list(
+        mongo.recu_demos.find(
+            {"_id": {"$in": list(recurring_parent_ids)}},
+            {
+                "title": 1,
+                "description": 1,
+                "default_language": 1,
+                "translations": 1,
+                "translation_proposals": 1,
+            },
+        )
+    )
+    first_child_dates = {}
+    for child in demo_docs:
+        parent_id = _normalize_objectid(child.get("parent"))
+        if parent_id and parent_id not in first_child_dates:
+            first_child_dates[parent_id] = child.get("date")
+    for parent in recurring_parents:
+        parent["is_recurring_translation_source"] = True
+        parent["date"] = first_child_dates.get(parent["_id"], "")
+
+    demos = recurring_parents + _filter_redundant_recurring_children(demo_docs)
+    demos.sort(key=lambda demo: (demo.get("date") or "", str(demo.get("_id"))))
+    demos = demos[:100]
 
     pending_items = []
     if _can_review_demo_translations(current_user):
@@ -1790,7 +1846,7 @@ def edit_demo_translations(demo_id):
     if not (_can_translate_demos(current_user) or _can_review_demo_translations(current_user)):
         abort(403)
 
-    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo_doc, demo_collection, is_recurring_source = _find_translation_source(demo_id)
     if not demo_doc:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_translation_dashboard"))
@@ -1818,7 +1874,7 @@ def edit_demo_translations(demo_id):
             "reviewed_by_name": None,
             "review_notes": "",
         }
-        mongo.demonstrations.update_one(
+        demo_collection.update_one(
             {"_id": ObjectId(demo_id)},
             {
                 "$set": {
@@ -1891,6 +1947,7 @@ def edit_demo_translations(demo_id):
         translation_rows=_translation_summary_rows(demo_doc),
         can_review_demo_translations=_can_review_demo_translations(current_user),
         can_translate_demos=_can_translate_demos(current_user),
+        is_recurring_source=is_recurring_source,
     )
 
 
@@ -1900,7 +1957,7 @@ def generate_demo_translation_suggestion(demo_id, language):
     if not _can_translate_demos(current_user):
         abort(403)
 
-    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo_doc, _demo_collection, _is_recurring_source = _find_translation_source(demo_id)
     if not demo_doc:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_translation_dashboard"))
@@ -1943,7 +2000,7 @@ def approve_demo_translation(demo_id, language):
     if not _can_review_demo_translations(current_user):
         abort(403)
 
-    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo_doc, demo_collection, _is_recurring_source = _find_translation_source(demo_id)
     if not demo_doc:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_translation_dashboard"))
@@ -1959,7 +2016,7 @@ def approve_demo_translation(demo_id, language):
         "description": proposal.get("description", ""),
         "tags": proposal.get("tags", []),
     }
-    mongo.demonstrations.update_one(
+    demo_collection.update_one(
         {"_id": ObjectId(demo_id)},
         {
             "$set": {
@@ -1992,7 +2049,7 @@ def reject_demo_translation(demo_id, language):
     if not _can_review_demo_translations(current_user):
         abort(403)
 
-    demo_doc = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    demo_doc, demo_collection, _is_recurring_source = _find_translation_source(demo_id)
     if not demo_doc:
         flash_message(_("Mielenosoitusta ei löytynyt."), "error")
         return redirect(url_for("admin_demo.demo_translation_dashboard"))
@@ -2003,7 +2060,7 @@ def reject_demo_translation(demo_id, language):
         return redirect(url_for("admin_demo.edit_demo_translations", demo_id=demo_id, language=language))
 
     review_notes = (request.form.get("review_notes") or "").strip()
-    mongo.demonstrations.update_one(
+    demo_collection.update_one(
         {"_id": ObjectId(demo_id)},
         {
             "$set": {

@@ -300,6 +300,12 @@ function confirmAction(action, taskId) {
             <i class="fas fa-house me-2"></i>{{ _('Yleiskuva') }}
           </a>
         </li>
+      {% elif current_user.has_city_admin_scope_grants() %}
+        <li class="nav-item">
+          <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
+            <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkiadminin näkymä') }}
+          </a>
+        </li>
       {% endif %}
 
       {% if current_user.has_permission("LIST_DEMOS") or current_user.has_permission("LIST_RECURRING_DEMOS") or current_user.has_permission("LIST_ORGANIZATIONS") or current_user.has_permission("EDIT_DEMO") or current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") or current_user.has_permission("TRANSLATE_UI") or current_user.has_permission("REVIEW_UI_TRANSLATIONS") %}

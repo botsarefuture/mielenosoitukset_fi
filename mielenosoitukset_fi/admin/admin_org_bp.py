@@ -115,6 +115,55 @@ from mielenosoitukset_fi.utils.logger import logger
 email_sender = EmailSender()
 
 
+def _has_explicit_organization_permission(user, permission: str, org_id=None) -> bool:
+    """Check organization permission without city-admin implied grants."""
+    if user.has_full_permissions():
+        return True
+    if permission in getattr(user, "global_permissions", []):
+        return True
+    if org_id is None:
+        return any(permission in membership.permissions for membership in user.memberships)
+    membership = user.membership_for(org_id)
+    return bool(membership and permission in membership.permissions)
+
+
+def _is_limited_city_admin(user) -> bool:
+    if user.has_full_permissions() or getattr(user, "role", None) == "admin":
+        return False
+    return user.has_city_admin_scope_grants()
+
+
+def _can_verify_organization(user, org_id) -> bool:
+    if _is_limited_city_admin(user):
+        return False
+    return _has_explicit_organization_permission(user, "EDIT_ORGANIZATION", org_id)
+
+
+def _can_invite_to_organization(user, organization) -> bool:
+    """Disallow city-admin-derived invitations to verified organizations."""
+    verified = (
+        organization.get("verified", False)
+        if isinstance(organization, dict)
+        else getattr(organization, "verified", False)
+    )
+    org_id = (
+        organization.get("_id")
+        if isinstance(organization, dict)
+        else getattr(organization, "_id", None)
+    )
+    if not user.has_permission("INVITE_TO_ORGANIZATION", org_id):
+        return False
+    if not verified:
+        return True
+    if _is_limited_city_admin(user):
+        return False
+    return _has_explicit_organization_permission(
+        user,
+        "INVITE_TO_ORGANIZATION",
+        org_id,
+    )
+
+
 
 
 # Organization control panel
@@ -124,11 +173,9 @@ email_sender = EmailSender()
 @permission_required("LIST_ORGANIZATIONS")
 def organization_control():
     """Render the organization control panel with a list of organizations."""
-    org_limiter = (
-        [ObjectId(org) for org in current_user.org_ids()]
-        if not current_user.global_admin
-        else None
-    )
+    org_limiter = None
+    if not current_user.has_full_permissions() and not current_user.has_city_admin_scope_grants():
+        org_limiter = [ObjectId(org) for org in current_user.org_ids()]
 
     search_query = request.args.get("search", "")
     page = _parse_positive_int_arg("page", 1)
@@ -290,7 +337,11 @@ def edit_organization(org_id):
             flash_message(_("Organisaatio päivitetty onnistuneesti."))
             return redirect(request.referrer)
 
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html", organization=organization)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}organizations/form.html",
+        organization=organization,
+        can_verify_organization=_can_verify_organization(current_user, org_id),
+    )
 
 
 def invite_to_organization(invitee_email, organization_id):
@@ -391,8 +442,9 @@ def update_organization(org_id):
         "email": email,
         "website": website,
         "social_media_links": social_media_links,
-        "verified": request.form.get("verified") == "on",
     }
+    if _can_verify_organization(current_user, org_id):
+        update_payload["verified"] = request.form.get("verified") == "on"
     if logo_changed:
         update_payload["logo"] = logo_value
 
@@ -691,6 +743,12 @@ def invite():
     """ """
     invitee_email = request.form.get("invitee_email")
     organization_id = request.form.get("organization_id")
+    organization = mongo.organizations.find_one({"_id": ObjectId(organization_id)})
+    if not organization:
+        abort(404)
+    if not _can_invite_to_organization(current_user, organization):
+        _log_org_event("organization_invite_forbidden", organization_id=organization_id)
+        abort(403)
     logger.debug(f"Inviting {invitee_email} to organization {organization_id}")
     invite_to_organization(invitee_email, ObjectId(organization_id))
     return redirect(request.referrer or url_for("admin_org.organization_control"))
@@ -744,7 +802,8 @@ def view_organization(org_id):
         f"{_ADMIN_TEMPLATE_FOLDER}organizations/view.html",
         organization=organization,
         memberships=members,
-        invited_users=invited_users
+        invited_users=invited_users,
+        can_invite_members=_can_invite_to_organization(current_user, organization_doc),
     )
 
 
@@ -1341,6 +1400,9 @@ def set_invite_role() -> Tuple[Response, int]:
     if not org:
         _log_org_event("organization_invite_role_error", reason="organization_not_found", organization_id=org_id, email=email)
         return jsonify({"status": "error", "error": "Organization not found."}), 404
+    if not _can_invite_to_organization(current_user, org):
+        _log_org_event("organization_invite_role_error", reason="forbidden", organization_id=org_id, email=email)
+        return jsonify({"status": "error", "error": "Forbidden."}), 403
 
     # --- Process invitations ---
     invitations = org.get("invitations", [])

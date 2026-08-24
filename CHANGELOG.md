@@ -27,6 +27,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Admin workspace styles now use a cache-busting asset revision so newly deployed city-management layouts replace previously cached CSS immediately instead of remaining visually stale for up to four hours.
 * API token creation, validation, listing, revocation, and usage logging now resolve the active MongoDB database per operation, preventing stale database handles after application or test database resets.
 * City admins cannot change an organization's verified status or invite users to verified organizations; forged form and API requests are blocked server-side while general admins and super admins retain their broader access.
 * The demonstration translation queue now includes active recurring-series parents, while still hiding their duplicate generated occurrences, and recurring translations use the same proposal and review workflow as one-off demonstrations.

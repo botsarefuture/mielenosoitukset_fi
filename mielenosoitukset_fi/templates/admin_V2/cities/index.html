@@ -114,70 +114,86 @@
 
   {% include 'admin_V2/governance/_tabs.html' %}
 
-  <section class="admin-workspace-summary" aria-label="{{ _('Kaupunkihallinnan yhteenveto') }}">
+  <section class="admin-workspace-summary city-admin-overview" aria-label="{{ _('Kaupunkihallinnan yhteenveto') }}">
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fa-solid fa-city" aria-hidden="true"></i></span>
-      <div><span>{{ _('Kaupunkeja käytössä') }}</span><strong>{{ active_count }}</strong></div>
+      <div class="city-admin-summary-copy"><strong>{{ active_count }}</strong><span>{{ _('Kaupunkeja käytössä') }}</span></div>
     </article>
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span>
-      <div><span>{{ _('Ilmoituksia kaupungeissa') }}</span><strong>{{ demo_count }}</strong></div>
+      <div class="city-admin-summary-copy"><strong>{{ demo_count }}</strong><span>{{ _('Ilmoituksia kaupungeissa') }}</span></div>
     </article>
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></span>
-      <div><span>{{ _('Voimassa olevia kaupunkioikeuksia') }}</span><strong>{{ grant_count }}</strong></div>
+      <div class="city-admin-summary-copy"><strong>{{ grant_count }}</strong><span>{{ _('Voimassa olevia kaupunkioikeuksia') }}</span></div>
     </article>
   </section>
 
   <form method="post" class="city-admin-card admin-workspace-toolbar" id="city-admin-form">
 
     <div class="city-admin-tools">
-      <label class="visually-hidden" for="city-filter">{{ _('Hae kaupunkia') }}</label>
-      <input class="form-control city-admin-search" type="search" id="city-filter" placeholder="{{ _('Suodata kaupunkeja') }}">
-      <label class="visually-hidden" for="city-status-filter">{{ _('Suodata tilan mukaan') }}</label>
-      <select class="form-select w-auto" id="city-status-filter" aria-label="{{ _('Suodata tilan mukaan') }}">
-        <option value="relevant" selected>{{ _('Käytössä tai sisältöä') }}</option>
-        <option value="all">{{ _('Kaikki kaupungit') }}</option>
-        <option value="enabled">{{ _('Vain käytössä olevat') }}</option>
-        <option value="disabled">{{ _('Vain pois käytöstä olevat') }}</option>
-      </select>
-      <span class="small text-body-secondary" id="city-visible-count" aria-live="polite"></span>
+      <div class="city-admin-filter-field city-admin-search-field">
+        <label for="city-filter">{{ _('Hae kaupunkia') }}</label>
+        <div class="city-admin-input-with-icon">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input class="form-control city-admin-search" type="search" id="city-filter" placeholder="{{ _('Suodata kaupunkeja') }}">
+        </div>
+      </div>
+      <div class="city-admin-filter-field">
+        <label for="city-status-filter">{{ _('Suodata tilan mukaan') }}</label>
+        <select class="form-select" id="city-status-filter">
+          <option value="relevant" selected>{{ _('Käytössä tai sisältöä') }}</option>
+          <option value="all">{{ _('Kaikki kaupungit') }}</option>
+          <option value="enabled">{{ _('Vain käytössä olevat') }}</option>
+          <option value="disabled">{{ _('Vain pois käytöstä olevat') }}</option>
+        </select>
+      </div>
+      <div class="city-admin-result-state">
+        <span class="small text-body-secondary" id="city-visible-count" aria-live="polite"></span>
+        <span class="city-admin-save-state" id="city-save-state" role="status" aria-live="polite"></span>
+      </div>
       <div class="city-admin-bulk-actions" aria-label="{{ _('Näkyvien kaupunkien massatoiminnot') }}">
         <button class="btn btn-outline-success btn-sm" type="button" data-bulk-city-state="true">
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
           {{ _('Ota näkyvät käyttöön') }}
         </button>
         <button class="btn btn-outline-secondary btn-sm" type="button" data-bulk-city-state="false">
+          <i class="fa-solid fa-circle-minus" aria-hidden="true"></i>
           {{ _('Poista näkyvät käytöstä') }}
         </button>
       </div>
-      <button class="btn btn-primary" type="submit">
+      <button class="btn btn-primary city-admin-save-button" type="submit">
         <i class="fa-solid fa-floppy-disk me-2"></i>{{ _('Tallenna') }}
       </button>
-      <span class="city-admin-save-state" id="city-save-state" role="status" aria-live="polite"></span>
     </div>
 
     <div class="table-responsive admin-workspace-table">
       <table class="table table-hover city-admin-table">
         <thead>
           <tr>
-            <th>{{ _('Käytössä') }}</th>
+            <th class="city-admin-toggle-column">{{ _('Käytössä') }}</th>
             <th>{{ _('Kaupunki') }}</th>
-            <th>{{ _('Ilmoituksia') }}</th>
-            <th>{{ _('Kaupunkioikeuksia') }}</th>
+            <th class="city-admin-metric-column">{{ _('Ilmoituksia') }}</th>
+            <th class="city-admin-metric-column">{{ _('Kaupunkioikeuksia') }}</th>
           </tr>
         </thead>
         <tbody>
           {% for row in city_rows %}
           <tr data-city-row data-city-name="{{ row.name|lower }}" data-enabled="{{ 'true' if row.enabled else 'false' }}" data-relevant="{{ 'true' if row.enabled or row.demo_count or row.grant_count else 'false' }}">
-            <td>
+            <td class="city-admin-toggle-column">
               <input class="form-check-input" type="checkbox" name="enabled_cities[]" value="{{ row.key }}" id="city_{{ row.key }}" data-city-toggle data-initial="{{ 'true' if row.enabled else 'false' }}" data-city-name="{{ row.name }}" data-demo-count="{{ row.demo_count }}" data-grant-count="{{ row.grant_count }}" {% if row.enabled %}checked{% endif %}>
             </td>
             <td>
-              <label class="fw-semibold" for="city_{{ row.key }}">{{ row.name }}</label>
-              <div class="small text-body-secondary">{{ row.key }}</div>
+              <div class="city-admin-city-identity">
+                <span class="city-admin-row-icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span>
+                <div>
+                  <label class="fw-semibold" for="city_{{ row.key }}">{{ row.name }}</label>
+                  <div class="small text-body-secondary">{{ row.key }}</div>
+                </div>
+              </div>
             </td>
-            <td><a href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
-            <td>{{ row.grant_count }}</td>
+            <td class="city-admin-metric-column"><a class="city-admin-metric" href="{{ url_for('city_demos', city=row.name) }}" target="_blank" rel="noopener">{{ row.demo_count }} <span class="visually-hidden">{{ _('Avaa julkinen kaupunkisivu') }}</span></a></td>
+            <td class="city-admin-metric-column"><span class="city-admin-metric">{{ row.grant_count }}</span></td>
           </tr>
           {% endfor %}
         </tbody>

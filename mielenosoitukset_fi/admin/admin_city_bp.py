@@ -1,5 +1,3 @@
-import re
-
 from flask import Blueprint, redirect, render_template, request, url_for
 from flask_babel import _
 from flask_login import current_user, login_required
@@ -13,6 +11,49 @@ from .utils import _ADMIN_TEMPLATE_FOLDER, mongo
 
 
 admin_city_bp = Blueprint("admin_city", __name__, url_prefix="/admin/cities")
+
+
+def _demonstration_counts_by_city():
+    counts = {}
+    pipeline = [
+        {
+            "$group": {
+                "_id": {
+                    "city_key": "$city_key",
+                    "city": "$city",
+                },
+                "count": {"$sum": 1},
+            }
+        }
+    ]
+    for group in mongo.demonstrations.aggregate(pipeline):
+        identity = group.get("_id") or {}
+        city_key = normalize_city_key(identity.get("city_key") or identity.get("city"))
+        if city_key in CITY_KEY_TO_NAME:
+            counts[city_key] = counts.get(city_key, 0) + group["count"]
+    return counts
+
+
+def _grant_counts_by_city():
+    pipeline = [
+        {
+            "$match": {
+                "scope_type": "city",
+                "$or": [
+                    {"revoked_at": {"$exists": False}},
+                    {"revoked_at": None},
+                ],
+            }
+        },
+        {"$unwind": "$scope_keys"},
+        {"$group": {"_id": "$scope_keys", "count": {"$sum": 1}}},
+    ]
+    counts = {}
+    for group in mongo.admin_scope_grants.aggregate(pipeline):
+        city_key = normalize_city_key(group.get("_id"))
+        if city_key in CITY_KEY_TO_NAME:
+            counts[city_key] = counts.get(city_key, 0) + group["count"]
+    return counts
 
 
 @admin_city_bp.route("/", methods=["GET", "POST"])
@@ -40,26 +81,15 @@ def city_control():
         return redirect(url_for("admin_city.city_control"))
 
     active_keys = enabled_city_keys(mongo)
+    demo_counts = _demonstration_counts_by_city()
+    grant_counts = _grant_counts_by_city()
     city_rows = [
         {
             "key": city_key,
             "name": name,
             "enabled": city_key in active_keys,
-            "demo_count": mongo.demonstrations.count_documents(
-                {
-                    "$or": [
-                        {"city_key": city_key},
-                        {"city": {"$regex": f"^{re.escape(name)}$", "$options": "i"}},
-                    ]
-                }
-            ),
-            "grant_count": mongo.admin_scope_grants.count_documents(
-                {
-                    "scope_type": "city",
-                    "scope_keys": city_key,
-                    "$or": [{"revoked_at": {"$exists": False}}, {"revoked_at": None}],
-                }
-            ),
+            "demo_count": demo_counts.get(city_key, 0),
+            "grant_count": grant_counts.get(city_key, 0),
         }
         for city_key, name in sorted(CITY_KEY_TO_NAME.items(), key=lambda item: item[1])
     ]
@@ -67,4 +97,6 @@ def city_control():
         f"{_ADMIN_TEMPLATE_FOLDER}cities/index.html",
         city_rows=city_rows,
         active_count=sum(1 for row in city_rows if row["enabled"]),
+        demo_count=sum(row["demo_count"] for row in city_rows),
+        grant_count=sum(row["grant_count"] for row in city_rows),
     )

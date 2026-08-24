@@ -66,6 +66,7 @@ def test_city_management_explains_unsaved_and_risky_changes(app, seeded_data):
 
     assert response.status_code == 200
     page = response.get_data(as_text=True)
+    assert "Käytössä tai sisältöä" in page
     assert "Vain käytössä olevat" in page
     assert "Tallentamattomia muutoksia" in page
     assert "Olet poistamassa käytöstä kaupunkeja" in page

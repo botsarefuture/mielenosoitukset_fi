@@ -37,7 +37,12 @@ def test_translation_dashboard_hides_unchanged_recurring_children(
 ):
     db.recu_demos.update_one(
         {"_id": seeded_data["recu_demo_id"]},
-        {"$set": {"description": "<p>Shared description</p>"}},
+        {
+            "$set": {
+                "title": "Recurring Translation Parent",
+                "description": "<p>Shared description</p>",
+            }
+        },
     )
     db.demonstrations.update_one(
         {"_id": seeded_data["child_demo_id"]},
@@ -56,6 +61,64 @@ def test_translation_dashboard_hides_unchanged_recurring_children(
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Unchanged Recurring Child" not in body
+    assert "Recurring Translation Parent" in body
+    assert "Toistuva" in body
+
+
+def test_translator_can_propose_translation_for_recurring_parent(
+    translator_client, db, seeded_data
+):
+    recurring_id = seeded_data["recu_demo_id"]
+    db.demonstrations.update_one(
+        {"_id": seeded_data["child_demo_id"]},
+        {"$set": {"date": "2099-05-02", "parent": recurring_id}},
+    )
+
+    editor_response = translator_client.get(
+        f"/admin/demo/{recurring_id}/translations?language=en"
+    )
+    submit_response = translator_client.post(
+        f"/admin/demo/{recurring_id}/translations",
+        data={
+            "language": "en",
+            "translated_title": "Recurring parent in English",
+            "translated_description": "Recurring English description.",
+            "translated_tags": "recurring, english",
+        },
+    )
+
+    assert editor_response.status_code == 200
+    assert submit_response.status_code == 302
+    recurring_doc = db.recu_demos.find_one({"_id": recurring_id})
+    assert recurring_doc["translation_proposals"]["en"]["title"] == "Recurring parent in English"
+
+
+def test_admin_can_approve_recurring_parent_translation(admin_client, db, seeded_data):
+    recurring_id = seeded_data["recu_demo_id"]
+    db.recu_demos.update_one(
+        {"_id": recurring_id},
+        {
+            "$set": {
+                "translation_proposals.en": {
+                    "language": "en",
+                    "title": "Approved recurring translation",
+                    "description": "<p>Approved recurring description.</p>",
+                    "tags": ["recurring"],
+                    "status": "pending",
+                }
+            }
+        },
+    )
+
+    response = admin_client.post(
+        f"/admin/demo/{recurring_id}/translations/en/approve",
+        data={"review_notes": "Looks good."},
+    )
+
+    assert response.status_code == 302
+    recurring_doc = db.recu_demos.find_one({"_id": recurring_id})
+    assert recurring_doc["translations"]["en"]["title"] == "Approved recurring translation"
+    assert recurring_doc["translation_proposals"]["en"]["status"] == "approved"
 
 
 def test_translation_dashboard_shows_changed_recurring_children(

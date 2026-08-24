@@ -23,6 +23,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* The demonstration translation queue now includes active recurring-series parents, while still hiding their duplicate generated occurrences, and recurring translations use the same proposal and review workflow as one-off demonstrations.
 * Admin UI translations now open with untranslated strings visible by default instead of an empty pending-review filter when no proposals exist yet.
 * Super admins now automatically pass every centralized global, organization, and city-scoped permission check without requiring duplicated permission grants on their account; the top-level `god` role also satisfies legacy global-admin checks.
 * Public and admin status banners now render their check/cross icons instead of displaying escaped HTML entity text.

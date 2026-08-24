@@ -43,9 +43,9 @@ from flask import jsonify
 from mielenosoitukset_fi.utils.tokens import (
     PRIVILEGED_SCOPES,
     SUPPORTED_SCOPES,
-    TOKEN_USAGE_LOGS,
-    TOKENS_COLLECTION,
     create_token,
+    token_usage_logs_collection,
+    tokens_collection,
 )
 
 
@@ -305,7 +305,7 @@ def generate_api_token():
         or current_user.role in ["global_admin", "admin", "superuser", "god"]
     )
     if requested_privileged_scopes and not can_issue_privileged_scopes:
-        TOKEN_USAGE_LOGS.insert_one({
+        token_usage_logs_collection().insert_one({
             "user_id": current_user._id,
             "username": current_user.username,
             "action": "attempted privileged scope request",
@@ -343,7 +343,7 @@ def generate_api_token():
 @auth_bp.route("/api_tokens/list")
 @login_required
 def list_tokens():
-    tokens = list(TOKENS_COLLECTION.find({"user_id": current_user._id}))
+    tokens = list(tokens_collection().find({"user_id": current_user._id}))
     # We never send hashed token back
     token_list = []
     for t in tokens:
@@ -366,7 +366,7 @@ def revoke_token():
     if not token_id:
         return jsonify({"status": "error", "message": "token_id required"}), 400
 
-    result = TOKENS_COLLECTION.delete_one({"_id": ObjectId(token_id), "user_id": current_user._id})
+    result = tokens_collection().delete_one({"_id": ObjectId(token_id), "user_id": current_user._id})
     if result.deleted_count == 1:
         return jsonify({"status": "success"})
 

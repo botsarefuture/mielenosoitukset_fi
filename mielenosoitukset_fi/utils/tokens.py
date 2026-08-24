@@ -5,11 +5,6 @@ from bson.objectid import ObjectId
 
 from mielenosoitukset_fi.utils.database import get_database_manager
 
-mongo = get_database_manager()
-
-TOKENS_COLLECTION = mongo["api_tokens"]
-TOKEN_USAGE_LOGS = mongo["api_usage"]
-
 # Durations
 SHORT_HOURS = 48  # short-lived user/app tokens
 LONG_DAYS = 90    # long-lived tokens
@@ -24,6 +19,16 @@ SUPPORTED_SCOPES = {
     "submit_demonstrations",
 }
 PRIVILEGED_SCOPES = {"admin", "mcp.admin"}
+
+
+def tokens_collection():
+    """Return the token collection from the currently active database."""
+    return get_database_manager()["api_tokens"]
+
+
+def token_usage_logs_collection():
+    """Return the usage-log collection from the currently active database."""
+    return get_database_manager()["api_usage"]
 
 
 def _hash_token(token: str) -> str:
@@ -74,7 +79,7 @@ def create_token(
     token = secrets.token_urlsafe(32)
     expires_at = _expiry_for_type(token_type)
 
-    TOKENS_COLLECTION.insert_one({
+    tokens_collection().insert_one({
         "user_id": ObjectId(user_id) if user_id else None,
         "app_id": ObjectId(app_id) if app_id else None,
         "session_id": session_id,
@@ -103,7 +108,7 @@ def check_token(token: str):
         raise ApiException(Message("Missing token", "token_missing"), 401)
 
     hashed = _hash_token(token)
-    record = TOKENS_COLLECTION.find_one({"token": hashed})
+    record = tokens_collection().find_one({"token": hashed})
     
     if not record:
         raise ApiException(Message("Invalid token", "token_invalid"), 401)

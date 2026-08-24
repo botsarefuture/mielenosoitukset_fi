@@ -372,10 +372,10 @@ def _submit_error(message, code, status=400, extra=None):
 
 def generate_alternate_urls(app, endpoint, **values):
     """
-    Generate alternate URLs for supported languages.
+    Generate alternate URLs only for languages published to visitors.
     """
     alternate_urls = {}
-    for lang_code in app.config["BABEL_SUPPORTED_LOCALES"]:
+    for lang_code in app.config["BABEL_PUBLIC_LOCALES"]:
         with app.test_request_context():
             alternate_urls[lang_code] = url_for(endpoint, lang_code=lang_code, **values)
     return alternate_urls
@@ -908,7 +908,7 @@ def init_routes(app):
         Notes
         -----
         Default language is Finnish. If only Finnish is enabled in
-        BABEL_SUPPORTED_LOCALES, no alternate hreflang links are emitted.
+        BABEL_PUBLIC_LOCALES, no alternate hreflang links are emitted.
 
         Returns
         -------
@@ -917,7 +917,7 @@ def init_routes(app):
         """
         try:
             # Supported locales (fallback to Finnish)
-            locales = app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"]
+            locales = app.config.get("BABEL_PUBLIC_LOCALES") or ["fi"]
             locales = [l for l in locales if l]  # normalize
 
             # If only Finnish is available, do not include alternate links
@@ -2987,10 +2987,10 @@ def init_routes(app):
     
     @app.route("/set_language/<lang>")
     def set_language(lang):
-        supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
+        supported_languages = app.config["BABEL_PUBLIC_LOCALES"]
         if lang not in supported_languages:
-            flash_message("Unsupported language selected.", "error")
-            return redirect(request.referrer)
+            flash_message(_("Valittu kieli ei ole vielä käytettävissä."), "error")
+            return redirect(request.referrer or url_for("index"))
         session["locale"] = lang
         session.modified = True
         referrer = request.referrer
@@ -3030,7 +3030,7 @@ def init_routes(app):
 
     @app.before_request
     def preprocess_url():  
-        supported_languages = app.config["BABEL_SUPPORTED_LOCALES"]
+        supported_languages = app.config["BABEL_PUBLIC_LOCALES"]
         path = request.path.strip("/").split("/")
         if path and path[0] in supported_languages:
             lang = path[0]

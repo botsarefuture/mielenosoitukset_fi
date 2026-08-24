@@ -736,8 +736,10 @@ time (datetime) | iso string, read (bool)
       </a>
     </div>
 
+    {% set public_locales = get_supported_locales() %}
+    {% if public_locales|length > 1 %}
     <nav class="language-buttons" aria-label="{{ _('Kielivalinta') }}">
-      {% for lang_code in get_supported_locales() %}
+      {% for lang_code in public_locales %}
       <button class="language-button {% if session.get('locale', 'fi') == lang_code %}active{% endif %}"
               onclick="location.href='{{ url_for('set_language', lang=lang_code) }}'"
               aria-label="{{ _('Vaihda kieleksi') }} {{ lang_code.upper() }}"
@@ -746,6 +748,7 @@ time (datetime) | iso string, read (bool)
       </button>
       {% endfor %}
     </nav>
+    {% endif %}
   </div>
 </header>
 

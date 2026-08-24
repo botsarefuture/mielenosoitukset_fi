@@ -66,6 +66,27 @@ def create_app(config_overrides=None) -> Flask:
     app.config.from_object("config.Config")  # Load configurations from 'config.Config'
     if config_overrides:
         app.config.update(config_overrides)
+
+    # Keep translation catalogs separate from languages that are ready to be
+    # published. This lets translators work on English and Swedish without
+    # exposing incomplete translations to visitors or search engines.
+    supported_locales = list(
+        dict.fromkeys(app.config.get("BABEL_SUPPORTED_LOCALES") or ["fi"])
+    )
+    default_locale = app.config.get("BABEL_DEFAULT_LOCALE") or "fi"
+    if default_locale not in supported_locales:
+        supported_locales.insert(0, default_locale)
+    public_locales = [
+        locale
+        for locale in dict.fromkeys(
+            app.config.get("BABEL_PUBLIC_LOCALES") or [default_locale]
+        )
+        if locale in supported_locales
+    ]
+    if default_locale not in public_locales:
+        public_locales.insert(0, default_locale)
+    app.config["BABEL_SUPPORTED_LOCALES"] = supported_locales
+    app.config["BABEL_PUBLIC_LOCALES"] = public_locales
     _configure_timezone(app)
 
     rate_limit_defaults = ["86400 per day", "3600 per hour", "10 per second"]
@@ -94,13 +115,16 @@ def create_app(config_overrides=None) -> Flask:
 
     # Locale selector function
     def get_locale():
-        return session.get(
-            "locale",
-            request.accept_languages.best_match(
-                app.config["BABEL_SUPPORTED_LOCALES"],
-                app.config["BABEL_DEFAULT_LOCALE"],
-            ),
-        )  # Get locale from session or request headers or else use default locale
+        public_locales = app.config["BABEL_PUBLIC_LOCALES"]
+        selected_locale = session.get("locale")
+        if selected_locale in public_locales:
+            return selected_locale
+        if selected_locale is not None:
+            session.pop("locale", None)
+        return request.accept_languages.best_match(
+            public_locales,
+            app.config["BABEL_DEFAULT_LOCALE"],
+        )
 
     # Initialize Babel
     babel.init_app(app, locale_selector=get_locale)
@@ -414,7 +438,7 @@ def create_app(config_overrides=None) -> Flask:
             return user_data
 
         def get_supported_locales():
-            return app.config["BABEL_SUPPORTED_LOCALES"]
+            return app.config["BABEL_PUBLIC_LOCALES"]
 
         def get_lang_name(lang_code):
             return app.config["BABEL_LANGUAGES"].get(lang_code)

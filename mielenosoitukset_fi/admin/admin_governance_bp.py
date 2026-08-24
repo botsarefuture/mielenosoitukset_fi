@@ -5,7 +5,7 @@ from mielenosoitukset_fi.utils.city_settings import enabled_city_keys
 from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
 
 from .board_audit import audit_rows
-from .board_compliance import clearance_rows
+from .board_compliance import clearance_rows, governance_csrf_token
 from .utils import _ADMIN_TEMPLATE_FOLDER, mongo
 
 
@@ -54,6 +54,7 @@ def clearances():
         f"{_ADMIN_TEMPLATE_FOLDER}governance/clearances.html",
         users=users,
         approved_count=sum(1 for user in users if user["approved"]),
+        governance_csrf_token=governance_csrf_token(),
     )
 
 

@@ -4,7 +4,7 @@
   </a>
   {% if current_user.global_admin or current_user.has_permission('MANAGE_CLEARANCE') %}
   <a href="{{ url_for('admin_governance.clearances') }}" {% if governance_tab == 'clearances' %}aria-current="page"{% endif %}>
-    <i class="fa-solid fa-user-shield" aria-hidden="true"></i>{{ _('Hyväksynnät') }}
+    <i class="fa-solid fa-user-shield" aria-hidden="true"></i>{{ _('Superkäyttäjähyväksynnät') }}
   </a>
   {% endif %}
   {% if current_user.global_admin or current_user.has_permission('VIEW_CLEARANCE_AUDIT') %}

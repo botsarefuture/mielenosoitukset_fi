@@ -1,4 +1,7 @@
-from flask import Blueprint, request, jsonify, redirect, url_for
+import hmac
+import secrets
+
+from flask import Blueprint, request, jsonify, redirect, session, url_for
 from flask_login import current_user, login_required
 from bson.objectid import ObjectId
 from mielenosoitukset_fi.utils.time_utils import utcnow
@@ -8,6 +11,21 @@ from .utils import mongo
 from .board_audit import log_board_action
 
 board_bp = Blueprint("board_compliance", __name__, url_prefix="/board")
+GOVERNANCE_CSRF_SESSION_KEY = "governance_csrf_token"
+
+
+def governance_csrf_token():
+    token = session.get(GOVERNANCE_CSRF_SESSION_KEY)
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session[GOVERNANCE_CSRF_SESSION_KEY] = token
+    return token
+
+
+def _valid_governance_csrf_token():
+    expected = session.get(GOVERNANCE_CSRF_SESSION_KEY, "")
+    provided = request.headers.get("X-CSRF-Token", "")
+    return bool(expected and provided and hmac.compare_digest(expected, provided))
 
 
 def _serialize_clearance(clearance, iso_timestamp=True):
@@ -73,6 +91,9 @@ def set_clearance(user_id):
     Expects JSON:
         { "approved": true/false }
     """
+    if not _valid_governance_csrf_token():
+        return jsonify({"status": "ERROR", "message": "Istunnon turvatarkistus epäonnistui."}), 403
+
     data = request.get_json(silent=True) or {}
     approved = bool(data.get("approved", False))
 

@@ -15,6 +15,7 @@ from mielenosoitukset_fi.utils.database import stringify_object_ids
 from mielenosoitukset_fi.utils.flashing import flash_message
 
 from .utils import get_org_name, mongo, _ADMIN_TEMPLATE_FOLDER
+from .board_compliance import has_board_clearance
 from flask_babel import _
 from mielenosoitukset_fi.utils.time_utils import utcnow
 from datetime import datetime
@@ -262,6 +263,17 @@ def edit_user(user_id):
             flash_message("Virheellinen sähköpostimuoto.", "error")
             return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
 
+        if (
+            incoming["role"] == "global_admin"
+            and user.role != "global_admin"
+            and not has_board_clearance(user._id)
+        ):
+            flash_message(
+                "Superkäyttäjäroolia ei voi myöntää ilman hallituksen hyväksyntää.",
+                "error",
+            )
+            return safe_redirect(url_for("admin_user.edit_user", user_id=user_id))
+
         # estä oman roolin muutos
         if current_user._id == user._id and incoming["role"] != current_user.role:
             flash_message("Et voi muuttaa omaa rooliasi.", "error")
@@ -401,6 +413,17 @@ def save_user(user_id):
         flash_message("Virheellinen sähköpostimuoto.", "error")
         return redirect(url_for("admin_user.edit_user", user_id=user_id))
 
+    if (
+        role == "global_admin"
+        and user.role != "global_admin"
+        and not has_board_clearance(user._id)
+    ):
+        flash_message(
+            "Superkäyttäjäroolia ei voi myöntää ilman hallituksen hyväksyntää.",
+            "error",
+        )
+        return redirect(url_for("admin_user.edit_user", user_id=user_id))
+
     
     # Assign values
     user.username = username
@@ -455,14 +478,12 @@ import warnings
 
 
 @admin_user_bp.route("/api/check_clearance/<user_id>")
+@login_required
+@admin_required
+@permission_required("MANAGE_CLEARANCE")
 def check_clearance(user_id):
-    """
-    Temporary endpoint to check if the board has approved the user for global_admin role.
-    Currently always returns False.
-    """
-    return jsonify({
-        "has_clearance": False
-    })
+    """Compatibility endpoint for checking global-admin board approval."""
+    return jsonify({"has_clearance": has_board_clearance(user_id)})
 
 
 def is_valid_email(email):

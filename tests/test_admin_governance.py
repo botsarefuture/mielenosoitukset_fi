@@ -1,6 +1,12 @@
 from tests.conftest import _client_for_user
 
 
+def _governance_csrf_headers(client):
+    with client.session_transaction() as session:
+        session["governance_csrf_token"] = "governance-test-token"
+    return {"X-CSRF-Token": "governance-test-token"}
+
+
 def test_governance_dashboard_collects_admin_tools(app, db, seeded_data):
     client = _client_for_user(app, seeded_data["admin_id"])
 
@@ -9,7 +15,7 @@ def test_governance_dashboard_collects_admin_tools(app, db, seeded_data):
     assert response.status_code == 200
     page = response.get_data(as_text=True)
     assert "Hallinto ja käyttöoikeudet" in page
-    assert "Hallituksen hyväksynnät" in page
+    assert "Superkäyttäjäroolin hyväksynnät" in page
     assert "Kaupunkihallinta" in page
     assert "Tapahtumaloki" in page
 
@@ -21,6 +27,7 @@ def test_board_clearance_is_persisted_and_audited(app, db, seeded_data):
     response = client.post(
         f"/board/api/clearance/{user_id}",
         json={"approved": True},
+        headers=_governance_csrf_headers(client),
     )
 
     assert response.status_code == 200
@@ -81,3 +88,61 @@ def test_governance_migration_preserves_existing_city_managers(db):
     assert "MANAGE_CITIES" in user["global_permissions"]
     assert result["city_permissions_added"] == 1
     assert "user_id_1" in db.board_clearances.index_information()
+
+
+def test_global_admin_promotion_requires_persistent_clearance(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    user_id = seeded_data["user_id"]
+    payload = {
+        "username": "alice",
+        "email": "alice@example.test",
+        "role": "global_admin",
+        "confirmed": "on",
+    }
+
+    blocked = client.post(f"/admin/user/save_user/{user_id}", data=payload)
+
+    assert blocked.status_code == 302
+    assert db.users.find_one({"_id": user_id})["role"] == "user"
+
+    client.post(
+        f"/board/api/clearance/{user_id}",
+        json={"approved": True},
+        headers=_governance_csrf_headers(client),
+    )
+    promoted = client.post(f"/admin/user/save_user/{user_id}", data=payload)
+
+    assert promoted.status_code == 302
+    assert db.users.find_one({"_id": user_id})["role"] == "global_admin"
+
+
+def test_city_permission_is_independent_from_user_editing(app, db, seeded_data):
+    db.users.update_one(
+        {"_id": seeded_data["friend_id"]},
+        {
+            "$set": {
+                "role": "admin",
+                "global_admin": False,
+                "global_permissions": ["MANAGE_CITIES"],
+            }
+        },
+    )
+    client = _client_for_user(app, seeded_data["friend_id"])
+
+    response = client.get("/admin/cities/")
+
+    assert response.status_code == 200
+    assert "Kaupunkihallinta" in response.get_data(as_text=True)
+
+
+def test_clearance_change_rejects_missing_csrf_token(app, db, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+    user_id = str(seeded_data["user_id"])
+
+    response = client.post(
+        f"/board/api/clearance/{user_id}",
+        json={"approved": True},
+    )
+
+    assert response.status_code == 403
+    assert db.board_clearances.find_one({"user_id": user_id}) is None

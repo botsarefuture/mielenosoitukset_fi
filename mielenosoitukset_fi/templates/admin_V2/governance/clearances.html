@@ -9,7 +9,7 @@
   <header class="governance-hero">
     <p class="governance-eyebrow mb-2">{{ _('Hallinto') }}</p>
     <div class="d-flex justify-content-between gap-3 align-items-start flex-wrap">
-      <div><h1 class="h2 mb-2">{{ _('Hallituksen hyväksynnät') }}</h1><p class="text-body-secondary mb-0">{{ _('Myönnä tai peru käyttäjän hallinnollinen hyväksyntä. Jokainen muutos kirjataan tapahtumalokiin.') }}</p></div>
+      <div><h1 class="h2 mb-2">{{ _('Superkäyttäjäroolin hyväksynnät') }}</h1><p class="text-body-secondary mb-0">{{ _('Hallituksen hyväksyntä vaaditaan ennen kuin käyttäjälle voidaan myöntää global_admin-superkäyttäjärooli. Jokainen muutos kirjataan tapahtumalokiin.') }}</p></div>
       <span class="badge text-bg-success fs-6">{{ approved_count }} {{ _('hyväksytty') }}</span>
     </div>
   </header>
@@ -56,7 +56,7 @@ document.querySelectorAll('[data-clearance-action]').forEach((button) => {
     const status = document.getElementById('clearance-status');
     status.textContent = '{{ _('Tallennetaan…') }}';
     try {
-      const response = await fetch(button.dataset.url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({approved})});
+      const response = await fetch(button.dataset.url, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRF-Token': {{ governance_csrf_token|tojson }}}, body: JSON.stringify({approved})});
       const result = await response.json();
       if (!response.ok || result.status !== 'OK') throw new Error(result.message || '{{ _('Tallennus epäonnistui.') }}');
       status.textContent = result.message;

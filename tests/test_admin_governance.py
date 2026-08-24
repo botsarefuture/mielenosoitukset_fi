@@ -73,6 +73,20 @@ def test_city_management_explains_unsaved_and_risky_changes(app, seeded_data):
     assert "/admin/governance/" in page
 
 
+def test_admin_management_views_share_workspace_design(app, seeded_data):
+    client = _client_for_user(app, seeded_data["admin_id"])
+
+    demonstration_page = client.get("/admin/demo/").get_data(as_text=True)
+    city_page = client.get("/admin/cities/").get_data(as_text=True)
+
+    assert "css/admin/workspace.css" in demonstration_page
+    assert 'class="admin-workspace-hero"' in demonstration_page
+    assert demonstration_page.count("admin-workspace-summary-card") >= 4
+    assert 'class="city-admin-header admin-workspace-hero"' in city_page
+    assert city_page.count("admin-workspace-summary-card") >= 3
+    assert "admin-workspace-table" in city_page
+
+
 def test_governance_migration_preserves_existing_city_managers(db):
     from mielenosoitukset_fi.utils.migrations.migration_004_admin_governance import (
         migrate_admin_governance,

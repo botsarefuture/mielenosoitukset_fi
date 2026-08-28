@@ -6,6 +6,7 @@
 
 ### Changed
 * Notification dropdown badge now shows the unread count (capped at `99+`) in a redesigned pill-style badge with an entry animation, and the dropdown header, footer, and unread indicators now use theme-aware colors so they render correctly in dark mode.
+* The notification bell is now a circular icon button that matches the theme toggle: the bell icon is centered, gains a primary-blue tint and subtle lift on hover/open with a bell-ring animation, and shrinks slightly on click for tactile feedback.
 * City management now uses centered overview icons and metrics, a clearer aligned filter-and-action toolbar, and more polished city rows with centered status and count controls on desktop and mobile.
 * Admin management views now share the blue-and-orange workspace design used by Users, Organizations, Statistics, and Suggestions, with consistent heroes, summary cards, toolbars, tables, dark-mode surfaces, spacing, and responsive behavior; demonstration and city management also expose clearer at-a-glance summaries.
 * Admin governance is now gathered under a consistent `/admin/governance/` panel for board clearances, their audit trail, and city management; the responsive sidebar is grouped into clear content, user, governance, and system sections and remains usable as an offcanvas menu on mobile; legacy board UI links redirect into the panel; clearances persist in MongoDB across restarts and are enforced before granting `global_admin`; and city management loads counts with two aggregate queries, prioritizes relevant cities, supports visible-row bulk actions, and provides clearer unsaved-state feedback and risk warnings.
@@ -28,6 +29,7 @@
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
 
 ### Fixed
+* Cities overview page hero now uses a dark gradient in dark mode instead of the light-only background.
 * Admin workspace styles now use a cache-busting asset revision so newly deployed city-management layouts replace previously cached CSS immediately instead of remaining visually stale for up to four hours.
 * API token creation, validation, listing, revocation, and usage logging now resolve the active MongoDB database per operation, preventing stale database handles after application or test database resets.
 * City admins cannot change an organization's verified status or invite users to verified organizations; forged form and API requests are blocked server-side while general admins and super admins retain their broader access.

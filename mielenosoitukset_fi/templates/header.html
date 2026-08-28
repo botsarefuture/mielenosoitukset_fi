@@ -614,13 +614,18 @@ time (datetime) | iso string, read (bool)
   }
 
   #notif-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     background: var(--color-bg);
     border: 1px solid var(--color-border);
-    border-radius: 999px;
-    padding: 0.45rem 0.6rem;
+    border-radius: 50%;
     color: var(--color-text);
     transition: var(--transition);
-    box-shadow: 0 5px 18px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   }
 
   #notif-btn:focus-visible {
@@ -629,13 +634,36 @@ time (datetime) | iso string, read (bool)
   }
 
   #notif-btn .fa-bell {
-    color: light-dark(var(--color-primary), #facc15);
-    transition: color .18s ease;
+    color: var(--color-text);
+    transition: color .18s ease, transform .18s ease;
+  }
+
+  #notif-btn:hover,
+  #notif-wrap[aria-expanded="true"] #notif-btn {
+    background: light-dark(rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.22));
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
   }
 
   #notif-btn:hover .fa-bell,
   #notif-wrap[aria-expanded="true"] #notif-btn .fa-bell {
-    color: light-dark(var(--color-primary-hover), #fde047);
+    color: var(--color-primary);
+  }
+
+  #notif-btn:hover .fa-bell {
+    animation: notif-bell-ring 0.5s ease;
+  }
+
+  #notif-btn:active {
+    transform: scale(0.96);
+  }
+
+  @keyframes notif-bell-ring {
+    0%, 100% { transform: rotate(0); }
+    20%      { transform: rotate(14deg); }
+    40%      { transform: rotate(-14deg); }
+    60%      { transform: rotate(9deg); }
+    80%      { transform: rotate(-9deg); }
   }
 
   .notif-panel {
@@ -744,8 +772,8 @@ time (datetime) | iso string, read (bool)
   }
 
   @keyframes notif-badge-in {
-    from { transform: scale(0); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
+    from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   }
 
   /* Unread dot indicator */

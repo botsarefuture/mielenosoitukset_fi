@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Notification dropdown badge now shows the unread count (capped at `99+`) in a redesigned pill-style badge with an entry animation, and the dropdown header, footer, and unread indicators now use theme-aware colors so they render correctly in dark mode.
 * City management now uses centered overview icons and metrics, a clearer aligned filter-and-action toolbar, and more polished city rows with centered status and count controls on desktop and mobile.
 * Admin management views now share the blue-and-orange workspace design used by Users, Organizations, Statistics, and Suggestions, with consistent heroes, summary cards, toolbars, tables, dark-mode surfaces, spacing, and responsive behavior; demonstration and city management also expose clearer at-a-glance summaries.
 * Admin governance is now gathered under a consistent `/admin/governance/` panel for board clearances, their audit trail, and city management; the responsive sidebar is grouped into clear content, user, governance, and system sections and remains usable as an offcanvas menu on mobile; legacy board UI links redirect into the panel; clearances persist in MongoDB across restarts and are enforced before granting `global_admin`; and city management loads counts with two aggregate queries, prioritizes relevant cities, supports visible-row bulk actions, and provides clearer unsaved-state feedback and risk warnings.

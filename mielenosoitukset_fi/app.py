@@ -27,6 +27,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from mielenosoitukset_fi.kampanja import campaign_bp
 from mielenosoitukset_fi.notifications_bp import notif_bp
+from mielenosoitukset_fi.translations_join_bp import translations_join_bp
 
 import os
 
@@ -206,6 +207,7 @@ def create_app(config_overrides=None) -> Flask:
     
     app.register_blueprint(campaign_bp)
     app.register_blueprint(notif_bp)
+    app.register_blueprint(translations_join_bp)
     from flask_babel import format_timedelta, get_locale
     def timeago(dt):
         return format_timedelta(utcnow() - dt,

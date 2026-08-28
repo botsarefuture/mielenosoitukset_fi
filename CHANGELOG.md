@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Public city overview page (`/cities`) is now faster and more polished: per-city demonstration and today counts are computed in a single MongoDB aggregation instead of a per-city query, and the city grid gained a live search filter, redesigned cards with initials avatars and theme-aware today badges, a staggered entrance animation, and icon-based summary cards.
 * Notification dropdown badge now shows the unread count (capped at `99+`) in a redesigned pill-style badge with an entry animation, and the dropdown header, footer, and unread indicators now use theme-aware colors so they render correctly in dark mode.
 * The notification bell is now a circular icon button that matches the theme toggle: the bell icon is centered, gains a primary-blue tint and subtle lift on hover/open with a bell-ring animation, and shrinks slightly on click for tactile feedback.
 * City management now uses centered overview icons and metrics, a clearer aligned filter-and-action toolbar, and more polished city rows with centered status and count controls on desktop and mobile.

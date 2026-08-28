@@ -1983,43 +1983,59 @@ def init_routes(app):
         """
         Render a public city index from enabled cities and cities with demonstrations.
         """
-        demo_city_keys = set()
-        for row in demonstrations_collection.aggregate(
+        today_iso = date.today().isoformat()
+        demo_counts: dict[str, int] = {}
+        today_counts: dict[str, int] = {}
+        for group in demonstrations_collection.aggregate(
             [
-                {"$match": {**DEMO_FILTER, "city": {"$exists": True, "$ne": ""}}},
-                {"$group": {"_id": {"city_key": "$city_key", "city": "$city"}}},
+                {
+                    "$match": {
+                        **DEMO_FILTER,
+                        "city": {"$exists": True, "$ne": ""},
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": {"city_key": "$city_key", "city": "$city"},
+                        "count": {"$sum": 1},
+                        "today_count": {
+                            "$sum": {"$cond": [{"$eq": ["$date", today_iso]}, 1, 0]}
+                        },
+                    }
+                },
             ]
         ):
-            raw = row.get("_id") or {}
-            city_key = raw.get("city_key") or normalize_city_key(raw.get("city"))
+            identity = group.get("_id") or {}
+            city_key = normalize_city_key(
+                identity.get("city_key") or identity.get("city")
+            )
             if city_key in CITY_KEY_TO_NAME:
-                demo_city_keys.add(city_key)
+                demo_counts[city_key] = (
+                    demo_counts.get(city_key, 0) + group["count"]
+                )
+                today_counts[city_key] = (
+                    today_counts.get(city_key, 0) + group["today_count"]
+                )
 
         enabled_keys = {
             normalize_city_key(name)
             for name in enabled_city_names(mongo)
             if normalize_city_key(name) in CITY_KEY_TO_NAME
         }
+        all_keys = sorted(
+            enabled_keys | set(demo_counts),
+            key=lambda k: CITY_KEY_TO_NAME[k],
+        )
         city_rows = []
-        for city_key in sorted(enabled_keys | demo_city_keys, key=lambda key: CITY_KEY_TO_NAME[key]):
+        for city_key in all_keys:
             city_name = CITY_KEY_TO_NAME[city_key]
-            demo_count = demonstrations_collection.count_documents(
-                {
-                    **DEMO_FILTER,
-                    "$or": [
-                        {"city_key": city_key},
-                        {"city": {"$regex": f"^{re.escape(city_name)}$", "$options": "i"}},
-                    ],
-                }
-            )
-            today_count = demonstrations_collection.count_documents(_today_demo_query(city_name))
             city_rows.append(
                 {
                     "key": city_key,
                     "name": city_name,
                     "phrase": _city_inessive_phrase(city_name),
-                    "demo_count": demo_count,
-                    "today_count": today_count,
+                    "demo_count": demo_counts.get(city_key, 0),
+                    "today_count": today_counts.get(city_key, 0),
                 }
             )
 

@@ -101,22 +101,107 @@
   .cities-stat {
     border: 1px solid var(--color-border);
     background: var(--color-card-bg);
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.05);
+    border-radius: var(--border-radius, 16px);
+    padding: 1rem 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  .cities-stat strong {
+  .cities-stat .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+  }
+
+  .cities-stat:nth-child(1) .stat-icon { background: light-dark(#eef4ff, #1a2540); color: var(--color-primary); }
+  .cities-stat:nth-child(2) .stat-icon { background: light-dark(#f3eeff, #241a40); color: #7c3aed; }
+  .cities-stat:nth-child(3) .stat-icon { background: light-dark(#eaf6ef, #153a24); color: #16a34a; }
+
+  .cities-stat .stat-text strong {
     display: block;
     font-size: 1.7rem;
     line-height: 1;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.15rem;
   }
 
-  .cities-stat span {
+  .cities-stat .stat-text span {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+  }
+
+  /* Search */
+  .cities-search-wrap {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cities-search {
+    position: relative;
+    max-width: 420px;
+  }
+
+  .cities-search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+    font-size: 0.95rem;
+  }
+
+  .cities-search input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card-bg);
+    color: var(--color-text);
+    font-size: 1rem;
+    outline: none;
+    transition: var(--transition, all 0.3s cubic-bezier(0.4,0,0.2,1));
+  }
+
+  .cities-search input::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.7;
+  }
+
+  .cities-search input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 15%, transparent);
+  }
+
+  .cities-search-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
     color: var(--color-text-secondary);
   }
 
+  .cities-empty {
+    display: none;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+  }
+
+  .cities-empty .empty-icon {
+    font-size: 2.4rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+  }
+
+  /* Grid */
   .city-grid-section {
     padding-top: 2rem;
   }
@@ -143,52 +228,102 @@
 
   .city-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
   }
 
+  /* Cards */
   .city-card {
     display: grid;
-    gap: 0.95rem;
+    gap: 0.8rem;
     min-height: 190px;
-    padding: 1rem;
+    padding: 1.15rem;
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--border-radius, 16px);
     background: var(--color-card-bg);
     color: var(--color-text);
     text-decoration: none;
+    transition: var(--transition, all 0.3s cubic-bezier(0.4,0,0.2,1));
+    animation: city-card-in 0.4s ease both;
+    animation-delay: calc(var(--i, 0) * 25ms);
+  }
+
+  @keyframes city-card-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .city-card { animation: none; }
   }
 
   .city-card:hover,
   .city-card:focus-within {
+    transform: translateY(-3px);
     border-color: var(--color-primary);
-    box-shadow: 0 12px 34px rgba(0, 86, 179, 0.1);
+    box-shadow: 0 8px 28px color-mix(in srgb, var(--color-primary) 12%, transparent);
   }
 
   .city-card-head {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .city-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    background: light-dark(#eef4ff, #1a2540);
+    color: var(--color-primary);
+  }
+
+  .city-card-head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1;
   }
 
   .city-card h3 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
+  /* Today badge */
   .city-today-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    min-height: 30px;
-    padding: 0.25rem 0.6rem;
+    min-height: 26px;
+    padding: 0.2rem 0.6rem;
     border-radius: 999px;
-    background: #eaf6ef;
-    color: #17633a;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 750;
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .city-today-badge.has-today {
+    background: light-dark(#dcfce7, #14532d);
+    color: light-dark(#16a34a, #4ade80);
+  }
+
+  .city-today-badge.no-today {
+    background: light-dark(#f3f4f6, #262830);
+    color: var(--color-text-secondary);
   }
 
   .city-card p {
@@ -209,12 +344,14 @@
     align-items: center;
     gap: 0.4rem;
     min-height: 38px;
-    padding: 0.55rem 0.7rem;
-    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    border-radius: 999px;
     border: 1px solid var(--color-border);
     color: var(--color-text);
     text-decoration: none;
     font-weight: 700;
+    font-size: 0.88rem;
+    transition: var(--transition, all 0.3s cubic-bezier(0.4,0,0.2,1));
   }
 
   .city-card-actions a:hover,
@@ -223,6 +360,7 @@
     color: var(--color-primary);
   }
 
+  /* How-to */
   .city-system {
     margin-top: 2.5rem;
     padding-top: 2rem;
@@ -257,6 +395,14 @@
     .section-heading p {
       margin-top: 0.5rem;
     }
+
+    .cities-search {
+      max-width: 100%;
+    }
+
+    .city-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 {% endblock %}
@@ -289,16 +435,25 @@
   <div class="cities-shell">
     <section class="cities-summary" aria-label="{{ _('Yhteenveto') }}">
       <div class="cities-stat">
-        <strong>{{ cities|length }}</strong>
-        <span>{{ _('kaupunkia listalla') }}</span>
+        <div class="stat-icon"><i class="fa-solid fa-city"></i></div>
+        <div class="stat-text">
+          <strong>{{ cities|length }}</strong>
+          <span>{{ _('kaupunkia listalla') }}</span>
+        </div>
       </div>
       <div class="cities-stat">
-        <strong>{{ cities|sum(attribute='demo_count') }}</strong>
-        <span>{{ _('tulevaa mielenosoitusta kaupunkisivuilla') }}</span>
+        <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+        <div class="stat-text">
+          <strong>{{ cities|sum(attribute='demo_count') }}</strong>
+          <span>{{ _('tulevaa mielenosoitusta kaupunkisivuilla') }}</span>
+        </div>
       </div>
       <div class="cities-stat">
-        <strong>{{ cities|sum(attribute='today_count') }}</strong>
-        <span>{{ _('mielenosoitusta tänään') }}</span>
+        <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div class="stat-text">
+          <strong>{{ cities|sum(attribute='today_count') }}</strong>
+          <span>{{ _('mielenosoitusta tänään') }}</span>
+        </div>
       </div>
     </section>
 
@@ -308,14 +463,37 @@
         <p>{{ _('Jokaisesta kaupungista löytyy oma päivänäkymä sekä laajempi lista tulevista mielenosoituksista.') }}</p>
       </div>
 
-      <div class="city-grid" aria-label="{{ _('Kaupunkilista') }}">
+      <div class="cities-search-wrap">
+        <div class="cities-search">
+          <i class="fa-solid fa-magnifying-glass cities-search-icon" aria-hidden="true"></i>
+          <input
+            type="search"
+            id="city-search-input"
+            placeholder="{{ _('Etsi kaupunki\u2026') }}"
+            aria-label="{{ _('Etsi kaupunkia') }}"
+            autocomplete="off"
+          />
+        </div>
+        <div class="cities-search-meta">
+          <span id="city-search-count"></span>
+        </div>
+      </div>
+
+      <div class="city-grid" id="city-grid" aria-label="{{ _('Kaupunkilista') }}">
         {% for city in cities %}
-        <article class="city-card">
+        <article class="city-card" data-city-key="{{ city.key }}" style="--i: {{ loop.index0 }}">
           <div class="city-card-head">
-            <h3>{{ city.name }}</h3>
-            <span class="city-today-badge">
+            <div class="city-avatar" aria-hidden="true">{{ city.name[:2] }}</div>
+            <div class="city-card-head-text">
+              <h3 data-searchable>{{ city.name }}</h3>
+            </div>
+            <span class="city-today-badge {{ 'has-today' if city.today_count > 0 else 'no-today' }}">
               <i class="fa-solid fa-calendar-day"></i>
-              {{ city.today_count }} {{ _('tänään') }}
+              {% if city.today_count > 0 %}
+                {{ city.today_count }} {{ _('tänään') }}
+              {% else %}
+                {{ _('Ei tänään') }}
+              {% endif %}
             </span>
           </div>
           <p>
@@ -335,6 +513,11 @@
         </article>
         {% endfor %}
       </div>
+
+      <div class="cities-empty" id="city-empty">
+        <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <p>{{ _('Ei hakutuloksia') }}</p>
+      </div>
     </section>
 
     <section class="city-system">
@@ -350,4 +533,33 @@
     </section>
   </div>
 </main>
+
+<script>
+(function () {
+  var input = document.getElementById('city-search-input');
+  var grid  = document.getElementById('city-grid');
+  var count = document.getElementById('city-search-count');
+  var empty = document.getElementById('city-empty');
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.city-card'));
+  var total = cards.length;
+
+  function update() {
+    var q = input.value.toLowerCase().trim();
+    var shown = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var name = (card.querySelector('[data-searchable]') || {}).textContent || '';
+      var match = !q || name.toLowerCase().indexOf(q) !== -1;
+      card.style.display = match ? '' : 'none';
+      if (match) shown++;
+    }
+    count.textContent = shown + ' {{ _('kaupunkia')|replace("'", "\\'") }}';
+    empty.style.display = shown === 0 ? '' : 'none';
+    grid.style.display = shown === 0 ? 'none' : '';
+  }
+
+  input.addEventListener('input', update);
+  update();
+})();
+</script>
 {% endblock %}

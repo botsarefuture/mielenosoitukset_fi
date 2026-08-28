@@ -290,6 +290,13 @@
       ],
       "sha256": "1b4b57b231a01be68a23f14adb6f01592d0bd8ad21982ee29f506299107feca7"
     },
+    "mielenosoitukset_fi/translations_join_bp.py": {
+      "count": 1,
+      "coverage": [
+        "integration"
+      ],
+      "sha256": "5d848cdfb95e77ff83cb7831e7b8f7b256e5103ebb0c5f42c82294a660448739"
+    },
     "mielenosoitukset_fi/users/BPs/auth.py": {
       "count": 29,
       "coverage": [

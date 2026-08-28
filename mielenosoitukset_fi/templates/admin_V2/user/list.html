@@ -714,6 +714,8 @@
   const createUserDisplayname = document.getElementById('create-user-displayname');
   const createUserRole = document.getElementById('create-user-role');
   const createUserRoleHelp = document.getElementById('create-user-role-help');
+  const createUserCityScope = document.getElementById('create-user-city-scope');
+  const createUserCities = document.getElementById('create-user-cities');
   const createUserStatus = document.getElementById('create-user-status');
   const createUserSubmit = document.getElementById('create-user-submit');
   let usernameWasEdited = false;
@@ -737,9 +739,16 @@
   });
 
   createUserRole?.addEventListener('change', () => {
-    createUserRoleHelp.textContent = createUserRole.value === 'admin'
-      ? "{{ _('Admin voi käyttää ylläpitotoimintoja myönnettyjen oikeuksien mukaan.') }}"
-      : "{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}";
+    const roleHelp = {
+      admin: "{{ _('Admin voi käyttää ylläpitotoimintoja myönnettyjen oikeuksien mukaan.') }}",
+      translator: "{{ _('Kääntäjä saa mielenosoitusten ja käyttöliittymän käännösoikeudet.') }}",
+      city_admin: "{{ _('Kaupunkiadmin voi käsitellä valittujen paikkakuntien mielenosoituksia.') }}",
+      user: "{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}",
+    };
+    createUserRoleHelp.textContent = roleHelp[createUserRole.value] || roleHelp.user;
+    const cityAdminSelected = createUserRole.value === 'city_admin';
+    createUserCityScope?.classList.toggle('d-none', !cityAdminSelected);
+    if (createUserCities) createUserCities.required = cityAdminSelected;
   });
 
   createUserForm?.addEventListener('submit', (event) => {
@@ -760,6 +769,9 @@
 
   createUserModal?.addEventListener('hidden.bs.modal', () => {
     createUserForm.reset();
+    createUserCityScope?.classList.add('d-none');
+    if (createUserCities) createUserCities.required = false;
+    createUserRoleHelp.textContent = "{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}";
     createUserForm.querySelectorAll('.is-invalid').forEach((field) => field.classList.remove('is-invalid'));
     createUserStatus.textContent = '';
     createUserStatus.classList.remove('error');

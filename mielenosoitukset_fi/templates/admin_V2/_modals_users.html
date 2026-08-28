@@ -209,10 +209,30 @@
               <label for="create-user-role">{{ _('Rooli') }}</label>
               <select class="form-select" id="create-user-role" name="role" required>
                 <option value="user">{{ _('Käyttäjä') }}</option>
+                <option value="translator">{{ _('Kääntäjä') }}</option>
+                {% if can_manage_scope_grants %}
+                <option value="city_admin">{{ _('Kaupunkiadmin') }}</option>
+                {% endif %}
                 <option value="admin">{{ _('Admin') }}</option>
               </select>
               <small id="create-user-role-help">{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}</small>
             </div>
+            {% if can_manage_scope_grants %}
+            <div class="create-user-field create-user-field-wide d-none" id="create-user-city-scope">
+              <label for="create-user-cities">{{ _('Kaupunkiadminin paikkakunnat') }}</label>
+              <select class="form-select" id="create-user-cities" name="admin_scope_cities[]" multiple size="7">
+                {% for city in enabled_city_list %}
+                <option value="{{ city_name_to_key[city] }}">{{ city }}</option>
+                {% endfor %}
+                {% for city in city_list %}
+                {% if city not in enabled_city_list %}
+                <option value="{{ city_name_to_key[city] }}">{{ city }} {{ _('(ei käytössä)') }}</option>
+                {% endif %}
+                {% endfor %}
+              </select>
+              <small>{{ _('Valitse vähintään yksi paikkakunta. Kaupunkiadmin saa niiden mielenosoitusten käsittelyoikeudet.') }}</small>
+            </div>
+            {% endif %}
           </div>
           <div id="create-user-status" class="create-user-status" aria-live="polite"></div>
           <div class="modal-footer">

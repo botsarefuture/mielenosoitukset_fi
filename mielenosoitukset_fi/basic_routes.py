@@ -2307,6 +2307,23 @@ def init_routes(app):
                 organizer_follow_map[org_id_str] = org_id_str in user_follow_orgs
                 org["organization_id_str"] = org_id_str
 
+        followable_org_ids = set()
+        org_oids = [
+            _safe_objectid(org.get("organization_id_str") or org.get("organization_id") or org.get("_id"))
+            for org in demo.get("organizers") or []
+        ]
+        org_oids = [oid for oid in org_oids if oid]
+        if org_oids:
+            for doc in mongo.organizations.find({"_id": {"$in": org_oids}}, {"verified": 1}):
+                doc_id = _stringify_id(doc.get("_id"))
+                if doc_id and doc.get("verified"):
+                    followable_org_ids.add(doc_id)
+
+        for org in demo.get("organizers") or []:
+            org_identifier = org.get("organization_id") or org.get("_id")
+            org_id_str = _stringify_id(org_identifier)
+            org["followable"] = bool(org_id_str and org_id_str in followable_org_ids)
+
         recurring_target_id = None
         #if demo.get("recurs"):
         #    recurring_target_id = _stringify_id(demo_obj._id)

@@ -29,8 +29,13 @@
 * Admin `before_request` audit logging now runs in a background thread so request handling is not blocked by audit writes.
 * `has_demo_permission` now caches demo document lookups per-request, eliminating redundant MongoDB queries in loops.
 * Admin demo control dashboard now uses MongoDB aggregation-based pagination instead of loading the entire collection into Python memory on page 1.
+* All logged-in users can now open the admin dashboard (`/admin/dashboard`) and see a role-filtered view: administrators get the full live overview (stats, panic mode, login feed, quick actions), while translators and other non-admin users get a role-relevant workspace view, and city-scoped admins are still routed to their scoped demonstration view.
+* Translators who sign up for the first time now receive a welcome email explaining the demonstration and UI translation work and linking to the translation workspace.
 
 ### Fixed
+
+* Demo detail pages no longer show the "Seuraa" follow button (or its anonymous-login prompt) for organizations that are not followable, such as unverified stub organizations, preventing dead-end follow attempts.
+* Horizontal overflow is fixed on the site header, the cities grid, and the "today" page: the header container/branding, notification bell area, and city cards now stay inside the viewport on mobile and desktop widths.
 * Cities overview page hero now uses a dark gradient in dark mode instead of the light-only background.
 * Admin workspace styles now use a cache-busting asset revision so newly deployed city-management layouts replace previously cached CSS immediately instead of remaining visually stale for up to four hours.
 * API token creation, validation, listing, revocation, and usage logging now resolve the active MongoDB database per operation, preventing stale database handles after application or test database resets.

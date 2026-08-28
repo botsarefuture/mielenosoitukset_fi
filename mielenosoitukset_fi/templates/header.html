@@ -115,6 +115,8 @@ time (datetime) | iso string, read (bool)
   }
 
   .top-header .container {
+    box-sizing: border-box;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -122,6 +124,17 @@ time (datetime) | iso string, read (bool)
     justify-content: space-between;
     align-items: center;
     background: none;
+  }
+
+  .branding {
+    min-width: 0;
+  }
+
+  .branding .logo {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .branding .logo {
@@ -212,6 +225,8 @@ time (datetime) | iso string, read (bool)
   }
 
   .nav-container {
+    box-sizing: border-box;
+    width: 100%;
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -490,6 +505,16 @@ time (datetime) | iso string, read (bool)
     .language-buttons {
       justify-content: center;
       width: fit-content;
+    }
+
+    .branding .logo {
+      font-size: 1.35rem;
+    }
+
+    @media (max-width: 420px) {
+      .branding .logo {
+        font-size: 1.15rem;
+      }
     }
 
     .mobile-menu-toggle {
@@ -899,6 +924,12 @@ time (datetime) | iso string, read (bool)
               <a href="{{ url_for('users.auth.settings') }}" role="menuitem">
                 <i class="fa-solid fa-cog" aria-hidden="true"></i>
                 <span>{{ _('Asetukset') }}</span>
+              </a>
+            </li>
+            <li role="none">
+              <a href="{{ url_for('admin.admin_dashboard') }}" role="menuitem">
+                <i class="fa-solid fa-gauge" aria-hidden="true"></i>
+                <span>{{ _('Hallintapaneeli') }}</span>
               </a>
             </li>
             <li role="none">

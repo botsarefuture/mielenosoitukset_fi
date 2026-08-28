@@ -353,6 +353,7 @@
 
 {% block main_content %}
 <div class="container-fluid py-4">
+  {% if is_admin_user %}
   <div class="dashboard-grid">
     <section class="main-panel card-panel">
       <header class="live-header">
@@ -546,6 +547,71 @@
       </div>
     </aside>
   </div>
+  {% else %}
+  <section class="card-panel">
+    <header class="live-header">
+      <div>
+        <div class="eyebrow">{{ _('Hallintapaneeli') }}</div>
+        <h2 class="mb-1">{{ _('Hei %(name)s', name=(current_user.displayname or current_user.username)) }}</h2>
+        <p class="text-muted mb-0">{{ _('Täältä löydät omat työtilasi ja sinulle sallitut hallintatyökalut.') }}</p>
+      </div>
+    </header>
+
+    <div class="quick-actions">
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") %}
+      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">
+        <div>
+          <strong>{{ _('Käännöstyöjono') }}</strong>
+          <div class="text-muted small">{{ _('Mielenosoitusten käännökset') }}</div>
+        </div>
+        <i class="fa-solid fa-language"></i>
+      </a>
+      {% endif %}
+      {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_UI") or current_user.has_permission("REVIEW_UI_TRANSLATIONS") %}
+      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin.ui_translation_dashboard') }}">
+        <div>
+          <strong>{{ _('Käyttöliittymäkäännökset') }}</strong>
+          <div class="text-muted small">{{ _('Käännä näkyviä tekstejä') }}</div>
+        </div>
+        <i class="fa-solid fa-globe"></i>
+      </a>
+      {% endif %}
+      {% if current_user.has_permission("LIST_DEMOS") %}
+      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_demo.demo_control') }}">
+        <div>
+          <strong>{{ _('Mielenosoitukset') }}</strong>
+          <div class="text-muted small">{{ _('Jatkuva hallinta') }}</div>
+        </div>
+        <i class="fa-solid fa-bullhorn"></i>
+      </a>
+      {% endif %}
+      {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
+      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_org.organization_control') }}">
+        <div>
+          <strong>{{ _('Organisaatiot') }}</strong>
+          <div class="text-muted small">{{ _('Toimijoiden tiedot') }}</div>
+        </div>
+        <i class="fa-solid fa-building"></i>
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">{{ _('Profiili') }}</div>
+        <div class="stat-sub">
+          <a href="{{ url_for('users.profile.profile') }}">{{ _('Näytä oma profiili') }}</a>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">{{ _('Asetukset') }}</div>
+        <div class="stat-sub">
+          <a href="{{ url_for('users.auth.settings') }}">{{ _('Muokkaa asetuksia') }}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 </div>
 {% endblock %}
 

@@ -294,14 +294,15 @@ function confirmAction(action, taskId) {
   {% set admin_endpoint = request.endpoint or '' %}
   <nav id="sidebarMenu" class="flex-grow-1">
     <ul class="nav nav-pills flex-column mb-3">
-      {% if current_user.global_admin %}
+      {% if current_user.is_authenticated %}
         <li class="admin-sidebar-heading">{{ _('Yleiskuva') }}</li>
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link {% if admin_endpoint == 'admin.admin_dashboard' %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}" {% if admin_endpoint == 'admin.admin_dashboard' %}aria-current="page"{% endif %}>
-            <i class="fas fa-house me-2"></i>{{ _('Yleiskuva') }}
+            <i class="fas fa-house me-2"></i>{{ _('Hallintapaneeli') }}
           </a>
         </li>
-      {% elif current_user.has_city_admin_scope_grants() %}
+      {% endif %}
+      {% if current_user.has_city_admin_scope_grants() %}
         <li class="nav-item">
           <a class="nav-link admin-sidebar-link" href="{{ url_for('admin_demo.demo_control') }}">
             <i class="fas fa-location-dot me-2"></i>{{ _('Kaupunkiadminin näkymä') }}

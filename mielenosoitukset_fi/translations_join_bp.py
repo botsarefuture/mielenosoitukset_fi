@@ -10,6 +10,7 @@ from flask import Blueprint, redirect, url_for
 from flask_login import current_user, login_required
 
 from mielenosoitukset_fi.utils.flashing import flash_message
+from mielenosoitukset_fi.emailer.EmailSender import EmailSender
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from flask_babel import _
 
@@ -17,6 +18,8 @@ from flask_babel import _
 translations_join_bp = Blueprint(
     "translations_join", __name__, url_prefix="/upcoming/translations"
 )
+
+email_sender = EmailSender()
 
 
 def _get_mongo():
@@ -32,11 +35,34 @@ TRANSLATE_DEMO_PERMS = ("TRANSLATE_DEMO", "TRANSLATE_UI")
 def join():
     """Grant the current user translation capabilities (idempotent)."""
     user_id = current_user._id
+    mongo_db = _get_mongo()
+
+    user = mongo_db.users.find_one(
+        {"_id": user_id}, {"global_permissions": 1, "email": 1}
+    )
+    already_joined = bool(
+        user and "TRANSLATE_DEMO" in (user.get("global_permissions") or [])
+    )
 
     for perm in TRANSLATE_DEMO_PERMS:
-        _get_mongo().users.update_one(
+        mongo_db.users.update_one(
             {"_id": user_id}, {"$addToSet": {"global_permissions": perm}}
         )
+
+    if not already_joined:
+        recipient_email = current_user.email or (user or {}).get("email")
+        if recipient_email:
+            email_sender.queue_email(
+                template_name="translator_welcome.html",
+                subject=_("Tervetuloa mukaan käännöstyöhön!"),
+                recipients=[recipient_email],
+                context={
+                    "user_name": current_user.displayname or current_user.username,
+                    "translations_url": url_for(
+                        "upcoming_translations", _external=True
+                    ),
+                },
+            )
 
     flash_message(
         _("Olet nyt mukana käännöstyössä. Kiitos avustasi!"),

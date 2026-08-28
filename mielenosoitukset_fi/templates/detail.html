@@ -1816,7 +1816,7 @@ Template accepts either demo['mastodon'] or a global mastodon_profile variable. 
               {% endif %}
             </div>
             {% set organizer_id_str = org.organization_id_str %}
-            {% if organizer_id_str %}
+            {% if organizer_id_str and org.followable %}
               {% if current_user.is_authenticated %}
                 {% set is_following = follow_meta.organizer_follow_map.get(organizer_id_str) %}
                 {% set follow_label = _('Seuraa')|upper %}

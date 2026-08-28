@@ -34,7 +34,11 @@ from flask_login import (
 from mielenosoitukset_fi.users.models import User  # Import User model
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from mielenosoitukset_fi.utils.logger import logger
-from mielenosoitukset_fi.utils.wrappers import admin_required, permission_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_admin_access,
+    permission_required,
+)
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.analytics import get_demo_views
 from mielenosoitukset_fi.utils.cache import cache
@@ -824,18 +828,25 @@ def load_user(user_id):
 # Admin dashboard
 
 # Route to view dashboard
+# Any authenticated user may open the dashboard; the template only renders
+# admin-only widgets for users with admin access (role-filtered view).
 @admin_bp.route("/dashboard")
 @login_required
-@admin_required
 def admin_dashboard():
-    """Render the admin dashboard."""
+    """Render the admin dashboard (role-filtered for all authenticated users)."""
     if _is_limited_city_admin(current_user):
         return redirect(url_for("admin_demo.demo_control"))
     # Load current panic mode
     panic = mongo.panic.find_one({"name": "global"})
     panic_mode = panic.get("panic", False) if panic else False
-    _log_admin_event("dashboard_view", panic_mode=panic_mode)
-    return render_template(f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html", panic_mode=panic_mode)
+    is_admin_user = has_admin_access(current_user)
+    if is_admin_user:
+        _log_admin_event("dashboard_view", panic_mode=panic_mode)
+    return render_template(
+        f"{_ADMIN_TEMPLATE_FOLDER}dashboard.html",
+        panic_mode=panic_mode,
+        is_admin_user=is_admin_user,
+    )
 
 
 # Route to activate panic mode

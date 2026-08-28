@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tervetuloa käännöstiimiin</title>
+    <style>
+        body {
+            background: #f4f4f4;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            background: #ffffff;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 10px 0;
+            background: #0033A0;
+            color: #ffffff;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            margin: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #0033A0;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #002a6d;
+        }
+        .info {
+            background: #f0f5ff;
+            border: 1px solid #d6e4ff;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin: 16px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tervetuloa käännöstiimiin!</h1>
+        </div>
+        <div class="content">
+            <p>Hei {{ user_name }},</p>
+            <p>Liityit juuri mukaan Mielenosoitukset.fin käännöstyöhön. Kiitos avustasi!</p>
+            <p>Käyttäjällesi on nyt avattu mahdollisuus kääntää</p>
+            <ul>
+                <li><strong>mielenosoitustapahtumien tekstejä</strong> (otsikot ja kuvaustekstit), sekä</li>
+                <li><strong>sivuston käyttöliittymän käännöksiä</strong>.</li>
+            </ul>
+            <div class="info">
+                <p>Pääset käännöstyöhön tästä:</p>
+                <p style="text-align: center;">
+                    <a href="{{ translations_url }}" class="btn">Avaa käännössivu</a>
+                </p>
+            </div>
+            <p>Käännösten <strong>tarkistusoikeudet</strong> myönnetään erikseen kokeneimmille kääntäjille.
+                Otamme mielellämme yhteyttä, kun toimintasi on vakiintunut.</p>
+            <p>Jos sinulla on kysyttävää tai haluat auttaa muissa tehtävissä, vastaa tähän sähköpostiin tai
+                ota yhteyttä: <a href="mailto:kaannoshanke@mielenosoitukset.fi">kaannoshanke@mielenosoitukset.fi</a>.</p>
+            <p>Ystävällisin terveisin,<br>Mielenosoitukset.fi-tiimi</p>
+        </div>
+        <div class="footer">
+            <p>Tämä on automaattinen viesti. Tarkista aina tietoturvaohjeemme ennen tuntemattomien linkkien avaamista.</p>
+        </div>
+    </div>
+</body>
+</html>

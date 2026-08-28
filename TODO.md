@@ -1,30 +1,26 @@
-# This file contains all the TODOs for the codebase
+# TODO — active task list
 
-## Admin UI
+Consolidated list of fixes/features requested (so none are forgotten). Tick items off as they land.
 
-- [x] Use `dashboard-container` for all mainlevel containers.
+## Overflow fixes
 
-- [x] Use `dashboard-panel` for all panels.
+- [x] Ensure no overflow on public pages (reported for `/city/helsinki/tanaan`, cities pages)
+  - [x] Header `.container` overflows viewport by 24–64px on the right (clips bell/user area)
+  - [x] Header `.branding` pokes ~9px past viewport on mobile
+  - [x] `.city-card` overflows ~6px past viewport on `/cities` at ~360px
+- [x] Verify no horizontal page scroll / protruding elements on home, cities, city today pages at desktop + mobile widths
+  - Verified via Playwright + Jinja harness at 320/360/390/768/1024/1440 (zero right-side offenders); live-site header also measured.
 
-- [ ] Link all the other view pages too.
+## Fixes
+- [ ] Please ensure hero consistency between all the user facing pages!
 
-### Refreshing
+## Features
 
-#### Demonstrations
+- [x] Add an info/welcome email to people who sign up as translators
+- [x] Allow all logged-in users to access the admin dashboard, but only show modules relevant to their role/job
+- [x] On demo detail pages, hide the "Seuraa" (follow) button for organizations that cannot be followed
+- [ ] Ensure that the user can enable 2fa in their settings!
 
-- [ ] Demo create and edit pages
+## Process
 
-- [ ] Recurring demo pages
-
-#### Users
-
-- [ ] Dashboard
-- [ ] Form
-
-
-## Logical stuff
-
-- [ ] Use 
-
-
-- [ ] make org_x for all the flatp
+- [x] Update CHANGELOG.md for every user-facing change

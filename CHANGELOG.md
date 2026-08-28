@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Standard public pages now share a consistent blue-gradient hero foundation, typography, corner treatment, lighting, and responsive behavior while campaign and guide pages retain their intentional visual identities.
 * The translation-project page (`/upcoming/translations/`) now lets logged-in users grant themselves translation capabilities (`TRANSLATE_DEMO` / `TRANSLATE_UI`) with one click instead of only an email signup; guests are prompted to log in first, and review/admin rights are intentionally not granted.
 * Public city overview page (`/cities`) is now faster and more polished: per-city demonstration and today counts are computed in a single MongoDB aggregation instead of a per-city query, and the city grid gained a live search filter, redesigned cards with initials avatars and theme-aware today badges, a staggered entrance animation, and icon-based summary cards.
 * Notification dropdown badge now shows the unread count (capped at `99+`) in a redesigned pill-style badge with an entry animation, and the dropdown header, footer, and unread indicators now use theme-aware colors so they render correctly in dark mode.
@@ -34,6 +35,7 @@
 
 ### Fixed
 
+* Two-factor authentication can now be enabled and managed reliably from account settings: QR generation includes its required PNG dependency, device removal accepts MongoDB IDs correctly, revoked-last-device state refreshes in the UI, and MFA verification uses only setup secrets issued to the current user.
 * Demo detail pages no longer show the "Seuraa" follow button (or its anonymous-login prompt) for organizations that are not followable, such as unverified stub organizations, preventing dead-end follow attempts.
 * Horizontal overflow is fixed on the site header, the cities grid, and the "today" page: the header container/branding, notification bell area, and city cards now stay inside the viewport on mobile and desktop widths.
 * Cities overview page hero now uses a dark gradient in dark mode instead of the light-only background.

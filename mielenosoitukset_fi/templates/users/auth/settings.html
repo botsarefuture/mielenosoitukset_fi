@@ -938,6 +938,7 @@
         const data = await res.json();
         if (data.status === "enabled") {
           mfaStatus.textContent = "{{ _('MFA on käytössä') }}";
+          mfaStatus.className = "text-success";
           mfaBtn.style.display = "none";
           addDeviceBtn.style.display = "inline-block";
           devicesList.innerHTML = "";
@@ -961,6 +962,12 @@
             li.appendChild(revokeBtn);
             devicesList.appendChild(li);
           });
+        } else {
+          mfaStatus.textContent = "{{ _('MFA ei käytössä') }}";
+          mfaStatus.className = "text-muted";
+          mfaBtn.style.display = "inline-block";
+          addDeviceBtn.style.display = "none";
+          devicesList.innerHTML = "";
         }
       } catch (e) {
         console.error("Failed to load MFA status", e);

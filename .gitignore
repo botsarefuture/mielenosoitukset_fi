@@ -19,3 +19,8 @@ config.compose.dev.yaml
 .playwright-cli
 .codex
 **/.DS_Store
+.backup_pre_perf
+**mailpit**
+data/mailpit.db
+data/mailpit.db-shm
+data/mailpit.db-wal

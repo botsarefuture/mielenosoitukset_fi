@@ -29,6 +29,27 @@
 {% endblock %}
 
 {% block content %}
+{% macro join_flow() %}
+  {% if not current_user.is_authenticated %}
+    <a
+      class="button button-primary"
+      href="{{ url_for('users.auth.login', next=request.path) }}"
+      aria-label="{{ _('Kirjaudu sisään liittyäksesi käännöshankkeeseen') }}"
+    >
+      <i class="fa-solid fa-right-to-bracket"></i> {{ _('Kirjaudu sisään liittyäksesi') }}
+    </a>
+  {% elif current_user.has_permission('TRANSLATE_DEMO') %}
+    <span class="button button-outline" style="cursor: default;" aria-label="{{ _('Olet mukana käännöstyössä') }}">
+      <i class="fa-solid fa-check"></i> {{ _('Olet mukana käännöstyössä') }}
+    </span>
+  {% else %}
+    <form method="post" action="{{ url_for('translations_join.join') }}" style="margin: 0;">
+      <button type="submit" class="button button-primary" aria-label="{{ _('Liity kääntäjäksi') }}">
+        <i class="fa-solid fa-language"></i> {{ _('Liity kääntäjäksi') }}
+      </button>
+    </form>
+  {% endif %}
+{% endmacro %}
 <div class="container-main-content">
 
   <!-- Hero Section -->
@@ -55,10 +76,8 @@
       <p>
         {{ _('Tämä työ tehdään yhdessä vapaaehtoisten kanssa – ja juuri siksi tarvitsemme sinua mukaan!') }}
       </p>
-      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        <button class="button button-outline" data-bs-toggle="modal" data-bs-target="#joinModal">
-          <i class="fa-solid fa-handshake"></i> {{ _('Tule mukaan') }}
-        </button>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; align-items: center;">
+        {{ join_flow() }}
       </div>
     </div>
   </section>
@@ -157,41 +176,17 @@
 
   <!-- Call to Action -->
   <div style="text-align: center; margin: 3rem 0;">
-    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; align-items: center;">
       <a class="button button-primary" href="{{ url_for('index') }}">
         <i class="fa-solid fa-house"></i> {{ _('Palaa etusivulle') }}
       </a>
-      <button class="button button-secondary" data-bs-toggle="modal" data-bs-target="#joinModal">
-        <i class="fa-solid fa-people-group"></i> {{ _('Liity työryhmään') }}
-      </button>
+      {{ join_flow() }}
     </div>
-  </div>
-</div>
-
-<!-- Bootstrap Modal -->
-<div class="modal fade" id="joinModal" tabindex="-1" aria-labelledby="joinModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 1rem;">
-      <div class="modal-header">
-        <h5 class="modal-title" id="joinModalLabel">
-          <i class="fa-solid fa-language"></i> {{ _('Liity käännöshankkeeseen') }}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
-      </div>
-      <div class="modal-body">
-        <p>{{ _('Haluaisitko auttaa tekemään Mielenosoitukset.fi:stä monikielisen? Käännöshanketyöryhmä etsii uusia vapaaehtoisia eri kielitaustoista!') }}</p>
-        <p>{{ _('Voit ilmoittautua mukaan lähettämällä sähköpostia osoitteeseen:') }}</p>
-        <p style="font-weight:600; text-align:center;">
-          <a href="mailto:kaannoshanke@mielenosoitukset.fi">kaannoshanke@mielenosoitukset.fi</a>
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
-        <a href="mailto:kaannoshanke@mielenosoitukset.fi" class="btn btn-primary">
-          <i class="fa-solid fa-envelope"></i> {{ _('Lähetä sähköpostia') }}
-        </a>
-      </div>
-    </div>
+    <p style="margin-top: 1.5rem; color: var(--color-text-secondary);">
+      <i class="fa-solid fa-envelope"></i>
+      {{ _('Tai ota yhteyttä:') }}
+      <a href="mailto:kaannoshanke@mielenosoitukset.fi">kaannoshanke@mielenosoitukset.fi</a>
+    </p>
   </div>
 </div>
 {% endblock %}

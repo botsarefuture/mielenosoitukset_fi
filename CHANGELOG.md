@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* The translation-project page (`/upcoming/translations/`) now lets logged-in users grant themselves translation capabilities (`TRANSLATE_DEMO` / `TRANSLATE_UI`) with one click instead of only an email signup; guests are prompted to log in first, and review/admin rights are intentionally not granted.
 * Public city overview page (`/cities`) is now faster and more polished: per-city demonstration and today counts are computed in a single MongoDB aggregation instead of a per-city query, and the city grid gained a live search filter, redesigned cards with initials avatars and theme-aware today badges, a staggered entrance animation, and icon-based summary cards.
 * Notification dropdown badge now shows the unread count (capped at `99+`) in a redesigned pill-style badge with an entry animation, and the dropdown header, footer, and unread indicators now use theme-aware colors so they render correctly in dark mode.
 * The notification bell is now a circular icon button that matches the theme toggle: the bell icon is centered, gains a primary-blue tint and subtle lift on hover/open with a bell-ring animation, and shrinks slightly on click for tactile feedback.

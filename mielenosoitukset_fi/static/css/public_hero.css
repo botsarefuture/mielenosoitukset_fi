@@ -1,0 +1,97 @@
+/* Shared visual foundation for the site's standard public-page heroes. */
+.site-hero {
+  --site-hero-radius: var(--border-radius-lg, 24px);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(
+    --color-gradient-primary,
+    linear-gradient(135deg, #2563eb 0%, #1e40af 100%)
+  );
+  border: 0;
+  border-radius: var(--site-hero-radius);
+  color: #fff;
+  box-shadow: var(--color-shadow-lg, 0 18px 42px rgba(15, 23, 42, 0.2));
+}
+
+.site-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.18), transparent 38%),
+    radial-gradient(circle at 86% 84%, rgba(249, 115, 22, 0.2), transparent 34%);
+  pointer-events: none;
+}
+
+.site-hero h1,
+.site-hero h2,
+.site-hero .demo-title {
+  color: #fff;
+  font-size: clamp(2rem, 4.5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-shadow: none;
+}
+
+.site-hero p,
+.site-hero .lead,
+.site-hero .demo-datetime,
+.site-hero .demo-location,
+.site-hero .org-description {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.site-hero .today-kicker,
+.site-hero .cities-kicker {
+  width: fit-content;
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.site-hero .today-button:not(.primary),
+.site-hero .cities-button:not(.primary) {
+  border-color: rgba(255, 255, 255, 0.36);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.site-hero .today-button:not(.primary):hover,
+.site-hero .today-button:not(.primary):focus,
+.site-hero .cities-button:not(.primary):hover,
+.site-hero .cities-button:not(.primary):focus {
+  border-color: #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.site-hero--wide {
+  margin: 2rem max(1rem, calc((100vw - 1120px) / 2));
+}
+
+@media (max-width: 720px) {
+  .site-hero {
+    --site-hero-radius: 16px;
+  }
+
+  .site-hero--wide {
+    margin: 1rem;
+  }
+
+  .site-hero h1,
+  .site-hero h2,
+  .site-hero .demo-title {
+    font-size: clamp(1.85rem, 9vw, 2.7rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-hero {
+    transform: none !important;
+  }
+}

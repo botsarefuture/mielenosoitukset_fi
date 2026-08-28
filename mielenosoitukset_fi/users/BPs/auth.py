@@ -791,10 +791,10 @@ def verify_mfa():
 
     if request.method == "POST":
         token = request.form.get("token")
-        next = request.args.get("next")
-        user = current_user
+        next_page = _normalize_post_login_target(request.args.get("next"))
+        user = current_user._get_current_object()
 
-        if UserMFA(user._id).verify_mfa(token):
+        if UserMFA(user._id).verify_token(token):
             
             login_user(user)
             
@@ -811,7 +811,7 @@ def verify_mfa():
                         window.opener.location.reload();
                         window.close();
                     }} else {{
-                        window.location = "{safe_next_page}";
+                        window.location = "{next_page}";
                     }}
                 </script>
                 """
@@ -819,7 +819,7 @@ def verify_mfa():
             if user.forced_pwd_reset:
                 return redirect(url_for("users.auth.forced_pwd_reset"))
 
-            return redirect(next or url_for("index"))
+            return redirect(next_page)
 
         flash_message("Väärä MFA-koodi", "error")
         return redirect(url_for("users.auth.verify_mfa"))
@@ -1067,6 +1067,9 @@ def mfa_setup_api():
         if not code or not secret:
             return jsonify({"status": "error", "message": "Code or secret missing"}), 400
 
+        if secret not in PendingMFA.get(user._id, secret):
+            return jsonify({"status": "error", "message": "Invalid or expired MFA setup"}), 400
+
         mfa_token = MFAToken(secret)
         if mfa_token.verify(code):
             mongo.mfas.insert_one({
@@ -1099,10 +1102,11 @@ def mfa_status():
     user_mfa_records = mongo.mfas.find({"user_id": user._id})
     devices = []
     for rec in user_mfa_records:
+        created_at = rec.get("created_at")
         devices.append({
             "id": str(rec["_id"]),
             "name": rec.get("device_name", "Unknown device"),
-            "created_at": rec.get("created_at").strftime("%Y-%m-%d %H:%M")
+            "created_at": created_at.strftime("%Y-%m-%d %H:%M") if created_at else created_at
         })
     
     return jsonify({
@@ -1121,12 +1125,17 @@ def mfa_device_revoke():
     user = current_user
     data = request.get_json(force=True)
     device_id = data.get("device_id")
-    
+
     if not device_id:
         return jsonify({"status": "error", "message": "device_id is required"}), 400
 
-    result = mongo.mfas.delete_one({"_id": device_id, "user_id": user._id})
-    
+    try:
+        device_oid = ObjectId(str(device_id))
+    except Exception:
+        return jsonify({"status": "error", "message": "Invalid device id"}), 400
+
+    result = mongo.mfas.delete_one({"_id": device_oid, "user_id": user._id})
+
     if result.deleted_count == 1:
         # Check if any devices remain, else disable MFA flag
         remaining = mongo.mfas.count_documents({"user_id": user._id})

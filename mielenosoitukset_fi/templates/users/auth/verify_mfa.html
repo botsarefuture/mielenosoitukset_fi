@@ -10,18 +10,11 @@
     <form method="POST">
         <div class="form-group">
             <label for="mfa_code">{{ _('MFA-koodi') }}</label>
-            <input type="text" id="mfa_code" name="mfa_code" required>
+            <input type="text" id="mfa_code" name="token" inputmode="numeric" autocomplete="one-time-code" required>
         </div>
 
         <button type="submit">{{ _('Vahvista') }}</button>
     </form>
-
-    <!-- Resend MFA code link -->
-    <div class="form-group">
-        <p class="resend-mfa">
-            <a href="{{ url_for('users.auth.resend_mfa_code') }}">{{ _('Lähetä koodi uudelleen') }}</a>
-        </p>
-    </div>
 
     <!-- Back to login link -->
     <div class="form-group">

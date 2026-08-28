@@ -16,6 +16,7 @@ PyJWT==2.10.1
 pymongo==4.6.3
 pyotp==2.9.0
 pyqrcode==1.2.1
+pypng==0.20220715.0
 python_dateutil==2.9.0.post0
 PyYAML==6.0.2
 Requests==2.32.4

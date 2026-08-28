@@ -48,6 +48,42 @@ def test_public_pages_render_in_real_browser(app, db, live_server, browser_page)
 
 @pytest.mark.e2e
 @pytest.mark.integration
+@pytest.mark.parametrize("viewport_width", [390, 1440])
+def test_standard_public_heroes_share_visual_foundation(
+    app,
+    db,
+    live_server,
+    browser_page,
+    viewport_width,
+):
+    _seed_database(app, db)
+    browser_page.set_viewport_size({"width": viewport_width, "height": 1000})
+
+    for path in ("/", "/cities", "/mielenosoitukset-tanaan", "/info", "/privacy"):
+        browser_page.goto(f"{live_server}{path}", wait_until="domcontentloaded")
+        hero = browser_page.locator(".site-hero").first
+        hero.wait_for(state="visible")
+        styles = hero.evaluate(
+            """element => {
+                const computed = getComputedStyle(element);
+                const rect = element.getBoundingClientRect();
+                return {
+                    backgroundImage: computed.backgroundImage,
+                    borderRadius: parseFloat(computed.borderRadius),
+                    left: rect.left,
+                    right: rect.right,
+                    viewport: document.documentElement.clientWidth,
+                };
+            }"""
+        )
+        assert "gradient" in styles["backgroundImage"]
+        assert styles["borderRadius"] >= 16
+        assert styles["left"] >= 0
+        assert styles["right"] <= styles["viewport"] + 1
+
+
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_user_login_and_notifications_flow_in_real_browser(
     app,
     db,

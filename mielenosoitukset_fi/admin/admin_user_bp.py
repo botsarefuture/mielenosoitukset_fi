@@ -113,6 +113,10 @@ def user_control():
         total_users=total_users,
         user_summary=user_summary,
         visible_pages=visible_pages,
+        can_manage_scope_grants=_can_manage_scope_grants(current_user),
+        city_list=CITY_LIST,
+        enabled_city_list=enabled_city_names(mongo),
+        city_name_to_key=CITY_NAME_TO_KEY,
     )
 
 
@@ -660,9 +664,31 @@ def create_user():
     role = data.get("role") or "user"
 
     # Basic validation
-    if role not in ["user", "city_admin", "admin", "global_admin"]:
+    if role not in ["user", "translator", "city_admin", "admin", "global_admin"]:
         flash_message("Rooli ei ole kelvollinen.", "error")
         return redirect(request.referrer or url_for("admin_user.user_control"))
+
+    if request.is_json:
+        city_scope_keys = data.get("admin_scope_cities", []) or []
+        if isinstance(city_scope_keys, str):
+            city_scope_keys = [city_scope_keys]
+    else:
+        city_scope_keys = request.form.getlist("admin_scope_cities[]")
+
+    city_scope_keys = sorted(
+        {
+            normalize_city_key(key)
+            for key in city_scope_keys
+            if normalize_city_key(key) in CITY_KEY_TO_NAME
+        }
+    )
+    if role == "city_admin":
+        if not _can_manage_scope_grants(current_user):
+            flash_message("Sinulla ei ole oikeutta myöntää kaupunkiadminin roolia.", "error")
+            return redirect(request.referrer or url_for("admin_user.user_control"))
+        if not city_scope_keys:
+            flash_message("Valitse kaupunkiadminille vähintään yksi paikkakunta.", "error")
+            return redirect(request.referrer or url_for("admin_user.user_control"))
 
     # Check if email already exists
     if mongo.users.find_one({"email": email}):
@@ -681,7 +707,7 @@ def create_user():
         "role": role,
         "confirmed": True,
         "password_hash": password_hash,
-        "global_permissions": [],
+        "global_permissions": _normalize_role_permissions(role, []),
     }
     
     result = mongo.users.insert_one(user_doc)
@@ -694,6 +720,9 @@ def create_user():
 
     user.forced_pwd_reset = True # We want to force password reset on first login
     user.save()
+
+    if role == "city_admin":
+        _sync_city_scope_grant(user._id, city_scope_keys, CITY_ADMIN_PERMISSIONS)
 
     # Send credentials via email
     email_sender.queue_email(

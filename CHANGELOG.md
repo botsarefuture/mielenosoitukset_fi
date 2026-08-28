@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Changed
+* Admins can now create translator accounts with translation permissions already assigned, while authorized global administrators can create city-admin accounts and select their managed cities in the same workflow.
 * Standard public pages now share a consistent blue-gradient hero foundation, typography, corner treatment, lighting, and responsive behavior while campaign and guide pages retain their intentional visual identities.
 * The translation-project page (`/upcoming/translations/`) now lets logged-in users grant themselves translation capabilities (`TRANSLATE_DEMO` / `TRANSLATE_UI`) with one click instead of only an email signup; guests are prompted to log in first, and review/admin rights are intentionally not granted.
 * Public city overview page (`/cities`) is now faster and more polished: per-city demonstration and today counts are computed in a single MongoDB aggregation instead of a per-city query, and the city grid gained a live search filter, redesigned cards with initials avatars and theme-aware today badges, a staggered entrance animation, and icon-based summary cards.

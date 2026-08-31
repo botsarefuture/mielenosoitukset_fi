@@ -5,6 +5,9 @@
 ## UNRELEASED
 
 ### Changed
+* MongoDB connection logs no longer expose credentials embedded in the connection URI.
+* Usernames and email addresses are now normalized to lowercase and protected by case-insensitive unique database indexes, preventing accounts such as `emilia` and `Emilia` or duplicate mixed-case emails.
+* `Admin` and `@Admin` identities are now reserved for internal use; affected accounts can be forced through a unique username and display-name change before continuing to use the service, with an official account notification.
 * Admins can now create translator accounts with translation permissions already assigned, while authorized global administrators can create city-admin accounts and select their managed cities in the same workflow.
 * Standard public pages now share a consistent blue-gradient hero foundation, typography, corner treatment, lighting, and responsive behavior while campaign and guide pages retain their intentional visual identities.
 * The translation-project page (`/upcoming/translations/`) now lets logged-in users grant themselves translation capabilities (`TRANSLATE_DEMO` / `TRANSLATE_UI`) with one click instead of only an email signup; guests are prompted to log in first, and review/admin rights are intentionally not granted.

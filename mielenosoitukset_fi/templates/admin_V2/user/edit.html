@@ -147,6 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="form-group">
+            <label for="displayname">{{ _('Näyttönimi') }}</label>
+            <input class="form-control" type="text" id="displayname" name="displayname" value="{{ user.displayname or '' }}" maxlength="80" required>
+        </div>
+
+        <div class="form-group">
             <label for="email">{{ _('Sähköpostiosoite') }}</label>
             <input class="form-control" type="email" id="email" name="email" value="{{ user.email }}" required>
         </div>
@@ -157,6 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <input type="checkbox" id="approved" name="confirmed" {% if user.confirmed %}checked{% endif %}>
                 <span class="status-text">{% if user.confirmed %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
                 <small class="muted">{{ _('Merkitse valituksi jos käyttäjän sähköposti on vahvistettu.') }}</small>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="forced_identity_change">{{ _('Pakota käyttäjänimen ja näyttönimen vaihto') }}</label>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <input type="checkbox" id="forced_identity_change" name="forced_identity_change" {% if user.forced_identity_change %}checked{% endif %}>
+                <small class="muted">{{ _('Käyttäjä ohjataan vaihtamaan molemmat nimet seuraavalla kirjautumiskerralla ja hänelle lähetetään ilmoitus.') }}</small>
             </div>
         </div>
 

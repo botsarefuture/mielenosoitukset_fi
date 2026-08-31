@@ -103,6 +103,7 @@ def test_edit_user_exposes_translator_role_and_auto_assigns_permission(admin_cli
 
     user_doc = db.users.find_one({"_id": translator_id})
     assert user_doc["role"] == "translator"
+    assert user_doc["username_canonical"] == "translator"
     assert "TRANSLATE_DEMO" in user_doc.get("global_permissions", [])
     assert "TRANSLATE_UI" in user_doc.get("global_permissions", [])
 
@@ -174,3 +175,19 @@ def test_create_city_admin_requires_city_selection(admin_client, db, seeded_data
 
     assert response.status_code == 302
     assert db.users.find_one({"email": "cityless-admin@example.test"}) is None
+
+
+def test_create_user_rejects_reserved_admin_identity(admin_client, db, seeded_data):
+    response = admin_client.post(
+        "/admin/user/create_user",
+        data={
+            "email": "reserved-admin@example.test",
+            "username": "regular-user",
+            "displayname": "@Admin",
+            "role": "user",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert db.users.find_one({"email": "reserved-admin@example.test"}) is None

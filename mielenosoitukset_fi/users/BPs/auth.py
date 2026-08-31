@@ -22,11 +22,18 @@ from mielenosoitukset_fi.utils.auth import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.helpers import is_strong_password
-from mielenosoitukset_fi.utils.validators import normalize_username, validate_username
+from mielenosoitukset_fi.utils.validators import (
+    is_reserved_identity_name,
+    normalize_email,
+    normalize_username,
+    valid_email,
+    validate_username,
+)
 from mielenosoitukset_fi.utils.s3 import upload_image_fileobj
 from mielenosoitukset_fi.utils.request_ip import get_client_ip
 from mielenosoitukset_fi.database_manager import DatabaseManager
 from bson.objectid import ObjectId
+from pymongo.errors import DuplicateKeyError
 from werkzeug.utils import secure_filename
 import importlib
 from mielenosoitukset_fi.utils.time_utils import utcnow
@@ -115,9 +122,64 @@ def _find_user_by_username(username: str):
     return users.find_one({"username": case_insensitive_username})
 
 
+def _find_user_by_email(email: str):
+    """Find a user by canonical email, falling back to legacy casing."""
+    email = normalize_email(email)
+    if not email:
+        return None
+
+    users = _get_mongo().users
+    user = users.find_one({"email_canonical": email})
+    if user:
+        return user
+    return users.find_one({
+        "email": {"$regex": f"^{re.escape(email)}$", "$options": "i"},
+    })
+
+
 def _username_exists(username: str) -> bool:
     """Check canonical usernames while remaining compatible with older user documents."""
     return _find_user_by_username(username) is not None
+
+
+def _username_taken_by_other(username: str, user_id: ObjectId) -> bool:
+    """Return whether another account owns the canonical username."""
+    username = normalize_username(username)
+    if not username:
+        return False
+    query = {
+        "_id": {"$ne": ObjectId(user_id)},
+        "$or": [
+            {"username_canonical": username},
+            {"username": {"$regex": f"^{re.escape(username)}$", "$options": "i"}},
+        ],
+    }
+    return _get_mongo().users.find_one(query, {"_id": 1}) is not None
+
+
+@auth_bp.before_app_request
+def enforce_required_identity_change():
+    """Keep flagged accounts in the identity-change flow until it is complete."""
+    if not current_user.is_authenticated or not getattr(current_user, "forced_identity_change", False):
+        return None
+
+    allowed_endpoints = {
+        "static",
+        "users.auth.forced_identity_change",
+        "users.auth.forced_pwd_reset",
+        "users.auth.logout",
+    }
+    if request.endpoint in allowed_endpoints:
+        return None
+
+    target = url_for("users.auth.forced_identity_change")
+    if request.path.startswith("/api/") or request.path.startswith("/users/auth/api/"):
+        return jsonify({
+            "status": "error",
+            "message": "Käyttäjänimi ja näyttönimi on vaihdettava ennen palvelun käyttöä.",
+            "redirect": target,
+        }), 428
+    return redirect(target)
 
 
 def _fresh_user_doc():
@@ -212,7 +274,7 @@ def register():
     if request.method == "POST":
         username = normalize_username(request.form.get("username"))
         password = request.form.get("password")
-        email = request.form.get("email")
+        email = normalize_email(request.form.get("email"))
 
         username_valid, username_error = validate_username(username)
         if not username_valid:
@@ -226,12 +288,16 @@ def register():
             )
             return redirect(url_for("users.auth.register"))
 
+        if not valid_email(email):
+            flash_message("Virheellinen sähköpostiosoite.", "error")
+            return redirect(url_for("users.auth.register"))
+
         if _username_exists(username):
             flash_message("Käyttäjänimi on jo käytössä.", "warning")
             return redirect(url_for("users.auth.register"))
 
         mongo = _get_mongo()
-        if mongo.users.find_one({"email": email}):
+        if _find_user_by_email(email):
             flash_message(
                 "Sähköpostiosoite on jo rekisteröity. Kirjaudu sisään sen sijaan.",
                 "warning",
@@ -239,8 +305,11 @@ def register():
             return redirect(url_for("users.auth.login"))
 
         user_data = User.create_user(username, password, email)
-        user_data["username_canonical"] = username
-        mongo.users.insert_one(user_data)
+        try:
+            mongo.users.insert_one(user_data)
+        except DuplicateKeyError:
+            flash_message("Käyttäjänimi tai sähköpostiosoite on jo käytössä.", "warning")
+            return redirect(url_for("users.auth.register"))
 
         try:
             verify_emailer(email, username)
@@ -457,9 +526,9 @@ def confirm_email(token):
     """
     email = verify_confirmation_token(token)
     if email:
-        user = mongo.users.find_one({"email": email})
+        user = _find_user_by_email(email)
         if user:
-            mongo.users.update_one({"email": email}, {"$set": {"confirmed": True}})
+            mongo.users.update_one({"_id": user["_id"]}, {"$set": {"confirmed": True}})
             flash_message(
                 "Sähköpostiosoitteesi on vahvistettu. Voit nyt kirjautua sisään.",
                 "info",
@@ -481,13 +550,11 @@ def resend_confirmation():
         if not email_or_username:
             return jsonify({"status": "error", "message": "Syötä sähköposti tai käyttäjänimi."}), 400
 
-        lookup_values = [email_or_username]
-        if "@" in email_or_username:
-            lookup_values.append(email_or_username.lower())
-
-        user_doc = mongo.users.find_one({
-            "$or": [{"email": {"$in": lookup_values}}, {"username": email_or_username}]
-        })
+        user_doc = (
+            _find_user_by_email(email_or_username)
+            if "@" in email_or_username
+            else _find_user_by_username(email_or_username)
+        )
 
         if user_doc:
             user = User.from_db(user_doc)
@@ -506,13 +573,11 @@ def resend_confirmation():
         flash_message("Syötä sähköposti tai käyttäjänimi.", "warning")
         return redirect(url_for("users.auth.login"))
 
-    lookup_values = [email_or_username]
-    if "@" in email_or_username:
-        lookup_values.append(email_or_username.lower())
-
-    user_doc = mongo.users.find_one({
-        "$or": [{"email": {"$in": lookup_values}}, {"username": email_or_username}]
-    })
+    user_doc = (
+        _find_user_by_email(email_or_username)
+        if "@" in email_or_username
+        else _find_user_by_username(email_or_username)
+    )
 
     if user_doc:
         user = User.from_db(user_doc)
@@ -541,7 +606,7 @@ def check_email_verified():
         A dictionary indicating whether the email is verified.
     """
     try:
-        user = mongo.users.find_one({"email": request.json.get("email")})
+        user = _find_user_by_email(request.json.get("email"))
         user = User.from_db(user)
         return jsonify({"verified": user.confirmed})
     except Exception as e:
@@ -680,6 +745,10 @@ def login():
             session["next_page"] = safe_next_page
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
+        if user.forced_identity_change:
+            session["next_page"] = safe_next_page
+            return redirect(url_for("users.auth.forced_identity_change"))
+
         # Clear the stored next_page so it won't persist forever
         if "next_page" in session:
             session.pop("next_page")
@@ -751,6 +820,9 @@ def forced_pwd_reset():
             flash_message(f"Salasanan vaihto epäonnistui: {e}", "error")
             return redirect(url_for("users.auth.forced_pwd_reset"))
 
+        if getattr(current_user, "forced_identity_change", False):
+            return redirect(url_for("users.auth.forced_identity_change"))
+
         # ✅ Get safe next page from session, fallback to profile
         safe_next_page = session.pop("next_page", None) or url_for("users.profile.profile")
         
@@ -767,6 +839,85 @@ def forced_pwd_reset():
     # log GET visit
     mongo.password_changes.insert_one(log_entry)
     return render_template("users/auth/forced_pwd_reset.html")
+
+
+@auth_bp.route("/forced_identity_change/", methods=["GET", "POST"])
+@login_required
+def forced_identity_change():
+    """Require a flagged user to choose a unique, non-reserved public identity."""
+    if not getattr(current_user, "forced_identity_change", False):
+        return redirect(url_for("users.auth.settings"))
+
+    if request.method == "POST":
+        username = normalize_username(request.form.get("username"))
+        displayname = (request.form.get("displayname") or "").strip()
+        username_valid, username_error = validate_username(username)
+
+        if not username_valid:
+            flash_message(username_error, "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if is_reserved_identity_name(username) or is_reserved_identity_name(displayname):
+            flash_message("Admin-nimitys on varattu palvelun sisäiseen käyttöön.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if len(displayname) < 2 or len(displayname) > 80:
+            flash_message("Näyttönimen tulee olla 2–80 merkkiä pitkä.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if username == normalize_username(current_user.username) or displayname == (current_user.displayname or "").strip():
+            flash_message("Valitse sekä uusi käyttäjänimi että uusi näyttönimi.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+        if _username_taken_by_other(username, current_user._id):
+            flash_message("Käyttäjänimi on jo käytössä.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+
+        users = _get_mongo().users
+        update_result = users.update_one(
+            {"_id": current_user._id, "forced_identity_change": True},
+            {
+                "$set": {
+                    "username": username,
+                    "username_canonical": username,
+                    "displayname": displayname,
+                    "forced_identity_change": False,
+                },
+                "$unset": {
+                    "forced_identity_change_reason": "",
+                    "forced_identity_change_at": "",
+                },
+            },
+        )
+        if update_result.matched_count != 1:
+            flash_message("Nimien vaihtaminen epäonnistui. Yritä uudelleen.", "error")
+            return redirect(url_for("users.auth.forced_identity_change"))
+
+        mongo.user_settings.update_one(
+            {"user_id": current_user._id},
+            {"$set": {"display_name": displayname}},
+            upsert=True,
+        )
+        current_user.username = username
+        current_user.displayname = displayname
+        current_user.forced_identity_change = False
+
+        try:
+            email_sender.queue_email(
+                template_name="auth/settings_changed.html",
+                subject="Käyttäjätilisi tunnistetiedot on päivitetty",
+                recipients=[current_user.email],
+                context={
+                    "changed_fields": {
+                        "username": {"old": "väliaikainen tunnus", "new": username},
+                        "display_name": {"old": "väliaikainen nimi", "new": displayname},
+                    },
+                    "user_name": displayname,
+                },
+            )
+        except Exception:
+            current_app.logger.exception("Failed to queue identity-change confirmation")
+
+        flash_message("Käyttäjänimi ja näyttönimi on vaihdettu onnistuneesti.", "success")
+        return redirect(session.pop("next_page", None) or url_for("users.profile.profile"))
+
+    return render_template("users/auth/forced_identity_change.html", user=current_user)
 
 
 
@@ -818,6 +969,9 @@ def verify_mfa():
 
             if user.forced_pwd_reset:
                 return redirect(url_for("users.auth.forced_pwd_reset"))
+
+            if user.forced_identity_change:
+                return redirect(url_for("users.auth.forced_identity_change"))
 
             return redirect(next_page)
 
@@ -975,6 +1129,11 @@ def settings_api_v2():
         if field not in user_data:
             continue
         new_value = user_data[field]
+        if field == "display_name" and is_reserved_identity_name(new_value):
+            return jsonify({
+                "status": "error",
+                "message": "Admin-nimitys on varattu palvelun sisäiseen käyttöön.",
+            }), 400
         current_value = sett.get(field)
 
         # try parse JSON for structured fields
@@ -1162,7 +1321,7 @@ def password_reset_request():
     Handles password reset requests without revealing whether an email exists.
     """
     if request.method == "POST":
-        email = request.form.get("email")
+        email = normalize_email(request.form.get("email"))
 
         # Always show the same response, regardless of whether the user exists
         flash_message(
@@ -1171,7 +1330,7 @@ def password_reset_request():
             "info"
         )
 
-        user = mongo.users.find_one({"email": email})
+        user = _find_user_by_email(email)
         if user:
             token = generate_reset_token(email)
             reset_url = url_for(
@@ -1296,7 +1455,7 @@ def password_reset(token):
         )
         return redirect(url_for("users.auth.password_reset_request"))
 
-    user_doc = mongo.users.find_one({"email": email})
+    user_doc = _find_user_by_email(email)
     if not user_doc:
         log_entry["error"] = "User not found"
         mongo.password_changes.insert_one(log_entry)

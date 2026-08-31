@@ -8,13 +8,15 @@ TEST_PASSWORD = "".join(("Mfa", "Pass", "1!"))
 
 
 def _create_mfa_user(db):
+    user_id = ObjectId()
+    identity_suffix = str(user_id)[-8:]
     user_doc = User.create_user(
-        username="mfa-user",
+        username=f"mfa-user-{identity_suffix}",
         password=TEST_PASSWORD,
-        email="mfa-user@example.test",
+        email=f"mfa-user-{identity_suffix}@example.test",
         displayname="MFA User",
     )
-    user_doc.update({"_id": ObjectId(), "confirmed": True, "active": True})
+    user_doc.update({"_id": user_id, "confirmed": True, "active": True})
     db.users.insert_one(user_doc)
     return user_doc["_id"]
 

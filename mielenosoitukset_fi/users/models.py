@@ -88,11 +88,15 @@ class User(UserMixin):
         dict
             The user document ready for insertion into the database.
         """
+        username = username.strip().casefold()
+        email = email.strip().casefold() if isinstance(email, str) else email
         password_hash = generate_password_hash(password)
         user_doc = {
             "username": username,
+            "username_canonical": username,
             "password_hash": password_hash,
             "email": email,
+            "email_canonical": email,
             "displayname": displayname,
             "global_admin": False,
             "confirmed": False,
@@ -154,6 +158,8 @@ class User(UserMixin):
         password_hash: str,
         *,
         email: Optional[str] = None,
+        username_canonical: Optional[str] = None,
+        email_canonical: Optional[str] = None,
         displayname: Optional[str] = None,
         profile_picture: Optional[str] = None,
         bio: Optional[str] = None,
@@ -170,13 +176,16 @@ class User(UserMixin):
         friends: list = [],
         friend_requests: list = [],
         forced_pwd_reset: bool = False,
+        forced_identity_change: bool = False,
         active: bool = True,
         last_login: datetime.datetime = None
     ):
         self.id                = str(user_id)  # flask‑login expects .id str
         self._id               = ObjectId(user_id)
         self.username          = username
+        self.username_canonical = username_canonical or username.strip().casefold()
         self.email             = email
+        self.email_canonical   = email_canonical or (email.strip().casefold() if email else None)
         self.password_hash     = password_hash
         self.displayname       = displayname
         self.profile_picture   = profile_picture
@@ -195,6 +204,7 @@ class User(UserMixin):
         self.friends           = friends
         self.friend_requests    = friend_requests
         self.forced_pwd_reset    = forced_pwd_reset
+        self.forced_identity_change = forced_identity_change
         self.active             = active
         self.last_login         = last_login
 
@@ -211,6 +221,8 @@ class User(UserMixin):
             username        = doc["username"],
             password_hash   = doc["password_hash"],
             email           = doc.get("email"),
+            username_canonical = doc.get("username_canonical"),
+            email_canonical = doc.get("email_canonical"),
             displayname     = doc.get("displayname"),
             profile_picture = doc.get("profile_picture"),
             bio             = doc.get("bio"),
@@ -228,6 +240,7 @@ class User(UserMixin):
             friends         = doc.get("friends", []),
             friend_requests = doc.get("friend_requests", []),
             forced_pwd_reset = doc.get("forced_pwd_reset", False),
+            forced_identity_change = doc.get("forced_identity_change", False),
             active          = doc.get("active", False),
             last_login      = doc.get("last_login", None)
         )
@@ -543,8 +556,10 @@ class User(UserMixin):
         d = {
             "_id": str(self._id) if json else self._id,
             "username": self.username,
+            "username_canonical": self.username_canonical,
             "password_hash": self.password_hash,
             "email": self.email,
+            "email_canonical": self.email_canonical,
             "displayname": self.displayname,
             "profile_picture": self.profile_picture,
             "bio": self.bio,
@@ -561,6 +576,7 @@ class User(UserMixin):
             "friends": self.friends,
             "friend_requests": self.friend_requests,
             "forced_pwd_reset": self.forced_pwd_reset,
+            "forced_identity_change": self.forced_identity_change,
             "active": self.active,
             "last_login": self.last_login
         }

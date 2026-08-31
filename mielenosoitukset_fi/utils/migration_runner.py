@@ -5,6 +5,7 @@ from mielenosoitukset_fi.utils.logger import logger
 from mielenosoitukset_fi.utils.migrations import (
     migration_003_city_keys,
     migration_004_admin_governance,
+    migration_005_user_identity_uniqueness,
 )
 
 
@@ -18,6 +19,11 @@ MIGRATIONS = [
         "id": "004_admin_governance",
         "description": "Persist board clearances and add explicit city-management access.",
         "run": migration_004_admin_governance.migrate_admin_governance,
+    },
+    {
+        "id": "005_user_identity_uniqueness",
+        "description": "Enforce case-insensitive username and email uniqueness.",
+        "run": migration_005_user_identity_uniqueness.migrate_user_identity_uniqueness,
     },
 ]
 

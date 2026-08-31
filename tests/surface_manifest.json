@@ -298,12 +298,12 @@
       "sha256": "5d848cdfb95e77ff83cb7831e7b8f7b256e5103ebb0c5f42c82294a660448739"
     },
     "mielenosoitukset_fi/users/BPs/auth.py": {
-      "count": 29,
+      "count": 30,
       "coverage": [
         "integration",
         "e2e-auth"
       ],
-      "sha256": "bd8f1297aa0d8d5129ec0a3bba7249024c63f534c5369c51cad91128a008e2d1"
+      "sha256": "187426130dda0a7d2ca709f927d95d2ad6837e577a83446c34daaf59b4d57923"
     },
     "mielenosoitukset_fi/users/BPs/orgs.py": {
       "count": 3,

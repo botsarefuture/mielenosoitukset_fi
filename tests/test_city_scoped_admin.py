@@ -9,10 +9,11 @@ from tests.conftest import _client_for_user
 
 def _create_scoped_admin(db, city_keys, permissions):
     user_id = ObjectId()
+    identity_suffix = str(user_id)[-8:]
     user_doc = User.create_user(
-        username="city-admin",
+        username=f"city-admin-{identity_suffix}",
         password="CityPass1!",
-        email="city-admin@example.test",
+        email=f"city-admin-{identity_suffix}@example.test",
         displayname="City Admin",
     )
     user_doc.update(

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The demonstration submission page's viewport-wide hero now stays horizontally centered inside its narrower form container instead of appearing shifted to the right.
 * City-scoped administrators can now see the accept, edit, view, command-center, and screenshot/freeze actions for demonstrations in their managed cities on the admin demonstration list; action visibility mirrors the actual per-city permission grants instead of being hidden by global permission checks.
 * City-scoped administrators now get an enabled "Uusi mielenosoitus" button on the admin demonstration list when they hold a `CREATE_DEMO` grant for any managed city (previously the button was globally gated, so city admins always saw the disabled variant and could not create new demonstrations from the list).
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.

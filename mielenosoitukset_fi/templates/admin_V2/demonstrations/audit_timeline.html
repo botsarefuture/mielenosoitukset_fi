@@ -26,17 +26,18 @@
 
 {% block main_content %}
 <div class="admin-page">
-  <div class="admin-header d-flex flex-column flex-md-row justify-content-between gap-3 align-items-start align-items-md-center mb-4">
+  <header class="admin-page-header">
     <div>
-      <h1 class="admin-section-title mb-1">{{ _('Audit-loki – aikajana') }}</h1>
-      <p class="text-muted mb-0">{{ _('Viimeisimmät merkinnät kaikista mielenosoituksista') }}</p>
+      <p class="admin-page-header__kicker">{{ _('Mielenosoitukset') }}</p>
+      <h1>{{ _('Audit-loki – aikajana') }}</h1>
+      <p>{{ _('Viimeisimmät merkinnät kaikista mielenosoituksista') }}</p>
     </div>
     <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
       <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
     </a>
-  </div>
+  </header>
 
-  <form method="get" class="row g-3 mb-4">
+  <form method="get" class="row g-3 admin-panel">
     <div class="col-md-5">
       <label for="demo_id" class="form-label">{{ _('Suodata mielenosoituksen ID:llä') }}</label>
       <div class="input-group">
@@ -62,7 +63,7 @@
   </form>
 
   {% if entries %}
-  <div class="card shadow-sm timeline-card">
+  <div class="card admin-data-view timeline-card">
     <div class="card-body">
       <div class="list-group list-group-flush">
         {% for entry in entries %}

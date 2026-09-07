@@ -3,16 +3,17 @@
 {% block title %}{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}{% endblock %}
 
 {% block main_content %}
-<div class="container py-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+<div class="admin-page">
+  <header class="admin-page-header">
     <div>
-      <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}</h1>
-      <p class="text-muted mb-0">{{ _('Seuraa hyväksyttyjen UI-käännösten branch-, PR- ja merge-tilaa sekä jonota epäonnistuneet synkit uudelleen.') }}</p>
+      <p class="admin-page-header__kicker">{{ _('Sisällönhallinta') }}</p>
+      <h1>{{ _('Käyttöliittymäkäännösten GitHub-synkit') }}</h1>
+      <p>{{ _('Seuraa hyväksyttyjen UI-käännösten branch-, PR- ja merge-tilaa sekä jonota epäonnistuneet synkit uudelleen.') }}</p>
     </div>
     <a class="btn btn-outline-secondary" href="{{ url_for('admin.ui_translation_dashboard', locale=selected_locale) }}">{{ _('Takaisin käyttöliittymäkäännöksiin') }}</a>
-  </div>
+  </header>
 
-  <form method="GET" class="row g-3 align-items-end mb-4">
+  <form method="GET" class="row g-3 align-items-end admin-panel">
     <div class="col-md-3">
       <label class="form-label" for="locale">{{ _('Kieli') }}</label>
       <select class="form-select" id="locale" name="locale">
@@ -66,14 +67,17 @@
       <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
           <h2 class="h5 mb-0">{{ _('GitHub-synkit') }}</h2>
-          <button class="btn btn-outline-primary btn-sm" type="submit">{{ _('Jonota valitut uudelleen') }}</button>
+          <div class="admin-page-header__actions">
+            <span id="sync-selection-status" class="admin-selection-status" aria-live="polite">{{ _('Ei valintoja · valitse synkkejä rivien neliöruuduista') }}</span>
+            <button id="bulk-requeue-button" class="btn btn-outline-primary btn-sm" type="submit" disabled>{{ _('Jonota valitut uudelleen') }}</button>
+          </div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive admin-workspace-table">
           <table class="table align-middle">
             <thead>
               <tr>
-                <th style="width: 1%;"><input type="checkbox" id="select-all-sync-rows"></th>
+                <th class="select-col"><input class="form-check-input admin-selection-checkbox" type="checkbox" id="select-all-sync-rows" aria-label="{{ _('Valitse kaikki uudelleen jonotettavat synkit') }}"></th>
                 <th>{{ _('Kieli / avainteksti') }}</th>
                 <th>{{ _('Sync') }}</th>
                 <th>{{ _('Merge') }}</th>
@@ -88,7 +92,7 @@
               <tr>
                 <td>
                   {% if retryable %}
-                  <input type="checkbox" name="proposal_ids" value="{{ row._id }}">
+                  <input class="form-check-input admin-selection-checkbox" type="checkbox" name="proposal_ids" value="{{ row._id }}" aria-label="{{ _('Valitse synkki') }} {{ row.msgid }}">
                   {% endif %}
                 </td>
                 <td>
@@ -130,7 +134,7 @@
               </tr>
               {% else %}
               <tr>
-                <td colspan="6" class="text-muted">{{ _('Ei synkkejä valituilla suodattimilla.') }}</td>
+                <td colspan="6" class="admin-empty-state">{{ _('Ei synkkejä valituilla suodattimilla.') }}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -144,12 +148,38 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const toggle = document.getElementById('select-all-sync-rows');
+  const status = document.getElementById('sync-selection-status');
+  const submit = document.getElementById('bulk-requeue-button');
   if (!toggle) return;
+  const checkboxes = Array.from(document.querySelectorAll('input[name="proposal_ids"]'));
+
+  function updateSelection() {
+    const selected = checkboxes.filter(function (checkbox) { return checkbox.checked; });
+    checkboxes.forEach(function (checkbox) {
+      const row = checkbox.closest('tr');
+      if (row) {
+        row.classList.toggle('selected', checkbox.checked);
+        row.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false');
+      }
+    });
+    toggle.checked = checkboxes.length > 0 && selected.length === checkboxes.length;
+    toggle.indeterminate = selected.length > 0 && selected.length < checkboxes.length;
+    submit.disabled = selected.length === 0;
+    status.textContent = selected.length
+      ? {{ _('Valittuja synkkejä')|tojson }} + ': ' + selected.length
+      : {{ _('Ei valintoja · valitse synkkejä rivien neliöruuduista')|tojson }};
+  }
+
   toggle.addEventListener('change', function () {
-    document.querySelectorAll('input[name="proposal_ids"]').forEach(function (checkbox) {
+    checkboxes.forEach(function (checkbox) {
       checkbox.checked = toggle.checked;
     });
+    updateSelection();
   });
+  checkboxes.forEach(function (checkbox) {
+    checkbox.addEventListener('change', updateSelection);
+  });
+  updateSelection();
 });
 </script>
 {% endblock %}

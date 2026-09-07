@@ -3,7 +3,7 @@
 {% block title %}{{ _('Käyttöliittymäkäännökset') }}{% endblock %}
 
 {% block main_content %}
-<div class="container py-4">
+<div class="admin-page">
   <header class="admin-page-hero mb-4">
     <div>
       <p class="admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
@@ -38,7 +38,7 @@
   </div>
 
   {% if selected_locale %}
-  <form method="GET" class="row g-3 align-items-end mb-4">
+  <form method="GET" class="row g-3 align-items-end admin-panel">
     <input type="hidden" name="locale" value="{{ selected_locale }}">
     <div class="col-md-5">
       <label class="form-label" for="search">{{ _('Haku') }}</label>
@@ -68,7 +68,7 @@
         <span>{{ _('Odottaa tarkistusta') }}: {{ selected_counts.pending }}</span>
       </div>
 
-      <div class="table-responsive">
+      <div class="table-responsive admin-workspace-table">
         <table class="table align-middle">
           <thead>
             <tr>
@@ -129,7 +129,7 @@
             </tr>
             {% else %}
             <tr>
-              <td colspan="4" class="text-muted">{{ _('Ei rivejä valituilla suodattimilla.') }}</td>
+              <td colspan="4" class="admin-empty-state">{{ _('Ei rivejä valituilla suodattimilla.') }}</td>
             </tr>
             {% endfor %}
           </tbody>

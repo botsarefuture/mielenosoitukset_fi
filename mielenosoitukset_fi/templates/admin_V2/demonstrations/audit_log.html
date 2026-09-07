@@ -21,18 +21,19 @@
 
 {% block main_content %}
 <div class="admin-page">
-  <div class="admin-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+  <header class="admin-page-header">
     <div>
-      <h1 class="admin-section-title mb-1">{{ _('Audit-loki:') }} {{ demo.title }}</h1>
-      <p class="text-muted mb-0">{{ demo.date }} · {{ demo.city }}</p>
+      <p class="admin-page-header__kicker">{{ _('Mielenosoitukset') }}</p>
+      <h1>{{ _('Audit-loki:') }} {{ demo.title }}</h1>
+      <p>{{ demo.date }} · {{ demo.city }}</p>
     </div>
     <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
       <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
     </a>
-  </div>
+  </header>
 
   {% if entries %}
-  <div class="card shadow-sm">
+  <div class="card admin-data-view">
     <div class="card-body p-0">
       <div class="list-group list-group-flush audit-list">
         {% for entry in entries %}

@@ -58,6 +58,113 @@ body {
   margin-inline: auto;
 }
 
+.admin-page {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1450px;
+  margin-inline: auto;
+}
+
+.admin-page-header {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  margin: 0;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  box-shadow: var(--admin-workspace-shadow);
+}
+
+.admin-page-header > div:first-child {
+  min-width: min(100%, 18rem);
+  flex: 1 1 30rem;
+}
+
+.admin-page-header h1,
+.admin-page-header h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  letter-spacing: -.025em;
+}
+
+.admin-page-header p {
+  max-width: 52rem;
+  margin: .35rem 0 0;
+  color: var(--admin-workspace-muted);
+  line-height: 1.55;
+}
+
+.admin-page-header__kicker {
+  margin: 0 0 .25rem !important;
+  color: var(--admin-workspace-blue-dark) !important;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-page-header__actions {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-panel,
+.admin-data-view {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  box-shadow: var(--admin-workspace-shadow);
+}
+
+.admin-panel {
+  padding: 1rem;
+}
+
+.admin-data-view {
+  overflow: hidden;
+}
+
+.admin-data-view > :is(.table, table, .list-group) {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.admin-data-view__header {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: .9rem 1rem;
+  border-bottom: 1px solid var(--admin-workspace-border);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-data-view__header :is(h2, h3, h4) {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.admin-empty-state,
+main.flex-grow-1 :is(.table, table) td.admin-empty-state {
+  padding: 3rem 1.25rem;
+  color: var(--admin-workspace-muted);
+  text-align: center;
+}
+
 /* Admin-wide component contract. This layer is intentionally loaded after
    page styles so legacy screens and Bootstrap components share one visual
    language in both themes. */

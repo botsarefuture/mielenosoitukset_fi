@@ -11,6 +11,7 @@
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
 
 ### Changed
+* Developer requests, API-key requests, submission errors, demonstration audits, magic links, and UI translation workflows now share the same compact page headers, filter panels, collection surfaces, table treatment, and empty states; UI translation sync rows also use the standard accessible bulk-selection pattern.
 * The administration UI now has a documented, enforceable design standard: every full admin page uses the shared shell, light/dark theme selection is applied before first paint, legacy color tokens resolve through one theme-aware palette, collection views share consistent cards/lists/tables, and campaign and confirmation workflows no longer use separate public or standalone layouts.
 * Admin multi-select tables now use unmistakably square checkboxes, a persistent selection explanation/count, accessible row state, and a full-row selected treatment; the demonstration list's select-all behavior ignores disabled and filtered-out rows.
 * MongoDB connection logs no longer expose credentials embedded in the connection URI.

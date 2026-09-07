@@ -1,15 +1,13 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <section class="manual-section">
-        <h2>Lisää uusi käyttäjä</h2>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / <a href="{{ url_for('admin.manual_page', page='users') }}">Käyttäjät</a> / Lisää käyttäjä
+</div>
+<section class="manual-section">
+    <h2>Lisää uusi käyttäjä</h2>
 
-        <div class="manual-warning">
-            ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään jatkuvasti. Kuvakaappaukset ovat esimerkinomaisia.
-        </div>
-
-        <p>Tällä sivulla opastamme sinut käyttäjän lisäämisen läpi vaihe vaiheelta hallintapaneelissa.</p>
+    <p>Tämä sivu opastaa sinut käyttäjän lisäämisen läpi vaihe vaiheelta hallintapaneelissa.</p>
 
         <!-- Step 1 -->
         <div class="card shadow-sm mb-4">
@@ -94,5 +92,4 @@
         </div>
 
     </section>
-</div>
 {% endblock %}

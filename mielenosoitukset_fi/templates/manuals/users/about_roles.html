@@ -1,7 +1,9 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / <a href="{{ url_for('admin.manual_page', page='users') }}">Käyttäjät</a> / <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}">Roolit &amp; oikeudet</a>
+</div>
     <section class="manual-section">
         <h2><i class="fa-solid fa-id-badge me-2"></i>Käyttäjäroolit</h2>
         <p>
@@ -476,8 +478,6 @@
             </div>
         </div>
     </section>
-</div>
-
 
 
 {% endblock %}

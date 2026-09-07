@@ -142,6 +142,22 @@ def test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo(
     assert "onclick=\"acceptDemo(" in page
 
 
+def test_city_scoped_admin_dashboard_shows_create_demo_action(app, db, seeded_data):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "CREATE_DEMO"],
+    )
+    client = _client_for_user(app, scoped_user_id)
+
+    response = client.get("/admin/demo/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert 'href="/admin/demo/create_demo"' in page
+    assert 'fa-ban"></i>Uusi mielenosoitus' not in page
+
+
 def test_city_scoped_admin_can_approve_only_assigned_city(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(
         db,

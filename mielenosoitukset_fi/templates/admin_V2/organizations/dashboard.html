@@ -296,7 +296,7 @@
               <div class="dropdown">
                 <button class="org-action-button dropdown-toggle" type="button" id="actionsDropdown-{{ org._id }}" data-bs-toggle="dropdown" aria-expanded="false"><i class="fa-solid fa-ellipsis" aria-hidden="true"></i>{{ _('Toiminnot') }}</button>
                 <ul class="dropdown-menu" aria-labelledby="actionsDropdown-{{ org._id }}">
-                  {% if current_user.has_permission("EDIT_ORGANIZATION", org._id) %}<li><a class="dropdown-item" href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>{% endif %}
+                  {% if org._id|string in editable_org_ids %}<li><a class="dropdown-item" href="{{ url_for('admin_org.edit_organization', org_id=org._id) }}"><i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}</a></li>{% endif %}
                   {% if current_user.has_permission("VIEW_ORGANIZATION", org._id) %}<li><a class="dropdown-item" href="{{ url_for('admin_org.view_organization', org_id=org._id) }}"><i class="fa-solid fa-chart-simple me-2"></i>{{ _('Yhteenveto') }}</a></li>{% endif %}
                   <li><a class="dropdown-item" href="{{ url_for('org', org_id=org._id) }}"><i class="fa-solid fa-arrow-up-right-from-square me-2"></i>{{ _('Julkinen sivu') }}</a></li>
                   {% if current_user.has_permission("DELETE_ORGANIZATION", org._id) %}<li><a class="dropdown-item text-danger" href="{{ url_for('admin_org.confirm_delete_organization', org_id=org._id) }}"><i class="fas fa-trash-alt me-2"></i>{{ _('Poista') }}</a></li>{% endif %}

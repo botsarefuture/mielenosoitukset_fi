@@ -40,6 +40,8 @@
 
 ### Fixed
 
+* City-scoped administrators can now use all demo permissions granted to them (edit, command center, edit history, editor management, freeze/unfreeze, screenshot, suggestion review, and cancellation) but only for demonstrations in their assigned cities; the permission gates previously blocked them before the city-scope check could run.
+* City-scoped administrators can no longer edit or apply suggestion changes to verified organizations; they can still create new organizations and edit unverified ones. Forged edit, membership, invite, and access-level requests against verified organizations are now blocked server-side.
 * Two-factor authentication can now be enabled and managed reliably from account settings: QR generation includes its required PNG dependency, device removal accepts MongoDB IDs correctly, revoked-last-device state refreshes in the UI, and MFA verification uses only setup secrets issued to the current user.
 * Demo detail pages no longer show the "Seuraa" follow button (or its anonymous-login prompt) for organizations that are not followable, such as unverified stub organizations, preventing dead-end follow attempts.
 * Horizontal overflow is fixed on the site header, the cities grid, and the "today" page: the header container/branding, notification bell area, and city cards now stay inside the viewport on mobile and desktop widths.

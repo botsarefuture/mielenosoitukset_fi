@@ -260,7 +260,7 @@
     <div class="org-detail-actions admin-page-hero__actions">
       <a class="org-detail-action admin-page-hero__action" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
       <a class="org-detail-action admin-page-hero__action" href="{{ url_for('org', org_id=organization._id) }}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Julkinen sivu') }}</a>
-      {% if current_user.has_permission("EDIT_ORGANIZATION", organization._id) %}
+      {% if can_edit_organization %}
       <a class="org-detail-action primary admin-page-hero__action" href="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}"><i class="fas fa-pen" aria-hidden="true"></i>{{ _('Muokkaa') }}</a>
       {% endif %}
     </div>

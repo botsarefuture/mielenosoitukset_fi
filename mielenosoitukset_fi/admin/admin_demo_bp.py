@@ -668,7 +668,7 @@ def unrecommend_demo(demo_id):
 @admin_demo_bp.route("/edit_history/<demo_id>", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def demo_edit_history(demo_id):
     """
     View the edit history for a demonstration.
@@ -731,6 +731,8 @@ def suggestion_view(suggestion_id):
         flash_message('Ehdotusta ei löytynyt.', 'error')
         return redirect(url_for('admin_demo.suggestions_list'))
 
+    _abort_if_demo_forbidden(s.get('demo_id'), "EDIT_DEMO")
+
     demo = None
     try:
         demo = mongo.demonstrations.find_one({'_id': ObjectId(s.get('demo_id'))})
@@ -756,6 +758,8 @@ def suggestion_apply(suggestion_id):
     if not s:
         flash_message('Ehdotusta ei löytynyt.', 'error')
         return redirect(url_for('admin_demo.suggestions_list'))
+
+    _abort_if_demo_forbidden(s.get('demo_id'), "EDIT_DEMO")
 
     demo_id = s.get('demo_id')
     try:
@@ -815,6 +819,14 @@ def suggestion_status_update(suggestion_id):
     if status not in ('rejected', 'closed'):
         flash_message('Tuntematon tila.', 'error')
         return redirect(url_for('admin_demo.suggestion_view', suggestion_id=suggestion_id))
+
+    try:
+        s_for_check = mongo.demo_suggestions.find_one({'_id': ObjectId(suggestion_id)})
+    except Exception:
+        s_for_check = None
+    if s_for_check:
+        _abort_if_demo_forbidden(s_for_check.get('demo_id'), "EDIT_DEMO")
+
     try:
         mongo.demo_suggestions.update_one({'_id': ObjectId(suggestion_id)}, {'$set': {'status': status, 'reviewed_by': str(getattr(current_user, '_id', 'unknown')), 'reviewed_at': utcnow()}})
         flash_message('Ehdotuksen tila päivitetty.', 'success')
@@ -826,7 +838,7 @@ def suggestion_status_update(suggestion_id):
 @admin_demo_bp.route("/trigger_screenshot/<demo_id>")
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def trigger_ss(demo_id):
     from mielenosoitukset_fi.utils.screenshot import trigger_screenshot
     with current_app.app_context():
@@ -863,6 +875,8 @@ def view_demo_diff(history_id):
     hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
     if not hist:
         abort(404)
+
+    _abort_if_demo_forbidden(hist.get("demo_id"), "EDIT_DEMO")
 
     old = hist.get("old_demo", {})
     new = hist.get("new_demo", {})
@@ -949,6 +963,8 @@ def rollback_demo(history_id):
     hist = mongo.demo_edit_history.find_one({"_id": BsonObjectId(history_id)})
     if not hist:
         abort(404)
+
+    _abort_if_demo_forbidden(hist.get("demo_id"), "EDIT_DEMO")
 
     demo_id = hist.get("demo_id")
     old_data = hist.get("old_demo")
@@ -2701,7 +2717,7 @@ def create_demo():
 @admin_demo_bp.route("/edit_demo/<demo_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def edit_demo(demo_id):
     """Edit demonstration details.
 
@@ -2756,7 +2772,7 @@ def edit_demo(demo_id):
 @admin_demo_bp.route("/command-center/<demo_id>")
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def demo_command_center(demo_id):
     """Unified view for inspecting and acting on a single demonstration."""
     demo_data = _find_demo_with_alias_support(demo_id)
@@ -3414,7 +3430,7 @@ def _user_can_manage_demo_access(user, demo_doc: dict) -> bool:
 @admin_demo_bp.route("/<demo_id>/editors/add", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def add_demo_editor(demo_id):
     """Allow inviting an existing user to become an explicit demo editor."""
     identifier = (request.form.get("identifier") or "").strip()
@@ -3464,7 +3480,7 @@ def add_demo_editor(demo_id):
 @admin_demo_bp.route("/<demo_id>/editors/remove", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def remove_demo_editor(demo_id):
     demo_obj = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo_obj:
@@ -3506,7 +3522,7 @@ from flask import jsonify
 @admin_demo_bp.route("/demo/<demo_id>/freeze", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("CREATE_DEMO")
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
 def freeze_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo:
@@ -3532,7 +3548,7 @@ def freeze_demo(demo_id):
 @admin_demo_bp.route("/demo/<demo_id>/is_frozen", methods=["GET"])
 @login_required
 @admin_required
-@permission_required("VIEW_DEMO")
+@permission_required("VIEW_DEMO", _type="DEMONSTRATION")
 def is_demo_frozen(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo:
@@ -3554,7 +3570,7 @@ def is_demo_frozen(demo_id):
 @admin_demo_bp.route("/demo/<demo_id>/unfreeze", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("CREATE_DEMO")
+@permission_required("CREATE_DEMO", _type="DEMONSTRATION")
 def unfreeze_demo(demo_id):
     demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
     if not demo:
@@ -4577,7 +4593,7 @@ def reject_demo(demo_id):
 @admin_demo_api_bp.route("/<demo_id>/cancel", methods=["POST"])
 @login_required
 @admin_required
-@permission_required("EDIT_DEMO")
+@permission_required("EDIT_DEMO", _type="DEMONSTRATION")
 def admin_cancel_demo(demo_id):
     try:
         demo_oid = _require_valid_objectid(demo_id)

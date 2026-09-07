@@ -417,6 +417,19 @@ def permission_required(permission_name: str, _id: str | None = None, _type: str
                 )
                 return f(*args, **kwargs)
 
+            if (
+                hasattr(current_user, "has_city_admin_scope_grants")
+                and current_user.has_city_admin_scope_grants()
+                and hasattr(current_user, "scoped_city_keys_for")
+                and current_user.scoped_city_keys_for(permission_name)
+            ):
+                logger.info(
+                    "User %s has city-scoped permission '%s' (general fallback).",
+                    current_user.username,
+                    permission_name,
+                )
+                return f(*args, **kwargs)
+
             # Check if user has the specified permission directly in global permissions
             if permission_name in current_user.global_permissions:
                 logger.info(

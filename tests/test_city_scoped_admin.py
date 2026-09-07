@@ -39,6 +39,66 @@ def _create_scoped_admin(db, city_keys, permissions):
     return user_id
 
 
+def test_city_admin_can_open_command_center_and_edit_only_for_assigned_city(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "VIEW_DEMO", "EDIT_DEMO", "CREATE_DEMO"],
+    )
+    client = _client_for_user(app, scoped_user_id)
+
+    helsinki_demo_id = seeded_data["demo_id"]
+    turku_demo = deepcopy(db.demonstrations.find_one({"_id": helsinki_demo_id}))
+    turku_demo["_id"] = ObjectId()
+    turku_demo["title"] = "Turku Edit Denied"
+    turku_demo["city"] = "Turku"
+    turku_demo["city_key"] = normalize_city_key("Turku")
+    turku_demo["slug"] = "turku-edit-denied"
+    turku_demo["editors"] = []
+    db.demonstrations.insert_one(turku_demo)
+    turku_demo_id = turku_demo["_id"]
+
+    assert client.get(f"/admin/demo/command-center/{helsinki_demo_id}").status_code == 200
+    assert client.get(f"/admin/demo/command-center/{turku_demo_id}").status_code == 403
+
+    assert client.get(f"/admin/demo/edit_demo/{helsinki_demo_id}").status_code == 200
+    assert client.get(f"/admin/demo/edit_demo/{turku_demo_id}").status_code == 403
+
+    assert client.get(f"/admin/demo/edit_history/{helsinki_demo_id}").status_code == 200
+    assert client.get(f"/admin/demo/edit_history/{turku_demo_id}").status_code == 403
+
+
+def test_city_admin_can_open_create_demo_form(app, db, seeded_data):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "CREATE_DEMO"],
+    )
+    client = _client_for_user(app, scoped_user_id)
+
+    response = client.get("/admin/demo/create_demo")
+    assert response.status_code == 200
+
+
+def test_city_admin_without_scoped_permission_still_blocked_from_demo_routes(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "VIEW_DEMO"],
+    )
+    client = _client_for_user(app, scoped_user_id)
+    helsinki_demo_id = seeded_data["demo_id"]
+
+    assert (
+        client.get(f"/admin/demo/edit_demo/{helsinki_demo_id}").status_code
+        == 403
+    )
+
+
 def test_city_scoped_admin_dashboard_only_lists_assigned_cities(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(
         db,
@@ -201,7 +261,7 @@ def test_city_admin_can_create_and_edit_but_cannot_verify_organization(
     assert 'name="verified"' not in edit_page.get_data(as_text=True)
 
 
-def test_city_admin_cannot_change_existing_verified_status(app, db, seeded_data):
+def test_city_admin_cannot_edit_verified_organization(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(
         db,
         ["helsinki"],
@@ -221,10 +281,13 @@ def test_city_admin_cannot_change_existing_verified_status(app, db, seeded_data)
         headers={"Referer": f"/admin/organization/edit/{verified_org['_id']}"},
     )
 
-    assert response.status_code == 302
+    assert response.status_code == 403
     refreshed = db.organizations.find_one({"_id": verified_org["_id"]})
     assert refreshed["verified"] is True
-    assert refreshed["description"] == "City admin may edit content but not verification."
+    assert refreshed["description"] != "City admin may edit content but not verification."
+
+    edit_page = client.get(f"/admin/organization/edit/{verified_org['_id']}")
+    assert edit_page.status_code == 403
 
 
 def test_city_admin_cannot_invite_to_verified_organization(app, db, seeded_data):

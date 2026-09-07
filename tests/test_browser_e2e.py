@@ -113,6 +113,8 @@ def test_standard_public_heroes_share_visual_foundation(
             assert styles["headingSize"] <= (40 if viewport_width == 390 else 52), path
             assert styles["left"] >= 0, path
             assert styles["right"] <= styles["viewport"] + 1, path
+            if path == "/submit":
+                assert abs((styles["left"] + styles["right"]) / 2 - styles["viewport"] / 2) <= 1
             rendered_styles.append(styles)
 
         assert max(style["width"] for style in rendered_styles) - min(

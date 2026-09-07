@@ -1765,6 +1765,8 @@ def demo_control():
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
         demo_actions=demo_actions,
+        can_create_demo=_user_can_create_demo_in_city(None),
+        can_create_recurring_demo=_user_can_create_recurring_demo(),
         search_query=search_query,
         year_filter=year_filter,
         tag_filter=tag_filter,
@@ -3211,14 +3213,35 @@ def _user_can_create_demo_in_city(city: str | None) -> bool:
     if org_scopes:
         return True
     city_key = normalize_city_key(city)
-    return bool(
-        city_key
-        and hasattr(current_user, "has_scoped_permission")
-        and current_user.has_scoped_permission(
-            "CREATE_DEMO",
-            scope_type="city",
-            scope_key=city_key,
+    if city_key:
+        return bool(
+            hasattr(current_user, "has_scoped_permission")
+            and current_user.has_scoped_permission(
+                "CREATE_DEMO",
+                scope_type="city",
+                scope_key=city_key,
+            )
         )
+    # No specific city given: allow when the user can create in any managed city.
+    return bool(
+        hasattr(current_user, "scoped_city_keys_for")
+        and current_user.scoped_city_keys_for("CREATE_DEMO")
+    )
+
+
+def _user_can_create_recurring_demo() -> bool:
+    if _user_has_global_demo_permission("CREATE_RECURRING_DEMO"):
+        return True
+    org_scopes = [
+        scope
+        for scope in getattr(current_user, "_perm_in", lambda _permission: [])("CREATE_RECURRING_DEMO")
+        if str(scope) != "global"
+    ]
+    if org_scopes:
+        return True
+    return bool(
+        hasattr(current_user, "scoped_city_keys_for")
+        and current_user.scoped_city_keys_for("CREATE_RECURRING_DEMO")
     )
 
 

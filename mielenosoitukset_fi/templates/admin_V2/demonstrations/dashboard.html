@@ -402,7 +402,7 @@
       <p>{{ _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.') }}</p>
     </div>
     <div class="admin-workspace-hero-actions admin-page-hero__actions">
-      {% if current_user.has_permission("CREATE_DEMO") %}
+      {% if can_create_demo %}
       <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
       </a>
@@ -412,7 +412,7 @@
       </a>
       {% endif %}
 
-      {% if current_user.has_permission("CREATE_RECURRING_DEMO") %}
+      {% if can_create_recurring_demo %}
       <a href="{{ url_for('admin_recu_demo.create_recu_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
         <i class="fas fa-plus-circle"></i>{{ _('Uusi toistuva mielenosoitus') }}
       </a>

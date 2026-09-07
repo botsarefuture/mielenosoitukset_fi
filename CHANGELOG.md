@@ -4,6 +4,9 @@
 
 ## UNRELEASED
 
+### Fixed
+* City-scoped administrators can now see the accept, edit, view, command-center, and screenshot/freeze actions for demonstrations in their managed cities on the admin demonstration list; action visibility mirrors the actual per-city permission grants instead of being hidden by global permission checks.
+
 ### Changed
 * MongoDB connection logs no longer expose credentials embedded in the connection URI.
 * Usernames and email addresses are now normalized to lowercase and protected by case-insensitive unique database indexes, preventing accounts such as `emilia` and `Emilia` or duplicate mixed-case emails.

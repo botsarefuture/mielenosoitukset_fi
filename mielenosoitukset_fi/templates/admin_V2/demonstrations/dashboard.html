@@ -653,7 +653,7 @@
 {% for demo in pending %}
 <tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
-    {% if current_user.has_permission("EDIT_DEMO") %}
+    {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
     <td class="select-col">
         <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
     </td>
@@ -690,7 +690,7 @@
 
     <td class="actions-cell">
         <div class="d-flex align-items-center gap-2">
-            {% if current_user.has_permission("VIEW_DEMO") %}
+            {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
             <a class="btn btn-sm btn-outline-primary command-center-btn"
                href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
                title="{{ _('Hallintanäkymä') }}">
@@ -708,7 +708,7 @@
 
                 {# Accept #}
                 {% if not demo.approved %}
-                  {% if current_user.has_permission("ACCEPT_DEMO") %}
+                  {% if 'ACCEPT_DEMO' in demo_actions.get(demo._id|string, []) %}
                       <li><button class="dropdown-item" type="button"
                                   onclick="acceptDemo('{{ demo._id }}')">
                           <i class="fa-solid fa-check me-2"></i>{{ _('Hyväksy') }}
@@ -736,7 +736,7 @@
                 {% endif %}
 
                 {# Edit #}
-                {% if current_user.has_permission("EDIT_DEMO") %}
+                {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
                         <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
@@ -744,7 +744,7 @@
                 {% endif %}
 
                 {# View #}
-                {% if current_user.has_permission("VIEW_DEMO") %}
+                {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
                         <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
@@ -757,7 +757,7 @@
                 {% endif %}
 
                 {# Screenshot + Freeze #}
-                {% if current_user.has_permission("CREATE_DEMO") %}
+                {% if 'CREATE_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><button class="dropdown-item" type="button"
                                 onclick="triggerScreenshot('{{ demo._id }}', this)">
                         <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}
@@ -813,7 +813,7 @@
 {% for demo in approved %}
 <tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
-    {% if current_user.has_permission("EDIT_DEMO") %}
+    {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
     <td class="select-col">
         <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
     </td>
@@ -849,7 +849,7 @@
     {% endif %}
 
     <td class="actions-cell">
-        {% if current_user.has_permission("VIEW_DEMO") %}
+        {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
         <a class="btn btn-sm btn-outline-primary me-2 command-center-btn"
            href="{{ url_for('admin_demo.demo_command_center', demo_id=demo._id) }}"
            title="{{ _('Hallintanäkymä') }}">
@@ -881,7 +881,7 @@
                 {% endif %}
 
                 {# Edit #}
-                {% if current_user.has_permission("EDIT_DEMO") %}
+                {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">
                         <i class="fas fa-edit me-2"></i>{{ _('Muokkaa') }}
@@ -889,7 +889,7 @@
                 {% endif %}
 
                 {# View #}
-                {% if current_user.has_permission("VIEW_DEMO") %}
+                {% if 'VIEW_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><a class="dropdown-item"
                            href="{{ url_for('demonstration_detail', demo_id=demo._id) }}">
                         <i class="fa-solid fa-eye me-2"></i>{{ _('Katsele') }}
@@ -902,7 +902,7 @@
                 {% endif %}
 
                 {# Screenshot + Freeze #}
-                {% if current_user.has_permission("CREATE_DEMO") %}
+                {% if 'CREATE_DEMO' in demo_actions.get(demo._id|string, []) %}
                     <li><button class="dropdown-item" type="button"
                                 onclick="triggerScreenshot('{{ demo._id }}', this)">
                         <i class="fas fa-camera me-2"></i>{{ _('Luo esikatselukuva') }}

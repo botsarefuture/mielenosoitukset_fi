@@ -15,6 +15,131 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Admin-wide component contract. This layer is intentionally loaded after
+   page styles so legacy screens and Bootstrap components share one visual
+   language in both themes. */
+main.flex-grow-1 :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--admin-workspace-text);
+  font-family: inherit;
+}
+
+main.flex-grow-1 :is(.card, .modal-content, .dropdown-menu, .accordion-item, .list-group-item) {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background-color: var(--admin-workspace-surface);
+  box-shadow: none;
+}
+
+main.flex-grow-1 .card,
+.modal-content {
+  border-radius: 1rem;
+}
+
+main.flex-grow-1 :is(.card-header, .card-footer, .accordion-header, .modal-header, .modal-footer) {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background-color: var(--admin-workspace-surface-muted);
+}
+
+.modal-content,
+.modal-header,
+.modal-body,
+.modal-footer {
+  color: var(--admin-workspace-text);
+}
+
+main.flex-grow-1 :is(label, .form-label, .col-form-label) {
+  color: var(--admin-workspace-text);
+  font-size: .82rem;
+  font-weight: 750;
+}
+
+main.flex-grow-1 :is(.form-control, .form-select, .form-check-input),
+.modal :is(.form-control, .form-select, .form-check-input) {
+  border-color: var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background-color: var(--admin-workspace-surface-muted);
+  box-shadow: none;
+}
+
+main.flex-grow-1 :is(.form-control, .form-select)::placeholder,
+.modal :is(.form-control, .form-select)::placeholder {
+  color: var(--admin-workspace-muted);
+  opacity: .8;
+}
+
+main.flex-grow-1 :is(.form-control, .form-select, .form-check-input):focus,
+.modal :is(.form-control, .form-select, .form-check-input):focus {
+  border-color: var(--admin-workspace-blue);
+  box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
+}
+
+main.flex-grow-1 .btn,
+.modal .btn {
+  border-radius: .7rem;
+  font-weight: 750;
+}
+
+main.flex-grow-1 :is(.table, table) {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--admin-workspace-text);
+  --bs-table-border-color: var(--admin-workspace-border);
+  --bs-table-hover-bg: var(--admin-workspace-blue-soft);
+  --bs-table-hover-color: var(--admin-workspace-text);
+  color: var(--admin-workspace-text);
+}
+
+main.flex-grow-1 :is(.table, table) thead {
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+}
+
+main.flex-grow-1 :is(.table-responsive, .table-container) {
+  border-radius: 1rem;
+}
+
+main.flex-grow-1 :is(.nav-tabs, .nav-pills) {
+  gap: .35rem;
+  border-color: var(--admin-workspace-border);
+}
+
+main.flex-grow-1 :is(.nav-link, .page-link, .dropdown-item) {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+}
+
+main.flex-grow-1 :is(.nav-link, .page-link, .dropdown-item):hover,
+main.flex-grow-1 :is(.nav-link, .page-link, .dropdown-item):focus {
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+}
+
+main.flex-grow-1 .nav-link.active,
+main.flex-grow-1 .page-item.active .page-link {
+  border-color: var(--admin-workspace-blue);
+  color: #fff;
+  background: var(--admin-workspace-blue);
+}
+
+main.flex-grow-1 .page-link {
+  background: var(--admin-workspace-surface);
+}
+
+main.flex-grow-1 :is(.text-muted, .text-body-secondary, .form-text) {
+  color: var(--admin-workspace-muted) !important;
+}
+
+main.flex-grow-1 hr {
+  border-color: var(--admin-workspace-border);
+  opacity: 1;
+}
+
+main.flex-grow-1 :focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--admin-workspace-blue) 35%, transparent);
+  outline-offset: 2px;
+}
+
 main.flex-grow-1 {
   flex: 1 1 0%;
   width: 0;

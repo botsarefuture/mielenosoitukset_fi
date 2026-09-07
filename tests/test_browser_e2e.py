@@ -96,6 +96,7 @@ def test_standard_public_heroes_share_visual_foundation(
                         backgroundImage: computed.backgroundImage,
                         borderRadius: parseFloat(computed.borderRadius),
                         headingSize: headingStyle ? parseFloat(headingStyle.fontSize) : 0,
+                        headingTextAlign: headingStyle ? headingStyle.textAlign : '',
                         left: rect.left,
                         right: rect.right,
                         textAlign: computed.textAlign,
@@ -107,7 +108,9 @@ def test_standard_public_heroes_share_visual_foundation(
             assert "gradient" in styles["backgroundImage"]
             assert styles["borderRadius"] >= 16
             assert styles["textAlign"] == "left"
+            assert styles["headingTextAlign"] == "left", path
             assert styles["headingSize"] > 0
+            assert styles["headingSize"] <= (40 if viewport_width == 390 else 52), path
             assert styles["left"] >= 0, path
             assert styles["right"] <= styles["viewport"] + 1, path
             rendered_styles.append(styles)

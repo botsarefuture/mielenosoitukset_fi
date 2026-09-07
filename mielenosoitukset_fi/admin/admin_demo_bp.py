@@ -1746,6 +1746,17 @@ def demo_control():
     for demo in demos:
         demo["is_recommended"] = recommended_lookup.get(str(demo.get("_id")), False)
 
+    # Compute per-demo action grants so the UI hides actions city admins
+    # cannot perform (mirrors the backend permission checks).
+    demo_actions = {}
+    for demo in demos:
+        demo_id = demo.get("_id")
+        demo_actions[str(demo_id)] = {
+            permission
+            for permission in ("VIEW_DEMO", "EDIT_DEMO", "ACCEPT_DEMO", "GENERATE_EDIT_LINK", "CREATE_DEMO")
+            if _user_can_access_demo(demo_id, permission)
+        }
+
     # --- Determine next/previous pages ---
     prev_page = page - 1 if page > 1 else None
     next_page = page + 1 if page < total_pages else None
@@ -1753,6 +1764,7 @@ def demo_control():
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
+        demo_actions=demo_actions,
         search_query=search_query,
         year_filter=year_filter,
         tag_filter=tag_filter,

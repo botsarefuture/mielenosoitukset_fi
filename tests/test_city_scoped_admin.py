@@ -125,6 +125,23 @@ def test_city_scoped_admin_dashboard_only_lists_assigned_cities(app, db, seeded_
     assert "Turku Outside Scope" not in page
 
 
+def test_city_scoped_admin_dashboard_shows_accept_action_for_scoped_demo(
+    app, db, seeded_data
+):
+    scoped_user_id = _create_scoped_admin(
+        db,
+        ["helsinki"],
+        ["LIST_DEMOS", "VIEW_DEMO", "ACCEPT_DEMO"],
+    )
+    client = _client_for_user(app, scoped_user_id)
+
+    response = client.get("/admin/demo/")
+
+    assert response.status_code == 200
+    page = response.get_data(as_text=True)
+    assert "onclick=\"acceptDemo(" in page
+
+
 def test_city_scoped_admin_can_approve_only_assigned_city(app, db, seeded_data):
     scoped_user_id = _create_scoped_admin(
         db,

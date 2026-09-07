@@ -107,8 +107,8 @@ def test_standard_public_heroes_share_visual_foundation(
             )
             assert "gradient" in styles["backgroundImage"]
             assert styles["borderRadius"] >= 16
-            assert styles["textAlign"] == "left"
-            assert styles["headingTextAlign"] == "left", path
+            assert styles["textAlign"] == "center"
+            assert styles["headingTextAlign"] == "center", path
             assert styles["headingSize"] > 0
             assert styles["headingSize"] <= (40 if viewport_width == 390 else 52), path
             assert styles["left"] >= 0, path

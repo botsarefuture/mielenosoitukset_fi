@@ -160,16 +160,16 @@
 
 {% block main_content %}
 <div class="org-form-page">
-  <header class="org-form-hero">
+  <header class="org-form-hero admin-page-hero">
     <div>
-      <p class="org-form-kicker">{{ _('Organisaatiohallinta') }}</p>
+      <p class="org-form-kicker admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
       <h1>{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h1>
       <p>{% if organization %}{{ _('Pidä organisaation profiili selkeänä, ajantasaisena ja helposti tunnistettavana.') }}{% else %}{{ _('Luo organisaatiolle selkeä profiili, jonka tiedot ovat valmiina julkaisemista ja jäsenhallintaa varten.') }}{% endif %}</p>
     </div>
-    <div class="org-form-hero-actions">
-      {% if organization %}<a class="org-form-button hero" href="{{ url_for('admin_org.view_organization', org_id=organization._id) }}"><i class="fas fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}</a>{% endif %}
-      <a class="org-form-button hero" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
-      {% if organization %}<button class="org-form-button hero" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>{% endif %}
+    <div class="org-form-hero-actions admin-page-hero__actions">
+      {% if organization %}<a class="org-form-button hero admin-page-hero__action" href="{{ url_for('admin_org.view_organization', org_id=organization._id) }}"><i class="fas fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}</a>{% endif %}
+      <a class="org-form-button hero admin-page-hero__action" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
+      {% if organization %}<button class="org-form-button hero admin-page-hero__action" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>{% endif %}
     </div>
   </header>
 

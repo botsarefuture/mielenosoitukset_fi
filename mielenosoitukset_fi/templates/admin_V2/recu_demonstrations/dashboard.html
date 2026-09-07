@@ -68,12 +68,15 @@
 
 {% block main_content %}
 <section class="dashboard-container">
-  <div class="introduction">
+  <header class="introduction admin-page-hero">
+    <div>
+    <p class="admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
     <h1 id="tabletitle">{{ _('Toistuvat mielenosoitukset') }}</h1>
     <p class="muted">
       {{ _('Täältä voit hallita toistuvia mielenosoituksia, joihin sinulla on käyttöoikeus.') }}
     </p>
-  </div>
+    </div>
+  </header>
 
   <div class="dashboard-panel">
     <div class="flex justify-center mb-4">

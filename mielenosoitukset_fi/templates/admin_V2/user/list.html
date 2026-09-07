@@ -592,17 +592,17 @@
 
 {% block main_content %}
 <div class="users-page">
-  <header class="users-hero">
+  <header class="users-hero admin-page-hero">
     <div>
-      <p class="users-kicker">{{ _('Käyttäjähallinta') }}</p>
+      <p class="users-kicker admin-page-hero__kicker">{{ _('Käyttäjähallinta') }}</p>
       <h1>{{ _('Käyttäjät') }}</h1>
       <p>{{ _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.') }}</p>
     </div>
-    <div class="users-hero-actions">
-      <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="users-hero-action">
+    <div class="users-hero-actions admin-page-hero__actions">
+      <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="users-hero-action admin-page-hero__action">
         <i class="fa-solid fa-book-open" aria-hidden="true"></i>{{ _('Käyttöohje') }}
       </a>
-      <a href="{{ url_for('admin_dev.list_requests') }}" class="users-hero-action">
+      <a href="{{ url_for('admin_dev.list_requests') }}" class="users-hero-action admin-page-hero__action">
         <i class="fa-solid fa-key" aria-hidden="true"></i>{{ _('API-avainpyynnöt') }}
         {% if pending_token_requests %}<span class="users-request-count">{{ pending_token_requests }}</span>{% endif %}
       </a>

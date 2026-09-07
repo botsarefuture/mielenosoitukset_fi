@@ -243,15 +243,15 @@
 
 {% block main_content %}
 <div class="orgs-page">
-  <header class="orgs-hero">
+  <header class="orgs-hero admin-page-hero">
     <div>
-      <p class="orgs-kicker">{{ _('Organisaatiohallinta') }}</p>
+      <p class="orgs-kicker admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
       <h1>{{ _('Organisaatiot') }}</h1>
       <p>{{ _('Etsi organisaatioita, tarkista profiilien tiedot ja hoida jäsenyyksien tärkeimmät ylläpitotoimet.') }}</p>
     </div>
-    <div class="orgs-hero-actions">
+    <div class="orgs-hero-actions admin-page-hero__actions">
       {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
-        <a href="{{ url_for('admin_org.create_organization') }}" class="orgs-hero-action"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Luo uusi organisaatio') }}</a>
+        <a href="{{ url_for('admin_org.create_organization') }}" class="orgs-hero-action admin-page-hero__action"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Luo uusi organisaatio') }}</a>
       {% endif %}
     </div>
   </header>

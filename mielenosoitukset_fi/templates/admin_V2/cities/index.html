@@ -95,17 +95,17 @@
 
 {% block main_content %}
 <section class="city-admin-shell admin-workspace">
-  <header class="city-admin-header admin-workspace-hero">
+  <header class="city-admin-header admin-workspace-hero admin-page-hero">
     <div>
-      <p class="admin-workspace-kicker">{{ _('Hallinto') }}</p>
+      <p class="admin-workspace-kicker admin-page-hero__kicker">{{ _('Hallinto') }}</p>
       <h1>{{ _('Kaupunkihallinta') }}</h1>
       <p>
         {{ _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.') }}
       </p>
     </div>
-    <div class="admin-workspace-hero-actions">
+    <div class="admin-workspace-hero-actions admin-page-hero__actions">
       {% if current_user.global_admin or current_user.has_permission('LIST_USERS') %}
-      <a class="admin-workspace-hero-action" href="{{ url_for('admin_user.user_control') }}">
+      <a class="admin-workspace-hero-action admin-page-hero__action" href="{{ url_for('admin_user.user_control') }}">
         <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ _('Hallinnoi kaupunkioikeuksia') }}
       </a>
       {% endif %}

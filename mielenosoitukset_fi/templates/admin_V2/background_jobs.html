@@ -590,7 +590,7 @@
 {% block main_content %}
 <div class="jobs-container">
   <div class="container-fluid">
-    <div class="page-header d-flex align-items-center justify-content-between">
+    <div class="page-header admin-page-hero">
       <div>
         <h1 class="page-title">
           <i class="fa-solid fa-gears"></i>
@@ -600,7 +600,7 @@
           {{ _('Seuraa ajoja, päivitä aikatauluja ja käynnistä tehtäviä käsin.') }}
         </p>
       </div>
-      <a href="{{ url_for('admin.background_jobs') }}" class="btn btn-modern btn-play">
+      <a href="{{ url_for('admin.background_jobs') }}" class="btn btn-modern btn-play admin-page-hero__action">
         <i class="fa-solid fa-rotate"></i>
         {{ _('Päivitä') }}
       </a>

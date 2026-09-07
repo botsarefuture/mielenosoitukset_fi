@@ -12,16 +12,53 @@ body {
   --admin-workspace-text: light-dark(#172033, #f2f5fa);
   --admin-workspace-muted: light-dark(#647083, #b7c0ce);
   --admin-workspace-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 main.flex-grow-1 {
+  flex: 1 1 0%;
+  width: 0;
+  max-width: 100%;
   min-width: 0;
   background: light-dark(#f6f8fb, #171b22);
 }
 
+.admin-layout {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.users-page,
+.orgs-page,
+.analytics-page,
+.stats-shell,
+.org-form-page,
+.org-detail,
+.suggestion-review {
+  width: 100%;
+  max-width: 1450px;
+  min-width: 0;
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+.users-page > *,
+.orgs-page > *,
+.analytics-page > *,
+.stats-shell > *,
+.org-form-page > *,
+.org-detail > *,
+.suggestion-review > * {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .admin-workspace,
 .dashboard-container,
-.governance-shell {
+.governance-shell,
+.admin-dashboard-shell {
   display: grid;
   gap: 1rem;
   width: 100%;
@@ -45,6 +82,7 @@ main.flex-grow-1 {
   box-sizing: border-box;
 }
 
+.admin-page-hero,
 .admin-workspace-hero,
 .dashboard-container > .introduction,
 .governance-hero,
@@ -53,10 +91,12 @@ main.flex-grow-1 {
 .case-hero {
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2rem;
   align-items: end;
+  min-height: 14rem;
   width: 100%;
   max-width: none;
   margin: 0;
@@ -70,6 +110,24 @@ main.flex-grow-1 {
   box-shadow: 0 20px 50px rgba(0, 43, 137, .18);
 }
 
+.dark .admin-page-hero {
+  background:
+    radial-gradient(circle at 94% 8%, rgba(255, 102, 0, .26), transparent 18rem),
+    linear-gradient(135deg, #0b1b3b, #102b61 72%, #183d78);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
+}
+
+.admin-page-hero::before,
+.admin-page-hero::after {
+  content: none;
+}
+
+.admin-page-hero--stacked {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.admin-page-hero__kicker,
 .admin-workspace-kicker,
 .governance-eyebrow,
 .admin-workspace-hero .eyebrow {
@@ -81,6 +139,7 @@ main.flex-grow-1 {
   text-transform: uppercase;
 }
 
+.admin-page-hero h1,
 .admin-workspace-hero h1,
 .dashboard-container > .introduction h1,
 .governance-hero h1,
@@ -92,9 +151,11 @@ main.flex-grow-1 {
   color: #fff;
   font-size: clamp(2rem, 4vw, 3.2rem);
   letter-spacing: -.035em;
+  overflow-wrap: anywhere;
   text-shadow: none;
 }
 
+.admin-page-hero p:not(.admin-page-hero__kicker),
 .admin-workspace-hero p:not(.admin-workspace-kicker),
 .dashboard-container > .introduction p,
 .governance-hero p:not(.governance-eyebrow),
@@ -108,6 +169,7 @@ main.flex-grow-1 {
   line-height: 1.65;
 }
 
+.admin-page-hero__actions,
 .admin-workspace-hero-actions {
   position: relative;
   z-index: 1;
@@ -118,6 +180,7 @@ main.flex-grow-1 {
   justify-content: flex-end;
 }
 
+.admin-page-hero__action,
 .admin-workspace-hero-action,
 .admin-workspace-hero .new-item,
 .admin-workspace-hero .non-suffperm {
@@ -137,10 +200,41 @@ main.flex-grow-1 {
   box-shadow: none;
 }
 
+.admin-page-hero__action:hover,
+.admin-page-hero__action:focus-visible,
 .admin-workspace-hero-action:hover,
 .admin-workspace-hero .new-item:hover {
   color: #fff;
   background: rgba(255, 255, 255, .2);
+}
+
+.admin-page-hero__metric {
+  position: relative;
+  z-index: 1;
+  min-width: 10rem;
+  padding: .9rem 1rem;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, .11);
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.admin-page-hero__metric > * {
+  display: block;
+  margin: 0;
+}
+
+.admin-page-hero__metric strong {
+  color: #fff;
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.admin-page-hero__metric span {
+  margin-top: .3rem;
+  color: rgba(255, 255, 255, .74);
+  font-size: .78rem;
 }
 
 .admin-workspace-summary {
@@ -197,6 +291,106 @@ main.flex-grow-1 {
   color: var(--admin-workspace-text);
   font-size: 1.55rem;
   line-height: 1.1;
+}
+
+/* Shared layout for at-a-glance metric cards. Page-specific templates retain
+   their vocabulary, but icons and copy always occupy separate grid tracks. */
+:is(
+  .admin-workspace-summary-card,
+  .users-summary-card,
+  .orgs-summary-card,
+  .org-detail-summary-card,
+  .stats-shell .stat-card
+) {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  min-width: 0;
+  min-height: 6.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  box-shadow: var(--admin-workspace-shadow);
+}
+
+:is(
+  .admin-workspace-summary-icon,
+  .users-summary-icon,
+  .orgs-summary-icon,
+  .org-detail-summary-icon,
+  .stats-shell .stat-icon
+) {
+  box-sizing: border-box;
+  display: inline-grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  align-self: center;
+  border-radius: .8rem;
+  font-size: 1rem;
+}
+
+:is(
+  .admin-workspace-summary-card,
+  .users-summary-card,
+  .orgs-summary-card,
+  .org-detail-summary-card,
+  .stats-shell .stat-card
+) > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+:is(
+  .admin-workspace-summary-card,
+  .users-summary-card,
+  .orgs-summary-card,
+  .org-detail-summary-card
+) > div > span {
+  order: 1;
+  min-height: 2.35em;
+  margin: 0 0 .25rem;
+  color: var(--admin-workspace-muted);
+  font-size: .74rem;
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+:is(
+  .admin-workspace-summary-card,
+  .users-summary-card,
+  .orgs-summary-card,
+  .org-detail-summary-card
+) > div > strong {
+  order: 2;
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.stats-shell .stat-card > div > .stat-label {
+  min-height: 1.2em;
+  margin: 0 0 .25rem;
+  line-height: 1.2;
+}
+
+.stats-shell .stat-card > div > .stat-value {
+  margin: 0;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.stats-shell .stat-card > div > .stat-sub {
+  margin-top: .35rem;
+  line-height: 1.3;
 }
 
 .admin-workspace-toolbar,
@@ -300,23 +494,23 @@ main.flex-grow-1 {
   text-align: center;
 }
 
-/* City management is deliberately calmer and more centered than the dense
-   data views: the three key figures lead, while controls stay in one row. */
+/* City management keeps status accents while following the shared metric-card
+   geometry used by the other admin workspaces. */
 .city-admin-shell .city-admin-overview {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .city-admin-shell .city-admin-overview .admin-workspace-summary-card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: .85rem;
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  gap: 1rem;
   align-items: center;
   justify-content: center;
-  min-height: 10.5rem;
-  padding: 1.4rem 1rem 1.25rem;
+  min-height: 6.25rem;
+  padding: 1rem 1.1rem;
   overflow: hidden;
-  text-align: center;
+  text-align: left;
   transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
@@ -345,12 +539,12 @@ main.flex-grow-1 {
 .city-admin-shell .city-admin-overview .admin-workspace-summary-icon {
   display: grid;
   flex: 0 0 auto;
-  width: 3.5rem;
-  height: 3.5rem;
-  margin: 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
   place-items: center;
-  border-radius: 1rem;
-  font-size: 1.25rem;
+  border-radius: .8rem;
+  font-size: 1rem;
 }
 
 .city-admin-shell .city-admin-overview .admin-workspace-summary-card:nth-child(2) .admin-workspace-summary-icon {
@@ -362,16 +556,17 @@ main.flex-grow-1 {
   display: flex;
   flex-direction: column;
   gap: .25rem;
-  align-items: center;
-  text-align: center;
+  align-items: stretch;
+  text-align: left;
 }
 
 .city-admin-shell .city-admin-summary-copy strong {
-  order: -1;
-  font-size: 1.9rem;
+  order: 2;
+  font-size: 1.7rem;
 }
 
 .city-admin-shell .city-admin-summary-copy > span {
+  order: 1;
   max-width: 18rem;
   color: var(--admin-workspace-muted);
   font-size: .78rem;
@@ -602,14 +797,45 @@ main.flex-grow-1 {
 }
 
 @media (max-width: 1050px) {
-  .admin-workspace-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .city-admin-shell .city-admin-overview { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .city-admin-shell .city-admin-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .city-admin-shell .city-admin-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .city-admin-shell .city-admin-result-state { align-items: flex-end; text-align: right; }
   .city-admin-shell .city-admin-bulk-actions { grid-column: 1 / 2; }
 }
 
 @media (max-width: 760px) {
+  .admin-layout {
+    display: block;
+  }
+
+  .admin-layout > .admin-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0 !important;
+    z-index: 1045;
+    max-width: min(88vw, 320px);
+    overflow-y: auto;
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition: transform .3s ease-in-out, visibility .3s ease-in-out;
+  }
+
+  .admin-layout > .admin-sidebar.show,
+  .admin-layout > .admin-sidebar.showing {
+    visibility: visible;
+    transform: none;
+  }
+
+  .admin-layout > main.flex-grow-1 {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 !important;
+  }
+
+  .admin-page-hero,
   .admin-workspace-hero,
   .dashboard-container > .introduction,
   .governance-hero,
@@ -617,19 +843,21 @@ main.flex-grow-1 {
   .logs-header,
   .case-hero {
     grid-template-columns: 1fr;
+    min-height: 0;
   }
 
+  .admin-page-hero__actions,
   .admin-workspace-hero-actions { justify-content: flex-start; }
   .dashboard-container { margin: 0; padding: 0; }
 
   .city-admin-shell .city-admin-overview { grid-template-columns: 1fr; }
   .city-admin-shell .city-admin-overview .admin-workspace-summary-card {
-    min-height: 8.75rem;
-    padding: 1.1rem 1rem 1rem;
+    min-height: 6.25rem;
+    padding: 1rem 1.1rem;
   }
   .city-admin-shell .city-admin-overview .admin-workspace-summary-icon {
-    width: 3.15rem;
-    height: 3.15rem;
+    width: 2.75rem;
+    height: 2.75rem;
   }
   .city-admin-shell .city-admin-tools { grid-template-columns: 1fr; }
   .city-admin-shell .city-admin-result-state { align-items: flex-start; text-align: left; }
@@ -648,7 +876,18 @@ main.flex-grow-1 {
 }
 
 @media (max-width: 520px) {
-  .admin-workspace-summary { grid-template-columns: 1fr; }
+  :is(.admin-workspace-summary, .users-summary, .orgs-summary, .org-detail-summary, .stats-shell > .stat-grid) {
+    grid-template-columns: 1fr;
+  }
+  :is(
+    .admin-workspace-summary-card,
+    .users-summary-card,
+    .orgs-summary-card,
+    .org-detail-summary-card
+  ) > div > span {
+    min-height: 0;
+  }
+  .admin-page-hero__action,
   .admin-workspace-hero-action,
   .admin-workspace-hero .new-item { width: 100%; }
 }

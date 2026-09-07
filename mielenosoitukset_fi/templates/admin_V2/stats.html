@@ -25,15 +25,15 @@
 
 {% block main_content %}
 <div class="stats-shell">
-  <section class="stats-hero">
+  <section class="stats-hero admin-page-hero">
     <div class="stats-hero-copy">
-      <p class="stats-kicker">{{ _('Tilastot') }}</p>
+      <p class="stats-kicker admin-page-hero__kicker">{{ _('Tilastot') }}</p>
       <h1>{{ _('Miten palvelulla menee?') }}</h1>
       <p class="stats-lede">
         {{ _('Täältä näet palvelun tärkeimmät luvut ja mielenosoitusten katselukerrat yhdessä paikassa.') }}
       </p>
     </div>
-    <div class="stats-hero-note">
+    <div class="stats-hero-note admin-page-hero__metric">
       <span>{{ _('Viimeisin päivitys') }}</span>
       <strong id="last-updated">{{ _('Päivitetään...') }}</strong>
     </div>

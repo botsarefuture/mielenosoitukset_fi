@@ -221,17 +221,17 @@
 
 {% block main_content %}
 <div class="admin-page suggestions-page">
-  <div class="suggestions-header">
+  <header class="suggestions-header admin-page-hero">
     <div>
-      <p class="suggestions-kicker">{{ _('Ylläpidon työjono') }}</p>
+      <p class="suggestions-kicker admin-page-hero__kicker">{{ _('Ylläpidon työjono') }}</p>
       <h1>{{ _('Ehdotukset') }}</h1>
       <p class="text-muted mb-0">{{ _('Tarkista käyttäjien ehdottamat korjaukset ja pidä tapahtumatiedot ajan tasalla.') }}</p>
     </div>
-    <div class="suggestions-count">
+    <div class="suggestions-count admin-page-hero__metric">
       <strong>{{ suggestions|length }}</strong>
       <span>{{ _('ehdotusta') }}</span>
     </div>
-  </div>
+  </header>
 
   {% if suggestions %}
     <div class="suggestions-intro">

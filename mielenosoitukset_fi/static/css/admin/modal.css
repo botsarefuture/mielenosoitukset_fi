@@ -1,5 +1,6 @@
-/* General modal styles */
-.modal {
+/* Legacy edit-link dialog. Keep this deliberately separate from Bootstrap's
+   `.modal` component, which is used throughout the admin application. */
+.legacy-admin-modal {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -14,12 +15,12 @@
     display: none; /* Hide the modal by default */
 }
 
-.modal.active {
+.legacy-admin-modal.active {
     display: block; /* Show the modal when .active class is added */
 }
 
 /* Modal header */
-.modal-header {
+.legacy-admin-modal__header {
     padding: 15px;
     background-color: var(--background_light);  /* updated variable */
     border-bottom: 1px solid var(--border_color);  /* updated variable */
@@ -28,18 +29,18 @@
     align-items: center;
 }
 
-.modal-header h2 {
+.legacy-admin-modal__header h2 {
     margin: 0;
     font-size: 1.5em;
     color: var(--primary_text_color);  /* updated variable */
 }
 
-.modal-header .close {
+.legacy-admin-modal__header .close {
     cursor: pointer;
 }
 
 /* Modal body */
-.modal-body {
+.legacy-admin-modal__body {
     padding: 20px;
     max-height: 400px;
     overflow-y: auto;
@@ -47,14 +48,14 @@
 }
 
 /* Modal footer */
-.modal-footer {
+.legacy-admin-modal__footer {
     padding: 10px;
     background-color: var(--background_light);  /* updated variable */
     border-top: 1px solid var(--border_color);  /* updated variable */
     text-align: right;
 }
 
-.modal-footer .btn {
+.legacy-admin-modal__footer .btn {
     padding: 10px 20px;
     margin-left: 10px;
     border: none;
@@ -62,22 +63,22 @@
     cursor: pointer;
 }
 
-.modal-footer .btn-primary {
+.legacy-admin-modal__footer .btn-primary {
     background-color: var(--primary_button_color);  /* updated variable */
     color: var(--primary_button_text_color);  /* updated variable */
 }
 
-.modal-footer .btn-primary:hover {
+.legacy-admin-modal__footer .btn-primary:hover {
     background-color: var(--primary_button_hover_color);  /* updated variable */
     color: var(--primary_button_hover_text_color);  /* updated variable */
 }
 
-.modal-footer .btn-secondary {
+.legacy-admin-modal__footer .btn-secondary {
     background-color: var(--secondary_button_color);  /* updated variable */
     color: var(--secondary_button_text_color);  /* updated variable */
 }
 
-.modal-footer .btn-secondary:hover {
+.legacy-admin-modal__footer .btn-secondary:hover {
     background-color: var(--secondary_button_hover_color);  /* updated variable */
     color: var(--secondary_button_hover_text_color);  /* updated variable */
 }

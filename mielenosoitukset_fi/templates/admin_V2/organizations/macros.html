@@ -2,7 +2,7 @@
 <!-- Invite Users Modal -->
 <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content shadow rounded-4 border-0 bg-light text-dark">
+    <div class="modal-content shadow rounded-4 border-0">
 
       <form method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
         <!-- Modal Header -->

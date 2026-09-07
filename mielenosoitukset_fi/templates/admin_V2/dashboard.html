@@ -495,28 +495,28 @@
       </div>
 
       <div class="quick-actions">
-        <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin.stats') }}">
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin.stats') }}">
           <div>
             <strong>{{ _('Tilastot') }}</strong>
             <div class="text-muted small">{{ _('Ryhdy data-analyysiin') }}</div>
           </div>
           <i class="fa-solid fa-chart-line"></i>
         </a>
-        <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_user.user_control') }}">
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin_user.user_control') }}">
           <div>
             <strong>{{ _('Käyttäjähallinta') }}</strong>
             <div class="text-muted small">{{ _('Roolit ja käyttöoikeudet') }}</div>
           </div>
           <i class="fa-solid fa-users-gear"></i>
         </a>
-        <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin.logs') }}">
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin.logs') }}">
           <div>
             <strong>{{ _('Audit-lokit') }}</strong>
             <div class="text-muted small">{{ _('Syvennä tapahtumia') }}</div>
           </div>
           <i class="fa-solid fa-list-check"></i>
         </a>
-        <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin.manual') }}">
+        <a class="quick-card text-decoration-none" href="{{ url_for('admin.manual') }}">
           <div>
             <strong>{{ _('Käyttöohje') }}</strong>
             <div class="text-muted small">{{ _('Työkalujen läpikäynti') }}</div>
@@ -566,7 +566,7 @@
 
     <div class="quick-actions">
       {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_DEMO") or current_user.has_permission("REVIEW_DEMO_TRANSLATIONS") %}
-      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">
         <div>
           <strong>{{ _('Käännöstyöjono') }}</strong>
           <div class="text-muted small">{{ _('Mielenosoitusten käännökset') }}</div>
@@ -575,7 +575,7 @@
       </a>
       {% endif %}
       {% if current_user.role in ['admin', 'global_admin', 'translator'] or current_user.has_permission("TRANSLATE_UI") or current_user.has_permission("REVIEW_UI_TRANSLATIONS") %}
-      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin.ui_translation_dashboard') }}">
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin.ui_translation_dashboard') }}">
         <div>
           <strong>{{ _('Käyttöliittymäkäännökset') }}</strong>
           <div class="text-muted small">{{ _('Käännä näkyviä tekstejä') }}</div>
@@ -584,7 +584,7 @@
       </a>
       {% endif %}
       {% if current_user.has_permission("LIST_DEMOS") %}
-      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_demo.demo_control') }}">
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin_demo.demo_control') }}">
         <div>
           <strong>{{ _('Mielenosoitukset') }}</strong>
           <div class="text-muted small">{{ _('Jatkuva hallinta') }}</div>
@@ -593,7 +593,7 @@
       </a>
       {% endif %}
       {% if current_user.has_permission("LIST_ORGANIZATIONS") %}
-      <a class="quick-card text-decoration-none text-dark" href="{{ url_for('admin_org.organization_control') }}">
+      <a class="quick-card text-decoration-none" href="{{ url_for('admin_org.organization_control') }}">
         <div>
           <strong>{{ _('Organisaatiot') }}</strong>
           <div class="text-muted small">{{ _('Toimijoiden tiedot') }}</div>

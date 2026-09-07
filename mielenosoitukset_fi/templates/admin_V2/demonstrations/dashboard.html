@@ -605,7 +605,7 @@
       <button type="button" id="merge-demos-btn" class="btn btn-outline-primary ms-2" disabled>
         <i class="fa-solid fa-object-group me-1"></i>{{ _('Yhdistä valitut mielenosoitukset') }}
       </button>
-      <span id="bulk-action-feedback" class="text-muted ms-3 d-none"></span>
+      <span id="bulk-action-feedback" class="admin-selection-status ms-2" aria-live="polite">{{ _('Ei valintoja · valitse mielenosoituksia rivien neliöruuduista') }}</span>
     </div>
     {% endif %}
 
@@ -620,7 +620,7 @@
       <thead>
         <tr>
           <th class="select-col">
-            <input type="checkbox" id="select-all-demos" aria-label="{{ _('Valitse kaikki mielenosoitukset') }}">
+            <input type="checkbox" id="select-all-demos" class="form-check-input admin-selection-checkbox" aria-label="{{ _('Valitse kaikki mielenosoitukset') }}" title="{{ _('Valitse kaikki muokattavissa olevat mielenosoitukset') }}"{{ '' if current_user.has_permission('EDIT_DEMO') else ' disabled' }}>
           </th>
           <th>{{ _('Otsikko') }}</th>
           <th>{{ _('Kaupunki') }}</th>
@@ -651,7 +651,7 @@
 <tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
     <td class="select-col">
-        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}"{{ '' if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
+        <input type="checkbox" class="demo-select form-check-input admin-selection-checkbox" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }} {{ demo.title }}"{{ '' if current_user.has_permission('EDIT_DEMO') and 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
     </td>
 
     <td>{{ demo.title }}</td>
@@ -809,7 +809,7 @@
 <tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
     <td class="select-col">
-        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}"{{ '' if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
+        <input type="checkbox" class="demo-select form-check-input admin-selection-checkbox" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }} {{ demo.title }}"{{ '' if current_user.has_permission('EDIT_DEMO') and 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
     </td>
 
     <td>{{ demo.title }}</td>
@@ -1250,12 +1250,14 @@
       const feedbackEl = document.getElementById('bulk-action-feedback');
       const selected = new Set();
       const selectionLabel = {{ _('Valittuja mielenosoituksia')|tojson }};
+      const emptySelectionLabel = {{ _('Ei valintoja · valitse mielenosoituksia rivien neliöruuduista')|tojson }};
       const defaultBulkContent = bulkBtn ? bulkBtn.innerHTML : '';
       const mergeUrlBase = {{ url_for('admin_demo.merge_demos')|tojson }};
       const maxMergeCount = 4;
       const mergeLimitMessage = {{ _('Voit yhdistää kerrallaan enintään %(count)s mielenosoitusta.', count=4)|tojson }};
 
-      const getCheckboxes = () => Array.from(document.querySelectorAll('.demo-select'));
+      const getCheckboxes = () => Array.from(document.querySelectorAll('.demo-select:not(:disabled)'))
+        .filter(cb => cb.closest('tr')?.style.display !== 'none');
 
       function updateState() {
         const total = getCheckboxes().length;
@@ -1267,11 +1269,9 @@
         }
         if (feedbackEl) {
           if (selected.size === 0) {
-            feedbackEl.textContent = '';
-            feedbackEl.classList.add('d-none');
+            feedbackEl.textContent = emptySelectionLabel;
           } else {
             feedbackEl.textContent = selectionLabel + ': ' + selected.size;
-            feedbackEl.classList.remove('d-none');
           }
         }
         if (masterCheckbox) {
@@ -1290,6 +1290,11 @@
 
       function handleSelection(cb) {
         if (!cb) return;
+        const row = cb.closest('tr');
+        if (row) {
+          row.classList.toggle('selected', cb.checked);
+          row.setAttribute('aria-selected', cb.checked ? 'true' : 'false');
+        }
         if (cb.checked) {
           selected.add(cb.value);
         } else {

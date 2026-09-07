@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
-  left: 50%;
+  left: auto;
   width: min(calc(100vw - 2rem), 1120px);
   min-height: 248px;
   margin: 1.5rem auto;
@@ -16,9 +16,9 @@
   border: 0;
   border-radius: var(--site-hero-radius);
   color: #fff;
-  text-align: left;
+  text-align: center;
   box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
-  translate: -50% 0;
+  translate: none;
   transition: box-shadow 180ms ease;
 }
 
@@ -52,21 +52,21 @@
 .site-hero.site-hero .org-fill-hero-content {
   width: 100%;
   max-width: 780px;
-  margin: 0;
-  text-align: left;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .site-hero.site-hero h1,
 .site-hero.site-hero h2,
 .site-hero.site-hero .demo-title {
   max-width: 760px;
-  margin: 0 0 0.75rem;
+  margin: 0 auto 0.75rem;
   color: #fff;
   font-size: clamp(2rem, 3.7vw, 3.2rem);
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.035em;
-  text-align: left;
+  text-align: center;
   text-shadow: none;
 }
 
@@ -78,9 +78,11 @@
   max-width: 720px;
   margin-top: 0;
   margin-bottom: 0;
+  margin-inline: auto;
   color: rgba(255, 255, 255, 0.9);
   font-size: clamp(1rem, 1.35vw, 1.1rem);
   line-height: 1.55;
+  text-align: center;
   text-shadow: none;
 }
 
@@ -92,7 +94,7 @@
   align-items: center;
   gap: 0.45rem;
   width: fit-content;
-  margin: 0 0 0.85rem;
+  margin: 0 auto 0.85rem;
   padding: 0.32rem 0.65rem;
   border-color: rgba(255, 255, 255, 0.34);
   border: 1px solid rgba(255, 255, 255, 0.34);
@@ -110,7 +112,7 @@
 .site-hero.site-hero .buttons-div,
 .site-hero.site-hero .today-actions,
 .site-hero.site-hero .cities-actions {
-  justify-content: flex-start;
+  justify-content: center;
   margin-top: 1.25rem;
 }
 
@@ -143,6 +145,17 @@
   border-color: #fff;
   background: #fff;
   color: #1e40af;
+}
+
+.site-hero.site-hero .demo-datetime,
+.site-hero.site-hero .demo-location,
+.site-hero.site-hero .org-hero-header {
+  justify-content: center;
+}
+
+.site-hero.site-hero .org-hero-info {
+  align-items: center;
+  text-align: center;
 }
 
 .site-hero.site-hero .button:hover,

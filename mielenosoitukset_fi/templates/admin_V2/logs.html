@@ -2,17 +2,14 @@
 
 {% block styles %}
 <style>
-    :root {
-        --surface: #ffffff;
-        --surface-muted: #f6f7fb;
-        --border-color: #e4e7f1;
-        --text-soft: #6c757d;
-    }
-
     .logs-shell {
-        max-width: 1200px;
+        --surface: var(--admin-workspace-surface);
+        --surface-muted: var(--admin-workspace-surface-muted);
+        --border-color: var(--admin-workspace-border);
+        --text-soft: var(--admin-workspace-muted);
+        max-width: 1450px;
         margin: 0 auto;
-        padding: 2rem 1.5rem 3rem;
+        padding: 0 0 3rem;
     }
 
     .logs-header {
@@ -22,6 +19,38 @@
     .logs-header h2 {
         margin-bottom: 0.35rem;
     }
+
+    .log-source-nav {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .75rem;
+        margin: 1rem 0;
+    }
+
+    .log-source-link {
+        display: flex;
+        gap: .75rem;
+        align-items: center;
+        min-width: 0;
+        padding: .9rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        color: var(--admin-workspace-text);
+        background: var(--surface);
+        text-decoration: none;
+        box-shadow: var(--admin-workspace-shadow);
+    }
+
+    .log-source-link:hover,
+    .log-source-link.active {
+        border-color: var(--admin-workspace-blue);
+        color: var(--admin-workspace-blue-dark);
+        background: var(--admin-workspace-blue-soft);
+    }
+
+    .log-source-link i { flex: 0 0 auto; width: 1.4rem; text-align: center; }
+    .log-source-link strong, .log-source-link small { display: block; }
+    .log-source-link small { margin-top: .15rem; color: var(--text-soft); font-size: .72rem; }
 
     .filter-card {
         background: var(--surface);
@@ -34,12 +63,18 @@
 
     .filter-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        grid-template-columns: repeat(2, minmax(180px, 1fr)) repeat(3, minmax(140px, .7fr));
         gap: 0.85rem;
     }
 
+    .filter-field { display: grid; gap: .35rem; min-width: 0; }
+    .filter-field label { color: var(--text-soft); font-size: .72rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+    .filter-field.search { grid-column: span 2; }
+
     .filter-grid input,
     .filter-grid select {
+        width: 100%;
+        min-height: 2.75rem;
         padding: 0.55rem 0.75rem;
         border-radius: 10px;
         border: 1px solid var(--border-color);
@@ -55,6 +90,7 @@
     }
 
     .filter-grid button {
+        min-height: 2.75rem;
         border-radius: 10px;
         border: none;
         background: linear-gradient(135deg, #2563eb, #4f46e5);
@@ -63,6 +99,12 @@
         cursor: pointer;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+
+    .filter-actions { display: flex; gap: .6rem; align-items: end; grid-column: 1 / -1; }
+    .filter-actions button { padding: .65rem 1rem; }
+    .filter-reset { display: inline-flex; min-height: 2.75rem; align-items: center; padding: .65rem 1rem; border: 1px solid var(--border-color); border-radius: 10px; color: var(--admin-workspace-text); background: var(--surface-muted); text-decoration: none; }
+
+    .log-results-summary { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin: 0 0 1rem; color: var(--text-soft); font-size: .84rem; }
 
     .filter-grid button:hover {
         transform: translateY(-1px);
@@ -141,6 +183,14 @@
         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
         gap: 0.85rem;
     }
+
+    .log-event-title { margin: 0 0 .25rem; color: var(--admin-workspace-text); font-size: 1rem; font-weight: 800; }
+    .category-pill { display: inline-flex; margin-right: .35rem; padding: .25rem .55rem; border-radius: 999px; color: var(--admin-workspace-blue-dark); background: var(--admin-workspace-blue-soft); font-size: .7rem; font-weight: 800; }
+    .category-pill.change { color: light-dark(#9a3412, #ffb98a); background: light-dark(#fff2e8, #3a2418); }
+    .category-pill.security { color: light-dark(#7e22ce, #d8b4fe); background: light-dark(#f5e8ff, #30203d); }
+    .log-investigation-links { display: flex; gap: .55rem; flex-wrap: wrap; margin-top: 1rem; }
+    .log-investigation-link { display: inline-flex; gap: .4rem; align-items: center; padding: .4rem .65rem; border: 1px solid var(--border-color); border-radius: .65rem; color: var(--admin-workspace-blue-dark); background: var(--surface-muted); font-size: .76rem; font-weight: 800; text-decoration: none; }
+    .log-investigation-link:hover { border-color: var(--admin-workspace-blue); background: var(--admin-workspace-blue-soft); }
 
     .meta-item {
         padding: 0.85rem;
@@ -271,53 +321,77 @@
     }
 
     @media (max-width: 640px) {
+        .log-source-nav { grid-template-columns: 1fr; }
+        .filter-grid { grid-template-columns: 1fr; }
+        .filter-field.search { grid-column: auto; }
+        .filter-actions { align-items: stretch; flex-direction: column; }
+        .filter-actions > * { width: 100%; justify-content: center; }
         .timestamp {
             text-align: left;
         }
+    }
+
+    @media (min-width: 641px) and (max-width: 1050px) {
+        .log-source-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 </style>
 {% endblock %}
 
 {% block main_content %}
 <div class="logs-shell">
-    <header class="logs-header">
-        <h2>{{ _('Admin Activity Timeline') }}</h2>
-        <p class="text-muted mb-0">{{ _('Inspect privileged actions, filter by user or time range, and expand any row for raw request metadata.') }}</p>
+    <header class="logs-header admin-page-hero">
+        <div>
+            <p class="admin-page-hero__kicker">{{ _('Lokit ja tietosuoja') }}</p>
+            <h1>{{ _('Hallinnan tapahtumaloki') }}</h1>
+            <p>{{ _('Selvitä kuka teki mitä ja milloin. Lokin katselu kirjataan tietosuojan ja jäljitettävyyden vuoksi.') }}</p>
+        </div>
     </header>
+
+    <nav class="log-source-nav" aria-label="{{ _('Lokilähteet') }}">
+        <a class="log-source-link active" href="{{ url_for('admin.logs') }}" aria-current="page"><i class="fa-solid fa-list-check"></i><span><strong>{{ _('Hallintatoiminnot') }}</strong><small>{{ _('Pyynnöt ja ylläpitotoimet') }}</small></span></a>
+        <a class="log-source-link" href="{{ url_for('admin_demo.audit_timeline') }}"><i class="fa-solid fa-bullhorn"></i><span><strong>{{ _('Mielenosoitushistoria') }}</strong><small>{{ _('Sisältömuutokset ja hyväksynnät') }}</small></span></a>
+        {% if current_user.global_admin or current_user.has_permission('VIEW_CLEARANCE_AUDIT') %}<a class="log-source-link" href="{{ url_for('admin_governance.audit_log') }}"><i class="fa-solid fa-user-shield"></i><span><strong>{{ _('Käyttöoikeushistoria') }}</strong><small>{{ _('Hyväksynnät ja peruutukset') }}</small></span></a>{% endif %}
+        {% if current_user.global_admin %}<a class="log-source-link" href="{{ url_for('admin_demo.view_super_audit_logs') }}"><i class="fa-solid fa-shield-halved"></i><span><strong>{{ _('Tekninen audit-loki') }}</strong><small>{{ _('Raaka tapahtuma- ja järjestelmädata') }}</small></span></a>{% endif %}
+    </nav>
 
     <section class="filter-card">
         <form method="GET" action="{{ url_for('admin.logs') }}" class="filter-grid">
-            <select name="user">
-                <option value="">{{ _('All Users') }}</option>
+            <div class="filter-field search"><label for="log-search">{{ _('Haku') }}</label><input id="log-search" type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="{{ _('Hae tapahtumalla, polulla tai tunnisteella') }}"></div>
+            <div class="filter-field"><label for="log-user">{{ _('Tekijä') }}</label><select id="log-user" name="user">
+                <option value="">{{ _('Kaikki käyttäjät') }}</option>
                 {% for user in users %}
                 <option value="{{ user.id }}" {% if request.args.get('user') == user.id %}selected{% endif %}>
                     {{ user.name }}
                 </option>
                 {% endfor %}
-            </select>
-            <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}" placeholder="{{ _('Start date') }}">
-            <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}" placeholder="{{ _('End date') }}">
-            <select name="action_type">
-                <option value="">{{ _('All Methods') }}</option>
+            </select></div>
+            <div class="filter-field"><label for="log-category">{{ _('Tapahtumalaji') }}</label><select id="log-category" name="category"><option value="">{{ _('Kaikki tapahtumat') }}</option><option value="read" {% if request.args.get('category') == 'read' %}selected{% endif %}>{{ _('Katselut') }}</option><option value="change" {% if request.args.get('category') == 'change' %}selected{% endif %}>{{ _('Muutokset') }}</option><option value="security" {% if request.args.get('category') == 'security' %}selected{% endif %}>{{ _('Tietoturva ja oikeudet') }}</option></select></div>
+            <div class="filter-field"><label for="log-method">{{ _('HTTP-metodi') }}</label><select id="log-method" name="action_type">
+                <option value="">{{ _('Kaikki metodit') }}</option>
                 {% for action in action_types %}
                 <option value="{{ action }}" {% if request.args.get('action_type') == action %}selected{% endif %}>
                     {{ action }}
                 </option>
                 {% endfor %}
-            </select>
-            <button type="submit">{{ _('Apply Filters') }}</button>
+            </select></div>
+            <div class="filter-field"><label for="log-start">{{ _('Alkaen') }}</label><input id="log-start" type="date" name="start_date" value="{{ request.args.get('start_date', '') }}"></div>
+            <div class="filter-field"><label for="log-end">{{ _('Päättyen') }}</label><input id="log-end" type="date" name="end_date" value="{{ request.args.get('end_date', '') }}"></div>
+            <div class="filter-actions"><button type="submit"><i class="fa-solid fa-filter me-2"></i>{{ _('Rajaa tapahtumat') }}</button><a class="filter-reset" href="{{ url_for('admin.logs') }}">{{ _('Tyhjennä rajaukset') }}</a></div>
         </form>
     </section>
 
+    <div class="log-results-summary" id="log-results-summary" role="status" aria-live="polite"><span>{{ _('Haetaan tapahtumia…') }}</span></div>
+
     <div id="log-stream" class="log-stream">
-        <div class="empty-state">{{ _('Loading log entries...') }}</div>
+        <div class="empty-state">{{ _('Haetaan tapahtumia…') }}</div>
     </div>
 
     <div class="pagination mt-3"></div>
 
     <div class="mt-4 text-center">
         <a href="{{ url_for('admin.admin_dashboard') }}" class="button">
-            <i class="fas fa-arrow-left"></i> {{ _('Back to Dashboard') }}
+            <i class="fas fa-arrow-left"></i> {{ _('Takaisin hallintapaneeliin') }}
         </a>
     </div>
 </div>
@@ -328,7 +402,14 @@
     const apiBaseUrl = "{{ url_for('admin.api_logs') }}";
     const logContainer = document.getElementById('log-stream');
     const paginationEl = document.querySelector('.pagination');
-    const minuteLabel = "{{ _('min ago') }}";
+    const resultsSummary = document.getElementById('log-results-summary');
+    const minuteLabel = "{{ _('min sitten') }}";
+    const categoryLabels = {
+        read: "{{ _('Katselu') }}",
+        change: "{{ _('Muutos') }}",
+        security: "{{ _('Tietoturva') }}",
+        system: "{{ _('Järjestelmä') }}",
+    };
 
     function escapeHtml(value) {
         if (value === null || value === undefined) return '';
@@ -344,7 +425,7 @@
     function getActiveFilters() {
         const params = new URLSearchParams(window.location.search);
         const filters = {};
-        ["user", "start_date", "end_date", "action_type"].forEach(key => {
+        ["q", "user", "start_date", "end_date", "action_type", "category"].forEach(key => {
             const value = params.get(key);
             if (value) filters[key] = value;
         });
@@ -356,10 +437,17 @@
     async function fetchLogs(page = 1) {
         const params = new URLSearchParams({ page });
         Object.entries(activeFilters).forEach(([key, value]) => params.append(key, value));
-        const res = await fetch(`${apiBaseUrl}?${params.toString()}`);
-        const data = await res.json();
-        renderLogs(data.logs || []);
-        renderPagination(data.page, data.total_pages);
+        try {
+            const res = await fetch(`${apiBaseUrl}?${params.toString()}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            renderLogs(data.logs || []);
+            renderPagination(data.page, data.total_pages);
+            if (resultsSummary) resultsSummary.innerHTML = `<span><strong>${Number(data.total_logs || 0).toLocaleString('fi-FI')}</strong> {{ _('tapahtumaa löytyi') }}</span><span>{{ _('Sivu') }} ${data.page} / ${Math.max(data.total_pages, 1)}</span>`;
+        } catch (error) {
+            logContainer.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation mb-2"></i><strong>{{ _('Lokien lataaminen epäonnistui') }}</strong><div>{{ _('Yritä hetken kuluttua uudelleen.') }}</div></div>`;
+            if (resultsSummary) resultsSummary.textContent = "{{ _('Tietoja ei voitu ladata') }}";
+        }
     }
 
     function createMetaItem(label, value, { isCode = false } = {}) {
@@ -372,16 +460,19 @@
         `;
     }
 
-    function renderDetailRows(meta = {}) {
+    function renderDetailRows(meta = {}, log = {}) {
         const rows = [
+            { label: "{{ _('IP-osoite') }}", value: log.action?.remote_addr },
+            { label: "{{ _('Istunto') }}", value: log.session_id },
+            { label: "{{ _('Selain ja laite') }}", value: log.action?.user_agent, multiline: true },
             { label: "{{ _('Endpoint') }}", value: meta.endpoint },
             { label: "{{ _('Blueprint') }}", value: meta.blueprint },
-            { label: "{{ _('Full Path') }}", value: meta.full_path },
-            { label: "{{ _('Referrer') }}", value: meta.referrer },
-            { label: "{{ _('View Args') }}", value: meta.view_args, multiline: true },
-            { label: "{{ _('Query Params') }}", value: meta.args, multiline: true },
-            { label: "{{ _('Form Data') }}", value: meta.form, multiline: true },
-            { label: "{{ _('JSON Payload') }}", value: meta.json, multiline: true },
+            { label: "{{ _('Koko polku') }}", value: meta.full_path },
+            { label: "{{ _('Viittaava sivu') }}", value: meta.referrer },
+            { label: "{{ _('Reittiparametrit') }}", value: meta.view_args, multiline: true },
+            { label: "{{ _('Kyselyparametrit') }}", value: meta.args, multiline: true },
+            { label: "{{ _('Lomakedata') }}", value: meta.form, multiline: true },
+            { label: "{{ _('JSON-data') }}", value: meta.json, multiline: true },
         ];
 
         return rows
@@ -400,23 +491,26 @@
     function renderLogs(logs) {
         if (!logContainer) return;
         if (!logs.length) {
-            logContainer.innerHTML = `<div class="empty-state">{{ _('No activities yet.') }}</div>`;
+            logContainer.innerHTML = `<div class="empty-state"><i class="fa-solid fa-magnifying-glass mb-2"></i><strong>{{ _('Tapahtumia ei löytynyt') }}</strong><div>{{ _('Kokeile väljempiä hakuehtoja.') }}</div></div>`;
             return;
         }
 
         logContainer.innerHTML = logs.map(log => {
             const rawMethod = log.action.method || 'GET';
             const method = escapeHtml(rawMethod);
-            const methodClass = `method-${rawMethod.toLowerCase()}`;
+            const methodClass = `method-${rawMethod.toLowerCase().replace(/[^a-z]/g, '')}`;
             const timestamp = escapeHtml(log.timestamp || '');
             const relative = log.relative_minutes != null ? `${log.relative_minutes} ${minuteLabel}` : '';
             const user = escapeHtml(log.by.displayname || log.by.username || '—');
             const email = escapeHtml(log.by.email || '—');
-            const ip = escapeHtml(log.action.remote_addr || '—');
-            const session = escapeHtml(log.session_id || '—');
-            const userAgent = escapeHtml(log.action.user_agent || '—');
             const path = escapeHtml(log.action.path || '—');
             const endpoint = escapeHtml(log.request_meta?.endpoint || '');
+            const eventName = escapeHtml(log.event || endpoint || `${rawMethod} ${log.action.path || ''}`);
+            const category = ['read', 'change', 'security', 'system'].includes(log.category) ? log.category : 'system';
+            const entity = log.entity?.id ? createMetaItem("{{ _('Kohde') }}", `${log.entity.type || ''} ${log.entity.id}`.trim(), { isCode: true }) : '';
+            const relatedValue = log.entity?.id || log.action.path || log.event;
+            const relatedHref = `{{ url_for('admin.logs') }}?q=${encodeURIComponent(relatedValue || '')}`;
+            const actorHref = log.by.id ? `{{ url_for('admin.logs') }}?user=${encodeURIComponent(log.by.id)}` : '';
             const details = log.details ? `<div class="log-note">${escapeHtml(log.details)}</div>` : '';
 
             return `
@@ -424,6 +518,7 @@
                     <div class="log-card__head">
                         <span class="method-pill ${methodClass}">${method}</span>
                         <div class="path-block">
+                            <div class="log-event-title"><span class="category-pill ${category}">${categoryLabels[category]}</span>${eventName}</div>
                             <div class="path">${path}</div>
                             <div class="endpoint">${endpoint || '&nbsp;'}</div>
                         </div>
@@ -436,19 +531,22 @@
                     <div class="log-card__meta">
                         ${createMetaItem("{{ _('User') }}", user)}
                         ${createMetaItem("{{ _('Email') }}", email)}
-                        ${createMetaItem("{{ _('IP Address') }}", ip)}
-                        ${createMetaItem("{{ _('Session') }}", session)}
-                        ${createMetaItem("{{ _('User Agent') }}", userAgent, { isCode: true })}
+                        ${entity}
+                    </div>
+
+                    <div class="log-investigation-links">
+                        <a class="log-investigation-link" href="${relatedHref}"><i class="fa-solid fa-link"></i>{{ _('Näytä liittyvät tapahtumat') }}</a>
+                        ${actorHref ? `<a class="log-investigation-link" href="${actorHref}"><i class="fa-solid fa-user-clock"></i>{{ _('Näytä tekijän tapahtumat') }}</a>` : ''}
                     </div>
 
                     ${details}
 
                     <button class="log-toggle" data-target="details-${log.id}">
-                        <span>{{ _('Request metadata') }}</span>
+                        <span>{{ _('Tekniset tiedot ja tietosuojan audit-data') }}</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="log-details" id="details-${log.id}">
-                        ${renderDetailRows(log.request_meta || {}) || `<div class="detail-row"><span>{{ _('Metadata') }}</span><code>—</code></div>`}
+                        ${renderDetailRows(log.request_meta || {}, log) || `<div class="detail-row"><span>{{ _('Metadata') }}</span><code>—</code></div>`}
                     </div>
                 </article>
             `;
@@ -472,15 +570,21 @@
         };
 
         if (current > 1) {
-            paginationEl.appendChild(createPageLink('« {{ _("Previous") }}', current - 1));
+            paginationEl.appendChild(createPageLink('« {{ _("Edellinen") }}', current - 1));
         }
 
-        for (let i = 1; i <= total; i++) {
+        const firstPage = Math.max(1, current - 2);
+        const lastPage = Math.min(total, current + 2);
+        if (firstPage > 1) paginationEl.appendChild(createPageLink('1', 1));
+        if (firstPage > 2) paginationEl.append('…');
+        for (let i = firstPage; i <= lastPage; i++) {
             paginationEl.appendChild(createPageLink(i, i, i === current));
         }
+        if (lastPage < total - 1) paginationEl.append('…');
+        if (lastPage < total) paginationEl.appendChild(createPageLink(total, total));
 
         if (current < total) {
-            paginationEl.appendChild(createPageLink('{{ _("Next") }} »', current + 1));
+            paginationEl.appendChild(createPageLink('{{ _("Seuraava") }} »', current + 1));
         }
     }
 

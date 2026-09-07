@@ -6,8 +6,8 @@
 
 {% block main_content %}
 <section class="governance-shell">
-  <header class="governance-hero">
-    <p class="governance-eyebrow mb-2">{{ _('Hallinto') }}</p>
+  <header class="governance-hero admin-page-hero">
+    <p class="governance-eyebrow admin-page-hero__kicker mb-2">{{ _('Hallinto') }}</p>
     <div class="d-flex justify-content-between gap-3 align-items-start flex-wrap">
       <div><h1 class="h2 mb-2">{{ _('Superkäyttäjäroolin hyväksynnät') }}</h1><p class="text-body-secondary mb-0">{{ _('Hallituksen hyväksyntä vaaditaan ennen kuin käyttäjälle voidaan myöntää global_admin-superkäyttäjärooli. Jokainen muutos kirjataan tapahtumalokiin.') }}</p></div>
       <span class="badge text-bg-success fs-6">{{ approved_count }} {{ _('hyväksytty') }}</span>

@@ -6,7 +6,7 @@
 
 {% block main_content %}
 <section class="governance-shell">
-  <header class="governance-hero"><p class="governance-eyebrow mb-2">{{ _('Hallinto') }}</p><h1 class="h2 mb-2">{{ _('Hyväksyntöjen tapahtumaloki') }}</h1><p class="text-body-secondary mb-0">{{ _('Tarkastele kuka myönsi tai perui hallinnollisen hyväksynnän ja milloin muutos tehtiin.') }}</p></header>
+  <header class="governance-hero admin-page-hero"><p class="governance-eyebrow admin-page-hero__kicker mb-2">{{ _('Hallinto') }}</p><h1 class="h2 mb-2">{{ _('Hyväksyntöjen tapahtumaloki') }}</h1><p class="text-body-secondary mb-0">{{ _('Tarkastele kuka myönsi tai perui hallinnollisen hyväksynnän ja milloin muutos tehtiin.') }}</p></header>
   {% include 'admin_V2/governance/_tabs.html' %}
   <section class="governance-card">
     <div class="governance-toolbar"><label class="visually-hidden" for="audit-search">{{ _('Hae käyttäjää, toimintoa tai tekijää') }}</label><input class="form-control" id="audit-search" type="search" placeholder="{{ _('Hae käyttäjää, toimintoa tai tekijää') }}"><span class="text-body-secondary">{{ audit_events|length }} {{ _('tapahtumaa') }}</span></div>

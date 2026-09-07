@@ -2,12 +2,15 @@
 
 {% block main_content %}
 <section class="dashboard-container">
-  <div class="introduction">
+  <header class="introduction admin-page-hero">
+    <div>
+    <p class="admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
     <h1 class="text-3xl font-bold">{{ _('Demojen käännökset') }}</h1>
     <p class="text-muted max-w-xl">
       {{ _('Kääntäjät tekevät täällä käännösehdotuksia. Moderaattori tai admin hyväksyy ne ennen julkaisua.') }}
     </p>
-  </div>
+    </div>
+  </header>
 
   {% if can_review_demo_translations and pending_items %}
   <section class="dashboard-panel mb-4">

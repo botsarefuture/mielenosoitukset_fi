@@ -191,15 +191,15 @@
 
 {% block main_content %}
 <section class="analytics-page">
-  <header class="analytics-hero">
+  <header class="analytics-hero admin-page-hero">
     <div>
-      <p class="analytics-kicker">{{ _('Analytiikka') }}</p>
+      <p class="analytics-kicker admin-page-hero__kicker">{{ _('Analytiikka') }}</p>
       <h1 id="tabletitle">{{ _('Mielenosoitusanalytiikka') }}</h1>
       <p>
       {{ _('Täältä näet mielenosoitusten katselukerrat järjestyksessä.') }}
       </p>
     </div>
-    <div class="analytics-summary">
+    <div class="analytics-summary admin-page-hero__metric">
       <strong>{{ data|length }}</strong>
       <span>{{ _('mielenosoitusta') }}</span>
     </div>

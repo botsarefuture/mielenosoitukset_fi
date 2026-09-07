@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import pytz
 from collections import defaultdict
 from typing import Any, Dict
@@ -1203,7 +1204,13 @@ def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
     user_filter = filters.get("user")
     if user_filter:
         try:
-            clauses.append({"user._id": ObjectId(user_filter)})
+            clauses.append({
+                "$or": [
+                    {"user._id": ObjectId(user_filter)},
+                    {"actor.id": user_filter},
+                    {"actor._id": user_filter},
+                ]
+            })
         except Exception:
             pass
 
@@ -1229,6 +1236,47 @@ def _build_logs_query(filters: Dict[str, Any]) -> Dict[str, Any]:
             "$or": [
                 {"request.method": action_type},
                 {"action.method": action_type},
+            ]
+        })
+
+    category = filters.get("category")
+    if category == "read":
+        clauses.append({
+            "$or": [
+                {"request.method": "GET"},
+                {"action.method": "GET"},
+            ]
+        })
+    elif category == "change":
+        clauses.append({
+            "$or": [
+                {"request.method": {"$in": ["POST", "PUT", "PATCH", "DELETE"]}},
+                {"action.method": {"$in": ["POST", "PUT", "PATCH", "DELETE"]}},
+            ]
+        })
+    elif category == "security":
+        clauses.append({
+            "$or": [
+                {"event": {"$regex": "login|auth|permission|token|clearance|mfa|security", "$options": "i"}},
+                {"message": {"$regex": "login|auth|permission|token|clearance|mfa|security", "$options": "i"}},
+            ]
+        })
+
+    search = (filters.get("q") or "").strip()
+    if search:
+        pattern = re.escape(search)
+        clauses.append({
+            "$or": [
+                {"event": {"$regex": pattern, "$options": "i"}},
+                {"message": {"$regex": pattern, "$options": "i"}},
+                {"details": {"$regex": pattern, "$options": "i"}},
+                {"request.path": {"$regex": pattern, "$options": "i"}},
+                {"action.path": {"$regex": pattern, "$options": "i"}},
+                {"user.username": {"$regex": pattern, "$options": "i"}},
+                {"user.displayname": {"$regex": pattern, "$options": "i"}},
+                {"actor.username": {"$regex": pattern, "$options": "i"}},
+                {"entity_id": {"$regex": pattern, "$options": "i"}},
+                {"related_id": {"$regex": pattern, "$options": "i"}},
             ]
         })
 
@@ -1286,9 +1334,11 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         timestamp_iso = timestamp_display
         rel_minutes = None
 
-    user_doc = doc.get("user") or {}
+    user_doc = doc.get("user") or doc.get("actor") or {}
+    if not isinstance(user_doc, dict):
+        user_doc = {"username": str(user_doc), "displayname": str(user_doc)}
     by = {
-        "id": str(user_doc.get("_id")) if user_doc.get("_id") else None,
+        "id": str(user_doc.get("_id") or user_doc.get("id")) if (user_doc.get("_id") or user_doc.get("id")) else None,
         "username": user_doc.get("username") or "Unknown",
         "displayname": user_doc.get("displayname") or user_doc.get("username") or "Unknown",
         "profile_picture": user_doc.get("profile_picture"),
@@ -1303,9 +1353,22 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         or "—"
     )
 
+    sensitive_keys = ("password", "passwd", "token", "secret", "authorization", "cookie", "csrf")
+
+    def _redact_payload(value):
+        if isinstance(value, dict):
+            return {
+                key: "[REDACTED]" if any(part in str(key).lower() for part in sensitive_keys) else _redact_payload(item)
+                for key, item in value.items()
+            }
+        if isinstance(value, list):
+            return [_redact_payload(item) for item in value]
+        return value
+
     def _stringify_payload(value):
         if value in (None, "", {}, []):
             return ""
+        value = _redact_payload(value)
         if isinstance(value, (dict, list)):
             try:
                 return json.dumps(value, ensure_ascii=False, default=str)
@@ -1325,7 +1388,7 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         "json": _stringify_payload(request_data.get("json")),
     }
 
-    details_text = doc.get("details")
+    details_text = _redact_payload(doc.get("details"))
     if isinstance(details_text, (dict, list)):
         try:
             details_text = json.dumps(details_text, ensure_ascii=False, default=str)
@@ -1334,11 +1397,26 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
     elif details_text is not None:
         details_text = str(details_text)
 
+    event = doc.get("event") or doc.get("message") or legacy_action or ""
+    event_lc = str(event).lower()
+    if any(term in event_lc for term in ("login", "auth", "permission", "token", "clearance", "mfa", "security")):
+        category = "security"
+    elif method in ("POST", "PUT", "PATCH", "DELETE"):
+        category = "change"
+    elif method == "GET":
+        category = "read"
+    else:
+        category = "system"
+
+    entity_doc = doc.get("entity") if isinstance(doc.get("entity"), dict) else {}
+
     return {
         "id": str(doc.get("_id")),
         "timestamp": timestamp_display,
         "timestamp_iso": timestamp_iso,
         "relative_minutes": rel_minutes,
+        "event": str(event),
+        "category": category,
         "action": {
             "method": method,
             "path": path,
@@ -1349,6 +1427,10 @@ def _format_log_entry(doc: Dict[str, Any]) -> Dict[str, Any]:
         "session_id": session_id,
         "details": details_text,
         "request_meta": request_meta,
+        "entity": {
+            "type": doc.get("entity_type") or entity_doc.get("type"),
+            "id": doc.get("entity_id") or doc.get("demo_id") or doc.get("related_id") or entity_doc.get("id"),
+        },
     }
 
 def get_admin_activity(page=1, per_page=20, query=None):
@@ -1788,13 +1870,15 @@ def api_logs():
         A dictionary containing the logs and pagination info
     """
     try:
-        page = int(request.args.get("page", 1))
-        per_page = int(request.args.get("per_page", 20))
+        page = max(int(request.args.get("page", 1)), 1)
+        per_page = min(max(int(request.args.get("per_page", 20)), 1), 100)
         filters = {
             "user": request.args.get("user"),
             "start_date": request.args.get("start_date"),
             "end_date": request.args.get("end_date"),
             "action_type": request.args.get("action_type"),
+            "category": request.args.get("category"),
+            "q": request.args.get("q"),
         }
         query = _build_logs_query(filters)
         logs = get_admin_activity(page, per_page, query)

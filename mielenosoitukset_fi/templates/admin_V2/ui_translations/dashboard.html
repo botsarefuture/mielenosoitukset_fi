@@ -4,15 +4,16 @@
 
 {% block main_content %}
 <div class="container py-4">
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+  <header class="admin-page-hero mb-4">
     <div>
+      <p class="admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
       <h1 class="h2 mb-1">{{ _('Käyttöliittymäkäännökset') }}</h1>
       <p class="text-muted mb-0">{{ _('Hallitse sivuston ydinkomponenttien gettext-käännöksiä ja tarkista ehdotukset ennen hyväksyntää.') }}</p>
     </div>
     {% if ui_translation_sync_enabled and can_review_ui_translations %}
-    <a class="btn btn-outline-primary" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Avaa GitHub-synkit') }}</a>
+    <a class="btn btn-outline-primary admin-page-hero__action" href="{{ url_for('admin.ui_translation_sync_dashboard') }}">{{ _('Avaa GitHub-synkit') }}</a>
     {% endif %}
-  </div>
+  </header>
 
   <div class="row g-3 mb-4">
     {% for locale in locales %}

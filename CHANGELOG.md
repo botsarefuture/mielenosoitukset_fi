@@ -10,6 +10,8 @@
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
 
 ### Changed
+* The administration UI now has a documented, enforceable design standard: every full admin page uses the shared shell, light/dark theme selection is applied before first paint, legacy color tokens resolve through one theme-aware palette, collection views share consistent cards/lists/tables, and campaign and confirmation workflows no longer use separate public or standalone layouts.
+* Admin multi-select tables now use unmistakably square checkboxes, a persistent selection explanation/count, accessible row state, and a full-row selected treatment; the demonstration list's select-all behavior ignores disabled and filtered-out rows.
 * MongoDB connection logs no longer expose credentials embedded in the connection URI.
 * Usernames and email addresses are now normalized to lowercase and protected by case-insensitive unique database indexes, preventing accounts such as `emilia` and `Emilia` or duplicate mixed-case emails.
 * `Admin` and `@Admin` identities are now reserved for internal use; affected accounts can be forced through a unique username and display-name change before continuing to use the service, with an official account notification.
@@ -45,6 +47,7 @@
 * Translators who sign up for the first time now receive a welcome email explaining the demonstration and UI translation work and linking to the translation workspace.
 
 ### Fixed
+* Fixed light-mode admin text resolving against the operating-system color scheme, Bootstrap modals being overridden by a legacy custom `.modal` implementation, hardcoded modal text colors, and legacy light-only surfaces leaking into dashboard, case, list, table, and form views.
 
 * City-scoped administrators can now use all demo permissions granted to them (edit, command center, edit history, editor management, freeze/unfreeze, screenshot, suggestion review, and cancellation) but only for demonstrations in their assigned cities; the permission gates previously blocked them before the city-scope check could run.
 * City-scoped administrators can no longer edit or apply suggestion changes to verified organizations; they can still create new organizations and edit unverified ones. Forged edit, membership, invite, and access-level requests against verified organizations are now blocked server-side.

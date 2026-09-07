@@ -1,19 +1,18 @@
-{% extends 'base.html' %}
+{% extends 'admin_base.html' %}
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_user_control.css') }}">
-
-<div class="confirm-delete-user">
-    <h2>{{ _('Haluatko varmasti poistaa tämän käyttäjän?') }}</h2>
+{% block main_content %}
+<section class="admin-confirm admin-confirm--danger" aria-labelledby="confirm-title">
+    <span class="admin-confirm__icon"><i class="fas fa-user-xmark" aria-hidden="true"></i></span>
+    <p class="admin-confirm__eyebrow">{{ _('Käyttäjähallinta') }}</p>
+    <h1 id="confirm-title">{{ _('Haluatko varmasti poistaa tämän käyttäjän?') }}</h1>
     <p><strong>{{ _('Käyttäjänimi:') }}</strong> {{ user['username'] }}</p>
     <p><strong>{{ _('Sähköpostiosoite:') }}</strong> {{ user['email'] }}</p>
     <p><strong>{{ _('Rooli:') }}</strong> {{ user['role'] }}</p>
 
-    <form method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}">
+    <form class="admin-confirm__actions" method="POST" action="{{ url_for('admin_user.delete_user', user_id=user['_id']) }}">
         <input type="hidden" name="confirm_delete" value="yes">
-        <button type="submit" class="button delete-button">{{ _('Kyllä, poista käyttäjä') }}</button>
-        <a href="{{ url_for('admin_user.user_control') }}" class="button cancel-button">{{ _('Peruuta poistaminen') }}</a>
+        <button type="submit" class="btn btn-danger">{{ _('Kyllä, poista käyttäjä') }}</button>
+        <a href="{{ url_for('admin_user.user_control') }}" class="btn btn-secondary">{{ _('Peruuta poistaminen') }}</a>
     </form>
-</div>
-
+</section>
 {% endblock %}

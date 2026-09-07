@@ -613,18 +613,15 @@
 
   <!-- Demonstrations table -->
   {% if demonstrations %}
-  {% set column_count = 6
-      + (1 if current_user.has_permission("EDIT_DEMO") else 0)
+  {% set column_count = 7
       + (1 if show_cancelled else 0) %}
   <div class="table-container admin-workspace-table">
     <table>
       <thead>
         <tr>
-          {% if current_user.has_permission("EDIT_DEMO") %}
           <th class="select-col">
             <input type="checkbox" id="select-all-demos" aria-label="{{ _('Valitse kaikki mielenosoitukset') }}">
           </th>
-          {% endif %}
           <th>{{ _('Otsikko') }}</th>
           <th>{{ _('Kaupunki') }}</th>
           <th>{{ _('Päivämäärä') }}</th>
@@ -653,11 +650,9 @@
 {% for demo in pending %}
 <tr id="demo-{{ demo._id }}" class="needs-attention" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
-    {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
     <td class="select-col">
-        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
+        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}"{{ '' if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
     </td>
-    {% endif %}
 
     <td>{{ demo.title }}</td>
     <td>{{ demo.city }}</td>
@@ -813,11 +808,9 @@
 {% for demo in approved %}
 <tr id="demo-{{ demo._id }}" data-search-row="true" data-search-text="{{ (demo.title ~ ' ' ~ demo.city ~ ' ' ~ demo.date ~ ' ' ~ (demo.address or '') ~ ' ' ~ ((demo.tags or [])|join(' ')))|lower }}">
 
-    {% if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) %}
     <td class="select-col">
-        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}">
+        <input type="checkbox" class="demo-select form-check-input" value="{{ demo._id }}" data-demo-id="{{ demo._id }}" aria-label="{{ _('Valitse mielenosoitus') }}"{{ '' if 'EDIT_DEMO' in demo_actions.get(demo._id|string, []) else ' disabled' }}>
     </td>
-    {% endif %}
 
     <td>{{ demo.title }}</td>
     <td>{{ demo.city }}</td>

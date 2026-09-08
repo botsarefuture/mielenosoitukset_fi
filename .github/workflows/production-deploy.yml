@@ -22,7 +22,7 @@ jobs:
     env:
       PRODUCTION_SSH_HOST: ${{ vars.PRODUCTION_SSH_HOST }}
       PRODUCTION_SSH_USER: ${{ vars.PRODUCTION_SSH_USER }}
-      SSH_OPTIONS: -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=5
+      SSH_OPTIONS: -o BatchMode=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=5
 
     steps:
       - name: Validate deployment configuration

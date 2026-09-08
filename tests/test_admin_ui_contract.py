@@ -76,3 +76,26 @@ def test_user_role_forms_use_shared_admin_contract():
     assert "admin-form-section" in edit
     assert "admin-sticky-actions" in edit
     assert "modal fade admin-modal" in modals
+
+
+def test_demo_collection_uses_server_side_filter_and_pagination_contract():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html"
+    ).read_text(encoding="utf-8")
+    route = Path(
+        "mielenosoitukset_fi/admin/admin_demo_bp.py"
+    ).read_text(encoding="utf-8")
+
+    for contract in (
+        "admin-filter-bar",
+        "admin-advanced-filters",
+        "admin-active-filters",
+        "admin-result-summary",
+        "admin-pagination",
+        "admin-page-size",
+    ):
+        assert contract in template
+    assert "filterRows" not in template
+    assert '"priority": {"_sort_priority": 1, "date": 1, "_id": 1}' in route
+    assert '"date_desc": {"date": -1, "_id": -1}' in route
+    assert "filtered_count = mongo.demonstrations.count_documents(filter_query)" in route

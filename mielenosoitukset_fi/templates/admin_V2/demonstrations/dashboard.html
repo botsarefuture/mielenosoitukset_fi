@@ -391,12 +391,9 @@
 
 
 
-{% set visible_pending = demonstrations|selectattr('approved', 'equalto', False)|list %}
-{% set visible_approved = demonstrations|selectattr('approved', 'equalto', True)|list %}
-{% set visible_recurring = demonstrations|selectattr('recurs')|list %}
 <section class="dashboard-container admin-workspace demo-management-page">
   <header class="admin-workspace-hero admin-page-hero">
-    <div>
+    <div class="admin-page-hero__content">
       <p class="admin-workspace-kicker admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
       <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
       <p>{{ _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.') }}</p>
@@ -433,170 +430,90 @@
   <section class="admin-workspace-summary" aria-label="{{ _('Näkyvien mielenosoitusten yhteenveto') }}">
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fas fa-bullhorn" aria-hidden="true"></i></span>
-      <div><span>{{ _('Näkyvissä') }}</span><strong>{{ demonstrations|length }}</strong></div>
+      <div><span>{{ _('Osumia') }}</span><strong>{{ filtered_count }}</strong></div>
     </article>
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></span>
-      <div><span>{{ _('Odottaa hyväksyntää') }}</span><strong>{{ visible_pending|length }}</strong></div>
+      <div><span>{{ _('Odottaa hyväksyntää') }}</span><strong>{{ pending_count }}</strong></div>
     </article>
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
-      <div><span>{{ _('Hyväksytyt') }}</span><strong>{{ visible_approved|length }}</strong></div>
+      <div><span>{{ _('Hyväksytyt') }}</span><strong>{{ approved_count }}</strong></div>
     </article>
     <article class="admin-workspace-summary-card">
       <span class="admin-workspace-summary-icon"><i class="fas fa-rotate" aria-hidden="true"></i></span>
-      <div><span>{{ _('Toistuvat') }}</span><strong>{{ visible_recurring|length }}</strong></div>
+      <div><span>{{ _('Toistuvat') }}</span><strong>{{ recurring_count }}</strong></div>
     </article>
   </section>
 
   <div class="dashboard-panel admin-workspace-toolbar">
-    <div class="search-and-filter">
-      <!-- Client-side search bar -->
-      <div class="search-bar">
-        <div class="search-icon">
-          <i class="fa-solid fa-magnifying-glass"></i>
+    <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="admin-filter-bar" id="dashboard-filter-form">
+      <input type="hidden" name="page" value="1">
+      <input type="hidden" name="per_page" value="{{ per_page }}">
+      <div class="admin-filter-bar__primary">
+        <div class="filter-field admin-field">
+          <label for="search">{{ _('Haku') }}</label>
+          <input type="search" name="search" id="search" class="filter-input" placeholder="{{ _('Nimi, paikka, osoite tai tunniste') }}" value="{{ search_query }}">
         </div>
-        <input type="search" id="search" class="search-input" placeholder="{{ _('Hae mielenosoituksia...') }}"
-          aria-label="{{ _('Hae mielenosoituksia') }}" value="{{ search_query }}">
-        <button type="button" id="search-btn" class="search-button">
-          <i class="fa-solid fa-arrow-right"></i><span>{{ _('Hae') }}</span>
-        </button>
-      </div>
-
-      <!-- Server-side filters -->
-      <form method="GET" action="{{ url_for('admin_demo.demo_control') }}" class="filter-form" id="dashboard-filter-form">
-        <input type="hidden" name="search" id="filter-search-hidden" value="{{ search_query }}">
-        <div class="filter-field">
+        <div class="filter-field admin-field">
+          <label for="city">{{ _('Kaupunki') }}</label>
+          <select name="city" id="city" class="filter-select">
+            <option value="">{{ _('Kaikki kaupungit') }}</option>
+            {% for city in city_options %}<option value="{{ city_name_to_key[city] }}" {% if city_filter == city_name_to_key[city] %}selected{% endif %}>{{ city }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="filter-field admin-field">
           <label for="year">{{ _('Vuosi') }}</label>
           <input type="text" inputmode="numeric" pattern="[0-9]{4}" name="year" id="year" class="filter-input"
             placeholder="2026" value="{{ year_filter }}">
         </div>
-
-        <div class="filter-field">
-          <label for="tag">{{ _('Sisältää tunnisteen') }}</label>
-          <input type="text" name="tag" id="tag" class="filter-input" placeholder="#pride" value="{{ tag_filter }}">
-        </div>
-
-        <div class="filter-field">
-          <label for="missing_tag">{{ _('Puuttuva tunniste') }}</label>
-          <input type="text" name="missing_tag" id="missing_tag" class="filter-input" placeholder="#pride" value="{{ missing_tag_filter }}">
-        </div>
-
-        <div class="filter-field">
-          <label for="approved">{{ _('Näytä vain hyväksytyt mielenosoitukset:') }}</label>
-          <select name="approved" id="approved" class="filter-select" onchange="this.form.submit()">
-            <option value="true" {% if approved_status %}selected{% endif %}>{{ _('Kyllä') }}</option>
-            <option value="false" {% if not approved_status %}selected{% endif %}>{{ _('Ei') }}</option>
+        <div class="filter-field admin-field">
+          <label for="approved">{{ _('Hyväksyntätila') }}</label>
+          <select name="approved" id="approved" class="filter-select">
+            <option value="all" {% if approval_filter == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
+            <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>{{ _('Odottaa hyväksyntää') }}</option>
+            <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>{{ _('Hyväksytty') }}</option>
           </select>
         </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter" aria-hidden="true"></i>{{ _('Suodata') }}</button>
+      </div>
 
-        <div class="filter-field">
-          <label for="show_past">{{ _('Näytä menneet mielenosoitukset:') }}</label>
-          <select name="show_past" id="show_past" class="filter-select" onchange="this.form.submit()">
+      <details class="admin-advanced-filters" {% if tag_filter or missing_tag_filter or show_hidden or show_cancelled or recurring_filter != 'all' or show_past_filter != 'all' or sort_filter != 'priority' %}open{% endif %}>
+        <summary>{{ _('Lisäsuodattimet') }}</summary>
+        <div class="admin-advanced-filters__grid">
+        <div class="filter-field admin-field">
+          <label for="show_past">{{ _('Menneet mielenosoitukset') }}</label>
+          <select name="show_past" id="show_past" class="filter-select">
             <option value="all" {% if show_past_filter=='all' %}selected{% endif %}>{{ _('Kaikki') }}</option>
-            <option value="false" {% if show_past_filter=='false' %}selected{% endif %}>{{ _('Ei') }}</option>
-            <option value="true" {% if show_past_filter=='true' %}selected{% endif %}>{{ _('Kyllä') }}</option>
+            <option value="false" {% if show_past_filter=='false' %}selected{% endif %}>{{ _('Piilota menneet') }}</option>
+            <option value="true" {% if show_past_filter=='true' %}selected{% endif %}>{{ _('Sisällytä menneet') }}</option>
           </select>
+          <small>{{ _('Rajaa, sisällytetäänkö jo päättyneet tapahtumat tuloksiin.') }}</small>
         </div>
-
-        <div class="filter-field">
-          <label for="show_hidden">{{ _('Näytä piilotetut mielenosoitukset:') }}</label>
-          <select name="show_hidden" id="show_hidden" class="filter-select" onchange="this.form.submit()">
+        <div class="filter-field admin-field"><label for="show_hidden">{{ _('Piilotetut') }}</label>
+          <select name="show_hidden" id="show_hidden" class="filter-select">
             <option value="false" {% if not show_hidden %}selected{% endif %}>{{ _('Ei') }}</option>
             <option value="true" {% if show_hidden %}selected{% endif %}>{{ _('Kyllä') }}</option>
           </select>
         </div>
-
-        <div class="filter-field">
-          <label for="show_cancelled">{{ _('Näytä perutut mielenosoitukset:') }}</label>
-          <select name="show_cancelled" id="show_cancelled" class="filter-select" onchange="this.form.submit()">
+        <div class="filter-field admin-field"><label for="show_cancelled">{{ _('Perutut') }}</label>
+          <select name="show_cancelled" id="show_cancelled" class="filter-select">
             <option value="false" {% if not show_cancelled %}selected{% endif %}>{{ _('Ei') }}</option>
             <option value="true" {% if show_cancelled %}selected{% endif %}>{{ _('Kyllä') }}</option>
           </select>
         </div>
+        <div class="filter-field admin-field"><label for="recurring">{{ _('Toistuvuus') }}</label><select name="recurring" id="recurring" class="filter-select"><option value="all" {% if recurring_filter == 'all' %}selected{% endif %}>{{ _('Kaikki') }}</option><option value="true" {% if recurring_filter == 'true' %}selected{% endif %}>{{ _('Vain toistuvat') }}</option><option value="false" {% if recurring_filter == 'false' %}selected{% endif %}>{{ _('Vain yksittäiset') }}</option></select></div>
+        <div class="filter-field admin-field"><label for="sort">{{ _('Järjestys') }}</label><select name="sort" id="sort" class="filter-select"><option value="priority" {% if sort_filter == 'priority' %}selected{% endif %}>{{ _('Hyväksyntätila ja päivämäärä') }}</option><option value="date_asc" {% if sort_filter == 'date_asc' %}selected{% endif %}>{{ _('Päivämäärä, vanhin ensin') }}</option><option value="date_desc" {% if sort_filter == 'date_desc' %}selected{% endif %}>{{ _('Päivämäärä, uusin ensin') }}</option><option value="title_asc" {% if sort_filter == 'title_asc' %}selected{% endif %}>{{ _('Otsikko A–Ö') }}</option></select></div>
+        <div class="filter-field admin-field"><label for="tag">{{ _('Sisältää tunnisteen') }}</label><input type="text" name="tag" id="tag" class="filter-input" placeholder="#pride" value="{{ tag_filter }}"><small>{{ _('Kaikkien annettujen tunnisteiden tulee löytyä.') }}</small></div>
+        <div class="filter-field admin-field"><label for="missing_tag">{{ _('Puuttuva tunniste') }}</label><input type="text" name="missing_tag" id="missing_tag" class="filter-input" placeholder="#pride" value="{{ missing_tag_filter }}"><small>{{ _('Sulkee pois annetuilla tunnisteilla merkityt rivit.') }}</small></div>
+        </div>
+      </details>
+    </form>
 
-        <button type="submit" class="filter-apply-button">{{ _('Suodata') }}</button>
-      </form>
+    <div class="admin-result-summary" aria-live="polite">
+      {% if active_filters %}<strong>{{ _('%(count)s osumaa', count=filtered_count) }}</strong> · {{ _('yhteensä %(count)s sinulle näkyvää mielenosoitusta', count=total_count) }}{% else %}{{ _('Näytetään %(start)s–%(end)s / %(count)s mielenosoituksesta', start=range_start, end=range_end, count=filtered_count) }}{% endif %}
     </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const searchInput = document.getElementById('search');
-        const searchButton = document.getElementById('search-btn');
-        const filterForm = document.getElementById('dashboard-filter-form');
-        const filterSearchHidden = document.getElementById('filter-search-hidden');
-        if (!searchInput || !searchButton) return;
-
-        const dataRows = Array.from(document.querySelectorAll('tr[data-search-row="true"]'));
-        const sectionHeaders = Array.from(document.querySelectorAll('tr.section-header'));
-
-        const updateSectionHeaders = () => {
-          sectionHeaders.forEach(header => {
-            let hasVisible = false;
-            let next = header.nextElementSibling;
-            while (next && !next.classList.contains('section-header')) {
-              if (!next.classList.contains('d-none')) {
-                hasVisible = true;
-                break;
-              }
-              next = next.nextElementSibling;
-            }
-            header.classList.toggle('d-none', !hasVisible);
-          });
-        };
-
-        const syncHiddenSearch = () => {
-          if (filterSearchHidden) {
-            filterSearchHidden.value = searchInput.value || '';
-          }
-        };
-
-        const applyLocalSearch = term => {
-          const normalized = term.trim().toLowerCase();
-          dataRows.forEach(row => {
-            const haystack = row.getAttribute('data-search-text') || row.textContent.toLowerCase();
-            const match = !normalized || haystack.includes(normalized);
-            row.classList.toggle('d-none', !match);
-          });
-          updateSectionHeaders();
-        };
-
-        const commitSearch = () => {
-          const normalized = (searchInput.value || '').trim();
-          const url = new URL(window.location.href);
-          if (normalized) {
-            url.searchParams.set('search', normalized);
-          } else {
-            url.searchParams.delete('search');
-          }
-          url.searchParams.delete('page');
-          window.location.href = url.toString();
-        };
-
-        searchInput.addEventListener('input', () => {
-          applyLocalSearch(searchInput.value || '');
-          syncHiddenSearch();
-        });
-
-        searchInput.addEventListener('keydown', event => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            commitSearch();
-          }
-        });
-
-        searchButton.addEventListener('click', () => {
-          commitSearch();
-        });
-
-        if (filterForm) {
-          filterForm.addEventListener('submit', () => {
-            syncHiddenSearch();
-          });
-        }
-
-        applyLocalSearch(searchInput.value || '');
-      });
-    </script>
+    {% if active_filters %}<div class="admin-active-filters" aria-label="{{ _('Aktiiviset suodattimet') }}">{% for filter in active_filters %}<a class="admin-filter-chip" href="{{ filter.remove_url }}"><span>{{ filter.label }}: {{ filter.value }}</span><i class="fas fa-xmark" aria-hidden="true"></i></a>{% endfor %}<a class="admin-clear-filters" href="{{ clear_filters_url }}">{{ _('Tyhjennä suodattimet') }}</a></div>{% endif %}
     {% if current_user.has_permission("EDIT_DEMO") %}
     <div class="bulk-action-bar mt-3">
       <button type="button" id="bulk-cancel-btn" class="btn btn-danger" disabled>
@@ -943,14 +860,17 @@
 </tbody>
 
     </table>
-    <nav aria-label="Stats pagination">
-      <ul class="pagination justify-content-center">
+    <div class="admin-pagination">
+    <label class="admin-page-size" for="page-size">{{ _('Rivejä sivulla') }}
+      <select id="page-size" aria-label="{{ _('Rivejä sivulla') }}">{% for size in [20, 50, 100] %}<option value="{{ size }}" {% if per_page == size %}selected{% endif %}>{{ size }}</option>{% endfor %}</select>
+    </label>
+    <nav aria-label="{{ _('Mielenosoitusten sivutus') }}">
+      <ul class="pagination">
 
         {# Previous button #}
         {% if prev_page %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ prev_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}&year={{ year_filter|urlencode }}&tag={{ tag_filter|urlencode }}&missing_tag={{ missing_tag_filter|urlencode }}&approved={{ 'true' if approved_status else 'false' }}&show_past={{ show_past_filter }}&show_hidden={{ 'true' if show_hidden else 'false' }}&show_cancelled={{ 'true' if show_cancelled else 'false' }}"
-            aria-label="Previous">
+          <a class="page-link" href="{{ prev_url }}" aria-label="{{ _('Edellinen sivu') }}">
             <i class="fas fa-angle-left"></i> {{ _('Edellinen') }}
           </a>
         </li>
@@ -968,8 +888,7 @@
         {# Next button #}
         {% if next_page %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ next_page }}&per_page={{ per_page }}&search={{ search_query|urlencode }}&year={{ year_filter|urlencode }}&tag={{ tag_filter|urlencode }}&missing_tag={{ missing_tag_filter|urlencode }}&approved={{ 'true' if approved_status else 'false' }}&show_past={{ show_past_filter }}&show_hidden={{ 'true' if show_hidden else 'false' }}&show_cancelled={{ 'true' if show_cancelled else 'false' }}"
-            aria-label="Next">
+          <a class="page-link" href="{{ next_url }}" aria-label="{{ _('Seuraava sivu') }}">
             {{ _('Seuraava') }} <i class="fas fa-angle-right"></i>
           </a>
         </li>
@@ -981,6 +900,7 @@
 
       </ul>
     </nav>
+    </div>
 
 
   </div>
@@ -1039,20 +959,11 @@
 
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const searchInput = document.getElementById('search');
-      const searchBtn = document.getElementById('search-btn');
-      const rows = document.querySelectorAll('.table-container tbody tr');
-
-      const filterRows = () => {
-        const term = searchInput.value.trim().toLowerCase();
-        rows.forEach(row => {
-          row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
-        });
-      };
-
-      searchInput.addEventListener('input', filterRows);
-      searchBtn.addEventListener('click', filterRows);
+    document.getElementById('page-size')?.addEventListener('change', (event) => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('per_page', event.target.value);
+      url.searchParams.set('page', '1');
+      window.location.assign(url.toString());
     });
   </script>
 

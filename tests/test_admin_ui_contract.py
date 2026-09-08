@@ -99,3 +99,19 @@ def test_demo_collection_uses_server_side_filter_and_pagination_contract():
     assert '"priority": {"_sort_priority": 1, "date": 1, "_id": 1}' in route
     assert '"date_desc": {"date": -1, "_id": -1}' in route
     assert "filtered_count = mongo.demonstrations.count_documents(filter_query)" in route
+
+
+def test_secondary_editors_use_shared_form_primitives():
+    merge = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/merge.html"
+    ).read_text(encoding="utf-8")
+    ui_editor = Path(
+        "mielenosoitukset_fi/templates/admin_V2/ui_translations/editor.html"
+    ).read_text(encoding="utf-8")
+
+    assert "{% block styles %}" not in merge
+    assert "admin-form admin-merge-form" in merge
+    assert "admin-sticky-actions" in merge
+    assert "admin-code-block" in ui_editor
+    assert "admin-panel-inset" in ui_editor
+    assert 'class="admin-form"' in ui_editor

@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
 * Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.
 * Anonymous demonstration edit links now render the shared admin shell safely instead of failing when navigation checks city-scoped administration grants.
 * The demonstration edit-link page (`/admin/demo/edit_demo_with_token/<token>`) no longer returns HTTP 500: the route now passes the same translation context (`translation_locales`, `translation_language_names`, `default_demo_language`) as the normal demo editor, so submitters who edit a demonstration via an emailed token link see the form instead of an error.

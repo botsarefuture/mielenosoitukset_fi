@@ -200,3 +200,25 @@ def test_secondary_editors_use_shared_form_primitives():
     assert "admin-code-block" in ui_editor
     assert "admin-panel-inset" in ui_editor
     assert 'class="admin-form"' in ui_editor
+
+
+def test_submitter_modal_keeps_stable_dom_across_reopens():
+    dashboard = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html"
+    ).read_text(encoding="utf-8")
+    handler = dashboard.split("window.showSubmitterInfoModal = async", 1)[1].split(
+        "// Initial button text update", 1
+    )[0]
+
+    assert 'class="modal fade admin-modal" id="submitterInfoModal"' in dashboard
+    for element_id in (
+        "submitterInfoLoading",
+        "submitterInfoResult",
+        "noSubmitterInfo",
+        "submitterInfoError",
+    ):
+        assert f'id="{element_id}"' in dashboard
+    assert "bootstrap.Modal.getOrCreateInstance(submitterModalEl)" in dashboard
+    assert "textContent =" in handler
+    assert "innerHTML" not in handler
+    assert "hidden.bs.modal" in handler

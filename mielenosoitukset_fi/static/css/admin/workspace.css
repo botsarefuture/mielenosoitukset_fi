@@ -12,6 +12,9 @@ body {
   --admin-workspace-blue: light-dark(#0033a0, #8bb1ff);
   --admin-workspace-blue-dark: light-dark(#00267a, #b9ceff);
   --admin-workspace-blue-soft: light-dark(#edf4ff, #17233b);
+  --admin-workspace-primary-bg: light-dark(#0033a0, #315ea8);
+  --admin-workspace-primary-hover: light-dark(#00267a, #416fbd);
+  --admin-workspace-on-primary: #ffffff;
   --admin-workspace-orange: #ff6600;
   --admin-workspace-orange-soft: light-dark(#fff2e8, #3a2418);
   --admin-workspace-surface: light-dark(#ffffff, #20252d);
@@ -119,6 +122,151 @@ body {
   gap: .6rem;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.admin-filter-bar {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-filter-bar__primary,
+.admin-advanced-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: .8rem;
+  align-items: end;
+}
+
+.admin-filter-bar .admin-field {
+  gap: .35rem;
+  margin: 0;
+}
+
+.admin-filter-bar :is(label, summary) {
+  color: var(--admin-workspace-text);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.admin-filter-bar :is(input, select) {
+  width: 100%;
+  min-height: 2.7rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-filter-bar :is(input, select):focus {
+  border-color: var(--admin-workspace-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
+}
+
+.admin-filter-bar .btn-primary {
+  min-height: 2.7rem;
+  border-color: var(--admin-workspace-primary-bg);
+  color: var(--admin-workspace-on-primary);
+  background: var(--admin-workspace-primary-bg);
+}
+
+.admin-filter-bar .btn-primary:hover {
+  border-color: var(--admin-workspace-primary-hover);
+  color: var(--admin-workspace-on-primary);
+  background: var(--admin-workspace-primary-hover);
+}
+
+.admin-advanced-filters {
+  border-top: 1px solid var(--admin-workspace-border);
+  padding-top: .8rem;
+}
+
+.admin-advanced-filters summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.admin-advanced-filters__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: .8rem;
+}
+
+.admin-result-summary {
+  margin-top: 1rem;
+  color: var(--admin-workspace-muted);
+  font-size: .86rem;
+}
+
+.admin-result-summary strong { color: var(--admin-workspace-text); }
+
+.admin-active-filters {
+  display: flex;
+  gap: .45rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: .7rem;
+}
+
+.admin-filter-chip,
+.admin-clear-filters {
+  display: inline-flex;
+  gap: .4rem;
+  align-items: center;
+  min-height: 2rem;
+  padding: .35rem .6rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 999px;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .75rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-filter-chip:hover,
+.admin-clear-filters:hover {
+  border-color: var(--admin-workspace-blue);
+  color: var(--admin-workspace-blue-dark);
+}
+
+.admin-pagination {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 1rem;
+  border-top: 1px solid var(--admin-workspace-border);
+}
+
+.admin-pagination .pagination { margin: 0; }
+
+.admin-page-size {
+  display: inline-flex;
+  gap: .55rem;
+  align-items: center;
+  color: var(--admin-workspace-muted);
+  font-size: .78rem;
+  font-weight: 750;
+}
+
+.admin-page-size select {
+  min-height: 2.35rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .6rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
+@media (max-width: 960px) {
+  .admin-filter-bar__primary,
+  .admin-advanced-filters__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+  .admin-filter-bar__primary,
+  .admin-advanced-filters__grid { grid-template-columns: 1fr; }
+  .admin-pagination { align-items: stretch; flex-direction: column; }
 }
 
 .admin-panel,

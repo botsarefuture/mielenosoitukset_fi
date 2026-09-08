@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.
 * Anonymous demonstration edit links now render the shared admin shell safely instead of failing when navigation checks city-scoped administration grants.
 * The demonstration edit-link page (`/admin/demo/edit_demo_with_token/<token>`) no longer returns HTTP 500: the route now passes the same translation context (`translation_locales`, `translation_language_names`, `default_demo_language`) as the normal demo editor, so submitters who edit a demonstration via an emailed token link see the form instead of an error.
 * The admin demonstration list page (`/admin/demo/`) no longer crashes with a server error after the pagination refactor: `enabled_city_names` and `CITY_NAME_TO_KEY` are now imported so the city filter (and the rest of the page) renders instead of failing.

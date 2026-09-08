@@ -1346,6 +1346,43 @@ main.flex-grow-1 {
   background: var(--admin-workspace-surface-muted);
 }
 
+.jobs-container :is(.history-header, .history-body, .history-details, .history-detail-item, .history-message, .error-details, .permission-notice) {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.jobs-container :is(.history-meta, .history-count) {
+  color: var(--admin-workspace-muted);
+}
+
+.jobs-container .permission-notice {
+  margin-top: .75rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .8rem;
+}
+
+.jobs-container .permission-notice i {
+  color: var(--admin-workspace-blue);
+}
+
+.jobs-container .btn-modern {
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  box-shadow: none;
+}
+
+.jobs-container .btn-logs {
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+}
+
+.jobs-container :is(.filter-input, .filter-select, .schedule-form input, .schedule-form select) {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
 .case-shell .stat-card.emphasis,
 .case-shell .stat-filter.active {
   border-color: var(--admin-workspace-blue);

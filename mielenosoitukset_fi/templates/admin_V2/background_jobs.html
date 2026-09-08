@@ -2,13 +2,13 @@
 
 {% block styles %}
 <style>
-  :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    --danger-gradient: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
-    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --card-shadow: 0 10px 40px rgba(0,0,0,0.08);
-    --card-shadow-hover: 0 20px 60px rgba(0,0,0,0.15);
+  .jobs-container {
+    --primary-gradient: linear-gradient(135deg, #0033a0 0%, #164fc2 100%);
+    --success-gradient: linear-gradient(135deg, #087f5b 0%, #16a36f 100%);
+    --danger-gradient: linear-gradient(135deg, #b42318 0%, #dc4c3f 100%);
+    --warning-gradient: linear-gradient(135deg, #a65b00 0%, #d97706 100%);
+    --card-shadow: var(--admin-workspace-shadow);
+    --card-shadow-hover: var(--admin-workspace-shadow);
   }
 
   .jobs-container {
@@ -772,8 +772,8 @@
                   {{ _('Aikataulua voi muuttaa vain käyttöoikeuden omaava käyttäjä.') }}
                 </div>
               {% else %}
-                <div class="permission-notice" style="margin-top: 0.75rem; background: linear-gradient(135deg, #eceff1 0%, #cfd8dc 100%); border-color: #78909c; color: #455a64;">
-                  <i class="fa-solid fa-info-circle" style="color: #78909c;"></i>
+                <div class="permission-notice">
+                  <i class="fa-solid fa-info-circle"></i>
                   {{ _('Aikataulua ei voi muuttaa käyttöliittymästä.') }}
                 </div>
               {% endif %}

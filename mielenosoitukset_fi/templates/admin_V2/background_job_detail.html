@@ -15,7 +15,9 @@
     cursor: pointer;
   }
   .metadata-block {
-    background: #f8f9fa;
+    border: 1px solid var(--admin-workspace-border);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface-muted);
     border-radius: 8px;
     padding: 0.75rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -25,16 +27,14 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="admin-page">
+  <header class="admin-page-header">
     <div>
-      <a href="{{ url_for('admin.background_jobs') }}" class="text-decoration-none">
-        <i class="fa-solid fa-arrow-left-long me-2"></i>{{ _('Takaisin listaukseen') }}
-      </a>
-      <h2 class="mt-2 mb-0">{{ job.name }}</h2>
-      <p class="text-muted mb-0">{{ job.description }}</p>
+      <p class="admin-page-header__kicker">{{ _('Taustatyöt') }}</p>
+      <h1>{{ job.name }}</h1>
+      <p>{{ job.description }}</p>
     </div>
-    <div class="text-end">
+    <div class="admin-page-header__actions">
       <span class="badge {{ 'bg-success' if job.enabled else 'bg-secondary' }}">
         {{ _('Käynnissä') if job.enabled else _('Pois käytöstä') }}
       </span>
@@ -43,8 +43,11 @@
       {% else %}
         <span class="badge bg-outline-secondary ms-1">{{ _('Manuaaliajo estetty') }}</span>
       {% endif %}
+      <a href="{{ url_for('admin.background_jobs') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left-long me-2"></i>{{ _('Takaisin listaukseen') }}
+      </a>
     </div>
-  </div>
+  </header>
 
   <div class="row g-3 mb-4">
     <div class="col-lg-4">

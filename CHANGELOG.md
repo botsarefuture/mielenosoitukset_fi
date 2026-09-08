@@ -5,14 +5,20 @@
 ## UNRELEASED
 
 ### Fixed
+* Anonymous demonstration edit links now render the shared admin shell safely instead of failing when navigation checks city-scoped administration grants.
+* The demonstration edit-link page (`/admin/demo/edit_demo_with_token/<token>`) no longer returns HTTP 500: the route now passes the same translation context (`translation_locales`, `translation_language_names`, `default_demo_language`) as the normal demo editor, so submitters who edit a demonstration via an emailed token link see the form instead of an error.
+* The admin demonstration list page (`/admin/demo/`) no longer crashes with a server error after the pagination refactor: `enabled_city_names` and `CITY_NAME_TO_KEY` are now imported so the city filter (and the rest of the page) renders instead of failing.
 * The demonstration submission page's viewport-wide hero now stays horizontally centered inside its narrower form container instead of appearing shifted to the right.
 * City-scoped administrators can now see the accept, edit, view, command-center, and screenshot/freeze actions for demonstrations in their managed cities on the admin demonstration list; action visibility mirrors the actual per-city permission grants instead of being hidden by global permission checks.
 * City-scoped administrators now get an enabled "Uusi mielenosoitus" button on the admin demonstration list when they hold a `CREATE_DEMO` grant for any managed city (previously the button was globally gated, so city admins always saw the disabled variant and could not create new demonstrations from the list).
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
+* Rewrote the admin manual (/admin/manual): replaced placeholder "under construction" sections with accurate documentation of the admin panel's actual features, added a consistent site-wide hero, fixed the sidebar active state (including sub-navigation for users), and added pages for demonstrations, recurring demos, and organizations. Manual pages now require login.
+* Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
 * Admin page heroes now enforce one shared content-group contract across governance, demonstrations, organizations, cities, cases, jobs, logs, analytics, statistics, translations, and dashboards, keeping each kicker, title, and description aligned as a single unit in light and dark mode.
 * Demonstration merging and UI translation editing now reuse the shared admin page, form section, field, inset, code block, and sticky-action primitives instead of maintaining separate editor surfaces.
+* The demonstration editor's "Luo muokkauslinkki" modal now uses the shared theme-aware admin modal contract (Bootstrap `admin-modal` with kicker and close button) instead of the legacy custom overlay, keeping the editor consistent with the rest of the redesigned admin UI.
 * The demonstration admin list now uses permission-scoped server-side filtering, deterministic pagination, preserved URL state, explicit result totals, removable filter chips, page-size controls, and a reusable basic/advanced filter layout instead of mixing page-local filtering with paginated results.
 * User creation and editing now present account details, roles, global permissions, city scope, and city permissions in the shared admin form and modal hierarchy, with consistent guidance, required markers, accessible field relationships, and theme-aware controls.
 * Organization creation and editing, member invitation modals, and change-suggestion review now use the shared admin hero, form, modal, selection, sticky-action, and light/dark token contracts.

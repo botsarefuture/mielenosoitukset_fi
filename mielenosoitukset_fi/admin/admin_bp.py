@@ -1811,14 +1811,16 @@ def admin_status():
 
 
 @admin_bp.route("/manual/")
+@login_required
 def manual():
     _log_admin_event("manual_index_view")
-    return render_template("manuals/index.html")
+    return render_template("manuals/index.html", current_page="index")
 
 @admin_bp.route("/manual/<path:page>")
+@login_required
 def manual_page(page):
     _log_admin_event("manual_page_view", page=page)
-    return render_template(f"manuals/{page}.html")
+    return render_template(f"manuals/{page}.html", current_page=page)
 
 @admin_bp.route("/logs")
 @login_required

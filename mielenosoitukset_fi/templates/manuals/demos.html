@@ -1,0 +1,80 @@
+{% extends 'manual_base.html' %}
+
+{% block content %}
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Mielenosoitukset
+</div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-flag me-2"></i>Mielenosoitusten hallinta</h2>
+  <p>
+    Mielenosoitukset (engl. demonstrations, lyh. demo) ovat sivuston keskeinen sisältö. Hallintanäkymä
+    löytyy osoitteesta <strong>/admin/demo</strong> ja se on jaettu useaan osioon listanäkymän ja
+    komentokeskuksen ympärille.
+  </p>
+
+  <h3>Lista- &amp; hallintanäkymä (demo_control)</h3>
+  <p>Keskeinen työpöytä, jossa voit:</p>
+  <ul>
+    <li><strong>Listata ja suodattaa</strong> mielenosoituksia, hakea tekstillä ja jakaa sivuille.</li>
+    <li><strong>Nähdä odottavat ja hyväksytyt</strong> mielenosoitukset erillisinä ryhminä.</li>
+    <li>Suorittaa <strong>katselu-, muokkaus-, hyväksymis-</strong> ja <strong>komennuskeskus-toimintoja</strong> suoraan listalta.</li>
+    <li><strong>Merkitä suositelluksi</strong> tai poistaa suosituksen (superkäyttäjä).</li>
+    <li>Luo uusi mielenosoitus käyttäen <strong>“Uusi mielenosoitus”</strong>-painiketta.</li>
+  </ul>
+  <div class="manual-note">
+    <i class="fa-solid fa-circle-info me-2"></i>
+    <strong>Huomio:</strong> Kaupunkiadminit näkevät toiminnot vain niille kaupunkeihin myönnettyjen
+    oikeuksien (esim. <code>ACCEPT_DEMO</code>, <code>EDIT_DEMO</code>) perusteella. Toiminnot näkyvät listalla
+    vain silloin, kun sinulla on oikeus kyseiseen mielenosoitukseen.
+  </div>
+
+  <h3>Komentokeskus (command center)</h3>
+  <p>
+    Komentokeskus tarjoaa laajemman hallintanäkymän, jossa voit käsitellä mielenosoituksia tehokkaasti.
+    Tänne pääset esimerkiksi demon nimen yhteydestä tai listanäkymän toimintovalikon kautta.
+  </p>
+
+  <h3>Hyväksyminen ja hylkääminen</h3>
+  <ul>
+    <li>Odottavia mielenosoituksia voit <strong>hyväksyä</strong> (ACCEPT_DEMO) tai <strong>hylätä</strong> (peruutus) listalta.</li>
+    <li>Hyväksyminen voidaan tehdä myös <strong>taikamerkkilinkin</strong> kautta ilman, että hyväksyjän tarvitsee kirjautua sisään – linkki on kertakäyttöinen ja IP-sidottu, ja se vanhenee 24 tunnissa.</li>
+  </ul>
+
+  <h3>Muokkaus &amp; muutoshistoria</h3>
+  <p>
+    Jokaista mielenosoitusta voit muokata (<code>EDIT_DEMO</code>). Kaikki muutokset tallentuvat
+    <strong>muutoshistoriaan</strong> (<code>/admin/demo/edit_history/&lt;demo_id&gt;</code>), josta voit
+    tarkastella merkkitarkkoja eroja (<code>view_demo_diff</code>) ja tarvittaessa <strong>palauttaa</strong>
+    aikaisemman version (<code>rollback_demo</code>).
+  </p>
+
+  <h3>Muokkauslinkit (magic-link tokenit)</h3>
+  <p>
+    Voit luoda <strong>muokkauslinkin</strong> (<code>GENERATE_EDIT_LINK</code>), jonka kautta organisaation
+    edustaja voi muokata tai hyväksyä mielenosoitusta ilman admin-tunnusta. Linkit ovat kertakäyttöisiä,
+    IP-sidottuja ja vanhenevat 24 tunnissa. Superkäyttäjät voivat hallita ja peruuttaa kaikki tokenit
+    <strong>“Hallinnoi taikamerkkilippuja”</strong>-näkymässä.
+  </p>
+
+  <h3>Käännöstyö</h3>
+  <p>
+    <strong>Käännöstyöjonossa</strong> (<code>TRANSLATE_DEMO</code> / <code>REVIEW_DEMO_TRANSLATIONS</code>)
+    voit kääntää mielenosoituksen sisältöä eri kielille tai hyväksyä kääntäjien ehdotuksia.
+  </p>
+
+  <h3>Ehdotukset, virheet ja yhdistäminen</h3>
+  <ul>
+    <li><strong>Ehdotukset:</strong> Käyttäjien tekemät muokkausehdotukset (<code>suggestions</code>) voidaan tarkastaa ja hyväksyä/hylätä kenttäkohtaisesti.</li>
+    <li><strong>Ilmoitusvirheet:</strong> <code>submission_errors</code>-näkymä kerää virheelliset ilmoitukset käsittelyä varten.</li>
+    <li><strong>Yhdistäminen:</strong> Päällekkäiset mielenosoitukset voidaan yhdistää yhdeksi.</li>
+    <li><strong>Kuvakaappaus:</strong> Demoista voidaan pakottaa uusi kuvakaappaus (<code>trigger_screenshot</code>).</li>
+  </ul>
+
+  <h3>Tarkastusloki (audit)</h3>
+  <p>
+    <strong>Audit-timeline</strong> ja <strong>super-audit-lokit</strong> näyttävät kuka on tehnyt mitä ja milloin,
+    mikä auttaa jäljittämään muutokset ja ongelmat.
+  </p>
+</section>
+{% endblock %}

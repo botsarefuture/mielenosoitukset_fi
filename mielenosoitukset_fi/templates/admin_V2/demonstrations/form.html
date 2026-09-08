@@ -912,30 +912,53 @@
         <button type="button" class="btn btn-warning" id="duplicate-demo-btn">{{ _('Luo kopio mielenosoituksesta') }}</button>
     </div>
 
-    <div id="overlay" class="modal-overlay"></div>
-
-    <div class="legacy-admin-modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
-        <div class="legacy-admin-modal__header">
-            <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
-            <button type="button" class="close" data-close-button><span aria-hidden="true">&times;</span></button>
-        </div>
-        <div class="legacy-admin-modal__body">
-            <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
-            <input type="text" id="edit_link" class="form-control" readonly>
-            <hr>
-            <div class="form-group">
-                <label for="edit_link_email">{{ _('Lähetä sähköpostilla') }}</label>
-                <input type="email" id="edit_link_email" name="edit_link_email" class="form-control"
-                    placeholder="{{ _('Syötä sähköpostiosoite') }}">
+    <div class="modal fade admin-modal" id="editLinkModal" tabindex="-1" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <p class="admin-modal-kicker">{{ _('Mielenosoituksen hallinta') }}</p>
+                        <h2 class="modal-title" id="editLinkModalLabel"><i class="fas fa-link me-2" aria-hidden="true"></i>{{ _('Muokkauslinkki') }}</h2>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
+                </div>
+                <div class="modal-body">
+                    <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
+                    <input type="text" id="edit_link" class="form-control" readonly>
+                    <hr>
+                    <div class="form-group">
+                        <label for="edit_link_email">{{ _('Lähetä sähköpostilla') }}</label>
+                        <input type="email" id="edit_link_email" name="edit_link_email" class="form-control"
+                            placeholder="{{ _('Syötä sähköpostiosoite') }}">
+                    </div>
+                    <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Sulje') }}</button>
+                </div>
             </div>
-            <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
-        </div>
-        <div class="legacy-admin-modal__footer">
-            <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
         </div>
     </div>
 
     <script>
+        const editLinkModal = document.getElementById('editLinkModal');
+        let editLinkModalInstance = null;
+
+        function openEditLinkModal() {
+            if (editLinkModal && !editLinkModalInstance) {
+                editLinkModalInstance = new bootstrap.Modal(editLinkModal);
+            }
+            if (editLinkModalInstance) {
+                editLinkModalInstance.show();
+            }
+        }
+
+        function closeEditLinkModal() {
+            if (editLinkModalInstance) {
+                editLinkModalInstance.hide();
+            }
+        }
+
         document.getElementById('generate-edit-link-btn').addEventListener('click', () => {
             const demoId = "{{ demo._id if demo else '' }}";
             if (demoId) {
@@ -944,7 +967,7 @@
                     .then(data => {
                         if (data.status === 'OK') {
                             document.getElementById('edit_link').value = data.edit_link;
-                            openModal($('#editLinkModal'));
+                            openEditLinkModal();
                         } else {
                             alert(data.message);
                         }
@@ -969,7 +992,7 @@
                     .then(data => {
                         if (data.status === 'OK') {
                             alert('{{ _("Sähköposti lähetetty onnistuneesti!") }}');
-                            closeModal($('#editLinkModal'));
+                            closeEditLinkModal();
                         } else {
                             alert(data.message);
                         }
@@ -1005,8 +1028,6 @@
         });
 
     </script>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/modal.css') }}">
 </div>
 {% endif %}
 

@@ -2,10 +2,10 @@
 
 {% block styles %}
 <style>
-  :root {
-    --card-bg: #ffffff;
-    --card-shadow: 0 15px 35px rgba(0,0,0,0.07);
-    --border-muted: #e9ecef;
+  .admin-dashboard-shell {
+    --card-bg: var(--admin-workspace-surface);
+    --card-shadow: var(--admin-workspace-shadow);
+    --border-muted: var(--admin-workspace-border);
   }
 
   .dashboard-grid {
@@ -33,7 +33,7 @@
     text-transform: uppercase;
     letter-spacing: 0.1em;
     font-size: 0.78rem;
-    color: #6c757d;
+    color: var(--admin-workspace-muted);
     margin-bottom: 0.35rem;
   }
 
@@ -41,11 +41,11 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: #f1f3f5;
+    background: var(--admin-workspace-surface-muted);
     padding: 0.65rem 1rem;
     border-radius: 999px;
     font-weight: 600;
-    color: #495057;
+    color: var(--admin-workspace-text);
   }
 
   .live-indicator .pulse {
@@ -58,9 +58,9 @@
   }
 
   .clock-chip {
-    background: #fff;
+    background: var(--admin-workspace-surface);
     border: 1px solid var(--border-muted);
-    color: #212529;
+    color: var(--admin-workspace-text);
   }
 
   .clock-chip .pulse {
@@ -91,12 +91,12 @@
 
   .stat-card:hover {
     transform: translateY(-4px);
-    border-color: #74c0fc;
+    border-color: var(--admin-workspace-blue);
   }
 
   .stat-label {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--admin-workspace-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin-bottom: 0.35rem;
@@ -105,14 +105,14 @@
   .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: #212529;
+    color: var(--admin-workspace-text);
   }
 
   .stat-sub {
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
-    color: #6c757d;
+    color: var(--admin-workspace-muted);
     margin-top: 0.4rem;
     gap: 0.75rem;
     flex-wrap: wrap;
@@ -143,7 +143,7 @@
 
   .panic-grid span {
     border-radius: 14px;
-    background: #e9ecef;
+    background: var(--admin-workspace-surface-muted);
     transition: background 0.3s ease, transform 0.3s ease;
   }
 
@@ -169,7 +169,7 @@
   .panic-state {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #212529;
+    color: var(--admin-workspace-text);
   }
 
   .panic-state.active {
@@ -198,7 +198,7 @@
 
   .health-label {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--admin-workspace-muted);
     display: flex;
     justify-content: space-between;
     margin-bottom: 0.35rem;
@@ -207,7 +207,7 @@
   .progress-bar {
     height: 10px;
     border-radius: 999px;
-    background: #e9ecef;
+    background: var(--admin-workspace-surface-muted);
     overflow: hidden;
   }
 
@@ -238,7 +238,7 @@
   }
 
   .quick-card:hover {
-    background: #f8f9fa;
+    background: var(--admin-workspace-blue-soft);
     transform: translateY(-3px);
   }
 
@@ -276,7 +276,7 @@
     padding: 1rem;
     margin-bottom: 0.85rem;
     transition: transform 0.2s ease;
-    background: #fff;
+    background: var(--admin-workspace-surface);
     position: relative;
   }
 
@@ -315,18 +315,18 @@
 
   .status-pill.success {
     background: rgba(25, 135, 84, 0.1);
-    color: #0f5132;
+    color: light-dark(#0f6538, #8ce0b4);
   }
 
   .status-pill.failure {
     background: rgba(220, 53, 69, 0.1);
-    color: #842029;
+    color: light-dark(#98272f, #ffaaa5);
   }
 
   .entry-meta {
     margin-top: 0.6rem;
     font-size: 0.85rem;
-    color: #6c757d;
+    color: var(--admin-workspace-muted);
     display: grid;
     gap: 0.25rem;
   }
@@ -336,7 +336,7 @@
     border-radius: 12px;
     padding: 1rem;
     text-align: center;
-    color: #6c757d;
+    color: var(--admin-workspace-muted);
   }
 
   @media (max-width: 1200px) {

@@ -131,6 +131,23 @@ def test_admin_page_heroes_keep_copy_in_one_content_group():
     assert violations == []
 
 
+def test_admin_hero_foreground_and_data_view_surfaces_are_shared():
+    workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
+        encoding="utf-8"
+    )
+    users = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_users_table.html"
+    ).read_text(encoding="utf-8")
+
+    assert "color: var(--admin-heading-color, var(--admin-workspace-text));" in workspace
+    assert "--admin-heading-color: var(--admin-hero-foreground);" in workspace
+    assert "--admin-hero-muted-foreground:" in workspace
+    assert "admin-data-view__header admin-result-summary" in users
+    assert "admin-data-view__viewport users-table-scroll" in users
+    assert "admin-data-view__footer admin-pagination" in users
+    assert ".users-results-heading" not in users
+
+
 def test_user_role_forms_use_shared_admin_contract():
     edit = Path(
         "mielenosoitukset_fi/templates/admin_V2/user/edit.html"

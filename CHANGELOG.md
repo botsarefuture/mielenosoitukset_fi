@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.
 * Admin checkboxes and radio buttons now retain distinct square and circular shapes with visible checked, focus, indeterminate, and disabled states in both themes; demonstration approval uses a full-row click target, updates its status live, and cannot be changed by editors without an explicit approval grant.
 * Anonymous demonstration edit links now render the shared admin shell safely instead of failing when navigation checks city-scoped administration grants.
 * The demonstration edit-link page (`/admin/demo/edit_demo_with_token/<token>`) no longer returns HTTP 500: the route now passes the same translation context (`translation_locales`, `translation_language_names`, `default_demo_language`) as the normal demo editor, so submitters who edit a demonstration via an emailed token link see the form instead of an error.

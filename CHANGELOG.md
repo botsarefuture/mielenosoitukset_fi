@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Production deployments stop reporting spurious failures after a successful deploy: the workflow-level public health curl was blocked by Cloudflare's edge for GitHub-hosted runner IPs (HTTP 403), even though the server-side deploy script had already verified the exact deployed commit's `/health` and succeeded. The redundant public check is removed; the deploy step still fails loudly if the server's own health verification fails.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.
 * Pull request previews now use small deterministic Docker subnets and reliably remove MongoDB-owned data on teardown, preventing closed previews from exhausting the server's network address pools; preview status comments also expose failed runs clearly.
 * Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.

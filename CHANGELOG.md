@@ -11,6 +11,7 @@
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
 
 ### Changed
+* Organization creation and editing, member invitation modals, and change-suggestion review now use the shared admin hero, form, modal, selection, sticky-action, and light/dark token contracts.
 * Demonstration and recurring-demonstration editors now share the admin form contract for section cards, fields, guidance, focus states, and responsive sticky save actions; their page heroes also keep kicker, title, and description together as one content unit.
 * Admin dashboard, case detail, background-job list, and background-job detail views now use the shared theme-aware surfaces, typography, metadata panels, controls, status treatments, and compact headers instead of page-global or light-only palettes.
 * Developer requests, API-key requests, submission errors, demonstration audits, magic links, and UI translation workflows now share the same compact page headers, filter panels, collection surfaces, table treatment, and empty states; UI translation sync rows also use the standard accessible bulk-selection pattern.

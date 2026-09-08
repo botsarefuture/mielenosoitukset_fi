@@ -19,6 +19,10 @@ body {
   --admin-workspace-border: light-dark(#dce3ec, #424b59);
   --admin-workspace-text: light-dark(#172033, #f2f5fa);
   --admin-workspace-muted: light-dark(#647083, #b7c0ce);
+  --admin-workspace-success: light-dark(#18794e, #6ee7a8);
+  --admin-workspace-success-soft: light-dark(#eaf8f0, #183328);
+  --admin-workspace-danger: light-dark(#b42318, #ff9b91);
+  --admin-workspace-danger-soft: light-dark(#fff0ee, #3b2021);
   --admin-workspace-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .08), rgba(0, 0, 0, .18));
   /* Compatibility aliases for older admin screens. New code should use the
      admin-workspace tokens directly. */
@@ -464,12 +468,14 @@ main.flex-grow-1 :is(.alert, .badge) {
 
 /* Shared admin form contract. Domain-specific forms can retain their field
    order while sharing section hierarchy, controls, help text and save bars. */
+.admin-form,
 .admin-editor-form {
   color: var(--admin-workspace-text);
   display: grid;
   gap: 1rem;
 }
 
+.admin-form-section,
 .admin-editor-form :is(.form-section, .dashboard-panel) {
   border: 1px solid var(--admin-workspace-border);
   border-radius: 1rem;
@@ -491,6 +497,7 @@ main.flex-grow-1 :is(.alert, .badge) {
   letter-spacing: -.01em;
 }
 
+.admin-field,
 .admin-editor-form .form-group {
   display: grid;
   gap: .4rem;
@@ -531,6 +538,7 @@ main.flex-grow-1 :is(.alert, .badge) {
   background: var(--admin-workspace-surface-muted) !important;
 }
 
+.admin-sticky-actions,
 .admin-editor-form :is(.editor-save-bar, .bulk-submit-row) {
   position: sticky;
   z-index: 20;
@@ -555,6 +563,100 @@ main.flex-grow-1 :is(.alert, .badge) {
   font-weight: 750;
 }
 
+.org-form-page .admin-workspace-form {
+  color: var(--admin-workspace-text);
+}
+
+.org-form-page .org-form-fields > .admin-field {
+  margin-bottom: 0;
+}
+
+.org-form-page :is(.org-form-card, .logo-preview, .org-form-tip, .social-media-row),
+.suggestion-container .changes-table-container {
+  border-color: var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+}
+
+.org-form-page :is(.org-form-label, .org-form-card-header h2),
+.suggestion-container :is(.field-name, .changes-table th) {
+  color: var(--admin-workspace-text);
+}
+
+.suggestion-container .suggestion-title {
+  margin: 0;
+}
+
+.suggestion-container .changes-table tbody tr:has(.field-checkbox:checked) {
+  background: var(--admin-workspace-blue-soft);
+}
+
+.org-form-page :is(.org-form-help, .org-form-card-header p, .org-form-savebar-copy span),
+.suggestion-container .field-value {
+  color: var(--admin-workspace-muted);
+}
+
+.org-form-page .org-form-control,
+.admin-workflow-modal :is(.form-control, .form-select) {
+  min-height: 2.7rem;
+  border-color: var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.org-form-page .org-form-savebar,
+.suggestion-container .action-buttons {
+  position: sticky;
+  z-index: 20;
+  bottom: .75rem;
+  padding: .9rem 1rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: 1rem;
+  background: light-dark(rgba(255, 255, 255, .96), rgba(32, 37, 45, .96));
+  box-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .14), rgba(0, 0, 0, .3));
+  backdrop-filter: blur(12px);
+}
+
+.admin-modal .modal-content,
+.admin-workflow-modal .modal-content {
+  overflow: hidden;
+  border: 1px solid var(--admin-workspace-border) !important;
+  border-radius: 1rem !important;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+}
+
+.admin-modal :is(.modal-header, .modal-footer),
+.admin-workflow-modal :is(.modal-header, .modal-footer) {
+  border-color: var(--admin-workspace-border);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-modal .modal-title,
+.admin-workflow-modal .modal-title {
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.admin-modal .modal-body,
+.admin-workflow-modal .modal-body {
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface);
+}
+
+.admin-modal-kicker {
+  margin: 0 0 .2rem;
+  color: var(--admin-workspace-blue-dark);
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 760px) {
   .admin-editor-form :is(.editor-save-bar, .bulk-submit-row) {
     position: static;
@@ -563,6 +665,12 @@ main.flex-grow-1 :is(.alert, .badge) {
 
   .admin-editor-form .editor-save-bar :is(button, .btn) {
     width: 100%;
+  }
+
+  .admin-sticky-actions,
+  .org-form-page .org-form-savebar,
+  .suggestion-container .action-buttons {
+    position: static;
   }
 }
 

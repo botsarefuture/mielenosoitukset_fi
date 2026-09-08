@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The demonstration edit-link page (`/admin/demo/edit_demo_with_token/<token>`) no longer returns HTTP 500: the route now passes the same translation context (`translation_locales`, `translation_language_names`, `default_demo_language`) as the normal demo editor, so submitters who edit a demonstration via an emailed token link see the form instead of an error.
 * The admin demonstration list page (`/admin/demo/`) no longer crashes with a server error after the pagination refactor: `enabled_city_names` and `CITY_NAME_TO_KEY` are now imported so the city filter (and the rest of the page) renders instead of failing.
 * The demonstration submission page's viewport-wide hero now stays horizontally centered inside its narrower form container instead of appearing shifted to the right.
 * City-scoped administrators can now see the accept, edit, view, command-center, and screenshot/freeze actions for demonstrations in their managed cities on the admin demonstration list; action visibility mirrors the actual per-city permission grants instead of being hidden by global permission checks.
@@ -14,6 +15,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The demonstration editor's "Luo muokkauslinkki" modal now uses the shared theme-aware admin modal contract (Bootstrap `admin-modal` with kicker and close button) instead of the legacy custom overlay, keeping the editor consistent with the rest of the redesigned admin UI.
 * The demonstration admin list now uses permission-scoped server-side filtering, deterministic pagination, preserved URL state, explicit result totals, removable filter chips, page-size controls, and a reusable basic/advanced filter layout instead of mixing page-local filtering with paginated results.
 * User creation and editing now present account details, roles, global permissions, city scope, and city permissions in the shared admin form and modal hierarchy, with consistent guidance, required markers, accessible field relationships, and theme-aware controls.
 * Organization creation and editing, member invitation modals, and change-suggestion review now use the shared admin hero, form, modal, selection, sticky-action, and light/dark token contracts.

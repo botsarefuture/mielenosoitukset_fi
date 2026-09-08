@@ -10,9 +10,11 @@
 {% block main_content %}
 <section class="governance-shell">
   <header class="governance-hero admin-page-hero">
-    <p class="governance-eyebrow admin-page-hero__kicker mb-2">{{ _('Admin-paneeli') }}</p>
-    <h1 class="h2 mb-2">{{ _('Hallinto ja käyttöoikeudet') }}</h1>
-    <p class="text-body-secondary mb-0">{{ _('Hallitse luottamuspäätöksiä, niiden tapahtumalokia sekä kaupunkien julkaisu- ja ylläpitoasetuksia yhdestä paikasta.') }}</p>
+    <div class="admin-page-hero__content">
+      <p class="governance-eyebrow admin-page-hero__kicker mb-2">{{ _('Admin-paneeli') }}</p>
+      <h1 class="h2 mb-2">{{ _('Hallinto ja käyttöoikeudet') }}</h1>
+      <p class="text-body-secondary mb-0">{{ _('Hallitse luottamuspäätöksiä, niiden tapahtumalokia sekä kaupunkien julkaisu- ja ylläpitoasetuksia yhdestä paikasta.') }}</p>
+    </div>
   </header>
 
   {% include 'admin_V2/governance/_tabs.html' %}

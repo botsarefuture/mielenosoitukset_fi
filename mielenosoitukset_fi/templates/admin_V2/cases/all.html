@@ -87,7 +87,7 @@
 {% block main_content %}
 <div class="case-shell">
   <div class="case-hero admin-page-hero">
-    <div>
+    <div class="admin-page-hero__content">
       <h1>{{ _('Tapaukset & eskaloinnit') }}</h1>
       <p>{{ _('Priorisoi avoimet tapaukset, sulje automaattisesti ratkaistut ja löydä esiin nostetut keissit nopeasti.') }}</p>
       <div class="badges">
@@ -97,7 +97,7 @@
         <span class="badge-chip"><i class="fas fa-arrow-up-right-from-square me-1"></i>{{ _('Eskaloinnit') }}: {{ escalated_count }}</span>
       </div>
     </div>
-    <div class="controls">
+    <div class="controls admin-page-hero__actions">
       <button class="filter-chip active" data-filter="all">{{ _('Kaikki') }}</button>
       <button class="filter-chip" data-filter="open">{{ _('Avoimet') }}</button>
       <button class="filter-chip" data-filter="closed">{{ _('Suljetut') }}</button>

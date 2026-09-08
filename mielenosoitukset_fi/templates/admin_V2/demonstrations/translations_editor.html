@@ -308,31 +308,33 @@
 </style>
 
 <section class="dashboard-container translation-editor accessibility-mode" id="translation-editor">
-  <div class="introduction">
-    <div class="translation-eyebrow mb-2">{{ _('Käännöstyötila') }}</div>
-    <h1 class="text-3xl font-bold">{{ _('Käännökset') }}: {{ demo.title or _('Nimetön mielenosoitus') }}</h1>
-    <p class="text-muted max-w-xl">
-      {{ _('Tee käännösehdotus valitulle kielelle. Ehdotus ei julkaise sisältöä suoraan, vaan jää tarkistettavaksi.') }}
-    </p>
-    <div class="accessibility-mode-control mt-3">
-      <input class="form-check-input" id="translation-accessibility-mode" type="checkbox" role="switch"
-             data-enabled-message="{{ _('Helppokäyttötila käytössä.') }}"
-             data-disabled-message="{{ _('Tiivis näkymä käytössä.') }}" checked>
-      <label for="translation-accessibility-mode">
-        <strong class="d-block">{{ _('Helppokäyttötila') }}</strong>
-        <span class="text-muted">{{ _('Suuremmat painikkeet, väljempi näkymä ja automaattinen opastus. Valinta muistetaan tällä laitteella.') }}</span>
-      </label>
+  <header class="introduction admin-page-hero">
+    <div class="admin-page-hero__content">
+      <p class="translation-eyebrow admin-page-hero__kicker mb-2">{{ _('Käännöstyötila') }}</p>
+      <h1 class="text-3xl font-bold">{{ _('Käännökset') }}: {{ demo.title or _('Nimetön mielenosoitus') }}</h1>
+      <p class="text-muted max-w-xl">
+        {{ _('Tee käännösehdotus valitulle kielelle. Ehdotus ei julkaise sisältöä suoraan, vaan jää tarkistettavaksi.') }}
+      </p>
+      <div class="accessibility-mode-control mt-3">
+        <input class="form-check-input" id="translation-accessibility-mode" type="checkbox" role="switch"
+               data-enabled-message="{{ _('Helppokäyttötila käytössä.') }}"
+               data-disabled-message="{{ _('Tiivis näkymä käytössä.') }}" checked>
+        <label for="translation-accessibility-mode">
+          <strong class="d-block">{{ _('Helppokäyttötila') }}</strong>
+          <span class="text-muted">{{ _('Suuremmat painikkeet, väljempi näkymä ja automaattinen opastus. Valinta muistetaan tällä laitteella.') }}</span>
+        </label>
+      </div>
+      <p class="visually-hidden" id="accessibility-mode-status" aria-live="polite"></p>
     </div>
-    <p class="visually-hidden" id="accessibility-mode-status" aria-live="polite"></p>
-    <div class="d-flex gap-2 mt-3">
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">{{ _('Takaisin työjonoon') }}</a>
+    <div class="admin-page-hero__actions">
+      <a class="admin-page-hero__action" href="{{ url_for('admin_demo.demo_translation_dashboard') }}">{{ _('Takaisin työjonoon') }}</a>
       {% if is_recurring_source and (current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_RECURRING_DEMO')) %}
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}">{{ _('Avaa toistuvan demon editori') }}</a>
+      <a class="admin-page-hero__action" href="{{ url_for('admin_recu_demo.edit_recu_demo', demo_id=demo._id) }}">{{ _('Avaa toistuvan demon editori') }}</a>
       {% elif current_user.role in ['admin', 'global_admin'] or current_user.has_permission('EDIT_DEMO') %}
-      <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">{{ _('Avaa demo-editori') }}</a>
+      <a class="admin-page-hero__action" href="{{ url_for('admin_demo.edit_demo', demo_id=demo._id) }}">{{ _('Avaa demo-editori') }}</a>
       {% endif %}
     </div>
-  </div>
+  </header>
 
   <section class="dashboard-panel mb-4">
     <h2 class="text-xl font-semibold mb-3">{{ _('Käännöstilanne') }}</h2>

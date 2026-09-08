@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.
 * Pull request previews now use small deterministic Docker subnets and reliably remove MongoDB-owned data on teardown, preventing closed previews from exhausting the server's network address pools; preview status comments also expose failed runs clearly.
 * Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.
 * Admin checkboxes and radio buttons now retain distinct square and circular shapes with visible checked, focus, indeterminate, and disabled states in both themes; demonstration approval uses a full-row click target, updates its status live, and cannot be changed by editors without an explicit approval grant.

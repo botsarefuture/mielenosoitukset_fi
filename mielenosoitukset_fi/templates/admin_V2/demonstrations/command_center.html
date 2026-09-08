@@ -385,8 +385,9 @@
 
 {% block main_content %}
 <div class="demo-command-center">
-  <div class="hero-card admin-page-hero admin-page-hero--stacked">
-    <div class="hero-header">
+  <header class="hero-card admin-page-hero admin-page-hero--stacked">
+    <div class="hero-header admin-page-hero__content">
+      <p class="admin-page-hero__kicker">{{ _('Mielenosoitukset') }}</p>
       <div class="status-badges">
         {% if status_flags.approved %}
         <span class="status-badge success"><i class="fa-solid fa-check"></i> {{ _('Hyväksytty') }}</span>
@@ -442,7 +443,6 @@
         </a>
         {% endif %}
       </div>
-    </div>
     <div class="hero-metadata">
       <div class="meta-item">
         <span>{{ _('Mongo ID') }}</span>
@@ -465,7 +465,8 @@
         {{ demo_raw.get('last_modified')|datetimeformat("%d.%m.%Y %H:%M") if demo_raw.get('last_modified') else '-' }}
       </div>
     </div>
-  </div>
+    </div>
+  </header>
 
   <div class="command-grid">
     <div class="primary-column">

@@ -1,4 +1,5 @@
 from pathlib import Path
+from html.parser import HTMLParser
 
 
 ADMIN_TEMPLATE_ROOTS = (
@@ -10,6 +11,62 @@ ADMIN_TEMPLATE_ROOTS = (
 def _admin_templates():
     for root in ADMIN_TEMPLATE_ROOTS:
         yield from root.rglob("*.html")
+
+
+class _AdminHeroContractParser(HTMLParser):
+    """Collect structural hero violations without rendering Jinja templates."""
+
+    _VOID_TAGS = {
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "param", "source", "track", "wbr",
+    }
+    _ALLOWED_CHILDREN = {
+        "admin-page-hero__content",
+        "admin-page-hero__actions",
+        "admin-page-hero__metric",
+        "admin-page-hero__nav",
+    }
+
+    def __init__(self):
+        super().__init__()
+        self.stack = []
+        self.violations = []
+
+    def handle_starttag(self, tag, attrs):
+        classes = set(dict(attrs).get("class", "").split())
+        if self.stack and self.stack[-1]["is_hero"]:
+            if not classes.intersection(self._ALLOWED_CHILDREN):
+                self.violations.append(
+                    f"unexpected direct <{tag}> child of admin-page-hero"
+                )
+            if "admin-page-hero__content" in classes:
+                self.stack[-1]["has_content"] = True
+
+        node = {
+            "tag": tag,
+            "is_hero": "admin-page-hero" in classes,
+            "has_content": False,
+        }
+        if tag not in self._VOID_TAGS:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag, attrs):
+        self.handle_starttag(tag, attrs)
+        if tag not in self._VOID_TAGS:
+            self.handle_endtag(tag)
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index]["tag"] != tag:
+                continue
+            closing = self.stack[index:]
+            del self.stack[index:]
+            for node in reversed(closing):
+                if node["is_hero"] and not node["has_content"]:
+                    self.violations.append(
+                        "admin-page-hero is missing admin-page-hero__content"
+                    )
+            return
 
 
 def test_full_admin_templates_use_the_admin_shell():
@@ -61,6 +118,17 @@ def test_admin_design_standard_is_documented():
     assert "## Lists and tables" in standard
     assert "## Modals" in standard
     assert "--admin-workspace-surface" in standard
+
+
+def test_admin_page_heroes_keep_copy_in_one_content_group():
+    violations = []
+
+    for template in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html"):
+        parser = _AdminHeroContractParser()
+        parser.feed(template.read_text(encoding="utf-8"))
+        violations.extend(f"{template}: {message}" for message in parser.violations)
+
+    assert violations == []
 
 
 def test_user_role_forms_use_shared_admin_contract():

@@ -11,6 +11,7 @@
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
 
 ### Changed
+* Admin page heroes now enforce one shared content-group contract across governance, demonstrations, organizations, cities, cases, jobs, logs, analytics, statistics, translations, and dashboards, keeping each kicker, title, and description aligned as a single unit in light and dark mode.
 * Demonstration merging and UI translation editing now reuse the shared admin page, form section, field, inset, code block, and sticky-action primitives instead of maintaining separate editor surfaces.
 * The demonstration admin list now uses permission-scoped server-side filtering, deterministic pagination, preserved URL state, explicit result totals, removable filter chips, page-size controls, and a reusable basic/advanced filter layout instead of mixing page-local filtering with paginated results.
 * User creation and editing now present account details, roles, global permissions, city scope, and city permissions in the shared admin form and modal hierarchy, with consistent guidance, required markers, accessible field relationships, and theme-aware controls.

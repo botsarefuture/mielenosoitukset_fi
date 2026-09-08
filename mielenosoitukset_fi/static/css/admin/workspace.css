@@ -1064,6 +1064,10 @@ main.flex-grow-1 {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.admin-page-hero > :not(.admin-page-hero__content):not(.admin-page-hero__actions):not(.admin-page-hero__metric):not(.admin-page-hero__nav) {
+  grid-column: 1 / -1;
+}
+
 .admin-page-hero__nav {
   position: relative;
   z-index: 1;

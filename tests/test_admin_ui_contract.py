@@ -62,3 +62,17 @@ def test_admin_design_standard_is_documented():
     assert "## Modals" in standard
     assert "--admin-workspace-surface" in standard
 
+
+def test_user_role_forms_use_shared_admin_contract():
+    edit = Path(
+        "mielenosoitukset_fi/templates/admin_V2/user/edit.html"
+    ).read_text(encoding="utf-8")
+    modals = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_modals_users.html"
+    ).read_text(encoding="utf-8")
+
+    assert 'class="admin-page-hero__content"' in edit
+    assert 'class="admin-form admin-user-form"' in edit
+    assert "admin-form-section" in edit
+    assert "admin-sticky-actions" in edit
+    assert "modal fade admin-modal" in modals

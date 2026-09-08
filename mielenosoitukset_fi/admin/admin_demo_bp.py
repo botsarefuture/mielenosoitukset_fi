@@ -1606,15 +1606,33 @@ from bson.objectid import ObjectId as BsonObjectId
 def demo_control():
     # --- Query parameters ---
     search_query = (request.args.get("search") or "").strip()
+    city_filter = (request.args.get("city") or "").strip()
     year_filter = (request.args.get("year") or "").strip()
     tag_filter = (request.args.get("tag") or "").strip()
     missing_tag_filter = (request.args.get("missing_tag") or "").strip()
-    approved_only = (request.args.get("approved") or "false").lower() == "true"
+    approval_filter = (request.args.get("approved") or "all").lower()
+    if approval_filter == "true":
+        approval_filter = "approved"
+    elif approval_filter == "false" or approval_filter not in {"all", "approved", "pending"}:
+        approval_filter = "all"
+    recurring_filter = (request.args.get("recurring") or "all").lower()
+    if recurring_filter not in {"all", "true", "false"}:
+        recurring_filter = "all"
+    sort_filter = (request.args.get("sort") or "priority").lower()
+    if sort_filter not in {"priority", "date_asc", "date_desc", "title_asc"}:
+        sort_filter = "priority"
     show_hidden = (request.args.get("show_hidden") or "false").lower() == "true"
     show_past_param = (request.args.get("show_past") or "all").lower()
     show_cancelled = (request.args.get("show_cancelled") or "false").lower() == "true"
-    per_page = int(request.args.get("per_page", 20))
-    page = int(request.args.get("page", 1))  # page numbers start at 1
+    try:
+        requested_per_page = int(request.args.get("per_page", 20))
+    except (TypeError, ValueError):
+        requested_per_page = 20
+    per_page = requested_per_page if requested_per_page in {20, 50, 100} else 20
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (TypeError, ValueError):
+        page = 1
 
     # Determine how we treat past demonstrations based on the filter value
     if show_past_param not in {"true", "false"}:
@@ -1623,41 +1641,12 @@ def demo_control():
         show_past_filter = show_past_param
 
     # --- Build filter clauses ---
-    filter_clauses = [
+    scope_clauses = [
         {"$or": [{"rejected": {"$exists": False}}, {"rejected": False}]},
     ]
 
-    if not show_cancelled:
-        filter_clauses.append({"cancelled": {"$ne": True}})
-
-    if not show_hidden:
-        filter_clauses.append({"$or": [{"hide": {"$exists": False}}, {"hide": False}]})
-
-    if show_past_filter == "false":
-        filter_clauses.append({"$or": [{"in_past": {"$exists": False}}, {"in_past": False}]})
-
-    if approved_only:
-        filter_clauses.append({"approved": True})
-
-    if search_query:
-        filter_clauses.append(_demo_text_search_clause(search_query))
-
-    if year_filter:
-        if year_filter.isdigit() and len(year_filter) == 4:
-            filter_clauses.append({"date": {"$regex": f"^{re.escape(year_filter)}-"}})
-        else:
-            flash_message(_("Vuosisuodatin jätettiin huomiotta, koska sen pitää olla muodossa VVVV."), "warning")
-            year_filter = ""
-
-    for required_tag in _split_admin_filter_tokens(tag_filter):
-        filter_clauses.append({"tags": {"$elemMatch": _tag_exact_filter(required_tag)}})
-
-    for excluded_tag in _split_admin_filter_tokens(missing_tag_filter):
-        filter_clauses.append(
-            {"tags": {"$not": {"$elemMatch": _tag_exact_filter(excluded_tag)}}}
-        )
-
-    # Permissions
+    # Permission scope is part of the base query. Counts and result rows always
+    # derive from this exact query so scoped users never see global totals.
     if not current_user.global_admin:
         _where = current_user._perm_in("LIST_DEMOS")
         org_scope_ids = [
@@ -1678,34 +1667,71 @@ def demo_control():
             )
         if city_scope_keys:
             permission_filters.append(
-                {
-                    "$or": [
-                        {"city_key": {"$in": city_scope_keys}},
-                        {"city": {"$in": city_scope_names}},
-                    ]
-                }
+                {"$or": [{"city_key": {"$in": city_scope_keys}}, {"city": {"$in": city_scope_names}}]}
             )
         if "global" not in _where:
-            filter_clauses.append({"$or": permission_filters})
+            scope_clauses.append({"$or": permission_filters})
 
-    def build_query(extra=None):
-        clauses = list(filter_clauses)
-        if extra:
-            if isinstance(extra, list):
-                clauses.extend(extra)
-            else:
-                clauses.append(extra)
+    def query_from(clauses):
         if not clauses:
             return {}
         if len(clauses) == 1:
             return clauses[0]
         return {"$and": clauses}
 
-    filter_query = build_query()
+    scope_query = query_from(scope_clauses)
+    filter_clauses = list(scope_clauses)
+
+    if not show_cancelled:
+        filter_clauses.append({"cancelled": {"$ne": True}})
+
+    if not show_hidden:
+        filter_clauses.append({"$or": [{"hide": {"$exists": False}}, {"hide": False}]})
+
+    if show_past_filter == "false":
+        filter_clauses.append({"$or": [{"in_past": {"$exists": False}}, {"in_past": False}]})
+
+    if approval_filter == "approved":
+        filter_clauses.append({"approved": True})
+    elif approval_filter == "pending":
+        filter_clauses.append({"approved": False})
+
+    if recurring_filter != "all":
+        filter_clauses.append({"recurs": True} if recurring_filter == "true" else {"recurs": {"$ne": True}})
+
+    if city_filter:
+        city_key = normalize_city_key(city_filter)
+        matching_names = [city for city in CITY_LIST if normalize_city_key(city) == city_key]
+        filter_clauses.append({"$or": [{"city_key": city_key}, {"city": {"$in": matching_names}}]})
+
+    if search_query:
+        filter_clauses.append(_demo_text_search_clause(search_query))
+
+    if year_filter:
+        if year_filter.isdigit() and len(year_filter) == 4:
+            filter_clauses.append({"date": {"$regex": f"^{re.escape(year_filter)}-"}})
+        else:
+            flash_message(_("Vuosisuodatin jätettiin huomiotta, koska sen pitää olla muodossa VVVV."), "warning")
+            year_filter = ""
+
+    for required_tag in _split_admin_filter_tokens(tag_filter):
+        filter_clauses.append({"tags": {"$elemMatch": _tag_exact_filter(required_tag)}})
+
+    for excluded_tag in _split_admin_filter_tokens(missing_tag_filter):
+        filter_clauses.append(
+            {"tags": {"$not": {"$elemMatch": _tag_exact_filter(excluded_tag)}}}
+        )
+
+    filter_query = query_from(filter_clauses)
 
     # --- Count total documents ---
-    total_count = mongo.demonstrations.count_documents(filter_query)
-    total_pages = (total_count + per_page - 1) // per_page  # ceil division
+    total_count = mongo.demonstrations.count_documents(scope_query)
+    filtered_count = mongo.demonstrations.count_documents(filter_query)
+    pending_count = mongo.demonstrations.count_documents(query_from(filter_clauses + [{"approved": False}]))
+    approved_count = mongo.demonstrations.count_documents(query_from(filter_clauses + [{"approved": True}]))
+    recurring_count = mongo.demonstrations.count_documents(query_from(filter_clauses + [{"recurs": True}]))
+    total_pages = max(1, (filtered_count + per_page - 1) // per_page)
+    page = min(page, total_pages)
     # --- Fetch current page ---
     skip_count = (page - 1) * per_page
 
@@ -1718,7 +1744,13 @@ def demo_control():
             }
         }
     }
-    sort_stage = {"$sort": {"_sort_priority": 1, "date": 1, "_id": 1}}
+    sort_specs = {
+        "priority": {"_sort_priority": 1, "date": 1, "_id": 1},
+        "date_asc": {"date": 1, "_id": 1},
+        "date_desc": {"date": -1, "_id": -1},
+        "title_asc": {"title": 1, "_id": 1},
+    }
+    sort_stage = {"$sort": sort_specs[sort_filter]}
     project_stage = {"$project": {"_sort_priority": 0}}
 
     pipeline = [
@@ -1731,13 +1763,6 @@ def demo_control():
     ]
 
     demos = list(mongo.demonstrations.aggregate(pipeline))
-
-    if not current_user.global_admin:
-        demos = [
-            demo
-            for demo in demos
-            if _user_can_access_demo(demo.get("_id"), "LIST_DEMOS")
-        ]
 
     recommended_lookup = {
         doc.get("demo_id"): True for doc in mongo.recommended_demos.find({}, {"demo_id": 1})
@@ -1761,6 +1786,52 @@ def demo_control():
     prev_page = page - 1 if page > 1 else None
     next_page = page + 1 if page < total_pages else None
 
+    preserved_args = {
+        key: value for key, value in request.args.items()
+        if key != "page" and value not in {None, ""}
+    }
+    preserved_args["per_page"] = str(per_page)
+
+    def page_url(target_page):
+        return url_for("admin_demo.demo_control", **preserved_args, page=target_page)
+
+    approval_label = {
+        "approved": _("Hyväksytty"),
+        "pending": _("Odottaa hyväksyntää"),
+    }.get(approval_filter, "")
+    recurring_label = {
+        "true": _("Vain toistuvat"),
+        "false": _("Vain yksittäiset"),
+    }.get(recurring_filter, "")
+    sort_label = {
+        "date_asc": _("Päivämäärä, vanhin ensin"),
+        "date_desc": _("Päivämäärä, uusin ensin"),
+        "title_asc": _("Otsikko A–Ö"),
+    }.get(sort_filter, "")
+    active_filter_specs = [
+        ("search", _("Haku"), search_query),
+        ("city", _("Kaupunki"), city_filter),
+        ("year", _("Vuosi"), year_filter),
+        ("approved", _("Hyväksyntä"), approval_label),
+        ("tag", _("Sisältää tunnisteen"), tag_filter),
+        ("missing_tag", _("Puuttuva tunniste"), missing_tag_filter),
+        ("show_past", _("Menneet"), show_past_filter if show_past_filter != "all" else ""),
+        ("show_hidden", _("Piilotetut"), _("Kyllä") if show_hidden else ""),
+        ("show_cancelled", _("Perutut"), _("Kyllä") if show_cancelled else ""),
+        ("recurring", _("Toistuvat"), recurring_label),
+        ("sort", _("Järjestys"), sort_label),
+    ]
+    active_filters = []
+    for key, label, value in active_filter_specs:
+        if not value:
+            continue
+        remove_args = dict(preserved_args)
+        remove_args.pop(key, None)
+        active_filters.append({"label": label, "value": value, "remove_url": url_for("admin_demo.demo_control", **remove_args)})
+
+    range_start = (page - 1) * per_page + 1 if filtered_count else 0
+    range_end = min(page * per_page, filtered_count)
+
     return render_template(
         f"{_ADMIN_TEMPLATE_FOLDER}demonstrations/dashboard.html",
         demonstrations=demos,
@@ -1768,18 +1839,34 @@ def demo_control():
         can_create_demo=_user_can_create_demo_in_city(None),
         can_create_recurring_demo=_user_can_create_recurring_demo(),
         search_query=search_query,
+        city_filter=city_filter,
+        city_options=enabled_city_names(mongo),
+        city_name_to_key=CITY_NAME_TO_KEY,
         year_filter=year_filter,
         tag_filter=tag_filter,
         missing_tag_filter=missing_tag_filter,
-        approved_status=approved_only,
+        approval_filter=approval_filter,
+        recurring_filter=recurring_filter,
+        sort_filter=sort_filter,
         show_hidden=show_hidden,
         show_cancelled=show_cancelled,
         show_past_filter=show_past_filter,
         per_page=per_page,
         current_page=page,
         total_pages=total_pages,
+        total_count=total_count,
+        filtered_count=filtered_count,
+        range_start=range_start,
+        range_end=range_end,
+        pending_count=pending_count,
+        approved_count=approved_count,
+        recurring_count=recurring_count,
+        active_filters=active_filters,
+        clear_filters_url=url_for("admin_demo.demo_control", per_page=per_page),
         prev_page=prev_page,
-        next_page=next_page
+        next_page=next_page,
+        prev_url=page_url(prev_page) if prev_page else None,
+        next_url=page_url(next_page) if next_page else None,
     )
 
 

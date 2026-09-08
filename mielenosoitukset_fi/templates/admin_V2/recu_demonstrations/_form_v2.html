@@ -131,10 +131,12 @@
 
     <!-- Page intro -->
     <section class="introduction editor-hero admin-page-hero">
-        <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-        <p class="text-muted max-w-xl">{{ _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.') }}
-        </p>
-        <nav class="editor-section-nav" aria-label="{{ _('Lomakkeen osiot') }}">
+        <div class="admin-page-hero__content">
+            <p class="admin-page-hero__kicker">{{ _('Toistuvat mielenosoitukset') }}</p>
+            <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
+            <p class="text-muted max-w-xl">{{ _('Muokkaa sarjan perustietoja, toistuvuutta ja tulevia lapsimielenosoituksia samasta näkymästä.') }}</p>
+        </div>
+        <nav class="editor-section-nav admin-page-hero__nav" aria-label="{{ _('Lomakkeen osiot') }}">
             <a href="#basic-info">{{ _('Perustiedot') }}</a>
             <a href="#recurrence-settings">{{ _('Toistuvuus') }}</a>
             <a href="#location-info">{{ _('Sijainti') }}</a>
@@ -1011,12 +1013,12 @@
 
     <div id="overlay" class="modal-overlay"></div>
 
-    <div class="modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
-        <div class="modal-header">
+    <div class="legacy-admin-modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+        <div class="legacy-admin-modal__header">
             <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
             <button type="button" class="close" data-close-button><span aria-hidden="true">&times;</span></button>
         </div>
-        <div class="modal-body">
+        <div class="legacy-admin-modal__body">
             <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
             <input type="text" id="edit_link" class="form-control" readonly>
             <hr>
@@ -1027,7 +1029,7 @@
             </div>
             <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
         </div>
-        <div class="modal-footer">
+        <div class="legacy-admin-modal__footer">
             <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
         </div>
     </div>

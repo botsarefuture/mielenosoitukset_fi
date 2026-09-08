@@ -1,14 +1,16 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<div class="container mt-4">
-    <h2>{{ _('Vahvista poistaminen') }}</h2>
+<section class="admin-confirm admin-confirm--danger" aria-labelledby="confirm-title">
+    <span class="admin-confirm__icon"><i class="fas fa-building-circle-xmark" aria-hidden="true"></i></span>
+    <p class="admin-confirm__eyebrow">{{ _('Organisaatiot') }}</p>
+    <h1 id="confirm-title">{{ _('Vahvista poistaminen') }}</h1>
     <p>{{ _('Haluatko varmasti poistaa organisaation') }} <strong>{{ organization.name }}</strong>? {{ _('Toiminto on peruuttamaton.') }}</p>
 
-    <form method="POST" action="{{ url_for('admin_org.delete_organization', org_id=organization._id) }}">
+    <form class="admin-confirm__actions" method="POST" action="{{ url_for('admin_org.delete_organization', org_id=organization._id) }}">
         <input type="hidden" name="confirm_delete" value="true">
         <button type="submit" class="btn btn-danger">{{ _('Kyllä, poista') }}</button>
         <a href="{{ url_for('admin_org.organization_control') }}" class="btn btn-secondary">{{ _('Peruuta') }}</a>
     </form>
-</div>
+</section>
 {% endblock %}

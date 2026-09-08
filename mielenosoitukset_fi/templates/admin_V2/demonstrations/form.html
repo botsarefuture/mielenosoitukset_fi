@@ -152,17 +152,19 @@
 
     <!-- Page intro -->
     <section class="introduction editor-hero admin-page-hero">
-        <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
-        <p class="text-muted max-w-xl">{{ _('Muokkaa mielenosoituksen tietoja osio kerrallaan. Tallennuspainike pysyy saatavilla sivua selatessa.') }}
-        </p>
+        <div class="admin-page-hero__content">
+            <p class="admin-page-hero__kicker">{{ _('Mielenosoitukset') }}</p>
+            <h1 id="tabletitle" class="text-3xl font-bold">{{ title }}</h1>
+            <p class="text-muted max-w-xl">{{ _('Muokkaa mielenosoituksen tietoja osio kerrallaan. Tallennuspainike pysyy saatavilla sivua selatessa.') }}</p>
+        </div>
         {% if demo and demo._id %}
-        <p class="mt-3">
-            <a class="btn btn-outline-secondary" href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id) }}">
+        <div class="admin-page-hero__actions">
+            <a class="admin-page-hero__action" href="{{ url_for('admin_demo.edit_demo_translations', demo_id=demo._id) }}">
                 <i class="fas fa-language me-1"></i>{{ _('Avaa käännöstyökalu') }}
             </a>
-        </p>
+        </div>
         {% endif %}
-        <nav class="editor-section-nav" aria-label="{{ _('Lomakkeen osiot') }}">
+        <nav class="editor-section-nav admin-page-hero__nav" aria-label="{{ _('Lomakkeen osiot') }}">
             <a href="#basic-info">{{ _('Perustiedot') }}</a>
             <a href="#location-info">{{ _('Sijainti') }}</a>
             <a href="#organizer-info">{{ _('Järjestäjät') }}</a>
@@ -912,12 +914,12 @@
 
     <div id="overlay" class="modal-overlay"></div>
 
-    <div class="modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
-        <div class="modal-header">
+    <div class="legacy-admin-modal" id="editLinkModal" role="dialog" aria-labelledby="editLinkModalLabel" aria-hidden="true">
+        <div class="legacy-admin-modal__header">
             <h2 class="modal-title" id="editLinkModalLabel">{{ _('Muokkauslinkki') }}</h2>
             <button type="button" class="close" data-close-button><span aria-hidden="true">&times;</span></button>
         </div>
-        <div class="modal-body">
+        <div class="legacy-admin-modal__body">
             <p>{{ _('Kopioi alla oleva linkki ja jaa se tarvittaessa:') }}</p>
             <input type="text" id="edit_link" class="form-control" readonly>
             <hr>
@@ -928,7 +930,7 @@
             </div>
             <button type="button" class="btn btn-secondary" id="send_email_btn">{{ _('Lähetä') }}</button>
         </div>
-        <div class="modal-footer">
+        <div class="legacy-admin-modal__footer">
             <button type="button" class="btn btn-secondary" data-close-button>{{ _('Sulje') }}</button>
         </div>
     </div>

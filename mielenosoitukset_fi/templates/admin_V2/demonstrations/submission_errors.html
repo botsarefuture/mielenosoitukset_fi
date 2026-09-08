@@ -1,13 +1,14 @@
 {% extends 'admin_base.html' %}
 
 {% block main_content %}
-<div class="container py-4">
-  <div class="d-flex align-items-center justify-content-between mb-3">
+<div class="admin-page">
+  <header class="admin-page-header">
     <div>
-      <h1 class="h3 mb-1">{{ _('Ilmoitusvirheet') }}</h1>
-      <p class="text-muted mb-0">{{ _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.') }}</p>
+      <p class="admin-page-header__kicker">{{ _('Järjestelmä') }}</p>
+      <h1>{{ _('Ilmoitusvirheet') }}</h1>
+      <p>{{ _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.') }}</p>
     </div>
-  </div>
+  </header>
 
   <div class="row g-3 mb-4">
     <div class="col-12 col-xl-8">
@@ -98,7 +99,7 @@
     </div>
   </div>
 
-  <div class="table-responsive shadow-sm rounded bg-white">
+  <div class="table-responsive admin-data-view admin-workspace-table">
     <table class="table table-hover mb-0">
       <thead class="table-light">
         <tr>
@@ -153,7 +154,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="6" class="text-center text-muted py-4">{{ _('Ei kirjattuja virheitä.') }}</td>
+          <td colspan="6" class="admin-empty-state">{{ _('Ei kirjattuja virheitä.') }}</td>
         </tr>
         {% endfor %}
       </tbody>

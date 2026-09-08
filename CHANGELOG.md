@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The demonstration submission page's viewport-wide hero now stays horizontally centered inside its narrower form container instead of appearing shifted to the right.
 * City-scoped administrators can now see the accept, edit, view, command-center, and screenshot/freeze actions for demonstrations in their managed cities on the admin demonstration list; action visibility mirrors the actual per-city permission grants instead of being hidden by global permission checks.
 * City-scoped administrators now get an enabled "Uusi mielenosoitus" button on the admin demonstration list when they hold a `CREATE_DEMO` grant for any managed city (previously the button was globally gated, so city admins always saw the disabled variant and could not create new demonstrations from the list).
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
@@ -12,6 +13,14 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The demonstration admin list now uses permission-scoped server-side filtering, deterministic pagination, preserved URL state, explicit result totals, removable filter chips, page-size controls, and a reusable basic/advanced filter layout instead of mixing page-local filtering with paginated results.
+* User creation and editing now present account details, roles, global permissions, city scope, and city permissions in the shared admin form and modal hierarchy, with consistent guidance, required markers, accessible field relationships, and theme-aware controls.
+* Organization creation and editing, member invitation modals, and change-suggestion review now use the shared admin hero, form, modal, selection, sticky-action, and light/dark token contracts.
+* Demonstration and recurring-demonstration editors now share the admin form contract for section cards, fields, guidance, focus states, and responsive sticky save actions; their page heroes also keep kicker, title, and description together as one content unit.
+* Admin dashboard, case detail, background-job list, and background-job detail views now use the shared theme-aware surfaces, typography, metadata panels, controls, status treatments, and compact headers instead of page-global or light-only palettes.
+* Developer requests, API-key requests, submission errors, demonstration audits, magic links, and UI translation workflows now share the same compact page headers, filter panels, collection surfaces, table treatment, and empty states; UI translation sync rows also use the standard accessible bulk-selection pattern.
+* The administration UI now has a documented, enforceable design standard: every full admin page uses the shared shell, light/dark theme selection is applied before first paint, legacy color tokens resolve through one theme-aware palette, collection views share consistent cards/lists/tables, and campaign and confirmation workflows no longer use separate public or standalone layouts.
+* Admin multi-select tables now use unmistakably square checkboxes, a persistent selection explanation/count, accessible row state, and a full-row selected treatment; the demonstration list's select-all behavior ignores disabled and filtered-out rows.
 * MongoDB connection logs no longer expose credentials embedded in the connection URI.
 * Usernames and email addresses are now normalized to lowercase and protected by case-insensitive unique database indexes, preventing accounts such as `emilia` and `Emilia` or duplicate mixed-case emails.
 * `Admin` and `@Admin` identities are now reserved for internal use; affected accounts can be forced through a unique username and display-name change before continuing to use the service, with an official account notification.
@@ -23,6 +32,7 @@
 * The notification bell is now a circular icon button that matches the theme toggle: the bell icon is centered, gains a primary-blue tint and subtle lift on hover/open with a bell-ring animation, and shrinks slightly on click for tactile feedback.
 * City management now uses centered overview icons and metrics, a clearer aligned filter-and-action toolbar, and more polished city rows with centered status and count controls on desktop and mobile.
 * Admin management views now use reusable hero and summary-card contracts across the dashboard, users, organizations, demonstrations, translations, statistics, governance, jobs, logs, cases, and editing workflows, keeping typography, spacing, actions, icon/value alignment, responsive behavior, and distinct light/dark treatments consistent instead of duplicating page-specific designs.
+* Admin cards, forms, tables, modals, dropdowns, tabs, pagination, labels, muted copy, buttons, borders, focus states, and content surfaces now follow the same theme-aware component contract across legacy and current management views.
 * Admin logs now have a Finnish, searchable log center with clearly linked activity, demonstration, permission, and technical audit sources; persistent sidebar navigation; event categories; compact pagination; collapsed technical details; and display-time redaction of passwords, tokens, authorization data, cookies, and CSRF values while preserving GDPR-required access logging.
 * Admin governance is now gathered under a consistent `/admin/governance/` panel for board clearances, their audit trail, and city management; the responsive sidebar is grouped into clear content, user, governance, and system sections and remains usable as an offcanvas menu on mobile; legacy board UI links redirect into the panel; clearances persist in MongoDB across restarts and are enforced before granting `global_admin`; and city management loads counts with two aggregate queries, prioritizes relevant cities, supports visible-row bulk actions, and provides clearer unsaved-state feedback and risk warnings.
 * City-scoped administrators now use a visible `city_admin` role, enter the admin area through their scoped demonstration view, and automatically receive limited organization listing, viewing, creation, editing, and invitation access.
@@ -46,6 +56,7 @@
 * Translators who sign up for the first time now receive a welcome email explaining the demonstration and UI translation work and linking to the translation workspace.
 
 ### Fixed
+* Fixed light-mode admin text resolving against the operating-system color scheme, Bootstrap modals being overridden by a legacy custom `.modal` implementation, hardcoded modal text colors, and legacy light-only surfaces leaking into dashboard, case, list, table, and form views.
 
 * City-scoped administrators can now use all demo permissions granted to them (edit, command center, edit history, editor management, freeze/unfreeze, screenshot, suggestion review, and cancellation) but only for demonstrations in their assigned cities; the permission gates previously blocked them before the city-scope check could run.
 * City-scoped administrators can no longer edit or apply suggestion changes to verified organizations; they can still create new organizations and edit unverified ones. Forged edit, membership, invite, and access-level requests against verified organizations are now blocked server-side.

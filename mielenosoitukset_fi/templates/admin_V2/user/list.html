@@ -223,37 +223,27 @@
 
   .toast { min-width: 250px; }
 
-  #createUserModal {
-    --create-surface: light-dark(#ffffff, #20252d);
-    --create-surface-muted: light-dark(#f6f8fb, #292f39);
-    --create-border: light-dark(#dce3ec, #424b59);
-    --create-text: light-dark(#172033, #f2f5fa);
-    --create-muted: light-dark(#647083, #b7c0ce);
-  }
-
   #createUserModal .modal-content {
     overflow: hidden;
-    border: 1px solid var(--create-border);
+    border: 1px solid var(--admin-workspace-border);
     border-radius: 1.2rem;
-    color: var(--create-text);
-    background: var(--create-surface);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface);
     box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
   }
 
   #createUserModal .modal-header {
     align-items: flex-start;
     padding: 1.25rem 1.35rem;
-    border-bottom: 1px solid rgba(255,255,255,.14);
-    color: #fff;
-    background:
-      radial-gradient(circle at 92% 5%, rgba(255, 102, 0, .4), transparent 12rem),
-      linear-gradient(135deg, #00236e, #0033a0 72%, #164fc2);
+    border-bottom: 1px solid var(--admin-workspace-border);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface-muted);
   }
 
-  #createUserModal .modal-title { color: #fff; font-size: 1.35rem; }
-  #createUserModal .modal-header p { margin: .3rem 0 0; color: rgba(255,255,255,.76); font-size: .84rem; }
-  #createUserModal .btn-close { filter: invert(1) grayscale(1) brightness(2); }
-  #createUserModal .modal-body { padding: 1.25rem 1.35rem; color: var(--create-text); }
+  #createUserModal .modal-title { color: var(--admin-workspace-text); font-size: 1.35rem; }
+  #createUserModal .modal-header p { margin: .3rem 0 0; color: var(--admin-workspace-muted); font-size: .84rem; }
+  #createUserModal .btn-close { filter: light-dark(none, invert(1)); }
+  #createUserModal .modal-body { padding: 1.25rem 1.35rem; color: var(--admin-workspace-text); }
 
   .create-user-note {
     display: flex;
@@ -261,9 +251,9 @@
     align-items: flex-start;
     margin-bottom: 1rem;
     padding: .9rem 1rem;
-    border: 1px solid light-dark(#f4d6bd, #68452e);
+    border: 1px solid var(--admin-workspace-orange);
     border-radius: .85rem;
-    color: var(--create-text);
+    color: var(--admin-workspace-text);
     background: var(--users-orange-soft);
     font-size: .82rem;
     line-height: 1.55;
@@ -284,7 +274,7 @@
   .create-user-field label {
     display: block;
     margin-bottom: .35rem;
-    color: var(--create-text);
+    color: var(--admin-workspace-text);
     font-size: .78rem;
     font-weight: 800;
   }
@@ -292,16 +282,16 @@
   .create-user-field small {
     display: block;
     margin-top: .3rem;
-    color: var(--create-muted);
+    color: var(--admin-workspace-muted);
     font-size: .72rem;
   }
 
   #createUserModal .form-control,
   #createUserModal .form-select {
-    border-color: var(--create-border);
+    border-color: var(--admin-workspace-border);
     border-radius: .7rem;
-    color: var(--create-text);
-    background-color: var(--create-surface-muted);
+    color: var(--admin-workspace-text);
+    background-color: var(--admin-workspace-surface-muted);
   }
 
   #createUserModal .form-control:focus,
@@ -311,23 +301,23 @@
   }
 
   #createUserModal .is-invalid {
-    border-color: light-dark(#c92a2a, #ff8787);
+    border-color: var(--admin-workspace-danger);
   }
 
   .create-user-status {
     min-height: 1.25rem;
     margin-top: .8rem;
-    color: var(--create-muted);
+    color: var(--admin-workspace-muted);
     font-size: .78rem;
   }
 
-  .create-user-status.error { color: light-dark(#c92a2a, #ff8787); }
+  .create-user-status.error { color: var(--admin-workspace-danger); }
 
   #createUserModal .modal-footer {
     gap: .6rem;
     margin-top: 1rem;
     padding: 1rem 0 0;
-    border-top: 1px solid var(--create-border);
+    border-top: 1px solid var(--admin-workspace-border);
   }
 
   .create-user-cancel,
@@ -344,54 +334,42 @@
   }
 
   .create-user-cancel {
-    border: 1px solid var(--create-border);
-    color: var(--create-text);
-    background: var(--create-surface-muted);
+    border: 1px solid var(--admin-workspace-border);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface-muted);
   }
 
   .create-user-submit {
-    border: 1px solid var(--users-blue);
+    border: 1px solid var(--admin-workspace-blue);
     color: #fff !important;
-    background: light-dark(#0033a0, #315ea8);
+    background: var(--admin-workspace-blue);
   }
 
   .create-user-submit:hover,
   .create-user-submit:focus {
-    border-color: light-dark(#00267a, #8bb1ff);
+    border-color: var(--admin-workspace-blue-dark);
     color: #fff !important;
-    background: light-dark(#00267a, #416fbd);
+    background: var(--admin-workspace-blue-dark);
   }
 
   .create-user-submit i { color: inherit; }
   .create-user-submit:disabled { opacity: .65; cursor: wait; }
 
-  .user-workflow-modal {
-    --workflow-surface: light-dark(#ffffff, #20252d);
-    --workflow-surface-muted: light-dark(#f6f8fb, #292f39);
-    --workflow-border: light-dark(#dce3ec, #424b59);
-    --workflow-text: light-dark(#172033, #f2f5fa);
-    --workflow-muted: light-dark(#647083, #b7c0ce);
-    --workflow-danger: light-dark(#b42318, #ff9b93);
-    --workflow-danger-soft: light-dark(#fff1f0, #3c2022);
-    --workflow-warning: light-dark(#9a4d00, #ffd098);
-    --workflow-warning-soft: light-dark(#fff4e6, #3d2b1c);
-  }
-
   .user-workflow-modal .modal-content {
     overflow: hidden;
-    border: 1px solid var(--workflow-border);
+    border: 1px solid var(--admin-workspace-border);
     border-radius: 1.15rem;
-    color: var(--workflow-text);
-    background: var(--workflow-surface);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface);
     box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
   }
 
   .user-workflow-modal .modal-header,
   .user-workflow-modal .modal-body,
   .user-workflow-modal .modal-footer {
-    color: var(--workflow-text);
-    background: var(--workflow-surface);
-    border-color: var(--workflow-border);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface);
+    border-color: var(--admin-workspace-border);
   }
 
   .user-workflow-modal .modal-header {
@@ -417,49 +395,49 @@
   }
 
   .workflow-heading-icon.warning {
-    color: var(--workflow-warning);
-    background: var(--workflow-warning-soft);
+    color: var(--admin-workspace-orange);
+    background: var(--admin-workspace-orange-soft);
   }
 
   .workflow-heading-icon.danger {
-    color: var(--workflow-danger);
-    background: var(--workflow-danger-soft);
+    color: var(--admin-workspace-danger);
+    background: var(--admin-workspace-danger-soft);
   }
 
-  .workflow-heading h5 { margin: 0; color: var(--workflow-text); font-size: 1.08rem; }
-  .workflow-heading p { margin: .25rem 0 0; color: var(--workflow-muted); font-size: .78rem; line-height: 1.5; }
+  .workflow-heading h5 { margin: 0; color: var(--admin-workspace-text); font-size: 1.08rem; }
+  .workflow-heading p { margin: .25rem 0 0; color: var(--admin-workspace-muted); font-size: .78rem; line-height: 1.5; }
   .user-workflow-modal .btn-close { filter: light-dark(none, invert(1) grayscale(1) brightness(2)); }
   .user-workflow-modal .modal-body { padding: 1.2rem 1.25rem; }
   .user-workflow-modal .modal-footer { gap: .55rem; padding: .9rem 1.25rem; }
 
   .workflow-note {
     padding: .85rem .95rem;
-    border: 1px solid var(--workflow-border);
+    border: 1px solid var(--admin-workspace-border);
     border-radius: .8rem;
-    color: var(--workflow-text);
-    background: var(--workflow-surface-muted);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface-muted);
     font-size: .84rem;
     line-height: 1.6;
   }
 
   .workflow-note.warning {
-    border-color: light-dark(#f4d6bd, #68452e);
-    background: var(--workflow-warning-soft);
+    border-color: var(--admin-workspace-orange);
+    background: var(--admin-workspace-orange-soft);
   }
 
   .workflow-confirm-label {
     display: block;
     margin: 1rem 0 .35rem;
-    color: var(--workflow-text);
+    color: var(--admin-workspace-text);
     font-size: .78rem;
     font-weight: 800;
   }
 
   .user-workflow-modal .form-control {
-    border-color: var(--workflow-border);
+    border-color: var(--admin-workspace-border);
     border-radius: .7rem;
-    color: var(--workflow-text);
-    background: var(--workflow-surface-muted);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface-muted);
   }
 
   .user-workflow-modal .form-control:focus {
@@ -470,12 +448,12 @@
   .workflow-status {
     min-height: 1.25rem;
     margin-top: .7rem;
-    color: var(--workflow-muted);
+    color: var(--admin-workspace-muted);
     font-size: .78rem;
   }
 
-  .workflow-status.warning { color: var(--workflow-warning); }
-  .workflow-status.danger { color: var(--workflow-danger); }
+  .workflow-status.warning { color: var(--admin-workspace-orange); }
+  .workflow-status.danger { color: var(--admin-workspace-danger); }
 
   .workflow-button {
     display: inline-flex;
@@ -484,10 +462,10 @@
     justify-content: center;
     min-height: 2.5rem;
     padding: .58rem .82rem;
-    border: 1px solid var(--workflow-border);
+    border: 1px solid var(--admin-workspace-border);
     border-radius: .68rem;
-    color: var(--workflow-text);
-    background: var(--workflow-surface-muted);
+    color: var(--admin-workspace-text);
+    background: var(--admin-workspace-surface-muted);
     font-size: .8rem;
     font-weight: 800;
   }
@@ -499,13 +477,13 @@
   }
 
   .workflow-button-warning {
-    border-color: var(--workflow-warning);
+    border-color: var(--admin-workspace-orange);
     color: light-dark(#fff, #201306);
     background: light-dark(#b85c00, #ffd098);
   }
 
   .workflow-button-danger {
-    border-color: var(--workflow-danger);
+    border-color: var(--admin-workspace-danger);
     color: #fff;
     background: light-dark(#b42318, #9f342d);
   }
@@ -514,7 +492,7 @@
 
   .login-history-status {
     padding: 2rem 1rem;
-    color: var(--workflow-muted);
+    color: var(--admin-workspace-muted);
     text-align: center;
   }
 
@@ -526,15 +504,15 @@
   .login-history-table th,
   .login-history-table td {
     padding: .75rem;
-    border-bottom: 1px solid var(--workflow-border);
-    color: var(--workflow-text);
+    border-bottom: 1px solid var(--admin-workspace-border);
+    color: var(--admin-workspace-text);
     font-size: .8rem;
     vertical-align: top;
   }
 
   .login-history-table th {
-    color: var(--workflow-muted);
-    background: var(--workflow-surface-muted);
+    color: var(--admin-workspace-muted);
+    background: var(--admin-workspace-surface-muted);
     font-size: .68rem;
     letter-spacing: .06em;
     text-transform: uppercase;
@@ -556,13 +534,13 @@
   }
 
   .login-history-result.failed {
-    color: var(--workflow-danger);
-    background: var(--workflow-danger-soft);
+    color: var(--admin-workspace-danger);
+    background: var(--admin-workspace-danger-soft);
   }
 
   .login-history-agent {
     margin-top: .25rem;
-    color: var(--workflow-muted);
+    color: var(--admin-workspace-muted);
     font-size: .68rem;
   }
 
@@ -593,7 +571,7 @@
 {% block main_content %}
 <div class="users-page">
   <header class="users-hero admin-page-hero">
-    <div>
+    <div class="admin-page-hero__content">
       <p class="users-kicker admin-page-hero__kicker">{{ _('Käyttäjähallinta') }}</p>
       <h1>{{ _('Käyttäjät') }}</h1>
       <p>{{ _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.') }}</p>

@@ -1,5 +1,5 @@
 <!-- Force Password Modal -->
-<div class="modal fade user-workflow-modal" id="forcePwdModal" tabindex="-1" aria-labelledby="forcePwdModalLabel" aria-hidden="true">
+<div class="modal fade admin-modal user-workflow-modal" id="forcePwdModal" tabindex="-1" aria-labelledby="forcePwdModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -26,14 +26,14 @@
   </div>
 </div>
 <!-- Delete User Modal -->
-<div class="modal fade user-workflow-modal" id="deleteModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade admin-modal user-workflow-modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <div class="workflow-heading">
           <span class="workflow-heading-icon danger"><i class="fas fa-user-xmark" aria-hidden="true"></i></span>
           <div>
-            <h5 class="modal-title">{{ _('Poista käyttäjä') }}</h5>
+            <h5 class="modal-title" id="deleteModalLabel">{{ _('Poista käyttäjä') }}</h5>
             <p>{{ _('Poistamista ei voi perua. Vahvista toiminto huolellisesti.') }}</p>
           </div>
         </div>
@@ -168,12 +168,13 @@
 </script>
 
 <!-- Create User Modal -->
-<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade admin-modal" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <div>
-          <h5 class="modal-title"><i class="fas fa-user-plus me-2" aria-hidden="true"></i>{{ _('Luo uusi käyttäjä') }}</h5>
+          <p class="admin-modal-kicker">{{ _('Käyttäjähallinta') }}</p>
+          <h2 class="modal-title" id="createUserModalLabel"><i class="fas fa-user-plus me-2" aria-hidden="true"></i>{{ _('Luo uusi käyttäjä') }}</h2>
           <p>{{ _('Uusi käyttäjä saa kirjautumistiedot sähköpostitse ja vaihtaa salasanan ensimmäisellä kirjautumisella.') }}</p>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
@@ -188,26 +189,26 @@
           </div>
         </div>
 
-        <form id="createUserForm" method="POST" action="{{ url_for('admin_user.create_user') }}">
+        <form id="createUserForm" class="admin-form" method="POST" action="{{ url_for('admin_user.create_user') }}">
           <div class="create-user-grid">
-            <div class="create-user-field create-user-field-wide">
-              <label for="create-user-email">{{ _('Sähköposti') }}</label>
-              <input type="email" class="form-control" id="create-user-email" name="email" autocomplete="off" required>
-              <small>{{ _('Kirjautumistiedot lähetetään tähän osoitteeseen.') }}</small>
+            <div class="create-user-field admin-field create-user-field-wide">
+              <label for="create-user-email">{{ _('Sähköposti') }} <span class="admin-required" aria-hidden="true">*</span></label>
+              <input type="email" class="form-control" id="create-user-email" name="email" autocomplete="email" required aria-required="true" aria-describedby="create-user-email-help">
+              <small id="create-user-email-help">{{ _('Kirjautumistiedot lähetetään tähän osoitteeseen.') }}</small>
             </div>
-            <div class="create-user-field">
-              <label for="create-user-username">{{ _('Käyttäjänimi') }}</label>
-              <input type="text" class="form-control" id="create-user-username" name="username" autocomplete="off" required>
-              <small>{{ _('Ehdotetaan automaattisesti sähköpostista.') }}</small>
+            <div class="create-user-field admin-field">
+              <label for="create-user-username">{{ _('Käyttäjänimi') }} <span class="admin-required" aria-hidden="true">*</span></label>
+              <input type="text" class="form-control" id="create-user-username" name="username" autocomplete="username" required aria-required="true" aria-describedby="create-user-username-help">
+              <small id="create-user-username-help">{{ _('Ehdotetaan automaattisesti sähköpostista.') }}</small>
             </div>
-            <div class="create-user-field">
+            <div class="create-user-field admin-field">
               <label for="create-user-displayname">{{ _('Näyttönimi') }}</label>
               <input type="text" class="form-control" id="create-user-displayname" name="displayname" autocomplete="off">
               <small>{{ _('Näkyy käyttäjän nimenä hallinnassa.') }}</small>
             </div>
-            <div class="create-user-field create-user-field-wide">
-              <label for="create-user-role">{{ _('Rooli') }}</label>
-              <select class="form-select" id="create-user-role" name="role" required>
+            <div class="create-user-field admin-field create-user-field-wide">
+              <label for="create-user-role">{{ _('Rooli') }} <span class="admin-required" aria-hidden="true">*</span></label>
+              <select class="form-select" id="create-user-role" name="role" required aria-required="true" aria-describedby="create-user-role-help">
                 <option value="user">{{ _('Käyttäjä') }}</option>
                 <option value="translator">{{ _('Kääntäjä') }}</option>
                 {% if can_manage_scope_grants %}
@@ -218,9 +219,9 @@
               <small id="create-user-role-help">{{ _('Tavallinen käyttäjä saa perustilin ilman ylläpito-oikeuksia.') }}</small>
             </div>
             {% if can_manage_scope_grants %}
-            <div class="create-user-field create-user-field-wide d-none" id="create-user-city-scope">
+            <div class="create-user-field admin-field create-user-field-wide d-none" id="create-user-city-scope">
               <label for="create-user-cities">{{ _('Kaupunkiadminin paikkakunnat') }}</label>
-              <select class="form-select" id="create-user-cities" name="admin_scope_cities[]" multiple size="7">
+              <select class="form-select" id="create-user-cities" name="admin_scope_cities[]" multiple size="7" aria-describedby="create-user-cities-help">
                 {% for city in enabled_city_list %}
                 <option value="{{ city_name_to_key[city] }}">{{ city }}</option>
                 {% endfor %}
@@ -230,7 +231,7 @@
                 {% endif %}
                 {% endfor %}
               </select>
-              <small>{{ _('Valitse vähintään yksi paikkakunta. Kaupunkiadmin saa niiden mielenosoitusten käsittelyoikeudet.') }}</small>
+              <small id="create-user-cities-help">{{ _('Valitse vähintään yksi paikkakunta. Kaupunkiadmin saa niiden mielenosoitusten käsittelyoikeudet.') }}</small>
             </div>
             {% endif %}
           </div>
@@ -248,7 +249,7 @@
 </div>
 
 <!-- Login History Modal -->
-<div class="modal fade user-workflow-modal" id="loginHistoryModal" tabindex="-1" aria-labelledby="loginHistoryModalLabel" aria-hidden="true">
+<div class="modal fade admin-modal user-workflow-modal" id="loginHistoryModal" tabindex="-1" aria-labelledby="loginHistoryModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">

@@ -1,17 +1,12 @@
 {% extends 'admin_base.html' %}
 
-{% block styles %}
-<style>
-  .token-actions button { margin-right: 0.5rem; }
-</style>
-{% endblock %}
-
 {% block main_content %}
-<div class="container-fluid">
-  <h2 class="mb-4">API-avainten pyynnöt</h2>
-  <p class="text-muted">Hyväksy tai hylkää käyttäjien tekemät API-avainten avauspyynnöt.</p>
+<div class="admin-page">
+  <header class="admin-page-header">
+    <div><p class="admin-page-header__kicker">{{ _('Käyttäjät ja hallinto') }}</p><h1>API-avainten pyynnöt</h1><p>Hyväksy tai hylkää käyttäjien tekemät API-avainten avauspyynnöt.</p></div>
+  </header>
 
-  <div class="table-responsive">
+  <div class="table-responsive admin-data-view admin-workspace-table">
     <table class="table table-striped align-middle">
       <thead>
         <tr>
@@ -29,7 +24,7 @@
           <td>{{ r.user.email }}</td>
           <td>{{ r.requested_at or '' }}</td>
           <td>{{ r.status|default('pending') }}</td>
-          <td class="text-end token-actions">
+          <td class="text-end">
             {% if r.status == 'pending' %}
             <button class="btn btn-sm btn-success" data-id="{{ r._id }}" data-action="approve">
               <i class="fa-solid fa-check"></i> Hyväksy
@@ -43,7 +38,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="text-center text-muted">Ei pyyntöjä.</td></tr>
+        <tr><td colspan="5" class="admin-empty-state">Ei pyyntöjä.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -141,7 +141,7 @@
 }
     </style>
     {% block styles %}{% endblock %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260908-admin-ui-13') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/workspace.css', v='20260908-admin-ui-14') }}">
 </head>
 
 <body class="min-vh-100 d-flex flex-column bg-body-tertiary">
@@ -592,6 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
     </script>
+    <script src="{{ url_for('static', filename='js/admin_workspace.js', v='20260908-admin-ui-1') }}" defer></script>
     {% block scripts %}{% endblock %}
     <!-- Logout confirmation modal -->
 <div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmLabel" aria-hidden="true">

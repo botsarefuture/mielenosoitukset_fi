@@ -43,7 +43,12 @@ from mielenosoitukset_fi.utils.variables import CITY_LIST
 from mielenosoitukset_fi.utils.cities import CITY_NAME_TO_KEY, normalize_city_key
 from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
-from mielenosoitukset_fi.utils.wrappers import admin_required, has_demo_permission, permission_required
+from mielenosoitukset_fi.utils.wrappers import (
+    admin_required,
+    has_demo_approval_permission,
+    has_demo_permission,
+    permission_required,
+)
 from mielenosoitukset_fi.users.models import User
 from .utils import (
     mongo,
@@ -2810,6 +2815,7 @@ def create_demo():
         city_list=CITY_LIST,
         demo_edit_access={"explicit_editors": [], "organizations": []},
         show_demo_access_panel=False,
+        can_approve_demo=has_demo_approval_permission(current_user),
         translation_locales=_supported_demo_translation_locales(),
         translation_language_names=_translation_language_names(),
         default_demo_language=current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
@@ -2866,6 +2872,7 @@ def edit_demo(demo_id):
         case_id=case_id,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=show_demo_access_panel,
+        can_approve_demo=has_demo_approval_permission(current_user, demo_data),
         translation_locales=_supported_demo_translation_locales(),
         translation_language_names=_translation_language_names(),
         default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
@@ -3250,6 +3257,7 @@ def edit_demo_with_token(token):
         edit_demo_with_token=True,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=False,
+        can_approve_demo=False,
         translation_locales=_supported_demo_translation_locales(),
         translation_language_names=_translation_language_names(),
         default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
@@ -3361,6 +3369,14 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
     from mielenosoitukset_fi.utils.admin.demonstration import fix_organizers
 
     demonstration_data = fix_organizers(demonstration_data)
+
+    approval_scope_demo = demonstration_data
+    if is_edit and demo_id:
+        approval_scope_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
+    if not has_demo_approval_permission(current_user, approval_scope_demo):
+        demonstration_data["approved"] = bool(
+            approval_scope_demo and approval_scope_demo.get("approved")
+        )
     
     if demo_id and demonstration_data.get("_id") is None:
         demonstration_data["_id"] = ObjectId(demo_id)

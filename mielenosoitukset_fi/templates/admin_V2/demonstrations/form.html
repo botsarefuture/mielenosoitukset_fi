@@ -807,21 +807,25 @@
         </script>
 
         <!-- Approval Section -->
-        {% if current_user.is_authenticated %}
+        {% if can_approve_demo|default(false) %}
         <section id="approval-info" class="form-section dashboard-panel mb-8">
-            <div class="form-group" id="approval-container">
-                <label for="approved">{{ _('Hyväksytty') }}</label>
-                <div>
-                    <input type="checkbox" id="approved" name="approved" class="form-check-input" {% if demo and
-                        demo.approved %}checked{% endif %}>
-                    <span id="approval-status" class="status-text">{% if demo and demo.approved %}{{ _('Kyllä') }}{%
-                        else %}{{ _('Ei') }}{% endif %}</span>
-                </div>
+            <div class="form-group admin-boolean-field" id="approval-container">
+                <label class="admin-check-row" for="approved">
+                    <input type="checkbox" id="approved" name="approved" class="form-check-input"
+                        data-admin-boolean aria-describedby="approval-help approval-status"
+                        {% if demo and demo.approved %}checked{% endif %}>
+                    <span class="admin-check-row__content">
+                        <strong class="admin-check-row__label">{{ _('Hyväksytty') }}</strong>
+                        <span id="approval-help" class="admin-check-row__help">{{ _('Hyväksytty mielenosoitus voidaan näyttää julkisissa näkymissä.') }}</span>
+                        <span id="approval-status" class="admin-check-row__status" aria-live="polite"
+                            data-true-label="{{ _('Kyllä') }}" data-false-label="{{ _('Ei') }}">{% if demo and demo.approved %}{{ _('Kyllä') }}{% else %}{{ _('Ei') }}{% endif %}</span>
+                    </span>
+                </label>
             </div>
         </section>
         {% else %}
         <input type="hidden" id="approved" name="approved"
-            value="{{ demo.approved if demo and demo.approved else '' }}">
+            value="{{ 'on' if demo and demo.approved else '' }}">
         {% endif %}
 
         <!-- Submit Section -->

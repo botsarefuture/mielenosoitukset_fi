@@ -575,8 +575,8 @@ main.flex-grow-1 :is(label, .form-label, .col-form-label) {
   font-weight: 750;
 }
 
-main.flex-grow-1 :is(.form-control, .form-select, .form-check-input),
-.modal :is(.form-control, .form-select, .form-check-input) {
+main.flex-grow-1 :is(.form-control, .form-select),
+.modal :is(.form-control, .form-select) {
   border-color: var(--admin-workspace-border);
   border-radius: .7rem;
   color: var(--admin-workspace-text);
@@ -590,10 +590,105 @@ main.flex-grow-1 :is(.form-control, .form-select)::placeholder,
   opacity: .8;
 }
 
-main.flex-grow-1 :is(.form-control, .form-select, .form-check-input):focus,
-.modal :is(.form-control, .form-select, .form-check-input):focus {
+main.flex-grow-1 :is(.form-control, .form-select):focus,
+.modal :is(.form-control, .form-select):focus {
   border-color: var(--admin-workspace-blue);
   box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
+}
+
+/* Boolean controls keep their native meaning instead of inheriting text-field
+   geometry. Wrapping them in an admin-check-row provides a 44px click target. */
+:is(main.flex-grow-1, .modal) .form-check-input {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  border: 2px solid var(--admin-workspace-border);
+  color: var(--admin-workspace-text);
+  background-color: var(--admin-workspace-surface);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+:is(main.flex-grow-1, .modal) input[type="checkbox"].form-check-input {
+  border-radius: .28rem;
+}
+
+:is(main.flex-grow-1, .modal) input[type="radio"].form-check-input {
+  border-radius: 50%;
+}
+
+:is(main.flex-grow-1, .modal) .form-check-input:checked,
+:is(main.flex-grow-1, .modal) .form-check-input:indeterminate {
+  border-color: var(--admin-workspace-primary-bg);
+  background-color: var(--admin-workspace-primary-bg);
+}
+
+:is(main.flex-grow-1, .modal) .form-check-input:focus-visible {
+  border-color: var(--admin-workspace-primary-bg);
+  outline: 0;
+  box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .16), rgba(139, 177, 255, .24));
+}
+
+:is(main.flex-grow-1, .modal) .form-check-input:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.admin-check-row {
+  display: grid;
+  box-sizing: border-box;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: .75rem;
+  align-items: start;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: .7rem .8rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .8rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+  cursor: pointer;
+}
+
+.admin-check-row:hover {
+  border-color: var(--admin-workspace-blue);
+  background: var(--admin-workspace-blue-soft);
+}
+
+.admin-check-row:has(.form-check-input:focus-visible) {
+  border-color: var(--admin-workspace-primary-bg);
+  box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .16));
+}
+
+.admin-check-row:has(.form-check-input:disabled) {
+  cursor: not-allowed;
+  opacity: .72;
+}
+
+.admin-check-row__content {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.admin-check-row__label {
+  color: var(--admin-workspace-text);
+  font-size: .9rem;
+  line-height: 1.25;
+}
+
+.admin-check-row__help,
+.admin-check-row__status {
+  color: var(--admin-workspace-muted);
+  font-size: .78rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.admin-check-row__status {
+  color: var(--admin-workspace-blue);
+  font-weight: 800;
 }
 
 main.flex-grow-1 .btn,

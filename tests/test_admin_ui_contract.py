@@ -183,3 +183,26 @@ def test_secondary_editors_use_shared_form_primitives():
     assert "admin-code-block" in ui_editor
     assert "admin-panel-inset" in ui_editor
     assert 'class="admin-form"' in ui_editor
+
+
+def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
+    workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
+        encoding="utf-8"
+    )
+    demo_form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html"
+    ).read_text(encoding="utf-8")
+    recurring_form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+
+    assert ":is(.form-control, .form-select, .form-check-input)" not in workspace
+    assert 'input[type="checkbox"].form-check-input' in workspace
+    assert 'input[type="radio"].form-check-input' in workspace
+    assert ".form-check-input:indeterminate" in workspace
+    assert ".form-check-input:focus-visible" in workspace
+    for template in (demo_form, recurring_form):
+        assert "{% if can_approve_demo|default(false) %}" in template
+        assert 'class="admin-check-row"' in template
+        assert "data-admin-boolean" in template
+        assert 'aria-live="polite"' in template

@@ -1,18 +1,38 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-  <section class="manual-section">
-    <h2>Tilastot & raportit</h2>
-    <div class="manual-warning">
-      ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään pian.
-    </div>
-    <p>Täältä voit tarkastella sivuston tilastoja ja käyttäjäraportteja.</p>
-    <ul>
-      <li>Käyttäjämäärien seuranta</li>
-      <li>Viimeisimmät kirjautumiset</li>
-      <li>Raportit ja kaaviot</li>
-    </ul>
-  </section>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Tilastot &amp; analytiikka
 </div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-chart-line me-2"></i>Tilastot &amp; analytiikka</h2>
+  <p>
+    Tilasto-osio tarjoaa näkymiä käyttäjistä, organisaatioista, mielenosoituksista ja sivuston käytöstä.
+    Pääsivut löytyvät osoitteista <strong>/admin/stats</strong>, <strong>/admin/demo_analytics</strong> ja
+    <strong>/admin/analytics/overall_24h</strong> (vain <code>VIEW_ANALYTICS</code>-oikeudella).
+  </p>
+
+  <h3>Perustilastot (stats)</h3>
+  <ul>
+    <li>Käyttäjien, organisaatioiden ja mielenosoitusten kokonaismäärät.</li>
+    <li>Toiminnan jakautuminen eri kategorioihin.</li>
+    <li>Yhteenveto palveluun kirjautumisista.</li>
+  </ul>
+
+  <h3>Analytiikka</h3>
+  <ul>
+    <li><strong>Yleisanalytiikka:</strong> näkymät koko palvelun käytöstä.</li>
+    <li><strong>Mielenosoituskohtainen analytiikka:</strong> tarkat kävijä-/katselutilastot yhdelle
+      mielenosoitukselle minuutti-, päivä- ja viikkonäkymillä.</li>
+    <li><strong>Nousevat mielenosoitukset:</strong> eniten katseluita viimeisen 24 tunnin aikana saaneet demonstraatiot.</li>
+    <li><strong>Matomo-live:</strong> reaaliaikainen kävijädata (jos Matomo on käytössä).</li>
+  </ul>
+
+  <div class="manual-tip">
+    <i class="fa-solid fa-lightbulb me-2"></i>
+    <strong>Vinkki:</strong> Analytiikkanäkymät päivittyvät automaattisesti, joten voit seurata suosiota
+    reaaliaikaisesti pitkien tapahtumien aikana.
+  </div>
+</section>
 {% endblock %}

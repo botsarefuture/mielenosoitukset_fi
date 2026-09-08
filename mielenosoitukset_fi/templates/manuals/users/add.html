@@ -1,98 +1,96 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <section class="manual-section">
-        <h2>Lisää uusi käyttäjä</h2>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / <a href="{{ url_for('admin.manual_page', page='users') }}">Käyttäjät</a> / Lisää käyttäjä
+</div>
+<section class="manual-section">
+    <h2>Lisää uusi käyttäjä</h2>
 
-        <div class="manual-warning">
-            ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään jatkuvasti. Kuvakaappaukset ovat esimerkinomaisia.
-        </div>
+    <p>
+      Uuden käyttäjän luominen tapahtuu <strong>yhdellä lomakkeella</strong> käyttäjien listanäkymässä
+      (<strong>/admin/user</strong>). Kaikki tarvittavat tiedot kysytään samassa
+      <strong>“Luo uusi käyttäjä”</strong>-ponnahdusikkunassa (modaalissa).
+    </p>
 
-        <p>Tällä sivulla opastamme sinut käyttäjän lisäämisen läpi vaihe vaiheelta hallintapaneelissa.</p>
-
-        <!-- Step 1 -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fa-solid fa-1 me-2"></i>Vaihe 1: Avaa Lisää käyttäjä -lomake</h5>
-                <p>Aloita hallintapaneelissa siirtymällä <strong>Käyttäjät</strong> -osioon ja napsauta <strong>"Luo
-                        uusi käyttäjä"</strong> -painiketta.</p>
-                <img src="{{ url_for('static', filename='manual/users_add_step1.png') }}"
-                    class="img-fluid rounded shadow-sm" alt="Vaihe 1 - Luo uusi käyttäjä">
-            </div>
-        </div>
-        <!-- Step 2 --><!-- Step 2 -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fa-solid fa-2 me-2"></i>Vaihe 2: Syötä käyttäjän tiedot</h5>
-                <p>
-                    Täytä kenttiin <strong>käyttäjänimi</strong> ja <strong>sähköpostiosoite</strong>.
-                    Mikäli käyttäjänimeä ei erikseen määritellä, järjestelmä luo sen automaattisesti sähköpostiosoitteen
-                    alkuosasta
-                    ennen <span class="badge bg-secondary">@</span>-merkkiä.
-                    Valitse lopuksi käyttäjälle sopiva <strong>rooli</strong> järjestelmässä.
+    <div class="manual-step">
+        <div class="d-flex align-items-start">
+            <span class="step-num"><i class="fa-solid fa-1"></i></span>
+            <div>
+                <h5 class="mb-1">Avaa “Luo uusi käyttäjä” -lomake</h5>
+                <p class="mb-0">
+                    Siirry hallintapaneelissa <strong>Käyttäjät</strong>-osioon (vasemman valikon
+                    <i class="fa-solid fa-users"></i> Käyttäjät) ja napsauta oikeassa yläkulmassa olevaa
+                    <strong>“Luo uusi käyttäjä”</strong> -painiketta. Lomake aukeaa ponnahdusikkunana nykyisen
+                    listan päälle.
                 </p>
-
-                <div class="alert alert-warning d-flex align-items-start mt-3" role="alert">
-                    <i class="fa-solid fa-triangle-exclamation me-2 mt-1"></i>
-                    <div>
-                        <strong>Huomio:</strong> Kaikilla <strong>superkäyttäjillä</strong> tulee olla
-                        <strong>hallitus hyväksymä turvaluokitus</strong> ennen käyttöoikeuksien myöntämistä.
-                        <br>
-                        <span class="badge bg-danger mt-1">Superuser-oikeuksien myöntäminen ilman hyväksyttyä
-                            turvaluokitusta voi johtaa oikeudellisiin seuraamuksiin.</span>
-                    </div>
-                </div>
-
-
-                <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}"
-                    class="btn btn-outline-primary mt-2">
-                    <i class="fa-solid fa-circle-info me-1"></i> Lue lisää rooleista
-                </a>
-
-                <img src="{{ url_for('static', filename='manual/users_add_step2.png') }}"
-                    class="img-fluid rounded shadow-sm mt-3" alt="Vaihe 2 - Syötä tiedot">
             </div>
         </div>
+    </div>
 
-
-
-
-        <!-- Step 3 -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fa-solid fa-3 me-2"></i>Vaihe 3: Tarkista ja vahvista</h5>
-                <p>Tarkista syötetyt tiedot huolellisesti. Järjestelmä varmistaa automaattisesti, että käyttäjälle
-                    annetaan oikeat oikeudet roolin ja organisaation mukaan.</p>
-                <img src="{{ url_for('static', filename='manual/users_add_step3.png') }}"
-                    class="img-fluid rounded shadow-sm" alt="Vaihe 3 - Tarkista tiedot">
-            </div>
-        </div>
-
-        <!-- Step 4 -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fa-solid fa-4 me-2"></i>Vaihe 4: Lähetä kutsu käyttäjälle</h5>
-                <p>Napsauta <strong>"Luo käyttäjä"</strong>. Käyttäjälle lähetetään automaattisesti sähköposti, joka
-                    sisältää kirjautumistiedot ja ohjeet salasanan vaihtoon.</p>
-                <img src="{{ url_for('static', filename='manual/users_add_step4.png') }}"
-                    class="img-fluid rounded shadow-sm" alt="Vaihe 4 - Lähetä kutsu">
-            </div>
-        </div>
-
-        <!-- Tips Section -->
-        <div class="card shadow-sm mb-4 bg-light">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fa-solid fa-lightbulb me-2"></i>Vinkkejä</h5>
-                <ul>
-                    <li>Varmista, että sähköpostiosoite on oikein – kutsu lähetetään tähän osoitteeseen.</li>
-                    <li>Rooli määrittää automaattisesti käyttäjän oikeudet, joten manuaalisia muutoksia ei yleensä
-                        tarvita.</li>
-                    <li>Jos käyttäjä ei saa sähköpostia, tarkista roskapostikansio ja järjestelmän asetukset.</li>
+    <div class="manual-step">
+        <div class="d-flex align-items-start">
+            <span class="step-num"><i class="fa-solid fa-2"></i></span>
+            <div>
+                <h5 class="mb-1">Täytä käyttäjän tiedot</h5>
+                <ul class="mb-2">
+                    <li>
+                        <strong>Sähköposti</strong> (pakollinen) – kirjautumistiedot lähetetään tähän osoitteeseen.
+                    </li>
+                    <li>
+                        <strong>Käyttäjänimi</strong> (pakollinen) – ehdotetaan automaattisesti sähköpostiosoitteen
+                        alkuosasta, mutta voit muokata sen vapaasti.
+                    </li>
+                    <li>
+                        <strong>Näyttönimi</strong> – ehdotetaan automaattisesti ja näkyy hallinnan listoilla.
+                    </li>
+                    <li>
+                        <strong>Rooli</strong> (pakollinen) – valitse listasta sopiva rooli
+                        (Käyttäjä, Kääntäjä, Kaupunkiadmin tai Admin). Roolin valitseminen näyttää lyhyen
+                        kuvauksen kyseisestä roolista.
+                    </li>
+                    <li>
+                        Jos valitset <strong>Kaupunkiadmin</strong>, valitse lisäksi <strong>vähintään yksi
+                        paikkakunta</strong> “Kaupunkiadminin paikkakunnat”-kentästä. Kaupunkiadmin saa näiden
+                        paikkakuntien mielenosoitusten käsittelyoikeudet.
+                    </li>
                 </ul>
             </div>
         </div>
+    </div>
 
-    </section>
-</div>
+    <div class="manual-step">
+        <div class="d-flex align-items-start">
+            <span class="step-num"><i class="fa-solid fa-3"></i></span>
+            <div>
+                <h5 class="mb-1">Tarkista ja luo</h5>
+                <p class="mb-0">
+                    Tarkista syöttämäsi tiedot huolellisesti ja napsauta <strong>“Luo käyttäjä”</strong>.
+                    Järjestelmä luo käyttäjän, määrittää oikeudet roolin mukaan ja lähettää käyttäjälle
+                    sähköpostitse kirjautumistiedot sekä ohjeet salasanan vaihtamiseen.
+                    <strong>Peruuta</strong> sulkee lomakkeen ilman tallennusta.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="manual-note">
+        <i class="fa-solid fa-shield-halved me-2"></i>
+        <strong>Huomio:</strong> <strong>Superkäyttäjäroolia (global_admin)</strong> ei voi myöntää tästä
+        lomakkeesta. Se vaatii erillisen hyväksynnän ja hallituksen turvaluokituksen (board clearance).
+        Lisätietoa: <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}">roolit &amp; oikeudet</a>.
+    </div>
+
+    <div class="card shadow-sm mb-4 bg-light">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fa-solid fa-lightbulb me-2"></i>Vinkkejä</h5>
+            <ul class="mb-0">
+                <li>Varmista, että sähköpostiosoite on oikein – kirjautumistiedot ja kutsut lähetetään tähän osoitteeseen.</li>
+                <li>Rooli määrittää käyttäjän oikeudet automaattisesti, joten manuaalisia muutoksia ei yleensä tarvita.</li>
+                <li>Jos käyttäjä ei saa sähköpostia, tarkista roskapostikansio ja järjestelmän asetukset.</li>
+            </ul>
+        </div>
+    </div>
+
+</section>
 {% endblock %}

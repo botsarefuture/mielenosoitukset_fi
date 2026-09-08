@@ -1,18 +1,54 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-  <section class="manual-section">
-    <h2>Tietoturva & oikeudet</h2>
-    <div class="manual-warning">
-      ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään pian.
-    </div>
-    <p>Täältä voit hallita käyttäjien oikeuksia, salasanoja ja järjestelmän tietoturvaa.</p>
-    <ul>
-      <li>Käyttäjäroolien hallinta</li>
-      <li>Salasanavaatimukset</li>
-      <li>Oikeuksien tarkistus</li>
-    </ul>
-  </section>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Tietoturva &amp; oikeudet
 </div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-lock me-2"></i>Tietoturva &amp; oikeudet</h2>
+  <p>
+    Tällä sivulla kuvataan järjestelmän tietoturvatoimintoja ja käyttöoikeusmallia, jotta käyttö on
+    turvallista ja jäljitettävää.
+  </p>
+
+  <h3>Roolit ja oikeudet</h3>
+  <p>
+    Oikeudet määräytyvät käyttäjän <strong>roolin</strong> sekä <strong>organisaatiojäsenyyksien</strong>
+    perusteella. Katso yksityiskohtainen vertailu
+    <a href="{{ url_for('admin.manual_page', page='users/about_roles') }}">roolit &amp; oikeudet</a> -sivulta.
+  </p>
+  <ul>
+    <li><strong>Roolihierarkia:</strong> käyttäjä ei voi muokata itseään korkeamman tason käyttäjiä.</li>
+    <li><strong>Kaupunkiadmin:</strong> rajattu oikeusjoukko (esim. <code>ACCEPT_DEMO</code>, <code>EDIT_DEMO</code>)
+      vain niille kaupungeille, jotka on myönnetty <code>admin_scope_grants</code>-luettelossa.</li>
+  </ul>
+
+  <h3>Hallituksen turvaluokitus (board clearance)</h3>
+  <p>
+    <code>global_admin</code>-roolin myöntäminen edellyttää <strong>hallituksen hyväksyntää</strong>.
+    Turvaluokituksen tilan näet <strong>/admin/governance/clearances</strong>-sivulla ja muutokset
+    kirjataan <strong>audit-lokiin</strong>.
+  </p>
+
+  <h3>Taikamerkkilinkit (magic linkit)</h3>
+  <p>
+    Kertakäyttöiset, IP-sidotut linkit, joiden avulla demoa voi esikatsella, hyväksyä, hylätä tai muokata
+    ilman admin-kirjautumista. Ne vanhenevat 24 tunnissa ja tokenit tallennetaan SHA-256-hajautettuina.
+  </p>
+
+  <h3>Panic mode</h3>
+  <p>
+    <strong>Hätäkatkaisin</strong>, joka voi tilapäisesti poistaa julkaistut toiminnot käytöstä
+    kriisitilanteessa (esim. vakava väärinkäytös). Aktivoi ja poista käytöstä hallintapaneelin
+    dashboardilta (<code>admin_required</code>).
+  </p>
+
+  <h3>Loki ja kirjaus</h3>
+  <ul>
+    <li>Kaikki admin-pyynnöt kirjataan <code>admin_logs</code>-kokoelmaan tekijän, polun ja menetelmän kanssa.</li>
+    <li>Arkaluonteiset kentät (salasanat, tokenit, salaisuudet, evästeet) <strong>piilotetaan</strong> lokista.</li>
+    <li>Audit-timeline ja super-audit-lokit auttavat jäljittämään muutokset mielenosoituksissa ja käyttäjissä.</li>
+  </ul>
+</section>
 {% endblock %}

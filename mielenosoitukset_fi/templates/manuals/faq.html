@@ -1,18 +1,60 @@
 {% extends 'manual_base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-  <section class="manual-section">
-    <h2>FAQ / Usein kysytyt kysymykset</h2>
-    <div class="manual-warning">
-      ⚠️ Tämä sivu on rakenteilla. Sisältöä päivitetään pian.
-    </div>
-    <p>Tässä osiossa vastataan yleisimpiin kysymyksiin hallintapaneelista.</p>
-    <ul>
-      <li>Miten lisään uuden käyttäjän?</li>
-      <li>Miten tarkastelen tilastoja?</li>
-      <li>Miten palautan salasanan?</li>
-    </ul>
-  </section>
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / FAQ
 </div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-question-circle me-2"></i>Usein kysytyt kysymykset</h2>
+
+  <p>Kokoamme tähän yleisimmät kysymykset hallintapaneelin käytöstä.</p>
+
+  <h3>Miten lisään uuden käyttäjän?</h3>
+  <p>
+    Siirry <strong>Käyttäjät</strong>-osioon ja valitse <strong>Lisää käyttäjä</strong>. Katso
+    vaiheittainen ohje <a href="{{ url_for('admin.manual_page', page='users/add') }}">täältä</a>.
+  </p>
+
+  <h3>Miten hyväksyn uuden mielenosoituksen?</h3>
+  <p>
+    Avaa <strong>Mielenosoitukset</strong>-näkymä ja etsi odottava mielenosoitus. Käytä sen
+    <strong>hyväksymispainiketta</strong> (vaatii <code>ACCEPT_DEMO</code>-oikeuden mielenosoituksen
+    kaupunkiin). Katso kohta <a href="{{ url_for('admin.manual_page', page='demos') }}">Mielenosoitukset</a>.
+  </p>
+
+  <h3>Miksi en näe joitain toimintoja listalla?</h3>
+  <p>
+    Toiminnot näytetään vain silloin, kun sinulla on oikeus kyseiseen mielenosoitukseen. Esimerkiksi
+    kaupunkiadminit näkevät <code>ACCEPT_DEMO</code>/<code>EDIT_DEMO</code>-toiminnot vain omille
+    kaupungeilleen myönnettyjen oikeuksien mukaan. Jos toiminto puuttuu, tarkista oikeutesi ylläpitäjältä.
+  </p>
+
+  <h3>Kuinka pakotan salasanan vaihdon?</h3>
+  <p>
+    Avaa käyttäjän muokkausnäkymä ja valitse <strong>“Pakota salasanan vaihto”</strong>
+    (<code>FORCE_PASSWORD_CHANGE</code>). Käyttäjä joutuu vaihtamaan salasanansa seuraavalla
+    kirjautumisella.
+  </p>
+
+  <h3>Miten luon muokkauslinkin mielenosoitukseen?</h3>
+  <p>
+    Käytä <strong>“Luo muokkauslinkki”</strong>-toimintoa (<code>GENERATE_EDIT_LINK</code>) mielenosoituksen
+    kohdalla. Linkki on kertakäyttöinen ja vanhenee 24 tunnissa, joten se voidaan jakaa esimerkiksi
+    organisaation edustajalle turvallisesti.
+  </p>
+
+  <h3>Mitä teen, jos mielenosoitus näkyy väärin?</h3>
+  <p>
+    Tarkastele mielenosoituksen <strong>muutoshistoriaa</strong> ja palauta tarvittaessa aiempi versio.
+    Jos ongelma on laajempi, katso <a href="{{ url_for('admin.manual_page', page='support') }}">Ylläpito &amp;
+    tuki</a> -sivua ja järjestelmän tilanäkymää.
+  </p>
+
+  <h3>Miten tulen superkäyttäjäksi?</h3>
+  <p>
+    <code>global_admin</code>-roolin myöntäminen edellyttää <strong>hallituksen turvaluokitusta</strong>.
+    Se on tarkoituksella rajoitettua, jotta järjestelmä pysyy turvallisena ja toiminta jäljitettävänä.
+  </p>
+</section>
 {% endblock %}

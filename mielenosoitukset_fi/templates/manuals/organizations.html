@@ -1,0 +1,44 @@
+{% extends 'manual_base.html' %}
+
+{% block content %}
+<div class="manual-breadcrumb">
+  <i class="fa-solid fa-house me-1"></i> <a href="{{ url_for('admin.manual_page', page='index') }}">Ohje</a> / Organisaatiot
+</div>
+
+<section class="manual-section">
+  <h2><i class="fa-solid fa-building me-2"></i>Organisaatioiden hallinta</h2>
+  <p>
+    Organisaatiot liittyvät mielenosoituksiin ja käyttäjiin. Niitä hallitaan näkymässä
+    <strong>/admin/organization</strong>. Oikeudet: <code>LIST_ORGANIZATIONS</code>,
+    <code>CREATE_ORGANIZATION</code>, <code>EDIT_ORGANIZATION</code>, <code>VIEW_ORGANIZATION</code>,
+    <code>DELETE_ORGANIZATION</code>, <code>INVITE_TO_ORGANIZATION</code>.
+  </p>
+
+  <h3>Keskeiset toiminnot</h3>
+  <ul>
+    <li><strong>Lista:</strong> selaa organisaatioita, hae tekstillä ja katso yhteenvetotilastot.</li>
+    <li><strong>Luo organisaatio</strong> – nimi, sähköposti, kuvaus, verkkosivu, logo ja sosiaalisen median linkit.</li>
+    <li><strong>Muokkaa organisaation tietoja</strong> ja katso sen jäsenet ja kutsut.</li>
+    <li><strong>Kutsu jäseniä</strong> organisaatioon sähköpostitse ja määritä heidän roolinsa.</li>
+    <li><strong>Poista organisaatio</strong> (vaatii vahvistuksen).</li>
+  </ul>
+
+  <h3>Jäsenet ja kutsut</h3>
+  <p>
+    Organisaation näkymästä voit hallita jäsenyyksiä: poistaa jäsenen, peruuttaa tai hyväksyä kutsun,
+    ja muuttaa jäsenen roolia organisaatiossa. Superkäyttäjä voi pakottaa kutsun hyväksynnän.
+  </p>
+
+  <h3>Organisaation muokkausehdotukset</h3>
+  <p>
+    Käyttäjät voivat ehdottaa muutoksia organisaation tietoihin. Nämä <strong>ehdotukset</strong> tulevat
+    tarkastettaviksi ja voit hyväksyä tai hylätä ne kenttäkohtaisesti.
+  </p>
+
+  <div class="manual-tip">
+    <i class="fa-solid fa-lightbulb me-2"></i>
+    <strong>Vinkki:</strong> Kun lisäät organisaation, varmista että sähköpostiosoite on oikea – kutsut
+    ja yhteydenotot lähetetään tähän osoitteeseen.
+  </div>
+</section>
+{% endblock %}

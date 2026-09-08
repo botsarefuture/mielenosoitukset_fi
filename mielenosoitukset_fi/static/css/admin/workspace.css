@@ -505,6 +505,49 @@ main.flex-grow-1 :is(.alert, .badge) {
   margin-bottom: 1rem;
 }
 
+.admin-form :is(label, .form-label) {
+  margin: 0;
+  color: var(--admin-workspace-text);
+  font-size: .8rem;
+  font-weight: 750;
+}
+
+.admin-required {
+  color: var(--admin-workspace-orange);
+  font-weight: 850;
+}
+
+.admin-field > :is(small, .form-text, .muted) {
+  color: var(--admin-workspace-muted);
+  font-size: .75rem;
+  line-height: 1.5;
+}
+
+.admin-form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  width: 100%;
+  min-height: 2.7rem;
+  border: 1px solid var(--admin-workspace-border);
+  border-radius: .7rem;
+  color: var(--admin-workspace-text);
+  background: var(--admin-workspace-surface-muted);
+}
+
+.admin-form :is(input, select, textarea):focus {
+  border-color: var(--admin-workspace-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px light-dark(rgba(0, 51, 160, .1), rgba(139, 177, 255, .12));
+}
+
+.admin-form :is(input, select, textarea):disabled,
+.admin-form :is(input, textarea)[readonly] {
+  opacity: .68;
+  cursor: not-allowed;
+}
+
+.admin-form :is(.invalid-feedback, .field-error, [aria-invalid="true"] + small) {
+  color: var(--admin-workspace-danger);
+}
+
 .admin-editor-form :is(label, .form-label) {
   margin: 0;
   color: var(--admin-workspace-text);
@@ -558,6 +601,12 @@ main.flex-grow-1 :is(.alert, .badge) {
 }
 
 .admin-editor-form .editor-save-bar :is(button, .btn) {
+  min-height: 2.7rem;
+  border-radius: .7rem;
+  font-weight: 750;
+}
+
+.admin-sticky-actions :is(button, .btn) {
   min-height: 2.7rem;
   border-radius: .7rem;
   font-weight: 750;

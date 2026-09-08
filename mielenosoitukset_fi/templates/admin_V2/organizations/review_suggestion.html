@@ -1,48 +1,17 @@
 {% extends "admin_base.html" %}
 
 {% block styles %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-
 <style>
-  :root {
-    --color-bg: light-dark(#f8fafc, #0f1419);
-    --color-card-bg: light-dark(#ffffff, #1a1d23);
-    --color-text: light-dark(#1e293b, #e2e8f0);
-    --color-text-secondary: light-dark(#64748b, #94a3b8);
-    --color-primary: light-dark(#0052cc, #3b82f6);
-    --color-primary-hover: light-dark(#003d99, #2563eb);
-    --color-success: light-dark(#10b981, #059669);
-    --color-danger: light-dark(#ef4444, #dc2626);
-    --color-warning: light-dark(#f59e0b, #d97706);
-    --color-border: light-dark(#e2e8f0, #374151);
-    --color-shadow: light-dark(0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.3));
-    --border-radius: 12px;
-    --border-radius-lg: 16px;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--color-bg);
-    color: var(--color-text);
-  }
-
   .suggestion-container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 2rem;
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
   }
 
   .suggestion-header {
-    background: var(--color-card-bg);
-    border-radius: var(--border-radius-lg);
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--color-shadow);
-    border: 1px solid var(--color-border);
+    margin: 0;
   }
 
   .suggestion-title {
@@ -55,40 +24,16 @@
   .suggestion-title h2 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: var(--color-text);
+    color: var(--admin-workspace-text);
     margin: 0;
   }
 
-  .suggestion-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-  }
-
-  .suggestion-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-text-secondary);
-    font-size: 0.95rem;
-  }
-
-  .suggestion-meta i {
-    font-size: 1rem;
-  }
-
   .changes-table-container {
-    background: var(--color-card-bg);
-    border-radius: var(--border-radius-lg);
+    background: var(--admin-workspace-surface);
+    border-radius: 1rem;
     padding: 2rem;
-    box-shadow: var(--color-shadow);
-    border: 1px solid var(--color-border);
+    box-shadow: var(--admin-workspace-shadow);
+    border: 1px solid var(--admin-workspace-border);
     overflow-x: auto;
   }
 
@@ -99,15 +44,15 @@
   }
 
   .changes-table thead {
-    background: var(--color-bg);
+    background: var(--admin-workspace-surface-muted);
   }
 
   .changes-table th {
     padding: 1rem;
     text-align: left;
     font-weight: 600;
-    color: var(--color-text);
-    border-bottom: 2px solid var(--color-border);
+    color: var(--admin-workspace-text);
+    border-bottom: 2px solid var(--admin-workspace-border);
   }
 
   .changes-table th:last-child {
@@ -115,12 +60,12 @@
   }
 
   .changes-table tbody tr {
-    border-bottom: 1px solid var(--color-border);
-    transition: var(--transition);
+    border-bottom: 1px solid var(--admin-workspace-border);
+    transition: all .2s ease;
   }
 
   .changes-table tbody tr:hover {
-    background: var(--color-bg);
+    background: var(--admin-workspace-surface-muted);
   }
 
   .changes-table td {
@@ -130,19 +75,19 @@
 
   .field-name {
     font-weight: 600;
-    color: var(--color-text);
+    color: var(--admin-workspace-text);
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
 
   .field-name i {
-    color: var(--color-primary);
+    color: var(--admin-workspace-blue);
     font-size: 0.875rem;
   }
 
   .field-value {
-    color: var(--color-text-secondary);
+    color: var(--admin-workspace-muted);
     line-height: 1.6;
   }
 
@@ -152,7 +97,7 @@
   }
 
   .field-value.new {
-    color: var(--color-success);
+    color: var(--admin-workspace-success);
     font-weight: 500;
   }
 
@@ -163,9 +108,9 @@
   }
 
   .suggested-logo-preview img {
-    background: var(--color-card-bg);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius);
+    background: var(--admin-workspace-surface);
+    border: 1px solid var(--admin-workspace-border);
+    border-radius: .75rem;
     height: 96px;
     object-fit: contain;
     padding: 0.6rem;
@@ -191,18 +136,18 @@
   }
 
   .value-badge.empty {
-    background: rgba(107, 114, 128, 0.1);
-    color: var(--color-text-secondary);
+    background: var(--admin-workspace-surface-muted);
+    color: var(--admin-workspace-muted);
   }
 
   .value-badge.has-value {
-    background: rgba(59, 130, 246, 0.1);
-    color: var(--color-primary);
+    background: var(--admin-workspace-blue-soft);
+    color: var(--admin-workspace-blue);
   }
 
   .value-badge.new-value {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--color-success);
+    background: var(--admin-workspace-success-soft);
+    color: var(--admin-workspace-success);
   }
 
   .checkbox-cell {
@@ -216,19 +161,19 @@
     height: 24px;
     cursor: pointer;
     appearance: none;
-    border: 2px solid var(--color-border);
+    border: 2px solid var(--admin-workspace-border);
     border-radius: 6px;
-    background: var(--color-card-bg);
-    transition: var(--transition);
+    background: var(--admin-workspace-surface);
+    transition: all .2s ease;
   }
 
   .custom-checkbox:hover {
-    border-color: var(--color-primary);
+    border-color: var(--admin-workspace-blue);
   }
 
   .custom-checkbox:checked {
-    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
-    border-color: #ec4899;
+    background: var(--admin-workspace-blue);
+    border-color: var(--admin-workspace-blue);
   }
 
   .custom-checkbox:checked::after {
@@ -250,52 +195,52 @@
     flex-wrap: wrap;
   }
 
-  .btn {
+  .suggestion-container .btn {
     display: inline-flex;
     align-items: center;
     gap: 0.75rem;
     padding: 1rem 2rem;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: .75rem;
     font-weight: 600;
     font-size: 1rem;
     cursor: pointer;
-    transition: var(--transition);
+    transition: all .2s ease;
     text-decoration: none;
   }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  .suggestion-container .btn-primary {
+    background: var(--admin-workspace-blue);
     color: white;
-    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+    box-shadow: var(--admin-workspace-shadow);
   }
 
-  .btn-primary:hover {
+  .suggestion-container .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+    box-shadow: var(--admin-workspace-shadow);
   }
 
-  .btn-secondary {
-    background: var(--color-card-bg);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
+  .suggestion-container .btn-secondary {
+    background: var(--admin-workspace-surface);
+    color: var(--admin-workspace-text);
+    border: 1px solid var(--admin-workspace-border);
   }
 
-  .btn-secondary:hover {
-    background: var(--color-bg);
+  .suggestion-container .btn-secondary:hover {
+    background: var(--admin-workspace-surface-muted);
     transform: translateY(-2px);
-    box-shadow: var(--color-shadow);
+    box-shadow: var(--admin-workspace-shadow);
   }
 
-  .btn-select-all {
-    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  .suggestion-container .btn-select-all {
+    background: var(--admin-workspace-blue);
     color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: var(--admin-workspace-shadow);
   }
 
-  .btn-select-all:hover {
+  .suggestion-container .btn-select-all:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    box-shadow: var(--admin-workspace-shadow);
   }
 
   .selection-info {
@@ -303,10 +248,10 @@
     align-items: center;
     gap: 0.75rem;
     padding: 1rem 1.5rem;
-    background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
-    border-radius: var(--border-radius);
-    color: var(--color-primary);
+    background: var(--admin-workspace-blue-soft);
+    border: 1px solid var(--admin-workspace-blue);
+    border-radius: .75rem;
+    color: var(--admin-workspace-blue);
     font-weight: 500;
     margin-bottom: 1.5rem;
   }
@@ -344,7 +289,7 @@
       flex-direction: column;
     }
 
-    .btn {
+    .suggestion-container .btn {
       width: 100%;
       justify-content: center;
     }
@@ -353,24 +298,27 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="suggestion-container">
-  <div class="suggestion-header">
-    <div class="suggestion-title">
-      <div class="suggestion-icon">
-        <i class="fa-solid fa-pen-to-square"></i>
-      </div>
-      <div>
-        <h2>{{ _('Muokkauspyyntö') }}: {{ org.name }}</h2>
-        <div class="suggestion-meta">
-          <i class="fa-regular fa-clock"></i>
-          <span>{{ _('Lähetetty') }} {{ suggestion.timestamp.strftime("%d.%m.%Y %H:%M") }}</span>
+<div class="suggestion-container admin-page">
+  <header class="suggestion-header admin-page-hero">
+    <div class="admin-page-hero__content">
+      <p class="admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
+      <div class="suggestion-title">
+        <div>
+          <h1>{{ _('Muokkauspyyntö') }}: {{ org.name }}</h1>
+          <p>{{ _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse hyväksyttävät muutokset.') }}</p>
         </div>
       </div>
     </div>
-  </div>
+    <div class="admin-page-hero__metric">
+      <i class="fa-regular fa-clock" aria-hidden="true"></i>
+      <span>{{ _('Lähetetty') }}</span>
+      <strong>{{ suggestion.timestamp.strftime("%d.%m.%Y") }}</strong>
+      <span>{{ suggestion.timestamp.strftime("%H:%M") }}</span>
+    </div>
+  </header>
 
-  <form method="post" action="{{ url_for('admin_org.apply_suggestion', org_id=org._id, suggestion_id=suggestion._id) }}" id="suggestion-form">
-    <div class="changes-table-container">
+  <form class="admin-form admin-workspace-form" method="post" action="{{ url_for('admin_org.apply_suggestion', org_id=org._id, suggestion_id=suggestion._id) }}" id="suggestion-form">
+    <div class="changes-table-container admin-form-section admin-data-view">
       <div class="selection-info">
         <i class="fa-solid fa-circle-info"></i>
         <span id="selection-count">{{ _('Valitse kentät, jotka haluat päivittää') }}</span>
@@ -451,15 +399,15 @@
               </div>
             </td>
             <td class="checkbox-cell">
-              <input type="checkbox" name="apply_fields" value="{{ key }}" class="custom-checkbox field-checkbox">
+              <input type="checkbox" name="apply_fields" value="{{ key }}" class="custom-checkbox field-checkbox" aria-label="{{ _('Hyväksy kentän muutos') }}: {{ field_labels.get(key, key) }}">
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
 
-      <div class="action-buttons">
-        <button type="button" class="btn btn-select-all" id="select-all-btn">
+      <div class="action-buttons admin-sticky-actions">
+        <button type="button" class="btn btn-select-all" id="select-all-btn" aria-pressed="false">
           <i class="fa-solid fa-check-double"></i>
           {{ _('Valitse kaikki') }}
         </button>
@@ -502,9 +450,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update select all button text
     if (selected === total) {
       selectAllBtn.innerHTML = '<i class="fa-solid fa-square-minus"></i> {{ _("Poista valinnat") }}';
+      selectAllBtn.setAttribute('aria-pressed', 'true');
     } else {
       selectAllBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> {{ _("Valitse kaikki") }}';
+      selectAllBtn.setAttribute('aria-pressed', 'false');
     }
+
+    checkboxes.forEach((checkbox) => {
+      checkbox.closest('tr')?.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false');
+    });
   }
 
   selectAllBtn.addEventListener('click', () => {

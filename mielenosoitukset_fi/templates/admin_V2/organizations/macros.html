@@ -1,29 +1,32 @@
 {% macro invite_modal(organization) %}
 <!-- Invite Users Modal -->
-<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+<div class="modal fade admin-modal admin-workflow-modal" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content shadow rounded-4 border-0">
 
-      <form method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
+      <form class="admin-workspace-form" method="POST" action="{{ url_for('admin_org.invite', org_id=organization._id if organization else None) }}">
         <!-- Modal Header -->
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjiä') }}</h5>
+        <div class="modal-header">
+          <div>
+            <p class="admin-modal-kicker">{{ _('Organisaation jäsenet') }}</p>
+            <h2 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjä') }}</h2>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button>
         </div>
 
         <!-- Modal Body -->
         <div class="modal-body">
           <div class="mb-3">
-            <label for="invitee_email" class="form-label">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="text-danger">*</span></label>
-            <input type="email" class="form-control" id="invitee_email" name="invitee_email" placeholder="{{ _('Sähköposti') }}" required>
+            <label for="invitee_email" class="form-label">{{ _('Kutsuttavan sähköpostiosoite') }} <span class="text-danger" aria-hidden="true">*</span></label>
+            <input type="email" class="form-control" id="invitee_email" name="invitee_email" placeholder="{{ _('Sähköposti') }}" required aria-required="true" autocomplete="email">
           </div>
           <input type="hidden" name="organization_id" value="{{ organization._id }}">
         </div>
 
         <!-- Modal Footer with Equal-Sized Buttons -->
-        <div class="modal-footer border-0 pt-0 d-flex gap-2">
-          <button type="button" class="btn btn-outline-secondary flex-fill" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
-          <button type="submit" class="btn btn-primary flex-fill">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ _('Peruuta') }}</button>
+          <button type="submit" class="btn btn-primary">
             <i class="fas fa-paper-plane me-1"></i>{{ _('Lähetä kutsu') }}
           </button>
         </div>

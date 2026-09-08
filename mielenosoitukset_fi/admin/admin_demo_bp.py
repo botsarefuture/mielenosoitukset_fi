@@ -40,7 +40,8 @@ from mielenosoitukset_fi.utils.demo_translation_cache import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.cities import CITY_NAME_TO_KEY, normalize_city_key
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.wrappers import admin_required, has_demo_permission, permission_required
 from mielenosoitukset_fi.users.models import User

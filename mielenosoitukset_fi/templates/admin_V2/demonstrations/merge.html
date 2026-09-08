@@ -1,50 +1,5 @@
 {% extends "admin_base.html" %}
 
-{% block styles %}
-<style>
-  .demo-merge-card {
-    border: 1px solid light-dark(#e0e0e0, #2d2d3a);
-    border-radius: 12px;
-    padding: 1rem;
-    height: 100%;
-  }
-
-  .merge-field-value {
-    font-size: 0.9rem;
-    color: light-dark(#444, #c9c9d9);
-    white-space: pre-wrap;
-  }
-
-  .merge-field-value code {
-    background-color: rgba(0, 0, 0, 0.04);
-    border-radius: 4px;
-    padding: 0.1rem 0.35rem;
-  }
-
-  .accordion-button:not(.collapsed) {
-    background-color: rgba(13,110,253,.08);
-  }
-
-  .guided-plan-list {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-  }
-
-  .guided-plan-list li + li {
-    margin-top: 0.35rem;
-  }
-
-  [data-manual-section] {
-    display: none;
-  }
-
-  .manual-mode-active [data-manual-section] {
-    display: block;
-  }
-</style>
-{% endblock %}
-
 {% macro render_field_value(demo, field) -%}
   {% set value = demo.get(field.key) %}
   {% if value is none or value == [] or value == '' %}
@@ -74,15 +29,16 @@
 
 {% block main_content %}
 <div class="admin-page">
-  <div class="admin-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+  <header class="admin-page-header">
     <div>
+      <p class="admin-page-header__kicker">{{ _('Mielenosoitukset') }}</p>
       <h1 class="admin-section-title mb-1">{{ _('Yhdistä mielenosoituksia') }}</h1>
       <p class="text-muted mb-0">{{ _('Valittuja mielenosoituksia: %(count)s', count=demos|length) }}</p>
     </div>
-    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
+    <div class="admin-page-header__actions"><a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
       <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
-    </a>
-  </div>
+    </a></div>
+  </header>
 
   <div class="alert alert-warning">
     <i class="fa-solid fa-triangle-exclamation me-2"></i>
@@ -92,7 +48,7 @@
   <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
     {% for demo in demos %}
     <div class="col">
-      <div class="demo-merge-card h-100">
+      <div class="demo-merge-card admin-panel h-100">
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <h5 class="mb-1">{{ demo.title }}</h5>
@@ -135,12 +91,12 @@
     {% endfor %}
   </div>
 
-  <form method="POST" action="{{ url_for('admin_demo.merge_demos') }}" class="mt-4" id="mergeForm">
+  <form method="POST" action="{{ url_for('admin_demo.merge_demos') }}" class="admin-form admin-merge-form" id="mergeForm">
     {% for demo_id in selected_ids %}
       <input type="hidden" name="demo_ids" value="{{ demo_id }}">
     {% endfor %}
 
-    <div class="card shadow-sm mb-4" id="guided-summary-card">
+    <section class="card admin-form-section" id="guided-summary-card">
       <div class="card-header fw-semibold d-flex align-items-center justify-content-between flex-wrap gap-2">
         <span>{{ _('Ohjattu yhdistäminen') }}</span>
         <div class="form-check form-switch mb-0">
@@ -227,9 +183,9 @@
           {{ _('Ohjattu tila on käytössä. Jos tarvitset täydellistä hallintaa, kytke manuaalinen tila päälle yllä olevasta kytkimestä.') }}
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card shadow-sm mb-4" data-manual-section>
+    <section class="card admin-form-section" data-manual-section>
       <div class="card-header fw-semibold">
         {{ _('Valitse päätapahtuma (säilytettävä ID)') }}
       </div>
@@ -244,9 +200,9 @@
         </div>
         {% endfor %}
       </div>
-    </div>
+    </section>
 
-    <div class="card shadow-sm mb-4" data-manual-section>
+    <section class="card admin-form-section" data-manual-section>
       <div class="card-header fw-semibold">
         {{ _('Kenttien lähde') }}
       </div>
@@ -285,9 +241,9 @@
           {% endfor %}
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card shadow-sm mb-4" data-manual-section>
+    <section class="card admin-form-section" data-manual-section>
       <div class="card-header fw-semibold">
         {{ _('Suosittelu ja toistuvuus') }}
       </div>
@@ -319,9 +275,9 @@
         </div>
         {% endfor %}
       </div>
-    </div>
+    </section>
 
-    <div class="text-end">
+    <div class="admin-sticky-actions">
       <button type="submit" class="btn btn-primary btn-lg">
         <i class="fa-solid fa-object-group me-2"></i>{{ _('Yhdistä mielenosoitukset') }}
       </button>

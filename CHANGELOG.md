@@ -16,6 +16,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Demonstration merging and UI translation editing now reuse the shared admin page, form section, field, inset, code block, and sticky-action primitives instead of maintaining separate editor surfaces.
 * The demonstration editor's "Luo muokkauslinkki" modal now uses the shared theme-aware admin modal contract (Bootstrap `admin-modal` with kicker and close button) instead of the legacy custom overlay, keeping the editor consistent with the rest of the redesigned admin UI.
 * The demonstration admin list now uses permission-scoped server-side filtering, deterministic pagination, preserved URL state, explicit result totals, removable filter chips, page-size controls, and a reusable basic/advanced filter layout instead of mixing page-local filtering with paginated results.
 * User creation and editing now present account details, roles, global permissions, city scope, and city permissions in the shared admin form and modal hierarchy, with consistent guidance, required markers, accessible field relationships, and theme-aware controls.

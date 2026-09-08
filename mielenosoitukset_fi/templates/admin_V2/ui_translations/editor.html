@@ -20,16 +20,16 @@
 
   <div class="row g-4">
     <div class="col-lg-6">
-      <div class="card h-100">
+      <div class="card admin-panel h-100">
         <div class="card-body">
           <h2 class="h5 mb-3">{{ _('Lähdeteksti') }}</h2>
           <div class="mb-3">
             <div class="small text-muted mb-1">msgid</div>
-            <pre class="p-3 bg-light border rounded small mb-0" style="white-space: pre-wrap;">{{ entry.msgid }}</pre>
+            <pre class="admin-code-block">{{ entry.msgid }}</pre>
           </div>
           <div class="mb-3">
             <div class="small text-muted mb-1">{{ _('Nykyinen käännös') }}</div>
-            <pre class="p-3 bg-light border rounded small mb-0" style="white-space: pre-wrap;">{{ entry.msgstr or '—' }}</pre>
+            <pre class="admin-code-block">{{ entry.msgstr or '—' }}</pre>
           </div>
           {% if entry.flags %}
           <div class="mb-3">
@@ -52,21 +52,21 @@
     </div>
 
     <div class="col-lg-6">
-      <div class="card mb-4">
+      <div class="card admin-panel mb-4">
         <div class="card-body">
           <h2 class="h5 mb-3">{{ _('Käännösehdotus') }}</h2>
           {% if can_translate_ui %}
-          <form method="POST" action="{{ url_for('admin.submit_ui_translation_proposal', locale=locale) }}">
+          <form class="admin-form" method="POST" action="{{ url_for('admin.submit_ui_translation_proposal', locale=locale) }}">
             <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-            <div class="mb-3">
+            <div class="admin-field">
               <label class="form-label" for="proposed_text">{{ _('Ehdotettu käännös') }}</label>
               <textarea class="form-control" id="proposed_text" name="proposed_text" rows="6">{{ proposal.proposed_text if proposal else entry.msgstr }}</textarea>
             </div>
-            <div class="mb-3">
+            <div class="admin-field">
               <label class="form-label" for="notes">{{ _('Huomiot tarkistajalle') }}</label>
               <textarea class="form-control" id="notes" name="notes" rows="3">{{ proposal.notes if proposal else '' }}</textarea>
             </div>
-            <button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistukseen') }}</button>
+            <div class="admin-sticky-actions"><button class="btn btn-primary" type="submit">{{ _('Lähetä tarkistukseen') }}</button></div>
           </form>
           {% else %}
           <p class="text-muted mb-0">{{ _('Sinulla ei ole oikeutta lähettää käännösehdotuksia.') }}</p>
@@ -75,7 +75,7 @@
       </div>
 
       {% if proposal %}
-      <div class="card">
+      <div class="card admin-panel">
         <div class="card-body">
           <h2 class="h5 mb-3">{{ _('Nykyinen ehdotustila') }}</h2>
           <p><strong>{{ _('Tila') }}:</strong> {{ proposal.status }}</p>
@@ -89,7 +89,7 @@
           <p><strong>{{ _('Tarkistusmuistiinpanot') }}:</strong> {{ proposal.review_notes }}</p>
           {% endif %}
           {% if ui_translation_sync_enabled and proposal.status == 'approved' and proposal.github_sync %}
-          <div class="border rounded p-3 bg-light mb-3">
+          <div class="admin-panel-inset mb-3">
             <p class="mb-2"><strong>{{ _('GitHub-synkin tila') }}:</strong> {{ proposal.github_sync.status }}</p>
             {% if proposal.github_sync.branch_name %}
             <p class="mb-2"><strong>{{ _('Branch') }}:</strong> <code>{{ proposal.github_sync.branch_name }}</code></p>
@@ -108,7 +108,7 @@
             <p class="mb-2 text-muted"><strong>{{ _('Lisätieto') }}:</strong> {{ proposal.github_sync.message }}</p>
             {% endif %}
             {% if can_review_ui_translations and proposal.github_sync.status in ['retry', 'committed_local_branch'] %}
-            <form method="POST" action="{{ url_for('admin.requeue_ui_translation_sync', locale=locale) }}">
+            <form class="admin-form" method="POST" action="{{ url_for('admin.requeue_ui_translation_sync', locale=locale) }}">
               <input type="hidden" name="msgid" value="{{ entry.msgid }}">
               <button class="btn btn-outline-primary btn-sm" type="submit">{{ _('Yritä GitHub-synkkiä uudelleen') }}</button>
             </form>
@@ -117,17 +117,17 @@
           {% endif %}
 
           {% if can_review_ui_translations and proposal.status == 'pending' %}
-          <form method="POST" action="{{ url_for('admin.approve_ui_translation_proposal', locale=locale) }}" class="mb-3">
+          <form class="admin-form mb-3" method="POST" action="{{ url_for('admin.approve_ui_translation_proposal', locale=locale) }}">
             <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-            <label class="form-label" for="review_notes_approve">{{ _('Tarkistusmuistiinpanot') }}</label>
-            <textarea class="form-control mb-3" id="review_notes_approve" name="review_notes" rows="3"></textarea>
+            <div class="admin-field"><label class="form-label" for="review_notes_approve">{{ _('Tarkistusmuistiinpanot') }}</label>
+            <textarea class="form-control" id="review_notes_approve" name="review_notes" rows="3"></textarea></div>
             <button class="btn btn-success" type="submit">{{ _('Hyväksy ja kirjoita katalogiin') }}</button>
           </form>
 
-          <form method="POST" action="{{ url_for('admin.reject_ui_translation_proposal', locale=locale) }}">
+          <form class="admin-form" method="POST" action="{{ url_for('admin.reject_ui_translation_proposal', locale=locale) }}">
             <input type="hidden" name="msgid" value="{{ entry.msgid }}">
-            <label class="form-label" for="review_notes_reject">{{ _('Hylkäyksen syy') }}</label>
-            <textarea class="form-control mb-3" id="review_notes_reject" name="review_notes" rows="3"></textarea>
+            <div class="admin-field"><label class="form-label" for="review_notes_reject">{{ _('Hylkäyksen syy') }}</label>
+            <textarea class="form-control" id="review_notes_reject" name="review_notes" rows="3"></textarea></div>
             <button class="btn btn-outline-danger" type="submit">{{ _('Hylkää') }}</button>
           </form>
           {% endif %}

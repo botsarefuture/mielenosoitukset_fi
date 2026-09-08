@@ -9,6 +9,7 @@
 * City-scoped administrators now get an enabled "Uusi mielenosoitus" button on the admin demonstration list when they hold a `CREATE_DEMO` grant for any managed city (previously the button was globally gated, so city admins always saw the disabled variant and could not create new demonstrations from the list).
 * Admin demonstration list table now always renders the checkbox select-column (header and per-row cell) to prevent column misalignment between superadmin and city-scoped admin views.
 * Rewrote the admin manual (/admin/manual): replaced placeholder "under construction" sections with accurate documentation of the admin panel's actual features, added a consistent site-wide hero, fixed the sidebar active state (including sub-navigation for users), and added pages for demonstrations, recurring demos, and organizations. Manual pages now require login.
+* Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
 * MongoDB connection logs no longer expose credentials embedded in the connection URI.

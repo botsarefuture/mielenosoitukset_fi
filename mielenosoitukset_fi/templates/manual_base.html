@@ -182,9 +182,35 @@
       color: #6c757d;
     }
 
+    .manual-sidebar-toggle {
+      display: none;
+      width: 100%;
+      margin: 0 auto 1rem;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      background: var(--color-card-bg);
+      color: var(--color-text);
+      padding: 0.6rem 1rem;
+      font-weight: 600;
+      text-align: left;
+      box-shadow: var(--color-shadow);
+    }
+    .manual-sidebar-toggle:hover,
+    .manual-sidebar-toggle:focus {
+      color: var(--color-primary);
+    }
+
     @media (max-width: 992px) {
       .manual-layout { flex-direction: column; }
-      .manual-sidebar { flex: 1 1 auto; max-width: 100%; position: static; }
+      .manual-sidebar { flex: 1 1 auto; max-width: 100%; position: static; display: none; }
+      .manual-sidebar.show { display: block; }
+      .manual-sidebar-toggle { display: flex; align-items: center; justify-content: space-between; }
+    }
+    @media (max-width: 768px) {
+      .manual-content { padding: 1.25rem; border-radius: 12px; }
+      .manual-layout { padding: 0 0.75rem; margin: 1.25rem auto; gap: 1rem; }
+      .manual-step .step-num { width: 1.75rem; height: 1.75rem; font-size: 0.9rem; }
+      .manual-section h2 { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -204,8 +230,14 @@
   </div>
 
   <div class="manual-layout">
+    <!-- Mobile: sisällysluettelon näyttäminen -->
+    <button class="manual-sidebar-toggle" type="button" aria-expanded="false" aria-controls="manualSidebar" onclick="toggleManualSidebar()">
+      <span><i class="fa-solid fa-list-ul me-2"></i>Sisällysluettelo</span>
+      <i class="fa-solid fa-chevron-down chevron"></i>
+    </button>
+
     <!-- Sidebar -->
-    <nav class="manual-sidebar" aria-label="Käyttöohjeen sisällysluettelo">
+    <nav class="manual-sidebar" id="manualSidebar" aria-label="Käyttöohjeen sisällysluettelo">
       <div class="nav flex-column">
         <a href="{{ url_for('admin.manual_page', page='dashboard') }}"
            class="nav-link {% if current_page=='dashboard' %}active{% endif %}">
@@ -277,6 +309,25 @@
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function toggleManualSidebar() {
+      const sidebar = document.getElementById('manualSidebar');
+      const btn = document.querySelector('.manual-sidebar-toggle');
+      if (!sidebar) return;
+      const open = sidebar.classList.toggle('show');
+      if (btn) {
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        const chevron = btn.querySelector('.chevron');
+        if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      const btn = document.querySelector('.manual-sidebar-toggle');
+      if (btn && window.matchMedia('(min-width: 993px)').matches) {
+        document.getElementById('manualSidebar')?.classList.add('show');
+      }
+    });
+  </script>
   {% block scripts %}
   {% endblock %}
 </body>

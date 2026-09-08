@@ -40,7 +40,8 @@ from mielenosoitukset_fi.utils.demo_translation_cache import (
 )
 from mielenosoitukset_fi.utils.flashing import flash_message
 from mielenosoitukset_fi.utils.variables import CITY_LIST
-from mielenosoitukset_fi.utils.cities import normalize_city_key
+from mielenosoitukset_fi.utils.cities import CITY_NAME_TO_KEY, normalize_city_key
+from mielenosoitukset_fi.utils.city_settings import enabled_city_names
 from mielenosoitukset_fi.utils.content_formatting import html_to_markdown, markdown_to_html
 from mielenosoitukset_fi.utils.wrappers import admin_required, has_demo_permission, permission_required
 from mielenosoitukset_fi.users.models import User
@@ -3249,6 +3250,9 @@ def edit_demo_with_token(token):
         edit_demo_with_token=True,
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=False,
+        translation_locales=_supported_demo_translation_locales(),
+        translation_language_names=_translation_language_names(),
+        default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
     )
 
 def _deep_merge(old: dict, new: dict) -> dict:

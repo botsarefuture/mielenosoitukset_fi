@@ -21,6 +21,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Organization admin pages now render their hero from one canonical Jinja component with consistent breadcrumbs, title grouping, and a back action that always occupies the same first position; the shared contract is ready for the remaining admin page migrations.
 * Organization detail, member, invitation, profile, social-link, confirmation, and notification views now reuse shared admin detail, data-view, section-card, modal, toast, action, and status primitives in both themes instead of a page-specific palette and inline stylesheet.
 * The organization collection now follows the shared admin hero, summary, filter, data-view, entity-row, status, selection, empty-state, and pagination contracts instead of carrying a separate page palette and 200-line inline stylesheet.
 * Organization create/edit, invitation, and change-review workflows now use shared admin form, data-view, modal, selection, and sticky-action components instead of maintaining large template-local style systems; primary admin actions also use theme-safe semantic colors with accessible hover, focus, busy, and disabled states.

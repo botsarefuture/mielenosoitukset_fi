@@ -1,19 +1,17 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-page admin-workspace">
-  <header class="admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
-      <h1>{{ _('Organisaatiot') }}</h1>
-      <p>{{ _('Etsi organisaatioita, tarkista profiilien tiedot ja hoida jäsenyyksien tärkeimmät ylläpitotoimet.') }}</p>
-    </div>
-    {% if current_user.has_permission("CREATE_ORGANIZATION", strict=true) %}
-    <div class="admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Organisaatiot'),
+    _('Etsi organisaatioita, tarkista profiilien tiedot ja hoida jäsenyyksien tärkeimmät ylläpitotoimet.'),
+    _('Organisaatiohallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), none)],
+    actions_visible=current_user.has_permission("CREATE_ORGANIZATION", strict=true)
+  ) %}
       <a href="{{ url_for('admin_org.create_organization') }}" class="admin-page-hero__action"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Luo uusi organisaatio') }}</a>
-    </div>
-    {% endif %}
-  </header>
+  {% endcall %}
 
   <section class="admin-workspace-summary" aria-label="{{ _('Organisaatioiden yhteenveto') }}">
     <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-building" aria-hidden="true"></i></span><div><span>{{ _('Kaikki organisaatiot') }}</span><strong>{{ organization_summary.all }}</strong></div></article>

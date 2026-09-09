@@ -38,3 +38,30 @@
     </div>
     {% endif %}
 {% endmacro %}
+
+{% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true) %}
+<header class="admin-page-hero">
+    <div class="admin-page-hero__content">
+        {% if breadcrumbs %}
+        <nav class="admin-breadcrumbs" aria-label="{{ _('Murupolku') }}">
+            <ol>
+                {% for item in breadcrumbs %}
+                <li>
+                    {% if item[1] %}<a href="{{ item[1] }}">{{ item[0] }}</a>{% else %}<span aria-current="page">{{ item[0] }}</span>{% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
+        <p class="admin-page-hero__kicker">{{ kicker }}</p>
+        <h1>{{ title }}</h1>
+        <p>{{ description }}</p>
+    </div>
+    {% if back_url or (caller is defined and actions_visible) %}
+    <div class="admin-page-hero__actions">
+        {% if back_url %}<a class="admin-page-hero__action admin-page-hero__back" href="{{ back_url }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ back_label or _('Takaisin') }}</a>{% endif %}
+        {% if caller is defined and actions_visible %}{{ caller() }}{% endif %}
+    </div>
+    {% endif %}
+</header>
+{% endmacro %}

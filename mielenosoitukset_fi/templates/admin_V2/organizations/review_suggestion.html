@@ -1,20 +1,16 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-form-page admin-page">
-  <header class="admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
-      <h1>{{ _('Muokkauspyyntö') }}: {{ org.name }}</h1>
-      <p>{{ _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse hyväksyttävät muutokset.') }}</p>
-    </div>
-    <div class="admin-page-hero__metric">
-      <i class="fa-regular fa-clock" aria-hidden="true"></i>
-      <span>{{ _('Lähetetty') }}</span>
-      <strong>{{ suggestion.timestamp.strftime("%d.%m.%Y") }}</strong>
-      <span>{{ suggestion.timestamp.strftime("%H:%M") }}</span>
-    </div>
-  </header>
+  {{ admin_page_hero(
+    _('Muokkauspyyntö') ~ ': ' ~ org.name,
+    _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse hyväksyttävät muutokset.') ~ ' ' ~ _('Lähetetty') ~ ' ' ~ suggestion.timestamp.strftime('%d.%m.%Y %H:%M') ~ '.',
+    _('Organisaatiohallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), url_for('admin_org.organization_control')), (org.name, url_for('admin_org.view_organization', org_id=org._id)), (_('Muokkauspyyntö'), none)],
+    back_url=url_for('admin_org.view_organization', org_id=org._id),
+    back_label=_('Organisaation yhteenveto')
+  ) }}
 
   <form class="admin-form admin-workspace-form" method="post" action="{{ url_for('admin_org.apply_suggestion', org_id=org._id, suggestion_id=suggestion._id) }}" id="suggestion-form">
     <div class="admin-data-view">

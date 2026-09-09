@@ -370,6 +370,24 @@ def test_translation_workspaces_use_canonical_hero_navigation():
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
 
 
+def test_system_workspaces_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/background_jobs.html",
+        "mielenosoitukset_fi/templates/admin_V2/background_job_detail.html",
+        "mielenosoitukset_fi/templates/admin_V2/status.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+    for name in pages[1:]:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "admin.admin_dashboard" in source
+    assert "back_url=" in Path(pages[2]).read_text(encoding="utf-8")
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

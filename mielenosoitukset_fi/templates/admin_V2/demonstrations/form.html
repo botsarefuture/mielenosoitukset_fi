@@ -1008,72 +1008,74 @@
 </section>
 
 <script>
-    const demoId = {{ (demo._id|string)|tojson }};
-    const editLinkCsrf = {{ edit_link_csrf_token|tojson }};
-    const duplicateButton = document.getElementById('duplicate-demo-btn');
-    const editLinkModal = document.getElementById('editLinkModal');
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const demoId = {{ (demo._id|string)|tojson }};
+        const editLinkCsrf = {{ edit_link_csrf_token|tojson }};
+        const duplicateButton = document.getElementById('duplicate-demo-btn');
+        const editLinkModal = document.getElementById('editLinkModal');
 
-    if (editLinkModal) {
-        const modal = bootstrap.Modal.getOrCreateInstance(editLinkModal);
-        const duration = document.getElementById('edit-link-duration');
-        const result = document.getElementById('edit-link-result');
-        const rawLink = document.getElementById('edit_link');
-        const expiry = document.getElementById('edit-link-expiry');
-        const feedback = document.getElementById('edit-link-feedback');
+        if (editLinkModal) {
+            const modal = bootstrap.Modal.getOrCreateInstance(editLinkModal);
+            const duration = document.getElementById('edit-link-duration');
+            const result = document.getElementById('edit-link-result');
+            const rawLink = document.getElementById('edit_link');
+            const expiry = document.getElementById('edit-link-expiry');
+            const feedback = document.getElementById('edit-link-feedback');
 
-        document.getElementById('generate-edit-link-btn').addEventListener('click', async () => {
-            feedback.textContent = '';
-            const response = await fetch(`/admin/demo/generate_edit_link/${demoId}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', 'X-CSRF-Token': editLinkCsrf},
-                body: JSON.stringify({duration: duration.value})
+            document.getElementById('generate-edit-link-btn').addEventListener('click', async () => {
+                feedback.textContent = '';
+                const response = await fetch(`/admin/demo/generate_edit_link/${demoId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': editLinkCsrf},
+                    body: JSON.stringify({duration: duration.value})
+                });
+                const data = await response.json();
+                if (!response.ok || data.status !== 'OK') {
+                    feedback.textContent = data.message || '{{ _("Linkin luominen epäonnistui.") }}';
+                    return;
+                }
+                rawLink.value = data.edit_link;
+                expiry.textContent = `{{ _('Vanhenee täsmälleen') }}: ${new Date(data.expires_at).toLocaleString()}`;
+                result.classList.remove('d-none');
+                rawLink.focus();
+                rawLink.select();
             });
-            const data = await response.json();
-            if (!response.ok || data.status !== 'OK') {
-                feedback.textContent = data.message || '{{ _("Linkin luominen epäonnistui.") }}';
-                return;
-            }
-            rawLink.value = data.edit_link;
-            expiry.textContent = `{{ _('Vanhenee täsmälleen') }}: ${new Date(data.expires_at).toLocaleString()}`;
-            result.classList.remove('d-none');
-            rawLink.focus();
-            rawLink.select();
-        });
 
-        document.getElementById('send_email_btn').addEventListener('click', async () => {
-            feedback.textContent = '';
-            const email = document.getElementById('edit_link_email').value;
-            const response = await fetch(`/admin/demo/send_edit_link_email/${demoId}`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', 'X-CSRF-Token': editLinkCsrf},
-                body: JSON.stringify({email, duration: duration.value})
+            document.getElementById('send_email_btn').addEventListener('click', async () => {
+                feedback.textContent = '';
+                const email = document.getElementById('edit_link_email').value;
+                const response = await fetch(`/admin/demo/send_edit_link_email/${demoId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': editLinkCsrf},
+                    body: JSON.stringify({email, duration: duration.value})
+                });
+                const data = await response.json();
+                feedback.textContent = response.ok
+                    ? `${data.message} {{ _('Vanhenee') }}: ${new Date(data.expires_at).toLocaleString()}`
+                    : (data.message || '{{ _("Sähköpostin lähettäminen epäonnistui.") }}');
             });
-            const data = await response.json();
-            feedback.textContent = response.ok
-                ? `${data.message} {{ _('Vanhenee') }}: ${new Date(data.expires_at).toLocaleString()}`
-                : (data.message || '{{ _("Sähköpostin lähettäminen epäonnistui.") }}');
-        });
 
-        editLinkModal.addEventListener('hidden.bs.modal', () => {
-            rawLink.value = '';
-            expiry.textContent = '';
-            feedback.textContent = '';
-            result.classList.add('d-none');
-        });
-    }
-
-    duplicateButton?.addEventListener('click', async () => {
-        if (!confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta?') }}')) return;
-        const response = await fetch(`/admin/demo/duplicate/${demoId}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        const data = await response.json();
-        if (response.ok && data.status === 'OK' && data.new_demo_id) {
-            window.open(`/admin/demo/edit_demo/${data.new_demo_id}`, '_blank', 'width=1000,height=800,noopener');
-        } else {
-            alert(data.message || '{{ _("Kopion luominen epäonnistui.") }}');
+            editLinkModal.addEventListener('hidden.bs.modal', () => {
+                rawLink.value = '';
+                expiry.textContent = '';
+                feedback.textContent = '';
+                result.classList.add('d-none');
+            });
         }
+
+        duplicateButton?.addEventListener('click', async () => {
+            if (!confirm('{{ _('Haluatko varmasti luoda kopion tästä mielenosoituksesta?') }}')) return;
+            const response = await fetch(`/admin/demo/duplicate/${demoId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            const data = await response.json();
+            if (response.ok && data.status === 'OK' && data.new_demo_id) {
+                window.open(`/admin/demo/edit_demo/${data.new_demo_id}`, '_blank', 'width=1000,height=800,noopener');
+            } else {
+                alert(data.message || '{{ _("Kopion luominen epäonnistui.") }}');
+            }
+        });
     });
 </script>
 {% endif %}

@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}{% endblock %}
 
@@ -17,10 +18,18 @@
 
 {% block main_content %}
 <section class="dashboard-container">
-  <h1>{{ _('Yhteensä katselukerrat viimeisen 24 tunnin aikana') }}</h1>
-  <form method="get" style="margin-bottom: 1rem;">
+  {{ admin_page_hero(
+    _('Yhteensä katselukerrat viimeisen 24 tunnin aikana'),
+    _('Tarkastele kaikkien mielenosoitusten katselukertoja valitulla aikavälijaolla.'),
+    _('Analytiikka'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Tilastot'), url_for('admin.stats')), (_('Viimeiset 24 tuntia'), none)],
+    back_url=url_for('admin.stats'),
+    back_label=_('Tilastot')
+  ) }}
+  <form method="get" class="admin-filter-bar">
+  <div class="admin-field">
   <label for="interval">{{ _('Jaa aikavälit:') }}</label>
-  <select name="interval" onchange="this.form.submit()">
+  <select class="form-select" id="interval" name="interval" onchange="this.form.submit()">
     <option value="1" {% if interval == 1 %}selected{% endif %}>1 min</option>
     <option value="5" {% if interval == 5 %}selected{% endif %}>5 min</option>
     <option value="15" {% if interval == 15 %}selected{% endif %}>15 min</option>
@@ -28,6 +37,7 @@
     <option value="60" {% if interval == 60 %}selected{% endif %}>1 tunti</option>
     <option value="120" {% if interval == 120 %}selected{% endif %}>2 tuntia</option>
   </select>
+  </div>
 </form>
 
   <div class="dashboard-panel">

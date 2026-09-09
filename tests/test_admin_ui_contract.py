@@ -473,6 +473,27 @@ def test_destructive_confirmations_use_canonical_hero_navigation():
         assert source.count("<h1") == 0
 
 
+def test_specialist_admin_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/kampanja/list.html",
+        "mielenosoitukset_fi/templates/admin_V2/overall_24h_analytics.html",
+        "mielenosoitukset_fi/templates/admin_V2/s3/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/s3/view_media.html",
+        "mielenosoitukset_fi/templates/admin_V2/super_audit/logs.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in (pages[1], pages[3], pages[4]):
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    campaign = Path(pages[0]).read_text(encoding="utf-8")
+    assert 'class="header' not in campaign
+    assert ".header" not in campaign
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

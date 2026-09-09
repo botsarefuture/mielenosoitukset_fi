@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
@@ -490,13 +491,13 @@
 
 {% block main_content %}
 <div class="users-page">
-  <header class="users-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="users-kicker admin-page-hero__kicker">{{ _('Käyttäjähallinta') }}</p>
-      <h1>{{ _('Käyttäjät') }}</h1>
-      <p>{{ _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.') }}</p>
-    </div>
-    <div class="users-hero-actions admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Käyttäjät'),
+    _('Etsi käyttäjiä, tarkista käyttöoikeudet ja hoida käyttäjätilien tärkeimmät ylläpitotoimet.'),
+    _('Käyttäjähallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Käyttäjät'), none)],
+    hero_classes='users-hero'
+  ) %}
       <a href="{{ url_for('admin.manual_page', page='users') }}" target="_blank" class="users-hero-action admin-page-hero__action">
         <i class="fa-solid fa-book-open" aria-hidden="true"></i>{{ _('Käyttöohje') }}
       </a>
@@ -504,8 +505,7 @@
         <i class="fa-solid fa-key" aria-hidden="true"></i>{{ _('API-avainpyynnöt') }}
         {% if pending_token_requests %}<span class="users-request-count">{{ pending_token_requests }}</span>{% endif %}
       </a>
-    </div>
-  </header>
+  {% endcall %}
 
   <section class="users-summary" aria-label="{{ _('Käyttäjätilien yhteenveto') }}">
     <article class="users-summary-card">

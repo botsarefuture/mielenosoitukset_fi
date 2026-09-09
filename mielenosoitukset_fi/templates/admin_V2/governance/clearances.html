@@ -1,19 +1,21 @@
 {% extends 'admin_base.html' %}
 {% set governance_tab = 'clearances' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Hallituksen hyväksynnät') }} – Mielenosoitukset.fi{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">{% endblock %}
 
 {% block main_content %}
 <section class="governance-shell">
-  <header class="governance-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="governance-eyebrow admin-page-hero__kicker mb-2">{{ _('Hallinto') }}</p>
-      <h1 class="h2 mb-2">{{ _('Superkäyttäjäroolin hyväksynnät') }}</h1>
-      <p class="text-body-secondary mb-0">{{ _('Hallituksen hyväksyntä vaaditaan ennen kuin käyttäjälle voidaan myöntää global_admin-superkäyttäjärooli. Jokainen muutos kirjataan tapahtumalokiin.') }}</p>
-    </div>
-    <div class="admin-page-hero__metric"><strong>{{ approved_count }}</strong><span>{{ _('hyväksytty') }}</span></div>
-  </header>
+  {{ admin_page_hero(
+    _('Superkäyttäjäroolin hyväksynnät'),
+    _('Hallituksen hyväksyntä vaaditaan ennen kuin käyttäjälle voidaan myöntää global_admin-superkäyttäjärooli. Jokainen muutos kirjataan tapahtumalokiin.') ~ ' ' ~ approved_count ~ ' ' ~ _('hyväksytty.'),
+    _('Hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinto ja käyttöoikeudet'), url_for('admin_governance.dashboard')), (_('Superkäyttäjäroolin hyväksynnät'), none)],
+    back_url=url_for('admin_governance.dashboard'),
+    back_label=_('Hallinto ja käyttöoikeudet'),
+    hero_classes='governance-hero'
+  ) }}
   {% include 'admin_V2/governance/_tabs.html' %}
 
   <section class="governance-card">

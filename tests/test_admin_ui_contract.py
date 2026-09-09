@@ -156,7 +156,7 @@ def test_user_role_forms_use_shared_admin_contract():
         "mielenosoitukset_fi/templates/admin_V2/_modals_users.html"
     ).read_text(encoding="utf-8")
 
-    assert 'class="admin-page-hero__content"' in edit
+    assert "admin_page_hero(" in edit
     assert 'class="admin-form admin-user-form"' in edit
     assert "admin-form-section" in edit
     assert "admin-sticky-actions" in edit
@@ -332,6 +332,24 @@ def test_city_admin_operational_pages_use_canonical_hero_macro():
         source = Path(name).read_text(encoding="utf-8")
         assert source.lstrip().startswith("{% extends")
         assert "float:right" not in source
+
+
+def test_access_management_pages_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/user/list.html",
+        "mielenosoitukset_fi/templates/admin_V2/user/edit.html",
+        "mielenosoitukset_fi/templates/admin_V2/governance/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/governance/clearances.html",
+        "mielenosoitukset_fi/templates/admin_V2/governance/audit.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[1:2] + pages[3:]:
+        assert "back_url=" in Path(name).read_text(encoding="utf-8")
 
 
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():

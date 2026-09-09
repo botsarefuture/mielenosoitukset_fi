@@ -389,6 +389,31 @@ def test_audit_and_developer_pages_use_canonical_hero_navigation():
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
 
 
+def test_analytics_pages_use_shared_hero_metric_slot():
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/analytics.html",
+        "mielenosoitukset_fi/templates/admin_V2/stats.html",
+    )
+
+    assert "metric_value=none" in macro
+    assert 'class="admin-page-hero__metric"' in macro
+    assert "metric_id" in macro
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "metric_value=" in source
+        assert "admin.admin_dashboard" in source
+    assert "analytics-hero" not in Path(pages[0]).read_text(encoding="utf-8")
+    stats_css = Path(
+        "mielenosoitukset_fi/static/css/admin/stats.css"
+    ).read_text(encoding="utf-8")
+    assert ".stats-hero" not in stats_css
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

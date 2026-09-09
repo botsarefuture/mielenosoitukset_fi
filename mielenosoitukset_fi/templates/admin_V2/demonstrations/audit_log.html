@@ -1,4 +1,5 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 {% block styles %}
 <style>
   .audit-list .list-group-item {
@@ -21,16 +22,14 @@
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-header__kicker">{{ _('Mielenosoitukset') }}</p>
-      <h1>{{ _('Audit-loki:') }} {{ demo.title }}</h1>
-      <p>{{ demo.date }} · {{ demo.city }}</p>
-    </div>
-    <a href="{{ url_for('admin_demo.demo_control') }}" class="btn btn-outline-secondary">
-      <i class="fa-solid fa-arrow-left me-2"></i>{{ _('Takaisin hallintapaneeliin') }}
-    </a>
-  </header>
+  {{ admin_page_hero(
+    _('Audit-loki:') ~ ' ' ~ demo.title,
+    demo.date ~ ' · ' ~ demo.city,
+    _('Mielenosoitukset'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (_('Audit-loki'), none)],
+    back_url=url_for('admin_demo.demo_control'),
+    back_label=_('Mielenosoitukset')
+  ) }}
 
   {% if entries %}
   <div class="card admin-data-view">

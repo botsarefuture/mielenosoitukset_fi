@@ -1,65 +1,6 @@
 {% extends 'admin_base.html' %}
 {% from 'admin_V2/macros.html' import admin_page_hero %}
 
-{% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_org_control.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/table.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell.css') }}" />
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_actions_cell_btns.css') }}" />
-
-
-<style>
-    /* Custom styles for the media view */
-    .media-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-         margin-top: 1rem;
-    }
-
-    .media-item {
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        padding: 1rem;
-        background: #f8f9fa;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        width: calc(33.333% - 1rem);
-        box-sizing: border-box;
-        position: relative;
-    }
-
-    .media-item img {
-        max-width: 100%;
-        border-radius: 5px;
-        opacity: 0;
-        transition: opacity 1s ease-in-out;
-    }
-
-    .media-item img.loaded {
-        opacity: 1;
-    }
-
-    .media-item p {
-        margin: 0.5rem 0 0;
-        font-size: 0.9rem;
-        color: #333;
-    }
-
-    .copy-button {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #007bff;
-        color: #fff;
-        border: none;
-        padding: 0.5rem;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-</style>
-{% endblock %}
-
 {% block main_content %}
 <div class="admin-page">
 {{ admin_page_hero(
@@ -71,24 +12,29 @@
     back_label=_('Lataa mediaa')
 ) }}
 <!-- New file input for uploading multiple photos -->
-<form id="upload-form" action="{{ url_for('admin_media_bp.upload_multiple') }}" method="post"
-    enctype="multipart/form-data">
-    <input type="file" id="photos" name="photos" accept="image/*" multiple>
-    <button type="submit">{{ _('Upload Photos') }}</button>
-</form>
-<div class="media-container">
-    {% for item in media %}
-    <div class="media-item">
-        <img src="{{ item.url }}" alt="Media" onload="this.classList.add('loaded')">
-        <p>{{ _('Uploaded at:') }} {{ item.uploaded_at }}</p>
-        <p>{{ _('Uploader ID:') }} {{ item.uploader }}</p>
-        <a class="button" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">
-            <i class="fas fa-download"></i> {{ _('Download') }}
-        </a>
-        <button class="copy-button" onclick="copyToClipboard('{{ item.url }}')">
-            <i class="fas fa-copy"></i> {{ _('Copy Link') }}
-        </button>
+<form id="upload-form" class="admin-form-section admin-media-upload" action="{{ url_for('admin_media_bp.upload_multiple') }}" method="post" enctype="multipart/form-data">
+    <div class="admin-field">
+        <label for="photos">{{ _('Lataa useita kuvia') }}</label>
+        <input class="form-control" type="file" id="photos" name="photos" accept="image/*" multiple required>
+        <p class="admin-field__help">{{ _('Voit valita useita kuvatiedostoja samalla kertaa.') }}</p>
     </div>
+    <button class="btn btn-primary" type="submit"><i class="fas fa-upload" aria-hidden="true"></i>{{ _('Lataa kuvat') }}</button>
+</form>
+<div class="admin-media-grid">
+    {% for item in media %}
+    <article class="admin-media-card">
+        <img class="admin-media-card__preview" src="{{ item.url }}" alt="{{ _('Mediakirjaston kuva') }}" loading="lazy">
+        <div class="admin-media-card__body">
+            <p class="admin-media-meta"><strong>{{ _('Ladattu') }}</strong><span>{{ item.uploaded_at }}</span></p>
+            <p class="admin-media-meta"><strong>{{ _('Lataajan tunniste') }}</strong><span>{{ item.uploader }}</span></p>
+        </div>
+        <div class="admin-media-card__actions">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ item.url }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-download" aria-hidden="true"></i>{{ _('Lataa') }}</a>
+            <button class="btn btn-outline-primary btn-sm admin-media-copy" type="button" data-copy-url="{{ item.url }}"><i class="fas fa-copy" aria-hidden="true"></i>{{ _('Kopioi linkki') }}</button>
+        </div>
+    </article>
+    {% else %}
+    <div class="admin-empty-state"><i class="fas fa-images" aria-hidden="true"></i><p>{{ _('Mediakirjastossa ei ole vielä kuvia.') }}</p></div>
     {% endfor %}
 </div>
 </div>
@@ -108,6 +54,10 @@
         });
     }
 
+    document.querySelectorAll('.admin-media-copy').forEach((button) => {
+        button.addEventListener('click', () => copyToClipboard(button.dataset.copyUrl));
+    });
+
     /**
     * Handle the file upload via the form.
     *
@@ -116,7 +66,7 @@
     document.getElementById('upload-form').addEventListener('submit', function (event) {
         event.preventDefault();
         const files = document.getElementById('photos').files;
-        const existingUrls = Array.from(document.querySelectorAll('.media-item img')).map(img => img.src);
+        const existingUrls = Array.from(document.querySelectorAll('.admin-media-card__preview')).map(img => img.src);
         const filesToUpload = Array.from(files).filter(file => !existingUrls.includes(URL.createObjectURL(file)));
 
         if (filesToUpload.length === 0) {

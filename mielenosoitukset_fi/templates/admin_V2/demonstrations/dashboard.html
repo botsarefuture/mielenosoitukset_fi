@@ -1,4 +1,6 @@
-{% extends 'admin_base.html' %} {% block styles %}
+{% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
+{% block styles %}
 
 <style>
   .search-and-filter {
@@ -388,13 +390,14 @@
 
 
 <section class="dashboard-container admin-workspace demo-management-page">
-  <header class="admin-workspace-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-workspace-kicker admin-page-hero__kicker">{{ _('Sisällönhallinta') }}</p>
-      <h1 id="tabletitle">{{ _('Mielenosoitukset') }}</h1>
-      <p>{{ _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.') }}</p>
-    </div>
-    <div class="admin-workspace-hero-actions admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Mielenosoitukset'),
+    _('Hae, suodata ja hallitse mielenosoituksia, joihin sinulla on käyttöoikeus.'),
+    _('Sisällönhallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), none)],
+    title_id='tabletitle',
+    hero_classes='admin-workspace-hero'
+  ) %}
       {% if can_create_demo %}
       <a href="{{ url_for('admin_demo.create_demo') }}" class="admin-workspace-hero-action admin-page-hero__action">
         <i class="fas fa-plus"></i>{{ _('Uusi mielenosoitus') }}
@@ -420,8 +423,7 @@
         <i class="fas fa-language"></i>{{ _('Käännöstyöjono') }}
       </a>
       {% endif %}
-    </div>
-  </header>
+  {% endcall %}
 
   <section class="admin-workspace-summary" aria-label="{{ _('Näkyvien mielenosoitusten yhteenveto') }}">
     <article class="admin-workspace-summary-card">

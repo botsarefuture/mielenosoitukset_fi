@@ -314,6 +314,26 @@ def test_organization_pages_use_canonical_hero_macro_and_navigation():
         assert "admin.admin_dashboard" in source
 
 
+def test_city_admin_operational_pages_use_canonical_hero_macro():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/cities/index.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/dashboard.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+    for name in pages[2:]:
+        source = Path(name).read_text(encoding="utf-8")
+        assert source.lstrip().startswith("{% extends")
+        assert "float:right" not in source
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

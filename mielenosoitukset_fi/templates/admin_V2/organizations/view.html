@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/organizations/macros.html' import invite_modal %}
 
 {% block styles %}
 <style>
@@ -375,22 +376,7 @@
     </aside>
   </div>
 
-  {% if can_invite_members %}<div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <form method="POST" action="{{ url_for('admin_org.invite') }}">
-          <div class="modal-header"><div><p class="org-detail-kicker mb-1">{{ _('Uusi jäsen') }}</p><h2 class="modal-title" id="inviteModalLabel">{{ _('Kutsu käyttäjä') }}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"></button></div>
-          <div class="modal-body">
-            <p class="org-confirm-copy mb-3">{{ _('Lähetämme käyttäjälle sähköpostitse linkin, jolla hän voi liittyä organisaatioon.') }}</p>
-            <label for="invitee_email" class="form-label">{{ _('Kutsuttavan sähköpostiosoite') }}</label>
-            <input type="email" id="invitee_email" name="invitee_email" class="form-control" required autocomplete="email" placeholder="nimi@example.fi">
-            <input type="hidden" name="organization_id" value="{{ organization._id }}">
-          </div>
-          <div class="modal-footer"><button type="button" class="org-button" data-bs-dismiss="modal">{{ _('Peruuta') }}</button><button type="submit" class="org-button primary"><i class="fas fa-paper-plane" aria-hidden="true"></i>{{ _('Lähetä kutsu') }}</button></div>
-        </form>
-      </div>
-    </div>
-  </div>{% endif %}
+  {% if can_invite_members %}{{ invite_modal(organization) }}{% endif %}
 
   <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">

@@ -1,5 +1,6 @@
 {% extends 'admin_base.html' %}
 {% set governance_tab = 'cities' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Kaupunkihallinta') }} – Mielenosoitukset.fi{% endblock %}
 
@@ -95,22 +96,18 @@
 
 {% block main_content %}
 <section class="city-admin-shell admin-workspace">
-  <header class="city-admin-header admin-workspace-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-workspace-kicker admin-page-hero__kicker">{{ _('Hallinto') }}</p>
-      <h1>{{ _('Kaupunkihallinta') }}</h1>
-      <p>
-        {{ _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.') }}
-      </p>
-    </div>
-    <div class="admin-workspace-hero-actions admin-page-hero__actions">
-      {% if current_user.global_admin or current_user.has_permission('LIST_USERS') %}
+  {% call admin_page_hero(
+    _('Kaupunkihallinta'),
+    _('Ota käyttöön kaupungit, joihin on löytynyt yhteyshenkilö. Käyttäjäkohtaiset oikeudet annetaan edelleen Käyttäjien hallinnasta.'),
+    _('Hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kaupunkihallinta'), none)],
+    actions_visible=current_user.global_admin or current_user.has_permission('LIST_USERS'),
+    hero_classes='city-admin-header admin-workspace-hero'
+  ) %}
       <a class="admin-workspace-hero-action admin-page-hero__action" href="{{ url_for('admin_user.user_control') }}">
         <i class="fa-solid fa-user-gear me-1" aria-hidden="true"></i>{{ _('Hallinnoi kaupunkioikeuksia') }}
       </a>
-      {% endif %}
-    </div>
-  </header>
+  {% endcall %}
 
   {% include 'admin_V2/governance/_tabs.html' %}
 

@@ -39,8 +39,8 @@
     {% endif %}
 {% endmacro %}
 
-{% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true) %}
-<header class="admin-page-hero">
+{% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true, sections=(), title_id=none, hero_classes='') %}
+<header class="admin-page-hero{% if hero_classes %} {{ hero_classes }}{% endif %}">
     <div class="admin-page-hero__content">
         {% if breadcrumbs %}
         <nav class="admin-breadcrumbs" aria-label="{{ _('Murupolku') }}">
@@ -54,7 +54,7 @@
         </nav>
         {% endif %}
         <p class="admin-page-hero__kicker">{{ kicker }}</p>
-        <h1>{{ title }}</h1>
+        <h1{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}</h1>
         <p>{{ description }}</p>
     </div>
     {% if back_url or (caller is defined and actions_visible) %}
@@ -62,6 +62,11 @@
         {% if back_url %}<a class="admin-page-hero__action admin-page-hero__back" href="{{ back_url }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ back_label or _('Takaisin') }}</a>{% endif %}
         {% if caller is defined and actions_visible %}{{ caller() }}{% endif %}
     </div>
+    {% endif %}
+    {% if sections %}
+    <nav class="admin-page-hero__nav" aria-label="{{ _('Sivun osiot') }}">
+        {% for section in sections %}<a href="#{{ section[0] }}">{{ section[1] }}</a>{% endfor %}
+    </nav>
     {% endif %}
 </header>
 {% endmacro %}

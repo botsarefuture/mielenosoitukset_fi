@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.
 * Pull request previews now use small deterministic Docker subnets and reliably remove MongoDB-owned data on teardown, preventing closed previews from exhausting the server's network address pools; preview status comments also expose failed runs clearly.
 * Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.
@@ -20,6 +21,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Organization detail, member, invitation, profile, social-link, confirmation, and notification views now reuse shared admin detail, data-view, section-card, modal, toast, action, and status primitives in both themes instead of a page-specific palette and inline stylesheet.
 * The organization collection now follows the shared admin hero, summary, filter, data-view, entity-row, status, selection, empty-state, and pagination contracts instead of carrying a separate page palette and 200-line inline stylesheet.
 * Organization create/edit, invitation, and change-review workflows now use shared admin form, data-view, modal, selection, and sticky-action components instead of maintaining large template-local style systems; primary admin actions also use theme-safe semantic colors with accessible hover, focus, busy, and disabled states.
 * Merges to `main` now trigger a serialized, exact-commit production deployment with Gunicorn's graceful worker reload and public health verification, minimizing downtime without allowing an older workflow run to overwrite a newer release.

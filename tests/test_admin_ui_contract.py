@@ -288,6 +288,32 @@ def test_organization_detail_uses_shared_components_and_scoped_controls():
     assert "org-role-select" not in detail
 
 
+def test_organization_pages_use_canonical_hero_macro_and_navigation():
+    macro = Path("mielenosoitukset_fi/templates/admin_V2/macros.html").read_text(
+        encoding="utf-8"
+    )
+    pages = (
+        "dashboard.html",
+        "form.html",
+        "review_suggestion.html",
+        "view.html",
+    )
+
+    assert "macro admin_page_hero" in macro
+    assert 'class="admin-breadcrumbs"' in macro
+    assert 'class="admin-page-hero__content"' in macro
+    assert 'class="admin-page-hero__actions"' in macro
+    assert "admin-page-hero__back" in macro
+    assert macro.index("back_url") < macro.index("caller()")
+    for name in pages:
+        source = Path(
+            "mielenosoitukset_fi/templates/admin_V2/organizations", name
+        ).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

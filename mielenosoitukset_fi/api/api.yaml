@@ -1,116 +1,1160 @@
 openapi: 3.0.0
 info:
   title: Mielenosoitukset.fi API
-  version: 1.1.0
-  description: Public and session-authenticated API routes exposed under `/api`.
+  version: 2.0.0
+  description: |
+    Public API for Mielenosoitukset.fi (demonstrations, likes, attending, invites,
+    API token management, and the /api/v1 helpers).
+
+    Authentication is via `Authorization: Bearer <token>` (API tokens) or the
+    browser login session cookie, depending on the endpoint.
+
+    Rate limits (global): 10 requests/second, 3600 requests/hour,
+    86400 requests/day.
+
+    Errors use the shape `{"message": "...", "code": "..."}` with the HTTP status
+    code carried by the response line. Common codes: `token_missing`,
+    `token_invalid`, `token_expired`, `token_no_renew`, `invalid_token_type`,
+    `demo_not_found`, `demo_not_approved`, `insufficient_permissions`,
+    `token_scope`, `auth_required`.
+
+    Admin-only and browser-session UI endpoints are intentionally not part of
+    this surface.
 servers:
-  - url: https://mielenosoitukset.fi/api
+  - url: https://mielenosoitukset.fi
+    description: Production
+  - url: http://127.0.0.1:5000
+    description: Local development
+
+security: []
+
 tags:
   - name: Demonstrations
+    description: Demonstration listing, details and stats
+  - name: Likes
+    description: Like / unlike actions
+  - name: Attending
+    description: Attending status for logged-in users
+  - name: Invites
+    description: Inviting friends to demonstrations
   - name: Friends
+    description: Friend attendance and friend list
   - name: Tokens
+    description: Token renewal, exchange and user token management
+  - name: API v1
+    description: Legacy /api/v1 helper endpoints (demonstrations, conflicts, organizations)
+
 paths:
-  /demonstrations:
+  /api/demonstrations:
     get:
       tags: [Demonstrations]
       summary: List demonstrations
+      description: >
+        Returns a paginated, filterable list of approved demonstrations. The
+        response may be served from cache (see the `cached` flag).
+      operationId: listDemonstrations
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/CityParam"
+        - $ref: "#/components/parameters/TitleParam"
+        - $ref: "#/components/parameters/TagParam"
+        - name: recurring
+          in: query
+          description: Reserved for future use; not currently applied.
+          required: false
+          schema:
+            type: string
+        - name: in_past
+          in: query
+          description: Include past demonstrations when `true`.
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: parent_id
+          in: query
+          description: Filter by recurring parent demonstration ObjectId.
+          required: false
+          schema:
+            type: string
+        - name: organization_id
+          in: query
+          description: Filter by organizer organization ObjectId.
+          required: false
+          schema:
+            type: string
+        - name: include_cancelled
+          in: query
+          description: |
+            Include cancelled demonstrations. Automatically enabled when
+            filtering by organization or recurring parent.
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: max_days_till
+          in: query
+          description: Only include demonstrations within N days from today (inclusive).
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: lang
+          in: query
+          description: Language code for localized output (e.g. `fi`, `en`). Falls back to the request locale, then the session locale.
+          required: false
+          schema:
+            type: string
+        - name: include_translations
+          in: query
+          description: Include full per-language translations in the output when `true`.
+          required: false
+          schema:
+            type: boolean
+            default: false
       responses:
         "200":
-          description: Demonstration list
-  /demonstrations/{demo_id}:
+          description: Paginated demonstration list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemonstrationListResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/demonstrations/{demo_id}:
     get:
       tags: [Demonstrations]
-      summary: Get a demonstration
+      summary: Get a single approved demonstration
+      operationId: getDemonstration
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Language code for localized output.
+        - name: include_translations
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Include full translations when `true`.
       responses:
         "200":
-          description: Demonstration payload
-  /demonstrations/{demo_id}/stats:
+          description: Localized demonstration payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Demonstration"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+        "403":
+          $ref: "#/components/responses/ErrorResponse"
+        "404":
+          description: Demonstration not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/demonstrations/{demo_id}/stats:
     get:
       tags: [Demonstrations]
-      summary: Get demonstration stats
+      summary: Get view and like statistics for a demonstration
+      operationId: getDemonstrationStats
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
       responses:
         "200":
-          description: Stats payload
-  /demonstrations/{demo_id}/like:
+          description: Statistics payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  demo_id:
+                    type: string
+                  views:
+                    type: integer
+                    example: 123
+                  likes:
+                    type: integer
+                    example: 10
+                required: [demo_id, views, likes]
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+        "404":
+          description: Demonstration not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/demonstrations/{demo_id}/like:
     post:
-      tags: [Demonstrations]
+      tags: [Likes]
       summary: Like a demonstration
+      description: Accepts either a Bearer token with the `write` scope or a logged-in session. Also toggles attending as a temporary side effect.
+      operationId: likeDemonstration
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
       responses:
         "200":
-          description: Updated likes count
-  /demonstrations/{demo_id}/attending:
-    get:
-      tags: [Demonstrations]
-      summary: Get attending state
-      responses:
-        "200":
-          description: Attending state
+          description: Updated like count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikesResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+        "403":
+          $ref: "#/components/responses/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/demonstrations/{demo_id}/unlike:
     post:
-      tags: [Demonstrations]
-      summary: Update attending state
-      responses:
-        "200":
-          description: Updated attending state
-  /demonstrations/{demo_id}/unlike:
-    post:
-      tags: [Demonstrations]
+      tags: [Likes]
       summary: Unlike a demonstration
+      description: Accepts either a Bearer token with the `write` scope or a logged-in session. Also toggles attending as a temporary side effect.
+      operationId: unlikeDemonstration
+      security:
+        - bearerAuth: []
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
       responses:
         "200":
-          description: Updated likes count
-  /demonstrations/{demo_id}/likes:
+          description: Updated like count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikesResponse"
+        "400":
+          $ref: "#/components/responses/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+        "403":
+          $ref: "#/components/responses/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/demonstrations/{demo_id}/likes:
     get:
-      tags: [Demonstrations]
-      summary: Get likes count
+      tags: [Likes]
+      summary: Get the current like count
+      operationId: getDemonstrationLikes
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
       responses:
         "200":
-          description: Like count
-  /demonstrations/unapproved:
+          description: Current like count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikesResponse"
+
+  /api/demonstrations/{demo_id}/attending:
     get:
-      tags: [Demonstrations]
-      summary: List unapproved demonstrations
+      tags: [Attending]
+      summary: Check whether the current user is attending
+      operationId: getAttendingStatus
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
       responses:
         "200":
-          description: Unapproved demonstrations
-  /admin/demonstrations/{demo_id}:
+          description: Attending status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendingResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+    post:
+      tags: [Attending]
+      summary: Toggle or set the attending status
+      operationId: setAttendingStatus
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attending:
+                  type: boolean
+                  description: Set the status explicitly. Omit to toggle.
+                  example: true
+      responses:
+        "200":
+          description: Updated attending status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttendingResponse"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/demonstrations/{demo_id}/invite:
+    post:
+      tags: [Invites]
+      summary: Invite friends to a demonstration
+      description: Sends a bell notification and a chat message to each new invitee; duplicates are skipped.
+      operationId: inviteFriendsToDemonstration
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DemoIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                friend_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: User ObjectIds to invite.
+                  example: ["507f1f77bcf86cd799439011"]
+              required: [friend_ids]
+      responses:
+        "200":
+          description: Invites sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  demo_id:
+                    type: string
+                  invited_friends:
+                    type: array
+                    items:
+                      type: string
+                    example: ["507f1f77bcf86cd799439011"]
+                  message:
+                    type: string
+                required: [demo_id, invited_friends, message]
+        "400":
+          description: No friends provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+        "500":
+          description: Invite processing failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/friends-attending:
+    post:
+      tags: [Friends]
+      summary: Get which friends are attending a set of demonstrations
+      description: |
+        Requires a logged-in session for meaningful results (not enforced in
+        code). Returns a mapping of demo ObjectId to the list of attending friends.
+      operationId: friendsAttending
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                demo_ids:
+                  type: array
+                  items:
+                    type: string
+                  description: Demonstration ObjectIds to inspect.
+                  example: ["507f1f77bcf86cd799439011"]
+              required: [demo_ids]
+      responses:
+        "200":
+          description: Per-demo attending friends
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Friend"
+                example:
+                  "507f1f77bcf86cd799439011":
+                    - user_id: "507f1f77bcf86cd799439022"
+                      name: "Liisa Virtanen"
+                      avatar: "/avatars/liisa.jpg"
+        "400":
+          description: Missing demo_ids
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Missing demo_ids
+
+  /api/user/friends/:
     get:
-      tags: [Demonstrations]
-      summary: Get admin demonstration details
+      tags: [Friends]
+      summary: Redirect to the user friends API
+      description: Redirects to the logged-in user's friends list endpoint used by the UI.
+      operationId: userFriendsRedirect
+      security:
+        - sessionAuth: []
       responses:
-        "200":
-          description: Demonstration payload
-  /token/renew:
+        "302":
+          description: Redirect to the friends list API
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/token/renew:
     post:
       tags: [Tokens]
-      summary: Renew a short-lived token
+      summary: Renew a token that is close to expiry
+      operationId: renewToken
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: Renewed token
-  /token/long_lived:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          description: Token does not need renewal yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/token/long_lived:
     post:
       tags: [Tokens]
-      summary: Exchange for a long-lived token
+      summary: Exchange a short-lived token for a long-lived token
+      operationId: createLongLivedToken
+      description: Only short-lived tokens can be exchanged.
+      security:
+        - bearerAuth: []
       responses:
-        "200":
-          description: Long-lived token
-  /friends-attending:
-    post:
-      tags: [Friends]
-      summary: Get which friends are attending demonstrations
-      responses:
-        "200":
-          description: Friend attendance mapping
-  /user/friends/:
+        "201":
+          description: Long-lived token created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          description: |
+            Only short-lived tokens can be exchanged (`invalid_token_type`) or
+            the short-lived token has expired (`token_expired`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /api/v1/demonstrations:
     get:
-      tags: [Friends]
-      summary: List a user's friends
+      tags: [API v1]
+      summary: List demonstrations (legacy /api/v1)
+      description: Legacy demonstration list returning `demonstrations` and `total_pages`.
+      operationId: apiV1Demonstrations
+      security: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+          description: Page number.
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+          description: Items per page.
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Case-insensitive search term.
+        - name: city
+          in: query
+          required: false
+          schema:
+            type: string
+          description: City name or comma-separated list.
+        - name: location
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Free-text location filter.
+        - name: date_start
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Start date (YYYY-MM-DD).
+        - name: date_end
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End date (YYYY-MM-DD).
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Tag filter.
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Language code for localized output.
       responses:
         "200":
-          description: Friend list
-  /demonstrations/{demo_id}/invite:
+          description: Demonstration list and total pages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  demonstrations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/V1Demonstration"
+                  total_pages:
+                    type: integer
+                required: [demonstrations, total_pages]
+
+  /api/v1/check_demo_conflict:
+    get:
+      tags: [API v1]
+      summary: Check for conflicting demonstrations
+      description: Finds up to 5 approved, non-cancelled demonstrations in the same city/date that match a title or address.
+      operationId: apiV1CheckDemoConflict
+      security: []
+      parameters:
+        - name: title
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Demonstration title.
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date (YYYY-MM-DD).
+        - name: city
+          in: query
+          required: true
+          schema:
+            type: string
+          description: City name.
+        - name: address
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Address to match.
+      responses:
+        "200":
+          description: Matching demonstrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        title:
+                          type: string
+                        address:
+                          type: string
+                        date:
+                          type: string
+                          format: date
+                    maxItems: 5
+
+  /api/v1/search_organizations:
+    get:
+      tags: [API v1]
+      summary: Search for organizations
+      description: Returns up to 10 organizations whose name matches the query (case-insensitive, minimum 2 characters).
+      operationId: apiV1SearchOrganizations
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          description: Organization name query.
+      responses:
+        "200":
+          description: Matching organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Organization ObjectId.
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    website:
+                      type: string
+                    description:
+                      type: string
+                  required: [id, name, email, website, description]
+
+  /users/auth/api_token:
     post:
-      tags: [Friends]
-      summary: Invite friends to a demonstration
+      tags: [Tokens]
+      summary: Create a new API token
+      description: |
+        Creates a token for the logged-in user. The raw token is returned only
+        once. `admin` and `mcp.admin` are privileged scopes and require a global
+        administrator account. Access must first be approved by an admin (see
+        `/users/auth/api_tokens/request_access`).
+      operationId: createApiToken
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [short, long]
+                  default: short
+                  description: short (48h) or long (90d).
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                    enum: [read, write, submit_demonstrations, admin, mcp.admin]
+                  default: [read]
+              required: [scopes]
       responses:
         "200":
-          description: Invitation result
+          description: Token created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  token:
+                    type: string
+                    description: Raw token. Only shown once.
+                  expires_at:
+                    type: string
+                    format: date-time
+                  scopes:
+                    type: array
+                    items:
+                      type: string
+                  type:
+                    type: string
+                required: [status, token, expires_at, scopes, type]
+        "400":
+          description: Invalid token type or unsupported scopes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: API token access locked, or privileged scopes require a global administrator
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/ErrorResponse"
+
+  /users/auth/api_tokens/list:
+    get:
+      tags: [Tokens]
+      summary: List the user's API tokens
+      description: Lists token metadata (hashed in DB); the raw token is never returned again.
+      operationId: listApiTokens
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Token list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  tokens:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        _id:
+                          type: string
+                        type:
+                          type: string
+                          enum: [short, long]
+                        scopes:
+                          type: array
+                          items:
+                            type: string
+                        expires_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                required: [status, tokens]
+
+  /users/auth/api_tokens/revoke:
+    post:
+      tags: [Tokens]
+      summary: Revoke an API token
+      operationId: revokeApiToken
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token_id:
+                  type: string
+                  description: Token ObjectId to revoke.
+              required: [token_id]
+      responses:
+        "200":
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+        "400":
+          description: token_id required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: token_id required
+
+  /users/auth/api_tokens/status:
+    get:
+      tags: [Tokens]
+      summary: Get API token access status
+      description: Reports whether the current user is approved for API token usage and whether a request is pending.
+      operationId: apiTokenStatus
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Access status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  approved:
+                    type: boolean
+                  requested:
+                    type: boolean
+                  requested_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                required: [status, approved, requested, requested_at]
+
+  /users/auth/api_tokens/request_access:
+    post:
+      tags: [Tokens]
+      summary: Request admin approval for API token access
+      operationId: requestApiTokenAccess
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Justification for access (optional in request body).
+      responses:
+        "200":
+          description: Access request sent, already approved, or already requested
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                  requested_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                required: [status, message]
+        "500":
+          description: Request failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Request failed
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: "API token. Tokens have scopes (`read`, `write`, `submit_demonstrations`, `admin`, `mcp.admin`). Send `Authorization: Bearer <token>`."
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Browser login session cookie.
+
+  parameters:
+    DemoIdParam:
+      name: demo_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Demonstration ObjectId.
+    SearchParam:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Free text search across title and description (case-insensitive).
+    CityParam:
+      name: city
+      in: query
+      required: false
+      schema:
+        type: string
+      description: City name or comma-separated list (case-insensitive).
+    TitleParam:
+      name: title
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Title substring filter (case-insensitive).
+    TagParam:
+      name: tag
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Tag filter (case-insensitive).
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Pagination page.
+    PerPageParam:
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+      description: Items per page.
+
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      description: Error payload. The HTTP status code is carried by the response line.
+      properties:
+        message:
+          type: string
+          description: Human readable message.
+        code:
+          type: string
+          description: Machine readable code (e.g. `token_missing`, `demo_not_found`).
+      required: [message, code]
+
+    Demonstration:
+      type: object
+      description: Localized demonstration payload.
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        default_language:
+          type: string
+          example: fi
+        resolved_language:
+          type: string
+          nullable: true
+        available_languages:
+          type: array
+          items:
+            type: string
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+        end_time:
+          type: string
+          nullable: true
+        city:
+          type: string
+        address:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        cancelled:
+          type: boolean
+        cover_picture:
+          type: string
+          nullable: true
+        slug:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+
+    DemonstrationListResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+        next_url:
+          type: string
+          nullable: true
+        prev_url:
+          type: string
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Demonstration"
+        rendered_at:
+          type: string
+          format: date-time
+        cached:
+          type: boolean
+      required:
+        [page, per_page, total, total_pages, next_url, prev_url, results, rendered_at]
+      example:
+        page: 1
+        per_page: 20
+        total: 133
+        total_pages: 7
+        next_url: "?page=2&per_page=20"
+        prev_url: null
+        results:
+          - _id: "507f1f77bcf86cd799439011"
+        rendered_at: "2025-01-01T12:00:00.000Z"
+        cached: false
+
+    LikesResponse:
+      type: object
+      properties:
+        likes:
+          type: integer
+      required: [likes]
+
+    AttendingResponse:
+      type: object
+      properties:
+        demo_id:
+          type: string
+        attending:
+          type: boolean
+      required: [demo_id, attending]
+
+    Friend:
+      type: object
+      properties:
+        user_id:
+          type: string
+        name:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+      required: [user_id, name]
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: New raw token.
+        expires_at:
+          type: string
+          format: date-time
+        message:
+          type: string
+      required: [token, expires_at, message]
+
+    V1Demonstration:
+      type: object
+      description: Demonstration payload for the legacy /api/v1 list.
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        default_language:
+          type: string
+        resolved_language:
+          type: string
+          nullable: true
+        available_languages:
+          type: array
+          items:
+            type: string
+        date_display:
+          type: string
+          description: Date as DD.MM.YYYY.
+        start_time_display:
+          type: string
+          description: Time as HH:MM.
+        end_time_display:
+          type: string
+          nullable: true
+        city:
+          type: string
+        address:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        cover_image:
+          type: string
+          nullable: true
+        cancelled:
+          type: boolean

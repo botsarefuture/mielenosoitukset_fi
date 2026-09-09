@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+### Added
+* The OpenAPI spec (`/api-docs/openapi.yaml`) now fully documents all public, externally-intended endpoints with schemas, auth, and error responses — including the `/api/` blueprint, the legacy `/api/v1` helpers (demonstrations, conflict check, organization search), and the `/users/auth` API-token management endpoints (create/list/revoke/status/request-access). Admin-scoped and session-only UI routes remain out of the public spec.
+* `docs/api.md` now documents `GET /users/auth/api_tokens/status` and the legacy `/api/v1` endpoints (demonstrations, check_demo_conflict, search_organizations).
+
 ### Fixed
 * The developer app detail view (`/developer/apps/<id>`) no longer breaks its inline JavaScript with literal escape sequences, so "Luo 48h token", scope-request, and token-revocation buttons work again.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.

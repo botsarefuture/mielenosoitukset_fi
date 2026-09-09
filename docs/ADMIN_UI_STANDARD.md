@@ -50,6 +50,13 @@ Use these shared classes:
 - `.admin-workspace-table`: responsive table surface.
 - `.admin-confirm`: destructive or consequential confirmation page.
 
+New and migrated full pages render their introduction with the
+`admin_page_hero` macro from `admin_V2/macros.html`. Breadcrumbs live above the
+kicker inside the content column. When a parent view exists, pass it as
+`back_url`; the macro always renders that back action first in the shared action
+column. Additional actions belong in the macro caller block. Do not hand-build a
+different back-button position inside page content.
+
 Use a compact heading instead of a hero only for detail editors and short
 workflows. The first screenful must still have one clear title, a short purpose
 statement, and consistently placed primary actions.

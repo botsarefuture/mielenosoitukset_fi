@@ -1,20 +1,20 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 {% from 'admin_V2/organizations/macros.html' import invite_modal %}
 
 {% block main_content %}
 <div class="admin-form-page admin-page">
-  <header class="admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
-      <h1>{{ _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio') }}</h1>
-      <p>{% if organization %}{{ _('Pidä organisaation profiili selkeänä, ajantasaisena ja helposti tunnistettavana.') }}{% else %}{{ _('Luo organisaatiolle selkeä profiili, jonka tiedot ovat valmiina julkaisemista ja jäsenhallintaa varten.') }}{% endif %}</p>
-    </div>
-    <div class="admin-page-hero__actions">
+  {% call admin_page_hero(
+    _('Muokkaa organisaatiota') if organization else _('Uusi organisaatio'),
+    _('Pidä organisaation profiili selkeänä, ajantasaisena ja helposti tunnistettavana.') if organization else _('Luo organisaatiolle selkeä profiili, jonka tiedot ovat valmiina julkaisemista ja jäsenhallintaa varten.'),
+    _('Organisaatiohallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), url_for('admin_org.organization_control')), ((_('Muokkaa') if organization else _('Uusi organisaatio')), none)],
+    back_url=url_for('admin_org.organization_control'),
+    back_label=_('Organisaatiot')
+  ) %}
       {% if organization %}<a class="admin-page-hero__action" href="{{ url_for('admin_org.view_organization', org_id=organization._id) }}"><i class="fas fa-chart-simple" aria-hidden="true"></i>{{ _('Yhteenveto') }}</a>{% endif %}
-      <a class="admin-page-hero__action" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
       {% if organization and can_invite_members %}<button class="admin-page-hero__action" type="button" data-bs-toggle="modal" data-bs-target="#inviteModal"><i class="fas fa-user-plus" aria-hidden="true"></i>{{ _('Kutsu käyttäjä') }}</button>{% endif %}
-    </div>
-  </header>
+  {% endcall %}
 
   <form id="organization-form" class="admin-form admin-workspace-form" method="POST" enctype="multipart/form-data" action="{{ url_for('admin_org.create_organization' if not organization else 'admin_org.edit_organization', org_id=organization._id if organization else None) }}">
     <div class="admin-form-layout">

@@ -1,20 +1,20 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 {% from 'admin_V2/organizations/macros.html' import invite_modal %}
 
 {% block main_content %}
 <div class="admin-page admin-workspace">
-  <header class="admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="admin-page-hero__kicker">{{ _('Organisaation yhteenveto') }}</p>
-      <h1>{{ organization.name }}</h1>
-      <p>{{ _('Tarkista profiilin tiedot, pidä jäsenroolit ajan tasalla ja hoida avoimet kutsut yhdessä paikassa.') }}</p>
-    </div>
-    <div class="admin-page-hero__actions">
-      <a class="admin-page-hero__action" href="{{ url_for('admin_org.organization_control') }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ _('Organisaatiot') }}</a>
+  {% call admin_page_hero(
+    organization.name,
+    _('Tarkista profiilin tiedot, pidä jäsenroolit ajan tasalla ja hoida avoimet kutsut yhdessä paikassa.'),
+    _('Organisaation yhteenveto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Organisaatiot'), url_for('admin_org.organization_control')), (organization.name, none)],
+    back_url=url_for('admin_org.organization_control'),
+    back_label=_('Organisaatiot')
+  ) %}
       <a class="admin-page-hero__action" href="{{ url_for('org', org_id=organization._id) }}"><i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>{{ _('Julkinen sivu') }}</a>
       {% if can_edit_organization %}<a class="admin-page-hero__action" href="{{ url_for('admin_org.edit_organization', org_id=organization._id) }}"><i class="fas fa-pen" aria-hidden="true"></i>{{ _('Muokkaa') }}</a>{% endif %}
-    </div>
-  </header>
+  {% endcall %}
 
   <section class="admin-workspace-summary" aria-label="{{ _('Organisaation yhteenveto') }}">
     <article class="admin-workspace-summary-card"><span class="admin-workspace-summary-icon"><i class="fas fa-user-group" aria-hidden="true"></i></span><div><span>{{ _('Jäseniä') }}</span><strong id="member-count">{{ memberships|length }}</strong></div></article>

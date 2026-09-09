@@ -332,6 +332,10 @@ def test_city_admin_operational_pages_use_canonical_hero_macro():
         source = Path(name).read_text(encoding="utf-8")
         assert source.lstrip().startswith("{% extends")
         assert "float:right" not in source
+    macro = Path(
+        "mielenosoitukset_fi/templates/admin_V2/macros.html"
+    ).read_text(encoding="utf-8")
+    assert 'class="admin-page-hero__nav editor-section-nav"' in macro
 
 
 def test_access_management_pages_use_canonical_hero_navigation():
@@ -368,6 +372,8 @@ def test_translation_workspaces_use_canonical_hero_navigation():
         assert "admin.admin_dashboard" in source
     for name in pages[:2] + pages[3:]:
         assert "back_url=" in Path(name).read_text(encoding="utf-8")
+    demo_dashboard = Path(pages[0]).read_text(encoding="utf-8")
+    assert "back_url=url_for('admin.admin_dashboard')" in demo_dashboard
 
 
 def test_system_workspaces_use_canonical_hero_navigation():
@@ -451,6 +457,12 @@ def test_case_and_merge_pages_use_canonical_hero_navigation():
     case_list = Path(pages[0]).read_text(encoding="utf-8")
     assert "case-hero" not in case_list
     assert "aclass=" not in case_list
+    case_detail = Path(pages[1]).read_text(encoding="utf-8")
+    assert "case-chip" not in case_detail
+    assert "admin-status-badge--danger" in case_detail
+    assert "admin-status-badge--info" in Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
 
 
 def test_demo_command_center_separates_hero_copy_from_operational_context():
@@ -473,6 +485,36 @@ def test_demo_command_center_separates_hero_copy_from_operational_context():
         ".hero-link",
     ):
         assert legacy_class not in template
+    assert ".demo-command-center {\n    padding: 1rem;\n    display: grid;\n    gap: 1.5rem;" in template
+
+
+def test_destructive_confirmations_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/organizations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/user/confirm.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+        assert "back_url=" in source
+        assert "title_id='confirm-title'" in source
+        assert source.count("<h1") == 0
+    for locale in ("en", "fi", "sv"):
+        catalog = Path(
+            f"mielenosoitukset_fi/translations/{locale}/LC_MESSAGES/messages.po"
+        ).read_text(encoding="utf-8")
+        for message in (
+            "Tarkista poistettava mielenosoitus ennen peruuttamatonta toimintoa.",
+            "Tarkista poistettava toistuva mielenosoitus ennen peruuttamatonta toimintoa.",
+            "Tarkista poistettava organisaatio ennen peruuttamatonta toimintoa.",
+            "Tarkista käyttäjätili ja sen rooli ennen peruuttamatonta toimintoa.",
+        ):
+            assert f'msgid "{message}"' in catalog
 
 
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():

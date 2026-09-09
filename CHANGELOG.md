@@ -22,6 +22,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Media upload and library views now use shared theme-aware admin form, field, button, empty-state, grid, and card primitives; their legacy stylesheet bundle, hard-coded light palette, inline visibility style, and inline copy handler have been removed.
 * Every full `admin_V2` page now renders its page identity through the canonical hero macro, including token decisions, per-demonstration analytics, and retained legacy utility/editor templates; a repository-wide contract prevents new standalone admin page headings.
 * Campaign management, 24-hour analytics, media upload/library, and super-audit pages now use the canonical admin hero, breadcrumb, back-action, and shared status treatment instead of standalone headings or custom header shells.
 * Demonstration, recurring-demonstration, organization, and user deletion confirmations now use the same canonical hero, breadcrumbs, and back-action placement as their parent admin workflows.

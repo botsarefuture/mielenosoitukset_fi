@@ -508,6 +508,32 @@ def test_every_full_admin_v2_page_uses_canonical_hero_macro():
     assert len(pages) == 51
 
 
+def test_media_admin_uses_shared_theme_aware_components():
+    upload = Path(
+        "mielenosoitukset_fi/templates/admin_V2/s3/dashboard.html"
+    ).read_text(encoding="utf-8")
+    library = Path(
+        "mielenosoitukset_fi/templates/admin_V2/s3/view_media.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    for template in (upload, library):
+        assert "<style" not in template
+        assert "style=" not in template
+        assert "admin_org_control.css" not in template
+        assert "form.css" not in template
+        assert "table.css" not in template
+    assert "admin-form-section" in upload
+    assert "admin-media-grid" in library
+    assert "admin-media-card__preview" in library
+    assert "onclick=" not in library
+    assert ".admin-media-card" in workspace
+    assert "var(--admin-workspace-surface)" in workspace
+    assert "var(--admin-workspace-border)" in workspace
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

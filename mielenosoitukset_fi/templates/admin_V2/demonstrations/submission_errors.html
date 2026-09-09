@@ -1,14 +1,14 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-header__kicker">{{ _('Järjestelmä') }}</p>
-      <h1>{{ _('Ilmoitusvirheet') }}</h1>
-      <p>{{ _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.') }}</p>
-    </div>
-  </header>
+  {{ admin_page_hero(
+    _('Ilmoitusvirheet'),
+    _('Viimeisimmät 200 virhettä mielenosoituksen ilmoittamisesta. Käytä virhekoodeja tukitiimin selvityksissä.'),
+    _('Järjestelmä'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Ilmoitusvirheet'), none)]
+  ) }}
 
   <div class="row g-3 mb-4">
     <div class="col-12 col-xl-8">

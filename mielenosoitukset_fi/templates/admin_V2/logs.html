@@ -1,4 +1,5 @@
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block styles %}
 <style>
@@ -340,13 +341,13 @@
 
 {% block main_content %}
 <div class="logs-shell">
-    <header class="logs-header admin-page-hero">
-        <div class="admin-page-hero__content">
-            <p class="admin-page-hero__kicker">{{ _('Lokit ja tietosuoja') }}</p>
-            <h1>{{ _('Hallinnan tapahtumaloki') }}</h1>
-            <p>{{ _('Selvitä kuka teki mitä ja milloin. Lokin katselu kirjataan tietosuojan ja jäljitettävyyden vuoksi.') }}</p>
-        </div>
-    </header>
+    {{ admin_page_hero(
+        _('Hallinnan tapahtumaloki'),
+        _('Selvitä kuka teki mitä ja milloin. Lokin katselu kirjataan tietosuojan ja jäljitettävyyden vuoksi.'),
+        _('Lokit ja tietosuoja'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinnan tapahtumaloki'), none)],
+        hero_classes='logs-header'
+    ) }}
 
     <nav class="log-source-nav" aria-label="{{ _('Lokilähteet') }}">
         <a class="log-source-link active" href="{{ url_for('admin.logs') }}" aria-current="page"><i class="fa-solid fa-list-check"></i><span><strong>{{ _('Hallintatoiminnot') }}</strong><small>{{ _('Pyynnöt ja ylläpitotoimet') }}</small></span></a>

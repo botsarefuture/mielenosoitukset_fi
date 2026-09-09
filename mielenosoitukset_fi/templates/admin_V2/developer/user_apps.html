@@ -1,10 +1,16 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div><p class="admin-page-header__kicker">{{ _('Kehittäjähallinta') }}</p><h1>Käyttäjän sovellukset</h1><p>Käyttäjä: {{ user.username or 'Tuntematon' }} ({{ user.email or '' }})</p></div>
-  </header>
+  {{ admin_page_hero(
+    _('Käyttäjän sovellukset'),
+    _('Käyttäjä: %(username)s (%(email)s)', username=(user.username or _('Tuntematon')), email=(user.email or '–')),
+    _('Kehittäjähallinta'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Kehittäjähallinta'), url_for('admin_dev.list_requests')), (_('Käyttäjän sovellukset'), none)],
+    back_url=url_for('admin_dev.list_requests'),
+    back_label=_('Kehittäjähallinta')
+  ) }}
   <div class="table-responsive admin-data-view admin-workspace-table">
     <table class="table table-striped align-middle">
       <thead>

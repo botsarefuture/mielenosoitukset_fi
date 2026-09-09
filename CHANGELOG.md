@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
 * Demonstration edit links now enforce one server-side duration allowlist, matching registry expiry and signature lifetime, CSRF-protected generation and revocation, friendly expired/revoked states, and anonymous token saves without exposing approval controls; the recurring-series editor no longer offers a broken regular-demo edit-link action.
 * Raw demonstration edit-link bearer credentials are no longer accepted from the browser, written to the persistent email queue, or passed to generic request-path auditing; each generated link is unique and can be revoked individually or per demonstration.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.

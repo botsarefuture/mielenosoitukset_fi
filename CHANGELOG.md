@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
 * Demonstration edit links now enforce one server-side duration allowlist, matching registry expiry and signature lifetime, CSRF-protected generation and revocation, friendly expired/revoked states, and anonymous token saves without exposing approval controls; the recurring-series editor no longer offers a broken regular-demo edit-link action.
 * Raw demonstration edit-link bearer credentials are no longer accepted from the browser, written to the persistent email queue, or passed to generic request-path auditing; each generated link is unique and can be revoked individually or per demonstration.
 * Admin checkboxes and radio buttons now retain distinct square and circular shapes with visible checked, focus, indeterminate, and disabled states in both themes; demonstration approval uses a full-row click target, updates its status live, and cannot be changed by editors without an explicit approval grant.

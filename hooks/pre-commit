@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+./scripts/ensure_agent_handoff.sh --check
+
+staged_files="$(git diff --cached --name-only)"
+[ -z "$staged_files" ] && exit 0
+
+if ! printf '%s\n' "$staged_files" | grep -q '^CHANGELOG\.md$'; then
+  if printf '%s\n' "$staged_files" | grep -Eq '^(mielenosoitukset_fi/|templates/|static/|config\.py|docs/.*|tests/)'; then
+    printf 'User-facing or behavioral changes detected without CHANGELOG.md staged.\n' >&2
+    exit 1
+  fi
+fi

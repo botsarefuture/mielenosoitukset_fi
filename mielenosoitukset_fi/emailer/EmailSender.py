@@ -75,7 +75,7 @@ class EmailSender:
                 smtp_port = self._config.MAIL_PORT
                 smtp_username = self._config.MAIL_USERNAME
                 smtp_password = self._config.MAIL_PASSWORD
-                use_tls = self._config.MAIL_USE_TLS or True
+                use_tls = self._config.MAIL_USE_TLS
 
             has_attachments = bool(getattr(email_job, "attachments", []))
             if has_attachments:

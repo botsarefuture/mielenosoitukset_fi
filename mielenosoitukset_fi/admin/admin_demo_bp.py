@@ -1,12 +1,14 @@
 import sys
 import re
 import bson
+import hmac
+import secrets
 from flask import abort, current_app
 import requests
 from copy import deepcopy
 
 from mielenosoitukset_fi.utils.time_utils import utcnow
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from bson.objectid import ObjectId
 import logging
 from flask import (
@@ -21,6 +23,7 @@ from flask import (
     abort,
     has_request_context,
     has_app_context,
+    session,
 )
 from flask_login import current_user, login_required
 from pymongo import DESCENDING, ReturnDocument
@@ -569,6 +572,14 @@ def log_request_info():
     """Log request information before handling it (non-blocking)."""
     import threading
 
+    g.audit_timeline_url = url_for("admin_demo.audit_timeline")
+
+    # The edit URL contains a bearer credential in its path. Token lifecycle
+    # events are audited separately using only the registry id/hash metadata,
+    # so never hand the raw URL to the generic request logger.
+    if request.endpoint and request.endpoint.endswith("_with_token"):
+        return
+
     def _log_async():
         try:
             log_admin_action_V2(
@@ -578,7 +589,6 @@ def log_request_info():
             pass
 
     threading.Thread(target=_log_async, daemon=True).start()
-    g.audit_timeline_url = url_for("admin_demo.audit_timeline")
 
 @admin_demo_bp.route("/recommend_demo/<demo_id>", methods=["POST"])
 @login_required
@@ -1023,6 +1033,13 @@ from bson.objectid import ObjectId
 
 MAGIC_TTL_SECONDS = 86400  # 24h, make configurable
 MAGIC_COLLECTION = "magic_links"  # central registry
+EDIT_LINK_DURATION_SECONDS = {
+    "1h": 60 * 60,
+    "24h": 24 * 60 * 60,
+    "7d": 7 * 24 * 60 * 60,
+}
+EDIT_LINK_MAX_AGE_SECONDS = max(EDIT_LINK_DURATION_SECONDS.values())
+EDIT_LINK_CSRF_SESSION_KEY = "demo_edit_link_csrf_token"
 
 # Recommended: create TTL index (run once on startup/migration)
 # mongo[MAGIC_COLLECTION].create_index("expires_at", expireAfterSeconds=0)
@@ -1035,6 +1052,33 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def _edit_link_duration(value: str | None) -> tuple[str, int]:
+    duration_key = (value or "24h").strip().lower()
+    if duration_key not in EDIT_LINK_DURATION_SECONDS:
+        raise ValueError("Unsupported edit-link duration")
+    return duration_key, EDIT_LINK_DURATION_SECONDS[duration_key]
+
+
+def _edit_link_csrf_token() -> str:
+    token = session.get(EDIT_LINK_CSRF_SESSION_KEY)
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session[EDIT_LINK_CSRF_SESSION_KEY] = token
+    return token
+
+
+def _valid_edit_link_csrf() -> bool:
+    expected = session.get(EDIT_LINK_CSRF_SESSION_KEY, "")
+    provided = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token", "")
+    return bool(expected and provided and hmac.compare_digest(expected, provided))
+
+
+def _utc_datetime(value):
+    if not isinstance(value, datetime):
+        return None
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
 def _token_payload(doc: dict | None) -> dict:
     if not doc:
         return {}
@@ -1045,6 +1089,7 @@ def _token_payload(doc: dict | None) -> dict:
         "demo_id": doc.get("demo_id"),
         "created_at": doc.get("created_at"),
         "expires_at": doc.get("expires_at"),
+        "duration_seconds": doc.get("duration_seconds"),
         "created_by": doc.get("created_by"),
         "created_by_id": doc.get("created_by_id"),
         "created_by_role": doc.get("created_by_role"),
@@ -1117,7 +1162,13 @@ def _require_valid_objectid(oid: str) -> ObjectId:
         abort(400, "Invalid id")
     return ObjectId(oid)
 
-def _registry_upsert_initial(token_hash: str, action: str, demo_id: str, creator: str | None = None):
+def _registry_upsert_initial(
+    token_hash: str,
+    action: str,
+    demo_id: str,
+    creator: str | None = None,
+    ttl_seconds: int = MAGIC_TTL_SECONDS,
+):
     """
     Create registry doc if missing. Do not bind IP yet (bind on first GET).
     """
@@ -1134,7 +1185,8 @@ def _registry_upsert_initial(token_hash: str, action: str, demo_id: str, creator
                 "action": action,                # "preview" | "approve" | "reject"
                 "demo_id": str(demo_id),
                 "created_at": now,
-                "expires_at": now + timedelta(seconds=MAGIC_TTL_SECONDS),
+                "expires_at": now + timedelta(seconds=ttl_seconds),
+                "duration_seconds": ttl_seconds,
                 "bound_ip": None,
                 "first_seen_at": None,
                 "used_at": None,
@@ -1172,6 +1224,7 @@ def _registry_upsert_initial(token_hash: str, action: str, demo_id: str, creator
         entity={"type": "token", "id": token_hash, "demo_id": str(demo_id)},
         tags=["token", action],
     )
+    return mongo[MAGIC_COLLECTION].find_one({"token_hash": token_hash})
 
 def _check_and_bind(action: str, token: str) -> dict:
     """
@@ -1369,18 +1422,114 @@ def generate_demo_reject_link(demo_id: str) -> str:
     )
     return url_for("admin_demo.reject_demo_with_token", token=token, _external=True)
 
-def generate_demo_edit_link_token(demo_id: str) -> str:
-    token = serializer.dumps(str(demo_id), salt="edit-demo")
-    actor = _get_actor_label()
-    _registry_upsert_initial(_hash_token(token), "edit", str(demo_id), actor)
+def _create_demo_edit_link(demo_id: str, duration_key: str = "24h"):
+    duration_key, duration_seconds = _edit_link_duration(duration_key)
     demo = _load_demo_or_bust(demo_id)
+    token = serializer.dumps(
+        {"demo_id": str(demo_id), "jti": secrets.token_urlsafe(16)},
+        salt="edit-demo",
+    )
+    actor = _get_actor_label()
+    token_doc = _registry_upsert_initial(
+        _hash_token(token),
+        "edit",
+        str(demo_id),
+        actor,
+        ttl_seconds=duration_seconds,
+    )
     log_demo_audit_entry(
         demo_id,
         action="token_created",
         message=_safe_translate("%(user)s loi muokkauslinkin", user=actor),
-        details={"token_type": "edit", "demo_date": demo.get("date"), "demo_city": demo.get("city")},
+        details={
+            "token_type": "edit",
+            "duration": duration_key,
+            "expires_at": token_doc.get("expires_at") if token_doc else None,
+            "demo_date": demo.get("date"),
+            "demo_city": demo.get("city"),
+        },
     )
-    return url_for("admin_demo.edit_demo_with_token", token=token, _external=True)
+    return (
+        url_for("admin_demo.edit_demo_with_token", token=token, _external=True),
+        token_doc,
+    )
+
+
+def generate_demo_edit_link_token(demo_id: str, duration_key: str = "24h") -> str:
+    """Create an edit link while keeping the historical string return contract."""
+    edit_link, _ = _create_demo_edit_link(demo_id, duration_key)
+    return edit_link
+
+
+def _resolve_demo_edit_link(token: str):
+    """Resolve an edit bearer token against both its signature and registry state."""
+    try:
+        payload = serializer.loads(
+            token,
+            salt="edit-demo",
+            max_age=EDIT_LINK_MAX_AGE_SECONDS,
+        )
+        demo_id = str(payload.get("demo_id")) if isinstance(payload, dict) else str(payload)
+    except SignatureExpired:
+        return None, "expired", 410
+    except BadSignature:
+        return None, "invalid", 400
+
+    token_doc = mongo[MAGIC_COLLECTION].find_one({"token_hash": _hash_token(token)})
+    if (
+        not token_doc
+        or token_doc.get("action") != "edit"
+        or token_doc.get("demo_id") != demo_id
+    ):
+        return None, "invalid", 400
+    if token_doc.get("revoked"):
+        return None, "revoked", 403
+
+    expires_at = _utc_datetime(token_doc.get("expires_at"))
+    if not expires_at or _now_utc() >= expires_at:
+        return None, "expired", 410
+
+    mongo[MAGIC_COLLECTION].update_one(
+        {"_id": token_doc["_id"]},
+        {
+            "$set": {
+                "last_accessed_at": _now_utc(),
+                "last_accessed_ip": _client_ip(),
+                "last_accessed_ua": _user_agent(),
+            }
+        },
+    )
+    return token_doc, None, 200
+
+
+def _demo_edit_link_rows(demo_id: str):
+    now = _now_utc()
+    rows = []
+    for token_doc in (
+        mongo[MAGIC_COLLECTION]
+        .find({"action": "edit", "demo_id": str(demo_id)})
+        .sort("created_at", -1)
+        .limit(30)
+    ):
+        expires_at = _utc_datetime(token_doc.get("expires_at"))
+        if token_doc.get("revoked"):
+            status = "revoked"
+        elif not expires_at or expires_at <= now:
+            status = "expired"
+        else:
+            status = "active"
+        rows.append(
+            {
+                "id": str(token_doc["_id"]),
+                "status": status,
+                "created_by": token_doc.get("created_by") or "-",
+                "created_at": token_doc.get("created_at"),
+                "expires_at": token_doc.get("expires_at"),
+                "last_accessed_at": token_doc.get("last_accessed_at"),
+                "duration_seconds": token_doc.get("duration_seconds"),
+            }
+        )
+    return rows
 
 # ------------------------------------------------------------------------------
 # PREVIEW (read-only) – allow via GET (single-use still enforced & IP-bound)
@@ -2858,6 +3007,9 @@ def edit_demo(demo_id):
     demonstration = Demonstration.from_dict(demo_data)
     demo_edit_access = gather_demo_edit_access_info(demo_data)
     show_demo_access_panel = _user_can_manage_demo_access(current_user, demo_data)
+    can_generate_edit_link = _user_can_access_demo(
+        demo_data["_id"], "GENERATE_EDIT_LINK"
+    )
     
         
     # Render the edit form with pre-filled demonstration details
@@ -2873,6 +3025,11 @@ def edit_demo(demo_id):
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=show_demo_access_panel,
         can_approve_demo=has_demo_approval_permission(current_user, demo_data),
+        can_generate_edit_link=can_generate_edit_link,
+        edit_link_rows=(
+            _demo_edit_link_rows(demo_id) if can_generate_edit_link else []
+        ),
+        edit_link_csrf_token=_edit_link_csrf_token(),
         translation_locales=_supported_demo_translation_locales(),
         translation_language_names=_translation_language_names(),
         default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
@@ -3158,25 +3315,46 @@ def send_edit_link(demo_id):
         JSON response containing the edit link if successful, or an error message otherwise.
     """
     try:
-        data = request.get_json() if request.is_json else request.form
-        email = data.get("email")
-        edit_link = data.get("edit_link") or generate_demo_edit_link_token(demo_id)
-
-        if not email:
+        if not _valid_edit_link_csrf():
             return jsonify(
-                {"status": "ERROR", "message": "Email address is required."}
+                {"status": "ERROR", "message": _("Istunnon turvatarkistus epäonnistui.")}
+            ), 403
+
+        data = request.get_json(silent=True) if request.is_json else request.form
+        data = data or {}
+        email = (data.get("email") or "").strip()
+
+        if not email or "@" not in email:
+            return jsonify(
+                {"status": "ERROR", "message": _("Syötä kelvollinen sähköpostiosoite.")}
             ), 400
 
+        duration_key, _ = _edit_link_duration(data.get("duration"))
+        edit_link, token_doc = _create_demo_edit_link(demo_id, duration_key)
         demo = Demonstration.load_by_id(demo_id)
-        email_sender.queue_email(
+        # Bearer links must not be persisted in the Mongo-backed email queue.
+        # Render and send this one sensitive message directly instead.
+        email_sender.send_now(
             template_name="demo_edit_link.html",
             subject=f"Muokkauslinkki mielenosoitukseen: {demo.title}",
             context={"edit_link": edit_link, "demo_id": demo_id},
-            recipients=[email]
+            recipients=[email],
+            raise_on_error=True,
         )
         logging.info("Sending edit link to email: %s", email)
 
-        return jsonify({"status": "OK", "message": "Email sent successfully."})
+        return jsonify(
+            {
+                "status": "OK",
+                "message": _("Muokkauslinkki lähetettiin."),
+                "expires_at": token_doc["expires_at"].isoformat(),
+            }
+        )
+
+    except ValueError:
+        return jsonify(
+            {"status": "ERROR", "message": _("Valitse sallittu voimassaoloaika.")}
+        ), 400
 
     except Exception as e:
         logging.error("Error sending edit link email: %s", str(e))
@@ -3200,14 +3378,113 @@ def generate_edit_link(demo_id):
         JSON response containing the edit link or an error message.
     """
     try:
-        edit_link = generate_demo_edit_link_token(demo_id)
-        return jsonify({"status": "OK", "edit_link": edit_link})
+        if not _valid_edit_link_csrf():
+            return jsonify(
+                {"status": "ERROR", "message": _("Istunnon turvatarkistus epäonnistui.")}
+            ), 403
+        data = request.get_json(silent=True) or {}
+        duration_key, _ = _edit_link_duration(data.get("duration"))
+        edit_link, token_doc = _create_demo_edit_link(demo_id, duration_key)
+        return jsonify(
+            {
+                "status": "OK",
+                "edit_link": edit_link,
+                "expires_at": token_doc["expires_at"].isoformat(),
+                "duration": duration_key,
+            }
+        )
+    except ValueError:
+        return jsonify(
+            {"status": "ERROR", "message": _("Valitse sallittu voimassaoloaika.")}
+        ), 400
     except Exception as e:
         logging.error("An error occurred while generating the edit link: %s", str(e))
         return (
             jsonify({"status": "ERROR", "message": "An internal error has occurred."}),
             500,
         )
+
+
+@admin_demo_bp.route("/edit-links/<demo_id>/revoke/<token_id>", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
+def revoke_demo_edit_link(demo_id, token_id):
+    if not _valid_edit_link_csrf():
+        abort(403)
+    if not ObjectId.is_valid(token_id):
+        abort(400)
+    token_doc = mongo[MAGIC_COLLECTION].find_one_and_update(
+        {
+            "_id": ObjectId(token_id),
+            "demo_id": str(demo_id),
+            "action": "edit",
+            "revoked": {"$ne": True},
+        },
+        {
+            "$set": {
+                "revoked": True,
+                "revoked_at": _now_utc(),
+                "revoked_by": _get_actor_label(),
+            }
+        },
+        return_document=ReturnDocument.AFTER,
+    )
+    if not token_doc:
+        abort(404)
+    _log_token_event(
+        token_doc,
+        "revoked",
+        message=_("Muokkauslinkki mitätöitiin."),
+        demo_action="token_revoked",
+    )
+    flash_message(_("Muokkauslinkki mitätöitiin."), "success")
+    return redirect(url_for("admin_demo.edit_demo", demo_id=demo_id))
+
+
+@admin_demo_bp.route("/edit-links/<demo_id>/revoke-all", methods=["POST"])
+@login_required
+@admin_required
+@permission_required("GENERATE_EDIT_LINK", _type="DEMONSTRATION")
+def revoke_all_demo_edit_links(demo_id):
+    if not _valid_edit_link_csrf():
+        abort(403)
+    active_tokens = list(
+        mongo[MAGIC_COLLECTION].find(
+            {
+                "demo_id": str(demo_id),
+                "action": "edit",
+                "revoked": {"$ne": True},
+                "expires_at": {"$gt": _now_utc()},
+            }
+        )
+    )
+    if active_tokens:
+        now = _now_utc()
+        mongo[MAGIC_COLLECTION].update_many(
+            {"_id": {"$in": [doc["_id"] for doc in active_tokens]}},
+            {
+                "$set": {
+                    "revoked": True,
+                    "revoked_at": now,
+                    "revoked_by": _get_actor_label(),
+                }
+            },
+        )
+        for token_doc in active_tokens:
+            token_doc.update({"revoked": True, "revoked_at": now})
+            _log_token_event(
+                token_doc,
+                "revoked",
+                message=_("Demon aktiivinen muokkauslinkki mitätöitiin."),
+                demo_action="token_revoked",
+            )
+    flash_message(
+        _("%(count)s aktiivista muokkauslinkkiä mitätöitiin.")
+        % {"count": len(active_tokens)},
+        "success",
+    )
+    return redirect(url_for("admin_demo.edit_demo", demo_id=demo_id))
 
 
 @admin_demo_bp.route("/edit_demo_with_token/<token>", methods=["GET", "POST"])
@@ -3224,12 +3501,16 @@ def edit_demo_with_token(token):
     response
         The rendered template or a redirect response.
     """
-    try:
-        demo_id = serializer.loads(token, salt="edit-demo", max_age=3600)
-    except SignatureExpired:
-        return jsonify({"status": "ERROR", "message": "The token has expired."}), 400
-    except BadSignature:
-        return jsonify({"status": "ERROR", "message": "Invalid token."}), 400
+    token_doc, unavailable_reason, status_code = _resolve_demo_edit_link(token)
+    if not token_doc:
+        return (
+            render_template(
+                "admin_V2/cc/edit_link_unavailable.html",
+                reason=unavailable_reason,
+            ),
+            status_code,
+        )
+    demo_id = token_doc["demo_id"]
 
     # Fetch demonstration data by ID
     demo_data = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
@@ -3238,8 +3519,15 @@ def edit_demo_with_token(token):
         return redirect(url_for("admin_demo.demo_control"))
 
     if request.method == "POST":
+        if not _valid_edit_link_csrf():
+            abort(403)
         # Handle form submission for editing the demonstration
-        return handle_demo_form(request, is_edit=True, demo_id=demo_id)
+        return handle_demo_form(
+            request,
+            is_edit=True,
+            demo_id=demo_id,
+            token_edit=True,
+        )
 
     # Convert demonstration data to a Demonstration object
     demonstration = Demonstration.from_dict(demo_data)
@@ -3258,6 +3546,9 @@ def edit_demo_with_token(token):
         demo_edit_access=demo_edit_access,
         show_demo_access_panel=False,
         can_approve_demo=False,
+        can_generate_edit_link=False,
+        edit_link_rows=[],
+        edit_link_csrf_token=_edit_link_csrf_token(),
         translation_locales=_supported_demo_translation_locales(),
         translation_language_names=_translation_language_names(),
         default_demo_language=demonstration.default_language or current_app.config.get("BABEL_DEFAULT_LOCALE", "fi"),
@@ -3344,7 +3635,13 @@ def _user_can_create_recurring_demo() -> bool:
     )
 
 
-def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
+def handle_demo_form(
+    request,
+    is_edit=False,
+    demo_id=None,
+    case_id=None,
+    token_edit=False,
+):
     """Handle form submission for creating or editing a demonstration.
 
     Parameters
@@ -3385,7 +3682,11 @@ def handle_demo_form(request, is_edit=False, demo_id=None, case_id=None):
         if is_edit and demo_id:
             prev_demo = mongo.demonstrations.find_one({"_id": ObjectId(demo_id)})
             if prev_demo:
-                _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
+                # The token route has already validated the signed bearer token,
+                # registry record, expiry and revocation state. Normal admin
+                # edits continue to require the scoped permission check.
+                if not token_edit:
+                    _abort_if_demo_forbidden(demo_id, "EDIT_DEMO")
                 previous_city_key = prev_demo.get("city_key") or normalize_city_key(prev_demo.get("city"))
                 incoming_city_key = demonstration_data.get("city_key") or normalize_city_key(demonstration_data.get("city"))
                 if incoming_city_key != previous_city_key and not _user_can_create_demo_in_city(demonstration_data.get("city")):
@@ -4254,7 +4555,8 @@ def manage_magic_tokens():
         query["demo_id"] = filters["demo_id"]
     if filters["status"] == "active":
         query["revoked"] = {"$ne": True}
-        query["used_at"] = {"$exists": False}
+        query["used_at"] = None
+        query["expires_at"] = {"$gt": _now_utc()}
     elif filters["status"] == "revoked":
         query["revoked"] = True
     elif filters["status"] == "used":

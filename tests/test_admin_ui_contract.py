@@ -253,3 +253,23 @@ def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
         assert 'class="admin-check-row"' in template
         assert "data-admin-boolean" in template
         assert 'aria-live="polite"' in template
+
+
+def test_demo_edit_links_use_the_shared_secure_lifecycle_contract():
+    demo_form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html"
+    ).read_text(encoding="utf-8")
+    recurring_form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+
+    assert "modal fade admin-modal" in demo_form
+    assert "admin-data-view" in demo_form
+    assert 'value="1h"' in demo_form
+    assert 'value="24h"' in demo_form
+    assert 'value="7d"' in demo_form
+    assert "'X-CSRF-Token': editLinkCsrf" in demo_form
+    assert "JSON.stringify({email, duration: duration.value})" in demo_form
+    assert "JSON.stringify({ email, edit_link: editLink })" not in demo_form
+    assert "generate-edit-link-btn" not in recurring_form
+    assert "send_edit_link_email" not in recurring_form

@@ -24,6 +24,9 @@ Use only the `--admin-workspace-*` semantic tokens for new shared UI:
 - `--admin-workspace-border` and `--admin-workspace-shadow`
 - `--admin-workspace-blue`, `--admin-workspace-blue-dark`, and
   `--admin-workspace-blue-soft`
+- `--admin-workspace-primary-bg`, `--admin-workspace-primary-hover`, and
+  `--admin-workspace-on-primary` for filled primary actions; accent blue is not
+  a safe filled-button background in every theme
 - `--admin-workspace-orange` and `--admin-workspace-orange-soft`
 
 Legacy token names are temporarily aliased in `workspace.css`. They are a
@@ -77,6 +80,10 @@ exclusive option.
 
 - Use Bootstrap form markup; the shared layer supplies theme-aware controls,
   labels, help text, focus rings, and disabled states.
+- Compose larger forms with `.admin-form-page`, `.admin-form-layout`,
+  `.admin-form-section`, `.admin-form-grid`, `.admin-field`, and
+  `.admin-sticky-actions`; reusable repeaters, previews, and guidance use the
+  corresponding shared `admin-*` primitives rather than template-local CSS.
 - Use `.btn` variants rather than inventing page-specific buttons.
 - Primary is for the main forward action, secondary/outline for navigation,
   and danger only for destructive actions.
@@ -102,4 +109,3 @@ inherits the active admin theme.
 - Light and dark modes preserve readable text and identical layout.
 - Keyboard focus, labels, empty states, bulk selection, and mobile overflow are
   understandable without guessing.
-

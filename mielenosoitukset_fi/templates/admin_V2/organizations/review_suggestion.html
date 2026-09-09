@@ -1,313 +1,12 @@
 {% extends "admin_base.html" %}
 
-{% block styles %}
-<style>
-  .suggestion-container {
-    display: grid;
-    gap: 1rem;
-    width: 100%;
-    max-width: 1320px;
-    margin: 0 auto;
-  }
-
-  .suggestion-header {
-    margin: 0;
-  }
-
-  .suggestion-title {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .suggestion-title h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--admin-workspace-text);
-    margin: 0;
-  }
-
-  .changes-table-container {
-    background: var(--admin-workspace-surface);
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: var(--admin-workspace-shadow);
-    border: 1px solid var(--admin-workspace-border);
-    overflow-x: auto;
-  }
-
-  .changes-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 2rem;
-  }
-
-  .changes-table thead {
-    background: var(--admin-workspace-surface-muted);
-  }
-
-  .changes-table th {
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    color: var(--admin-workspace-text);
-    border-bottom: 2px solid var(--admin-workspace-border);
-  }
-
-  .changes-table th:last-child {
-    text-align: center;
-  }
-
-  .changes-table tbody tr {
-    border-bottom: 1px solid var(--admin-workspace-border);
-    transition: all .2s ease;
-  }
-
-  .changes-table tbody tr:hover {
-    background: var(--admin-workspace-surface-muted);
-  }
-
-  .changes-table td {
-    padding: 1.25rem 1rem;
-    vertical-align: top;
-  }
-
-  .field-name {
-    font-weight: 600;
-    color: var(--admin-workspace-text);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .field-name i {
-    color: var(--admin-workspace-blue);
-    font-size: 0.875rem;
-  }
-
-  .field-value {
-    color: var(--admin-workspace-muted);
-    line-height: 1.6;
-  }
-
-  .field-value.empty {
-    font-style: italic;
-    opacity: 0.6;
-  }
-
-  .field-value.new {
-    color: var(--admin-workspace-success);
-    font-weight: 500;
-  }
-
-  .suggested-logo-preview {
-    display: grid;
-    gap: 0.65rem;
-    max-width: 260px;
-  }
-
-  .suggested-logo-preview img {
-    background: var(--admin-workspace-surface);
-    border: 1px solid var(--admin-workspace-border);
-    border-radius: .75rem;
-    height: 96px;
-    object-fit: contain;
-    padding: 0.6rem;
-    width: 96px;
-  }
-
-  .suggested-logo-preview a,
-  .suggested-dict-value a {
-    overflow-wrap: anywhere;
-  }
-
-  .suggested-dict-value {
-    display: grid;
-    gap: 0.35rem;
-  }
-
-  .value-badge {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
-  }
-
-  .value-badge.empty {
-    background: var(--admin-workspace-surface-muted);
-    color: var(--admin-workspace-muted);
-  }
-
-  .value-badge.has-value {
-    background: var(--admin-workspace-blue-soft);
-    color: var(--admin-workspace-blue);
-  }
-
-  .value-badge.new-value {
-    background: var(--admin-workspace-success-soft);
-    color: var(--admin-workspace-success);
-  }
-
-  .checkbox-cell {
-    text-align: center;
-    width: 80px;
-  }
-
-  .custom-checkbox {
-    position: relative;
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    appearance: none;
-    border: 2px solid var(--admin-workspace-border);
-    border-radius: 6px;
-    background: var(--admin-workspace-surface);
-    transition: all .2s ease;
-  }
-
-  .custom-checkbox:hover {
-    border-color: var(--admin-workspace-blue);
-  }
-
-  .custom-checkbox:checked {
-    background: var(--admin-workspace-blue);
-    border-color: var(--admin-workspace-blue);
-  }
-
-  .custom-checkbox:checked::after {
-    content: '\f00c';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 0.75rem;
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-  }
-
-  .suggestion-container .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 2rem;
-    border: none;
-    border-radius: .75rem;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all .2s ease;
-    text-decoration: none;
-  }
-
-  .suggestion-container .btn-primary {
-    background: var(--admin-workspace-blue);
-    color: white;
-    box-shadow: var(--admin-workspace-shadow);
-  }
-
-  .suggestion-container .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--admin-workspace-shadow);
-  }
-
-  .suggestion-container .btn-secondary {
-    background: var(--admin-workspace-surface);
-    color: var(--admin-workspace-text);
-    border: 1px solid var(--admin-workspace-border);
-  }
-
-  .suggestion-container .btn-secondary:hover {
-    background: var(--admin-workspace-surface-muted);
-    transform: translateY(-2px);
-    box-shadow: var(--admin-workspace-shadow);
-  }
-
-  .suggestion-container .btn-select-all {
-    background: var(--admin-workspace-blue);
-    color: white;
-    box-shadow: var(--admin-workspace-shadow);
-  }
-
-  .suggestion-container .btn-select-all:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--admin-workspace-shadow);
-  }
-
-  .selection-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    background: var(--admin-workspace-blue-soft);
-    border: 1px solid var(--admin-workspace-blue);
-    border-radius: .75rem;
-    color: var(--admin-workspace-blue);
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-  }
-
-  .selection-info i {
-    font-size: 1.25rem;
-  }
-
-  @media (max-width: 768px) {
-    .suggestion-container {
-      padding: 0 1rem;
-      margin: 1rem auto;
-    }
-
-    .suggestion-header {
-      padding: 1.5rem;
-    }
-
-    .suggestion-title {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .changes-table-container {
-      padding: 1rem;
-    }
-
-    .changes-table th,
-    .changes-table td {
-      padding: 0.75rem 0.5rem;
-      font-size: 0.875rem;
-    }
-
-    .action-buttons {
-      flex-direction: column;
-    }
-
-    .suggestion-container .btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-</style>
-{% endblock %}
-
 {% block main_content %}
-<div class="suggestion-container admin-page">
-  <header class="suggestion-header admin-page-hero">
+<div class="admin-form-page admin-page">
+  <header class="admin-page-hero">
     <div class="admin-page-hero__content">
       <p class="admin-page-hero__kicker">{{ _('Organisaatiohallinta') }}</p>
-      <div class="suggestion-title">
-        <div>
-          <h1>{{ _('Muokkauspyyntö') }}: {{ org.name }}</h1>
-          <p>{{ _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse hyväksyttävät muutokset.') }}</p>
-        </div>
-      </div>
+      <h1>{{ _('Muokkauspyyntö') }}: {{ org.name }}</h1>
+      <p>{{ _('Vertaa nykyisiä ja ehdotettuja arvoja ja valitse hyväksyttävät muutokset.') }}</p>
     </div>
     <div class="admin-page-hero__metric">
       <i class="fa-regular fa-clock" aria-hidden="true"></i>
@@ -318,166 +17,90 @@
   </header>
 
   <form class="admin-form admin-workspace-form" method="post" action="{{ url_for('admin_org.apply_suggestion', org_id=org._id, suggestion_id=suggestion._id) }}" id="suggestion-form">
-    <div class="changes-table-container admin-form-section admin-data-view">
-      <div class="selection-info">
-        <i class="fa-solid fa-circle-info"></i>
+    <div class="admin-data-view">
+      <div class="admin-data-view__header admin-selection-status" aria-live="polite">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
         <span id="selection-count">{{ _('Valitse kentät, jotka haluat päivittää') }}</span>
       </div>
-
-      <table class="changes-table">
-        <thead>
-          <tr>
-            <th style="width: 20%;">{{ _('Kenttä') }}</th>
-            <th style="width: 35%;">{{ _('Nykyinen arvo') }}</th>
-            <th style="width: 35%;">{{ _('Ehdotettu arvo') }}</th>
-            <th style="width: 10%;">{{ _('Valitse') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% set field_labels = {
-            "name": _("Nimi"),
-            "description": _("Kuvaus"),
-            "website": _("Verkkosivusto"),
-            "email": _("Sähköposti"),
-            "logo": _("Logo"),
-            "social_media_links": _("Sosiaalinen media")
-          } %}
-          {% set field_icons = {
-            "name": "fa-building",
-            "description": "fa-align-left",
-            "website": "fa-globe",
-            "email": "fa-envelope",
-            "logo": "fa-image",
-            "social_media_links": "fa-share-nodes"
-          } %}
-          {% for key, new_value in suggestion.fields.items() %}
-          <tr>
-            <td>
-              <div class="field-name">
-                <i class="fa-solid {{ field_icons.get(key, 'fa-tag') }}"></i>
-                {{ field_labels.get(key, key) }}
-              </div>
-            </td>
-            <td>
-              <div class="field-value {% if not org.to_dict().get(key) %}empty{% endif %}">
-                {% if org.to_dict().get(key) %}
+      <div class="admin-data-view__viewport">
+        <table class="admin-data-view__table">
+          <thead><tr><th>{{ _('Kenttä') }}</th><th>{{ _('Nykyinen arvo') }}</th><th>{{ _('Ehdotettu arvo') }}</th><th class="admin-selection-column">{{ _('Valitse') }}</th></tr></thead>
+          <tbody>
+            {% set field_labels = {"name": _("Nimi"), "description": _("Kuvaus"), "website": _("Verkkosivusto"), "email": _("Sähköposti"), "logo": _("Logo"), "social_media_links": _("Sosiaalinen media")} %}
+            {% set field_icons = {"name": "fa-building", "description": "fa-align-left", "website": "fa-globe", "email": "fa-envelope", "logo": "fa-image", "social_media_links": "fa-share-nodes"} %}
+            {% for key, new_value in suggestion.fields.items() %}
+            <tr>
+              <td><strong class="admin-data-label"><i class="fa-solid {{ field_icons.get(key, 'fa-tag') }}" aria-hidden="true"></i>{{ field_labels.get(key, key) }}</strong></td>
+              <td>
+                <div class="admin-data-value {% if not org.to_dict().get(key) %}admin-data-value--empty{% endif %}">
+                  {% if org.to_dict().get(key) %}
+                    {% if key == "logo" %}
+                      <div class="admin-data-media"><img src="{{ org.to_dict().get(key) }}" alt="{{ _('Nykyinen logo') }}" loading="lazy" referrerpolicy="no-referrer"><a href="{{ org.to_dict().get(key) }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ org.to_dict().get(key) }}</a></div>
+                    {% elif key == "social_media_links" and org.to_dict().get(key) is mapping %}
+                      <div class="admin-data-list">{% for platform, url in org.to_dict().get(key).items() %}<span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>{% endfor %}</div>
+                    {% else %}<span class="admin-value-badge">{{ org.to_dict().get(key) }}</span>{% endif %}
+                  {% else %}<span class="admin-value-badge admin-value-badge--muted">{{ _('Ei asetettu') }}</span>{% endif %}
+                </div>
+              </td>
+              <td>
+                <div class="admin-data-value admin-data-value--success">
                   {% if key == "logo" %}
-                    <div class="suggested-logo-preview">
-                      <img src="{{ org.to_dict().get(key) }}" alt="{{ _('Nykyinen logo') }}" loading="lazy" referrerpolicy="no-referrer">
-                      <a href="{{ org.to_dict().get(key) }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ org.to_dict().get(key) }}</a>
-                    </div>
-                  {% elif key == "social_media_links" and org.to_dict().get(key) is mapping %}
-                    <div class="suggested-dict-value">
-                      {% for platform, url in org.to_dict().get(key).items() %}
-                        <span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <span class="value-badge has-value">{{ org.to_dict().get(key) }}</span>
-                  {% endif %}
-                {% else %}
-                  <span class="value-badge empty">{{ _('Ei asetettu') }}</span>
-                {% endif %}
-              </div>
-            </td>
-            <td>
-              <div class="field-value new">
-                {% if key == "logo" %}
-                  <div class="suggested-logo-preview">
-                    <img src="{{ new_value }}" alt="{{ _('Ehdotettu logo') }}" loading="lazy" referrerpolicy="no-referrer">
-                    <a href="{{ new_value }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ new_value }}</a>
-                  </div>
-                {% elif key == "social_media_links" and new_value is mapping %}
-                  <div class="suggested-dict-value">
-                    {% for platform, url in new_value.items() %}
-                      <span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>
-                    {% endfor %}
-                  </div>
-                {% else %}
-                  <span class="value-badge new-value">{{ new_value }}</span>
-                {% endif %}
-              </div>
-            </td>
-            <td class="checkbox-cell">
-              <input type="checkbox" name="apply_fields" value="{{ key }}" class="custom-checkbox field-checkbox" aria-label="{{ _('Hyväksy kentän muutos') }}: {{ field_labels.get(key, key) }}">
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-      <div class="action-buttons admin-sticky-actions">
-        <button type="button" class="btn btn-select-all" id="select-all-btn" aria-pressed="false">
-          <i class="fa-solid fa-check-double"></i>
-          {{ _('Valitse kaikki') }}
-        </button>
-        <button type="submit" class="btn btn-primary" id="apply-btn">
-          <i class="fa-solid fa-check-circle"></i>
-          {{ _('Päivitä valitut kentät') }}
-        </button>
-        <a href="{{ request.referrer or url_for('index') }}" class="btn btn-secondary">
-          <i class="fa-solid fa-xmark"></i>
-          {{ _('Peruuta') }}
-        </a>
+                    <div class="admin-data-media"><img src="{{ new_value }}" alt="{{ _('Ehdotettu logo') }}" loading="lazy" referrerpolicy="no-referrer"><a href="{{ new_value }}" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">{{ new_value }}</a></div>
+                  {% elif key == "social_media_links" and new_value is mapping %}
+                    <div class="admin-data-list">{% for platform, url in new_value.items() %}<span><strong>{{ platform }}:</strong> <a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ url }}</a></span>{% endfor %}</div>
+                  {% else %}<span class="admin-value-badge admin-value-badge--success">{{ new_value }}</span>{% endif %}
+                </div>
+              </td>
+              <td class="admin-selection-column"><input type="checkbox" name="apply_fields" value="{{ key }}" class="form-check-input admin-selection-checkbox field-checkbox" aria-label="{{ _('Hyväksy kentän muutos') }}: {{ field_labels.get(key, key) }}"></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="admin-sticky-actions">
+      <div class="admin-sticky-actions__copy"><strong>{{ _('Tarkista valinnat ennen päivittämistä') }}</strong><span>{{ _('Vain valitut kentät korvaavat organisaation nykyiset tiedot.') }}</span></div>
+      <div class="admin-sticky-actions__buttons">
+        <button type="button" class="btn btn-outline-primary" id="select-all-btn" aria-pressed="false"><i class="fa-solid fa-check-double" aria-hidden="true"></i><span id="select-all-label">{{ _('Valitse kaikki') }}</span></button>
+        <a href="{{ request.referrer or url_for('index') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark" aria-hidden="true"></i>{{ _('Peruuta') }}</a>
+        <button type="submit" class="btn btn-primary" id="apply-btn"><i class="fa-solid fa-check-circle" aria-hidden="true"></i><span id="apply-label">{{ _('Päivitä valitut kentät') }}</span></button>
       </div>
     </div>
   </form>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const checkboxes = document.querySelectorAll('.field-checkbox');
+  const checkboxes = [...document.querySelectorAll('.field-checkbox')];
   const selectAllBtn = document.getElementById('select-all-btn');
+  const selectAllLabel = document.getElementById('select-all-label');
   const selectionCount = document.getElementById('selection-count');
   const applyBtn = document.getElementById('apply-btn');
+  const applyLabel = document.getElementById('apply-label');
 
   function updateSelectionCount() {
-    const selected = document.querySelectorAll('.field-checkbox:checked').length;
+    const selected = checkboxes.filter((checkbox) => checkbox.checked).length;
     const total = checkboxes.length;
-    
-    if (selected === 0) {
-      selectionCount.textContent = '{{ _("Valitse kentät, jotka haluat päivittää") }}';
-      applyBtn.disabled = true;
-      applyBtn.style.opacity = '0.5';
-      applyBtn.style.cursor = 'not-allowed';
-    } else {
-      selectionCount.innerHTML = `<strong>${selected}</strong> / ${total} {{ _("kenttää valittu") }}`;
-      applyBtn.disabled = false;
-      applyBtn.style.opacity = '1';
-      applyBtn.style.cursor = 'pointer';
-    }
-
-    // Update select all button text
-    if (selected === total) {
-      selectAllBtn.innerHTML = '<i class="fa-solid fa-square-minus"></i> {{ _("Poista valinnat") }}';
-      selectAllBtn.setAttribute('aria-pressed', 'true');
-    } else {
-      selectAllBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> {{ _("Valitse kaikki") }}';
-      selectAllBtn.setAttribute('aria-pressed', 'false');
-    }
-
-    checkboxes.forEach((checkbox) => {
-      checkbox.closest('tr')?.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false');
-    });
+    selectionCount.textContent = selected === 0 ? '{{ _("Valitse kentät, jotka haluat päivittää") }}' : `${selected} / ${total} {{ _("kenttää valittu") }}`;
+    applyBtn.disabled = selected === 0;
+    selectAllBtn.setAttribute('aria-pressed', selected === total && total > 0 ? 'true' : 'false');
+    selectAllLabel.textContent = selected === total && total > 0 ? '{{ _("Poista valinnat") }}' : '{{ _("Valitse kaikki") }}';
+    checkboxes.forEach((checkbox) => checkbox.closest('tr')?.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false'));
   }
 
   selectAllBtn.addEventListener('click', () => {
-    const allChecked = document.querySelectorAll('.field-checkbox:checked').length === checkboxes.length;
-    checkboxes.forEach(cb => cb.checked = !allChecked);
+    const allChecked = checkboxes.length > 0 && checkboxes.every((checkbox) => checkbox.checked);
+    checkboxes.forEach((checkbox) => { checkbox.checked = !allChecked; });
     updateSelectionCount();
   });
-
-  checkboxes.forEach(cb => {
-    cb.addEventListener('change', updateSelectionCount);
-  });
-
-  // Initial state
+  checkboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelectionCount));
   updateSelectionCount();
-
-  // Form submission animation
-  document.getElementById('suggestion-form').addEventListener('submit', (e) => {
-    applyBtn.classList.add('loading');
-    applyBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> {{ _("Päivitetään...") }}';
+  document.getElementById('suggestion-form').addEventListener('submit', () => {
+    applyBtn.disabled = true;
+    applyBtn.setAttribute('aria-busy', 'true');
+    applyLabel.textContent = '{{ _("Päivitetään...") }}';
   });
 });
 </script>

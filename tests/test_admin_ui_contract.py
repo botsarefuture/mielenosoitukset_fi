@@ -131,6 +131,23 @@ def test_admin_page_heroes_keep_copy_in_one_content_group():
     assert violations == []
 
 
+def test_admin_hero_foreground_and_data_view_surfaces_are_shared():
+    workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
+        encoding="utf-8"
+    )
+    users = Path(
+        "mielenosoitukset_fi/templates/admin_V2/_users_table.html"
+    ).read_text(encoding="utf-8")
+
+    assert "color: var(--admin-heading-color, var(--admin-workspace-text));" in workspace
+    assert "--admin-heading-color: var(--admin-hero-foreground);" in workspace
+    assert "--admin-hero-muted-foreground:" in workspace
+    assert "admin-data-view__header admin-result-summary" in users
+    assert "admin-data-view__viewport users-table-scroll" in users
+    assert "admin-data-view__footer admin-pagination" in users
+    assert ".users-results-heading" not in users
+
+
 def test_user_role_forms_use_shared_admin_contract():
     edit = Path(
         "mielenosoitukset_fi/templates/admin_V2/user/edit.html"
@@ -183,6 +200,36 @@ def test_secondary_editors_use_shared_form_primitives():
     assert "admin-code-block" in ui_editor
     assert "admin-panel-inset" in ui_editor
     assert 'class="admin-form"' in ui_editor
+
+
+def test_organization_workflows_use_shared_admin_components():
+    form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/form.html"
+    ).read_text(encoding="utf-8")
+    review = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html"
+    ).read_text(encoding="utf-8")
+    macros = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/macros.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    for template in (form, review, macros):
+        assert "<style" not in template
+        assert "style=" not in template
+    assert "admin-form-layout" in form
+    assert "admin-form-section__header" in form
+    assert "admin-sticky-actions__buttons" in form
+    assert "{{ invite_modal(organization) }}" in form
+    assert "organization and can_invite_members" in form
+    assert "admin-data-view__viewport" in review
+    assert "admin-selection-checkbox field-checkbox" in review
+    assert "applyBtn.style" not in review
+    assert "--admin-workspace-on-primary: #ffffff;" in workspace
+    assert "background: var(--admin-workspace-primary-bg);" in workspace
+    assert "background: var(--admin-workspace-primary-hover);" in workspace
 
 
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():

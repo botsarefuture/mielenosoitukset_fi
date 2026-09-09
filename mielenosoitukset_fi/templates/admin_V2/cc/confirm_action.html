@@ -1,7 +1,17 @@
 <!-- templates/confirm_action.html -->
 {% extends "admin_base.html" %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block main_content %}
+{% set action_title = _('Hyväksy mielenosoitus') if action == 'approve' else _('Hylkää mielenosoitus') %}
+{{ admin_page_hero(
+  action_title,
+  _('Vahvista päätös ennen kuin mielenosoituksen tila muutetaan.'),
+  _('Mielenosoitukset'),
+  [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Mielenosoitukset'), url_for('admin_demo.demo_control')), (action_title, none)],
+  back_url=url_for('admin_demo.demo_control'),
+  back_label=_('Mielenosoitukset')
+) }}
 <div class="container mt-5">
   <div class="row justify-content-center">
     <div class="col-lg-6">
@@ -14,13 +24,13 @@
              {% else %}
                bg-danger text-white
              {% endif %}">
-          <h4 class="mb-0">
+          <h2 class="h4 mb-0">
             {% if action == 'approve' %}
               ✅ Hyväksy mielenosoitus
             {% else %}
               ❌ Hylkää mielenosoitus
             {% endif %}
-          </h4>
+          </h2>
         </div>
 
         <!-- Body -->

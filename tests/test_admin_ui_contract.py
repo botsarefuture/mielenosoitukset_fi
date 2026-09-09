@@ -494,6 +494,20 @@ def test_specialist_admin_pages_use_canonical_hero_navigation():
     assert ".header" not in campaign
 
 
+def test_every_full_admin_v2_page_uses_canonical_hero_macro():
+    pages = []
+
+    for template in Path("mielenosoitukset_fi/templates/admin_V2").rglob("*.html"):
+        source = template.read_text(encoding="utf-8")
+        if "{% extends" not in source or "{% block main_content %}" not in source:
+            continue
+        pages.append(template)
+        assert "import admin_page_hero" in source, str(template)
+        assert "admin_page_hero(" in source, str(template)
+
+    assert len(pages) == 51
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

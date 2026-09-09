@@ -1,18 +1,21 @@
 {% extends 'admin_base.html' %}
 {% set governance_tab = 'audit' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% block title %}{{ _('Hallinnon tapahtumaloki') }} – Mielenosoitukset.fi{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/governance.css') }}">{% endblock %}
 
 {% block main_content %}
 <section class="governance-shell">
-  <header class="governance-hero admin-page-hero">
-    <div class="admin-page-hero__content">
-      <p class="governance-eyebrow admin-page-hero__kicker mb-2">{{ _('Hallinto') }}</p>
-      <h1 class="h2 mb-2">{{ _('Hyväksyntöjen tapahtumaloki') }}</h1>
-      <p class="text-body-secondary mb-0">{{ _('Tarkastele kuka myönsi tai perui hallinnollisen hyväksynnän ja milloin muutos tehtiin.') }}</p>
-    </div>
-  </header>
+  {{ admin_page_hero(
+    _('Hyväksyntöjen tapahtumaloki'),
+    _('Tarkastele kuka myönsi tai perui hallinnollisen hyväksynnän ja milloin muutos tehtiin.'),
+    _('Hallinto'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Hallinto ja käyttöoikeudet'), url_for('admin_governance.dashboard')), (_('Hyväksyntöjen tapahtumaloki'), none)],
+    back_url=url_for('admin_governance.dashboard'),
+    back_label=_('Hallinto ja käyttöoikeudet'),
+    hero_classes='governance-hero'
+  ) }}
   {% include 'admin_V2/governance/_tabs.html' %}
   <section class="governance-card">
     <div class="governance-toolbar"><label class="visually-hidden" for="audit-search">{{ _('Hae käyttäjää, toimintoa tai tekijää') }}</label><input class="form-control" id="audit-search" type="search" placeholder="{{ _('Hae käyttäjää, toimintoa tai tekijää') }}"><span class="text-body-secondary">{{ audit_events|length }} {{ _('tapahtumaa') }}</span></div>

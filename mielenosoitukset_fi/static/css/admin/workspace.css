@@ -534,6 +534,16 @@ body {
   background: var(--admin-workspace-orange-soft);
 }
 
+.admin-status-badge--danger {
+  color: var(--admin-workspace-danger);
+  background: var(--admin-workspace-danger-soft);
+}
+
+.admin-status-badge--info {
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+}
+
 .admin-detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(17.5rem, .55fr);

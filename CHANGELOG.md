@@ -10,6 +10,7 @@
 
 ### Fixed
 * The developer app detail view (`/developer/apps/<id>`) no longer breaks its inline JavaScript with literal escape sequences, so "Luo 48h token", scope-request, and token-revocation buttons work again.
+* The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
 * The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
 * Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
@@ -30,6 +31,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Case listing/detail and demonstration merging now use the canonical admin hero, breadcrumbs, back-navigation, and shared status badges rather than bespoke page-header structures.
 * Analytics and service statistics now render titles, breadcrumbs, descriptions, and live/static summary metrics through the shared admin hero instead of maintaining separate hero geometries and color rules.
 * Admin event logs, demonstration audit/token/error views, developer access requests, and API-token requests now use the canonical hero, breadcrumb, and back-navigation hierarchy.
 * The admin landing page, background-job list/detail, and system-status view now share the canonical hero, breadcrumb, action, and back-navigation contract instead of mixing custom page headers.

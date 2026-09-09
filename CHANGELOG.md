@@ -21,6 +21,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The admin landing page, background-job list/detail, and system-status view now share the canonical hero, breadcrumb, action, and back-navigation contract instead of mixing custom page headers.
 * Demonstration and interface translation dashboards and editors now use the canonical admin hero, breadcrumb, and back-action hierarchy, so translator workflows match the rest of the administration workspace.
 * User list/edit and governance overview, clearance, and audit pages now use the canonical admin hero, breadcrumb, and back-action hierarchy, including the previously inconsistent “Hallinto ja käyttöoikeudet” introduction.
 * City administration plus demonstration and recurring-demonstration list/editor heroes now use the canonical breadcrumb, title, action, back-link, and section-navigation component; stray edit-history links that rendered before the editor layout have moved into the standard hero action area.

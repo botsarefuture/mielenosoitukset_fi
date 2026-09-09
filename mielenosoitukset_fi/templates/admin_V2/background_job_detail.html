@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% macro interval_text(job) -%}
   {%- set args = job.trigger_args or {} -%}
@@ -28,13 +29,14 @@
 
 {% block main_content %}
 <div class="admin-page">
-  <header class="admin-page-header">
-    <div>
-      <p class="admin-page-header__kicker">{{ _('Taustatyöt') }}</p>
-      <h1>{{ job.name }}</h1>
-      <p>{{ job.description }}</p>
-    </div>
-    <div class="admin-page-header__actions">
+  {% call admin_page_hero(
+    job.name,
+    job.description,
+    _('Taustatyöt'),
+    [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (_('Taustatyöt'), url_for('admin.background_jobs')), (job.name, none)],
+    back_url=url_for('admin.background_jobs'),
+    back_label=_('Taustatyöt')
+  ) %}
       <span class="badge {{ 'bg-success' if job.enabled else 'bg-secondary' }}">
         {{ _('Käynnissä') if job.enabled else _('Pois käytöstä') }}
       </span>
@@ -43,11 +45,7 @@
       {% else %}
         <span class="badge bg-outline-secondary ms-1">{{ _('Manuaaliajo estetty') }}</span>
       {% endif %}
-      <a href="{{ url_for('admin.background_jobs') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="fa-solid fa-arrow-left-long me-2"></i>{{ _('Takaisin listaukseen') }}
-      </a>
-    </div>
-  </header>
+  {% endcall %}
 
   <div class="row g-3 mb-4">
     <div class="col-lg-4">

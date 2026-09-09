@@ -1,4 +1,5 @@
 {% extends 'admin_base.html' %}
+{% from 'admin_V2/macros.html' import admin_page_hero %}
 
 {% import 'admin/macros.html' as macros %}
 
@@ -59,12 +60,15 @@
 {% block main_content %}
 
 <div class="container">
-    <h2 id="table-title">{{ config.name }} Hallinta</h2>
-    {% if config.create_action %}
-    <div class="flex justify-center mb-4">
-        <a href="{{ url_for(config.create_action) }}" class="button create-button"><i class="fas fa-plus"></i>Uusi kohde</a>
-    </div>
-    {%  endif %}
+    {% call admin_page_hero(
+        config.name ~ ' ' ~ _('Hallinta'),
+        _('Hae ja hallitse tämän työkalun kohteita yhteisestä admin-näkymästä.'),
+        _('Hallintatyökalut'),
+        [(_('Hallintapaneeli'), url_for('admin.admin_dashboard')), (config.name, none)],
+        actions_visible=config.create_action
+    ) %}
+        <a href="{{ url_for(config.create_action) }}" class="admin-page-hero__action"><i class="fas fa-plus" aria-hidden="true"></i>{{ _('Uusi kohde') }}</a>
+    {% endcall %}
 
     <form method="GET" class="search-form" action="{{ url_for('control_panel') }}">
         <input type="text" name="search" class="search-input" placeholder="Hae kohteita..." value="{{ search_query }}">

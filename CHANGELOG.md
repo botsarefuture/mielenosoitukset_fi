@@ -31,6 +31,8 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* Every full `admin_V2` page now renders its page identity through the canonical hero macro, including token decisions, per-demonstration analytics, and retained legacy utility/editor templates; a repository-wide contract prevents new standalone admin page headings.
+* Campaign management, 24-hour analytics, media upload/library, and super-audit pages now use the canonical admin hero, breadcrumb, back-action, and shared status treatment instead of standalone headings or custom header shells.
 * Demonstration, recurring-demonstration, organization, and user deletion confirmations now use the same canonical hero, breadcrumbs, and back-action placement as their parent admin workflows.
 * The demonstration command center now uses the canonical stacked admin hero: title copy, navigation actions, status badges, and technical metadata have explicit regions instead of sharing one bespoke hero content cell.
 * Case listing/detail and demonstration merging now use the canonical admin hero, breadcrumbs, back-navigation, and shared status badges rather than bespoke page-header structures.

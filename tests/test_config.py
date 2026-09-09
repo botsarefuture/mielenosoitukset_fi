@@ -14,7 +14,7 @@ class ConfigReloadTests(unittest.TestCase):
         config_module.Config.reload()
         DatabaseManager.reset_instance()
 
-    def test_reload_reads_config_from_env_selected_path(self):
+    def test_reload_reads_config_from_given_path(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_path = Path(temp_dir) / "config.yaml"
             config_path.write_text(
@@ -32,8 +32,7 @@ class ConfigReloadTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with patch.dict(os.environ, {"CONFIG_YAML_PATH": str(config_path)}):
-                config_module.Config.reload()
+            config_module.Config.reload(str(config_path))
 
             self.assertEqual(
                 config_module.Config.MONGO_URI,

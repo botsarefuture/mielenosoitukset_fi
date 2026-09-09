@@ -4,6 +4,10 @@
 
 ## UNRELEASED
 
+### Added
+* The OpenAPI spec (`/api-docs/openapi.yaml`) now fully documents all public, externally-intended endpoints with schemas, auth, and error responses — including the `/api/` blueprint, the legacy `/api/v1` helpers (demonstrations, conflict check, organization search), and the `/users/auth` API-token management endpoints (create/list/revoke/status/request-access). Admin-scoped and session-only UI routes remain out of the public spec.
+* `docs/api.md` now documents `GET /users/auth/api_tokens/status` and the legacy `/api/v1` endpoints (demonstrations, check_demo_conflict, search_organizations).
+
 ### Fixed
 * The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
 * Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.

@@ -8,28 +8,12 @@
     display: grid;
     gap: 1.5rem;
   }
-  .chip-row {
+  .case-status-row {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
     margin-top: 1rem;
   }
-  .case-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.75rem;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.86rem;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.09);
-    color: #eef4ff;
-  }
-  .case-chip.success { background: rgba(22, 163, 74, 0.18); }
-  .case-chip.warning { background: rgba(217, 119, 6, 0.22); }
-  .case-chip.danger { background: rgba(220, 38, 38, 0.2); }
-  .case-chip.info { background: rgba(37, 99, 235, 0.24); }
   .case-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
@@ -232,17 +216,17 @@
     back_url=url_for('admin_case.cases'),
     back_label=_('Tapaukset')
   ) }}
-  <div class="chip-row" aria-label="{{ _('Tapauksen tila') }}">
-    <span class="case-chip"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
-    <span class="case-chip {{ 'success' if case.meta.closed else 'info' }}">
+  <div class="case-status-row" aria-label="{{ _('Tapauksen tila') }}">
+    <span class="admin-status-badge"><i class="fa-solid fa-folder"></i>{{ case_data.type_label }}</span>
+    <span class="admin-status-badge admin-status-badge--{{ 'success' if case.meta.closed else 'info' }}">
       <i class="fa-solid {{ 'fa-circle-check' if case.meta.closed else 'fa-clock' }}"></i>
       {{ _('Suljettu') if case.meta.closed else _('Avoin') }}
     </span>
     {% if case.meta.superior_needed %}
-    <span class="case-chip danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
+    <span class="admin-status-badge admin-status-badge--danger"><i class="fa-solid fa-arrow-up-right-dots"></i>{{ _('Eskaloitu') }}</span>
     {% endif %}
     {% if demo and demo.status %}
-    <span class="case-chip {{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
+    <span class="admin-status-badge admin-status-badge--{{ demo.status.tone }}"><i class="fa-solid fa-bullhorn"></i>{{ demo.status.label }}</span>
     {% endif %}
   </div>
 

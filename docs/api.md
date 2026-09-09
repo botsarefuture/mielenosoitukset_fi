@@ -390,6 +390,121 @@ Response:
 { "status": "success", "message": "Request sent. An admin must approve API tokens for your account." }
 ```
 
+#### GET `/users/auth/api_tokens/status`
+Check whether API token access is approved, requested, or locked for your account.
+
+Auth: **logged-in session required**
+
+Response:
+
+```json
+{
+  "status": "success",
+  "approved": true,
+  "requested": false,
+  "requested_at": null
+}
+```
+
+Notes:
+- `approved` — whether token creation is unlocked for the account.
+- `requested` — whether an access request is pending admin review.
+- `requested_at` — timestamp of the last access request, or `null`.
+
+---
+
+## API v1
+
+Legacy helper endpoints registered outside the `/api` blueprint; public, no auth required.
+
+### GET `/v1/demonstrations`
+Paginated list of approved, upcoming demonstrations.
+
+Auth: none
+
+Query params:
+
+- `page` — page number (1-based, default 1)
+- `per_page` — items per page (default 20)
+- `search` — case-insensitive search term
+- `city` — city or comma-separated list of cities
+- `location` — free-text location filter
+- `date_start` — include demos from this date (YYYY-MM-DD)
+- `date_end` — include demos up to this date (YYYY-MM-DD)
+- `tag` — tag filter
+- `lang` — language for localized output (e.g. `fi`, `en`)
+
+Response:
+
+```json
+{
+  "demonstrations": [
+    {
+      "_id": "...",
+      "title": "...",
+      "default_language": "fi",
+      "resolved_language": "fi",
+      "available_languages": ["fi"],
+      "date_display": "01.01.2025",
+      "start_time_display": "12:00",
+      "end_time_display": null,
+      "city": "Helsinki",
+      "address": "...",
+      "tags": [],
+      "description": "...",
+      "cover_image": null,
+      "cancelled": false
+    }
+  ],
+  "total_pages": 7
+}
+```
+
+---
+
+### GET `/v1/check_demo_conflict`
+Find up to 5 approved, non-cancelled demonstrations in the same city/date matching a title or address.
+
+Auth: none
+
+Query params:
+
+- `title` — demonstration title (required)
+- `date` — date as YYYY-MM-DD (required)
+- `city` — city name (required)
+- `address` — address to match (optional)
+
+Response:
+
+```json
+{
+  "matches": [
+    { "_id": "...", "title": "...", "address": "...", "date": "2025-01-01" }
+  ]
+}
+```
+
+---
+
+### GET `/v1/search_organizations`
+Search organizations by name (case-insensitive substring).
+
+Auth: none
+
+Query params:
+
+- `q` — search query, minimum 2 characters
+
+Response:
+
+```json
+[
+  { "id": "...", "name": "...", "email": "...", "website": "...", "description": "..." }
+]
+```
+
+Returns an empty array when `q` is missing or shorter than 2 characters.
+
 ---
 
 ## Notifications
@@ -420,7 +535,7 @@ Auth: **logged-in session required**
 # Notes
 
 - Some endpoints use both session + token auth. If you are calling from a server, use tokens.
-- The OpenAPI spec is available at `/api-docs/openapi.yaml` but is currently partial.
+- The OpenAPI spec is available at `/api-docs/openapi.yaml`.
 
 ---
 

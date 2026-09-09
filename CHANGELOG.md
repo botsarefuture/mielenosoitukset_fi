@@ -4,9 +4,18 @@
 
 ## UNRELEASED
 
+### Added
+* The OpenAPI spec (`/api-docs/openapi.yaml`) now fully documents all public, externally-intended endpoints with schemas, auth, and error responses — including the `/api/` blueprint, the legacy `/api/v1` helpers (demonstrations, conflict check, organization search), and the `/users/auth` API-token management endpoints (create/list/revoke/status/request-access). Admin-scoped and session-only UI routes remain out of the public spec.
+* `docs/api.md` now documents `GET /users/auth/api_tokens/status` and the legacy `/api/v1` endpoints (demonstrations, check_demo_conflict, search_organizations).
+
 ### Fixed
+* The developer app detail view (`/developer/apps/<id>`) no longer breaks its inline JavaScript with literal escape sequences, so "Luo 48h token", scope-request, and token-revocation buttons work again.
 * The escalated-case summary card now applies the same label styling as the other case counters instead of emitting an invalid `aclass` attribute.
 * Organization viewers no longer see member-role mutation, member-removal, or invitation-cancellation controls unless their scoped organization permissions allow those actions; server-side authorization remains authoritative.
+* The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
+* Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
+* Demonstration edit links now enforce one server-side duration allowlist, matching registry expiry and signature lifetime, CSRF-protected generation and revocation, friendly expired/revoked states, and anonymous token saves without exposing approval controls; the recurring-series editor no longer offers a broken regular-demo edit-link action.
+* Raw demonstration edit-link bearer credentials are no longer accepted from the browser, written to the persistent email queue, or passed to generic request-path auditing; each generated link is unique and can be revoked individually or per demonstration.
 * Production deployments no longer fail with SSH `Permission denied (publickey,password)` right after freshly adding the deploy key to the agent: the workflow no longer sets `IdentitiesOnly` without a matching `IdentityFile`, so the GitHub Actions agent can actually offer the dedicated deploy key to the server.
 * Pull request previews now use small deterministic Docker subnets and reliably remove MongoDB-owned data on teardown, preventing closed previews from exhausting the server's network address pools; preview status comments also expose failed runs clearly.
 * Admin hero headings and supporting text now retain their shared high-contrast foreground on the gradient in both themes, and user-list result and pagination surfaces follow the shared data-view corner contract without painting over the rounded shell or clipping desktop action menus.

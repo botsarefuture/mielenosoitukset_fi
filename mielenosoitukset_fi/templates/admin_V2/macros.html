@@ -39,7 +39,7 @@
     {% endif %}
 {% endmacro %}
 
-{% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true, sections=(), title_id=none, hero_classes='') %}
+{% macro admin_page_hero(title, description, kicker, breadcrumbs=(), back_url=none, back_label=none, actions_visible=true, sections=(), title_id=none, hero_classes='', metric_value=none, metric_label=none, metric_id=none) %}
 <header class="admin-page-hero{% if hero_classes %} {{ hero_classes }}{% endif %}">
     <div class="admin-page-hero__content">
         {% if breadcrumbs %}
@@ -61,6 +61,12 @@
     <div class="admin-page-hero__actions">
         {% if back_url %}<a class="admin-page-hero__action admin-page-hero__back" href="{{ back_url }}"><i class="fas fa-arrow-left" aria-hidden="true"></i>{{ back_label or _('Takaisin') }}</a>{% endif %}
         {% if caller is defined and actions_visible %}{{ caller() }}{% endif %}
+    </div>
+    {% endif %}
+    {% if metric_value is not none %}
+    <div class="admin-page-hero__metric">
+        <strong{% if metric_id %} id="{{ metric_id }}"{% endif %}>{{ metric_value }}</strong>
+        {% if metric_label %}<span>{{ metric_label }}</span>{% endif %}
     </div>
     {% endif %}
     {% if sections %}

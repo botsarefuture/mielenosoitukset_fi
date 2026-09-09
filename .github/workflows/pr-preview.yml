@@ -25,7 +25,7 @@ jobs:
     env:
       PREVIEW_SSH_HOST: ${{ vars.PREVIEW_SSH_HOST }}
       PREVIEW_SSH_USER: ${{ vars.PREVIEW_SSH_USER }}
-      PREVIEW_DOMAIN: mielenosoitukset.fi
+      PREVIEW_DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
       PREVIEW_ENV_FILE: ${{ vars.PREVIEW_ENV_FILE }}
       PREVIEW_REMOTE_SCRIPT: /home/preview/preview_deploy.sh
       PREVIEW_SSH_OPTS: -o ServerAliveInterval=30 -o ServerAliveCountMax=10
@@ -122,6 +122,33 @@ jobs:
             "PREVIEW_ENV_FILE='${PREVIEW_ENV_FILE:-/etc/mielenosoitukset-preview.env}' $PREVIEW_REMOTE_SCRIPT deploy '${PR_NUMBER}' 'preview-pr-${PR_NUMBER}:${PR_HEAD_SHA}'"
           printf 'preview_url=%s\n' "$preview_url" >> "$GITHUB_OUTPUT"
 
+      - name: Publish failure details
+        if: ${{ failure() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- preview-environment -->';
+            const body = [
+              marker,
+              '### Preview Environment',
+              '',
+              'Status: failed',
+              '',
+              `Inspect the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for the failing step.`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
       - name: Publish preview comment
         uses: actions/github-script@v7
         env:
@@ -175,7 +202,7 @@ jobs:
     env:
       PREVIEW_SSH_HOST: ${{ vars.PREVIEW_SSH_HOST }}
       PREVIEW_SSH_USER: ${{ vars.PREVIEW_SSH_USER }}
-      PREVIEW_DOMAIN: mielenosoitukset.fi
+      PREVIEW_DOMAIN: ${{ vars.PREVIEW_DOMAIN }}
       PREVIEW_ENV_FILE: ${{ vars.PREVIEW_ENV_FILE }}
       PREVIEW_REMOTE_SCRIPT: /home/preview/preview_deploy.sh
       PREVIEW_SSH_OPTS: -o ServerAliveInterval=30 -o ServerAliveCountMax=10
@@ -209,7 +236,7 @@ jobs:
       - name: Close preview comment
         uses: actions/github-script@v7
         env:
-          PREVIEW_URL: https://pr-${{ github.event.pull_request.number }}.mielenosoitukset.fi
+          PREVIEW_URL: https://pr-${{ github.event.pull_request.number }}.${{ vars.PREVIEW_DOMAIN }}
         with:
           script: |
             const marker = '<!-- preview-environment -->';

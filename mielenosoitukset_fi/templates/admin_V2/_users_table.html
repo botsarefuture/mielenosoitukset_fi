@@ -1,64 +1,4 @@
 <style>
-  .users-results-heading {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: center;
-    padding: .9rem 1.1rem;
-    border-bottom: 1px solid var(--users-border);
-    color: var(--users-muted);
-    background: var(--users-surface-muted);
-    font-size: .8rem;
-    font-weight: 700;
-  }
-
-  .users-results-heading strong { color: var(--users-text); }
-  .users-table-scroll { overflow: visible; }
-
-  .users-table {
-    width: 100%;
-    min-width: 920px;
-    border-collapse: collapse;
-  }
-
-  .users-table th,
-  .users-table td {
-    padding: .85rem 1rem;
-    border-bottom: 1px solid var(--users-border);
-    color: var(--users-text);
-    text-align: left;
-    vertical-align: middle;
-  }
-
-  .users-table th {
-    color: var(--users-muted);
-    background: var(--users-surface);
-    font-size: .7rem;
-    font-weight: 800;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
-
-  .users-table tbody tr:hover { background: var(--users-blue-soft); }
-  .users-table tbody tr:last-child td { border-bottom: 0; }
-
-  .users-table th.sortable {
-    position: relative;
-    cursor: pointer;
-  }
-
-  .users-table th.sortable::after {
-    content: "\f0dc";
-    margin-left: .45rem;
-    color: var(--users-muted);
-    font-family: "Font Awesome 6 Free";
-    font-size: .68rem;
-    font-weight: 900;
-  }
-
-  .users-table th.sortable.asc::after { content: "\f0de"; }
-  .users-table th.sortable.desc::after { content: "\f0dd"; }
-
   .user-identity {
     display: flex;
     gap: .7rem;
@@ -142,101 +82,16 @@
     font-weight: 800;
   }
 
-  .users-table .dropdown-menu {
-    z-index: 1080;
-    min-width: 14rem;
-    border-color: var(--users-border);
-    border-radius: .75rem;
-    color: var(--users-text);
-    background: var(--users-surface);
-    box-shadow: 0 14px 38px light-dark(rgba(28, 48, 82, .16), rgba(0, 0, 0, .36));
-  }
-
-  .users-table .dropdown-item {
-    color: var(--users-text);
-    font-size: .82rem;
-  }
-
-  .users-table .dropdown-item:hover,
-  .users-table .dropdown-item:focus {
-    color: var(--users-blue-dark);
-    background: var(--users-blue-soft);
-  }
-
-  .users-pagination {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: center;
-    padding: .8rem 1rem;
-    border-top: 1px solid var(--users-border);
-    background: var(--users-surface);
-  }
-
-  .users-pagination-info {
-    color: var(--users-muted);
-    font-size: .8rem;
-    font-weight: 700;
-  }
-
-  .users-pagination .pagination {
-    display: flex;
-    gap: .3rem;
-    flex-wrap: wrap;
-    margin: 0;
-  }
-
-  .users-pagination .page-link {
-    display: inline-flex;
-    min-width: 2.3rem;
-    min-height: 2.3rem;
-    align-items: center;
-    justify-content: center;
-    gap: .35rem;
-    padding: .42rem .65rem;
-    border: 1px solid var(--users-border);
-    border-radius: .62rem !important;
-    color: var(--users-blue-dark);
-    background: var(--users-surface-muted);
-    font-size: .78rem;
-    font-weight: 800;
-  }
-
-  .users-pagination .page-item.active .page-link {
-    border-color: var(--users-blue);
-    color: #fff;
-    background: var(--users-blue);
-  }
-
-  .users-pagination .page-item.disabled .page-link { opacity: .45; pointer-events: none; }
-
-  .users-empty {
-    padding: 3rem 1.5rem;
-    color: var(--users-muted);
-    text-align: center;
-  }
-
-  @media (max-width: 760px) {
-    .users-table-scroll { overflow-x: auto; }
-    .users-table .dropdown-menu.show {
-      position: static !important;
-      transform: none !important;
-      margin-top: .4rem !important;
-    }
-    .users-pagination { align-items: stretch; flex-direction: column; }
-    .users-pagination .pagination { justify-content: center; }
-    .users-pagination-label { display: none; }
-  }
 </style>
 
-<div class="users-results-heading">
+<div class="admin-data-view__header admin-result-summary">
   <span><strong>{{ total_users }}</strong> {{ _('käyttäjää löytyi') }}</span>
   {% if search_query %}<span>{{ _('Haku') }}: “{{ search_query }}”</span>{% endif %}
 </div>
 
 {% if users %}
-<div class="users-table-scroll">
-  <table class="users-table">
+<div class="admin-data-view__viewport users-table-scroll">
+  <table class="admin-data-view__table users-table">
     <thead>
       <tr>
         <th class="sortable">{{ _('Käyttäjä') }}</th>
@@ -317,7 +172,7 @@
   </table>
 </div>
 
-<nav class="users-pagination" aria-label="{{ _('Käyttäjien sivutus') }}">
+<nav class="admin-data-view__footer admin-pagination users-pagination" aria-label="{{ _('Käyttäjien sivutus') }}">
   <div class="users-pagination-info">{{ _('Sivu') }} {{ current_page }} / {{ total_pages }}</div>
   <ul class="pagination">
     <li class="page-item {% if not prev_page %}disabled{% endif %}">
@@ -338,7 +193,7 @@
   </ul>
 </nav>
 {% else %}
-<div class="users-empty">
+<div class="admin-empty-state users-empty">
   <i class="fas fa-user-slash fs-2 mb-3" aria-hidden="true"></i>
   <h3>{{ _('Ei käyttäjiä tällä haulla.') }}</h3>
   <p class="mb-0">{{ _('Kokeile käyttäjänimeä, näyttönimeä tai sähköpostiosoitetta.') }}</p>

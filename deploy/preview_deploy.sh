@@ -98,6 +98,27 @@ wait_for_mongo() {
   die "preview MongoDB did not become ready"
 }
 
+wait_for_app() {
+  local container_name="$1"
+
+  for _ in $(seq 1 90); do
+    if docker exec "$container_name" python -c \
+      'import urllib.request; urllib.request.urlopen("http://127.0.0.1:5002/health", timeout=3)' \
+      >/dev/null 2>&1; then
+      return 0
+    fi
+
+    if [[ "$(docker inspect --format '{{.State.Running}}' "$container_name" 2>/dev/null || true)" != "true" ]]; then
+      docker logs --tail 100 "$container_name" >&2 || true
+      die "preview application container exited before becoming ready"
+    fi
+    sleep 2
+  done
+
+  docker logs --tail 100 "$container_name" >&2 || true
+  die "preview application did not become ready"
+}
+
 seed_mongo_if_requested() {
   local network="$1"
   local preview_dir="$2"
@@ -168,13 +189,41 @@ start_mail_container() {
 
 create_network() {
   local network="$1"
+  local pr_number="$2"
   if ! docker network inspect "$network" >/dev/null 2>&1; then
+    # Docker's default pools allocate very large subnets and can be exhausted
+    # after only a few previews. Allocate a deterministic /28 from a dedicated
+    # configurable pool instead (16 addresses are ample for this three-service
+    # preview network).
+    local pool_prefix="${PREVIEW_SUBNET_POOL_PREFIX:-10.242}"
+    local subnet_index=$((pr_number % 4096))
+    local subnet_third=$((subnet_index / 16))
+    local subnet_fourth=$(((subnet_index % 16) * 16))
+    local subnet="${pool_prefix}.${subnet_third}.${subnet_fourth}/28"
+    local network_args=(--subnet "$subnet")
+
     if [[ "${PREVIEW_INTERNAL_NETWORK:-true}" == "true" ]]; then
-      docker network create --internal "$network" >/dev/null
-    else
-      docker network create "$network" >/dev/null
+      network_args+=(--internal)
     fi
+
+    docker network create "${network_args[@]}" "$network" >/dev/null
   fi
+}
+
+remove_preview_dir() {
+  local preview_dir="$1"
+
+  if [[ ! -d "$preview_dir" ]]; then
+    return
+  fi
+
+  # MongoDB writes the mounted files as its container user. Remove them from a
+  # disposable container running as root, then remove the preview-owned shell.
+  docker run --rm \
+    -v "${preview_dir}:/preview" \
+    mongo:8 \
+    find /preview -mindepth 1 -depth -delete
+  rmdir "$preview_dir"
 }
 
 deploy_preview() {
@@ -211,7 +260,7 @@ deploy_preview() {
   chmod 0770 "$snippets_dir"
 
   echo "[preview] creating isolated network and service containers"
-  create_network "$network_name"
+  create_network "$network_name" "$pr_number"
   start_mongo_container "$mongo_container" "$network_name" "$mongo_data_dir"
   start_mail_container "$mail_container" "$network_name"
 
@@ -245,6 +294,9 @@ deploy_preview() {
     -e CONFIG_YAML_PATH=/app/config.preview.yaml \
     -v "$config_file:/app/config.preview.yaml:ro" \
     "$image_tag" >/dev/null
+
+  echo "[preview] waiting for application health check"
+  wait_for_app "$container_name"
 
   local container_ip
   container_ip="$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$container_name")"
@@ -292,8 +344,8 @@ destroy_preview() {
   docker rm -f "$mongo_container" >/dev/null 2>&1 || true
   docker rm -f "$mail_container" >/dev/null 2>&1 || true
   rm -f "$snippet_file"
-  rm -rf "$preview_dir"
   docker network rm "$network_name" >/dev/null 2>&1 || true
+  remove_preview_dir "$preview_dir"
 
   eval "$reload_cmd"
 }

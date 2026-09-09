@@ -7,8 +7,9 @@ This project can build a pull request branch, deploy it to a dedicated preview s
 1. GitHub Actions checks out the PR head commit and builds the app image.
 2. The image is streamed over SSH to a preview server.
 3. The server starts one container per PR and writes a per-PR Caddy snippet.
-4. The workflow posts a sticky PR comment with the preview URL.
-5. When the PR closes, the workflow removes the container, Caddy snippet, and per-PR working directory.
+4. The server waits for the app's `/health` endpoint before publishing it.
+5. The workflow posts a sticky PR comment with the preview URL.
+6. When the PR closes, the workflow removes the container, Caddy snippet, and per-PR working directory.
 
 ## Security model
 
@@ -50,6 +51,8 @@ It should define the app secrets and preview-only service endpoints, for example
 - `PREVIEW_CDN_BASE_URL`
 - optional `PREVIEW_REDIS_HOST`, `PREVIEW_REDIS_PORT`, `PREVIEW_REDIS_DB`
 - optional `PREVIEW_DEFAULT_LOCALE`, `PREVIEW_DEFAULT_TIMEZONE`
+- optional `PREVIEW_SUBNET_POOL_PREFIX` (defaults to `10.242`; each PR gets a
+  small deterministic `/28` instead of consuming Docker's large default pools)
 - optional `PREVIEW_MONGO_SOURCE_URI` and `PREVIEW_MONGO_SOURCE_DB` if you want the preview MongoDB to be seeded from an existing server database
 
 The app will render a per-PR YAML config file from those values and use it through `CONFIG_YAML_PATH`. The runtime config always points the app to its own local MongoDB container at `mongodb://mongo:27017`.
@@ -93,9 +96,10 @@ password, typically through a narrow sudoers rule for:
 
 - `sudo -n /usr/bin/systemctl restart caddy`
 
-For this repository, the preview domain is `mielenosoitukset.fi`, so previews
-will be published at `pr-<id>.mielenosoitukset.fi`. That keeps the hostname in
-Cloudflare's normal first-level wildcard coverage.
+The workflow uses `PREVIEW_DOMAIN` as the hostname suffix. For example, a value
+of `mielenosoitukset.fi` publishes `pr-<id>.mielenosoitukset.fi`; a value of
+`previews.mielenosoitukset.fi` publishes
+`pr-<id>.previews.mielenosoitukset.fi`.
 
 The helper script `scripts/setup_preview_environment.sh` can print the values you need,
 or apply them directly if `gh` is already authenticated.
@@ -103,6 +107,8 @@ or apply them directly if `gh` is already authenticated.
 ## Operational notes
 
 - The workflow only deploys same-repository pull requests. Forks are skipped because the preview server needs secrets.
+- Teardown removes MongoDB-owned files from a disposable container so a closed
+  PR cannot strand its network and eventually exhaust Docker's address pools.
 - Each PR gets a separate database name inside its own preview MongoDB container, so it does not share data with other previews.
 - The preview config disables chat, background jobs, the email worker, and the panic thread by default to keep previews lighter and safer.
 - If the preview server needs stricter isolation, keep the backing services on the same dedicated Docker network and do not reuse production containers.

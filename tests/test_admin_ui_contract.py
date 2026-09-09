@@ -455,6 +455,24 @@ def test_demo_command_center_separates_hero_copy_from_operational_context():
         assert legacy_class not in template
 
 
+def test_destructive_confirmations_use_canonical_hero_navigation():
+    pages = (
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/organizations/confirm_delete.html",
+        "mielenosoitukset_fi/templates/admin_V2/user/confirm.html",
+    )
+
+    for name in pages:
+        source = Path(name).read_text(encoding="utf-8")
+        assert "import admin_page_hero" in source
+        assert "admin_page_hero(" in source
+        assert "admin.admin_dashboard" in source
+        assert "back_url=" in source
+        assert "title_id='confirm-title'" in source
+        assert source.count("<h1") == 0
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

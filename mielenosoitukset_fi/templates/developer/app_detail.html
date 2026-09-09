@@ -218,7 +218,27 @@
       return;
     }
     try {
-      const res = await fetch(\"{{ url_for('developer.request_scopes', app_id=app._id) }}\", {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ scopes, reason })\n      });\n      const data = await res.json();\n      if (data.status === 'success') {\n        scopeMsg.className = 'alert alert-success';\n        scopeMsg.textContent = data.message || 'Pyyntö lähetetty';\n      } else {\n        scopeMsg.className = 'alert alert-danger';\n        scopeMsg.textContent = data.message || 'Pyyntö epäonnistui';\n      }\n      scopeMsg.classList.remove('d-none');\n    } catch (err) {\n      console.error(err);\n      scopeMsg.className = 'alert alert-danger';\n      scopeMsg.textContent = 'Pyyntö epäonnistui';\n      scopeMsg.classList.remove('d-none');\n    }\n  });
+      const res = await fetch("{{ url_for('developer.request_scopes', app_id=app._id) }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scopes, reason })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        scopeMsg.className = 'alert alert-success';
+        scopeMsg.textContent = data.message || 'Pyyntö lähetetty';
+      } else {
+        scopeMsg.className = 'alert alert-danger';
+        scopeMsg.textContent = data.message || 'Pyyntö epäonnistui';
+      }
+      scopeMsg.classList.remove('d-none');
+    } catch (err) {
+      console.error(err);
+      scopeMsg.className = 'alert alert-danger';
+      scopeMsg.textContent = 'Pyyntö epäonnistui';
+      scopeMsg.classList.remove('d-none');
+    }
+  });
 
   document.getElementById('token-list')?.addEventListener('click', async (e) => {
     const btn = e.target.closest('.revoke-token');

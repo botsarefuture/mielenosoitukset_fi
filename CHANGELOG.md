@@ -5,6 +5,7 @@
 ## UNRELEASED
 
 ### Fixed
+* The developer app detail view (`/developer/apps/<id>`) no longer breaks its inline JavaScript with literal escape sequences, so "Luo 48h token", scope-request, and token-revocation buttons work again.
 * The demonstration submitter modal now keeps stable loading, result, empty, and error regions across repeated opens, writes API values with `textContent`, restores focus to its trigger, and uses the shared admin modal contract instead of replacing its own DOM.
 * Demonstration approval and rejection now use one idempotent decision service across token, legacy, form, single-item API, and bulk API entry points: canonical status, related-case resolution, bearer-link revocation, history/audit metadata, and submitter email happen consistently without duplicate notifications or history on retries.
 * Demonstration edit links now enforce one server-side duration allowlist, matching registry expiry and signature lifetime, CSRF-protected generation and revocation, friendly expired/revoked states, and anonymous token saves without exposing approval controls; the recurring-series editor no longer offers a broken regular-demo edit-link action.

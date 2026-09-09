@@ -433,6 +433,28 @@ def test_case_and_merge_pages_use_canonical_hero_navigation():
     assert "aclass=" not in case_list
 
 
+def test_demo_command_center_separates_hero_copy_from_operational_context():
+    template = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/command_center.html"
+    ).read_text(encoding="utf-8")
+
+    assert "import admin_page_hero" in template
+    assert "admin_page_hero(" in template
+    assert "admin-page-hero--stacked" in template
+    assert "back_url=" in template
+    assert template.index("{% endcall %}") < template.index('class="status-badges"')
+    assert template.index("{% endcall %}") < template.index('class="hero-metadata"')
+    for legacy_class in (
+        ".hero-card",
+        ".hero-header",
+        ".hero-title",
+        ".hero-subtitle",
+        ".hero-links",
+        ".hero-link",
+    ):
+        assert legacy_class not in template
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

@@ -22,6 +22,7 @@
 * Updated the "Lisää käyttäjä" manual page to match the real single-modal user creation flow (removed outdated step-by-step screenshots that referenced files that do not exist), expanded the roles page with all current roles (`user`, `translator`, `city_admin`, `admin`, `global_admin`, `god`), and made the manual layout usable on mobile with a collapsible table of contents.
 
 ### Changed
+* The demonstration command center now uses the canonical stacked admin hero: title copy, navigation actions, status badges, and technical metadata have explicit regions instead of sharing one bespoke hero content cell.
 * Case listing/detail and demonstration merging now use the canonical admin hero, breadcrumbs, back-navigation, and shared status badges rather than bespoke page-header structures.
 * Analytics and service statistics now render titles, breadcrumbs, descriptions, and live/static summary metrics through the shared admin hero instead of maintaining separate hero geometries and color rules.
 * Admin event logs, demonstration audit/token/error views, developer access requests, and API-token requests now use the canonical hero, breadcrumb, and back-navigation hierarchy.

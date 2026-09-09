@@ -1,0 +1,23 @@
+{% extends "admin_base.html" %}
+
+{% block title %}{{ _('Muokkauslinkki ei ole käytettävissä') }} – Mielenosoitukset.fi{% endblock %}
+
+{% block main_content %}
+<main class="admin-page">
+  <header class="admin-page-hero">
+    <div class="admin-page-hero__content">
+      <p class="admin-page-hero__kicker">{{ _('Mielenosoituksen muokkaus') }}</p>
+      <h1>
+        {% if reason == 'expired' %}{{ _('Muokkauslinkki on vanhentunut') }}
+        {% elif reason == 'revoked' %}{{ _('Muokkauslinkki on mitätöity') }}
+        {% else %}{{ _('Muokkauslinkki ei kelpaa') }}{% endif %}
+      </h1>
+      <p>{{ _('Pyydä mielenosoituksen ylläpitäjältä uusi linkki, jos muokkaamista pitää jatkaa.') }}</p>
+    </div>
+  </header>
+  <section class="admin-form-section admin-empty-state" role="status">
+    <p>{{ _('Linkillä ei voi enää avata tai tallentaa mielenosoituksen tietoja.') }}</p>
+    <a class="btn btn-primary" href="{{ url_for('index') }}">{{ _('Palaa etusivulle') }}</a>
+  </section>
+</main>
+{% endblock %}

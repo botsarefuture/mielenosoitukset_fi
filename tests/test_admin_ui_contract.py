@@ -222,6 +222,36 @@ def test_submitter_modal_keeps_stable_dom_across_reopens():
     assert "textContent =" in handler
     assert "innerHTML" not in handler
     assert "hidden.bs.modal" in handler
+def test_organization_workflows_use_shared_admin_components():
+    form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/form.html"
+    ).read_text(encoding="utf-8")
+    review = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/review_suggestion.html"
+    ).read_text(encoding="utf-8")
+    macros = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/macros.html"
+    ).read_text(encoding="utf-8")
+    workspace = Path(
+        "mielenosoitukset_fi/static/css/admin/workspace.css"
+    ).read_text(encoding="utf-8")
+
+    for template in (form, review, macros):
+        assert "<style" not in template
+        assert "style=" not in template
+    assert "admin-form-layout" in form
+    assert "admin-form-section__header" in form
+    assert "admin-sticky-actions__buttons" in form
+    assert "{{ invite_modal(organization) }}" in form
+    assert "organization and can_invite_members" in form
+    assert "admin-data-view__viewport" in review
+    assert "admin-selection-checkbox field-checkbox" in review
+    assert "applyBtn.style" not in review
+    assert "--admin-workspace-on-primary: #ffffff;" in workspace
+    assert "background: var(--admin-workspace-primary-bg);" in workspace
+    assert "background: var(--admin-workspace-primary-hover);" in workspace
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"
@@ -243,3 +273,23 @@ def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
         assert 'class="admin-check-row"' in template
         assert "data-admin-boolean" in template
         assert 'aria-live="polite"' in template
+
+
+def test_demo_edit_links_use_the_shared_secure_lifecycle_contract():
+    demo_form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/demonstrations/form.html"
+    ).read_text(encoding="utf-8")
+    recurring_form = Path(
+        "mielenosoitukset_fi/templates/admin_V2/recu_demonstrations/_form_v2.html"
+    ).read_text(encoding="utf-8")
+
+    assert "modal fade admin-modal" in demo_form
+    assert "admin-data-view" in demo_form
+    assert 'value="1h"' in demo_form
+    assert 'value="24h"' in demo_form
+    assert 'value="7d"' in demo_form
+    assert "'X-CSRF-Token': editLinkCsrf" in demo_form
+    assert "JSON.stringify({email, duration: duration.value})" in demo_form
+    assert "JSON.stringify({ email, edit_link: editLink })" not in demo_form
+    assert "generate-edit-link-btn" not in recurring_form
+    assert "send_edit_link_email" not in recurring_form

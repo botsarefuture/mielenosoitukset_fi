@@ -175,10 +175,6 @@
     color: light-dark(#000, #fff);
   }
 
-  .submitter-info-body {
-    color: light-dark(#1f2937, #e5e7f4);
-  }
-
   /* smooth fade/slide when a row is removed */
   tr.fade‑out {
     opacity: 0;
@@ -663,7 +659,7 @@
                     </a></li>
 
                     <li><button class="dropdown-item" type="button"
-                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                                onclick="showSubmitterInfoModal('{{ demo._id }}', this)">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
                 {% endif %}
@@ -806,7 +802,7 @@
                     </a></li>
 
                     <li><button class="dropdown-item" type="button"
-                                onclick="showSubmitterInfoModal('{{ demo._id }}')">
+                                onclick="showSubmitterInfoModal('{{ demo._id }}', this)">
                         <i class="fa-solid fa-user me-2"></i>{{ _('Ilmoittaja') }}
                     </button></li>
                 {% endif %}
@@ -931,25 +927,42 @@
     </div>
   </div>
   <!-- Submitter Info Modal -->
-  <div class="modal fade" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
+  <div class="modal fade admin-modal" id="submitterInfoModal" tabindex="-1" aria-labelledby="submitterInfoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4" id="submitterInfoModalContent">
-        <div class="modal-header bg-info text-white rounded-top-4">
-          <h5 class="modal-title" id="submitterInfoLabel">
-            <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
-          </h5>
-          <button type="button" class="btn-close btn-close-white" aria-label="{{ _('Sulje') }}"
+      <div class="modal-content" id="submitterInfoModalContent">
+        <div class="modal-header">
+          <div>
+            <p class="admin-modal-kicker">{{ _('Mielenosoituksen hallinta') }}</p>
+            <h2 class="modal-title" id="submitterInfoLabel">
+              <i class="fa-solid fa-user me-2"></i> {{ _('Ilmoittajan tiedot') }}
+            </h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Sulje') }}"
             id="submitterInfoCloseBtn"></button>
         </div>
-        <div class="modal-body p-4 text-center submitter-info-body" id="submitter-info-content">
-          <!-- Dynamically filled content -->
-          <div id="noSubmitterInfo" class="alert alert-warning d-none">
+        <div class="modal-body" id="submitter-info-content">
+          <div id="submitterInfoLoading" role="status" aria-live="polite">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            {{ _('Haetaan ilmoittajan tietoja…') }}
+          </div>
+          <dl id="submitterInfoResult" class="row mb-0 d-none">
+            <dt class="col-sm-5">{{ _('Nimi') }}</dt><dd class="col-sm-7" id="submitterName"></dd>
+            <dt class="col-sm-5">{{ _('Sähköposti') }}</dt><dd class="col-sm-7" id="submitterEmail"></dd>
+            <dt class="col-sm-5">{{ _('Rooli') }}</dt><dd class="col-sm-7" id="submitterRole"></dd>
+            <dt class="col-sm-5">{{ _('Hyväksynyt ehdot') }}</dt><dd class="col-sm-7" id="submitterAcceptedTerms"></dd>
+            <dt class="col-sm-5">{{ _('Ilmoitettu') }}</dt><dd class="col-sm-7" id="submitterSubmittedAt"></dd>
+          </dl>
+          <div id="noSubmitterInfo" class="alert alert-warning d-none" role="status">
             <i class="fa-solid fa-circle-exclamation me-2"></i>
             {{ _('Ilmoittajan tietoja ei löytynyt.') }}
           </div>
+          <div id="submitterInfoError" class="alert alert-danger d-none" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            {{ _('Virhe haettaessa tietoja.') }}
+          </div>
         </div>
-        <div class="modal-footer justify-content-center">
-          <button type="button" class="btn btn-outline-info btn-lg px-4" id="closeSubmitterInfo">
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeSubmitterInfo">
             {{ _('Sulje') }}
           </button>
         </div>
@@ -971,12 +984,8 @@
     document.addEventListener('DOMContentLoaded', () => {
       const deleteModalEl = document.getElementById('deleteModal');
       const deleteModal = new bootstrap.Modal(deleteModalEl);
-      // Initialize Bootstrap modal once
       const submitterModalEl = document.getElementById('submitterInfoModal');
-      const submitterModal = new bootstrap.Modal(submitterModalEl, {
-        backdrop: 'static',  // Optional: prevents closing on outside click
-        keyboard: false      // Optional: prevents closing with ESC
-      });
+      const submitterModal = bootstrap.Modal.getOrCreateInstance(submitterModalEl);
 
       // Dark mode toggle for modals (adjust if your dark mode class is on <html> or <body>)
       const isDark = document.body.classList.contains('dark') || document.documentElement.classList.contains('dark');
@@ -1095,52 +1104,66 @@
       });
 
 
-      // Show submitter info modal and fetch data
-      window.showSubmitterInfoModal = async (demoId) => {
-        const content = document.getElementById('submitter-info-content');
-        const noInfoAlert = document.getElementById('noSubmitterInfo');
+      const submitterStates = {
+        loading: document.getElementById('submitterInfoLoading'),
+        result: document.getElementById('submitterInfoResult'),
+        empty: document.getElementById('noSubmitterInfo'),
+        error: document.getElementById('submitterInfoError')
+      };
+      const submitterFields = {
+        name: document.getElementById('submitterName'),
+        email: document.getElementById('submitterEmail'),
+        role: document.getElementById('submitterRole'),
+        acceptedTerms: document.getElementById('submitterAcceptedTerms'),
+        submittedAt: document.getElementById('submitterSubmittedAt')
+      };
+      let submitterRequestNumber = 0;
+      let submitterTrigger = null;
 
-        // Clear previous content
-        content.querySelectorAll("p:not(#noSubmitterInfo)").forEach(p => p.remove());
-        noInfoAlert.classList.add("d-none");
+      function showSubmitterState(activeState) {
+        Object.entries(submitterStates).forEach(([name, element]) => {
+          element.classList.toggle('d-none', name !== activeState);
+        });
+      }
+
+      window.showSubmitterInfoModal = async (demoId, trigger = null) => {
+        const requestNumber = ++submitterRequestNumber;
+        submitterTrigger = trigger?.closest('.dropdown')?.querySelector('.dropdown-toggle')
+          || trigger
+          || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+        showSubmitterState('loading');
+        submitterModal.show();
 
         try {
           const res = await fetch(`/admin/demo/get_submitter_info/${demoId}`);
           const data = await res.json();
+          if (requestNumber !== submitterRequestNumber) return;
 
-          if (data.status === 'OK' && data.submitter) {
+          if (res.ok && data.status === 'OK' && data.submitter) {
             const s = data.submitter;
-
-            // Dynamically fill the modal
-            const name = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
-            const email = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
-            const role = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
-            const accepted = (s.accept_terms === true || s.accept_terms === 'true') ? '{{ _("Kyllä") }}' : '{{ _("Ei") }}';
-            const submittedAt = s.submitted_at || '{{ _("Ei saatavilla") }}';
-
-            content.innerHTML = `
-                <p><strong>{{ _('Nimi') }}:</strong> ${name}</p>
-                <p><strong>{{ _('Sähköposti') }}:</strong> ${email}</p>
-                <p><strong>{{ _('Rooli') }}:</strong> ${role}</p>
-                <p><strong>{{ _('Hyväksynyt ehdot') }}:</strong> ${accepted}</p>
-                <p><strong>{{ _('Ilmoitettu') }}:</strong> ${submittedAt}</p>
-            `;
+            submitterFields.name.textContent = s.submitter_name || s.name || '{{ _("Ei saatavilla") }}';
+            submitterFields.email.textContent = s.submitter_email || s.email || '{{ _("Ei saatavilla") }}';
+            submitterFields.role.textContent = s.submitter_role || s.role || '{{ _("Ei saatavilla") }}';
+            submitterFields.acceptedTerms.textContent = (s.accept_terms === true || s.accept_terms === 'true')
+              ? '{{ _("Kyllä") }}'
+              : '{{ _("Ei") }}';
+            submitterFields.submittedAt.textContent = s.submitted_at || '{{ _("Ei saatavilla") }}';
+            showSubmitterState('result');
+          } else if (res.status === 404) {
+            showSubmitterState('empty');
           } else {
-            // Show the "no info" alert
-            noInfoAlert.classList.remove("d-none");
+            showSubmitterState('error');
           }
         } catch (err) {
+          if (requestNumber !== submitterRequestNumber) return;
           console.error("Error fetching submitter info:", err);
-          noInfoAlert.textContent = '{{ _("Virhe haettaessa tietoja.") }}';
-          noInfoAlert.classList.remove("d-none");
-        } finally {
-          submitterModal.show();
+          showSubmitterState('error');
         }
       };
 
-      // Close modal buttons
-      document.getElementById('submitterInfoCloseBtn').onclick = () => submitterModal.hide();
-      document.getElementById('closeSubmitterInfo').onclick = () => submitterModal.hide();
+      submitterModalEl.addEventListener('hidden.bs.modal', () => {
+        if (submitterTrigger?.isConnected) submitterTrigger.focus();
+      });
 
       // Initial button text update
       updateDeleteButtonTexts();

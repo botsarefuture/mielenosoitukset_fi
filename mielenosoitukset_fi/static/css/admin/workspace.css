@@ -137,6 +137,10 @@ body {
   align-items: end;
 }
 
+.admin-filter-bar__primary--search {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
 .admin-filter-bar .admin-field {
   gap: .35rem;
   margin: 0;
@@ -241,6 +245,20 @@ body {
 
 .admin-pagination .pagination { margin: 0; }
 
+.admin-pagination__info {
+  color: var(--admin-workspace-muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.admin-pagination__ellipsis {
+  display: inline-grid;
+  min-width: 1.8rem;
+  min-height: 2.3rem;
+  place-items: center;
+  color: var(--admin-workspace-muted);
+}
+
 .admin-page-size {
   display: inline-flex;
   gap: .55rem;
@@ -267,6 +285,8 @@ body {
   .admin-filter-bar__primary,
   .admin-advanced-filters__grid { grid-template-columns: 1fr; }
   .admin-pagination { align-items: stretch; flex-direction: column; }
+  .admin-filter-bar__primary--search { grid-template-columns: 1fr; }
+  .admin-pagination__label { display: none; }
 }
 
 .admin-merge-form {
@@ -437,6 +457,76 @@ body {
 
 .admin-data-label i {
   color: var(--admin-workspace-blue-dark);
+}
+
+.admin-entity-identity {
+  display: flex;
+  gap: .7rem;
+  align-items: center;
+  min-width: 13rem;
+}
+
+.admin-entity-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border-radius: .75rem;
+  color: var(--admin-workspace-blue-dark);
+  background: var(--admin-workspace-blue-soft);
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.admin-entity-identity__copy :is(strong, span) {
+  display: block;
+}
+
+.admin-entity-identity__copy strong {
+  font-size: .9rem;
+}
+
+.admin-entity-identity__copy span,
+.admin-entity-description,
+.admin-entity-contact {
+  color: var(--admin-workspace-muted);
+  font-size: .78rem;
+}
+
+.admin-entity-identity__copy span {
+  margin-top: .18rem;
+}
+
+.admin-entity-description {
+  max-width: 22rem;
+  line-height: 1.45;
+}
+
+.admin-entity-contact {
+  overflow-wrap: anywhere;
+}
+
+.admin-entity-contact a {
+  color: var(--admin-workspace-blue-dark);
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  gap: .35rem;
+  align-items: center;
+  padding: .25rem .55rem;
+  border-radius: 999px;
+  color: var(--admin-workspace-muted);
+  background: var(--admin-workspace-surface-muted);
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.admin-status-badge--success {
+  color: var(--admin-workspace-success);
+  background: var(--admin-workspace-success-soft);
 }
 
 .admin-data-value {

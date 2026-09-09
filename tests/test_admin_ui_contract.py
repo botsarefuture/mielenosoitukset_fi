@@ -252,6 +252,23 @@ def test_organization_workflows_use_shared_admin_components():
     assert "background: var(--admin-workspace-primary-hover);" in workspace
 
 
+def test_organization_collection_uses_shared_data_view_contract():
+    dashboard = Path(
+        "mielenosoitukset_fi/templates/admin_V2/organizations/dashboard.html"
+    ).read_text(encoding="utf-8")
+
+    assert "<style" not in dashboard
+    assert "style=" not in dashboard
+    assert 'class="admin-page admin-workspace"' in dashboard
+    assert "admin-workspace-summary-card" in dashboard
+    assert "admin-filter-bar__primary--search" in dashboard
+    assert "admin-data-view__viewport" in dashboard
+    assert "admin-data-view__footer admin-pagination" in dashboard
+    assert "admin-pagination__info" in dashboard
+    assert "admin-entity-identity" in dashboard
+    assert "aria-selected" in dashboard
+
+
 def test_admin_boolean_controls_do_not_inherit_text_field_geometry():
     workspace = Path("mielenosoitukset_fi/static/css/admin/workspace.css").read_text(
         encoding="utf-8"

@@ -175,8 +175,11 @@ def capture_request_context() -> dict | None:
     if not has_request_context():
         return None
     try:
+        request_path = request.path
+        if request.endpoint and request.endpoint.endswith("_with_token"):
+            request_path = request.url_rule.rule if request.url_rule else "<token-route>"
         return {
-            "path": request.path,
+            "path": request_path,
             "method": request.method,
             "remote_addr": get_client_ip(),
             "ip": get_client_ip(),
